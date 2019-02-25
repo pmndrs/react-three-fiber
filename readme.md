@@ -57,6 +57,17 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 # Custom config
 
+```jsx
+<Canvas
+  camera={new THREE.PerspectiveCamera(75, 0, 0.1, 1000)}
+  glProps={ aleased: true }
+  onCreate={(gl, camera, pool scene) => console.log("gl created")}
+  onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}
+/>
+```
+
+# Custom canvas
+
 The default `Canvas` component is just a effect around the canvas element. You can implement your own.
 
 ```jsx

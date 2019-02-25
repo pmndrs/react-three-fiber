@@ -134,7 +134,7 @@ export function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export function Canvas({ children, style, ...props }) {
+export function Canvas({ children, style, camera, onCreate, onUpdate, glProps, ...props }) {
   const canvasRef = useRef()
   const renderer = useRef()
   const camera = useRef()
@@ -148,14 +148,18 @@ export function Canvas({ children, style, ...props }) {
   useEffect(() => {
     const scene = new THREE.Scene()
     pool.current = window.pool = new THREE.Group()
-    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current })
-    camera.current = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, ...glProps })
+    camera.current = camera || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     renderer.current.setSize(0, 0, false)
     camera.current.position.z = 5
     scene.add(pool.current)
+
+    if (onCreate) onCreate(renderer.current, camera.current, pool.current, scene)
+
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
+      if (onUpdate) onUpdate(renderer.current, camera.current, pool.current, scene)
       renderer.current.render(scene, camera.current)
     }
     render(children, pool.current)
