@@ -1,0 +1,38 @@
+{
+  "name": "react-three-fiber",
+  "version": "1.0.1",
+  "description": "React-fiber renderer for THREE.js",
+  "main": "index.js",
+  "module": "index.js",
+  "sideEffects": false,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drcmda/react-three-fiber.git"
+  },
+  "keywords": [
+    "react",
+    "renderer",
+    "fiber",
+    "three",
+    "threejs"
+  ],
+  "author": "Paul Henschel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/drcmda/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/drcmda/react-three-fiber#readme",
+  "dependencies": {
+    "lodash-es": "^4.17.11",
+    "react-reconciler": "^0.20.1",
+    "resize-observer-polyfill": "^1.5.1"
+  },
+  "peerDependencies": {
+    "react": ">=16.8",
+    "react-dom": ">=16.8",
+    "three": ">=100"
+  }
+}
