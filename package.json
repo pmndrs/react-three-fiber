@@ -28,7 +28,8 @@
   "dependencies": {
     "lodash-es": "^4.17.11",
     "react-reconciler": "^0.20.1",
-    "resize-observer-polyfill": "^1.5.1"
+    "resize-observer-polyfill": "^1.5.1",
+    "scheduler": "^0.13.3"
   },
   "peerDependencies": {
     "react": ">=16.8",

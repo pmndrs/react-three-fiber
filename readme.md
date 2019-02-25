@@ -1,8 +1,16 @@
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE. By creating a render-target it's not only easier to build complex and reactive scene graphs, but you can apply generic React-eco-system packages to it for state, animation, etc.
+React-three-fiber is a small React renderer for THREE. By driving THREE as a render-target it's not only easier to build complex and reactive scene graphs, but you can apply generic React-eco-system packages to it for state, animation, etc.
 
-# How to use it
+### Objects and attributes
+
+You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use camelCase. 
+
+### Events
+
+THREE objects that implement their own `raycast` method (for instance meshes) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
+
+# Example
 
 ```jsx
 import * as THREE from 'three'
@@ -31,6 +39,12 @@ function App() {
               material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
               materialColor={new THREE.Color(0xff0000)}
               rotationX={2}
+              onHover={e => console.log("hovered", e)}
+              onUnhover={e => console.log("unhovered", e)}
+              onClick={e => console.log("clicked", e)}
+              onPick={e => console.log("picked", e)}
+              onDrag={e => console.log("dragdge", e)}
+              onDrop={e => console.log("dropped", e)}
             />
           )}
         </group>
@@ -43,7 +57,7 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 # Custom config
 
-The default `Canvas` component is just a small effect around the canvas element. You can implement your own. 
+The default `Canvas` component is just a effect around the canvas element. You can implement your own.
 
 ```jsx
 import * as THREE from 'three'
