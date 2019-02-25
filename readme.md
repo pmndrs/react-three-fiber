@@ -57,13 +57,26 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 # Custom config
 
+GL-props, camera and some events allow you to costomize the render-session.
+
 ```jsx
 <Canvas
-  camera={new THREE.PerspectiveCamera(75, 0, 0.1, 1000)}
   glProps={ aleased: true }
+  camera={new THREE.PerspectiveCamera(75, 0, 0.1, 1000)}
   onCreate={(gl, camera, pool scene) => console.log("gl created")}
   onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}
 />
+```
+
+# Extending or using arbitrary objects
+
+Wrap the `primitive` placeholder around custom or extended THREE-objects that you want to render into the scene-graph.
+
+```jsx
+const geo = new THREE.BoxGeometry(10, 0.1, 0.1)
+const mat = new THREE.MeshBasicMaterial({ transparent: true })
+const msh = new MyExtendedMesh(geo, mat)
+return <primitive object={msh} />
 ```
 
 # Custom canvas

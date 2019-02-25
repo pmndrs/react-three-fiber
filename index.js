@@ -51,7 +51,7 @@ const Renderer = Reconciler({
     return emptyObject
   },
   createInstance(type, props, rootContainerInstance, hostContext, internalInstanceHandle) {
-    const instance = new THREE[(upperFirst(type))]() //(rootContainerInstance, {})
+    const instance = type === "primitive" ? props.object : new THREE[(upperFirst(type))]()
     applyProps(instance, props, {})
     return instance
   },
@@ -134,7 +134,7 @@ export function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export function Canvas({ children, style, camera, onCreate, onUpdate, glProps, ...props }) {
+export function Canvas({ children, style, ...props }) {
   const canvasRef = useRef()
   const renderer = useRef()
   const camera = useRef()
@@ -148,18 +148,14 @@ export function Canvas({ children, style, camera, onCreate, onUpdate, glProps, .
   useEffect(() => {
     const scene = new THREE.Scene()
     pool.current = window.pool = new THREE.Group()
-    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, ...glProps })
-    camera.current = camera || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current })
+    camera.current = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     renderer.current.setSize(0, 0, false)
     camera.current.position.z = 5
     scene.add(pool.current)
-
-    if (onCreate) onCreate(renderer.current, camera.current, pool.current, scene)
-
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
-      if (onUpdate) onUpdate(renderer.current, camera.current, pool.current, scene)
       renderer.current.render(scene, camera.current)
     }
     render(children, pool.current)
@@ -189,7 +185,7 @@ export function Canvas({ children, style, camera, onCreate, onUpdate, glProps, .
       for (var i = 0; i < intersects.length; i++) {
         const object = intersects[i].object
         const handlers = object.__handlers
-        if (handlers.hover && !hovered[object.uuid]) {
+        if (handlers && handlers.hover && !hovered[object.uuid]) {
           hovered[object.uuid] = object
           handlers.hover(intersects[i])
         }
