@@ -1,8 +1,15 @@
+<p align="center">
+  <a href="https://codesandbox.io/embed/9y8vkjykyy"><img src="https://i.imgur.com/NNb6QoP.gif" /></a>
+</p>
+<p align="middle">
+  <i>This demo is real, click it!</i>
+</p>
+
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes lend to complex code due to non-reactive mutation and imperative layout-inflating.
+React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
 
-By driving THREE as a render-target building scene graphs is easier since the graph can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you now apply generic packages for state, animation, gestures, etc.
+Driving something like THREE as a render-target makes so much sense if you think about it, it makes building scene graphs easier since content can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 ### Objects and attributes
 
@@ -10,11 +17,17 @@ You can access the entirety of [THREE's object catalogue as well as all of their
 
 ### Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and (**soon**) drag'n'drop.
 
 ### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-From how it looks to me, some of these aren't maintained, chained to React 15, highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue. It uses a few heuristics to support attributes and that is all.
+Not trying to step on anyones toes, from how it looks to me, some of the above mentioned aren't maintained any longer, or chained to React 15, or highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses a few heuristics to support attributes generically.
+
+### Todo
+
+1. There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
+
+2. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
 
 # Example
 
