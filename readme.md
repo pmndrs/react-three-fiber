@@ -6,7 +6,7 @@ By driving THREE as a render-target it's not only easier to build complex scene 
 
 ### Objects and attributes
 
-You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`rotation-x={...}`).
+You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`<mesh rotation-x={...} />`).
 
 ### Events
 
