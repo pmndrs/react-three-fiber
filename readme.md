@@ -23,6 +23,10 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 From how it looks to me, some of these aren't maintained, chained to React 15, highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue. It uses a few heuristics to support attributes and that is all.
 
+### Todo
+
+There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
+
 # Example
 
 ```jsx
