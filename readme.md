@@ -7,9 +7,9 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes lend to complex code due to non-reactive mutation and imperative layout-inflating.
+React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
 
-By driving THREE as a render-target building scene graphs is easier since the graph can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you now apply generic packages for state, animation, gestures, etc.
+Driving something like THREE as a render-target makes so much sense if you think about it, it makes building scene graphs easier since content can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 ### Objects and attributes
 
