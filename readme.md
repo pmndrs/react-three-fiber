@@ -17,7 +17,7 @@ You can access the entirety of [THREE's object catalogue as well as all of their
 
 ### Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and (**soon**) drag'n'drop.
 
 ### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
