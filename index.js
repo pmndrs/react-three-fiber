@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import Reconciler from 'react-reconciler'
 import omit from 'lodash-es/omit'
 import upperFirst from 'lodash-es/upperFirst'
@@ -153,36 +153,35 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
   const canvasRef = useRef()
   const renderer = useRef()
   const cameraRef = useRef()
-  const pool = useRef()
+  const scene = useRef()
   const active = useRef(true)
   const [bind, measurements] = useMeasure()
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
   const subscribers = useRef([])
+  const [cursor, setCursor] = useState('default')
 
   useEffect(() => {
-    const scene = new THREE.Scene()
-    pool.current = window.pool = new THREE.Group()
-    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current })
+    scene.current = new THREE.Scene()
+    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true })
+    renderer.current.setClearColor(new THREE.Color('transparent'))
     cameraRef.current = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     renderer.current.setSize(0, 0, false)
     cameraRef.current.position.z = 5
-    scene.add(pool.current)
 
-    if (onCreated) onCreated()
+    if (onCreated) onCreated(renderer.current, scene.current, cameraRef.current)
 
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
       if (onUpdate) onUpdate()
       subscribers.current.forEach(fn => fn())
-      renderer.current.render(scene, cameraRef.current)
+      renderer.current.render(scene.current, cameraRef.current)
     }
     render(
       <context.Provider
         value={{
-          scene,
-          pool: pool.current,
+          scene: scene.current,
           renderer: renderer.current,
           camera: cameraRef.current,
           subscribe: fn => {
@@ -192,13 +191,13 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
         }}>
         {children}
       </context.Provider>,
-      pool.current
+      scene.current
     )
     requestAnimationFrame(renderLoop)
 
     return () => {
       active.current = false
-      unmountComponentAtNode(pool.current)
+      unmountComponentAtNode(scene.current)
     }
   }, [])
 
@@ -210,21 +209,36 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
     cameraRef.current.radius = (measurements.width + measurements.height) / 4
   })
 
+  const intersect = useCallback((event, fn) => {
+    mouse.x = (event.clientX / measurements.width) * 2 - 1
+    mouse.y = -(event.clientY / measurements.height) * 2 + 1
+    raycaster.setFromCamera(mouse, cameraRef.current)
+    const intersects = raycaster.intersectObjects(scene.current.children, true)
+    for (var i = 0; i < intersects.length; i++) {
+      if (!intersects[i].object.__handlers) continue
+      fn(intersects[i])
+    }
+    return intersects
+  })
+
   useEffect(() => {
     const hovered = {}
     const handleMove = event => {
-      mouse.x = (event.clientX / measurements.width) * 2 - 1
-      mouse.y = -(event.clientY / measurements.height) * 2 + 1
-      raycaster.setFromCamera(mouse, cameraRef.current)
-      const intersects = raycaster.intersectObjects(pool.current.children, true)
-      for (var i = 0; i < intersects.length; i++) {
-        const object = intersects[i].object
+      let hover = false
+      let intersects = intersect(event, data => {
+        const object = data.object
         const handlers = object.__handlers
-        if (handlers && handlers.hover && !hovered[object.uuid]) {
-          hovered[object.uuid] = object
-          handlers.hover(intersects[i])
+        if (handlers.hover) {
+          hover = true
+          if (!hovered[object.uuid]) {
+            hovered[object.uuid] = object
+            handlers.hover(data)
+          }
         }
-      }
+      })
+
+      if (hover) cursor !== 'pointer' && setCursor('pointer')
+      else cursor !== 'default' && setCursor('default')
 
       Object.values(hovered).forEach(object => {
         if (!intersects.length || !intersects.find(i => i.object === object)) {
@@ -243,7 +257,14 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
     <div
       {...bind}
       {...props}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+      onClick={event => {
+        let intersects = intersect(event, data => {
+          const object = data.object
+          const handlers = object.__handlers
+          if (handlers.click) handlers.click(data)
+        })
+      }}
+      style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
       <canvas ref={canvasRef} />
     </div>
   )
