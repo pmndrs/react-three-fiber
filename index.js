@@ -149,16 +149,18 @@ export function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export function Canvas({ children, style, camera, ...props }) {
+export const context = React.createContext()
+
+export function Canvas({ children, style, camera, onCreated, onUpdate, ...props }) {
   const canvasRef = useRef()
   const renderer = useRef()
   const cameraRef = useRef()
   const pool = useRef()
   const active = useRef(true)
   const [bind, measurements] = useMeasure()
-
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
+  const subscribers = useRef([])
 
   useEffect(() => {
     const scene = new THREE.Scene()
@@ -168,12 +170,32 @@ export function Canvas({ children, style, camera, ...props }) {
     renderer.current.setSize(0, 0, false)
     cameraRef.current.position.z = 5
     scene.add(pool.current)
+
+    if (onCreated) onCreated()
+
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
+      if (onUpdate) onUpdate()
+      subscribers.current.forEach(fn => fn())
       renderer.current.render(scene, cameraRef.current)
     }
-    render(children, pool.current)
+    render(
+      <context.Provider
+        value={{
+          scene,
+          pool: pool.current,
+          renderer: renderer.current,
+          camera: cameraRef.current,
+          subscribe: fn => {
+            subscribers.current.push(fn)
+            return () => subscribers.current = subscribers.current.filter(s => s === fn)
+          }
+        }}>
+        {children}
+      </context.Provider>,
+      pool.current,
+    )
     requestAnimationFrame(renderLoop)
 
     return () => {
@@ -220,7 +242,10 @@ export function Canvas({ children, style, camera, ...props }) {
   })
 
   return (
-    <div {...bind} {...props} style={{ position: 'relative', width: '100%', height: '100%', ...style }}>
+    <div
+      {...bind}
+      {...props}
+      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
       <canvas ref={canvasRef} />
     </div>
   )
