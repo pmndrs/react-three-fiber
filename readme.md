@@ -98,6 +98,20 @@ const msh = new MyExtendedMesh(geo, mat)
 return <primitive object={msh} />
 ```
 
+# Hooking into the render loop
+
+Sometime you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe from context to do this. `subscribe()` returns the unsub function, so you can nicely use it in effects for auto-cleanup.
+
+```jsx
+import { Canvas, context } from 'react-three-fiber'
+
+function App() {
+  const { subscribe, renderer, scene, camera } = useContext(context)
+  useEffect(() => subscribe(() => console.log("i'm in the render-loop")), [])
+  return <group />
+}
+```
+
 # Custom canvas
 
 The default `Canvas` component is just a effect around the canvas element. You can implement your own.
