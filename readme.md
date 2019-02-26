@@ -74,7 +74,7 @@ function App() {
     <Canvas
       camera={cam}
       glProps={ antialias: true }
-      onCreate={(gl, camera, pool scene) => console.log("gl created")}
+      onCreated={(gl, camera, pool scene) => console.log("gl created")}
       onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}>
       <perspectiveCamera
         ref={cam}
