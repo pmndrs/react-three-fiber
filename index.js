@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, useState, useCallback } from 'react'
+import React, { useRef, useEffect, useState, useCallback, useContext } from 'react'
 import Reconciler from 'react-reconciler'
 import omit from 'lodash-es/omit'
 import upperFirst from 'lodash-es/upperFirst'
@@ -150,40 +150,42 @@ export function useMeasure() {
 export const context = React.createContext()
 
 export function Canvas({ children, style, camera, onCreated, onUpdate, ...props }) {
-  const canvasRef = useRef()
-  const renderer = useRef()
-  const cameraRef = useRef()
-  const scene = useRef()
+  const canvas = useRef()
+  const state = useRef({
+    canvas: undefined,
+    gl: undefined,
+    camera: undefined,
+    scene: undefined,
+  })
+  const subscribers = useRef([])
   const active = useRef(true)
   const [bind, measurements] = useMeasure()
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
-  const subscribers = useRef([])
   const [cursor, setCursor] = useState('default')
 
   useEffect(() => {
-    scene.current = new THREE.Scene()
-    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true, alpha: true })
-    renderer.current.setClearAlpha(0)
-    cameraRef.current = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    renderer.current.setSize(0, 0, false)
-    cameraRef.current.position.z = 5
+    state.current.scene = new THREE.Scene()
+    state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true })
+    state.current.gl.setClearAlpha(0)
+    state.current.camera = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    state.current.gl.setSize(0, 0, false)
+    state.current.camera.position.z = 5
+    state.current.canvas = canvas.current
 
-    if (onCreated) onCreated(renderer.current, scene.current, cameraRef.current)
+    if (onCreated) onCreated(state.current)
 
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
-      if (onUpdate) onUpdate()
-      subscribers.current.forEach(fn => fn())
-      renderer.current.render(scene.current, cameraRef.current)
+      if (onUpdate) onUpdate(state.current)
+      subscribers.current.forEach(fn => fn(state.current))
+      state.current.gl.render(state.current.scene, state.current.camera)
     }
     render(
       <context.Provider
         value={{
-          scene: scene.current,
-          renderer: renderer.current,
-          camera: cameraRef.current,
+          ...state.current,
           subscribe: fn => {
             subscribers.current.push(fn)
             return () => (subscribers.current = subscribers.current.filter(s => s === fn))
@@ -191,29 +193,29 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
         }}>
         {children}
       </context.Provider>,
-      scene.current
+      state.current.scene
     )
     requestAnimationFrame(renderLoop)
 
     return () => {
       active.current = false
-      unmountComponentAtNode(scene.current)
+      unmountComponentAtNode(state.current.scene)
     }
   }, [])
 
   useEffect(() => {
-    renderer.current.setSize(measurements.width, measurements.height, false)
+    state.current.gl.setSize(measurements.width, measurements.height, false)
     const aspect = measurements.width / measurements.height
-    cameraRef.current.aspect = aspect
-    cameraRef.current.updateProjectionMatrix()
-    cameraRef.current.radius = (measurements.width + measurements.height) / 4
+    state.current.camera.aspect = aspect
+    state.current.camera.updateProjectionMatrix()
+    state.current.camera.radius = (measurements.width + measurements.height) / 4
   })
 
   const intersect = useCallback((event, fn) => {
     mouse.x = (event.clientX / measurements.width) * 2 - 1
     mouse.y = -(event.clientY / measurements.height) * 2 + 1
-    raycaster.setFromCamera(mouse, cameraRef.current)
-    const intersects = raycaster.intersectObjects(scene.current.children, true)
+    raycaster.setFromCamera(mouse, state.current.camera)
+    const intersects = raycaster.intersectObjects(state.current.scene.children, true)
     for (var i = 0; i < intersects.length; i++) {
       if (!intersects[i].object.__handlers) continue
       fn(intersects[i])
@@ -259,7 +261,7 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
       {...props}
       onClick={event => {
         const clicked = {}
-        let intersects = intersect(event, data => {
+        intersect(event, data => {
           const object = data.object
           const handlers = object.__handlers
           if (handlers.click && !clicked[object.uuid]) {
@@ -269,7 +271,17 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
         })
       }}
       style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas ref={canvasRef} />
+      <canvas ref={canvas} />
     </div>
   )
+}
+
+export function useRender(fn) {
+  const { subscribe } = useContext(context)
+  useEffect(() => subscribe(fn), [])
+}
+
+export function useThree(fn) {
+  const { subscribe, ...props } = useContext(context)
+  return props
 }

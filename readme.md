@@ -98,16 +98,18 @@ const msh = new MyExtendedMesh(geo, mat)
 return <primitive object={msh} />
 ```
 
-# Hooking into the render loop
+# Gl data & hooking into the render loop
 
-Sometime you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe from context to do this. `subscribe()` returns the unsub function, so you can nicely use it in effects for auto-cleanup.
+Sometime you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this.
 
 ```jsx
-import { Canvas, context } from 'react-three-fiber'
+import { Canvas, useRender, useThree } from 'react-three-fiber'
 
 function App() {
-  const { subscribe, renderer, scene, camera } = useContext(context)
-  useEffect(() => subscribe(() => console.log("i'm in the render-loop")), [])
+  // Just fetching data
+  const { gl, canvas, scene, camera } = useThree()
+  // Subscribing to the render-loop
+  useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
   return <group />
 }
 ```
