@@ -4,7 +4,7 @@ React-three-fiber is a small React renderer for THREE. By driving THREE as a ren
 
 ### Objects and attributes
 
-You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use camelCase. 
+You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use dashCase.
 
 ### Events
 
@@ -20,34 +20,34 @@ import { Canvas } from 'react-three-fiber'
 
 function App() {
   const boxRef = useRef()
-  const [show, toggle] = useState(true)
-
-  useEffect(() => {
-    // You have access to the raw THREE components
-    console.log(boxRef)
-    // Like any other React component, the scene graph is reactive
-    setTimeout(() => toggle(false), 2000)
-  }, [])
-
   return (
-     <Canvas>
-        <group>
-          {show && (
-            <mesh
-              ref={boxRef}
-              geometry={new THREE.BoxGeometry(1, 1, 1)}
-              material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
-              materialColor={new THREE.Color(0xff0000)}
-              rotationX={2}
-              onHover={e => console.log("hovered", e)}
-              onUnhover={e => console.log("unhovered", e)}
-              onClick={e => console.log("clicked", e)}
-              onPick={e => console.log("picked", e)}
-              onDrag={e => console.log("dragdge", e)}
-              onDrop={e => console.log("dropped", e)}
-            />
-          )}
-        </group>
+    <Canvas>
+      <group>
+        <mesh
+          // You get full access to the instance with a reference
+          ref={boxRef}
+          // You can set any object on the instance
+          geometry={new THREE.BoxGeometry(1, 1, 1)}
+          material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
+          // Read-only props in THREE that have a ".set" function can still be written to
+          scale={new Vector3(2, 2, 2)}
+          // Or by an array that gets spread over the internal ".set(...)" function
+          scale={[2, 2, 2]}
+          // You are also allowed to pierce into the instance
+          scale-x={3}
+          // ... which works for everything, even materials
+          material-color={new THREE.Color(0xff0000)}
+          // And since it's using ".set(...)", you can feed it all the values it can take
+          material-color={'rgb(100, 200, 50)'}
+          // Interaction comes inbuilt
+          onHover={e => console.log('hovered', e)}
+          onUnhover={e => console.log('unhovered', e)}
+          onClick={e => console.log('clicked', e)}
+          onPick={e => console.log('picked', e)}
+          onDrag={e => console.log('dragdge', e)}
+          onDrop={e => console.log('dropped', e)}
+        />
+      </group>
     </Canvas>
   )
 }
@@ -57,15 +57,27 @@ ReactDOM.render(<App />, document.getElementById('root'))
 
 # Custom config
 
-GL-props, camera and some events allow you to costomize the render-session.
+GL-props, camera and some events allow you to customize the render-session.
 
 ```jsx
-<Canvas
-  glProps={ aleased: true }
-  camera={new THREE.PerspectiveCamera(75, 0, 0.1, 1000)}
-  onCreate={(gl, camera, pool scene) => console.log("gl created")}
-  onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}
-/>
+function App() {
+  const cam = useRef()
+  return (
+    <Canvas
+      camera={cam}
+      glProps={ antialias: true }
+      onCreate={(gl, camera, pool scene) => console.log("gl created")}
+      onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}>
+      <perspectiveCamera
+        ref={cam}
+        fov={75}
+        aspect={window.innerWidth / window.innerHeight}
+        near={0.1}
+        far={1000} />
+      <SpinningBox />
+    </Canvas>
+  )
+}
 ```
 
 # Extending or using arbitrary objects

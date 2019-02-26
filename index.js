@@ -13,19 +13,34 @@ import {
 const roots = new Map()
 const emptyObject = {}
 
-function applyProps(instance, newProps, oldProps) {
+export function applyProps(instance, newProps, oldProps = {}) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
   const filteredProps = omit(newProps, [...sameProps, ...handlers, 'children', 'key', 'ref'])
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
-      const [targetName, ...entries] = key
-        .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .split(' ')
-        .reverse()
-      const target = entries.reverse().reduce((acc, key) => acc[key.toLowerCase()], instance)
-      target[targetName.toLowerCase()] = value
+      let root = instance
+      let target = root[key]
+      if (key.includes('-')) {
+        const entries = key.split('-')
+        target = entries.reduce((acc, key) => acc[key], instance)
+        if (target && !target.set) {
+          // The target is atomic, this forces us to switch the root
+          const [name, ...reverseEntries] = entries.reverse()
+          root = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+          key = name
+        }
+      }
+      if (target && target.set) {
+        if (target.constructor.name === value.constructor.name) {
+          target.copy(value)
+        } else if (Array.isArray(value)) {
+          target.set(...value)
+        } else {
+          target.set(value)
+        }
+      } else root[key] = value
     })
 
     if (handlers.length) {
@@ -51,7 +66,7 @@ const Renderer = Reconciler({
     return emptyObject
   },
   createInstance(type, props, rootContainerInstance, hostContext, internalInstanceHandle) {
-    const instance = type === "primitive" ? props.object : new THREE[(upperFirst(type))]()
+    const instance = type === 'primitive' ? props.object : new THREE[(upperFirst(type))]()
     applyProps(instance, props, {})
     return instance
   },
@@ -134,10 +149,10 @@ export function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export function Canvas({ children, style, ...props }) {
+export function Canvas({ children, style, camera, ...props }) {
   const canvasRef = useRef()
   const renderer = useRef()
-  const camera = useRef()
+  const cameraRef = useRef()
   const pool = useRef()
   const active = useRef(true)
   const [bind, measurements] = useMeasure()
@@ -149,14 +164,14 @@ export function Canvas({ children, style, ...props }) {
     const scene = new THREE.Scene()
     pool.current = window.pool = new THREE.Group()
     renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current })
-    camera.current = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    cameraRef.current = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     renderer.current.setSize(0, 0, false)
-    camera.current.position.z = 5
+    cameraRef.current.position.z = 5
     scene.add(pool.current)
     const renderLoop = function() {
       if (!active.current) return
       requestAnimationFrame(renderLoop)
-      renderer.current.render(scene, camera.current)
+      renderer.current.render(scene, cameraRef.current)
     }
     render(children, pool.current)
     requestAnimationFrame(renderLoop)
@@ -170,9 +185,9 @@ export function Canvas({ children, style, ...props }) {
   useEffect(() => {
     renderer.current.setSize(measurements.width, measurements.height, false)
     const aspect = measurements.width / measurements.height
-    camera.current.aspect = aspect
-    camera.current.updateProjectionMatrix()
-    camera.current.radius = (measurements.width + measurements.height) / 4
+    cameraRef.current.aspect = aspect
+    cameraRef.current.updateProjectionMatrix()
+    cameraRef.current.radius = (measurements.width + measurements.height) / 4
   })
 
   useEffect(() => {
@@ -180,7 +195,7 @@ export function Canvas({ children, style, ...props }) {
     const handleMove = event => {
       mouse.x = (event.clientX / measurements.width) * 2 - 1
       mouse.y = -(event.clientY / measurements.height) * 2 + 1
-      raycaster.setFromCamera(mouse, camera.current)
+      raycaster.setFromCamera(mouse, cameraRef.current)
       const intersects = raycaster.intersectObjects(pool.current.children, true)
       for (var i = 0; i < intersects.length; i++) {
         const object = intersects[i].object
