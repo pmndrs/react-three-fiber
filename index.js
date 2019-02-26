@@ -163,8 +163,8 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
 
   useEffect(() => {
     scene.current = new THREE.Scene()
-    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true })
-    renderer.current.setClearColor(new THREE.Color('transparent'))
+    renderer.current = new THREE.WebGLRenderer({ canvas: canvasRef.current, antialias: true, alpha: true })
+    renderer.current.setClearAlpha(0)
     cameraRef.current = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     renderer.current.setSize(0, 0, false)
     cameraRef.current.position.z = 5
