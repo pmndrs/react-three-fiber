@@ -258,10 +258,14 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
       {...bind}
       {...props}
       onClick={event => {
+        const clicked = {}
         let intersects = intersect(event, data => {
           const object = data.object
           const handlers = object.__handlers
-          if (handlers.click) handlers.click(data)
+          if (handlers.click && !clicked[object.uuid]) {
+            clicked[object.uuid] = object
+            handlers.click(data)
+          }
         })
       }}
       style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
