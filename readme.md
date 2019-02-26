@@ -4,7 +4,7 @@ React-three-fiber is a small React renderer for THREE. By driving THREE as a ren
 
 ### Objects and attributes
 
-You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use dashCase.
+You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use dash-case.
 
 ### Events
 
