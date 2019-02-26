@@ -47,7 +47,7 @@ function App() {
           geometry={new THREE.Geometry()}
           material={new THREE.LineBasicMaterial({ color: 0xffffff })}
           // With piercing you can even declare mesh/vertice data declaratively
-          geometry-vertices={vertices.map(v => new THREE.Vector3(...v))}
+          geometry-vertices={[[-1,0,0],[0,1,0],[1,0,0]].map(v => new THREE.Vector3(...v))}
         />
       </group>
     </Canvas>
