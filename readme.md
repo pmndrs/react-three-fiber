@@ -1,16 +1,16 @@
     npm install react-three-fiber
 
-React-three-fiber is a small (2KB) React renderer for THREE-js. Regular THREE can sometimes lend to spaghetti code since it relies on non-reactive mutation and imperative layout-inflating. Code like that can get out of hand quickly.
+React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes lend to complex code due to non-reactive mutation and imperative layout-inflating.
 
-By driving THREE as a render-target it's not only easier to build complex scene graphs, since you can basically componentize the graph with clean React semantics, but you can also apply generic eco-system packages for state, animation, gestures, etc.
+By driving THREE as a render-target building scene graphs is easier since the graph can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you now apply generic packages for state, animation, gestures, etc.
 
 ### Objects and attributes
 
-You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`<mesh rotation-x={...} />`).
+You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`<mesh rotation-x={...} />`). This renderer doesn't change THREE's semantics other than using JSX, it does not introduce any regression or limit.
 
 ### Events
 
-THREE objects that implement their own `raycast` method (for instance meshes) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
 
 ### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
