@@ -13,9 +13,6 @@ THREE objects that implement their own `raycast` method (for instance meshes) ca
 # Example
 
 ```jsx
-import * as THREE from 'three'
-import React, { useRef, useState, useEffect } from 'react'
-import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
 
 function App({ visible }) {
