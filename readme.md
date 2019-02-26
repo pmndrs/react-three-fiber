@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://i.imgur.com/NNb6QoP.gif" />
+</p>
+
     npm install react-three-fiber
 
 React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes lend to complex code due to non-reactive mutation and imperative layout-inflating.
