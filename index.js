@@ -107,11 +107,9 @@ const Renderer = Reconciler({
     }
   },
   removeChild(parentInstance, child) {
-    console.log('removeChild')
     if (child) parentInstance.remove(child)
   },
   removeChildFromContainer(parentInstance, child) {
-    console.log('removeChildFromContainer')
     if (child) parentInstance.remove(child)
   },
   commitUpdate(instance, updatePayload, type, oldProps, newProps) {
@@ -189,12 +187,12 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
           camera: cameraRef.current,
           subscribe: fn => {
             subscribers.current.push(fn)
-            return () => subscribers.current = subscribers.current.filter(s => s === fn)
-          }
+            return () => (subscribers.current = subscribers.current.filter(s => s === fn))
+          },
         }}>
         {children}
       </context.Provider>,
-      pool.current,
+      pool.current
     )
     requestAnimationFrame(renderLoop)
 
