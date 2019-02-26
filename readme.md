@@ -21,7 +21,7 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 ### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-Not trying to step on anyones toes, from how it looks to me, some of the above mentioned aren't maintained any longer, or chained to React 15, or highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue. It uses a few heuristics to support attributes and adds interaction.
+Not trying to step on anyones toes, from how it looks to me, some of the above mentioned aren't maintained any longer, or chained to React 15, or highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses a few heuristics to support attributes generically.
 
 ### Todo
 
