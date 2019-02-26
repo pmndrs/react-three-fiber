@@ -1,10 +1,10 @@
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE. By driving THREE as a render-target it's not only easier to build complex and scene graphs, but you can apply generic React-eco-system packages to it for state, animation, etc.
+React-three-fiber is a small React renderer for THREE-js. By driving THREE as a render-target it's not only easier to build complex scene graphs, but you can apply generic React-eco-system packages to it for state, animation, gestures, etc.
 
 ### Objects and attributes
 
-You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: mesh.rotation.x), just use dash-case.
+You can access the entirety of THREE's object catalogue as well as all of its properties. If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`rotation-x={...}`).
 
 ### Events
 
@@ -15,43 +15,46 @@ THREE objects that implement their own `raycast` method (for instance meshes) ca
 ```jsx
 import { Canvas } from 'react-three-fiber'
 
-function App({ visible }) {
-  const boxRef = useRef()
+function App() {
   return (
     <Canvas>
       <group>
-        {visible &&
-          <mesh
-            // You get full access to the instance with a reference
-            ref={boxRef}
-            // You can set any object on the instance
-            geometry={new THREE.BoxGeometry(1, 1, 1)}
-            material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
-            // Read-only props in THREE that have a ".set" function can still be written to
-            scale={new Vector3(2, 2, 2)}
-            // Or by an array that gets spread over the internal ".set(...)" function
-            scale={[2, 2, 2]}
-            // You are also allowed to pierce into the instance
-            scale-x={3}
-            // ... which works for everything, even materials
-            material-color={new THREE.Color(0xff0000)}
-            // And since it's using ".set(...)", you can feed it all the values it can take
-            material-color={'rgb(100, 200, 50)'}
-            // Interaction comes inbuilt
-            onHover={e => console.log('hovered', e)}
-            onUnhover={e => console.log('unhovered', e)}
-            onClick={e => console.log('clicked', e)}
-            onPick={e => console.log('picked', e)}
-            onDrag={e => console.log('dragdge', e)}
-            onDrop={e => console.log('dropped', e)}
-          />
-        }
+        <mesh
+          // You get full access to the instance with a reference
+          ref={ref => console.log(ref)}
+          // You can set any object on the instance
+          geometry={new THREE.BoxGeometry(1, 1, 1)}
+          material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
+          // Read-only props in THREE that have a ".set" function can still be written to
+          scale={new Vector3(2, 2, 2)}
+          // Or by an array that gets spread over the internal ".set(...)" function
+          scale={[2, 2, 2]}
+          // You are also allowed to pierce into the instance
+          scale-x={3}
+          // ... which works for everything, even materials
+          material-color={new THREE.Color(0xff0000)}
+          // And since it's using ".set(...)", you can feed it all the values it can take
+          material-color={'rgb(100, 200, 50)'}
+          // Interaction comes inbuilt
+          onHover={e => console.log('hovered', e)}
+          onUnhover={e => console.log('unhovered', e)}
+          onClick={e => console.log('clicked', e)}
+          onPick={e => console.log('picked', e)}
+          onDrag={e => console.log('dragged', e)}
+          onDrop={e => console.log('dropped', e)}
+        />
+        <line
+          geometry={new THREE.Geometry()}
+          material={new THREE.LineBasicMaterial({ color: 0xffffff })}
+          // With piercing you can even declare mesh/vertice data declaratively
+          geometry-vertices={vertices.map(v => new THREE.Vector3(...v))}
+        />
       </group>
     </Canvas>
   )
 }
 
-ReactDOM.render(<App visible/>, document.getElementById('root'))
+ReactDOM.render(<App />, document.getElementById('root'))
 ```
 
 # Custom config
@@ -70,7 +73,6 @@ function App() {
       <perspectiveCamera
         ref={cam}
         fov={75}
-        aspect={window.innerWidth / window.innerHeight}
         near={0.1}
         far={1000} />
       <SpinningBox />
