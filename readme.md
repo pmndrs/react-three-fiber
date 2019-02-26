@@ -12,7 +12,7 @@ You can access the entirety of THREE's object catalogue as well as all of its pr
 
 THREE objects that implement their own `raycast` method (for instance meshes) can be interacted with by declaring events on the object. For now that's hovering state, clicks and drag'n'drop.
 
-## Difference to react-three, react-three-renderer, react-three-renderer-fiber
+### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
 From how it looks to me, some of these aren't maintained, chained to React 15, highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue. It uses a few heuristics to support attributes and that is all.
 
