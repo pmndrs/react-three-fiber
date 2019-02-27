@@ -87,8 +87,9 @@ function App() {
     <Canvas
       camera={cam}
       glProps={{ antialias: true }}
-      onCreated={(gl, camera, pool scene) => console.log("gl created")}
-      onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}>
+      onCreated={({ gl, canvas, scene, camera }) => console.log("gl created")}
+      onUpdate={({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop")}
+      render={({ gl, canvas, scene, camera }) => gl.render(scene, camera)}>
       <perspectiveCamera
         ref={cam}
         fov={75}
