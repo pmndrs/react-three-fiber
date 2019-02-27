@@ -86,7 +86,7 @@ function App() {
   return (
     <Canvas
       camera={cam}
-      glProps={ antialias: true }
+      glProps={{ antialias: true }}
       onCreated={(gl, camera, pool scene) => console.log("gl created")}
       onUpdate={(gl, camera, pool scene) => console.log("i'm in the render-loop")}>
       <perspectiveCamera
