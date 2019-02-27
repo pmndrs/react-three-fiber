@@ -109,7 +109,7 @@ return <primitive object={msh} />
 
 # Gl data & hooking into the render loop
 
-Sometime you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this.
+Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this.
 
 ```jsx
 import { Canvas, useRender, useThree } from 'react-three-fiber'
@@ -117,7 +117,7 @@ import { Canvas, useRender, useThree } from 'react-three-fiber'
 function App() {
   // Just fetching data
   const { gl, canvas, scene, camera } = useThree()
-  // Subscribing to the render-loop
+  // Subscribing to the render-loop, gets cleaned up automatically when the component unmounts
   useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
   return <group />
 }
