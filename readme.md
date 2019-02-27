@@ -66,7 +66,7 @@ function App() {
           geometry={new THREE.Geometry()}
           material={new THREE.LineBasicMaterial({ color: 0xffffff })}
           // With piercing you can even declare mesh/vertice data declaratively
-          geometry-vertices={[[-1,0,0],[0,1,0],[1,0,0]].map(v => new THREE.Vector3(...v))}
+          geometry-vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0]].map(v => new THREE.Vector3(...v))}
         />
       </group>
     </Canvas>
@@ -87,14 +87,10 @@ function App() {
     <Canvas
       camera={cam}
       glProps={{ antialias: true }}
-      onCreated={({ gl, canvas, scene, camera }) => console.log("gl created")}
+      onCreated={({ gl, canvas, scene, camera }) => console.log('gl created')}
       onUpdate={({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop")}
       render={({ gl, canvas, scene, camera }) => gl.render(scene, camera)}>
-      <perspectiveCamera
-        ref={cam}
-        fov={75}
-        near={0.1}
-        far={1000} />
+      <perspectiveCamera ref={cam} fov={75} near={0.1} far={1000} />
     </Canvas>
   )
 }

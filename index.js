@@ -1,3 +1,10 @@
+/** TODOS
+ * 1. Intersection has be more specific, it goes through the entire scene currently
+ * 2. Fix camera
+ * 3. Better way to set up the scene declaratively
+ * 4. make it possible to render into a target without regressions
+ */
+
 import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useCallback, useContext } from 'react'
 import Reconciler from 'react-reconciler'
@@ -53,9 +60,9 @@ export function applyProps(instance, newProps, oldProps = {}) {
 }
 
 const Renderer = Reconciler({
+  now,
   supportsMutation: true,
   isPrimaryRenderer: false,
-  now,
   getPublicInstance(instance) {
     return instance
   },
@@ -136,7 +143,7 @@ export function unmountComponentAtNode(container) {
   if (root) Renderer.updateContainer(null, root, null, () => roots.delete(container))
 }
 
-export function useMeasure() {
+function useMeasure() {
   const ref = useRef()
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
@@ -149,16 +156,16 @@ export function useMeasure() {
 
 export const context = React.createContext()
 
-export function Canvas({ children, style, camera, onCreated, onUpdate, ...props }) {
+export function Canvas({ children, style, camera, render: renderFn, onCreated, onUpdate, ...props }) {
   const canvas = useRef()
   const state = useRef({
+    subscribers: [],
+    active: true,
     canvas: undefined,
     gl: undefined,
     camera: undefined,
     scene: undefined,
   })
-  const subscribers = useRef([])
-  const active = useRef(true)
   const [bind, measurements] = useMeasure()
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
@@ -168,6 +175,9 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
     state.current.scene = new THREE.Scene()
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true })
     state.current.gl.setClearAlpha(0)
+
+    console.log(camera)
+
     state.current.camera = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     state.current.gl.setSize(0, 0, false)
     state.current.camera.position.z = 5
@@ -176,29 +186,35 @@ export function Canvas({ children, style, camera, onCreated, onUpdate, ...props 
     if (onCreated) onCreated(state.current)
 
     const renderLoop = function() {
-      if (!active.current) return
+      if (!state.current.active) return
       requestAnimationFrame(renderLoop)
       if (onUpdate) onUpdate(state.current)
-      subscribers.current.forEach(fn => fn(state.current))
-      state.current.gl.render(state.current.scene, state.current.camera)
+      state.current.subscribers.forEach(fn => fn(state.current))
+      if (renderFn) renderFn(state.current)
+      else state.current.gl.render(state.current.scene, state.current.camera)
     }
+
+    // Start render-loop
+    requestAnimationFrame(renderLoop)
+
+    // Render v-dom into scene
     render(
       <context.Provider
         value={{
           ...state.current,
           subscribe: fn => {
-            subscribers.current.push(fn)
-            return () => (subscribers.current = subscribers.current.filter(s => s === fn))
+            state.current.subscribers.push(fn)
+            return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
           },
         }}>
         {children}
       </context.Provider>,
       state.current.scene
     )
-    requestAnimationFrame(renderLoop)
 
+    // Clean-up
     return () => {
-      active.current = false
+      state.current.active = false
       unmountComponentAtNode(state.current.scene)
     }
   }, [])
