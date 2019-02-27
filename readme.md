@@ -21,7 +21,7 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 ### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-Not trying to step on anyones toes, from how it looks to me, some of the above mentioned aren't maintained any longer, or chained to React 15, or highly specific and/or complex. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses a few heuristics to support attributes generically.
+Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
 
 ### Todo
 
@@ -53,7 +53,7 @@ function App() {
           // ... which works for everything, even materials
           material-color={new THREE.Color(0xff0000)}
           // And since it's using ".set(...)", you can feed it all the values it can take
-          material-color={'rgb(100, 200, 50)'}
+          material-color="rgb(100, 200, 50)"
           // Interaction comes inbuilt
           onHover={e => console.log('hovered', e)}
           onUnhover={e => console.log('unhovered', e)}
@@ -90,11 +90,7 @@ function App() {
       onCreated={({ gl, canvas, scene, camera }) => console.log("gl created")}
       onUpdate={({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop")}
       render={({ gl, canvas, scene, camera }) => gl.render(scene, camera)}>
-      <perspectiveCamera
-        ref={cam}
-        fov={75}
-        near={0.1}
-        far={1000} />
+      <perspectiveCamera ref={cam} fov={75} near={0.1} far={1000} />
     </Canvas>
   )
 }
