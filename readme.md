@@ -94,7 +94,6 @@ function App() {
         fov={75}
         near={0.1}
         far={1000} />
-      <SpinningBox />
     </Canvas>
   )
 }
