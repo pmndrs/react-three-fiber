@@ -9,11 +9,67 @@
 
 React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
 
-Driving something like THREE as a render-target makes so much sense if you think about it, it makes building scene graphs easier since content can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
+Driving something like THREE as a render-target makes just as much sense as it makes for the DOM. Building a  complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
-### Objects and attributes
+### How it looks
 
-You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case (`<mesh rotation-x={...} />`). This renderer doesn't change THREE's semantics other than using JSX, it does not introduce any regression or limit.
+```jsx
+import { Canvas } from 'react-three-fiber'
+
+function Thing({ vertices, color }) {
+  return (
+    <group ref={ref => console.log('we have access to the instance')}>
+      <line position={[10, 20, 30]} rotation={[THREE.Math.degToRad(90), 0, 0]}>
+        <geometry name="geometry" vertices={vertices.map(v => new THREE.Vector3(...v))} />
+        <lineBasicMaterial name="material" color={color} />
+      </line>
+      <mesh
+        onClick={e => console.log('click')}
+        onHover={e => console.log('hover')}
+        onUnhover={e => console.log('unhover')}>
+        <octahedronGeometry name="geometry" />
+        <meshStandardMaterial name="material" color="grey" opacity={0.5} transparent />
+      </mesh>
+    </group>
+  )
+}
+
+ReactDOM.render(
+  <Canvas>
+    <Thing color="blue" vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0]]} />
+  </Canvas>,
+  document.getElementById('root')
+)
+```
+
+### Objects and properties
+
+You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you're in doubt what objects can and can not take in, always consult the docs.
+
+```jsx
+<mesh
+  visible
+  userData={ test: "hello" }
+  position={new THREE.Vector3(1, 2, 3)}
+  rotation={new THREE.Euler(0, 0, 0)}
+  geometry={new THREE.SphereGeometry(1, 16, 16)}
+  material={new THEE.MeshBasicMaterial({ color: new THREE.Color('indianred'), transparent: true })} />
+```
+
+All properties that have a `.set()` method (THREE.Color/VectorX/Euler/Matrix, etc) can be given a shortcut. You can stow away non-Object3D primitives (THREE.Geometry/Material/etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
+
+```jsx
+<mesh visible userData={ test: "hello" } position={[1, 2, 3]} rotation={[0, 0, 0]}>
+  <sphereGeometry name="geometry" args={[1, 16, 16]} />
+  <meshStandardMaterial name="material" color="indianred" transparent />
+</mesh>
+```
+
+If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case:
+
+```jsx
+<mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
+```
 
 ### Events
 
@@ -28,53 +84,6 @@ Some of the above mentioned aren't maintained any longer, or chained to React 15
 1. There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
 
 2. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
-
-# Example
-
-```jsx
-import { Canvas } from 'react-three-fiber'
-
-function App() {
-  return (
-    <Canvas>
-      <group>
-        <mesh
-          // You get full access to the instance with a reference
-          ref={ref => console.log(ref)}
-          // You can set any object on the instance
-          geometry={new THREE.BoxGeometry(1, 1, 1)}
-          material={new THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true })}
-          // Read-only props in THREE that have a ".set" function can still be written to
-          scale={new Vector3(2, 2, 2)}
-          // Or by an array that gets spread over the internal ".set(...)" function
-          scale={[2, 2, 2]}
-          // You are also allowed to pierce into the instance
-          scale-x={3}
-          // ... which works for everything, even materials
-          material-color={new THREE.Color(0xff0000)}
-          // And since it's using ".set(...)", you can feed it all the values it can take
-          material-color="rgb(100, 200, 50)"
-          // Interaction comes inbuilt
-          onHover={e => console.log('hovered', e)}
-          onUnhover={e => console.log('unhovered', e)}
-          onClick={e => console.log('clicked', e)}
-          onPick={e => console.log('picked', e)}
-          onDrag={e => console.log('dragged', e)}
-          onDrop={e => console.log('dropped', e)}
-        />
-        <line
-          geometry={new THREE.Geometry()}
-          material={new THREE.LineBasicMaterial({ color: 0xffffff })}
-          // With piercing you can even declare mesh/vertice data declaratively
-          geometry-vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0]].map(v => new THREE.Vector3(...v))}
-        />
-      </group>
-    </Canvas>
-  )
-}
-
-ReactDOM.render(<App />, document.getElementById('root'))
-```
 
 # Custom config
 

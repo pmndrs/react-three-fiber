@@ -59,10 +59,87 @@ export function applyProps(instance, newProps, oldProps = {}) {
   }
 }
 
+function createInstance(type, { args = [], ...props }) {
+  const name = upperFirst(type)
+  const instance = type === 'primitive' ? props.object : new THREE[name](...args)
+  instance.__objects = []
+  instance.__type = type
+  applyProps(instance, props, {})
+  return instance
+}
+
+function appendChild(parentInstance, child) {
+  if (child) {
+    if (child.isObject3D) parentInstance.add(child)
+    else {
+      parentInstance.__objects.push(child)
+      if (child.name) {
+        child.__parent = parentInstance
+        applyProps(parentInstance, { [child.name]: child })
+      }
+    }
+  }
+}
+
+function removeChild(parentInstance, child) {
+  if (child) {
+    if (child.isObject3D) parentInstance.remove(child)
+    else {
+      child.__parent = undefined
+      parentInstance.__objects = parentInstance.__objects.filter(c => c !== child)
+    }
+  }
+}
+
 const Renderer = Reconciler({
   now,
+  createInstance,
+  removeChild,
+  appendChild,
   supportsMutation: true,
   isPrimaryRenderer: false,
+  schedulePassiveEffects: scheduleDeferredCallback,
+  cancelPassiveEffects: cancelDeferredCallback,
+  appendInitialChild: appendChild,
+  appendChildToContainer: appendChild,
+  removeChildFromContainer: removeChild,
+  insertBefore(parentInstance, child, beforeChild) {
+    if (child) {
+      if (child.isObject3D) {
+        child.parent = parentInstance
+        child.dispatchEvent({ type: 'added' })
+        // TODO: the order is out of whack if data objects are presents, has to be recalculated
+        const index = parentInstance.children.indexOf(beforeChild)
+        parentInstance.children = [
+          ...parentInstance.children.slice(0, index),
+          child,
+          ...parentInstance.children.slice(index),
+        ]
+      } else appendChild(parentInstance, child)
+    }
+  },
+  commitUpdate(instance, updatePayload, type, oldProps, newProps) {
+    instance.busy = true
+    if (instance.isObject3D) {
+      applyProps(instance, newProps, oldProps)
+    } else {
+      // This is a data object, let's extract critical information about it
+      const parent = instance.__parent
+      const { args: argsNew = [], ...restNew } = newProps
+      const { args: argsOld = [], ...restOld } = oldProps
+      // If it has new props or arguments, then it needs to be re-instanciated
+      if (argsNew.some((value, index) => value !== argsOld[index])) {
+        // First it gets removed from its parent
+        removeChild(parent, instance)
+        // Next we create a new instance and append it again
+        appendChild(parent, createInstance(instance.type, newProps))
+      } else {
+        // Otherwise just overwrite props
+        applyProps(instance, restNew, restOld)
+      }
+    }
+    instance.busy = false
+  },
   getPublicInstance(instance) {
     return instance
   },
@@ -72,15 +149,7 @@ const Renderer = Reconciler({
   getChildHostContext(parentHostContext, type) {
     return emptyObject
   },
-  createInstance(type, props, rootContainerInstance, hostContext, internalInstanceHandle) {
-    const instance = type === 'primitive' ? props.object : new THREE[(upperFirst(type))]()
-    applyProps(instance, props, {})
-    return instance
-  },
   createTextInstance() {},
-  appendInitialChild(parentInstance, child) {
-    if (child) parentInstance.add(child)
-  },
   finalizeInitialChildren(instance, type, props, rootContainerInstance) {
     return false
   },
@@ -95,37 +164,6 @@ const Renderer = Reconciler({
   shouldSetTextContent(props) {
     return false
   },
-  appendChild(parentInstance, child) {
-    if (child) parentInstance.add(child)
-  },
-  appendChildToContainer(parentInstance, child) {
-    if (child) parentInstance.add(child)
-  },
-  insertBefore(parentInstance, child, beforeChild) {
-    if (child) {
-      child.parent = parentInstance
-      child.dispatchEvent({ type: 'added' })
-      const index = parentInstance.children.indexOf(beforeChild)
-      parentInstance.children = [
-        ...parentInstance.children.slice(0, index),
-        child,
-        ...parentInstance.children.slice(index),
-      ]
-    }
-  },
-  removeChild(parentInstance, child) {
-    if (child) parentInstance.remove(child)
-  },
-  removeChildFromContainer(parentInstance, child) {
-    if (child) parentInstance.remove(child)
-  },
-  commitUpdate(instance, updatePayload, type, oldProps, newProps) {
-    instance.busy = true
-    applyProps(instance, newProps, oldProps)
-    instance.busy = false
-  },
-  schedulePassiveEffects: scheduleDeferredCallback,
-  cancelPassiveEffects: cancelDeferredCallback,
 })
 
 export function render(element, container) {
@@ -172,11 +210,10 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
   const [cursor, setCursor] = useState('default')
 
   useEffect(() => {
-    state.current.scene = new THREE.Scene()
+    state.current.scene = window.scene = new THREE.Scene()
+    state.current.scene.__objects = []
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true })
     state.current.gl.setClearAlpha(0)
-
-    console.log(camera)
 
     state.current.camera = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     state.current.gl.setSize(0, 0, false)
