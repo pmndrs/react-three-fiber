@@ -189,6 +189,6 @@ export function Canvas({ children }) {
 
 # Todo
 
-1. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
+1. Not sure about `Canvas`, probably will be possible to declaratively define it soon
 
 2. Handling multiple scenes and multi-render scenarios in general, effect-composition and so on
