@@ -72,15 +72,20 @@ function createInstance(type, { args = [], ...props }) {
 function appendChild(parentInstance, child) {
   if (child) {
     if (child.isObject3D) parentInstance.add(child)
-    else if (child.current.name)
+    else if (child.current.name) {
+      child.parent = parentInstance
       applyProps(parentInstance.isObject3D ? parentInstance : parentInstance.current, {
         [child.current.name]: child.current,
       })
+    }
   }
 }
 
 function removeChild(parentInstance, child) {
-  if (child && child.isObject3D) parentInstance.remove(child)
+  if (child) {
+    if (child.isObject3D) parentInstance.remove(child)
+    else child.parent = undefined
+  }
 }
 
 const Renderer = Reconciler({
@@ -107,7 +112,7 @@ const Renderer = Reconciler({
           child,
           ...parentInstance.children.slice(index),
         ]
-      }
+      } else child.parent = parentInstance
     }
   },
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
@@ -115,14 +120,18 @@ const Renderer = Reconciler({
       applyProps(instance, newProps, oldProps)
     } else {
       // This is a data object, let's extract critical information about it
+      const parent = instance.parent
       const { args: argsNew = [], ...restNew } = newProps
       const { args: argsOld = [], ...restOld } = oldProps
       // If it has new props or arguments, then it needs to be re-instanciated
       if (argsNew.some((value, index) => value !== argsOld[index])) {
         // Next we create a new instance and append it again
         const newInstance = createInstance(instance.current.type, newProps)
+        removeChild(parent, instance)
+        appendChild(parent, newInstance)
         // Switch instance
-        instance.current = newInstance
+        instance.current = newInstance.current
+        instance.parent = newInstance.parent
       } else {
         // Otherwise just overwrite props
         applyProps(instance.current, restNew, restOld)
