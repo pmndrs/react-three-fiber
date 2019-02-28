@@ -198,6 +198,6 @@ export function Canvas({ children }) {
 
 # Todo
 
-1. There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
+1. Not sure about `Canvas`, probably will be possible to declaratively define it soon
 
-2. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
+2. Handling multiple scenes and multi-render scenarios in general, effect-composition and so on
