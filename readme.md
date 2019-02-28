@@ -79,6 +79,14 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
+You can even nest primitive objects, which is great for awaiting async textures and such. You could use React-suspense if you wanted!
+
+```jsx
+<meshBasicMaterial name="material">
+  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={s => img && (s.needsUpdate = true)} />
+</meshBasicMaterial>
+```
+
 #### Piercing into nested properties
 
 If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case:
@@ -96,7 +104,8 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
   onClick={e => console.log('click')}
   onHover={e => console.log('hover')}
   onUnhover={e => console.log('unhover')}
-  onUpdate={self => console.log('props have been updated')} />
+  onUpdate={self => console.log('props have been updated')}
+/>
 ```
 
 # Custom config
