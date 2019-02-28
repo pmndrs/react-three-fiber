@@ -64,7 +64,7 @@ You can access the entirety of [THREE's object catalogue as well as all of their
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="pachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array. 
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array. 
 
 You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
 
