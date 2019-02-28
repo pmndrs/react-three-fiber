@@ -17,7 +17,7 @@ Driving something like THREE as a render-target makes just as much sense as it m
 
 Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
 
-# How it looks
+# How it looks like ...
 
 ```jsx
 import { Canvas } from 'react-three-fiber'
