@@ -15,7 +15,7 @@ Driving something like THREE as a render-target makes just as much sense as it m
 
 Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
 
-# How it looks
+# How it looks like ...
 
 ```jsx
 import { Canvas } from 'react-three-fiber'
@@ -61,7 +61,7 @@ You can access the entirety of [THREE's object catalogue as well as all of their
   position={new THREE.Vector3(1, 2, 3)}
   rotation={new THREE.Euler(0, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
-  material={new THEE.MeshBasicMaterial({ color: new THREE.Color('indianred'), transparent: true })} />
+  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('indianred'), transparent: true })} />
 ```
 
 #### Shortcuts and non-Object3D stow-away
