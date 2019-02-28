@@ -154,7 +154,7 @@ export function Canvas({ children }) {
     // Start render-loop
     renderLoop()
     // Clean-up
-    () => {
+    return () => {
       active.current = false
       unmountComponentAtNode(scene)
     }
