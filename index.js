@@ -117,11 +117,13 @@ const Renderer = Reconciler({
           child,
           ...parentInstance.children.slice(index),
         ]
-      } else appendChild(parentInstance, child)
+      } else {
+        child.__parent = parentInstance
+        appendChild(parentInstance, child)
+      }
     }
   },
-  commitUpdate(instance, updatePayload, type, oldProps, newProps) {
-    instance.busy = true
+  commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
     if (instance.isObject3D) {
       applyProps(instance, newProps, oldProps)
     } else {
@@ -134,13 +136,16 @@ const Renderer = Reconciler({
         // First it gets removed from its parent
         removeChild(parent, instance)
         // Next we create a new instance and append it again
-        appendChild(parent, createInstance(instance.type, newProps))
+        const newInstance = createInstance(instance.type, newProps)
+        appendChild(parent, newInstance)
+        // Switch fiber node
+        fiber.alternate.stateNode = newInstance
+        fiber.stateNode = newInstance
       } else {
         // Otherwise just overwrite props
         applyProps(instance, restNew, restOld)
       }
     }
-    instance.busy = false
   },
   getPublicInstance(instance) {
     return instance
@@ -196,7 +201,7 @@ function useMeasure() {
 
 export const context = React.createContext()
 
-export function Canvas({ children, style, camera, render: renderFn, onCreated, onUpdate, ...props }) {
+export const Canvas = React.memo(({ children, style, camera, render: renderFn, onCreated, onUpdate, ...props }) => {
   const canvas = useRef()
   const state = useRef({
     subscribers: [],
@@ -205,8 +210,16 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
     gl: undefined,
     camera: undefined,
     scene: undefined,
+    size: undefined,
+    subscribe: fn => {
+      state.current.subscribers.push(fn)
+      return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
+    },
   })
-  const [bind, measurements] = useMeasure()
+
+  const [bind, size] = useMeasure()
+  state.current.size = size
+
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
   const [cursor, setCursor] = useState('default')
@@ -236,21 +249,6 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
     // Start render-loop
     requestAnimationFrame(renderLoop)
 
-    // Render v-dom into scene
-    render(
-      <context.Provider
-        value={{
-          ...state.current,
-          subscribe: fn => {
-            state.current.subscribers.push(fn)
-            return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
-          },
-        }}>
-        {children}
-      </context.Provider>,
-      state.current.scene
-    )
-
     // Clean-up
     return () => {
       state.current.active = false
@@ -259,16 +257,16 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
   }, [])
 
   useEffect(() => {
-    state.current.gl.setSize(measurements.width, measurements.height, false)
-    const aspect = measurements.width / measurements.height
+    state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
+    const aspect = state.current.size.width / state.current.size.height
     state.current.camera.aspect = aspect
     state.current.camera.updateProjectionMatrix()
-    state.current.camera.radius = (measurements.width + measurements.height) / 4
+    state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
   })
 
   const intersect = useCallback((event, fn) => {
-    mouse.x = (event.clientX / measurements.width) * 2 - 1
-    mouse.y = -(event.clientY / measurements.height) * 2 + 1
+    mouse.x = (event.clientX / state.current.size.width) * 2 - 1
+    mouse.y = -(event.clientY / state.current.size.height) * 2 + 1
     raycaster.setFromCamera(mouse, state.current.camera)
     const intersects = raycaster.intersectObjects(state.current.scene.children, true)
     for (var i = 0; i < intersects.length; i++) {
@@ -310,6 +308,14 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
     }
   })
 
+  // Render v-dom into scene
+  useEffect(() => {
+    if (state.current.size.width > 0) {
+      render(<context.Provider value={{ ...state.current }} children={children} />, state.current.scene)
+    }
+  })
+
+  // Render the canvas into the dom
   return (
     <div
       {...bind}
@@ -325,11 +331,11 @@ export function Canvas({ children, style, camera, render: renderFn, onCreated, o
           }
         })
       }}
-      style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+      style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
       <canvas ref={canvas} />
     </div>
   )
-}
+})
 
 export function useRender(fn) {
   const { subscribe } = useContext(context)

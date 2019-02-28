@@ -83,7 +83,8 @@ You can even nest primitive objects, which is great for awaiting async textures 
 
 ```jsx
 <meshBasicMaterial name="material">
-  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={s => img && (s.needsUpdate = true)} />
+  <texture name="map" format={THREE.RGBFormat}
+    image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
 ```
 
