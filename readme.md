@@ -7,11 +7,17 @@
 
     npm install react-three-fiber
 
+    
+
 React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
 
 Driving something like THREE as a render-target makes just as much sense as it makes for the DOM. Building a  complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
-### How it looks
+#### Difference to react-three, react-three-renderer, react-three-renderer-fiber
+
+Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
+
+# How it looks
 
 ```jsx
 import { Canvas } from 'react-three-fiber'
@@ -42,9 +48,9 @@ ReactDOM.render(
 )
 ```
 
-### Objects and properties
+# Objects and properties
 
-You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you're in doubt what objects can and can not take in, always consult the docs.
+You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you are in doubt about something, always consult the docs.
 
 ```jsx
 <mesh
@@ -56,7 +62,11 @@ You can access the entirety of [THREE's object catalogue as well as all of their
   material={new THEE.MeshBasicMaterial({ color: new THREE.Color('indianred'), transparent: true })} />
 ```
 
-All properties that have a `.set()` method (THREE.Color/VectorX/Euler/Matrix, etc) can be given a shortcut. You can stow away non-Object3D primitives (THREE.Geometry/Material/etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
+#### Shortcuts and non-Object3D stow-away
+
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
+
+The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
 
 ```jsx
 <mesh visible userData={ test: "hello" } position={[1, 2, 3]} rotation={[0, 0, 0]}>
@@ -65,25 +75,17 @@ All properties that have a `.set()` method (THREE.Color/VectorX/Euler/Matrix, et
 </mesh>
 ```
 
+#### Piercing into nested properties
+
 If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case:
 
 ```jsx
 <mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
 ```
 
-### Events
+# Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state, clicks and (**soon**) drag'n'drop.
-
-### Difference to react-three, react-three-renderer, react-three-renderer-fiber
-
-Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
-
-### Todo
-
-1. There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
-
-2. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state and clicks. Touch follows soon!
 
 # Custom config
 
@@ -172,3 +174,9 @@ export function Canvas({ children }) {
   return <canvas ref={canvasRef} />
 }
 ```
+
+# Todo
+
+1. There are still lots of objects you need to create outside of the render tree (geometries, materials, vectors, etc). THREE usually wouldn't allow them inside the scene. I am still thinking on how to solve this, i'd like them to be in the render-tree so that they can be reactive. 🤔
+
+2. Not sure it's a good idea to abstract the renderer away with `Canvas`, probably will be possible to declaratively define it soon.
