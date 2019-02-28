@@ -7,11 +7,9 @@
 
     npm install react-three-fiber
 
-    
-
 React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
 
-Driving something like THREE as a render-target makes just as much sense as it makes for the DOM. Building a  complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
+Driving something like THREE as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
@@ -26,7 +24,11 @@ function Thing({ vertices, color }) {
   return (
     <group ref={ref => console.log('we have access to the instance')}>
       <line position={[10, 20, 30]} rotation={[THREE.Math.degToRad(90), 0, 0]}>
-        <geometry name="geometry" vertices={vertices.map(v => new THREE.Vector3(...v))} />
+        <geometry
+          name="geometry"
+          vertices={vertices.map(v => new THREE.Vector3(...v))}
+          onUpdate={self => (self.verticesNeedUpdate = true)}
+        />
         <lineBasicMaterial name="material" color={color} />
       </line>
       <mesh
@@ -64,7 +66,7 @@ You can access the entirety of [THREE's object catalogue as well as all of their
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array. 
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
 You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
 
@@ -87,7 +89,15 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's hovering state and clicks. Touch follows soon!
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`), hovering-state and clicks. Touch follows soon!
+
+```jsx
+<mesh
+  onClick={e => console.log('click')}
+  onHover={e => console.log('hover')}
+  onUnhover={e => console.log('unhover')}
+  onUpdate={self => console.log('props have been updated')} />
+```
 
 # Custom config
 

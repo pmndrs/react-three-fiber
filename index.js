@@ -55,6 +55,8 @@ export function applyProps(instance, newProps, oldProps = {}) {
         const name = key.charAt(2).toLowerCase() + key.substr(3)
         return { ...acc, [name]: newProps[key] }
       }, {})
+      // Call the update lifecycle, if present
+      if (instance.__handlers.update) instance.__handlers.update(instance)
     }
   }
 }
