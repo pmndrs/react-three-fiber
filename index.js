@@ -62,35 +62,25 @@ export function applyProps(instance, newProps, oldProps = {}) {
 }
 
 function createInstance(type, { args = [], ...props }) {
-  const name = upperFirst(type)
-  const instance = type === 'primitive' ? props.object : new THREE[name](...args)
-  instance.__objects = []
-  instance.__type = type
+  let name = upperFirst(type)
+  let instance = type === 'primitive' ? props.object : new THREE[name](...args)
   applyProps(instance, props, {})
+  if (!instance.isObject3D) instance = { current: instance }
   return instance
 }
 
 function appendChild(parentInstance, child) {
   if (child) {
     if (child.isObject3D) parentInstance.add(child)
-    else {
-      parentInstance.__objects.push(child)
-      if (child.name) {
-        child.__parent = parentInstance
-        applyProps(parentInstance, { [child.name]: child })
-      }
-    }
+    else if (child.current.name)
+      applyProps(parentInstance.isObject3D ? parentInstance : parentInstance.current, {
+        [child.current.name]: child.current,
+      })
   }
 }
 
 function removeChild(parentInstance, child) {
-  if (child) {
-    if (child.isObject3D) parentInstance.remove(child)
-    else {
-      child.__parent = undefined
-      parentInstance.__objects = parentInstance.__objects.filter(c => c !== child)
-    }
-  }
+  if (child && child.isObject3D) parentInstance.remove(child)
 }
 
 const Renderer = Reconciler({
@@ -110,16 +100,13 @@ const Renderer = Reconciler({
       if (child.isObject3D) {
         child.parent = parentInstance
         child.dispatchEvent({ type: 'added' })
-        // TODO: the order is out of whack if data objects are presents, has to be recalculated
+        // TODO: the order is out of whack if data objects are present, has to be recalculated
         const index = parentInstance.children.indexOf(beforeChild)
         parentInstance.children = [
           ...parentInstance.children.slice(0, index),
           child,
           ...parentInstance.children.slice(index),
         ]
-      } else {
-        child.__parent = parentInstance
-        appendChild(parentInstance, child)
       }
     }
   },
@@ -128,22 +115,17 @@ const Renderer = Reconciler({
       applyProps(instance, newProps, oldProps)
     } else {
       // This is a data object, let's extract critical information about it
-      const parent = instance.__parent
       const { args: argsNew = [], ...restNew } = newProps
       const { args: argsOld = [], ...restOld } = oldProps
       // If it has new props or arguments, then it needs to be re-instanciated
       if (argsNew.some((value, index) => value !== argsOld[index])) {
-        // First it gets removed from its parent
-        removeChild(parent, instance)
         // Next we create a new instance and append it again
-        const newInstance = createInstance(instance.type, newProps)
-        appendChild(parent, newInstance)
-        // Switch fiber node
-        fiber.alternate.stateNode = newInstance
-        fiber.stateNode = newInstance
+        const newInstance = createInstance(instance.current.type, newProps)
+        // Switch instance
+        instance.current = newInstance
       } else {
         // Otherwise just overwrite props
-        applyProps(instance, restNew, restOld)
+        applyProps(instance.current, restNew, restOld)
       }
     }
   },
@@ -226,7 +208,6 @@ export const Canvas = React.memo(({ children, style, camera, render: renderFn, o
 
   useEffect(() => {
     state.current.scene = window.scene = new THREE.Scene()
-    state.current.scene.__objects = []
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true })
     state.current.gl.setClearAlpha(0)
 
