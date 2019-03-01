@@ -256,7 +256,7 @@ export const Canvas = React.memo(({ children, style, camera, render: renderFn, o
 
   const intersect = useCallback(({clientX, clientY}, fn) => {
     mouse.x = (clientX / state.current.size.width) * 2 - 1
-    mouse.y = -(clientY / state.current.size.height) * 2 + 1
+    mouse.y = (clientY / state.current.size.height) * 2 + 1
     raycaster.setFromCamera(mouse, state.current.camera)
     const intersects = raycaster.intersectObjects(state.current.scene.children, true)
     for (let i = 0; i < intersects.length; i++) {
