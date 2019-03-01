@@ -227,7 +227,7 @@ export const Canvas = React.memo(({ children, style, camera, render: renderFn, o
 
     if (onCreated) onCreated(state.current)
 
-    const renderLoop = function() {
+    const renderLoop = () => {
       if (!state.current.active) return
       requestAnimationFrame(renderLoop)
       if (onUpdate) onUpdate(state.current)
@@ -254,12 +254,12 @@ export const Canvas = React.memo(({ children, style, camera, render: renderFn, o
     state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
   })
 
-  const intersect = useCallback((event, fn) => {
-    mouse.x = (event.clientX / state.current.size.width) * 2 - 1
-    mouse.y = -(event.clientY / state.current.size.height) * 2 + 1
+  const intersect = useCallback(({clientX, clientY}, fn) => {
+    mouse.x = (clientX / state.current.size.width) * 2 - 1
+    mouse.y = -(clientY / state.current.size.height) * 2 + 1
     raycaster.setFromCamera(mouse, state.current.camera)
     const intersects = raycaster.intersectObjects(state.current.scene.children, true)
-    for (var i = 0; i < intersects.length; i++) {
+    for (let i = 0; i < intersects.length; i++) {
       if (!intersects[i].object.__handlers) continue
       fn(intersects[i])
     }
