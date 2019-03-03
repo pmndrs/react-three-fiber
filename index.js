@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three'
-import React, { useRef, useEffect, useState, useCallback, useContext } from 'react'
+import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import Reconciler from 'react-reconciler'
 import omit from 'lodash-es/omit'
 import upperFirst from 'lodash-es/upperFirst'
@@ -69,7 +69,7 @@ export function applyProps(instance, newProps, oldProps = {}) {
   }
 }
 
-function createInstance(type, { args = [], ...props }) {
+function createInstance(type, { args = [], ...props }, ...b) {
   let name = upperFirst(type)
   let instance
   if (type === 'primitive') instance = props.object
@@ -96,8 +96,13 @@ function appendChild(parentInstance, child) {
 
 function removeChild(parentInstance, child) {
   if (child) {
-    if (child.isObject3D) parentInstance.remove(child)
-    else child.parent = undefined
+    if (child.isObject3D) {
+      parentInstance.remove(child)
+      if (child.dispose) child.dispose()
+    } else {
+      child.parent = undefined
+      if (child.current.dispose) child.current.dispose()
+    }
   }
 }
 
@@ -257,7 +262,7 @@ export const Canvas = React.memo(
           if (onUpdate) onUpdate(state.current)
           state.current.subscribers.forEach(fn => fn(state.current))
           if (renderFn) renderFn(state.current)
-          else {
+          else if (state.current.scene.children.length) {
             state.current.gl.render(state.current.scene, state.current.camera)
           }
         }
@@ -273,14 +278,16 @@ export const Canvas = React.memo(
       }
     }, [])
 
-    useEffect(() => {
-      state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
-      state.current.aspect = state.current.size.width / state.current.size.height
-      if (state.current.ready && onResize) onResize(state.current)
-      state.current.camera.aspect = state.current.aspect
-      state.current.camera.updateProjectionMatrix()
-      state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
-    })
+    useMemo(() => {
+      if (state.current.ready) {
+        state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
+        state.current.aspect = state.current.size.width / state.current.size.height
+        if (onResize) onResize(state.current)
+        state.current.camera.aspect = state.current.aspect
+        state.current.camera.updateProjectionMatrix()
+        state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
+      }
+    }, [state.current.ready, state.current.size.width, state.current.size.height])
 
     const intersect = useCallback((event, fn) => {
       const x = (event.clientX / state.current.size.width) * 2 - 1
@@ -346,21 +353,20 @@ export const Canvas = React.memo(
       }
     })
 
-    class IsReady extends React.Component {
-      componentDidMount() {
+    const IsReady = useCallback(() => {
+      useEffect(() => {
+        state.current.ready = true
         if (onResize) onResize(state.current)
-      }
-      render() {
-        return null
-      }
-    }
+      }, [])
+      return null
+    }, [])
 
     // Render v-dom into scene
     useEffect(() => {
       if (state.current.size.width > 0) {
         render(
           <context.Provider value={{ ...state.current }}>
-            <IsReady ref={c => (state.current.ready = true)} />
+            <IsReady />
             {children}
           </context.Provider>,
           state.current.scene
