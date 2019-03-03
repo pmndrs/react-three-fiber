@@ -20,7 +20,14 @@ import {
 const roots = new Map()
 const emptyObject = {}
 
+let catalogue = {}
+export const use = fn => (catalogue = { ...catalogue, ...fn() })
+
 export function applyProps(instance, newProps, oldProps = {}) {
+  if (instance.current) {
+    instance = instance.current
+  }
+
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
@@ -55,15 +62,21 @@ export function applyProps(instance, newProps, oldProps = {}) {
         const name = key.charAt(2).toLowerCase() + key.substr(3)
         return { ...acc, [name]: newProps[key] }
       }, {})
-      // Call the update lifecycle, if present
-      if (instance.__handlers.update) instance.__handlers.update(instance)
     }
+
+    // Call the update lifecycle, if present
+    if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
   }
 }
 
 function createInstance(type, { args = [], ...props }) {
   let name = upperFirst(type)
-  let instance = type === 'primitive' ? props.object : new THREE[name](...args)
+  let instance
+  if (type === 'primitive') instance = props.object
+  else {
+    const target = catalogue[name] || THREE[name]
+    instance = Array.isArray(args) ? new target(...args) : new target(args)
+  }
   applyProps(instance, props, {})
   if (!instance.isObject3D) instance = { current: instance }
   return instance
@@ -192,125 +205,128 @@ function useMeasure() {
 
 export const context = React.createContext()
 
-export const Canvas = React.memo(({ children, style, camera, render: renderFn, onCreated, onUpdate, ...props }) => {
-  const canvas = useRef()
-  const state = useRef({
-    subscribers: [],
-    active: true,
-    canvas: undefined,
-    gl: undefined,
-    camera: undefined,
-    scene: undefined,
-    size: undefined,
-    subscribe: fn => {
-      state.current.subscribers.push(fn)
-      return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
-    },
-  })
+export const Canvas = React.memo(
+  ({ children, glProps, style, camera, render: renderFn, onResize, onMouseMove, onCreated, onUpdate, ...props }) => {
+    const canvas = useRef()
+    const state = useRef({
+      subscribers: [],
+      ready: false,
+      active: true,
+      canvas: undefined,
+      gl: undefined,
+      camera: undefined,
+      scene: undefined,
+      size: undefined,
+      viewport: (target = new THREE.Vector3(0, 0, 0)) => {
+        const distance = state.current.camera.position.distanceTo(target)
+        const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+        const height = 2 * Math.tan(fov / 2) * distance // visible height
+        const width = height * state.current.camera.aspect
+        return { width, height }
+      },
+      subscribe: fn => {
+        state.current.subscribers.push(fn)
+        return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
+      },
+    })
 
-  const [bind, size] = useMeasure()
-  state.current.size = size
+    const [bind, size] = useMeasure()
+    state.current.size = size
 
-  const [raycaster] = useState(() => new THREE.Raycaster())
-  const [mouse] = useState(() => new THREE.Vector2())
-  const [cursor, setCursor] = useState('default')
+    const [raycaster] = useState(() => new THREE.Raycaster())
+    const [mouse] = useState(() => new THREE.Vector2())
+    const [cursor, setCursor] = useState('default')
 
-  useEffect(() => {
-    state.current.scene = window.scene = new THREE.Scene()
-    state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true })
-    state.current.gl.setClearAlpha(0)
+    useEffect(() => {
+      state.current.scene = window.scene = new THREE.Scene()
+      state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...glProps })
+      state.current.gl.setClearAlpha(0)
+      //state.current.gl.setClearColor(0xffffff, 0)
 
-    state.current.camera = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    state.current.gl.setSize(0, 0, false)
-    state.current.camera.position.z = 5
-    state.current.canvas = canvas.current
+      state.current.camera = (camera && camera.current) || new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+      state.current.gl.setSize(0, 0, false)
+      state.current.camera.position.z = 5
+      state.current.canvas = canvas.current
 
-    if (onCreated) onCreated(state.current)
+      if (onCreated) onCreated(state.current)
 
-    const renderLoop = function() {
-      if (!state.current.active) return
-      requestAnimationFrame(renderLoop)
-      if (onUpdate) onUpdate(state.current)
-      state.current.subscribers.forEach(fn => fn(state.current))
-      if (renderFn) renderFn(state.current)
-      else state.current.gl.render(state.current.scene, state.current.camera)
-    }
-
-    // Start render-loop
-    requestAnimationFrame(renderLoop)
-
-    // Clean-up
-    return () => {
-      state.current.active = false
-      unmountComponentAtNode(state.current.scene)
-    }
-  }, [])
-
-  useEffect(() => {
-    state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
-    const aspect = state.current.size.width / state.current.size.height
-    state.current.camera.aspect = aspect
-    state.current.camera.updateProjectionMatrix()
-    state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
-  })
-
-  const intersect = useCallback((event, fn) => {
-    mouse.x = (event.clientX / state.current.size.width) * 2 - 1
-    mouse.y = -(event.clientY / state.current.size.height) * 2 + 1
-    raycaster.setFromCamera(mouse, state.current.camera)
-    const intersects = raycaster.intersectObjects(state.current.scene.children, true)
-    for (var i = 0; i < intersects.length; i++) {
-      if (!intersects[i].object.__handlers) continue
-      fn(intersects[i])
-    }
-    return intersects
-  })
-
-  useEffect(() => {
-    const hovered = {}
-    const handleMove = event => {
-      let hover = false
-      let intersects = intersect(event, data => {
-        const object = data.object
-        const handlers = object.__handlers
-        if (handlers.hover) {
-          hover = true
-          if (!hovered[object.uuid]) {
-            hovered[object.uuid] = object
-            handlers.hover(data)
+      const renderLoop = function() {
+        if (!state.current.active) return
+        requestAnimationFrame(renderLoop)
+        if (state.current.ready) {
+          if (onUpdate) onUpdate(state.current)
+          state.current.subscribers.forEach(fn => fn(state.current))
+          if (renderFn) renderFn(state.current)
+          else {
+            state.current.gl.render(state.current.scene, state.current.camera)
           }
         }
-      })
+      }
 
-      if (hover) cursor !== 'pointer' && setCursor('pointer')
-      else cursor !== 'default' && setCursor('default')
+      // Start render-loop
+      requestAnimationFrame(renderLoop)
 
-      Object.values(hovered).forEach(object => {
-        if (!intersects.length || !intersects.find(i => i.object === object)) {
-          if (object.__handlers.unhover) object.__handlers.unhover()
-          delete hovered[object.uuid]
-        }
-      })
-    }
-    window.addEventListener('mousemove', handleMove, { passive: true })
-    return () => {
-      window.removeEventListener('mousemove', handleMove)
-    }
-  })
+      // Clean-up
+      return () => {
+        state.current.active = false
+        unmountComponentAtNode(state.current.scene)
+      }
+    }, [])
 
-  // Render v-dom into scene
-  useEffect(() => {
-    if (state.current.size.width > 0) {
-      render(<context.Provider value={{ ...state.current }} children={children} />, state.current.scene)
-    }
-  })
+    useEffect(() => {
+      state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
+      state.current.aspect = state.current.size.width / state.current.size.height
+      if (state.current.ready && onResize) onResize(state.current)
+      state.current.camera.aspect = state.current.aspect
+      state.current.camera.updateProjectionMatrix()
+      state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
+    })
 
-  // Render the canvas into the dom
-  return (
-    <div
-      {...bind}
-      {...props}
-      onClick={event => {
+    const intersect = useCallback((event, fn) => {
+      const x = (event.clientX / state.current.size.width) * 2 - 1
+      const y = -(event.clientY / state.current.size.height) * 2 + 1
+      mouse.set(x, y, 0.5)
+      raycaster.setFromCamera(mouse, state.current.camera)
+      const intersects = raycaster.intersectObjects(state.current.scene.children, true)
+      for (var i = 0; i < intersects.length; i++) {
+        const intersect = intersects[i]
+        if (!intersect.object.__handlers) continue
+        fn(intersect)
+      }
+      return intersects
+    }, [])
+
+    useEffect(() => {
+      const hovered = {}
+      const handleMove = event => {
+        if (onMouseMove) onMouseMove(event)
+        let hover = false
+        let intersects = intersect(event, data => {
+          const object = data.object
+          const handlers = object.__handlers
+          if (handlers.hover) {
+            hover = true
+            if (!hovered[object.uuid]) {
+              hovered[object.uuid] = object
+              handlers.hover(data)
+            }
+          }
+        })
+
+        if (hover) cursor !== 'pointer' && setCursor('pointer')
+        else cursor !== 'default' && setCursor('default')
+
+        Object.values(hovered).forEach(object => {
+          if (!intersects.length || !intersects.find(i => i.object === object)) {
+            if (object.__handlers.unhover) {
+              object.__handlers.unhover()
+            }
+            delete hovered[object.uuid]
+          }
+        })
+      }
+
+      const handleClick = event => {
         const clicked = {}
         intersect(event, data => {
           const object = data.object
@@ -320,12 +336,49 @@ export const Canvas = React.memo(({ children, style, camera, render: renderFn, o
             handlers.click(data)
           }
         })
-      }}
-      style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-      <canvas ref={canvas} />
-    </div>
-  )
-})
+      }
+
+      window.addEventListener('mousemove', handleMove, { passive: true })
+      window.addEventListener('mouseup', handleClick, { passive: true })
+      return () => {
+        window.removeEventListener('mousemove', handleMove)
+        window.removeEventListener('mouseup', handleClick)
+      }
+    })
+
+    class IsReady extends React.Component {
+      componentDidMount() {
+        if (onResize) onResize(state.current)
+      }
+      render() {
+        return null
+      }
+    }
+
+    // Render v-dom into scene
+    useEffect(() => {
+      if (state.current.size.width > 0) {
+        render(
+          <context.Provider value={{ ...state.current }}>
+            <IsReady ref={c => (state.current.ready = true)} />
+            {children}
+          </context.Provider>,
+          state.current.scene
+        )
+      }
+    })
+
+    // Render the canvas into the dom
+    return (
+      <div
+        {...bind}
+        {...props}
+        style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+        <canvas ref={canvas} />
+      </div>
+    )
+  }
+)
 
 export function useRender(fn) {
   const { subscribe } = useContext(context)

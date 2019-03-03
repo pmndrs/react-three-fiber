@@ -83,8 +83,7 @@ You can even nest primitive objects, which is great for awaiting async textures 
 
 ```jsx
 <meshBasicMaterial name="material">
-  <texture name="map" format={THREE.RGBFormat}
-    image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
 ```
 
@@ -115,15 +114,32 @@ GL-props, camera and some events allow you to customize the render-session.
 
 ```jsx
 function App() {
-  const cam = useRef()
+  const scene = useRef()
+  const camera = useRef()
+  const [cameraData, set] = useState({ aspect: 0, radius: 0 })
   return (
     <Canvas
       camera={cam}
       glProps={{ antialias: true }}
-      onCreated={({ gl, canvas, scene, camera }) => console.log('gl created')}
-      onUpdate={({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop")}
-      render={({ gl, canvas, scene, camera }) => gl.render(scene, camera)}>
-      <perspectiveCamera ref={cam} fov={75} near={0.1} far={1000} />
+      onCreated={state => console.log('gl created')}
+      onUpdate={state => console.log("i'm in the render-loop")}
+      render={({ gl }) => gl.render(scene.current, camera.current)}
+      onResize={({ size, aspect }) => set({ aspect, radius: (size.width + size.height) / 4 })}>
+      <scene ref={scene}>
+        <perspectiveCamera
+          {...cameraData}
+          ref={camera}
+          fov={75}
+          near={0.1}
+          far={1000}
+          position={[0, 0, 5]}
+          onUpdate={self => self.updateProjectionMatrix()}
+        />
+        <mesh>
+          <sphereBufferGeometry name="geometry" args={[1, 16, 16]} />
+          <meshBasicMaterial name="material" />
+        </mesh>
+      </scene>
     </Canvas>
   )
 }
