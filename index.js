@@ -69,7 +69,7 @@ export function applyProps(instance, newProps, oldProps = {}) {
   }
 }
 
-function createInstance(type, { args = [], ...props }, ...b) {
+function createInstance(type, { args = [], ...props }) {
   let name = upperFirst(type)
   let instance
   if (type === 'primitive') instance = props.object
@@ -215,7 +215,6 @@ export const Canvas = React.memo(
     const canvas = useRef()
     const state = useRef({
       subscribers: [],
-      ready: false,
       active: true,
       canvas: undefined,
       gl: undefined,
@@ -238,6 +237,10 @@ export const Canvas = React.memo(
     const [bind, size] = useMeasure()
     state.current.size = size
 
+    const [ready, setReady] = useState(false)
+    const readyRef = useRef(false)
+    useEffect(() => void (readyRef.current = ready), [ready])
+
     const [raycaster] = useState(() => new THREE.Raycaster())
     const [mouse] = useState(() => new THREE.Vector2())
     const [cursor, setCursor] = useState('default')
@@ -258,7 +261,7 @@ export const Canvas = React.memo(
       const renderLoop = function() {
         if (!state.current.active) return
         requestAnimationFrame(renderLoop)
-        if (state.current.ready) {
+        if (readyRef.current) {
           if (onUpdate) onUpdate(state.current)
           state.current.subscribers.forEach(fn => fn(state.current))
           if (renderFn) renderFn(state.current)
@@ -279,7 +282,7 @@ export const Canvas = React.memo(
     }, [])
 
     useMemo(() => {
-      if (state.current.ready) {
+      if (ready) {
         state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
         state.current.aspect = state.current.size.width / state.current.size.height
         if (onResize) onResize(state.current)
@@ -287,7 +290,7 @@ export const Canvas = React.memo(
         state.current.camera.updateProjectionMatrix()
         state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
       }
-    }, [state.current.ready, state.current.size.width, state.current.size.height])
+    }, [ready, state.current.size.width, state.current.size.height])
 
     const intersect = useCallback((event, fn) => {
       const x = (event.clientX / state.current.size.width) * 2 - 1
@@ -354,10 +357,7 @@ export const Canvas = React.memo(
     })
 
     const IsReady = useCallback(() => {
-      useEffect(() => {
-        state.current.ready = true
-        if (onResize) onResize(state.current)
-      }, [])
+      useEffect(() => void setReady(true), [])
       return null
     }, [])
 
