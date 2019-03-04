@@ -7,13 +7,7 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE-js. Regular THREE can sometimes produce rather complex code due to everything being non-reactive, mutation and imperative layout-inflating.
-
-Driving something like THREE as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
-
-#### Difference to react-three, react-three-renderer, react-three-renderer-fiber
-
-Some of the above mentioned aren't maintained any longer, or chained to React 15, or quite specific. This lib just ships a small reconciler config with a few additions for interaction. It does not know, care about or duplicate THREE's object catalogue, it uses heuristics to support attributes generically.
+React-three-fiber is a small React renderer for THREE-js. Driving THREE as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 # How it looks like ...
 
@@ -79,7 +73,7 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
-You can even nest primitive objects, which is great for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects, which is great for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial name="material">
@@ -95,6 +89,15 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 <mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
 ```
 
+#### Extending or using arbitrary objects
+
+Sometimes you need to bring local (or custom/extended) objects into the scene, you can do this with the `primitive` placeholder.
+
+```jsx
+const msh = new THREE.Mesh()
+return <primitive object={msh} />
+```
+
 # Events
 
 THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`), hovering-state and clicks. Touch follows soon!
@@ -106,54 +109,6 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
   onUnhover={e => console.log('unhover')}
   onUpdate={self => console.log('props have been updated')}
 />
-```
-
-# Custom config
-
-GL-props, camera and some events allow you to customize the render-session.
-
-```jsx
-function App() {
-  const scene = useRef()
-  const camera = useRef()
-  const [cameraData, set] = useState({ aspect: 0, radius: 0 })
-  return (
-    <Canvas
-      camera={cam}
-      glProps={{ antialias: true }}
-      onCreated={state => console.log('gl created')}
-      onUpdate={state => console.log("i'm in the render-loop")}
-      render={({ gl }) => gl.render(scene.current, camera.current)}
-      onResize={({ size, aspect }) => set({ aspect, radius: (size.width + size.height) / 4 })}>
-      <scene ref={scene}>
-        <perspectiveCamera
-          {...cameraData}
-          ref={camera}
-          fov={75}
-          near={0.1}
-          far={1000}
-          position={[0, 0, 5]}
-          onUpdate={self => self.updateProjectionMatrix()}
-        />
-        <mesh>
-          <sphereBufferGeometry name="geometry" args={[1, 16, 16]} />
-          <meshBasicMaterial name="material" />
-        </mesh>
-      </scene>
-    </Canvas>
-  )
-}
-```
-
-# Extending or using arbitrary objects
-
-Wrap the `primitive` placeholder around custom or extended THREE-objects that you want to render into the scene-graph.
-
-```jsx
-const geo = new THREE.BoxGeometry(10, 0.1, 0.1)
-const mat = new THREE.MeshBasicMaterial({ transparent: true })
-const msh = new MyExtendedMesh(geo, mat)
-return <primitive object={msh} />
 ```
 
 # Gl data & hooking into the render loop
@@ -172,49 +127,86 @@ function App() {
 }
 ```
 
-# Custom canvas
+# Receipes
 
-The default `Canvas` component is just a effect around the canvas element. You can implement your own.
+## Handling loaders
 
 ```jsx
-import * as THREE from 'three'
-import React, { useRef, useEffect } from 'react'
-import { render, unmountComponentAtNode } from 'react-three-fiber'
-
-export function Canvas({ children }) {
-  const canvasRef = useRef()
-  const active = useRef(true)
-
-  useEffect(() => {
-    // Create THREE renderer
-    const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current })
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    camera.position.z = 5
-    // Create render-loop
-    const renderLoop = function() {
-      if (!active.current) return
-      requestAnimationFrame(renderLoop)
-      renderer.render(scene, camera)
-    }
-    // Render children into scene
-    render(children, scene)
-    // Start render-loop
-    renderLoop()
-    // Clean-up
-    return () => {
-      active.current = false
-      unmountComponentAtNode(scene)
-    }
-  }, [])
-  // Render canvas container into the DOM
-  return <canvas ref={canvasRef} />
+function Image({ url }) {
+  const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
+  return (
+    <mesh>
+      <planeBufferGeometry name="geometry" args={[1, 1]} />
+      <meshLambertMaterial name="material" transparent>
+        <primitive name="map" object={texture} />
+      </meshLambertMaterial>
+    </anim.mesh>
+  )
 }
 ```
 
-# Todo
+## Dealing with effects (hijacking main render-loop)
 
-1. Not sure about `Canvas`, probably will be possible to declaratively define it soon
+```jsx
+import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { EffectComposer } from './impl/postprocessing/EffectComposer'
+import { RenderPass } from './impl/postprocessing/RenderPass'
+import { GlitchPass } from './impl/postprocessing/GlitchPass'
+// Makes these objects available as native objects "<renderPass />" and so on
+apply({ EffectComposer, RenderPass, GlitchPass })
 
-2. Handling multiple scenes and multi-render scenarios in general, effect-composition and so on
+function Effects({ factor }) {
+  const { gl, scene, camera, size } = useThree()
+  const composer = useRef()
+  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size.width, size.height])
+  // This takes over as the main render-loop (when 2nd arg is set to true)
+  useRender(() => composer.current.obj.render(), true)
+  return (
+    <effectComposer ref={composer} args={[gl]}>
+      <renderPass name="passes" args={[scene, camera]} />
+      <glitchPass name="passes" renderToScreen factor={factor} />
+    </effectComposer>
+  )
+}
+```
+
+## Heads-up display (rendering multiple scenes)
+
+```jsx
+function App() {
+  const scene = useRef()
+  const hud = useRef()
+  const camera = useRef()
+  const [camData, setCamData] = useState({ aspect: 0, radius: 0 })
+  return (
+    <Canvas
+      resize={({ size, aspect }) => setCamData({ aspect, radius: (size.width + size.height) / 4 })}
+      render={({ gl }) => {
+        gl.autoClear = true
+        gl.render(scene.current, camera.current)
+        gl.autoClear = false
+        gl.clearDepth()
+        gl.render(hud.current, camera.current)
+      }}>
+      <scene ref={scene}>
+        <perspectiveCamera
+          {...camData}
+          ref={camera}
+          position={[0, 0, 5]}
+          onUpdate={self => self.updateProjectionMatrix()}
+        />
+        <mesh>
+          <sphereBufferGeometry name="geometry" args={[1, 64, 64]} />
+          <meshBasicMaterial name="material" color="white" />
+        </mesh>
+      </scene>
+      <scene ref={hud}>
+        <mesh>
+          <sphereBufferGeometry name="geometry" args={[0.5, 64, 64]} />
+          <meshBasicMaterial name="material" color="black" />
+        </mesh>
+      </scene>
+    </Canvas>
+  )
+}
+```
