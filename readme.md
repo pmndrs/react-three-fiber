@@ -123,9 +123,13 @@ Sometimes you're running effects, postprocessing, etc that needs to get updated.
 import { Canvas, useRender, useThree } from 'react-three-fiber'
 
 function App() {
-  // Just fetching data
-  const { gl, canvas, scene, camera } = useThree()
-  // Subscribing to the render-loop, gets cleaned up automatically when the component unmounts
+  // gl is the webgl-renderer
+  // canvas the dom element that was created
+  // size the bounds of the view (which stretches 100% and auto-adjusts)
+  // viewport is the calculated screen-size, it's a function
+  const { gl, canvas, scene, camera, size, viewport } = useThree()
+  // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
+  // Add a "true" as the 2nd argument and you take over the render-loop 
   useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
   return <group />
 }
@@ -144,7 +148,7 @@ function Image({ url }) {
       <meshLambertMaterial name="material" transparent>
         <primitive name="map" object={texture} />
       </meshLambertMaterial>
-    </anim.mesh>
+    </mesh>
   )
 }
 ```
