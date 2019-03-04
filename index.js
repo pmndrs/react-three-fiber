@@ -27,7 +27,7 @@ export const useFrameloop = fn => {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}) {
+export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false) {
   if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
@@ -57,7 +57,7 @@ export function applyProps(instance, newProps, oldProps = {}) {
             target.set(value)
           }
         } else {
-          if (Array.isArray(root[key])) root[key].push(value)
+          if (interpolateArray && Array.isArray(root[key])) root[key].push(value)
           else root[key] = value
         }
       }
@@ -94,7 +94,7 @@ function appendChild(parentInstance, child) {
     else {
       child.parent = parentInstance
       // The name attribute implies that the object attaches itself on the parent
-      if (child.obj.name) applyProps(parentInstance, { [child.obj.name]: child.obj })
+      if (child.obj.name) applyProps(parentInstance, { [child.obj.name]: child.obj }, true)
     }
   }
 }
@@ -278,7 +278,6 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
         state.current.subscribers.forEach(fn => fn(state.current))
         if (renderFn) renderFn(state.current)
         else if (state.current.render && state.current.scene.children.length) {
-          console.log(state.current.render)
           state.current.gl.render(state.current.scene, state.current.camera)
         }
       }
