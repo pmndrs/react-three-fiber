@@ -77,7 +77,11 @@ You can nest primitive objects, good for awaiting async textures and such. You c
 
 ```jsx
 <meshBasicMaterial name="material">
-  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+  <texture
+    name="map"
+    format={THREE.RGBFormat}
+    image={img}
+    onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
 ```
 
@@ -177,23 +181,28 @@ function Hud() {
   const scene = useRef()
   const hud = useRef()
 
-  const camera = useRef()
+  const cam = useRef()
   const { size: { aspect, width, height} } = useThree()
   const [data, set] = useState({ aspect: 0, radius: 0 })
   useEffect(() => void set({ aspect, radius: (width + height) / 4 }), [width, height])
-
+  
+  // This takes over as the main render-loop (when 2nd arg is set to true)
   useRender(({ gl }) => {
     gl.autoClear = true
-    gl.render(scene.current, camera.current)
+    gl.render(scene.current, cam.current)
     gl.autoClear = false
     gl.clearDepth()
-    gl.render(hud.current, camera.current)
+    gl.render(hud.current, cam.current)
   }, true)
 
   return (
     <>
       <scene ref={scene}>
-        <perspectiveCamera {...data} ref={camera} position={[0, 0, 5]} onUpdate={s => s.updateProjectionMatrix()} />
+        <perspectiveCamera
+          {...data}
+          ref={cam}
+          position={[0, 0, 5]}
+          onUpdate={self => self.updateProjectionMatrix()} />
         {/* Main scene ... */}
       </scene>
       <scene ref={hud}>
