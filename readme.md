@@ -73,7 +73,7 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
-You can nest primitive objects, which is great for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects, good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial name="material">
@@ -173,40 +173,33 @@ function Effects({ factor }) {
 ## Heads-up display (rendering multiple scenes)
 
 ```jsx
-function App() {
+function Hud() {
   const scene = useRef()
   const hud = useRef()
+
   const camera = useRef()
-  const [camData, setCamData] = useState({ aspect: 0, radius: 0 })
+  const { size: { aspect, width, height} } = useThree()
+  const [data, set] = useState({ aspect: 0, radius: 0 })
+  useEffect(() => void set({ aspect, radius: (width + height) / 4 }), [width, height])
+
+  useRender(({ gl }) => {
+    gl.autoClear = true
+    gl.render(scene.current, camera.current)
+    gl.autoClear = false
+    gl.clearDepth()
+    gl.render(hud.current, camera.current)
+  }, true)
+
   return (
-    <Canvas
-      resize={({ size, aspect }) => setCamData({ aspect, radius: (size.width + size.height) / 4 })}
-      render={({ gl }) => {
-        gl.autoClear = true
-        gl.render(scene.current, camera.current)
-        gl.autoClear = false
-        gl.clearDepth()
-        gl.render(hud.current, camera.current)
-      }}>
+    <>
       <scene ref={scene}>
-        <perspectiveCamera
-          {...camData}
-          ref={camera}
-          position={[0, 0, 5]}
-          onUpdate={self => self.updateProjectionMatrix()}
-        />
-        <mesh>
-          <sphereBufferGeometry name="geometry" args={[1, 64, 64]} />
-          <meshBasicMaterial name="material" color="white" />
-        </mesh>
+        <perspectiveCamera {...data} ref={camera} position={[0, 0, 5]} onUpdate={s => s.updateProjectionMatrix()} />
+        {/* Main scene ... */}
       </scene>
       <scene ref={hud}>
-        <mesh>
-          <sphereBufferGeometry name="geometry" args={[0.5, 64, 64]} />
-          <meshBasicMaterial name="material" color="black" />
-        </mesh>
+        {/* This scene will be projected on top... */}
       </scene>
-    </Canvas>
+    </>
   )
 }
 ```
