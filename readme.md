@@ -46,7 +46,7 @@ ReactDOM.render(
 
 # Objects and properties
 
-You can access the entirety of [THREE's object catalogue as well as all of their properties](https://threejs.org/docs). If you are in doubt about something, always consult the docs.
+You can use [THREE's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
 ```jsx
 <mesh
