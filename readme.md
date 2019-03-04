@@ -95,7 +95,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 #### Extending or using arbitrary objects
 
-Sometimes you need to bring local (or custom/extended) objects into the scene, you can do this with the `primitive` placeholder.
+When you need managed local (or custom/extended) objects, you can use the `primitive` placeholder.
 
 ```jsx
 const msh = new THREE.Mesh()
