@@ -94,7 +94,7 @@ function appendChild(parentInstance, child) {
     else {
       child.parent = parentInstance
       // The name attribute implies that the object attaches itself on the parent
-      if (child.obj.name) applyProps(parentInstance, { [child.obj.name]: child.obj }, true)
+      if (child.obj.name) applyProps(parentInstance, { [child.obj.name]: child.obj }, {}, true)
     }
   }
 }
