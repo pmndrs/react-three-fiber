@@ -1,7 +1,3 @@
-/** TODOS
- * 1. make it possible to render into a target without regressions
- */
-
 import * as THREE from 'three/src/Three'
 import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import Reconciler from 'react-reconciler'
@@ -27,7 +23,7 @@ export const useFrameloop = fn => {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false) {
+export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container) {
   if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
@@ -65,6 +61,10 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
 
     // Prep interaction handlers
     if (handlers.length) {
+      if (container && instance.raycast) {
+        // Add interactive object to central container
+        container.__interaction.push(instance)
+      }
       instance.__handlers = handlers.reduce((acc, key) => {
         const name = key.charAt(2).toLowerCase() + key.substr(3)
         return { ...acc, [name]: newProps[key] }
@@ -75,7 +75,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
   }
 }
 
-function createInstance(type, { args = [], ...props }) {
+function createInstance(type, { args = [], ...props }, container) {
   let name = upperFirst(type)
   let instance
   if (type === 'primitive') instance = props.object
@@ -84,7 +84,7 @@ function createInstance(type, { args = [], ...props }) {
     instance = Array.isArray(args) ? new target(...args) : new target(args)
   }
   if (!instance.isObject3D) instance = { obj: instance, parent: undefined }
-  applyProps(instance, props, {})
+  applyProps(instance, props, {}, false, container)
   return instance
 }
 
@@ -219,9 +219,11 @@ function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export const context = React.createContext()
+export const stateContext = React.createContext()
+export const intersectsContext = React.createContext()
 
 export const Canvas = React.memo(({ children, props, style, camera, render: renderFn, resize, created, ...rest }) => {
+  const [intersects, setIntersects] = useState([])
   const canvas = useRef()
   const state = useRef({
     subscribers: [],
@@ -248,6 +250,7 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
 
   const [bind, size] = useMeasure()
   state.current.size = size
+  state.current.size.aspect = state.current.size.width / state.current.size.height
 
   const [ready, setReady] = useState(false)
   const readyRef = useRef(false)
@@ -269,6 +272,7 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
     state.current.canvas = canvas.current
 
     state.current.scene = window.scene = new THREE.Scene()
+    state.current.scene.__interaction = []
 
     const renderLoop = function() {
       if (!state.current.active) return
@@ -296,9 +300,8 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
   useMemo(() => {
     if (ready) {
       state.current.gl.setSize(state.current.size.width, state.current.size.height, false)
-      state.current.aspect = state.current.size.width / state.current.size.height
       if (resize) resize(state.current)
-      state.current.camera.aspect = state.current.aspect
+      state.current.camera.aspect = state.current.size.aspect
       state.current.camera.updateProjectionMatrix()
       state.current.camera.radius = (state.current.size.width + state.current.size.height) / 4
     }
@@ -309,20 +312,17 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
     const y = -(event.clientY / state.current.size.height) * 2 + 1
     mouse.set(x, y, 0.5)
     raycaster.setFromCamera(mouse, state.current.camera)
-    const intersects = raycaster.intersectObjects(state.current.scene.children, true)
-    for (var i = 0; i < intersects.length; i++) {
-      const intersect = intersects[i]
-      if (!intersect.object.__handlers) continue
-      fn(intersect)
-    }
-    return intersects
+    // TODO only inspect onbjects that have handlers
+    const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+    hits.forEach(fn)
+    return hits
   }, [])
 
   useEffect(() => {
     const hovered = {}
     const handleMove = event => {
       let hover = false
-      let intersects = intersect(event, data => {
+      const hits = intersect(event, data => {
         const object = data.object
         const handlers = object.__handlers
         if (handlers.hover) {
@@ -338,13 +338,16 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
       else cursor !== 'default' && setCursor('default')
 
       Object.values(hovered).forEach(object => {
-        if (!intersects.length || !intersects.find(i => i.object === object)) {
+        if (!hits.length || !hits.find(i => i.object === object)) {
           if (object.__handlers.unhover) {
             object.__handlers.unhover()
           }
           delete hovered[object.uuid]
         }
       })
+
+      /*if (intersects.length !== hits.length || intersects.some((h, index) => h.object !== hits[index].object))
+        setIntersects(hits)*/
     }
 
     const handleClick = event => {
@@ -369,6 +372,7 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
 
   const IsReady = useCallback(() => {
     useEffect(() => {
+      state.current.gl.compile(state.current.scene, state.current.camera)
       setReady(true)
       if (created) created(state.current)
     }, [])
@@ -379,10 +383,10 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
   useEffect(() => {
     if (state.current.size.width > 0) {
       render(
-        <context.Provider value={{ ...state.current }}>
+        <stateContext.Provider value={{ ...state.current }}>
           <IsReady />
           {typeof children === 'function' ? children(state.current) : children}
-        </context.Provider>,
+        </stateContext.Provider>,
         state.current.scene
       )
     }
@@ -400,11 +404,14 @@ export const Canvas = React.memo(({ children, props, style, camera, render: rend
 })
 
 export function useRender(fn, main) {
-  const { subscribe } = useContext(context)
+  const { subscribe } = useContext(stateContext)
   useEffect(() => subscribe(fn, main), [])
 }
 
 export function useThree(fn) {
-  const { subscribe, ...props } = useContext(context)
+  const { subscribe, ...props } = useContext(stateContext)
   return props
 }
+
+// TODO
+export function useSelection() {}
