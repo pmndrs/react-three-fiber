@@ -1,8 +1,8 @@
 import * as THREE from 'three/src/Three'
 import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import Reconciler from 'react-reconciler'
-import omit from 'lodash-es/omit'
-import upperFirst from 'lodash-es/upperFirst'
+import omit from 'lodash/omit'
+import upperFirst from 'lodash/upperFirst'
 import ResizeObserver from 'resize-observer-polyfill'
 import {
   unstable_scheduleCallback as scheduleDeferredCallback,
