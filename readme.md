@@ -11,7 +11,7 @@ React-three-fiber is a small React renderer for THREE-js. Driving THREE as a ren
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-They served as an inspiration for this library. We ships a small reconciler config with a few additions for interaction. It does not know THREE deeply, it uses heuristics to support attributes generically, betting on hooks to hold it all together.
+We ship a small reconciler config with a few additions for interaction. It does not know or care about THREE deeply, it uses heuristics to support attributes generically, so we can get away without creating a strong dependency. Hooks of course hold it all together. The aforementioned libs served as an inspiration.
 
 # How it looks like ...
 
