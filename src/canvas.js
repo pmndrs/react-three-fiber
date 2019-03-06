@@ -91,7 +91,7 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   }, [])
 
   // Adjusts default camera
-  useMemo(() => {
+  useEffect(() => {
     if (ready) {
       state.current.gl.setSize(size.width, size.height, false)
       state.current.camera.aspect = state.current.aspect
