@@ -196,16 +196,3 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
     </div>
   )
 })
-
-export function useRender(fn, main) {
-  const { subscribe } = useContext(stateContext)
-  useEffect(() => subscribe(fn, main), [])
-}
-
-export function useThree(fn) {
-  const { subscribe, ...props } = useContext(stateContext)
-  return props
-}
-
-// TODO
-export function useSelection() {}
