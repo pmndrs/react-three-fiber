@@ -1,7 +1,5 @@
 import * as THREE from 'three/src/Three'
 import Reconciler from 'react-reconciler'
-import omit from 'lodash-es/omit'
-import upperFirst from 'lodash-es/upperFirst'
 import {
   unstable_scheduleCallback as scheduleDeferredCallback,
   unstable_cancelCallback as cancelDeferredCallback,
@@ -19,7 +17,11 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
-  const filteredProps = omit(newProps, [...sameProps, 'children', 'key', 'ref'])
+
+  const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
+    let { [prop]: _, ...rest } = acc
+    return rest
+  }, newProps)
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
       if (!handlers.includes(key)) {
@@ -67,7 +69,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
 }
 
 function createInstance(type, { args = [], ...props }, container) {
-  let name = upperFirst(type)
+  let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
   if (type === 'primitive') instance = props.object
   else {
