@@ -1,8 +1,9 @@
 <p align="center">
-  <a href="https://codesandbox.io/embed/9y8vkjykyy"><img src="https://i.imgur.com/NNb6QoP.gif" /></a>
+  <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="400" src="https://i.imgur.com/tQi753C.gif" /></a>
+  <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="400" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
-  <i>This demo is real, click it!</i>
+  <i>These demos are real, click them!</i>
 </p>
 
     npm install react-three-fiber
