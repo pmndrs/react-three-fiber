@@ -48,7 +48,6 @@
   },
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
   "dependencies": {
-    "lodash-es": "^4.17.11",
     "react-reconciler": "^0.20.1",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "^0.13.3",
