@@ -116,8 +116,9 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   }, [ready, size, camera])
 
   const intersect = useCallback((event, fn) => {
-    const x = (event.clientX / state.current.size.width) * 2 - 1
-    const y = -(event.clientY / state.current.size.height) * 2 + 1
+    const canvasRect = canvas.current.getBoundingClientRect()
+    const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
+    const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
     mouse.set(x, y, 0.5)
     raycaster.setFromCamera(mouse, state.current.camera)
     // TODO only inspect onbjects that have handlers
