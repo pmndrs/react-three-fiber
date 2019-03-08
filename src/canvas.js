@@ -53,7 +53,14 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
       state.current.subscribers.push(fn)
       return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
     },
-    setManual: flag => (state.current.manual = flag),
+    setManual: takeOverRenderloop => {
+      state.current.manual = takeOverRenderloop
+      if (takeOverRenderloop) {
+        // In manual mode items shouldn't really be part of the internal scene which has adverse effects
+        // on the camera being unable to update without explicit calls to updateMatrixWorl()
+        state.current.scene.children.forEach(child => state.current.scene.remove(child))
+      }
+    },
     setDefaultCamera: cam => {
       state.current.camera = cam
       setDefaultCamera(cam)

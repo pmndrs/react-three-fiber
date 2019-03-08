@@ -82,11 +82,7 @@ You can nest primitive objects, good for awaiting async textures and such. You c
 
 ```jsx
 <meshBasicMaterial name="material">
-  <texture
-    name="map"
-    format={THREE.RGBFormat}
-    image={img}
-    onUpdate={self => img && (self.needsUpdate = true)} />
+  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
 ```
 
@@ -134,7 +130,7 @@ function App() {
   // viewport is the calculated screen-size, it's a function
   const { gl, canvas, scene, camera, size, viewport } = useThree()
   // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-  // Add a "true" as the 2nd argument and you take over the render-loop 
+  // Add a "true" as the 2nd argument and you take over the render-loop
   useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
   return <group />
 }
@@ -186,37 +182,36 @@ function Effects({ factor }) {
 ## Heads-up display (rendering multiple scenes)
 
 ```jsx
-function Hud() {
+function MainContent({ camera }) {
   const scene = useRef()
-  const hud = useRef()
+  useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), true)
+  return <scene ref={scene}>{/* ... */}</scene>
+}
 
-  const cam = useRef()
-  const { size: { aspect, width, height} } = useThree()
-  const [data, set] = useState({ aspect: 0, radius: 0 })
-  useEffect(() => void set({ aspect, radius: (width + height) / 4 }), [width, height])
-  
-  // This takes over as the main render-loop (when 2nd arg is set to true)
-  useRender(({ gl }) => {
-    gl.autoClear = true
-    gl.render(scene.current, cam.current)
-    gl.autoClear = false
-    gl.clearDepth()
-    gl.render(hud.current, cam.current)
-  }, true)
+function HeadsUpDisplay({ camera }) {
+  const scene = useRef()
+  useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
+  return <scene ref={scene}>{/* ... */}</scene>
+}
 
+const cameraContext = React.createContext()
+function App() {
+  const camera = useRef()
+  const { width, height } = useThree().size
   return (
     <>
-      <scene ref={scene}>
-        <perspectiveCamera
-          {...data}
-          ref={cam}
-          position={[0, 0, 5]}
-          onUpdate={self => self.updateProjectionMatrix()} />
-        {/* Main scene ... */}
-      </scene>
-      <scene ref={hud}>
-        {/* This scene will be projected on top... */}
-      </scene>
+      <perspectiveCamera
+        ref={camera}
+        aspect={width / height}
+        radius={(width + height) / 4}
+        onUpdate={self => self.updateProjectionMatrix()}
+      />
+      {camera.current && (
+        <group>
+          <MainContent camera={camera} />
+          <HeadsUpDisplay camera={camera} />
+        </group>
+      )}
     </>
   )
 }

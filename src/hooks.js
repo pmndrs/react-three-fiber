@@ -1,17 +1,17 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import { stateContext } from './canvas'
 
-export function useRender(fn, main) {
+export function useRender(fn, takeOverRenderloop) {
   const { subscribe, setManual } = useContext(stateContext)
   // This calls into the host to inform it whether the render-loop is manual or not
-  useMemo(() => main && setManual(true), [main])
+  useMemo(() => takeOverRenderloop && setManual(true), [takeOverRenderloop])
   useEffect(() => {
     // Subscribe to the render-loop
-    const unsubscribe = subscribe(fn, main)
+    const unsubscribe = subscribe(fn, takeOverRenderloop)
     return () => {
       // Call subscription off on unmount
       unsubscribe()
-      if (main) setManual(false)
+      if (takeOverRenderloop) setManual(false)
     }
   }, [])
 }
