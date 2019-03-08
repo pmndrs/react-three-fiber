@@ -1,56 +1,92 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { useSpring, animated } from 'react-spring/three'
-import { Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { OrbitControls } from '../resources/controls/OrbitControls'
+import { EffectComposer } from './../resources/postprocessing/EffectComposer'
+import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { GlitchPass } from './../resources/postprocessing/GlitchPass'
+import { ShaderPass } from './../resources/postprocessing/ShaderPass'
+apply({ OrbitControls, EffectComposer, RenderPass, GlitchPass })
 
-function Hud() {
+function Main() {
   const scene = useRef()
-  const hud = useRef()
-  const camera = useRef()
-  const {
-    aspect,
-    size: { width, height },
-  } = useThree()
-  const [data, set] = useState({ aspect: 0, radius: 0 })
-  useEffect(() => void set({ aspect, radius: (width + height) / 4 }), [width, height])
+  const camera = useContext(cameraContext)
 
+  const composer = useRef()
+  const { gl, size } = useThree()
+  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
   useRender(({ gl }) => {
     gl.autoClear = true
-    gl.render(scene.current, camera.current)
-    gl.autoClear = false
-    gl.clearDepth()
-    gl.render(hud.current, camera.current)
+    composer.current.obj.render()
   }, true)
 
   return (
-    <>
-      <scene ref={scene}>
-        <perspectiveCamera {...data} ref={camera} position={[0, 0, 5]} onUpdate={s => s.updateProjectionMatrix()} />
-        <mesh>
-          <sphereBufferGeometry name="geometry" args={[1, 64, 64]} />
-          <meshBasicMaterial name="material" color="white" />
-        </mesh>
-      </scene>
-      <scene ref={hud}>
-        <mesh>
-          <sphereBufferGeometry name="geometry" args={[0.5, 64, 64]} />
-          <meshBasicMaterial name="material" color="black" />
-        </mesh>
-      </scene>
-    </>
+    <scene ref={scene}>
+      <effectComposer ref={composer} args={[gl]}>
+        {scene.current && (
+          <>
+            <renderPass name="passes" args={[scene.current, camera]} />
+            <glitchPass name="passes" factor={1} renderToScreen />
+          </>
+        )}
+      </effectComposer>
+      <ambientLight />
+      <spotLight position={[100, 10, 10]} />
+      <mesh>
+        <boxBufferGeometry name="geometry" args={[2, 2, 2]} />
+        <meshStandardMaterial name="material" color="green" />
+      </mesh>
+    </scene>
+  )
+}
+
+function Hud() {
+  const camera = useContext(cameraContext)
+  const scene = useRef()
+  useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
+  const [hovered, set] = useState(false)
+  const hover = useCallback(() => set(true), [])
+  const unhover = useCallback(() => set(false), [])
+  return (
+    <scene ref={scene}>
+      <mesh onHover={hover} onUnhover={unhover}>
+        <sphereBufferGeometry name="geometry" args={[0.5, 64, 64]} />
+        <meshBasicMaterial name="material" color={hovered ? 'hotpink' : 'black'} />
+      </mesh>
+    </scene>
+  )
+}
+
+const cameraContext = React.createContext()
+function Content() {
+  const { size, setDefaultCamera } = useThree()
+  const [camera] = useState(() => {
+    const camera = new THREE.PerspectiveCamera()
+    camera.position.z = 5
+    setDefaultCamera(camera)
+    return camera
+  })
+  useMemo(() => {
+    camera.aspect = size.width / size.height
+    camera.radius = (size.width + size.height) / 4
+    camera.updateProjectionMatrix()
+  }, [size])
+  const controls = useRef()
+  useRender(() => controls.current.obj.update())
+  return (
+    <cameraContext.Provider value={camera}>
+      <orbitControls ref={controls} args={[camera]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
+      <Main />
+      <Hud />
+    </cameraContext.Provider>
   )
 }
 
 export default function App() {
-  const scene = useRef()
-  const hud = useRef()
-  const camera = useRef()
-  const [data, set] = useState({ aspect: 0, radius: 0 })
   return (
-    <>
-      <Canvas style={{ background: '#272727' }}>
-        <Hud />
-      </Canvas>
-    </>
+    <Canvas style={{ background: '#272727' }}>
+      <Content />
+    </Canvas>
   )
 }

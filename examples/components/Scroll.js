@@ -104,7 +104,7 @@ function Stars({ position }) {
 const Effects = React.memo(({ factor }) => {
   const { gl, scene, camera, size } = useThree()
   const composer = useRef()
-  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size.width, size.height])
+  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
   useRender(() => composer.current.obj.render(), true)
   return (

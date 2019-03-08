@@ -22,15 +22,20 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   const [ready, setReady] = useState(false)
   const [bind, size] = useMeasure()
   const [intersects, setIntersects] = useState([])
+  const [cursor, setCursor] = useState('default')
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
-  const [cursor, setCursor] = useState('default')
+  const [camera, setDefaultCamera] = useState(() => {
+    const camera = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    camera.position.z = 5
+    return camera
+  })
 
   // Public state
   const state = useRef({
     ready: false,
     subscribers: [],
-    render: true,
+    manual: false,
     active: true,
     canvas: undefined,
     gl: undefined,
@@ -45,9 +50,13 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
       return { width, height }
     },
     subscribe: (fn, main) => {
-      if (main !== void 0) state.current.render = main ? false : true
       state.current.subscribers.push(fn)
       return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
+    },
+    setManual: flag => (state.current.manual = flag),
+    setDefaultCamera: cam => {
+      state.current.camera = cam
+      setDefaultCamera(cam)
     },
   })
 
@@ -56,17 +65,15 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
     state.current.ready = ready
     state.current.size = size
     state.current.aspect = size.width / size.height
-  }, [ready, size])
+    state.current.camera = camera
+  }, [ready, size, camera])
 
   // Component mount effect, creates the webGL render context
   useEffect(() => {
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...props })
     state.current.gl.setClearAlpha(0)
-    state.current.gl.setSize(size.width, size.height, false)
-    state.current.camera = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    state.current.camera.position.z = 5
     state.current.canvas = canvas.current
-    state.current.scene = window.scene = new THREE.Scene()
+    state.current.scene = new THREE.Scene()
     state.current.scene.__interaction = []
 
     const renderLoop = function() {
@@ -74,8 +81,9 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
       requestAnimationFrame(renderLoop)
       if (state.current.ready) {
         state.current.subscribers.forEach(fn => fn(state.current))
-        if (state.current.render && state.current.scene.children.length)
+        if (!state.current.manual && state.current.scene.children.length) {
           state.current.gl.render(state.current.scene, state.current.camera)
+        }
       }
     }
 
@@ -95,10 +103,10 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
     if (ready) {
       state.current.gl.setSize(size.width, size.height, false)
       state.current.camera.aspect = state.current.aspect
-      state.current.camera.updateProjectionMatrix()
       state.current.camera.radius = (size.width + size.height) / 4
+      state.current.camera.updateProjectionMatrix()
     }
-  }, [ready, size])
+  }, [ready, size, camera])
 
   const intersect = useCallback((event, fn) => {
     const x = (event.clientX / state.current.size.width) * 2 - 1
@@ -166,10 +174,7 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   // This component is a bridge into the three render context, when it gets rendererd
   // we know we are ready to compile shaders, call subscribers, etc
   const IsReady = useCallback(() => {
-    useEffect(() => {
-      state.current.gl.compile(state.current.scene, state.current.camera)
-      setReady(true)
-    }, [])
+    useEffect(() => void setReady(true), [])
     return null
   }, [])
 

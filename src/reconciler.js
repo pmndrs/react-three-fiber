@@ -108,11 +108,28 @@ function removeChild(parentInstance, child) {
   }
 }
 
+function insertBefore(parentInstance, child, beforeChild) {
+  if (child) {
+    if (child.isObject3D) {
+      child.parent = parentInstance
+      child.dispatchEvent({ type: 'added' })
+      // TODO: the order is out of whack if data objects are present, has to be recalculated
+      const index = parentInstance.children.indexOf(beforeChild)
+      parentInstance.children = [
+        ...parentInstance.children.slice(0, index),
+        child,
+        ...parentInstance.children.slice(index),
+      ]
+    } else child.parent = parentInstance
+  }
+}
+
 const Renderer = Reconciler({
   now,
   createInstance,
   removeChild,
   appendChild,
+  insertBefore,
   supportsMutation: true,
   isPrimaryRenderer: false,
   schedulePassiveEffects: scheduleDeferredCallback,
@@ -120,21 +137,7 @@ const Renderer = Reconciler({
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
   removeChildFromContainer: removeChild,
-  insertBefore(parentInstance, child, beforeChild) {
-    if (child) {
-      if (child.isObject3D) {
-        child.parent = parentInstance
-        child.dispatchEvent({ type: 'added' })
-        // TODO: the order is out of whack if data objects are present, has to be recalculated
-        const index = parentInstance.children.indexOf(beforeChild)
-        parentInstance.children = [
-          ...parentInstance.children.slice(0, index),
-          child,
-          ...parentInstance.children.slice(index),
-        ]
-      } else child.parent = parentInstance
-    }
-  },
+  insertInContainerBefore: insertBefore,
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
     if (instance.isObject3D) {
       applyProps(instance, newProps, oldProps)

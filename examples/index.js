@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import './styles.css'
-import App from './components/Scroll'
+import App from './components/Hud'
 
 ReactDOM.render(<App />, document.getElementById('root'))
