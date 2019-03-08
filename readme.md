@@ -194,7 +194,6 @@ function HeadsUpDisplay({ camera }) {
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
-const cameraContext = React.createContext()
 function App() {
   const camera = useRef()
   const { width, height } = useThree().size
@@ -208,8 +207,8 @@ function App() {
       />
       {camera.current && (
         <group>
-          <MainContent camera={camera} />
-          <HeadsUpDisplay camera={camera} />
+          <MainContent camera={camera.current} />
+          <HeadsUpDisplay camera={camera.current} />
         </group>
       )}
     </>
