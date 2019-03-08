@@ -140,6 +140,8 @@ function App() {
 
 ## Handling loaders
 
+You can use Reacts built-in memoizing-features (as well as suspense) to build async graphs.
+
 ```jsx
 function Image({ url }) {
   const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
@@ -156,6 +158,8 @@ function Image({ url }) {
 
 ## Dealing with effects (hijacking main render-loop)
 
+Effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
+
 ```jsx
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
 import { EffectComposer } from './impl/postprocessing/EffectComposer'
@@ -167,19 +171,21 @@ apply({ EffectComposer, RenderPass, GlitchPass })
 function Effects({ factor }) {
   const { gl, scene, camera, size } = useThree()
   const composer = useRef()
-  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size.width, size.height])
+  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
   useRender(() => composer.current.obj.render(), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass name="passes" args={[scene, camera]} />
-      <glitchPass name="passes" renderToScreen factor={factor} />
+      <glitchPass name="passes" factor={factor} renderToScreen />
     </effectComposer>
   )
 }
 ```
 
 ## Heads-up display (rendering multiple scenes)
+
+`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible that one component can render over the content of another. The order of these operations is established by the scene-graph.
 
 ```jsx
 function MainContent({ camera }) {
