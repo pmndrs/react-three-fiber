@@ -8,11 +8,11 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE-js. Driving THREE as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
+React-three-fiber is a small React renderer for Three-js. Driving Three as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-We ship a small reconciler config with a few additions for interaction. It does not know or care about THREE deeply, it uses heuristics to support attributes generically, so we can get away without creating a strong dependency. Hooks of course hold it all together. The aforementioned libs served as an inspiration.
+This is a small reconciler config with a few additions for interaction. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with [r1](https://github.com/mrdoob/three.js/tree/r1) as well as with [r-latest](https://github.com/mrdoob/three.js/releases/). At the same time we don't want to change any rules, if something works in Three in s specific way, it will be the same here. Hooks of course hold it all together.
 
 # How it looks like ...
 
@@ -51,7 +51,7 @@ ReactDOM.render(
 
 # Objects and properties
 
-You can use [THREE's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
+You can use [Three's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
 ```jsx
 <mesh
