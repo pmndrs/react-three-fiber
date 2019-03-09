@@ -140,7 +140,7 @@ function App() {
 
 ## Handling loaders
 
-You can use Reacts built-in memoizing-features (as well as suspense) to build async graphs.
+You can use Reacts built-in memoizing-features (as well as suspense) to build async dependence graphs.
 
 ```jsx
 function Image({ url }) {
@@ -158,13 +158,13 @@ function Image({ url }) {
 
 ## Dealing with effects (hijacking main render-loop)
 
-Effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
+Managing effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { EffectComposer } from './impl/postprocessing/EffectComposer'
-import { RenderPass } from './impl/postprocessing/RenderPass'
-import { GlitchPass } from './impl/postprocessing/GlitchPass'
+import { EffectComposer } from './postprocessing/EffectComposer'
+import { RenderPass } from './postprocessing/RenderPass'
+import { GlitchPass } from './postprocessing/GlitchPass'
 // Makes these objects available as native objects "<renderPass />" and so on
 apply({ EffectComposer, RenderPass, GlitchPass })
 
@@ -185,10 +185,10 @@ function Effects({ factor }) {
 
 ## Heads-up display (rendering multiple scenes)
 
-`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible that one component can render over the content of another. The order of these operations is established by the scene-graph.
+`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible for one component to render over the content of another. The order of these operations is established by the scene-graph.
 
 ```jsx
-function MainContent({ camera }) {
+function Content({ camera }) {
   const scene = useRef()
   useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), true)
   return <scene ref={scene}>{/* ... */}</scene>
@@ -200,7 +200,7 @@ function HeadsUpDisplay({ camera }) {
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
-function App() {
+function Main() {
   const camera = useRef()
   const { width, height } = useThree().size
   return (
@@ -213,7 +213,7 @@ function App() {
       />
       {camera.current && (
         <group>
-          <MainContent camera={camera.current} />
+          <Content camera={camera.current} />
           <HeadsUpDisplay camera={camera.current} />
         </group>
       )}
