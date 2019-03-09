@@ -8,11 +8,11 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for THREE-js. Driving THREE as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
+React-three-fiber is a small React renderer for Three-js. Driving Three as a render-target makes just as much sense as it makes for the DOM. Building a complex scene graph becomes easier because it can be componentized declaratively with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures, etc.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-We ship a small reconciler config with a few additions for interaction. It does not know or care about THREE deeply, it uses heuristics to support attributes generically, so we can get away without creating a strong dependency. Hooks of course hold it all together. The aforementioned libs served as an inspiration.
+This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with [r1](https://github.com/mrdoob/three.js/tree/r1) as well as with their [latest](https://github.com/mrdoob/three.js/releases/). At the same time we don't want to alter any rules, if something works in Three in a specific way, it will be the same here.
 
 # How it looks like ...
 
@@ -51,7 +51,7 @@ ReactDOM.render(
 
 # Objects and properties
 
-You can use [THREE's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
+You can use [Three's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
 ```jsx
 <mesh
@@ -140,7 +140,7 @@ function App() {
 
 ## Handling loaders
 
-You can use Reacts built-in memoizing-features (as well as suspense) to build async graphs.
+You can use Reacts built-in memoizing-features (as well as suspense) to build async dependence graphs.
 
 ```jsx
 function Image({ url }) {
@@ -158,13 +158,13 @@ function Image({ url }) {
 
 ## Dealing with effects (hijacking main render-loop)
 
-Effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
+Managing effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { EffectComposer } from './impl/postprocessing/EffectComposer'
-import { RenderPass } from './impl/postprocessing/RenderPass'
-import { GlitchPass } from './impl/postprocessing/GlitchPass'
+import { EffectComposer } from './postprocessing/EffectComposer'
+import { RenderPass } from './postprocessing/RenderPass'
+import { GlitchPass } from './postprocessing/GlitchPass'
 // Makes these objects available as native objects "<renderPass />" and so on
 apply({ EffectComposer, RenderPass, GlitchPass })
 
@@ -185,10 +185,10 @@ function Effects({ factor }) {
 
 ## Heads-up display (rendering multiple scenes)
 
-`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible that one component can render over the content of another. The order of these operations is established by the scene-graph.
+`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible for one component to render over the content of another. The order of these operations is established by the scene-graph.
 
 ```jsx
-function MainContent({ camera }) {
+function Content({ camera }) {
   const scene = useRef()
   useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), true)
   return <scene ref={scene}>{/* ... */}</scene>
@@ -200,7 +200,7 @@ function HeadsUpDisplay({ camera }) {
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
-function App() {
+function Main() {
   const camera = useRef()
   const { width, height } = useThree().size
   return (
@@ -213,7 +213,7 @@ function App() {
       />
       {camera.current && (
         <group>
-          <MainContent camera={camera.current} />
+          <Content camera={camera.current} />
           <HeadsUpDisplay camera={camera.current} />
         </group>
       )}
