@@ -1,33 +1,33 @@
-import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { useSpring, animated } from 'react-spring/three'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
 import { OrbitControls } from '../resources/controls/OrbitControls'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
-import { GlitchPass } from './../resources/postprocessing/GlitchPass'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
-apply({ OrbitControls, EffectComposer, RenderPass, GlitchPass })
+import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { WaterPass } from './../resources/postprocessing/WaterPass'
+import { FXAAShader } from './../resources/shaders/FXAAShader'
+apply({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
 
-function Main() {
+function Main({ camera }) {
   const scene = useRef()
-  const camera = useContext(cameraContext)
-
   const composer = useRef()
   const { gl, size } = useThree()
   useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
-  useRender(({ gl }) => {
-    gl.autoClear = true
-    composer.current.obj.render()
-  }, true)
-
+  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.obj.render()), true)
   return (
     <scene ref={scene}>
       <effectComposer ref={composer} args={[gl]}>
         {scene.current && (
           <>
             <renderPass name="passes" args={[scene.current, camera]} />
-            <glitchPass name="passes" factor={1} renderToScreen />
+            <waterPass name="passes" factor={1} />
+            <shaderPass
+              name="passes"
+              args={[FXAAShader]}
+              material-uniforms-resolution-value-x={1 / size.width}
+              material-uniforms-resolution-value-y={1 / size.height}
+              renderToScreen
+            />
           </>
         )}
       </effectComposer>
@@ -35,14 +35,13 @@ function Main() {
       <spotLight position={[100, 10, 10]} />
       <mesh>
         <boxBufferGeometry name="geometry" args={[2, 2, 2]} />
-        <meshStandardMaterial name="material" color="green" />
+        <meshStandardMaterial name="material" color="lightgreen" />
       </mesh>
     </scene>
   )
 }
 
-function Hud() {
-  const camera = useContext(cameraContext)
+function Hud({ camera }) {
   const scene = useRef()
   useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
   const [hovered, set] = useState(false)
@@ -58,28 +57,30 @@ function Hud() {
   )
 }
 
-const cameraContext = React.createContext()
 function Content() {
-  const { size, setDefaultCamera } = useThree()
-  const [camera] = useState(() => {
-    const camera = new THREE.PerspectiveCamera()
-    camera.position.z = 5
-    setDefaultCamera(camera)
-    return camera
-  })
-  useMemo(() => {
-    camera.aspect = size.width / size.height
-    camera.radius = (size.width + size.height) / 4
-    camera.updateProjectionMatrix()
-  }, [size])
+  const camera = useRef()
   const controls = useRef()
+  const { size, setDefaultCamera } = useThree()
+  useEffect(() => void setDefaultCamera(camera.current), [])
   useRender(() => controls.current.obj.update())
   return (
-    <cameraContext.Provider value={camera}>
-      <orbitControls ref={controls} args={[camera]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
-      <Main />
-      <Hud />
-    </cameraContext.Provider>
+    <>
+      <perspectiveCamera
+        ref={camera}
+        aspect={size.width / size.height}
+        radius={(size.width + size.height) / 4}
+        fov={55}
+        position={[0, 0, 5]}
+        onUpdate={self => self.updateProjectionMatrix()}
+      />
+      {camera.current && (
+        <group>
+          <orbitControls ref={controls} args={[camera.current]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
+          <Main camera={camera.current} />
+          <Hud camera={camera.current} />
+        </group>
+      )}
+    </>
   )
 }
 

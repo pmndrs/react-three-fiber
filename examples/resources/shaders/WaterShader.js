@@ -22,50 +22,47 @@
 
 var WaterShader = {
   uniforms: {
-    tDiffuse: { type: 't', value: null },
+    byp: { value: 0 }, //apply the glitch ?
+    texture: { type: 't', value: null },
     time: { type: 'f', value: 0.0 },
-    distort_speed: { type: 'f', value: 0.0005 },
-    distortion: { type: 'f', value: 0.04 },
-    centerX: { type: 'f', value: 0.5 },
-    centerY: { type: 'f', value: 0.5 },
+    factor: { type: 'f', value: 0.0 },
+    resolution: { type: 'v2', value: null },
   },
 
   vertexShader: [
-    'varying vec2 vUv;',
-    'void main() {',
-    'vUv = uv;',
-    'gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );',
-
-    '}',
+    `varying vec2 vUv;
+    void main(){  
+      vUv = uv; 
+      vec4 modelViewPosition = modelViewMatrix * vec4(position, 1.0);
+      gl_Position = projectionMatrix * modelViewPosition;
+    }`,
   ].join('\n'),
 
   fragmentShader: [
-    'uniform sampler2D tDiffuse;',
-    'uniform float time;',
-    'uniform float distort_speed;',
-    'uniform float distortion;',
-    'uniform float centerX;',
-    'uniform float centerY;',
-    'varying vec2 vUv;',
-
-    'void main() {',
-    'vec2 p = vUv;',
-    'vec2 center_coord;',
-    'float distance_to_center;',
-    'float projected_distance_to_center;',
-    'float distort_degree;',
-
-    'center_coord.x = p.x - centerX;',
-    'center_coord.y = p.y - centerY;',
-    'distance_to_center = sqrt(center_coord.x * center_coord.x + center_coord.y * center_coord.y);',
-    'distort_degree = abs( mod(distort_speed* time, distortion) - (distortion / 2.0)) + 1.0;',
-    'projected_distance_to_center = pow(1.0, distort_degree - 1.0) * pow(distance_to_center/1.0, distort_degree);',
-    'p.x = projected_distance_to_center * center_coord.x/ distance_to_center + centerX;',
-    'p.y = projected_distance_to_center * center_coord.y/ distance_to_center + centerY;',
-    'vec4 color = texture2D(tDiffuse, p);',
-    'gl_FragColor = color;',
-
-    '}',
+    `uniform int byp; //should we apply the glitch ?
+    uniform float time;
+    uniform float factor;
+    uniform vec2 resolution;
+    uniform sampler2D texture;
+    
+    varying vec2 vUv;
+    
+    void main() {  
+      if (byp<1) {
+        vec2 uv1 = vUv;
+        vec2 uv = gl_FragCoord.xy/resolution.xy;
+        float frequency = 6.0 * factor;
+        float amplitude = 0.015 * factor;
+        float x = uv1.y * frequency + time * .7; 
+        float y = uv1.x * frequency + time * .3;
+        uv1.x += cos(x+y) * amplitude * cos(y);
+        uv1.y += sin(x-y) * amplitude * cos(y);
+        vec4 rgba = texture2D(texture, uv1);
+        gl_FragColor = rgba;
+      } else {
+        gl_FragColor = texture2D(texture, vUv);
+      }
+    }`,
   ].join('\n'),
 }
 

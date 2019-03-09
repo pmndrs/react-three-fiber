@@ -8,6 +8,19 @@ import {
 
 const roots = new Map()
 const emptyObject = {}
+const is = {
+  str: a => typeof a === 'string',
+  num: a => typeof a === 'number',
+  und: a => a === void 0,
+  equ(a, b) {
+    if (typeof a !== typeof b) return false
+    if (is.str(a) || is.num(a)) return a === b
+    let i
+    for (i in a) if (!(i in b)) return false
+    for (i in b) if (a[i] !== b[i]) return false
+    return is.und(i) ? a === b : true
+  },
+}
 
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
@@ -15,7 +28,7 @@ export const apply = objects => (catalogue = { ...catalogue, ...objects })
 export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container) {
   if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
-  const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
+  const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
 
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
