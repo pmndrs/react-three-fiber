@@ -100,8 +100,8 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 When you need managed local (or custom/extended) objects, you can use the `primitive` placeholder.
 
 ```jsx
-const msh = new THREE.Mesh()
-return <primitive object={msh} />
+const mesh = new THREE.Mesh()
+return <primitive object={mesh} />
 ```
 
 # Events
@@ -159,7 +159,7 @@ function Image({ url }) {
 
 ## Dealing with effects (hijacking main render-loop)
 
-Managing effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
+Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
