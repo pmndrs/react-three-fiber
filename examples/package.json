@@ -25,7 +25,8 @@
     "webpack-dev-server": "3.2.1"
   },
   "scripts": {
-    "start": "webpack-dev-server --progress --colors --env development"
+    "start": "webpack-dev-server --progress --colors --env development",
+    "build": "webpack --progress --colors --env production"
   },
   "browserslist": [
     ">0.2%",

@@ -1,7 +1,7 @@
 import * as THREE from 'three/src/Three'
 import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { render, unmountComponentAtNode } from './reconciler'
+import { applyProps, render, unmountComponentAtNode } from './reconciler'
 
 export const stateContext = React.createContext()
 
@@ -16,7 +16,7 @@ function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export const Canvas = React.memo(({ children, props, style, ...rest }) => {
+export const Canvas = React.memo(({ children, props, camera, style, ...rest }) => {
   // Local, reactive state
   const canvas = useRef()
   const [ready, setReady] = useState(false)
@@ -25,10 +25,12 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   const [cursor, setCursor] = useState('default')
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [mouse] = useState(() => new THREE.Vector2())
-  const [camera, setDefaultCamera] = useState(() => {
-    const camera = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    camera.position.z = 5
-    return camera
+  const [defaultCam, setDefaultCamera] = useState(() => {
+    const cam = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    cam.position.z = 5
+    if (camera) applyProps(cam, camera, {})
+    console.log(cam)
+    return cam
   })
 
   // Public state
@@ -72,8 +74,8 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
     state.current.ready = ready
     state.current.size = size
     state.current.aspect = size.width / size.height
-    state.current.camera = camera
-  }, [ready, size, camera])
+    state.current.camera = defaultCam
+  }, [ready, size, defaultCam])
 
   // Component mount effect, creates the webGL render context
   useEffect(() => {
@@ -114,7 +116,7 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
       state.current.camera.radius = (size.width + size.height) / 4
       state.current.camera.updateProjectionMatrix()
     }
-  }, [ready, size, camera])
+  }, [ready, size, defaultCam])
 
   const intersect = useCallback((event, fn) => {
     const canvasRect = canvas.current.getBoundingClientRect()
