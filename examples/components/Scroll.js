@@ -8,6 +8,7 @@ import data from './../resources/data'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { RenderPass } from './../resources/postprocessing/RenderPass'
 import { GlitchPass } from './../resources/postprocessing/GlitchPass'
+
 applySpring({ EffectComposer, RenderPass, GlitchPass })
 applyThree({ EffectComposer, RenderPass, GlitchPass })
 

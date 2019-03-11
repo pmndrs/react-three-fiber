@@ -1,3 +1,4 @@
+import * as THREE from 'three/src/Three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
 import { OrbitControls } from '../resources/controls/OrbitControls'
@@ -6,7 +7,38 @@ import { ShaderPass } from './../resources/postprocessing/ShaderPass'
 import { RenderPass } from './../resources/postprocessing/RenderPass'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
 import { FXAAShader } from './../resources/shaders/FXAAShader'
+import fontFile from './../resources/fonts/unknown'
 apply({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
+
+/** This renders text via canvas and projects it as a sprite */
+function Text({ children, size = 1, letterSpacing = 0.01, color = '#000000' }) {
+  const [font] = useState(() => new THREE.FontLoader().parse(fontFile))
+  const [shapes, [x, y]] = useMemo(() => {
+    let x = 0,
+      y = 0
+    let letters = [...children]
+    let mat = new THREE.MeshBasicMaterial({ color, opacity: 1, transparent: true })
+    return [
+      letters.map(letter => {
+        const geom = new THREE.ShapeGeometry(font.generateShapes(letter, size, 1))
+        geom.computeBoundingBox()
+        const mesh = new THREE.Mesh(geom, mat)
+        mesh.position.x = x
+        x += geom.boundingBox.max.x + letterSpacing
+        y = Math.max(y, geom.boundingBox.max.y)
+        return mesh
+      }),
+      [x, y],
+    ]
+  }, [children])
+  return (
+    <group position={[-x / 2, -y / 2, 0]}>
+      {shapes.map((shape, index) => (
+        <primitive key={index} object={shape} />
+      ))}
+    </group>
+  )
+}
 
 function Main({ camera }) {
   const scene = useRef()
@@ -14,6 +46,8 @@ function Main({ camera }) {
   const { gl, size } = useThree()
   useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
   useRender(({ gl }) => void ((gl.autoClear = true), composer.current.obj.render()), true)
+  //useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)))
+
   return (
     <scene ref={scene}>
       <effectComposer ref={composer} args={[gl]}>
@@ -32,10 +66,7 @@ function Main({ camera }) {
       </effectComposer>
       <ambientLight />
       <spotLight position={[100, 10, 10]} />
-      <mesh>
-        <boxBufferGeometry name="geometry" args={[2, 2, 2]} />
-        <meshStandardMaterial name="material" color="lightgreen" />
-      </mesh>
+      <Text>lorem</Text>
     </scene>
   )
 }
@@ -85,7 +116,7 @@ function Content() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#272727' }}>
+    <Canvas style={{ background: '#dfdfdf' }}>
       <Content />
     </Canvas>
   )

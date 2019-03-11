@@ -78,6 +78,7 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   // Component mount effect, creates the webGL render context
   useEffect(() => {
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...props })
+    state.current.gl.setPixelRatio(window.devicePixelRatio || 1)
     state.current.gl.setClearAlpha(0)
     state.current.canvas = canvas.current
     state.current.scene = new THREE.Scene()
@@ -108,7 +109,7 @@ export const Canvas = React.memo(({ children, props, style, ...rest }) => {
   // Adjusts default camera
   useEffect(() => {
     if (ready) {
-      state.current.gl.setSize(size.width, size.height, false)
+      state.current.gl.setSize(size.width, size.height)
       state.current.camera.aspect = state.current.aspect
       state.current.camera.radius = (size.width + size.height) / 4
       state.current.camera.updateProjectionMatrix()

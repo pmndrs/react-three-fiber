@@ -30,7 +30,6 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
-
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
     return rest
@@ -51,30 +50,21 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
           }
         }
         if (target && target.set) {
-          if (target.constructor.name === value.constructor.name) {
-            target.copy(value)
-          } else if (Array.isArray(value)) {
-            target.set(...value)
-          } else {
-            target.set(value)
-          }
-        } else {
-          if (interpolateArray && Array.isArray(root[key])) root[key].push(value)
-          else root[key] = value
-        }
+          if (target.constructor.name === value.constructor.name) target.copy(value)
+          else if (Array.isArray(value)) target.set(...value)
+          else target.set(value)
+        } else root[key] = value
       }
     })
 
     // Prep interaction handlers
     if (handlers.length) {
-      if (container && instance.raycast) {
-        // Add interactive object to central container
-        container.__interaction.push(instance)
-      }
-      instance.__handlers = handlers.reduce((acc, key) => {
-        const name = key.charAt(2).toLowerCase() + key.substr(3)
-        return { ...acc, [name]: newProps[key] }
-      }, {})
+      // Add interactive object to central container
+      if (container && instance.raycast) container.__interaction.push(instance)
+      instance.__handlers = handlers.reduce(
+        (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
+        {}
+      )
     }
     // Call the update lifecycle, if present
     if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
@@ -89,9 +79,8 @@ function createInstance(type, { args = [], ...props }, container) {
     const target = catalogue[name] || THREE[name]
     instance = Array.isArray(args) ? new target(...args) : new target(args)
   }
-  if (!instance.isObject3D) instance = { obj: instance, parent: undefined }
   applyProps(instance, props, {}, false, container)
-  return instance
+  return !instance.isObject3D ? { obj: instance, parent: undefined } : instance
 }
 
 function appendChild(parentInstance, child) {
@@ -100,7 +89,12 @@ function appendChild(parentInstance, child) {
     else {
       child.parent = parentInstance
       // The name attribute implies that the object attaches itself on the parent
-      if (child.obj.name) applyProps(parentInstance, { [child.obj.name]: child.obj }, {}, true)
+      if (child.obj.name) {
+        if (parentInstance.obj) parentInstance = parentInstance.obj
+        const target = parentInstance[child.obj.name]
+        if (Array.isArray(target)) target.push(child.obj)
+        else parentInstance[child.obj.name] = child.obj
+      }
     }
   }
 }
@@ -113,6 +107,7 @@ function removeChild(parentInstance, child) {
     } else {
       child.parent = undefined
       if (child.obj.name) {
+        if (parentInstance.obj) parentInstance = parentInstance.obj
         // Remove attachment
         const target = parentInstance[child.obj.name]
         if (Array.isArray(target)) parentInstance[child.obj.name] = target.filter(x => x !== child.obj)
