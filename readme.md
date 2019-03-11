@@ -4,7 +4,7 @@
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="430" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
-  <i>These demos are real, click them!</i>
+  <i>These demos are real, click them! They contain the full code, too.</i>
 </p>
 
     npm install react-three-fiber
