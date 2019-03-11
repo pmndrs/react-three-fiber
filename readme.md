@@ -56,7 +56,7 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 ```jsx
 <mesh
   visible
-  userData={ test: "hello" }
+  userData={{ test: "hello" }}
   position={new THREE.Vector3(1, 2, 3)}
   rotation={new THREE.Euler(0, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
@@ -72,7 +72,7 @@ You can stow away non-Object3D primitives (geometries, materials, etc) into the 
 The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
 
 ```jsx
-<mesh visible userData={ test: "hello" } position={[1, 2, 3]} rotation={[0, 0, 0]}>
+<mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
   <sphereGeometry name="geometry" args={[1, 16, 16]} />
   <meshStandardMaterial name="material" color="indianred" transparent />
 </mesh>
