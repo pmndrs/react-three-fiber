@@ -244,7 +244,7 @@ function Extrusion({ start = [0,0], paths, ...props }) {
 
   return (
     <mesh>
-      <extrudeGeometry name="geometry" args={[heartShape, props]} />
+      <extrudeGeometry name="geometry" args={[shape, props]} />
       <meshPhongMaterial name="material" />
     </mesh>
   )
