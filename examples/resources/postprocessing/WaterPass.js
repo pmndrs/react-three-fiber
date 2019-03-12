@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   UniformsUtils,
   Vector2,
-} from 'three/src/Three'
+} from 'three'
 import { WaterShader } from '../shaders/WaterShader.js'
 import { Pass } from './Pass.js'
 

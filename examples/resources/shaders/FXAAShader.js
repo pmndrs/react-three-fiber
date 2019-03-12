@@ -1,4 +1,4 @@
-import { Vector2 } from 'three/src/Three'
+import { Vector2 } from 'three'
 /**
  * @author alteredq / http://alteredqualia.com/
  * @author davidedc / http://www.sketchpatch.net/

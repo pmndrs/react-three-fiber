@@ -1,4 +1,4 @@
-import { EventDispatcher, MOUSE, Quaternion, Spherical, Vector2, Vector3 } from 'three/src/Three'
+import { EventDispatcher, MOUSE, Quaternion, Spherical, Vector2, Vector3 } from 'three'
 /**
  * @author qiao / https://github.com/qiao
  * @author mrdoob / http://mrdoob.com

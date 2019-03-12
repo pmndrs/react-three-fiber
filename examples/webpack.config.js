@@ -36,7 +36,7 @@ module.exports = mode => {
         react: path.resolve('node_modules/react'),
         'react-dom': path.resolve('node_modules/react-dom'),
         'prop-types': path.resolve('node_modules/prop-types'),
-        three: path.resolve('node_modules/three'),
+        three: path.resolve('node_modules/three/src/Three'),
       },
     },
     plugins: [new HtmlWebpackPlugin({ template: 'public/index.html' })],

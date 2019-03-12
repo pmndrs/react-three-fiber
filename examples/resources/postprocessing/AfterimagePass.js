@@ -10,7 +10,7 @@ import {
   ShaderMaterial,
   UniformsUtils,
   WebGLRenderTarget,
-} from 'three/src/Three'
+} from 'three'
 import { AfterimageShader } from '../shaders/AfterimageShader.js'
 import { Pass } from './Pass.js'
 /**

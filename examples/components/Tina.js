@@ -1,4 +1,4 @@
-import * as THREE from 'three/src/Three'
+import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
 import { useTransition, useSpring, animated as anim } from 'react-spring/three'

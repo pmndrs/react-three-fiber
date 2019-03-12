@@ -1,4 +1,4 @@
-import { DefaultLoadingManager, FileLoader, Matrix3, Path, ShapePath, Vector2, Vector3 } from 'three/src/Three'
+import { DefaultLoadingManager, FileLoader, Matrix3, Path, ShapePath, Vector2, Vector3 } from 'three'
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author zz85 / http://joshuakoo.com/

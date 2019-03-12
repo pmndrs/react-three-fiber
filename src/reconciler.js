@@ -1,4 +1,4 @@
-import * as THREE from 'three/src/Three'
+import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
 import {
   unstable_scheduleCallback as scheduleDeferredCallback,

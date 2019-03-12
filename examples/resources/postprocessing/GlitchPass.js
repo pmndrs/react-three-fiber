@@ -9,7 +9,7 @@ import {
   Scene,
   ShaderMaterial,
   UniformsUtils,
-} from 'three/src/Three'
+} from 'three'
 import { DigitalGlitch } from '../shaders/DigitalGlitch.js'
 import { Pass } from './Pass.js'
 /**

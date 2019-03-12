@@ -1,4 +1,4 @@
-import { Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial, UniformsUtils } from 'three/src/Three'
+import { Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial, UniformsUtils } from 'three'
 import { Pass } from './Pass.js'
 /**
  * @author alteredq / http://alteredqualia.com/
