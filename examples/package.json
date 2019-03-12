@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "lodash-es": "^4.17.11",
     "react": "^16.8.4",
     "react-app-polyfill": "^0.2.1",
     "react-dev-utils": "^7.0.3",
     "react-dom": "^16.8.4",
-    "react-spring": "^8.0.11"
+    "react-spring": "^8.0.11",
+    "three": "^0.102.1"
   },
   "devDependencies": {
     "@babel/core": "7.3.4",
