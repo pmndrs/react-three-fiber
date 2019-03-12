@@ -4,7 +4,7 @@
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="430" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
-  <i>These demos are real, click them! They contain the full code, too.</i>
+  <i>These demos are real, you can click them! They contain the full code, too.</i>
 </p>
 
     npm install react-three-fiber
@@ -17,7 +17,7 @@ This is a small reconciler config with a few additions for interaction and hooks
 
 # How it looks like ...
 
-Copy the following into a project. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
+Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
 ```jsx
 import * as THREE from 'three/src/Three'
