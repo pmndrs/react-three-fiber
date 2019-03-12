@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="865" src="https://i.imgur.com/vjmDwpS.gif" /></a>
+  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="864" src="https://i.imgur.com/vjmDwpS.gif" /></a>
   <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="430" src="https://i.imgur.com/tQi753C.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="430" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
