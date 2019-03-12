@@ -229,7 +229,7 @@ function Main() {
 }
 ```
 
-## Managing imperative code
+## Managing imperative code
 
 Stick imperative stuff into useMemo and write out everything else declaratively. This is how you can quickly form reactive, re-usable components that can be bound to a store, graphql, etc.
 
