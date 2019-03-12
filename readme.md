@@ -17,26 +17,32 @@ This is a small reconciler config with a few additions for interaction and hooks
 
 # How it looks like ...
 
+Copy the following into a project. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
+
 ```jsx
+import * as THREE from 'three/src/Three'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
+import './styles.css' // Make sure to give #root a size, or the canvas will stretch
 
 function Thing({ vertices, color }) {
   return (
     <group ref={ref => console.log('we have access to the instance')}>
-      <line position={[10, 20, 30]} rotation={[THREE.Math.degToRad(90), 0, 0]}>
+      <line>
         <geometry
           name="geometry"
           vertices={vertices.map(v => new THREE.Vector3(...v))}
           onUpdate={self => (self.verticesNeedUpdate = true)}
         />
-        <lineBasicMaterial name="material" color={color} />
+        <lineBasicMaterial name="material" color="black" />
       </line>
-      <mesh
-        onClick={e => console.log('click')}
-        onHover={e => console.log('hover')}
+      <mesh 
+        onClick={e => console.log('click')} 
+        onHover={e => console.log('hover')} 
         onUnhover={e => console.log('unhover')}>
         <octahedronGeometry name="geometry" />
-        <meshStandardMaterial name="material" color="grey" opacity={0.5} transparent />
+        <meshBasicMaterial name="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
     </group>
   )
@@ -44,7 +50,7 @@ function Thing({ vertices, color }) {
 
 ReactDOM.render(
   <Canvas>
-    <Thing color="blue" vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0]]} />
+    <Thing vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]} />
   </Canvas>,
   document.getElementById('root')
 )
