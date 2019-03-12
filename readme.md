@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="865" src="https://i.imgur.com/vjmDwpS.gif" /></a>
+  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="864" src="https://i.imgur.com/vjmDwpS.gif" /></a>
   <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="430" src="https://i.imgur.com/tQi753C.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="430" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
@@ -227,4 +227,47 @@ function Main() {
     </>
   )
 }
+```
+
+## Managing imperative code
+
+Stick imperative stuff into useMemo and write out everything else declaratively. This is how you can quickly form reactive, re-usable components that can be bound to a store, graphql, etc.
+
+```jsx
+function Extrusion({ start = [0,0], paths, ...props }) {
+  const shape = useMemo(() => {
+    const shape = new THREE.Shape()
+    shape.moveTo(...start)
+    paths.forEach(path => shape.bezierCurveTo(...path))
+    return shape
+  }, [start, paths])
+
+  return (
+    <mesh>
+      <extrudeGeometry name="geometry" args={[shape, props]} />
+      <meshPhongMaterial name="material" />
+    </mesh>
+  )
+}
+```
+
+Then ...
+
+```jsx
+<Extrusion
+  start={[25, 25]}
+  paths={[
+    [25, 25, 20, 0, 0, 0],
+    [30, 0, 30, 35,30,35],
+    [30, 55, 10, 77, 25, 95],
+    [60, 77, 80, 55, 80, 35],
+    [80, 35, 80, 0, 50, 0],
+    [35, 0, 25, 25, 25, 25],
+  ]}
+  bevelEnabled
+  amount={8}
+  bevelSegments={2}
+  steps={2}
+  bevelSize={1}
+  bevelThickness={1} />
 ```
