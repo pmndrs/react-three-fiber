@@ -6,3 +6,5 @@ cd examples
 yarn
 yarn start
 ```
+
+Edit examples/index.js to show the demo you're interested in.
