@@ -264,8 +264,8 @@ Then ...
     [80, 35, 80, 0, 50, 0],
     [35, 0, 25, 25, 25, 25],
   ]}
-  amount={8}
   bevelEnabled
+  amount={8}
   bevelSegments={2}
   steps={2}
   bevelSize={1}
