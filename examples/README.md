@@ -7,4 +7,4 @@ yarn
 yarn start
 ```
 
-Edit examples/index.js to show the demo you're interested in.
+Edit examples/index.js to show the demo you're interested in. I use this mainly for debugging and testing, a real showcase will follow.
