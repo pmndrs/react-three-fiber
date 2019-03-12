@@ -1,9 +1,10 @@
 <p align="center">
+  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="865" src="https://i.imgur.com/vjmDwpS.gif" /></a>
   <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="430" src="https://i.imgur.com/tQi753C.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="430" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
-  <i>These demos are real, click them!</i>
+  <i>These demos are real, click them! They contain the full code, too.</i>
 </p>
 
     npm install react-three-fiber
@@ -16,26 +17,32 @@ This is a small reconciler config with a few additions for interaction and hooks
 
 # How it looks like ...
 
+Copy the following into a project. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
+
 ```jsx
+import * as THREE from 'three/src/Three'
+import React from 'react'
+import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
+import './styles.css' // Make sure to give #root a size, or the canvas will stretch
 
 function Thing({ vertices, color }) {
   return (
     <group ref={ref => console.log('we have access to the instance')}>
-      <line position={[10, 20, 30]} rotation={[THREE.Math.degToRad(90), 0, 0]}>
+      <line>
         <geometry
           name="geometry"
           vertices={vertices.map(v => new THREE.Vector3(...v))}
           onUpdate={self => (self.verticesNeedUpdate = true)}
         />
-        <lineBasicMaterial name="material" color={color} />
+        <lineBasicMaterial name="material" color="black" />
       </line>
-      <mesh
-        onClick={e => console.log('click')}
-        onHover={e => console.log('hover')}
+      <mesh 
+        onClick={e => console.log('click')} 
+        onHover={e => console.log('hover')} 
         onUnhover={e => console.log('unhover')}>
         <octahedronGeometry name="geometry" />
-        <meshStandardMaterial name="material" color="grey" opacity={0.5} transparent />
+        <meshBasicMaterial name="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
     </group>
   )
@@ -43,7 +50,7 @@ function Thing({ vertices, color }) {
 
 ReactDOM.render(
   <Canvas>
-    <Thing color="blue" vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0]]} />
+    <Thing vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]} />
   </Canvas>,
   document.getElementById('root')
 )
@@ -99,8 +106,8 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 When you need managed local (or custom/extended) objects, you can use the `primitive` placeholder.
 
 ```jsx
-const msh = new THREE.Mesh()
-return <primitive object={msh} />
+const mesh = new THREE.Mesh()
+return <primitive object={mesh} />
 ```
 
 # Events
@@ -158,7 +165,7 @@ function Image({ url }) {
 
 ## Dealing with effects (hijacking main render-loop)
 
-Managing effects can get quite complex normally. Drop the component below into a scene and you have live effect. Remove it and everything is as it was without any re-configuration.
+Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
