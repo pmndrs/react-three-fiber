@@ -29,7 +29,6 @@ export const Canvas = React.memo(({ children, props, camera, style, ...rest }) =
     const cam = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     cam.position.z = 5
     if (camera) applyProps(cam, camera, {})
-    console.log(cam)
     return cam
   })
 
@@ -80,7 +79,7 @@ export const Canvas = React.memo(({ children, props, camera, style, ...rest }) =
   // Component mount effect, creates the webGL render context
   useEffect(() => {
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...props })
-    state.current.gl.setPixelRatio(window.devicePixelRatio || 1)
+    state.current.gl.setPixelRatio((window.devicePixelRatio || 2) * 0.5)
     state.current.gl.setClearAlpha(0)
     state.current.canvas = canvas.current
     state.current.scene = new THREE.Scene()
