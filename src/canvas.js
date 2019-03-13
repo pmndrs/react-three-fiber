@@ -52,7 +52,7 @@ export const Canvas = React.memo(({ children, props, camera, style, ...rest }) =
     },
     subscribe: (fn, main) => {
       state.current.subscribers.push(fn)
-      return () => (state.current.subscribers = state.current.subscribers.filter(s => s === fn))
+      return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
     },
     setManual: takeOverRenderloop => {
       state.current.manual = takeOverRenderloop
