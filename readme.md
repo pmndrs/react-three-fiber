@@ -271,3 +271,27 @@ Then ...
   bevelSize={1}
   bevelThickness={1} />
 ```
+
+## ShaderMaterials
+
+```jsx
+function CrossFade({ url1, url2, disp }) {
+  const [texture1, texture2, dispTexture] = useMemo(() => {
+    const loader = new THREE.TextureLoader()
+    return [loader.load(url1), loader.load(url2), loader.load(disp)]
+  }, [url1, url2, disp])
+  return (
+    <mesh>
+      <planeBufferGeometry name="geometry" args={[3.8, 3.8]} />
+      <shaderMaterial
+        name="material"
+        args={[CrossFadeShader]}
+        uniforms-texture-value={texture1}
+        uniforms-texture2-value={texture2}
+        uniforms-disp-value={dispTexture}
+        uniforms-dispFactor-value={0.5}
+      />
+    </mesh>
+  )
+}
+```
