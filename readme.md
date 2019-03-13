@@ -125,7 +125,7 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 # Gl data & hooking into the render loop
 
-Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this.
+Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
 
 ```jsx
 import { Canvas, useRender, useThree } from 'react-three-fiber'
