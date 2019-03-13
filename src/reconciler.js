@@ -44,8 +44,8 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
         if (key.includes('-')) {
           const entries = key.split('-')
           target = entries.reduce((acc, key) => acc[key], instance)
-          if (target && !target.set) {
-            // The target is atomic, this forces us to switch the root
+          // If the target is atomic, it forces us to switch the root
+          if (!is.obj(target)) {
             const [name, ...reverseEntries] = entries.reverse()
             root = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
             key = name
