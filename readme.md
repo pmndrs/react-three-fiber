@@ -20,7 +20,7 @@ This is a small reconciler config with a few additions for interaction and hooks
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
 ```jsx
-import * as THREE from 'three/src/Three'
+import * as THREE from 'three'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
@@ -125,7 +125,7 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 # Gl data & hooking into the render loop
 
-Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this.
+Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
 
 ```jsx
 import { Canvas, useRender, useThree } from 'react-three-fiber'
