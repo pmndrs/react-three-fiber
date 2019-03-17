@@ -48,10 +48,11 @@
   },
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
   "dependencies": {
+    "@babel/runtime": "^7.3.4",
+    "lodash-es": "^4.17.11",
     "react-reconciler": "^0.20.1",
     "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "^0.13.3",
-    "@babel/runtime": "^7.3.4"
+    "scheduler": "^0.13.3"
   },
   "peerDependencies": {
     "react": ">=16.8",

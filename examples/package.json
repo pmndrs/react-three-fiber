@@ -3,7 +3,6 @@
   "version": "0.1.1",
   "private": true,
   "dependencies": {
-    "lodash-es": "^4.17.11",
     "react": "^16.8.4",
     "react-app-polyfill": "^0.2.1",
     "react-dev-utils": "^7.0.3",

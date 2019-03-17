@@ -8,6 +8,16 @@ import * as svgs from '../resources/images/svg'
 const urls = Object.values(svgs)
 const colors = ['#21242d', '#ea5158', '#0d4663', '#ffbcb7', '#2d4a3e', '#8bd8d2']
 const deg = THREE.Math.degToRad
+const loaders = urls.map(
+  url =>
+    new Promise(res =>
+      new SVGLoader().load(url, shapes =>
+        res(
+          flat(shapes.map((group, index) => group.toShapes(true).map(shape => ({ shape, color: group.color, index }))))
+        )
+      )
+    )
+)
 
 const Scene = React.memo(() => {
   const { viewport } = useThree()
@@ -16,11 +26,7 @@ const Scene = React.memo(() => {
   const [shapes, setShape] = useState([])
   useEffect(() => void setInterval(() => setPage(i => (i + 1) % urls.length), 4000), [])
   //window.s = setPage
-  useEffect(() => {
-    new SVGLoader().load(urls[page], p =>
-      setShape(flat(p.map((p, i) => p.toShapes(true).map((shape, j) => ({ shape, color: p.color, index: i })))))
-    )
-  }, [page])
+  useEffect(() => void loaders[page].then(setShape), [page])
   const { color } = useSpring({
     from: { color: colors[0] },
     color: colors[page],

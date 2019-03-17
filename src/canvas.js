@@ -16,7 +16,7 @@ function useMeasure() {
   return [{ ref }, bounds]
 }
 
-export const Canvas = React.memo(({ children, props, camera, style, ...rest }) => {
+export const Canvas = React.memo(({ children, props, camera, style, pixelRatio, ...rest }) => {
   // Local, reactive state
   const canvas = useRef()
   const [ready, setReady] = useState(false)
@@ -79,7 +79,7 @@ export const Canvas = React.memo(({ children, props, camera, style, ...rest }) =
   // Component mount effect, creates the webGL render context
   useEffect(() => {
     state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...props })
-    state.current.gl.setPixelRatio((window.devicePixelRatio || 2) * 0.5)
+    if (pixelRatio) state.current.gl.setPixelRatio(pixelRatio)
     state.current.gl.setClearAlpha(0)
     state.current.canvas = canvas.current
     state.current.scene = new THREE.Scene()
@@ -207,7 +207,7 @@ export const Canvas = React.memo(({ children, props, camera, style, ...rest }) =
       {...bind}
       {...rest}
       style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas ref={canvas} />
+      <canvas style={{ display: 'block' }} ref={canvas} />
     </div>
   )
 })
