@@ -194,7 +194,7 @@ export const Canvas = React.memo(({ children, props, camera, style, pixelRatio, 
       render(
         <stateContext.Provider value={{ ...state.current }}>
           <IsReady />
-          {children}
+          {typeof children === 'function' ? children(state.current) : children}
         </stateContext.Provider>,
         state.current.scene
       )
