@@ -11,3 +11,4 @@ $RECYCLE.BIN/
 package-lock.json
 coverage/
 .idea
+__tests__/__image_snapshots__/__diff_output__

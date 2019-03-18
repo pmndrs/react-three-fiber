@@ -1,0 +1,42 @@
+{
+  "name": "tests",
+  "version": "0.1.1",
+  "private": true,
+  "dependencies": {
+    "react": "^16.8.4",
+    "react-app-polyfill": "^0.2.1",
+    "react-dev-utils": "^7.0.3",
+    "react-dom": "^16.8.4",
+    "react-spring": "^8.0.15",
+    "three": "^0.102.1"
+  },
+  "devDependencies": {
+    "@babel/core": "7.3.4",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-typescript": "^7.3.3",
+    "babel-loader": "8.0.5",
+    "css-loader": "^2.1.0",
+    "file-loader": "^3.0.1",
+    "html-webpack-plugin": "4.0.0-alpha.2",
+    "image-webpack-loader": "^4.6.0",
+    "style-loader": "^0.23.1",
+    "terser-webpack-plugin": "1.2.3",
+    "webpack": "4.29.6",
+    "webpack-cli": "^3.2.3",
+    "webpack-dev-server": "3.2.1",
+    "jest": "^24.3.1",
+    "jest-cli": "^24.3.1",
+    "jest-dev-server": "^4.0.0",
+    "jest-puppeteer": "^4.1.0"
+  },
+  "scripts": {
+    "start": "webpack-dev-server --progress --colors --env development",
+    "build": "webpack --progress --colors --env production"
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

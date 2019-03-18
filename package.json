@@ -9,7 +9,8 @@
     "prebuild": "rimraf dist",
     "build": "rollup -c",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "runserver": "yarn --cwd ./__tests__/src start",
+    "test": "jest"
   },
   "husky": {
     "hooks": {
@@ -49,10 +50,12 @@
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
   "dependencies": {
     "@babel/runtime": "^7.3.4",
-    "lodash-es": "^4.17.11",
+    "jest-image-snapshot": "^2.8.1",
+    "puppeteer": "^1.13.0",
     "react-reconciler": "^0.20.1",
     "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "^0.13.3"
+    "scheduler": "^0.13.3",
+    "three": "^0.102.1"
   },
   "peerDependencies": {
     "react": ">=16.8",
@@ -73,6 +76,10 @@
     "@babel/preset-typescript": "^7.3.3",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "husky": "^1.3.1",
+    "jest": "^24.5.0",
+    "jest-cli": "^24.3.1",
+    "jest-dev-server": "^4.0.0",
+    "jest-puppeteer": "^4.1.0",
     "lint-staged": "^8.1.5",
     "prettier": "^1.16.4",
     "rollup": "^1.4.1",
