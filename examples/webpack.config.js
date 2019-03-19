@@ -3,6 +3,9 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const webpack = require('webpack')
 const fs = require('fs')
 
+const createAlias = (name, fallback) =>
+  fs.existsSync(`./../../${name}`) ? path.resolve(`./../../${name}`) : fallback || name
+
 module.exports = mode => {
   return {
     mode,
@@ -18,7 +21,23 @@ module.exports = mode => {
             loader: 'babel-loader',
             options: {
               babelrc: false,
-              presets: ['@babel/preset-react', '@babel/preset-typescript'],
+              presets: [
+                [
+                  '@babel/preset-env',
+                  {
+                    modules: false,
+                    loose: true,
+                    useBuiltIns: false,
+                    targets: { browsers: 'last 2 Chrome versions' },
+                  },
+                ],
+                '@babel/preset-react',
+                '@babel/preset-typescript',
+              ],
+              plugins: [
+                '@babel/plugin-syntax-dynamic-import',
+                ['@babel/plugin-proposal-class-properties', { loose: true }],
+              ],
             },
           },
         },
@@ -39,6 +58,7 @@ module.exports = mode => {
         three: path.resolve('node_modules/three/src/Three'),
         lodash: path.resolve('../node_modules/lodash-es'),
         'lodash-es': path.resolve('../node_modules/lodash-es'),
+        'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
       },
     },
     plugins: [new HtmlWebpackPlugin({ template: 'public/index.html' })],

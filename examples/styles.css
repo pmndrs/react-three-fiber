@@ -19,6 +19,10 @@ body,
   overflow: hidden;
 }
 
+#root {
+  overflow: auto;
+}
+
 body {
   position: fixed;
   overflow: hidden;
@@ -98,3 +102,23 @@ canvas {
   pointer-events: none;
   overflow: hidden;
 }
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.grid .item {
+  position: relative;
+  width: 50vw;
+  height: 50vw;
+  background: #eee;
+}
+
+@media only screen and (max-width: 480px) {
+  .grid .item {
+    width: 100vw;
+    height: 100vw;
+  }
+}
+

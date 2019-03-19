@@ -23,10 +23,52 @@ const is = {
   },
 }
 
+let globalEffects = []
+export function addEffect(callback) {
+  globalEffects.push(callback)
+}
+
+let running = false
+function renderLoop() {
+  running = true
+  let repeat = 0
+
+  // Run global effects
+  globalEffects.forEach(effect => effect() && repeat++)
+
+  roots.forEach(root => {
+    const state = root.containerInfo.__state
+    const { invalidateFrameloop, frames, active, ready, subscribers, manual, scene, gl, camera } = state.current
+    // If the frameloop is invalidated, do not run another frame
+    if (active && ready && (!invalidateFrameloop || frames > 0)) {
+      // Decrease frame count
+      repeat += --state.current.frames
+      // Run local effects
+      subscribers.forEach(fn => fn(state.current))
+      // Render content
+      if (!manual && scene.children.length) gl.render(scene, camera)
+    }
+  })
+
+  if (repeat !== 0) return requestAnimationFrame(renderLoop)
+  // Flag end of operation
+  running = false
+}
+
+export function invalidate(state) {
+  if (state && state.current) state.current.frames = 60
+  if (!running) {
+    running = true
+    requestAnimationFrame(renderLoop)
+  }
+}
+
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
 export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container) {
+  //console.log(newProps)
+  const state = instance.__state
   if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
   //console.log(newProps, oldProps)
@@ -56,7 +98,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
         } else root[key] = value
-        if (instance.__state) instance.__state.current.invalidate()
+        if (state) invalidate(state)
       }
     })
 
@@ -107,7 +149,7 @@ function appendChild(parentInstance, child) {
       }
     }
   }
-  if (parentInstance.__state) parentInstance.__state.current.invalidate()
+  if (parentInstance.__state) invalidate(parentInstance.__state)
 }
 
 function removeChild(parentInstance, child) {
@@ -127,7 +169,7 @@ function removeChild(parentInstance, child) {
       if (child.obj.dispose) child.obj.dispose()
     }
   }
-  if (parentInstance.__state) parentInstance.__state.current.invalidate()
+  if (parentInstance.__state) invalidate(parentInstance.__state)
 }
 
 function insertBefore(parentInstance, child, beforeChild) {
@@ -144,7 +186,7 @@ function insertBefore(parentInstance, child, beforeChild) {
       ]
     } else child.parent = parentInstance
   }
-  if (parentInstance.__state) parentInstance.__state.current.invalidate()
+  if (parentInstance.__state) invalidate(parentInstance.__state)
 }
 
 const Renderer = Reconciler({
@@ -164,7 +206,6 @@ const Renderer = Reconciler({
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
     if (instance.isObject3D) {
       applyProps(instance, newProps, oldProps)
-      if (instance.__state) instance.__state.current.invalidate()
     } else {
       // This is a data object, let's extract critical information about it
       const parent = instance.parent

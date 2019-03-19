@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { applyProps, render, unmountComponentAtNode } from './reconciler'
+import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
 export const stateContext = React.createContext()
 
@@ -44,7 +44,7 @@ export const Canvas = React.memo(
       camera: undefined,
       scene: undefined,
       size: undefined,
-      frames: 60,
+      frames: 0,
       viewport: (target = new THREE.Vector3(0, 0, 0)) => {
         const distance = state.current.camera.position.distanceTo(target)
         const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
@@ -68,26 +68,6 @@ export const Canvas = React.memo(
         state.current.camera = cam
         setDefaultCamera(cam)
       },
-      invalidate: () => {
-        if (invalidateFrameloop && state.current.frames <= 0) {
-          state.current.frames = 60
-          requestAnimationFrame(state.current.renderLoop)
-        }
-      },
-      renderLoop: () => {
-        if (!state.current.active) return
-        if (state.current.ready) {
-          state.current.subscribers.forEach(fn => fn(state.current))
-          if (!state.current.manual && state.current.scene.children.length) {
-            state.current.gl.render(state.current.scene, state.current.camera)
-          }
-        }
-        // If the frameloop is invalidated, do not run another frame
-        if (!invalidateFrameloop || state.current.frames > 0) {
-          state.current.frames--
-          requestAnimationFrame(state.current.renderLoop)
-        }
-      },
     })
 
     // Writes locals into public state for distribution among subscribers, context, etc
@@ -96,7 +76,8 @@ export const Canvas = React.memo(
       state.current.size = size
       state.current.aspect = size.width / size.height
       state.current.camera = defaultCam
-    }, [ready, size, defaultCam])
+      state.current.invalidateFrameloop = invalidateFrameloop
+    }, [invalidateFrameloop, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -108,7 +89,7 @@ export const Canvas = React.memo(
       state.current.scene.__interaction = []
 
       // Start render-loop
-      requestAnimationFrame(state.current.renderLoop)
+      invalidate(state)
 
       // Clean-up
       return () => {
@@ -125,6 +106,7 @@ export const Canvas = React.memo(
         state.current.camera.aspect = state.current.aspect
         state.current.camera.radius = (size.width + size.height) / 4
         state.current.camera.updateProjectionMatrix()
+        invalidate(state)
       }
     }, [ready, size, defaultCam])
 
@@ -195,7 +177,7 @@ export const Canvas = React.memo(
     // This component is a bridge into the three render context, when it gets rendererd
     // we know we are ready to compile shaders, call subscribers, etc
     const IsReady = useCallback(() => {
-      useEffect(() => void setReady(true), [])
+      useEffect(() => void (setReady(true), invalidate(state)), [])
       return null
     }, [])
 
