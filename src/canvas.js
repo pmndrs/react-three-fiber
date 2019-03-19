@@ -17,7 +17,7 @@ function useMeasure() {
 }
 
 export const Canvas = React.memo(
-  ({ children, props, camera, style, pixelRatio, invalidateFrameloop = false, ...rest }) => {
+  ({ children, props, camera, style, pixelRatio, invalidateFrameloop = false, onCreated, ...rest }) => {
     // Local, reactive state
     const canvas = useRef()
     const [ready, setReady] = useState(false)
@@ -177,7 +177,11 @@ export const Canvas = React.memo(
     // This component is a bridge into the three render context, when it gets rendererd
     // we know we are ready to compile shaders, call subscribers, etc
     const IsReady = useCallback(() => {
-      useEffect(() => void (setReady(true), invalidate(state)), [])
+      const activate = useCallback(() => void (setReady(true), invalidate(state)), [])
+      useEffect(() => {
+        if (onCreated) onCreated(state.current).then(activate)
+        else activate()
+      }, [])
       return null
     }, [])
 
