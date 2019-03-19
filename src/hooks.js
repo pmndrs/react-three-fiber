@@ -17,7 +17,7 @@ export function useRender(fn, takeOverRenderloop) {
 }
 
 export function useThree(fn) {
-  const { subscribe, ...props } = useContext(stateContext)
+  const { subscribe, renderLoop, ...props } = useContext(stateContext)
   return props
 }
 

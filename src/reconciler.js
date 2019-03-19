@@ -56,6 +56,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
         } else root[key] = value
+        if (instance.__state) instance.__state.current.invalidate()
       }
     })
 
@@ -81,8 +82,15 @@ function createInstance(type, { args = [], ...props }, container) {
     const target = catalogue[name] || THREE[name]
     instance = Array.isArray(args) ? new target(...args) : new target(args)
   }
+  // Apply initial props
   applyProps(instance, props, {}, false, container)
-  return !instance.isObject3D ? { obj: instance, parent: undefined } : instance
+
+  if (!instance.isObject3D) {
+    instance = { obj: instance, parent: undefined, __state: container.__state }
+  } else {
+    instance.__state = container.__state
+  }
+  return instance
 }
 
 function appendChild(parentInstance, child) {
@@ -99,6 +107,7 @@ function appendChild(parentInstance, child) {
       }
     }
   }
+  if (parentInstance.__state) parentInstance.__state.current.invalidate()
 }
 
 function removeChild(parentInstance, child) {
@@ -118,6 +127,7 @@ function removeChild(parentInstance, child) {
       if (child.obj.dispose) child.obj.dispose()
     }
   }
+  if (parentInstance.__state) parentInstance.__state.current.invalidate()
 }
 
 function insertBefore(parentInstance, child, beforeChild) {
@@ -134,6 +144,7 @@ function insertBefore(parentInstance, child, beforeChild) {
       ]
     } else child.parent = parentInstance
   }
+  if (parentInstance.__state) parentInstance.__state.current.invalidate()
 }
 
 const Renderer = Reconciler({
@@ -153,6 +164,7 @@ const Renderer = Reconciler({
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
     if (instance.isObject3D) {
       applyProps(instance, newProps, oldProps)
+      if (instance.__state) instance.__state.current.invalidate()
     } else {
       // This is a data object, let's extract critical information about it
       const parent = instance.parent
@@ -199,10 +211,11 @@ const Renderer = Reconciler({
   },
 })
 
-export function render(element, container) {
+export function render(element, container, state) {
   let root = roots.get(container)
   if (!root) {
     root = Renderer.createContainer(container)
+    container.__state = state
     roots.set(container, root)
   }
   Renderer.updateContainer(element, root, null, undefined)

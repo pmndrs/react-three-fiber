@@ -71,6 +71,7 @@ export default function App() {
   return (
     <div class="main">
       <Canvas
+        invalidateFrameloop={true}
         camera={{
           fov: 80,
           position: [0, 0, 2000],
