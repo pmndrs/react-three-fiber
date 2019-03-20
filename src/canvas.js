@@ -179,8 +179,11 @@ export const Canvas = React.memo(
     const IsReady = useCallback(() => {
       const activate = useCallback(() => void (setReady(true), invalidate(state)), [])
       useEffect(() => {
-        if (onCreated) onCreated(state.current).then(activate)
-        else activate()
+        if (onCreated) {
+          const result = onCreated(state.current)
+          if (result.then) return void result.then(activate)
+        }
+        activate()
       }, [])
       return null
     }, [])
