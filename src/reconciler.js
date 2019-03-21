@@ -47,7 +47,9 @@ function renderLoop() {
       // Run local effects
       subscribers.forEach(fn => fn(state.current))
       // Render content
-      if (!manual && scene.children.length) gl.render(scene, camera)
+      if (!manual && scene.children.length) {
+        gl.render(scene, camera)
+      }
     }
   })
 

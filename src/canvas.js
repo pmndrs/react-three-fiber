@@ -68,9 +68,7 @@ export const Canvas = React.memo(
         state.current.camera = cam
         setDefaultCamera(cam)
       },
-      invalidate: frames => {
-        invalidate(state, frames)
-      },
+      invalidate: () => invalidate(state),
     })
 
     // Writes locals into public state for distribution among subscribers, context, etc
@@ -90,6 +88,8 @@ export const Canvas = React.memo(
       state.current.canvas = canvas.current
       state.current.scene = new THREE.Scene()
       state.current.scene.__interaction = []
+      //window.scene = state.current.scene
+      //window.camera = state.current.camera
 
       // Start render-loop
       invalidate(state)
