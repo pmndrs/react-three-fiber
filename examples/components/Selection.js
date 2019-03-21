@@ -1,7 +1,7 @@
 import * as THREE from 'three'
-import React, { useMemo, useCallback } from 'react'
-import { Canvas, useThree, useRender } from 'react-three-fiber'
-import { animated as anim } from 'react-spring/three'
+import React, { useMemo, useCallback, useState } from 'react'
+import { Canvas, useThree } from 'react-three-fiber'
+import { useSpring, animated as a } from 'react-spring/three'
 import img1 from '../resources/images/crop-1.jpg'
 import img2 from '../resources/images/crop-2.jpg'
 import disp1 from '../resources/images/crop-13.jpg'
@@ -15,16 +15,26 @@ function Image({ url1, ...props }) {
     return texture
   }, [url1])
 
-  const hover = useCallback(e => console.log('hover', e.object.uuid))
+  const [active, set] = useState(false)
+  const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 2 : 0] })
+  const hover = useCallback(e => {
+    e.stopPropagation()
+    console.log('hover', e.object.uuid)
+  })
   const unhover = useCallback(e => console.log('unhover'))
+  const click = useCallback(e => {
+    e.stopPropagation()
+    console.log('click', e)
+    set(active => !active)
+  }, [])
 
   return (
-    <mesh {...props} onHover={hover} onUnhover={unhover}>
+    <a.mesh {...props} onHover={hover} onUnhover={unhover} onClick={click} {...animatedProps}>
       <planeBufferGeometry name="geometry" args={[4, 4]} />
-      <anim.meshBasicMaterial name="material">
+      <meshBasicMaterial name="material">
         <primitive name="map" object={texture} />
-      </anim.meshBasicMaterial>
-    </mesh>
+      </meshBasicMaterial>
+    </a.mesh>
   )
 }
 

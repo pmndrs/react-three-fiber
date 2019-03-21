@@ -78,7 +78,8 @@ export const Canvas = React.memo(
       state.current.aspect = size.width / size.height
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
-    }, [invalidateFrameloop, ready, size, defaultCam])
+      state.current.cursor = cursor
+    }, [invalidateFrameloop, ready, size, defaultCam, cursor])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -121,61 +122,14 @@ export const Canvas = React.memo(
       raycaster.setFromCamera(mouse, state.current.camera)
       // TODO only inspect onbjects that have handlers
       const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-      hits.forEach(fn)
+      //.sort((a, b) => b.object.id - a.object.id)
+      for (let hit of hits) {
+        let flag
+        fn({ ...hit, stopPropagation: () => (flag = false) })
+        if (flag === false) break
+      }
       return hits
     }, [])
-
-    useEffect(() => {
-      const hovered = {}
-      const handleMove = event => {
-        let hover = false
-        const hits = intersect(event, data => {
-          const object = data.object
-          const handlers = object.__handlers
-          if (handlers.hover) {
-            hover = true
-            if (!hovered[object.uuid]) {
-              hovered[object.uuid] = object
-              handlers.hover(data)
-            }
-          }
-        })
-
-        if (hover) cursor !== 'pointer' && setCursor('pointer')
-        else cursor !== 'default' && setCursor('default')
-
-        Object.values(hovered).forEach(object => {
-          if (!hits.length || !hits.find(i => i.object === object)) {
-            if (object.__handlers.unhover) {
-              object.__handlers.unhover()
-            }
-            delete hovered[object.uuid]
-          }
-        })
-
-        /*if (intersects.length !== hits.length || intersects.some((h, index) => h.object !== hits[index].object))
-        setIntersects(hits)*/
-      }
-
-      const handleClick = event => {
-        const clicked = {}
-        intersect(event, data => {
-          const object = data.object
-          const handlers = object.__handlers
-          if (handlers.click && !clicked[object.uuid]) {
-            clicked[object.uuid] = object
-            handlers.click(data)
-          }
-        })
-      }
-
-      window.addEventListener('mousemove', handleMove, { passive: true })
-      window.addEventListener('mouseup', handleClick, { passive: true })
-      return () => {
-        window.removeEventListener('mousemove', handleMove)
-        window.removeEventListener('mouseup', handleClick)
-      }
-    })
 
     // This component is a bridge into the three render context, when it gets rendererd
     // we know we are ready to compile shaders, call subscribers, etc
@@ -205,11 +159,56 @@ export const Canvas = React.memo(
       }
     })
 
+    const handleClick = useCallback(event => {
+      if (!state.current.ready) return
+      const clicked = {}
+      intersect(event, data => {
+        const object = data.object
+        const handlers = object.__handlers
+        if (handlers.click && !clicked[object.uuid]) {
+          clicked[object.uuid] = object
+          handlers.click(data)
+        }
+      })
+    })
+
+    const hovered = useRef({})
+    const handleMove = useCallback(event => {
+      if (!state.current.ready) return
+      let hover = false
+      const hits = intersect(event, data => {
+        const object = data.object
+        const handlers = object.__handlers
+        if (handlers.hover) {
+          hover = true
+          if (!hovered.current[object.uuid]) {
+            hovered.current[object.uuid] = object
+            handlers.hover(data)
+          }
+        }
+      })
+
+      if (hover) state.current.cursor !== 'pointer' && setCursor('pointer')
+      else state.current.cursor !== 'default' && setCursor('default')
+
+      Object.values(hovered.current).forEach(object => {
+        if (!hits.length || !hits.find(i => i.object === object)) {
+          if (object.__handlers.unhover) object.__handlers.unhover()
+          delete hovered.current[object.uuid]
+        }
+      })
+    }, [])
+
     // Render the canvas into the dom
     return (
       <div
         {...bind}
         {...rest}
+        onClick={handleClick}
+        onMouseMove={handleMove}
+        //onMouseDown={e => console.log('down')}
+        //onMouseUp={e => console.log('up')}
+        //onMouseMove={e => console.log('move')}
         style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
       </div>
