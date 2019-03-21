@@ -24,7 +24,6 @@ import * as THREE from 'three'
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
-import './styles.css' // Make sure to give #root a size, or the canvas will stretch
 
 function Thing({ vertices, color }) {
   return (
