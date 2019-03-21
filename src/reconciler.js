@@ -42,7 +42,8 @@ function renderLoop() {
     // If the frameloop is invalidated, do not run another frame
     if (active && ready && (!invalidateFrameloop || frames > 0)) {
       // Decrease frame count
-      repeat += --state.current.frames
+      state.current.frames = Math.max(0, state.current.frames - 1)
+      repeat += !invalidateFrameloop ? 1 : state.current.frames
       // Run local effects
       subscribers.forEach(fn => fn(state.current))
       // Render content
@@ -55,8 +56,9 @@ function renderLoop() {
   running = false
 }
 
-export function invalidate(state) {
-  if (state && state.current) state.current.frames = 60
+export function invalidate(state, frames = 1) {
+  if (state && state.current) state.current.frames = frames
+  else if (state === true) roots.forEach(root => (root.containerInfo.__state.current.frames = frames))
   if (!running) {
     running = true
     requestAnimationFrame(renderLoop)
@@ -72,7 +74,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
   if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
   //console.log(newProps, oldProps)
-  const sameProps = Object.keys(newProps).filter(key => newProps[key] === oldProps[key])
+  const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
@@ -98,6 +100,7 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
         } else root[key] = value
+        //console.log(key, value, filteredProps)
         if (state) invalidate(state)
       }
     })

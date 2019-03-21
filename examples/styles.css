@@ -122,3 +122,15 @@ canvas {
   }
 }
 
+.scroll-container {
+  position: absolute;
+  overflow: auto;
+  top: 0px;
+  width: 100%;
+  height: 100vh;
+  font-size: 20em;
+  font-weight: 800;
+  line-height: 0.9em;
+}
+
+

@@ -68,6 +68,9 @@ export const Canvas = React.memo(
         state.current.camera = cam
         setDefaultCamera(cam)
       },
+      invalidate: frames => {
+        invalidate(state, frames)
+      },
     })
 
     // Writes locals into public state for distribution among subscribers, context, etc
