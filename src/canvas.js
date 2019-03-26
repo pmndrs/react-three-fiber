@@ -112,6 +112,7 @@ export const Canvas = React.memo(
     }, [ready, size, defaultCam])
 
     const intersect = useCallback((event, fn) => {
+      state.current.canvasRect = canvas.current.getBoundingClientRect()
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
@@ -129,18 +130,12 @@ export const Canvas = React.memo(
           pageY: event.pageY,
           shiftKey: event.shiftKey,
           preventDefault: event.preventDefault,
+          type: event.type,
           stopPropagation: () => (stopped.current = true),
           // react-use-gesture transforms ...
-          transform: props => {
-            const aW = state.current.size.width / state.current.viewport.width
-            const aH = state.current.size.height / state.current.viewport.height
-            return {
-              ...props,
-              delta: [props.delta[0] / aW, -props.delta[1] / aH],
-              local: [props.local[0] / aW, -props.local[1] / aH],
-              direction: [props.direction[0], -props.direction[1]],
-              velocity: props.velocity / aW,
-            }
+          transform: {
+            x: x => x / (state.current.size.width / state.current.viewport.width),
+            y: y => -y / (state.current.size.height / state.current.viewport.height),
           },
         })
         if (stopped.current === true) break

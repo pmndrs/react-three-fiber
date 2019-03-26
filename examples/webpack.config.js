@@ -59,7 +59,7 @@ module.exports = mode => {
         lodash: path.resolve('../node_modules/lodash-es'),
         'lodash-es': path.resolve('../node_modules/lodash-es'),
         'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
-        'react-use-gesture': createAlias('react-use-gesture', 'react-use-gesture'),
+        'react-use-gesture': createAlias('react-use-gesture/index.js', 'react-use-gesture'),
       },
     },
     plugins: [new HtmlWebpackPlugin({ template: 'public/index.html' })],
