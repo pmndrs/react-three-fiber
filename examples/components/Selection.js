@@ -5,9 +5,11 @@ import { useSpring, animated as a } from 'react-spring/three'
 import img1 from '../resources/images/crop-1.jpg'
 import img2 from '../resources/images/crop-2.jpg'
 import disp1 from '../resources/images/crop-13.jpg'
+import useGesture from 'react-use-gesture'
+import { add, scale } from 'vec-la'
 
 const loader = new THREE.TextureLoader()
-function Image({ url1, ...props }) {
+function Image({ url1, position = [0, 0, 0], ...props }) {
   const { invalidate } = useThree()
   const texture = useMemo(() => {
     const texture = loader.load(url1, invalidate)
@@ -16,20 +18,36 @@ function Image({ url1, ...props }) {
   }, [url1])
 
   const [active, set] = useState(false)
-  const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 2 : 0] })
+  const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 4 : 0] })
   const hover = useCallback(e => {
     e.stopPropagation()
     console.log('hover', e.object.uuid)
-  })
-  const unhover = useCallback(e => console.log('unhover'))
+  }, [])
+  const unhover = useCallback(e => console.log('unhover', e.object.uuid), [])
+  const move = useCallback(e => console.log('move', e), [])
   const click = useCallback(e => {
     e.stopPropagation()
     console.log('click', e)
     set(active => !active)
   }, [])
 
+  const [{ xy }, setXY] = useSpring(() => ({ xy: [0, 0] }))
+  const bind = useGesture(({ event, down, delta, velocity, direction, temp = xy.getValue() }) => {
+    event.stopPropagation()
+    setXY({ xy: add(delta, temp) })
+    return temp
+  })
+
   return (
-    <a.mesh {...props} onHover={hover} onUnhover={unhover} onClick={click} {...animatedProps}>
+    <a.mesh
+      {...props}
+      position={xy.interpolate((x, y) => [x + position[0], y + position[1], position[2]])}
+      //onMouseEnter={hover}
+      //onMouseLeave={unhover}
+      //onMouseMove={move}
+      onClick={click}
+      {...bind()}
+      {...animatedProps}>
       <planeBufferGeometry name="geometry" args={[4, 4]} />
       <meshBasicMaterial name="material">
         <primitive name="map" object={texture} />
@@ -42,7 +60,7 @@ export default function App() {
   return (
     <Canvas className="canvas" invalidateFrameloop>
       <Image url1={img1} url2={img2} disp={disp1} />
-      <Image url1={img2} url2={img1} disp={disp1} position={[2, 2, 0]} />
+      <Image url1={img2} url2={img1} disp={disp1} position={[2, 2, 0.000000001]} />
     </Canvas>
   )
 }
