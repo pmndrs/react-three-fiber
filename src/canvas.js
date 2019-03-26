@@ -23,7 +23,6 @@ export const Canvas = React.memo(
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
     const [intersects, setIntersects] = useState([])
-    const [cursor, setCursor] = useState('default')
     const [raycaster] = useState(() => new THREE.Raycaster())
     const [mouse] = useState(() => new THREE.Vector2())
     const [defaultCam, setDefaultCamera] = useState(() => {
@@ -44,14 +43,9 @@ export const Canvas = React.memo(
       camera: undefined,
       scene: undefined,
       size: undefined,
+      canvasRect: undefined,
       frames: 0,
-      viewport: (target = new THREE.Vector3(0, 0, 0)) => {
-        const distance = state.current.camera.position.distanceTo(target)
-        const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
-        const height = 2 * Math.tan(fov / 2) * distance // visible height
-        const width = height * state.current.camera.aspect
-        return { width, height }
-      },
+      viewport: undefined,
       subscribe: (fn, main) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -75,11 +69,9 @@ export const Canvas = React.memo(
     useEffect(() => {
       state.current.ready = ready
       state.current.size = size
-      state.current.aspect = size.width / size.height
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
-      state.current.cursor = cursor
-    }, [invalidateFrameloop, ready, size, defaultCam, cursor])
+    }, [invalidateFrameloop, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -89,8 +81,6 @@ export const Canvas = React.memo(
       state.current.canvas = canvas.current
       state.current.scene = new THREE.Scene()
       state.current.scene.__interaction = []
-      //window.scene = state.current.scene
-      //window.camera = state.current.camera
 
       // Start render-loop
       invalidate(state)
@@ -99,12 +89,19 @@ export const Canvas = React.memo(
       return () => {
         state.current.active = false
         unmountComponentAtNode(state.current.scene)
-        // TODO: Clean up and dispose scene ...
       }
     }, [])
 
     // Adjusts default camera
     useEffect(() => {
+      state.current.aspect = size.width / size.height || 0
+      const target = new THREE.Vector3(0, 0, 0)
+      const distance = state.current.camera.position.distanceTo(target)
+      const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+      const height = 2 * Math.tan(fov / 2) * distance // visible height
+      const width = height * state.current.aspect
+      state.current.viewport = { width, height }
+      state.current.canvasRect = canvas.current.getBoundingClientRect()
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
         state.current.camera.aspect = state.current.aspect
@@ -115,18 +112,38 @@ export const Canvas = React.memo(
     }, [ready, size, defaultCam])
 
     const intersect = useCallback((event, fn) => {
-      const canvasRect = canvas.current.getBoundingClientRect()
+      const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
       mouse.set(x, y, 0.5)
       raycaster.setFromCamera(mouse, state.current.camera)
-      // TODO only inspect onbjects that have handlers
       const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-      //.sort((a, b) => b.object.id - a.object.id)
       for (let hit of hits) {
-        let flag
-        fn({ ...hit, stopPropagation: () => (flag = false) })
-        if (flag === false) break
+        let stopped = { current: false }
+        fn({
+          ...hit,
+          stopped,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          pageX: event.pageX,
+          pageY: event.pageY,
+          shiftKey: event.shiftKey,
+          preventDefault: event.preventDefault,
+          stopPropagation: () => (stopped.current = true),
+          // react-use-gesture transforms ...
+          transform: props => {
+            const aW = state.current.size.width / state.current.viewport.width
+            const aH = state.current.size.height / state.current.viewport.height
+            return {
+              ...props,
+              delta: [props.delta[0] / aW, -props.delta[1] / aH],
+              local: [props.local[0] / aW, -props.local[1] / aH],
+              direction: [props.direction[0], -props.direction[1]],
+              velocity: props.velocity / aW,
+            }
+          },
+        })
+        if (stopped.current === true) break
       }
       return hits
     }, [])
@@ -159,42 +176,51 @@ export const Canvas = React.memo(
       }
     })
 
-    const handleClick = useCallback(event => {
-      if (!state.current.ready) return
-      const clicked = {}
-      intersect(event, data => {
-        const object = data.object
-        const handlers = object.__handlers
-        if (handlers.click && !clicked[object.uuid]) {
-          clicked[object.uuid] = object
-          handlers.click(data)
-        }
-      })
-    })
+    const handleMouse = useCallback(
+      name => event => {
+        if (!state.current.ready) return
+        intersect(event, data => {
+          const object = data.object
+          const handlers = object.__handlers
+          if (handlers[name]) handlers[name](data)
+        })
+      },
+      []
+    )
 
     const hovered = useRef({})
     const handleMove = useCallback(event => {
       if (!state.current.ready) return
-      let hover = false
       const hits = intersect(event, data => {
         const object = data.object
         const handlers = object.__handlers
-        if (handlers.hover) {
-          hover = true
+        // Call mouse move
+        if (handlers.mouseMove) handlers.mouseMove(data)
+        // Check if mouse enter is present
+        if (handlers.mouseEnter) {
           if (!hovered.current[object.uuid]) {
-            hovered.current[object.uuid] = object
-            handlers.hover(data)
+            // If the object wasn't previously hovered, book it and call its handler
+            hovered.current[object.uuid] = data
+            handlers.mouseEnter(data)
+          } else if (hovered.current[object.uuid].stopped.current) {
+            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+            data.stopPropagation()
+            // In fact, wwe can safely remove them from the cache
+            Object.values(hovered.current).forEach(data => {
+              if (data.object.uuid !== object.uuid) {
+                if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave(data)
+                delete hovered.current[data.object.uuid]
+              }
+            })
           }
         }
       })
 
-      if (hover) state.current.cursor !== 'pointer' && setCursor('pointer')
-      else state.current.cursor !== 'default' && setCursor('default')
-
-      Object.values(hovered.current).forEach(object => {
-        if (!hits.length || !hits.find(i => i.object === object)) {
-          if (object.__handlers.unhover) object.__handlers.unhover()
-          delete hovered.current[object.uuid]
+      // Take care of unhover
+      Object.values(hovered.current).forEach(data => {
+        if (!hits.length || !hits.find(i => i.object === data.object)) {
+          if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave(data)
+          delete hovered.current[data.object.uuid]
         }
       })
     }, [])
@@ -204,12 +230,11 @@ export const Canvas = React.memo(
       <div
         {...bind}
         {...rest}
-        onClick={handleClick}
+        onClick={handleMouse('click')}
+        onMouseUp={handleMouse('mouseUp')}
+        onMouseDown={handleMouse('mouseDown')}
         onMouseMove={handleMove}
-        //onMouseDown={e => console.log('down')}
-        //onMouseUp={e => console.log('up')}
-        //onMouseMove={e => console.log('move')}
-        style={{ cursor, position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
       </div>
     )
