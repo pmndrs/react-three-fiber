@@ -111,38 +111,6 @@ export const Canvas = React.memo(
       }
     }, [ready, size, defaultCam])
 
-    const intersect = useCallback((event, fn) => {
-      state.current.canvasRect = canvas.current.getBoundingClientRect()
-      const canvasRect = state.current.canvasRect
-      const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
-      const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
-      mouse.set(x, y, 0.5)
-      raycaster.setFromCamera(mouse, state.current.camera)
-      const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-      for (let hit of hits) {
-        let stopped = { current: false }
-        fn({
-          ...hit,
-          stopped,
-          clientX: event.clientX,
-          clientY: event.clientY,
-          pageX: event.pageX,
-          pageY: event.pageY,
-          shiftKey: event.shiftKey,
-          preventDefault: event.preventDefault,
-          type: event.type,
-          stopPropagation: () => (stopped.current = true),
-          // react-use-gesture transforms ...
-          transform: {
-            x: x => x / (state.current.size.width / state.current.viewport.width),
-            y: y => -y / (state.current.size.height / state.current.viewport.height),
-          },
-        })
-        if (stopped.current === true) break
-      }
-      return hits
-    }, [])
-
     // This component is a bridge into the three render context, when it gets rendererd
     // we know we are ready to compile shaders, call subscribers, etc
     const IsReady = useCallback(() => {
@@ -170,6 +138,39 @@ export const Canvas = React.memo(
         )
       }
     })
+
+    const intersect = useCallback((event, fn) => {
+      state.current.canvasRect = canvas.current.getBoundingClientRect()
+      const canvasRect = state.current.canvasRect
+      const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
+      const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
+      mouse.set(x, y, 0.5)
+      raycaster.setFromCamera(mouse, state.current.camera)
+      const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+      for (let hit of hits) {
+        let stopped = { current: false }
+        fn({
+          ...hit,
+          stopped,
+          event,
+          clientX: event.clientX,
+          clientY: event.clientY,
+          pageX: event.pageX,
+          pageY: event.pageY,
+          shiftKey: event.shiftKey,
+          preventDefault: event.preventDefault,
+          type: event.type,
+          stopPropagation: () => (stopped.current = true),
+          // react-use-gesture transforms ...
+          transform: {
+            x: x => x / (state.current.size.width / state.current.viewport.width),
+            y: y => -y / (state.current.size.height / state.current.viewport.height),
+          },
+        })
+        if (stopped.current === true) break
+      }
+      return hits
+    }, [])
 
     const handleMouse = useCallback(
       name => event => {
@@ -228,6 +229,8 @@ export const Canvas = React.memo(
         onClick={handleMouse('click')}
         onMouseUp={handleMouse('mouseUp')}
         onMouseDown={handleMouse('mouseDown')}
+        onWheel={handleMouse('wheel')}
+        onScroll={handleMouse('scroll')}
         onMouseMove={handleMove}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
