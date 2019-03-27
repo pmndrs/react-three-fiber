@@ -152,7 +152,7 @@ export const Canvas = React.memo(
         fn({
           ...hit,
           stopped,
-          event,
+          event: Object.assign({}, event),
           clientX: event.clientX,
           clientY: event.clientY,
           pageX: event.pageX,
