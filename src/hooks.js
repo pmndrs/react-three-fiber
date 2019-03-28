@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useRef, useContext, useEffect, useMemo, useState } from 'react'
 import { stateContext } from './canvas'
 
 export function useRender(fn, takeOverRenderloop) {
@@ -16,25 +16,18 @@ export function useRender(fn, takeOverRenderloop) {
   }, [])
 }
 
-export function useThree(fn) {
+export function useThree() {
   const { subscribe, ...props } = useContext(stateContext)
   return props
 }
 
-export function useCamera(instance, ...args) {
-  const { size, setDefaultCamera } = useThree()
-  const [camera] = useState(() => {
-    const camera = new instance(...args)
-    setDefaultCamera(camera)
-    return camera
-  })
-  useMemo(() => {
-    camera.aspect = size.width / size.height
-    camera.radius = (size.width + size.height) / 4
-    camera.updateProjectionMatrix()
-  }, [size])
-  return camera
+export function useUpdate(callback, dependents, optionalRef) {
+  const { invalidate } = useContext(stateContext)
+  let ref = useRef()
+  if (optionalRef) ref = optionalRef
+  useEffect(() => {
+    callback(ref.current)
+    invalidate()
+  }, dependents)
+  return ref
 }
-
-// TODO
-export function useSelection() {}

@@ -48,9 +48,9 @@ function Image({ url1, position = [0, 0, 0], ...props }) {
       onClick={click}
       {...bind()}
       {...animatedProps}>
-      <planeBufferGeometry name="geometry" args={[4, 4]} />
-      <meshBasicMaterial name="material">
-        <primitive name="map" object={texture} />
+      <planeBufferGeometry attach="geometry" args={[4, 4]} />
+      <meshBasicMaterial attach="material">
+        <primitive attach="map" object={texture} />
       </meshBasicMaterial>
     </a.mesh>
   )

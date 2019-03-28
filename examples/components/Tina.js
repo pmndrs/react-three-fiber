@@ -21,7 +21,6 @@ const loaders = urls.map(
 
 const Scene = React.memo(() => {
   const { viewport } = useThree()
-  const { width, height } = viewport()
   const [page, setPage] = useState(0)
   const [shapes, setShape] = useState([])
   useEffect(() => void setInterval(() => setPage(i => (i + 1) % urls.length), 4000), [])
@@ -44,7 +43,7 @@ const Scene = React.memo(() => {
   })
   return (
     <>
-      <mesh scale={[width * 2, height * 2, 1]} rotation={[0, deg(-20), 0]}>
+      <mesh scale={[viewport.width * 2, viewport.height * 2, 1]} rotation={[0, deg(-20), 0]}>
         <planeGeometry name="geometry" args={[1, 1]} />
         <anim.meshPhongMaterial name="material" color={color} depthTest={false} />
       </mesh>
@@ -52,14 +51,14 @@ const Scene = React.memo(() => {
         {transitions.map(({ item: { shape, color, index }, key, props: { opacity, position } }) => (
           <anim.mesh key={key} position={position.interpolate((x, y, z) => [x, y, z + -index * 50])}>
             <anim.meshPhongMaterial
-              name="material"
+              attach="material"
               color={color}
               opacity={opacity}
               side={THREE.DoubleSide}
               depthWrite={false}
               transparent
             />
-            <shapeBufferGeometry name="geometry" args={[shape]} />
+            <shapeBufferGeometry attach="geometry" args={[shape]} />
           </anim.mesh>
         ))}
       </anim.group>

@@ -30,18 +30,18 @@ function Thing({ vertices, color }) {
     <group ref={ref => console.log('we have access to the instance')}>
       <line>
         <geometry
-          name="geometry"
+          attach="geometry"
           vertices={vertices.map(v => new THREE.Vector3(...v))}
           onUpdate={self => (self.verticesNeedUpdate = true)}
         />
-        <lineBasicMaterial name="material" color="black" />
+        <lineBasicMaterial attach="material" color="black" />
       </line>
       <mesh 
         onClick={e => console.log('click')} 
         onHover={e => console.log('hover')} 
         onUnhover={e => console.log('unhover')}>
-        <octahedronGeometry name="geometry" />
-        <meshBasicMaterial name="material" color="peachpuff" opacity={0.5} transparent />
+        <octahedronGeometry attach="geometry" />
+        <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
     </group>
   )
@@ -53,6 +53,20 @@ ReactDOM.render(
   </Canvas>,
   document.getElementById('root')
 )
+```
+
+# Canvas
+
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, *not dom element*!
+
+```jsx
+<Canvas
+  children                      // Either a function child (which receives state) or regular children
+  gl                            // These props go into the webGL renderer
+  camera                        // And these go in to the default camera
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
+  invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
+  onCreated />                  // Callback when vdom is ready, return a promise to prevent FOC
 ```
 
 # Objects and properties
@@ -73,23 +87,40 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
-You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
+You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
 The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
 
 ```jsx
 <mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
-  <sphereGeometry name="geometry" args={[1, 16, 16]} />
-  <meshStandardMaterial name="material" color="indianred" transparent />
+  <sphereGeometry attach="geometry" args={[1, 16, 16]} />
+  <meshStandardMaterial attach="material" color="indianred" transparent />
 </mesh>
 ```
 
-You can nest primitive objects, good for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
-<meshBasicMaterial name="material">
-  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+<meshBasicMaterial attach="material">
+  <texture attach="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
+```
+
+Sometimes attaching isn't enough, for instance effects cling to an array called "passes" of a the parental effect-composer. In that case you use `attachArray` which adds the object to the target array and takes it out on unmount:
+
+```jsx
+<effectComposer>
+  <renderPass attachArray="passes" />
+  <glitchPass attachArray="passes" renderToScreen />
+</effectComposer>
+```
+
+You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position. 
+
+```jsx
+<bufferGeometry>
+  <bufferAttribute attachObject={['attributes', 'position']} array={vertices} itemSize={3} />
+</bufferGeometry>
 ```
 
 #### Piercing into nested properties
@@ -111,35 +142,72 @@ return <primitive object={mesh} />
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`), hovering-state and clicks. Touch follows soon!
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`) and mouse events. Touch follows soon!
 
 ```jsx
 <mesh
   onClick={e => console.log('click')}
-  onHover={e => console.log('hover')}
-  onUnhover={e => console.log('unhover')}
+  onMouseUp={e => console.log('mouse button up')}
+  onMouseDown={e => console.log('mouse button down')}
+  onMouseEnter={e => console.log('hover')}
+  onMouseLeave={e => console.log('unhover')}
+  onMouseMove={e => console.log('mouse moves')}
+  onWheel={e => console.log('wheel spins')}
   onUpdate={self => console.log('props have been updated')}
 />
 ```
 
-# Gl data & hooking into the render loop
+# Hooks
 
-Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
+All hooks can only be used *inside* the Canvas element because they rely on context updates!
+
+#### useThree
 
 ```jsx
-import { Canvas, useRender, useThree } from 'react-three-fiber'
+import { useThree } from 'react-three-fiber'
 
-function App() {
-  // gl is the webgl-renderer
-  // canvas the dom element that was created
-  // size the bounds of the view (which stretches 100% and auto-adjusts)
-  // viewport is the calculated screen-size, it's a function
-  const { gl, canvas, scene, camera, size, viewport } = useThree()
-  // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-  // Add a "true" as the 2nd argument and you take over the render-loop
-  useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
-  return <group />
-}
+const { 
+  gl,               // WebGL renderer
+  canvas,           // canvas the dom element that was created
+  scene,            // Default scene
+  camera,           // Default camera
+  size,             // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport,         // Bounds of the viewport in 3d units
+  invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  setDefaultCamera  // Sets the default camera
+} = useThree()
+```
+
+#### useRender
+
+If you're running effects, postprocessings, controls, etc that need to get updated every frame, useRender gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
+
+```jsx
+import { useRender } from 'react-three-fiber'
+
+// Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
+useRender(state => console.log("i'm in the render-loop"))
+
+// Add a "true" as the 2nd argument and you take over the render-loop completely
+useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
+```
+
+#### useUpdate
+
+Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate. 
+
+```jsx
+import { useUpdate } from 'react-three-fiber'
+
+const ref = useUpdate( 
+  geometry => {
+    geometry.addAttribute('position', getCubeVertices(x, y, z))
+    geometry.attributes.position.needsUpdate = true
+    geometry.computeBoundingSphere()
+  }, 
+  [x, y, z] // execute only if these properties change
+)
+return <bufferGeometry ref={ref} />
 ```
 
 # Receipes
@@ -153,9 +221,9 @@ function Image({ url }) {
   const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[1, 1]} />
-      <meshLambertMaterial name="material" transparent>
-        <primitive name="map" object={texture} />
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <meshLambertMaterial attach="material" transparent>
+        <primitive attach="map" object={texture} />
       </meshLambertMaterial>
     </mesh>
   )
@@ -182,8 +250,8 @@ function Effects({ factor }) {
   useRender(() => composer.current.obj.render(), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
-      <renderPass name="passes" args={[scene, camera]} />
-      <glitchPass name="passes" factor={factor} renderToScreen />
+      <renderPass attachArray="passes" args={[scene, camera]} />
+      <glitchPass attachArray="passes" factor={factor} renderToScreen />
     </effectComposer>
   )
 }
@@ -243,8 +311,8 @@ function Extrusion({ start = [0,0], paths, ...props }) {
 
   return (
     <mesh>
-      <extrudeGeometry name="geometry" args={[shape, props]} />
-      <meshPhongMaterial name="material" />
+      <extrudeGeometry attach="geometry" args={[shape, props]} />
+      <meshPhongMaterial attach="material" />
     </mesh>
   )
 }
@@ -281,9 +349,9 @@ function CrossFade({ url1, url2, disp }) {
   }, [url1, url2, disp])
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[3.8, 3.8]} />
+      <planeBufferGeometry attach="geometry" args={[3.8, 3.8]} />
       <shaderMaterial
-        name="material"
+        attach="material"
         args={[CrossFadeShader]}
         uniforms-texture-value={texture1}
         uniforms-texture2-value={texture2}
@@ -293,4 +361,42 @@ function CrossFade({ url1, url2, disp }) {
     </mesh>
   )
 }
+```
+
+## Rendering only when needed
+
+By default it renders like a game loop, which isn't that battery efficient. Switch on `invalidateFrameloop` to activate loop invalidation, which is automatic most of the time.
+
+```jsx
+<Canvas invalidateFrameloop ... />
+```
+
+Sometimes you must be able to kick off frames manually, for instance when you're dealing with async stuff or camera controls:
+
+```jsx
+const { invalidate } = useThree()
+const texture = useMemo(() => loader.load(url1, invalidate), [url1])
+```
+
+## Switching the default renderer
+
+If you want to exchange the default renderer you can. But, you will loose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
+
+```jsx
+import { render, unmountComponentAtNode } from 'react-three-fiber'
+
+const renderer = new THREE.SVGRenderer()
+renderer.setClearColor(0x000000)
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.domElement)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.position.z = 35
+const scene = new THREE.Scene()
+
+render((
+  <mesh>
+    <sphereGeometry name="geometry" args={[1, 16, 16]} />
+    <meshBasicMaterial name="material" />
+  </mesh>
+), scene)
 ```

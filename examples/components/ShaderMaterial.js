@@ -68,13 +68,13 @@ const data = [
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { progress } = useSpring({ progress: hovered ? 1 : 0 })
 
-  const { gl } = useThree()
+  const { gl, invalidate } = useThree()
 
   const args = useMemo(() => {
     const loader = new THREE.TextureLoader()
-    const texture1 = loader.load(url1)
-    const texture2 = loader.load(url2)
-    const dispTexture = loader.load(disp)
+    const texture1 = loader.load(url1, invalidate)
+    const texture2 = loader.load(url2, invalidate)
+    const dispTexture = loader.load(disp, invalidate)
 
     dispTexture.wrapS = dispTexture.wrapT = THREE.RepeatWrapping
     texture1.magFilter = texture2.magFilter = THREE.LinearFilter
@@ -97,8 +97,8 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
 
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[8, 8]} />
-      <anim.shaderMaterial name="material" args={[args]} uniforms-dispFactor-value={progress} />
+      <planeBufferGeometry attach="geometry" args={[8, 8]} />
+      <anim.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>
   )
 }
@@ -115,7 +115,7 @@ function Image(props) {
       onTouchStart={hover}
       onTouchEnd={unhover}
       onTouchCancel={unhover}>
-      <Canvas className="canvas" invalidateFrameloop={true}>
+      <Canvas className="canvas" invalidateFrameloop>
         <ImageWebgl {...props} hovered={hovered} />
       </Canvas>
     </div>
