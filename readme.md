@@ -152,10 +152,6 @@ All hooks can only be used *inside* the Canvas element because they rely on cont
 ```jsx
 import { useThree } from 'react-three-fiber'
 
-// gl is the webgl-renderer
-// canvas the dom element that was created
-// size the bounds of the view (which stretches 100% and auto-adjusts)
-// viewport is the calculated screen-size, it's a function
 const { 
   gl,               // WebGL renderer
   canvas,           // canvas the dom element that was created
