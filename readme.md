@@ -164,7 +164,7 @@ const {
 } = useThree()
 ```
 
-#### useRender
+#### useRender
 
 Sometimes you're running effects, postprocessings, etc that need to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
 
