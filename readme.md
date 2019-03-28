@@ -55,6 +55,20 @@ ReactDOM.render(
 )
 ```
 
+# Canvas
+
+The `Canvas` object is your portal into Threejs. It renders Threejs element, *not dom element*!
+
+```jsx
+<Canvas
+  children                      // Either a function child (which receives state) or regular children
+  gl                            // These props go into the webGL renderer
+  camera                        // And these go in to the default camera
+  pixelRatio = undefined         // You could provide window.devicePixelRatio if you like 
+  invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
+  onCreated />                  // Callback when vdom is ready, return a promise to prevent FOC
+```
+
 # Objects and properties
 
 You can use [Three's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
@@ -347,4 +361,42 @@ function CrossFade({ url1, url2, disp }) {
     </mesh>
   )
 }
+```
+
+## Rendering only when needed
+
+By default it renders like a game loop, which isn't that battery efficient. Switch on `invalidateFrameloop` to activate loop invalidation, which is automatic most of the time.
+
+```jsx
+<Canvas invalidateFrameloop ... />
+```
+
+Sometimes you must be able to kick off frames manually, for instance when you're dealing with async stuff or camera controls:
+
+```jsx
+const { invalidate } = useThree()
+const texture = useMemo(() => loader.load(url1, invalidate), [url1])
+```
+
+## Switching the default renderer
+
+If you want to exchange the default renderer you can. But, you will loose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
+
+```jsx
+import { render, unmountComponentAtNode } from 'react-three-fiber'
+
+const renderer = new THREE.SVGRenderer()
+renderer.setClearColor(0x000000)
+renderer.setSize(window.innerWidth, window.innerHeight)
+document.body.appendChild(renderer.domElement)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.position.z = 35
+const scene = new THREE.Scene()
+
+render((
+  <mesh>
+    <sphereGeometry name="geometry" args={[1, 16, 16]} />
+    <meshBasicMaterial name="material" />
+  </mesh>
+), scene)
 ```
