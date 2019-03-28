@@ -57,14 +57,14 @@ ReactDOM.render(
 
 # Canvas
 
-The `Canvas` object is your portal into Threejs. It renders Threejs element, *not dom element*!
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, *not dom element*!
 
 ```jsx
 <Canvas
   children                      // Either a function child (which receives state) or regular children
   gl                            // These props go into the webGL renderer
   camera                        // And these go in to the default camera
-  pixelRatio = undefined         // You could provide window.devicePixelRatio if you like 
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   onCreated />                  // Callback when vdom is ready, return a promise to prevent FOC
 ```
