@@ -30,18 +30,18 @@ function Thing({ vertices, color }) {
     <group ref={ref => console.log('we have access to the instance')}>
       <line>
         <geometry
-          name="geometry"
+          attach="geometry"
           vertices={vertices.map(v => new THREE.Vector3(...v))}
           onUpdate={self => (self.verticesNeedUpdate = true)}
         />
-        <lineBasicMaterial name="material" color="black" />
+        <lineBasicMaterial attach="material" color="black" />
       </line>
       <mesh 
         onClick={e => console.log('click')} 
         onHover={e => console.log('hover')} 
         onUnhover={e => console.log('unhover')}>
-        <octahedronGeometry name="geometry" />
-        <meshBasicMaterial name="material" color="peachpuff" opacity={0.5} transparent />
+        <octahedronGeometry attach="geometry" />
+        <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
     </group>
   )
@@ -73,23 +73,43 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
-You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. If you give them a name they attach automatically to their parent.
+You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property they bind automatically to their parent.
 
 The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
 
 ```jsx
 <mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
-  <sphereGeometry name="geometry" args={[1, 16, 16]} />
-  <meshStandardMaterial name="material" color="indianred" transparent />
+  <sphereGeometry attach="geometry" args={[1, 16, 16]} />
+  <meshStandardMaterial attach="material" color="indianred" transparent />
 </mesh>
 ```
 
 You can nest primitive objects, good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
-<meshBasicMaterial name="material">
-  <texture name="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+<meshBasicMaterial attach="material">
+  <texture attach="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 </meshBasicMaterial>
+```
+
+Sometimes attaching isn't enough, for instance effects cling to an array called "passes" of a the parental effect-component. In that case you use `attachArray` which adds the object to the target array and takes it out on unmount:
+
+```jsx
+<effectComposer>
+  <renderPass attachArray="passes" />
+  <glitchPass attachArray="passes" renderToScreen />
+</effectComposer>
+```
+
+You can also attach to existing objects using `attachObject`, which adds the object onto a property on the parent, and takes it out on unmount.
+
+```jsx
+<bufferGeometry>
+  <bufferAttribute
+    attachObject={['attributes', 'position']}
+    array={vertices} 
+    itemSize={3} />
+</bufferGeometry>
 ```
 
 #### Piercing into nested properties
@@ -153,9 +173,9 @@ function Image({ url }) {
   const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[1, 1]} />
-      <meshLambertMaterial name="material" transparent>
-        <primitive name="map" object={texture} />
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <meshLambertMaterial attach="material" transparent>
+        <primitive attach="map" object={texture} />
       </meshLambertMaterial>
     </mesh>
   )
@@ -182,8 +202,8 @@ function Effects({ factor }) {
   useRender(() => composer.current.obj.render(), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
-      <renderPass name="passes" args={[scene, camera]} />
-      <glitchPass name="passes" factor={factor} renderToScreen />
+      <renderPass attachArray="passes" args={[scene, camera]} />
+      <glitchPass attachArray="passes" factor={factor} renderToScreen />
     </effectComposer>
   )
 }
@@ -243,8 +263,8 @@ function Extrusion({ start = [0,0], paths, ...props }) {
 
   return (
     <mesh>
-      <extrudeGeometry name="geometry" args={[shape, props]} />
-      <meshPhongMaterial name="material" />
+      <extrudeGeometry attach="geometry" args={[shape, props]} />
+      <meshPhongMaterial attach="material" />
     </mesh>
   )
 }
@@ -281,9 +301,9 @@ function CrossFade({ url1, url2, disp }) {
   }, [url1, url2, disp])
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[3.8, 3.8]} />
+      <planeBufferGeometry attach="geometry" args={[3.8, 3.8]} />
       <shaderMaterial
-        name="material"
+        attach="material"
         args={[CrossFadeShader]}
         uniforms-texture-value={texture1}
         uniforms-texture2-value={texture2}

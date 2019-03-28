@@ -18,8 +18,9 @@ function Icosahedron({ position, rotation }) {
   const [hovered, setHover] = useState(false)
   const [{ xy, size }, set] = useSpring(() => ({ xy: [0, 0], size: 1 }))
   const bind = useGesture({
-    onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
-    //onHover: ({ hovering, event }) => console.log(hovering) || void (event.stopPropagation(), set({ size: hovering ? 1.2 : 1 })),
+    //onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
+    onHover: ({ hovering, event }) =>
+      console.log(hovering) || void (event.stopPropagation(), set({ size: hovering ? 1.2 : 1 })),
   })
   return (
     <a.mesh
@@ -27,8 +28,8 @@ function Icosahedron({ position, rotation }) {
       position={xy.interpolate((x, y) => [x + position[0], y + position[1], position[2]])}
       rotation={rotation}
       scale={size.interpolate(s => [s, s, s])}>
-      <icosahedronGeometry name="geometry" args={[5, 0]} />
-      <meshNormalMaterial name="material" />
+      <icosahedronGeometry attach="geometry" args={[5, 0]} />
+      <meshNormalMaterial attach="material" />
     </a.mesh>
   )
 }

@@ -20,16 +20,16 @@ function Thing() {
   return (
     <group>
       <animated.line position={pos}>
-        <geometry name="geometry" vertices={vertices.map(v => new THREE.Vector3(...v))} />
-        <animated.lineBasicMaterial name="material" color={color} />
+        <geometry attach="geometry" vertices={vertices.map(v => new THREE.Vector3(...v))} />
+        <animated.lineBasicMaterial attach="material" color={color} />
       </animated.line>
       <animated.mesh
         onClick={e => setActive(!active)}
         onMouseEnter={e => setHover(true)}
         onMouseLeave={e => setHover(false)}
         {...props}>
-        <octahedronGeometry name="geometry" />
-        <meshStandardMaterial name="material" color="grey" transparent />
+        <octahedronGeometry attach="geometry" />
+        <meshStandardMaterial attach="material" color="grey" transparent />
       </animated.mesh>
     </group>
   )

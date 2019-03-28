@@ -51,14 +51,14 @@ const Scene = React.memo(() => {
         {transitions.map(({ item: { shape, color, index }, key, props: { opacity, position } }) => (
           <anim.mesh key={key} position={position.interpolate((x, y, z) => [x, y, z + -index * 50])}>
             <anim.meshPhongMaterial
-              name="material"
+              attach="material"
               color={color}
               opacity={opacity}
               side={THREE.DoubleSide}
               depthWrite={false}
               transparent
             />
-            <shapeBufferGeometry name="geometry" args={[shape]} />
+            <shapeBufferGeometry attach="geometry" args={[shape]} />
           </anim.mesh>
         ))}
       </anim.group>

@@ -53,10 +53,10 @@ function Main({ camera }) {
       <effectComposer ref={composer} args={[gl]}>
         {scene.current && (
           <>
-            <renderPass name="passes" scene={scene.current} camera={camera} />
-            <waterPass name="passes" factor={1} />
+            <renderPass attachArray="passes" scene={scene.current} camera={camera} />
+            <waterPass attachArray="passes" factor={1} />
             <shaderPass
-              name="passes"
+              attachArray="passes"
               args={[FXAAShader]}
               material-uniforms-resolution-value={[1 / size.width, 1 / size.height]}
               renderToScreen
@@ -80,8 +80,8 @@ function Hud({ camera }) {
   return (
     <scene ref={scene}>
       <mesh onHover={hover} onUnhover={unhover}>
-        <sphereBufferGeometry name="geometry" args={[0.5, 64, 64]} />
-        <meshBasicMaterial name="material" color={hovered ? 'hotpink' : 'black'} />
+        <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
+        <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'black'} />
       </mesh>
     </scene>
   )

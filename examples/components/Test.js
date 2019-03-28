@@ -18,7 +18,7 @@ function Image({ url1 }) {
     <mesh>
       <planeBufferGeometry name="geometry" args={[5, 5]} />
       <anim.meshBasicMaterial name="material">
-        <primitive name="map" object={texture} />
+        <primitive attach="map" object={texture} />
       </anim.meshBasicMaterial>
     </mesh>
   )
@@ -28,7 +28,7 @@ export default function App() {
   return (
     <>
       <button onClick={() => invalidate(true)}>Invalidate</button>
-      <Canvas className="canvas" invalidateFrameloop={true}>
+      <Canvas className="canvas" invalidateFrameloop>
         <Image url1={img1} url2={img2} disp={disp1} />
       </Canvas>
     </>

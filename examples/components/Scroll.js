@@ -25,9 +25,9 @@ function Image({ url, opacity, scale, ...props }) {
       onHover={hover}
       onUnhover={unhover}
       scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
-      <planeBufferGeometry name="geometry" args={[5, 5]} />
-      <anim.meshLambertMaterial name="material" transparent opacity={opacity}>
-        <primitive name="map" object={texture} />
+      <planeBufferGeometry attach="geometry" args={[5, 5]} />
+      <anim.meshLambertMaterial attach="material" transparent opacity={opacity}>
+        <primitive attach="map" object={texture} />
       </anim.meshLambertMaterial>
     </anim.mesh>
   )
@@ -54,8 +54,8 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
   }, [children, width, height])
   return (
     <anim.sprite scale={[scale, scale, 1]} position={position}>
-      <anim.spriteMaterial name="material" transparent opacity={opacity}>
-        <canvasTexture name="map" image={canvas} premultiplyAlpha onUpdate={s => (s.needsUpdate = true)} />
+      <anim.spriteMaterial attach="material" transparent opacity={opacity}>
+        <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={s => (s.needsUpdate = true)} />
       </anim.spriteMaterial>
     </anim.sprite>
   )
@@ -66,8 +66,8 @@ function Background({ color }) {
   const { viewport } = useThree()
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
-      <planeGeometry name="geometry" args={[1, 1]} />
-      <anim.meshBasicMaterial name="material" color={color} depthTest={false} />
+      <planeGeometry attach="geometry" args={[1, 1]} />
+      <anim.meshBasicMaterial attach="material" color={color} depthTest={false} />
     </mesh>
   )
 }
@@ -108,8 +108,8 @@ const Effects = React.memo(({ factor }) => {
   useRender(() => composer.current.obj.render(), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
-      <renderPass name="passes" args={[scene, camera]} />
-      <anim.glitchPass name="passes" renderToScreen factor={factor} />
+      <renderPass attachArray="passes" args={[scene, camera]} />
+      <anim.glitchPass attachArray="passes" renderToScreen factor={factor} />
     </effectComposer>
   )
 })

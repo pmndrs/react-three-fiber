@@ -145,13 +145,11 @@ function appendChild(parentInstance, child) {
     if (child.isObject3D) parentInstance.add(child)
     else {
       child.parent = parentInstance
-      // The name attribute implies that the object attaches itself on the parent
-      if (child.obj.name) {
-        if (parentInstance.obj) parentInstance = parentInstance.obj
-        const target = parentInstance[child.obj.name]
-        if (Array.isArray(target)) target.push(child.obj)
-        else parentInstance[child.obj.name] = child.obj
-      }
+      if (parentInstance.obj) parentInstance = parentInstance.obj
+      // The attach attribute implies that the object attaches itself on the parent
+      if (child.obj.attach) parentInstance[child.obj.attach] = child.obj
+      else if (child.obj.attachArray) parentInstance[child.obj.attachArray].push(child.obj)
+      else if (child.obj.attachObject) parentInstance[child.obj.attachObject[0]][child.obj.attachObject[1]] = child.obj
     }
   }
   if (parentInstance.__state) invalidate(parentInstance.__state)
@@ -164,13 +162,12 @@ function removeChild(parentInstance, child) {
       if (child.dispose) child.dispose()
     } else {
       child.parent = undefined
-      if (child.obj.name) {
-        if (parentInstance.obj) parentInstance = parentInstance.obj
-        // Remove attachment
-        const target = parentInstance[child.obj.name]
-        if (Array.isArray(target)) parentInstance[child.obj.name] = target.filter(x => x !== child.obj)
-        else parentInstance[child.obj.name] = undefined
-      }
+      if (parentInstance.obj) parentInstance = parentInstance.obj
+      // Remove attachment
+      if (child.obj.attach) parentInstance[child.obj.attach] = undefined
+      else if (child.obj.attachArray) parentInstance[child.obj.attachArray] = target.filter(x => x !== child.obj)
+      else if (child.obj.attachObject) parentInstance[child.obj.attachObject[0]][child.obj.attachObject[1]] = undefined
+      // Dispose item
       if (child.obj.dispose) child.obj.dispose()
     }
   }
