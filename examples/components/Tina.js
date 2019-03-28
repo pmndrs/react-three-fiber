@@ -21,7 +21,6 @@ const loaders = urls.map(
 
 const Scene = React.memo(() => {
   const { viewport } = useThree()
-  const { width, height } = viewport()
   const [page, setPage] = useState(0)
   const [shapes, setShape] = useState([])
   useEffect(() => void setInterval(() => setPage(i => (i + 1) % urls.length), 4000), [])
@@ -44,7 +43,7 @@ const Scene = React.memo(() => {
   })
   return (
     <>
-      <mesh scale={[width * 2, height * 2, 1]} rotation={[0, deg(-20), 0]}>
+      <mesh scale={[viewport.width * 2, viewport.height * 2, 1]} rotation={[0, deg(-20), 0]}>
         <planeGeometry name="geometry" args={[1, 1]} />
         <anim.meshPhongMaterial name="material" color={color} depthTest={false} />
       </mesh>

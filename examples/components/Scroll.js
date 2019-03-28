@@ -38,9 +38,8 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
   const {
     camera,
     size: { width, height },
-    viewport,
+    viewport: { width: viewportWidth, height: viewportHeight },
   } = useThree()
-  const { width: viewportWidth, height: viewportHeight } = viewport()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
   const canvas = useMemo(() => {
     const canvas = document.createElement('canvas')
@@ -65,9 +64,8 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
   const { viewport } = useThree()
-  const { width, height } = viewport()
   return (
-    <mesh scale={[width, height, 1]}>
+    <mesh scale={[viewport.width, viewport.height, 1]}>
       <planeGeometry name="geometry" args={[1, 1]} />
       <anim.meshBasicMaterial name="material" color={color} depthTest={false} />
     </mesh>
