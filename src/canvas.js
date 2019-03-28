@@ -139,54 +139,86 @@ export const Canvas = React.memo(
       }
     })
 
-    const intersect = useCallback((event, fn) => {
+    const getRaycasterTargets = useCallback((clientX, clientY) => {
+      const canvasRect = state.current.canvasRect;
+      const x = (clientX - canvasRect.left) / (canvasRect.right - canvasRect.left) * 2 - 1;
+      const y = -((clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1;
+      mouse.set(x, y, 0.5);
+      raycaster.setFromCamera(mouse, state.current.camera);
+      return raycaster.intersectObjects(state.current.scene.__interaction, true)
+    }, []);
+
+    const mouseIntersect = useCallback((event, fn) => {
       state.current.canvasRect = canvas.current.getBoundingClientRect()
-      const canvasRect = state.current.canvasRect
-      const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
-      const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
-      mouse.set(x, y, 0.5)
-      raycaster.setFromCamera(mouse, state.current.camera)
-      const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-      for (let hit of hits) {
-        let stopped = { current: false }
+      const raycasterTargets = getRaycasterTargets(event.clientX, event.clientY)
+      const eventTargets = raycasterTargets.filter(h => h.object.__handlers);
+      for (let target of eventTargets) {
+        let stopped = {
+          current: false
+        };
         fn({
-          ...hit,
           stopped,
-          event: Object.assign({}, event),
-          clientX: event.clientX,
-          clientY: event.clientY,
-          pageX: event.pageX,
-          pageY: event.pageY,
-          shiftKey: event.shiftKey,
-          altKey: event.altKey,
-          ctrlKey: event.ctrlKey,
-          metaKey: event.metaKey,
-          button: event.button,
-          preventDefault: event.preventDefault,
-          type: event.type,
-          stopPropagation: () => (stopped.current = true),
+          event: { ...event },
+          target: target,
+          raycasterTargets: raycasterTargets,
+          stopPropagation: () => stopped.current = true,
           // react-use-gesture transforms ...
           transform: {
-            x: x => x / (state.current.size.width / state.current.viewport.width),
-            y: y => -y / (state.current.size.height / state.current.viewport.height),
-          },
-        })
-        if (stopped.current === true) break
+            x: _x => _x / (state.current.size.width / state.current.viewport.width),
+            y: _y => -_y / (state.current.size.height / state.current.viewport.height)
+          }
+        });
+        if (stopped.current === true) break;
       }
-      return hits
-    }, [])
+      return eventTargets;
+    }, []);
 
-    const handleMouse = useCallback(
-      name => event => {
-        if (!state.current.ready) return
-        intersect(event, data => {
-          const object = data.object
-          const handlers = object.__handlers
-          if (handlers[name]) handlers[name](data)
-        })
-      },
-      []
-    )
+    const touchIntersect = useCallback((event, fn) => {
+      state.current.canvasRect = canvas.current.getBoundingClientRect()
+      const raycasterTouches = [...event.touches].map(t => getRaycasterTargets(t.clientX, t.clientY))
+      const raycasterChangedTouches = [...event.changedTouches].map(t => getRaycasterTargets(t.clientX, t.clientY))
+      const raycasterTargetTouches = [...event.changedTouches].map(t => getRaycasterTargets(t.clientX, t.clientY))
+      const eventTargets = raycasterChangedTouches.flat().filter(h => h.object.__handlers);
+      for (let target of eventTargets) {
+        fn({
+          event: { ...event },
+          target: target,
+          raycasterTouches: raycasterTouches,
+          raycasterChangedTouches: raycasterChangedTouches,
+          raycasterTargetTouches: raycasterTargetTouches,
+          stopPropagation: () => stopped.current = true,
+          // react-use-gesture transforms ...
+          transform: {
+            x: _x => _x / (state.current.size.width / state.current.viewport.width),
+            y: _y => -_y / (state.current.size.height / state.current.viewport.height)
+          }
+        });
+      }
+      return eventTargets;
+    }, []);
+
+    const handleMouse = useCallback(name => event => {
+      if (!state.current.ready) return;
+      mouseIntersect(event, data => {
+        const object = data.target.object;
+        const handlers = object.__handlers;
+        if (handlers[name]) handlers[name](data);
+      });
+    }, []);
+
+    const handleTouch = useCallback(name => event => {
+      if (!state.current.ready) return;
+      // preventDefault() to stop browser making mouse events after
+      // note it appears chrome does like this
+      // need to make eventListener { passive: false }
+      // by referencing the DOM Node
+      event.preventDefault()
+      touchIntersect(event, data => {
+        const object = data.target.object;
+        const handlers = object.__handlers;
+        if (handlers[name]) handlers[name](data);
+      });
+    }, []);
 
     const hovered = useRef({})
     const handleMove = useCallback(event => {
@@ -235,6 +267,9 @@ export const Canvas = React.memo(
         onMouseDown={handleMouse('mouseDown')}
         onWheel={handleMouse('wheel')}
         onScroll={handleMouse('scroll')}
+        onTouchStart={handleTouch('touchStart')}
+        onTouchEnd={handleTouch('touchEnd')}
+        onTouchMove={handleTouch('touchMove')}
         onMouseMove={handleMove}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
