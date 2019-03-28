@@ -363,7 +363,7 @@ function CrossFade({ url1, url2, disp }) {
 }
 ```
 
-## Rendering only when needed
+## Rendering only when needed
 
 By default it renders like a game loop, which isn't that battery efficient. Switch on `invalidateFrameloop` to activate loop invalidation, which is automatic most of the time.
 
@@ -378,7 +378,7 @@ const { invalidate } = useThree()
 const texture = useMemo(() => loader.load(url1, invalidate), [url1])
 ```
 
-## Switching the default renderer
+## Switching the default renderer
 
 If you want to exchange the default renderer you can. But, you will loose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
 
