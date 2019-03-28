@@ -166,7 +166,7 @@ const {
 
 #### useRender
 
-Sometimes you're running effects, postprocessings, etc that need to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
+If you're running effects, postprocessings, controls, etc that need to get updated every frame, useRender gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
 
 ```jsx
 import { useRender } from 'react-three-fiber'
