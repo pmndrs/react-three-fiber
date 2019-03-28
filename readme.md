@@ -73,7 +73,7 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
-You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property they bind automatically to their parent.
+You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
 The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
 
@@ -84,7 +84,7 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
-You can nest primitive objects, good for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial attach="material">
@@ -92,7 +92,7 @@ You can nest primitive objects, good for awaiting async textures and such. You c
 </meshBasicMaterial>
 ```
 
-Sometimes attaching isn't enough, for instance effects cling to an array called "passes" of a the parental effect-component. In that case you use `attachArray` which adds the object to the target array and takes it out on unmount:
+Sometimes attaching isn't enough, for instance effects cling to an array called "passes" of a the parental effect-composer. In that case you use `attachArray` which adds the object to the target array and takes it out on unmount:
 
 ```jsx
 <effectComposer>
@@ -101,14 +101,11 @@ Sometimes attaching isn't enough, for instance effects cling to an array called 
 </effectComposer>
 ```
 
-You can also attach to existing objects using `attachObject`, which adds the object onto a property on the parent, and takes it out on unmount.
+You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position. 
 
 ```jsx
 <bufferGeometry>
-  <bufferAttribute
-    attachObject={['attributes', 'position']}
-    array={vertices} 
-    itemSize={3} />
+  <bufferAttribute attachObject={['attributes', 'position']} array={vertices} itemSize={3} />
 </bufferGeometry>
 ```
 
@@ -131,35 +128,76 @@ return <primitive object={mesh} />
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`), hovering-state and clicks. Touch follows soon!
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`) and mouse events. Touch follows soon!
 
 ```jsx
 <mesh
   onClick={e => console.log('click')}
-  onHover={e => console.log('hover')}
-  onUnhover={e => console.log('unhover')}
+  onMouseUp={e => console.log('mouse button up')}
+  onMouseDown={e => console.log('mouse button down')}
+  onMouseEnter={e => console.log('hover')}
+  onMouseLeave={e => console.log('unhover')}
+  onMouseMove={e => console.log('mouse moves')}
+  onWheel={e => console.log('wheel spins')}
   onUpdate={self => console.log('props have been updated')}
 />
 ```
 
-# Gl data & hooking into the render loop
+# Hooks
 
-Sometimes you're running effects, postprocessing, etc that needs to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
+All hooks can only be used *inside* the Canvas element because they rely on context updates!
+
+#### useThree
 
 ```jsx
-import { Canvas, useRender, useThree } from 'react-three-fiber'
+import { useThree } from 'react-three-fiber'
 
-function App() {
-  // gl is the webgl-renderer
-  // canvas the dom element that was created
-  // size the bounds of the view (which stretches 100% and auto-adjusts)
-  // viewport is the calculated screen-size, it's a function
-  const { gl, canvas, scene, camera, size, viewport } = useThree()
-  // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-  // Add a "true" as the 2nd argument and you take over the render-loop
-  useRender(({ gl, canvas, scene, camera }) => console.log("i'm in the render-loop"))
-  return <group />
-}
+// gl is the webgl-renderer
+// canvas the dom element that was created
+// size the bounds of the view (which stretches 100% and auto-adjusts)
+// viewport is the calculated screen-size, it's a function
+const { 
+  gl,               // WebGL renderer
+  canvas,           // canvas the dom element that was created
+  scene,            // Default scene
+  camera,           // Default camera
+  size,             // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport,         // Bounds of the viewport in 3d units
+  invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  setDefaultCamera  // Sets the default camera
+} = useThree()
+```
+
+#### useRender
+
+Sometimes you're running effects, postprocessings, etc that need to get updated. You can fetch the renderer, the camera, scene, and a render-loop subscribe to do this. You can only use these hooks *inside* the Canvas render tree (they're context based)!
+
+```jsx
+import { useRender } from 'react-three-fiber'
+
+// Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
+useRender(state => console.log("i'm in the render-loop"))
+
+// Add a "true" as the 2nd argument and you take over the render-loop completely
+useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
+```
+
+#### useUpdate
+
+Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate. 
+
+```jsx
+import { useUpdate } from 'react-three-fiber'
+
+const ref = useUpdate( 
+  geometry => {
+    geometry.addAttribute('position', getCubeVertices(x, y, z))
+    geometry.attributes.position.needsUpdate = true
+    geometry.computeBoundingSphere()
+  }, 
+  [x, y, z] // execute only if these properties change
+)
+return <bufferGeometry ref={ref} />
 ```
 
 # Receipes
