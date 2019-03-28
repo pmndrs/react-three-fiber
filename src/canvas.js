@@ -101,7 +101,7 @@ export const Canvas = React.memo(
       const height = 2 * Math.tan(fov / 2) * distance // visible height
       const width = height * state.current.aspect
       state.current.viewport = { width, height }
-      state.current.canvasRect = canvas.current.getBoundingClientRect()
+      state.current.canvasRect = bind.ref.current.getBoundingClientRect()
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
         state.current.camera.aspect = state.current.aspect
@@ -140,7 +140,6 @@ export const Canvas = React.memo(
     })
 
     const intersect = useCallback((event, fn) => {
-      state.current.canvasRect = canvas.current.getBoundingClientRect()
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
@@ -201,14 +200,15 @@ export const Canvas = React.memo(
           if (!hovered.current[object.uuid]) {
             // If the object wasn't previously hovered, book it and call its handler
             hovered.current[object.uuid] = data
-            handlers.mouseEnter(data)
+            handlers.mouseEnter({ ...data, type: 'mouseenter' })
           } else if (hovered.current[object.uuid].stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
             // In fact, wwe can safely remove them from the cache
             Object.values(hovered.current).forEach(data => {
               if (data.object.uuid !== object.uuid) {
-                if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave(data)
+                if (data.object.__handlers.mouseLeave)
+                  data.object.__handlers.mouseLeave({ ...data, type: 'mouseleave' })
                 delete hovered.current[data.object.uuid]
               }
             })
@@ -219,7 +219,7 @@ export const Canvas = React.memo(
       // Take care of unhover
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
-          if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave(data)
+          if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave({ ...data, type: 'mouseleave' })
           delete hovered.current[data.object.uuid]
         }
       })
@@ -234,7 +234,6 @@ export const Canvas = React.memo(
         onMouseUp={handleMouse('mouseUp')}
         onMouseDown={handleMouse('mouseDown')}
         onWheel={handleMouse('wheel')}
-        onScroll={handleMouse('scroll')}
         onMouseMove={handleMove}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
