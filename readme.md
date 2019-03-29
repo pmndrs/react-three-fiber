@@ -38,8 +38,8 @@ function Thing({ vertices, color }) {
       </line>
       <mesh 
         onClick={e => console.log('click')} 
-        onHover={e => console.log('hover')} 
-        onUnhover={e => console.log('unhover')}>
+        onMouseEnter={e => console.log('hover')} 
+        onMouseLeave={e => console.log('unhover')}>
         <octahedronGeometry attach="geometry" />
         <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
@@ -245,9 +245,9 @@ apply({ EffectComposer, RenderPass, GlitchPass })
 function Effects({ factor }) {
   const { gl, scene, camera, size } = useThree()
   const composer = useRef()
-  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
+  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
-  useRender(() => composer.current.obj.render(), true)
+  useRender(() => composer.current.render(), true)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" args={[scene, camera]} />
