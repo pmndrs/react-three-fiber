@@ -149,20 +149,9 @@ export const Canvas = React.memo(
       for (let hit of hits) {
         let stopped = { current: false }
         fn({
+          ...Object.assign({}, event),
           ...hit,
           stopped,
-          event: Object.assign({}, event),
-          clientX: event.clientX,
-          clientY: event.clientY,
-          pageX: event.pageX,
-          pageY: event.pageY,
-          shiftKey: event.shiftKey,
-          altKey: event.altKey,
-          ctrlKey: event.ctrlKey,
-          metaKey: event.metaKey,
-          button: event.button,
-          preventDefault: event.preventDefault,
-          type: event.type,
           stopPropagation: () => (stopped.current = true),
           // react-use-gesture transforms ...
           transform: {

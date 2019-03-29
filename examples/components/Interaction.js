@@ -18,7 +18,8 @@ function Icosahedron({ position, rotation }) {
   const [{ xy, size }, set] = useSpring(() => ({ xy: [0, 0], size: 1 }))
   const bind = useGesture({
     onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
-    //onHover: ({ hovering, event }) => void (event.stopPropagation(), set({ size: hovering ? 1.2 : 1 }))
+    onHover: ({ event, active }) => void (event.stopPropagation(), set({ size: active ? 1.2 : 1 })),
+    onWheel: ({ event, velocity }) => void (event.stopPropagation(), set({ size: 1 + velocity })),
   })
   return (
     <a.mesh
