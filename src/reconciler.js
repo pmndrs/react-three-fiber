@@ -47,9 +47,7 @@ function renderLoop() {
       // Run local effects
       subscribers.forEach(fn => fn(state.current))
       // Render content
-      if (!manual && scene.children.length) {
-        gl.render(scene, camera)
-      }
+      if (!manual) gl.render(scene, camera)
     }
   })
 
@@ -135,6 +133,7 @@ function createInstance(type, { args = [], ...props }, container) {
     instance = Array.isArray(args) ? new target(...args) : new target(args)
   }
   // Apply initial props
+  instance.__objects = []
   instance.__container = container
   applyProps(instance, props, {}, false, container)
   return instance
@@ -144,33 +143,16 @@ function appendChild(parentInstance, child) {
   if (child) {
     if (child.isObject3D) parentInstance.add(child)
     else {
+      parentInstance.__objects.push(child)
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
       if (child.attach) parentInstance[child.attach] = child
       else if (child.attachArray) parentInstance[child.attachArray].push(child)
       else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = child
     }
+    updateInstance(child)
+    invalidateInstance(child)
   }
-  updateInstance(child)
-  invalidateInstance(child)
-}
-
-function removeChild(parentInstance, child) {
-  if (child) {
-    if (child.isObject3D) {
-      parentInstance.remove(child)
-      if (child.dispose) child.dispose()
-    } else {
-      child.parent = undefined
-      // Remove attachment
-      if (child.attach) parentInstance[child.attach] = undefined
-      else if (child.attachArray) parentInstance[child.attachArray] = target.filter(x => x !== child)
-      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
-      // Dispose item
-      if (child.dispose) child.dispose()
-    }
-  }
-  invalidateInstance(child)
 }
 
 function insertBefore(parentInstance, child, beforeChild) {
@@ -187,8 +169,31 @@ function insertBefore(parentInstance, child, beforeChild) {
       ]
       updateInstance(child)
     } else appendChild(parentInstance, child) // TODO: order!!!
+    invalidateInstance(child)
   }
-  invalidateInstance(child)
+}
+
+function removeChild(parentInstance, child) {
+  if (child) {
+    if (child.isObject3D) {
+      parentInstance.remove(child)
+    } else {
+      child.parent = undefined
+      parentInstance.__objects = parentInstance.__objects.filter(x => x !== child)
+      // Remove attachment
+      if (child.attach) parentInstance[child.attach] = undefined
+      else if (child.attachArray) parentInstance[child.attachArray] = target.filter(x => x !== child)
+      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
+    }
+    // Remove child objects
+    child.__objects.forEach(nestedChild => removeChild(child, nestedChild))
+    // Dispose item
+    if (child.dispose) child.dispose()
+    invalidateInstance(child)
+    // TODO: remove events
+    delete child.__container
+    delete child.__objects
+  }
 }
 
 const Renderer = Reconciler({
@@ -219,10 +224,6 @@ const Renderer = Reconciler({
         const newInstance = createInstance(type, newProps, instance.__container)
         removeChild(parent, instance)
         appendChild(parent, newInstance)
-
-        // Switch instance
-        // instance.obj = newInstance.obj
-        // instance.obj.parent = newInstance.obj.parent
 
         // This evil hack switches the react-internal fiber node
         // https://github.com/facebook/react/issues/14983

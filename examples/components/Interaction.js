@@ -17,9 +17,9 @@ const items = new Array(count)
 function Icosahedron({ position, rotation }) {
   const [{ xy, size }, set] = useSpring(() => ({ xy: [0, 0], size: 1 }))
   const bind = useGesture({
-    onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
+    onDrag: ({ event, local }) => void (event.stopPropagation(), set({ xy: local })),
     onHover: ({ event, active }) => void (event.stopPropagation(), set({ size: active ? 1.2 : 1 })),
-    onWheel: ({ event, velocity }) => void (event.stopPropagation(), set({ size: 1 + velocity })),
+    onWheel: ({ event, velocity }) => void (event.stopPropagation(), set({ size: Math.max(1, velocity * 3) })),
   })
   return (
     <a.mesh

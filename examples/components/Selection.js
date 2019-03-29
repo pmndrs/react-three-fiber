@@ -38,7 +38,10 @@ function Image({ url1, position = [0, 0, 0], ...props }) {
     return temp
   })
 
-  return (
+  const [condition, sC] = React.useState(true)
+  React.useEffect(() => void setTimeout(() => sC(false), 1000), [])
+  React.useEffect(() => void setTimeout(() => sC(true), 2000), [])
+  return condition ? (
     <a.mesh
       {...props}
       position={xy.interpolate((x, y) => [x + position[0], y + position[1], position[2]])}
@@ -53,7 +56,7 @@ function Image({ url1, position = [0, 0, 0], ...props }) {
         <primitive attach="map" object={texture} />
       </meshBasicMaterial>
     </a.mesh>
-  )
+  ) : null
 }
 
 export default function App() {
