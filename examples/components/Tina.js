@@ -44,8 +44,8 @@ const Scene = React.memo(() => {
   return (
     <>
       <mesh scale={[viewport.width * 2, viewport.height * 2, 1]} rotation={[0, deg(-20), 0]}>
-        <planeGeometry name="geometry" args={[1, 1]} />
-        <anim.meshPhongMaterial name="material" color={color} depthTest={false} />
+        <planeGeometry attach="geometry" args={[1, 1]} />
+        <anim.meshPhongMaterial attach="material" color={color} depthTest={false} />
       </mesh>
       <anim.group position={[1600, -700, page]} rotation={[0, deg(180), 0]}>
         {transitions.map(({ item: { shape, color, index }, key, props: { opacity, position } }) => (

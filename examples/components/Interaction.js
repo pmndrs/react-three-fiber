@@ -15,12 +15,10 @@ const items = new Array(count)
   ])
 
 function Icosahedron({ position, rotation }) {
-  const [hovered, setHover] = useState(false)
   const [{ xy, size }, set] = useSpring(() => ({ xy: [0, 0], size: 1 }))
   const bind = useGesture({
-    //onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
-    onHover: ({ hovering, event }) =>
-      console.log(hovering) || void (event.stopPropagation(), set({ size: hovering ? 1.2 : 1 })),
+    onDrag: ({ event, down, local }) => void (event.stopPropagation(), set({ xy: local })),
+    //onHover: ({ hovering, event }) => void (event.stopPropagation(), set({ size: hovering ? 1.2 : 1 }))
   })
   return (
     <a.mesh

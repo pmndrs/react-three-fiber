@@ -1,36 +1,37 @@
 import * as THREE from 'three'
-import React, { useMemo } from 'react'
-import { Canvas, useThree, useRender, invalidate } from 'react-three-fiber'
-import { animated as anim } from 'react-spring/three'
-import img1 from '../resources/images/crop-1.jpg'
-import img2 from '../resources/images/crop-2.jpg'
-import disp1 from '../resources/images/crop-13.jpg'
+import React, { useCallback, useMemo } from 'react'
+import { Canvas } from 'react-three-fiber'
 
-const loader = new THREE.TextureLoader()
-function Image({ url1 }) {
-  const texture = useMemo(() => {
-    const texture = loader.load(url1)
-    texture.minFilter = THREE.LinearFilter
-    return texture
-  }, [url1])
+function Test() {
+  const vertices = useMemo(
+    () =>
+      new Float32Array([-1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0])
+  )
+  const update = useCallback(self => {
+    self.needsUpdate = true
+    self.parent.computeBoundingSphere()
+  }, [])
 
   return (
     <mesh>
-      <planeBufferGeometry name="geometry" args={[5, 5]} />
-      <anim.meshBasicMaterial name="material">
-        <primitive attach="map" object={texture} />
-      </anim.meshBasicMaterial>
+      <bufferGeometry attach="geometry">
+        <bufferAttribute
+          attachObject={['attributes', 'position']}
+          array={vertices}
+          count={6}
+          itemSize={3}
+          onUpdate={update}
+        />
+      </bufferGeometry>
+      <meshBasicMaterial attach="material" color="white" />
     </mesh>
   )
 }
 
 export default function App() {
   return (
-    <>
-      <button onClick={() => invalidate(true)}>Invalidate</button>
-      <Canvas className="canvas" invalidateFrameloop>
-        <Image url1={img1} url2={img2} disp={disp1} />
-      </Canvas>
-    </>
+    <Canvas>
+      <Test />
+    </Canvas>
   )
 }

@@ -71,17 +71,14 @@ let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
 export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container) {
-  //console.log(newProps)
-  const state = instance.__state
-  if (instance.obj) instance = instance.obj
   // Filter equals, events and reserved props
-  //console.log(newProps, oldProps)
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
     return rest
   }, newProps)
+
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
       if (!handlers.includes(key)) {
@@ -102,8 +99,8 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
         } else root[key] = value
-        //console.log(key, value, filteredProps)
-        if (state) invalidate(state)
+
+        invalidateInstance(instance)
       }
     })
 
@@ -116,9 +113,17 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
         {}
       )
     }
-    // Call the update lifecycle, if present
-    if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
+    // Call the update lifecycle when it is being updated
+    if (!container) updateInstance(instance)
   }
+}
+
+function invalidateInstance(instance) {
+  if (instance.__container && instance.__container.__state) invalidate(instance.__container.__state)
+}
+
+function updateInstance(instance) {
+  if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
 }
 
 function createInstance(type, { args = [], ...props }, container) {
@@ -130,13 +135,8 @@ function createInstance(type, { args = [], ...props }, container) {
     instance = Array.isArray(args) ? new target(...args) : new target(args)
   }
   // Apply initial props
+  instance.__container = container
   applyProps(instance, props, {}, false, container)
-
-  if (!instance.isObject3D) {
-    instance = { obj: instance, parent: undefined, __state: container.__state }
-  } else {
-    instance.__state = container.__state
-  }
   return instance
 }
 
@@ -145,14 +145,14 @@ function appendChild(parentInstance, child) {
     if (child.isObject3D) parentInstance.add(child)
     else {
       child.parent = parentInstance
-      if (parentInstance.obj) parentInstance = parentInstance.obj
       // The attach attribute implies that the object attaches itself on the parent
-      if (child.obj.attach) parentInstance[child.obj.attach] = child.obj
-      else if (child.obj.attachArray) parentInstance[child.obj.attachArray].push(child.obj)
-      else if (child.obj.attachObject) parentInstance[child.obj.attachObject[0]][child.obj.attachObject[1]] = child.obj
+      if (child.attach) parentInstance[child.attach] = child
+      else if (child.attachArray) parentInstance[child.attachArray].push(child)
+      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = child
     }
   }
-  if (parentInstance.__state) invalidate(parentInstance.__state)
+  updateInstance(child)
+  invalidateInstance(child)
 }
 
 function removeChild(parentInstance, child) {
@@ -162,16 +162,15 @@ function removeChild(parentInstance, child) {
       if (child.dispose) child.dispose()
     } else {
       child.parent = undefined
-      if (parentInstance.obj) parentInstance = parentInstance.obj
       // Remove attachment
-      if (child.obj.attach) parentInstance[child.obj.attach] = undefined
-      else if (child.obj.attachArray) parentInstance[child.obj.attachArray] = target.filter(x => x !== child.obj)
-      else if (child.obj.attachObject) parentInstance[child.obj.attachObject[0]][child.obj.attachObject[1]] = undefined
+      if (child.attach) parentInstance[child.attach] = undefined
+      else if (child.attachArray) parentInstance[child.attachArray] = target.filter(x => x !== child)
+      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
       // Dispose item
-      if (child.obj.dispose) child.obj.dispose()
+      if (child.dispose) child.dispose()
     }
   }
-  if (parentInstance.__state) invalidate(parentInstance.__state)
+  invalidateInstance(child)
 }
 
 function insertBefore(parentInstance, child, beforeChild) {
@@ -186,9 +185,10 @@ function insertBefore(parentInstance, child, beforeChild) {
         child,
         ...parentInstance.children.slice(index),
       ]
-    } else child.parent = parentInstance
+      updateInstance(child)
+    } else appendChild(parentInstance, child) // TODO: order!!!
   }
-  if (parentInstance.__state) invalidate(parentInstance.__state)
+  invalidateInstance(child)
 }
 
 const Renderer = Reconciler({
@@ -216,12 +216,26 @@ const Renderer = Reconciler({
       // If it has new props or arguments, then it needs to be re-instanciated
       if (argsNew.some((value, index) => value !== argsOld[index])) {
         // Next we create a new instance and append it again
-        const newInstance = createInstance(type, newProps)
+        const newInstance = createInstance(type, newProps, instance.__container)
         removeChild(parent, instance)
         appendChild(parent, newInstance)
+
         // Switch instance
-        instance.obj = newInstance.obj
-        instance.parent = newInstance.parent
+        // instance.obj = newInstance.obj
+        // instance.obj.parent = newInstance.obj.parent
+
+        // This evil hack switches the react-internal fiber node
+        // https://github.com/facebook/react/issues/14983
+        // https://github.com/facebook/react/pull/15021
+        ;[fiber, fiber.alternate].forEach(fiber => {
+          if (fiber !== null) {
+            fiber.stateNode = newInstance
+            if (fiber.ref) {
+              if (typeof fiber.ref === 'function') fiber.ref(newInstance)
+              else fiber.ref.current = newInstance
+            }
+          }
+        })
       } else {
         // Otherwise just overwrite props
         applyProps(instance, restNew, restOld)

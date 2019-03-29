@@ -12,8 +12,8 @@ function Main({ camera }) {
   const scene = useRef()
   const composer = useRef()
   const { gl, size } = useThree()
-  useEffect(() => void composer.current.obj.setSize(size.width, size.height), [size])
-  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.obj.render()), true)
+  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
   return (
     <scene ref={scene}>
       <effectComposer ref={composer} args={[gl]}>
@@ -61,7 +61,7 @@ function Content() {
   const controls = useRef()
   const { size, setDefaultCamera } = useThree()
   useEffect(() => void setDefaultCamera(camera.current), [])
-  useRender(() => controls.current.obj.update())
+  useRender(() => controls.current.update())
   return (
     <>
       <perspectiveCamera
