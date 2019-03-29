@@ -38,8 +38,8 @@ function Thing({ vertices, color }) {
       </line>
       <mesh 
         onClick={e => console.log('click')} 
-        onHover={e => console.log('hover')} 
-        onUnhover={e => console.log('unhover')}>
+        onMouseEnter={e => console.log('hover')} 
+        onMouseLeave={e => console.log('unhover')}>
         <octahedronGeometry attach="geometry" />
         <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
