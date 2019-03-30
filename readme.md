@@ -161,7 +161,7 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 All hooks can only be used *inside* the Canvas element because they rely on context updates!
 
-#### useThree
+#### useThree()
 
 ```jsx
 import { useThree } from 'react-three-fiber'
@@ -178,7 +178,7 @@ const {
 } = useThree()
 ```
 
-#### useRender
+#### useRender(callback, takeOver=false)
 
 If you're running effects, postprocessings, controls, etc that need to get updated every frame, useRender gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
 
@@ -192,9 +192,9 @@ useRender(state => console.log("i'm in the render-loop"))
 useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
 ```
 
-#### useUpdate
+#### useUpdate(callback, denpendencies, optionalRef=undefined)
 
-Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate. 
+Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate.
 
 ```jsx
 import { useUpdate } from 'react-three-fiber'
@@ -205,9 +205,28 @@ const ref = useUpdate(
     geometry.attributes.position.needsUpdate = true
     geometry.computeBoundingSphere()
   }, 
-  [x, y, z] // execute only if these properties change
+  [x, y, z], // execute only if these properties change
 )
 return <bufferGeometry ref={ref} />
+```
+
+#### useResource(optionalRef=undefined)
+
+
+Materials and such aren't normally re-created for every instance using it. You may want to share and re-use resources. This can be done imperatively simply by maintaining the object yourself, but it can also be done declaratively by using refs. `useResource` simply creates a ref and re-renders the component when it becomes available next frame. You can pass this reference on, or even channel it through a context provider.
+
+```jsx
+import { useUpdate } from 'react-three-fiber'
+
+const [ref, material] = useResource()
+return (
+  <meshBasicMaterial ref={ref} />
+  {material && (
+    <mesh material={material} />
+    <mesh material={material} />
+    <mesh material={material} />
+  )}
+)
 ```
 
 # Receipes

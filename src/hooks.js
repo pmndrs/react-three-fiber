@@ -31,3 +31,11 @@ export function useUpdate(callback, dependents, optionalRef) {
   }, dependents)
   return ref
 }
+
+export function useResource(optionalRef) {
+  let ref = useRef()
+  if (optionalRef) ref = optionalRef
+  const [resource, set] = useState()
+  useEffect(() => void set(ref.current), [ref.current])
+  return resource
+}
