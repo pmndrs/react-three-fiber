@@ -216,7 +216,7 @@ return <bufferGeometry ref={ref} />
 Materials and such aren't normally re-created for every instance using it. You may want to share and re-use resources. This can be done imperatively simply by maintaining the object yourself, but it can also be done declaratively by using refs. `useResource` simply creates a ref and re-renders the component when it becomes available next frame. You can pass this reference on, or even channel it through a context provider.
 
 ```jsx
-import { useUpdate } from 'react-three-fiber'
+import { useResource } from 'react-three-fiber'
 
 const [ref, material] = useResource()
 return (
