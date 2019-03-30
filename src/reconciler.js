@@ -4,6 +4,8 @@ import {
   unstable_scheduleCallback as scheduleDeferredCallback,
   unstable_cancelCallback as cancelDeferredCallback,
   unstable_now as now,
+  unstable_IdlePriority as idlePriority,
+  unstable_runWithPriority as run,
 } from 'scheduler'
 
 const roots = new Map()
@@ -185,14 +187,16 @@ function removeChild(parentInstance, child) {
       else if (child.attachArray) parentInstance[child.attachArray] = target.filter(x => x !== child)
       else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
     }
-    // Remove child objects
-    child.__objects.forEach(nestedChild => removeChild(child, nestedChild))
-    // Dispose item
-    if (child.dispose) child.dispose()
     invalidateInstance(child)
-    // TODO: remove events
-    delete child.__container
-    delete child.__objects
+    run(idlePriority, () => {
+      // Remove child objects
+      child.__objects.forEach(nestedChild => removeChild(child, nestedChild))
+      // Dispose item
+      if (child.dispose) child.dispose()
+      // TODO: remove events
+      delete child.__container
+      delete child.__objects
+    })
   }
 }
 
