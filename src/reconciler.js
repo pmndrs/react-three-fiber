@@ -107,7 +107,8 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
     // Prep interaction handlers
     if (handlers.length) {
       // Add interactive object to central container
-      if (container && instance.raycast) container.__interaction.push(instance)
+      if (container && instance.raycast && !(handlers.length === 1 && handlers[0] === 'onUpdate'))
+        container.__interaction.push(instance)
       instance.__handlers = handlers.reduce(
         (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
         {}
