@@ -342,14 +342,7 @@ Then ...
 ```jsx
 <Extrusion
   start={[25, 25]}
-  paths={[
-    [25, 25, 20, 0, 0, 0],
-    [30, 0, 30, 35,30,35],
-    [30, 55, 10, 77, 25, 95],
-    [60, 77, 80, 55, 80, 35],
-    [80, 35, 80, 0, 50, 0],
-    [35, 0, 25, 25, 25, 25],
-  ]}
+  paths={[[25, 25, 20, 0, 0, 0], [30, 0, 30, 35,30,35], [30, 55, 10, 77, 25, 95]]}
   bevelEnabled
   amount={8}
   bevelSegments={2}
@@ -405,11 +398,9 @@ If you want to exchange the default renderer you can. But, you will loose some o
 import { render, unmountComponentAtNode } from 'react-three-fiber'
 
 const renderer = new THREE.SVGRenderer()
-renderer.setClearColor(0x000000)
 renderer.setSize(window.innerWidth, window.innerHeight)
 document.body.appendChild(renderer.domElement)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.z = 35
 const scene = new THREE.Scene()
 
 render((
