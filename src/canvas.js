@@ -159,7 +159,10 @@ export const Canvas = React.memo(
     const handleIntersects = useCallback((event, fn) => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
-      const hits = state.current.captured || intersect(event, false)
+      const hits =
+        state.current.captured && event.type !== 'click' && event.type !== 'wheel'
+          ? state.current.captured
+          : intersect(event, false)
       for (let hit of hits) {
         let stopped = { current: false }
         fn({
