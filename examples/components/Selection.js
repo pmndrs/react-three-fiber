@@ -7,7 +7,7 @@ import img2 from '../resources/images/crop-2.jpg'
 import disp1 from '../resources/images/crop-13.jpg'
 import useGesture from 'react-use-gesture'
 import { add, scale } from 'vec-la'
-import 'pepjs'
+import 'pointer-events-polyfill'
 
 const loader = new THREE.TextureLoader()
 function Image({ url1, position = [0, 0, 0], ...props }) {

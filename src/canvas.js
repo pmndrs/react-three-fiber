@@ -169,20 +169,6 @@ export const Canvas = React.memo(
           ray: raycaster.ray,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => (stopped.current = true),
-          // No polyfill seems to treat pointer capture properly :(
-          target: {
-            setPointerCapture: id => {
-              console.log('got capture')
-              state.current.captured = intersect(event)
-              event.target.setPointerCapture(id)
-            },
-            releasePointerCapture: id => {
-              console.log('lost capture')
-              state.current.captured = undefined
-              event.target.releasePointerCapture(id)
-              handlePointerCancel(event)
-            },
-          },
           // react-use-gesture transforms ...
           transform: {
             x: x => x / (state.current.size.width / state.current.viewport.width),
@@ -260,10 +246,10 @@ export const Canvas = React.memo(
         onPointerUp={handlePointer('pointerUp')}
         onPointerLeave={event => handlePointerCancel(event, [])}
         onPointerMove={handlePointerMove}
-        //onGotPointerCapture={event => console.log("got capture") || (state.current.captured = intersect(event))}
-        /*onLostPointerCapture={event =>
-          console.log('lost capture') || ((state.current.captured = undefined), handlePointerCancel(event))
-        }*/
+        // On capture intersect and remember the last known position
+        onGotPointerCapture={event => (state.current.captured = intersect(event, false))}
+        // On lost capture remove the captured hit
+        onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
       </div>

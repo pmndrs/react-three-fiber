@@ -60,6 +60,7 @@ module.exports = mode => {
         'lodash-es': path.resolve('../node_modules/lodash-es'),
         'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
         'react-use-gesture': createAlias('react-use-gesture/index.js', 'react-use-gesture'),
+        'pointer-events-polyfill': createAlias('pointer-events-polyfill/dist/pep.js', 'pointer-events-polyfill'),
       },
     },
     plugins: [new HtmlWebpackPlugin({ template: 'public/index.html' })],
