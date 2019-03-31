@@ -46,6 +46,7 @@ export const Canvas = React.memo(
       canvasRect: undefined,
       frames: 0,
       viewport: undefined,
+      captured: undefined,
       subscribe: (fn, main) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -139,20 +140,49 @@ export const Canvas = React.memo(
       }
     })
 
-    const intersect = useCallback((event, fn) => {
+    /** Sets up raycaster */
+    const prepareRay = useCallback(event => {
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
       mouse.set(x, y, 0.5)
       raycaster.setFromCamera(mouse, state.current.camera)
-      const hits = raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+    }, [])
+
+    /** Intersects interaction objects using the event input */
+    const intersect = useCallback((event, prepare = true) => {
+      if (prepare) prepareRay(event)
+      return raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+    })
+
+    /**  Handles intersections by forwarding them to handlers */
+    const handleIntersects = useCallback((event, fn) => {
+      prepareRay(event)
+      // If the interaction is captured, take the last known hit instead of raycasting again
+      const hits = state.current.captured || intersect(event, false)
       for (let hit of hits) {
         let stopped = { current: false }
         fn({
           ...Object.assign({}, event),
           ...hit,
           stopped,
+          ray: raycaster.ray,
+          // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => (stopped.current = true),
+          // No polyfill seems to treat pointer capture properly :(
+          target: {
+            setPointerCapture: id => {
+              console.log('got capture')
+              state.current.captured = intersect(event)
+              event.target.setPointerCapture(id)
+            },
+            releasePointerCapture: id => {
+              console.log('lost capture')
+              state.current.captured = undefined
+              event.target.releasePointerCapture(id)
+              handlePointerCancel(event)
+            },
+          },
           // react-use-gesture transforms ...
           transform: {
             x: x => x / (state.current.size.width / state.current.viewport.width),
@@ -164,10 +194,10 @@ export const Canvas = React.memo(
       return hits
     }, [])
 
-    const handleMouse = useCallback(
+    const handlePointer = useCallback(
       name => event => {
         if (!state.current.ready) return
-        intersect(event, data => {
+        handleIntersects(event, data => {
           const object = data.object
           const handlers = object.__handlers
           if (handlers[name]) handlers[name](data)
@@ -177,27 +207,27 @@ export const Canvas = React.memo(
     )
 
     const hovered = useRef({})
-    const handleMove = useCallback(event => {
+    const handlePointerMove = useCallback(event => {
       if (!state.current.ready) return
-      const hits = intersect(event, data => {
+      const hits = handleIntersects(event, data => {
         const object = data.object
         const handlers = object.__handlers
         // Call mouse move
-        if (handlers.mouseMove) handlers.mouseMove(data)
+        if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter is present
-        if (handlers.mouseEnter) {
+        if (handlers.pointerOver) {
           if (!hovered.current[object.uuid]) {
             // If the object wasn't previously hovered, book it and call its handler
             hovered.current[object.uuid] = data
-            handlers.mouseEnter({ ...data, type: 'mouseenter' })
+            handlers.pointerOver({ ...data, type: 'pointerover' })
           } else if (hovered.current[object.uuid].stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
             // In fact, wwe can safely remove them from the cache
             Object.values(hovered.current).forEach(data => {
               if (data.object.uuid !== object.uuid) {
-                if (data.object.__handlers.mouseLeave)
-                  data.object.__handlers.mouseLeave({ ...data, type: 'mouseleave' })
+                if (data.object.__handlers.pointerOut)
+                  data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
                 delete hovered.current[data.object.uuid]
               }
             })
@@ -206,9 +236,14 @@ export const Canvas = React.memo(
       })
 
       // Take care of unhover
+      handlePointerCancel(event, hits)
+    }, [])
+
+    const handlePointerCancel = useCallback((event, hits) => {
+      if (!hits) hits = handleIntersects(event, () => null)
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
-          if (data.object.__handlers.mouseLeave) data.object.__handlers.mouseLeave({ ...data, type: 'mouseleave' })
+          if (data.object.__handlers.pointerOut) data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
           delete hovered.current[data.object.uuid]
         }
       })
@@ -219,11 +254,16 @@ export const Canvas = React.memo(
       <div
         {...bind}
         {...rest}
-        onClick={handleMouse('click')}
-        onMouseUp={handleMouse('mouseUp')}
-        onMouseDown={handleMouse('mouseDown')}
-        onWheel={handleMouse('wheel')}
-        onMouseMove={handleMove}
+        onClick={handlePointer('click')}
+        onWheel={handlePointer('wheel')}
+        onPointerDown={handlePointer('pointerDown')}
+        onPointerUp={handlePointer('pointerUp')}
+        onPointerLeave={event => handlePointerCancel(event, [])}
+        onPointerMove={handlePointerMove}
+        //onGotPointerCapture={event => console.log("got capture") || (state.current.captured = intersect(event))}
+        /*onLostPointerCapture={event =>
+          console.log('lost capture') || ((state.current.captured = undefined), handlePointerCancel(event))
+        }*/
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas style={{ display: 'block' }} ref={canvas} />
       </div>

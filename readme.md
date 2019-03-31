@@ -38,8 +38,8 @@ function Thing({ vertices, color }) {
       </line>
       <mesh 
         onClick={e => console.log('click')} 
-        onMouseEnter={e => console.log('hover')} 
-        onMouseLeave={e => console.log('unhover')}>
+        onPointerOver={e => console.log('hover')} 
+        onPointerOut={e => console.log('unhover')}>
         <octahedronGeometry attach="geometry" />
         <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
       </mesh>
@@ -142,19 +142,36 @@ return <primitive object={mesh} />
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. For now that's prop-updates (very useful for things like `verticesNeedUpdate`) and mouse events. Touch follows soon!
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events (you need to polyfill them yourself), clicks and wheel-scroll.
+
+Additionally there's a special `onUpdate` that is called every time object is updated with fresh props (as well as when it's first being instanciated).
 
 ```jsx
 <mesh
   onClick={e => console.log('click')}
-  onMouseUp={e => console.log('mouse button up')}
-  onMouseDown={e => console.log('mouse button down')}
-  onMouseEnter={e => console.log('hover')}
-  onMouseLeave={e => console.log('unhover')}
-  onMouseMove={e => console.log('mouse moves')}
   onWheel={e => console.log('wheel spins')}
+  onPointerUp={e => console.log('mouse button up')}
+  onPointerDown={e => console.log('mouse button down')}
+  onPointerOver={e => console.log('hover')}
+  onPointerOut={e => console.log('unhover')}
+  onPointerMove={e => console.log('mouse moves')}
   onUpdate={self => console.log('props have been updated')}
-/>
+```
+
+#### Propagation and capturing
+
+```jsx
+  onPointerDown={e => {
+    // Only the mesh closest to the camera will be processed
+    e.stopPropagation()
+    // You may optionally capture the target
+    e.target.setPointerCapture(e.pointerId)
+  }}
+  onPointerUp={e => {
+    e.stopPropagation()
+    // Release capture (if you capture, you *must* release due to cross browser issues)
+    e.target.releasePointerCapture(e.pointerId)
+  }}
 ```
 
 # Hooks

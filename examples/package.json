@@ -3,6 +3,8 @@
   "version": "0.1.1",
   "private": true,
   "dependencies": {
+    "pepjs": "^0.4.3",
+    "pointer": "^1.0.2",
     "react": "^16.8.4",
     "react-app-polyfill": "^0.2.1",
     "react-dev-utils": "^7.0.3",

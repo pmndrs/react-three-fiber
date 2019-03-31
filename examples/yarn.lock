@@ -4617,6 +4617,11 @@ pend@~1.2.0:
   resolved "https://registry.yarnpkg.com/pend/-/pend-1.2.0.tgz#7a57eb550a6783f9115331fcf4663d5c8e007a50"
   integrity sha1-elfrVQpng/kRUzH89GY9XI4AelA=
 
+pepjs@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/pepjs/-/pepjs-0.4.3.tgz#16080e970aae779913756c2daef88eaa7486df41"
+  integrity sha1-FggOlwqud5kTdWwtrviOqnSG30E=
+
 performance-now@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/performance-now/-/performance-now-2.1.0.tgz#6309f4e0e5fa913ec1c69307ae364b4b377c9e7b"
@@ -4672,6 +4677,11 @@ pngquant-bin@^5.0.0:
     bin-wrapper "^4.0.1"
     execa "^0.10.0"
     logalot "^2.0.0"
+
+pointer@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/pointer/-/pointer-1.0.2.tgz#cd2e9bb99b9ab4028a9db0d52c8b79740fee1e8a"
+  integrity sha512-18mftksP6xZvuFNguQhgdOq5UlVmJCswhMaYprSOmF3OXCF2kiXtDw/gHTC7dcK2kbHvQbCQaFJSnxRIlcuyvg==
 
 portfinder@^1.0.9:
   version "1.0.20"
