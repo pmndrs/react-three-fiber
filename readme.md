@@ -169,7 +169,7 @@ Additionally there's a special `onUpdate` that is called every time object is up
   }}
   onPointerUp={e => {
     e.stopPropagation()
-    // Release capture (if you capture, you *must* release due to cross browser issues)
+    // Optionally release capture
     e.target.releasePointerCapture(e.pointerId)
   }}
 ```
