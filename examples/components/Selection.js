@@ -57,7 +57,7 @@ function Image({ url1, position = [0, 0, 0], ...props }) {
       }}
       onPointerUp={e => {
         e.stopPropagation()
-        //e.target.releasePointerCapture(e.pointerId)
+        e.target.releasePointerCapture(e.pointerId)
       }}
       onPointerMove={move}
       onPointerOver={hover}
