@@ -143,7 +143,7 @@ return <primitive object={mesh} />
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP/issues/365)), clicks and wheel-scroll.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/react-spring/pointer-events-polyfill)), clicks and wheel-scroll.
 
 Additionally there's a special `onUpdate` that is called every time the object is updated with fresh props (as well as when it's first being created).
 
