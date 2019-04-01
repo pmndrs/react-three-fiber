@@ -25,8 +25,8 @@ function Thing() {
       </animated.line>
       <animated.mesh
         onClick={e => setActive(!active)}
-        onMouseEnter={e => setHover(true)}
-        onMouseLeave={e => setHover(false)}
+        onPointerOver={e => setHover(true)}
+        onPointerOut={e => setHover(false)}
         {...props}>
         <octahedronGeometry attach="geometry" />
         <meshStandardMaterial attach="material" color="grey" transparent />

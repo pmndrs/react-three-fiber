@@ -108,13 +108,7 @@ function Image(props) {
   const hover = useCallback(() => setHover(true), [])
   const unhover = useCallback(() => setHover(false), [])
   return (
-    <div
-      className="item"
-      onMouseEnter={hover}
-      onMouseLeave={unhover}
-      onTouchStart={hover}
-      onTouchEnd={unhover}
-      onTouchCancel={unhover}>
+    <div className="item" onPointerOver={hover} onPointerOut={unhover}>
       <Canvas className="canvas" invalidateFrameloop>
         <ImageWebgl {...props} hovered={hovered} />
       </Canvas>

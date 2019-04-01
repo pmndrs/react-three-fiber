@@ -48,7 +48,7 @@ function Hud({ camera }) {
   const unhover = useCallback(() => set(false), [])
   return (
     <scene ref={scene}>
-      <mesh onMouseEnter={hover} onMouseLeave={unhover}>
+      <mesh onPointerOver={hover} onPointerOut={unhover}>
         <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
         <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'black'} />
       </mesh>

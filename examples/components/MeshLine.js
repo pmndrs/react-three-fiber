@@ -5,7 +5,7 @@ import * as meshline from 'three.meshline'
 
 apply(meshline)
 
-const numLines = 100
+const numLines = 50
 const lines = new Array(numLines).fill()
 const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#EE786E']
 

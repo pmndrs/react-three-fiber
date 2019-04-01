@@ -76,12 +76,13 @@ export const Canvas = React.memo(
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
-      state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...gl })
+      state.current.gl = new THREE.WebGLRenderer({ canvas: bind.ref.current, antialias: true, alpha: true, ...gl })
       if (pixelRatio) state.current.gl.setPixelRatio(pixelRatio)
       state.current.gl.setClearAlpha(0)
-      state.current.canvas = canvas.current
+      state.current.canvas = bind.ref.current
       state.current.scene = new THREE.Scene()
       state.current.scene.__interaction = []
+      state.current.scene.__objects = []
 
       // Start render-loop
       invalidate(state)
@@ -240,9 +241,8 @@ export const Canvas = React.memo(
 
     // Render the canvas into the dom
     return (
-      <div
+      <canvas
         {...bind}
-        {...rest}
         onClick={handlePointer('click')}
         onWheel={handlePointer('wheel')}
         onPointerDown={handlePointer('pointerDown')}
@@ -253,9 +253,9 @@ export const Canvas = React.memo(
         onGotPointerCapture={event => (state.current.captured = intersect(event, false))}
         // On lost capture remove the captured hit
         onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
-        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-        <canvas style={{ display: 'block' }} ref={canvas} />
-      </div>
+        {...rest}
+        style={{ display: 'block', position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+      />
     )
   }
 )

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply as applySpring, useSpring, animated as anim, interpolate } from 'react-spring/three'
+import { apply as applySpring, useSpring, animated as a, interpolate } from 'react-spring/three'
 import { apply as applyThree, Canvas, useRender, useThree } from 'react-three-fiber'
 import data from './../resources/data'
 
@@ -20,16 +20,12 @@ function Image({ url, opacity, scale, ...props }) {
   const unhover = useCallback(() => setHover(false), [])
   const { factor } = useSpring({ factor: hovered ? 1.1 : 1 })
   return (
-    <anim.mesh
-      {...props}
-      onHover={hover}
-      onUnhover={unhover}
-      scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
+    <a.mesh {...props} onHover={hover} onUnhover={unhover} scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
-      <anim.meshLambertMaterial attach="material" transparent opacity={opacity}>
+      <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
-      </anim.meshLambertMaterial>
-    </anim.mesh>
+      </a.meshLambertMaterial>
+    </a.mesh>
   )
 }
 
@@ -53,11 +49,11 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
     return canvas
   }, [children, width, height])
   return (
-    <anim.sprite scale={[scale, scale, 1]} position={position}>
-      <anim.spriteMaterial attach="material" transparent opacity={opacity}>
+    <a.sprite scale={[scale, scale, 1]} position={position}>
+      <a.spriteMaterial attach="material" transparent opacity={opacity}>
         <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={s => (s.needsUpdate = true)} />
-      </anim.spriteMaterial>
-    </anim.sprite>
+      </a.spriteMaterial>
+    </a.sprite>
   )
 }
 
@@ -67,7 +63,7 @@ function Background({ color }) {
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
       <planeGeometry attach="geometry" args={[1, 1]} />
-      <anim.meshBasicMaterial attach="material" color={color} depthTest={false} />
+      <a.meshBasicMaterial attach="material" color={color} depthTest={false} />
     </mesh>
   )
 }
@@ -91,11 +87,11 @@ function Stars({ position }) {
     return [geo, mat, coords]
   }, [])
   return (
-    <anim.group ref={group} position={position}>
+    <a.group ref={group} position={position}>
       {coords.map(([p1, p2, p3], i) => (
         <mesh key={i} geometry={geo} material={mat} position={[p1, p2, p3]} />
       ))}
-    </anim.group>
+    </a.group>
   )
 }
 
@@ -109,7 +105,7 @@ const Effects = React.memo(({ factor }) => {
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" args={[scene, camera]} />
-      <anim.glitchPass attachArray="passes" renderToScreen factor={factor} />
+      <a.glitchPass attachArray="passes" renderToScreen factor={factor} />
     </effectComposer>
   )
 })
@@ -137,7 +133,7 @@ function Scene({ top, mouse }) {
   const scrollMax = size.height * 4.5
   return (
     <>
-      <anim.spotLight intensity={1.2} color="white" position={mouse.interpolate((x, y) => [x / 100, -y / 100, 6.5])} />
+      <a.spotLight intensity={1.2} color="white" position={mouse.interpolate((x, y) => [x / 100, -y / 100, 6.5])} />
       <Effects factor={top.interpolate([0, 150], [1, 0])} />
       <Background
         color={top.interpolate(
