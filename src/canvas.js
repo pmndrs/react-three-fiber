@@ -76,10 +76,10 @@ export const Canvas = React.memo(
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
-      state.current.gl = new THREE.WebGLRenderer({ canvas: bind.ref.current, antialias: true, alpha: true, ...gl })
+      state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...gl })
       if (pixelRatio) state.current.gl.setPixelRatio(pixelRatio)
       state.current.gl.setClearAlpha(0)
-      state.current.canvas = bind.ref.current
+      state.current.canvas = canvas.current
       state.current.scene = new THREE.Scene()
       state.current.scene.__interaction = []
       state.current.scene.__objects = []
@@ -241,7 +241,7 @@ export const Canvas = React.memo(
 
     // Render the canvas into the dom
     return (
-      <canvas
+      <div
         {...bind}
         onClick={handlePointer('click')}
         onWheel={handlePointer('wheel')}
@@ -254,8 +254,9 @@ export const Canvas = React.memo(
         // On lost capture remove the captured hit
         onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
         {...rest}
-        style={{ display: 'block', position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
-      />
+        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+        <canvas ref={canvas} style={{ display: 'block' }} />
+      </div>
     )
   }
 )

@@ -52,6 +52,35 @@ span.header {
   line-height: 1em;
 }
 
+span.header-left {
+  font-family: 'Playfair Display', serif;
+  position: absolute;
+  display: inline-block;
+  transform: translate3d(0, -50%, 0);
+  line-height: 1em;
+  top: 200px;
+  left: 50px;
+  font-size: 4em;
+  width: 200px;
+}
+
+div.header-major {
+  font-family: 'Playfair Display', serif;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+
+div.header-major > span {
+  font-size: 15em;
+}
+
 @media only screen and (max-width: 600px) {
   span.header {
     top: 200px;
@@ -65,13 +94,14 @@ span.header {
 }
 
 a {
-  color: white;
+  color: inherit;
   font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto,
     segoe ui, arial, sans-serif;
   position: absolute;
   font-size: 1.1em;
   display: inline;
   text-decoration: none;
+  z-index: 1;
 }
 
 a.top-left {
@@ -131,5 +161,3 @@ canvas {
   font-weight: 800;
   line-height: 0.9em;
 }
-
-
