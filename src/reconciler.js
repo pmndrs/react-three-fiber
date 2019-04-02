@@ -17,7 +17,7 @@ const is = {
   und: a => a === void 0,
   arr: a => Array.isArray(a),
   equ(a, b) {
-    // Wron type, doesn't match
+    // Wrong type, doesn't match
     if (typeof a !== typeof b) return false
     // Atomic, just compare a against b
     if (is.str(a) || is.num(a) || is.obj(a)) return a === b
