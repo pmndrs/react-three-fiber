@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply as applySpring, useSpring, animated as a, interpolate } from 'react-spring/three'
+import { apply as applySpring, useSpring, a, interpolate } from 'react-spring/three'
 import { apply as applyThree, Canvas, useRender, useThree } from 'react-three-fiber'
 import data from './../resources/data'
 

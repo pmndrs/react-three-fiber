@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useMemo, useCallback, useState } from 'react'
 import { Canvas, useThree } from 'react-three-fiber'
-import { useSpring, animated as a } from 'react-spring/three'
+import { useSpring, a } from 'react-spring/three'
 import img1 from '../resources/images/crop-1.jpg'
 import img2 from '../resources/images/crop-2.jpg'
 import disp1 from '../resources/images/crop-13.jpg'

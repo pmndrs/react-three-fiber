@@ -5,7 +5,7 @@ import ReactDOM from 'react-dom'
 import * as THREE from 'three'
 import { vertexShader, fragmentShader } from '../resources/shaders/XFadeShader'
 import { Canvas, useThree } from 'react-three-fiber'
-import { useSpring, animated as anim } from 'react-spring/three'
+import { useSpring, a } from 'react-spring/three'
 
 import img1 from '../resources/images/crop-1.jpg'
 import img2 from '../resources/images/crop-2.jpg'
@@ -98,7 +98,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   return (
     <mesh>
       <planeBufferGeometry attach="geometry" args={[8, 8]} />
-      <anim.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
+      <a.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>
   )
 }

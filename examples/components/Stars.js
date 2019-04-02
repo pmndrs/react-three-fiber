@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useMemo, useContext, useEffect, useCallback } from 'react'
-import { useSpring, animated } from 'react-spring/three'
+import { useSpring, a } from 'react-spring/three'
 import { Canvas, useRender, useThree } from 'react-three-fiber'
 
 function Thing() {
@@ -19,18 +19,18 @@ function Thing() {
 
   return (
     <group>
-      <animated.line position={pos}>
+      <a.line position={pos}>
         <geometry attach="geometry" vertices={vertices.map(v => new THREE.Vector3(...v))} />
-        <animated.lineBasicMaterial attach="material" color={color} />
-      </animated.line>
-      <animated.mesh
+        <a.lineBasicMaterial attach="material" color={color} />
+      </a.line>
+      <a.mesh
         onClick={e => setActive(!active)}
         onPointerOver={e => setHover(true)}
         onPointerOut={e => setHover(false)}
         {...props}>
         <octahedronGeometry attach="geometry" />
         <meshStandardMaterial attach="material" color="grey" transparent />
-      </animated.mesh>
+      </a.mesh>
     </group>
   )
 }

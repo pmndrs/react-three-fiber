@@ -15,9 +15,15 @@ const is = {
   str: a => typeof a === 'string',
   num: a => typeof a === 'number',
   und: a => a === void 0,
+  arr: a => Array.isArray(a),
   equ(a, b) {
+    // Wron type, doesn't match
     if (typeof a !== typeof b) return false
+    // Atomic, just compare a against b
     if (is.str(a) || is.num(a) || is.obj(a)) return a === b
+    // Array, shallow compare first to see if it's a match
+    if (is.arr(a) && a == b) return true
+    // Last resort, go through keys
     let i
     for (i in a) if (!(i in b)) return false
     for (i in b) if (a[i] !== b[i]) return false
@@ -94,10 +100,12 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
             key = name
           }
         }
-        if (target && target.set) {
+        // Special treatment for objects with support for set/copy
+        if (target && target.set && target.copy) {
           if (target.constructor.name === value.constructor.name) target.copy(value)
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
+          // Else, just overwrite the value
         } else root[key] = value
 
         invalidateInstance(instance)
@@ -224,6 +232,7 @@ const Renderer = Reconciler({
       const { args: argsNew = [], ...restNew } = newProps
       const { args: argsOld = [], ...restOld } = oldProps
       // If it has new props or arguments, then it needs to be re-instanciated
+      // TODO, are colors falsely detected here?
       if (argsNew.some((value, index) => value !== argsOld[index])) {
         // Next we create a new instance and append it again
         const newInstance = createInstance(type, newProps, instance.__container)

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useMemo, useCallback, useState } from 'react'
 import { Canvas, useThree } from 'react-three-fiber'
-import { useSpring, animated as a } from 'react-spring/three'
+import { useSpring, a } from 'react-spring/three'
 import useGesture from 'react-use-gesture'
 import { add, scale } from 'vec-la'
 

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { update, useTransition, useSpring, animated as anim } from 'react-spring/three'
+import { update, useTransition, useSpring, a } from 'react-spring/three'
 import flat from 'lodash-es/flatten'
 import { SVGLoader } from './../resources/loaders/SVGLoader'
 import * as svgs from '../resources/images/svg'
@@ -45,12 +45,12 @@ const Scene = React.memo(() => {
     <>
       <mesh scale={[viewport.width * 2, viewport.height * 2, 1]} rotation={[0, deg(-20), 0]}>
         <planeGeometry attach="geometry" args={[1, 1]} />
-        <anim.meshPhongMaterial attach="material" color={color} depthTest={false} />
+        <a.meshPhongMaterial attach="material" color={color} depthTest={false} />
       </mesh>
-      <anim.group position={[1600, -700, page]} rotation={[0, deg(180), 0]}>
+      <a.group position={[1600, -700, page]} rotation={[0, deg(180), 0]}>
         {transitions.map(({ item: { shape, color, index }, key, props: { opacity, position } }) => (
-          <anim.mesh key={key} position={position.interpolate((x, y, z) => [x, y, z + -index * 50])}>
-            <anim.meshPhongMaterial
+          <a.mesh key={key} position={position.interpolate((x, y, z) => [x, y, z + -index * 50])}>
+            <a.meshPhongMaterial
               attach="material"
               color={color}
               opacity={opacity}
@@ -59,9 +59,9 @@ const Scene = React.memo(() => {
               transparent
             />
             <shapeBufferGeometry attach="geometry" args={[shape]} />
-          </anim.mesh>
+          </a.mesh>
         ))}
-      </anim.group>
+      </a.group>
     </>
   )
 })
