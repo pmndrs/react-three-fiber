@@ -10,13 +10,13 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for Three-js. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Three as it makes for the Dom. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the eco system, you can now apply generic packages for state, animation, gestures and so on.
+React-three-fiber is a small React renderer for Three-js. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Three as it makes for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
 This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with version 1 as well as their latest. At the same time we don't want to alter any rules, if something works in Three in a specific way, it will be the same here.
 
-# How it looks like ...
+# What it looks like ...
 
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
@@ -58,7 +58,7 @@ ReactDOM.render(
 
 # Canvas
 
-The `Canvas` object is your portal into Threejs. It renders Threejs elements, *not dom element*!
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, *not DOM elements*!
 
 ```jsx
 <Canvas
@@ -86,11 +86,11 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some set-methods take multiple arguments (vectors for instance), in this case you can pass an array.
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
 You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
-The following is the same as above, but it's leaner and critical properties aren't re-instanciated on every render.
+The following is the same as above, but it's leaner and critical properties aren't re-instantiated on every render.
 
 ```jsx
 <mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
@@ -99,7 +99,7 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
-You can nest primitive objects, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects—which is good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial attach="material">
@@ -107,7 +107,7 @@ You can nest primitive objects, which is good for awaiting async textures and su
 </meshBasicMaterial>
 ```
 
-Sometimes attaching isn't enough, for instance effects cling to an array called "passes" of a the parental effect-composer. In that case you use `attachArray` which adds the object to the target array and takes it out on unmount:
+Sometimes attaching isn't enough. For example, this code attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
 
 ```jsx
 <effectComposer>
@@ -251,7 +251,7 @@ return (
 
 ## Handling loaders
 
-You can use Reacts built-in memoizing-features (as well as suspense) to build async dependence graphs.
+You can use React's built-in memoizing-features (as well as suspense) to build async dependence graphs.
 
 ```jsx
 function Image({ url }) {
