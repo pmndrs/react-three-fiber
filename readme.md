@@ -68,7 +68,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   camera                        // And these go in to the default camera
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
-  onCreated />                  // Callback when vdom is ready, return a promise to prevent FOC
+  onCreated />                  // Callback when vdom is ready (you can block first render via promise)
 ```
 
 # Objects and properties
@@ -144,7 +144,7 @@ return <primitive object={mesh} />
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/react-spring/pointer-events-polyfill)), clicks and wheel-scroll.
+THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll.
 
 Additionally there's a special `onUpdate` that is called every time the object is updated with fresh props (as well as when it's first being created).
 
