@@ -193,7 +193,8 @@ function removeChild(parentInstance, child) {
       parentInstance.__objects = parentInstance.__objects.filter(x => x !== child)
       // Remove attachment
       if (child.attach) parentInstance[child.attach] = undefined
-      else if (child.attachArray) parentInstance[child.attachArray] = target.filter(x => x !== child)
+      else if (child.attachArray)
+        parentInstance[child.attachArray] = parentInstance[child.attachArray].filter(x => x !== child)
       else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
     }
     invalidateInstance(child)
