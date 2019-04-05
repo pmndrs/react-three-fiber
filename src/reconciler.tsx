@@ -143,7 +143,7 @@ function createInstance(type, { args = [], ...props }, container) {
   if (type === 'primitive') instance = props.object
   else {
     const target = catalogue[name] || THREE[name]
-    instance = Array.isArray(args) ? new target(...args) : new target(args)
+    instance = Array.isArray(args) ? new target.apply(null, args) : new target(args)
   }
   // Apply initial props
   instance.__objects = []

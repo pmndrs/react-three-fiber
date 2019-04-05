@@ -1,7 +1,33 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, useState, useCallback } from 'react'
+import * as React from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
+
+type Measure = [
+  { ref: React.MutableRefObject<any> },
+  { left: number, top: number, width: number, height: number }
+]
+
+type IntersectObject = Event & THREE.Intersection & {
+  ray: THREE.Raycaster;
+  stopped: { current: boolean };
+  uuid: string;
+  transform: {
+    x: Function,
+    y: Function
+  };
+}
+
+type CanvasProps = {
+  children: React.ReactNode;
+  gl: THREE.WebGLRenderer;
+  camera?: THREE.Camera;
+  style?: React.CSSProperties;
+  pixelRatio?: number;
+  invalidateFrameloop?: boolean;
+  onCreated: Function;
+}
 
 const defaultRef = {
   ready: false,
@@ -27,7 +53,7 @@ const defaultRef = {
 
 export const stateContext = React.createContext(defaultRef)
 
-function useMeasure() {
+function useMeasure(): Measure {
   const ref = useRef()
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
@@ -38,16 +64,6 @@ function useMeasure() {
   }, [ref.current])
 
   return [{ ref }, bounds]
-}
-
-type CanvasProps = {
-  children: React.ReactNode;
-  gl: THREE.WebGLRenderer;
-  camera?: THREE.Camera;
-  style?: React.CSSProperties;
-  pixelRatio?: number;
-  invalidateFrameloop?: boolean;
-  onCreated: (ref: React.MutableRefObject<any>) => any,
 }
 
 export const Canvas = React.memo(
@@ -181,7 +197,7 @@ export const Canvas = React.memo(
     }, [])
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event, fn) => {
+    const handleIntersects = useCallback((event, fn: (data: IntersectObject) => any) => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
       const hits =
@@ -220,13 +236,16 @@ export const Canvas = React.memo(
       []
     )
 
-    const hovered = useRef({})
+    const hoveredInitialValue: { [key: string]: IntersectObject } = {};
+    const hovered = useRef(hoveredInitialValue)
+
     const handlePointerMove = useCallback(event => {
       if (!state.current.ready) return
 
       const hits = handleIntersects(event, data => {
         const object = data.object
         const handlers = object.__handlers
+
         // Call mouse move
         if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter is present
@@ -254,8 +273,9 @@ export const Canvas = React.memo(
       handlePointerCancel(event, hits)
     }, [])
 
-    const handlePointerCancel = useCallback((event, hits) => {
+    const handlePointerCancel = useCallback((event, hits?) => {
       if (!hits) hits = handleIntersects(event, () => null)
+
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
           if (data.object.__handlers.pointerOut) data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
