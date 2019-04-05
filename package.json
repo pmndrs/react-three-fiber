@@ -9,7 +9,8 @@
     "prebuild": "rimraf dist",
     "build": "rollup -c",
     "prepare": "npm run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typecheck": "tsc --noEmit src/*"
   },
   "husky": {
     "hooks": {
@@ -72,15 +73,21 @@
     "@babel/preset-env": "7.4.3",
     "@babel/preset-react": "7.0.0",
     "@babel/preset-typescript": "^7.3.3",
+    "@types/lodash-es": "^4.17.3",
+    "@types/react": "^16.8.12",
+    "@types/three": "^0.93.30",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "husky": "^1.3.1",
     "lint-staged": "^8.1.5",
     "prettier": "^1.16.4",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
     "rollup": "^1.8.0",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.0.1",
     "rollup-plugin-size-snapshot": "^0.8.0",
+    "three": "^0.103.0",
     "typescript": "^3.4.1"
   }
 }

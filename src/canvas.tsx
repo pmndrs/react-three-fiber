@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 

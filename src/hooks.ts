@@ -1,4 +1,4 @@
-import React, { useRef, useContext, useEffect, useMemo, useState } from 'react'
+import { useRef, useContext, useEffect, useMemo, useState } from 'react'
 import { stateContext } from './canvas'
 
 export function useRender(fn, takeOverRenderloop) {
