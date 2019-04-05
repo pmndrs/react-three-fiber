@@ -58,7 +58,7 @@ export const Canvas = React.memo(
     const [bind, size] = useMeasure()
     const [intersects, setIntersects] = useState([])
     const [raycaster] = useState(() => new THREE.Raycaster())
-    const [mouse] = useState(() => new THREE.Vector2())
+    const [mouse] = useState(() => new THREE.Vector3())
     const [defaultCam, setDefaultCamera] = useState(() => {
       const cam = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
       cam.position.z = 5
@@ -168,7 +168,9 @@ export const Canvas = React.memo(
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
+
       mouse.set(x, y, 0.5)
+
       raycaster.setFromCamera(mouse, state.current.camera)
     }, [])
 

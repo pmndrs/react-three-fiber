@@ -50,6 +50,7 @@
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
   "dependencies": {
     "@babel/runtime": "^7.4.3",
+    "@types/three": "^0.93.30",
     "lodash-es": "^4.17.11",
     "pointer-events-polyfill": "^0.4.4-pre",
     "react-reconciler": "^0.20.1",
@@ -75,7 +76,6 @@
     "@babel/preset-typescript": "^7.3.3",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.8.12",
-    "@types/three": "^0.93.30",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "husky": "^1.3.1",
     "lint-staged": "^8.1.5",
