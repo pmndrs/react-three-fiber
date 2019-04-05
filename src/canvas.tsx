@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
-export const stateContext = React.createContext()
+export const stateContext = React.createContext({})
 
 function useMeasure() {
   const ref = useRef()
@@ -16,8 +16,18 @@ function useMeasure() {
   return [{ ref }, bounds]
 }
 
+type CanvasProps = {
+  children: React.ReactChildren;
+  gl: THREE.WebGLRenderer;
+  camera?: THREE.Camera;
+  style?: React.CSSProperties;
+  pixelRatio?: number;
+  invalidateFrameloop?: boolean;
+  onCreated: (ref: React.MutableRefObject<any>) => any,
+}
+
 export const Canvas = React.memo(
-  ({ children, gl, camera, style, pixelRatio, invalidateFrameloop = false, onCreated, ...rest }) => {
+  ({ children, gl, camera, style, pixelRatio, invalidateFrameloop = false, onCreated, ...rest }: CanvasProps) => {
     // Local, reactive state
     const canvas = useRef()
     const [ready, setReady] = useState(false)
