@@ -87,7 +87,7 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')}` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
 You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
@@ -205,7 +205,7 @@ If you're running effects, postprocessings, controls, etc that need to get updat
 import { useRender } from 'react-three-fiber'
 
 // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-useRender(state => console.log("i'm in the render-loop"))
+useRender(state => console.log("I'm in the render-loop"))
 
 // Add a "true" as the 2nd argument and you take over the render-loop completely
 useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
@@ -411,7 +411,7 @@ const texture = useMemo(() => loader.load(url1, invalidate), [url1])
 
 ## Switching the default renderer
 
-If you want to exchange the default renderer you can. But, you will loose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
+If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
 
 ```jsx
 import { render, unmountComponentAtNode } from 'react-three-fiber'
