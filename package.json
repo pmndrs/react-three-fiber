@@ -10,7 +10,8 @@
     "build": "rollup -c",
     "prepare": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typecheck": "tsc --noEmit --jsx react src/*"
+    "typecheck": "tsc --noEmit --jsx react src/*",
+    "typegen": "tsc  --jsx react --emitDeclarationOnly -d --declarationDir types src/*"
   },
   "husky": {
     "hooks": {

@@ -1,13 +1,16 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
 import { stateContext } from './canvas'
 
-export function useRender(fn, takeOverRenderloop) {
+export function useRender(fn: Function, takeOverRenderloop: boolean): any {
   const { subscribe, setManual } = useContext(stateContext)
+
   // This calls into the host to inform it whether the render-loop is manual or not
   useMemo(() => takeOverRenderloop && setManual(true), [takeOverRenderloop])
+
   useEffect(() => {
     // Subscribe to the render-loop
     const unsubscribe = subscribe(fn, takeOverRenderloop)
+
     return () => {
       // Call subscription off on unmount
       unsubscribe()
@@ -21,21 +24,29 @@ export function useThree() {
   return props
 }
 
-export function useUpdate(callback, dependents, optionalRef) {
+export function useUpdate(
+  callback: Function,
+  dependents: [],
+  optionalRef: React.MutableRefObject<any>
+): React.MutableRefObject<any> {
   const { invalidate } = useContext(stateContext)
-  let ref = useRef()
-  if (optionalRef) ref = optionalRef
+  const ref = optionalRef ? optionalRef : useRef()
+
   useEffect(() => {
     callback(ref.current)
     invalidate()
   }, dependents)
+
   return ref
 }
 
-export function useResource(optionalRef) {
-  let ref = useRef()
-  if (optionalRef) ref = optionalRef
+export function useResource(
+  optionalRef: React.MutableRefObject<any>
+): React.MutableRefObject<any> {
   const [resource, set] = useState()
+  const ref = optionalRef ? optionalRef : useRef()
+
   useEffect(() => void set(ref.current), [ref.current])
+
   return resource
 }
