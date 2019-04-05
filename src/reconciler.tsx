@@ -76,7 +76,7 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container = {}) {
+export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container = { __interaction: undefined }) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
@@ -115,8 +115,10 @@ export function applyProps(instance, newProps, oldProps = {}, interpolateArray =
     // Prep interaction handlers
     if (handlers.length) {
       // Add interactive object to central container
-      if (container && instance.raycast && !(handlers.length === 1 && handlers[0] === 'onUpdate'))
+      if (container && instance.raycast && !(handlers.length === 1 && handlers[0] === 'onUpdate')) {
         container.__interaction.push(instance)
+      }
+
       instance.__handlers = handlers.reduce(
         (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
         {}

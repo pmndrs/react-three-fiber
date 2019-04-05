@@ -3,21 +3,45 @@ import React, { useRef, useEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
-export const stateContext = React.createContext({})
+const defaultRef = {
+  ready: false,
+  subscribers: [],
+  manual: false,
+  active: true,
+  canvas: undefined,
+  gl: undefined,
+  camera: undefined,
+  scene: undefined,
+  size: undefined,
+  canvasRect: undefined,
+  frames: 0,
+  aspect: 0,
+  viewport: undefined,
+  captured: undefined,
+  invalidateFrameloop: false,
+  subscribe: (fn, main) => () => {},
+  setManual: (takeOverRenderloop) => {},
+  setDefaultCamera: (cam) => {},
+  invalidate: () => {}
+}
+
+export const stateContext = React.createContext(defaultRef)
 
 function useMeasure() {
   const ref = useRef()
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
+
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
   }, [ref.current])
+
   return [{ ref }, bounds]
 }
 
 type CanvasProps = {
-  children: React.ReactChildren;
+  children: React.ReactNode;
   gl: THREE.WebGLRenderer;
   camera?: THREE.Camera;
   style?: React.CSSProperties;
@@ -44,19 +68,7 @@ export const Canvas = React.memo(
 
     // Public state
     const state = useRef({
-      ready: false,
-      subscribers: [],
-      manual: false,
-      active: true,
-      canvas: undefined,
-      gl: undefined,
-      camera: undefined,
-      scene: undefined,
-      size: undefined,
-      canvasRect: undefined,
-      frames: 0,
-      viewport: undefined,
-      captured: undefined,
+      ...defaultRef,
       subscribe: (fn, main) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -164,7 +176,7 @@ export const Canvas = React.memo(
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
       return raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-    })
+    }, [])
 
     /**  Handles intersections by forwarding them to handlers */
     const handleIntersects = useCallback((event, fn) => {
@@ -209,6 +221,7 @@ export const Canvas = React.memo(
     const hovered = useRef({})
     const handlePointerMove = useCallback(event => {
       if (!state.current.ready) return
+
       const hits = handleIntersects(event, data => {
         const object = data.object
         const handlers = object.__handlers
@@ -223,7 +236,7 @@ export const Canvas = React.memo(
           } else if (hovered.current[object.uuid].stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
-            // In fact, wwe can safely remove them from the cache
+            // In fact, we can safely remove them from the cache
             Object.values(hovered.current).forEach(data => {
               if (data.object.uuid !== object.uuid) {
                 if (data.object.__handlers.pointerOut)
