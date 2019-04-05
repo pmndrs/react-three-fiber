@@ -76,7 +76,7 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container) {
+export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container = {}) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))

@@ -10,7 +10,7 @@
     "build": "rollup -c",
     "prepare": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typecheck": "tsc --noEmit src/*"
+    "typecheck": "tsc --noEmit --jsx react src/*"
   },
   "husky": {
     "hooks": {
