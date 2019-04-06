@@ -11,11 +11,11 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for Three-js. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Three as it makes for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
+React-three-fiber is a small React renderer for Threejs. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with version 1 as well as their latest. At the same time we don't want to alter any rules, if something works in Three in a specific way, it will be the same here.
+This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with version 1 as well as their latest. At the same time we don't want to alter any rules, if something works in Threejs in a specific way, it will be the same here.
 
 # What it looks like ...
 
@@ -133,13 +133,29 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 <mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
 ```
 
-#### Extending or using arbitrary objects
+#### Putting already existing objects into the scene-graph
 
-When you need managed local (or custom/extended) objects, you can use the `primitive` placeholder.
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it.
 
 ```jsx
 const mesh = new THREE.Mesh()
-return <primitive object={mesh} />
+return <primitive object={mesh} position={[0, 0, 0]} />
+```
+
+#### Using 3rd-party (non THREE namespaced) objects in the scene-graph
+
+The `apply` function extends three-fibers catalogue of known native elements. These objects become available and can now be directly instantiated.
+
+```jsx
+import { apply } from 'react-three-fiber'
+import { EffectComposer } from './postprocessing/EffectComposer'
+import { RenderPass } from './postprocessing/RenderPass'
+
+apply({ EffectComposer, RenderPass })
+
+<effectComposer>
+  <renderPass />
+</effectComposer>
 ```
 
 # Events
