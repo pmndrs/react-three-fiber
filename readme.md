@@ -198,6 +198,8 @@ All hooks can only be used *inside* the Canvas element because they rely on cont
 
 #### useThree()
 
+This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the size of the canvas in screen and viewport coordinates. When you resize the canvas, or the browser window, your component will be updated with fresh values. 
+
 ```jsx
 import { useThree } from 'react-three-fiber'
 
