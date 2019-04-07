@@ -11,11 +11,11 @@
 
     npm install react-three-fiber
 
-React-three-fiber is a small React renderer for Three-js. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Three as it makes for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
+React-three-fiber is a small React renderer for Threejs. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
 
 #### Difference to react-three, react-three-renderer, react-three-renderer-fiber
 
-This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with version 1 as well as their latest. At the same time we don't want to alter any rules, if something works in Three in a specific way, it will be the same here.
+This is a small reconciler config with a few additions for interaction and hooks holding it all together. It does not know or care about Three internals, it uses heuristics for objects and attributes, so that we can get away without creating a strong dependency. Three is constantly changing, we don't want to rely on a specific version or chase their release cycle. This library works with version 1 as well as their latest. At the same time we don't want to alter any rules, if something works in Threejs in a specific way, it will be the same here.
 
 # What it looks like ...
 
@@ -87,7 +87,7 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')}` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
 
 You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
@@ -133,13 +133,29 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 <mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
 ```
 
-#### Extending or using arbitrary objects
+#### Putting already existing objects into the scene-graph
 
-When you need managed local (or custom/extended) objects, you can use the `primitive` placeholder.
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it.
 
 ```jsx
 const mesh = new THREE.Mesh()
-return <primitive object={mesh} />
+return <primitive object={mesh} position={[0, 0, 0]} />
+```
+
+#### Using 3rd-party (non THREE namespaced) objects in the scene-graph
+
+The `apply` function extends three-fibers catalogue of known native elements. These objects become available and can now be directly instantiated.
+
+```jsx
+import { apply } from 'react-three-fiber'
+import { EffectComposer } from './postprocessing/EffectComposer'
+import { RenderPass } from './postprocessing/RenderPass'
+
+apply({ EffectComposer, RenderPass })
+
+<effectComposer>
+  <renderPass />
+</effectComposer>
 ```
 
 # Events
@@ -182,6 +198,8 @@ All hooks can only be used *inside* the Canvas element because they rely on cont
 
 #### useThree()
 
+This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the size of the canvas in screen and viewport coordinates. When you resize the canvas, or the browser window, your component will be updated with fresh values. 
+
 ```jsx
 import { useThree } from 'react-three-fiber'
 
@@ -205,7 +223,7 @@ If you're running effects, postprocessings, controls, etc that need to get updat
 import { useRender } from 'react-three-fiber'
 
 // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-useRender(state => console.log("i'm in the render-loop"))
+useRender(state => console.log("I'm in the render-loop"))
 
 // Add a "true" as the 2nd argument and you take over the render-loop completely
 useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
@@ -411,7 +429,7 @@ const texture = useMemo(() => loader.load(url1, invalidate), [url1])
 
 ## Switching the default renderer
 
-If you want to exchange the default renderer you can. But, you will loose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
+If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
 
 ```jsx
 import { render, unmountComponentAtNode } from 'react-three-fiber'
