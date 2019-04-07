@@ -82,9 +82,6 @@ SVGLoader.prototype = {
           style = parseStyle(node, style)
           if (isVisible(style)) path = parseLineNode(node, style)
           break
-
-        default:
-          console.log(node)
       }
 
       if (path) {
@@ -424,9 +421,6 @@ SVGLoader.prototype = {
               isFirstPoint = true
             }
             break
-
-          default:
-            console.warn(command)
         }
 
         // console.log( type, parseFloats( data ), parseFloats( data ).length  )
@@ -835,10 +829,6 @@ SVGLoader.prototype = {
             transfVec2(curve.v1)
             transfVec2(curve.v2)
           } else if (curve.isEllipseCurve) {
-            if (isRotated) {
-              console.warn('SVGLoader: Elliptic arc or ellipse rotation or skewing is not implemented.')
-            }
-
             tempV2.set(curve.aX, curve.aY)
             transfVec2(tempV2)
             curve.aX = tempV2.x
@@ -867,8 +857,6 @@ SVGLoader.prototype = {
 
     //
 
-    console.log('THREE.SVGLoader')
-
     var paths = []
 
     var transformStack = []
@@ -880,19 +868,11 @@ SVGLoader.prototype = {
 
     var currentTransform = new Matrix3()
 
-    console.time('THREE.SVGLoader: DOMParser')
-
     var xml = new DOMParser().parseFromString(text, 'image/svg+xml') // application/xml
-
-    console.timeEnd('THREE.SVGLoader: DOMParser')
-
-    console.time('THREE.SVGLoader: Parse')
 
     parseNode(xml.documentElement, { fill: '#000' })
 
     // console.log( paths );
-
-    console.timeEnd('THREE.SVGLoader: Parse')
 
     return paths
   },

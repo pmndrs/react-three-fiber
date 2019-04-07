@@ -67,18 +67,18 @@ function Effect() {
 
 export default function App() {
   return (
-    <div class="main" style={{ color: '#172717' }}>
+    <div className="main" style={{ color: '#172717' }}>
       <Canvas style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 30] }}>
         <ambientLight intensity={0.5} />
         <spotLight intensity={0.5} position={[300, 300, 4000]} />
         <Effect />
         <Content />
       </Canvas>
-      <a href="https://github.com/drcmda/react-three-fiber" class="top-left" children="Github" />
-      <a href="https://twitter.com/0xca0a" class="top-right" children="Twitter" />
-      <a href="https://github.com/react-spring/react-spring" class="bottom-left" children="+ react-spring" />
-      <span class="header-left">React Three Fiber</span>
-      <div class="header-major">
+      <a href="https://github.com/drcmda/react-three-fiber" className="top-left" children="Github" />
+      <a href="https://twitter.com/0xca0a" className="top-right" children="Twitter" />
+      <a href="https://github.com/react-spring/react-spring" className="bottom-left" children="+ react-spring" />
+      <span className="header-left">React Three Fiber</span>
+      <div className="header-major">
         <span>2.0</span>
       </div>
     </div>

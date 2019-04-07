@@ -37,12 +37,12 @@ export function addEffect(callback) {
 }
 
 let running = false
-function renderLoop() {
+function renderLoop(t) {
   running = true
   let repeat = 0
 
   // Run global effects
-  globalEffects.forEach(effect => effect() && repeat++)
+  globalEffects.forEach(effect => effect(t) && repeat++)
 
   roots.forEach(root => {
     const state = root.containerInfo.__state
@@ -53,7 +53,7 @@ function renderLoop() {
       state.current.frames = Math.max(0, state.current.frames - 1)
       repeat += !invalidateFrameloop ? 1 : state.current.frames
       // Run local effects
-      subscribers.forEach(fn => fn(state.current))
+      subscribers.forEach(fn => fn(state.current, t))
       // Render content
       if (!manual) gl.render(scene, camera)
     }
