@@ -121,7 +121,11 @@ You can also attach to named parent properties using `attachObject={[target, nam
 
 ```jsx
 <bufferGeometry>
-  <bufferAttribute attachObject={['attributes', 'position']} array={vertices} itemSize={3} />
+  <bufferAttribute
+    attachObject={['attributes', 'position']}
+    count={vertices.length / 3}
+    array={vertices}
+    itemSize={3} />
 </bufferGeometry>
 ```
 
