@@ -64,12 +64,39 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
 ```jsx
 <Canvas
   children                      // Either a function child (which receives state) or regular children
-  gl                            // These props go into the webGL renderer
-  camera                        // And these go in to the default camera
-  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
+  gl                            // Props that go into the default webGL-renderer
+  camera                        // Props that go into the default camera
+  raycaster                     // Props that go into the default raycaster
+  orthographic = false          // Creates an orthographic camera if true
+  pixelRatio = undefined         // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   onCreated />                  // Callback when vdom is ready (you can block first render via promise)
 ```
+
+You can give it additional properties like style and className, which will be added to the container (a div) that holds the dom-canvas element.
+
+# Defaults
+
+Canvas will create a translucent webGL-renderer with the following properties:
+
+- antialias: true
+- alpha: true
+- setClearAlpha(0)
+
+A default perspective camera:
+
+- fov: 75
+- near: 0.1
+- far: 1000
+- position.z: 5
+
+Or a default orthographic canera if Camvas.orthographic is true:
+
+- near: 0.1
+- far: 1000
+- position.z: 10
+
+A default scene (into which all the jsx is rendered) and a raycaster. You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
 # Objects and properties
 

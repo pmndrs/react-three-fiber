@@ -2,6 +2,14 @@
   "name": "examples",
   "version": "0.1.1",
   "private": true,
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 120
+  },
   "dependencies": {
     "react": "^16.8.6",
     "react-app-polyfill": "^0.2.2",

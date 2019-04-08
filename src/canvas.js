@@ -17,17 +17,34 @@ function useMeasure() {
 }
 
 export const Canvas = React.memo(
-  ({ children, gl, camera, style, pixelRatio, invalidateFrameloop = false, onCreated, ...rest }) => {
+  ({
+    children,
+    gl,
+    camera,
+    orthographic,
+    raycaster,
+    style,
+    pixelRatio,
+    invalidateFrameloop = false,
+    onCreated,
+    ...rest
+  }) => {
     // Local, reactive state
     const canvas = useRef()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
     const [intersects, setIntersects] = useState([])
-    const [raycaster] = useState(() => new THREE.Raycaster())
+    const [defaultRaycaster] = useState(() => {
+      const ray = new THREE.Raycaster()
+      if (raycaster) applyProps(ray, raycaster, {})
+      return ray
+    })
     const [mouse] = useState(() => new THREE.Vector2())
     const [defaultCam, setDefaultCamera] = useState(() => {
-      const cam = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-      cam.position.z = 5
+      const cam = orthographic
+        ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+        : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+      cam.position.z = orthographic ? 10 : 5
       if (camera) applyProps(cam, camera, {})
       return cam
     })
@@ -97,17 +114,30 @@ export const Canvas = React.memo(
     // Adjusts default camera
     useEffect(() => {
       state.current.aspect = size.width / size.height || 0
-      const target = new THREE.Vector3(0, 0, 0)
-      const distance = state.current.camera.position.distanceTo(target)
-      const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
-      const height = 2 * Math.tan(fov / 2) * distance // visible height
-      const width = height * state.current.aspect
-      state.current.viewport = { width, height }
+
+      if (state.current.camera.isOrthographicCamera) {
+        state.current.viewport = { width: size.width, height: size.height, factor: 1 }
+      } else {
+        const target = new THREE.Vector3(0, 0, 0)
+        const distance = state.current.camera.position.distanceTo(target)
+        const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+        const height = 2 * Math.tan(fov / 2) * distance // visible height
+        const width = height * state.current.aspect
+        state.current.viewport = { width, height, factor: size.width / width }
+      }
+
       state.current.canvasRect = bind.ref.current.getBoundingClientRect()
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
-        state.current.camera.aspect = state.current.aspect
-        state.current.camera.radius = (size.width + size.height) / 4
+        if (state.current.camera.isOrthographicCamera) {
+          state.current.camera.left = size.width / -2
+          state.current.camera.right = size.width / 2
+          state.current.camera.top = size.height / 2
+          state.current.camera.bottom = size.height / -2
+        } else {
+          state.current.camera.aspect = state.current.aspect
+          state.current.camera.radius = (size.width + size.height) / 4
+        }
         state.current.camera.updateProjectionMatrix()
         invalidate(state)
       }
@@ -141,19 +171,19 @@ export const Canvas = React.memo(
       }
     })
 
-    /** Sets up raycaster */
+    /** Sets up defaultRaycaster */
     const prepareRay = useCallback(event => {
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
-      mouse.set(x, y, 0.5)
-      raycaster.setFromCamera(mouse, state.current.camera)
+      mouse.set(x, y)
+      defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }, [])
 
     /** Intersects interaction objects using the event input */
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
-      return raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+      return defaultRaycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
     })
 
     /**  Handles intersections by forwarding them to handlers */
@@ -170,7 +200,7 @@ export const Canvas = React.memo(
           ...Object.assign({}, event),
           ...hit,
           stopped,
-          ray: raycaster.ray,
+          ray: defaultRaycaster.ray,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => (stopped.current = true),
           // react-use-gesture transforms ...
