@@ -87,7 +87,7 @@ A default *perspective camera*:
 
 Or a default *orthographic camera* if Canvas.orthographic is true:
 
-`near: 0.1, far: 1000, position.z: 10`
+`near: 0.1, far: 1000, position.z: 5`
 
 A default scene (into which all the jsx is rendered) and a raycaster. You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
