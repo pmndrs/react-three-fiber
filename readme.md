@@ -77,11 +77,17 @@ You can give it additional properties like style and className, which will be ad
 
 # Defaults
 
-Canvas will create a translucent webGL-renderer with the following properties: antialias: true, alpha: true, setClearAlpha(0)
+Canvas will create a *translucent webGL-renderer* with the following properties: 
 
-A default perspective camera: fov: 75, near: 0.1, far: 1000, position.z: 5
+`antialias: true, alpha: true, setClearAlpha(0)`
 
-Or a default orthographic canera if Camvas.orthographic is true: near: 0.1, far: 1000, position.z: 10
+A default *perspective camera*:
+
+`fov: 75, near: 0.1, far: 1000, position.z: 5`
+
+Or a default *orthographic canera* if Canvas.orthographic is true:
+
+`near: 0.1, far: 1000, position.z: 10`
 
 A default scene (into which all the jsx is rendered) and a raycaster. You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
