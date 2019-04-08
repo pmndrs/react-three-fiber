@@ -194,11 +194,11 @@ The event data you receive contains the browser event as well as the Threejs eve
 <mesh
   onClick={e => console.log('click')}
   onWheel={e => console.log('wheel spins')}
-  onPointerUp={e => console.log('mouse button up')}
-  onPointerDown={e => console.log('mouse button down')}
+  onPointerUp={e => console.log('up')}
+  onPointerDown={e => console.log('down')}
   onPointerOver={e => console.log('hover')}
   onPointerOut={e => console.log('unhover')}
-  onPointerMove={e => console.log('mouse moves')}
+  onPointerMove={e => console.log('move')}
   onUpdate={self => console.log('props have been updated')}
 ```
 
