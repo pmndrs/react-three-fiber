@@ -44,7 +44,7 @@ export const Canvas = React.memo(
       const cam = orthographic
         ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
         : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-      cam.position.z = orthographic ? 10 : 5
+      cam.position.z = 5
       if (camera) applyProps(cam, camera, {})
       return cam
     })
@@ -194,22 +194,27 @@ export const Canvas = React.memo(
         state.current.captured && event.type !== 'click' && event.type !== 'wheel'
           ? state.current.captured
           : intersect(event, false)
-      for (let hit of hits) {
-        let stopped = { current: false }
-        fn({
-          ...Object.assign({}, event),
-          ...hit,
-          stopped,
-          ray: defaultRaycaster.ray,
-          // Hijack stopPropagation, which just sets a flag
-          stopPropagation: () => (stopped.current = true),
-          // react-use-gesture transforms ...
-          transform: {
-            x: x => x / (state.current.size.width / state.current.viewport.width),
-            y: y => -y / (state.current.size.height / state.current.viewport.height),
-          },
-        })
-        if (stopped.current === true) break
+
+      if (hits.length) {
+        const point = new THREE.Vector3(
+          (event.clientX / state.current.size.width) * 2 - 1,
+          -(event.clientY / state.current.size.height) * 2 + 1,
+          0
+        ).unproject(state.current.camera)
+
+        for (let hit of hits) {
+          let stopped = { current: false }
+          fn({
+            ...Object.assign({}, event),
+            ...hit,
+            stopped,
+            point,
+            ray: defaultRaycaster.ray,
+            // Hijack stopPropagation, which just sets a flag
+            stopPropagation: () => (stopped.current = true),
+          })
+          if (stopped.current === true) break
+        }
       }
       return hits
     }, [])

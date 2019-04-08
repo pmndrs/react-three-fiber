@@ -188,6 +188,8 @@ THREE objects that implement their own `raycast` method (for instance meshes, li
 
 Additionally there's a special `onUpdate` that is called every time the object is updated with fresh props (as well as when it's first being created).
 
+The event data you receive contains the browser event as well as the Threejs event data (object, point, distance, etc) all merged into one object.
+
 ```jsx
 <mesh
   onClick={e => console.log('click')}
