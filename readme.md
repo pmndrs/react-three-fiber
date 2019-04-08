@@ -68,7 +68,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
   orthographic = false          // Creates an orthographic camera if true
-  pixelRatio = undefined         // You could provide window.devicePixelRatio if you like 
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   onCreated />                  // Callback when vdom is ready (you can block first render via promise)
 ```
@@ -85,7 +85,7 @@ A default *perspective camera*:
 
 `fov: 75, near: 0.1, far: 1000, position.z: 5`
 
-Or a default *orthographic canera* if Canvas.orthographic is true:
+Or a default *orthographic camera* if Canvas.orthographic is true:
 
 `near: 0.1, far: 1000, position.z: 10`
 
