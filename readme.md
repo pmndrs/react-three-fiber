@@ -233,7 +233,8 @@ const {
   scene,            // Default scene
   camera,           // Default camera
   size,             // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport,         // Bounds of the viewport in 3d units
+  viewport,         // Bounds of the viewport in 3d units + factor (size/viewport)
+  aspect,           // Aspect ratio (size.width / size.height)
   invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
   setDefaultCamera  // Sets the default camera
 } = useThree()
