@@ -33,7 +33,6 @@ export const Canvas = React.memo(
     const canvas = useRef()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
-    const [intersects, setIntersects] = useState([])
     const [defaultRaycaster] = useState(() => {
       const ray = new THREE.Raycaster()
       if (raycaster) applyProps(ray, raycaster, {})
@@ -157,11 +156,14 @@ export const Canvas = React.memo(
       return null
     }, [])
 
+    // Only trigger the context provider when necessary
+    const sharedState = useMemo(() => ({ ...state.current }), [size, defaultCam])
+
     // Render v-dom into scene
     useEffect(() => {
       if (size.width > 0 && size.height > 0) {
         render(
-          <stateContext.Provider value={{ ...state.current }}>
+          <stateContext.Provider value={sharedState}>
             <IsReady />
             {typeof children === 'function' ? children(state.current) : children}
           </stateContext.Provider>,
