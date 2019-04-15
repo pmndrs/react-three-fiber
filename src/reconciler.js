@@ -11,7 +11,7 @@ import {
 const roots = new Map()
 const emptyObject = {}
 const is = {
-  obj: a => Object.prototype.toString.call(a) === '[object Object]',
+  obj: a => a === Object(a),
   str: a => typeof a === 'string',
   num: a => typeof a === 'number',
   und: a => a === void 0,
@@ -141,7 +141,7 @@ function createInstance(type, { args = [], ...props }, container) {
   if (type === 'primitive') instance = props.object
   else {
     const target = catalogue[name] || THREE[name]
-    instance = Array.isArray(args) ? new target(...args) : new target(args)
+    instance = is.arr(args) ? new target(...args) : new target(args)
   }
   // Apply initial props
   instance.__objects = []
@@ -159,10 +159,10 @@ function appendChild(parentInstance, child) {
       // The attach attribute implies that the object attaches itself on the parent
       if (child.attach) parentInstance[child.attach] = child
       else if (child.attachArray) {
-        if (!parentInstance[child.attachArray]) parentInstance[child.attachArray] = []
+        if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
         parentInstance[child.attachArray].push(child)
       } else if (child.attachObject) {
-        if (!parentInstance[child.attachObject[0]]) parentInstance[child.attachObject[0]] = {}
+        if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
       }
     }
