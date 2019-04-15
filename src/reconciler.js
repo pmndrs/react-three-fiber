@@ -158,8 +158,13 @@ function appendChild(parentInstance, child) {
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
       if (child.attach) parentInstance[child.attach] = child
-      else if (child.attachArray) parentInstance[child.attachArray].push(child)
-      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      else if (child.attachArray) {
+        if (parentInstance[child.attachArray] === undefined) parentInstance[child.attachArray] = []
+        parentInstance[child.attachArray].push(child)
+      } else if (child.attachObject) {
+        if (parentInstance[child.attachObject[0]] === undefined) parentInstance[child.attachObject[0]] = {}
+        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      }
     }
     updateInstance(child)
     invalidateInstance(child)
