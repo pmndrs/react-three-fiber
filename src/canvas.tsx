@@ -1,104 +1,48 @@
 import * as THREE from 'three'
-import * as React from 'react';
-import { useRef, useEffect, useState, useCallback } from 'react'
+import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
-export type CanvasContext = {
-  canvas?: React.MutableRefObject<any>,
-  subscribers: Array<Function>,
-  frames: 0,
-  aspect: 0,
-  gl?: THREE.WebGLRenderer,
-  camera?: THREE.Camera,
-  scene?: THREE.Scene,
-  canvasRect?: DOMRectReadOnly,
-  viewport?: { width: number, height: number },
-  size?: { left: number, top: number, width: number, height: number },
-  ready: boolean,
-  manual: boolean,
-  active: boolean,
-  captured: boolean,
-  invalidateFrameloop: boolean,
-  subscribe?: (callback: Function, main: any) => () => any,
-  setManual: (takeOverRenderloop: boolean) => any,
-  setDefaultCamera: (camera: THREE.Camera) => any,
-  invalidate: () => any,
-}
+export const stateContext = React.createContext()
 
-export type CanvasProps = {
-  children: React.ReactNode;
-  gl: THREE.WebGLRenderer;
-  camera?: THREE.Camera;
-  style?: React.CSSProperties;
-  pixelRatio?: number;
-  invalidateFrameloop?: boolean;
-  onCreated: Function;
-}
-
-export type Measure = [
-  { ref: React.MutableRefObject<any> },
-  { left: number, top: number, width: number, height: number }
-]
-
-export type IntersectObject = Event & THREE.Intersection & {
-  ray: THREE.Raycaster;
-  stopped: { current: boolean };
-  uuid: string;
-  transform: {
-    x: Function,
-    y: Function
-  };
-}
-
-const defaultRef = {
-  ready: false,
-  subscribers: [],
-  manual: false,
-  active: true,
-  canvas: undefined,
-  gl: undefined,
-  camera: undefined,
-  scene: undefined,
-  size: undefined,
-  canvasRect: undefined,
-  frames: 0,
-  aspect: 0,
-  viewport: undefined,
-  captured: undefined,
-  invalidateFrameloop: false,
-  subscribe: (fn, main) => () => {},
-  setManual: (takeOverRenderloop) => {},
-  setDefaultCamera: (cam) => {},
-  invalidate: () => {}
-}
-
-export const stateContext = React.createContext(defaultRef)
-
-function useMeasure(): Measure {
+function useMeasure() {
   const ref = useRef()
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
-
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
   }, [ref.current])
-
   return [{ ref }, bounds]
 }
 
 export const Canvas = React.memo(
-  ({ children, gl, camera, style, pixelRatio, invalidateFrameloop = false, onCreated, ...rest }: CanvasProps) => {
+  ({
+    children,
+    gl,
+    camera,
+    orthographic,
+    raycaster,
+    style,
+    pixelRatio,
+    invalidateFrameloop = false,
+    onCreated,
+    ...rest
+  }) => {
     // Local, reactive state
     const canvas = useRef()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
-    const [intersects, setIntersects] = useState([])
-    const [raycaster] = useState(() => new THREE.Raycaster())
-    const [mouse] = useState(() => new THREE.Vector3())
+    const [defaultRaycaster] = useState(() => {
+      const ray = new THREE.Raycaster()
+      if (raycaster) applyProps(ray, raycaster, {})
+      return ray
+    })
+    const [mouse] = useState(() => new THREE.Vector2())
     const [defaultCam, setDefaultCamera] = useState(() => {
-      const cam = new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+      const cam = orthographic
+        ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+        : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
       cam.position.z = 5
       if (camera) applyProps(cam, camera, {})
       return cam
@@ -106,7 +50,19 @@ export const Canvas = React.memo(
 
     // Public state
     const state = useRef({
-      ...defaultRef,
+      ready: false,
+      subscribers: [],
+      manual: false,
+      active: true,
+      canvas: undefined,
+      gl: undefined,
+      camera: undefined,
+      scene: undefined,
+      size: undefined,
+      canvasRect: undefined,
+      frames: 0,
+      viewport: undefined,
+      captured: undefined,
       subscribe: (fn, main) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -157,17 +113,30 @@ export const Canvas = React.memo(
     // Adjusts default camera
     useEffect(() => {
       state.current.aspect = size.width / size.height || 0
-      const target = new THREE.Vector3(0, 0, 0)
-      const distance = state.current.camera.position.distanceTo(target)
-      const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
-      const height = 2 * Math.tan(fov / 2) * distance // visible height
-      const width = height * state.current.aspect
-      state.current.viewport = { width, height }
+
+      if (state.current.camera.isOrthographicCamera) {
+        state.current.viewport = { width: size.width, height: size.height, factor: 1 }
+      } else {
+        const target = new THREE.Vector3(0, 0, 0)
+        const distance = state.current.camera.position.distanceTo(target)
+        const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+        const height = 2 * Math.tan(fov / 2) * distance // visible height
+        const width = height * state.current.aspect
+        state.current.viewport = { width, height, factor: size.width / width }
+      }
+
       state.current.canvasRect = bind.ref.current.getBoundingClientRect()
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
-        state.current.camera.aspect = state.current.aspect
-        state.current.camera.radius = (size.width + size.height) / 4
+        if (state.current.camera.isOrthographicCamera) {
+          state.current.camera.left = size.width / -2
+          state.current.camera.right = size.width / 2
+          state.current.camera.top = size.height / 2
+          state.current.camera.bottom = size.height / -2
+        } else {
+          state.current.camera.aspect = state.current.aspect
+          state.current.camera.radius = (size.width + size.height) / 4
+        }
         state.current.camera.updateProjectionMatrix()
         invalidate(state)
       }
@@ -187,11 +156,14 @@ export const Canvas = React.memo(
       return null
     }, [])
 
+    // Only trigger the context provider when necessary
+    const sharedState = useMemo(() => ({ ...state.current }), [size, defaultCam])
+
     // Render v-dom into scene
     useEffect(() => {
       if (size.width > 0 && size.height > 0) {
         render(
-          <stateContext.Provider value={{ ...state.current }}>
+          <stateContext.Provider value={sharedState}>
             <IsReady />
             {typeof children === 'function' ? children(state.current) : children}
           </stateContext.Provider>,
@@ -201,47 +173,50 @@ export const Canvas = React.memo(
       }
     })
 
-    /** Sets up raycaster */
+    /** Sets up defaultRaycaster */
     const prepareRay = useCallback(event => {
       const canvasRect = state.current.canvasRect
       const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
       const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
-
-      mouse.set(x, y, 0.5)
-
-      raycaster.setFromCamera(mouse, state.current.camera)
+      mouse.set(x, y)
+      defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }, [])
 
     /** Intersects interaction objects using the event input */
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
-      return raycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-    }, [])
+      return defaultRaycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+    })
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event, fn: (data: IntersectObject) => any) => {
+    const handleIntersects = useCallback((event, fn) => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
       const hits =
         state.current.captured && event.type !== 'click' && event.type !== 'wheel'
           ? state.current.captured
           : intersect(event, false)
-      for (let hit of hits) {
-        let stopped = { current: false }
-        fn({
-          ...Object.assign({}, event),
-          ...hit,
-          stopped,
-          ray: raycaster.ray,
-          // Hijack stopPropagation, which just sets a flag
-          stopPropagation: () => (stopped.current = true),
-          // react-use-gesture transforms ...
-          transform: {
-            x: x => x / (state.current.size.width / state.current.viewport.width),
-            y: y => -y / (state.current.size.height / state.current.viewport.height),
-          },
-        })
-        if (stopped.current === true) break
+
+      if (hits.length) {
+        const point = new THREE.Vector3(
+          (event.clientX / state.current.size.width) * 2 - 1,
+          -(event.clientY / state.current.size.height) * 2 + 1,
+          0
+        ).unproject(state.current.camera)
+
+        for (let hit of hits) {
+          let stopped = { current: false }
+          fn({
+            ...Object.assign({}, event),
+            ...hit,
+            stopped,
+            point,
+            ray: defaultRaycaster.ray,
+            // Hijack stopPropagation, which just sets a flag
+            stopPropagation: () => (stopped.current = true),
+          })
+          if (stopped.current === true) break
+        }
       }
       return hits
     }, [])
@@ -258,16 +233,12 @@ export const Canvas = React.memo(
       []
     )
 
-    const hoveredInitialValue: { [key: string]: IntersectObject } = {};
-    const hovered = useRef(hoveredInitialValue)
-
+    const hovered = useRef({})
     const handlePointerMove = useCallback(event => {
       if (!state.current.ready) return
-
       const hits = handleIntersects(event, data => {
         const object = data.object
         const handlers = object.__handlers
-
         // Call mouse move
         if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter is present
@@ -279,7 +250,7 @@ export const Canvas = React.memo(
           } else if (hovered.current[object.uuid].stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
-            // In fact, we can safely remove them from the cache
+            // In fact, wwe can safely remove them from the cache
             Object.values(hovered.current).forEach(data => {
               if (data.object.uuid !== object.uuid) {
                 if (data.object.__handlers.pointerOut)
@@ -295,9 +266,8 @@ export const Canvas = React.memo(
       handlePointerCancel(event, hits)
     }, [])
 
-    const handlePointerCancel = useCallback((event, hits?) => {
+    const handlePointerCancel = useCallback((event, hits) => {
       if (!hits) hits = handleIntersects(event, () => null)
-
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
           if (data.object.__handlers.pointerOut) data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
