@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import * as React from 'react';
+import React from 'react';
 export declare type CanvasContext = {
     canvas?: React.MutableRefObject<any>;
     subscribers: Array<Function>;
@@ -32,6 +32,8 @@ export declare type CanvasContext = {
 export declare type CanvasProps = {
     children: React.ReactNode;
     gl: THREE.WebGLRenderer;
+    orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera;
+    raycaster: THREE.Raycaster;
     camera?: THREE.Camera;
     style?: React.CSSProperties;
     pixelRatio?: number;
@@ -57,25 +59,5 @@ export declare type IntersectObject = Event & THREE.Intersection & {
         y: Function;
     };
 };
-export declare const stateContext: React.Context<{
-    ready: boolean;
-    subscribers: any[];
-    manual: boolean;
-    active: boolean;
-    canvas: any;
-    gl: any;
-    camera: any;
-    scene: any;
-    size: any;
-    canvasRect: any;
-    frames: number;
-    aspect: number;
-    viewport: any;
-    captured: any;
-    invalidateFrameloop: boolean;
-    subscribe: (fn: any, main: any) => () => void;
-    setManual: (takeOverRenderloop: any) => void;
-    setDefaultCamera: (cam: any) => void;
-    invalidate: () => void;
-}>;
-export declare const Canvas: React.MemoExoticComponent<({ children, gl, camera, style, pixelRatio, invalidateFrameloop, onCreated, ...rest }: CanvasProps) => JSX.Element>;
+export declare const stateContext: any;
+export declare const Canvas: any;

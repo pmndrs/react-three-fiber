@@ -1,18 +1,92 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, useMemo, useState, useCallback, useContext } from 'react'
+import * as React from 'react'
+import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
-export const stateContext = React.createContext()
+export type CanvasContext = {
+  canvas?: React.MutableRefObject<any>,
+  subscribers: Array<Function>,
+  frames: 0,
+  aspect: 0,
+  gl?: THREE.WebGLRenderer,
+  camera?: THREE.Camera,
+  scene?: THREE.Scene,
+  canvasRect?: DOMRectReadOnly,
+  viewport?: { width: number, height: number },
+  size?: { left: number, top: number, width: number, height: number },
+  ready: boolean,
+  manual: boolean,
+  active: boolean,
+  captured: boolean,
+  invalidateFrameloop: boolean,
+  subscribe?: (callback: Function, main: any) => () => any,
+  setManual: (takeOverRenderloop: boolean) => any,
+  setDefaultCamera: (camera: THREE.Camera) => any,
+  invalidate: () => any,
+}
 
-function useMeasure() {
+export type CanvasProps = {
+  children: React.ReactNode;
+  gl: THREE.WebGLRenderer;
+  orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera;
+  raycaster: THREE.Raycaster;
+  camera?: THREE.Camera;
+  style?: React.CSSProperties;
+  pixelRatio?: number;
+  invalidateFrameloop?: boolean;
+  onCreated: Function;
+}
+
+export type Measure = [
+  { ref: React.MutableRefObject<any> },
+  { left: number, top: number, width: number, height: number }
+]
+
+export type IntersectObject = Event & THREE.Intersection & {
+  ray: THREE.Raycaster;
+  stopped: { current: boolean };
+  uuid: string;
+  transform: {
+    x: Function,
+    y: Function
+  };
+}
+
+const defaultRef = {
+  ready: false,
+  subscribers: [],
+  manual: false,
+  active: true,
+  canvas: undefined,
+  gl: undefined,
+  camera: undefined,
+  scene: undefined,
+  size: undefined,
+  canvasRect: undefined,
+  frames: 0,
+  aspect: 0,
+  viewport: undefined,
+  captured: undefined,
+  invalidateFrameloop: false,
+  subscribe: (fn, main) => () => {},
+  setManual: (takeOverRenderloop) => {},
+  setDefaultCamera: (cam) => {},
+  invalidate: () => {}
+}
+
+export const stateContext = React.createContext(defaultRef)
+
+function useMeasure(): Measure {
   const ref = useRef()
+
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
   }, [ref.current])
+
   return [{ ref }, bounds]
 }
 
@@ -28,7 +102,7 @@ export const Canvas = React.memo(
     invalidateFrameloop = false,
     onCreated,
     ...rest
-  }) => {
+  }: CanvasProps) => {
     // Local, reactive state
     const canvas = useRef()
     const [ready, setReady] = useState(false)
