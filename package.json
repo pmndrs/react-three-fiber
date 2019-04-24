@@ -9,6 +9,7 @@
     "prebuild": "rimraf dist",
     "build": "rollup -c",
     "prepare": "npm run build",
+    "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit --jsx react src/*",
     "typegen": "tsc  --jsx react --emitDeclarationOnly -d --declarationDir types src/*"
@@ -77,18 +78,26 @@
     "@babel/preset-typescript": "^7.3.3",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.8.14",
+    "babel-eslint": "^10.0.1",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-plugin-import": "^2.17.2",
+    "eslint-plugin-react-hooks": "^1.6.0",
     "husky": "^1.3.1",
     "lint-staged": "^8.1.5",
-    "prettier": "^1.17.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "rollup": "^1.10.1",
+    "prettier": "^1.17.0",
+    "react": ">=16.8",
+    "react-dom": ">=16.8",
     "rollup": "^1.10.1",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
     "three": "^0.103.0",
-    "typescript": "^3.4.4"
+    "typescript": "^3.4.5"
   }
 }

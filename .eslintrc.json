@@ -1,0 +1,41 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "parser": "babel-eslint",
+  "extends": [
+    "eslint:recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "prettier"
+  ],
+  "plugins": [
+    "react-hooks"
+  ],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "rules": {
+    "curly": [
+      "warn",
+      "multi-line",
+      "consistent"
+    ],
+    "no-console": "off",
+    "no-dupe-class-members": "error",
+    "no-empty": "warn",
+    "no-undef": "error",
+    "no-unused-expressions": "error",
+    "no-unused-vars": "error",
+    "no-var": "warn",
+    "prefer-const": "warn",
+    "no-shadow": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}
