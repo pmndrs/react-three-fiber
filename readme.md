@@ -9,7 +9,7 @@
   <i>These demos are real, you can click them! They contain the full code, too.</i>
 </p>
 
-    npm install react-three-fiber
+    npm install three react-three-fiber
 
 React-three-fiber is a small React renderer for Threejs. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
 
