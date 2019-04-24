@@ -7,7 +7,7 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "rollup -c",
+    "build": "rollup -c && npm run typegen",
     "prepare": "npm run build",
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -28,7 +28,7 @@
     "printWidth": 120
   },
   "lint-staged": {
-    "*.{js,}": [
+    "*.{js,jsx,ts,tsx}": [
       "prettier --write",
       "git add"
     ]

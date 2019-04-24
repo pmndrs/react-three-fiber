@@ -5,53 +5,54 @@ import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
 
 export type CanvasContext = {
-  canvas?: React.MutableRefObject<any>,
-  subscribers: Array<Function>,
-  frames: 0,
-  aspect: 0,
-  gl?: THREE.WebGLRenderer,
-  camera?: THREE.Camera,
-  scene?: THREE.Scene,
-  canvasRect?: DOMRectReadOnly,
-  viewport?: { width: number, height: number },
-  size?: { left: number, top: number, width: number, height: number },
-  ready: boolean,
-  manual: boolean,
-  active: boolean,
-  captured: boolean,
-  invalidateFrameloop: boolean,
-  subscribe?: (callback: Function, main: any) => () => any,
-  setManual: (takeOverRenderloop: boolean) => any,
-  setDefaultCamera: (camera: THREE.Camera) => any,
-  invalidate: () => any,
+  canvas?: React.MutableRefObject<any>
+  subscribers: Array<Function>
+  frames: 0
+  aspect: 0
+  gl?: THREE.WebGLRenderer
+  camera?: THREE.Camera
+  scene?: THREE.Scene
+  canvasRect?: DOMRectReadOnly
+  viewport?: { width: number; height: number }
+  size?: { left: number; top: number; width: number; height: number }
+  ready: boolean
+  manual: boolean
+  active: boolean
+  captured: boolean
+  invalidateFrameloop: boolean
+  subscribe?: (callback: Function, main: any) => () => any
+  setManual: (takeOverRenderloop: boolean) => any
+  setDefaultCamera: (camera: THREE.Camera) => any
+  invalidate: () => any
 }
 
 export type CanvasProps = {
-  children: React.ReactNode;
-  gl: THREE.WebGLRenderer;
-  orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera;
-  raycaster: THREE.Raycaster;
-  camera?: THREE.Camera;
-  style?: React.CSSProperties;
-  pixelRatio?: number;
-  invalidateFrameloop?: boolean;
-  onCreated: Function;
+  children: React.ReactNode
+  gl: THREE.WebGLRenderer
+  orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
+  raycaster: THREE.Raycaster
+  camera?: THREE.Camera
+  style?: React.CSSProperties
+  pixelRatio?: number
+  invalidateFrameloop?: boolean
+  onCreated: Function
 }
 
 export type Measure = [
   { ref: React.MutableRefObject<any> },
-  { left: number, top: number, width: number, height: number }
+  { left: number; top: number; width: number; height: number }
 ]
 
-export type IntersectObject = Event & THREE.Intersection & {
-  ray: THREE.Raycaster;
-  stopped: { current: boolean };
-  uuid: string;
-  transform: {
-    x: Function,
-    y: Function
-  };
-}
+export type IntersectObject = Event &
+  THREE.Intersection & {
+    ray: THREE.Raycaster
+    stopped: { current: boolean }
+    uuid: string
+    transform: {
+      x: Function
+      y: Function
+    }
+  }
 
 const defaultRef = {
   ready: false,
@@ -70,9 +71,9 @@ const defaultRef = {
   captured: undefined,
   invalidateFrameloop: false,
   subscribe: (fn, main) => () => {},
-  setManual: (takeOverRenderloop) => {},
-  setDefaultCamera: (cam) => {},
-  invalidate: () => {}
+  setManual: takeOverRenderloop => {},
+  setDefaultCamera: cam => {},
+  invalidate: () => {},
 }
 
 export const stateContext = React.createContext(defaultRef)
@@ -124,19 +125,7 @@ export const Canvas = React.memo(
 
     // Public state
     const state = useRef({
-      ready: false,
-      subscribers: [],
-      manual: false,
-      active: true,
-      canvas: undefined,
-      gl: undefined,
-      camera: undefined,
-      scene: undefined,
-      size: undefined,
-      canvasRect: undefined,
-      frames: 0,
-      viewport: undefined,
-      captured: undefined,
+      ...defaultRef,
       subscribe: (fn, main) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -260,10 +249,10 @@ export const Canvas = React.memo(
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
       return defaultRaycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
-    })
+    }, [])
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event, fn) => {
+    const handleIntersects = useCallback((event: React.PointerEvent<any>, fn) => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
       const hits =
@@ -280,6 +269,7 @@ export const Canvas = React.memo(
 
         for (let hit of hits) {
           let stopped = { current: false }
+
           fn({
             ...Object.assign({}, event),
             ...hit,
@@ -289,6 +279,7 @@ export const Canvas = React.memo(
             // Hijack stopPropagation, which just sets a flag
             stopPropagation: () => (stopped.current = true),
           })
+
           if (stopped.current === true) break
         }
       }
@@ -308,7 +299,7 @@ export const Canvas = React.memo(
     )
 
     const hovered = useRef({})
-    const handlePointerMove = useCallback(event => {
+    const handlePointerMove = useCallback((event: React.PointerEvent<any>) => {
       if (!state.current.ready) return
       const hits = handleIntersects(event, data => {
         const object = data.object
@@ -340,7 +331,7 @@ export const Canvas = React.memo(
       handlePointerCancel(event, hits)
     }, [])
 
-    const handlePointerCancel = useCallback((event, hits) => {
+    const handlePointerCancel = useCallback((event: React.PointerEvent<any>, hits?: []) => {
       if (!hits) hits = handleIntersects(event, () => null)
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
