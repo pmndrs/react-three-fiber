@@ -145,6 +145,9 @@ export const Canvas = React.memo(
       invalidate: () => invalidate(state),
     })
 
+    // This is used as a clone of the current state, to be distributed through context and useThree
+    const sharedState = useRef(state.current)
+
     // Writes locals into public state for distribution among subscribers, context, etc
     useEffect(() => {
       state.current.ready = ready
@@ -203,6 +206,8 @@ export const Canvas = React.memo(
         state.current.camera.updateProjectionMatrix()
         invalidate(state)
       }
+      // Only trigger the context provider when necessary
+      sharedState.current = { ...state.current }
     }, [ready, size, defaultCam])
 
     // This component is a bridge into the three render context, when it gets rendererd
@@ -219,14 +224,11 @@ export const Canvas = React.memo(
       return null
     }, [])
 
-    // Only trigger the context provider when necessary
-    const sharedState = useMemo(() => ({ ...state.current }), [size, defaultCam])
-
     // Render v-dom into scene
     useEffect(() => {
       if (size.width > 0 && size.height > 0) {
         render(
-          <stateContext.Provider value={sharedState}>
+          <stateContext.Provider value={sharedState.current}>
             <IsReady />
             {typeof children === 'function' ? children(state.current) : children}
           </stateContext.Provider>,
@@ -248,7 +250,19 @@ export const Canvas = React.memo(
     /** Intersects interaction objects using the event input */
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
-      return defaultRaycaster.intersectObjects(state.current.scene.__interaction, true).filter(h => h.object.__handlers)
+
+      const intersects = defaultRaycaster.intersectObjects(state.current.scene.__interaction, true)
+      const hits = []
+
+      for (let intersect of intersects) {
+        let object = intersect.object
+        // Bubble event up
+        while (object) {
+          if (object.__handlers) hits.push({ ...intersect, object })
+          object = object.parent
+        }
+      }
+      return hits
     }, [])
 
     /**  Handles intersections by forwarding them to handlers */

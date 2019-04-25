@@ -11,7 +11,7 @@ import {
 const roots = new Map()
 const emptyObject = {}
 const is = {
-  obj: a => Object.prototype.toString.call(a) === '[object Object]',
+  obj: a => a === Object(a),
   str: a => typeof a === 'string',
   num: a => typeof a === 'number',
   und: a => a === void 0,
@@ -76,7 +76,13 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, interpolateArray = false, container = { __interaction: undefined }) {
+export function applyProps(
+  instance,
+  newProps,
+  oldProps = {},
+  interpolateArray = false,
+  container = { __interaction: undefined }
+) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
@@ -143,7 +149,7 @@ function createInstance(type, { args = [], ...props }, container) {
   if (type === 'primitive') instance = props.object
   else {
     const target = catalogue[name] || THREE[name]
-    instance = Array.isArray(args) ? new target.apply(null, args) : new target(args)
+    instance = is.arr(args) ? new target(...args) : new target(args)
   }
   // Apply initial props
   instance.__objects = []
@@ -160,8 +166,13 @@ function appendChild(parentInstance, child) {
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
       if (child.attach) parentInstance[child.attach] = child
-      else if (child.attachArray) parentInstance[child.attachArray].push(child)
-      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      else if (child.attachArray) {
+        if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
+        parentInstance[child.attachArray].push(child)
+      } else if (child.attachObject) {
+        if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
+        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      }
     }
     updateInstance(child)
     invalidateInstance(child)

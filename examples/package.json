@@ -11,12 +11,13 @@
     "printWidth": 120
   },
   "dependencies": {
+    "d3-ease": "^1.0.5",
     "react": "^16.8.6",
     "react-app-polyfill": "^0.2.2",
     "react-dev-utils": "^8.0.0",
     "react-dom": "^16.8.6",
     "react-spring": "^8.0.19",
-    "three": "^0.103.0",
+    "three": "^0.104.0",
     "three.meshline": "^1.2.0",
     "vec-la": "^1.5.0"
   },

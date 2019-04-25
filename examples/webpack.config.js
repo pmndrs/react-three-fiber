@@ -72,7 +72,11 @@ module.exports = mode => {
         chunks: 'all',
       },
     },
-    plugins: [new HtmlWebpackPlugin({ template: 'public/index.html' }), new ShakePlugin(), new BundleAnalyzerPlugin()],
+    plugins: [
+      new HtmlWebpackPlugin({ template: 'public/index.html' }),
+      new ShakePlugin(),
+      ...(mode === 'production' ? [new BundleAnalyzerPlugin()] : []),
+    ],
     devServer: { hot: false, contentBase: path.resolve('./'), stats: 'errors-only' },
     devtool: undefined,
     performance: { hints: false },
