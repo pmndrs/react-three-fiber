@@ -7,6 +7,7 @@ import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
 const external = id => !id.startsWith('.') && !id.startsWith(root)
 const extensions = ['.js', '.jsx', '.ts', '.tsx']
+
 const getBabelOptions = ({ useESModules }, targets) => ({
   babelrc: false,
   extensions,
