@@ -46,16 +46,19 @@ function renderLoop(t) {
 
   roots.forEach(root => {
     const state = root.containerInfo.__state
-    const { invalidateFrameloop, frames, active, ready, subscribers, manual, scene, gl, camera } = state.current
     // If the frameloop is invalidated, do not run another frame
-    if (active && ready && (!invalidateFrameloop || frames > 0)) {
+    if (
+      state.current.active &&
+      state.current.ready &&
+      (!state.current.invalidateFrameloop || state.current.frames > 0)
+    ) {
       // Decrease frame count
       state.current.frames = Math.max(0, state.current.frames - 1)
-      repeat += !invalidateFrameloop ? 1 : state.current.frames
+      repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
       // Run local effects
-      subscribers.forEach(fn => fn(state.current, t))
+      state.current.subscribers.forEach(fn => fn(state.current, t))
       // Render content
-      if (!manual) gl.render(scene, camera)
+      if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
     }
   })
 
@@ -76,13 +79,7 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(
-  instance,
-  newProps,
-  oldProps = {},
-  interpolateArray = false,
-  container = { __interaction: undefined }
-) {
+export function applyProps(instance, newProps, oldProps = {}, container) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
@@ -154,7 +151,7 @@ function createInstance(type, { args = [], ...props }, container) {
   // Apply initial props
   instance.__objects = []
   instance.__container = container
-  applyProps(instance, props, {}, false, container)
+  applyProps(instance, props, {}, container)
   return instance
 }
 

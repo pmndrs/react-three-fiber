@@ -255,10 +255,11 @@ export const Canvas = React.memo(
       const hits = []
 
       for (let intersect of intersects) {
+        let receivingObject = intersect.object
         let object = intersect.object
         // Bubble event up
         while (object) {
-          if (object.__handlers) hits.push({ ...intersect, object })
+          if (object.__handlers) hits.push({ ...intersect, object, receivingObject })
           object = object.parent
         }
       }
