@@ -86,7 +86,7 @@ const Effect = React.memo(({ factor }) => {
 export default function App() {
   return (
     <div class="main">
-      <span class="middle">Paul</span>
+      <span class="middle">Test</span>
       <Canvas
         camera={{
           fov: 90,
