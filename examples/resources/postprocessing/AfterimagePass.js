@@ -26,7 +26,7 @@ var AfterimagePass = function(damp) {
 
   this.uniforms = UniformsUtils.clone(this.shader.uniforms)
 
-  this.uniforms['damp'].value = damp !== undefined ? damp : 0.96
+  this.factor = damp !== undefined ? damp : 0.96
 
   this.textureComp = new WebGLRenderTarget(window.innerWidth, window.innerHeight, {
     minFilter: LinearFilter,
@@ -69,6 +69,7 @@ AfterimagePass.prototype = Object.assign(Object.create(Pass.prototype), {
   constructor: AfterimagePass,
 
   render: function(renderer, writeBuffer, readBuffer) {
+    this.uniforms['damp'].value = this.factor
     this.uniforms['tOld'].value = this.textureOld.texture
     this.uniforms['tNew'].value = readBuffer.texture
 

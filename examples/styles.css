@@ -165,3 +165,18 @@ canvas {
   font-weight: 800;
   line-height: 0.9em;
 }
+
+span.middle {
+  font-family: 'Josefin Sans', sans-serif;
+  font-weight: 700;
+  position: absolute;
+  display: inline-block;
+  font-size: 80vh;
+  line-height: 0.9em;
+  pointer-events: none;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -37%, 0);
+  text-transform: uppercase;
+  letter-spacing: -40px;
+}
