@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { invalidate, applyProps, render, unmountComponentAtNode } from './reconciler'
+import { invalidate, applyProps, render, renderGl, unmountComponentAtNode } from './reconciler'
 
 export type CanvasContext = {
   canvas?: React.MutableRefObject<any>
@@ -16,6 +16,7 @@ export type CanvasContext = {
   viewport?: { width: number; height: number }
   size?: { left: number; top: number; width: number; height: number }
   ready: boolean
+  vr: boolean
   manual: boolean
   active: boolean
   captured: boolean
@@ -35,6 +36,7 @@ export type CanvasProps = {
   style?: React.CSSProperties
   pixelRatio?: number
   invalidateFrameloop?: boolean
+  vr?: boolean
   onCreated: Function
 }
 
@@ -58,6 +60,7 @@ const defaultRef = {
   ready: false,
   subscribers: [],
   manual: false,
+  vr: false,
   active: true,
   canvas: undefined,
   gl: undefined,
@@ -100,6 +103,7 @@ export const Canvas = React.memo(
     raycaster,
     style,
     pixelRatio,
+    vr = false,
     invalidateFrameloop = false,
     onCreated,
     ...rest
@@ -154,7 +158,8 @@ export const Canvas = React.memo(
       state.current.size = size
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
-    }, [invalidateFrameloop, ready, size, defaultCam])
+      state.current.vr = vr
+    }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -166,11 +171,16 @@ export const Canvas = React.memo(
       state.current.scene.__interaction = []
       state.current.scene.__objects = []
 
-      // Start render-loop
-      invalidate(state)
+      // Start render-loop, either via RAF or setAnimationLoop for VR
+      if (!state.current.vr) invalidate(state)
+      else {
+        state.current.gl.vr.enabled = true
+        state.current.gl.setAnimationLoop(t => renderGl(state, t, 0, true))
+      }
 
       // Clean-up
       return () => {
+        state.current.gl.dispose()
         state.current.active = false
         unmountComponentAtNode(state.current.scene)
       }

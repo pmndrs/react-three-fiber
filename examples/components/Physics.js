@@ -1,12 +1,29 @@
-import React, { useRef, useEffect, useState } from 'react'
-import { Canvas, useRender, addEffect, useThree } from 'react-three-fiber'
 import * as CANNON from 'cannon'
 import * as THREE from 'three'
-import useBody from './useBody'
-import './styles.css'
+import React, { useRef, useEffect, useState, useContext } from 'react'
+import { Canvas, useRender, addEffect, useThree } from 'react-three-fiber'
+
+// Cannon-world context provider
+const context = React.createContext()
+export function Provider({ children }) {
+  // Set up physics
+  const [world] = useState(() => new CANNON.World())
+  useEffect(() => {
+    world.broadphase = new CANNON.NaiveBroadphase()
+    world.solver.iterations = 10
+    world.gravity.set(0, 0, -25)
+  }, [world])
+  // Run world stepper every frame
+  useRender(() => world.step(1 / 60))
+  // Distribute world via context
+  return <context.Provider value={world} children={children} />
+}
 
 // Custom hook to maintain a world physics body
-function useBody({ world, ...props }, fn, deps = []) {
+export function useCannon({ ...props }, fn, deps = []) {
+  const ref = useRef()
+  // Get cannon world object
+  const world = useContext(context)
   // Instanciate a physics body
   const [body] = useState(() => new CANNON.Body(props))
   useEffect(() => {
@@ -17,26 +34,24 @@ function useBody({ world, ...props }, fn, deps = []) {
     // Remove body on unmount
     return () => world.removeBody(body)
   }, deps)
-  // Return body
-  return body
+  useRender(() => {
+    if (ref.current) {
+      // Transport cannon physics into the referenced threejs object
+      ref.current.position.copy(body.position)
+      ref.current.quaternion.copy(body.quaternion)
+    }
+  })
+  return ref
 }
-
-// Set up physics
-const world = new CANNON.World()
-world.broadphase = new CANNON.NaiveBroadphase()
-world.solver.iterations = 10
-world.gravity.set(0, 0, -20)
-// Add world stepper to global effects
-addEffect(() => world.step(1 / 60))
 
 function Plane({ position }) {
   // Register plane as a physics body with zero mass
-  useBody({ world, mass: 0 }, body => {
+  const ref = useCannon({ mass: 0 }, body => {
     body.addShape(new CANNON.Plane())
     body.position.set(...position)
   })
   return (
-    <mesh receiveShadow position={position}>
+    <mesh ref={ref} receiveShadow>
       <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
       <meshPhongMaterial attach="material" color="#272727" />
     </mesh>
@@ -45,57 +60,41 @@ function Plane({ position }) {
 
 function Box({ position }) {
   // Register box as a physics body with mass
-  const body = useBody({ world, mass: 100 }, body => {
+  const ref = useCannon({ mass: 100000 }, body => {
     body.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)))
     body.position.set(...position)
   })
-  const mesh = useRef()
-  useRender(() => {
-    if (mesh.current) {
-      // Translate physics data into threejs
-      mesh.current.position.copy(body.position)
-      mesh.current.quaternion.copy(body.quaternion)
-    }
-  })
   return (
-    <mesh ref={mesh} castShadow receiveShadow>
+    <mesh ref={ref} castShadow receiveShadow>
       <boxGeometry attach="geometry" args={[2, 2, 2]} />
       <meshStandardMaterial attach="material" />
     </mesh>
   )
 }
 
-function Lights() {
-  const { gl } = useThree()
-  useEffect(() => {
-    gl.shadowMap.enabled = true
-    gl.shadowMap.type = THREE.PCFSoftShadowMap
-  }, [gl])
-  return (
-    <group>
-      <ambientLight intensity={0.5} />
-      <spotLight intensity={0.5} position={[30, 30, 40]} castShadow />
-    </group>
-  )
-}
-
 export default function App() {
   const [showPlane, set] = useState(true)
-  // React removes (unmounts) 1st plane after 5 sec, objects should drop ...
+  // When React removes (unmounts) the upper plane after 5 sec, objects should drop ...
+  // This may seem like magic, but as the plane unmounts it removes itself from cannon and that's that
   useEffect(() => void setTimeout(() => set(false), 5000), [])
   return (
     <div className="main">
-      <Canvas camera={{ position: [0, 0, 15] }}>
-        <Lights />
-        <Plane position={[0, 0, -10]} />
-        {showPlane && <Plane position={[0, 0, 0]} />}
-        <Box position={[1, 0, 1]} />
-        <Box position={[2, 1, 5]} />
-        <Box position={[0, 0, 6]} />
-        <Box position={[-1, 1, 8]} />
-        <Box position={[-2, 2, 13]} />
-        <Box position={[2, -2, 13]} />
-        <Box position={[0.5, 1.2, 200]} />
+      <Canvas
+        camera={{ position: [0, 0, 15] }}
+        onCreated={({ gl }) => ((gl.shadowMap.enabled = true), (gl.shadowMap.type = THREE.PCFSoftShadowMap))}>
+        <ambientLight intensity={0.5} />
+        <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+        <Provider>
+          <Plane position={[0, 0, -10]} />
+          {showPlane && <Plane position={[0, 0, 0]} />}
+          <Box position={[1, 0, 1]} />
+          <Box position={[2, 1, 5]} />
+          <Box position={[0, 0, 6]} />
+          <Box position={[-1, 1, 8]} />
+          <Box position={[-2, 2, 13]} />
+          <Box position={[2, -1, 13]} />
+          {!showPlane && <Box position={[0.5, 1.5, 20]} />}
+        </Provider>
       </Canvas>
     </div>
   )

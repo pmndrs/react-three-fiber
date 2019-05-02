@@ -30,6 +30,7 @@
     "@babel/preset-typescript": "^7.3.3",
     "babel-loader": "8.0.5",
     "css-loader": "^2.1.1",
+    "exports-loader": "^0.7.0",
     "file-loader": "^3.0.1",
     "html-webpack-plugin": "4.0.0-alpha.2",
     "image-webpack-loader": "^4.6.0",

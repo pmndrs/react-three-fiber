@@ -36,6 +36,20 @@ export function addEffect(callback) {
   globalEffects.push(callback)
 }
 
+export function renderGl(state, time, repeat = 0, runGlobalEffects = false) {
+  // Run global effects
+  if (runGlobalEffects) globalEffects.forEach(effect => effect(time) && repeat++)
+
+  // Decrease frame count
+  state.current.frames = Math.max(0, state.current.frames - 1)
+  repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
+  // Run local effects
+  state.current.subscribers.forEach(fn => fn(state.current, time))
+  // Render content
+  if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
+  return repeat
+}
+
 let running = false
 function renderLoop(t) {
   running = true
@@ -47,19 +61,8 @@ function renderLoop(t) {
   roots.forEach(root => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
-    if (
-      state.current.active &&
-      state.current.ready &&
-      (!state.current.invalidateFrameloop || state.current.frames > 0)
-    ) {
-      // Decrease frame count
-      state.current.frames = Math.max(0, state.current.frames - 1)
-      repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
-      // Run local effects
-      state.current.subscribers.forEach(fn => fn(state.current, t))
-      // Render content
-      if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
-    }
+    if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
+      repeat = renderGl(state, t, repeat)
   })
 
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
@@ -68,8 +71,10 @@ function renderLoop(t) {
 }
 
 export function invalidate(state, frames = 1) {
-  if (state && state.current) state.current.frames = frames
-  else if (state === true) roots.forEach(root => (root.containerInfo.__state.current.frames = frames))
+  if (state && state.current) {
+    if (state.current.vr) return
+    state.current.frames = frames
+  } else if (state === true) roots.forEach(root => (root.containerInfo.__state.current.frames = frames))
   if (!running) {
     running = true
     requestAnimationFrame(renderLoop)
