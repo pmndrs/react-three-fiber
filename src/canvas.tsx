@@ -217,7 +217,7 @@ export const Canvas = React.memo(
       useEffect(() => {
         if (onCreated) {
           const result = onCreated(state.current)
-          if (result.then) return void result.then(activate)
+          if (result && result.then) return void result.then(activate)
         }
         activate()
       }, [])
