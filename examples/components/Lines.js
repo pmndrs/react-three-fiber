@@ -80,13 +80,18 @@ function Line({ defaultStart, defaultEnd }) {
 
 const camContext = React.createContext()
 function Controls({ children }) {
-  const { camera, invalidate } = useThree()
+  const { camera, invalidate, intersect } = useThree()
   const api = useState(true)
   const ref = useRef()
   useEffect(() => {
     const handler = ref.current.addEventListener('change', invalidate)
     return () => ref.current.removeEventListener('change', handler)
   }, [])
+
+  useEffect(() => {
+    setTimeout(() => console.log(intersect()), 3000)
+  }, [])
+
   return (
     <>
       <orbitControls ref={ref} args={[camera]} enabled={api[0]} />

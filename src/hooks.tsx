@@ -9,7 +9,7 @@ export function useRender(fn: Function, takeOverRenderloop: boolean): any {
 
   useEffect(() => {
     // Subscribe to the render-loop
-    const unsubscribe = subscribe(fn, takeOverRenderloop)
+    const unsubscribe = subscribe(fn)
 
     return () => {
       // Call subscription off on unmount
@@ -40,9 +40,7 @@ export function useUpdate(
   return ref
 }
 
-export function useResource(
-  optionalRef: React.MutableRefObject<any>
-): React.MutableRefObject<any> {
+export function useResource(optionalRef: React.MutableRefObject<any>): React.MutableRefObject<any> {
   const [resource, set] = useState()
   const ref = optionalRef ? optionalRef : useRef()
 

@@ -12,6 +12,7 @@ export type CanvasContext = {
   gl?: THREE.WebGLRenderer
   camera?: THREE.Camera
   scene?: THREE.Scene
+  raycaster?: THREE.Raycaster
   canvasRect?: DOMRectReadOnly
   viewport?: { width: number; height: number }
   size?: { left: number; top: number; width: number; height: number }
@@ -31,7 +32,8 @@ export type CanvasProps = {
   children: React.ReactNode
   gl: THREE.WebGLRenderer
   orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
-  raycaster: THREE.Raycaster
+  raycaster?: THREE.Raycaster
+  mouse?: THREE.Vector2
   camera?: THREE.Camera
   style?: React.CSSProperties
   pixelRatio?: number
@@ -50,10 +52,6 @@ export type IntersectObject = Event &
     ray: THREE.Raycaster
     stopped: { current: boolean }
     uuid: string
-    transform: {
-      x: Function
-      y: Function
-    }
   }
 
 const defaultRef = {
@@ -65,6 +63,8 @@ const defaultRef = {
   canvas: undefined,
   gl: undefined,
   camera: undefined,
+  raycaster: undefined,
+  mouse: undefined,
   scene: undefined,
   size: undefined,
   canvasRect: undefined,
@@ -73,7 +73,7 @@ const defaultRef = {
   viewport: undefined,
   captured: undefined,
   invalidateFrameloop: false,
-  subscribe: (fn, main) => () => {},
+  subscribe: fn => () => {},
   setManual: takeOverRenderloop => {},
   setDefaultCamera: cam => {},
   invalidate: () => {},
@@ -130,7 +130,7 @@ export const Canvas = React.memo(
     // Public state
     const state = useRef({
       ...defaultRef,
-      subscribe: (fn, main) => {
+      subscribe: fn => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
       },
@@ -147,6 +147,7 @@ export const Canvas = React.memo(
         setDefaultCamera(cam)
       },
       invalidate: () => invalidate(state),
+      intersect: () => handlePointerMove({}),
     })
 
     // This is used as a clone of the current state, to be distributed through context and useThree
@@ -159,6 +160,8 @@ export const Canvas = React.memo(
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.vr = vr
+      state.current.raycaster = defaultRaycaster
+      state.current.mouse = mouse
     }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
@@ -250,11 +253,13 @@ export const Canvas = React.memo(
 
     /** Sets up defaultRaycaster */
     const prepareRay = useCallback(event => {
-      const canvasRect = state.current.canvasRect
-      const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
-      const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
-      mouse.set(x, y)
-      defaultRaycaster.setFromCamera(mouse, state.current.camera)
+      if (event.clientX) {
+        const canvasRect = state.current.canvasRect
+        const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
+        const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
+        mouse.set(x, y)
+        defaultRaycaster.setFromCamera(mouse, state.current.camera)
+      }
     }, [])
 
     /** Intersects interaction objects using the event input */
@@ -286,11 +291,7 @@ export const Canvas = React.memo(
           : intersect(event, false)
 
       if (hits.length) {
-        const point = new THREE.Vector3(
-          (event.clientX / state.current.size.width) * 2 - 1,
-          -(event.clientY / state.current.size.height) * 2 + 1,
-          0
-        ).unproject(state.current.camera)
+        const point = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
 
         for (let hit of hits) {
           let stopped = { current: false }
@@ -351,9 +352,9 @@ export const Canvas = React.memo(
           }
         }
       })
-
       // Take care of unhover
       handlePointerCancel(event, hits)
+      return hits
     }, [])
 
     const handlePointerCancel = useCallback((event: React.PointerEvent<any>, hits?: []) => {
