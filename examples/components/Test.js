@@ -1,31 +1,23 @@
-import * as THREE from 'three'
-import React, { useState, useEffect } from 'react'
-import { Canvas, useThree } from 'react-three-fiber'
-
-const Box = React.memo(props => {
-  const { viewport } = useThree()
-  console.log('render', viewport)
-  return (
-    <mesh>
-      <boxGeometry args={[5, 5, 5]} attach="geometry" />
-      <meshBasicMaterial attachArray="material" color="red" />
-      <meshBasicMaterial attachArray="material" color="green" />
-      <meshBasicMaterial attachArray="material" color="blue" />
-      <meshBasicMaterial attachArray="material" color="red" />
-      <meshBasicMaterial attachArray="material" color="green" />
-      <meshBasicMaterial attachArray="material" color="blue" />
-    </mesh>
-  )
-})
+import React, { useCallback } from 'react'
+import { Canvas } from 'react-three-fiber'
 
 export default function App() {
-  const [_, set] = useState(0)
-  useEffect(() => void setInterval(() => set(s => s + 1), 500), [])
   return (
-    <div class="main">
-      <Canvas camera={{ position: [0, 0, 20] }}>
-        <Box />
-      </Canvas>
-    </div>
+    <Canvas
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+      }}
+      camera={[0, 0, 300]}>
+      <group onPointerMove={() => null}>
+        <mesh onPointerUp={e => console.log('hi')}>
+          <icosahedronBufferGeometry attach="geometry" args={[1, 0]} />
+          <meshNormalMaterial attach="material" />
+        </mesh>
+      </group>
+    </Canvas>
   )
 }

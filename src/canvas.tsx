@@ -266,8 +266,12 @@ export const Canvas = React.memo(
     const intersect = useCallback((event, prepare = true) => {
       if (prepare) prepareRay(event)
 
-      const intersects = defaultRaycaster.intersectObjects(state.current.scene.__interaction, true)
+      const seen = {}
       const hits = []
+      // Intersect known handler objects and filter against duplicates
+      const intersects = defaultRaycaster
+        .intersectObjects(state.current.scene.__interaction, true)
+        .filter(item => (seen.hasOwnProperty(item.object.uuid) ? false : (seen[item.object.uuid] = true)))
 
       for (let intersect of intersects) {
         let receivingObject = intersect.object
