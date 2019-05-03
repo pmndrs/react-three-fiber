@@ -92,12 +92,12 @@ div.header-major > span {
     font-size: 4em;
     width: 200px;
   }
-  a.bottom-left {
+  .bottom-left {
     display: none;
   }
 }
 
-a {
+a, .main > span {
   font-family: 'Josefin Sans', sans-serif;
   font-weight: 400;
   font-size: 18px;
@@ -108,22 +108,29 @@ a {
   z-index: 1;
 }
 
-a.top-left {
+.main > span { z-index: 0; }
+
+.main > span > a {
+  position: unset;
+  text-transform: capitalize;
+}
+
+.top-left {
   top: 60px;
   left: 60px;
 }
 
-a.top-right {
+.top-right {
   top: 60px;
   right: 60px;
 }
 
-a.bottom-left {
+.bottom-left {
   bottom: 60px;
   left: 60px;
 }
 
-a.bottom-right {
+.bottom-right {
   bottom: 60px;
   right: 60px;
 }
@@ -171,7 +178,7 @@ span.middle {
   font-weight: 700;
   position: absolute;
   display: inline-block;
-  font-size: 80vh;
+  font-size: 60vh;
   line-height: 0.9em;
   pointer-events: none;
   top: 50%;

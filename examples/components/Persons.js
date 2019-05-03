@@ -1,20 +1,14 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { apply as applySpring, update, useTransition, useSpring, a } from 'react-spring/three'
+import { useTransition, a } from 'react-spring/three'
+import { useRoute, useLocation, Link, Route, Switch } from 'wouter'
 import flat from 'lodash-es/flatten'
 import { SVGLoader } from './../resources/loaders/SVGLoader'
-import * as svgs from '../resources/images/svg/persons'
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { ShaderPass } from './../resources/postprocessing/ShaderPass'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
-import { GlitchPass } from './../resources/postprocessing/GlitchPass'
-import { AfterimagePass } from './../resources/postprocessing/AfterimagePass'
-import { FXAAShader } from './../resources/shaders/FXAAShader'
-apply({ EffectComposer, ShaderPass, RenderPass, GlitchPass, AfterimagePass })
+import * as persons from '../resources/images/svg/persons'
 
-const urls = Object.values(svgs)
-const colors = ['#21242d', '#ea5158', '#0d4663', '#EE786E', '#2d4a3e', '#8bd8d2']
+const names = Object.keys(persons)
+const urls = Object.values(persons)
 const deg = THREE.Math.degToRad
 const loaders = urls.map(
   url =>
@@ -28,10 +22,10 @@ const loaders = urls.map(
 )
 
 function Person() {
-  const [index, setIndex] = useState(0)
+  const [match, params] = useRoute('/person/:name')
+  const index = match ? names.indexOf(params.name) : 0
   const [shapes, setShapes] = useState([])
   useEffect(() => void loaders[index].then(setShapes), [index])
-  useEffect(() => void setInterval(() => setIndex(i => (i + 1) % loaders.length), 3000), [])
 
   const transitions = useTransition(shapes, item => item.shape.uuid, {
     from: { position: [-50, 0, 0], rotation: [0, -0.6, 0], opacity: 0 },
@@ -63,30 +57,16 @@ function Person() {
   )
 }
 
-const Effect = React.memo(({ factor }) => {
-  const { gl, scene, camera, size } = useThree()
-  const composer = useRef()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  // This takes over as the main render-loop (when 2nd arg is set to true)
-  useRender(() => composer.current.render(), true)
-  return (
-    <effectComposer ref={composer} args={[gl]}>
-      <renderPass attachArray="passes" args={[scene, camera]} />
-      <afterimagePass attachArray="passes" factor={0.94} />
-      <shaderPass
-        attachArray="passes"
-        args={[FXAAShader]}
-        material-uniforms-resolution-value={[1 / size.width, 1 / size.height]}
-        renderToScreen
-      />
-    </effectComposer>
-  )
-})
+function Name() {
+  const [match, params] = useRoute('/person/:name')
+  const name = match ? params.name : names[0]
+  return <span class="middle">{name}</span>
+}
 
 export default function App() {
   return (
     <div class="main">
-      <span class="middle">Test</span>
+      <Name />
       <Canvas
         camera={{
           fov: 90,
@@ -99,14 +79,15 @@ export default function App() {
         <spotLight intensity={0.5} position={[300, 300, 4000]} />
         <Person />
       </Canvas>
-      <a href="https://tympanus.net/codrops" class="top-left" children="Article" />
-      <a href="https://github.com/drcmda/react-three-fiber" class="top-right" children="Github" />
-      <a href="https://twitter.com/0xca0a" class="bottom-left" children="Twitter" />
-      <a
-        href="https://www.instagram.com/tina.henschel/"
-        class="bottom-right"
-        children="Illustrations / Tina Henschel"
-      />
+      <a href="https://github.com/drcmda/react-three-fiber" class="top-left" children="Github" />
+      <span class="top-right">
+        {names.map(person => (
+          <>
+            <Link to={`/person/${person}`}>{person}</Link>&nbsp;
+          </>
+        ))}
+      </span>
+      <a href="https://www.instagram.com/tina.henschel/" class="bottom-left" children="Illustrations / Tina Henschel" />
     </div>
   )
 }
