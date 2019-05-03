@@ -214,11 +214,14 @@ function removeChild(parentInstance, child) {
     }
     invalidateInstance(child)
     run(idlePriority, () => {
-      // Remove child objects
-      child.__objects.forEach(nestedChild => removeChild(child, nestedChild))
+      // Remove interactivity
+      if (child.__container) child.__container.__interaction = child.__container.__interaction.filter(x => x !== child)
+      // Remove nested child objects
+      if (child.__objects) child.__objects.forEach(obj => removeChild(child, obj))
+      if (child.children) child.children.forEach(obj => removeChild(child, obj))
       // Dispose item
       if (child.dispose) child.dispose()
-      // TODO: remove events
+      // Remove references
       delete child.__container
       delete child.__objects
     })

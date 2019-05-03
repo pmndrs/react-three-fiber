@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
 import { apply, Canvas, useThree, useRender } from 'react-three-fiber'
-import { OrbitControls } from '../resources/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 apply({ OrbitControls })
 
 function useHover(stopPropagation = true) {

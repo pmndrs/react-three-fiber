@@ -1,6 +1,6 @@
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { OrbitControls } from '../resources/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
 import { RenderPass } from './../resources/postprocessing/RenderPass'

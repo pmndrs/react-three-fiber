@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import React, { useRef, useEffect } from 'react'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
-import { OrbitControls } from '../resources/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 apply({ OrbitControls })
 
 const count = 400

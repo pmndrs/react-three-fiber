@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { useSpring, animated } from 'react-spring/three'
 import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
-import { OrbitControls } from '../resources/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 apply({ OrbitControls })
 
 function Content() {
