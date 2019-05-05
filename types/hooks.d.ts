@@ -4,10 +4,13 @@ export declare function useThree(): {
   ready: boolean
   subscribers: any[]
   manual: boolean
+  vr: boolean
   active: boolean
   canvas: any
   gl: any
   camera: any
+  raycaster: any
+  mouse: any
   scene: any
   size: any
   canvasRect: any

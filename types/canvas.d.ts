@@ -8,6 +8,7 @@ export declare type CanvasContext = {
   gl?: THREE.WebGLRenderer
   camera?: THREE.Camera
   scene?: THREE.Scene
+  raycaster?: THREE.Raycaster
   canvasRect?: DOMRectReadOnly
   viewport?: {
     width: number
@@ -20,6 +21,7 @@ export declare type CanvasContext = {
     height: number
   }
   ready: boolean
+  vr: boolean
   manual: boolean
   active: boolean
   captured: boolean
@@ -33,11 +35,13 @@ export declare type CanvasProps = {
   children: React.ReactNode
   gl: THREE.WebGLRenderer
   orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
-  raycaster: THREE.Raycaster
+  raycaster?: THREE.Raycaster
+  mouse?: THREE.Vector2
   camera?: THREE.Camera
   style?: React.CSSProperties
   pixelRatio?: number
   invalidateFrameloop?: boolean
+  vr?: boolean
   onCreated: Function
 }
 export declare type Measure = [
@@ -58,19 +62,18 @@ export declare type IntersectObject = Event &
       current: boolean
     }
     uuid: string
-    transform: {
-      x: Function
-      y: Function
-    }
   }
 export declare const stateContext: React.Context<{
   ready: boolean
   subscribers: any[]
   manual: boolean
+  vr: boolean
   active: boolean
   canvas: any
   gl: any
   camera: any
+  raycaster: any
+  mouse: any
   scene: any
   size: any
   canvasRect: any
@@ -79,7 +82,7 @@ export declare const stateContext: React.Context<{
   viewport: any
   captured: any
   invalidateFrameloop: boolean
-  subscribe: (fn: any, main: any) => () => void
+  subscribe: (fn: any) => () => void
   setManual: (takeOverRenderloop: any) => void
   setDefaultCamera: (cam: any) => void
   invalidate: () => void
@@ -93,6 +96,7 @@ export declare const Canvas: React.MemoExoticComponent<
     raycaster,
     style,
     pixelRatio,
+    vr,
     invalidateFrameloop,
     onCreated,
     ...rest
