@@ -147,7 +147,7 @@ export const Canvas = React.memo(
         setDefaultCamera(cam)
       },
       invalidate: () => invalidate(state),
-      intersect: () => handlePointerMove({}),
+      intersect: (event = {}) => handlePointerMove(event),
     })
 
     // This is used as a clone of the current state, to be distributed through context and useThree
@@ -253,7 +253,7 @@ export const Canvas = React.memo(
 
     /** Sets up defaultRaycaster */
     const prepareRay = useCallback(event => {
-      if (event.clientX) {
+      if (event.clientX !== void 0) {
         const canvasRect = state.current.canvasRect
         const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
         const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
