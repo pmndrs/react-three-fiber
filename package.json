@@ -4,15 +4,16 @@
   "description": "React-fiber renderer for THREE.js",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
+  "types": "dist/types/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "rollup -c",
-    "prepare": "npm run build",
+    "prepare": "npm run build && npm run typegen",
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typecheck": "tsc --noEmit --jsx react src/*",
-    "typegen": "tsc  --jsx react --emitDeclarationOnly -d --declarationDir types src/*"
+    "typecheck": "tsc --noEmit --strict --jsx react src/*",
+    "typegen": "tsc"
   },
   "husky": {
     "hooks": {

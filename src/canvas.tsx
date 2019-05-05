@@ -73,9 +73,9 @@ const defaultRef = {
   viewport: undefined,
   captured: undefined,
   invalidateFrameloop: false,
-  subscribe: fn => () => {},
-  setManual: takeOverRenderloop => {},
-  setDefaultCamera: cam => {},
+  subscribe: (fn: Function) => () => {},
+  setManual: (takeOverRenderloop: boolean) => {},
+  setDefaultCamera: (cam: THREE.Camera) => {},
   invalidate: () => {},
 }
 
@@ -130,11 +130,11 @@ export const Canvas = React.memo(
     // Public state
     const state = useRef({
       ...defaultRef,
-      subscribe: fn => {
+      subscribe: (fn: Function) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
       },
-      setManual: takeOverRenderloop => {
+      setManual: (takeOverRenderloop: boolean) => {
         state.current.manual = takeOverRenderloop
         if (takeOverRenderloop) {
           // In manual mode items shouldn't really be part of the internal scene which has adverse effects
@@ -142,7 +142,7 @@ export const Canvas = React.memo(
           state.current.scene.children.forEach(child => state.current.scene.remove(child))
         }
       },
-      setDefaultCamera: cam => {
+      setDefaultCamera: (cam: THREE.Camera) => {
         state.current.camera = cam
         setDefaultCamera(cam)
       },

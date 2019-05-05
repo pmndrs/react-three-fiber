@@ -11,12 +11,12 @@ import {
 const roots = new Map()
 const emptyObject = {}
 const is = {
-  obj: a => a === Object(a),
-  str: a => typeof a === 'string',
-  num: a => typeof a === 'number',
-  und: a => a === void 0,
-  arr: a => Array.isArray(a),
-  equ(a, b) {
+  obj: (a: any) => a === Object(a),
+  str: (a: any) => typeof a === 'string',
+  num: (a: any) => typeof a === 'number',
+  und: (a: any) => a === void 0,
+  arr: (a: any) => Array.isArray(a),
+  equ(a: any, b: any) {
     // Wrong type, doesn't match
     if (typeof a !== typeof b) return false
     // Atomic, just compare a against b
@@ -31,8 +31,9 @@ const is = {
   },
 }
 
-let globalEffects = []
-export function addEffect(callback) {
+let globalEffects: Function[] = []
+
+export function addEffect(callback: Function) {
   globalEffects.push(callback)
 }
 
@@ -84,7 +85,7 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, container) {
+export function applyProps(instance, newProps, oldProps = {}, container?) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))

@@ -5,8 +5,12 @@
     "moduleResolution": "node",
     "jsx": "react",
     "pretty": true,
+    "strict": true,
     "skipLibCheck": true,
-    "allowJs": true
+    "declaration": true,
+    "removeComments": true,
+    "emitDeclarationOnly": true,
+    "outFile": "dist/types/index.d.ts"
   },
   "include": ["./src/**/*"],
   "exclude": ["./node_modules/**/*"]
