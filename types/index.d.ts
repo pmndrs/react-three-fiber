@@ -22,16 +22,16 @@ declare module 'canvas' {
     subscribers: Function[]
     subscribe: (callback: Function) => () => any
     setManual: (takeOverRenderloop: boolean) => any
-    setDefaultCamera: (camera: THREE.OrthographicCamera | THREE.PerspectiveCamera) => any
+    setDefaultCamera: (camera: THREE.Camera) => any
     invalidate: () => any
     gl: THREE.WebGLRenderer
-    camera: THREE.OrthographicCamera | THREE.PerspectiveCamera
+    camera: THREE.Camera
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     scene: THREE.Scene
     captured?: THREE.Intersection
     canvas?: HTMLCanvasElement
-    canvasRect?: DOMRectReadOnly
+    canvasRect?: ClientRect | DOMRect
     size?: {
       left: number
       top: number
@@ -46,20 +46,20 @@ declare module 'canvas' {
   }
   export type CanvasProps = {
     children: React.ReactNode
-    gl: THREE.WebGLRenderer
-    orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
-    camera?: THREE.OrthographicCamera | THREE.PerspectiveCamera
+    vr: boolean
+    orthographic: boolean
+    invalidateFrameloop: boolean
+    gl?: THREE.WebGLRenderer
+    camera?: THREE.Camera
     raycaster?: THREE.Raycaster
     mouse?: THREE.Vector2
     style?: React.CSSProperties
     pixelRatio?: number
-    invalidateFrameloop?: boolean
-    vr?: boolean
-    onCreated: Function
+    onCreated?: Function
   }
   export type Measure = [
     {
-      ref: React.MutableRefObject<HTMLCanvasElement>
+      ref: React.MutableRefObject<HTMLDivElement | undefined>
     },
     {
       left: number
