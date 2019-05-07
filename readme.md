@@ -68,6 +68,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   gl                            // Props that go into the default webGL-renderer
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
+  vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
@@ -239,6 +240,7 @@ const {
   viewport,         // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,           // Aspect ratio (size.width / size.height)
   invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  intersect,        // Calls onMouseMove handlers for objects underneath the cursor
   setDefaultCamera  // Sets the default camera
 } = useThree()
 ```
@@ -292,6 +294,19 @@ return (
     <mesh material={material} />
   )}
 )
+```
+
+# Additional exports
+
+```jsx
+import {
+  addEffect,              // Adds a global callback which is called each frame
+  invalidate,             // Forces view global invalidation
+  apply,                  // Extends the native-object catalogue
+  render,                 // Internal: Renders three jsx into a scene
+  unmountComponentAtNode, // Internal: Unmounts root scene
+  applyProps,             // Internal: Sets element properties
+} from 'react-three-fiber'
 ```
 
 # Receipes
@@ -455,6 +470,17 @@ const { invalidate } = useThree()
 const texture = useMemo(() => loader.load(url1, invalidate), [url1])
 ```
 
+## Enabling VR
+
+Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
+
+```jsx
+import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
+import { Canvas } from 'react-three-fiber'
+
+<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
+```
+
 ## Switching the default renderer
 
 If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
@@ -475,3 +501,9 @@ render((
   </mesh>
 ), scene)
 ```
+
+## Reducing bundle-size
+
+Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
+
+Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
