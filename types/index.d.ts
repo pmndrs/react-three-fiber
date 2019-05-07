@@ -23,10 +23,10 @@ declare module 'canvas' {
     subscribers: []
     subscribe: (callback: Function) => () => any
     setManual: (takeOverRenderloop: boolean) => any
-    setDefaultCamera: (camera: THREE.Camera) => any
+    setDefaultCamera: (camera: THREE.OrthographicCamera | THREE.PerspectiveCamera) => any
     invalidate: () => any
     gl: THREE.WebGLRenderer
-    camera: THREE.Camera
+    camera: THREE.OrthographicCamera | THREE.PerspectiveCamera
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     scene: THREE.Scene
@@ -41,15 +41,16 @@ declare module 'canvas' {
     viewport?: {
       width: number
       height: number
+      factor: number
     }
   }
   export type CanvasProps = {
     children: React.ReactNode
     gl: THREE.WebGLRenderer
     orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
+    camera?: THREE.OrthographicCamera | THREE.PerspectiveCamera
     raycaster?: THREE.Raycaster
     mouse?: THREE.Vector2
-    camera?: THREE.Camera
     style?: React.CSSProperties
     pixelRatio?: number
     invalidateFrameloop?: boolean

@@ -16,26 +16,26 @@ export type CanvasContext = {
   subscribers: []
   subscribe: (callback: Function) => () => any
   setManual: (takeOverRenderloop: boolean) => any
-  setDefaultCamera: (camera: THREE.Camera) => any
+  setDefaultCamera: (camera: THREE.OrthographicCamera | THREE.PerspectiveCamera) => any
   invalidate: () => any
   gl: THREE.WebGLRenderer
-  camera: THREE.Camera
+  camera: THREE.OrthographicCamera | THREE.PerspectiveCamera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
   canvas?: React.MutableRefObject<any>
   canvasRect?: DOMRectReadOnly
   size?: { left: number; top: number; width: number; height: number }
-  viewport?: { width: number; height: number }
+  viewport?: { width: number; height: number; factor: number }
 }
 
 export type CanvasProps = {
   children: React.ReactNode
   gl: THREE.WebGLRenderer
   orthographic: THREE.OrthographicCamera | THREE.PerspectiveCamera
+  camera?: THREE.OrthographicCamera | THREE.PerspectiveCamera
   raycaster?: THREE.Raycaster
   mouse?: THREE.Vector2
-  camera?: THREE.Camera
   style?: React.CSSProperties
   pixelRatio?: number
   invalidateFrameloop?: boolean
@@ -70,7 +70,7 @@ const defaultRef: CanvasContext = {
   setDefaultCamera: () => {},
   invalidate: () => {},
   gl: new THREE.WebGLRenderer(),
-  camera: new THREE.Camera(),
+  camera: new THREE.PerspectiveCamera(),
   raycaster: new THREE.Raycaster(),
   mouse: new THREE.Vector2(),
   scene: new THREE.Scene(),
@@ -143,7 +143,7 @@ export const Canvas = React.memo(
           state.current.scene.children.forEach(child => state.current.scene.remove(child))
         }
       },
-      setDefaultCamera: (cam: THREE.Camera) => {
+      setDefaultCamera: (cam: THREE.OrthographicCamera | THREE.PerspectiveCamera) => {
         state.current.camera = cam
         setDefaultCamera(cam)
       },
@@ -194,7 +194,7 @@ export const Canvas = React.memo(
     useEffect(() => {
       state.current.aspect = size.width / size.height || 0
 
-      if (state.current.camera.isOrthographicCamera) {
+      if (state.current.camera instanceof THREE.OrthographicCamera) {
         state.current.viewport = { width: size.width, height: size.height, factor: 1 }
       } else {
         const target = new THREE.Vector3(0, 0, 0)
@@ -208,7 +208,8 @@ export const Canvas = React.memo(
       state.current.canvasRect = bind.ref.current.getBoundingClientRect()
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
-        if (state.current.camera.isOrthographicCamera) {
+
+        if (state.current.camera instanceof THREE.OrthographicCamera) {
           state.current.camera.left = size.width / -2
           state.current.camera.right = size.width / 2
           state.current.camera.top = size.height / 2
