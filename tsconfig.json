@@ -10,7 +10,7 @@
     "declaration": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
-    "outFile": "dist/types/index.d.ts"
+    "outFile": "types/index.d.ts"
   },
   "include": ["./src/**/*"],
   "exclude": ["./node_modules/**/*"]

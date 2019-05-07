@@ -4,7 +4,7 @@
   "description": "React-fiber renderer for THREE.js",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
-  "types": "dist/types/index.d.ts",
+  "types": "types/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist",
