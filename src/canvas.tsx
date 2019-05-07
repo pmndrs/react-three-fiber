@@ -9,11 +9,10 @@ export type CanvasContext = {
   manual: boolean
   vr: boolean
   active: boolean
-  captured: boolean
   invalidateFrameloop: boolean
   frames: number
   aspect: number
-  subscribers: []
+  subscribers: Function[]
   subscribe: (callback: Function) => () => any
   setManual: (takeOverRenderloop: boolean) => any
   setDefaultCamera: (camera: THREE.OrthographicCamera | THREE.PerspectiveCamera) => any
@@ -23,8 +22,9 @@ export type CanvasContext = {
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  canvas?: React.MutableRefObject<any>
-  canvasRect?: DOMRectReadOnly
+  captured?: THREE.Intersection
+  canvas?: HTMLCanvasElement
+  canvasRect?: ClientRect | DOMRect
   size?: { left: number; top: number; width: number; height: number }
   viewport?: { width: number; height: number; factor: number }
 }
@@ -44,7 +44,7 @@ export type CanvasProps = {
 }
 
 export type Measure = [
-  { ref: React.MutableRefObject<any> },
+  { ref: React.MutableRefObject<HTMLDivElement | undefined> },
   { left: number; top: number; width: number; height: number }
 ]
 
@@ -60,7 +60,6 @@ const defaultRef: CanvasContext = {
   manual: false,
   vr: false,
   active: true,
-  captured: false,
   invalidateFrameloop: false,
   frames: 0,
   aspect: 0,
@@ -74,6 +73,7 @@ const defaultRef: CanvasContext = {
   raycaster: new THREE.Raycaster(),
   mouse: new THREE.Vector2(),
   scene: new THREE.Scene(),
+  captured: undefined,
   canvas: undefined,
   canvasRect: undefined,
   size: undefined,
@@ -83,10 +83,11 @@ const defaultRef: CanvasContext = {
 export const stateContext = React.createContext(defaultRef)
 
 function useMeasure(): Measure {
-  const ref = useRef()
+  const ref = useRef<HTMLDivElement>()
 
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
+
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
@@ -110,7 +111,7 @@ export const Canvas = React.memo(
     ...rest
   }: CanvasProps) => {
     // Local, reactive state
-    const canvas = useRef()
+    const canvas = useRef<HTMLCanvasElement>()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
     const [defaultRaycaster] = useState(() => {
@@ -206,6 +207,7 @@ export const Canvas = React.memo(
       }
 
       state.current.canvasRect = bind.ref.current.getBoundingClientRect()
+
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
 
@@ -257,8 +259,13 @@ export const Canvas = React.memo(
     const prepareRay = useCallback(event => {
       if (event.clientX !== void 0) {
         const canvasRect = state.current.canvasRect
-        const x = ((event.clientX - canvasRect.left) / (canvasRect.right - canvasRect.left)) * 2 - 1
-        const y = -((event.clientY - canvasRect.top) / (canvasRect.bottom - canvasRect.top)) * 2 + 1
+        const left = (canvasRect && canvasRect.left) || 0
+        const right = (canvasRect && canvasRect.right) || 0
+        const top = (canvasRect && canvasRect.top) || 0
+        const bottom = (canvasRect && canvasRect.bottom) || 0
+        const x = ((event.clientX - left) / (right - left)) * 2 - 1
+        const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
+
         mouse.set(x, y)
         defaultRaycaster.setFromCamera(mouse, state.current.camera)
       }
@@ -288,7 +295,7 @@ export const Canvas = React.memo(
     }, [])
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event: React.PointerEvent<any>, fn) => {
+    const handleIntersects = useCallback((event: React.PointerEvent<HTMLDivElement>, fn) => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
       const hits =
@@ -331,7 +338,7 @@ export const Canvas = React.memo(
     )
 
     const hovered = useRef({})
-    const handlePointerMove = useCallback((event: React.PointerEvent<any>) => {
+    const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
       if (!state.current.ready) return
       const hits = handleIntersects(event, data => {
         const object = data.object
@@ -363,7 +370,7 @@ export const Canvas = React.memo(
       return hits
     }, [])
 
-    const handlePointerCancel = useCallback((event: React.PointerEvent<any>, hits?: []) => {
+    const handlePointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>, hits?: []) => {
       if (!hits) hits = handleIntersects(event, () => null)
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
@@ -376,7 +383,7 @@ export const Canvas = React.memo(
     // Render the canvas into the dom
     return (
       <div
-        {...bind}
+        ref={bind.ref as React.MutableRefObject<HTMLDivElement>}
         onClick={handlePointer('click')}
         onWheel={handlePointer('wheel')}
         onPointerDown={handlePointer('pointerDown')}
@@ -389,7 +396,7 @@ export const Canvas = React.memo(
         onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
         {...rest}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-        <canvas ref={canvas} style={{ display: 'block' }} />
+        <canvas ref={canvas as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
       </div>
     )
   }

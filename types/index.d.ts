@@ -16,11 +16,10 @@ declare module 'canvas' {
     manual: boolean
     vr: boolean
     active: boolean
-    captured: boolean
     invalidateFrameloop: boolean
     frames: number
     aspect: number
-    subscribers: []
+    subscribers: Function[]
     subscribe: (callback: Function) => () => any
     setManual: (takeOverRenderloop: boolean) => any
     setDefaultCamera: (camera: THREE.OrthographicCamera | THREE.PerspectiveCamera) => any
@@ -30,7 +29,8 @@ declare module 'canvas' {
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
     scene: THREE.Scene
-    canvas?: React.MutableRefObject<any>
+    captured?: THREE.Intersection
+    canvas?: HTMLCanvasElement
     canvasRect?: DOMRectReadOnly
     size?: {
       left: number
@@ -59,7 +59,7 @@ declare module 'canvas' {
   }
   export type Measure = [
     {
-      ref: React.MutableRefObject<any>
+      ref: React.MutableRefObject<HTMLCanvasElement>
     },
     {
       left: number
