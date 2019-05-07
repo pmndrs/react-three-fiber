@@ -1,31 +1,32 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useMemo, useState, useCallback } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, renderGl, unmountComponentAtNode } from './reconciler'
 
 export type CanvasContext = {
-  canvas?: React.MutableRefObject<any>
-  subscribers: Array<Function>
-  frames: 0
-  aspect: 0
-  gl?: THREE.WebGLRenderer
-  camera?: THREE.Camera
-  scene?: THREE.Scene
-  raycaster?: THREE.Raycaster
-  canvasRect?: DOMRectReadOnly
-  viewport?: { width: number; height: number }
-  size?: { left: number; top: number; width: number; height: number }
   ready: boolean
-  vr: boolean
   manual: boolean
+  vr: boolean
   active: boolean
   captured: boolean
   invalidateFrameloop: boolean
-  subscribe?: (callback: Function, main: any) => () => any
+  frames: number
+  aspect: number
+  subscribers: []
+  subscribe: (callback: Function) => () => any
   setManual: (takeOverRenderloop: boolean) => any
   setDefaultCamera: (camera: THREE.Camera) => any
   invalidate: () => any
+  canvas?: React.MutableRefObject<any>
+  gl?: THREE.WebGLRenderer
+  camera?: THREE.Camera
+  raycaster?: THREE.Raycaster
+  mouse?: THREE.Vector2
+  scene?: THREE.Scene
+  size?: { left: number; top: number; width: number; height: number }
+  canvasRect?: DOMRectReadOnly
+  viewport?: { width: number; height: number }
 }
 
 export type CanvasProps = {
@@ -54,12 +55,20 @@ export type IntersectObject = Event &
     uuid: string
   }
 
-const defaultRef = {
+const defaultRef: CanvasContext = {
   ready: false,
-  subscribers: [],
   manual: false,
   vr: false,
   active: true,
+  captured: false,
+  invalidateFrameloop: false,
+  frames: 0,
+  aspect: 0,
+  subscribers: [],
+  subscribe: () => () => {},
+  setManual: () => {},
+  setDefaultCamera: () => {},
+  invalidate: () => {},
   canvas: undefined,
   gl: undefined,
   camera: undefined,
@@ -68,15 +77,7 @@ const defaultRef = {
   scene: undefined,
   size: undefined,
   canvasRect: undefined,
-  frames: 0,
-  aspect: 0,
   viewport: undefined,
-  captured: undefined,
-  invalidateFrameloop: false,
-  subscribe: (fn: Function) => () => {},
-  setManual: (takeOverRenderloop: boolean) => {},
-  setDefaultCamera: (cam: THREE.Camera) => {},
-  invalidate: () => {},
 }
 
 export const stateContext = React.createContext(defaultRef)

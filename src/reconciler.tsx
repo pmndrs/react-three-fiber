@@ -37,33 +37,33 @@ export function addEffect(callback: Function) {
   globalEffects.push(callback)
 }
 
-export function renderGl(state, time, repeat = 0, runGlobalEffects = false) {
+export function renderGl(state, timestamp: number, repeat = 0, runGlobalEffects = false) {
   // Run global effects
-  if (runGlobalEffects) globalEffects.forEach(effect => effect(time) && repeat++)
+  if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Run local effects
-  state.current.subscribers.forEach(fn => fn(state.current, time))
+  state.current.subscribers.forEach(fn => fn(state.current, timestamp))
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
   return repeat
 }
 
 let running = false
-function renderLoop(t) {
+function renderLoop(timestamp: number) {
   running = true
   let repeat = 0
 
   // Run global effects
-  globalEffects.forEach(effect => effect(t) && repeat++)
+  globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   roots.forEach(root => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
     if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
-      repeat = renderGl(state, t, repeat)
+      repeat = renderGl(state, timestamp, repeat)
   })
 
   if (repeat !== 0) return requestAnimationFrame(renderLoop)

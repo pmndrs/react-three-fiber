@@ -1,7 +1,10 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
-import { stateContext } from './canvas'
+import { stateContext, CanvasContext } from './canvas'
 
-export function useRender(fn: Function, takeOverRenderloop: boolean): any {
+// helper type for omitting properties from types
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
+export function useRender(fn: Function, takeOverRenderloop: boolean): void {
   const { subscribe, setManual } = useContext(stateContext)
 
   // This calls into the host to inform it whether the render-loop is manual or not
@@ -19,7 +22,7 @@ export function useRender(fn: Function, takeOverRenderloop: boolean): any {
   }, [])
 }
 
-export function useThree() {
+export function useThree(): Omit<CanvasContext, 'subscribe'> {
   const { subscribe, ...props } = useContext(stateContext)
   return props
 }
