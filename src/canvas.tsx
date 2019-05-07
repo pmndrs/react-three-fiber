@@ -18,14 +18,14 @@ export type CanvasContext = {
   setManual: (takeOverRenderloop: boolean) => any
   setDefaultCamera: (camera: THREE.Camera) => any
   invalidate: () => any
+  gl: THREE.WebGLRenderer
+  camera: THREE.Camera
+  raycaster: THREE.Raycaster
+  mouse: THREE.Vector2
+  scene: THREE.Scene
   canvas?: React.MutableRefObject<any>
-  gl?: THREE.WebGLRenderer
-  camera?: THREE.Camera
-  raycaster?: THREE.Raycaster
-  mouse?: THREE.Vector2
-  scene?: THREE.Scene
-  size?: { left: number; top: number; width: number; height: number }
   canvasRect?: DOMRectReadOnly
+  size?: { left: number; top: number; width: number; height: number }
   viewport?: { width: number; height: number }
 }
 
@@ -69,14 +69,14 @@ const defaultRef: CanvasContext = {
   setManual: () => {},
   setDefaultCamera: () => {},
   invalidate: () => {},
+  gl: new THREE.WebGLRenderer(),
+  camera: new THREE.Camera(),
+  raycaster: new THREE.Raycaster(),
+  mouse: new THREE.Vector2(),
+  scene: new THREE.Scene(),
   canvas: undefined,
-  gl: undefined,
-  camera: undefined,
-  raycaster: undefined,
-  mouse: undefined,
-  scene: undefined,
-  size: undefined,
   canvasRect: undefined,
+  size: undefined,
   viewport: undefined,
 }
 

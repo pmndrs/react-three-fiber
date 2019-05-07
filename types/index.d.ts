@@ -25,19 +25,19 @@ declare module 'canvas' {
     setManual: (takeOverRenderloop: boolean) => any
     setDefaultCamera: (camera: THREE.Camera) => any
     invalidate: () => any
+    gl: THREE.WebGLRenderer
+    camera: THREE.Camera
+    raycaster: THREE.Raycaster
+    mouse: THREE.Vector2
+    scene: THREE.Scene
     canvas?: React.MutableRefObject<any>
-    gl?: THREE.WebGLRenderer
-    camera?: THREE.Camera
-    raycaster?: THREE.Raycaster
-    mouse?: THREE.Vector2
-    scene?: THREE.Scene
+    canvasRect?: DOMRectReadOnly
     size?: {
       left: number
       top: number
       width: number
       height: number
     }
-    canvasRect?: DOMRectReadOnly
     viewport?: {
       width: number
       height: number
