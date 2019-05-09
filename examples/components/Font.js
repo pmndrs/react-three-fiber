@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useRender, useThree, useResource } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import fontFile from './../resources/fonts/unknown'
+import fontFile from '../resources/fonts/unknown'
 apply({ OrbitControls })
 
 /** This renders text via canvas and projects it as a sprite */
@@ -61,10 +61,28 @@ function Content() {
   )
 }
 
+function TestCamHelper() {
+  const [ref, camera] = useResource()
+  return (
+    <>
+      <perspectiveCamera
+        ref={ref}
+        aspect={1200 / 600}
+        radius={(1200 + 600) / 4}
+        fov={45}
+        position={[0, 0, 2]}
+        onUpdate={self => self.updateProjectionMatrix()}
+      />
+      {camera && <cameraHelper args={camera} />}
+    </>
+  )
+}
+
 export default function App() {
   return (
     <Canvas style={{ background: '#dfdfdf' }}>
       <Content />
+      <TestCamHelper />
     </Canvas>
   )
 }

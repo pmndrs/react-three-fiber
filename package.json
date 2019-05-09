@@ -80,6 +80,7 @@
     "@types/react": "^16.8.15",
     "babel-eslint": "^10.0.1",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "cypress": "^3.2.0",
     "eslint": "^5.16.0",
     "eslint-config-prettier": "^4.2.0",
     "eslint-plugin-import": "^2.17.2",
@@ -95,6 +96,7 @@
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
     "three": "^0.104.0",
-    "typescript": "^3.4.5"
+    "typescript": "^3.4.5",
+    "wait-on": "^3.2.0"
   }
 }

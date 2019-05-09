@@ -1,7 +1,7 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
 import { stateContext } from './canvas'
 
-export function useRender(fn: Function, takeOverRenderloop: boolean): any {
+export function useRender(fn: Function, takeOverRenderloop: boolean): void {
   const { subscribe, setManual } = useContext(stateContext)
 
   // This calls into the host to inform it whether the render-loop is manual or not
@@ -40,11 +40,9 @@ export function useUpdate(
   return ref
 }
 
-export function useResource(optionalRef: React.MutableRefObject<any>): React.MutableRefObject<any> {
+export function useResource(optionalRef: React.MutableRefObject<any>): any {
   const [resource, set] = useState()
   const ref = optionalRef ? optionalRef : useRef()
-
   useEffect(() => void set(ref.current), [ref.current])
-
-  return resource
+  return [ref, resource]
 }

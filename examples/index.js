@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './components/Persons'
+import App from './components/Font'
 import './styles.css'
 
 //ReactDOM.unstable_createRoot(document.getElementById('root')).render(<App />)
