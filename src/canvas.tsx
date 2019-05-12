@@ -304,7 +304,7 @@ export const Canvas = React.memo(
           : intersect(event, false)
 
       if (hits.length) {
-        const point = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
+        const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
 
         for (let hit of hits) {
           let stopped = { current: false }
@@ -313,7 +313,7 @@ export const Canvas = React.memo(
             ...Object.assign({}, event),
             ...hit,
             stopped,
-            point,
+            unprojectedPoint,
             ray: defaultRaycaster.ray,
             // Hijack stopPropagation, which just sets a flag
             stopPropagation: () => (stopped.current = true),

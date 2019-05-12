@@ -43,11 +43,9 @@ export function useUpdate(
   return ref
 }
 
-export function useResource(optionalRef: React.MutableRefObject<any>): React.MutableRefObject<any> {
+export function useResource(optionalRef: React.MutableRefObject<any>): any {
   const [resource, set] = useState()
   const ref = optionalRef ? optionalRef : useRef()
-
   useEffect(() => void set(ref.current), [ref.current])
-
-  return resource
+  return [ref, resource]
 }
