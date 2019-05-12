@@ -195,7 +195,7 @@ export const Canvas = React.memo(
     useEffect(() => {
       state.current.aspect = size.width / size.height || 0
 
-      if (state.current.camera instanceof THREE.OrthographicCamera) {
+      if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
         state.current.viewport = { width: size.width, height: size.height, factor: 1 }
       } else {
         const target = new THREE.Vector3(0, 0, 0)
@@ -211,7 +211,7 @@ export const Canvas = React.memo(
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
 
-        if (state.current.camera instanceof THREE.OrthographicCamera) {
+        if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
           state.current.camera.left = size.width / -2
           state.current.camera.right = size.width / 2
           state.current.camera.top = size.height / 2

@@ -1,21 +1,21 @@
 {
   "dist/index.js": {
-    "bundled": 27015,
-    "minified": 12947,
-    "gzipped": 4601,
+    "bundled": 27262,
+    "minified": 13038,
+    "gzipped": 4640,
     "treeshaked": {
       "rollup": {
-        "code": 10657,
+        "code": 10702,
         "import_statements": 647
       },
       "webpack": {
-        "code": 12251
+        "code": 12352
       }
     }
   },
   "dist/index.cjs.js": {
-    "bundled": 30582,
-    "minified": 14834,
-    "gzipped": 4850
+    "bundled": 30856,
+    "minified": 14949,
+    "gzipped": 4887
   }
 }

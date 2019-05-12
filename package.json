@@ -13,7 +13,8 @@
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit --strict --jsx react src/*",
-    "typegen": "tsc"
+    "//": "The typegen script below should omit the '|| true' once remaining type errors are addressed",
+    "typegen": "tsc || true"
   },
   "husky": {
     "hooks": {

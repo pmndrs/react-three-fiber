@@ -103,5 +103,5 @@ declare module 'hooks' {
     dependents: [],
     optionalRef: React.MutableRefObject<any>
   ): React.MutableRefObject<any>
-  export function useResource(optionalRef: React.MutableRefObject<any>): React.MutableRefObject<any>
+  export function useResource(optionalRef: React.MutableRefObject<any>): any
 }
