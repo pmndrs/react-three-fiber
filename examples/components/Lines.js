@@ -42,7 +42,7 @@ function useDrag(onDrag, onEnd) {
   const move = useCallback(event => {
     if (activeRef.current) {
       event.stopPropagation()
-      onDrag(event.point)
+      onDrag(event.unprojectedPoint)
     }
   }, [])
 
