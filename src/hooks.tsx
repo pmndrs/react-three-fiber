@@ -1,5 +1,8 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
-import { stateContext } from './canvas'
+import { stateContext, CanvasContext } from './canvas'
+
+// helper type for omitting properties from types
+type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
 export function useRender(fn: Function, takeOverRenderloop: boolean): void {
   const { subscribe, setManual } = useContext(stateContext)
@@ -19,7 +22,7 @@ export function useRender(fn: Function, takeOverRenderloop: boolean): void {
   }, [])
 }
 
-export function useThree() {
+export function useThree(): Omit<CanvasContext, 'subscribe'> {
   const { subscribe, ...props } = useContext(stateContext)
   return props
 }

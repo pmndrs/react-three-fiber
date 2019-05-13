@@ -11,12 +11,12 @@ import {
 const roots = new Map()
 const emptyObject = {}
 const is = {
-  obj: a => a === Object(a),
-  str: a => typeof a === 'string',
-  num: a => typeof a === 'number',
-  und: a => a === void 0,
-  arr: a => Array.isArray(a),
-  equ(a, b) {
+  obj: (a: any) => a === Object(a),
+  str: (a: any) => typeof a === 'string',
+  num: (a: any) => typeof a === 'number',
+  und: (a: any) => a === void 0,
+  arr: (a: any) => Array.isArray(a),
+  equ(a: any, b: any) {
     // Wrong type, doesn't match
     if (typeof a !== typeof b) return false
     // Atomic, just compare a against b
@@ -31,38 +31,39 @@ const is = {
   },
 }
 
-let globalEffects = []
-export function addEffect(callback) {
+let globalEffects: Function[] = []
+
+export function addEffect(callback: Function) {
   globalEffects.push(callback)
 }
 
-export function renderGl(state, time, repeat = 0, runGlobalEffects = false) {
+export function renderGl(state, timestamp: number, repeat = 0, runGlobalEffects = false) {
   // Run global effects
-  if (runGlobalEffects) globalEffects.forEach(effect => effect(time) && repeat++)
+  if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Run local effects
-  state.current.subscribers.forEach(fn => fn(state.current, time))
+  state.current.subscribers.forEach(fn => fn(state.current, timestamp))
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
   return repeat
 }
 
 let running = false
-function renderLoop(t) {
+function renderLoop(timestamp: number) {
   running = true
   let repeat = 0
 
   // Run global effects
-  globalEffects.forEach(effect => effect(t) && repeat++)
+  globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   roots.forEach(root => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
     if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
-      repeat = renderGl(state, t, repeat)
+      repeat = renderGl(state, timestamp, repeat)
   })
 
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
@@ -84,7 +85,7 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance, newProps, oldProps = {}, container) {
+export function applyProps(instance, newProps, oldProps = {}, container?) {
   // Filter equals, events and reserved props
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
