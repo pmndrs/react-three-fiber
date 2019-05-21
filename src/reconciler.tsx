@@ -85,15 +85,19 @@ export function invalidate(state, frames = 1) {
 let catalogue = {}
 export const apply = objects => (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance: any, newProps: any, oldProps: any = {}, callUpdate: boolean = true) {
+export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative: boolean = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
   const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
   const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
+  const leftOvers = accumulative ? Object.keys(oldProps).filter(key => newProps[key] === void 0) : []
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
     return rest
   }, newProps)
+
+  // Add left-overs as undefined props so they can be removed
+  leftOvers.forEach(key => (filteredProps[key] = undefined))
 
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
@@ -122,25 +126,28 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, cal
       }
     })
 
+    // Preemptively delete the instance from the containers interaction
+    if (accumulative && container && instance.raycast && instance.__handlers) {
+      instance.__handlers = undefined
+      const index = container.__interaction.indexOf(instance)
+      if (index > -1) container.__interaction.splice(index, 1)
+    }
+
     // Prep interaction handlers
     if (handlers.length) {
       // Add interactive object to central container
       if (container && instance.raycast) {
-        // Preemptively delete the instance from the containers interaction
-        const index = container.__interaction.indexOf(instance)
-        if (index > -1) container.__interaction.splice(index, 1)
         // Unless the only onUpdate is the only event present we flag the instance as interactive
         if (!(handlers.length === 1 && handlers[0] === 'onUpdate')) container.__interaction.push(instance)
       }
-
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce(
         (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
         {}
       )
     }
-    // Call the update lifecycle when it is being updated
-    if (callUpdate) updateInstance(instance)
+    // Call the update lifecycle when it is being updated, but only when it is part of the scene
+    if (instance.parent) updateInstance(instance)
   }
 }
 
@@ -166,7 +173,7 @@ function createInstance(type, { args = [], ...props }, container) {
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
   // why it passes "false" here
-  applyProps(instance, props, {}, false)
+  applyProps(instance, props, {})
   return instance
 }
 
@@ -254,7 +261,7 @@ const Renderer = Reconciler({
   insertInContainerBefore: insertBefore,
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
     if (instance.isObject3D) {
-      applyProps(instance, newProps, oldProps)
+      applyProps(instance, newProps, oldProps, true)
     } else {
       // This is a data object, let's extract critical information about it
       const parent = instance.parent

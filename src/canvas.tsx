@@ -68,11 +68,11 @@ const defaultRef: CanvasContext = {
   setManual: () => {},
   setDefaultCamera: () => {},
   invalidate: () => {},
-  gl: new THREE.WebGLRenderer(),
   camera: new THREE.PerspectiveCamera(),
   raycaster: new THREE.Raycaster(),
   mouse: new THREE.Vector2(),
   scene: new THREE.Scene(),
+  gl: undefined,
   captured: undefined,
   canvas: undefined,
   canvasRect: undefined,
@@ -277,6 +277,7 @@ export const Canvas = React.memo(
 
       const seen = {}
       const hits = []
+
       // Intersect known handler objects and filter against duplicates
       const intersects = defaultRaycaster
         .intersectObjects(state.current.scene.__interaction, true)
@@ -331,7 +332,7 @@ export const Canvas = React.memo(
         handleIntersects(event, data => {
           const object = data.object
           const handlers = object.__handlers
-          if (handlers[name]) handlers[name](data)
+          if (handlers && handlers[name]) handlers[name](data)
         })
       },
       []
@@ -343,6 +344,9 @@ export const Canvas = React.memo(
       const hits = handleIntersects(event, data => {
         const object = data.object
         const handlers = object.__handlers
+        // Check presence of handlers
+        if (!handlers) return
+
         // Call mouse move
         if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter is present
@@ -374,8 +378,10 @@ export const Canvas = React.memo(
       if (!hits) hits = handleIntersects(event, () => null)
       Object.values(hovered.current).forEach(data => {
         if (!hits.length || !hits.find(i => i.object === data.object)) {
-          if (data.object.__handlers.pointerOut) data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
-          delete hovered.current[data.object.uuid]
+          const object = data.object
+          const handlers = object.__handlers
+          if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
+          delete hovered.current[object.uuid]
         }
       })
     }, [])

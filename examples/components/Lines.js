@@ -51,8 +51,16 @@ function useDrag(onDrag, onEnd) {
 }
 
 function EndPoint({ position, onDrag, onEnd }) {
-  const [bindHover, hovered] = useHover(false)
-  const bindDrag = useDrag(onDrag, onEnd)
+  let [bindHover, hovered] = useHover(false)
+  let bindDrag = useDrag(onDrag, onEnd)
+
+  const [active, setActive] = useState(true)
+  if (!active) bindDrag = undefined
+  if (!active) bindHover = undefined
+
+  useEffect(() => void setTimeout(() => console.log('________inactive') || setActive(false), 2000), [])
+  useEffect(() => void setTimeout(() => console.log('________active!!') || setActive(true), 6000), [])
+
   return (
     <mesh position={position} {...bindDrag} {...bindHover}>
       <sphereBufferGeometry attach="geometry" args={[7.5, 16, 16]} />
@@ -88,9 +96,7 @@ function Controls({ children }) {
     return () => ref.current.removeEventListener('change', handler)
   }, [])
 
-  useEffect(() => {
-    setTimeout(() => console.log(intersect()), 3000)
-  }, [])
+  //useEffect(() => setTimeout(() => console.log(intersect()), 3000), [])
 
   return (
     <>
