@@ -159,7 +159,7 @@ function updateInstance(instance) {
   if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
 }
 
-function createInstance(type, { args = [], ...props }, container) {
+function createInstance(type: string, { args = [], ...props }, container) {
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
   if (type === 'primitive') instance = props.object

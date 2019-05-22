@@ -30,10 +30,11 @@ export function useThree(): Omit<CanvasContext, 'subscribe'> {
 export function useUpdate(
   callback: Function,
   dependents: [],
-  optionalRef: React.MutableRefObject<any>
+  optionalRef?: React.MutableRefObject<any>
 ): React.MutableRefObject<any> {
   const { invalidate } = useContext(stateContext)
-  const ref = optionalRef ? optionalRef : useRef()
+  const localRef = useRef()
+  const ref = optionalRef ? optionalRef : localRef
 
   useEffect(() => {
     callback(ref.current)
@@ -43,9 +44,10 @@ export function useUpdate(
   return ref
 }
 
-export function useResource(optionalRef: React.MutableRefObject<any>): any {
+export function useResource(optionalRef?: React.MutableRefObject<any>): any {
   const [resource, set] = useState()
-  const ref = optionalRef ? optionalRef : useRef()
+  const localRef = useRef()
+  const ref = optionalRef ? optionalRef : localRef
   useEffect(() => void set(ref.current), [ref.current])
   return [ref, resource]
 }

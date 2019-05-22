@@ -17,7 +17,7 @@ export type CanvasContext = {
   setManual: (takeOverRenderloop: boolean) => any
   setDefaultCamera: (camera: THREE.Camera) => any
   invalidate: () => any
-  gl: THREE.WebGLRenderer
+  gl?: THREE.WebGLRenderer
   camera: THREE.Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
@@ -30,14 +30,13 @@ export type CanvasContext = {
 }
 
 export type CanvasProps = {
-  children: React.ReactNode
-  vr: boolean
-  orthographic: boolean
-  invalidateFrameloop: boolean
-  gl?: THREE.WebGLRenderer
-  camera?: THREE.Camera
-  raycaster?: THREE.Raycaster
-  mouse?: THREE.Vector2
+  children?: React.ReactNode
+  vr?: boolean
+  orthographic?: boolean
+  invalidateFrameloop?: boolean
+  gl?: object
+  camera?: object
+  raycaster?: object
   style?: React.CSSProperties
   pixelRatio?: number
   onCreated?: Function
