@@ -295,7 +295,7 @@ export const Canvas = React.memo(
     }, [])
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event: React.PointerEvent<HTMLDivElement>, fn) => {
+    const handleIntersects = useCallback((event: React.PointerEvent<HTMLDivElement>, fn): [] => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
       const hits =
