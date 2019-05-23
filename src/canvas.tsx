@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, renderGl, unmountComponentAtNode } from './reconciler'
 
@@ -241,7 +241,7 @@ export const Canvas = React.memo(
     }, [])
 
     // Render v-dom into scene
-    useEffect(() => {
+    useLayoutEffect(() => {
       if (size.width > 0 && size.height > 0) {
         render(
           <stateContext.Provider value={sharedState.current}>
