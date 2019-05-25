@@ -83,7 +83,7 @@ export function invalidate(state, frames = 1) {
 }
 
 let catalogue = {}
-export const apply = objects => (catalogue = { ...catalogue, ...objects })
+export const extend = objects => (catalogue = { ...catalogue, ...objects })
 
 export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative: boolean = false) {
   // Filter equals, events and reserved props
@@ -291,6 +291,18 @@ const Renderer = Reconciler({
         // Otherwise just overwrite props
         applyProps(instance, restNew, restOld)
       }
+    }
+  },
+  hideInstance(instance) {
+    if (instance.isObject3D) {
+      instance.visible = false
+      invalidateInstance(instance)
+    }
+  },
+  unhideInstance(instance, props) {
+    if ((instance.isObject3D && props.visible == null) || props.visible) {
+      instance.visible = true
+      invalidateInstance(instance)
     }
   },
   getPublicInstance(instance) {

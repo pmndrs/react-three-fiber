@@ -4,7 +4,7 @@ declare module 'reconciler' {
   export function renderGl(state: any, timestamp: number, repeat?: number, runGlobalEffects?: boolean): number
   export function invalidate(state: any, frames?: number): void
   export const apply: (objects: any) => any
-  export function applyProps(instance: any, newProps: any, oldProps?: {}, container?: any): void
+  export function applyProps(instance: any, newProps: any, oldProps?: any, accumulative?: boolean): void
   export function render(element: any, container: any, state: any): any
   export function unmountComponentAtNode(container: any): void
 }
@@ -24,7 +24,7 @@ declare module 'canvas' {
     setManual: (takeOverRenderloop: boolean) => any
     setDefaultCamera: (camera: THREE.Camera) => any
     invalidate: () => any
-    gl: THREE.WebGLRenderer
+    gl?: THREE.WebGLRenderer
     camera: THREE.Camera
     raycaster: THREE.Raycaster
     mouse: THREE.Vector2
@@ -45,14 +45,13 @@ declare module 'canvas' {
     }
   }
   export type CanvasProps = {
-    children: React.ReactNode
-    vr: boolean
-    orthographic: boolean
-    invalidateFrameloop: boolean
-    gl?: THREE.WebGLRenderer
-    camera?: THREE.Camera
-    raycaster?: THREE.Raycaster
-    mouse?: THREE.Vector2
+    children?: React.ReactNode
+    vr?: boolean
+    orthographic?: boolean
+    invalidateFrameloop?: boolean
+    gl?: object
+    camera?: object
+    raycaster?: object
     style?: React.CSSProperties
     pixelRatio?: number
     onCreated?: Function
@@ -101,7 +100,7 @@ declare module 'hooks' {
   export function useUpdate(
     callback: Function,
     dependents: [],
-    optionalRef: React.MutableRefObject<any>
+    optionalRef?: React.MutableRefObject<any>
   ): React.MutableRefObject<any>
-  export function useResource(optionalRef: React.MutableRefObject<any>): any
+  export function useResource(optionalRef?: React.MutableRefObject<any>): any
 }
