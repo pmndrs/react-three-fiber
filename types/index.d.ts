@@ -104,3 +104,9 @@ declare module 'hooks' {
   ): React.MutableRefObject<any>
   export function useResource(optionalRef?: React.MutableRefObject<any>): any
 }
+
+declare module "react-three-fiber" {
+    export * from "reconciler";
+    export * from "canvas";
+    export * from "hooks";
+}
