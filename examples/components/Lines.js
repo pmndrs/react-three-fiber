@@ -54,12 +54,12 @@ function EndPoint({ position, onDrag, onEnd }) {
   let [bindHover, hovered] = useHover(false)
   let bindDrag = useDrag(onDrag, onEnd)
 
-  const [active, setActive] = useState(true)
+  /*const [active, setActive] = useState(true)
   if (!active) bindDrag = undefined
   if (!active) bindHover = undefined
 
   useEffect(() => void setTimeout(() => console.log('________inactive') || setActive(false), 2000), [])
-  useEffect(() => void setTimeout(() => console.log('________active!!') || setActive(true), 6000), [])
+  useEffect(() => void setTimeout(() => console.log('________active!!') || setActive(true), 6000), [])*/
 
   return (
     <mesh position={position} {...bindDrag} {...bindHover}>
