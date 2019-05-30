@@ -10,6 +10,7 @@ export type CanvasContext = {
   vr: boolean
   active: boolean
   invalidateFrameloop: boolean
+  updateDefaultCamera: boolean
   frames: number
   aspect: number
   subscribers: Function[]
@@ -34,6 +35,7 @@ export type CanvasProps = {
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
+  updateDefaultCamera?: boolean
   gl?: object
   camera?: object
   raycaster?: object
@@ -60,6 +62,7 @@ const defaultRef: CanvasContext = {
   vr: false,
   active: true,
   invalidateFrameloop: false,
+  updateDefaultCamera: true,
   frames: 0,
   aspect: 0,
   subscribers: [],
@@ -106,6 +109,7 @@ export const Canvas = React.memo(
     pixelRatio,
     vr = false,
     invalidateFrameloop = false,
+    updateDefaultCamera = true,
     onCreated,
     ...rest
   }: CanvasProps) => {
@@ -160,6 +164,7 @@ export const Canvas = React.memo(
       state.current.size = size
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
+      state.current.updateDefaultCamera = updateDefaultCamera
       state.current.vr = vr
       state.current.raycaster = defaultRaycaster
       state.current.mouse = mouse
@@ -210,16 +215,20 @@ export const Canvas = React.memo(
       if (ready) {
         state.current.gl.setSize(size.width, size.height)
 
-        if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
-          state.current.camera.left = size.width / -2
-          state.current.camera.right = size.width / 2
-          state.current.camera.top = size.height / 2
-          state.current.camera.bottom = size.height / -2
-        } else {
-          state.current.camera.aspect = state.current.aspect
-          state.current.camera.radius = (size.width + size.height) / 4
+        /* https://github.com/drcmda/react-three-fiber/issues/92
+           Sometimes automatic default camera adjustment isn't wanted behaviour */
+        if (state.current.updateDefaultCamera) {
+          if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
+            state.current.camera.left = size.width / -2
+            state.current.camera.right = size.width / 2
+            state.current.camera.top = size.height / 2
+            state.current.camera.bottom = size.height / -2
+          } else {
+            state.current.camera.aspect = state.current.aspect
+            state.current.camera.radius = (size.width + size.height) / 4
+          }
+          state.current.camera.updateProjectionMatrix()
         }
-        state.current.camera.updateProjectionMatrix()
         invalidate(state)
       }
       // Only trigger the context provider when necessary

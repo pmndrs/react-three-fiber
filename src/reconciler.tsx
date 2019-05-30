@@ -162,8 +162,10 @@ function updateInstance(instance) {
 function createInstance(type: string, { args = [], ...props }, container) {
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
-  if (type === 'primitive') instance = props.object
-  else {
+  if (type === 'primitive') {
+    instance = props.object
+    instance.__instance = true
+  } else {
     const target = catalogue[name] || THREE[name]
     instance = is.arr(args) ? new target(...args) : new target(args)
   }
@@ -245,6 +247,26 @@ function removeChild(parentInstance, child) {
   }
 }
 
+function switchInstance(instance, type, newProps, fiber) {
+  const parent = instance.parent
+  const newInstance = createInstance(type, newProps, instance.__container)
+  removeChild(parent, instance)
+  appendChild(parent, newInstance)
+
+  // This evil hack switches the react-internal fiber node
+  // https://github.com/facebook/react/issues/14983
+  // https://github.com/facebook/react/pull/15021
+  ;[fiber, fiber.alternate].forEach(fiber => {
+    if (fiber !== null) {
+      fiber.stateNode = newInstance
+      if (fiber.ref) {
+        if (typeof fiber.ref === 'function') fiber.ref(newInstance)
+        else fiber.ref.current = newInstance
+      }
+    }
+  })
+}
+
 const Renderer = Reconciler({
   now,
   createInstance,
@@ -260,36 +282,24 @@ const Renderer = Reconciler({
   removeChildFromContainer: removeChild,
   insertInContainerBefore: insertBefore,
   commitUpdate(instance, updatePayload, type, oldProps, newProps, fiber) {
-    if (instance.isObject3D) {
+    if (instance.__instance && newProps.object && newProps.object !== instance) {
+      // <instance object={...} /> where the object reference has changed
+      switchInstance(instance, type, newProps, fiber)
+    } else if (instance.isObject3D) {
+      // Common Threejs scene object
       applyProps(instance, newProps, oldProps, true)
     } else {
       // This is a data object, let's extract critical information about it
-      const parent = instance.parent
       const { args: argsNew = [], ...restNew } = newProps
       const { args: argsOld = [], ...restOld } = oldProps
       // If it has new props or arguments, then it needs to be re-instanciated
       // TODO, are colors falsely detected here?
       if (argsNew.some((value, index) => value !== argsOld[index])) {
         // Next we create a new instance and append it again
-        const newInstance = createInstance(type, newProps, instance.__container)
-        removeChild(parent, instance)
-        appendChild(parent, newInstance)
-
-        // This evil hack switches the react-internal fiber node
-        // https://github.com/facebook/react/issues/14983
-        // https://github.com/facebook/react/pull/15021
-        ;[fiber, fiber.alternate].forEach(fiber => {
-          if (fiber !== null) {
-            fiber.stateNode = newInstance
-            if (fiber.ref) {
-              if (typeof fiber.ref === 'function') fiber.ref(newInstance)
-              else fiber.ref.current = newInstance
-            }
-          }
-        })
+        switchInstance(instance, type, newProps, fiber)
       } else {
         // Otherwise just overwrite props
-        applyProps(instance, restNew, restOld)
+        applyProps(instance, restNew, restOld, true)
       }
     }
   },

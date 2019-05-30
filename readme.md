@@ -73,6 +73,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   orthographic = false          // Creates an orthographic camera if true
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
+  updateDefaultCamera = true    // Adjusts default camera on size changes
   onCreated />                  // Callback when vdom is ready (you can block first render via promise)
 ```
 
@@ -246,7 +247,7 @@ const {
 } = useThree()
 ```
 
-#### useRender(callback, takeOver=false)
+#### useRender(callback, takeOver=false, dependencies=[])
 
 If you're running effects, postprocessings, controls, etc that need to get updated every frame, useRender gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
 
