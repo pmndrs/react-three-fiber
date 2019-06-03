@@ -7,8 +7,7 @@ import {
   unstable_IdlePriority as idlePriority,
   unstable_runWithPriority as run,
 } from 'scheduler'
-
-import { version as VERSION } from './../package.json'
+import { version } from './../package.json'
 
 const roots = new Map()
 const emptyObject = {}
@@ -373,7 +372,7 @@ export function createPortal(children, containerInfo, implementation, key = null
 
 Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  version: VERSION,
+  version: version,
   rendererPackageName: 'react-three-fiber',
   findHostInstanceByFiber: Renderer.findHostInstance,
 })

@@ -7,6 +7,18 @@ declare module 'reconciler' {
   export function applyProps(instance: any, newProps: any, oldProps?: any, accumulative?: boolean): void
   export function render(element: any, container: any, state: any): any
   export function unmountComponentAtNode(container: any): void
+  export function createPortal(
+    children: any,
+    containerInfo: any,
+    implementation: any,
+    key?: null
+  ): {
+    $$typeof: number | symbol
+    key: string | null
+    children: any
+    containerInfo: any
+    implementation: any
+  }
 }
 declare module 'canvas' {
   import * as THREE from 'three'

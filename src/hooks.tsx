@@ -4,7 +4,7 @@ import { stateContext, CanvasContext } from './canvas'
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
-export function useRender(fn: Function, takeOverRenderloop: boolean = false, deps: [] = []): void {
+export function useRender(fn: Function, takeOverRenderloop: boolean = false, deps: any[] = []): void {
   const { subscribe, setManual } = useContext(stateContext)
 
   // This calls into the host to inform it whether the render-loop is manual or not
@@ -29,7 +29,7 @@ export function useThree(): Omit<CanvasContext, 'subscribe'> {
 
 export function useUpdate(
   callback: Function,
-  dependents: [],
+  dependents: any[],
   optionalRef?: React.MutableRefObject<any>
 ): React.MutableRefObject<any> {
   const { invalidate } = useContext(stateContext)
