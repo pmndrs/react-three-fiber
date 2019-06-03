@@ -2,11 +2,12 @@ import path from 'path'
 import babel from 'rollup-plugin-babel'
 import resolve from 'rollup-plugin-node-resolve'
 import commonjs from 'rollup-plugin-commonjs'
+import json from 'rollup-plugin-json'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
 const external = id => !id.startsWith('.') && !id.startsWith(root)
-const extensions = ['.js', '.jsx', '.ts', '.tsx']
+const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json']
 
 const getBabelOptions = ({ useESModules }, targets) => ({
   babelrc: false,
@@ -33,8 +34,8 @@ function createConfig(entry, out) {
       output: { file: `dist/${out}.js`, format: 'esm' },
       external,
       plugins: [
+        json(),
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
-        sizeSnapshot(),
         resolve({ extensions }),
       ],
     },
@@ -42,7 +43,7 @@ function createConfig(entry, out) {
       input: entry,
       output: { file: `dist/${out}.cjs.js`, format: 'cjs' },
       external,
-      plugins: [babel(getBabelOptions({ useESModules: false })), sizeSnapshot(), resolve({ extensions })],
+      plugins: [json(), babel(getBabelOptions({ useESModules: false })), resolve({ extensions })],
     },
   ]
 }

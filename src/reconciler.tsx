@@ -8,6 +8,8 @@ import {
   unstable_runWithPriority as run,
 } from 'scheduler'
 
+import { version as VERSION } from './../package.json'
+
 const roots = new Map()
 const emptyObject = {}
 const is = {
@@ -356,3 +358,22 @@ export function unmountComponentAtNode(container) {
   const root = roots.get(container)
   if (root) Renderer.updateContainer(null, root, null, () => roots.delete(container))
 }
+
+const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
+export function createPortal(children, containerInfo, implementation, key = null) {
+  return {
+    $$typeof: REACT_PORTAL_TYPE,
+    key: key == null ? null : '' + key,
+    children,
+    containerInfo,
+    implementation,
+  }
+}
+
+Renderer.injectIntoDevTools({
+  bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
+  version: VERSION,
+  rendererPackageName: 'react-three-fiber',
+  findHostInstanceByFiber: Renderer.findHostInstance,
+})

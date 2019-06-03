@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { apply, Canvas, useThree, useRender } from 'react-three-fiber'
+import { extend, Canvas, useThree, useRender } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-apply({ OrbitControls })
+extend({ OrbitControls })
 
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)

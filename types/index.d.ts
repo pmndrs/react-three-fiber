@@ -17,6 +17,7 @@ declare module 'canvas' {
     vr: boolean
     active: boolean
     invalidateFrameloop: boolean
+    updateDefaultCamera: boolean
     frames: number
     aspect: number
     subscribers: Function[]
@@ -49,6 +50,7 @@ declare module 'canvas' {
     vr?: boolean
     orthographic?: boolean
     invalidateFrameloop?: boolean
+    updateDefaultCamera?: boolean
     gl?: object
     camera?: object
     raycaster?: object
@@ -87,6 +89,7 @@ declare module 'canvas' {
       pixelRatio,
       vr,
       invalidateFrameloop,
+      updateDefaultCamera,
       onCreated,
       ...rest
     }: CanvasProps) => JSX.Element
@@ -95,7 +98,7 @@ declare module 'canvas' {
 declare module 'hooks' {
   import { CanvasContext } from 'canvas'
   type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-  export function useRender(fn: Function, takeOverRenderloop: boolean, deps?: []): void
+  export function useRender(fn: Function, takeOverRenderloop?: boolean, deps?: []): void
   export function useThree(): Omit<CanvasContext, 'subscribe'>
   export function useUpdate(
     callback: Function,
