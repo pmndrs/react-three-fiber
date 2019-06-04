@@ -10,8 +10,9 @@
     "declaration": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
-    "outFile": "types/index.d.ts"
+    "outDir": "types",
+    "resolveJsonModule": true
   },
-  "include": ["./src/**/*"],
+  "include": ["./index.ts", "/src/**/*"],
   "exclude": ["./node_modules/**/*"]
 }

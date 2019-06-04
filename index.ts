@@ -1,5 +1,5 @@
-import { Canvas } from './src/canvas.tsx'
-import { useRender, useThree, useUpdate, useResource } from './src/hooks.tsx'
+import { Canvas } from './src/canvas'
+import { useRender, useThree, useUpdate, useResource } from './src/hooks'
 import {
   addEffect,
   invalidate,
@@ -8,9 +8,9 @@ import {
   extend,
   applyProps,
   createPortal,
-} from './src/reconciler.tsx'
+} from './src/reconciler'
 
-const apply = args => {
+const apply = (args: any) => {
   console.warn('react-three-fiber: Please use extend ✅ instead of apply ❌, the former will be made obsolete soon!')
   extend(args)
 }
