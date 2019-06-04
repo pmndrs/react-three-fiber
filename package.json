@@ -9,7 +9,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "rollup -c",
-    "prepare": "npm run build && npm run typegen",
+    "prepare": "npm run build",
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit --strict --jsx react src/*",
