@@ -110,18 +110,33 @@ declare module 'canvas' {
 declare module 'hooks' {
   import { CanvasContext } from 'canvas'
   type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-  export function useRender(fn: Function, takeOverRenderloop?: boolean, deps?: []): void
+  export function useRender(fn: Function, takeOverRenderloop?: boolean, deps?: any[]): void
   export function useThree(): Omit<CanvasContext, 'subscribe'>
   export function useUpdate(
     callback: Function,
-    dependents: [],
+    dependents: any[],
     optionalRef?: React.MutableRefObject<any>
   ): React.MutableRefObject<any>
   export function useResource(optionalRef?: React.MutableRefObject<any>): any
 }
-
- declare module 'react-three-fiber' {
-    export * from 'reconciler';
-    export * from 'canvas';
-    export * from 'hooks';
+declare module 'react-three-fiber' {
+  import { Canvas } from 'canvas'
+  import { useRender, useThree, useUpdate, useResource } from 'hooks'
+  import { addEffect, invalidate, render, unmountComponentAtNode, extend, applyProps, createPortal } from 'reconciler'
+  const apply: (args: any) => void
+  export {
+    Canvas,
+    addEffect,
+    invalidate,
+    render,
+    createPortal,
+    unmountComponentAtNode,
+    apply,
+    extend,
+    applyProps,
+    useRender,
+    useThree,
+    useUpdate,
+    useResource,
+  }
 }
