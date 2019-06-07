@@ -2,40 +2,23 @@ import * as THREE from 'three/src/Three'
 import React, { useState, useEffect, useMemo } from 'react'
 import { Canvas } from 'react-three-fiber'
 
-const CubePrimitive = ({ size }) => {
-  const geometry = useMemo(() => new THREE.BoxBufferGeometry(size, size, size), [size])
-  return (
-    <mesh position-x={2}>
-      <primitive object={geometry} attach="geometry" />
-      <meshBasicMaterial attach="material" color="#ff3f34" />
-    </mesh>
-  )
+function Test() {
+  const [mesh] = useState(() => {
+    const mat = new THREE.MeshBasicMaterial()
+    const geo = new THREE.SphereBufferGeometry(1, 16, 16)
+    return new THREE.Mesh(geo, mat)
+  })
+
+  const over = () => console.log('over')
+  const out = () => console.log('out')
+
+  return <primitive object={mesh} onPointerOver={over} onPointerOut={out} />
 }
 
-const Cube = ({ size }) => {
-  const geometry = useMemo(() => new THREE.BoxBufferGeometry(size, size, size), [size])
-  return (
-    <mesh geometry={geometry} position-x={-2}>
-      <meshBasicMaterial attach="material" color="#05c46b" />
-    </mesh>
-  )
-}
-
-const Content = () => {
-  const [size, setSize] = useState(1)
-
-  useEffect(() => {
-    setInterval(() => {
-      setSize(size => (size >= 2 ? 1 : size + 0.5))
-    }, 1000)
-  }, [])
-
+export default function App() {
   return (
     <Canvas>
-      <Cube size={size} />
-      <CubePrimitive size={size} />
+      <Test />
     </Canvas>
   )
 }
-
-export default Content
