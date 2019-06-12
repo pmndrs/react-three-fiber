@@ -219,6 +219,14 @@ function insertBefore(parentInstance, child, beforeChild) {
   }
 }
 
+function removeRecursive(array: any, parent: any, clone: boolean = false) {
+  if (array) {
+    // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
+    const target = clone ? [...array] : array
+    target.forEach((child: any) => removeChild(parent, child))
+  }
+}
+
 function removeChild(parentInstance, child) {
   if (child) {
     if (child.isObject3D) {
@@ -237,8 +245,8 @@ function removeChild(parentInstance, child) {
       // Remove interactivity
       if (child.__container) child.__container.__interaction = child.__container.__interaction.filter(x => x !== child)
       // Remove nested child objects
-      if (child.__objects) child.__objects.forEach(obj => removeChild(child, obj))
-      if (child.children) child.children.forEach(obj => removeChild(child, obj))
+      removeRecursive(child.__objects, child)
+      removeRecursive(child.children, child, true)
       // Dispose item
       if (child.dispose) child.dispose()
       // Remove references
