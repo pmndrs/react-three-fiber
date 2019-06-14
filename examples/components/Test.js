@@ -1,4 +1,4 @@
-import * as THREE from 'three/src/Three'
+import * as THREE from 'three'
 import React, { useState, useEffect, useMemo } from 'react'
 import { Canvas } from 'react-three-fiber'
 

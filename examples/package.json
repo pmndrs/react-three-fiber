@@ -17,12 +17,12 @@
     "react-app-polyfill": "^1.0.0",
     "react-dev-utils": "^9.0.0",
     "react-dom": "^16.8.6",
-    "react-spring": "^8.0.19",
+    "react-spring": "8.0.23",
     "three": "^0.104.0",
     "three.meshline": "^1.2.0",
     "vec-la": "^1.5.0",
     "wouter": "^1.2.0",
-    "zustand": "^0.1.3"
+    "zustand": "^0.2.1"
   },
   "devDependencies": {
     "@babel/core": "7.4.4",

@@ -5016,7 +5016,7 @@ promise@8.0.2:
   dependencies:
     asap "~2.0.6"
 
-prop-types@^15.6.2:
+prop-types@^15.5.8, prop-types@^15.6.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -5244,12 +5244,13 @@ react-is@^16.8.1:
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.8.5.tgz#c54ac229dd66b5afe0de5acbe47647c3da692ff8"
   integrity sha512-sudt2uq5P/2TznPV4Wtdi+Lnq3yaYW8LfvPKLM9BKD8jJNBkxMVyB0C9/GmVhLw7Jbdmndk/73n7XQGeN9A3QQ==
 
-react-spring@^8.0.19:
-  version "8.0.19"
-  resolved "https://registry.yarnpkg.com/react-spring/-/react-spring-8.0.19.tgz#62f4f396b4b73fa402838200a1c80374338cb12e"
-  integrity sha512-DjrwjXqqVEitj6e6GqdW5dUp1BoVyeFQhEcXvPfoQxwyIVSJ9smNt8CNjSvoQqRujVllE7XKaJRWSZO/ewd1/A==
+react-spring@8.0.23:
+  version "8.0.23"
+  resolved "https://registry.yarnpkg.com/react-spring/-/react-spring-8.0.23.tgz#2a0ddaeb0816ea9e21898d04d3b8da7d1a3daa14"
+  integrity sha512-2mp7+0DnoBQ67h2zY0rFztdMqSm8gdvSWHgfwKz4TbLQ+N4n2IauB6DCMc046K8uvUNwDCUdlKgshUrCj14QUA==
   dependencies:
     "@babel/runtime" "^7.3.1"
+    prop-types "^15.5.8"
 
 react@^16.8.6:
   version "16.8.6"
@@ -6789,7 +6790,7 @@ yauzl@^2.4.2:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
 
-zustand@^0.1.3:
-  version "0.1.3"
-  resolved "https://registry.yarnpkg.com/zustand/-/zustand-0.1.3.tgz#fdaff52c5017ad4d33fdae8fced525d6c196af5c"
-  integrity sha512-zu3d0v/w5IFoMopo7woyjbyOuXZ3pA9+ITJT0Vi7p6JArq1Bux9ewyO9XN9Dlb2pv5Jw9UiY5w5diMDpewdS9g==
+zustand@^0.2.1:
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/zustand/-/zustand-0.2.1.tgz#813c23cacf6b8410b12c5a7d86c4bd801f0ea827"
+  integrity sha512-A8/oxlViTJH9QlXJLxWC9CLqLGi2NfJi0ayrSFjZiKmK94o6671yoKkqrYkvVI37ytRD7blN6ZgweDq4qd8vKg==
