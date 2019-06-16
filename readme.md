@@ -311,7 +311,7 @@ import {
 } from 'react-three-fiber'
 ```
 
-# Receipes
+# Recipes
 
 ## Handling loaders
 
