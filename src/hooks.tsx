@@ -22,6 +22,14 @@ export function useRender(fn: Function, takeOverRenderloop: boolean = false, dep
   }, deps)
 }
 
+export function useFrame(fn: Function, deps: any[] = []): void {
+  useRender(fn, false, deps)
+}
+
+export function useGl(fn: Function, deps: any[] = []): void {
+  useRender(fn, true, deps)
+}
+
 export function useThree(): Omit<CanvasContext, 'subscribe'> {
   const { subscribe, ...props } = useContext(stateContext)
   return props
