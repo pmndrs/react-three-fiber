@@ -310,7 +310,7 @@ import {
   unmountComponentAtNode, // Internal: Unmounts root scene
   applyProps,             // Internal: Sets element properties
 } from 'react-three-fiber'
-```s
+```
 
 # Recipes
 
