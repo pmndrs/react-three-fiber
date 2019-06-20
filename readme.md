@@ -305,11 +305,12 @@ import {
   addEffect,              // Adds a global callback which is called each frame
   invalidate,             // Forces view global invalidation
   apply,                  // Extends the native-object catalogue
+  createPortal,           // Creates a portal (it's a React feature for re-parenting)
   render,                 // Internal: Renders three jsx into a scene
   unmountComponentAtNode, // Internal: Unmounts root scene
   applyProps,             // Internal: Sets element properties
 } from 'react-three-fiber'
-```
+```s
 
 # Recipes
 
@@ -455,6 +456,18 @@ function CrossFade({ url1, url2, disp }) {
     </mesh>
   )
 }
+```
+
+## Re-parenting
+
+We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece if the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
+
+```jsx
+import { createPortal } from 'react-three-fiber'
+
+function Component() {
+  // "target" can be a three object, like a group, etc
+  return createPortal(<mesh />, target)
 ```
 
 ## Rendering only when needed
