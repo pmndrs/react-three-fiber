@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import React from 'react'
 import Reconciler from 'react-reconciler'
 import {
   unstable_scheduleCallback as scheduleDeferredCallback,
@@ -7,6 +8,7 @@ import {
   unstable_IdlePriority as idlePriority,
   unstable_runWithPriority as run,
 } from 'scheduler'
+import { useThree } from './hooks'
 import { version } from './../package.json'
 
 const roots = new Map()
@@ -170,9 +172,17 @@ function createInstance(type: string, { args = [], ...props }, container) {
     const target = catalogue[name] || THREE[name]
     instance = is.arr(args) ? new target(...args) : new target(args)
   }
+
+  // Bind to the root container in case portals are being used
+  // This is perhaps better for event management as we can keep them on a single instance
+  while (container.__container) {
+    container = container.__container
+  }
+
   // Apply initial props
   instance.__objects = []
   instance.__container = container
+
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
   // why it passes "false" here
@@ -369,9 +379,13 @@ export function unmountComponentAtNode(container) {
 const hasSymbol = typeof Symbol === 'function' && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 export function createPortal(children, containerInfo, implementation, key = null) {
+  return <Portal children={children} containerInfo={containerInfo} implementation={implementation} pkey={key} />
+}
+
+function Portal({ children, containerInfo, implementation, pkey = null }) {
   return {
     $$typeof: REACT_PORTAL_TYPE,
-    key: key == null ? null : '' + key,
+    key: pkey == null ? null : '' + pkey,
     children,
     containerInfo,
     implementation,

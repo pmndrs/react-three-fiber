@@ -107,8 +107,18 @@ function Controls({ children }) {
 }
 
 export default function App() {
+  const ref = useRef()
+  useEffect(() => {
+    console.log(ref.current)
+  })
+
   return (
-    <Canvas invalidateFrameloop orthographic raycaster={{ linePrecision: 5 }} camera={{ position: [0, 0, 500] }}>
+    <Canvas
+      ref={ref}
+      invalidateFrameloop
+      orthographic
+      raycaster={{ linePrecision: 5 }}
+      camera={{ position: [0, 0, 500] }}>
       <Controls>
         <Line defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
         <Line defaultStart={[0, 100, 0]} defaultEnd={[100, -100, 0]} />
