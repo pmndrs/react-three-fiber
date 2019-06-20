@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import React from 'react'
 import Reconciler from 'react-reconciler'
 import {
   unstable_scheduleCallback as scheduleDeferredCallback,
@@ -8,7 +7,6 @@ import {
   unstable_IdlePriority as idlePriority,
   unstable_runWithPriority as run,
 } from 'scheduler'
-import { useThree } from './hooks'
 import { version } from './../package.json'
 
 const roots = new Map()
@@ -379,13 +377,9 @@ export function unmountComponentAtNode(container) {
 const hasSymbol = typeof Symbol === 'function' && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 export function createPortal(children, containerInfo, implementation, key = null) {
-  return <Portal children={children} containerInfo={containerInfo} implementation={implementation} pkey={key} />
-}
-
-function Portal({ children, containerInfo, implementation, pkey = null }) {
   return {
     $$typeof: REACT_PORTAL_TYPE,
-    key: pkey == null ? null : '' + pkey,
+    key: key == null ? null : '' + key,
     children,
     containerInfo,
     implementation,
