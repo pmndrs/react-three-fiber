@@ -310,8 +310,12 @@ const Renderer = Reconciler({
       const { args: argsNew = [], ...restNew } = newProps
       const { args: argsOld = [], ...restOld } = oldProps
       // If it has new props or arguments, then it needs to be re-instanciated
-      // TODO, are colors falsely detected here?
-      if (argsNew.some((value, index) => value !== argsOld[index])) {
+      const hasNewArgs = argsNew.some((value, index) =>
+        is.obj(value)
+          ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
+          : value !== argsOld[index]
+      )
+      if (hasNewArgs) {
         // Next we create a new instance and append it again
         switchInstance(instance, type, newProps, fiber)
       } else {
