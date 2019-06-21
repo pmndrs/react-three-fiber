@@ -498,7 +498,7 @@ import { Canvas } from 'react-three-fiber'
 
 ## Switching the default renderer
 
-If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas.
+If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example. 
 
 ```jsx
 import { render, unmountComponentAtNode } from 'react-three-fiber'
