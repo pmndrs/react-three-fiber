@@ -56,33 +56,7 @@ export type IntersectObject = Event &
     uuid: string
   }
 
-const defaultRef: CanvasContext = {
-  ready: false,
-  manual: false,
-  vr: false,
-  active: true,
-  invalidateFrameloop: false,
-  updateDefaultCamera: true,
-  frames: 0,
-  aspect: 0,
-  subscribers: [],
-  subscribe: () => () => {},
-  setManual: () => {},
-  setDefaultCamera: () => {},
-  invalidate: () => {},
-  camera: new THREE.PerspectiveCamera(),
-  raycaster: new THREE.Raycaster(),
-  mouse: new THREE.Vector2(),
-  scene: new THREE.Scene(),
-  gl: undefined,
-  captured: undefined,
-  canvas: undefined,
-  canvasRect: undefined,
-  size: undefined,
-  viewport: undefined,
-}
-
-export const stateContext = React.createContext(defaultRef)
+export const stateContext = React.createContext(null)
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>()
@@ -117,12 +91,18 @@ export const Canvas = React.memo(
     const canvas = useRef<HTMLCanvasElement>()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
+    const [mouse] = useState(() => new THREE.Vector2())
     const [defaultRaycaster] = useState(() => {
       const ray = new THREE.Raycaster()
       if (raycaster) applyProps(ray, raycaster, {})
       return ray
     })
-    const [mouse] = useState(() => new THREE.Vector2())
+    const [defaultScene] = useState(() => {
+      const scene = new THREE.Scene()
+      scene.__interaction = []
+      scene.__objects = []
+      return scene
+    })
     const [defaultCam, setDefaultCamera] = useState(() => {
       const cam = orthographic
         ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
@@ -134,7 +114,26 @@ export const Canvas = React.memo(
 
     // Public state
     const state = useRef({
-      ...defaultRef,
+      ready: false,
+      manual: false,
+      vr: false,
+      active: true,
+      invalidateFrameloop: false,
+      updateDefaultCamera: true,
+      frames: 0,
+      aspect: 0,
+      subscribers: [],
+      camera: defaultCam,
+      scene: defaultScene,
+      raycaster: defaultRaycaster,
+      mouse: mouse,
+      gl: undefined,
+      captured: undefined,
+      canvas: undefined,
+      canvasRect: undefined,
+      size: undefined,
+      viewport: undefined,
+
       subscribe: (fn: Function) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -166,8 +165,6 @@ export const Canvas = React.memo(
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.updateDefaultCamera = updateDefaultCamera
       state.current.vr = vr
-      state.current.raycaster = defaultRaycaster
-      state.current.mouse = mouse
     }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
@@ -176,17 +173,12 @@ export const Canvas = React.memo(
       if (pixelRatio) state.current.gl.setPixelRatio(pixelRatio)
       state.current.gl.setClearAlpha(0)
       state.current.canvas = canvas.current
-      state.current.scene = new THREE.Scene()
-      state.current.scene.__interaction = []
-      state.current.scene.__objects = []
-
       // Start render-loop, either via RAF or setAnimationLoop for VR
       if (!state.current.vr) invalidate(state)
       else {
         state.current.gl.vr.enabled = true
         state.current.gl.setAnimationLoop(t => renderGl(state, t, 0, true))
       }
-
       // Clean-up
       return () => {
         state.current.gl.dispose()
