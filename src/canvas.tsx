@@ -135,6 +135,7 @@ export const Canvas = React.memo(
     // Public state
     const state = useRef({
       ...defaultRef,
+      subscribers: [],
       subscribe: (fn: Function) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
