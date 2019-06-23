@@ -29,7 +29,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
 
-function Thing({ vertices, color }) {
+function Thing({ vertices }) {
   return (
     <group ref={ref => console.log('we have access to the instance')}>
       <line>
