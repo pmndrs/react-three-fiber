@@ -460,7 +460,7 @@ function CrossFade({ url1, url2, disp }) {
 
 ## Re-parenting
 
-We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece if the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
+We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
 
 ```jsx
 import { createPortal } from 'react-three-fiber'
