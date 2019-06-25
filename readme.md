@@ -29,7 +29,7 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import { Canvas } from 'react-three-fiber'
 
-function Thing({ vertices, color }) {
+function Thing({ vertices }) {
   return (
     <group ref={ref => console.log('we have access to the instance')}>
       <line>
@@ -460,7 +460,7 @@ function CrossFade({ url1, url2, disp }) {
 
 ## Re-parenting
 
-We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece if the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
+We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
 
 ```jsx
 import { createPortal } from 'react-three-fiber'
