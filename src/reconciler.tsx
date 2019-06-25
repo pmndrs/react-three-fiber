@@ -41,12 +41,11 @@ export function addEffect(callback: Function) {
 export function renderGl(state, timestamp: number, repeat = 0, runGlobalEffects = false) {
   // Run global effects
   if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
-
+  // Run local effects
+  state.current.subscribers.forEach(fn => fn(state.current, timestamp))
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
-  // Run local effects
-  state.current.subscribers.forEach(fn => fn(state.current, timestamp))
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
   return repeat
@@ -72,7 +71,7 @@ function renderLoop(timestamp: number) {
   running = false
 }
 
-export function invalidate(state, frames = 1) {
+export function invalidate(state, frames = 2) {
   if (state && state.current) {
     if (state.current.vr) return
     state.current.frames = frames

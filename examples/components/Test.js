@@ -1,24 +1,26 @@
 import * as THREE from 'three'
 import React, { useState, useEffect, useMemo } from 'react'
-import { Canvas } from 'react-three-fiber'
+import { Canvas, useThree, useRender } from 'react-three-fiber'
 
-function Test() {
-  const [mesh] = useState(() => {
-    const mat = new THREE.MeshBasicMaterial()
-    const geo = new THREE.SphereBufferGeometry(1, 16, 16)
-    return new THREE.Mesh(geo, mat)
+const Cube = () => {
+  const { invalidate } = useThree()
+
+  useRender(() => {
+    console.log('Render!')
+    invalidate()
   })
 
-  const over = () => console.log('over')
-  const out = () => console.log('out')
-
-  return <primitive object={mesh} onPointerOver={over} onPointerOut={out} />
+  return (
+    <mesh>
+      <meshBasicMaterial attach="material" />
+      <boxBufferGeometry attach="geometry" />
+    </mesh>
+  )
 }
-
 export default function App() {
   return (
-    <Canvas>
-      <Test />
+    <Canvas invalidateFrameloop>
+      <Cube />
     </Canvas>
   )
 }

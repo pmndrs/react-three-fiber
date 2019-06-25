@@ -10,7 +10,6 @@ export type CanvasContext = {
   vr: boolean
   active: boolean
   invalidateFrameloop: boolean
-  updateDefaultCamera: boolean
   frames: number
   aspect: number
   subscribers: Function[]
@@ -35,7 +34,6 @@ export type CanvasProps = {
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
   gl?: object
   camera?: object
   raycaster?: object
@@ -119,7 +117,6 @@ export const Canvas = React.memo(
       vr: false,
       active: true,
       invalidateFrameloop: false,
-      updateDefaultCamera: true,
       frames: 0,
       aspect: 0,
       subscribers: [],
@@ -146,10 +143,7 @@ export const Canvas = React.memo(
           state.current.scene.children.forEach(child => state.current.scene.remove(child))
         }
       },
-      setDefaultCamera: (cam: THREE.OrthographicCamera | THREE.PerspectiveCamera) => {
-        state.current.camera = cam
-        setDefaultCamera(cam)
-      },
+      setDefaultCamera: (cam: THREE.OrthographicCamera | THREE.PerspectiveCamera) => setDefaultCamera(cam),
       invalidate: () => invalidate(state),
       intersect: (event = {}) => handlePointerMove(event),
     })
@@ -163,7 +157,6 @@ export const Canvas = React.memo(
       state.current.size = size
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
-      state.current.updateDefaultCamera = updateDefaultCamera
       state.current.vr = vr
     }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
@@ -181,7 +174,9 @@ export const Canvas = React.memo(
       }
       // Clean-up
       return () => {
+        state.current.gl.forceContextLoss()
         state.current.gl.dispose()
+        state.current.gl = undefined
         state.current.active = false
         unmountComponentAtNode(state.current.scene)
       }
@@ -209,7 +204,7 @@ export const Canvas = React.memo(
 
         /* https://github.com/drcmda/react-three-fiber/issues/92
            Sometimes automatic default camera adjustment isn't wanted behaviour */
-        if (state.current.updateDefaultCamera) {
+        if (updateDefaultCamera) {
           if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
             state.current.camera.left = size.width / -2
             state.current.camera.right = size.width / 2
@@ -225,7 +220,7 @@ export const Canvas = React.memo(
       }
       // Only trigger the context provider when necessary
       sharedState.current = { ...state.current }
-    }, [ready, size, defaultCam])
+    }, [ready, size, defaultCam, updateDefaultCamera])
 
     // This component is a bridge into the three render context, when it gets rendererd
     // we know we are ready to compile shaders, call subscribers, etc
