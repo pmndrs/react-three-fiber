@@ -6,7 +6,6 @@ export declare type CanvasContext = {
   vr: boolean
   active: boolean
   invalidateFrameloop: boolean
-  updateDefaultCamera: boolean
   frames: number
   aspect: number
   subscribers: Function[]
@@ -39,7 +38,6 @@ export declare type CanvasProps = {
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
   gl?: object
   camera?: object
   raycaster?: object
@@ -66,7 +64,7 @@ export declare type IntersectObject = Event &
     }
     uuid: string
   }
-export declare const stateContext: React.Context<CanvasContext>
+export declare const stateContext: React.Context<null>
 export declare const Canvas: React.MemoExoticComponent<
   ({
     children,
