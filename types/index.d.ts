@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { Canvas } from './src/canvas'
 import { useRender, useThree, useUpdate, useResource } from './src/hooks'
 import {
@@ -28,12 +29,14 @@ export {
   useResource,
 }
 
+type ClassParams<T> = Parameters<Extract<T, (...args: any[]) => any>>;
+interface ClassSignature<T> {
+  new <K extends keyof T>(...args: ClassParams<T[K]>): T;
+}
+type Args<T> = ConstructorParameters<ClassSignature<T>>;
+
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T];
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O;
-type Params<T> = Parameters<Extract<T, (...args: any[]) => any>>;
-interface ClassSignature<T> {
-  new <K extends keyof T>(...args: Params<T[K]>): T;
-}
 
 export namespace ReactThreeFiber {
   type Vector2 = THREE.Vector2 | [number, number];
@@ -41,14 +44,13 @@ export namespace ReactThreeFiber {
   type Vector4 = THREE.Vector4 | [number, number, number, number];
   type Color = THREE.Color | number;
 
-
-  type Node<T> = Overwrite<
+  type Node<T, P = Args<T>> = Overwrite<
     Partial<T>,
     {
       /** Using the attach property objects bind automatically to their parent and are taken off it once they unmount. */
       attach?: string;
       /** Constructor arguments */
-      args?: ConstructorParameters<ClassSignature<T>>;
+      args?: P;
       children?: React.ReactNode;
       ref?: React.Ref<React.ReactNode>;
     }
@@ -70,8 +72,8 @@ export namespace ReactThreeFiber {
     }
   >;
 
-  type MaterialNode<T> = Overwrite<
-    Node<T>,
+  type MaterialNode<T, P = Args<T>> = Overwrite<
+    Node<T, P>,
     {
       color?: Color;
     }
@@ -81,22 +83,21 @@ export namespace ReactThreeFiber {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
+      // @types/react conflict: line, canvas, audio, path
+
+      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>;
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>;
       sprite: ReactThreeFiber.Object3DNode<THREE.Sprite>;
       lOD: ReactThreeFiber.Object3DNode<THREE.LOD>;
       skinnedMesh: ReactThreeFiber.Object3DNode<THREE.SkinnedMesh>;
       skeleton: ReactThreeFiber.Object3DNode<THREE.Skeleton>;
       bone: ReactThreeFiber.Object3DNode<THREE.Bone>;
-      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>;
       lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments>;
       lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop>;
+      // line: ReactThreeFiber.Object3DNode<THREE.Line>;
       points: ReactThreeFiber.Object3DNode<THREE.Points>;
       group: ReactThreeFiber.Object3DNode<THREE.Group>;
       immediateRenderObject: ReactThreeFiber.Object3DNode<THREE.ImmediateRenderObject>;
-
-      // conflict with @types/react
-      // audio: ReactThreeFiber.Object3DNode<THREE.Audio>;
-      // line: ReactThreeFiber.Object3DNode<THREE.Line>;
 
       // cameras
       camera: ReactThreeFiber.Object3DNode<THREE.Camera>;
@@ -133,24 +134,36 @@ declare global {
       boxGeometry: ReactThreeFiber.GeometryNode<THREE.BoxGeometry>;
 
       // materials
-      material: ReactThreeFiber.MaterialNode<THREE.Material>;
-      shadowMaterial: ReactThreeFiber.MaterialNode<THREE.ShadowMaterial>;
-      spriteMaterial: ReactThreeFiber.MaterialNode<THREE.SpriteMaterial>;
-      rawShaderMaterial: ReactThreeFiber.MaterialNode<THREE.RawShaderMaterial>;
-      shaderMaterial: ReactThreeFiber.MaterialNode<THREE.ShaderMaterial>;
-      pointsMaterial: ReactThreeFiber.MaterialNode<THREE.PointsMaterial>;
-      meshPhysicalMaterial: ReactThreeFiber.MaterialNode<THREE.MeshPhysicalMaterial>;
-      meshStandardMaterial: ReactThreeFiber.MaterialNode<THREE.MeshStandardMaterial>;
-      meshPhongMaterial: ReactThreeFiber.MaterialNode<THREE.MeshPhongMaterial>;
-      meshToonMaterial: ReactThreeFiber.MaterialNode<THREE.MeshToonMaterial>;
-      meshNormalMaterial: ReactThreeFiber.MaterialNode<THREE.MeshNormalMaterial>;
-      meshLambertMaterial: ReactThreeFiber.MaterialNode<THREE.MeshLambertMaterial>;
-      meshDepthMaterial: ReactThreeFiber.MaterialNode<THREE.MeshDepthMaterial>;
-      meshDistanceMaterial: ReactThreeFiber.MaterialNode<THREE.MeshDistanceMaterial>;
-      meshBasicMaterial: ReactThreeFiber.MaterialNode<THREE.MeshBasicMaterial>;
-      meshMatcapMaterial: ReactThreeFiber.MaterialNode<THREE.MeshMatcapMaterial>;
-      lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial>;
-      lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial>;
+      material: ReactThreeFiber.MaterialNode<THREE.Material, [THREE.MaterialParameters]>;
+      shadowMaterial: ReactThreeFiber.MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>;
+      spriteMaterial: ReactThreeFiber.MaterialNode<THREE.SpriteMaterial, [THREE.SpriteMaterialParameters]>;
+      rawShaderMaterial: ReactThreeFiber.MaterialNode<THREE.RawShaderMaterial, [THREE.ShaderMaterialParameters]>;
+      shaderMaterial: ReactThreeFiber.MaterialNode<THREE.ShaderMaterial, [THREE.ShaderMaterialParameters]>;
+      pointsMaterial: ReactThreeFiber.MaterialNode<THREE.PointsMaterial, [THREE.PointsMaterialParameters]>;
+      meshPhysicalMaterial: ReactThreeFiber.MaterialNode<
+        THREE.MeshPhysicalMaterial,
+        [THREE.MeshPhysicalMaterialParameters]
+      >;
+      meshStandardMaterial: ReactThreeFiber.MaterialNode<
+        THREE.MeshStandardMaterial,
+        [THREE.MeshStandardMaterialParameters]
+      >;
+      meshPhongMaterial: ReactThreeFiber.MaterialNode<THREE.MeshPhongMaterial, [THREE.MeshPhongMaterialParameters]>;
+      meshToonMaterial: ReactThreeFiber.MaterialNode<THREE.MeshToonMaterial, [THREE.MeshToonMaterialParameters]>;
+      meshNormalMaterial: ReactThreeFiber.MaterialNode<THREE.MeshNormalMaterial, [THREE.MeshNormalMaterialParameters]>;
+      meshLambertMaterial: ReactThreeFiber.MaterialNode<
+        THREE.MeshLambertMaterial,
+        [THREE.MeshLambertMaterialParameters]
+      >;
+      meshDepthMaterial: ReactThreeFiber.MaterialNode<THREE.MeshDepthMaterial, [THREE.MeshDepthMaterialParameters]>;
+      meshDistanceMaterial: ReactThreeFiber.MaterialNode<
+        THREE.MeshDistanceMaterial,
+        [THREE.MeshDistanceMaterialParameters]
+      >;
+      meshBasicMaterial: ReactThreeFiber.MaterialNode<THREE.MeshBasicMaterial, [THREE.MeshBasicMaterialParameters]>;
+      meshMatcapMaterial: ReactThreeFiber.MaterialNode<THREE.MeshMatcapMaterial, [THREE.MeshMatcapMaterialParameters]>;
+      lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>;
+      lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>;
 
       // lights and other
       light: ReactThreeFiber.Object3DNode<THREE.Light>;
