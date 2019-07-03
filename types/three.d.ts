@@ -9,9 +9,7 @@ export interface ClassSignature<T> {
 type Args<T> = ConstructorParameters<ClassSignature<T>>
 
 export namespace ReactThreeFiber {
-  type Vector2 = THREE.Vector2 | [number, number]
   type Vector3 = THREE.Vector3 | [number, number, number]
-  type Vector4 = THREE.Vector4 | [number, number, number, number]
   type Color = THREE.Color | number
 
   type Node<T, P = Args<T>> = Overwrite<
@@ -53,7 +51,9 @@ export namespace ReactThreeFiber {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      // @types/react conflict: line, canvas, audio, path
+      audio: ReactThreeFiber.Object3DNode<THREE.Audio>
+      audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener>
+      positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio>
 
       mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>
@@ -64,7 +64,7 @@ declare global {
       bone: ReactThreeFiber.Object3DNode<THREE.Bone>
       lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments>
       lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop>
-      // line: ReactThreeFiber.Object3DNode<THREE.Line>;
+      line: ReactThreeFiber.Object3DNode<THREE.Line>
       points: ReactThreeFiber.Object3DNode<THREE.Points>
       group: ReactThreeFiber.Object3DNode<THREE.Group>
       immediateRenderObject: ReactThreeFiber.Object3DNode<THREE.ImmediateRenderObject>
