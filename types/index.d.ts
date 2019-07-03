@@ -30,6 +30,10 @@ export {
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T];
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O;
+type Params<T> = Parameters<Extract<T, (...args: any[]) => any>>;
+interface ClassSignature<T> {
+  new <K extends keyof T>(...args: Params<T[K]>): T;
+}
 
 export namespace ReactThreeFiber {
   type Vector2 = THREE.Vector2 | [number, number];
@@ -37,18 +41,17 @@ export namespace ReactThreeFiber {
   type Vector4 = THREE.Vector4 | [number, number, number, number];
   type Color = THREE.Color | number;
 
-  type Node<T> = Partial<
-    Overwrite<
-      T,
-      {
-        /** Using the attach property objects bind automatically to their parent and are taken off it once they unmount. */
-        attach?: string;
-        /** Constructor arguments */
-        args?: any[];
-        children?: React.ReactNode;
-        ref?: React.Ref<React.ReactNode>;
-      }
-    >
+
+  type Node<T> = Overwrite<
+    Partial<T>,
+    {
+      /** Using the attach property objects bind automatically to their parent and are taken off it once they unmount. */
+      attach?: string;
+      /** Constructor arguments */
+      args?: ConstructorParameters<ClassSignature<T>>;
+      children?: React.ReactNode;
+      ref?: React.Ref<React.ReactNode>;
+    }
   >;
 
   type Object3DNode<T> = Overwrite<
@@ -76,8 +79,6 @@ export namespace ReactThreeFiber {
 }
 
 declare global {
-  // export type SVGLineElement = THREE.Line;
-
   namespace JSX {
     interface IntrinsicElements {
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>;
