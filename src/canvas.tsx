@@ -306,14 +306,14 @@ export const Canvas = React.memo(
           let stopped = { current: false }
 
           fn({
-            ...Object.assign({}, event),
+            ...event,
             ...hit,
             stopped,
             unprojectedPoint,
             ray: defaultRaycaster.ray,
             // Hijack stopPropagation, which just sets a flag
-            stopPropagation: () => ((stopped.current = true), event.stopPropagation()),
-            preventDefault: () => event.preventDefault(),
+            stopPropagation: () => (stopped.current = true),
+            sourceEvent: event,
           })
 
           if (stopped.current === true) break
