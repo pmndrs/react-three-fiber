@@ -1,3 +1,4 @@
+/// <reference path="three.d.ts" />
 import { Canvas } from './src/canvas'
 import { useRender, useThree, useUpdate, useResource } from './src/hooks'
 import {
