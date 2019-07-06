@@ -261,7 +261,7 @@ useRender(state => console.log("I'm in the render-loop"))
 useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
 ```
 
-#### useUpdate(callback, denpendencies, optionalRef=undefined)
+#### useUpdate(callback, dependencies, optionalRef=undefined)
 
 Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate.
 
