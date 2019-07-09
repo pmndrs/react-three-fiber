@@ -52,7 +52,8 @@ export namespace ReactThreeFiber {
       up?: Vector3
       scale?: Vector3
     }
-  >
+  > &
+    ReactThreeFiber.Events
 
   type GeometryNode<T> = Overwrite<
     Node<T>,
@@ -76,7 +77,7 @@ declare global {
       audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener>
       positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio>
 
-      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh> & ReactThreeFiber.Events
+      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>
       sprite: ReactThreeFiber.Object3DNode<THREE.Sprite>
       lOD: ReactThreeFiber.Object3DNode<THREE.LOD>
@@ -85,7 +86,7 @@ declare global {
       bone: ReactThreeFiber.Object3DNode<THREE.Bone>
       lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments>
       lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop>
-      line: ReactThreeFiber.Object3DNode<THREE.Line> & ReactThreeFiber.Events
+      line: ReactThreeFiber.Object3DNode<THREE.Line>
       points: ReactThreeFiber.Object3DNode<THREE.Points>
       group: ReactThreeFiber.Object3DNode<THREE.Group>
       immediateRenderObject: ReactThreeFiber.Object3DNode<THREE.ImmediateRenderObject>
