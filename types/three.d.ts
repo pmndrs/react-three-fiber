@@ -11,6 +11,27 @@ type Args<T> = ConstructorParameters<ClassSignature<T>>
 export namespace ReactThreeFiber {
   type Vector3 = THREE.Vector3 | [number, number, number]
   type Color = THREE.Color | number
+  type Event = MouseEvent & {
+    distance: number
+    face: THREE.Face3
+    faceIndex: number
+    object: THREE.Object3D
+    point: THREE.Vector3
+    ray: THREE.Ray
+    receivingObject: THREE.Object3D
+    unprojectedPoint: Vector3
+    sourceEvent: MouseEvent
+  }
+  type Events = {
+    onClick?: (e: Event) => void
+    onPointerUp?: (e: Event) => void
+    onPointerDown?: (e: Event) => void
+    onPointerOver?: (e: Event) => void
+    onPointerOut?: (e: Event) => void
+    onPointerMove?: (e: Event) => void
+    onWheel?: (e: any) => void
+    onUpdate?: (e: any) => void
+  }
 
   type Node<T, P = Args<T>> = Overwrite<
     Partial<T>,
@@ -21,6 +42,7 @@ export namespace ReactThreeFiber {
       args?: P
       children?: React.ReactNode
       ref?: React.Ref<React.ReactNode>
+      key?: React.Key
     }
   >
 
@@ -31,7 +53,8 @@ export namespace ReactThreeFiber {
       up?: Vector3
       scale?: Vector3
     }
-  >
+  > &
+    ReactThreeFiber.Events
 
   type GeometryNode<T> = Overwrite<
     Node<T>,
