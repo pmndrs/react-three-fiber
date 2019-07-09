@@ -20,6 +20,7 @@ export namespace ReactThreeFiber {
     ray: THREE.Ray
     receivingObject: THREE.Object3D
     unprojectedPoint: Vector3
+    sourceEvent: MouseEvent
   }
   type Events = {
     onClick?: (e: Event) => void
