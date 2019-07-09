@@ -21,6 +21,7 @@ export namespace ReactThreeFiber {
       args?: P
       children?: React.ReactNode
       ref?: React.Ref<React.ReactNode>
+      key?: React.Key
     }
   >
 
