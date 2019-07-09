@@ -11,6 +11,26 @@ type Args<T> = ConstructorParameters<ClassSignature<T>>
 export namespace ReactThreeFiber {
   type Vector3 = THREE.Vector3 | [number, number, number]
   type Color = THREE.Color | number
+  type Event = MouseEvent & {
+    distance: number
+    face: THREE.Face3
+    faceIndex: number
+    object: THREE.Object3D
+    point: THREE.Vector3
+    ray: THREE.Ray
+    receivingObject: THREE.Object3D
+    unprojectedPoint: Vector3
+  }
+  type Events = {
+    onClick?: (e: Event) => void
+    onPointerUp?: (e: Event) => void
+    onPointerDown?: (e: Event) => void
+    onPointerOver?: (e: Event) => void
+    onPointerOut?: (e: Event) => void
+    onPointerMove?: (e: Event) => void
+    onWheel?: (e: any) => void
+    onUpdate?: (e: any) => void
+  }
 
   type Node<T, P = Args<T>> = Overwrite<
     Partial<T>,
@@ -56,7 +76,7 @@ declare global {
       audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener>
       positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio>
 
-      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>
+      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh> & ReactThreeFiber.Events
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>
       sprite: ReactThreeFiber.Object3DNode<THREE.Sprite>
       lOD: ReactThreeFiber.Object3DNode<THREE.LOD>
@@ -65,7 +85,7 @@ declare global {
       bone: ReactThreeFiber.Object3DNode<THREE.Bone>
       lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments>
       lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop>
-      line: ReactThreeFiber.Object3DNode<THREE.Line>
+      line: ReactThreeFiber.Object3DNode<THREE.Line> & ReactThreeFiber.Events
       points: ReactThreeFiber.Object3DNode<THREE.Points>
       group: ReactThreeFiber.Object3DNode<THREE.Group>
       immediateRenderObject: ReactThreeFiber.Object3DNode<THREE.ImmediateRenderObject>
