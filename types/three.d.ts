@@ -9,6 +9,8 @@ export interface ClassSignature<T> {
 type Args<T> = ConstructorParameters<ClassSignature<T>>
 
 export namespace ReactThreeFiber {
+  type Euler = THREE.Euler | number[]
+  type Matrix4 = THREE.Matrix4 | number[]
   type Vector3 = THREE.Vector3 | number[]
   type Color = THREE.Color | number | string
   type Event = MouseEvent & {
@@ -52,6 +54,8 @@ export namespace ReactThreeFiber {
       position?: Vector3
       up?: Vector3
       scale?: Vector3
+      rotation?: Euler
+      matrix?: Matrix4
     }
   > &
     ReactThreeFiber.Events
