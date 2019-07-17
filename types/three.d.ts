@@ -9,8 +9,8 @@ export interface ClassSignature<T> {
 type Args<T> = ConstructorParameters<ClassSignature<T>>
 
 export namespace ReactThreeFiber {
-  type Vector3 = THREE.Vector3 | [number, number, number]
-  type Color = THREE.Color | number
+  type Vector3 = THREE.Vector3 | number[]
+  type Color = THREE.Color | number | string
   type Event = MouseEvent & {
     distance: number
     face: THREE.Face3
