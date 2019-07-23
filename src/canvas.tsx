@@ -158,6 +158,7 @@ export const Canvas = React.memo(
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.vr = vr
+      invalidate(state)
     }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
