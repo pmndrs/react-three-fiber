@@ -107,10 +107,6 @@ You can use [Three's entire object catalogue and all properties](https://threejs
 
 #### Shortcuts and non-Object3D stow-away
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')}` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
-
-You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
-
 The following is the same as above, but it's leaner and critical properties aren't re-instantiated on every render.
 
 ```jsx
@@ -120,7 +116,11 @@ The following is the same as above, but it's leaner and critical properties aren
 </mesh>
 ```
 
-You can nest primitive objects—which is good for awaiting async textures and such. You could use React-suspense if you wanted!
+All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')}` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
+
+You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
+
+You can nest primitive objects, too, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial attach="material">
@@ -220,7 +220,31 @@ The event data you receive contains the browser event as well as the Threejs eve
 
 # Hooks
 
-All hooks can only be used *inside* the Canvas element because they rely on context updates!
+All hooks can only be used **inside** the Canvas element because they rely on context updates! You cannot expect something like this to work:
+
+```jsx
+funciton App() {
+  const { gl } = useThree() // This will just crash
+  return (
+    <Canvas>
+      <mesh>
+        ...
+```
+
+Do this instead:
+
+```jsx
+funciton SomeComponent() {
+  const { gl } = useThree()
+  return <mesh />
+}
+        
+funciton App() {
+  return (
+    <Canvas>
+      <SomeComponent />
+        ...
+```
 
 #### useThree()
 
