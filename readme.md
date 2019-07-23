@@ -220,7 +220,31 @@ The event data you receive contains the browser event as well as the Threejs eve
 
 # Hooks
 
-All hooks can only be used *inside* the Canvas element because they rely on context updates!
+All hooks can only be used **inside** the Canvas element because they rely on context updates! You cannot expect something like this to work:
+
+```jsx
+funciton App() {
+  const { gl } = useThree() // This will just crash
+  return (
+    <Canvas>
+      <mesh>
+        ...
+```
+
+Do this instead:
+
+```jsx
+funciton SomeComponent() {
+  const { gl } = useThree()
+  return <mesh />
+}
+        
+funciton App() {
+  return (
+    <Canvas>
+      <SomeComponent />
+        ...
+```
 
 #### useThree()
 
