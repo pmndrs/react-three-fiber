@@ -152,7 +152,7 @@ export const Canvas = React.memo(
     const sharedState = useRef(state.current)
 
     // Writes locals into public state for distribution among subscribers, context, etc
-    useEffect(() => {
+    useLayoutEffect(() => {
       state.current.ready = ready
       state.current.size = size
       state.current.camera = defaultCam
@@ -184,7 +184,7 @@ export const Canvas = React.memo(
     }, [])
 
     // Adjusts default camera
-    useEffect(() => {
+    useLayoutEffect(() => {
       state.current.aspect = size.width / size.height || 0
 
       if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
