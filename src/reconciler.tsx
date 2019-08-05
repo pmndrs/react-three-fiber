@@ -116,7 +116,10 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         }
         // Special treatment for objects with support for set/copy
         if (target && target.set && target.copy) {
-          if (target.constructor.name === value.constructor.name) target.copy(value)
+          if (value && value.constructor) {
+            if (target.constructor.name === value.constructor.name) target.copy(value)
+          }
+          
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
           // Else, just overwrite the value
