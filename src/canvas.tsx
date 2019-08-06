@@ -83,6 +83,7 @@ export const Canvas = React.memo(
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     onCreated,
+    onPointerMissed,
     ...rest
   }: CanvasProps) => {
     // Local, reactive state
@@ -130,6 +131,8 @@ export const Canvas = React.memo(
       canvasRect: undefined,
       size: undefined,
       viewport: undefined,
+      onPointerMissed: undefined,
+      initialClick: [0, 0],
 
       subscribe: (fn: Function) => {
         state.current.subscribers.push(fn)
@@ -158,8 +161,9 @@ export const Canvas = React.memo(
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.vr = vr
+      state.current.onPointerMissed = onPointerMissed
       invalidate(state)
-    }, [invalidateFrameloop, vr, ready, size, defaultCam])
+    }, [invalidateFrameloop, vr, ready, size, defaultCam, onPointerMissed])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -326,11 +330,21 @@ export const Canvas = React.memo(
     const handlePointer = useCallback(
       name => event => {
         if (!state.current.ready) return
-        handleIntersects(event, data => {
+
+        const hits = handleIntersects(event, data => {
           const object = data.object
           const handlers = object.__handlers
           if (handlers && handlers[name]) handlers[name](data)
         })
+
+        // If a click yields no results, pass it back to the user as a miss
+        if (name === 'pointerDown') state.current.initialClick = [event.clientX, event.clientY]
+        if (name === 'click' && !hits.length && state.current.onPointerMissed) {
+          let dx = event.clientX - state.current.initialClick[0]
+          let dy = event.clientY - state.current.initialClick[1]
+          let distance = Math.round(Math.sqrt(dx * dx + dy * dy))
+          if (distance <= 2) state.current.onPointerMissed()
+        }
       },
       []
     )

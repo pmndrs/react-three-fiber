@@ -70,7 +70,8 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   updateDefaultCamera = true    // Adjusts default camera on size changes
-  onCreated />                  // Callback when vdom is ready (you can block first render via promise)
+  onCreated                     // Callback when vdom is ready (you can block first render via promise)
+  onPointerMissed />            // Response for pointer clicks that have missed a target
 ```
 
 You can give it additional properties like style and className, which will be added to the container (a div) that holds the dom-canvas element.
