@@ -239,13 +239,13 @@ function removeChild(parentInstance, child) {
     if (child.isObject3D) {
       parentInstance.remove(child)
     } else {
-      child.parent = undefined
+      child.parent = null
       parentInstance.__objects = parentInstance.__objects.filter(x => x !== child)
       // Remove attachment
-      if (child.attach) parentInstance[child.attach] = undefined
+      if (child.attach) parentInstance[child.attach] = null
       else if (child.attachArray)
         parentInstance[child.attachArray] = parentInstance[child.attachArray].filter(x => x !== child)
-      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = undefined
+      else if (child.attachObject) parentInstance[child.attachObject[0]][child.attachObject[1]] = null
     }
     invalidateInstance(child)
     run(idlePriority, () => {
