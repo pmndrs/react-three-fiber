@@ -4,6 +4,39 @@ import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react
 import ResizeObserver from 'resize-observer-polyfill'
 import { invalidate, applyProps, render, renderGl, unmountComponentAtNode } from './reconciler'
 
+export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export function isOrthographicCamera(def: THREE.Camera): def is THREE.OrthographicCamera {
+  return (def as THREE.OrthographicCamera).isOrthographicCamera
+}
+
+export type DomEvent =
+  | React.MouseEvent<HTMLDivElement, MouseEvent>
+  | React.WheelEvent<HTMLDivElement>
+  | React.PointerEvent<HTMLDivElement>
+
+export type Intersection = THREE.Intersection & {
+  object: THREE.Object3D
+  receivingObject: THREE.Object3D
+}
+
+export type PointerEvent = DomEvent &
+  Intersection & {
+    stopped: React.MutableRefObject<boolean>
+    unprojectedPoint: THREE.Vector3
+    ray: THREE.Ray
+    stopPropagation: () => void
+    sourceEvent: DomEvent
+  }
+
+export type IntersectObject = Event &
+  Intersection & {
+    ray: THREE.Raycaster
+    stopped: { current: boolean }
+    uuid: string
+  }
+
+export type RenderCallback = (props: CanvasContext, timestamp: number) => void
+
 export type CanvasContext = {
   ready: boolean
   manual: boolean
@@ -12,21 +45,23 @@ export type CanvasContext = {
   invalidateFrameloop: boolean
   frames: number
   aspect: number
-  subscribers: Function[]
-  subscribe: (callback: Function) => () => any
-  setManual: (takeOverRenderloop: boolean) => any
-  setDefaultCamera: (camera: THREE.Camera) => any
-  invalidate: () => any
+  subscribers: RenderCallback[]
+  subscribe: (callback: RenderCallback) => () => void
+  setManual: (takeOverRenderloop: boolean) => void
+  setDefaultCamera: (camera: Camera) => void
+  invalidate: () => void
+  intersect: (event?: React.PointerEvent<HTMLDivElement>) => void
   gl?: THREE.WebGLRenderer
-  camera: THREE.Camera
+  camera: Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  captured?: THREE.Intersection
+  captured?: Intersection[]
   canvas?: HTMLCanvasElement
   canvasRect?: ClientRect | DOMRect
   size?: { left: number; top: number; width: number; height: number }
   viewport?: { width: number; height: number; factor: number }
+  initialClick: [number, number]
 }
 
 export type CanvasProps = {
@@ -34,40 +69,32 @@ export type CanvasProps = {
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
-  gl?: object
-  camera?: object
-  raycaster?: object
+  updateDefaultCamera?: boolean
+  gl?: Partial<THREE.WebGLRenderer>
+  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
+  raycaster?: Partial<THREE.Raycaster>
   style?: React.CSSProperties
   pixelRatio?: number
-  onCreated?: Function
+  onCreated?: (props: CanvasContext) => Promise<any> | void
+  onPointerMissed?: () => void
 }
 
 export type Measure = [
-  { ref: React.MutableRefObject<HTMLDivElement | undefined> },
+  React.MutableRefObject<HTMLDivElement | null>,
   { left: number; top: number; width: number; height: number }
 ]
 
-export type IntersectObject = Event &
-  THREE.Intersection & {
-    ray: THREE.Raycaster
-    stopped: { current: boolean }
-    uuid: string
-  }
-
-export const stateContext = React.createContext(null)
+export const stateContext = React.createContext<CanvasContext | null>(null)
 
 function useMeasure(): Measure {
-  const ref = useRef<HTMLDivElement>()
-
+  const ref = useRef<HTMLDivElement>(null)
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
   const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
-
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
   }, [ref.current])
-
-  return [{ ref }, bounds]
+  return [ref, bounds]
 }
 
 export const Canvas = React.memo(
@@ -91,17 +118,20 @@ export const Canvas = React.memo(
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
     const [mouse] = useState(() => new THREE.Vector2())
+
     const [defaultRaycaster] = useState(() => {
       const ray = new THREE.Raycaster()
       if (raycaster) applyProps(ray, raycaster, {})
       return ray
     })
+
     const [defaultScene] = useState(() => {
       const scene = new THREE.Scene()
-      scene.__interaction = []
-      scene.__objects = []
+      ;(scene as any).__interaction = []
+      ;(scene as any).__objects = []
       return scene
     })
+
     const [defaultCam, setDefaultCamera] = useState(() => {
       const cam = orthographic
         ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
@@ -112,7 +142,7 @@ export const Canvas = React.memo(
     })
 
     // Public state
-    const state = useRef({
+    const state: React.MutableRefObject<CanvasContext> = useRef<CanvasContext>({
       ready: false,
       manual: false,
       vr: false,
@@ -131,10 +161,9 @@ export const Canvas = React.memo(
       canvasRect: undefined,
       size: undefined,
       viewport: undefined,
-      onPointerMissed: undefined,
       initialClick: [0, 0],
 
-      subscribe: (fn: Function) => {
+      subscribe: (fn: RenderCallback) => {
         state.current.subscribers.push(fn)
         return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
       },
@@ -146,9 +175,9 @@ export const Canvas = React.memo(
           state.current.scene.children.forEach(child => state.current.scene.remove(child))
         }
       },
-      setDefaultCamera: (cam: THREE.OrthographicCamera | THREE.PerspectiveCamera) => setDefaultCamera(cam),
+      setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
       invalidate: () => invalidate(state),
-      intersect: (event = {}) => handlePointerMove(event),
+      intersect: (event?: React.PointerEvent<HTMLDivElement>) => handlePointerMove(event || ({} as DomEvent)),
     })
 
     // This is used as a clone of the current state, to be distributed through context and useThree
@@ -161,9 +190,8 @@ export const Canvas = React.memo(
       state.current.camera = defaultCam
       state.current.invalidateFrameloop = invalidateFrameloop
       state.current.vr = vr
-      state.current.onPointerMissed = onPointerMissed
       invalidate(state)
-    }, [invalidateFrameloop, vr, ready, size, defaultCam, onPointerMissed])
+    }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Component mount effect, creates the webGL render context
     useEffect(() => {
@@ -175,12 +203,14 @@ export const Canvas = React.memo(
       if (!state.current.vr) invalidate(state)
       else {
         state.current.gl.vr.enabled = true
-        state.current.gl.setAnimationLoop(t => renderGl(state, t, 0, true))
+        state.current.gl.setAnimationLoop((t: any) => renderGl(state, t, 0, true))
       }
       // Clean-up
       return () => {
-        state.current.gl.forceContextLoss()
-        state.current.gl.dispose()
+        if (state.current.gl) {
+          state.current.gl.forceContextLoss()
+          state.current.gl.dispose()
+        }
         state.current.gl = undefined
         state.current.active = false
         unmountComponentAtNode(state.current.scene)
@@ -191,7 +221,7 @@ export const Canvas = React.memo(
     useLayoutEffect(() => {
       state.current.aspect = size.width / size.height || 0
 
-      if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
+      if (isOrthographicCamera(state.current.camera)) {
         state.current.viewport = { width: size.width, height: size.height, factor: 1 }
       } else {
         const target = new THREE.Vector3(0, 0, 0)
@@ -202,22 +232,24 @@ export const Canvas = React.memo(
         state.current.viewport = { width, height, factor: size.width / width }
       }
 
-      state.current.canvasRect = bind.ref.current.getBoundingClientRect()
+      // Get canvas dom bounds
+      if (bind.current) state.current.canvasRect = bind.current.getBoundingClientRect()
 
-      if (ready) {
+      if (ready && state.current.gl) {
         state.current.gl.setSize(size.width, size.height)
 
         /* https://github.com/drcmda/react-three-fiber/issues/92
            Sometimes automatic default camera adjustment isn't wanted behaviour */
         if (updateDefaultCamera) {
-          if ((state.current.camera as THREE.OrthographicCamera).isOrthographicCamera) {
+          if (isOrthographicCamera(state.current.camera)) {
             state.current.camera.left = size.width / -2
             state.current.camera.right = size.width / 2
             state.current.camera.top = size.height / 2
             state.current.camera.bottom = size.height / -2
           } else {
             state.current.camera.aspect = state.current.aspect
-            state.current.camera.radius = (size.width + size.height) / 4
+            // TODO: Why radius??
+            // state.current.camera.radius = (size.width + size.height) / 4
           }
           state.current.camera.updateProjectionMatrix()
         }
@@ -265,30 +297,33 @@ export const Canvas = React.memo(
         const bottom = (canvasRect && canvasRect.bottom) || 0
         const x = ((event.clientX - left) / (right - left)) * 2 - 1
         const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
-
         mouse.set(x, y)
         defaultRaycaster.setFromCamera(mouse, state.current.camera)
       }
     }, [])
 
     /** Intersects interaction objects using the event input */
-    const intersect = useCallback((event, prepare = true) => {
+    const intersect = useCallback((event: DomEvent, prepare = true): Intersection[] => {
       if (prepare) prepareRay(event)
 
-      const seen = {}
-      const hits = []
+      const seen = new Set<string>()
+      const hits: Intersection[] = []
 
       // Intersect known handler objects and filter against duplicates
       const intersects = defaultRaycaster
-        .intersectObjects(state.current.scene.__interaction, true)
-        .filter(item => (seen.hasOwnProperty(item.object.uuid) ? false : (seen[item.object.uuid] = true)))
+        .intersectObjects((state.current.scene as any).__interaction, true)
+        .filter(item => {
+          if (seen.has(item.object.uuid)) return false
+          seen.add(item.object.uuid)
+          return true
+        })
 
       for (let intersect of intersects) {
         let receivingObject = intersect.object
-        let object = intersect.object
+        let object: THREE.Object3D | null = intersect.object
         // Bubble event up
         while (object) {
-          if (object.__handlers) hits.push({ ...intersect, object, receivingObject })
+          if ((object as any).__handlers) hits.push({ ...intersect, object, receivingObject })
           object = object.parent
         }
       }
@@ -296,10 +331,10 @@ export const Canvas = React.memo(
     }, [])
 
     /**  Handles intersections by forwarding them to handlers */
-    const handleIntersects = useCallback((event: React.PointerEvent<HTMLDivElement>, fn): [] => {
+    const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
       prepareRay(event)
       // If the interaction is captured, take the last known hit instead of raycasting again
-      const hits =
+      const hits: Intersection[] =
         state.current.captured && event.type !== 'click' && event.type !== 'wheel'
           ? state.current.captured
           : intersect(event, false)
@@ -309,7 +344,6 @@ export const Canvas = React.memo(
 
         for (let hit of hits) {
           let stopped = { current: false }
-
           fn({
             ...event,
             ...hit,
@@ -320,7 +354,6 @@ export const Canvas = React.memo(
             stopPropagation: () => (stopped.current = true),
             sourceEvent: event,
           })
-
           if (stopped.current === true) break
         }
       }
@@ -328,33 +361,32 @@ export const Canvas = React.memo(
     }, [])
 
     const handlePointer = useCallback(
-      name => event => {
+      (name: string) => (event: DomEvent) => {
         if (!state.current.ready) return
-
+        // Collect hits
         const hits = handleIntersects(event, data => {
           const object = data.object
-          const handlers = object.__handlers
+          const handlers = (object as any).__handlers
           if (handlers && handlers[name]) handlers[name](data)
         })
-
         // If a click yields no results, pass it back to the user as a miss
         if (name === 'pointerDown') state.current.initialClick = [event.clientX, event.clientY]
-        if (name === 'click' && !hits.length && state.current.onPointerMissed) {
+        if (name === 'click' && !hits.length && onPointerMissed) {
           let dx = event.clientX - state.current.initialClick[0]
           let dy = event.clientY - state.current.initialClick[1]
           let distance = Math.round(Math.sqrt(dx * dx + dy * dy))
-          if (distance <= 2) state.current.onPointerMissed()
+          if (distance <= 2) onPointerMissed()
         }
       },
-      []
+      [onPointerMissed]
     )
 
-    const hovered = useRef({})
-    const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const hovered = new Map<string, PointerEvent>()
+    const handlePointerMove = useCallback((event: DomEvent) => {
       if (!state.current.ready) return
       const hits = handleIntersects(event, data => {
         const object = data.object
-        const handlers = object.__handlers
+        const handlers = (object as any).__handlers
         // Check presence of handlers
         if (!handlers) return
 
@@ -362,19 +394,20 @@ export const Canvas = React.memo(
         if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter is present
         if (handlers.pointerOver) {
-          if (!hovered.current[object.uuid]) {
+          const hoveredItem = hovered.get(object.uuid)
+          if (!hoveredItem) {
             // If the object wasn't previously hovered, book it and call its handler
-            hovered.current[object.uuid] = data
+            hovered.set(object.uuid, data)
             handlers.pointerOver({ ...data, type: 'pointerover' })
-          } else if (hovered.current[object.uuid].stopped.current) {
+          } else if (hoveredItem.stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
             // In fact, wwe can safely remove them from the cache
-            Object.values(hovered.current).forEach(data => {
+            Array.from(hovered.values()).forEach(data => {
               if (data.object.uuid !== object.uuid) {
-                if (data.object.__handlers.pointerOut)
-                  data.object.__handlers.pointerOut({ ...data, type: 'pointerout' })
-                delete hovered.current[data.object.uuid]
+                if ((data.object as any).__handlers.pointerOut)
+                  (data.object as any).__handlers.pointerOut({ ...data, type: 'pointerout' })
+                hovered.delete(data.object.uuid)
               }
             })
           }
@@ -385,14 +418,14 @@ export const Canvas = React.memo(
       return hits
     }, [])
 
-    const handlePointerCancel = useCallback((event: React.PointerEvent<HTMLDivElement>, hits?: []) => {
+    const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[]) => {
       if (!hits) hits = handleIntersects(event, () => null)
-      Object.values(hovered.current).forEach(data => {
-        if (!hits.length || !hits.find(i => i.object === data.object)) {
+      Array.from(hovered.values()).forEach(data => {
+        if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
           const object = data.object
-          const handlers = object.__handlers
+          const handlers = (object as any).__handlers
           if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
-          delete hovered.current[object.uuid]
+          hovered.delete(object.uuid)
         }
       })
     }, [])
@@ -400,7 +433,7 @@ export const Canvas = React.memo(
     // Render the canvas into the dom
     return (
       <div
-        ref={bind.ref as React.MutableRefObject<HTMLDivElement>}
+        ref={bind as React.MutableRefObject<HTMLDivElement>}
         onClick={handlePointer('click')}
         onWheel={handlePointer('wheel')}
         onPointerDown={handlePointer('pointerDown')}
@@ -410,7 +443,7 @@ export const Canvas = React.memo(
         // On capture intersect and remember the last known position
         onGotPointerCapture={event => (state.current.captured = intersect(event, false))}
         // On lost capture remove the captured hit
-        onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
+        onLostPointerCapture={event => ((state.current.captured = []), handlePointerCancel(event))}
         {...rest}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas ref={canvas as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
