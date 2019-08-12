@@ -443,7 +443,7 @@ export const Canvas = React.memo(
         // On capture intersect and remember the last known position
         onGotPointerCapture={event => (state.current.captured = intersect(event, false))}
         // On lost capture remove the captured hit
-        onLostPointerCapture={event => ((state.current.captured = []), handlePointerCancel(event))}
+        onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
         {...rest}
         style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
         <canvas ref={canvas as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
