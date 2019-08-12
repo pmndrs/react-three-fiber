@@ -401,13 +401,13 @@ export const Canvas = React.memo(
 
         // Call mouse move
         if (handlers.pointerMove) handlers.pointerMove(data)
-        // Check if mouse enter is present
-        if (handlers.pointerOver) {
+        // Check if mouse enter or out is present
+        if (handlers.pointerOver || handlers.pointerOut) {
           const hoveredItem = hovered.get(object.uuid)
           if (!hoveredItem) {
             // If the object wasn't previously hovered, book it and call its handler
             hovered.set(object.uuid, data)
-            handlers.pointerOver({ ...data, type: 'pointerover' })
+            if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
           } else if (hoveredItem.stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
