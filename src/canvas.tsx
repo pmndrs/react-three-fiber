@@ -84,7 +84,7 @@ export type Measure = [
   { left: number; top: number; width: number; height: number }
 ]
 
-export const stateContext = React.createContext<CanvasContext | null>(null)
+export const stateContext = React.createContext<CanvasContext>({} as CanvasContext)
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>(null)
