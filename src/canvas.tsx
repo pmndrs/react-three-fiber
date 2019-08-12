@@ -62,6 +62,7 @@ export type CanvasContext = {
   size?: { left: number; top: number; width: number; height: number }
   viewport?: { width: number; height: number; factor: number }
   initialClick: [number, number]
+  initialHits: THREE.Object3D[]
 }
 
 export type CanvasProps = {
@@ -162,6 +163,7 @@ export const Canvas = React.memo(
       size: undefined,
       viewport: undefined,
       initialClick: [0, 0],
+      initialHits: [],
 
       subscribe: (fn: RenderCallback) => {
         state.current.subscribers.push(fn)
@@ -367,10 +369,17 @@ export const Canvas = React.memo(
         const hits = handleIntersects(event, data => {
           const object = data.object
           const handlers = (object as any).__handlers
-          if (handlers && handlers[name]) handlers[name](data)
+          if (handlers && handlers[name]) {
+            // Forward all events back to their respective handlers with the exception of click,
+            // which must must the initial target
+            if (name !== 'click' || state.current.initialHits.includes(object)) handlers[name](data)
+          }
         })
         // If a click yields no results, pass it back to the user as a miss
-        if (name === 'pointerDown') state.current.initialClick = [event.clientX, event.clientY]
+        if (name === 'pointerDown') {
+          state.current.initialClick = [event.clientX, event.clientY]
+          state.current.initialHits = hits.map(hit => hit.object)
+        }
         if (name === 'click' && !hits.length && onPointerMissed) {
           let dx = event.clientX - state.current.initialClick[0]
           let dy = event.clientY - state.current.initialClick[1]
