@@ -1,5 +1,32 @@
 import * as THREE from 'three'
 import * as React from 'react'
+export declare type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export declare function isOrthographicCamera(def: THREE.Camera): def is THREE.OrthographicCamera
+export declare type DomEvent =
+  | React.MouseEvent<HTMLDivElement, MouseEvent>
+  | React.WheelEvent<HTMLDivElement>
+  | React.PointerEvent<HTMLDivElement>
+export declare type Intersection = THREE.Intersection & {
+  object: THREE.Object3D
+  receivingObject: THREE.Object3D
+}
+export declare type PointerEvent = DomEvent &
+  Intersection & {
+    stopped: React.MutableRefObject<boolean>
+    unprojectedPoint: THREE.Vector3
+    ray: THREE.Ray
+    stopPropagation: () => void
+    sourceEvent: DomEvent
+  }
+export declare type IntersectObject = Event &
+  Intersection & {
+    ray: THREE.Raycaster
+    stopped: {
+      current: boolean
+    }
+    uuid: string
+  }
+export declare type RenderCallback = (props: CanvasContext, timestamp: number) => void
 export declare type CanvasContext = {
   ready: boolean
   manual: boolean
@@ -8,17 +35,18 @@ export declare type CanvasContext = {
   invalidateFrameloop: boolean
   frames: number
   aspect: number
-  subscribers: Function[]
-  subscribe: (callback: Function) => () => any
-  setManual: (takeOverRenderloop: boolean) => any
-  setDefaultCamera: (camera: THREE.Camera) => any
-  invalidate: () => any
+  subscribers: RenderCallback[]
+  subscribe: (callback: RenderCallback) => () => void
+  setManual: (takeOverRenderloop: boolean) => void
+  setDefaultCamera: (camera: Camera) => void
+  invalidate: () => void
+  intersect: (event?: React.PointerEvent<HTMLDivElement>) => void
   gl?: THREE.WebGLRenderer
-  camera: THREE.Camera
+  camera: Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  captured?: THREE.Intersection
+  captured?: Intersection[]
   canvas?: HTMLCanvasElement
   canvasRect?: ClientRect | DOMRect
   size?: {
@@ -32,23 +60,24 @@ export declare type CanvasContext = {
     height: number
     factor: number
   }
+  initialClick: [number, number]
 }
 export declare type CanvasProps = {
   children?: React.ReactNode
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
-  gl?: object
-  camera?: object
-  raycaster?: object
+  updateDefaultCamera?: boolean
+  gl?: Partial<THREE.WebGLRenderer>
+  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
+  raycaster?: Partial<THREE.Raycaster>
   style?: React.CSSProperties
   pixelRatio?: number
-  onCreated?: Function
+  onCreated?: (props: CanvasContext) => Promise<any> | void
+  onPointerMissed?: () => void
 }
 export declare type Measure = [
-  {
-    ref: React.MutableRefObject<HTMLDivElement | undefined>
-  },
+  React.MutableRefObject<HTMLDivElement | null>,
   {
     left: number
     top: number
@@ -56,15 +85,7 @@ export declare type Measure = [
     height: number
   }
 ]
-export declare type IntersectObject = Event &
-  THREE.Intersection & {
-    ray: THREE.Raycaster
-    stopped: {
-      current: boolean
-    }
-    uuid: string
-  }
-export declare const stateContext: React.Context<null>
+export declare const stateContext: React.Context<CanvasContext>
 export declare const Canvas: React.MemoExoticComponent<
   ({
     children,
@@ -78,6 +99,7 @@ export declare const Canvas: React.MemoExoticComponent<
     invalidateFrameloop,
     updateDefaultCamera,
     onCreated,
+    onPointerMissed,
     ...rest
   }: CanvasProps) => JSX.Element
 >

@@ -203,7 +203,7 @@ export const Canvas = React.memo(
       if (!state.current.vr) invalidate(state)
       else {
         state.current.gl.vr.enabled = true
-        state.current.gl.setAnimationLoop((t: any) => renderGl(state, t, 0, true))
+        state.current.gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
       }
       // Clean-up
       return () => {

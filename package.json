@@ -55,16 +55,16 @@
   "dependencies": {
     "@babel/runtime": "^7.4.4",
     "@types/three": "^0.103.2",
-    "lodash-es": "^4.17.11",
+    "lodash-es": "^4.17.15",
     "pointer-events-polyfill": "^0.4.4-pre",
-    "react-reconciler": "^0.20.4",
+    "react-reconciler": "^0.21.0",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.13.3"
   },
   "peerDependencies": {
-    "react": ">=16.8",
-    "react-dom": ">=16.8",
-    "three": ">=0.103"
+    "react": ">=16.9",
+    "react-dom": ">=16.9",
+    "three": ">=0.107"
   },
   "devDependencies": {
     "@babel/core": "7.4.4",
@@ -79,7 +79,7 @@
     "@babel/preset-react": "7.0.0",
     "@babel/preset-typescript": "^7.3.3",
     "@types/lodash-es": "^4.17.3",
-    "@types/react": "^16.8.15",
+    "@types/react": "^16.9.1",
     "@types/react-reconciler": "^0.18.0",
     "@types/scheduler": "^0.12.1",
     "babel-eslint": "^10.0.1",
@@ -91,17 +91,17 @@
     "eslint-plugin-react-hooks": "^1.6.0",
     "husky": "^2.1.0",
     "lint-staged": "^8.1.5",
-    "prettier": "^1.17.0",
+    "prettier": "^1.18.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "rollup": "^1.10.1",
+    "rollup": "^1.19.4",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^9.3.4",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
     "three": "^0.104.0",
-    "typescript": "^3.4.5",
+    "typescript": "^3.5.3",
     "wait-on": "^3.2.0"
   }
 }
