@@ -7,14 +7,12 @@
   "types": "types/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "prebuild": "rimraf dist",
+    "prebuild": "rimraf dist && tsc",
     "build": "rollup -c",
     "prepare": "npm run build",
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typecheck": "tsc --noEmit --strict --jsx react src/*",
-    "//": "The typegen script below should omit the '|| true' once remaining type errors are addressed",
-    "typegen": "tsc || true"
+    "typecheck": "tsc --noEmit --strict --jsx react src/*"
   },
   "husky": {
     "hooks": {

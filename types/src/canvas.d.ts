@@ -40,7 +40,7 @@ export declare type CanvasContext = {
   setManual: (takeOverRenderloop: boolean) => void
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
-  intersect: (event?: React.PointerEvent<HTMLDivElement>) => void
+  intersect: (event?: DomEvent) => void
   gl?: THREE.WebGLRenderer
   camera: Camera
   raycaster: THREE.Raycaster
@@ -61,9 +61,10 @@ export declare type CanvasContext = {
     factor: number
   }
   initialClick: [number, number]
+  initialHits: THREE.Object3D[]
 }
 export declare type CanvasProps = {
-  children?: React.ReactNode
+  children: React.ReactNode
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean

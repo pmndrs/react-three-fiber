@@ -50,7 +50,7 @@ export type CanvasContext = {
   setManual: (takeOverRenderloop: boolean) => void
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
-  intersect: (event?: React.PointerEvent<HTMLDivElement>) => void
+  intersect: (event?: DomEvent) => void
   gl?: THREE.WebGLRenderer
   camera: Camera
   raycaster: THREE.Raycaster
@@ -66,7 +66,7 @@ export type CanvasContext = {
 }
 
 export type CanvasProps = {
-  children?: React.ReactNode
+  children: React.ReactNode
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
@@ -179,7 +179,7 @@ export const Canvas = React.memo(
       },
       setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
       invalidate: () => invalidate(state),
-      intersect: (event?: React.PointerEvent<HTMLDivElement>) => handlePointerMove(event || ({} as DomEvent)),
+      intersect: (event?: DomEvent) => handlePointerMove(event || ({} as DomEvent)),
     })
 
     // This is used as a clone of the current state, to be distributed through context and useThree
