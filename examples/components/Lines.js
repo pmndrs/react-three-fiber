@@ -62,7 +62,7 @@ function EndPoint({ position, onDrag, onEnd }) {
   useEffect(() => void setTimeout(() => console.log('________active!!') || setActive(true), 6000), [])*/
 
   return (
-    <mesh position={position} {...bindDrag} {...bindHover}>
+    <mesh position={position} {...bindDrag} {...bindHover} onClick={e => console.log(e)}>
       <sphereBufferGeometry attach="geometry" args={[7.5, 16, 16]} />
       <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'white'} />
     </mesh>

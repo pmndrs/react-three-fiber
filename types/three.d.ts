@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { PointerEvent } from './src/canvas.d.ts'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
@@ -13,33 +14,26 @@ export namespace ReactThreeFiber {
   type Matrix4 = THREE.Matrix4 | number[]
   type Vector3 = THREE.Vector3 | number[]
   type Color = THREE.Color | number | string
-  type Event = MouseEvent & {
-    distance: number
-    face: THREE.Face3
-    faceIndex: number
-    object: THREE.Object3D
-    point: THREE.Vector3
-    ray: THREE.Ray
-    receivingObject: THREE.Object3D
-    unprojectedPoint: Vector3
-    sourceEvent: MouseEvent
-  }
   type Events = {
-    onClick?: (e: Event) => void
-    onPointerUp?: (e: Event) => void
-    onPointerDown?: (e: Event) => void
-    onPointerOver?: (e: Event) => void
-    onPointerOut?: (e: Event) => void
-    onPointerMove?: (e: Event) => void
-    onWheel?: (e: any) => void
-    onUpdate?: (e: any) => void
+    onClick?: (e: PointerEvent) => void
+    onPointerUp?: (e: PointerEvent) => void
+    onPointerDown?: (e: PointerEvent) => void
+    onPointerOver?: (e: PointerEvent) => void
+    onPointerOut?: (e: PointerEvent) => void
+    onPointerMove?: (e: PointerEvent) => void
+    onWheel?: (e: PointerEvent) => void
+    onUpdate?: (e: PointerEvent) => void
   }
 
   type Node<T, P = Args<T>> = Overwrite<
     Partial<T>,
     {
-      /** Using the attach property objects bind automatically to their parent and are taken off it once they unmount. */
+      /** Attaches this class onto the parent under the given name and nulls it on unmount */
       attach?: string
+      /** Appends this class to an array on the parent under the given name and removes it on unmount */
+      attachArray?: string
+      /** Adds this class to an object on the parent under the given name and deletes it on unmount */
+      attachObject?: [string, string]
       /** Constructor arguments */
       args?: P
       children?: React.ReactNode

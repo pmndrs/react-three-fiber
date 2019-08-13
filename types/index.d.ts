@@ -10,7 +10,6 @@ import {
   applyProps,
   createPortal,
 } from './src/reconciler'
-declare const apply: (args: any) => void
 export {
   Canvas,
   addEffect,
@@ -18,7 +17,6 @@ export {
   render,
   createPortal,
   unmountComponentAtNode,
-  apply,
   extend,
   applyProps,
   useRender,
