@@ -1,6 +1,4 @@
-/// <reference path="types/three.d.ts" />
-
-import { Canvas } from './src/canvas'
+export * from './src/canvas'
 import { useRender, useThree, useUpdate, useResource } from './src/hooks'
 import {
   addEffect,
@@ -18,7 +16,6 @@ const apply = (objects: object): void => {
 }
 
 export {
-  Canvas,
   addEffect,
   invalidate,
   render,

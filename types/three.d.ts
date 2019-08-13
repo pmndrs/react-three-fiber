@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { PointerEvent } from './src/canvas.d.ts'
+import { PointerEvent } from './src/canvas'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
