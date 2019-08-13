@@ -22,7 +22,6 @@ export namespace ReactThreeFiber {
     onPointerOut?: (e: PointerEvent) => void
     onPointerMove?: (e: PointerEvent) => void
     onWheel?: (e: PointerEvent) => void
-    onUpdate?: (e: PointerEvent) => void
   }
 
   type Node<T, P = Args<T>> = Overwrite<
@@ -39,6 +38,7 @@ export namespace ReactThreeFiber {
       children?: React.ReactNode
       ref?: React.Ref<React.ReactNode>
       key?: React.Key
+      onUpdate?: (self: T) => void
     }
   >
 
@@ -50,6 +50,7 @@ export namespace ReactThreeFiber {
       scale?: Vector3
       rotation?: Euler
       matrix?: Matrix4
+      onUpdate?: (self: T) => void
     }
   > &
     ReactThreeFiber.Events
