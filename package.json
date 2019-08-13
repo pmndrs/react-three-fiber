@@ -1,18 +1,19 @@
 {
   "name": "react-three-fiber",
-  "version": "2.2.17",
+  "version": "2.2.17-beta.2",
   "description": "React-fiber renderer for THREE.js",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
   "types": "types/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "prebuild": "rimraf dist && tsc",
+    "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c",
     "prepare": "npm run build",
     "eslint": "eslint ./src",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "typecheck": "tsc --noEmit --strict --jsx react src/*"
+    "typecheck": "tsc --noEmit --strict --jsx react src/*",
+    "typegen": "tsc || true"
   },
   "husky": {
     "hooks": {
@@ -55,7 +56,7 @@
     "@types/three": "^0.103.2",
     "lodash-es": "^4.17.15",
     "pointer-events-polyfill": "^0.4.4-pre",
-    "react-reconciler": "^0.21.0",
+    "react-reconciler": "0.20.4",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.13.3"
   },

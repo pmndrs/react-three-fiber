@@ -308,13 +308,8 @@ const Renderer = Reconciler({
   insertBefore,
   supportsMutation: true,
   isPrimaryRenderer: false,
-  scheduleDeferredCallback,
-  cancelDeferredCallback,
-  setTimeout,
-  clearTimeout,
-  noTimeout: -1,
-  supportsPersistence: false,
-  supportsHydration: false,
+  schedulePassiveEffects: scheduleDeferredCallback,
+  cancelPassiveEffects: cancelDeferredCallback,
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
   removeChildFromContainer: removeChild,
@@ -345,7 +340,18 @@ const Renderer = Reconciler({
       }
     }
   },
-
+  hideInstance(instance: any) {
+    if (instance.isObject3D) {
+      instance.visible = false
+      invalidateInstance(instance)
+    }
+  },
+  unhideInstance(instance: any, props: any) {
+    if ((instance.isObject3D && props.visible == null) || props.visible) {
+      instance.visible = true
+      invalidateInstance(instance)
+    }
+  },
   getPublicInstance(instance: any) {
     return instance
   },
@@ -404,10 +410,9 @@ export function createPortal(children: React.ReactNode, containerInfo: any, impl
   }
 }
 
-;(Renderer as any).injectIntoDevTools({
+Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   version: version,
   rendererPackageName: 'react-three-fiber',
-  findFiberByHostInstance: Renderer.findHostInstance,
   findHostInstanceByFiber: Renderer.findHostInstance,
 })
