@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useCallback, useState, useEffect, useRef } from 'react'
-import { apply, Canvas, useRender, useResource, useThree } from 'react-three-fiber'
+import { extend, Canvas, useRender, useResource, useThree } from 'react-three-fiber'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
 import { RenderPass } from './../resources/postprocessing/RenderPass'
@@ -8,7 +8,7 @@ import { WaterPass } from './../resources/postprocessing/WaterPass'
 import { GlitchPass } from './../resources/postprocessing/GlitchPass'
 import { AfterimagePass } from './../resources/postprocessing/AfterimagePass'
 import { FXAAShader } from './../resources/shaders/FXAAShader'
-apply({ EffectComposer, ShaderPass, RenderPass, WaterPass, GlitchPass, AfterimagePass })
+extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, GlitchPass, AfterimagePass })
 
 function Particle({ geometry, material, mouse }) {
   let ref = useRef()

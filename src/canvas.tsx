@@ -38,6 +38,10 @@ export type IntersectObject = Event &
 export type RenderCallback = (props: CanvasContext, timestamp: number) => void
 
 export type CanvasContext = {
+  gl: THREE.WebGLRenderer
+  canvas: HTMLCanvasElement
+  captured: Intersection[] | undefined
+  canvasRect: ClientRect | DOMRect
   ready: boolean
   manual: boolean
   vr: boolean
@@ -51,16 +55,12 @@ export type CanvasContext = {
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
   intersect: (event?: DomEvent) => void
-  gl?: THREE.WebGLRenderer
   camera: Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  captured?: Intersection[]
-  canvas?: HTMLCanvasElement
-  canvasRect?: ClientRect | DOMRect
-  size?: { left: number; top: number; width: number; height: number }
-  viewport?: { width: number; height: number; factor: number }
+  size: { left: number; top: number; width: number; height: number }
+  viewport: { width: number; height: number; factor: number }
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
 }
@@ -115,10 +115,15 @@ export const Canvas = React.memo(
     ...rest
   }: CanvasProps) => {
     // Local, reactive state
-    const canvas = useRef<HTMLCanvasElement>()
     const [ready, setReady] = useState(false)
     const [bind, size] = useMeasure()
     const [mouse] = useState(() => new THREE.Vector2())
+
+    const [defaultCanvas] = useState(() => {
+      const element = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
+      element.style.display = 'block'
+      return element as HTMLCanvasElement
+    })
 
     const [defaultRaycaster] = useState(() => {
       const ray = new THREE.Raycaster()
@@ -142,6 +147,13 @@ export const Canvas = React.memo(
       return cam
     })
 
+    const [defaultRenderer] = useState(() => {
+      const renderer = new THREE.WebGLRenderer({ canvas: defaultCanvas, antialias: true, alpha: true, ...gl })
+      if (pixelRatio) renderer.setPixelRatio(pixelRatio)
+      renderer.setClearAlpha(0)
+      return renderer
+    })
+
     // Public state
     const state: React.MutableRefObject<CanvasContext> = useRef<CanvasContext>({
       ready: false,
@@ -156,12 +168,12 @@ export const Canvas = React.memo(
       scene: defaultScene,
       raycaster: defaultRaycaster,
       mouse: mouse,
-      gl: undefined,
+      gl: defaultRenderer,
+      canvas: defaultCanvas,
       captured: undefined,
-      canvas: undefined,
-      canvasRect: undefined,
-      size: undefined,
-      viewport: undefined,
+      canvasRect: { bottom: 0, height: 0, width: 0, left: 0, right: 0, top: 0, x: 0, y: 0 },
+      size: { left: 0, top: 0, width: 0, height: 0 },
+      viewport: { width: 0, height: 0, factor: 0 },
       initialClick: [0, 0],
       initialHits: [],
 
@@ -185,6 +197,28 @@ export const Canvas = React.memo(
     // This is used as a clone of the current state, to be distributed through context and useThree
     const sharedState = useRef(state.current)
 
+    // Manage canvas element in the dom
+    useLayoutEffect(() => {
+      // Add canvas to the view
+      if (bind.current) bind.current.appendChild(defaultCanvas)
+      // Start render-loop, either via RAF or setAnimationLoop for VR
+      if (!state.current.vr) invalidate(state)
+      else {
+        defaultRenderer.vr.enabled = true
+        defaultRenderer.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
+      }
+      // Dispose renderer on unmount
+      return () => {
+        if (defaultRenderer) {
+          defaultRenderer.forceContextLoss()
+          defaultRenderer.dispose()
+        }
+        ;(state.current as any).gl = undefined
+        state.current.active = false
+        unmountComponentAtNode(state.current.scene)
+      }
+    }, [])
+
     // Writes locals into public state for distribution among subscribers, context, etc
     useLayoutEffect(() => {
       state.current.ready = ready
@@ -194,30 +228,6 @@ export const Canvas = React.memo(
       state.current.vr = vr
       invalidate(state)
     }, [invalidateFrameloop, vr, ready, size, defaultCam])
-
-    // Component mount effect, creates the webGL render context
-    useEffect(() => {
-      state.current.gl = new THREE.WebGLRenderer({ canvas: canvas.current, antialias: true, alpha: true, ...gl })
-      if (pixelRatio) state.current.gl.setPixelRatio(pixelRatio)
-      state.current.gl.setClearAlpha(0)
-      state.current.canvas = canvas.current
-      // Start render-loop, either via RAF or setAnimationLoop for VR
-      if (!state.current.vr) invalidate(state)
-      else {
-        state.current.gl.vr.enabled = true
-        state.current.gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
-      }
-      // Clean-up
-      return () => {
-        if (state.current.gl) {
-          state.current.gl.forceContextLoss()
-          state.current.gl.dispose()
-        }
-        state.current.gl = undefined
-        state.current.active = false
-        unmountComponentAtNode(state.current.scene)
-      }
-    }, [])
 
     // Adjusts default camera
     useLayoutEffect(() => {
@@ -237,8 +247,8 @@ export const Canvas = React.memo(
       // Get canvas dom bounds
       if (bind.current) state.current.canvasRect = bind.current.getBoundingClientRect()
 
-      if (ready && state.current.gl) {
-        state.current.gl.setSize(size.width, size.height)
+      if (ready) {
+        defaultRenderer.setSize(size.width, size.height)
 
         /* https://github.com/drcmda/react-three-fiber/issues/92
            Sometimes automatic default camera adjustment isn't wanted behaviour */
@@ -454,9 +464,8 @@ export const Canvas = React.memo(
         // On lost capture remove the captured hit
         onLostPointerCapture={event => ((state.current.captured = undefined), handlePointerCancel(event))}
         {...rest}
-        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-        <canvas ref={canvas as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
-      </div>
+        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+      />
     )
   }
 )

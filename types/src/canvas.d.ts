@@ -28,6 +28,10 @@ export declare type IntersectObject = Event &
   }
 export declare type RenderCallback = (props: CanvasContext, timestamp: number) => void
 export declare type CanvasContext = {
+  gl: THREE.WebGLRenderer
+  canvas: HTMLCanvasElement
+  captured: Intersection[] | undefined
+  canvasRect: ClientRect | DOMRect
   ready: boolean
   manual: boolean
   vr: boolean
@@ -41,21 +45,17 @@ export declare type CanvasContext = {
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
   intersect: (event?: DomEvent) => void
-  gl?: THREE.WebGLRenderer
   camera: Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  captured?: Intersection[]
-  canvas?: HTMLCanvasElement
-  canvasRect?: ClientRect | DOMRect
-  size?: {
+  size: {
     left: number
     top: number
     width: number
     height: number
   }
-  viewport?: {
+  viewport: {
     width: number
     height: number
     factor: number

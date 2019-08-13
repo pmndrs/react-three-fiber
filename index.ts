@@ -12,6 +12,11 @@ import {
   createPortal,
 } from './src/reconciler'
 
+const apply = (objects: object): void => {
+  console.warn('react-three-fiber: Please use extend ✅ instead of apply ❌, the former will be made obsolete soon!')
+  extend(objects)
+}
+
 export {
   Canvas,
   addEffect,
@@ -19,6 +24,7 @@ export {
   render,
   createPortal,
   unmountComponentAtNode,
+  apply,
   extend,
   applyProps,
   useRender,
