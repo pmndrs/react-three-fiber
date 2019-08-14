@@ -1,15 +1,16 @@
+/// <reference types="react" />
 import * as THREE from 'three'
-import { PointerEvent } from './src/canvas'
-
-export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
-export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
-export type ClassParams<T> = Parameters<Extract<T, (...args: any[]) => any>>
+import { PointerEvent } from './canvas'
+export declare type NonFunctionKeys<T> = {
+  [K in keyof T]: T[K] extends Function ? never : K
+}[keyof T]
+export declare type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
+export declare type ClassParams<T> = Parameters<Extract<T, (...args: any[]) => any>>
 export interface ClassSignature<T> {
   new <K extends keyof T>(...args: ClassParams<T[K]>): T
 }
-type Args<T> = ConstructorParameters<ClassSignature<T>>
-
-export namespace ReactThreeFiber {
+declare type Args<T> = ConstructorParameters<ClassSignature<T>>
+export declare namespace ReactThreeFiber {
   type Euler = THREE.Euler | number[]
   type Matrix4 = THREE.Matrix4 | number[]
   type Vector3 = THREE.Vector3 | number[]
@@ -23,17 +24,12 @@ export namespace ReactThreeFiber {
     onPointerMove?: (e: PointerEvent) => void
     onWheel?: (e: PointerEvent) => void
   }
-
   type Node<T, P = Args<T>> = Overwrite<
     Partial<T>,
     {
-      /** Attaches this class onto the parent under the given name and nulls it on unmount */
       attach?: string
-      /** Appends this class to an array on the parent under the given name and removes it on unmount */
       attachArray?: string
-      /** Adds this class to an object on the parent under the given name and deletes it on unmount */
       attachObject?: [string, string]
-      /** Constructor arguments */
       args?: P
       children?: React.ReactNode
       ref?: React.Ref<React.ReactNode>
@@ -41,7 +37,6 @@ export namespace ReactThreeFiber {
       onUpdate?: (self: T) => void
     }
   >
-
   type Object3DNode<T> = Overwrite<
     Node<T>,
     {
@@ -54,14 +49,12 @@ export namespace ReactThreeFiber {
     }
   > &
     ReactThreeFiber.Events
-
   type GeometryNode<T> = Overwrite<
     Node<T>,
     {
       vertices?: Vector3[]
     }
   >
-
   type MaterialNode<T, P = Args<T>> = Overwrite<
     Node<T, P>,
     {
@@ -69,14 +62,12 @@ export namespace ReactThreeFiber {
     }
   >
 }
-
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       audio: ReactThreeFiber.Object3DNode<THREE.Audio>
       audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener>
       positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio>
-
       mesh: ReactThreeFiber.Object3DNode<THREE.Mesh>
       scene: ReactThreeFiber.Object3DNode<THREE.Scene>
       sprite: ReactThreeFiber.Object3DNode<THREE.Sprite>
@@ -90,15 +81,11 @@ declare global {
       points: ReactThreeFiber.Object3DNode<THREE.Points>
       group: ReactThreeFiber.Object3DNode<THREE.Group>
       immediateRenderObject: ReactThreeFiber.Object3DNode<THREE.ImmediateRenderObject>
-
-      // cameras
       camera: ReactThreeFiber.Object3DNode<THREE.Camera>
       perspectiveCamera: ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera>
       orthographicCamera: ReactThreeFiber.Object3DNode<THREE.OrthographicCamera>
       cubeCamera: ReactThreeFiber.Object3DNode<THREE.CubeCamera>
       arrayCamera: ReactThreeFiber.Object3DNode<THREE.ArrayCamera>
-
-      // geometry
       geometry: ReactThreeFiber.GeometryNode<THREE.Geometry>
       instancedBufferGeometry: ReactThreeFiber.GeometryNode<THREE.InstancedBufferGeometry>
       bufferGeometry: ReactThreeFiber.GeometryNode<THREE.BufferGeometry>
@@ -124,8 +111,6 @@ declare global {
       cylinderGeometry: ReactThreeFiber.GeometryNode<THREE.CylinderGeometry>
       circleGeometry: ReactThreeFiber.GeometryNode<THREE.CircleGeometry>
       boxGeometry: ReactThreeFiber.GeometryNode<THREE.BoxGeometry>
-
-      // materials
       material: ReactThreeFiber.MaterialNode<THREE.Material, [THREE.MaterialParameters]>
       shadowMaterial: ReactThreeFiber.MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>
       spriteMaterial: ReactThreeFiber.MaterialNode<THREE.SpriteMaterial, [THREE.SpriteMaterialParameters]>
@@ -156,8 +141,6 @@ declare global {
       meshMatcapMaterial: ReactThreeFiber.MaterialNode<THREE.MeshMatcapMaterial, [THREE.MeshMatcapMaterialParameters]>
       lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
       lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
-
-      // lights and other
       light: ReactThreeFiber.Object3DNode<THREE.Light>
       spotLightShadow: ReactThreeFiber.Object3DNode<THREE.SpotLightShadow>
       spotLight: ReactThreeFiber.Object3DNode<THREE.SpotLight>
@@ -171,8 +154,6 @@ declare global {
       ambientLightProbe: ReactThreeFiber.Object3DNode<THREE.AmbientLightProbe>
       hemisphereLightProbe: ReactThreeFiber.Object3DNode<THREE.HemisphereLightProbe>
       lightProbe: ReactThreeFiber.Object3DNode<THREE.LightProbe>
-
-      // helpers
       vertexNormalsHelper: ReactThreeFiber.Object3DNode<THREE.VertexNormalsHelper>
       spotLightHelper: ReactThreeFiber.Object3DNode<THREE.SpotLightHelper>
       skeletonHelper: ReactThreeFiber.Object3DNode<THREE.SkeletonHelper>
@@ -190,8 +171,6 @@ declare global {
       planeHelper: ReactThreeFiber.Object3DNode<THREE.PlaneHelper>
       arrowHelper: ReactThreeFiber.Object3DNode<THREE.ArrowHelper>
       axesHelper: ReactThreeFiber.Object3DNode<THREE.AxesHelper>
-
-      // textures
       texture: ReactThreeFiber.Node<THREE.Texture>
       videoTexture: ReactThreeFiber.Node<THREE.VideoTexture>
       dataTexture: ReactThreeFiber.Node<THREE.DataTexture>
@@ -203,3 +182,4 @@ declare global {
     }
   }
 }
+export {}
