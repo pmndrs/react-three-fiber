@@ -9,7 +9,7 @@ export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
  */
 type Args<T> = T extends (new (...args: any) => any) ? ConstructorParameters<T> : T
 
-export namespace ReactThreeFiber {
+export declare namespace ReactThreeFiber {
   type Euler = THREE.Euler | number[]
   type Matrix4 = THREE.Matrix4 | number[]
   type Vector3 = THREE.Vector3 | number[]
