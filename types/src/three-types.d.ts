@@ -5,11 +5,7 @@ export declare type NonFunctionKeys<T> = {
   [K in keyof T]: T[K] extends Function ? never : K
 }[keyof T]
 export declare type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
-declare type Args<P> = P extends {
-  prototype: any
-}
-  ? Exclude<ConstructorParameters<P>, 'prototype'>
-  : P
+declare type Args<T> = T extends (new (...args: any) => any) ? ConstructorParameters<T> : T
 export declare namespace ReactThreeFiber {
   type Euler = THREE.Euler | number[]
   type Matrix4 = THREE.Matrix4 | number[]

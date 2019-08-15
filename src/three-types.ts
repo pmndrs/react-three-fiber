@@ -3,8 +3,11 @@ import { PointerEvent } from './canvas'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
-// @ts-ignore
-type Args<P> = P extends { prototype: any } ? Exclude<ConstructorParameters<P>, 'prototype'> : P
+
+/**
+ * If **T** contains a constructor, @see ConstructorParameters must be used, otherwise **T**.
+ */
+type Args<T> = T extends (new (...args: any) => any) ? ConstructorParameters<T> : T
 
 export namespace ReactThreeFiber {
   type Euler = THREE.Euler | number[]
