@@ -44,13 +44,14 @@ export declare namespace ReactThreeFiber {
     }
   > &
     ReactThreeFiber.Events
-  type GeometryNode<T, P> = Overwrite<
+  type GeometryNode<T extends THREE.Geometry, P> = Overwrite<
     Node<T, P>,
     {
       vertices?: Vector3[]
     }
   >
-  type MaterialNode<T, P> = Overwrite<
+  type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
+  type MaterialNode<T extends THREE.Material, P> = Overwrite<
     Node<T, P>,
     {
       color?: Color
@@ -85,12 +86,12 @@ declare global {
       cubeCamera: ReactThreeFiber.Object3DNode<THREE.CubeCamera, typeof THREE.CubeCamera>
       arrayCamera: ReactThreeFiber.Object3DNode<THREE.ArrayCamera, typeof THREE.ArrayCamera>
       geometry: ReactThreeFiber.GeometryNode<THREE.Geometry, typeof THREE.Geometry>
-      instancedBufferGeometry: ReactThreeFiber.GeometryNode<
+      instancedBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.InstancedBufferGeometry,
         typeof THREE.InstancedBufferGeometry
       >
-      bufferGeometry: ReactThreeFiber.GeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
-      wireframeGeometry: ReactThreeFiber.GeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
+      bufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
+      wireframeGeometry: ReactThreeFiber.BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
       parametricGeometry: ReactThreeFiber.GeometryNode<THREE.ParametricGeometry, typeof THREE.ParametricGeometry>
       tetrahedronGeometry: ReactThreeFiber.GeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
       octahedronGeometry: ReactThreeFiber.GeometryNode<THREE.OctahedronGeometry, typeof THREE.OctahedronGeometry>
@@ -107,7 +108,7 @@ declare global {
       latheGeometry: ReactThreeFiber.GeometryNode<THREE.LatheGeometry, typeof THREE.LatheGeometry>
       shapeGeometry: ReactThreeFiber.GeometryNode<THREE.ShapeGeometry, typeof THREE.ShapeGeometry>
       extrudeGeometry: ReactThreeFiber.GeometryNode<THREE.ExtrudeGeometry, typeof THREE.ExtrudeGeometry>
-      edgesGeometry: ReactThreeFiber.GeometryNode<THREE.EdgesGeometry, typeof THREE.EdgesGeometry>
+      edgesGeometry: ReactThreeFiber.BufferGeometryNode<THREE.EdgesGeometry, typeof THREE.EdgesGeometry>
       coneGeometry: ReactThreeFiber.GeometryNode<THREE.ConeGeometry, typeof THREE.ConeGeometry>
       cylinderGeometry: ReactThreeFiber.GeometryNode<THREE.CylinderGeometry, typeof THREE.CylinderGeometry>
       circleGeometry: ReactThreeFiber.GeometryNode<THREE.CircleGeometry, typeof THREE.CircleGeometry>
@@ -143,18 +144,15 @@ declare global {
       lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
       lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
       light: ReactThreeFiber.Object3DNode<THREE.Light, typeof THREE.Light>
-      spotLightShadow: ReactThreeFiber.Object3DNode<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
+      spotLightShadow: ReactThreeFiber.Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
       spotLight: ReactThreeFiber.Object3DNode<THREE.SpotLight, typeof THREE.SpotLight>
       pointLight: ReactThreeFiber.Object3DNode<THREE.PointLight, typeof THREE.PointLight>
       rectAreaLight: ReactThreeFiber.Object3DNode<THREE.RectAreaLight, typeof THREE.RectAreaLight>
       hemisphereLight: ReactThreeFiber.Object3DNode<THREE.HemisphereLight, typeof THREE.HemisphereLight>
-      directionalLightShadow: ReactThreeFiber.Object3DNode<
-        THREE.DirectionalLightShadow,
-        typeof THREE.DirectionalLightShadow
-      >
+      directionalLightShadow: ReactThreeFiber.Node<THREE.DirectionalLightShadow, typeof THREE.DirectionalLightShadow>
       directionalLight: ReactThreeFiber.Object3DNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
       ambientLight: ReactThreeFiber.Object3DNode<THREE.AmbientLight, typeof THREE.AmbientLight>
-      lightShadow: ReactThreeFiber.Object3DNode<THREE.LightShadow, typeof THREE.LightShadow>
+      lightShadow: ReactThreeFiber.Node<THREE.LightShadow, typeof THREE.LightShadow>
       ambientLightProbe: ReactThreeFiber.Object3DNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
       hemisphereLightProbe: ReactThreeFiber.Object3DNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
       lightProbe: ReactThreeFiber.Object3DNode<THREE.LightProbe, typeof THREE.LightProbe>
@@ -162,13 +160,13 @@ declare global {
       spotLightHelper: ReactThreeFiber.Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
       skeletonHelper: ReactThreeFiber.Object3DNode<THREE.SkeletonHelper, typeof THREE.SkeletonHelper>
       pointLightHelper: ReactThreeFiber.Object3DNode<THREE.PointLightHelper, typeof THREE.PointLightHelper>
-      rectAreaLightHelper: ReactThreeFiber.Object3DNode<THREE.RectAreaLightHelper, typeof THREE.RectAreaLightHelper>
+      rectAreaLightHelper: ReactThreeFiber.Node<THREE.RectAreaLightHelper, typeof THREE.RectAreaLightHelper>
       hemisphereLightHelper: ReactThreeFiber.Object3DNode<
         THREE.HemisphereLightHelper,
         typeof THREE.HemisphereLightHelper
       >
       gridHelper: ReactThreeFiber.Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
-      polarGridHelper: ReactThreeFiber.Object3DNode<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
+      polarGridHelper: ReactThreeFiber.Node<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
       positionalAudioHelper: ReactThreeFiber.Object3DNode<
         THREE.PositionalAudioHelper,
         typeof THREE.PositionalAudioHelper
@@ -180,7 +178,7 @@ declare global {
       >
       cameraHelper: ReactThreeFiber.Object3DNode<THREE.CameraHelper, typeof THREE.CameraHelper>
       boxHelper: ReactThreeFiber.Object3DNode<THREE.BoxHelper, typeof THREE.BoxHelper>
-      box3Helper: ReactThreeFiber.Object3DNode<THREE.Box3Helper, typeof THREE.Box3Helper>
+      box3Helper: ReactThreeFiber.Node<THREE.Box3Helper, typeof THREE.Box3Helper>
       planeHelper: ReactThreeFiber.Object3DNode<THREE.PlaneHelper, typeof THREE.PlaneHelper>
       arrowHelper: ReactThreeFiber.Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
       axesHelper: ReactThreeFiber.Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>

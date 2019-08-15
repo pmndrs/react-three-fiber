@@ -308,6 +308,7 @@ const Renderer = Reconciler({
   insertBefore,
   supportsMutation: true,
   isPrimaryRenderer: false,
+  // @ts-ignore
   schedulePassiveEffects: scheduleDeferredCallback,
   cancelPassiveEffects: cancelDeferredCallback,
   appendInitialChild: appendChild,
