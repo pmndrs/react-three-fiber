@@ -18,14 +18,6 @@ export declare type PointerEvent = DomEvent &
     stopPropagation: () => void
     sourceEvent: DomEvent
   }
-export declare type IntersectObject = Event &
-  Intersection & {
-    ray: THREE.Raycaster
-    stopped: {
-      current: boolean
-    }
-    uuid: string
-  }
 export declare type RenderCallback = (props: CanvasContext, timestamp: number) => void
 export declare type CanvasContext = {
   gl: THREE.WebGLRenderer
