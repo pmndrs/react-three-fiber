@@ -28,13 +28,6 @@ export type PointerEvent = DomEvent &
     sourceEvent: DomEvent
   }
 
-export type IntersectObject = Event &
-  Intersection & {
-    ray: THREE.Raycaster
-    stopped: { current: boolean }
-    uuid: string
-  }
-
 export type RenderCallback = (props: CanvasContext, timestamp: number) => void
 
 export type CanvasContext = {
@@ -96,6 +89,10 @@ function useMeasure(): Measure {
     return () => ro.disconnect()
   }, [ref.current])
   return [ref, bounds]
+}
+
+function makeId(event: THREE.Intersection) {
+  return event.object.uuid + '/' + event.index
 }
 
 export const Canvas = React.memo(
@@ -324,8 +321,9 @@ export const Canvas = React.memo(
       const intersects = defaultRaycaster
         .intersectObjects((state.current.scene as any).__interaction, true)
         .filter(item => {
-          if (seen.has(item.object.uuid)) return false
-          seen.add(item.object.uuid)
+          const id = makeId(item)
+          if (seen.has(id)) return false
+          seen.add(id)
           return true
         })
 
@@ -412,20 +410,22 @@ export const Canvas = React.memo(
         if (handlers.pointerMove) handlers.pointerMove(data)
         // Check if mouse enter or out is present
         if (handlers.pointerOver || handlers.pointerOut) {
-          const hoveredItem = hovered.get(object.uuid)
+          const id = makeId(data)
+          const hoveredItem = hovered.get(id)
           if (!hoveredItem) {
             // If the object wasn't previously hovered, book it and call its handler
-            hovered.set(object.uuid, data)
+            hovered.set(id, data)
             if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
           } else if (hoveredItem.stopped.current) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
             // In fact, wwe can safely remove them from the cache
             Array.from(hovered.values()).forEach(data => {
-              if (data.object.uuid !== object.uuid) {
+              const checkId = makeId(data)
+              if (checkId !== id) {
                 if ((data.object as any).__handlers.pointerOut)
                   (data.object as any).__handlers.pointerOut({ ...data, type: 'pointerout' })
-                hovered.delete(data.object.uuid)
+                hovered.delete(checkId)
               }
             })
           }
@@ -443,7 +443,7 @@ export const Canvas = React.memo(
           const object = data.object
           const handlers = (object as any).__handlers
           if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
-          hovered.delete(object.uuid)
+          hovered.delete(makeId(data))
         }
       })
     }, [])
