@@ -21,10 +21,6 @@ function Particles({ pointCount }) {
 
   const attrib = useRef()
   const hover = useCallback(e => {
-    console.log(e.index)
-    // TODO: it behaves weird when two points are close by, it doesn't seem to be able
-    // to raytrace multiple points which are displayed on top of one another
-    // this looks like a bug in the threejs points object ...
     e.stopPropagation()
     attrib.current.array[e.index * 3] = 1
     attrib.current.array[e.index * 3 + 1] = 1
