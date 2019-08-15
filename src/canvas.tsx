@@ -197,6 +197,15 @@ export const Canvas = React.memo(
     // This is used as a clone of the current state, to be distributed through context and useThree
     const sharedState = useRef(state.current)
 
+    // Writes locals into public state for distribution among subscribers, context, etc
+    useLayoutEffect(() => {
+      state.current.ready = ready
+      state.current.size = size
+      state.current.camera = defaultCam
+      state.current.invalidateFrameloop = invalidateFrameloop
+      state.current.vr = vr
+    }, [invalidateFrameloop, vr, ready, size, defaultCam])
+
     // Manage canvas element in the dom
     useLayoutEffect(() => {
       // Add canvas to the view
@@ -218,16 +227,6 @@ export const Canvas = React.memo(
         unmountComponentAtNode(state.current.scene)
       }
     }, [])
-
-    // Writes locals into public state for distribution among subscribers, context, etc
-    useLayoutEffect(() => {
-      state.current.ready = ready
-      state.current.size = size
-      state.current.camera = defaultCam
-      state.current.invalidateFrameloop = invalidateFrameloop
-      state.current.vr = vr
-      invalidate(state)
-    }, [invalidateFrameloop, vr, ready, size, defaultCam])
 
     // Adjusts default camera
     useLayoutEffect(() => {
