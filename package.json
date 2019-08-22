@@ -99,7 +99,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
-    "three": "^0.104.0",
+    "three": "^0.107.0",
     "typescript": "^3.5.3",
     "wait-on": "^3.2.0"
   }
