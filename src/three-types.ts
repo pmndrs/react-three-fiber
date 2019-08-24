@@ -100,6 +100,71 @@ declare global {
         typeof THREE.InstancedBufferGeometry
       >
       bufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
+      BoxBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
+      CircleBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.CircleBufferGeometry,
+        typeof THREE.CircleBufferGeometry
+      >
+      ConeBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
+      CylinderBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.CylinderBufferGeometry,
+        typeof THREE.CylinderBufferGeometry
+      >
+      DodecahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.DodecahedronBufferGeometry,
+        typeof THREE.DodecahedronBufferGeometry
+      >
+      ExtrudeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.ExtrudeBufferGeometry,
+        typeof THREE.ExtrudeBufferGeometry
+      >
+      IcosahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.IcosahedronBufferGeometry,
+        typeof THREE.IcosahedronBufferGeometry
+      >
+      latheBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.LatheBufferGeometry,
+        typeof THREE.LatheBufferGeometry
+      >
+      octahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.OctahedronBufferGeometry,
+        typeof THREE.OctahedronBufferGeometry
+      >
+      parametricBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.ParametricBufferGeometry,
+        typeof THREE.ParametricBufferGeometry
+      >
+      planeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.PlaneBufferGeometry,
+        typeof THREE.PlaneBufferGeometry
+      >
+      polyhedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.PolyhedronBufferGeometry,
+        typeof THREE.PolyhedronBufferGeometry
+      >
+      ringBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.RingBufferGeometry, typeof THREE.RingBufferGeometry>
+      shapeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.ShapeBufferGeometry,
+        typeof THREE.ShapeBufferGeometry
+      >
+      sphereBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.SphereBufferGeometry,
+        typeof THREE.SphereBufferGeometry
+      >
+      tetrahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.TetrahedronBufferGeometry,
+        typeof THREE.TetrahedronBufferGeometry
+      >
+      textBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.TextBufferGeometry, typeof THREE.TextBufferGeometry>
+      torusBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.TorusBufferGeometry,
+        typeof THREE.TorusBufferGeometry
+      >
+      torusKnotBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+        THREE.TorusKnotBufferGeometry,
+        typeof THREE.TorusKnotBufferGeometry
+      >
+      tubeBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.TubeBufferGeometry, typeof THREE.TubeBufferGeometry>
       wireframeGeometry: ReactThreeFiber.BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
       parametricGeometry: ReactThreeFiber.GeometryNode<THREE.ParametricGeometry, typeof THREE.ParametricGeometry>
       tetrahedronGeometry: ReactThreeFiber.GeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
@@ -112,10 +177,6 @@ declare global {
       torusGeometry: ReactThreeFiber.GeometryNode<THREE.TorusGeometry, typeof THREE.TorusGeometry>
       textGeometry: ReactThreeFiber.GeometryNode<THREE.TextGeometry, typeof THREE.TextGeometry>
       sphereGeometry: ReactThreeFiber.GeometryNode<THREE.SphereGeometry, typeof THREE.SphereGeometry>
-      sphereBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.SphereBufferGeometry,
-        typeof THREE.SphereBufferGeometry
-      >
       ringGeometry: ReactThreeFiber.GeometryNode<THREE.RingGeometry, typeof THREE.RingGeometry>
       planeGeometry: ReactThreeFiber.GeometryNode<THREE.PlaneGeometry, typeof THREE.PlaneGeometry>
       latheGeometry: ReactThreeFiber.GeometryNode<THREE.LatheGeometry, typeof THREE.LatheGeometry>
