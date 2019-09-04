@@ -220,6 +220,9 @@ declare global {
       lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
       lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
 
+      // primitive
+      primitive: { object: any } & { [properties: string]: any }
+
       // lights and other
       light: ReactThreeFiber.Object3DNode<THREE.Light, typeof THREE.Light>
       spotLightShadow: ReactThreeFiber.Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
