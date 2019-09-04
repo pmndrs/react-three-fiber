@@ -146,7 +146,6 @@ export const Canvas = React.memo(
 
     const [defaultRenderer] = useState(() => {
       const renderer = new THREE.WebGLRenderer({ canvas: defaultCanvas, antialias: true, alpha: true, ...gl })
-      if (pixelRatio) renderer.setPixelRatio(pixelRatio)
       renderer.setClearAlpha(0)
       return renderer
     })
@@ -224,6 +223,11 @@ export const Canvas = React.memo(
         unmountComponentAtNode(state.current.scene)
       }
     }, [])
+
+    // Update pixel ratio
+    useLayoutEffect(() => {
+      if (pixelRatio) defaultRenderer.setPixelRatio(pixelRatio)
+    }, [pixelRatio])
 
     // Adjusts default camera
     useLayoutEffect(() => {
