@@ -100,25 +100,25 @@ declare global {
         typeof THREE.InstancedBufferGeometry
       >
       bufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
-      BoxBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
-      CircleBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+      boxBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
+      circleBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.CircleBufferGeometry,
         typeof THREE.CircleBufferGeometry
       >
-      ConeBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
-      CylinderBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+      coneBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
+      cylinderBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.CylinderBufferGeometry,
         typeof THREE.CylinderBufferGeometry
       >
-      DodecahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+      dodecahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.DodecahedronBufferGeometry,
         typeof THREE.DodecahedronBufferGeometry
       >
-      ExtrudeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+      extrudeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.ExtrudeBufferGeometry,
         typeof THREE.ExtrudeBufferGeometry
       >
-      IcosahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
+      icosahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
         THREE.IcosahedronBufferGeometry,
         typeof THREE.IcosahedronBufferGeometry
       >
