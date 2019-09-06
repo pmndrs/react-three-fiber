@@ -1,2 +1,2 @@
-export * from '../../shared/index'
+export * from '../../index'
 export * from './canvas'

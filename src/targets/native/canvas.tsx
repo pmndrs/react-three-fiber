@@ -4,7 +4,7 @@ import { GLView } from 'expo-gl'
 import { LayoutChangeEvent, PixelRatio, ViewStyle } from 'react-native'
 import { Renderer } from 'expo-three'
 import { useEffect, useState } from 'react'
-import { CanvasContext, useCanvas } from '../../shared/canvas'
+import { CanvasContext, useCanvas } from '../../canvas'
 
 export type CanvasProps = {
   children: React.ReactNode

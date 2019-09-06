@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useLayoutEffect, useState } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasContext } from '../../shared/canvas'
+import { useCanvas, CanvasContext } from '../../canvas'
 
 export type CanvasProps = {
   children: React.ReactNode

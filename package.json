@@ -2,9 +2,9 @@
   "name": "react-three-fiber",
   "version": "2.4.3",
   "description": "React-fiber renderer for THREE.js",
-  "main": "web.cjs.js",
-  "module": "web.js",
-  "react-native": "native.js",
+  "main": "dist/web.cjs.js",
+  "module": "dist/web.js",
+  "react-native": "dist/native.js",
   "types": "types/index.d.ts",
   "sideEffects": false,
   "scripts": {
