@@ -1,5 +1,5 @@
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
-import { stateContext, CanvasContext, RenderCallback } from './canvas'
+import { CanvasContext, RenderCallback, stateContext } from './canvas'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>

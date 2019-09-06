@@ -2,8 +2,9 @@
   "name": "react-three-fiber",
   "version": "2.3.9",
   "description": "React-fiber renderer for THREE.js",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.js",
+  "main": "web.cjs.js",
+  "module": "web.js",
+  "react-native": "native.js",
   "types": "types/index.d.ts",
   "sideEffects": false,
   "scripts": {
@@ -46,6 +47,9 @@
     "threejs"
   ],
   "author": "Paul Henschel",
+  "contributors": [
+    "Birkir Gudjonsson <birkir.gudjonsson@gmail.com>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/drcmda/react-three-fiber/issues"
@@ -79,6 +83,7 @@
     "@babel/preset-typescript": "^7.3.3",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.9.1",
+    "@types/react-native": "^0.60.11",
     "@types/react-reconciler": "^0.18.0",
     "@types/scheduler": "^0.12.1",
     "babel-eslint": "^10.0.1",
@@ -88,11 +93,14 @@
     "eslint-config-prettier": "^4.2.0",
     "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-react-hooks": "^1.6.0",
+    "expo-gl": "^6.0.0",
+    "expo-three": "^5.0.0",
     "husky": "^2.1.0",
     "lint-staged": "^8.1.5",
     "prettier": "^1.18.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "react-native": "^0.60.5",
     "rollup": "^1.19.4",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^9.3.4",

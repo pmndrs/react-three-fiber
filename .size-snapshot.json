@@ -17,5 +17,43 @@
     "bundled": 33657,
     "minified": 15904,
     "gzipped": 5244
+  },
+  "dist/web.js": {
+    "bundled": 26350,
+    "minified": 12381,
+    "gzipped": 4520,
+    "treeshaked": {
+      "rollup": {
+        "code": 9263,
+        "import_statements": 655
+      },
+      "webpack": {
+        "code": 10870
+      }
+    }
+  },
+  "dist/web.cjs.js": {
+    "bundled": 28718,
+    "minified": 13811,
+    "gzipped": 4659
+  },
+  "dist/native.js": {
+    "bundled": 26459,
+    "minified": 12175,
+    "gzipped": 4470,
+    "treeshaked": {
+      "rollup": {
+        "code": 9188,
+        "import_statements": 688
+      },
+      "webpack": {
+        "code": 10775
+      }
+    }
+  },
+  "dist/native.cjs.js": {
+    "bundled": 28755,
+    "minified": 13539,
+    "gzipped": 4609
   }
 }

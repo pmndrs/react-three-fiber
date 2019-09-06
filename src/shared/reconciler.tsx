@@ -9,7 +9,7 @@ import {
 } from 'scheduler'
 
 import { CanvasContext } from './canvas'
-import { version } from './../package.json'
+import { version } from '../../package.json'
 
 export type GlobalRenderCallback = (timeStamp: number) => boolean
 
