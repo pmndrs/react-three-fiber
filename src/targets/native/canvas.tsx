@@ -24,8 +24,8 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
       onStartShouldSetPanResponder() {
         return true
       },
-      onStartShouldSetPanResponderCapture() {
-        pointerEvents.onGotPointerCapture()
+      onStartShouldSetPanResponderCapture(e) {
+        pointerEvents.onGotPointerCapture(e)
         return true
       },
       onMoveShouldSetPanResponder() {
@@ -37,12 +37,12 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
       onPanResponderTerminationRequest() {
         return true
       },
-      onPanResponderStart: e => pointerEvents.onPointerDown(),
-      onPanResponderMove: e => pointerEvents.onPointerMove(),
-      onPanResponderEnd: e => pointerEvents.onPointerUp(),
-      onPanResponderRelease: e => pointerEvents.onPointerLeave(),
-      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(),
-      onPanResponderReject: e => pointerEvents.onLostPointerCapture(),
+      onPanResponderStart: e => pointerEvents.onPointerDown(e),
+      onPanResponderMove: e => pointerEvents.onPointerMove(e),
+      onPanResponderEnd: e => pointerEvents.onPointerUp(e),
+      onPanResponderRelease: e => pointerEvents.onPointerLeave(e),
+      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(e),
+      onPanResponderReject: e => pointerEvents.onLostPointerCapture(e),
     })
   )
 
