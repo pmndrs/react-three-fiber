@@ -66,6 +66,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   gl                            // Props that go into the default webGL-renderer
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
+  shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 

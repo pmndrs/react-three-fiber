@@ -61,6 +61,7 @@ export type CanvasContext = {
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
+  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
@@ -105,6 +106,7 @@ export const Canvas = React.memo(
     style,
     pixelRatio,
     vr = false,
+    shadowMap = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     onCreated,
@@ -147,6 +149,15 @@ export const Canvas = React.memo(
     const [defaultRenderer] = useState(() => {
       const renderer = new THREE.WebGLRenderer({ canvas: defaultCanvas, antialias: true, alpha: true, ...gl })
       renderer.setClearAlpha(0)
+      if (shadowMap) {
+        if (typeof shadowMap === 'object') {
+          renderer.shadowMap.enabled = true
+          Object.assign(renderer, shadowMap)
+        } else {
+          renderer.shadowMap.enabled = true
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        }
+      }
       return renderer
     })
 
