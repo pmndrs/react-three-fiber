@@ -57,6 +57,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
   useLayoutEffect(() => {
     if (!gl && size.width && size.height) {
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
+      renderer.setClearAlpha(0)
       setGl(renderer)
     }
   }, [size])
