@@ -1,6 +1,6 @@
 export * from './src/three-types'
 export * from './src/canvas'
-import { useRender, useThree, useUpdate, useResource } from './src/hooks'
+import { useRender, useThree, useUpdate, useResource, useLoader } from './src/hooks'
 import {
   addEffect,
   invalidate,
@@ -29,4 +29,5 @@ export {
   useThree,
   useUpdate,
   useResource,
+  useLoader,
 }
