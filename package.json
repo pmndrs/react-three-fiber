@@ -1,6 +1,6 @@
 {
   "name": "react-three-fiber",
-  "version": "2.3.9",
+  "version": "2.4.3",
   "description": "React-fiber renderer for THREE.js",
   "main": "web.cjs.js",
   "module": "web.js",

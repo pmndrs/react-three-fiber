@@ -5,7 +5,7 @@ const apply = (objects: object): void => {
   extend(objects)
 }
 
-export * from '../three-types'
+export * from './three-types'
 export * from './hooks'
 
 export { addEffect, invalidate, render, createPortal, unmountComponentAtNode, apply, extend, applyProps }

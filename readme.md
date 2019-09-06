@@ -66,6 +66,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   gl                            // Props that go into the default webGL-renderer
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
+  shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
@@ -303,7 +304,6 @@ return <bufferGeometry ref={ref} />
 
 #### useResource(optionalRef=undefined)
 
-
 Materials and such aren't normally re-created for every instance using it. You may want to share and re-use resources. This can be done imperatively simply by maintaining the object yourself, but it can also be done declaratively by using refs. `useResource` simply creates a ref and re-renders the component when it becomes available next frame. You can pass this reference on, or even channel it through a context provider.
 
 ```jsx
@@ -317,6 +317,27 @@ return (
     <mesh material={material} />
     <mesh material={material} />
   )}
+)
+```
+
+#### useLoader(loader, url, [extensions]) (experimental!)
+
+Loading objects in THREE is, again, imperative. If you want to write out a loaded object declaratively, where you get to lay events on objects, alter materials, etc, then useLoader will help you. It loads a file (which must be present somewhere in your static/public folder) and caches it. It returns an array of geometry/material pairs.
+
+```jsx
+import { useLoader } from 'react-three-fiber'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+
+const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
+  const dracoLoader = new DRACOLoader()
+  dracoLoader.setDecoderPath('/draco-gltf/')
+  loader.setDRACOLoader(dracoLoader)
+}))
+return model.map(({ geometry, material }) => (
+  <mesh key={geometry.uuid} geometry={geometry} castShadow>
+    <meshStandardMaterial attach="material" map={material.map} roughness={1} />
+  </mesh>
 )
 ```
 
@@ -338,7 +359,7 @@ import {
 
 ## Handling loaders
 
-You can use React's built-in memoizing-features (as well as suspense) to build async dependence graphs.
+You can use React's built-in memoizing-features (as well as suspense) to build async dependency graphs.
 
 ```jsx
 function Image({ url }) {
@@ -353,6 +374,8 @@ function Image({ url }) {
   )
 }
 ```
+
+Please also take a look at useLoader, it was made to make 3d-asset loading easier. 
 
 ## Dealing with effects (hijacking main render-loop)
 
@@ -379,6 +402,23 @@ function Effects({ factor }) {
     </effectComposer>
   )
 }
+```
+
+## Using your own camera rig
+
+```jsx
+function Camera(props) {
+  const ref = useRef()
+  const { setDefaultCamera } = useThree()
+  // This makes sure that size-related calculations are proper
+  // Every call to useThree will return this camera instead of the default camera 
+  useEffect(() => void setDefaultCamera(ref.current), [])
+  return <perspectiveCamera ref={camera} {...props} />
+}
+
+<Canvas>
+  <Camera position={[0, 0, 10]} />
+</Canvas>
 ```
 
 ## Heads-up display (rendering multiple scenes)

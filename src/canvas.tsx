@@ -57,6 +57,7 @@ type UseCanvasProps = {
   children: React.ReactNode
   browser?: boolean
   vr?: boolean
+  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
@@ -80,6 +81,7 @@ export const useCanvas = (props: UseCanvasProps) => {
     size,
     pixelRatio,
     vr = false,
+    shadowMap = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     onCreated,
@@ -210,6 +212,16 @@ export const useCanvas = (props: UseCanvasProps) => {
     if (ready && size.width) {
       if (gl) {
         gl.setSize(size.width, size.height)
+        gl.setClearAlpha(0)
+        if (shadowMap) {
+          if (typeof shadowMap === 'object') {
+            gl.shadowMap.enabled = true
+            Object.assign(gl, shadowMap)
+          } else {
+            gl.shadowMap.enabled = true
+            gl.shadowMap.type = THREE.PCFSoftShadowMap
+          }
+        }
       }
 
       /* https://github.com/drcmda/react-three-fiber/issues/92

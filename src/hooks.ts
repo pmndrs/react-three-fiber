@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
 import { CanvasContext, RenderCallback, stateContext } from './canvas'
 
@@ -22,10 +23,12 @@ export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = fals
   }, deps)
 }
 
+/** experimental */
 export function useFrame(fn: RenderCallback, deps: any[] = []): void {
   useRender(fn, false, deps)
 }
 
+/** experimental */
 export function useGl(fn: RenderCallback, deps: any[] = []): void {
   useRender(fn, true, deps)
 }
@@ -60,4 +63,36 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): [React.
   const ref = optionalRef ? optionalRef : localRef
   useEffect(() => void set(ref.current), [ref.current])
   return [ref, resource]
+}
+
+type Content = {
+  geometry: THREE.Geometry | THREE.BufferGeometry
+  material: THREE.Material | THREE.Material[]
+}
+
+type Extensions = (loader: THREE.Loader) => void
+
+/** experimental */
+export function useLoader(proto: THREE.Loader, url: string, extensions: Extensions): Content[] {
+  const key = useMemo(() => ({}), [url])
+  const [cache] = useState(() => new WeakMap())
+  const loader = useMemo(() => {
+    const temp = new (proto as any)()
+    if (extensions) extensions(temp)
+    return temp
+  }, [proto])
+  const [_, forceUpdate] = useState(false)
+  useEffect(() => {
+    if (!cache.has(key)) {
+      loader.load(url, (gltf: any) => {
+        const temp: Content[] = []
+        gltf.scene.traverse(
+          (obj: THREE.Mesh) => obj.isMesh && temp.push({ geometry: obj.geometry, material: obj.material })
+        )
+        cache.set(key, temp)
+        forceUpdate(i => !i)
+      })
+    }
+  }, [proto, key])
+  return cache.get(key) || []
 }
