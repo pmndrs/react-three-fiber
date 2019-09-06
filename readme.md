@@ -303,7 +303,6 @@ return <bufferGeometry ref={ref} />
 
 #### useResource(optionalRef=undefined)
 
-
 Materials and such aren't normally re-created for every instance using it. You may want to share and re-use resources. This can be done imperatively simply by maintaining the object yourself, but it can also be done declaratively by using refs. `useResource` simply creates a ref and re-renders the component when it becomes available next frame. You can pass this reference on, or even channel it through a context provider.
 
 ```jsx
@@ -317,6 +316,22 @@ return (
     <mesh material={material} />
     <mesh material={material} />
   )}
+)
+```
+
+#### useLoader(loader, url) (experimental!)
+
+Loading objects in THREE is, again, imperative. If you want to write out a loaded object declaratively, where you get to lay events on objects, alter materials, etc, then useLoader will help you. It loads a file (which must be present somewhere in your static/public folder) and caches it. It returns an array of geometry/material pairs.
+
+```jsx
+import { useLoader } from 'react-three-fiber'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+
+const model = useLoader(GLTFLoader, '/spaceship.gltf')
+return model.map(({ geometry, material }) => (
+  <mesh key={geometry.uuid} geometry={geometry} castShadow>
+    <meshStandardMaterial attach="material" map={material.map} roughness={1} />
+  </mesh>
 )
 ```
 
