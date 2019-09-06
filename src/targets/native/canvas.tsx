@@ -1,40 +1,50 @@
-import * as THREE from 'three'
 import * as React from 'react'
 import { GLView } from 'expo-gl'
-import { LayoutChangeEvent, PixelRatio, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, PixelRatio, ViewStyle, PanResponder } from 'react-native'
 import { Renderer } from 'expo-three'
 import { useEffect, useState } from 'react'
-import { CanvasContext, useCanvas } from '../../canvas'
+import { useCanvas, CanvasProps } from '../../canvas'
 
-export type CanvasProps = {
-  children: React.ReactNode
-  vr?: boolean
-  orthographic?: boolean
-  invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
-  gl?: Partial<THREE.WebGLRenderer>
-  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
-  raycaster?: Partial<THREE.Raycaster>
-  size: { width: number; height: number; top: number; left: number }
-  style?: ViewStyle
-  pixelRatio?: number
-  onCreated?: (props: CanvasContext) => Promise<any> | void
-  onPointerMissed?: () => void
-}
-
-export const Canvas = React.memo((props: CanvasProps) => {
+export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) => {
   const [gl, setGl] = useState()
   const [glContext, setGlContext] = useState()
 
   const [pixelRatio, setPixelRatio] = useState(props.pixelRatio || 1)
-  const [size, setSize] = useState(props.size || { width: 0, height: 0, top: 0, left: 0 })
+  const [size, setSize] = useState({ width: 0, height: 0, top: 0, left: 0 })
 
-  useCanvas({
+  const { pointerEvents } = useCanvas({
     ...props,
     size,
     pixelRatio,
     gl,
   })
+
+  const [panResponder] = useState(() =>
+    PanResponder.create({
+      onStartShouldSetPanResponder() {
+        return true
+      },
+      onStartShouldSetPanResponderCapture() {
+        pointerEvents.onGotPointerCapture()
+        return true
+      },
+      onMoveShouldSetPanResponder() {
+        return true
+      },
+      onMoveShouldSetPanResponderCapture() {
+        return true
+      },
+      onPanResponderTerminationRequest() {
+        return true
+      },
+      onPanResponderStart: e => pointerEvents.onPointerDown(),
+      onPanResponderMove: e => pointerEvents.onPointerMove(),
+      onPanResponderEnd: e => pointerEvents.onPointerUp(),
+      onPanResponderRelease: e => pointerEvents.onPointerLeave(),
+      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(),
+      onPanResponderReject: e => pointerEvents.onLostPointerCapture(),
+    })
+  )
 
   useEffect(() => {
     // Wait for ExpoGL Context and onLayout callback
@@ -59,9 +69,11 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   function onLayout(e: LayoutChangeEvent) {
     const { width, height, x, y } = e.nativeEvent.layout
-    if (!props.size) setSize({ width, height, top: y, left: x })
+    setSize({ width, height, top: y, left: x })
     if (!props.pixelRatio) setPixelRatio(PixelRatio.get())
   }
 
-  return <GLView onContextCreate={setGlContext} onLayout={onLayout} style={{ flex: 1 }} />
+  return (
+    <GLView {...panResponder} onContextCreate={setGlContext} onLayout={onLayout} style={{ flex: 1, ...props.style }} />
+  )
 })

@@ -32,6 +32,7 @@ export type RenderCallback = (props: CanvasContext, timestamp: number) => void
 
 export type CanvasContext = {
   gl?: THREE.WebGLRenderer
+  captured: Intersection[] | undefined
   ready: boolean
   manual: boolean
   vr: boolean
@@ -44,16 +45,43 @@ export type CanvasContext = {
   setManual: (takeOverRenderloop: boolean) => void
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
+  intersect: (event?: DomEvent) => void
   camera: Camera
   raycaster: THREE.Raycaster
+  mouse: THREE.Vector2
   scene: THREE.Scene
   size: { left: number; top: number; width: number; height: number }
   viewport: { width: number; height: number; factor: number }
+  initialClick: [number, number]
+  initialHits: THREE.Object3D[]
 }
 
-export const stateContext = createContext<CanvasContext>({} as CanvasContext)
+export type CanvasProps = {
+  children: React.ReactNode
+  vr?: boolean
+  orthographic?: boolean
+  invalidateFrameloop?: boolean
+  updateDefaultCamera?: boolean
+  gl?: Partial<THREE.WebGLRenderer>
+  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
+  raycaster?: Partial<THREE.Raycaster>
+  pixelRatio?: number
+  onCreated?: (props: CanvasContext) => Promise<any> | void
+  onPointerMissed?: () => void
+}
 
-type UseCanvasProps = {
+export type PointerEvents = {
+  onClick(e: any): void
+  onWheel(e: any): void
+  onPointerDown(e: any): void
+  onPointerUp(e: any): void
+  onPointerLeave(e: any): void
+  onPointerMove(e: any): void
+  onGotPointerCapture(e: any): void
+  onLostPointerCapture(e: any): void
+}
+
+export type UseCanvasProps = {
   children: React.ReactNode
   browser?: boolean
   vr?: boolean
@@ -71,7 +99,13 @@ type UseCanvasProps = {
   onPointerMissed?: () => void
 }
 
-export const useCanvas = (props: UseCanvasProps) => {
+function makeId(event: THREE.Intersection) {
+  return event.object.uuid + '/' + event.index
+}
+
+export const stateContext = createContext<CanvasContext>({} as CanvasContext)
+
+export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents } => {
   const {
     children,
     gl,
@@ -85,6 +119,7 @@ export const useCanvas = (props: UseCanvasProps) => {
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     onCreated,
+    onPointerMissed,
     browser,
   } = props
 
@@ -93,6 +128,7 @@ export const useCanvas = (props: UseCanvasProps) => {
 
   // Local, reactive state
   const [ready, setReady] = useState(false)
+  const [mouse] = useState(() => new THREE.Vector2())
 
   const [defaultRaycaster] = useState(() => {
     const ray = new THREE.Raycaster()
@@ -129,9 +165,14 @@ export const useCanvas = (props: UseCanvasProps) => {
     camera: defaultCam,
     scene: defaultScene,
     raycaster: defaultRaycaster,
+    mouse,
     gl,
+    captured: undefined,
     size: { left: 0, top: 0, width: 0, height: 0 },
     viewport: { width: 0, height: 0, factor: 0 },
+    initialClick: [0, 0],
+    initialHits: [],
+
     subscribe: (fn: RenderCallback) => {
       state.current.subscribers.push(fn)
       return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -146,6 +187,7 @@ export const useCanvas = (props: UseCanvasProps) => {
     },
     setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
     invalidate: () => invalidate(state),
+    intersect: (event?: DomEvent) => handlePointerMove(event || ({} as DomEvent)),
   })
 
   // This is used as a clone of the current state, to be distributed through context and useThree
@@ -273,4 +315,172 @@ export const useCanvas = (props: UseCanvasProps) => {
       isReadyPrepared = true
     }
   }, [gl, size])
+
+  /** Sets up defaultRaycaster */
+  const prepareRay = useCallback(event => {
+    // @todo pre-process this in platform-specific code
+    if (event.clientX !== void 0) {
+      // const canvasRect = state.current.canvasRect
+      // const left = (canvasRect && canvasRect.left) || 0
+      // const right = (canvasRect && canvasRect.right) || 0
+      // const top = (canvasRect && canvasRect.top) || 0
+      // const bottom = (canvasRect && canvasRect.bottom) || 0
+      // const x = ((event.clientX - left) / (right - left)) * 2 - 1
+      // const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
+      // mouse.set(x, y)
+      // defaultRaycaster.setFromCamera(mouse, state.current.camera)
+    }
+  }, [])
+
+  /** Intersects interaction objects using the event input */
+  const intersect = useCallback((event: DomEvent, prepare = true): Intersection[] => {
+    if (prepare) prepareRay(event)
+
+    const seen = new Set<string>()
+    const hits: Intersection[] = []
+
+    // Intersect known handler objects and filter against duplicates
+    const intersects = defaultRaycaster
+      .intersectObjects((state.current.scene as any).__interaction, true)
+      .filter(item => {
+        const id = makeId(item)
+        if (seen.has(id)) return false
+        seen.add(id)
+        return true
+      })
+
+    for (let intersect of intersects) {
+      let receivingObject = intersect.object
+      let object: THREE.Object3D | null = intersect.object
+      // Bubble event up
+      while (object) {
+        if ((object as any).__handlers) hits.push({ ...intersect, object, receivingObject })
+        object = object.parent
+      }
+    }
+    return hits
+  }, [])
+
+  /**  Handles intersections by forwarding them to handlers */
+  const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
+    prepareRay(event)
+    // If the interaction is captured, take the last known hit instead of raycasting again
+    const hits: Intersection[] =
+      state.current.captured && event.type !== 'click' && event.type !== 'wheel'
+        ? state.current.captured
+        : intersect(event, false)
+
+    if (hits.length) {
+      const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
+
+      for (let hit of hits) {
+        let stopped = { current: false }
+        fn({
+          ...event,
+          ...hit,
+          stopped,
+          unprojectedPoint,
+          ray: defaultRaycaster.ray,
+          // Hijack stopPropagation, which just sets a flag
+          stopPropagation: () => (stopped.current = true),
+          sourceEvent: event,
+        })
+        if (stopped.current === true) break
+      }
+    }
+    return hits
+  }, [])
+
+  const handlePointer = useCallback(
+    (name: string) => (event: DomEvent) => {
+      if (!state.current.ready) return
+      // Collect hits
+      const hits = handleIntersects(event, data => {
+        const object = data.object
+        const handlers = (object as any).__handlers
+        if (handlers && handlers[name]) {
+          // Forward all events back to their respective handlers with the exception of click,
+          // which must must the initial target
+          if (name !== 'click' || state.current.initialHits.includes(object)) handlers[name](data)
+        }
+      })
+      // If a click yields no results, pass it back to the user as a miss
+      if (name === 'pointerDown') {
+        state.current.initialClick = [event.clientX, event.clientY]
+        state.current.initialHits = hits.map(hit => hit.object)
+      }
+      if (name === 'click' && !hits.length && onPointerMissed) {
+        let dx = event.clientX - state.current.initialClick[0]
+        let dy = event.clientY - state.current.initialClick[1]
+        let distance = Math.round(Math.sqrt(dx * dx + dy * dy))
+        if (distance <= 2) onPointerMissed()
+      }
+    },
+    [onPointerMissed]
+  )
+
+  const hovered = new Map<string, PointerEvent>()
+  const handlePointerMove = useCallback((event: DomEvent) => {
+    if (!state.current.ready) return
+    const hits = handleIntersects(event, data => {
+      const object = data.object
+      const handlers = (object as any).__handlers
+      // Check presence of handlers
+      if (!handlers) return
+
+      // Call mouse move
+      if (handlers.pointerMove) handlers.pointerMove(data)
+      // Check if mouse enter or out is present
+      if (handlers.pointerOver || handlers.pointerOut) {
+        const id = makeId(data)
+        const hoveredItem = hovered.get(id)
+        if (!hoveredItem) {
+          // If the object wasn't previously hovered, book it and call its handler
+          hovered.set(id, data)
+          if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
+        } else if (hoveredItem.stopped.current) {
+          // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+          data.stopPropagation()
+          // In fact, wwe can safely remove them from the cache
+          Array.from(hovered.values()).forEach(data => {
+            const checkId = makeId(data)
+            if (checkId !== id) {
+              if ((data.object as any).__handlers.pointerOut)
+                (data.object as any).__handlers.pointerOut({ ...data, type: 'pointerout' })
+              hovered.delete(checkId)
+            }
+          })
+        }
+      }
+    })
+    // Take care of unhover
+    handlePointerCancel(event, hits)
+    return hits
+  }, [])
+
+  const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[]) => {
+    if (!hits) hits = handleIntersects(event, () => null)
+    Array.from(hovered.values()).forEach(data => {
+      if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
+        const object = data.object
+        const handlers = (object as any).__handlers
+        if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
+        hovered.delete(makeId(data))
+      }
+    })
+  }, [])
+
+  return {
+    pointerEvents: {
+      onClick: handlePointer('click'),
+      onWheel: handlePointer('wheel'),
+      onPointerDown: handlePointer('pointerDown'),
+      onPointerUp: handlePointer('pointerUp'),
+      onPointerLeave: (e: any) => handlePointerCancel(e, []),
+      onPointerMove: handlePointerMove,
+      onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
+      onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
+    },
+    // anything else we might want to return?
+  }
 }

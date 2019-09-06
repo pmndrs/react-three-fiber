@@ -2,22 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useLayoutEffect, useState } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasContext } from '../../canvas'
-
-export type CanvasProps = {
-  children: React.ReactNode
-  vr?: boolean
-  orthographic?: boolean
-  invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
-  gl?: Partial<THREE.WebGLRenderer>
-  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
-  raycaster?: Partial<THREE.Raycaster>
-  style?: React.CSSProperties
-  pixelRatio?: number
-  onCreated?: (props: CanvasContext) => Promise<any> | void
-  onPointerMissed?: () => void
-}
+import { useCanvas, CanvasProps } from '../../canvas'
 
 export type Measure = [
   React.MutableRefObject<HTMLDivElement | null>,
@@ -35,7 +20,7 @@ function useMeasure(): Measure {
   return [ref, bounds]
 }
 
-export const Canvas = React.memo((props: CanvasProps) => {
+export const Canvas = React.memo((props: CanvasProps & { style?: React.CSSProperties }) => {
   // Local, reactive state
   const [bind, size] = useMeasure()
   const [pixelRatio] = useState(props.pixelRatio)
@@ -62,7 +47,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
     }
   }, [size])
 
-  useCanvas({
+  const { pointerEvents } = useCanvas({
     ...props,
     browser: true,
     gl,
@@ -73,6 +58,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
   // Render the canvas into the dom
   return (
     <div
+      {...pointerEvents}
       ref={bind as React.MutableRefObject<HTMLDivElement>}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...props.style }}
     />
