@@ -358,7 +358,7 @@ import {
 
 ## Handling loaders
 
-You can use React's built-in memoizing-features (as well as suspense) to build async dependence graphs.
+You can use React's built-in memoizing-features (as well as suspense) to build async dependency graphs.
 
 ```jsx
 function Image({ url }) {
@@ -373,6 +373,8 @@ function Image({ url }) {
   )
 }
 ```
+
+Please also take a look at useLoader, it was made to make 3d-asset loading easier. 
 
 ## Dealing with effects (hijacking main render-loop)
 
@@ -399,6 +401,23 @@ function Effects({ factor }) {
     </effectComposer>
   )
 }
+```
+
+## Using your own camera rig
+
+```jsx
+function Camera(props) {
+  const ref = useRef()
+  const { setDefaultCamera } = useThree()
+  // This makes sure that size-related calculations are proper
+  // Every call to useThree will return this camera instead of the default camera 
+  useEffect(() => void setDefaultCamera(ref.current), [])
+  return <perspectiveCamera ref={camera} {...props} />
+}
+
+<Canvas>
+  <Camera position={[0, 0, 10]} />
+</Canvas>
 ```
 
 ## Heads-up display (rendering multiple scenes)
