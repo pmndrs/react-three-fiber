@@ -55,6 +55,7 @@ export const stateContext = createContext<CanvasContext>({} as CanvasContext)
 
 type UseCanvasProps = {
   children: React.ReactNode
+  browser?: boolean
   vr?: boolean
   orthographic?: boolean
   invalidateFrameloop?: boolean
@@ -82,7 +83,11 @@ export const useCanvas = (props: UseCanvasProps) => {
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     onCreated,
+    browser,
   } = props
+
+  const useLayoutEffect = browser ? React.useLayoutEffect : useEffect
+  let isReadyPrepared = false
 
   // Local, reactive state
   const [ready, setReady] = useState(false)
@@ -145,7 +150,7 @@ export const useCanvas = (props: UseCanvasProps) => {
   const sharedState = useRef(state.current)
 
   // Writes locals into public state for distribution among subscribers, context, etc
-  useEffect(() => {
+  useLayoutEffect(() => {
     state.current.ready = ready
     state.current.size = size
     state.current.camera = defaultCam
@@ -154,7 +159,7 @@ export const useCanvas = (props: UseCanvasProps) => {
     state.current.gl = gl
   }, [invalidateFrameloop, vr, ready, size, defaultCam, gl])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (gl) {
       // Start render-loop, either via RAF or setAnimationLoop for VR
       if (!state.current.vr) {
@@ -169,7 +174,7 @@ export const useCanvas = (props: UseCanvasProps) => {
   }, [gl])
 
   // Manage renderer
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Dispose renderer on unmount
     return () => {
       if (gl) {
@@ -183,12 +188,12 @@ export const useCanvas = (props: UseCanvasProps) => {
   }, [])
 
   // Update pixel ratio
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (pixelRatio && gl) gl.setPixelRatio(pixelRatio)
   }, [pixelRatio, gl])
 
   // Adjusts default camera
-  useEffect(() => {
+  useLayoutEffect(() => {
     state.current.aspect = size.width / size.height || 0
 
     if (isOrthographicCamera(state.current.camera)) {
@@ -202,7 +207,7 @@ export const useCanvas = (props: UseCanvasProps) => {
       state.current.viewport = { width, height, factor: size.width / width }
     }
 
-    if (ready) {
+    if (ready && size.width) {
       if (gl) {
         gl.setSize(size.width, size.height)
       }
@@ -243,8 +248,8 @@ export const useCanvas = (props: UseCanvasProps) => {
   }, [])
 
   // Render v-dom into scene
-  useEffect(() => {
-    if (size.width && size.height) {
+  useLayoutEffect(() => {
+    if (!isReadyPrepared && gl && size.width && size.height) {
       render(
         <stateContext.Provider value={sharedState.current}>
           <IsReady />
@@ -253,6 +258,7 @@ export const useCanvas = (props: UseCanvasProps) => {
         state.current.scene,
         state
       )
+      isReadyPrepared = true
     }
-  }, [gl])
+  }, [gl, size])
 }

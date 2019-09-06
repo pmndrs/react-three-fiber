@@ -24,8 +24,6 @@ export type Measure = [
   { left: number; top: number; width: number; height: number }
 ]
 
-export const stateContext = React.createContext<CanvasContext>({} as CanvasContext)
-
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>(null)
   const [bounds, set] = useState({ left: 0, top: 0, width: 0, height: 0 })
@@ -40,7 +38,7 @@ function useMeasure(): Measure {
 export const Canvas = React.memo((props: CanvasProps) => {
   // Local, reactive state
   const [bind, size] = useMeasure()
-  const [pixelRatio] = useState(props.pixelRatio || 1)
+  const [pixelRatio] = useState(props.pixelRatio)
 
   const [canvas] = useState(() => {
     const element = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas')
@@ -48,11 +46,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
     return element as HTMLCanvasElement
   })
 
-  const [gl] = useState(() => {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
-    renderer.setClearAlpha(0)
-    return renderer
-  })
+  const [gl, setGl] = useState()
 
   // Manage canvas element in the dom
   useLayoutEffect(() => {
@@ -60,8 +54,16 @@ export const Canvas = React.memo((props: CanvasProps) => {
     if (bind.current) bind.current.appendChild(canvas)
   }, [])
 
+  useLayoutEffect(() => {
+    if (!gl && size.width && size.height) {
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
+      setGl(renderer)
+    }
+  }, [size])
+
   useCanvas({
     ...props,
+    browser: true,
     gl,
     size,
     pixelRatio,

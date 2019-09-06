@@ -1,7 +1,6 @@
 import React, { useRef } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import * as RTF from './lib/native'
-
+import { useRender, Canvas } from 'react-three-fiber'
 ;(window as any).performance = {
   clearMarks() {},
   measure() {},
@@ -11,7 +10,7 @@ import * as RTF from './lib/native'
 
 function Box() {
   const box = useRef()
-  RTF.useRender(state => {
+  useRender(state => {
     if (box.current) {
       box.current.rotation.x += 0.01
       box.current.rotation.y += 0.02
@@ -26,14 +25,13 @@ function Box() {
 }
 
 export default function App() {
-  console.log({ RTF })
   return (
     <View style={styles.container}>
-      <RTF.Canvas>
+      <Canvas>
         <ambientLight intensity={1} />
         <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
         <Box />
-      </RTF.Canvas>
+      </Canvas>
     </View>
   )
 }
