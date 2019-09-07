@@ -584,3 +584,27 @@ render((
 Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
 
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
+
+
+## Usage with React Native
+
+We can leverage Expo's excellent WebGL port to React Native and use react-three-fiber as the renderer.
+
+<img src="https://i.imgur.com/zx0Rnzz.png" width="280" />
+
+#### Quick Start
+
+```bash
+expo init myapp
+cd myapp
+yarn add expo-gl expo-three three@0.105.0 react-three-fiber
+yarn start
+```
+
+_three@0.105.0 is the only recent version that includes required files for expo-three_
+
+#### Limitations
+
+The `onClick` and `onWheel` will not be triggered, react-three-fiber uses PanResponder in the background to detect touches and presses.
+
+Be aware that performance is limited compared to ThreeJS in the browser.

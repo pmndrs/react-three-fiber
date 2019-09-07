@@ -1,9 +1,15 @@
 import * as React from 'react'
 import { GLView } from 'expo-gl'
-import { LayoutChangeEvent, PixelRatio, ViewStyle, PanResponder } from 'react-native'
+import { LayoutChangeEvent, PixelRatio, ViewStyle, PanResponder, GestureResponderEvent } from 'react-native'
 import { Renderer } from 'expo-three'
 import { useEffect, useState } from 'react'
 import { useCanvas, CanvasProps } from '../../canvas'
+
+function clientXY(e: GestureResponderEvent) {
+  ;(e as any).clientX = e.nativeEvent.pageX
+  ;(e as any).clientY = e.nativeEvent.pageY
+  return e
+}
 
 export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) => {
   const [gl, setGl] = useState()
@@ -25,7 +31,7 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
         return true
       },
       onStartShouldSetPanResponderCapture(e) {
-        pointerEvents.onGotPointerCapture(e)
+        pointerEvents.onGotPointerCapture(clientXY(e))
         return true
       },
       onMoveShouldSetPanResponder() {
@@ -37,12 +43,12 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
       onPanResponderTerminationRequest() {
         return true
       },
-      onPanResponderStart: e => pointerEvents.onPointerDown(e),
-      onPanResponderMove: e => pointerEvents.onPointerMove(e),
-      onPanResponderEnd: e => pointerEvents.onPointerUp(e),
-      onPanResponderRelease: e => pointerEvents.onPointerLeave(e),
-      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(e),
-      onPanResponderReject: e => pointerEvents.onLostPointerCapture(e),
+      onPanResponderStart: e => pointerEvents.onPointerDown(clientXY(e)),
+      onPanResponderMove: e => pointerEvents.onPointerMove(clientXY(e)),
+      onPanResponderEnd: e => pointerEvents.onPointerUp(clientXY(e)),
+      onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
+      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(clientXY(e)),
+      onPanResponderReject: e => pointerEvents.onLostPointerCapture(clientXY(e)),
     })
   )
 
@@ -74,6 +80,11 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
   }
 
   return (
-    <GLView {...panResponder} onContextCreate={setGlContext} onLayout={onLayout} style={{ flex: 1, ...props.style }} />
+    <GLView
+      {...panResponder.panHandlers}
+      onContextCreate={setGlContext}
+      onLayout={onLayout}
+      style={{ flex: 1, ...props.style }}
+    />
   )
 })

@@ -2,10 +2,10 @@
   "name": "react-three-fiber",
   "version": "2.4.3",
   "description": "React-fiber renderer for THREE.js",
-  "main": "dist/web.cjs.js",
-  "module": "dist/web.js",
-  "react-native": "dist/native.js",
-  "types": "types/index.d.ts",
+  "main": "./dist/web.cjs.js",
+  "module": "./dist/web.js",
+  "react-native": "./dist/native.js",
+  "types": "./types/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
@@ -69,6 +69,11 @@
     "react-dom": ">=16.9",
     "three": ">=0.107"
   },
+  "optionalDependencies": {
+    "expo-gl": ">=6.0.0",
+    "expo-three": ">=5.0.0",
+    "react-native": ">=0.60.0"
+  },
   "devDependencies": {
     "@babel/core": "7.4.4",
     "@babel/plugin-proposal-class-properties": "7.4.4",
@@ -93,14 +98,11 @@
     "eslint-config-prettier": "^4.2.0",
     "eslint-plugin-import": "^2.17.2",
     "eslint-plugin-react-hooks": "^1.6.0",
-    "expo-gl": "^6.0.0",
-    "expo-three": "^5.0.0",
     "husky": "^2.1.0",
     "lint-staged": "^8.1.5",
     "prettier": "^1.18.2",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
-    "react-native": "^0.60.5",
     "rollup": "^1.19.4",
     "rollup-plugin-babel": "^4.3.2",
     "rollup-plugin-commonjs": "^9.3.4",

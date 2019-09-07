@@ -318,17 +318,15 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
-    // @todo pre-process this in platform-specific code
     if (event.clientX !== void 0) {
-      // const canvasRect = state.current.canvasRect
-      // const left = (canvasRect && canvasRect.left) || 0
-      // const right = (canvasRect && canvasRect.right) || 0
-      // const top = (canvasRect && canvasRect.top) || 0
-      // const bottom = (canvasRect && canvasRect.bottom) || 0
-      // const x = ((event.clientX - left) / (right - left)) * 2 - 1
-      // const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
-      // mouse.set(x, y)
-      // defaultRaycaster.setFromCamera(mouse, state.current.camera)
+      const left = state.current.size.left || 0
+      const right = left + state.current.size.width || 0
+      const top = size.top || 0
+      const bottom = top + state.current.size.height || 0
+      const x = ((event.clientX - left) / (right - left)) * 2 - 1
+      const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
+      mouse.set(x, y)
+      defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
 
