@@ -33,12 +33,6 @@ export const Canvas = React.memo((props: CanvasProps & { style?: React.CSSProper
 
   const [gl, setGl] = useState()
 
-  // Manage canvas element in the dom
-  useLayoutEffect(() => {
-    // Add canvas to the view
-    if (bind.current) bind.current.appendChild(canvas)
-  }, [])
-
   useLayoutEffect(() => {
     if (!gl && size.width && size.height) {
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
@@ -46,6 +40,12 @@ export const Canvas = React.memo((props: CanvasProps & { style?: React.CSSProper
       setGl(renderer)
     }
   }, [size])
+
+  // Manage canvas element in the dom
+  useLayoutEffect(() => {
+    // Add canvas to the view
+    if (bind.current) bind.current.appendChild(canvas)
+  }, [])
 
   const { pointerEvents } = useCanvas({
     ...props,

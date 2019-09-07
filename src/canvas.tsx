@@ -124,7 +124,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   } = props
 
   const useLayoutEffect = browser ? React.useLayoutEffect : useEffect
-  let isReadyPrepared = false
 
   // Local, reactive state
   const [ready, setReady] = useState(false)
@@ -218,7 +217,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   }, [gl])
 
   // Manage renderer
-  useLayoutEffect(() => {
+  useEffect(() => {
     // Dispose renderer on unmount
     return () => {
       if (gl) {
@@ -251,7 +250,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       state.current.viewport = { width, height, factor: size.width / width }
     }
 
-    if (ready && size.width) {
+    if (ready) {
       if (gl) {
         gl.setSize(size.width, size.height)
         gl.setClearAlpha(0)
@@ -303,7 +302,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   // Render v-dom into scene
   useLayoutEffect(() => {
-    if (!isReadyPrepared && gl && size.width && size.height) {
+    if (gl && size.width && size.height) {
       render(
         <stateContext.Provider value={sharedState.current}>
           <IsReady />
@@ -312,7 +311,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         state.current.scene,
         state
       )
-      isReadyPrepared = true
     }
   }, [gl, size])
 
