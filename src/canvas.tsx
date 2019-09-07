@@ -312,7 +312,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         state
       )
     }
-  }, [gl, size])
+  })
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
