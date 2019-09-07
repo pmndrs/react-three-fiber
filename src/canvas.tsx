@@ -277,6 +277,8 @@ export const Canvas = React.memo(
           state.current.camera.updateProjectionMatrix()
         }
         invalidate(state)
+        //Must render once more for resizing events to prevent flicker
+        defaultRenderer.render(defaultScene, defaultCam)
       }
       // Only trigger the context provider when necessary
       sharedState.current = { ...state.current }
