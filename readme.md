@@ -594,7 +594,7 @@ You can leverage Expo's excellent WebGL port to react-native and use react-three
 ```bash
 expo init myapp
 cd myapp
-yarn add expo-gl expo-three three@0.105.0 react-three-fiber
+yarn add expo-gl expo-three three@0.105.0 react-three-fiber@beta
 yarn start
 ```
 
