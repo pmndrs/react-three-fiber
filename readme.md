@@ -588,11 +588,7 @@ Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
 ## Usage with React Native
 
-We can leverage Expo's excellent WebGL port to React Native and use react-three-fiber as the renderer.
-
-<img src="https://i.imgur.com/zx0Rnzz.png" width="280" />
-
-#### Quick Start
+You can leverage Expo's excellent WebGL port to react-native and use react-three-fiber as the renderer.
 
 ```bash
 expo init myapp
