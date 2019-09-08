@@ -587,7 +587,7 @@ Three is a heavy-weight, and althought it is modular tree-shaking may not be suf
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
 
-## Usage with React Native
+## Usage with React Native (beta)
 
 You can leverage Expo's excellent WebGL port to react-native and use react-three-fiber as the renderer.
 
@@ -598,9 +598,9 @@ yarn add expo-gl expo-three three@0.105.0 react-three-fiber
 yarn start
 ```
 
-_three@0.105.0 is the only recent version that includes required files for expo-three_
-
 #### Limitations
+
+three@0.105.0 is the only recent version that includes required files for expo-three
 
 The `onClick` and `onWheel` will not be triggered, react-three-fiber uses PanResponder in the background to detect touches and presses.
 
