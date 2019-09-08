@@ -220,9 +220,9 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   useEffect(() => {
     // Dispose renderer on unmount
     return () => {
-      if (gl) {
-        gl.forceContextLoss!()
-        gl.dispose!()
+      if (state.current.gl) {
+        state.current.gl.forceContextLoss!()
+        state.current.gl.dispose!()
         ;(state.current as any).gl = undefined
         state.current.active = false
         unmountComponentAtNode(state.current.scene)
