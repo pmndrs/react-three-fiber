@@ -47,15 +47,21 @@ export const Canvas = React.memo((props: CanvasProps & NativeCanvasProps) => {
         return true
       },
       onPanResponderStart: e => {
-        context.controls && context.controls.onTouchStart(e.nativeEvent)
+        if (context.controls && context.controls.onTouchStart) {
+          context.controls.onTouchStart(e.nativeEvent)
+        }
         pointerEvents.onPointerDown(clientXY(e))
       },
       onPanResponderMove: e => {
-        context.controls && context.controls.onTouchMove(e.nativeEvent)
+        if (context.controls && context.controls.onTouchMove) {
+          context.controls && context.controls.onTouchMove(e.nativeEvent)
+        }
         pointerEvents.onPointerMove(clientXY(e))
       },
       onPanResponderEnd: e => {
-        context.controls && context.controls.onTouchEnd(e.nativeEvent)
+        if (context.controls && context.controls.onTouchEnd) {
+          context.controls && context.controls.onTouchEnd(e.nativeEvent)
+        }
         pointerEvents.onPointerUp(clientXY(e))
       },
       onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
