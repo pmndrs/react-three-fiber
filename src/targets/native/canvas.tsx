@@ -55,6 +55,9 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
   useEffect(() => {
     // Wait for ExpoGL Context and onLayout callback
     if (!gl && glContext && pixelRatio && size.width && size.height) {
+      // https://github.com/expo/expo-three/issues/38
+      glContext.createRenderbuffer = () => ({})
+
       const renderer = new Renderer({
         gl: glContext,
         width: size.width / pixelRatio,
