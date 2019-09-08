@@ -1,7 +1,6 @@
 import path from 'path'
 import babel from 'rollup-plugin-babel'
 import resolve from 'rollup-plugin-node-resolve'
-import commonjs from 'rollup-plugin-commonjs'
 import json from 'rollup-plugin-json'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
@@ -30,22 +29,23 @@ const getBabelOptions = ({ useESModules }, targets) => ({
 function createConfig(entry, out) {
   return [
     {
-      input: entry,
+      input: `./src/${entry}/index`,
       output: { file: `dist/${out}.js`, format: 'esm' },
       external,
       plugins: [
         json(),
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
+        sizeSnapshot(),
         resolve({ extensions }),
       ],
     },
     {
-      input: entry,
+      input: `./src/${entry}/index`,
       output: { file: `dist/${out}.cjs.js`, format: 'cjs' },
       external,
-      plugins: [json(), babel(getBabelOptions({ useESModules: false })), resolve({ extensions })],
+      plugins: [json(), babel(getBabelOptions({ useESModules: false })), sizeSnapshot(), resolve({ extensions })],
     },
   ]
 }
 
-export default [...createConfig('index.ts', 'index')]
+export default [...createConfig('targets/web', 'web'), ...createConfig('targets/native', 'native')]
