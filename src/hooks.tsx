@@ -73,7 +73,7 @@ type Content = {
 type Extensions = (loader: THREE.Loader) => void
 
 /** experimental */
-export function useLoader(proto: THREE.Loader, url: string, extensions: Extensions): Content[] {
+export function useLoader(proto: THREE.Loader, url: string, extensions?: Extensions): Content[] {
   const key = useMemo(() => ({}), [url])
   const [cache] = useState(() => new WeakMap())
   const loader = useMemo(() => {
