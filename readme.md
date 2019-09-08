@@ -1,4 +1,6 @@
 <p align="center">
+  <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="172" src="https://i.imgur.com/1atWRR3.gif" /></a>
+  <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="172" src="https://i.imgur.com/8xpKFkN.gif" /></a>
   <a href="https://codesandbox.io/embed/387z7o2zrq"><img width="288" height="172" src="https://i.imgur.com/YewcWL5.gif" /></a>
   <a href="https://codesandbox.io/embed/m7q0r29nn9"><img width="288" height="172" src="https://i.imgur.com/LDddjjC.gif" /></a>
   <a href="https://codesandbox.io/embed/jz9l97qn89"><img width="288" height="172" src="https://i.imgur.com/zrhe5Jc.gif" /></a>
@@ -6,7 +8,6 @@
   <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="288" height="172" src="https://i.imgur.com/vjmDwpS.gif" /></a>
   <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="288" height="172" src="https://i.imgur.com/tQi753C.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="288" height="172" src="https://i.imgur.com/iFtjKHM.gif" /></a>
-  <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="172" src="https://i.imgur.com/8xpKFkN.gif" /></a>
 </p>
 <p align="middle">
   <i>These demos are real, you can click them! They contain the full code, too.</i>
@@ -584,3 +585,23 @@ render((
 Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
 
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
+
+
+## Usage with React Native
+
+You can leverage Expo's excellent WebGL port to react-native and use react-three-fiber as the renderer.
+
+```bash
+expo init myapp
+cd myapp
+yarn add expo-gl expo-three three@0.105.0 react-three-fiber
+yarn start
+```
+
+_three@0.105.0 is the only recent version that includes required files for expo-three_
+
+#### Limitations
+
+The `onClick` and `onWheel` will not be triggered, react-three-fiber uses PanResponder in the background to detect touches and presses.
+
+Be aware that performance is limited compared to ThreeJS in the browser.
