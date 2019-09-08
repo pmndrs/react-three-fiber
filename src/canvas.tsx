@@ -54,6 +54,8 @@ export type CanvasContext = {
   viewport: { width: number; height: number; factor: number }
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
+  controls?: any
+  setControls(controls: any): void
 }
 
 export type CanvasProps = {
@@ -99,13 +101,18 @@ export type UseCanvasProps = {
   onPointerMissed?: () => void
 }
 
+type CanvasResult = {
+  pointerEvents: PointerEvents
+  context: CanvasContext
+}
+
 function makeId(event: THREE.Intersection) {
   return event.object.uuid + '/' + event.index
 }
 
 export const stateContext = createContext<CanvasContext>({} as CanvasContext)
 
-export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents } => {
+export const useCanvas = (props: UseCanvasProps): CanvasResult => {
   const {
     children,
     gl,
@@ -171,7 +178,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
-
+    setControls: controls => void (state.current.controls = controls),
     subscribe: (fn: RenderCallback) => {
       state.current.subscribers.push(fn)
       return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
@@ -467,6 +474,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   }, [])
 
   return {
+    context: state.current,
     pointerEvents: {
       onClick: handlePointer('click'),
       onWheel: handlePointer('wheel'),

@@ -11,14 +11,17 @@ function clientXY(e: GestureResponderEvent) {
   return e
 }
 
-export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) => {
+type NativeCanvasProps = {
+  style?: ViewStyle
+}
+
+export const Canvas = React.memo((props: CanvasProps & NativeCanvasProps) => {
   const [gl, setGl] = useState()
   const [glContext, setGlContext] = useState()
-
   const [pixelRatio, setPixelRatio] = useState(props.pixelRatio || 1)
   const [size, setSize] = useState({ width: 0, height: 0, top: 0, left: 0 })
 
-  const { pointerEvents } = useCanvas({
+  const { pointerEvents, context } = useCanvas({
     ...props,
     size,
     pixelRatio,
@@ -43,9 +46,18 @@ export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) =>
       onPanResponderTerminationRequest() {
         return true
       },
-      onPanResponderStart: e => pointerEvents.onPointerDown(clientXY(e)),
-      onPanResponderMove: e => pointerEvents.onPointerMove(clientXY(e)),
-      onPanResponderEnd: e => pointerEvents.onPointerUp(clientXY(e)),
+      onPanResponderStart: e => {
+        context.controls && context.controls.onTouchStart(e.nativeEvent)
+        pointerEvents.onPointerDown(clientXY(e))
+      },
+      onPanResponderMove: e => {
+        context.controls && context.controls.onTouchMove(e.nativeEvent)
+        pointerEvents.onPointerMove(clientXY(e))
+      },
+      onPanResponderEnd: e => {
+        context.controls && context.controls.onTouchEnd(e.nativeEvent)
+        pointerEvents.onPointerUp(clientXY(e))
+      },
       onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
       onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(clientXY(e)),
       onPanResponderReject: e => pointerEvents.onLostPointerCapture(clientXY(e)),
