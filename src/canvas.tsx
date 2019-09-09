@@ -66,6 +66,7 @@ export type CanvasProps = {
   camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
   raycaster?: Partial<THREE.Raycaster>
   pixelRatio?: number
+  style?: React.CSSProperties
   onCreated?: (props: CanvasContext) => Promise<any> | void
   onPointerMissed?: () => void
 }
@@ -104,6 +105,8 @@ function makeId(event: THREE.Intersection) {
 }
 
 export const stateContext = createContext<CanvasContext>({} as CanvasContext)
+
+export const Canvas = (props: CanvasProps): React.ReactNode => null
 
 export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents } => {
   const {

@@ -11,7 +11,7 @@ function clientXY(e: GestureResponderEvent) {
   return e
 }
 
-export const Canvas = React.memo((props: CanvasProps & { style?: ViewStyle }) => {
+export const Canvas = React.memo((props: Omit<CanvasProps, 'style'> & { style?: ViewStyle }) => {
   const [gl, setGl] = useState()
   const [glContext, setGlContext] = useState()
 

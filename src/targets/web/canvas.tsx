@@ -20,7 +20,7 @@ function useMeasure(): Measure {
   return [ref, bounds]
 }
 
-export const Canvas = React.memo((props: CanvasProps & { style?: React.CSSProperties }) => {
+export const Canvas = React.memo((props: CanvasProps) => {
   // Local, reactive state
   const [bind, size] = useMeasure()
   const [pixelRatio] = useState(props.pixelRatio)
