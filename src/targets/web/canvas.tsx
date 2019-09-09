@@ -21,6 +21,12 @@ function useMeasure(): Measure {
 }
 
 export const Canvas = React.memo((props: CanvasProps) => {
+  // Allow Gatsby, Next and other server side apps to run.
+  // Will output styles to reduce flickering.
+  if (typeof window === 'undefined') {
+    return <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...props.style }} />
+  }
+
   // Local, reactive state
   const [bind, size] = useMeasure()
   const [pixelRatio] = useState(props.pixelRatio)
