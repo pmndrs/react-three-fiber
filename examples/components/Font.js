@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree, useResource } from 'react-three-fiber'
+import { apply, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import fontFile from '../resources/fonts/unknown'
 apply({ OrbitControls })
@@ -40,7 +40,7 @@ function Content() {
   const controls = useRef()
   const { size, setDefaultCamera } = useThree()
   useEffect(() => void setDefaultCamera(camera.current), [])
-  useRender(() => controls.current.update())
+  useFrame(() => controls.current.update())
   return (
     <>
       <perspectiveCamera

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useCallback, useState, useEffect, useRef } from 'react'
-import { extend, Canvas, useRender, useResource, useThree } from 'react-three-fiber'
+import { extend, Canvas, useFrame, useResource, useThree } from 'react-three-fiber'
 import { EffectComposer } from './../resources/postprocessing/EffectComposer'
 import { ShaderPass } from './../resources/postprocessing/ShaderPass'
 import { RenderPass } from './../resources/postprocessing/RenderPass'
@@ -18,7 +18,7 @@ function Particle({ geometry, material, mouse }) {
   let xFactor = -50 + Math.random() * 100
   let yFactor = -50 + Math.random() * 100
   let zFactor = -30 + Math.random() * 60
-  useRender(() => {
+  useFrame(() => {
     t += speed
     const a = Math.cos(t) + Math.sin(t * 1) / 10
     const b = Math.sin(t) + Math.cos(t * 2) / 10
@@ -39,7 +39,7 @@ function Swarm({ mouse }) {
   const [geometryRef, geometry] = useResource()
   const [materialRef, material] = useResource()
 
-  useRender(() => {
+  useFrame(() => {
     light.current.position.set(mouse.current[0] / 50, -mouse.current[1] / 50, 0)
   })
   return (
@@ -65,7 +65,7 @@ function Effect() {
   const composer = useRef()
   const { scene, gl, size, camera } = useThree()
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
+  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />
@@ -88,9 +88,10 @@ export default function App() {
     ({ clientX: x, clientY: y }) => (mouse.current = [x - window.innerWidth / 2, y - window.innerHeight / 2]),
     []
   )
+
   return (
     <div className="main" onMouseMove={onMouseMove}>
-      <Canvas style={{ background: '#272727' }} camera={{ fov: 75, position: [0, 0, 50] }}>
+      <Canvas style={{ background: '#272727' }} camera={{ fov: 75, position: [0, 0, 50] }} manual>
         <Swarm mouse={mouse} />
         <Effect />
       </Canvas>

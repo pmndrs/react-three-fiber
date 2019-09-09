@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useState, useCallback, createContext } from 'react'
+import { useRef, useEffect, useState, useCallback, createContext, useMemo } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -30,19 +30,10 @@ export type PointerEvent = DomEvent &
 
 export type RenderCallback = (props: CanvasContext, timestamp: number) => void
 
-export type CanvasContext = {
-  gl?: THREE.WebGLRenderer
-  captured: Intersection[] | undefined
-  ready: boolean
-  manual: boolean
-  vr: boolean
-  active: boolean
-  invalidateFrameloop: boolean
-  frames: number
+export type SharedCanvasContext = {
+  gl: THREE.WebGLRenderer
   aspect: number
-  subscribers: RenderCallback[]
-  subscribe: (callback: RenderCallback) => () => void
-  setManual: (takeOverRenderloop: boolean) => void
+  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
   setDefaultCamera: (camera: Camera) => void
   invalidate: () => void
   intersect: (event?: DomEvent) => void
@@ -52,6 +43,22 @@ export type CanvasContext = {
   scene: THREE.Scene
   size: { left: number; top: number; width: number; height: number }
   viewport: { width: number; height: number; factor: number }
+}
+
+export type Subscription = {
+  ref: React.MutableRefObject<RenderCallback>
+  priority: number
+}
+
+export type CanvasContext = SharedCanvasContext & {
+  captured: Intersection[] | undefined
+  ready: boolean
+  active: boolean
+  manual: number
+  vr: boolean
+  invalidateFrameloop: boolean
+  frames: number
+  subscribers: Subscription[]
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
 }
@@ -82,18 +89,29 @@ export type PointerEvents = {
   onLostPointerCapture(e: any): void
 }
 
+export interface RectReadOnly {
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+  readonly left: number
+}
+
 export type UseCanvasProps = {
   children: React.ReactNode
+  gl: THREE.WebGLRenderer
   browser?: boolean
   vr?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
-  gl?: THREE.WebGLRenderer
   camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
   raycaster?: Partial<THREE.Raycaster>
-  size: { width: number; height: number; top: number; left: number }
+  size: RectReadOnly
   style?: any
   pixelRatio?: number
   onCreated?: (props: CanvasContext) => Promise<any> | void
@@ -104,7 +122,7 @@ function makeId(event: THREE.Intersection) {
   return event.object.uuid + '/' + event.index
 }
 
-export const stateContext = createContext<CanvasContext>({} as CanvasContext)
+export const stateContext = createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
 export const Canvas = (props: CanvasProps): React.ReactNode => null
 
@@ -157,9 +175,9 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   // Public state
   const state: React.MutableRefObject<CanvasContext> = useRef<CanvasContext>({
     ready: false,
-    manual: false,
-    vr: false,
     active: true,
+    manual: 0,
+    vr,
     invalidateFrameloop: false,
     frames: 0,
     aspect: 0,
@@ -175,16 +193,21 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     initialClick: [0, 0],
     initialHits: [],
 
-    subscribe: (fn: RenderCallback) => {
-      state.current.subscribers.push(fn)
-      return () => (state.current.subscribers = state.current.subscribers.filter(s => s !== fn))
-    },
-    setManual: (takeOverRenderloop: boolean) => {
-      state.current.manual = takeOverRenderloop
-      if (takeOverRenderloop) {
-        // In manual mode items shouldn't really be part of the internal scene which has adverse effects
-        // on the camera being unable to update without explicit calls to updateMatrixWorl()
-        state.current.scene.children.forEach(child => state.current.scene.remove(child))
+    subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
+      // If this subscription was given a priority, it takes rendering into its own hands
+      // For that reason we switch off automatic rendering and increase the manual flag
+      // As long as this flag is positive (there could be multiple render subscription)
+      // ..there can be no internal rendering at all
+      if (priority) {
+        state.current.manual++
+      }
+
+      state.current.subscribers.push({ ref, priority: priority })
+      state.current.subscribers = state.current.subscribers.sort((a, b) => b.priority - a.priority)
+      return () => {
+        // Decrease manual flag if this subscription had a priority
+        if (priority) state.current.manual--
+        state.current.subscribers = state.current.subscribers.filter(s => s.ref !== ref)
       }
     },
     setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
@@ -192,8 +215,12 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     intersect: (event?: DomEvent) => handlePointerMove(event || ({} as DomEvent)),
   })
 
-  // This is used as a clone of the current state, to be distributed through context and useThree
-  const sharedState = useRef(state.current)
+  // In manual mode items shouldn't really be part of the internal scene which has adverse effects
+  // on the camera being unable to update without explicit calls to updateMatrixWorld()
+  // TODO: what the hell is this????
+  /*useLayoutEffect(() => {
+    if (manual) state.current.scene.children.forEach(child => state.current.scene.remove(child))
+  }, [manual])*/
 
   // Writes locals into public state for distribution among subscribers, context, etc
   useLayoutEffect(() => {
@@ -205,42 +232,41 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     state.current.gl = gl
   }, [invalidateFrameloop, vr, ready, size, defaultCam, gl])
 
-  useLayoutEffect(() => {
-    if (gl) {
-      // Start render-loop, either via RAF or setAnimationLoop for VR
-      if (!state.current.vr) {
-        invalidate(state)
-      } else {
-        gl.vr!.enabled = true
-        gl.setAnimationLoop!((t: number) => {
-          renderGl(state, t, 0, true)
-        })
-      }
-    }
-  }, [gl])
-
-  // Manage renderer
-  useEffect(() => {
-    // Dispose renderer on unmount
-    return () => {
+  // Dispose renderer on unmount
+  useEffect(
+    () => () => {
       if (state.current.gl) {
         state.current.gl.forceContextLoss!()
         state.current.gl.dispose!()
         ;(state.current as any).gl = undefined
-        state.current.active = false
         unmountComponentAtNode(state.current.scene)
+        state.current.active = false
       }
-    }
-  }, [])
+    },
+    []
+  )
 
   // Update pixel ratio
   useLayoutEffect(() => {
-    if (pixelRatio && gl) gl.setPixelRatio(pixelRatio)
-  }, [pixelRatio, gl])
+    if (pixelRatio) gl.setPixelRatio(pixelRatio)
+  }, [pixelRatio])
+
+  // Update shadowmap
+  useLayoutEffect(() => {
+    if (shadowMap) {
+      if (typeof shadowMap === 'object') {
+        gl.shadowMap.enabled = true
+        Object.assign(gl, shadowMap)
+      } else {
+        gl.shadowMap.enabled = true
+        gl.shadowMap.type = THREE.PCFSoftShadowMap
+      }
+    }
+  }, [shadowMap])
 
   // Adjusts default camera
   useLayoutEffect(() => {
-    state.current.aspect = size.width / size.height || 0
+    state.current.aspect = size.width / size.height
 
     if (isOrthographicCamera(state.current.camera)) {
       state.current.viewport = { width: size.width, height: size.height, factor: 1 }
@@ -253,46 +279,31 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       state.current.viewport = { width, height, factor: size.width / width }
     }
 
-    if (ready) {
-      if (gl) {
-        gl.setSize(size.width, size.height)
-        gl.setClearAlpha(0)
-        if (shadowMap) {
-          if (typeof shadowMap === 'object') {
-            gl.shadowMap.enabled = true
-            Object.assign(gl, shadowMap)
-          } else {
-            gl.shadowMap.enabled = true
-            gl.shadowMap.type = THREE.PCFSoftShadowMap
-          }
-        }
+    // #92 (https://github.com/drcmda/react-three-fiber/issues/92)
+    // Sometimes automatic default camera adjustment isn't wanted behaviour
+    if (updateDefaultCamera) {
+      if (isOrthographicCamera(state.current.camera)) {
+        state.current.camera.left = size.width / -2
+        state.current.camera.right = size.width / 2
+        state.current.camera.top = size.height / 2
+        state.current.camera.bottom = size.height / -2
+      } else {
+        state.current.camera.aspect = state.current.aspect
       }
-
-      /* https://github.com/drcmda/react-three-fiber/issues/92
-          Sometimes automatic default camera adjustment isn't wanted behaviour */
-      if (updateDefaultCamera) {
-        if (isOrthographicCamera(state.current.camera)) {
-          state.current.camera.left = size.width / -2
-          state.current.camera.right = size.width / 2
-          state.current.camera.top = size.height / 2
-          state.current.camera.bottom = size.height / -2
-        } else {
-          state.current.camera.aspect = state.current.aspect
-          // TODO: Why radius??
-          // state.current.camera.radius = (size.width + size.height) / 4
-        }
-        state.current.camera.updateProjectionMatrix()
-      }
-      invalidate(state)
+      state.current.camera.updateProjectionMatrix()
     }
-    // Only trigger the context provider when necessary
-    sharedState.current = { ...state.current }
-  }, [ready, size, defaultCam, updateDefaultCamera, gl])
+
+    gl.setSize(size.width, size.height)
+
+    console.log('  update cam', size.width)
+
+    if (ready) invalidate(state)
+  }, [size, updateDefaultCamera])
 
   // This component is a bridge into the three render context, when it gets rendererd
   // we know we are ready to compile shaders, call subscribers, etc
-  const IsReady = useCallback(() => {
-    const activate = useCallback(() => void (setReady(true), invalidate(state)), [])
+  const IsReady = useCallback(({ children }) => {
+    const activate = useCallback(() => setReady(true), [])
     useEffect(() => {
       if (onCreated) {
         const result = onCreated(state.current)
@@ -300,22 +311,53 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       }
       activate()
     }, [])
+
     return null
   }, [])
 
+  // Only trigger the context provider when necessary
+  const sharedState = useRef<SharedCanvasContext>()
+  useLayoutEffect(() => {
+    const {
+      ready,
+      manual,
+      vr,
+      invalidateFrameloop,
+      frames,
+      subscribers,
+      captured,
+      initialClick,
+      initialHits,
+      ...props
+    } = state.current
+    sharedState.current = props
+  }, [size, defaultCam])
+
   // Render v-dom into scene
   useLayoutEffect(() => {
-    if (gl && size.width && size.height) {
-      render(
-        <stateContext.Provider value={sharedState.current}>
-          <IsReady />
-          {typeof children === 'function' ? children(state.current) : children}
-        </stateContext.Provider>,
-        state.current.scene,
-        state
-      )
+    render(
+      <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
+        {typeof children === 'function' ? children(state.current) : children}
+        <IsReady />
+      </stateContext.Provider>,
+      defaultScene,
+      state
+    )
+  }, [ready, children, sharedState.current])
+
+  useLayoutEffect(() => {
+    if (ready) {
+      // Start render-loop, either via RAF or setAnimationLoop for VR
+      if (!state.current.vr) {
+        invalidate(state)
+      } else if (gl.vr && gl.setAnimationLoop) {
+        gl.vr.enabled = true
+        gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
+      } else {
+        console.warn('react-three-fiber: the gl instance does not support VR!')
+      }
     }
-  })
+  }, [ready])
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
@@ -392,7 +434,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const handlePointer = useCallback(
     (name: string) => (event: DomEvent) => {
-      if (!state.current.ready) return
       // Collect hits
       const hits = handleIntersects(event, data => {
         const object = data.object
@@ -420,7 +461,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const hovered = new Map<string, PointerEvent>()
   const handlePointerMove = useCallback((event: DomEvent) => {
-    if (!state.current.ready) return
     const hits = handleIntersects(event, data => {
       const object = data.object
       const handlers = (object as any).__handlers

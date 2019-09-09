@@ -12,7 +12,7 @@ import {
   Vector2,
 } from 'three'
 import { WaterShader } from '../shaders/WaterShader.js'
-import { Pass } from './Pass.js'
+import { Pass } from 'three/examples/jsm/postprocessing/Pass'
 
 var WaterPass = function(dt_size) {
   Pass.call(this)

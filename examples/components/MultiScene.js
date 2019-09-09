@@ -1,14 +1,14 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { useSpring, animated } from 'react-spring/three'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-apply({ OrbitControls })
+extend({ OrbitControls })
 
 function Content() {
   const camera = useContext(cameraContext)
   const scene = useRef()
-  useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), true)
+  useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
   return (
     <scene ref={scene}>
       <mesh>
@@ -22,7 +22,7 @@ function Content() {
 function HeadsUpDisplay() {
   const camera = useContext(cameraContext)
   const scene = useRef()
-  useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
+  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   return (
     <scene ref={scene}>
       <mesh>
@@ -36,20 +36,26 @@ function HeadsUpDisplay() {
 const cameraContext = React.createContext()
 function Main() {
   const { width, height } = useThree().size
-  const camera = useRef()
+  const [ref, camera] = useResource()
+
+  // #15929 (https://github.com/mrdoob/three.js/issues/15929)
+  // The camera needs to be updated every frame
+  // We give this frame a priority so that automatic rendering will be switched off right away
+  useFrame(() => camera && camera.updateMatrixWorld(), 1000)
+
   return (
     <>
       <perspectiveCamera
-        ref={camera}
+        ref={ref}
         aspect={width / height}
         radius={(width + height) / 4}
         fov={100}
         position={[0, 0, 5]}
         onUpdate={self => self.updateProjectionMatrix()}
       />
-      {camera.current && (
-        <cameraContext.Provider value={camera.current}>
-          <orbitControls args={[camera.current]} enableDamping />
+      {camera && (
+        <cameraContext.Provider value={camera}>
+          <orbitControls args={[camera]} enableDamping />
           <Content />
           <HeadsUpDisplay />
         </cameraContext.Provider>

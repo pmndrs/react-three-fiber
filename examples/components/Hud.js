@@ -1,26 +1,28 @@
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { ShaderPass } from './../resources/postprocessing/ShaderPass'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
-import { FXAAShader } from './../resources/shaders/FXAAShader'
-apply({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
+extend({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
 
-function Main({ camera }) {
-  const scene = useRef()
+function Main() {
+  const [sceneRef, scene] = useResource()
   const composer = useRef()
-  const { gl, size } = useThree()
+  const { gl, size, camera } = useThree()
+
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
+  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 100)
+
   return (
-    <scene ref={scene}>
+    <scene ref={sceneRef}>
       <effectComposer ref={composer} args={[gl]}>
-        {scene.current && (
+        {scene && (
           <>
-            <renderPass attachArray="passes" scene={scene.current} camera={camera} />
-            <waterPass attachArray="passes" factor={1} />
+            <renderPass attachArray="passes" scene={scene} camera={camera} />
+            <waterPass attachArray="passes" factor={2} />
             <shaderPass
               attachArray="passes"
               args={[FXAAShader]}
@@ -40,9 +42,10 @@ function Main({ camera }) {
   )
 }
 
-function Hud({ camera }) {
+function Hud() {
   const scene = useRef()
-  useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
+  const { camera } = useThree()
+  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   const [hovered, set] = useState(false)
   const hover = useCallback(() => set(true), [])
   const unhover = useCallback(() => set(false), [])
@@ -57,11 +60,16 @@ function Hud({ camera }) {
 }
 
 function Content() {
+  const { size, setDefaultCamera } = useThree()
   const camera = useRef()
   const controls = useRef()
-  const { size, setDefaultCamera } = useThree()
+
   useEffect(() => void setDefaultCamera(camera.current), [])
-  useRender(() => controls.current.update())
+  useFrame(() => {
+    if (controls.current) controls.current.update()
+    if (camera.current) camera.current.updateMatrixWorld()
+  }, 1000)
+
   return (
     <>
       <perspectiveCamera
@@ -75,8 +83,8 @@ function Content() {
       {camera.current && (
         <group>
           <orbitControls ref={controls} args={[camera.current]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
-          <Main camera={camera.current} />
-          <Hud camera={camera.current} />
+          <Main />
+          <Hud />
         </group>
       )}
     </>

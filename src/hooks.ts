@@ -1,41 +1,35 @@
 import * as THREE from 'three'
 import { useRef, useContext, useEffect, useMemo, useState } from 'react'
-import { CanvasContext, RenderCallback, stateContext } from './canvas'
+import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
-export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
-  const { subscribe, setManual } = useContext(stateContext)
-
-  // This calls into the host to inform it whether the render-loop is manual or not
-  useMemo(() => takeOverRenderloop && setManual(true), [takeOverRenderloop])
-
+export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
+  const { subscribe } = useContext(stateContext)
+  // Update ref
+  const ref = useRef<RenderCallback>(fn)
+  useEffect(() => void (ref.current = fn), [fn])
+  // Subscribe/unsub
   useEffect(() => {
-    // Subscribe to the render-loop
-    const unsubscribe = subscribe(fn)
-
-    return () => {
-      // Call subscription off on unmount
-      unsubscribe()
-      if (takeOverRenderloop) setManual(false)
-    }
-  }, deps)
+    const unsubscribe = subscribe(ref, renderPriority)
+    return () => unsubscribe()
+  }, [renderPriority])
 }
 
-/** experimental */
-export function useFrame(fn: RenderCallback, deps: any[] = []): void {
-  useRender(fn, false, deps)
+export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
+  useEffect(
+    () =>
+      void console.warn(
+        'react-three-fiber: Please use useFrame(fn, [priority=0]) ✅ instead of useRender ❌, the former will be made obsolete soon!'
+      ),
+    []
+  )
+  useFrame(fn, takeOverRenderloop ? 1 : 0)
 }
 
-/** experimental */
-export function useGl(fn: RenderCallback, deps: any[] = []): void {
-  useRender(fn, true, deps)
-}
-
-export function useThree(): Omit<CanvasContext, 'subscribe'> {
-  const { subscribe, ...props } = useContext(stateContext)
-  return props
+export function useThree(): SharedCanvasContext {
+  return useContext(stateContext)
 }
 
 export function useUpdate<T>(
@@ -58,11 +52,11 @@ export function useUpdate<T>(
 }
 
 export function useResource<T>(optionalRef?: React.MutableRefObject<T>): [React.MutableRefObject<T>, T] {
-  const [resource, set] = useState()
+  const [_, forceUpdate] = useState(false)
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
-  useEffect(() => void set(ref.current), [ref.current])
-  return [ref, resource]
+  useEffect(() => void forceUpdate(i => !i), [ref.current])
+  return [ref, ref.current]
 }
 
 type Content = {

@@ -54,13 +54,14 @@ export function renderGl(
 ) {
   // Run global effects
   if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
+
   // Run local effects
-  state.current.subscribers.forEach(fn => fn(state.current, timestamp))
+  state.current.subscribers.forEach(sub => sub.ref.current(state.current, timestamp))
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Render content
-  if (!state.current.manual && state.current.gl) state.current.gl.render(state.current.scene, state.current.camera)
+  if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
   return repeat
 }
 

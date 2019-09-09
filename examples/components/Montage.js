@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useFrame, useThree } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { ShaderPass } from './../resources/postprocessing/ShaderPass'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
-import { FXAAShader } from './../resources/shaders/FXAAShader'
 apply({ EffectComposer, ShaderPass, RenderPass, WaterPass })
 
 const number = 30
@@ -49,8 +49,10 @@ function Content() {
 function Effect() {
   const composer = useRef()
   const { scene, gl, size, camera } = useThree()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useRender(({ gl }) => void ((gl.autoClear = true), composer.current.render()), true)
+  console.log(size)
+  useEffect(() => console.log(size) || void composer.current.setSize(size.width, size.height), [size])
+  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
+
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />

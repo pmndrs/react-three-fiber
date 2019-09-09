@@ -6151,10 +6151,10 @@ three.meshline@^1.2.0:
   resolved "https://registry.yarnpkg.com/three.meshline/-/three.meshline-1.2.0.tgz#89a0c9d67d8062e5649dc0ac9aa16f14e7c199b5"
   integrity sha512-E7s9xwgjUhQWIvXBMIdCOIvpT1qV9UlntzaaJTWzJvYtvI2ZvVsX8EM8FxoiG5aptXuKbp5osnvcJCCkYOjmBA==
 
-three@^0.107.0:
-  version "0.107.0"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.107.0.tgz#0c862c348d61bd3f22058e01f5e771c1294315a1"
-  integrity sha512-vqbKJRLBEviPVa7poEzXocobicwxzsctr5mnymA7n8fEzcVS49rYP0RrwqZ98JqujRoruK+/YzcchNpRP+kXsQ==
+three@^0.108.0:
+  version "0.108.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.108.0.tgz#53d26597c7932f214bb43f4655e566d2058143b5"
+  integrity sha512-d1ysIXwi8qTlbmMwrTxi5pYiiYIflEr0e48krP0LAY8ndS8c6fkLHn6NvRT+o76/Fs9PBLxFViuI62iGVWwwlg==
 
 through2@^2.0.0:
   version "2.0.5"
