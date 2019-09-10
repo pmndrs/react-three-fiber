@@ -1,35 +1,39 @@
-import React, { useState } from 'react'
-import { Canvas } from 'react-three-fiber'
+import * as THREE from 'three'
+import React from 'react'
+import { Canvas, useThree, useUpdate } from 'react-three-fiber'
 
-function Thing() {
-  const [color, setColor] = useState('salmon')
+function Rectangle() {
+  const {
+    gl,
+    camera,
+    size: { width, height },
+  } = useThree()
 
-  console.log(color)
+  const ref = useUpdate(
+    geometry => {
+      const vector = geometry.vertices[0].clone()
+      vector.project(camera)
+      vector.x = ((vector.x + 1) / 2) * width
+      vector.y = (-(vector.y - 1) / 2) * height
+      console.log(vector)
+    },
+    [camera, width, height]
+  )
 
   return (
-    <group ref={ref => console.log('we have access to the instance')}>
-      <mesh onPointerOver={e => setColor('steelblue')} onPointerOut={e => setColor('salmon')}>
-        <octahedronGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" color={color} />
-      </mesh>
-    </group>
+    <mesh position={[0, 0, 0]}>
+      <planeGeometry ref={ref} attach="geometry" />
+      <meshBasicMaterial attach="material" color="hotpink" />
+    </mesh>
   )
 }
 
 export default function App() {
   return (
-    <div>
-      <Canvas
-        style={{
-          background: 'yellow',
-          position: 'relative',
-          float: 'right',
-          height: '100vh',
-          width: '650px',
-          top: 40,
-        }}>
-        <Thing />
-      </Canvas>
-    </div>
+    <Canvas>
+      <group>
+        <Rectangle />
+      </group>
+    </Canvas>
   )
 }

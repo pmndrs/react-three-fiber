@@ -282,6 +282,10 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         state.current.camera.aspect = state.current.aspect
       }
       state.current.camera.updateProjectionMatrix()
+
+      // #178: https://github.com/react-spring/react-three-fiber/issues/178
+      // Update matrix world for whatever reason so that project/unproject is available
+      state.current.camera.updateMatrixWorld()
     }
 
     gl.setSize(size.width, size.height)
