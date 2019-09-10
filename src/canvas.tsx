@@ -351,13 +351,21 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
     if (event.clientX !== void 0) {
+      let x = event.clientX
+      let y = event.clientY
+
+      // #101: https://github.com/react-spring/react-three-fiber/issues/101
+      // The offset parent isn't taken into account by the resize observer
+      if (browser && event.target && event.target.offsetParent) {
+        x -= event.target.offsetParent.offsetLeft
+        y -= event.target.offsetParent.offsetTop
+      }
+
       const left = state.current.size.left || 0
       const right = left + state.current.size.width || 0
       const top = size.top || 0
       const bottom = top + state.current.size.height || 0
-      const x = ((event.clientX - left) / (right - left)) * 2 - 1
-      const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
-      mouse.set(x, y)
+      mouse.set(((x - left) / (right - left)) * 2 - 1, -((y - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])

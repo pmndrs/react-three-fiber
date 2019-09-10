@@ -1,34 +1,35 @@
-import * as THREE from 'three'
-import React, { useMemo, useCallback, useState } from 'react'
-import { Canvas, useThree } from 'react-three-fiber'
-import { useSpring, animated as a } from 'react-spring/three'
-import img1 from '../resources/images/crop-1.jpg'
-import img2 from '../resources/images/crop-2.jpg'
+import React, { useState } from 'react'
+import { Canvas } from 'react-three-fiber'
 
-function Image({ url, renderOrder, ...props }) {
-  const { invalidate } = useThree()
-  const texture = useMemo(() => new THREE.TextureLoader().load(url, invalidate), [url, invalidate])
-  const [active, set] = useState(false)
-  const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 2 : 0] })
-  const click = useCallback(e => {
-    console.log(e.distance, e.object.renderOrder)
-    e.stopPropagation()
-    set(active => !active)
-  }, [])
+function Thing() {
+  const [color, setColor] = useState('salmon')
+
+  console.log(color)
 
   return (
-    <a.mesh {...props} onClick={click} {...animatedProps} renderOrder={renderOrder}>
-      <planeBufferGeometry attach="geometry" args={[4, 4]} />
-      <meshBasicMaterial attach="material" map={texture} />
-    </a.mesh>
+    <group ref={ref => console.log('we have access to the instance')}>
+      <mesh onPointerOver={e => setColor('steelblue')} onPointerOut={e => setColor('salmon')}>
+        <octahedronGeometry attach="geometry" />
+        <meshBasicMaterial attach="material" color={color} />
+      </mesh>
+    </group>
   )
 }
 
 export default function App() {
   return (
-    <Canvas className="canvas" invalidateFrameloop>
-      <Image url={img1} renderOrder={0} />
-      <Image url={img2} position={[2, 2, 0]} renderOrder={1} />
-    </Canvas>
+    <div>
+      <Canvas
+        style={{
+          background: 'yellow',
+          position: 'relative',
+          float: 'right',
+          height: '100vh',
+          width: '650px',
+          top: 40,
+        }}>
+        <Thing />
+      </Canvas>
+    </div>
   )
 }
