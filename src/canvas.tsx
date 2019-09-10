@@ -378,6 +378,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         seen.add(id)
         return true
       })
+      .sort((a, b) => (b.object.renderOrder || 0) - (a.object.renderOrder || 0))
 
     for (let intersect of intersects) {
       let receivingObject = intersect.object

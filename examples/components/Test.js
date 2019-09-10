@@ -1,40 +1,34 @@
 import * as THREE from 'three'
-import React from 'react'
-import { Canvas, useThree, useUpdate } from 'react-three-fiber'
+import React, { useMemo, useCallback, useState } from 'react'
+import { Canvas, useThree } from 'react-three-fiber'
+import { useSpring, animated as a } from 'react-spring/three'
+import img1 from '../resources/images/crop-1.jpg'
+import img2 from '../resources/images/crop-2.jpg'
 
-function Rectangle() {
-  const {
-    camera,
-    size: { width: canvasWidth, height: canvasHeight },
-  } = useThree()
-
-  const ref = useUpdate(
-    geometry => {
-      const vector = geometry.vertices[0].clone()
-      vector.project(camera)
-      const halfWidth = canvasWidth / 2
-      const halfHeight = canvasHeight / 2
-      vector.x = vector.x * halfWidth + halfWidth
-      vector.y = -(vector.y * halfHeight) + halfHeight
-      console.log('  ', vector)
-    },
-    [camera, canvasWidth, canvasHeight]
-  )
+function Image({ url, renderOrder, ...props }) {
+  const { invalidate } = useThree()
+  const texture = useMemo(() => new THREE.TextureLoader().load(url, invalidate), [url, invalidate])
+  const [active, set] = useState(false)
+  const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 2 : 0] })
+  const click = useCallback(e => {
+    console.log(e.object)
+    e.stopPropagation()
+    set(active => !active)
+  }, [])
 
   return (
-    <mesh position={[0, 0, 0]}>
-      <planeGeometry ref={ref} attach="geometry" />
-      <meshBasicMaterial attach="material" />
-    </mesh>
+    <a.mesh {...props} onClick={click} {...animatedProps} renderOrder={renderOrder}>
+      <planeBufferGeometry attach="geometry" args={[4, 4]} />
+      <meshBasicMaterial attach="material" map={texture} />
+    </a.mesh>
   )
 }
 
 export default function App() {
   return (
-    <Canvas>
-      <group>
-        <Rectangle />
-      </group>
+    <Canvas className="canvas" invalidateFrameloop>
+      <Image url={img1} renderOrder={0} />
+      <Image url={img2} position={[2, 2, 0]} renderOrder={1} />
     </Canvas>
   )
 }
