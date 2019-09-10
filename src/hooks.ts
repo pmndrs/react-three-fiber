@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useRef, useContext, useEffect, useMemo, useState } from 'react'
+import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
 
 // helper type for omitting properties from types
@@ -9,7 +9,7 @@ export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
   const { subscribe } = useContext(stateContext)
   // Update ref
   const ref = useRef<RenderCallback>(fn)
-  useEffect(() => void (ref.current = fn), [fn])
+  useLayoutEffect(() => void (ref.current = fn), [fn])
   // Subscribe/unsub
   useEffect(() => {
     const unsubscribe = subscribe(ref, renderPriority)

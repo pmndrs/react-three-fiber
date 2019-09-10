@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { apply, Canvas, useThree, useRender } from 'react-three-fiber'
+import { apply, Canvas, useThree, useFrame } from 'react-three-fiber'
 import create from 'zustand'
 
 const numberOfItems = 100
@@ -49,7 +49,7 @@ function BoxB({ id }) {
   // having to re-render, we offload data to a reference
   useEffect(() => api.subscribe(state => (coords.current = state.coords[id])), [])
   // we update the component transiently
-  useRender(() => mesh.current.rotation.set(...coords.current))
+  useFrame(() => mesh.current.rotation.set(...coords.current))
   return (
     <mesh ref={mesh}>
       <boxBufferGeometry args={[2, 2, 2]} attach="geometry" />

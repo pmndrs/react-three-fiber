@@ -6,7 +6,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 extend({ OrbitControls })
 
 function Content() {
-  const camera = useContext(cameraContext)
+  const { camera } = useThree()
   const scene = useRef()
   useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
   return (
@@ -20,7 +20,9 @@ function Content() {
 }
 
 function HeadsUpDisplay() {
-  const camera = useContext(cameraContext)
+  const { camera } = useThree()
+
+  console.log
   const scene = useRef()
   useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   return (
@@ -33,32 +35,32 @@ function HeadsUpDisplay() {
   )
 }
 
-const cameraContext = React.createContext()
 function Main() {
-  const { width, height } = useThree().size
+  const { size, setDefaultCamera } = useThree()
   const [ref, camera] = useResource()
 
   // #15929 (https://github.com/mrdoob/three.js/issues/15929)
   // The camera needs to be updated every frame
   // We give this frame a priority so that automatic rendering will be switched off right away
-  useFrame(() => camera && camera.updateMatrixWorld(), 1000)
+  useFrame(() => camera.updateMatrixWorld())
+  useEffect(() => void setDefaultCamera(ref.current), [])
 
   return (
     <>
       <perspectiveCamera
         ref={ref}
-        aspect={width / height}
-        radius={(width + height) / 4}
+        aspect={size.width / size.height}
+        radius={(size.width + size.height) / 4}
         fov={100}
-        position={[0, 0, 5]}
+        position={[0, 0, 2.5]}
         onUpdate={self => self.updateProjectionMatrix()}
       />
       {camera && (
-        <cameraContext.Provider value={camera}>
+        <>
           <orbitControls args={[camera]} enableDamping />
           <Content />
           <HeadsUpDisplay />
-        </cameraContext.Provider>
+        </>
       )}
     </>
   )
@@ -66,7 +68,7 @@ function Main() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#272727' }}>
+    <Canvas style={{ background: '#272727' }} invalidateFrameloop>
       <Main />
     </Canvas>
   )

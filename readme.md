@@ -271,18 +271,19 @@ const {
 } = useThree()
 ```
 
-#### useRender(callback, takeOver=false, dependencies=[])
+#### useFrame(callback, priority=0)
 
-If you're running effects, postprocessings, controls, etc that need to get updated every frame, useRender gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
+If you're running effects, postprocessings, controls, etc that need to get updated every frame, useFrame gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
 
 ```jsx
-import { useRender } from 'react-three-fiber'
+import { useFrame } from 'react-three-fiber'
 
 // Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-useRender(state => console.log("I'm in the render-loop"))
+useFrame(state => console.log("I'm in the render-loop"))
 
-// Add a "true" as the 2nd argument and you take over the render-loop completely
-useRender(({ gl, scene, camera }) => gl.render(scene, camera), true)
+// Add a priority as the 2nd argument and you have to take care of rendering yourself
+// If you have multiple frames that render, they are ordered after the priority you give it
+useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 100)
 ```
 
 #### useUpdate(callback, dependencies, optionalRef=undefined)
@@ -383,7 +384,7 @@ Please also take a look at useLoader, it was made to make 3d-asset loading easie
 Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useFrame, useThree } from 'react-three-fiber'
 import { EffectComposer } from './postprocessing/EffectComposer'
 import { RenderPass } from './postprocessing/RenderPass'
 import { GlitchPass } from './postprocessing/GlitchPass'
@@ -395,7 +396,7 @@ function Effects({ factor }) {
   const composer = useRef()
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
-  useRender(() => composer.current.render(), true)
+  useFrame(() => composer.current.render(), 1)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" args={[scene, camera]} />
@@ -414,6 +415,7 @@ function Camera(props) {
   // This makes sure that size-related calculations are proper
   // Every call to useThree will return this camera instead of the default camera 
   useEffect(() => void setDefaultCamera(ref.current), [])
+  useFrame(() => ref.current.updateMatrixWorld())
   return <perspectiveCamera ref={camera} {...props} />
 }
 
@@ -424,24 +426,25 @@ function Camera(props) {
 
 ## Heads-up display (rendering multiple scenes)
 
-`useRender` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible for one component to render over the content of another. The order of these operations is established by the scene-graph.
+`useFrame` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible for one component to render over the content of another. The order of these operations is established by the priority you give it, higher priority means it renders first.
 
 ```jsx
-function Content({ camera }) {
+function Main({ camera }) {
   const scene = useRef()
-  useRender(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), true)
+  useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
 function HeadsUpDisplay({ camera }) {
   const scene = useRef()
-  useRender(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)))
+  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
-function Main() {
+function App() {
   const camera = useRef()
   const { width, height } = useThree().size
+  useFrame(() => camera.current.updateMatrixWorld())
   return (
     <>
       <perspectiveCamera
@@ -451,10 +454,10 @@ function Main() {
         onUpdate={self => self.updateProjectionMatrix()}
       />
       {camera.current && (
-        <group>
-          <Content camera={camera.current} />
+        <>
+          <Main camera={camera.current} />
           <HeadsUpDisplay camera={camera.current} />
-        </group>
+        </>
       )}
     </>
   )
@@ -523,7 +526,7 @@ function CrossFade({ url1, url2, disp }) {
 
 ## Re-parenting
 
-We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-userender-test-fojbq) for a small demo.
+We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-useFrame-test-fojbq) for a small demo.
 
 ```jsx
 import { createPortal } from 'react-three-fiber'
@@ -561,7 +564,7 @@ import { Canvas } from 'react-three-fiber'
 
 ## Switching the default renderer
 
-If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useRender, useThree, events, which is all covered in canvas. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example. 
+If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useFrame, useThree, events, which is all covered in canvas. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example. 
 
 ```jsx
 import { render, unmountComponentAtNode } from 'react-three-fiber'
@@ -587,21 +590,13 @@ Three is a heavy-weight, and althought it is modular tree-shaking may not be suf
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
 
-## Usage with React Native (beta)
+## Usage with React Native
 
 You can leverage Expo's excellent WebGL port to react-native and use react-three-fiber as the renderer.
 
 ```bash
 expo init myapp
 cd myapp
-yarn add expo-gl expo-three three@0.105.0 react-three-fiber@beta
+yarn add expo-gl expo-three three@latest react-three-fiber@beta
 yarn start
 ```
-
-#### Limitations
-
-three@0.105.0 is the only recent version that includes required files for expo-three
-
-The `onClick` and `onWheel` will not be triggered, react-three-fiber uses PanResponder in the background to detect touches and presses.
-
-Be aware that performance is limited compared to ThreeJS in the browser.

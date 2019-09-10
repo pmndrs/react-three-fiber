@@ -30,6 +30,17 @@ export type PointerEvent = DomEvent &
 
 export type RenderCallback = (props: CanvasContext, timestamp: number) => void
 
+export interface RectReadOnly {
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+  readonly left: number
+}
+
 export type SharedCanvasContext = {
   gl: THREE.WebGLRenderer
   aspect: number
@@ -41,7 +52,7 @@ export type SharedCanvasContext = {
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
   scene: THREE.Scene
-  size: { left: number; top: number; width: number; height: number }
+  size: RectReadOnly
   viewport: { width: number; height: number; factor: number }
 }
 
@@ -87,17 +98,6 @@ export type PointerEvents = {
   onPointerMove(e: any): void
   onGotPointerCapture(e: any): void
   onLostPointerCapture(e: any): void
-}
-
-export interface RectReadOnly {
-  readonly x: number
-  readonly y: number
-  readonly width: number
-  readonly height: number
-  readonly top: number
-  readonly right: number
-  readonly bottom: number
-  readonly left: number
 }
 
 export type UseCanvasProps = {
@@ -188,7 +188,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     mouse,
     gl,
     captured: undefined,
-    size: { left: 0, top: 0, width: 0, height: 0 },
+    size: { left: 0, top: 0, width: 0, height: 0, bottom: 0, right: 0, x: 0, y: 0 },
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
@@ -198,9 +198,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       // For that reason we switch off automatic rendering and increase the manual flag
       // As long as this flag is positive (there could be multiple render subscription)
       // ..there can be no internal rendering at all
-      if (priority) {
-        state.current.manual++
-      }
+      if (priority) state.current.manual++
 
       state.current.subscribers.push({ ref, priority: priority })
       state.current.subscribers = state.current.subscribers.sort((a, b) => b.priority - a.priority)
@@ -214,13 +212,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     invalidate: () => invalidate(state),
     intersect: (event?: DomEvent) => handlePointerMove(event || ({} as DomEvent)),
   })
-
-  // In manual mode items shouldn't really be part of the internal scene which has adverse effects
-  // on the camera being unable to update without explicit calls to updateMatrixWorld()
-  // TODO: what the hell is this????
-  /*useLayoutEffect(() => {
-    if (manual) state.current.scene.children.forEach(child => state.current.scene.remove(child))
-  }, [manual])*/
 
   // Writes locals into public state for distribution among subscribers, context, etc
   useLayoutEffect(() => {
@@ -294,8 +285,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     }
 
     gl.setSize(size.width, size.height)
-
-    console.log('  update cam', size.width)
 
     if (ready) invalidate(state)
   }, [size, updateDefaultCamera])
