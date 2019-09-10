@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useCallback, createContext, useMemo } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
+import EventEmitter from 'events'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -72,11 +73,13 @@ export type CanvasContext = SharedCanvasContext & {
   subscribers: Subscription[]
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
+  pointer: EventEmitter
 }
 
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
+  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
@@ -192,6 +195,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
+    pointer: new EventEmitter(),
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
       // If this subscription was given a priority, it takes rendering into its own hands
@@ -423,6 +427,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const handlePointer = useCallback(
     (name: string) => (event: DomEvent) => {
+      state.current.pointer.emit(name, event)
       // Collect hits
       const hits = handleIntersects(event, data => {
         const object = data.object
@@ -450,6 +455,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const hovered = new Map<string, PointerEvent>()
   const handlePointerMove = useCallback((event: DomEvent) => {
+    state.current.pointer.emit('pointerMove', event)
     const hits = handleIntersects(event, data => {
       const object = data.object
       const handlers = (object as any).__handlers
@@ -487,6 +493,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   }, [])
 
   const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[]) => {
+    state.current.pointer.emit('pointerCancel', event)
     if (!hits) hits = handleIntersects(event, () => null)
     Array.from(hovered.values()).forEach(data => {
       if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
