@@ -37,7 +37,7 @@ const IsReady = React.memo(({ canvas, ...props }: CanvasProps & { canvas: HTMLCa
   }, [])
 
   const { pointerEvents } = useCanvas({ ...props, gl, browser: true })
-  return <div {...pointerEvents} style={styles} />
+  return <div {...pointerEvents} style={{ ...styles, position: 'absolute', top: 0, left: 0 }} />
 })
 
 const styles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }

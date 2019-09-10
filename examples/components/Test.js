@@ -11,7 +11,7 @@ function Image({ url, renderOrder, ...props }) {
   const [active, set] = useState(false)
   const animatedProps = useSpring({ rotation: [0, 0, active ? Math.PI / 2 : 0] })
   const click = useCallback(e => {
-    console.log(e.object)
+    console.log(e.distance, e.object.renderOrder)
     e.stopPropagation()
     set(active => !active)
   }, [])

@@ -378,7 +378,9 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         seen.add(id)
         return true
       })
-      .sort((a, b) => (b.object.renderOrder || 0) - (a.object.renderOrder || 0))
+      // #16031: (https://github.com/mrdoob/three.js/issues/16031)
+      // Sort intersects distance first renderorder second
+      .sort((a, b) => a.distance - b.distance || (b.object.renderOrder || 0) - (a.object.renderOrder || 0))
 
     for (let intersect of intersects) {
       let receivingObject = intersect.object
