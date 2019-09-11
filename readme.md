@@ -336,7 +336,7 @@ React-podcast episode: https://reactpodcast.simplecast.fm/56
 
 Learn-with-jason: https://www.youtube.com/watch?v=1rP3nNY2hTo
 
-## Funding
+# Contributions
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto:
 
