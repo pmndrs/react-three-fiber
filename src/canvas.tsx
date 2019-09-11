@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useCallback, createContext, useMemo } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
-import EventEmitter from 'events'
+import { TinyEmitter } from 'tiny-emitter'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -73,7 +73,7 @@ export type CanvasContext = SharedCanvasContext & {
   subscribers: Subscription[]
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
-  pointer: EventEmitter
+  pointer: TinyEmitter
 }
 
 export type CanvasProps = {
@@ -194,7 +194,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
-    pointer: new EventEmitter(),
+    pointer: new TinyEmitter(),
     captured: undefined,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {

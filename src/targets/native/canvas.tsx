@@ -1,6 +1,14 @@
 import * as React from 'react'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
-import { View, LayoutChangeEvent, PixelRatio, ViewStyle, PanResponder, GestureResponderEvent } from 'react-native'
+import {
+  View,
+  LayoutChangeEvent,
+  PixelRatio,
+  ViewStyle,
+  PanResponder,
+  GestureResponderEvent,
+  StyleSheet,
+} from 'react-native'
 import { Renderer } from 'expo-three'
 import { useState } from 'react'
 import { useCanvas, CanvasProps, RectReadOnly } from '../../canvas'
@@ -42,7 +50,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
     []
   )
 
-  return <View {...panResponder.panHandlers} style={styles} />
+  return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} />
 })
 
 export const Canvas = React.memo((props: NativeCanvasProps) => {
@@ -90,7 +98,7 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
   // 3. Call `useCanvas`
   return (
     <View onLayout={onLayout} style={{ ...styles, ...props.style }}>
-      {size && <GLView onContextCreate={onContextCreate} style={styles} />}
+      {size && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       {size && renderer && <IsReady {...props} size={size!} gl={renderer} />}
     </View>
   )
