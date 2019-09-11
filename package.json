@@ -62,7 +62,8 @@
     "pointer-events-polyfill": "^0.4.4-pre",
     "react-reconciler": "0.20.4",
     "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "0.13.3"
+    "scheduler": "0.13.3",
+    "tiny-emitter": "^2.1.0"
   },
   "peerDependencies": {
     "react": ">=16.9",
