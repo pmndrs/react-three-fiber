@@ -4,27 +4,26 @@ import { Canvas, useThree, useUpdate } from 'react-three-fiber'
 
 function Rectangle() {
   const {
+    gl,
     camera,
-    size: { width: canvasWidth, height: canvasHeight },
+    size: { width, height },
   } = useThree()
 
   const ref = useUpdate(
     geometry => {
       const vector = geometry.vertices[0].clone()
       vector.project(camera)
-      const halfWidth = canvasWidth / 2
-      const halfHeight = canvasHeight / 2
-      vector.x = vector.x * halfWidth + halfWidth
-      vector.y = -(vector.y * halfHeight) + halfHeight
-      console.log('  ', vector)
+      vector.x = ((vector.x + 1) / 2) * width
+      vector.y = (-(vector.y - 1) / 2) * height
+      console.log(vector)
     },
-    [camera, canvasWidth, canvasHeight]
+    [camera, width, height]
   )
 
   return (
     <mesh position={[0, 0, 0]}>
       <planeGeometry ref={ref} attach="geometry" />
-      <meshBasicMaterial attach="material" />
+      <meshBasicMaterial attach="material" color="hotpink" />
     </mesh>
   )
 }

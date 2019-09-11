@@ -1,12 +1,11 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useContext, useLayoutEffect, useCallback, useMemo } from 'react'
 import { useSpring, animated } from 'react-spring/three'
 import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-extend({ OrbitControls })
 
 function Content() {
   const { camera } = useThree()
+  console.log(camera)
   const scene = useRef()
   useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
   return (
@@ -21,8 +20,6 @@ function Content() {
 
 function HeadsUpDisplay() {
   const { camera } = useThree()
-
-  console.log
   const scene = useRef()
   useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   return (
@@ -43,7 +40,7 @@ function Main() {
   // The camera needs to be updated every frame
   // We give this frame a priority so that automatic rendering will be switched off right away
   useFrame(() => camera.updateMatrixWorld())
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useLayoutEffect(() => void setDefaultCamera(ref.current), [])
 
   return (
     <>
@@ -55,13 +52,8 @@ function Main() {
         position={[0, 0, 2.5]}
         onUpdate={self => self.updateProjectionMatrix()}
       />
-      {camera && (
-        <>
-          <orbitControls args={[camera]} enableDamping />
-          <Content />
-          <HeadsUpDisplay />
-        </>
-      )}
+      <Content />
+      <HeadsUpDisplay />
     </>
   )
 }
