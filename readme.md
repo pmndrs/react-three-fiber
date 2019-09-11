@@ -117,7 +117,7 @@ You can nest primitive objects, too, which is good for awaiting async textures a
 
 ```jsx
 <meshBasicMaterial attach="material">
-  <texture attach="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+  <texture attach="map" image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 ```
 
 Sometimes attaching isn't enough. For example, this code attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
@@ -131,8 +131,8 @@ Sometimes attaching isn't enough. For example, this code attaches effects to an 
 You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position. 
 
 ```jsx
-<bufferGeometry>
-  <bufferAttribute attachObject={['attributes', 'position']} count={vert.length / 3} array={vert} itemSize={3} />
+<bufferGeometry attach="geometry">
+  <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
 ```
 
 #### Piercing into nested properties
@@ -276,8 +276,6 @@ return (
     <mesh material={material} />
     <mesh material={material} />
     <mesh material={material} />
-  )}
-)
 ```
 
 #### useUpdate(callback, dependencies, optionalRef=undefined)
@@ -314,8 +312,6 @@ const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
 return model.map(({ geometry, material }) => (
   <mesh key={geometry.uuid} geometry={geometry} castShadow>
     <meshStandardMaterial attach="material" map={material.map} roughness={1} />
-  </mesh>
-))
 ```
 
 # Additional exports
@@ -463,11 +459,7 @@ function CrossFade({ url1, url2, disp }) {
         uniforms-texture-value={texture1}
         uniforms-texture2-value={texture2}
         uniforms-disp-value={dispTexture}
-        uniforms-dispFactor-value={0.5}
-      />
-    </mesh>
-  )
-}
+        uniforms-dispFactor-value={0.5} />
 ```
 
 ## Re-parenting
