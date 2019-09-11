@@ -15,46 +15,33 @@
 
     npm install three react-three-fiber
 
-React-three-fiber is a small React renderer for Threejs. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
+React-three-fiber is a small React renderer for Threejs on the web and react-native. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
 
 # What it looks like ...
 
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
 ```jsx
-import * as THREE from 'three'
-import React from 'react'
-import ReactDOM from 'react-dom'
-import { Canvas } from 'react-three-fiber'
+import { Canvas, useFrame } from 'react-three-fiber'
 
-function Thing({ vertices }) {
+function Thing() {
+  const ref = useRef()
+  useFrame(() => (ref.current.rotation.z += 0.01))
   return (
-    <group ref={ref => console.log('we have access to the instance')}>
-      <line>
-        <geometry
-          attach="geometry"
-          vertices={vertices.map(v => new THREE.Vector3(...v))}
-          onUpdate={self => (self.verticesNeedUpdate = true)}
-        />
-        <lineBasicMaterial attach="material" color="black" />
-      </line>
-      <mesh 
-        onClick={e => console.log('click')} 
-        onPointerOver={e => console.log('hover')} 
-        onPointerOut={e => console.log('unhover')}>
-        <octahedronGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" color="peachpuff" opacity={0.5} transparent />
-      </mesh>
-    </group>
+    <mesh
+      ref={ref}
+      onClick={e => console.log('click')}
+      onPointerOver={e => console.log('hover')}
+      onPointerOut={e => console.log('unhover')}>
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <meshBasicMaterial attach="material" color="hotpink" opacity={0.5} transparent />
+    </mesh>
   )
 }
 
-ReactDOM.render(
-  <Canvas>
-    <Thing vertices={[[-1, 0, 0], [0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]} />
-  </Canvas>,
-  document.getElementById('root')
-)
+<Canvas>
+  <Thing />
+</Canvas>
 ```
 
 # Canvas
@@ -79,25 +66,25 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
 
 You can give it additional properties like style and className, which will be added to the container (a div) that holds the dom-canvas element.
 
-# Defaults
+# Defaults that the canvas component sets up
 
-Canvas will create a *translucent webGL-renderer* with the following properties: 
+Canvas will create a *translucent WebGL-renderer* with the following properties: `antialias, alpha, setClearAlpha(0)`
 
-`antialias: true, alpha: true, setClearAlpha(0)`
+A default *perspective camera*: `fov: 75, near: 0.1, far: 1000, position.z: 5`
 
-A default *perspective camera*:
+A default *orthographic camera* if Canvas.orthographic is true: `near: 0.1, far: 1000, position.z: 5`
 
-`fov: 75, near: 0.1, far: 1000, position.z: 5`
+A default *shadowMap* if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
 
-Or a default *orthographic camera* if Canvas.orthographic is true:
+A default *scene* (into which all the JSX is rendered) and a *raycaster*.
 
-`near: 0.1, far: 1000, position.z: 5`
-
-A default scene (into which all the jsx is rendered) and a raycaster. You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
+You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
 # Objects and properties
 
-You can use [Three's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
+You can use [Threejs's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
+
+You could lay out an object like this:
 
 ```jsx
 <mesh
@@ -106,51 +93,46 @@ You can use [Three's entire object catalogue and all properties](https://threejs
   position={new THREE.Vector3(1, 2, 3)}
   rotation={new THREE.Euler(0, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
-  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('indianred'), transparent: true })} />
+  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })} />
 ```
 
-#### Shortcuts and non-Object3D stow-away
-
-The following is the same as above, but it's leaner and critical properties aren't re-instantiated on every render.
+The problem is that all of these properties will be re-created on every render pass. Instead, you should define properties declaratively.
 
 ```jsx
 <mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
   <sphereGeometry attach="geometry" args={[1, 16, 16]} />
-  <meshStandardMaterial attach="material" color="indianred" transparent />
+  <meshStandardMaterial attach="material" color="hotpink" transparent />
 </mesh>
 ```
 
-All properties that have a `.set()` method (colors, vectors, euler, matrix, etc) can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('peachpuff')}` you can do `color="peachpuff"`. Some `set` methods take multiple arguments (vectors for instance), in this case you can pass an array.
+#### Shortcuts (set)
 
-You can stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
+All properties that have a `.set()` method can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('hotpink')}` you can do `color="hotpink"`. Some `set` methods take multiple arguments ([THREE.Vector3.set](https://threejs.org/docs/index.html#api/en/math/Vector3.set)), so you can pass an array `position={[100, 0, 0]}`.
+
+#### Shortcuts and non-Object3D stow-away
+
+Stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
 You can nest primitive objects, too, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
 
 ```jsx
 <meshBasicMaterial attach="material">
-  <texture attach="map" format={THREE.RGBFormat} image={img} onUpdate={self => img && (self.needsUpdate = true)} />
-</meshBasicMaterial>
+  <texture attach="map" image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 ```
 
 Sometimes attaching isn't enough. For example, this code attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
 
 ```jsx
 <effectComposer>
-  <renderPass attachArray="passes" />
+  <renderPass attachArray="passes" scene={scene} camera={camera} />
   <glitchPass attachArray="passes" renderToScreen />
-</effectComposer>
 ```
 
 You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position. 
 
 ```jsx
-<bufferGeometry>
-  <bufferAttribute
-    attachObject={['attributes', 'position']}
-    count={vertices.length / 3}
-    array={vertices}
-    itemSize={3} />
-</bufferGeometry>
+<bufferGeometry attach="geometry">
+  <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
 ```
 
 #### Piercing into nested properties
@@ -158,7 +140,7 @@ You can also attach to named parent properties using `attachObject={[target, nam
 If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case:
 
 ```jsx
-<mesh rotation-x={1} material-color="lightblue" geometry-vertices={newVertices} />
+<mesh rotation-x={1} material-uniforms-resolution-value={[1 / size.width, 1 / size.height]} />
 ```
 
 #### Putting already existing objects into the scene-graph
@@ -172,27 +154,23 @@ return <primitive object={mesh} position={[0, 0, 0]} />
 
 #### Using 3rd-party (non THREE namespaced) objects in the scene-graph
 
-The `apply` function extends three-fibers catalogue of known native elements. These objects become available and can now be directly instantiated.
+The `extend` function extends three-fibers catalogue of known native JSX elements.
 
 ```jsx
-import { apply } from 'react-three-fiber'
-import { EffectComposer } from './postprocessing/EffectComposer'
-import { RenderPass } from './postprocessing/RenderPass'
-
-apply({ EffectComposer, RenderPass })
+import { extend } from 'react-three-fiber'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+extend({ EffectComposer, RenderPass })
 
 <effectComposer>
   <renderPass />
-</effectComposer>
 ```
 
 # Events
 
-THREE objects that implement their own `raycast` method (for instance meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll.
+Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc).
 
-Additionally there's a special `onUpdate` that is called every time the object is updated with fresh props (as well as when it's first being created).
-
-The event data you receive contains the browser event as well as the Threejs event data (object, point, distance, etc) all merged into one object.
+Additionally there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
 ```jsx
 <mesh
@@ -203,7 +181,7 @@ The event data you receive contains the browser event as well as the Threejs eve
   onPointerOver={e => console.log('hover')}
   onPointerOut={e => console.log('unhover')}
   onPointerMove={e => console.log('move')}
-  onUpdate={self => console.log('props have been updated')}
+  onUpdate={self => console.log('props have been updated')} />
 ```
 
 #### Propagation and capturing
@@ -224,22 +202,21 @@ The event data you receive contains the browser event as well as the Threejs eve
 
 # Hooks
 
-All hooks can only be used **inside** the Canvas element because they rely on context updates! You cannot expect something like this to work:
+Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
 
 ```jsx
 funciton App() {
-  const { gl } = useThree() // This will just crash
+  const { size } = useThree() // This will just crash
   return (
     <Canvas>
       <mesh>
-        ...
 ```
 
 Do this instead:
 
 ```jsx
 funciton SomeComponent() {
-  const { gl } = useThree()
+  const { size } = useThree()
   return <mesh />
 }
         
@@ -247,12 +224,11 @@ funciton App() {
   return (
     <Canvas>
       <SomeComponent />
-        ...
 ```
 
 #### useThree()
 
-This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the size of the canvas in screen and viewport coordinates. When you resize the canvas, or the browser window, your component will be updated with fresh values. 
+This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates.
 
 ```jsx
 import { useThree } from 'react-three-fiber'
@@ -273,7 +249,7 @@ const {
 
 #### useFrame(callback, priority=0)
 
-If you're running effects, postprocessings, controls, etc that need to get updated every frame, useFrame gives you access to the render-loop. You receive the internal state as well, which is the same as what you would get from useThree.
+When you're running effects, postprocessings, controls, etc that need to get updated every frame. You receive the internal state as well, which is the same as what you would get from useThree.
 
 ```jsx
 import { useFrame } from 'react-three-fiber'
@@ -283,30 +259,12 @@ useFrame(state => console.log("I'm in the render-loop"))
 
 // Add a priority as the 2nd argument and you have to take care of rendering yourself
 // If you have multiple frames that render, they are ordered after the priority you give it
-useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 100)
-```
-
-#### useUpdate(callback, dependencies, optionalRef=undefined)
-
-Sometimes objects have to be updated imperatively. You could update the parts that you can access declaratively and then call `onUpdate={self => ...}`, or there's useUpdate.
-
-```jsx
-import { useUpdate } from 'react-three-fiber'
-
-const ref = useUpdate( 
-  geometry => {
-    geometry.addAttribute('position', getCubeVertices(x, y, z))
-    geometry.attributes.position.needsUpdate = true
-    geometry.computeBoundingSphere()
-  }, 
-  [x, y, z], // execute only if these properties change
-)
-return <bufferGeometry ref={ref} />
+useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
 ```
 
 #### useResource(optionalRef=undefined)
 
-Materials and such aren't normally re-created for every instance using it. You may want to share and re-use resources. This can be done imperatively simply by maintaining the object yourself, but it can also be done declaratively by using refs. `useResource` simply creates a ref and re-renders the component when it becomes available next frame. You can pass this reference on, or even channel it through a context provider.
+When you want to share and re-use resources. `useResource` creates a ref and re-renders the component when it becomes available next frame.
 
 ```jsx
 import { useResource } from 'react-three-fiber'
@@ -318,13 +276,28 @@ return (
     <mesh material={material} />
     <mesh material={material} />
     <mesh material={material} />
-  )}
+```
+
+#### useUpdate(callback, dependencies, optionalRef=undefined)
+
+When objects need to be updated imperatively.
+
+```jsx
+import { useUpdate } from 'react-three-fiber'
+
+const ref = useUpdate( 
+  geometry => {
+    geometry.addAttribute('position', getVertices(x, y, z))
+    geometry.attributes.position.needsUpdate = true
+  }, 
+  [x, y, z], // execute only if these properties change
 )
+return <bufferGeometry ref={ref} />
 ```
 
 #### useLoader(loader, url, [extensions]) (experimental!)
 
-Loading objects in THREE is, again, imperative. If you want to write out a loaded object declaratively, where you get to lay events on objects, alter materials, etc, then useLoader will help you. It loads a file (which must be present somewhere in your static/public folder) and caches it. It returns an array of geometry/material pairs.
+When you want to write out a loaded object declaratively, where you get to lay events on objects, alter materials, etc. It loads a file (which must be present in your /public folder) and caches it. It returns an array of geometry/material pairs.
 
 ```jsx
 import { useLoader } from 'react-three-fiber'
@@ -339,8 +312,6 @@ const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
 return model.map(({ geometry, material }) => (
   <mesh key={geometry.uuid} geometry={geometry} castShadow>
     <meshStandardMaterial attach="material" map={material.map} roughness={1} />
-  </mesh>
-)
 ```
 
 # Additional exports
@@ -357,246 +328,43 @@ import {
 } from 'react-three-fiber'
 ```
 
-# Recipes
+# Further information
 
-## Handling loaders
+Recipes and FAQ: [/react-three-fiber/recipes.md](https://github.com/react-three-fiber/react-three-fiber/blob/master/recipes.md)
 
-You can use React's built-in memoizing-features (as well as suspense) to build async dependency graphs.
+React-podcast episode: https://reactpodcast.simplecast.fm/56
 
-```jsx
-function Image({ url }) {
-  const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
-  return (
-    <mesh>
-      <planeBufferGeometry attach="geometry" args={[1, 1]} />
-      <meshLambertMaterial attach="material" transparent>
-        <primitive attach="map" object={texture} />
-      </meshLambertMaterial>
-    </mesh>
-  )
-}
-```
+Learn-with-jason: https://www.youtube.com/watch?v=1rP3nNY2hTo
 
-Please also take a look at useLoader, it was made to make 3d-asset loading easier. 
+# Contributions
 
-## Dealing with effects (hijacking main render-loop)
+If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto:
 
-Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
+BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH
 
-```jsx
-import { apply, Canvas, useFrame, useThree } from 'react-three-fiber'
-import { EffectComposer } from './postprocessing/EffectComposer'
-import { RenderPass } from './postprocessing/RenderPass'
-import { GlitchPass } from './postprocessing/GlitchPass'
-// Makes these objects available as native objects "<renderPass />" and so on
-apply({ EffectComposer, RenderPass, GlitchPass })
+ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682
 
-function Effects({ factor }) {
-  const { gl, scene, camera, size } = useThree()
-  const composer = useRef()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  // This takes over as the main render-loop (when 2nd arg is set to true)
-  useFrame(() => composer.current.render(), 1)
-  return (
-    <effectComposer ref={composer} args={[gl]}>
-      <renderPass attachArray="passes" args={[scene, camera]} />
-      <glitchPass attachArray="passes" factor={factor} renderToScreen />
-    </effectComposer>
-  )
-}
-```
+#### Sponsors
 
-## Using your own camera rig
+<a href="https://opencollective.com/react-three-fiber/sponsor/0/website" target="_blank">
+  <img src="https://opencollective.com/react-three-fiber/sponsor/0/avatar.svg"/>
+</a>
+<a href="https://opencollective.com/react-three-fiber/sponsor/1/website" target="_blank">
+  <img src="https://opencollective.com/react-three-fiber/sponsor/1/avatar.svg"/>
+</a>
 
-```jsx
-function Camera(props) {
-  const ref = useRef()
-  const { setDefaultCamera } = useThree()
-  // This makes sure that size-related calculations are proper
-  // Every call to useThree will return this camera instead of the default camera 
-  useEffect(() => void setDefaultCamera(ref.current), [])
-  useFrame(() => ref.current.updateMatrixWorld())
-  return <perspectiveCamera ref={camera} {...props} />
-}
+#### Backers
 
-<Canvas>
-  <Camera position={[0, 0, 10]} />
-</Canvas>
-```
+Thank you to all our backers! 🙏
 
-## Heads-up display (rendering multiple scenes)
+<a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
+  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890"/>
+</a>
 
-`useFrame` allows components to hook into the render-loop, or even to take it over entirely. That makes it possible for one component to render over the content of another. The order of these operations is established by the priority you give it, higher priority means it renders first.
+##### Contributors
 
-```jsx
-function Main({ camera }) {
-  const scene = useRef()
-  useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
-  return <scene ref={scene}>{/* ... */}</scene>
-}
+This project exists thanks to all the people who contribute.
 
-function HeadsUpDisplay({ camera }) {
-  const scene = useRef()
-  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
-  return <scene ref={scene}>{/* ... */}</scene>
-}
-
-function App() {
-  const camera = useRef()
-  const { width, height } = useThree().size
-  useFrame(() => camera.current.updateMatrixWorld())
-  return (
-    <>
-      <perspectiveCamera
-        ref={camera}
-        aspect={width / height}
-        radius={(width + height) / 4}
-        onUpdate={self => self.updateProjectionMatrix()}
-      />
-      {camera.current && (
-        <>
-          <Main camera={camera.current} />
-          <HeadsUpDisplay camera={camera.current} />
-        </>
-      )}
-    </>
-  )
-}
-```
-
-## Managing imperative code
-
-Stick imperative stuff into useMemo and write out everything else declaratively. This is how you can quickly form reactive, re-usable components that can be bound to a store, graphql, etc.
-
-```jsx
-function Extrusion({ start = [0,0], paths, ...props }) {
-  const shape = useMemo(() => {
-    const shape = new THREE.Shape()
-    shape.moveTo(...start)
-    paths.forEach(path => shape.bezierCurveTo(...path))
-    return shape
-  }, [start, paths])
-
-  return (
-    <mesh>
-      <extrudeGeometry attach="geometry" args={[shape, props]} />
-      <meshPhongMaterial attach="material" />
-    </mesh>
-  )
-}
-```
-
-Then ...
-
-```jsx
-<Extrusion
-  start={[25, 25]}
-  paths={[[25, 25, 20, 0, 0, 0], [30, 0, 30, 35,30,35], [30, 55, 10, 77, 25, 95]]}
-  bevelEnabled
-  amount={8}
-  bevelSegments={2}
-  steps={2}
-  bevelSize={1}
-  bevelThickness={1} />
-```
-
-## ShaderMaterials
-
-```jsx
-function CrossFade({ url1, url2, disp }) {
-  const [texture1, texture2, dispTexture] = useMemo(() => {
-    const loader = new THREE.TextureLoader()
-    return [loader.load(url1), loader.load(url2), loader.load(disp)]
-  }, [url1, url2, disp])
-  return (
-    <mesh>
-      <planeBufferGeometry attach="geometry" args={[3.8, 3.8]} />
-      <shaderMaterial
-        attach="material"
-        args={[CrossFadeShader]}
-        uniforms-texture-value={texture1}
-        uniforms-texture2-value={texture2}
-        uniforms-disp-value={dispTexture}
-        uniforms-dispFactor-value={0.5}
-      />
-    </mesh>
-  )
-}
-```
-
-## Re-parenting
-
-We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-useFrame-test-fojbq) for a small demo.
-
-```jsx
-import { createPortal } from 'react-three-fiber'
-
-function Component() {
-  // "target" can be a three object, like a group, etc
-  return createPortal(<mesh />, target)
-```
-
-## Rendering only when needed
-
-By default it renders like a game loop, which isn't that battery efficient. Switch on `invalidateFrameloop` to activate loop invalidation, which is automatic most of the time.
-
-```jsx
-<Canvas invalidateFrameloop ... />
-```
-
-Sometimes you must be able to kick off frames manually, for instance when you're dealing with async stuff or camera controls:
-
-```jsx
-const { invalidate } = useThree()
-const texture = useMemo(() => loader.load(url1, invalidate), [url1])
-```
-
-## Enabling VR
-
-Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
-
-```jsx
-import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
-import { Canvas } from 'react-three-fiber'
-
-<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
-```
-
-## Switching the default renderer
-
-If you want to exchange the default renderer you can. But, you will lose some of the functionality, like useFrame, useThree, events, which is all covered in canvas. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example. 
-
-```jsx
-import { render, unmountComponentAtNode } from 'react-three-fiber'
-
-const renderer = new THREE.SVGRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-const scene = new THREE.Scene()
-
-render((
-  <mesh>
-    <sphereGeometry name="geometry" args={[1, 16, 16]} />
-    <meshBasicMaterial name="material" />
-  </mesh>
-), scene)
-```
-
-## Reducing bundle-size
-
-Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
-
-Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
-
-
-## Usage with React Native
-
-You can leverage Expo's excellent WebGL port to react-native and use react-three-fiber as the renderer.
-
-```bash
-expo init myapp
-cd myapp
-yarn add expo-gl expo-three three@latest react-three-fiber@beta
-yarn start
-```
+<a href="https://github.com/react-spring/react-three-fiber/graphs/contributors">
+  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" />
+</a>

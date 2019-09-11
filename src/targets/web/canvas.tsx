@@ -2,12 +2,9 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasProps, UseCanvasProps, RectReadOnly } from '../../canvas'
+import { useCanvas, CanvasProps, RectReadOnly } from '../../canvas'
 
-export type Measure = [
-  React.MutableRefObject<HTMLDivElement | null>,
-  { left: number; top: number; width: number; height: number }
-]
+export type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly]
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>(null)
@@ -37,7 +34,7 @@ const IsReady = React.memo(({ canvas, ...props }: CanvasProps & { canvas: HTMLCa
   }, [])
 
   const { pointerEvents } = useCanvas({ ...props, gl, browser: true })
-  return <div {...pointerEvents} style={styles} />
+  return <div {...pointerEvents} style={{ ...styles, position: 'absolute', top: 0, left: 0 }} />
 })
 
 const styles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }

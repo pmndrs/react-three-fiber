@@ -109,5 +109,9 @@
     "three": "^0.107.0",
     "typescript": "^3.5.3",
     "wait-on": "^3.2.0"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
   }
 }

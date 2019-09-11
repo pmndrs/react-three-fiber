@@ -190,12 +190,12 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     raycaster: defaultRaycaster,
     mouse,
     gl,
-    captured: undefined,
-    size: { left: 0, top: 0, width: 0, height: 0, bottom: 0, right: 0, x: 0, y: 0 },
+    size,
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
     pointer: new EventEmitter(),
+    captured: undefined,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
       // If this subscription was given a priority, it takes rendering into its own hands
@@ -286,6 +286,10 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         state.current.camera.aspect = state.current.aspect
       }
       state.current.camera.updateProjectionMatrix()
+
+      // #178: https://github.com/react-spring/react-three-fiber/issues/178
+      // Update matrix world since the renderer is a frame late
+      state.current.camera.updateMatrixWorld()
     }
 
     gl.setSize(size.width, size.height)
@@ -355,13 +359,21 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
     if (event.clientX !== void 0) {
+      let x = event.clientX
+      let y = event.clientY
+
+      // #101: https://github.com/react-spring/react-three-fiber/issues/101
+      // The offset parent isn't taken into account by the resize observer
+      if (browser && event.target && event.target.offsetParent) {
+        x -= event.target.offsetParent.offsetLeft
+        y -= event.target.offsetParent.offsetTop
+      }
+
       const left = state.current.size.left || 0
       const right = left + state.current.size.width || 0
       const top = size.top || 0
       const bottom = top + state.current.size.height || 0
-      const x = ((event.clientX - left) / (right - left)) * 2 - 1
-      const y = -((event.clientY - top) / (bottom - top)) * 2 + 1
-      mouse.set(x, y)
+      mouse.set(((x - left) / (right - left)) * 2 - 1, -((y - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
@@ -382,6 +394,9 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         seen.add(id)
         return true
       })
+      // #16031: (https://github.com/mrdoob/three.js/issues/16031)
+      // Sort intersects distance first renderorder second
+      .sort((a, b) => a.distance - b.distance || (b.object.renderOrder || 0) - (a.object.renderOrder || 0))
 
     for (let intersect of intersects) {
       let receivingObject = intersect.object
