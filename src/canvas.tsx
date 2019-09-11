@@ -187,11 +187,11 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     raycaster: defaultRaycaster,
     mouse,
     gl,
-    captured: undefined,
-    size: { left: 0, top: 0, width: 0, height: 0, bottom: 0, right: 0, x: 0, y: 0 },
+    size,
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
+    captured: undefined,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
       // If this subscription was given a priority, it takes rendering into its own hands
@@ -284,7 +284,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       state.current.camera.updateProjectionMatrix()
 
       // #178: https://github.com/react-spring/react-three-fiber/issues/178
-      // Update matrix world for whatever reason so that project/unproject is available
+      // Update matrix world since the renderer is a frame late
       state.current.camera.updateMatrixWorld()
     }
 
