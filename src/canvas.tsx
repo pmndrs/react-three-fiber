@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useState, useCallback, createContext, useMemo } from 'react'
+import { useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
+import { TinyEmitter } from 'tiny-emitter'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -72,11 +73,13 @@ export type CanvasContext = SharedCanvasContext & {
   subscribers: Subscription[]
   initialClick: [number, number]
   initialHits: THREE.Object3D[]
+  pointer: TinyEmitter
 }
 
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
+  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
@@ -103,7 +106,6 @@ export type PointerEvents = {
 export type UseCanvasProps = {
   children: React.ReactNode
   gl: THREE.WebGLRenderer
-  browser?: boolean
   vr?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
@@ -141,10 +143,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     updateDefaultCamera = true,
     onCreated,
     onPointerMissed,
-    browser,
   } = props
-
-  const useLayoutEffect = browser ? React.useLayoutEffect : useEffect
 
   // Local, reactive state
   const [ready, setReady] = useState(false)
@@ -191,6 +190,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     viewport: { width: 0, height: 0, factor: 0 },
     initialClick: [0, 0],
     initialHits: [],
+    pointer: new TinyEmitter(),
     captured: undefined,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
@@ -360,7 +360,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
       // #101: https://github.com/react-spring/react-three-fiber/issues/101
       // The offset parent isn't taken into account by the resize observer
-      if (browser && event.target && event.target.offsetParent) {
+      if (event.target && event.target.offsetParent) {
         x -= event.target.offsetParent.offsetLeft
         y -= event.target.offsetParent.offsetTop
       }
@@ -438,6 +438,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const handlePointer = useCallback(
     (name: string) => (event: DomEvent) => {
+      state.current.pointer.emit(name, event)
       // Collect hits
       const hits = handleIntersects(event, data => {
         const object = data.object
@@ -465,6 +466,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const hovered = new Map<string, PointerEvent>()
   const handlePointerMove = useCallback((event: DomEvent) => {
+    state.current.pointer.emit('pointerMove', event)
     const hits = handleIntersects(event, data => {
       const object = data.object
       const handlers = (object as any).__handlers
@@ -502,6 +504,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   }, [])
 
   const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[]) => {
+    state.current.pointer.emit('pointerCancel', event)
     if (!hits) hits = handleIntersects(event, () => null)
     Array.from(hovered.values()).forEach(data => {
       if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
