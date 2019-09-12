@@ -19,6 +19,8 @@ function clientXY(e: GestureResponderEvent) {
   return e
 }
 
+const CLICK_DELTA = 20
+
 type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
   style?: ViewStyle
   onContextCreated?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
@@ -28,6 +30,8 @@ const styles: ViewStyle = { flex: 1 }
 
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
   const { pointerEvents } = useCanvas({ ...props, gl })
+
+  let pointerDownCoords: null | [number, number] = null
 
   const panResponder = React.useMemo(
     () =>
@@ -40,9 +44,22 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
         onMoveShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponderCapture: () => true,
         onPanResponderTerminationRequest: () => true,
-        onPanResponderStart: e => pointerEvents.onPointerDown(clientXY(e)),
+        onPanResponderStart: e => {
+          pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
+          pointerEvents.onPointerDown(clientXY(e))
+        },
         onPanResponderMove: e => pointerEvents.onPointerMove(clientXY(e)),
-        onPanResponderEnd: e => pointerEvents.onPointerUp(clientXY(e)),
+        onPanResponderEnd: e => {
+          pointerEvents.onPointerUp(clientXY(e))
+          if (pointerDownCoords) {
+            const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
+            const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
+            if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
+              pointerEvents.onClick(clientXY(e))
+            }
+          }
+          pointerDownCoords = null
+        },
         onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
         onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(clientXY(e)),
         onPanResponderReject: e => pointerEvents.onLostPointerCapture(clientXY(e)),
