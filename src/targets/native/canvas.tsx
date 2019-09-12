@@ -23,6 +23,7 @@ const CLICK_DELTA = 20
 
 type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
   style?: ViewStyle
+  nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
   onContextCreated?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
 }
 
@@ -110,12 +111,24 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
     setRenderer(renderer)
   }
 
+  const setNativeRef = (ref: any) => {
+    if (props.nativeRef_EXPERIMENTAL && !props.nativeRef_EXPERIMENTAL.current) {
+      props.nativeRef_EXPERIMENTAL.current = ref
+    }
+  }
+
   // 1. Ensure Size
   // 2. Ensure EXGLContext
   // 3. Call `useCanvas`
   return (
     <View onLayout={onLayout} style={{ ...styles, ...props.style }}>
-      {size && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+      {size && (
+        <GLView
+          nativeRef_EXPERIMENTAL={setNativeRef}
+          onContextCreate={onContextCreate}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
       {size && renderer && <IsReady {...props} size={size!} gl={renderer} />}
     </View>
   )
