@@ -409,11 +409,11 @@ function Effects({ factor }) {
 
 ```jsx
 function Camera(props) {
-  const ref = useRef()
+  const camera = useRef()
   const { setDefaultCamera } = useThree()
   // This makes sure that size-related calculations are proper
   // Every call to useThree will return this camera instead of the default camera 
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useEffect(() => void setDefaultCamera(camera.current), [])
   return <perspectiveCamera ref={camera} {...props} />
 }
 
