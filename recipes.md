@@ -42,7 +42,7 @@ function Camera(props) {
   useEffect(() => void setDefaultCamera(ref.current), [])
   // Update it every frame
   useFrame(() => ref.current.updateMatrixWorld())
-  return <perspectiveCamera ref={camera} {...props} />
+  return <perspectiveCamera ref={ref} {...props} />
 }
 
 <Canvas>

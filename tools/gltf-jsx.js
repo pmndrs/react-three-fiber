@@ -11,13 +11,6 @@ function toArrayBuffer(buf) {
   return ab
 }
 
-const file = process.argv[2]
-const nameExt = file.match(/[-_\w]+[.][\w]+$/i)[0]
-const name = nameExt
-  .split('.')
-  .slice(0, -1)
-  .join('.')
-
 const gltfLoader = new THREE.GLTFLoader()
 
 function print(objects, obj, level = 0, parent) {
@@ -49,51 +42,59 @@ function print(objects, obj, level = 0, parent) {
   return result
 }
 
-var stream = fs.createWriteStream(name.charAt(0).toUpperCase() + name.slice(1) + '.js')
-stream.once('open', fd => {
-  if (fs.existsSync(file)) {
-    var data = fs.readFileSync(file)
-    var arrayBuffer = toArrayBuffer(data)
-    console.log(arrayBuffer)
-    gltfLoader.parse(
-      arrayBuffer,
-      '',
-      gltf => {
+module.exports = function(file, output) {
+  const nameExt = file.match(/[-_\w]+[.][\w]+$/i)[0]
+  const name = nameExt
+    .split('.')
+    .slice(0, -1)
+    .join('.')
+
+  const stream = fs.createWriteStream(output || name.charAt(0).toUpperCase() + name.slice(1) + '.js')
+  stream.once('open', fd => {
+    if (fs.existsSync(file)) {
+      const data = fs.readFileSync(file)
+      const arrayBuffer = toArrayBuffer(data)
+      console.log(arrayBuffer)
+      gltfLoader.parse(
+        arrayBuffer,
+        '',
+        gltf => {
+          const objects = []
+          gltf.scene.traverse(child => objects.push(child))
+
+          stream.write(`import React, { useState, useEffect } from 'react'
+  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+  import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+  
+  export default function Model({ fallback, ...props }) {
+    const [{ gltf, objects }, set] = useState({})
+    useEffect(() => {
+      const gltfLoader = new GLTFLoader()
+      const dracoLoader = new DRACOLoader()
+      dracoLoader.setDecoderPath('/draco-gltf/')
+      gltfLoader.setDRACOLoader(dracoLoader)
+      gltfLoader.load('/${nameExt}', gltf => {
         const objects = []
         gltf.scene.traverse(child => objects.push(child))
-
-        stream.write(`import React, { useState, useEffect } from 'react'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
-
-export default function Model({ fallback, ...props }) {
-  const [{ gltf, objects }, set] = useState({})
-  useEffect(() => {
-    const gltfLoader = new GLTFLoader()
-    const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/draco-gltf/')
-    gltfLoader.setDRACOLoader(dracoLoader)
-    gltfLoader.load('/${nameExt}', gltf => {
-      const objects = []
-      gltf.scene.traverse(child => objects.push(child))
-      set({ gltf, objects })
-    })
-  }, [])
-
-  if (!gltf) return <group {...props}>{fallback || null}</group>
-
-  return (
-    <group {...props}>
-${print(objects, gltf.scene, 6)}
-    </group>
-  )
-}`)
-        stream.end()
-      },
-      event => {
-        console.log(event)
-        console.log('loader failed')
-      }
+        set({ gltf, objects })
+      })
+    }, [])
+  
+    if (!gltf) return <group {...props}>{fallback || null}</group>
+  
+    return (
+      <group {...props}>
+  ${print(objects, gltf.scene, 6)}
+      </group>
     )
-  }
-})
+  }`)
+          stream.end()
+        },
+        event => {
+          console.log(event)
+          console.log('loader failed')
+        }
+      )
+    }
+  })
+}

@@ -1,6 +1,6 @@
 {
   "name": "react-three-fiber",
-  "version": "2.4.3",
+  "version": "3.0.0-beta.6",
   "description": "React-fiber renderer for THREE.js",
   "main": "./dist/web.cjs.js",
   "module": "./dist/web.js",
@@ -63,12 +63,13 @@
     "react-reconciler": "0.20.4",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.13.3",
-    "tiny-emitter": "^2.1.0"
+    "tiny-emitter": "^2.1.0",
+    "three": "^0.105.0"
   },
   "peerDependencies": {
     "react": ">=16.9",
     "react-dom": ">=16.9",
-    "three": ">=0.107"
+    "three": ">=0.105"
   },
   "devDependencies": {
     "@babel/core": "7.4.4",
@@ -114,5 +115,8 @@
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
+  },
+  "bin": {
+    "react-three-fiber": "./tools/index.js"
   }
 }
