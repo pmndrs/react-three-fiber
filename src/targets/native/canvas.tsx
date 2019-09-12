@@ -27,7 +27,7 @@ type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
 const styles: ViewStyle = { flex: 1 }
 
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
-  const { pointerEvents } = useCanvas({ ...props, gl, browser: true })
+  const { pointerEvents } = useCanvas({ ...props, gl })
 
   const panResponder = React.useMemo(
     () =>

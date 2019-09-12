@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useState, useCallback, createContext, useMemo } from 'react'
+import { useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 import { TinyEmitter } from 'tiny-emitter'
 
@@ -106,7 +106,6 @@ export type PointerEvents = {
 export type UseCanvasProps = {
   children: React.ReactNode
   gl: THREE.WebGLRenderer
-  browser?: boolean
   vr?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
@@ -144,10 +143,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     updateDefaultCamera = true,
     onCreated,
     onPointerMissed,
-    browser,
   } = props
-
-  const useLayoutEffect = browser ? React.useLayoutEffect : useEffect
 
   // Local, reactive state
   const [ready, setReady] = useState(false)
@@ -364,7 +360,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
       // #101: https://github.com/react-spring/react-three-fiber/issues/101
       // The offset parent isn't taken into account by the resize observer
-      if (browser && event.target && event.target.offsetParent) {
+      if (event.target && event.target.offsetParent) {
         x -= event.target.offsetParent.offsetLeft
         y -= event.target.offsetParent.offsetTop
       }

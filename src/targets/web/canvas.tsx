@@ -33,7 +33,7 @@ const IsReady = React.memo(({ canvas, ...props }: CanvasProps & { canvas: HTMLCa
     return renderer
   }, [])
 
-  const { pointerEvents } = useCanvas({ ...props, gl, browser: true })
+  const { pointerEvents } = useCanvas({ ...props, gl })
   return <div {...pointerEvents} style={{ ...styles, position: 'absolute', top: 0, left: 0 }} />
 })
 
