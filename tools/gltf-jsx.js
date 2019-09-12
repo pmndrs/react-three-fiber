@@ -1,6 +1,9 @@
 const fs = require('fs')
 const THREE = (global.THREE = require('three'))
 require('three/examples/js/loaders/GLTFLoader')
+const DracoLoader = require('./dracoloader')
+
+THREE.DRACOLoader.getDecoderModule = () => {}
 
 function toArrayBuffer(buf) {
   var ab = new ArrayBuffer(buf.length)
@@ -12,6 +15,7 @@ function toArrayBuffer(buf) {
 }
 
 const gltfLoader = new THREE.GLTFLoader()
+gltfLoader.setDRACOLoader(new DracoLoader())
 
 function print(objects, obj, level = 0, parent) {
   let result = ''
@@ -59,6 +63,8 @@ module.exports = function(file, output) {
         arrayBuffer,
         '',
         gltf => {
+          console.log(gltf)
+
           const objects = []
           gltf.scene.traverse(child => objects.push(child))
 

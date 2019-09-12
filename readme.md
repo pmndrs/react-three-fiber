@@ -332,6 +332,8 @@ import {
 
 Recipes and FAQ: [/react-three-fiber/recipes.md](https://github.com/react-three-fiber/react-three-fiber/blob/master/recipes.md)
 
+Tools (GLTF-to-JSX etc): [/react-three-fiber/tools](https://github.com/react-spring/react-three-fiber/tools)
+
 React-podcast episode: https://reactpodcast.simplecast.fm/56
 
 Learn-with-jason: https://www.youtube.com/watch?v=1rP3nNY2hTo
