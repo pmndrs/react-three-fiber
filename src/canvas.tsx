@@ -52,6 +52,7 @@ export type SharedCanvasContext = {
   camera: Camera
   raycaster: THREE.Raycaster
   mouse: THREE.Vector2
+  clock: THREE.Clock
   scene: THREE.Scene
   size: RectReadOnly
   viewport: { width: number; height: number; factor: number }
@@ -171,6 +172,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     return cam
   })
 
+  const [clock] = useState(() => new THREE.Clock())
+
   // Public state
   const state: React.MutableRefObject<CanvasContext> = useRef<CanvasContext>({
     ready: false,
@@ -185,6 +188,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     scene: defaultScene,
     raycaster: defaultRaycaster,
     mouse,
+    clock,
     gl,
     size,
     viewport: { width: 0, height: 0, factor: 0 },

@@ -241,6 +241,8 @@ const {
   size,             // Bounds of the view (which stretches 100% and auto-adjusts)
   viewport,         // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,           // Aspect ratio (size.width / size.height)
+  mouse,            // Current 2D mouse coordinates 
+  clock,            // THREE.Clock (usefull for useFrame deltas)
   invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
   intersect,        // Calls onMouseMove handlers for objects underneath the cursor
   setDefaultCamera  // Sets the default camera
@@ -297,21 +299,21 @@ return <bufferGeometry ref={ref} />
 
 #### useLoader(loader, url, [extensions]) (experimental!)
 
-When you want to write out a loaded object declaratively, where you get to lay events on objects, alter materials, etc. It loads a file (which must be present in your /public folder) and caches it. It returns an array of geometry/material pairs.
+For easier asset loading. This hook returns two values, the asset itself and a look-up-table of props.
+
+Please do check out the [/tools section](https://github.com/react-spring/react-three-fiber/tools) which contains converters that allow you to represent assets declaratively in JSX instead of importing a pre-made blob via `<primitive />`
 
 ```jsx
 import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
-const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
+const [gltf, objects] = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
   const dracoLoader = new DRACOLoader()
   dracoLoader.setDecoderPath('/draco-gltf/')
   loader.setDRACOLoader(dracoLoader)
 }))
-return model.map(({ geometry, material }) => (
-  <mesh key={geometry.uuid} geometry={geometry} castShadow>
-    <meshStandardMaterial attach="material" map={material.map} roughness={1} />
+return <primitive object={gltf.scene} />
 ```
 
 # Additional exports

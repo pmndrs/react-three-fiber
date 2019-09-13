@@ -66,27 +66,51 @@ type Content = {
 
 type Extensions = (loader: THREE.Loader) => void
 
-/** experimental */
-export function useLoader(proto: THREE.Loader, url: string, extensions?: Extensions): Content[] {
-  const key = useMemo(() => ({}), [url])
-  const [cache] = useState(() => new WeakMap())
-  const loader = useMemo(() => {
-    const temp = new (proto as any)()
-    if (extensions) extensions(temp)
-    return temp
-  }, [proto])
-  const [_, forceUpdate] = useState(false)
+type LoaderData = {
+  data?: any
+  objects: any[]
+}
+
+const blackList = [
+  'id',
+  'uuid',
+  'type',
+  'children',
+  'parent',
+  'matrix',
+  'matrixWorld',
+  'matrixWorldNeedsUpdate',
+  'modelViewMatrix',
+  'normalMatrix',
+]
+
+function prune(props: any) {
+  const reducedProps = { ...props }
+  // Remove black listed props
+  blackList.forEach(name => delete reducedProps[name])
+  // Remove functions
+  Object.keys(reducedProps).forEach(name => typeof reducedProps[name] === 'function' && delete reducedProps[name])
+  // Prune materials and geometries
+  if (reducedProps.material) reducedProps.material = prune(reducedProps.material)
+  if (reducedProps.geometry) reducedProps.geometry = prune(reducedProps.geometry)
+  // Return cleansed object
+  return reducedProps
+}
+
+export function useLoader<T>(Proto: THREE.Loader, url: string, extensions?: Extensions): [T, any[]] {
+  const [{ data, objects }, set] = useState<LoaderData>({ data: undefined, objects: [] })
+  // Load and prune object
   useEffect(() => {
-    if (!cache.has(key)) {
-      loader.load(url, (gltf: any) => {
-        const temp: Content[] = []
-        gltf.scene.traverse(
-          (obj: THREE.Mesh) => obj.isMesh && temp.push({ geometry: obj.geometry, material: obj.material })
-        )
-        cache.set(key, temp)
-        forceUpdate(i => !i)
-      })
-    }
-  }, [proto, key])
-  return cache.get(key) || []
+    const loader = new (Proto as any)()
+    if (extensions) extensions(loader)
+    loader.load(url, (data: any) => {
+      const objects: any[] = []
+      if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
+      set({ data, objects })
+    })
+    // Dispose root object if it exists
+    return () => data && data.scene && data.scene.dispose()
+  }, [url])
+  // Return the object itself and a list of pruned props
+  return [data, objects]
 }
