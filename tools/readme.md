@@ -49,3 +49,5 @@ export default function Model({ fallback, ...props }) {
   )
 }
 ```
+
+TODO: abstract the useEffect away, this will be put into a official three-fiber hook, probably useModel or useLoader. Then it won't duplicate for each component.
