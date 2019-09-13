@@ -313,7 +313,7 @@ const [gltf, objects] = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
   dracoLoader.setDecoderPath('/draco-gltf/')
   loader.setDRACOLoader(dracoLoader)
 }))
-return <primitive object={gltf.scene} />
+return gltf ? <primitive object={gltf.scene} /> : null
 ```
 
 # Additional exports
