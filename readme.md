@@ -227,7 +227,7 @@ The event data you receive contains the browser event as well as the Threejs eve
 All hooks can only be used **inside** the Canvas element because they rely on context updates! You cannot expect something like this to work:
 
 ```jsx
-funciton App() {
+function App() {
   const { gl } = useThree() // This will just crash
   return (
     <Canvas>
@@ -238,12 +238,12 @@ funciton App() {
 Do this instead:
 
 ```jsx
-funciton SomeComponent() {
+function SomeComponent() {
   const { gl } = useThree()
   return <mesh />
 }
         
-funciton App() {
+function App() {
   return (
     <Canvas>
       <SomeComponent />
