@@ -1,7 +1,8 @@
 const fs = require('fs')
+require('jsdom-global')()
 const THREE = (global.THREE = require('three'))
-require('three/examples/js/loaders/GLTFLoader')
-const DracoLoader = require('./dracoloader')
+require('./bin/GLTFLoader')
+const DracoLoader = require('./bin/dracoloader')
 
 THREE.DRACOLoader.getDecoderModule = () => {}
 
@@ -74,7 +75,7 @@ function printAnimations(gltf) {
       mixer.current = new THREE.AnimationMixer(root)
       ${printClips(gltf)}
     }
-    return () => mixer.current && mixer.current.uncacheRoot(root)
+    return () => root && mixer.current && mixer.current.uncacheRoot(root)
   }, [gltf])`
     : ''
 }
@@ -115,14 +116,10 @@ export default function Model({ fallback = null, ...props }) {
     loader.setDRACOLoader(dracoLoader)
   })
 ${printAnimations(gltf)}
-
+  if (!gltf) return <group ref={group} {...props} children={fallback} />
   return (
     <group ref={group} {...props}>
-      {gltf ? ( 
-${print(objects, gltf.scene, 8)}
-      ) : (
-        fallback
-      )}
+${print(objects, gltf.scene, 6)}
     </group>
   )
 }`)
