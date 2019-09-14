@@ -29,7 +29,7 @@ export type PointerEvent = DomEvent &
     sourceEvent: DomEvent
   }
 
-export type RenderCallback = (props: CanvasContext, timestamp: number) => void
+export type RenderCallback = (props: CanvasContext, delta: number) => void
 
 export interface RectReadOnly {
   readonly x: number

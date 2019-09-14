@@ -56,7 +56,8 @@ export function renderGl(
   if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   // Run local effects
-  state.current.subscribers.forEach(sub => sub.ref.current(state.current, timestamp))
+  const delta = state.current.clock.getDelta()
+  state.current.subscribers.forEach(sub => sub.ref.current(state.current, delta))
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames

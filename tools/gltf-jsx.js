@@ -56,7 +56,7 @@ function printAnimations(gltf) {
     ? `
   const mixer = useRef()
   const actions = useRef()
-  useFrame(({ clock }) => mixer.current && mixer.current.update(clock.getDelta()))
+  useFrame((state, delta) => mixer.current && mixer.current.update(delta))
   useEffect(() => {
     const root = group.current
     if (gltf) {
