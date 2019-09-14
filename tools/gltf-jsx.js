@@ -51,28 +51,31 @@ function print(objects, obj, level = 0, parent) {
   return result
 }
 
+function printClips(gltf) {
+  return `actions.current = {
+        ${gltf.animations.map(
+          (clip, i) =>
+            `"${clip.name}": mixer.current.clipAction(gltf.animations[${i}]),${
+              i < gltf.animations.length - 1 ? '\n' : ''
+            }`
+        )}
+      }`
+}
+
 function printAnimations(gltf) {
   return gltf.animations && gltf.animations.length
     ? `
   const mixer = useRef()
-  const actions = useRef()
+  const actions = useRef({})
   useFrame((state, delta) => mixer.current && mixer.current.update(delta))
   useEffect(() => {
     const root = group.current
     if (gltf) {
       mixer.current = new THREE.AnimationMixer(root)
-      actions.current = gltf.animations.map(clip => mixer.current.clipAction(clip))
+      ${printClips(gltf)}
     }
     return () => mixer.current && mixer.current.uncacheRoot(root)
-  }, [gltf])
-  
-  useEffect(() => {
-    if (gltf) {
-      actions.current.forEach(action => (action.paused = true))
-      if (animate && animate.length)
-        animate.forEach(i => ((actions.current[i].paused = false), actions.current[i].play()))
-    }
-  }, [gltf, animate])`
+  }, [gltf])`
     : ''
 }
 
@@ -104,21 +107,21 @@ import { useLoader, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
   
-export default function Model({ fallback, animate, ...props }) {
+export default function Model({ fallback = null, ...props }) {
   const group = useRef()
   const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}', loader => {
-  const dracoLoader = new DRACOLoader()
+    const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/draco-gltf/')
     loader.setDRACOLoader(dracoLoader)
   })
-${printAnimations(gltf)}  
+${printAnimations(gltf)}
 
   return (
     <group ref={group} {...props}>
       {gltf ? ( 
 ${print(objects, gltf.scene, 8)}
       ) : (
-        fallback || null
+        fallback
       )}
     </group>
   )
