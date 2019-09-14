@@ -22,6 +22,7 @@ function print(objects, obj, level = 0, parent) {
   let space = new Array(level).fill(' ').join('')
   let children = ''
   let type = obj.type.charAt(0).toLowerCase() + obj.type.slice(1)
+  let currentId = objects.indexOf(obj)
   let parentId = objects.indexOf(parent)
 
   if (obj.children) obj.children.forEach(child => (children += print(objects, child, level + 2, obj)))
@@ -34,6 +35,10 @@ function print(objects, obj, level = 0, parent) {
   if (obj.isGeometry || obj.isBufferGeometry) result += `attach="geometry" {...objects[${parentId}].geometry} `
   if (obj.name.length) result += `name="${obj.name}" `
   if (obj.visible === false) result += `visible={false} `
+
+  if (obj.morphTargetDictionary) result += `morphTargetDictionary={objects[${currentId}].morphTargetDictionary} `
+  if (obj.morphTargetInfluences) result += `morphTargetInfluences={objects[${currentId}].morphTargetInfluences} `
+
   if (obj.position instanceof THREE.Vector3 && obj.position.length())
     result += `position={[${obj.position.x}, ${obj.position.y}, ${obj.position.z},]} `
   if (obj.rotation instanceof THREE.Euler && obj.rotation.toVector3().length())
@@ -44,6 +49,31 @@ function print(objects, obj, level = 0, parent) {
 
   if (children.length) result += children + `${space}</${type}>${!parent ? '' : '\n'}`
   return result
+}
+
+function printAnimations(gltf) {
+  return gltf.animations && gltf.animations.length
+    ? `
+  const mixer = useRef()
+  const actions = useRef()
+  useFrame(({ clock }) => mixer.current && mixer.current.update(clock.getDelta()))
+  useEffect(() => {
+    const root = group.current
+    if (gltf) {
+      mixer.current = new THREE.AnimationMixer(root)
+      actions.current = gltf.animations.map(clip => mixer.current.clipAction(clip))
+    }
+    return () => mixer.current && mixer.current.uncacheRoot(root)
+  }, [gltf])
+  
+  useEffect(() => {
+    if (gltf) {
+      actions.current.forEach(action => (action.paused = true))
+      if (animate && animate.length)
+        animate.forEach(i => ((actions.current[i].paused = false), actions.current[i].play()))
+    }
+  }, [gltf, animate])`
+    : ''
 }
 
 module.exports = function(file, output) {
@@ -68,26 +98,31 @@ module.exports = function(file, output) {
           const objects = []
           gltf.scene.traverse(child => objects.push(child))
 
-          stream.write(`import React, { useState, useEffect } from 'react'
-  import { useLoader } from 'react-three-fiber'
-  import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-  import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+          stream.write(`import * as THREE from 'three'
+import React, { useEffect, useRef } from 'react'
+import { useLoader, useFrame } from 'react-three-fiber'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
   
-  export default function Model({ fallback, ...props }) {
-    const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}', loader => {
-      const dracoLoader = new DRACOLoader()
-      dracoLoader.setDecoderPath('/draco-gltf/')
-      gltfLoader.setDRACOLoader(dracoLoader)
-    })
-  
-    if (!gltf) return <group {...props}>{fallback || null}</group>
-  
-    return (
-      <group {...props}>
-  ${print(objects, gltf.scene, 6)}
-      </group>
-    )
-  }`)
+export default function Model({ fallback, animate, ...props }) {
+  const group = useRef()
+  const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}', loader => {
+  const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('/draco-gltf/')
+    loader.setDRACOLoader(dracoLoader)
+  })
+${printAnimations(gltf)}  
+
+  return (
+    <group ref={group} {...props}>
+      {gltf ? ( 
+${print(objects, gltf.scene, 8)}
+      ) : (
+        fallback || null
+      )}
+    </group>
+  )
+}`)
           stream.end()
         },
         event => {
