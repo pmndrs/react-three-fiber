@@ -18,22 +18,16 @@ A typical output looks like this:
 
 ```jsx
 import React, { useState, useEffect } from 'react'
+import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
 export default function Model({ fallback, ...props }) {
-  const [{ gltf, objects }, set] = useState({})
-  useEffect(() => {
-    const gltfLoader = new GLTFLoader()
+  const [gltf, objects] = useLoader(GLTFLoader, '/seat.glb', loader => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/draco-gltf/')
-    gltfLoader.setDRACOLoader(dracoLoader)
-    gltfLoader.load('/seat.glb', gltf => {
-      const objects = []
-      gltf.scene.traverse(child => objects.push(child))
-      set({ gltf, objects })
-    })
-  }, [])
+    loader.setDRACOLoader(dracoLoader)
+  })
 
   if (!gltf) return <group {...props}>{fallback || null}</group>
 
@@ -49,5 +43,3 @@ export default function Model({ fallback, ...props }) {
   )
 }
 ```
-
-TODO: abstract the useEffect away, this will be put into a official three-fiber hook, probably useModel or useLoader. Then it won't duplicate for each component.
