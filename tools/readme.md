@@ -26,7 +26,7 @@ export default function Model({ fallback, ...props }) {
   const [gltf, objects] = useLoader(GLTFLoader, '/seat.glb', loader => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/draco-gltf/')
-    gltfLoader.setDRACOLoader(dracoLoader)
+    loader.setDRACOLoader(dracoLoader)
   })
 
   if (!gltf) return <group {...props}>{fallback || null}</group>
