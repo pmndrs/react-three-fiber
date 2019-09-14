@@ -53,14 +53,11 @@ function print(objects, obj, level = 0, parent) {
 }
 
 function printClips(gltf) {
-  return `actions.current = {
-        ${gltf.animations.map(
-          (clip, i) =>
-            `"${clip.name}": mixer.current.clipAction(gltf.animations[${i}]),${
-              i < gltf.animations.length - 1 ? '\n' : ''
-            }`
-        )}
-      }`
+  return (
+    '    actions.current = {\n' +
+    gltf.animations.map((clip, i) => `      "${clip.name}": mixer.current.clipAction(gltf.animations[${i}]),\n`) +
+    '    }'
+  )
 }
 
 function printAnimations(gltf) {
@@ -71,12 +68,10 @@ function printAnimations(gltf) {
   useFrame((state, delta) => mixer.current && mixer.current.update(delta))
   useEffect(() => {
     const root = group.current
-    if (gltf) {
-      mixer.current = new THREE.AnimationMixer(root)
-      ${printClips(gltf)}
-    }
+    mixer.current = new THREE.AnimationMixer(root)
+${printClips(gltf)}
     return () => root && mixer.current && mixer.current.uncacheRoot(root)
-  }, [gltf])`
+  }, [])\n`
     : ''
 }
 
@@ -116,7 +111,6 @@ export default function Model({ fallback = null, ...props }) {
     loader.setDRACOLoader(dracoLoader)
   })
 ${printAnimations(gltf)}
-  if (!gltf) return <group ref={group} {...props} children={fallback} />
   return (
     <group ref={group} {...props}>
 ${print(objects, gltf.scene, 6)}

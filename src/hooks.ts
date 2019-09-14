@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
+import usePromise from 'react-promise-suspense'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
@@ -67,7 +68,7 @@ type Content = {
 type Extensions = (loader: THREE.Loader) => void
 
 type LoaderData = {
-  data?: any
+  data: any
   objects: any[]
 }
 
@@ -98,19 +99,22 @@ function prune(props: any) {
 }
 
 export function useLoader<T>(Proto: THREE.Loader, url: string, extensions?: Extensions): [T, any[]] {
-  const [{ data, objects }, set] = useState<LoaderData>({ data: undefined, objects: [] })
-  // Load and prune object
-  useEffect(() => {
-    const loader = new (Proto as any)()
-    if (extensions) extensions(loader)
-    loader.load(url, (data: any) => {
-      const objects: any[] = []
-      if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
-      set({ data, objects })
-    })
-    // Dispose root object if it exists
-    return () => data && data.scene && data.scene.dispose()
-  }, [url])
+  // Use suspense to load async assets
+  const { data, objects } = usePromise<LoaderData>(
+    (Proto: THREE.Loader, url: string) =>
+      new Promise(res => {
+        const loader = new (Proto as any)()
+        if (extensions) extensions(loader)
+        loader.load(url, (data: any) => {
+          const objects: any[] = []
+          if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
+          res({ data, objects })
+        })
+      }),
+    [Proto, url]
+  )
+  // Dispose objects on unmount
+  useEffect(() => () => data.scene && data.scene.dispose(), [])
   // Return the object itself and a list of pruned props
   return [data, objects]
 }

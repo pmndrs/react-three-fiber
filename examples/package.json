@@ -18,6 +18,7 @@
     "react-app-polyfill": "^1.0.0",
     "react-dev-utils": "^9.0.0",
     "react-dom": "^16.9.0",
+    "react-promise-suspense": "^0.3.1",
     "react-spring": "8.0.27",
     "three": "^0.108.0",
     "three.meshline": "^1.2.0",
