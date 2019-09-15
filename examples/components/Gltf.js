@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef } from 'react'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
@@ -7,24 +7,23 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import stork from 'file-loader!../resources/gltf/stork.glb'
 extend({ OrbitControls })
 
-function Model() {
+function Model(props) {
   const group = useRef()
   const [gltf, objects] = useLoader(GLTFLoader, stork)
 
-  const mixer = useRef()
-  const actions = useRef({})
-  useFrame((state, delta) => mixer.current && mixer.current.update(delta))
+  const actions = useRef()
+  const [mixer] = useState(() => new THREE.AnimationMixer())
+  useFrame((state, delta) => mixer.update(delta))
   useEffect(() => {
     const root = group.current
-    mixer.current = new THREE.AnimationMixer(root)
-    actions.current = { storkFly_B_: mixer.current.clipAction(gltf.animations[0]) }
-    return () => root && mixer.current && mixer.current.uncacheRoot(root)
+    actions.current = { storkFly_B_: mixer.clipAction(gltf.animations[0], root) }
+    return () => gltf.animations.forEach(clip => mixer.uncacheClip(clip))
   }, [])
 
   useEffect(() => void actions.current.storkFly_B_.play(), [])
 
   return (
-    <group ref={group}>
+    <group ref={group} {...props}>
       <scene name="AuxScene">
         <mesh
           castShadow
@@ -61,6 +60,8 @@ export default function App() {
       />
       <Suspense fallback={null}>
         <Model />
+        <Model position={[50, 0, 0]} />
+        <Model position={[-50, 0, 0]} />
       </Suspense>
       <Controls />
     </Canvas>

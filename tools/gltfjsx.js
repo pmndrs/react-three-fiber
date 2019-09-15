@@ -54,28 +54,27 @@ function print(objects, obj, level = 0, parent) {
 
 function printClips(gltf) {
   return (
-    '    actions.current = {\n' +
-    gltf.animations.map((clip, i) => `      "${clip.name}": mixer.current.clipAction(gltf.animations[${i}]),\n`) +
+    '{\n' +
+    gltf.animations.map(
+      (clip, i) => `      "${clip.name}": mixer.clipAction(gltf.animations[${i}], group.current),\n`
+    ) +
     '    }'
   )
 }
 
 function printAnimations(gltf) {
   return gltf.animations && gltf.animations.length
-    ? `
-  const mixer = useRef()
-  const actions = useRef({})
-  useFrame((state, delta) => mixer.current && mixer.current.update(delta))
+    ? `\n\n  const actions = useRef()
+  const [mixer] = useState(() => new THREE.AnimationMixer())
+  useFrame((state, delta) => mixer.update(delta))
   useEffect(() => {
-    const root = group.current
-    mixer.current = new THREE.AnimationMixer(root)
-${printClips(gltf)}
-    return () => root && mixer.current && mixer.current.uncacheRoot(root)
-  }, [])\n`
+    actions.current = ${printClips(gltf)}
+    return () => gltf.animations.forEach(clip => mixer.uncacheClip(clip))
+  }, [])`
     : ''
 }
 
-module.exports = function(file, output) {
+module.exports = function(file, output, { draco, animation }) {
   const nameExt = file.match(/[-_\w]+[.][\w]+$/i)[0]
   const name = nameExt
     .split('.')
@@ -100,17 +99,22 @@ module.exports = function(file, output) {
           stream.write(`import * as THREE from 'three'
 import React, { useEffect, useRef } from 'react'
 import { useLoader, useFrame } from 'react-three-fiber'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'${
+            draco ? `\nimport { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'` : ``
+          }
   
 export default function Model(props) {
   const group = useRef()
-  const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}', loader => {
+  const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}'${
+            draco
+              ? `, loader => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/draco-gltf/')
     loader.setDRACOLoader(dracoLoader)
-  })
-${printAnimations(gltf)}
+  }`
+              : ``
+          })${animation ? printAnimations(gltf) : ``}
+
   return (
     <group ref={group} {...props}>
 ${print(objects, gltf.scene, 6)}

@@ -69,7 +69,8 @@
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.13.3",
     "three": "^0.105.0",
-    "tiny-emitter": "^2.1.0"
+    "tiny-emitter": "^2.1.0",
+    "yargs": "^14.0.0"
   },
   "peerDependencies": {
     "react": ">=16.9",
