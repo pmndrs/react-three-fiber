@@ -103,7 +103,7 @@ import { useLoader, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
   
-export default function Model({ fallback = null, ...props }) {
+export default function Model(props) {
   const group = useRef()
   const [gltf, objects] = useLoader(GLTFLoader, '/${nameExt}', loader => {
     const dracoLoader = new DRACOLoader()

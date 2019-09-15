@@ -22,15 +22,8 @@ import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
-export default function Model({ fallback, ...props }) {
-  const [gltf, objects] = useLoader(GLTFLoader, '/seat.glb', loader => {
-    const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/draco-gltf/')
-    loader.setDRACOLoader(dracoLoader)
-  })
-
-  if (!gltf) return <group {...props}>{fallback || null}</group>
-
+export default function Model(props) {
+  const [gltf, objects] = useLoader(GLTFLoader, '/scene.glb')
   return (
     <group {...props}>
       <scene name="Scene">
@@ -42,4 +35,14 @@ export default function Model({ fallback, ...props }) {
     </group>
   )
 }
+```
+
+This componend suspends, so you can wrap it into `<Suspense />` for fallbacks and error-boundaries for error handling:
+
+```jsx
+<ErrorBoundary>
+  <Suspense fallback={<Fallback />}>
+    <Model />
+  </Suspense>
+</ErrorBoundary>
 ```

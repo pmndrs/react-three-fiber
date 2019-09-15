@@ -9,11 +9,7 @@ extend({ OrbitControls })
 
 function Model() {
   const group = useRef()
-  const [gltf, objects] = useLoader(GLTFLoader, stork, loader => {
-    const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/draco-gltf/')
-    loader.setDRACOLoader(dracoLoader)
-  })
+  const [gltf, objects] = useLoader(GLTFLoader, stork)
 
   const mixer = useRef()
   const actions = useRef({})
