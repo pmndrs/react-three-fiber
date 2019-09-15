@@ -1,23 +1,30 @@
 # npx react-three-fiber
 
-node helpers, see: https://twitter.com/0xca0a/status/1172183080452464640
+(Experimental) node helpers, see: https://twitter.com/0xca0a/status/1172183080452464640
 
-## --jsx inputfile [outputfile]
+```bash
+npx react-three-fiber input.gltf [Output.js] [options]
+
+Options:
+  --jsx, -j        converts a gltf/glb file to jsx     [boolean]
+  --draco, -d      adds DRACOLoader                   [string] [default: "/draco-gltf/"]
+  --animation, -a  extracts animation clips           [boolean]
+  --help           Show help                          [boolean]
+  --version        Show version number                [boolean]
+```
+
+## --jsx
 
 <img src="https://i.imgur.com/U4cWrNN.gif" />
 
-This command turns a GLTF file into a JSX component. This is still experimental.
+This command turns a GLTF file into a JSX component.
 
-```bash
-npx react-three-fiber@beta scene.gltf Scene.js --jsx
-```
-
-You still need to be set up for asset loading and the actual GLTF has to be present in production. It just loads it, creates a hashmap of all the objects inside and writes out a JSX tree, which now you can freely alter.
+You need to be set up for asset loading and the actual GLTF has to be present in your /public folder. This tools loads it, creates a hashmap of all the objects inside and writes out a JSX tree which you can now freely alter.
 
 A typical output looks like this:
 
 ```jsx
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
@@ -36,7 +43,7 @@ export default function Model(props) {
 }
 ```
 
-This componend suspends, so you can wrap it into `<Suspense />` for fallbacks and error-boundaries for error handling:
+This component suspends, so you must wrap it into `<Suspense />` for fallbacks and, optionally, error-boundaries for error handling:
 
 ```jsx
 <ErrorBoundary>
@@ -48,9 +55,9 @@ This componend suspends, so you can wrap it into `<Suspense />` for fallbacks an
 
 ## --draco
 
-Adds a DRACOLoader. You need to be set up for draco, the necessary files have to exist in your /public folder. By default it defaults to `/draco-gltf/` which should contain [dracos gltf decoder](https://github.com/mrdoob/three.js/tree/dev/examples/js/libs/draco/gltf).
+Adds a DRACOLoader, for which you need to be set up. The necessary files have to exist in your /public folder. It defaults to `/draco-gltf/` which should contain [dracos gltf decoder](https://github.com/mrdoob/three.js/tree/dev/examples/js/libs/draco/gltf).
 
-It will then extend the loader:
+It will then extend the loader-section:
 
 ```jsx
 const [gltf, objects] = useLoader(GLTFLoader, '/stork.glb', loader => {
@@ -62,7 +69,7 @@ const [gltf, objects] = useLoader(GLTFLoader, '/stork.glb', loader => {
 
 ## --animation
 
-This adds a THREE.AnimationMixer to your component and extracts its clips:
+If your GLTF contains animations it will add a THREE.AnimationMixer to your component and extract the clips:
 
 
 ```jsx
@@ -70,9 +77,7 @@ const actions = useRef()
 const [mixer] = useState(() => new THREE.AnimationMixer())
 useFrame((state, delta) => mixer.update(delta))
 useEffect(() => {
-  actions.current = {
-    "storkFly_B_": mixer.clipAction(gltf.animations[0]),
-  }
+  actions.current = { storkFly_B_: mixer.clipAction(gltf.animations[0]) }
   return () => gltf.animations.forEach(clip => mixer.uncacheClip(clip))
 }, [])
 ```
@@ -80,5 +85,5 @@ useEffect(() => {
 If you want to play an animation you can do so at any time:
 
 ```jsx
-actions.current.storkFly_B_.play()
+<mesh onClick={e => actions.current.storkFly_B_.play()} />
 ```

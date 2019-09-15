@@ -7,7 +7,7 @@ const argv = require('yargs')
   .option('jsx', { alias: 'j', describe: 'converts a gltf/glb file to jsx' })
   .option('draco', { alias: 'd', describe: 'adds DRACOLoader', default: '/draco-gltf/' })
   .option('animation', { alias: 'a', describe: 'extracts animation clips' })
-  .usage('$0 input [output] --jsx --draco')
+  .usage('npx react-three-fiber input.gltf [Output.js] [options]')
   .help().argv
 
 console.log(argv)
