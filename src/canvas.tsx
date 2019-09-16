@@ -77,6 +77,8 @@ export type CanvasContext = SharedCanvasContext & {
   pointer: TinyEmitter
 }
 
+export type FilterFunction = (items: THREE.Intersection[], state: SharedCanvasContext) => THREE.Intersection[]
+
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
@@ -86,11 +88,16 @@ export type CanvasProps = {
   updateDefaultCamera?: boolean
   gl?: Partial<THREE.WebGLRenderer>
   camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
-  raycaster?: Partial<THREE.Raycaster>
+  raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
   style?: React.CSSProperties
   onCreated?: (props: CanvasContext) => Promise<any> | void
   onPointerMissed?: () => void
+}
+
+export type UseCanvasProps = CanvasProps & {
+  gl: THREE.WebGLRenderer
+  size: RectReadOnly
 }
 
 export type PointerEvents = {
@@ -102,23 +109,6 @@ export type PointerEvents = {
   onPointerMove(e: any): void
   onGotPointerCapture(e: any): void
   onLostPointerCapture(e: any): void
-}
-
-export type UseCanvasProps = {
-  children: React.ReactNode
-  gl: THREE.WebGLRenderer
-  vr?: boolean
-  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
-  orthographic?: boolean
-  invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
-  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
-  raycaster?: Partial<THREE.Raycaster>
-  size: RectReadOnly
-  style?: any
-  pixelRatio?: number
-  onCreated?: (props: CanvasContext) => Promise<any> | void
-  onPointerMissed?: () => void
 }
 
 function makeId(event: THREE.Intersection) {
@@ -152,7 +142,10 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   const [defaultRaycaster] = useState(() => {
     const ray = new THREE.Raycaster()
-    if (raycaster) applyProps(ray, raycaster, {})
+    if (raycaster) {
+      const { filter, ...raycasterProps } = raycaster
+      applyProps(ray, raycasterProps, {})
+    }
     return ray
   })
 
@@ -386,7 +379,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     const hits: Intersection[] = []
 
     // Intersect known handler objects and filter against duplicates
-    const intersects = defaultRaycaster
+    let intersects = defaultRaycaster
       .intersectObjects((state.current.scene as any).__interaction, true)
       .filter(item => {
         const id = makeId(item)
@@ -394,9 +387,11 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         seen.add(id)
         return true
       })
-      // #16031: (https://github.com/mrdoob/three.js/issues/16031)
-      // Sort intersects distance first renderorder second
-      .sort((a, b) => a.distance - b.distance || (b.object.renderOrder || 0) - (a.object.renderOrder || 0))
+
+    // #16031: (https://github.com/mrdoob/three.js/issues/16031)
+    // Allow custom userland intersect sort order
+    if (raycaster && raycaster.filter && sharedState.current)
+      intersects = raycaster.filter(intersects, sharedState.current)
 
     for (let intersect of intersects) {
       let receivingObject = intersect.object
