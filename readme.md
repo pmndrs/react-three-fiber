@@ -205,7 +205,7 @@ Additionally there's a special `onUpdate` that is called every time the object g
 Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
 
 ```jsx
-funciton App() {
+function App() {
   const { size } = useThree() // This will just crash
   return (
     <Canvas>
@@ -215,12 +215,12 @@ funciton App() {
 Do this instead:
 
 ```jsx
-funciton SomeComponent() {
+function SomeComponent() {
   const { size } = useThree()
   return <mesh />
 }
         
-funciton App() {
+function App() {
   return (
     <Canvas>
       <SomeComponent />
