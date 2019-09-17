@@ -5,7 +5,7 @@
   "main": "./dist/web.cjs.js",
   "module": "./dist/web.js",
   "react-native": "./dist/native.js",
-  "types": "./types/index.d.ts",
+  "types": "./types/src/targets/web/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",

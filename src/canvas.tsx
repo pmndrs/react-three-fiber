@@ -117,8 +117,6 @@ function makeId(event: THREE.Intersection) {
 
 export const stateContext = createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
-export const Canvas = (props: CanvasProps): React.ReactNode => null
-
 export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents } => {
   const {
     children,

@@ -2,9 +2,9 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasProps, RectReadOnly } from '../../canvas'
+import { useCanvas, CanvasProps, RectReadOnly, PointerEvents } from '../../canvas'
 
-export type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly]
+type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly]
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>(null)
@@ -26,22 +26,35 @@ function useMeasure(): Measure {
   return [ref, bounds]
 }
 
-const IsReady = React.memo(({ canvas, ...props }: CanvasProps & { canvas: HTMLCanvasElement; size: any }) => {
-  const gl = useMemo(() => {
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
-    renderer.setClearAlpha(0)
-    return renderer
-  }, [])
+const IsReady = React.memo(
+  ({
+    setEvents,
+    canvas,
+    ...props
+  }: CanvasProps & {
+    setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
+    canvas: HTMLCanvasElement
+    size: any
+  }) => {
+    const gl = useMemo(() => {
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
+      renderer.setClearAlpha(0)
+      return renderer
+    }, [])
 
-  const { pointerEvents } = useCanvas({ ...props, gl })
-  return <div {...pointerEvents} style={{ ...styles, position: 'absolute', top: 0, left: 0 }} />
-})
+    // Init canvas, fetch events, hand them back to the warpping div
+    const { pointerEvents } = useCanvas({ ...props, gl })
+    useEffect(() => void setEvents(pointerEvents), [])
+    return null
+  }
+)
 
 const styles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
 
 export const Canvas = React.memo((props: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>()
   const [bind, size] = useMeasure()
+  const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
@@ -51,9 +64,9 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   // Render the canvas into the dom
   return (
-    <div ref={bind as React.MutableRefObject<HTMLDivElement>} style={{ ...styles, ...props.style }}>
+    <div ref={bind as React.MutableRefObject<HTMLDivElement>} style={{ ...styles, ...props.style }} {...events}>
       <canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
-      {canvasRef.current && <IsReady {...props} size={size} canvas={canvasRef.current} />}
+      {canvasRef.current && <IsReady {...props} size={size} canvas={canvasRef.current} setEvents={setEvents} />}
     </div>
   )
 })

@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import React, { useState, useRef } from 'react'
-import { apply, Canvas, useRender } from 'react-three-fiber'
+import { extend, Canvas, useFrame } from 'react-three-fiber'
 import * as meshline from 'three.meshline'
 
-apply(meshline)
+extend(meshline)
 
 const numLines = 50
 const lines = new Array(numLines).fill()
@@ -24,7 +24,7 @@ function Fatline() {
       )
   })
   // Hook into the render loop and decrease the materials dash-offset
-  useRender(() => (material.current.uniforms.dashOffset.value -= 0.0005))
+  useFrame(() => (material.current.uniforms.dashOffset.value -= 0.0005))
   return (
     <mesh>
       {/** MeshLine and CMRCurve are a OOP factories, not scene objects, hence all the imperative code in here :-( */}
@@ -52,7 +52,7 @@ function Scene() {
   let group = useRef()
   let theta = 0
   // Hook into the render loop and rotate the scene a bit
-  useRender(() => group.current.rotation.set(0, 5 * Math.sin(THREE.Math.degToRad((theta += 0.02))), 0))
+  useFrame(() => group.current.rotation.set(0, 5 * Math.sin(THREE.Math.degToRad((theta += 0.02))), 0))
   return (
     <group ref={group}>
       {lines.map((_, index) => (

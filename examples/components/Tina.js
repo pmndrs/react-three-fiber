@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useThree } from 'react-three-fiber'
 import { update, useTransition, useSpring, a } from 'react-spring/three'
 import flat from 'lodash-es/flatten'
 import { SVGLoader } from './../resources/loaders/SVGLoader'

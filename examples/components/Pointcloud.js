@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useCallback } from 'react'
-import { Canvas, extend, useRender, useThree } from 'react-three-fiber'
+import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 extend({ OrbitControls })
@@ -60,7 +60,7 @@ function Particles({ pointCount }) {
 function Controls() {
   const controls = useRef()
   const { camera, gl } = useThree()
-  useRender(() => controls.current.update())
+  useFrame(() => controls.current.update())
   return (
     <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
   )
