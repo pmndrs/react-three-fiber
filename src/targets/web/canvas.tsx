@@ -18,7 +18,9 @@ function useMeasure(): Measure {
     x: 0,
     y: 0,
   })
-  const [ro] = useState(() => new ResizeObserver(([entry]) => set(entry.contentRect)))
+  const [ro] = useState(
+    () => new ResizeObserver(() => ref.current && set(ref.current.getBoundingClientRect() as RectReadOnly))
+  )
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
@@ -34,7 +36,7 @@ const IsReady = React.memo(
   }: CanvasProps & {
     setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
     canvas: HTMLCanvasElement
-    size: any
+    size: RectReadOnly
   }) => {
     const gl = useMemo(() => {
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
@@ -53,8 +55,12 @@ const styles: React.CSSProperties = { position: 'relative', width: '100%', heigh
 
 export const Canvas = React.memo((props: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>()
-  const [bind, size] = useMeasure()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
+
+  const [bind, size] = useMeasure()
+  useMemo(() => {
+    if (bind.current) Object.assign(size, bind.current.getBoundingClientRect())
+  }, [size])
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
