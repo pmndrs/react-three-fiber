@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
+//@ts-ignore
 import usePromise from 'react-promise-suspense'
 
 // helper type for omitting properties from types

@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { Renderer } from 'expo-three'
 import { useState } from 'react'
-import { useCanvas, CanvasProps, RectReadOnly } from '../../canvas'
+import { useCanvas, CanvasProps, RectReadOnly, UseCanvasProps } from '../../canvas'
 
 function clientXY(e: GestureResponderEvent) {
   ;(e as any).clientX = e.nativeEvent.pageX
@@ -30,7 +30,7 @@ type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
 const styles: ViewStyle = { flex: 1 }
 
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
-  const { pointerEvents } = useCanvas({ ...props, gl })
+  const { pointerEvents } = useCanvas({ ...props, gl } as UseCanvasProps)
 
   let pointerDownCoords: null | [number, number] = null
 

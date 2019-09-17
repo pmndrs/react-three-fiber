@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './components/Gltf'
+import App from './components/SelectiveBloom'
 import './styles.css'
 
 //ReactDOM.unstable_createRoot(document.getElementById('root')).render(<App />)
