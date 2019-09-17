@@ -12,7 +12,11 @@ module.exports = mode => {
   return {
     mode,
     entry: 'index.js',
-    output: { filename: 'bundle.js', path: path.resolve('./dist') },
+    output: {
+      filename: 'bundle.js',
+      path: path.resolve('./dist'),
+      publicPath: '/',
+    },
     module: {
       rules: [
         { test: /\.css$/, use: ['style-loader', 'css-loader'] },

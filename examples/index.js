@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './components/PointCloud'
+import App from './components/GltfPlanet'
 import './styles.css'
 
 //ReactDOM.unstable_createRoot(document.getElementById('root')).render(<App />)

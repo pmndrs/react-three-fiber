@@ -10,7 +10,6 @@ extend({ OrbitControls })
 function Model(props) {
   const group = useRef()
   const [gltf, objects] = useLoader(GLTFLoader, stork)
-
   const actions = useRef()
   const [mixer] = useState(() => new THREE.AnimationMixer())
   useFrame((state, delta) => mixer.update(delta))
@@ -19,9 +18,7 @@ function Model(props) {
     actions.current = { storkFly_B_: mixer.clipAction(gltf.animations[0], root) }
     return () => gltf.animations.forEach(clip => mixer.uncacheClip(clip))
   }, [])
-
   useEffect(() => void actions.current.storkFly_B_.play(), [])
-
   return (
     <group ref={group} {...props}>
       <scene name="AuxScene">
@@ -43,7 +40,7 @@ export function Controls() {
   const ref = useRef()
   const { camera, gl } = useThree()
   useFrame(() => ref.current.update())
-  return <orbitControls ref={ref} args={[camera, gl.domelement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
+  return <orbitControls ref={ref} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
 }
 
 export default function App() {
