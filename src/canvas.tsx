@@ -394,7 +394,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       let object: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (object) {
-        if ((object as any).__handlers) hits.push({ ...intersect, object, receivingObject })
+        const handlers = (object as any).__handlers
+        if (handlers) hits.push({ ...intersect, object, receivingObject })
         object = object.parent
       }
     }
@@ -485,8 +486,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
           Array.from(hovered.values()).forEach(data => {
             const checkId = makeId(data)
             if (checkId !== id) {
-              if ((data.object as any).__handlers.pointerOut)
-                (data.object as any).__handlers.pointerOut({ ...data, type: 'pointerout' })
+              const handlers = (data.object as any).__handlers
+              if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
               hovered.delete(checkId)
             }
           })
