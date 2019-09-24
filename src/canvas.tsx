@@ -27,7 +27,7 @@ export type PointerEvent = DomEvent &
     ray: THREE.Ray
     stopPropagation: () => void
     sourceEvent: DomEvent
-    distance: number
+    delta: number
   }
 
 export type RenderCallback = (props: CanvasContext, delta: number) => void
@@ -421,7 +421,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
     if (hits.length) {
       const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
-      const distance = event.type === 'click' ? calculateDistance(event) : 0
+      const delta = event.type === 'click' ? calculateDistance(event) : 0
 
       for (let hit of hits) {
         let stopped = { current: false }
@@ -429,7 +429,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
           ...event,
           ...hit,
           stopped,
-          distance,
+          delta,
           unprojectedPoint,
           ray: defaultRaycaster.ray,
           // Hijack stopPropagation, which just sets a flag
