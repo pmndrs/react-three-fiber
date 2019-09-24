@@ -1,4 +1,5 @@
 <p align="center">
+  <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="172" src="https://i.imgur.com/UzG518m.gif" /></a>
   <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="172" src="https://i.imgur.com/1atWRR3.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="172" src="https://i.imgur.com/8xpKFkN.gif" /></a>
   <a href="https://codesandbox.io/embed/387z7o2zrq"><img width="288" height="172" src="https://i.imgur.com/YewcWL5.gif" /></a>
@@ -39,14 +40,14 @@ function Thing() {
   )
 }
 
-<Canvas>
+;<Canvas>
   <Thing />
 </Canvas>
 ```
 
 # Canvas
 
-The `Canvas` object is your portal into Threejs. It renders Threejs elements, *not DOM elements*!
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_!
 
 ```jsx
 <Canvas
@@ -57,7 +58,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, *n
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
-  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like 
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   updateDefaultCamera = true    // Adjusts default camera on size changes
   onCreated                     // Callback when vdom is ready (you can block first render via promise)
@@ -68,15 +69,15 @@ You can give it additional properties like style and className, which will be ad
 
 # Defaults that the canvas component sets up
 
-Canvas will create a *translucent WebGL-renderer* with the following properties: `antialias, alpha, setClearAlpha(0)`
+Canvas will create a _translucent WebGL-renderer_ with the following properties: `antialias, alpha, setClearAlpha(0)`
 
-A default *perspective camera*: `fov: 75, near: 0.1, far: 1000, position.z: 5`
+A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, position.z: 5`
 
-A default *orthographic camera* if Canvas.orthographic is true: `near: 0.1, far: 1000, position.z: 5`
+A default _orthographic camera_ if Canvas.orthographic is true: `near: 0.1, far: 1000, position.z: 5`
 
-A default *shadowMap* if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
+A default _shadowMap_ if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
 
-A default *scene* (into which all the JSX is rendered) and a *raycaster*.
+A default _scene_ (into which all the JSX is rendered) and a _raycaster_.
 
 You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
@@ -89,17 +90,18 @@ You could lay out an object like this:
 ```jsx
 <mesh
   visible
-  userData={{ test: "hello" }}
+  userData={{ test: 'hello' }}
   position={new THREE.Vector3(1, 2, 3)}
   rotation={new THREE.Euler(0, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
-  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })} />
+  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })}
+/>
 ```
 
 The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
 
 ```jsx
-<mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
+<mesh visible userData={{ test: 'hello' }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
   <sphereGeometry attach="geometry" args={[1, 16, 16]} />
   <meshStandardMaterial attach="material" color="hotpink" transparent />
 </mesh>
@@ -128,7 +130,7 @@ Sometimes attaching isn't enough. For example, this code attaches effects to an 
   <glitchPass attachArray="passes" renderToScreen />
 ```
 
-You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position. 
+You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position.
 
 ```jsx
 <bufferGeometry attach="geometry">
@@ -160,10 +162,7 @@ The `extend` function extends three-fibers catalogue of known native JSX element
 import { extend } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-extend({ EffectComposer, RenderPass })
-
-<effectComposer>
-  <renderPass />
+extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
 ```
 
 # Events
@@ -181,7 +180,8 @@ Additionally there's a special `onUpdate` that is called every time the object g
   onPointerOver={e => console.log('hover')}
   onPointerOut={e => console.log('unhover')}
   onPointerMove={e => console.log('move')}
-  onUpdate={self => console.log('props have been updated')} />
+  onUpdate={self => console.log('props have been updated')}
+/>
 ```
 
 #### Propagation and capturing
@@ -219,7 +219,7 @@ function SomeComponent() {
   const { size } = useThree()
   return <mesh />
 }
-        
+
 function App() {
   return (
     <Canvas>
@@ -233,19 +233,19 @@ This hooks gives you access to all the basic objects that are kept internally, l
 ```jsx
 import { useThree } from 'react-three-fiber'
 
-const { 
-  gl,               // WebGL renderer
-  canvas,           // canvas the dom element that was created
-  scene,            // Default scene
-  camera,           // Default camera
-  size,             // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport,         // Bounds of the viewport in 3d units + factor (size/viewport)
-  aspect,           // Aspect ratio (size.width / size.height)
-  mouse,            // Current 2D mouse coordinates 
-  clock,            // THREE.Clock (usefull for useFrame deltas)
-  invalidate,       // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect,        // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera  // Sets the default camera
+const {
+  gl, // WebGL renderer
+  canvas, // canvas the dom element that was created
+  scene, // Default scene
+  camera, // Default camera
+  size, // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport, // Bounds of the viewport in 3d units + factor (size/viewport)
+  aspect, // Aspect ratio (size.width / size.height)
+  mouse, // Current 2D mouse coordinates
+  clock, // THREE.Clock (usefull for useFrame deltas)
+  invalidate, // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  intersect, // Calls onMouseMove handlers for objects underneath the cursor
+  setDefaultCamera, // Sets the default camera
 } = useThree()
 ```
 
@@ -287,12 +287,12 @@ When objects need to be updated imperatively.
 ```jsx
 import { useUpdate } from 'react-three-fiber'
 
-const ref = useUpdate( 
+const ref = useUpdate(
   geometry => {
     geometry.addAttribute('position', getVertices(x, y, z))
     geometry.attributes.position.needsUpdate = true
-  }, 
-  [x, y, z], // execute only if these properties change
+  },
+  [x, y, z] // execute only if these properties change
 )
 return <bufferGeometry ref={ref} />
 ```
@@ -320,13 +320,13 @@ return gltf ? <primitive object={gltf.scene} /> : null
 
 ```jsx
 import {
-  addEffect,              // Adds a global callback which is called each frame
-  invalidate,             // Forces view global invalidation
-  apply,                  // Extends the native-object catalogue
-  createPortal,           // Creates a portal (it's a React feature for re-parenting)
-  render,                 // Internal: Renders three jsx into a scene
+  addEffect, // Adds a global callback which is called each frame
+  invalidate, // Forces view global invalidation
+  apply, // Extends the native-object catalogue
+  createPortal, // Creates a portal (it's a React feature for re-parenting)
+  render, // Internal: Renders three jsx into a scene
   unmountComponentAtNode, // Internal: Unmounts root scene
-  applyProps,             // Internal: Sets element properties
+  applyProps, // Internal: Sets element properties
 } from 'react-three-fiber'
 ```
 
