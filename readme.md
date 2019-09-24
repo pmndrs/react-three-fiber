@@ -335,7 +335,7 @@ const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
   const dracoLoader = new DRACOLoader()
   dracoLoader.setDecoderPath('/draco-gltf/')
   loader.setDRACOLoader(dracoLoader)
-}))
+})
 return model.map(({ geometry, material }) => (
   <mesh key={geometry.uuid} geometry={geometry} castShadow>
     <meshStandardMaterial attach="material" map={material.map} roughness={1} />
