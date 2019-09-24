@@ -96,7 +96,7 @@ You could lay out an object like this:
   material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })} />
 ```
 
-The problem is that all of these properties will be re-created on every render pass. Instead, you should define properties declaratively.
+The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
 
 ```jsx
 <mesh visible userData={{ test: "hello" }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
