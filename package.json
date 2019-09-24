@@ -1,6 +1,6 @@
 {
   "name": "react-three-fiber",
-  "version": "3.0.0-beta.11",
+  "version": "3.0.0-beta.13",
   "description": "React-fiber renderer for THREE.js",
   "main": "./dist/web.cjs.js",
   "module": "./dist/web.js",
@@ -58,19 +58,11 @@
   "dependencies": {
     "@babel/runtime": "^7.4.4",
     "@types/three": "^0.103.2",
-    "create-object-url": "^1.0.2",
-    "draco3dgltf": "^1.3.4",
-    "jsdom": "^15.1.1",
-    "jsdom-global": "^3.0.2",
-    "lodash-es": "^4.17.15",
-    "pointer-events-polyfill": "^0.4.4-pre",
     "react-promise-suspense": "^0.3.1",
     "react-reconciler": "0.20.4",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.13.3",
-    "three": "^0.105.0",
-    "tiny-emitter": "^2.1.0",
-    "yargs": "^14.0.0"
+    "tiny-emitter": "^2.1.0"
   },
   "peerDependencies": {
     "react": ">=16.9",
@@ -114,15 +106,11 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
-    "three": "^0.107.0",
     "typescript": "^3.5.3",
     "wait-on": "^3.2.0"
   },
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
-  },
-  "bin": {
-    "react-three-fiber": "./tools/index.js"
   }
 }

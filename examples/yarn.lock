@@ -4981,6 +4981,11 @@ postcss@^7.0.14, postcss@^7.0.5, postcss@^7.0.6:
     source-map "^0.6.1"
     supports-color "^6.1.0"
 
+postprocessing@^6.7.0:
+  version "6.7.0"
+  resolved "https://registry.yarnpkg.com/postprocessing/-/postprocessing-6.7.0.tgz#4151c436a1ba63d506d1c41ae17a46850a604aef"
+  integrity sha512-4q+bC8N/GL9gJO8PmgYFKUwuVvnfaD7kVU23Ku9hMZ83kdHELfRERHn9RF6Mx9SQIolCuvgGj07ip6vIW/UdSw==
+
 prepend-http@^1.0.1:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/prepend-http/-/prepend-http-1.0.4.tgz#d4f4562b0ce3696e41ac52d0e002e57a635dc6dc"

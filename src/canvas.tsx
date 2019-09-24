@@ -27,6 +27,7 @@ export type PointerEvent = DomEvent &
     ray: THREE.Ray
     stopPropagation: () => void
     sourceEvent: DomEvent
+    distance: number
   }
 
 export type RenderCallback = (props: CanvasContext, delta: number) => void
@@ -402,6 +403,13 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     return hits
   }, [])
 
+  /**  Calculates click deltas */
+  const calculateDistance = useCallback((event: DomEvent) => {
+    let dx = event.clientX - state.current.initialClick[0]
+    let dy = event.clientY - state.current.initialClick[1]
+    return Math.round(Math.sqrt(dx * dx + dy * dy))
+  }, [])
+
   /**  Handles intersections by forwarding them to handlers */
   const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
     prepareRay(event)
@@ -413,6 +421,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
     if (hits.length) {
       const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
+      const distance = event.type === 'click' ? calculateDistance(event) : 0
 
       for (let hit of hits) {
         let stopped = { current: false }
@@ -420,6 +429,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
           ...event,
           ...hit,
           stopped,
+          distance,
           unprojectedPoint,
           ray: defaultRaycaster.ray,
           // Hijack stopPropagation, which just sets a flag
@@ -442,7 +452,9 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         if (handlers && handlers[name]) {
           // Forward all events back to their respective handlers with the exception of click,
           // which must must the initial target
-          if (name !== 'click' || state.current.initialHits.includes(object)) handlers[name](data)
+          if (name !== 'click' || state.current.initialHits.includes(object)) {
+            handlers[name](data)
+          }
         }
       })
       // If a click yields no results, pass it back to the user as a miss
@@ -451,10 +463,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         state.current.initialHits = hits.map(hit => hit.object)
       }
       if (name === 'click' && !hits.length && onPointerMissed) {
-        let dx = event.clientX - state.current.initialClick[0]
-        let dy = event.clientY - state.current.initialClick[1]
-        let distance = Math.round(Math.sqrt(dx * dx + dy * dy))
-        if (distance <= 2) onPointerMissed()
+        if (calculateDistance(event) <= 2) onPointerMissed()
       }
     },
     [onPointerMissed]
@@ -482,15 +491,6 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         } else if (hoveredItem.stopped.current) {
           // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
           data.stopPropagation()
-          // In fact, wwe can safely remove them from the cache
-          Array.from(hovered.values()).forEach(data => {
-            const checkId = makeId(data)
-            if (checkId !== id) {
-              const handlers = (data.object as any).__handlers
-              if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
-              hovered.delete(checkId)
-            }
-          })
         }
       }
     })
@@ -503,6 +503,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     state.current.pointer.emit('pointerCancel', event)
     if (!hits) hits = handleIntersects(event, () => null)
     Array.from(hovered.values()).forEach(data => {
+      // When no objects were hit or the the hovered object wasn't found underneath the cursor
+      // we call onPointerOut and delete the object from the hovered-elements map
       if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
         const object = data.object
         const handlers = (object as any).__handlers

@@ -14,6 +14,7 @@
     "cannon": "^0.6.2",
     "d3-ease": "^1.0.5",
     "pepjs": "^0.5.2",
+    "postprocessing": "^6.7.0",
     "react": "^16.9.0",
     "react-app-polyfill": "^1.0.0",
     "react-dev-utils": "^9.0.0",
