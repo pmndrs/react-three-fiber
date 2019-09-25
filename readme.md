@@ -187,6 +187,21 @@ Additionally there's a special `onUpdate` that is called every time the object g
 />
 ```
 
+#### Event data
+
+```jsx
+({
+  ...DomEvent                   // All the original event data
+  ...ThreeEvent                 // All of Three's intersection data
+  object: Object3D              // The object that was actually hit
+  eventObject: Object3D         // The object that registered the event
+  unprojectedPoint: Vector3     // Camera-unprojected point
+  ray: Ray                      // The ray that was used to strike the object
+  sourceEvent: DomEvent         // A reference to the host event
+  delta: number                 // Initial-click delta
+}) => ...
+```
+
 #### Propagation and capturing
 
 ```jsx

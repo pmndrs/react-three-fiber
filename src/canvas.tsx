@@ -15,10 +15,7 @@ export type DomEvent =
   | React.WheelEvent<HTMLDivElement>
   | React.PointerEvent<HTMLDivElement>
 
-export type Intersection = THREE.Intersection & {
-  object: THREE.Object3D
-  receivingObject: THREE.Object3D
-}
+export type Intersection = THREE.Intersection & { eventObject: THREE.Object3D }
 
 export type PointerEvent = DomEvent &
   Intersection & {
@@ -392,13 +389,12 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       intersects = raycaster.filter(intersects, sharedState.current)
 
     for (let intersect of intersects) {
-      let receivingObject = intersect.object
-      let object: THREE.Object3D | null = intersect.object
+      let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
-      while (object) {
-        const handlers = (object as any).__handlers
-        if (handlers) hits.push({ ...intersect, object, receivingObject })
-        object = object.parent
+      while (eventObject) {
+        const handlers = (eventObject as any).__handlers
+        if (handlers) hits.push({ ...intersect, eventObject })
+        eventObject = eventObject.parent
       }
     }
     return hits
