@@ -40,7 +40,7 @@ function Thing() {
   )
 }
 
-;<Canvas>
+<Canvas>
   <Thing />
 </Canvas>
 ```
@@ -58,7 +58,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
-  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
+  pixelRation = undefined        // You could provide window.devicePixelRatio if you like
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   updateDefaultCamera = true    // Adjusts default camera on size changes
   onCreated                     // Callback when vdom is ready (you can block first render via promise)
@@ -162,7 +162,10 @@ The `extend` function extends three-fibers catalogue of known native JSX element
 import { extend } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
+extend({ EffectComposer, RenderPass })
+
+<effectComposer>
+  <renderPass />
 ```
 
 # Events
@@ -234,18 +237,18 @@ This hooks gives you access to all the basic objects that are kept internally, l
 import { useThree } from 'react-three-fiber'
 
 const {
-  gl, // WebGL renderer
-  canvas, // canvas the dom element that was created
-  scene, // Default scene
-  camera, // Default camera
-  size, // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport, // Bounds of the viewport in 3d units + factor (size/viewport)
-  aspect, // Aspect ratio (size.width / size.height)
-  mouse, // Current 2D mouse coordinates
-  clock, // THREE.Clock (usefull for useFrame deltas)
-  invalidate, // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect, // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera, // Sets the default camera
+  gl,                           // WebGL renderer
+  canvas,                       // canvas the dom element that was created
+  scene,                        // Default scene
+  camera,                       // Default camera
+  size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
+  aspect,                       // Aspect ratio (size.width / size.height)
+  mouse,                        // Current 2D mouse coordinates
+  clock,                        // THREE.Clock (usefull for useFrame deltas)
+  invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
+  setDefaultCamera,             // Sets the default camera
 } = useThree()
 ```
 
@@ -330,13 +333,13 @@ function Asset({ url }) {
 
 ```jsx
 import {
-  addEffect, // Adds a global callback which is called each frame
-  invalidate, // Forces view global invalidation
-  apply, // Extends the native-object catalogue
-  createPortal, // Creates a portal (it's a React feature for re-parenting)
-  render, // Internal: Renders three jsx into a scene
-  unmountComponentAtNode, // Internal: Unmounts root scene
-  applyProps, // Internal: Sets element properties
+  addEffect,                    // Adds a global callback which is called each frame
+  invalidate,                   // Forces view global invalidation
+  apply,                        // Extends the native-object catalogue
+  createPortal,                 // Creates a portal (it's a React feature for re-parenting)
+  render,                       // Internal: Renders three jsx into a scene
+  unmountComponentAtNode,       // Internal: Unmounts root scene
+  applyProps,                   // Internal: Sets element properties
 } from 'react-three-fiber'
 ```
 
