@@ -24,7 +24,7 @@ function Torusknot({ layer = DEFAULT_LAYER }) {
   })
   return (
     <mesh ref={ref} position={[0, 0, 2]} layers={layer}>
-      <torusKnotBufferGeometry attach="geometry" args={[0.5, 0.15, 100, 16]} />
+      <torusKnotBufferGeometry attach="geometry" args={[0.5, 0.15, 150, 32]} />
       <Material attach="material" color={layer === DEFAULT_LAYER ? '#873740' : '#070707'} roughness={1} />
     </mesh>
   )

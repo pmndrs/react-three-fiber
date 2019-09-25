@@ -30,7 +30,7 @@ export type PointerEvent = DomEvent &
     delta: number
   }
 
-export type RenderCallback = (props: CanvasContext, delta: number) => void
+export type RenderCallback = (state: CanvasContext, delta: number) => void
 
 export interface RectReadOnly {
   readonly x: number
@@ -197,7 +197,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       if (priority) state.current.manual++
 
       state.current.subscribers.push({ ref, priority: priority })
-      state.current.subscribers = state.current.subscribers.sort((a, b) => b.priority - a.priority)
+      // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
+      state.current.subscribers = state.current.subscribers.sort((a, b) => a.priority - b.priority)
       return () => {
         // Decrease manual flag if this subscription had a priority
         if (priority) state.current.manual--

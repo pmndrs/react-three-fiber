@@ -7,11 +7,11 @@ import usePromise from 'react-promise-suspense'
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
-export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
+export function useFrame(callback: RenderCallback, renderPriority: number = 0): void {
   const { subscribe } = useContext(stateContext)
   // Update ref
-  const ref = useRef<RenderCallback>(fn)
-  useLayoutEffect(() => void (ref.current = fn), [fn])
+  const ref = useRef<RenderCallback>(callback)
+  useLayoutEffect(() => void (ref.current = callback), [callback])
   // Subscribe/unsub
   useEffect(() => {
     const unsubscribe = subscribe(ref, renderPriority)
@@ -19,7 +19,7 @@ export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
   }, [renderPriority])
 }
 
-export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
+export function useRender(callback: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
   useEffect(
     () =>
       void console.warn(
@@ -27,7 +27,7 @@ export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = fals
       ),
     []
   )
-  useFrame(fn, takeOverRenderloop ? 1 : 0)
+  useFrame(callback, takeOverRenderloop ? 1 : 0)
 }
 
 export function useThree(): SharedCanvasContext {

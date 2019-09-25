@@ -226,7 +226,7 @@ function App() {
       <SomeComponent />
 ```
 
-#### useThree()
+#### useThree(): SharedCanvasContext
 
 This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates.
 
@@ -249,18 +249,23 @@ const {
 } = useThree()
 ```
 
-#### useFrame(callback, priority=0)
+#### useFrame(callback: (state, delta) => void, renderPriority: number = 0)
 
-When you're running effects, postprocessings, controls, etc that need to get updated every frame. You receive the internal state as well, which is the same as what you would get from useThree.
+This hooks calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.
+
+Updating controls:
 
 ```jsx
 import { useFrame } from 'react-three-fiber'
 
-// Subscribes to the render-loop, gets cleaned up automatically when the component unmounts
-useFrame(state => console.log("I'm in the render-loop"))
+const controls = useRef()
+useFrame(state => controls.current.update())
+return <orbitControls ref={controls} />
+```
 
-// Add a priority as the 2nd argument and you have to take care of rendering yourself
-// If you have multiple frames that render, they are ordered after the priority you give it
+Taking over the render-loop:
+
+```jsx
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
 ```
 
@@ -299,21 +304,26 @@ return <bufferGeometry ref={ref} />
 
 #### useLoader(loader, url, [extensions]) (experimental!)
 
-For easier asset loading. This hook returns two values, the asset itself and a look-up-table of props.
-
-Please do check out the [/tools section](https://github.com/react-spring/react-three-fiber/tools) which contains converters that allow you to represent assets declaratively in JSX instead of importing a pre-made blob via `<primitive />`
+This hooks loads assets and suspends for easier fallback- and error-handling. It returns two values, the asset itself and a look-up-table of props. If you need to lay out GLTF's declaratively check out [gltfjsx](https://github.com/react-spring/gltfjsx).
 
 ```jsx
+import React, { Suspense } from 'react'
 import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
-const [gltf, objects] = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
-  const dracoLoader = new DRACOLoader()
-  dracoLoader.setDecoderPath('/draco-gltf/')
-  loader.setDRACOLoader(dracoLoader)
-}))
-return gltf ? <primitive object={gltf.scene} /> : null
+function Asset({ url }) {
+  const [gltf] = useLoader(GLTFLoader, url, loader => {
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('/draco-gltf/')
+    loader.setDRACOLoader(dracoLoader)
+  })
+  return <primitive object={gltf.scene} />
+}
+
+<Suspense fallback={<Cube />}>
+  <Asset url="/spaceship.gltf" />
+</Suspense>
 ```
 
 # Additional exports
