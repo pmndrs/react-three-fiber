@@ -23,14 +23,12 @@ function Sphere({ geometry, x, y, z, s }) {
 function RandomSpheres() {
   const [geometry] = useState(() => new THREE.IcosahedronBufferGeometry(1, 4), [])
   const data = useMemo(() => {
-    return new Array(25)
-      .fill()
-      .map((_, i) => ({
-        x: Math.random() * 100 - 50,
-        y: Math.random() * 100 - 50,
-        z: Math.random() * 100 - 50,
-        s: Math.random() + 10,
-      }))
+    return new Array(25).fill().map((_, i) => ({
+      x: Math.random() * 100 - 50,
+      y: Math.random() * 100 - 50,
+      z: Math.random() * 100 - 50,
+      s: Math.random() + 10,
+    }))
   }, [])
   return data.map((props, i) => <Sphere key={i} {...props} geometry={geometry} />)
 }
@@ -45,14 +43,14 @@ function Bloom({ children }) {
     composer.current.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 1.5, 1, 0))
   }, [])
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useFrame(() => composer.current.render(), 2)
+  useFrame(() => composer.current.render(), 1)
   return <scene ref={scene}>{children}</scene>
 }
 
 function Main({ children }) {
   const scene = useRef()
   const { gl, camera } = useThree()
-  useFrame(() => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 1)
+  useFrame(() => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 2)
   return <scene ref={scene}>{children}</scene>
 }
 
