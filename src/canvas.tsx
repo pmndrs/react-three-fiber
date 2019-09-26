@@ -444,12 +444,12 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       state.current.pointer.emit(name, event)
       // Collect hits
       const hits = handleIntersects(event, data => {
-        const object = data.object
-        const handlers = (object as any).__handlers
+        const eventObject = data.eventObject
+        const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
           // Forward all events back to their respective handlers with the exception of click,
           // which must must the initial target
-          if (name !== 'click' || state.current.initialHits.includes(object)) {
+          if (name !== 'click' || state.current.initialHits.includes(eventObject)) {
             handlers[name](data)
           }
         }
@@ -470,8 +470,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   const handlePointerMove = useCallback((event: DomEvent) => {
     state.current.pointer.emit('pointerMove', event)
     const hits = handleIntersects(event, data => {
-      const object = data.object
-      const handlers = (object as any).__handlers
+      const eventObject = data.eventObject
+      const handlers = (eventObject as any).__handlers
       // Check presence of handlers
       if (!handlers) return
 
@@ -503,8 +503,8 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
-        const object = data.object
-        const handlers = (object as any).__handlers
+        const eventObject = data.eventObject
+        const handlers = (eventObject as any).__handlers
         if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
         hovered.delete(makeId(data))
       }
