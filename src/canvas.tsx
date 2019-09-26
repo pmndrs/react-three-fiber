@@ -457,7 +457,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       // If a click yields no results, pass it back to the user as a miss
       if (name === 'pointerDown') {
         state.current.initialClick = [event.clientX, event.clientY]
-        state.current.initialHits = hits.map(hit => hit.object)
+        state.current.initialHits = hits.map(hit => hit.eventObject)
       }
       if (name === 'click' && !hits.length && onPointerMissed) {
         if (calculateDistance(event) <= 2) onPointerMissed()
@@ -502,7 +502,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     Array.from(hovered.values()).forEach(data => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
-      if (hits && (!hits.length || !hits.find(i => i.object === data.object))) {
+      if (hits && (!hits.length || !hits.find(i => i.eventObject === data.eventObject))) {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
