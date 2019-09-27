@@ -583,7 +583,7 @@ render((
 
 ## Reducing bundle-size
 
-Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
+Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias the "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need.
 
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
