@@ -287,7 +287,6 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   const newInstance = createInstance(type, newProps, instance.__container)
   removeChild(parent, instance)
   appendChild(parent, newInstance)
-
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021

@@ -93,7 +93,7 @@ function Content() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#272727' }}>
+    <Canvas>
       <Content />
     </Canvas>
   )

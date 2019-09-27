@@ -63,6 +63,7 @@ export type Subscription = {
 
 export type CanvasContext = SharedCanvasContext & {
   captured: Intersection[] | undefined
+  noEvents: boolean
   ready: boolean
   active: boolean
   manual: number
@@ -84,6 +85,7 @@ export type CanvasProps = {
   orthographic?: boolean
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
+  noEvents?: boolean
   gl?: Partial<THREE.WebGLRenderer>
   camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
@@ -115,7 +117,7 @@ function makeId(event: THREE.Intersection) {
 
 export const stateContext = createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
-export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents } => {
+export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   const {
     children,
     gl,
@@ -128,6 +130,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     shadowMap = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
+    noEvents = false,
     onCreated,
     onPointerMissed,
   } = props
@@ -169,6 +172,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     active: true,
     manual: 0,
     vr,
+    noEvents,
     invalidateFrameloop: false,
     frames: 0,
     aspect: 0,
@@ -215,37 +219,17 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
     state.current.invalidateFrameloop = invalidateFrameloop
     state.current.vr = vr
     state.current.gl = gl
-  }, [invalidateFrameloop, vr, ready, size, defaultCam, gl])
-
-  // Dispose renderer on unmount
-  useEffect(
-    () => () => {
-      if (state.current.gl) {
-        state.current.gl.forceContextLoss!()
-        state.current.gl.dispose!()
-        ;(state.current as any).gl = undefined
-        unmountComponentAtNode(state.current.scene)
-        state.current.active = false
-      }
-    },
-    []
-  )
+    state.current.noEvents = noEvents
+  }, [invalidateFrameloop, vr, noEvents, ready, size, defaultCam, gl])
 
   // Update pixel ratio
-  useLayoutEffect(() => {
-    if (pixelRatio) gl.setPixelRatio(pixelRatio)
-  }, [pixelRatio])
-
+  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
   // Update shadowmap
   useLayoutEffect(() => {
     if (shadowMap) {
-      if (typeof shadowMap === 'object') {
-        gl.shadowMap.enabled = true
-        Object.assign(gl, shadowMap)
-      } else {
-        gl.shadowMap.enabled = true
-        gl.shadowMap.type = THREE.PCFSoftShadowMap
-      }
+      gl.shadowMap.enabled = true
+      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
+      else gl.shadowMap.type = THREE.PCFSoftShadowMap
     }
   }, [shadowMap])
 
@@ -289,16 +273,12 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
 
   // This component is a bridge into the three render context, when it gets rendererd
   // we know we are ready to compile shaders, call subscribers, etc
-  const IsReady = useCallback(({ children }) => {
-    const activate = useCallback(() => setReady(true), [])
+  const IsReady = useCallback(() => {
+    const activate = () => setReady(true)
     useEffect(() => {
-      if (onCreated) {
-        const result = onCreated(state.current)
-        if (result && result.then) return void result.then(activate)
-      }
-      activate()
+      const result = onCreated && onCreated(state.current)
+      return void (result && result.then ? result.then(activate) : activate())
     }, [])
-
     return null
   }, [])
 
@@ -309,6 +289,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       ready,
       manual,
       vr,
+      noEvents,
       invalidateFrameloop,
       frames,
       subscribers,
@@ -340,11 +321,23 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       } else if (gl.vr && gl.setAnimationLoop) {
         gl.vr.enabled = true
         gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
-      } else {
-        console.warn('react-three-fiber: the gl instance does not support VR!')
-      }
+      } else console.warn('the gl instance does not support VR!')
     }
   }, [ready])
+
+  // Dispose renderer on unmount
+  useEffect(
+    () => () => {
+      if (state.current.gl) {
+        state.current.gl.forceContextLoss!()
+        state.current.gl.dispose!()
+        ;(state.current as any).gl = undefined
+        unmountComponentAtNode(state.current.scene)
+        state.current.active = false
+      }
+    },
+    []
+  )
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(event => {
@@ -359,15 +352,16 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
       // }
 
       const { left, right, top, bottom } = state.current.size
-      const mouseX = ((event.clientX - left) / (right - left)) * 2 - 1
-      const mouseY = -((event.clientY - top) / (bottom - top)) * 2 + 1
-      mouse.set(mouseX, mouseY)
+      mouse.set(((event.clientX - left) / (right - left)) * 2 - 1, -((event.clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
 
   /** Intersects interaction objects using the event input */
   const intersect = useCallback((event: DomEvent, prepare = true): Intersection[] => {
+    // Skip event handling when noEvents is set
+    if (state.current.noEvents) return []
+
     if (prepare) prepareRay(event)
 
     const seen = new Set<string>()
@@ -449,9 +443,7 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
         if (handlers && handlers[name]) {
           // Forward all events back to their respective handlers with the exception of click,
           // which must must the initial target
-          if (name !== 'click' || state.current.initialHits.includes(eventObject)) {
-            handlers[name](data)
-          }
+          if (name !== 'click' || state.current.initialHits.includes(eventObject)) handlers[name](data)
         }
       })
       // If a click yields no results, pass it back to the user as a miss
@@ -512,16 +504,13 @@ export const useCanvas = (props: UseCanvasProps): { pointerEvents: PointerEvents
   }, [])
 
   return {
-    pointerEvents: {
-      onClick: handlePointer('click'),
-      onWheel: handlePointer('wheel'),
-      onPointerDown: handlePointer('pointerDown'),
-      onPointerUp: handlePointer('pointerUp'),
-      onPointerLeave: (e: any) => handlePointerCancel(e, []),
-      onPointerMove: handlePointerMove,
-      onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
-      onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
-    },
-    // anything else we might want to return?
+    onClick: handlePointer('click'),
+    onWheel: handlePointer('wheel'),
+    onPointerDown: handlePointer('pointerDown'),
+    onPointerUp: handlePointer('pointerUp'),
+    onPointerLeave: (e: any) => handlePointerCancel(e, []),
+    onPointerMove: handlePointerMove,
+    onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
+    onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
   }
 }

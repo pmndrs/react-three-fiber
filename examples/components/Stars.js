@@ -67,7 +67,7 @@ function Stars() {
 export default function App() {
   return (
     <>
-      <Canvas style={{ background: '#272727' }}>
+      <Canvas>
         <ambientLight color="lightblue" />
         <pointLight color="white" intensity={1} position={[10, 10, 10]} />
         <Stars />

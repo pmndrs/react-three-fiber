@@ -19,15 +19,8 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   }, [renderPriority])
 }
 
-export function useRender(callback: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
-  useEffect(
-    () =>
-      void console.warn(
-        'react-three-fiber: Please use useFrame(fn, [priority=0]) ✅ instead of useRender ❌, the former will be made obsolete soon!'
-      ),
-    []
-  )
-  useFrame(callback, takeOverRenderloop ? 1 : 0)
+export function useRender(callback: RenderCallback, takeOver: boolean) {
+  return useFrame(callback, takeOver ? 1 : 0)
 }
 
 export function useThree(): SharedCanvasContext {
@@ -49,7 +42,6 @@ export function useUpdate<T>(
       invalidate()
     }
   }, dependents)
-
   return ref
 }
 

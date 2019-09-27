@@ -30,7 +30,7 @@ type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
 const styles: ViewStyle = { flex: 1 }
 
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
-  const { pointerEvents } = useCanvas({ ...props, gl } as UseCanvasProps)
+  const events = useCanvas({ ...props, gl } as UseCanvasProps)
 
   let pointerDownCoords: null | [number, number] = null
 
@@ -38,7 +38,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
     () =>
       PanResponder.create({
         onStartShouldSetPanResponderCapture(e) {
-          pointerEvents.onGotPointerCapture(clientXY(e))
+          events.onGotPointerCapture(clientXY(e))
           return true
         },
         onStartShouldSetPanResponder: () => true,
@@ -47,23 +47,23 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
         onPanResponderTerminationRequest: () => true,
         onPanResponderStart: e => {
           pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
-          pointerEvents.onPointerDown(clientXY(e))
+          events.onPointerDown(clientXY(e))
         },
-        onPanResponderMove: e => pointerEvents.onPointerMove(clientXY(e)),
+        onPanResponderMove: e => events.onPointerMove(clientXY(e)),
         onPanResponderEnd: e => {
-          pointerEvents.onPointerUp(clientXY(e))
+          events.onPointerUp(clientXY(e))
           if (pointerDownCoords) {
             const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
             const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
             if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
-              pointerEvents.onClick(clientXY(e))
+              events.onClick(clientXY(e))
             }
           }
           pointerDownCoords = null
         },
-        onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
-        onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(clientXY(e)),
-        onPanResponderReject: e => pointerEvents.onLostPointerCapture(clientXY(e)),
+        onPanResponderRelease: e => events.onPointerLeave(clientXY(e)),
+        onPanResponderTerminate: e => events.onLostPointerCapture(clientXY(e)),
+        onPanResponderReject: e => events.onLostPointerCapture(clientXY(e)),
       }),
     []
   )

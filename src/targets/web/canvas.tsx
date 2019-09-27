@@ -38,15 +38,11 @@ const IsReady = React.memo(
     canvas: HTMLCanvasElement
     size: RectReadOnly
   }) => {
-    const gl = useMemo(() => {
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl })
-      renderer.setClearAlpha(0)
-      return renderer
-    }, [])
+    const gl = useMemo(() => new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl }), [])
 
     // Init canvas, fetch events, hand them back to the warpping div
-    const { pointerEvents } = useCanvas({ ...props, gl })
-    useEffect(() => void setEvents(pointerEvents), [])
+    const events = useCanvas({ ...props, gl })
+    useEffect(() => void setEvents(events), [])
     return null
   }
 )
@@ -56,11 +52,7 @@ const styles: React.CSSProperties = { position: 'relative', width: '100%', heigh
 export const Canvas = React.memo((props: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
-
   const [bind, size] = useMeasure()
-  useMemo(() => {
-    if (bind.current) Object.assign(size, bind.current.getBoundingClientRect())
-  }, [size])
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
