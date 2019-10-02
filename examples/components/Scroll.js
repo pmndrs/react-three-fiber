@@ -1,16 +1,16 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply as applySpring, useSpring, a, interpolate } from 'react-spring/three'
-import { apply as applyThree, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply as extendSpring, useSpring, a, interpolate } from 'react-spring/three'
+import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-fiber'
 import data from './../resources/data'
 
 // Import and register postprocessing classes as three-native-elements
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { GlitchPass } from './../resources/postprocessing/GlitchPass'
 
-applySpring({ EffectComposer, RenderPass, GlitchPass })
-applyThree({ EffectComposer, RenderPass, GlitchPass })
+extendSpring({ EffectComposer, RenderPass, GlitchPass })
+extendThree({ EffectComposer, RenderPass, GlitchPass })
 
 /** This component loads an image and projects it onto a plane */
 function Image({ url, opacity, scale, ...props }) {
@@ -59,7 +59,8 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
-  const { viewport } = useThree()
+  const { size, viewport } = useThree()
+  console.log(viewport)
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
       <planeGeometry attach="geometry" args={[1, 1]} />
@@ -72,7 +73,7 @@ function Background({ color }) {
 function Stars({ position }) {
   let group = useRef()
   let theta = 0
-  useRender(() => {
+  useFrame(() => {
     const r = 5 * Math.sin(THREE.Math.degToRad((theta += 0.01)))
     const s = Math.cos(THREE.Math.degToRad(theta * 2))
     group.current.rotation.set(r, r, r)
@@ -101,7 +102,7 @@ const Effects = React.memo(({ factor }) => {
   const composer = useRef()
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
-  useRender(() => composer.current.render(), true)
+  useFrame(() => composer.current.render(), 1)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" args={[scene, camera]} />

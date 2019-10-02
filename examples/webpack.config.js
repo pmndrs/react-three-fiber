@@ -3,7 +3,6 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const webpack = require('webpack')
 const fs = require('fs')
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
-const ShakePlugin = require('webpack-common-shake').Plugin
 
 const createAlias = (name, fallback) =>
   fs.existsSync(`./../../${name}`) ? path.resolve(`./../../${name}`) : fallback || name
@@ -12,7 +11,11 @@ module.exports = mode => {
   return {
     mode,
     entry: 'index.js',
-    output: { filename: 'bundle.js', path: path.resolve('./dist') },
+    output: {
+      filename: 'bundle.js',
+      path: path.resolve('./dist'),
+      publicPath: '/',
+    },
     module: {
       rules: [
         { test: /\.css$/, use: ['style-loader', 'css-loader'] },
@@ -58,10 +61,9 @@ module.exports = mode => {
         react: path.resolve('node_modules/react'),
         'react-dom': path.resolve('node_modules/react-dom'),
         'prop-types': path.resolve('node_modules/prop-types'),
-        three$: path.resolve('node_modules/three/src/Three'),
+        three: path.resolve('node_modules/three'),
+        //three$: path.resolve('node_modules/three/src/Three'),
         //three$: path.resolve('./resources/three.js'),
-        lodash: path.resolve('../node_modules/lodash-es'),
-        'lodash-es': path.resolve('../node_modules/lodash-es'),
         'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
         'react-use-gesture': createAlias('react-use-gesture/index.js', 'react-use-gesture'),
         //'pointer-events-polyfill': createAlias('pointer-events-polyfill/dist/pep.js', 'pointer-events-polyfill'),
@@ -75,7 +77,6 @@ module.exports = mode => {
     },
     plugins: [
       new HtmlWebpackPlugin({ template: 'public/index.html' }),
-      new ShakePlugin(),
       ...(mode === 'production' ? [new BundleAnalyzerPlugin()] : []),
     ],
     devServer: { hot: false, contentBase: path.resolve('./'), stats: 'errors-only' },

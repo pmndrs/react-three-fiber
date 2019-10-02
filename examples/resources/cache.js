@@ -196,9 +196,6 @@ export function unstable_createResource(fetch, maybeHashInput) {
           return undefined
       }
     },
-    preload(input) {
-      accessResult(resource, fetch, input, hashInput(input))
-    },
   }
   return resource
 }

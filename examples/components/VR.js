@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import * as WEBVR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
 import React, { useRef, useEffect, useState, useContext, useMemo } from 'react'
-import { Canvas, useRender, useThree } from 'react-three-fiber'
+import { Canvas, useFrame, useThree } from 'react-three-fiber'
 
 function Stars() {
   let group = useRef()
   let theta = 0
-  useRender(() => {
+  useFrame(() => {
     // Some things maybe shouldn't be declarative, we're in the render-loop here with full access to the instance
     const r = 5 * Math.sin(THREE.Math.degToRad((theta += 0.01)))
     const s = Math.cos(THREE.Math.degToRad(theta * 2))

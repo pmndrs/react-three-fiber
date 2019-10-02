@@ -1,9 +1,17 @@
 import * as React from 'react'
-import { GLView } from 'expo-gl'
-import { LayoutChangeEvent, PixelRatio, ViewStyle, PanResponder, GestureResponderEvent } from 'react-native'
+import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
+import {
+  View,
+  LayoutChangeEvent,
+  PixelRatio,
+  ViewStyle,
+  PanResponder,
+  GestureResponderEvent,
+  StyleSheet,
+} from 'react-native'
 import { Renderer } from 'expo-three'
-import { useEffect, useState } from 'react'
-import { useCanvas, CanvasProps } from '../../canvas'
+import { useState } from 'react'
+import { useCanvas, CanvasProps, RectReadOnly, UseCanvasProps } from '../../canvas'
 
 function clientXY(e: GestureResponderEvent) {
   ;(e as any).clientX = e.nativeEvent.pageX
@@ -11,83 +19,117 @@ function clientXY(e: GestureResponderEvent) {
   return e
 }
 
-export const Canvas = React.memo((props: Omit<CanvasProps, 'style'> & { style?: ViewStyle }) => {
-  const [gl, setGl] = useState()
-  const [glContext, setGlContext] = useState()
+const CLICK_DELTA = 20
 
-  const [pixelRatio, setPixelRatio] = useState(props.pixelRatio || 1)
-  const [size, setSize] = useState({ width: 0, height: 0, top: 0, left: 0 })
+type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
+  style?: ViewStyle
+  nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
+  onContextCreated?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
+}
 
-  const { pointerEvents } = useCanvas({
-    ...props,
-    size,
-    pixelRatio,
-    gl,
-  })
+const styles: ViewStyle = { flex: 1 }
 
-  const [panResponder] = useState(() =>
-    PanResponder.create({
-      onStartShouldSetPanResponder() {
-        return true
-      },
-      onStartShouldSetPanResponderCapture(e) {
-        pointerEvents.onGotPointerCapture(clientXY(e))
-        return true
-      },
-      onMoveShouldSetPanResponder() {
-        return true
-      },
-      onMoveShouldSetPanResponderCapture() {
-        return true
-      },
-      onPanResponderTerminationRequest() {
-        return true
-      },
-      onPanResponderStart: e => pointerEvents.onPointerDown(clientXY(e)),
-      onPanResponderMove: e => pointerEvents.onPointerMove(clientXY(e)),
-      onPanResponderEnd: e => pointerEvents.onPointerUp(clientXY(e)),
-      onPanResponderRelease: e => pointerEvents.onPointerLeave(clientXY(e)),
-      onPanResponderTerminate: e => pointerEvents.onLostPointerCapture(clientXY(e)),
-      onPanResponderReject: e => pointerEvents.onLostPointerCapture(clientXY(e)),
-    })
+const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
+  const events = useCanvas({ ...props, gl } as UseCanvasProps)
+
+  let pointerDownCoords: null | [number, number] = null
+
+  const panResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onStartShouldSetPanResponderCapture(e) {
+          events.onGotPointerCapture(clientXY(e))
+          return true
+        },
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderTerminationRequest: () => true,
+        onPanResponderStart: e => {
+          pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
+          events.onPointerDown(clientXY(e))
+        },
+        onPanResponderMove: e => events.onPointerMove(clientXY(e)),
+        onPanResponderEnd: e => {
+          events.onPointerUp(clientXY(e))
+          if (pointerDownCoords) {
+            const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
+            const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
+            if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
+              events.onClick(clientXY(e))
+            }
+          }
+          pointerDownCoords = null
+        },
+        onPanResponderRelease: e => events.onPointerLeave(clientXY(e)),
+        onPanResponderTerminate: e => events.onLostPointerCapture(clientXY(e)),
+        onPanResponderReject: e => events.onLostPointerCapture(clientXY(e)),
+      }),
+    []
   )
 
-  useEffect(() => {
-    // Wait for ExpoGL Context and onLayout callback
-    if (!gl && glContext && pixelRatio && size.width && size.height) {
-      // https://github.com/expo/expo-three/issues/38
-      glContext.createRenderbuffer = () => ({})
+  return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} />
+})
 
-      const renderer = new Renderer({
-        gl: glContext,
-        width: size.width / pixelRatio,
-        height: size.height / pixelRatio,
-        pixelRatio,
-      })
-      // Bind previous render method to Renderer
-      const rendererRender = renderer.render.bind(renderer)
-      renderer.render = (scene, camera) => {
-        rendererRender(scene, camera)
-        // End frame through the RN Bridge
-        glContext.endFrameEXP()
-      }
-      renderer.setClearAlpha(0)
-      setGl(renderer)
+export const Canvas = React.memo((props: NativeCanvasProps) => {
+  const [size, setSize] = useState<RectReadOnly | null>(null)
+  const [renderer, setRenderer] = useState()
+
+  // Handle size changes
+  const onLayout = (e: LayoutChangeEvent) => setSize(e.nativeEvent.layout as any)
+
+  // Fired when EXGL context is initialized
+  const onContextCreate = async (gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
+    if (props.onContextCreated) {
+      // Allow customization of the GL Context
+      // Useful for AR, VR and others
+      await props.onContextCreated(gl)
     }
-  }, [glContext, size, pixelRatio])
 
-  function onLayout(e: LayoutChangeEvent) {
-    const { width, height, x, y } = e.nativeEvent.layout
-    setSize({ width, height, top: y, left: x })
-    if (!props.pixelRatio) setPixelRatio(PixelRatio.get())
+    if (props.shadowMap) {
+      // https://github.com/expo/expo-three/issues/38
+      gl.createRenderbuffer = () => ({})
+    }
+
+    const pixelRatio = PixelRatio.get()
+
+    const renderer = new Renderer({
+      gl,
+      width: size!.width / pixelRatio,
+      height: size!.height / pixelRatio,
+      pixelRatio,
+    })
+
+    // Bind previous render method to Renderer
+    const rendererRender = renderer.render.bind(renderer)
+    renderer.render = (scene, camera) => {
+      rendererRender(scene, camera)
+      // End frame through the RN Bridge
+      gl.endFrameEXP()
+    }
+
+    setRenderer(renderer)
   }
 
+  const setNativeRef = (ref: any) => {
+    if (props.nativeRef_EXPERIMENTAL && !props.nativeRef_EXPERIMENTAL.current) {
+      props.nativeRef_EXPERIMENTAL.current = ref
+    }
+  }
+
+  // 1. Ensure Size
+  // 2. Ensure EXGLContext
+  // 3. Call `useCanvas`
   return (
-    <GLView
-      {...panResponder.panHandlers}
-      onContextCreate={setGlContext}
-      onLayout={onLayout}
-      style={{ flex: 1, ...props.style }}
-    />
+    <View onLayout={onLayout} style={{ ...styles, ...props.style }}>
+      {size && (
+        <GLView
+          nativeRef_EXPERIMENTAL={setNativeRef}
+          onContextCreate={onContextCreate}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      {size && renderer && <IsReady {...props} size={size!} gl={renderer} />}
+    </View>
   )
 })

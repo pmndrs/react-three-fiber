@@ -1,12 +1,11 @@
 import * as THREE from 'three'
 import React, { useCallback, useState, useEffect, useRef } from 'react'
 import { extend, Canvas, useFrame, useResource, useThree } from 'react-three-fiber'
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { ShaderPass } from './../resources/postprocessing/ShaderPass'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
-import { GlitchPass } from './../resources/postprocessing/GlitchPass'
-import { AfterimagePass } from './../resources/postprocessing/AfterimagePass'
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass'
 import { FXAAShader } from './../resources/shaders/FXAAShader'
 extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, GlitchPass, AfterimagePass })
 
@@ -70,8 +69,7 @@ function Effect() {
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />
       <waterPass attachArray="passes" factor={2} />
-      <glitchPass attachArray="passes" factor={0} />
-      <afterimagePass attachArray="passes" factor={0.7} />
+      <afterimagePass attachArray="passes" uniforms-damp-value={0.7} />
       <shaderPass
         attachArray="passes"
         args={[FXAAShader]}

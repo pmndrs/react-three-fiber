@@ -1,15 +1,17 @@
 import * as THREE from 'three'
-import { useRef, useContext, useEffect, useMemo, useState } from 'react'
+import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
+//@ts-ignore
+import usePromise from 'react-promise-suspense'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
 
-export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
+export function useFrame(callback: RenderCallback, renderPriority: number = 0): void {
   const { subscribe } = useContext(stateContext)
   // Update ref
-  const ref = useRef<RenderCallback>(fn)
-  useEffect(() => void (ref.current = fn), [fn])
+  const ref = useRef<RenderCallback>(callback)
+  useLayoutEffect(() => void (ref.current = callback), [callback])
   // Subscribe/unsub
   useEffect(() => {
     const unsubscribe = subscribe(ref, renderPriority)
@@ -17,15 +19,8 @@ export function useFrame(fn: RenderCallback, renderPriority: number = 0): void {
   }, [renderPriority])
 }
 
-export function useRender(fn: RenderCallback, takeOverRenderloop: boolean = false, deps: any[] = []): void {
-  useEffect(
-    () =>
-      void console.warn(
-        'react-three-fiber: Please use useFrame(fn, [priority=0]) ✅ instead of useRender ❌, the former will be made obsolete soon!'
-      ),
-    []
-  )
-  useFrame(fn, takeOverRenderloop ? 1 : 0)
+export function useRender(callback: RenderCallback, takeOver: boolean) {
+  return useFrame(callback, takeOver ? 1 : 0)
 }
 
 export function useThree(): SharedCanvasContext {
@@ -47,7 +42,6 @@ export function useUpdate<T>(
       invalidate()
     }
   }, dependents)
-
   return ref
 }
 
@@ -66,27 +60,54 @@ type Content = {
 
 type Extensions = (loader: THREE.Loader) => void
 
-/** experimental */
-export function useLoader(proto: THREE.Loader, url: string, extensions?: Extensions): Content[] {
-  const key = useMemo(() => ({}), [url])
-  const [cache] = useState(() => new WeakMap())
-  const loader = useMemo(() => {
-    const temp = new (proto as any)()
-    if (extensions) extensions(temp)
-    return temp
-  }, [proto])
-  const [_, forceUpdate] = useState(false)
-  useEffect(() => {
-    if (!cache.has(key)) {
-      loader.load(url, (gltf: any) => {
-        const temp: Content[] = []
-        gltf.scene.traverse(
-          (obj: THREE.Mesh) => obj.isMesh && temp.push({ geometry: obj.geometry, material: obj.material })
-        )
-        cache.set(key, temp)
-        forceUpdate(i => !i)
-      })
-    }
-  }, [proto, key])
-  return cache.get(key) || []
+type LoaderData = {
+  data: any
+  objects: any[]
+}
+
+const blackList = [
+  'id',
+  'uuid',
+  'type',
+  'children',
+  'parent',
+  'matrix',
+  'matrixWorld',
+  'matrixWorldNeedsUpdate',
+  'modelViewMatrix',
+  'normalMatrix',
+]
+
+function prune(props: any) {
+  const reducedProps = { ...props }
+  // Remove black listed props
+  blackList.forEach(name => delete reducedProps[name])
+  // Remove functions
+  Object.keys(reducedProps).forEach(name => typeof reducedProps[name] === 'function' && delete reducedProps[name])
+  // Prune materials and geometries
+  if (reducedProps.material) reducedProps.material = prune(reducedProps.material)
+  if (reducedProps.geometry) reducedProps.geometry = prune(reducedProps.geometry)
+  // Return cleansed object
+  return reducedProps
+}
+
+export function useLoader<T>(Proto: THREE.Loader, url: string, extensions?: Extensions): [T, any[]] {
+  // Use suspense to load async assets
+  const { data, objects } = usePromise<LoaderData>(
+    (Proto: THREE.Loader, url: string) =>
+      new Promise(res => {
+        const loader = new (Proto as any)()
+        if (extensions) extensions(loader)
+        loader.load(url, (data: any) => {
+          const objects: any[] = []
+          if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
+          res({ data, objects })
+        })
+      }),
+    [Proto, url]
+  )
+  // Dispose objects on unmount
+  useEffect(() => () => data.scene && data.scene.dispose(), [])
+  // Return the object itself and a list of pruned props
+  return [data, objects]
 }

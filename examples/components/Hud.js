@@ -14,7 +14,7 @@ function Main() {
   const { gl, size, camera } = useThree()
 
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 100)
+  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
 
   return (
     <scene ref={sceneRef}>
@@ -93,7 +93,7 @@ function Content() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#272727' }}>
+    <Canvas>
       <Content />
     </Canvas>
   )

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useMemo, useContext, useEffect, useCallback } from 'react'
 import { useSpring, a } from 'react-spring/three'
-import { Canvas, useRender, useThree } from 'react-three-fiber'
+import { Canvas, useFrame, useThree } from 'react-three-fiber'
 
 function Thing() {
   const [active, setActive] = useState(false)
@@ -38,7 +38,7 @@ function Thing() {
 function Stars() {
   let group = useRef()
   let theta = 0
-  useRender(() => {
+  useFrame(() => {
     // Some things maybe shouldn't be declarative, we're in the render-loop here with full access to the instance
     const r = 5 * Math.sin(THREE.Math.degToRad((theta += 0.01)))
     const s = Math.cos(THREE.Math.degToRad(theta * 2))
@@ -67,7 +67,7 @@ function Stars() {
 export default function App() {
   return (
     <>
-      <Canvas style={{ background: '#272727' }}>
+      <Canvas>
         <ambientLight color="lightblue" />
         <pointLight color="white" intensity={1} position={[10, 10, 10]} />
         <Stars />

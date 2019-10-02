@@ -56,7 +56,8 @@ export function renderGl(
   if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
 
   // Run local effects
-  state.current.subscribers.forEach(sub => sub.ref.current(state.current, timestamp))
+  const delta = state.current.clock.getDelta()
+  state.current.subscribers.forEach(sub => sub.ref.current(state.current, delta))
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
@@ -130,8 +131,8 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
         }
         // Special treatment for objects with support for set/copy
-        if (target && target.set && target.copy) {
-          if (target.constructor.name === (value as any).constructor.name) target.copy(value)
+        if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
+          if (target.copy && target.constructor.name === (value as any).constructor.name) target.copy(value)
           else if (Array.isArray(value)) target.set(...value)
           else target.set(value)
           // Else, just overwrite the value
@@ -286,7 +287,6 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   const newInstance = createInstance(type, newProps, instance.__container)
   removeChild(parent, instance)
   appendChild(parent, newInstance)
-
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021

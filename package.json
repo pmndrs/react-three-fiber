@@ -5,7 +5,7 @@
   "main": "./dist/web.cjs.js",
   "module": "./dist/web.js",
   "react-native": "./dist/native.js",
-  "types": "./types/index.d.ts",
+  "types": "./types/src/targets/web/index.d.ts",
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
@@ -58,16 +58,16 @@
   "dependencies": {
     "@babel/runtime": "^7.4.4",
     "@types/three": "^0.103.2",
-    "lodash-es": "^4.17.15",
-    "pointer-events-polyfill": "^0.4.4-pre",
+    "react-promise-suspense": "^0.3.1",
     "react-reconciler": "0.20.4",
     "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "0.13.3"
+    "scheduler": "0.13.3",
+    "tiny-emitter": "^2.1.0"
   },
   "peerDependencies": {
     "react": ">=16.9",
     "react-dom": ">=16.9",
-    "three": ">=0.107"
+    "three": ">=0.108"
   },
   "devDependencies": {
     "@babel/core": "7.4.4",
@@ -106,8 +106,11 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^4.2.3",
     "rollup-plugin-size-snapshot": "^0.8.0",
-    "three": "^0.107.0",
     "typescript": "^3.5.3",
     "wait-on": "^3.2.0"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
   }
 }

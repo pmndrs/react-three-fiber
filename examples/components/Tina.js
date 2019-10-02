@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useRender, useThree } from 'react-three-fiber'
+import { apply, Canvas, useThree } from 'react-three-fiber'
 import { update, useTransition, useSpring, a } from 'react-spring/three'
 import flat from 'lodash-es/flatten'
-import { SVGLoader } from './../resources/loaders/SVGLoader'
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import * as svgs from '../resources/images/svg'
 
 const urls = Object.values(svgs)
@@ -12,11 +12,17 @@ const deg = THREE.Math.degToRad
 const loaders = urls.map(
   url =>
     new Promise(res =>
-      new SVGLoader().load(url, shapes =>
+      new SVGLoader().load(url, svg => {
         res(
-          flat(shapes.map((group, index) => group.toShapes(true).map(shape => ({ shape, color: group.color, index }))))
+          flat(
+            svg.paths.map((path, index) => {
+              return path
+                .toShapes(true)
+                .map(shape => ({ shape, color: path.color, fillOpacity: path.userData.style.fillOpacity, index }))
+            })
+          )
         )
-      )
+      })
     )
 )
 
