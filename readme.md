@@ -7,6 +7,7 @@ Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, 
 <br />
 
 <p align="center">
+  <a href="https://codesandbox.io/embed/react-three-fiber-gestures-dh2jc"><img width="288" height="172" src="https://i.imgur.com/ZJ04pRJ.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="172" src="https://i.imgur.com/UzG518m.gif" /></a>
   <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="172" src="https://i.imgur.com/1atWRR3.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="172" src="https://i.imgur.com/8xpKFkN.gif" /></a>

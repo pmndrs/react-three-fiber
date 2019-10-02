@@ -1,13 +1,18 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import fontFile from '../resources/fonts/unknown'
-apply({ OrbitControls })
+import React, { Suspense, useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
+import { apply, Canvas, useFrame, useThree, useResource, useLoader } from 'react-three-fiber'
+import bold from 'file-loader!../resources/fonts/bold.blob'
 
-/** This renders text via canvas and projects it as a sprite */
-function Text({ children, size = 1, letterSpacing = 0.01, color = '#000000' }) {
-  const [font] = useState(() => new THREE.FontLoader().parse(fontFile))
+function Text({
+  children,
+  vAlign = 'center',
+  hAlign = 'center',
+  size = 1,
+  letterSpacing = 0.01,
+  color = '#000000',
+  ...props
+}) {
+  const [font] = useLoader(THREE.FontLoader, bold)
   const [shapes, [x, y]] = useMemo(() => {
     let x = 0,
       y = 0
@@ -27,62 +32,50 @@ function Text({ children, size = 1, letterSpacing = 0.01, color = '#000000' }) {
     ]
   }, [children])
   return (
-    <group position={[-x / 2, -y / 2, 0]}>
-      {shapes.map((shape, index) => (
-        <primitive key={index} object={shape} />
-      ))}
+    <group {...props}>
+      <group
+        position={[
+          vAlign === 'center' ? -x / 2 : vAlign === 'right' ? -x : 0,
+          hAlign === 'center' ? -y / 2 : hAlign === 'right' ? -y : 0,
+          0,
+        ]}>
+        {shapes.map((shape, index) => (
+          <primitive key={index} object={shape} />
+        ))}
+      </group>
     </group>
   )
 }
 
-function Content() {
-  const camera = useRef()
-  const controls = useRef()
-  const { size, setDefaultCamera } = useThree()
-  useEffect(() => void setDefaultCamera(camera.current), [])
-  useFrame(() => controls.current.update())
-  return (
-    <>
-      <perspectiveCamera
-        ref={camera}
-        aspect={size.width / size.height}
-        radius={(size.width + size.height) / 4}
-        fov={55}
-        position={[0, 0, 5]}
-        onUpdate={self => self.updateProjectionMatrix()}
-      />
-      {camera.current && (
-        <group>
-          <orbitControls ref={controls} args={[camera.current]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
-          <Text>lorem</Text>
-        </group>
-      )}
-    </>
-  )
-}
+function Rig() {
+  const target = useRef()
+  useFrame(({ camera, scene }) => {
+    const t = Date.now() * 0.001
+    const rx = Math.sin(t * 0.7) * 0.5
+    const ry = Math.sin(t * 0.3) * 0.5
+    const rz = Math.sin(t * 0.2) * 0.5
+    target.current.rotation.x = rx
+    target.current.rotation.y = ry
+    target.current.rotation.z = rz
+  })
 
-function TestCamHelper() {
-  const [ref, camera] = useResource()
   return (
-    <>
-      <perspectiveCamera
-        ref={ref}
-        aspect={1200 / 600}
-        radius={(1200 + 600) / 4}
-        fov={45}
-        position={[0, 0, 2]}
-        onUpdate={self => self.updateProjectionMatrix()}
-      />
-      {camera && <cameraHelper args={camera} />}
-    </>
+    <group ref={target} scale={[0.7, 0.7, 0.7]}>
+      <Text vAlign="right" position={[0, 1.1, 0]} children="REACT" />
+      <Text vAlign="right" position={[0, 0, 0]} children="THREE" />
+      <Text vAlign="right" position={[0, -1.1, 0]} children="FIBER" />
+      <Text vAlign="right" size={3.3} position={[2.8, 0, 0]} children="3" />
+      <Text vAlign="right" position={[3.9, -1.1, 0]} children="X" />
+    </group>
   )
 }
 
 export default function App() {
   return (
     <Canvas style={{ background: '#dfdfdf' }}>
-      <Content />
-      <TestCamHelper />
+      <Suspense fallback={null}>
+        <Rig />
+      </Suspense>
     </Canvas>
   )
 }
