@@ -21,7 +21,7 @@
   "dist/web.js": {
     "bundled": 33758,
     "minified": 16015,
-    "gzipped": 5874,
+    "gzipped": 5873,
     "treeshaked": {
       "rollup": {
         "code": 12141,
@@ -35,7 +35,7 @@
   "dist/web.cjs.js": {
     "bundled": 41035,
     "minified": 18857,
-    "gzipped": 6332
+    "gzipped": 6331
   },
   "dist/native.js": {
     "bundled": 35405,
@@ -54,6 +54,6 @@
   "dist/native.cjs.js": {
     "bundled": 43965,
     "minified": 20121,
-    "gzipped": 6668
+    "gzipped": 6667
   }
 }
