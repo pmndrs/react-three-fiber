@@ -6,7 +6,9 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
 import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass'
-import { FXAAShader } from './../resources/shaders/FXAAShader'
+import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
+import { GlitchPass } from './../resources/postprocessing/GlitchPass'
+
 extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, GlitchPass, AfterimagePass })
 
 function Particle({ geometry, material, mouse }) {
