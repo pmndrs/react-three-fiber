@@ -1,4 +1,5 @@
 <p align="center">
+  <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="172" src="https://i.imgur.com/UzG518m.gif" /></a>
   <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="172" src="https://i.imgur.com/1atWRR3.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="172" src="https://i.imgur.com/8xpKFkN.gif" /></a>
   <a href="https://codesandbox.io/embed/387z7o2zrq"><img width="288" height="172" src="https://i.imgur.com/YewcWL5.gif" /></a>
@@ -227,7 +228,7 @@ The event data you receive contains the browser event as well as the Threejs eve
 All hooks can only be used **inside** the Canvas element because they rely on context updates! You cannot expect something like this to work:
 
 ```jsx
-funciton App() {
+function App() {
   const { gl } = useThree() // This will just crash
   return (
     <Canvas>
@@ -238,12 +239,12 @@ funciton App() {
 Do this instead:
 
 ```jsx
-funciton SomeComponent() {
+function SomeComponent() {
   const { gl } = useThree()
   return <mesh />
 }
         
-funciton App() {
+function App() {
   return (
     <Canvas>
       <SomeComponent />
@@ -334,7 +335,7 @@ const model = useLoader(GLTFLoader, '/spaceship.gltf', loader => {
   const dracoLoader = new DRACOLoader()
   dracoLoader.setDecoderPath('/draco-gltf/')
   loader.setDRACOLoader(dracoLoader)
-}))
+})
 return model.map(({ geometry, material }) => (
   <mesh key={geometry.uuid} geometry={geometry} castShadow>
     <meshStandardMaterial attach="material" map={material.map} roughness={1} />
@@ -409,11 +410,11 @@ function Effects({ factor }) {
 
 ```jsx
 function Camera(props) {
-  const ref = useRef()
+  const camera = useRef()
   const { setDefaultCamera } = useThree()
   // This makes sure that size-related calculations are proper
   // Every call to useThree will return this camera instead of the default camera 
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useEffect(() => void setDefaultCamera(camera.current), [])
   return <perspectiveCamera ref={camera} {...props} />
 }
 
@@ -582,7 +583,7 @@ render((
 
 ## Reducing bundle-size
 
-Three is a heavy-weight, and althought it is modular tree-shaking may not be sufficient. But you can always create your own exports file and alias the "three" name towards it. This way you can reduce it to 50-80kb or perhaps less.
+Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need.
 
 Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
