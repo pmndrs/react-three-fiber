@@ -381,7 +381,7 @@ import {
 
 # Further information
 
-Recipes and FAQ: [/react-three-fiber/recipes.md](https://github.com/react-three-fiber/react-three-fiber/blob/master/recipes.md)
+Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
 
 GLTF-to-JSX converter: https://github.com/react-spring/gltfjsx
 
