@@ -5,8 +5,8 @@ import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-f
 import data from './../resources/data'
 
 // Import and register postprocessing classes as three-native-elements
-import { EffectComposer } from './../resources/postprocessing/EffectComposer'
-import { RenderPass } from './../resources/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { GlitchPass } from './../resources/postprocessing/GlitchPass'
 
 extendSpring({ EffectComposer, RenderPass, GlitchPass })

@@ -11,7 +11,7 @@ import {
   UniformsUtils,
 } from 'three'
 import { DigitalGlitch } from '../shaders/DigitalGlitch.js'
-import { Pass } from './Pass.js'
+import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 /**
  * @author alteredq / http://alteredqualia.com/
  */
