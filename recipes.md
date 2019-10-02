@@ -193,7 +193,7 @@ render((
 
 ## Reducing bundle-size
 
-Threejs is a heavy-weight. But you can always create your own exports file and alias the "three" towards it. This way you can reduce it to 50-80kb or perhaps less. Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
+Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need. Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
 
 
 ## Usage with React Native

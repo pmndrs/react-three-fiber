@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import App from './components/Stars'
+import App from './components/Gestures'
 import './styles.css'
 
 //ReactDOM.unstable_createRoot(document.getElementById('root')).render(<App />)

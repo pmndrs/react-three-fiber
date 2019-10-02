@@ -1,3 +1,11 @@
+# Version 3.x is out 🎉 🎊 🥳
+
+Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, react-native, better types, very few breaking changes (mostly just useRender -> useFrame and apply -> extend).
+
+<br />
+<br />
+<br />
+
 <p align="center">
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="172" src="https://i.imgur.com/UzG518m.gif" /></a>
   <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="172" src="https://i.imgur.com/1atWRR3.gif" /></a>
@@ -16,7 +24,7 @@
 
     npm install three react-three-fiber
 
-React-three-fiber is a small React renderer for Threejs on the web and react-native. Why, you might ask? React was made to drive complex tree structures, it makes just as much sense for Threejs as for the DOM. Building a dynamic scene graph becomes so much easier because you can break it up into declarative, re-usable components with clean, reactive semantics. This also opens up the ecosystem, you can now apply generic packages for state, animation, gestures and so on.
+React-three-fiber is a renderer for Threejs on the web and react-native. Why? Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable, reactive components. It also opens up the ecosystem, you can apply generic packages for state, animation, gestures and so on. This is less of an abstraction and more of a pure reconciler (think react-dom in relation to HTML). It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features, it won't change any specifics or rules, and there are zero limitations.
 
 # What it looks like ...
 

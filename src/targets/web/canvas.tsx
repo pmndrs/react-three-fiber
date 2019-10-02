@@ -42,7 +42,7 @@ const IsReady = React.memo(
 
     // Init canvas, fetch events, hand them back to the warpping div
     const events = useCanvas({ ...props, gl })
-    useEffect(() => void setEvents(events), [])
+    useEffect(() => void setEvents(events), [events])
     return null
   }
 )
