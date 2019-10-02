@@ -26,7 +26,17 @@ Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, 
 
     npm install three react-three-fiber
 
-React-three-fiber is a renderer for Threejs on the web and react-native. Why? Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable, reactive components. It also opens up the ecosystem, you can apply generic packages for state, animation, gestures and so on. This is less of an abstraction and more of a pure reconciler (think react-dom in relation to HTML). It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features, it won't change any specifics or rules, and there are zero limitations.
+#### What is it?
+
+React-three-fiber is a renderer for Threejs on the web and react-native. Why? Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable, reactive components. It also opens up the ecosystem, you can apply generic packages for state, animation, gestures and so on.
+
+#### Does is have regressions?
+
+This is less of an abstraction and more of a pure reconciler (think react-dom in relation to HTML). It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features, it won't change any specifics or rules, and there are zero limitations.
+
+#### Is it slower?
+
+No. It most likely is faster. Raw rendering performance is fully up to Threejs and the GPU, react-three-fiber is not involved other than driving Threes renderloop. But React is very efficent when it comes to building and updating complex component-trees.
 
 # What it looks like ...
 
