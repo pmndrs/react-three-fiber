@@ -341,28 +341,41 @@ const ref = useUpdate(
 return <bufferGeometry ref={ref} />
 ```
 
-#### useLoader(loader, url, [extensions]) (experimental!)
+#### useLoader(loader, url: string | string[], extensions?) (experimental!)
 
-This hooks loads assets and suspends for easier fallback- and error-handling. It returns two values, the asset itself and a look-up-table of props. If you need to lay out GLTF's declaratively check out [gltfjsx](https://github.com/react-spring/gltfjsx).
+This hooks loads assets and suspends for easier fallback- and error-handling. If you need to lay out GLTF's declaratively check out [gltfjsx](https://github.com/react-spring/gltfjsx).
 
 ```jsx
 import React, { Suspense } from 'react'
 import { useLoader } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
 function Asset({ url }) {
-  const [gltf] = useLoader(GLTFLoader, url, loader => {
-    const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/draco-gltf/')
-    loader.setDRACOLoader(dracoLoader)
-  })
+  const gltf = useLoader(GLTFLoader, url)
   return <primitive object={gltf.scene} />
 }
 
 <Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
+```
+
+You can provide a callback if you need to configure your loader:
+
+```jsx
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+
+useLoader(GLTFLoader, url, loader => {
+  const dracoLoader = new DRACOLoader()
+  dracoLoader.setDecoderPath('/draco-gltf/')
+  loader.setDRACOLoader(dracoLoader)
+})
+```
+
+It can also make multiple requests in parallel:
+
+```jsx
+const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
 ```
 
 # Additional exports

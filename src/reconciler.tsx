@@ -418,3 +418,5 @@ Renderer.injectIntoDevTools({
   rendererPackageName: 'react-three-fiber',
   findHostInstanceByFiber: Renderer.findHostInstance,
 })
+
+export { Renderer }

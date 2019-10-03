@@ -91,23 +91,53 @@ function prune(props: any) {
   return reducedProps
 }
 
-export function useLoader<T>(Proto: THREE.Loader, url: string, extensions?: Extensions): [T, any[]] {
+export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extensions?: Extensions): T {
+  const isArray = Array.isArray(url)
+  const loader = useMemo(() => {
+    // Construct new loader
+    const temp = new (Proto as any)()
+    // Run loader extensions
+    if (extensions) extensions(temp)
+    return temp
+  }, [Proto])
   // Use suspense to load async assets
-  const { data, objects } = usePromise<LoaderData>(
-    (Proto: THREE.Loader, url: string) =>
-      new Promise(res => {
-        const loader = new (Proto as any)()
-        if (extensions) extensions(loader)
-        loader.load(url, (data: any) => {
-          const objects: any[] = []
-          if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
-          res({ data, objects })
-        })
-      }),
+  let results = usePromise<LoaderData>(
+    (Proto: THREE.Loader, url: string | string[]) => {
+      url = isArray ? url : [url]
+      return Promise.all(
+        url.map(
+          url =>
+            new Promise(res =>
+              loader.load(url, (data: any) => {
+                const objects: any[] = []
+                if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
+                data.__$ = objects
+                res(data)
+              })
+            )
+        )
+      )
+    },
     [Proto, url]
   )
   // Dispose objects on unmount
-  useEffect(() => () => data.scene && data.scene.dispose(), [])
+  useEffect(() => () =>
+    results.forEach((data: any) => {
+      if (data.dispose) data.dispose()
+      if (data.scene) data.scene.dispose()
+    }, [])
+  )
+
+  // Temporary hack ...
+  if (!isArray) {
+    Object.assign(results[0], {
+      [Symbol.iterator]() {
+        console.warn('[value]=useLoader(...) is deprecated, please use value=useLoader(...) instead!')
+        return [results[0]][Symbol.iterator]()
+      },
+    })
+  }
+
   // Return the object itself and a list of pruned props
-  return [data, objects]
+  return isArray ? results : results[0]
 }

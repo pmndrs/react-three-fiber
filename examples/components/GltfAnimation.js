@@ -8,7 +8,7 @@ extend({ OrbitControls })
 
 function Model(props) {
   const group = useRef()
-  const [gltf, objects] = useLoader(GLTFLoader, stork)
+  const gltf = useLoader(GLTFLoader, stork)
   const actions = useRef()
   const [mixer] = useState(() => new THREE.AnimationMixer())
   useFrame((state, delta) => mixer.update(delta))
@@ -25,10 +25,10 @@ function Model(props) {
           castShadow
           receiveShadow
           name="mesh_0"
-          morphTargetDictionary={objects[1].morphTargetDictionary}
-          morphTargetInfluences={objects[1].morphTargetInfluences}>
-          <bufferGeometry attach="geometry" {...objects[1].geometry} />
-          <meshStandardMaterial attach="material" {...objects[1].material} />
+          morphTargetDictionary={gltf.__$[1].morphTargetDictionary}
+          morphTargetInfluences={gltf.__$[1].morphTargetInfluences}>
+          <bufferGeometry attach="geometry" {...gltf.__$[1].geometry} />
+          <meshStandardMaterial attach="material" {...gltf.__$[1].material} />
         </mesh>
       </scene>
     </group>

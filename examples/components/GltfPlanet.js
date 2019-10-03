@@ -8,7 +8,7 @@ import planet from 'file-loader!../resources/gltf/planet.gltf'
 
 function Planet(props) {
   const group = useRef()
-  const [, objects] = useLoader(GLTFLoader, planet, loader => {
+  const gltf = useLoader(GLTFLoader, planet, loader => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('/public/draco-gltf/')
     loader.setDRACOLoader(dracoLoader)
@@ -26,12 +26,12 @@ function Planet(props) {
                 rotation={[0.23801904073457583, -0.5453875094307201, 0.5622765917510457]}
                 scale={[7.0000020953568285, 6.999997807471086, 6.999999297157107]}>
                 <mesh name="planet001">
-                  <bufferGeometry attach="geometry" {...objects[5].geometry} />
-                  <meshStandardMaterial attach="material" {...objects[5].material} name="scene" roughness={1} />
+                  <bufferGeometry attach="geometry" {...gltf.__$[5].geometry} />
+                  <meshStandardMaterial attach="material" {...gltf.__$[5].material} name="scene" roughness={1} />
                 </mesh>
                 <mesh name="planet001" receiveShadow castShadow>
-                  <bufferGeometry attach="geometry" {...objects[6].geometry} />
-                  <meshStandardMaterial attach="material" {...objects[6].material} name="scene" roughness={1} />
+                  <bufferGeometry attach="geometry" {...gltf.__$[6].geometry} />
+                  <meshStandardMaterial attach="material" {...gltf.__$[6].material} name="scene" roughness={1} />
                 </mesh>
               </object3D>
             </object3D>

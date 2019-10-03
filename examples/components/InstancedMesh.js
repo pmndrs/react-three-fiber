@@ -6,7 +6,7 @@ import suzanne from 'file-loader!../resources/gltf/suzanne.blob'
 const dummy = new THREE.Object3D()
 function Suzanne() {
   // Load async model
-  const [geometry] = useLoader(THREE.BufferGeometryLoader, suzanne)
+  const geometry = useLoader(THREE.BufferGeometryLoader, suzanne)
   // When we're here it's loaded, now compute vertex normals
   useMemo(() => {
     geometry.computeVertexNormals()

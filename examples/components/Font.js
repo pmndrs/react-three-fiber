@@ -12,7 +12,7 @@ function Text({
   color = '#000000',
   ...props
 }) {
-  const [font] = useLoader(THREE.FontLoader, bold)
+  const font = useLoader(THREE.FontLoader, bold)
   const [shapes, [x, y]] = useMemo(() => {
     let x = 0,
       y = 0
@@ -72,7 +72,7 @@ function Rig() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#dfdfdf' }}>
+    <Canvas pixelRatio={window.devicePixelRatio} style={{ background: '#dfdfdf' }}>
       <Suspense fallback={null}>
         <Rig />
       </Suspense>
