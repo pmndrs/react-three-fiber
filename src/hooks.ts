@@ -92,7 +92,6 @@ function prune(props: any) {
 }
 
 export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extensions?: Extensions): T {
-  const isArray = Array.isArray(url)
   const loader = useMemo(() => {
     // Construct new loader
     const temp = new (Proto as any)()
@@ -103,9 +102,9 @@ export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extens
   // Use suspense to load async assets
   let results = usePromise<LoaderData>(
     (Proto: THREE.Loader, url: string | string[]) => {
-      url = isArray ? url : [url]
+      const urlArray = Array.isArray(url) ? url : [url]
       return Promise.all(
-        url.map(
+        urlArray.map(
           url =>
             new Promise(res =>
               loader.load(url, (data: any) => {
@@ -128,7 +127,8 @@ export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extens
     }, [])
   )
 
-  // Temporary hack ...
+  // Temporary hack to make the new api backwards compatible for a while ...
+  const isArray = Array.isArray(url)
   if (!isArray) {
     Object.assign(results[0], {
       [Symbol.iterator]() {
