@@ -21,7 +21,7 @@
   "dist/web.js": {
     "bundled": 34241,
     "minified": 16193,
-    "gzipped": 5909,
+    "gzipped": 5910,
     "treeshaked": {
       "rollup": {
         "code": 12141,
