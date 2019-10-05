@@ -90,17 +90,9 @@ export default function App() {
   )
 
   return (
-    <div className="main" onMouseMove={onMouseMove}>
-      <Canvas style={{ background: '#272727' }} camera={{ fov: 75, position: [0, 0, 50] }} manual>
-        <Swarm mouse={mouse} />
-        <Effect />
-      </Canvas>
-      <a href="https://github.com/drcmda/react-three-fiber" className="top-left" children="Github" />
-      <a href="https://twitter.com/0xca0a" className="top-right" children="Twitter" />
-      <a href="https://github.com/react-spring/react-spring" className="bottom-left" children="+ react-spring" />
-      <div className="header-major">
-        <span>LOREM</span>
-      </div>
-    </div>
+    <Canvas style={{ background: '#272727' }} camera={{ fov: 75, position: [0, 0, 50] }} manual>
+      <Swarm mouse={mouse} />
+      <Effect />
+    </Canvas>
   )
 }

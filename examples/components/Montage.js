@@ -1,13 +1,13 @@
 import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { apply, Canvas, useFrame, useThree } from 'react-three-fiber'
+import { extend, Canvas, useFrame, useThree } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { WaterPass } from './../resources/postprocessing/WaterPass'
-apply({ EffectComposer, ShaderPass, RenderPass, WaterPass })
+extend({ EffectComposer, ShaderPass, RenderPass, WaterPass })
 
 const number = 30
 const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff']
@@ -69,20 +69,11 @@ function Effect() {
 
 export default function App() {
   return (
-    <div className="main" style={{ color: '#172717' }}>
-      <Canvas style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 30] }}>
-        <ambientLight intensity={0.5} />
-        <spotLight intensity={0.5} position={[300, 300, 4000]} />
-        <Effect />
-        <Content />
-      </Canvas>
-      <a href="https://github.com/drcmda/react-three-fiber" className="top-left" children="Github" />
-      <a href="https://twitter.com/0xca0a" className="top-right" children="Twitter" />
-      <a href="https://github.com/react-spring/react-spring" className="bottom-left" children="+ react-spring" />
-      <span className="header-left">React Three Fiber</span>
-      <div className="header-major">
-        <span>2.0</span>
-      </div>
-    </div>
+    <Canvas style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 30] }}>
+      <ambientLight intensity={0.5} />
+      <spotLight intensity={0.5} position={[300, 300, 4000]} />
+      <Effect />
+      <Content />
+    </Canvas>
   )
 }

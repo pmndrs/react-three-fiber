@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Canvas, useFrame } from 'react-three-fiber'
 
 const CanvasStyle = {
-  width: '100vw',
-  height: '50vh',
+  width: '100%',
+  height: '50%',
 }
 
 const Obj = () => {
@@ -43,11 +43,11 @@ function App() {
   const [secondScene, setSecondScene] = useState(false)
 
   useEffect(() => {
-    setTimeout(() => setSecondScene(true), 5000)
+    setTimeout(() => setSecondScene(true), 2000)
   }, [])
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100%', height: '100%' }}>
       <SpinningScene />
       {secondScene && <StaticScene />}
     </div>

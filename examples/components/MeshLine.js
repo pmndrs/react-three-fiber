@@ -64,18 +64,8 @@ function Scene() {
 
 export default function App() {
   return (
-    <div class="main">
-      <Canvas style={{ background: '#324444' }} camera={{ position: [0, 50, 10], fov: 75 }}>
-        <Scene />
-      </Canvas>
-      <a href="https://github.com/drcmda/react-three-fiber" class="top-left" children="Github" />
-      <a href="https://twitter.com/0xca0a" class="top-right" children="Twitter" />
-      <a
-        href="https://codepen.io/machida_yosuke/pen/aPjRjq"
-        class="bottom-right"
-        children="Original / Machida Yosuke"
-      />
-      <span class="header">React Three Fiber</span>
-    </div>
+    <Canvas style={{ background: '#324444' }} camera={{ position: [0, 50, 10], fov: 75 }}>
+      <Scene />
+    </Canvas>
   )
 }

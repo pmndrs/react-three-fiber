@@ -82,27 +82,16 @@ const Scene = React.memo(() => {
 
 export default function App() {
   return (
-    <div class="main">
-      <Canvas
-        invalidateFrameloop
-        camera={{
-          fov: 90,
-          position: [0, 0, 1800],
-          rotation: [0, deg(-20), deg(180)],
-          near: 0.1,
-          far: 20000,
-        }}>
-        <Scene />
-      </Canvas>
-      <a href="https://tympanus.net/codrops" class="top-left" children="Article" />
-      <a href="https://github.com/drcmda/react-three-fiber" class="top-right" children="Github" />
-      <a href="https://twitter.com/0xca0a" class="bottom-left" children="Twitter" />
-      <a
-        href="https://www.instagram.com/tina.henschel/"
-        class="bottom-right"
-        children="Illustrations / Tina Henschel"
-      />
-      <span class="header">REACT THREE FIBER</span>
-    </div>
+    <Canvas
+      invalidateFrameloop
+      camera={{
+        fov: 90,
+        position: [0, 0, 1800],
+        rotation: [0, deg(-20), deg(180)],
+        near: 0.1,
+        far: 20000,
+      }}>
+      <Scene />
+    </Canvas>
   )
 }
