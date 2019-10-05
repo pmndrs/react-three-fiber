@@ -53,7 +53,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server --progress --colors --env development",
-    "build": "webpack --progress --colors --env production"
+    "build": "webpack --progress --colors --env production && cp -a public/. dist/"
   },
   "browserslist": [
     ">0.2%",
