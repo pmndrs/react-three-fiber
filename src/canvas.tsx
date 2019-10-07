@@ -357,7 +357,14 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // }
 
       const { left, right, top, bottom } = state.current.size
-      mouse.set(((event.clientX - left) / (right - left)) * 2 - 1, -((event.clientY - top) / (bottom - top)) * 2 + 1)
+      let { clientX, clientY } = event
+
+      if (typeof window !== 'undefined') {
+        clientX += window.pageXOffset
+        clientY += window.pageYOffset
+      }
+
+      mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
