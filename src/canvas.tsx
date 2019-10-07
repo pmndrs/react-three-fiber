@@ -3,6 +3,7 @@ import * as React from 'react'
 import { useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 import { TinyEmitter } from 'tiny-emitter'
+import { ReactThreeFiber } from './three-types'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -87,7 +88,11 @@ export type CanvasProps = {
   updateDefaultCamera?: boolean
   noEvents?: boolean
   gl?: Partial<THREE.WebGLRenderer>
-  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
+  camera?: Partial<
+    ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
+      ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
+      ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+  >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
   style?: React.CSSProperties

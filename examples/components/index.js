@@ -28,6 +28,7 @@ const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./V
 const VR = { descr: '', tags: [], Component: lazy(() => import('./VR')) }
 
 export {
+  Swarm,
   Font,
   Bloom,
   Gestures,
@@ -48,7 +49,6 @@ export {
   ShaderMaterial,
   Stars,
   Suspense,
-  Swarm,
   Test,
   Textures,
   SVGLoader,

@@ -279,6 +279,16 @@ declare global {
       cubeTexture: ReactThreeFiber.Node<THREE.CubeTexture, typeof THREE.CubeTexture>
       canvasTexture: ReactThreeFiber.Node<THREE.CanvasTexture, typeof THREE.CanvasTexture>
       depthTexture: ReactThreeFiber.Node<THREE.DepthTexture, typeof THREE.DepthTexture>
+
+      // misc
+      raycaster: ReactThreeFiber.Node<THREE.Raycaster, typeof THREE.Raycaster>
+      vector2: ReactThreeFiber.Node<THREE.Vector2, typeof THREE.Vector2>
+      vector3: ReactThreeFiber.Node<THREE.Vector3, typeof THREE.Vector3>
+      vector4: ReactThreeFiber.Node<THREE.Vector4, typeof THREE.Vector4>
+      euler: ReactThreeFiber.Node<THREE.Euler, typeof THREE.Euler>
+      matrix3: ReactThreeFiber.Node<THREE.Matrix3, typeof THREE.Matrix3>
+      matrix4: ReactThreeFiber.Node<THREE.Matrix4, typeof THREE.Matrix4>
+      quaternion: ReactThreeFiber.Node<THREE.Quaternion, typeof THREE.Quaternion>
     }
   }
 }

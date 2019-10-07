@@ -76,7 +76,7 @@ function Stars({ count = 5000 }) {
 export default () => (
   <Canvas
     style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
-    camera={{ position: [0, 0, 10], fov: 40 }}
+    camera={{ position: [0, 0, 8], fov: 40 }}
     onCreated={({ gl }) => {
       gl.gammaInput = true
       gl.toneMapping = THREE.ACESFilmicToneMapping

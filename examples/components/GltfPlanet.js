@@ -52,18 +52,21 @@ const Controls = props => {
 
 export default function App() {
   return (
-    <Canvas camera={{ position: [0, 0, 15] }} shadowMap>
-      <ambientLight intensity={0.8} />
-      <pointLight intensity={1} position={[-10, -25, -10]} color="red" />
+    <Canvas
+      style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
+      camera={{ position: [0, 0, 15], near: 0.1, far: 30 }}
+      shadowMap>
+      <ambientLight intensity={0.4} />
+      <pointLight intensity={20} position={[-10, -25, -10]} color="#200f20" />
       <spotLight
         castShadow
         intensity={4}
-        angle={Math.PI / 6}
+        angle={Math.PI / 8}
         position={[25, 25, 15]}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <fog attach="fog" args={['#cc7b32', 16, 20]} />
+      <fog attach="fog" args={['#090b1f', 0, 25]} />
       <Suspense fallback={null}>
         <Planet />
       </Suspense>
