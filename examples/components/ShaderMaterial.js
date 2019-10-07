@@ -1,11 +1,11 @@
 // WebGL code from https://tympanus.net/Development/DistortionHoverEffect/
 
 import React, { useState, useCallback, useMemo } from 'react'
-import ReactDOM from 'react-dom'
 import * as THREE from 'three'
 import { vertexShader, fragmentShader } from '../resources/shaders/XFadeShader'
 import { Canvas, useThree } from 'react-three-fiber'
 import { useSpring, a } from 'react-spring/three'
+import styled from 'styled-components'
 
 import img1 from '../resources/images/crop-1.jpg'
 import img2 from '../resources/images/crop-2.jpg'
@@ -47,8 +47,6 @@ import disp11 from '../resources/images/crop-9.jpg'
 import disp13 from '../resources/images/crop-10.jpg'
 import disp15 from '../resources/images/crop-11.jpg'
 
-import '../styles.css'
-
 // data.map(([url1, url2, disp, intensity, x, y, factor, z, scale], index) => (
 
 const data = [
@@ -67,8 +65,7 @@ const data = [
 
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { progress } = useSpring({ progress: hovered ? 1 : 0 })
-
-  const { gl, invalidate } = useThree()
+  const { gl, invalidate, viewport } = useThree()
 
   const args = useMemo(() => {
     const loader = new THREE.TextureLoader()
@@ -96,8 +93,8 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   }, [url1, url2, disp])
 
   return (
-    <mesh>
-      <planeBufferGeometry attach="geometry" args={[8, 8]} />
+    <mesh scale={[viewport.width, viewport.height, 1]}>
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
       <a.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>
   )
@@ -108,20 +105,54 @@ function Image(props) {
   const hover = useCallback(() => setHover(true), [])
   const unhover = useCallback(() => setHover(false), [])
   return (
-    <div className="item" onPointerOver={hover} onPointerOut={unhover}>
-      <Canvas className="canvas" invalidateFrameloop>
+    <Item onPointerOver={hover} onPointerOut={unhover}>
+      <Canvas invalidateFrameloop>
         <ImageWebgl {...props} hovered={hovered} />
       </Canvas>
-    </div>
+    </Item>
   )
 }
 
 export default function App() {
   return (
-    <div className="grid">
-      {data.map(([url1, url2, disp, intensity], index) => (
-        <Image key={index} url1={url1} url2={url2} disp={disp} intensity={intensity} />
-      ))}
-    </div>
+    <Container>
+      <Grid>
+        {data.map(([url1, url2, disp, intensity], index) => (
+          <Image key={index} url1={url1} url2={url2} disp={disp} intensity={intensity} />
+        ))}
+      </Grid>
+    </Container>
   )
 }
+
+const Container = styled.div`
+  position: absolute;
+  overflow: auto;
+  top: 0px;
+  width: 100%;
+  height: 100vh;
+  font-size: 20em;
+  font-weight: 800;
+  line-height: 0.9em;
+  background: #eee;
+`
+
+const Grid = styled.div`
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-wrap: wrap;
+`
+
+const Item = styled.div`
+  position: relative;
+  width: 33%;
+  height: 33%;
+
+  & canvas {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+`

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
 import { apply as extendSpring, useSpring, a, interpolate } from 'react-spring/three'
 import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-fiber'
+import styled from 'styled-components'
 import data from './../resources/data'
 
 // Import and register postprocessing classes as three-native-elements
@@ -168,9 +169,20 @@ export default function Main() {
       <Canvas className="canvas">
         <Scene top={top} mouse={mouse} />
       </Canvas>
-      <div className="scroll-container" onScroll={onScroll} onMouseMove={onMouseMove}>
+      <Container onScroll={onScroll} onMouseMove={onMouseMove}>
         <div style={{ height: '525vh' }} />
-      </div>
+      </Container>
     </>
   )
 }
+
+const Container = styled.div`
+  position: absolute;
+  overflow: auto;
+  top: 0px;
+  width: 100%;
+  height: 100vh;
+  font-size: 20em;
+  font-weight: 800;
+  line-height: 0.9em;
+`

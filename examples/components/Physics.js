@@ -78,24 +78,22 @@ export default function App() {
   // This may seem like magic, but as the plane unmounts it removes itself from cannon and that's that
   useEffect(() => void setTimeout(() => set(false), 5000), [])
   return (
-    <div className="main">
-      <Canvas
-        camera={{ position: [0, 0, 15] }}
-        onCreated={({ gl }) => ((gl.shadowMap.enabled = true), (gl.shadowMap.type = THREE.PCFSoftShadowMap))}>
-        <ambientLight intensity={0.5} />
-        <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
-        <Provider>
-          <Plane position={[0, 0, -10]} />
-          {showPlane && <Plane position={[0, 0, 0]} />}
-          <Box position={[1, 0, 1]} />
-          <Box position={[2, 1, 5]} />
-          <Box position={[0, 0, 6]} />
-          <Box position={[-1, 1, 8]} />
-          <Box position={[-2, 2, 13]} />
-          <Box position={[2, -1, 13]} />
-          {!showPlane && <Box position={[0.5, 1.5, 20]} />}
-        </Provider>
-      </Canvas>
-    </div>
+    <Canvas
+      camera={{ position: [0, 0, 15] }}
+      onCreated={({ gl }) => ((gl.shadowMap.enabled = true), (gl.shadowMap.type = THREE.PCFSoftShadowMap))}>
+      <ambientLight intensity={0.5} />
+      <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+      <Provider>
+        <Plane position={[0, 0, -10]} />
+        {showPlane && <Plane position={[0, 0, 0]} />}
+        <Box position={[1, 0, 1]} />
+        <Box position={[2, 1, 5]} />
+        <Box position={[0, 0, 6]} />
+        <Box position={[-1, 1, 8]} />
+        <Box position={[-2, 2, 13]} />
+        <Box position={[2, -1, 13]} />
+        {!showPlane && <Box position={[0.5, 1.5, 20]} />}
+      </Provider>
+    </Canvas>
   )
 }

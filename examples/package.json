@@ -23,6 +23,7 @@
     "react-promise-suspense": "^0.3.1",
     "react-spring": "8.0.27",
     "react-use-gesture": "6.0.2-beta.1",
+    "styled-components": "^4.4.0",
     "three": "^0.109.0",
     "three.meshline": "^1.2.0",
     "vec-la": "^1.5.0",
@@ -52,7 +53,7 @@
   },
   "scripts": {
     "start": "webpack-dev-server --progress --colors --env development",
-    "build": "webpack --progress --colors --env production"
+    "build": "webpack --progress --colors --env production && cp -a public/. dist/"
   },
   "browserslist": [
     ">0.2%",

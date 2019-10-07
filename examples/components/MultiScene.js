@@ -7,7 +7,7 @@ function Content() {
   const { camera } = useThree()
   console.log(camera)
   const scene = useRef()
-  useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
+  useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 10)
   return (
     <scene ref={scene}>
       <mesh>
@@ -21,7 +21,7 @@ function Content() {
 function HeadsUpDisplay() {
   const { camera } = useThree()
   const scene = useRef()
-  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
+  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 100)
   return (
     <scene ref={scene}>
       <mesh>
