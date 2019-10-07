@@ -19,7 +19,21 @@ function useMeasure(): Measure {
     y: 0,
   })
   const [ro] = useState(
-    () => new ResizeObserver(() => ref.current && set(ref.current.getBoundingClientRect() as RectReadOnly))
+    () =>
+      new ResizeObserver(() => {
+        if (!ref.current) return
+        const { pageXOffset, pageYOffset } = window
+        const { left, top, width, height, bottom, right, x, y } = ref.current.getBoundingClientRect() as RectReadOnly
+        const size = { left, top, width, height, bottom, right, x, y }
+        size.top += pageYOffset
+        size.bottom += pageYOffset
+        size.y += pageYOffset
+        size.left += pageXOffset
+        size.right += pageXOffset
+        size.x += pageXOffset
+        Object.freeze(size)
+        return set(size)
+      })
   )
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
