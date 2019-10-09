@@ -4,19 +4,23 @@ import styled, { createGlobalStyle } from 'styled-components'
 import { HashRouter as Router, Link, Route, Switch, useRouteMatch } from 'react-router-dom'
 import Label from './ui/Label'
 
+const visibleComponents = Object.entries(components)
+  .filter(([name, item]) => !item.dev)
+  .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
+
 export default function App() {
-  const [active, set] = useState(Object.values(components)[0])
+  const [active, set] = useState(Object.values(visibleComponents)[0])
   return (
     <Router>
       <Global />
       <Suspense fallback={null}>
         <Switch>
-          <Route exact path="/" component={components.Swarm.Component} />
+          <Route exact path="/" component={visibleComponents.Swarm.Component} />
           <Route
             exact
             path="/demo/:name"
             render={({ match }) => {
-              const Component = components[match.params.name].Component
+              const Component = visibleComponents[match.params.name].Component
               return <Component />
             }}
           />
@@ -38,7 +42,7 @@ function Demos() {
   let match = useRouteMatch('/demo/:name')
   return (
     <DemoPanel>
-      {Object.entries(components).map(([name, item]) => (
+      {Object.entries(visibleComponents).map(([name, item]) => (
         <Link key={name} to={`/demo/${name}`}>
           <Spot
             style={{
@@ -102,10 +106,10 @@ const DemoPanel = styled.div`
 
 const Spot = styled.div`
   display: inline-block;
-  width: 25px;
-  height: 25px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  margin: 10px;
+  margin: 8px;
   box-shadow: #00000040 0px 0px 15px 0px;
 `
 

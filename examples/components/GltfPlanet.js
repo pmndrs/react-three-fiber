@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef } from 'react'
+import React, { Suspense, useEffect, useRef, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
@@ -42,6 +42,31 @@ function Planet(props) {
   )
 }
 
+function Stars({ count = 5000 }) {
+  const positions = useMemo(() => {
+    let positions = []
+    for (let i = 0; i < count; i++) {
+      positions.push((50 + Math.random() * 1000) * (Math.round(Math.random()) ? -1 : 1))
+      positions.push((50 + Math.random() * 1000) * (Math.round(Math.random()) ? -1 : 1))
+      positions.push((50 + Math.random() * 1000) * (Math.round(Math.random()) ? -1 : 1))
+    }
+    return new Float32Array(positions)
+  }, [count])
+  return (
+    <points>
+      <bufferGeometry attach="geometry">
+        <bufferAttribute
+          attachObject={['attributes', 'position']}
+          count={positions.length / 3}
+          array={positions}
+          itemSize={3}
+        />
+      </bufferGeometry>
+      <pointsMaterial attach="material" size={2} sizeAttenuation color="white" transparent opacity={0.8} fog={false} />
+    </points>
+  )
+}
+
 extend({ OrbitControls })
 const Controls = props => {
   const { gl, camera } = useThree()
@@ -54,7 +79,7 @@ export default function App() {
   return (
     <Canvas
       style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
-      camera={{ position: [0, 0, 15], near: 0.1, far: 30 }}
+      camera={{ position: [0, 0, 15] }}
       shadowMap>
       <ambientLight intensity={0.4} />
       <pointLight intensity={20} position={[-10, -25, -10]} color="#200f20" />
@@ -62,7 +87,7 @@ export default function App() {
         castShadow
         intensity={4}
         angle={Math.PI / 8}
-        position={[25, 25, 15]}
+        position={[15, 25, 5]}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
@@ -70,6 +95,7 @@ export default function App() {
       <Suspense fallback={null}>
         <Planet />
       </Suspense>
+      <Stars />
       <Controls
         autoRotate
         enablePan={false}

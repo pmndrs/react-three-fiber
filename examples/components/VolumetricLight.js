@@ -15,7 +15,7 @@ const OCCLUSION_LAYER = 1
 
 function Torusknot({ layer = DEFAULT_LAYER }) {
   const ref = useRef()
-  const Material = `mesh${layer === DEFAULT_LAYER ? 'Standard' : 'Basic'}Material`
+  const Material = `mesh${layer === DEFAULT_LAYER ? 'Physical' : 'Basic'}Material`
   useFrame(({ clock }) => {
     ref.current.position.x = Math.cos(clock.getElapsedTime()) * 1.5
     ref.current.rotation.x += 0.01
@@ -24,8 +24,14 @@ function Torusknot({ layer = DEFAULT_LAYER }) {
   })
   return (
     <mesh ref={ref} position={[0, 0, 2]} layers={layer}>
-      <torusKnotBufferGeometry attach="geometry" args={[0.5, 0.15, 150, 32]} />
-      <Material attach="material" color={layer === DEFAULT_LAYER ? '#873740' : '#070707'} roughness={1} />
+      <torusKnotBufferGeometry attach="geometry" args={[0.8, 0.28, 150, 32]} />
+      <Material
+        attach="material"
+        color={layer === DEFAULT_LAYER ? '#873740' : '#070707'}
+        roughness={1}
+        clearcoat={1}
+        clearcoatRoughness={0.2}
+      />
     </mesh>
   )
 }
@@ -35,7 +41,7 @@ function VolumetricLight() {
   useFrame(() => (ref.current.rotation.z += 0.005))
   return (
     <mesh ref={ref} layers={OCCLUSION_LAYER}>
-      <boxBufferGeometry attach="geometry" args={[0.5, 20, 1]} />
+      <boxBufferGeometry attach="geometry" args={[1, 20, 1]} />
       <meshBasicMaterial attach="material" color="lightblue" />
     </mesh>
   )
@@ -86,7 +92,7 @@ function Effects() {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas style={{ background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }}>
       <pointLight intensity={5} />
       <pointLight intensity={1} position={[10, 10, 10]} />
       <ambientLight />

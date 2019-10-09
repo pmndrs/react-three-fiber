@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { Canvas, useThree, useFrame } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
@@ -9,8 +9,16 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 
 function Sphere({ geometry, x, y, z, s }) {
   const [active, set] = useState(false)
+  let t = useMemo(() => Math.random() * 1000, [])
+  const ref = useRef()
+  useFrame(({ clock }, delta) => {
+    ref.current.position.x = x + (Math.sin(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
+    ref.current.position.y = y + (Math.cos(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
+    ref.current.position.z = z + (Math.sin(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
+  })
   return (
     <mesh
+      ref={ref}
       onPointerOver={() => set(true)}
       onPointerOut={() => set(false)}
       position={[x, y, z]}
@@ -23,13 +31,13 @@ function Sphere({ geometry, x, y, z, s }) {
 }
 
 function Spheres() {
-  const [geometry] = useState(() => new THREE.IcosahedronBufferGeometry(1, 4), [])
+  const [geometry] = useState(() => new THREE.IcosahedronBufferGeometry(1, 0), [])
   const data = useMemo(() => {
     return new Array(50).fill().map((_, i) => ({
-      x: Math.random() * 100 - 50,
-      y: Math.random() * 100 - 50,
-      z: Math.random() * 100 - 50,
-      s: Math.random() + 10,
+      x: Math.random() * 140 - 70,
+      y: Math.random() * 140 - 70,
+      z: Math.random() * 140 - 70,
+      s: Math.random() + 8,
     }))
   }, [])
   return data.map((props, i) => <Sphere key={i} {...props} geometry={geometry} />)
@@ -49,7 +57,7 @@ function Effect() {
     const comp = new EffectComposer(gl)
     comp.renderToScreen = false
     comp.addPass(renderScene)
-    comp.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 1, 1.5, 0))
+    comp.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 1.25, 1, 0))
 
     const finalComposer = new EffectComposer(gl)
     finalComposer.addPass(renderScene)
@@ -92,9 +100,20 @@ function Effect() {
 }
 
 export default () => (
-  <Canvas gl={{ toneMapping: THREE.Uncharted2ToneMapping }} camera={{ position: [0, 0, 100] }}>
+  <Canvas
+    camera={{ position: [0, 0, 100] }}
+    onCreated={({ gl }) => {
+      gl.gammaInput = true
+      gl.gammaOutput = true
+      gl.toneMapping = THREE.Uncharted2ToneMapping
+    }}>
     <pointLight />
     <ambientLight />
+    <spotLight intensity={1.6} position={[120, 50, 150]} angle={0.5} penumbra={1} />
+    <mesh position={[0, 0, -100]}>
+      <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
+      <meshPhongMaterial attach="material" color="#070707" depthTest={false} />
+    </mesh>
     <Spheres />
     <Effect />
   </Canvas>

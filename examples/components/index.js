@@ -3,55 +3,54 @@ import { lazy } from 'react'
 const Bloom = { descr: '', tags: [], Component: lazy(() => import('./Bloom')) }
 const Font = { descr: '', tags: [], Component: lazy(() => import('./Font')) }
 const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')) }
-const GltfAnimation = { descr: '', tags: [], Component: lazy(() => import('./GltfAnimation')) }
 const GltfPlanet = { descr: '', tags: [], Component: lazy(() => import('./GltfPlanet')) }
-const Hud = { descr: '', tags: [], Component: lazy(() => import('./Hud')) }
-const InstancedMesh = { descr: '', tags: [], Component: lazy(() => import('./InstancedMesh')) }
-const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')) }
 const MeshLine = { descr: '', tags: [], Component: lazy(() => import('./MeshLine')) }
 const Montage = { descr: '', tags: [], Component: lazy(() => import('./Montage')) }
-const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./MultiRender')) }
-const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./MultiScene')) }
 const Physics = { descr: '', tags: [], Component: lazy(() => import('./Physics')) }
-const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')) }
-const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./Reparenting')) }
-const Scroll = { descr: '', tags: [], Component: lazy(() => import('./Scroll')) }
-const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./SelectiveBloom')) }
-const ShaderMaterial = { descr: '', tags: [], Component: lazy(() => import('./ShaderMaterial')) }
-const Stars = { descr: '', tags: [], Component: lazy(() => import('./Stars')) }
-const Suspense = { descr: '', tags: [], Component: lazy(() => import('./Suspense')) }
 const Swarm = { descr: '', tags: [], Component: lazy(() => import('./Swarm')) }
-const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')) }
 const Textures = { descr: '', tags: [], Component: lazy(() => import('./Textures')) }
 const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoader')) }
 const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')) }
-const VR = { descr: '', tags: [], Component: lazy(() => import('./VR')) }
+
+const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true }
+const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true }
+const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./Reparenting')), dev: true }
+const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./MultiRender')), dev: true }
+const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./MultiScene')), dev: true }
+const Hud = { descr: '', tags: [], Component: lazy(() => import('./Hud')), dev: true }
+const InstancedMesh = { descr: '', tags: [], Component: lazy(() => import('./InstancedMesh')), dev: true }
+const GltfAnimation = { descr: '', tags: [], Component: lazy(() => import('./GltfAnimation')), dev: true }
+const VR = { descr: '', tags: [], Component: lazy(() => import('./VR')), dev: true }
+const ShaderMaterial = { descr: '', tags: [], Component: lazy(() => import('./ShaderMaterial')), dev: true }
+const Suspense = { descr: '', tags: [], Component: lazy(() => import('./Suspense')), dev: true }
+const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./SelectiveBloom')), dev: true }
+const Scroll = { descr: '', tags: [], Component: lazy(() => import('./Scroll')), dev: true }
+const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')), dev: true }
 
 export {
   Swarm,
+  Montage,
   Font,
-  Bloom,
-  Gestures,
-  GltfAnimation,
+  VolumetricLight,
   GltfPlanet,
+  Physics,
+  Textures,
+  Gestures,
+  Bloom,
+  GltfAnimation,
+  SVGLoader,
   Hud,
   InstancedMesh,
   Lines,
   MeshLine,
-  Montage,
   MultiRender,
   MultiScene,
-  Physics,
   Pointcloud,
   Reparenting,
   Scroll,
   SelectiveBloom,
   ShaderMaterial,
-  Stars,
   Suspense,
   Test,
-  Textures,
-  SVGLoader,
-  VolumetricLight,
   VR,
 }

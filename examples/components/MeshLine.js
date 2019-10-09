@@ -12,19 +12,19 @@ const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#EE786E']
 function Fatline() {
   const material = useRef()
   const [color] = useState(() => colors[parseInt(colors.length * Math.random())])
-  const [ratio] = useState(() => 0.5 + 0.5 * Math.random())
-  const [width] = useState(() => Math.max(0.1, 0.3 * Math.random()))
+  const [width] = useState(() => Math.max(0.1, 0.4 * Math.random()))
+  const [speed] = useState(() => Math.max(0.0001, 0.0005 * Math.random()))
   // Calculate wiggly curve
   const [curve] = useState(() => {
-    let pos = new THREE.Vector3(30 - 60 * Math.random(), -5, 10 - 20 * Math.random())
-    return new Array(30)
+    let pos = new THREE.Vector3(4 - Math.random() * 8, 10 - Math.random() * 20, 3 - Math.random() * 6)
+    return new Array(20)
       .fill()
       .map(() =>
-        pos.add(new THREE.Vector3(2 - Math.random() * 4, 4 - Math.random() * 2, 5 - Math.random() * 10)).clone()
+        pos.add(new THREE.Vector3(4 - Math.random() * 8, 10 - Math.random() * 20, 3 - Math.random() * 6)).clone()
       )
   })
   // Hook into the render loop and decrease the materials dash-offset
-  useFrame(() => (material.current.uniforms.dashOffset.value -= 0.0005))
+  useFrame(() => (material.current.uniforms.dashOffset.value -= speed))
   return (
     <mesh>
       {/** MeshLine and CMRCurve are a OOP factories, not scene objects, hence all the imperative code in here :-( */}
@@ -41,20 +41,22 @@ function Fatline() {
         depthTest={false}
         lineWidth={width}
         color={color}
-        dashArray={0.1}
-        dashRatio={ratio}
+        dashArray={0.05}
+        dashRatio={0.7}
       />
     </mesh>
   )
 }
 
-function Scene() {
-  let group = useRef()
-  let theta = 0
-  // Hook into the render loop and rotate the scene a bit
-  useFrame(() => group.current.rotation.set(0, 5 * Math.sin(THREE.Math.degToRad((theta += 0.02))), 0))
+function Lines() {
+  const ref = useRef()
+  useFrame(({ clock }) => {
+    ref.current.rotation.x = Math.cos(clock.getElapsedTime() / 10) * Math.PI
+    ref.current.rotation.y = Math.sin(clock.getElapsedTime() / 10) * Math.PI
+    ref.current.rotation.z = Math.cos(clock.getElapsedTime() / 10) * Math.PI
+  })
   return (
-    <group ref={group}>
+    <group ref={ref}>
       {lines.map((_, index) => (
         <Fatline key={index} />
       ))}
@@ -64,8 +66,8 @@ function Scene() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#324444' }} camera={{ position: [0, 50, 10], fov: 75 }}>
-      <Scene />
+    <Canvas style={{ background: '#324444' }} camera={{ position: [0, 0, 10], fov: 50 }}>
+      <Lines />
     </Canvas>
   )
 }

@@ -58,12 +58,12 @@ const Scene = React.memo(() => {
       <ambientLight intensity={0.5} />
       <spotLight intensity={0.5} position={[300, 300, 4000]} />
       <mesh scale={[viewport.width * 2, viewport.height * 2, 1]} rotation={[0, deg(-20), 0]}>
-        <planeGeometry attach="geometry" args={[1, 1]} />
+        <planeBufferGeometry attach="geometry" args={[1, 1]} />
         <a.meshPhongMaterial attach="material" color={color} depthTest={false} />
       </mesh>
-      <a.group position={[1600, -700, page]} rotation={[0, deg(180), 0]}>
+      <a.group position={[2000, -700, page]} rotation={[0, deg(180), 0]}>
         {transitions.map(({ item: { shape, color, index }, key, props: { opacity, position, rotation } }) => (
-          <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + -index * 50])}>
+          <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + -index * 20])}>
             <a.meshPhongMaterial
               attach="material"
               color={color}
@@ -86,7 +86,7 @@ export default function App() {
       invalidateFrameloop
       camera={{
         fov: 90,
-        position: [0, 0, 1800],
+        position: [0, 0, 1000],
         rotation: [0, deg(-20), deg(180)],
         near: 0.1,
         far: 20000,

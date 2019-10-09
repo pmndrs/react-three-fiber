@@ -107,16 +107,11 @@ function Controls({ children }) {
 }
 
 export default function App() {
-  const ref = useRef()
-  useEffect(() => {
-    console.log(ref.current)
-  })
-
   return (
     <Canvas
-      ref={ref}
       invalidateFrameloop
       orthographic
+      style={{ background: '#272727' }}
       raycaster={{ linePrecision: 5 }}
       camera={{ position: [0, 0, 500] }}>
       <Controls>

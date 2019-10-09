@@ -64,7 +64,7 @@ function Background({ color }) {
   console.log(viewport)
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
-      <planeGeometry attach="geometry" args={[1, 1]} />
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
       <a.meshBasicMaterial attach="material" color={color} depthTest={false} />
     </mesh>
   )
