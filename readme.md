@@ -79,7 +79,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   orthographic = false          // Creates an orthographic camera if true
   noEvents = false              // Switch off raytracing and event support
-  pixelRation = undefined        // You could provide window.devicePixelRatio if you like
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   updateDefaultCamera = true    // Adjusts default camera on size changes
   onCreated                     // Callback when vdom is ready (you can block first render via promise)
