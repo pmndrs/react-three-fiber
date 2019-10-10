@@ -274,7 +274,6 @@ import { useThree } from 'react-three-fiber'
 
 const {
   gl,                           // WebGL renderer
-  canvas,                       // canvas the dom element that was created
   scene,                        // Default scene
   camera,                       // Default camera
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
