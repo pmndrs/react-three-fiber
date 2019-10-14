@@ -3,6 +3,7 @@ import * as React from 'react'
 import { useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 import { TinyEmitter } from 'tiny-emitter'
+import { ReactThreeFiber } from './three-types'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -87,7 +88,11 @@ export type CanvasProps = {
   updateDefaultCamera?: boolean
   noEvents?: boolean
   gl?: Partial<THREE.WebGLRenderer>
-  camera?: Partial<THREE.OrthographicCamera & THREE.PerspectiveCamera>
+  camera?: Partial<
+    ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
+      ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
+      ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+  >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
   style?: React.CSSProperties
@@ -352,7 +357,14 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // }
 
       const { left, right, top, bottom } = state.current.size
-      mouse.set(((event.clientX - left) / (right - left)) * 2 - 1, -((event.clientY - top) / (bottom - top)) * 2 + 1)
+      let { clientX, clientY } = event
+
+      if (typeof window !== 'undefined') {
+        clientX += window.pageXOffset
+        clientY += window.pageYOffset
+      }
+
+      mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])

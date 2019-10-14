@@ -1,23 +1,25 @@
 import * as THREE from 'three'
-import React, { useCallback, useState, useEffect, useRef, useMemo } from 'react'
-import { extend, Canvas, useFrame, useResource, useThree } from 'react-three-fiber'
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { WaterPass } from './../resources/postprocessing/WaterPass'
-import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass'
-import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass'
+import { FilmPass } from 'three/examples/jsm/postprocessing/FilmPass'
+import { GlitchPass } from './../resources/postprocessing/GlitchPass'
+import { WaterPass } from './../resources/postprocessing/WaterPass'
 
-extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, AfterimagePass, UnrealBloomPass })
+// Makes these prototypes available as "native" jsx-string elements
+extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, UnrealBloomPass, FilmPass, GlitchPass })
 
 function Swarm({ count, mouse }) {
-  const ref = useRef()
+  const mesh = useRef()
   const light = useRef()
   const { size, viewport } = useThree()
-  const aspect = size.width / viewport.width / 1
+  const aspect = size.width / viewport.width
 
   const dummy = useMemo(() => new THREE.Object3D(), [])
+  // Generate some random positions, speed factors and timings
   const particles = useMemo(() => {
     const temp = []
     for (let i = 0; i < count; i++) {
@@ -31,90 +33,89 @@ function Swarm({ count, mouse }) {
     }
     return temp
   }, [count])
-
+  // The innards of this hook will run every frame
   useFrame(state => {
+    // Makes the light follow the mouse
     light.current.position.set(mouse.current[0] / aspect, -mouse.current[1] / aspect, 0)
+    // Run through the randomized data to calculate some movement
     particles.forEach((particle, i) => {
       let { t, factor, speed, xFactor, yFactor, zFactor } = particle
+      // There is no sense or reason to any of this, just messing around with trigonometric functions
       t = particle.t += speed / 2
       const a = Math.cos(t) + Math.sin(t * 1) / 10
       const b = Math.sin(t) + Math.cos(t * 2) / 10
       const s = Math.cos(t)
-
       particle.mx += (mouse.current[0] - particle.mx) * 0.01
       particle.my += (mouse.current[1] * -1 - particle.my) * 0.01
-
+      // Update the dummy object
       dummy.position.set(
         (particle.mx / 10) * a + xFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 1) * factor) / 10,
         (particle.my / 10) * b + yFactor + Math.sin((t / 10) * factor) + (Math.cos(t * 2) * factor) / 10,
-        b + zFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
+        (particle.my / 10) * b + zFactor + Math.cos((t / 10) * factor) + (Math.sin(t * 3) * factor) / 10
       )
       dummy.scale.set(s, s, s)
       dummy.rotation.set(s * 5, s * 5, s * 5)
       dummy.updateMatrix()
-      ref.current.setMatrixAt(i, dummy.matrix)
+      // And apply the matrix to the instanced item
+      mesh.current.setMatrixAt(i, dummy.matrix)
     })
-    ref.current.instanceMatrix.needsUpdate = true
+    mesh.current.instanceMatrix.needsUpdate = true
   })
   return (
     <>
-      <pointLight distance={40} intensity={8} ref={light}>
-        <mesh>
-          <sphereBufferGeometry attach="geometry" args={[3, 32, 32]} />
-          <meshBasicMaterial attach="material" color="white" />
+      <pointLight ref={light} distance={40} intensity={8} color="lightblue">
+        <mesh scale={[1, 1, 6]}>
+          <dodecahedronBufferGeometry attach="geometry" args={[4, 0]} />
+          <meshBasicMaterial attach="material" color="lightblue" transparent />
         </mesh>
       </pointLight>
-      <instancedMesh ref={ref} args={[null, null, count]}>
+      <instancedMesh ref={mesh} args={[null, null, count]}>
         <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
-        <meshStandardMaterial attach="material" color="#760026" />
+        <meshStandardMaterial attach="material" color="#020000" />
       </instancedMesh>
     </>
   )
 }
 
-function Effect() {
+function Effect({ down }) {
   const composer = useRef()
   const { scene, gl, size, camera } = useThree()
   const aspect = useMemo(() => new THREE.Vector2(size.width, size.height), [size])
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
-  useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
+  useFrame(() => composer.current.render(), 1)
   return (
     <effectComposer ref={composer} args={[gl]}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />
       <waterPass attachArray="passes" factor={2} />
-      <afterimagePass attachArray="passes" uniforms-damp-value={0.3} />
-      <unrealBloomPass attachArray="passes" args={[aspect, 1, 1, 0]} />
-      <shaderPass
-        attachArray="passes"
-        args={[FXAAShader]}
-        material-uniforms-resolution-value={[1 / size.width, 1 / size.height]}
-        renderToScreen
-      />
+      <unrealBloomPass attachArray="passes" args={[aspect, 2, 1, 0]} />
+      <filmPass attachArray="passes" args={[0.25, 0.4, 1500, false]} />
+      <glitchPass attachArray="passes" factor={down ? 1 : 0} />
     </effectComposer>
   )
 }
 
 export default function App() {
-  const mouse = useRef([0, 0])
+  const [down, set] = useState(false)
+  const mouse = useRef([300, -200])
   const onMouseMove = useCallback(
     ({ clientX: x, clientY: y }) => (mouse.current = [x - window.innerWidth / 2, y - window.innerHeight / 2]),
     []
   )
-
   return (
-    <div style={{ width: '100%', height: '100%' }} onMouseMove={onMouseMove}>
-      <Canvas
-        style={{ background: '#272727' }}
-        camera={{ fov: 75, position: [0, 0, 70] }}
-        onCreated={({ gl }) => (window.gl = gl)}>
+    <div
+      style={{ width: '100%', height: '100%' }}
+      onMouseMove={onMouseMove}
+      onMouseUp={() => set(false)}
+      onMouseDown={() => set(true)}>
+      <Canvas camera={{ fov: 100, position: [0, 0, 30] }}>
         <pointLight distance={60} intensity={2} color="white" />
-        <spotLight intensity={0.5} position={[0, 0, 70]} penumbra={1} />
+        <spotLight intensity={2} position={[0, 0, 70]} penumbra={1} color="red" />
         <mesh>
-          <planeGeometry attach="geometry" args={[10000, 10000]} />
-          <meshPhongMaterial attach="material" color="#373737" depthTest={false} />
+          <planeBufferGeometry attach="geometry" args={[10000, 10000]} />
+          <meshStandardMaterial attach="material" color="#00ffff" depthTest={false} />
         </mesh>
         <Swarm mouse={mouse} count={20000} />
-        <Effect />
+        <Effect down={down} />
       </Canvas>
     </div>
   )

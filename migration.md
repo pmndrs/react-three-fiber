@@ -41,6 +41,8 @@ const {
 } = useThree()
 ```
 
+**[DEPRECATED]**: `useThree().canvas`. Replace by using `useThree().gl.domElement`.
+
 #### useFrame(callback: (state, delta) => void, renderPriority: number = 0)
 
 This hooks calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.

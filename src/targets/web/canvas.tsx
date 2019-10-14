@@ -19,7 +19,21 @@ function useMeasure(): Measure {
     y: 0,
   })
   const [ro] = useState(
-    () => new ResizeObserver(() => ref.current && set(ref.current.getBoundingClientRect() as RectReadOnly))
+    () =>
+      new ResizeObserver(() => {
+        if (!ref.current) return
+        const { pageXOffset, pageYOffset } = window
+        const { left, top, width, height, bottom, right, x, y } = ref.current.getBoundingClientRect() as RectReadOnly
+        const size = { left, top, width, height, bottom, right, x, y }
+        size.top += pageYOffset
+        size.bottom += pageYOffset
+        size.y += pageYOffset
+        size.left += pageXOffset
+        size.right += pageXOffset
+        size.x += pageXOffset
+        Object.freeze(size)
+        return set(size)
+      })
   )
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
@@ -47,9 +61,27 @@ const IsReady = React.memo(
   }
 )
 
-const styles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
+const defaultStyles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
 
 export const Canvas = React.memo((props: CanvasProps) => {
+  const {
+    children,
+    vr,
+    shadowMap,
+    orthographic,
+    invalidateFrameloop,
+    updateDefaultCamera,
+    noEvents,
+    gl,
+    camera,
+    raycaster,
+    pixelRatio,
+    style,
+    onCreated,
+    onPointerMissed,
+    ...restSpread
+  } = props
+
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
   const [bind, size] = useMeasure()
@@ -58,7 +90,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
   // Will output styles to reduce flickering.
   if (typeof window === 'undefined') {
     return (
-      <div style={{ ...styles, ...props.style }}>
+      <div style={{ ...defaultStyles, ...props.style }}>
         <canvas style={{ display: 'block' }} />
       </div>
     )
@@ -66,7 +98,11 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   // Render the canvas into the dom
   return (
-    <div ref={bind as React.MutableRefObject<HTMLDivElement>} style={{ ...styles, ...props.style }} {...events}>
+    <div
+      ref={bind as React.MutableRefObject<HTMLDivElement>}
+      style={{ ...defaultStyles, ...style }}
+      {...events}
+      {...restSpread}>
       <canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
       {canvasRef.current && <IsReady {...props} size={size} canvas={canvasRef.current} setEvents={setEvents} />}
     </div>
