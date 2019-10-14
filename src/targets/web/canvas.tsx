@@ -90,7 +90,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
   // Will output styles to reduce flickering.
   if (typeof window === 'undefined') {
     return (
-      <div style={{ ...defaultStyles, ...props.style }}>
+      <div style={{ ...defaultStyles, ...style }}>
         <canvas style={{ display: 'block' }} />
       </div>
     )
