@@ -13,3 +13,4 @@ package-lock.json
 coverage/
 .idea
 yarn-error.log
+.size-snapshot.json
