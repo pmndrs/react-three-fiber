@@ -280,7 +280,7 @@ const {
   viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,                       // Aspect ratio (size.width / size.height)
   mouse,                        // Current 2D mouse coordinates
-  clock,                        // THREE.Clock (usefull for useFrame deltas)
+  clock,                        // THREE.Clock (useful for useFrame deltas)
   invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
   intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
   setDefaultCamera,             // Sets the default camera
@@ -383,7 +383,7 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 import {
   addEffect,                    // Adds a global callback which is called each frame
   invalidate,                   // Forces view global invalidation
-  apply,                        // Extends the native-object catalogue
+  extend,                       // Extends the native-object catalogue
   createPortal,                 // Creates a portal (it's a React feature for re-parenting)
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
