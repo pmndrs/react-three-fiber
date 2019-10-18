@@ -17,7 +17,7 @@ function Fatline() {
   // Calculate wiggly curve
   const [curve] = useState(() => {
     let pos = new THREE.Vector3(4 - Math.random() * 8, 10 - Math.random() * 20, 3 - Math.random() * 6)
-    return new Array(20)
+    let points = new Array(20)
       .fill()
       .map(() =>
         pos.add(new THREE.Vector3(4 - Math.random() * 8, 10 - Math.random() * 20, 3 - Math.random() * 6)).clone()
