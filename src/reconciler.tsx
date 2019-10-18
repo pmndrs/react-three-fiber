@@ -402,7 +402,7 @@ export function unmountComponentAtNode(container: THREE.Object3D) {
 
 const hasSymbol = typeof Symbol === 'function' && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
-export function createPortal(children: React.ReactNode, containerInfo: any, implementation: any, key = null) {
+export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
   return {
     $$typeof: REACT_PORTAL_TYPE,
     key: key == null ? null : '' + key,
