@@ -2,9 +2,9 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasProps, RectReadOnly, PointerEvents } from '../../canvas'
+import { useCanvas, CanvasProps, RectReadOnly, BoundingClientRectRef, PointerEvents } from '../../canvas'
 
-type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly]
+type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly, BoundingClientRectRef]
 
 function useMeasure(): Measure {
   const ref = useRef<HTMLDivElement>(null)
@@ -19,27 +19,42 @@ function useMeasure(): Measure {
     y: 0,
   })
   const [ro] = useState(
-    () =>
-      new ResizeObserver(() => {
-        if (!ref.current) return
-        const { pageXOffset, pageYOffset } = window
-        const { left, top, width, height, bottom, right, x, y } = ref.current.getBoundingClientRect() as RectReadOnly
-        const size = { left, top, width, height, bottom, right, x, y }
-        size.top += pageYOffset
-        size.bottom += pageYOffset
-        size.y += pageYOffset
-        size.left += pageXOffset
-        size.right += pageXOffset
-        size.x += pageXOffset
-        Object.freeze(size)
-        return set(size)
-      })
+    () => new ResizeObserver(() => ref.current && set(ref.current.getBoundingClientRect() as RectReadOnly))
   )
   useEffect(() => {
     if (ref.current) ro.observe(ref.current)
     return () => ro.disconnect()
   }, [])
-  return [ref, bounds]
+
+  const shouldRecalc = useRef<boolean>(false)
+  const scrollBounds = useMemo(
+    () => ({
+      _cache: bounds,
+      get current() {
+        if (shouldRecalc.current) {
+          shouldRecalc.current = false
+          this._cache = (ref.current as HTMLDivElement).getBoundingClientRect() as RectReadOnly
+        }
+
+        return this._cache
+      },
+    }),
+    [bounds]
+  )
+
+  useEffect(() => {
+    const onScroll = (event: Event) => {
+      // Skip the check if flag already set
+      if (shouldRecalc.current) return
+      shouldRecalc.current = (event.target as HTMLElement).contains(ref.current as Node)
+    }
+
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true })
+
+    return () => window.removeEventListener('scroll', onScroll, true)
+  }, [])
+
+  return [ref, bounds, scrollBounds]
 }
 
 const IsReady = React.memo(
@@ -51,6 +66,7 @@ const IsReady = React.memo(
     setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
     canvas: HTMLCanvasElement
     size: RectReadOnly
+    rayBounds: BoundingClientRectRef
   }) => {
     const gl = useMemo(() => new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl }), [])
 
@@ -84,7 +100,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
-  const [bind, size] = useMeasure()
+  const [bind, size, rayBounds] = useMeasure()
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
@@ -104,7 +120,9 @@ export const Canvas = React.memo((props: CanvasProps) => {
       {...events}
       {...restSpread}>
       <canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
-      {canvasRef.current && <IsReady {...props} size={size} canvas={canvasRef.current} setEvents={setEvents} />}
+      {canvasRef.current && (
+        <IsReady {...props} size={size} rayBounds={rayBounds} canvas={canvasRef.current} setEvents={setEvents} />
+      )}
     </div>
   )
 })

@@ -41,6 +41,10 @@ export interface RectReadOnly {
   readonly left: number
 }
 
+export type BoundingClientRectRef = {
+  readonly current: RectReadOnly
+}
+
 export type SharedCanvasContext = {
   gl: THREE.WebGLRenderer
   aspect: number
@@ -103,6 +107,7 @@ export type CanvasProps = {
 export type UseCanvasProps = CanvasProps & {
   gl: THREE.WebGLRenderer
   size: RectReadOnly
+  rayBounds: BoundingClientRectRef
 }
 
 export type PointerEvents = {
@@ -130,6 +135,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     orthographic,
     raycaster,
     size,
+    rayBounds,
     pixelRatio,
     vr = false,
     shadowMap = false,
@@ -356,15 +362,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       //   y -= event.target.offsetParent.offsetTop
       // }
 
-      const { left, right, top, bottom } = state.current.size
-      let { clientX, clientY } = event
+      const { left, right, top, bottom } = rayBounds.current
 
-      if (typeof window !== 'undefined') {
-        clientX += window.pageXOffset
-        clientY += window.pageYOffset
-      }
-
-      mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
+      mouse.set(((event.clientX - left) / (right - left)) * 2 - 1, -((event.clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
