@@ -89,7 +89,11 @@ export const Canvas = React.memo((props: CanvasProps) => {
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
   if (typeof window === 'undefined') {
-    return <div style={{ ...defaultStyles, ...style }} />
+    return (
+      <div style={{ ...defaultStyles, ...style }}>
+        <canvas style={{ display: 'block' }} />
+      </div>
+    )
   }
 
   // Render the canvas into the dom

@@ -7,6 +7,7 @@ Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, 
 <br />
 
 <p align="center">
+  <a href="https://codesandbox.io/embed/react-three-fiber-untitled-game-i2160"><img width="288" height="160" src="https://i.imgur.com/2Ix4Du8.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-c671i"><img width="288" height="160" src="https://i.imgur.com/OwxJQfx.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gestures-dh2jc"><img width="288" height="160" src="https://i.imgur.com/ZJ04pRJ.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="160" src="https://i.imgur.com/UzG518m.gif" /></a>
@@ -17,7 +18,6 @@ Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, 
   <a href="https://codesandbox.io/embed/jz9l97qn89"><img width="288" height="160" src="https://i.imgur.com/zrhe5Jc.gif" /></a>
   <a href="https://codesandbox.io/embed/kky7yk087v"><img width="288" height="160" src="https://i.imgur.com/jemlXzE.gif" /></a>
   <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="288" height="160" src="https://i.imgur.com/vjmDwpS.gif" /></a>
-  <a href="https://codesandbox.io/embed/9y8vkjykyy"><img width="288" height="160" src="https://i.imgur.com/tQi753C.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="288" height="160" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
@@ -274,7 +274,6 @@ import { useThree } from 'react-three-fiber'
 
 const {
   gl,                           // WebGL renderer
-  canvas,                       // canvas the dom element that was created
   scene,                        // Default scene
   camera,                       // Default camera
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
