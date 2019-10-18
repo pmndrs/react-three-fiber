@@ -383,7 +383,7 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 import {
   addEffect,                    // Adds a global callback which is called each frame
   invalidate,                   // Forces view global invalidation
-  apply,                        // Extends the native-object catalogue
+  extend,                        // Extends the native-object catalogue
   createPortal,                 // Creates a portal (it's a React feature for re-parenting)
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
