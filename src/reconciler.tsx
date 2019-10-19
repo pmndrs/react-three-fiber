@@ -18,6 +18,7 @@ export interface ObjectHash {
 }
 
 const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
+
 const emptyObject = {}
 const is = {
   obj: (a: any) => a === Object(a),
@@ -175,7 +176,13 @@ function updateInstance(instance: any) {
   if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
 }
 
-function createInstance(type: string, { args = [], ...props }, container: THREE.Object3D) {
+function createInstance(
+  type: string,
+  { args = [], ...props },
+  container: THREE.Object3D,
+  hostContext: any,
+  internalInstanceHandle: Reconciler.Fiber
+) {
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
   if (type === 'primitive') {
@@ -190,6 +197,16 @@ function createInstance(type: string, { args = [], ...props }, container: THREE.
   // This is perhaps better for event management as we can keep them on a single instance
   while ((container as any).__container) {
     container = (container as any).__container
+  }
+
+  // TODO: https://github.com/facebook/react/issues/17147
+  // If it's still not there it means the portal was created on a virtual node outside of react
+  if (!roots.has(container)) {
+    const fn = (node: Reconciler.Fiber): THREE.Object3D => {
+      if (!node.return) return node.stateNode && node.stateNode.containerInfo
+      else return fn(node.return)
+    }
+    container = fn(internalInstanceHandle)
   }
 
   // Apply initial props
@@ -284,7 +301,7 @@ function removeChild(parentInstance: any, child: any) {
 
 function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber) {
   const parent = instance.parent
-  const newInstance = createInstance(type, newProps, instance.__container)
+  const newInstance = createInstance(type, newProps, instance.__container, null, fiber)
   removeChild(parent, instance)
   appendChild(parent, newInstance)
   // This evil hack switches the react-internal fiber node
