@@ -30,7 +30,7 @@ Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, 
 
 This is a renderer for Threejs on the web and react-native. Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
 
-#### Does is have regressions?
+#### Does it have regressions?
 
 This is less of an abstraction and more of a pure reconciler (like react-dom in relation to HTML). It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules. There are zero limitations.
 
