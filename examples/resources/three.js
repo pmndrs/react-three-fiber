@@ -11,7 +11,7 @@ export { ShaderChunk } from 'three/src/renderers/shaders/ShaderChunk.js'
 //export { FogExp2 } from 'three/src/scenes/FogExp2.js';
 export { Fog } from 'three/src/scenes/Fog.js'
 export { Scene } from 'three/src/scenes/Scene.js'
-//export { Sprite } from 'three/src/objects/Sprite.js';
+export { Sprite } from 'three/src/objects/Sprite.js'
 //export { LOD } from 'three/src/objects/LOD.js';
 //export { SkinnedMesh } from 'three/src/objects/SkinnedMesh.js';
 //export { Skeleton } from 'three/src/objects/Skeleton.js';
@@ -29,7 +29,7 @@ export { DataTexture } from 'three/src/textures/DataTexture.js'
 //export { DataTexture3D } from 'three/src/textures/DataTexture3D.js';
 //export { CompressedTexture } from 'three/src/textures/CompressedTexture.js';
 //export { CubeTexture } from 'three/src/textures/CubeTexture.js';
-//export { CanvasTexture } from 'three/src/textures/CanvasTexture.js';
+export { CanvasTexture } from 'three/src/textures/CanvasTexture.js'
 //export { DepthTexture } from 'three/src/textures/DepthTexture.js';
 //export { Texture } from 'three/src/textures/Texture.js';
 
@@ -43,7 +43,7 @@ export { /*DodecahedronGeometry,*/ DodecahedronBufferGeometry } from 'three/src/
 // export { TubeGeometry, TubeBufferGeometry } from 'three/src/geometries/TubeGeometry.js';
 export { /*TorusKnotGeometry,*/ TorusKnotBufferGeometry } from 'three/src/geometries/TorusKnotGeometry.js'
 // export { TorusGeometry, TorusBufferGeometry } from 'three/src/geometries/TorusGeometry.js';
-// export { TextGeometry, TextBufferGeometry } from 'three/src/geometries/TextGeometry.js';
+export { TextGeometry, TextBufferGeometry } from 'three/src/geometries/TextGeometry.js'
 export { /*SphereGeometry,*/ SphereBufferGeometry } from 'three/src/geometries/SphereGeometry.js'
 // export { RingGeometry, RingBufferGeometry } from 'three/src/geometries/RingGeometry.js';
 export { /*PlaneGeometry,*/ PlaneBufferGeometry } from 'three/src/geometries/PlaneGeometry.js'
@@ -56,9 +56,9 @@ export { ShapeGeometry, ShapeBufferGeometry } from 'three/src/geometries/ShapeGe
 // export { CircleGeometry, CircleBufferGeometry } from 'three/src/geometries/CircleGeometry.js';
 export { /*BoxGeometry,*/ BoxBufferGeometry } from 'three/src/geometries/BoxGeometry.js'
 
-/*export { ShadowMaterial } from 'three/src/materials/ShadowMaterial.js';
-export { SpriteMaterial } from 'three/src/materials/SpriteMaterial.js';
-export { RawShaderMaterial } from 'three/src/materials/RawShaderMaterial.js';*/
+//export { ShadowMaterial } from 'three/src/materials/ShadowMaterial.js';
+export { SpriteMaterial } from 'three/src/materials/SpriteMaterial.js'
+//export { RawShaderMaterial } from 'three/src/materials/RawShaderMaterial.js';
 export { ShaderMaterial } from 'three/src/materials/ShaderMaterial.js'
 export { PointsMaterial } from 'three/src/materials/PointsMaterial.js'
 export { MeshPhysicalMaterial } from 'three/src/materials/MeshPhysicalMaterial.js'

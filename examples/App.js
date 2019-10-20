@@ -56,6 +56,7 @@ function Demos() {
 }
 
 const R3FBatch = styled.div`
+  pointer-events: none;
   position: absolute;
   font-weight: 700;
   font-size: 1.5em;
@@ -72,9 +73,11 @@ const R3FBatch = styled.div`
   box-shadow: #ffffff30 0px 0px 100px 0px;
 
   & span {
+    display: inline-block;
     font-family: 'Josefin Sans', sans-serif;
     font-size: 2.2em;
-    line-height: 0.94em;
+    line-height: 0.9em;
+    margin-bottom: 0.2em;
   }
 `
 

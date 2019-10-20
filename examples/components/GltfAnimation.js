@@ -24,9 +24,10 @@ function Model(props) {
         <mesh
           castShadow
           receiveShadow
-          name="mesh_0"
+          name="Object_0"
           morphTargetDictionary={gltf.__$[1].morphTargetDictionary}
-          morphTargetInfluences={gltf.__$[1].morphTargetInfluences}>
+          morphTargetInfluences={gltf.__$[1].morphTargetInfluences}
+          rotation={[1.5707964611537577, 0, 0]}>
           <bufferGeometry attach="geometry" {...gltf.__$[1].geometry} />
           <meshStandardMaterial attach="material" {...gltf.__$[1].material} />
         </mesh>
@@ -44,7 +45,7 @@ export function Controls() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#dfdfdf' }} camera={{ position: [0, 0, 200] }}>
+    <Canvas style={{ background: '#dfdfdf' }} camera={{ position: [0, 0, 10] }}>
       <pointLight intensity={5} position={[0, 0, -50]} />
       <spotLight
         intensity={2}
@@ -56,8 +57,8 @@ export default function App() {
       />
       <Suspense fallback={null}>
         <Model />
-        <Model position={[50, 0, 0]} />
-        <Model position={[-50, 0, 0]} />
+        <Model position={[5, 0, 0]} />
+        <Model position={[-5, 0, 0]} />
       </Suspense>
       <Controls />
     </Canvas>
