@@ -11,7 +11,7 @@
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c",
     "prepare": "npm run build",
-    "eslint": "eslint ./src",
+    "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit --strict --jsx react src/*",
     "typegen": "tsc || true && prettier types/**/** --write"
@@ -86,6 +86,8 @@
     "@types/react-native": "^0.60.11",
     "@types/react-reconciler": "^0.18.0",
     "@types/scheduler": "^0.12.1",
+    "@typescript-eslint/eslint-plugin": "^2.4.0",
+    "@typescript-eslint/parser": "^2.4.0",
     "babel-eslint": "^10.0.1",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "cypress": "^3.2.0",

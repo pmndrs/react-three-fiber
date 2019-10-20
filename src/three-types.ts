@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-ignore */
+
 import * as THREE from 'three'
 import { PointerEvent } from './canvas'
 
