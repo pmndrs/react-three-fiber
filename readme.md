@@ -1,11 +1,3 @@
-# Version 3.x is out 🎉 🎊 🥳
-
-Find out [here](/migration.md) about the changes. TLDR: bugfixes, new features, react-native, better types, very few breaking changes (mostly just useRender -> useFrame and apply -> extend).
-
-<br />
-<br />
-<br />
-
 <p align="center">
   <a href="https://codesandbox.io/embed/react-three-fiber-untitled-game-i2160"><img width="288" height="160" src="https://i.imgur.com/2Ix4Du8.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-c671i"><img width="288" height="160" src="https://i.imgur.com/OwxJQfx.gif" /></a>
