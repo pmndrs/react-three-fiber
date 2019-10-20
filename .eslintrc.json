@@ -6,7 +6,7 @@
   },
   "parser": "babel-eslint",
   "extends": ["eslint:recommended", "plugin:import/errors", "plugin:import/warnings", "prettier"],
-  "plugins": ["react-hooks"],
+  "plugins": ["react-hooks", "react"],
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
@@ -25,7 +25,8 @@
     "prefer-const": "warn",
     "no-shadow": "warn",
     "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn"
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-uses-vars": "error"
   },
   "overrides": [
     {
