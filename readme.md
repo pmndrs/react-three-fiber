@@ -20,7 +20,7 @@
 
 #### What is it?
 
-This is a renderer for Threejs on the web and react-native. Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
+This is a React renderer for Threejs on the web and react-native. Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
 
 #### Does it have regressions?
 
