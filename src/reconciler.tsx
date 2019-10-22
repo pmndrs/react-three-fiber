@@ -337,9 +337,6 @@ const Renderer = Reconciler({
     if (instance.__instance && newProps.object && newProps.object !== instance) {
       // <instance object={...} /> where the object reference has changed
       switchInstance(instance, type, newProps, fiber)
-    } else if (instance.isObject3D) {
-      // Common Threejs scene object
-      applyProps(instance, newProps, oldProps, true)
     } else {
       // This is a data object, let's extract critical information about it
       const { args: argsNew = [], ...restNew } = newProps
