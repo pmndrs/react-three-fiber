@@ -482,7 +482,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // Call mouse move
       if (handlers.pointerMove) handlers.pointerMove(data)
       // Check if mouse enter or out is present
-      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut) {
+      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
         const id = makeId(data)
         const hoveredItem = hovered.get(id)
         if (!hoveredItem) {
