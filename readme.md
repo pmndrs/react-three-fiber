@@ -193,8 +193,10 @@ Additionally there's a special `onUpdate` that is called every time the object g
   onWheel={e => console.log('wheel spins')}
   onPointerUp={e => console.log('up')}
   onPointerDown={e => console.log('down')}
-  onPointerOver={e => console.log('hover')}
-  onPointerOut={e => console.log('unhover')}
+  onPointerOver={e => console.log('over')}
+  onPointerOut={e => console.log('out')}
+  onPointerEnter={e => console.log('enter')}
+  onPointerLeave={e => console.log('leave')}
   onPointerMove={e => console.log('move')}
   onUpdate={self => console.log('props have been updated')}
 />

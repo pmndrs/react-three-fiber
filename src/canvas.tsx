@@ -482,13 +482,14 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // Call mouse move
       if (handlers.pointerMove) handlers.pointerMove(data)
       // Check if mouse enter or out is present
-      if (handlers.pointerOver || handlers.pointerOut) {
+      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut) {
         const id = makeId(data)
         const hoveredItem = hovered.get(id)
         if (!hoveredItem) {
           // If the object wasn't previously hovered, book it and call its handler
           hovered.set(id, data)
           if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
+          if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerEnter' })
         } else if (hoveredItem.stopped.current) {
           // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
           data.stopPropagation()
@@ -509,7 +510,10 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       if (hits && (!hits.length || !hits.find(i => i.eventObject === data.eventObject))) {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
-        if (handlers && handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
+        if (handlers) {
+          if (handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
+          if (handlers.pointerLeave) handlers.pointerLeave({ ...data, type: 'pointerleave' })
+        }
         hovered.delete(makeId(data))
       }
     })
