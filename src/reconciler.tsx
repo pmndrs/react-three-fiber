@@ -1,12 +1,6 @@
 import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
-import {
-  unstable_scheduleCallback as scheduleDeferredCallback,
-  unstable_cancelCallback as cancelDeferredCallback,
-  unstable_now as now,
-  unstable_IdlePriority as idlePriority,
-  unstable_runWithPriority as run,
-} from 'scheduler'
+import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 
 import { CanvasContext } from './canvas'
 import { version } from '../package.json'
@@ -327,8 +321,8 @@ const Renderer = Reconciler({
   supportsMutation: true,
   isPrimaryRenderer: false,
   // @ts-ignore
-  schedulePassiveEffects: scheduleDeferredCallback,
-  cancelPassiveEffects: cancelDeferredCallback,
+  scheduleTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
+  cancelTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
   removeChildFromContainer: removeChild,

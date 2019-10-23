@@ -59,14 +59,14 @@
     "@babel/runtime": "^7.6.3",
     "@types/three": "^0.103.2",
     "react-promise-suspense": "^0.3.1",
-    "react-reconciler": "0.20.4",
+    "react-reconciler": "0.23.0",
     "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "0.13.3",
+    "scheduler": "0.17.0",
     "tiny-emitter": "^2.1.0"
   },
   "peerDependencies": {
-    "react": ">=16.10",
-    "react-dom": ">=16.10",
+    "react": ">=16.11",
+    "react-dom": ">=16.11",
     "three": ">=0.109"
   },
   "devDependencies": {
@@ -82,7 +82,7 @@
     "@types/react": "^16.9.9",
     "@types/react-native": "^0.60.21",
     "@types/react-reconciler": "^0.18.0",
-    "@types/scheduler": "^0.12.1",
+    "@types/scheduler": "^0.16.1",
     "@typescript-eslint/eslint-plugin": "^2.5.0",
     "@typescript-eslint/parser": "^2.5.0",
     "babel-eslint": "^10.0.3",
@@ -98,8 +98,8 @@
     "husky": "^3.0.9",
     "lint-staged": "^9.4.2",
     "prettier": "^1.18.2",
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6",
+    "react": "^0.0.0-experimental-5faf377df",
+    "react-dom": "^0.0.0-experimental-5faf377df",
     "rimraf": "^3.0.0",
     "rollup": "^1.25.1",
     "rollup-plugin-babel": "^4.3.3",
