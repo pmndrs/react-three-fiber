@@ -248,12 +248,12 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   useLayoutEffect(() => {
     state.current.aspect = size.width / size.height
 
-    if (isOrthographicCamera(state.current.camera)) {
+    if (isOrthographicCamera(defaultCam)) {
       state.current.viewport = { width: size.width, height: size.height, factor: 1 }
     } else {
       const target = new THREE.Vector3(0, 0, 0)
-      const distance = state.current.camera.position.distanceTo(target)
-      const fov = THREE.Math.degToRad(state.current.camera.fov) // convert vertical fov to radians
+      const distance = defaultCam.position.distanceTo(target)
+      const fov = THREE.Math.degToRad(defaultCam.fov) // convert vertical fov to radians
       const height = 2 * Math.tan(fov / 2) * distance // visible height
       const width = height * state.current.aspect
       state.current.viewport = { width, height, factor: size.width / width }
@@ -262,25 +262,25 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     // #92 (https://github.com/drcmda/react-three-fiber/issues/92)
     // Sometimes automatic default camera adjustment isn't wanted behaviour
     if (updateDefaultCamera) {
-      if (isOrthographicCamera(state.current.camera)) {
-        state.current.camera.left = size.width / -2
-        state.current.camera.right = size.width / 2
-        state.current.camera.top = size.height / 2
-        state.current.camera.bottom = size.height / -2
+      if (isOrthographicCamera(defaultCam)) {
+        defaultCam.left = size.width / -2
+        defaultCam.right = size.width / 2
+        defaultCam.top = size.height / 2
+        defaultCam.bottom = size.height / -2
       } else {
-        state.current.camera.aspect = state.current.aspect
+        defaultCam.aspect = state.current.aspect
       }
-      state.current.camera.updateProjectionMatrix()
+      defaultCam.updateProjectionMatrix()
 
       // #178: https://github.com/react-spring/react-three-fiber/issues/178
       // Update matrix world since the renderer is a frame late
-      state.current.camera.updateMatrixWorld()
+      defaultCam.updateMatrixWorld()
     }
 
     gl.setSize(size.width, size.height)
 
     if (ready) invalidate(state)
-  }, [size, updateDefaultCamera])
+  }, [defaultCam, size, updateDefaultCamera])
 
   // This component is a bridge into the three render context, when it gets rendererd
   // we know we are ready to compile shaders, call subscribers, etc
