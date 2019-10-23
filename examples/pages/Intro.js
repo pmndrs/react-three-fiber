@@ -1,18 +1,21 @@
-import React, { Suspense, useState } from 'react'
-import * as components from './components'
-import styled, { createGlobalStyle } from 'styled-components'
-import { HashRouter as Router, Link, Route, Switch, useRouteMatch } from 'react-router-dom'
-import Label from './ui/Label'
+import React, { Suspense } from 'react'
+import styled from 'styled-components'
+import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
+import Label from './components/Label'
+import * as demos from '../demos'
+import { Page as PageImpl } from '../styles'
 
-const visibleComponents = Object.entries(components)
+const Page = styled(PageImpl)`
+  padding: 25px;
+`
+
+const visibleComponents = Object.entries(demos)
   .filter(([name, item]) => !item.dev)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
-export default function App() {
-  const [active, set] = useState(Object.values(visibleComponents)[0])
+export default function Intro() {
   return (
-    <Router>
-      <Global />
+    <Page>
       <Suspense fallback={null}>
         <Switch>
           <Route exact path="/" component={visibleComponents.Swarm.Component} />
@@ -34,7 +37,7 @@ export default function App() {
       </R3FBatch>
       <Bubble children="</>" />
       <Label />
-    </Router>
+    </Page>
   )
 }
 
@@ -68,7 +71,7 @@ const R3FBatch = styled.div`
   left: 50%;
   transform: translate3d(-50%, 0%, 0);
   max-width: 400px;
-  background: black;
+  background: #171720;
   padding: 40px;
   box-shadow: #ffffff30 0px 0px 100px 0px;
 
@@ -87,7 +90,7 @@ const Bubble = styled.div`
   right: 60px;
   bottom: 60px;
   border-radius: 50%;
-  background: black;
+  background: #171720;
   color: white;
   font-size: 1.75em;
   padding: 1rem;
@@ -114,40 +117,4 @@ const Spot = styled.div`
   border-radius: 50%;
   margin: 8px;
   box-shadow: #00000040 0px 0px 15px 0px;
-`
-
-const Global = createGlobalStyle`
-  * {
-    box-sizing: border-box;
-  }
-
-  html,
-  body,
-  #root {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    overflow: hidden;
-  }
-
-  #root {
-    overflow: auto;
-    padding: 20px;
-  }
-
-  body {
-    position: fixed;
-    overflow: hidden;
-    overscroll-behavior-y: none;
-    font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif;
-    color: black;
-    background: white;
-  }
 `

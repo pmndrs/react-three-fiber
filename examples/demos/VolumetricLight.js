@@ -23,11 +23,11 @@ function Torusknot({ layer = DEFAULT_LAYER }) {
     ref.current.rotation.z += 0.01
   })
   return (
-    <mesh ref={ref} position={[0, 0, 2]} layers={layer}>
+    <mesh ref={ref} position={[0, 0, 2]} layers={layer} receiveShadow castShadow>
       <torusKnotBufferGeometry attach="geometry" args={[0.8, 0.28, 150, 32]} />
       <Material
         attach="material"
-        color={layer === DEFAULT_LAYER ? '#873740' : '#070707'}
+        color={layer === DEFAULT_LAYER ? 'hotpink' : 'black'}
         roughness={1}
         clearcoat={1}
         clearcoatRoughness={0.2}
@@ -42,7 +42,7 @@ function VolumetricLight() {
   return (
     <mesh ref={ref} layers={OCCLUSION_LAYER}>
       <boxBufferGeometry attach="geometry" args={[1, 20, 1]} />
-      <meshBasicMaterial attach="material" color="lightblue" />
+      <meshBasicMaterial attach="material" color="white" />
     </mesh>
   )
 }
@@ -92,10 +92,17 @@ function Effects() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }}>
-      <pointLight intensity={5} />
-      <pointLight intensity={1} position={[10, 10, 10]} />
+    <Canvas style={{ background: '#171720' }} shadowMap camera={{ fov: 50, position: [0, 0, 7] }}>
       <ambientLight />
+      <pointLight intensity={4} />
+      <spotLight
+        castShadow
+        intensity={1}
+        angle={Math.PI / 10}
+        position={[10, 10, 10]}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+      />
       <Torusknot />
       <Torusknot layer={OCCLUSION_LAYER} />
       <Effects />
