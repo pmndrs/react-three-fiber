@@ -1,4 +1,5 @@
-import React, { FC } from 'react'
+import THREE from 'three'
+import { FC } from 'react'
 import { ReactThreeFiber } from './three-types'
 
 type Three = typeof import('three')
@@ -9,24 +10,29 @@ type DefinedKeys<T extends object> = {
 
 type FilterDefined<T extends object> = Pick<T, DefinedKeys<T>>
 
-type ThreeFiberJsx = FilterDefined<
-  {
-    [P in keyof Three]: Three[P] extends Three['Object3D']
-      ? FC<ReactThreeFiber.Object3DNode<InstanceType<Three[P]>, Three[P]>>
-      : Three[P] extends Three['Geometry']
-      ? FC<ReactThreeFiber.GeometryNode<InstanceType<Three[P]>, Three[P]>>
-      : Three[P] extends Three['BufferGeometry']
-      ? FC<ReactThreeFiber.BufferGeometryNode<InstanceType<Three[P]>, Three[P]>>
-      : Three[P] extends Three['Material']
-      ? FC<ReactThreeFiber.MaterialNode<InstanceType<Three[P]>, Required<ConstructorParameters<Three[P]>>>>
-      : Three[P] extends new () => any
-      ? FC<ReactThreeFiber.Node<InstanceType<Three[P]>, Three[P]>>
-      : never
-  }
->
+interface ThreeFiberComponents
+  extends FilterDefined<
+    {
+      [P in keyof Three]: Three[P] extends Three['Object3D']
+        ? FC<ReactThreeFiber.Object3DNode<InstanceType<Three[P]>, Three[P]>>
+        : Three[P] extends Three['Geometry']
+        ? FC<ReactThreeFiber.GeometryNode<InstanceType<Three[P]>, Three[P]>>
+        : Three[P] extends Three['BufferGeometry']
+        ? FC<ReactThreeFiber.BufferGeometryNode<InstanceType<Three[P]>, Three[P]>>
+        : Three[P] extends Three['Material']
+        ? FC<ReactThreeFiber.MaterialNode<InstanceType<Three[P]>, Required<ConstructorParameters<Three[P]>>>>
+        : Three[P] extends new () => any
+        ? FC<ReactThreeFiber.Node<InstanceType<Three[P]>, Three[P]>>
+        : never
+    }
+  > {}
 
-const X: ThreeFiberJsx['CircleBufferGeometry'] = 'line' as any
-
-type Y = ThreeFiberJsx['Vector3']
-
-const _ = <X onUpdate={x => console.log(x)} />
+export const components: ThreeFiberComponents = Object.entries(THREE)
+  // Reconciler takes exports from THREE and constructor calls them
+  .filter(([_, value]) => typeof value === 'function' && value.prototype)
+  .map(([key]) => key)
+  .concat(['Primitive'])
+  .reduce<Record<string, string>>((acc, key) => {
+    acc[key] = `${key[0].toLowerCase()}${key.slice(1)}`
+    return acc
+  }, {}) as any
