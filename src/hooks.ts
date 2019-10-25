@@ -123,7 +123,7 @@ export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extens
   useEffect(() => () =>
     results.forEach((data: any) => {
       if (data.dispose) data.dispose()
-      if (data.scene) data.scene.dispose()
+      if (data.scene && data.scene.dispose) data.scene.dispose()
     }, [])
   )
 
