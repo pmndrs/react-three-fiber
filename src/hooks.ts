@@ -120,11 +120,13 @@ export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extens
     [Proto, url]
   )
   // Dispose objects on unmount
-  useEffect(() => () =>
-    results.forEach((data: any) => {
-      if (data.dispose) data.dispose()
-      if (data.scene && data.scene.dispose) data.scene.dispose()
-    }, [])
+  useEffect(
+    () => () =>
+      results.forEach((data: any) => {
+        if (data.dispose) data.dispose()
+        if (data.scene && data.scene.dispose) data.scene.dispose()
+      }),
+    []
   )
 
   // Temporary hack to make the new api backwards compatible for a while ...

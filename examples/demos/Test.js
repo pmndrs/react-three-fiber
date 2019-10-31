@@ -4,12 +4,8 @@ import { Canvas, useThree, useUpdate } from 'react-three-fiber'
 
 export default function App() {
   return (
-    <Canvas camera={{ fov: 50 }}>
-      <ambientLight />
-      <pointLight />
-      <group
-        onPointerOver={e => (e.stopPropagation(), console.log('group1 over'))}
-        onPointerOut={e => console.log('group1 out')}>
+    <Canvas style={{ background: '#272730' }} camera={{ fov: 20 }}>
+      <group onPointerOver={e => console.log('group1 over')} onPointerOut={e => console.log('group1 out')}>
         <group
           onPointerOver={e => console.log('      group2 over')}
           onPointerOut={e => console.log('      group2 out')}>
@@ -18,7 +14,7 @@ export default function App() {
             onPointerOver={e => console.log('      white mesh over')}
             onPointerOut={e => console.log('      white mesh out')}>
             <sphereBufferGeometry attach="geometry" args={[0.25, 32, 32]} />
-            <meshBasicMaterial attach="material" color="white" transparent opacity={0.5} />
+            <meshBasicMaterial attach="material" color="white" transparent opacity={0.2} />
           </mesh>
           <mesh
             renderOrder={7}
@@ -32,22 +28,3 @@ export default function App() {
     </Canvas>
   )
 }
-
-/*
-
- <mesh
-          renderOrder={10}
-          onPointerOver={e => console.log('  red mesh over')}
-          onPointerOut={e => console.log('  red mesh out')}>
-          <sphereBufferGeometry attach="geometry" args={[1, 32, 32]} />
-          <meshBasicMaterial attach="material" color="red" transparent opacity={0.3} />
-        </mesh>
-        <mesh
-          renderOrder={9}
-          onPointerOver={e => console.log('    green mesh over')}
-          onPointerOut={e => console.log('    green mesh out')}>
-          <sphereBufferGeometry attach="geometry" args={[0.5, 32, 32]} />
-          <meshBasicMaterial attach="material" color="green" transparent opacity={0.4} />
-        </mesh>
-
-*/

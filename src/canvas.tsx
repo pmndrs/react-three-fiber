@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
+import { useMemo, useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 import { TinyEmitter } from 'tiny-emitter'
 import { ReactThreeFiber } from './three-types'
@@ -121,8 +121,8 @@ export type PointerEvents = {
   onLostPointerCapture(e: any): void
 }
 
-function makeId(event: THREE.Intersection) {
-  return event.object.uuid + '/' + event.index
+function makeId(event: PointerEvent) {
+  return (event.eventObject || event.object).uuid + '/' + event.index
 }
 
 export const stateContext = createContext<SharedCanvasContext>({} as SharedCanvasContext)
@@ -223,7 +223,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   })
 
   // Writes locals into public state for distribution among subscribers, context, etc
-  useLayoutEffect(() => {
+  useMemo(() => {
     state.current.ready = ready
     state.current.size = size
     state.current.camera = defaultCam
@@ -233,19 +233,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     state.current.noEvents = noEvents
   }, [invalidateFrameloop, vr, noEvents, ready, size, defaultCam, gl])
 
-  // Update pixel ratio
-  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
-  // Update shadowmap
-  useLayoutEffect(() => {
-    if (shadowMap) {
-      gl.shadowMap.enabled = true
-      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
-      else gl.shadowMap.type = THREE.PCFSoftShadowMap
-    }
-  }, [shadowMap])
-
   // Adjusts default camera
-  useLayoutEffect(() => {
+  useMemo(() => {
     state.current.aspect = size.width / size.height
 
     if (isOrthographicCamera(defaultCam)) {
@@ -282,20 +271,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     if (ready) invalidate(state)
   }, [defaultCam, size, updateDefaultCamera])
 
-  // This component is a bridge into the three render context, when it gets rendererd
-  // we know we are ready to compile shaders, call subscribers, etc
-  const IsReady = useCallback(() => {
-    const activate = () => setReady(true)
-    useEffect(() => {
-      const result = onCreated && onCreated(state.current)
-      return void (result && result.then ? result.then(activate) : activate())
-    }, [])
-    return null
-  }, [])
-
   // Only trigger the context provider when necessary
   const sharedState = useRef<SharedCanvasContext>()
-  useLayoutEffect(() => {
+  useMemo(() => {
     const {
       ready,
       manual,
@@ -311,6 +289,28 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     } = state.current
     sharedState.current = props
   }, [size, defaultCam])
+
+  // Update pixel ratio
+  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
+  // Update shadowmap
+  useLayoutEffect(() => {
+    if (shadowMap) {
+      gl.shadowMap.enabled = true
+      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
+      else gl.shadowMap.type = THREE.PCFSoftShadowMap
+    }
+  }, [shadowMap])
+
+  // This component is a bridge into the three render context, when it gets rendererd
+  // we know we are ready to compile shaders, call subscribers, etc
+  const IsReady = useCallback(() => {
+    const activate = () => setReady(true)
+    useEffect(() => {
+      const result = onCreated && onCreated(state.current)
+      return void (result && result.then ? result.then(activate) : activate())
+    }, [])
+    return null
+  }, [])
 
   // Render v-dom into scene
   useLayoutEffect(() => {
@@ -361,9 +361,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       //   x -= event.target.offsetParent.offsetLeft
       //   y -= event.target.offsetParent.offsetTop
       // }
-
       const { left, right, top, bottom } = rayBounds.current
-
       mouse.set(((event.clientX - left) / (right - left)) * 2 - 1, -((event.clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
@@ -383,7 +381,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     let intersects = defaultRaycaster
       .intersectObjects((state.current.scene as any).__interaction, true)
       .filter(item => {
-        const id = makeId(item)
+        const id = makeId(item as PointerEvent)
         if (seen.has(id)) return false
         seen.add(id)
         return true
