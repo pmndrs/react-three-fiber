@@ -30,7 +30,7 @@ type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
 const styles: ViewStyle = { flex: 1 }
 
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
-  const events = useCanvas({ ...props, gl, rayBounds: { current: props.size } } as UseCanvasProps)
+  const events = useCanvas({ ...props, gl } as UseCanvasProps)
 
   let pointerDownCoords: null | [number, number] = null
 
