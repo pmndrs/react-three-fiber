@@ -11,7 +11,8 @@ import {
 } from 'react-native'
 import { Renderer } from 'expo-three'
 import { useState } from 'react'
-import { useCanvas, CanvasProps, RectReadOnly, UseCanvasProps } from '../../canvas'
+import { useCanvas, CanvasProps, UseCanvasProps } from '../../canvas'
+import { RectReadOnly } from 'react-use-measure'
 
 function clientXY(e: GestureResponderEvent) {
   ;(e as any).clientX = e.nativeEvent.pageX

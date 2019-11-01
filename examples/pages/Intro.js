@@ -10,7 +10,7 @@ const Page = styled(PageImpl)`
 `
 
 const visibleComponents = Object.entries(demos)
-  //.filter(([name, item]) => !item.dev)
+  .filter(([name, item]) => !item.dev)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 export default function Intro() {
@@ -18,7 +18,7 @@ export default function Intro() {
     <Page>
       <Suspense fallback={null}>
         <Switch>
-          <Route exact path="/" component={visibleComponents.Swarm.Component} />
+          <Route exact path="/" component={visibleComponents.Refraction.Component} />
           <Route
             exact
             path="/demo/:name"

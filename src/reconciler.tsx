@@ -182,6 +182,8 @@ function createInstance(
   if (type === 'primitive') {
     instance = props.object
     instance.__instance = true
+  } else if (type === 'new') {
+    instance = new props.object(args)
   } else {
     const target = (catalogue as any)[name] || (THREE as any)[name]
     instance = is.arr(args) ? new target(...args) : new target(args)

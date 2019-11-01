@@ -2,45 +2,8 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import ResizeObserver from 'resize-observer-polyfill'
-import { useCanvas, CanvasProps, RectReadOnly, PointerEvents } from '../../canvas'
-
-type Measure = [React.MutableRefObject<HTMLDivElement | null>, RectReadOnly]
-
-function useMeasure(): Measure {
-  const ref = useRef<HTMLDivElement>(null)
-  const [bounds, set] = useState<RectReadOnly>({
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
-    bottom: 0,
-    right: 0,
-    x: 0,
-    y: 0,
-  })
-  const [ro] = useState(
-    () =>
-      new ResizeObserver(() => {
-        if (!ref.current) return
-        const { pageXOffset, pageYOffset } = window
-        const { left, top, width, height, bottom, right, x, y } = ref.current.getBoundingClientRect() as RectReadOnly
-        const size = { left, top, width, height, bottom, right, x, y }
-        size.top += pageYOffset
-        size.bottom += pageYOffset
-        size.y += pageYOffset
-        size.left += pageXOffset
-        size.right += pageXOffset
-        size.x += pageXOffset
-        Object.freeze(size)
-        return set(size)
-      })
-  )
-  useEffect(() => {
-    if (ref.current) ro.observe(ref.current)
-    return () => ro.disconnect()
-  }, [])
-  return [ref, bounds]
-}
+import useMeasure, { RectReadOnly } from 'react-use-measure'
+import { useCanvas, CanvasProps, PointerEvents } from '../../canvas'
 
 const IsReady = React.memo(
   ({

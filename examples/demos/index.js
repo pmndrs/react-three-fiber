@@ -11,6 +11,7 @@ const Swarm = { descr: '', tags: [], Component: lazy(() => import('./Swarm')) }
 const Textures = { descr: '', tags: [], Component: lazy(() => import('./Textures')) }
 const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoader')) }
 const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')) }
+const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')) }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true }
@@ -28,6 +29,7 @@ const Scroll = { descr: '', tags: [], Component: lazy(() => import('./Scroll')),
 const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')), dev: true }
 
 export {
+  Refraction,
   Swarm,
   Montage,
   Font,

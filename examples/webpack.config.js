@@ -56,7 +56,8 @@ module.exports = mode => {
       modules: [path.resolve('./'), 'node_modules'],
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
       alias: {
-        'react-three-fiber': path.resolve(`./../src/targets/web/index.ts`),
+        'react-three-fiber': path.resolve(`../src/targets/web/index.ts`),
+        'react-use-measure': path.resolve(`../node_modules/react-use-measure`),
         //scheduler: path.resolve('node_modules/scheduler'),
         react: path.resolve('node_modules/react'),
         'react-dom': path.resolve('node_modules/react-dom'),

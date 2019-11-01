@@ -4,6 +4,7 @@ import { useMemo, useRef, useEffect, useState, useCallback, createContext, useLa
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
 import { TinyEmitter } from 'tiny-emitter'
 import { ReactThreeFiber } from './three-types'
+import { RectReadOnly } from 'react-use-measure'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 
@@ -29,17 +30,6 @@ export type PointerEvent = DomEvent &
   }
 
 export type RenderCallback = (state: CanvasContext, delta: number) => void
-
-export interface RectReadOnly {
-  readonly x: number
-  readonly y: number
-  readonly width: number
-  readonly height: number
-  readonly top: number
-  readonly right: number
-  readonly bottom: number
-  readonly left: number
-}
 
 export type SharedCanvasContext = {
   gl: THREE.WebGLRenderer
