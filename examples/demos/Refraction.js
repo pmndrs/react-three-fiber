@@ -114,7 +114,7 @@ function Diamonds() {
 
 export default function App() {
   return (
-    <Canvas gl2 camera={{ fov: 50, position: [0, 0, 30] }}>
+    <Canvas camera={{ fov: 50, position: [0, 0, 30] }}>
       <Suspense fallback={null}>
         <Background />
         <Diamonds />
