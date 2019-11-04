@@ -9,7 +9,7 @@ import { WEBGL } from 'three/examples/jsm/WebGL'
 
 extend({ EffectComposer, ShaderPass, RenderPass })
 
-function MultisampledBuffer() {
+function Dodecahedron() {
   const ref = useRef()
   useFrame(() => (ref.current.rotation.x = ref.current.rotation.y = ref.current.rotation.z += 0.01))
   return (
@@ -57,7 +57,7 @@ export default function App() {
   ) : (
     <Canvas gl2 style={{ background: 'lightblue' }}>
       <color attach="background" args={['lightblue']} />
-      <MultisampledBuffer />
+      <Dodecahedron />
       <Effects />
     </Canvas>
   )
