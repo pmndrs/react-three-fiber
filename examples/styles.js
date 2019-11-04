@@ -5,12 +5,27 @@ const Page = styled.div`
   width: 100%;
   height: 100vh;
 
-  & h1 {
-    color: white;
+  & > h1 {
     font-family: 'Roboto', sans-serif;
+    font-weight: 900;
     font-size: 10em;
-    line-height: 0.82em;
     margin: 0;
+    color: white;
+    line-height: 0.59em;
+    letter-spacing: -2px;
+  }
+
+  @media only screen and (max-width: 1000px) {
+    & > h1 {
+      font-size: 6em;
+      letter-spacing: -1px;
+    }
+  }
+
+  & > a {
+    margin: 0;
+    color: white;
+    text-decoration: none;
   }
 `
 

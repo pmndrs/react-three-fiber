@@ -6,14 +6,30 @@ import * as demos from '../demos'
 import { Page as PageImpl } from '../styles'
 
 const Page = styled(PageImpl)`
-  padding: 25px;
+  padding: 20px;
+
+  & > h1 {
+    position: absolute;
+    top: 70px;
+    left: 60px;
+  }
+
+  & > a {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    font-size: 1.2em;
+  }
 `
 
+const defaultComponent = 'Refraction'
 const visibleComponents = Object.entries(demos)
   .filter(([name, item]) => !item.dev)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 export default function Intro() {
+  let match = useRouteMatch('/demo/:name')
+  let { bright } = visibleComponents[match ? match.params.name : defaultComponent]
   return (
     <Page>
       <Suspense fallback={null}>
@@ -30,26 +46,35 @@ export default function Intro() {
         </Switch>
       </Suspense>
       <Demos />
-      <R3FBatch>
-        <span>React three fiber</span>
-        <br /> is a React renderer
-        <br /> for Three.js
-      </R3FBatch>
-      <Bubble children="</>" />
-      <Label />
+      <h1 style={{ color: bright ? '#2c2d31' : 'white' }}>
+        three
+        <br />
+        zero
+        <br />
+        seven.
+      </h1>
+      <a href="https://github.com/drcmda/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
+        Github
+      </a>
     </Page>
   )
 }
 
 function Demos() {
   let match = useRouteMatch('/demo/:name')
+  let { bright } = visibleComponents[match ? match.params.name : defaultComponent]
   return (
     <DemoPanel>
       {Object.entries(visibleComponents).map(([name, item]) => (
         <Link key={name} to={`/demo/${name}`}>
           <Spot
             style={{
-              background: (!match && name === 'Swarm') || (match && match.params.name === name) ? 'salmon' : 'white',
+              background:
+                (!match && name === defaultComponent) || (match && match.params.name === name)
+                  ? 'salmon'
+                  : bright
+                  ? '#2c2d31'
+                  : 'white',
             }}
           />
         </Link>
@@ -58,55 +83,10 @@ function Demos() {
   )
 }
 
-const R3FBatch = styled.div`
-  pointer-events: none;
-  position: absolute;
-  font-weight: 700;
-  font-size: 1.5em;
-  line-height: 1em;
-  text-transform: uppercase;
-  color: white;
-
-  bottom: 0%;
-  left: 50%;
-  transform: translate3d(-50%, 0%, 0);
-  max-width: 400px;
-  background: #171720;
-  padding: 40px;
-  box-shadow: #ffffff30 0px 0px 100px 0px;
-
-  & span {
-    display: inline-block;
-    font-family: 'Josefin Sans', sans-serif;
-    font-size: 2.2em;
-    line-height: 0.9em;
-    margin-bottom: 0.2em;
-  }
-`
-
-const Bubble = styled.div`
-  font-family: 'Josefin Sans', sans-serif;
-  position: absolute;
-  right: 60px;
-  bottom: 60px;
-  border-radius: 50%;
-  background: #171720;
-  color: white;
-  font-size: 1.75em;
-  padding: 1rem;
-  height: 4rem;
-  width: 4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: #ffffff30 0px 0px 15px 0px;
-`
-
 const DemoPanel = styled.div`
   position: absolute;
-  top: 60px;
-  left: 60px;
+  bottom: 50px;
+  left: 50px;
   max-width: 250px;
 `
 
@@ -116,5 +96,4 @@ const Spot = styled.div`
   height: 20px;
   border-radius: 50%;
   margin: 8px;
-  box-shadow: #00000040 0px 0px 15px 0px;
 `

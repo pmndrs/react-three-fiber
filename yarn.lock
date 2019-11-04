@@ -2117,6 +2117,11 @@ date-now@^0.1.4:
   resolved "https://registry.yarnpkg.com/date-now/-/date-now-0.1.4.tgz#eaf439fd4d4848ad74e5cc7dbef200672b9e345b"
   integrity sha1-6vQ5/U1ISK105cx9vvIAZyueNFs=
 
+debounce@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/debounce/-/debounce-1.2.0.tgz#44a540abc0ea9943018dc0eaa95cce87f65cd131"
+  integrity sha512-mYtLl1xfZLi1m4RtQYlZgJUNQjl4ZxVnHzIR8nLLgi4q1YT8o/WM+MK/f8yfcc9s5Ir5zRaPZyZU6xs1Syoocg==
+
 debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.8, debug@^2.6.9:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
@@ -5133,10 +5138,13 @@ react-reconciler@0.23.0:
     prop-types "^15.6.2"
     scheduler "^0.17.0"
 
-react-use-measure@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-1.0.3.tgz#9872ae4540645359a19eb82e17034ec5ca84495e"
-  integrity sha512-pGKLmuumwyO2CdrIWCh1oR8zwkygVuGDt7F430Qd5ZMRI/xAvG/idEgpPmDo0PA/K0fhEJOjbNAGLB6bn9WVJA==
+react-use-measure@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-1.1.0.tgz#dde8e53aa8f19169f3c1e1d4cfff227334a6bf69"
+  integrity sha512-iWvrQ8s/64NWtNEgtw8rFJvgsT8NqFkYtuk/lFgdFaqR+uQMes+2wBFs7R6X9qyX3eHAwWlahlX16qC7JQzT0A==
+  dependencies:
+    debounce "^1.2.0"
+    resize-observer-polyfill "^1.5.1"
 
 react@^16.11.0:
   version "16.11.0"
@@ -5469,10 +5477,10 @@ rollup-pluginutils@^2.5.0, rollup-pluginutils@^2.6.0, rollup-pluginutils@^2.8.1:
   dependencies:
     estree-walker "^0.6.1"
 
-rollup@^1.26.2:
-  version "1.26.2"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.26.2.tgz#33d1ad23ee94aff1057448bae267be51dab4bdc1"
-  integrity sha512-TLM8hlYP85TFFptYlXmr2VnhCLA8GaYXG4LBdWsHu9oBH/Wm5MMPAE9wsAnohfV21Dqq0ZvRHdmsKXomshaDSg==
+rollup@^1.26.3:
+  version "1.26.3"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-1.26.3.tgz#3e71b8120a4ccc745a856e926cab0efbe0eead90"
+  integrity sha512-8MhY/M8gnv3Q/pQQSWYWzbeJ5J1C5anCNY5BK1kV8Yzw9RFS0FF4lbLt+uyPO3wLKWXSXrhAL5pWL85TZAh+Sw==
   dependencies:
     "@types/estree" "*"
     "@types/node" "*"

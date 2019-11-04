@@ -57,7 +57,6 @@ module.exports = mode => {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
       alias: {
         'react-three-fiber': path.resolve(`../src/targets/web/index.ts`),
-        'react-use-measure': path.resolve(`../node_modules/react-use-measure`),
         //scheduler: path.resolve('node_modules/scheduler'),
         react: path.resolve('node_modules/react'),
         'react-dom': path.resolve('node_modules/react-dom'),
@@ -68,6 +67,7 @@ module.exports = mode => {
         '../../../build/three.module.js': path.resolve('./resources/three.js'),
         'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
         'react-use-gesture': createAlias('react-use-gesture/index.js', 'react-use-gesture'),
+        'react-use-measure': createAlias('react-use-measure/src/web', '../node_modules/react-use-measure'),
         //'pointer-events-polyfill': createAlias('pointer-events-polyfill/dist/pep.js', 'pointer-events-polyfill'),
       },
     },

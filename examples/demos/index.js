@@ -1,17 +1,17 @@
 import { lazy } from 'react'
 
-const Bloom = { descr: '', tags: [], Component: lazy(() => import('./Bloom')) }
-const Font = { descr: '', tags: [], Component: lazy(() => import('./Font')) }
-const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')) }
-const GltfPlanet = { descr: '', tags: [], Component: lazy(() => import('./GltfPlanet')) }
-const MeshLine = { descr: '', tags: [], Component: lazy(() => import('./MeshLine')) }
-const Montage = { descr: '', tags: [], Component: lazy(() => import('./Montage')) }
-const Physics = { descr: '', tags: [], Component: lazy(() => import('./Physics')) }
-const Swarm = { descr: '', tags: [], Component: lazy(() => import('./Swarm')) }
-const Textures = { descr: '', tags: [], Component: lazy(() => import('./Textures')) }
-const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoader')) }
-const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')) }
-const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')) }
+const Bloom = { descr: '', tags: [], Component: lazy(() => import('./Bloom')), bright: false }
+const Font = { descr: '', tags: [], Component: lazy(() => import('./Font')), bright: false }
+const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')), bright: false }
+const GltfPlanet = { descr: '', tags: [], Component: lazy(() => import('./GltfPlanet')), bright: false }
+const MeshLine = { descr: '', tags: [], Component: lazy(() => import('./MeshLine')), bright: true }
+const Montage = { descr: '', tags: [], Component: lazy(() => import('./Montage')), bright: true }
+const Physics = { descr: '', tags: [], Component: lazy(() => import('./Physics')), bright: false }
+const Swarm = { descr: '', tags: [], Component: lazy(() => import('./Swarm')), bright: false }
+const Textures = { descr: '', tags: [], Component: lazy(() => import('./Textures')), bright: false }
+const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoader')), bright: false }
+const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')), bright: false }
+const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true }

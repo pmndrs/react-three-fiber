@@ -72,6 +72,7 @@ export type FilterFunction = (items: THREE.Intersection[], state: SharedCanvasCo
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
+  gl2?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   invalidateFrameloop?: boolean

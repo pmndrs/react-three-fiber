@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
-import ResizeObserver from 'resize-observer-polyfill'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
 import { useCanvas, CanvasProps, PointerEvents } from '../../canvas'
 
@@ -9,13 +8,25 @@ const IsReady = React.memo(
   ({
     setEvents,
     canvas,
+    gl2,
     ...props
   }: CanvasProps & {
     setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
     canvas: HTMLCanvasElement
     size: RectReadOnly
+    gl2?: boolean
   }) => {
-    const gl = useMemo(() => new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, ...props.gl }), [])
+    const gl = useMemo(
+      () =>
+        new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          context: gl2 ? (canvas.getContext('webgl2', { alpha: false }) as WebGLRenderingContext) : undefined,
+          alpha: true,
+          ...props.gl,
+        }),
+      []
+    )
 
     // Init canvas, fetch events, hand them back to the warpping div
     const events = useCanvas({ ...props, gl })
@@ -30,6 +41,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
   const {
     children,
     vr,
+    gl2,
     shadowMap,
     orthographic,
     invalidateFrameloop,
@@ -61,13 +73,11 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   // Render the canvas into the dom
   return (
-    <div
-      ref={bind as React.MutableRefObject<HTMLDivElement>}
-      style={{ ...defaultStyles, ...style }}
-      {...events}
-      {...restSpread}>
+    <div ref={bind} style={{ ...defaultStyles, ...style }} {...events} {...restSpread}>
       <canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />
-      {canvasRef.current && <IsReady {...props} size={size} canvas={canvasRef.current} setEvents={setEvents} />}
+      {canvasRef.current && (
+        <IsReady {...props} size={size} gl2={gl2} canvas={canvasRef.current} setEvents={setEvents} />
+      )}
     </div>
   )
 })

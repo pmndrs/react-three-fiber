@@ -10,11 +10,7 @@ export default function Why() {
   return (
     <Page>
       <h1>
-        react
-        <br />
-        three
-        <br />
-        fiber
+        react 3
         <br />
         three
       </h1>
