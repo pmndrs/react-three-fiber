@@ -16,14 +16,13 @@ const IsReady = React.memo(
     size: RectReadOnly
     gl2?: boolean
   }) => {
+    const params = { antialias: true, alpha: true, ...props.gl }
     const gl = useMemo(
       () =>
         new THREE.WebGLRenderer({
           canvas,
-          antialias: true,
-          context: gl2 ? (canvas.getContext('webgl2', { alpha: false }) as WebGLRenderingContext) : undefined,
-          alpha: true,
-          ...props.gl,
+          context: gl2 ? (canvas.getContext('webgl2', params) as WebGLRenderingContext) : undefined,
+          ...params,
         }),
       []
     )
@@ -59,7 +58,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
-  const [bind, size] = useMeasure()
+  const [bind, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 } })
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.

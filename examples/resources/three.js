@@ -1,6 +1,6 @@
 //import 'three/src/polyfills.js';
 
-//export { WebGLMultisampleRenderTarget } from 'three/src/renderers/WebGLMultisampleRenderTarget.js';
+export { WebGLMultisampleRenderTarget } from 'three/src/renderers/WebGLMultisampleRenderTarget.js'
 //export { WebGLRenderTargetCube } from 'three/src/renderers/WebGLRenderTargetCube.js';
 export { WebGLRenderTarget } from 'three/src/renderers/WebGLRenderTarget.js'
 export { WebGLRenderer } from 'three/src/renderers/WebGLRenderer.js'

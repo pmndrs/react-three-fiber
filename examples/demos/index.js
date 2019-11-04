@@ -27,6 +27,7 @@ const Suspense = { descr: '', tags: [], Component: lazy(() => import('./Suspense
 const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./SelectiveBloom')), dev: true }
 const Scroll = { descr: '', tags: [], Component: lazy(() => import('./Scroll')), dev: true }
 const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')), dev: true }
+const WebGL2 = { descr: '', tags: [], Component: lazy(() => import('./WebGL2')), dev: true }
 
 export {
   Refraction,
@@ -53,6 +54,7 @@ export {
   SelectiveBloom,
   ShaderMaterial,
   Suspense,
+  WebGL2,
   Test,
   VR,
 }

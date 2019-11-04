@@ -5138,10 +5138,10 @@ react-reconciler@0.23.0:
     prop-types "^15.6.2"
     scheduler "^0.17.0"
 
-react-use-measure@^1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-1.1.0.tgz#dde8e53aa8f19169f3c1e1d4cfff227334a6bf69"
-  integrity sha512-iWvrQ8s/64NWtNEgtw8rFJvgsT8NqFkYtuk/lFgdFaqR+uQMes+2wBFs7R6X9qyX3eHAwWlahlX16qC7JQzT0A==
+react-use-measure@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-1.1.1.tgz#1c5d4071e3fd9f71527f6abe34b315a1e69dcb29"
+  integrity sha512-LqUpJcdV8PoGhySo03ZNBdemW4WPVsm80Txq/EWoWbQRctakMV9QlNnCJndAQlaNMj7gtlIZID8OIv7SDzJ07Q==
   dependencies:
     debounce "^1.2.0"
     resize-observer-polyfill "^1.5.1"

@@ -24,7 +24,7 @@ const Page = styled(PageImpl)`
 
 const defaultComponent = 'Refraction'
 const visibleComponents = Object.entries(demos)
-  .filter(([name, item]) => !item.dev)
+  //.filter(([name, item]) => !item.dev)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 export default function Intro() {
