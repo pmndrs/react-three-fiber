@@ -111,7 +111,7 @@ export default function App() {
     <Canvas
       invalidateFrameloop
       orthographic
-      style={{ background: '#272727' }}
+      style={{ background: '#272727', touchAction: 'none' }}
       raycaster={{ linePrecision: 5 }}
       camera={{ position: [0, 0, 500] }}>
       <Controls>

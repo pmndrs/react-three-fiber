@@ -14,7 +14,7 @@ function Thing() {
 
 export default function() {
   return (
-    <Canvas>
+    <Canvas style={{ touchAction: 'none' }}>
       <Thing />
     </Canvas>
   )

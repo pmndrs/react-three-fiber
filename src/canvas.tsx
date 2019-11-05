@@ -393,12 +393,15 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   /**  Handles intersections by forwarding them to handlers */
   const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
     prepareRay(event)
-    // If the interaction is captured, take the last known hit instead of raycasting again
-    const hits: Intersection[] =
-      state.current.captured && event.type !== 'click' && event.type !== 'wheel'
-        ? state.current.captured
-        : intersect(event, false)
-
+    // Get fresh intersects
+    const hits: Intersection[] = intersect(event, false)
+    // If the interaction is captured take that into account, the captured event has to be part of the intersects
+    if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
+      state.current.captured.forEach(captured => {
+        if (!hits.find(hit => hit.eventObject === captured.eventObject)) hits.push(captured)
+      })
+    }
+    // If anything has been found, forward it to the event listeners
     if (hits.length) {
       const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
       const delta = event.type === 'click' ? calculateDistance(event) : 0
@@ -416,7 +419,6 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           stopPropagation: () => (stopped.current = true),
           sourceEvent: event,
         }
-        //console.log(raycastEvent)
         fn(raycastEvent)
         if (stopped.current === true) {
           // Propagation is stopped, remove all other hover records
