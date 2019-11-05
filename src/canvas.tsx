@@ -395,6 +395,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
+  const hovered = useMemo(() => new Map<string, PointerEvent>(), [])
+
   /**  Handles intersections by forwarding them to handlers */
   const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
     prepareRay(event)
@@ -410,7 +412,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
       for (let hit of hits) {
         let stopped = { current: false }
-        fn({
+        let raycastEvent = {
           ...event,
           ...hit,
           stopped,
@@ -420,39 +422,18 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => (stopped.current = true),
           sourceEvent: event,
-        })
-        if (stopped.current === true) break
+        }
+        fn(raycastEvent)
+        if (stopped.current === true) {
+          // Propagation is stopped, remove all other hover records
+          handlePointerCancel(raycastEvent, [hit])
+          break
+        }
       }
     }
     return hits
   }, [])
 
-  const handlePointer = useCallback(
-    (name: string) => (event: DomEvent) => {
-      state.current.pointer.emit(name, event)
-      // Collect hits
-      const hits = handleIntersects(event, data => {
-        const eventObject = data.eventObject
-        const handlers = (eventObject as any).__handlers
-        if (handlers && handlers[name]) {
-          // Forward all events back to their respective handlers with the exception of click,
-          // which must must the initial target
-          if (name !== 'click' || state.current.initialHits.includes(eventObject)) handlers[name](data)
-        }
-      })
-      // If a click yields no results, pass it back to the user as a miss
-      if (name === 'pointerDown') {
-        state.current.initialClick = [event.clientX, event.clientY]
-        state.current.initialHits = hits.map(hit => hit.eventObject)
-      }
-      if (name === 'click' && !hits.length && onPointerMissed) {
-        if (calculateDistance(event) <= 2) onPointerMissed()
-      }
-    },
-    [onPointerMissed]
-  )
-
-  const hovered = new Map<string, PointerEvent>()
   const handlePointerMove = useCallback((event: DomEvent) => {
     state.current.pointer.emit('pointerMove', event)
     const hits = handleIntersects(event, data => {
@@ -460,7 +441,6 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       const handlers = (eventObject as any).__handlers
       // Check presence of handlers
       if (!handlers) return
-
       // Call mouse move
       if (handlers.pointerMove) handlers.pointerMove(data)
       // Check if mouse enter or out is present
@@ -500,6 +480,31 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       }
     })
   }, [])
+
+  const handlePointer = useCallback(
+    (name: string) => (event: DomEvent) => {
+      state.current.pointer.emit(name, event)
+      // Collect hits
+      const hits = handleIntersects(event, data => {
+        const eventObject = data.eventObject
+        const handlers = (eventObject as any).__handlers
+        if (handlers && handlers[name]) {
+          // Forward all events back to their respective handlers with the exception of click,
+          // which must must the initial target
+          if (name !== 'click' || state.current.initialHits.includes(eventObject)) handlers[name](data)
+        }
+      })
+      // If a click yields no results, pass it back to the user as a miss
+      if (name === 'pointerDown') {
+        state.current.initialClick = [event.clientX, event.clientY]
+        state.current.initialHits = hits.map(hit => hit.eventObject)
+      }
+      if (name === 'click' && !hits.length && onPointerMissed) {
+        if (calculateDistance(event) <= 2) onPointerMissed()
+      }
+    },
+    [onPointerMissed]
+  )
 
   return {
     onClick: handlePointer('click'),

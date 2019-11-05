@@ -53,7 +53,7 @@ export { ShapeGeometry, ShapeBufferGeometry } from 'three/src/geometries/ShapeGe
 // export { EdgesGeometry } from 'three/src/geometries/EdgesGeometry.js';
 // export { ConeGeometry, ConeBufferGeometry } from 'three/src/geometries/ConeGeometry.js';
 // export { CylinderGeometry, CylinderBufferGeometry } from 'three/src/geometries/CylinderGeometry.js';
-// export { CircleGeometry, CircleBufferGeometry } from 'three/src/geometries/CircleGeometry.js';
+export { CircleGeometry, CircleBufferGeometry } from 'three/src/geometries/CircleGeometry.js'
 export { /*BoxGeometry,*/ BoxBufferGeometry } from 'three/src/geometries/BoxGeometry.js'
 
 //export { ShadowMaterial } from 'three/src/materials/ShadowMaterial.js';
