@@ -70,7 +70,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   gl2 = false                   // Enabled webgl2
-  resize = undefined             // Resize config, see react-use-measure's options
+  resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
   noEvents = false              // Switch off raytracing and event support
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
