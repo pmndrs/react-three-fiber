@@ -8,7 +8,7 @@ const Page = styled.div`
   & > h1 {
     font-family: 'Roboto', sans-serif;
     font-weight: 900;
-    font-size: 10em;
+    font-size: 8em;
     margin: 0;
     color: white;
     line-height: 0.59em;
@@ -17,7 +17,7 @@ const Page = styled.div`
 
   @media only screen and (max-width: 1000px) {
     & > h1 {
-      font-size: 6em;
+      font-size: 5em;
       letter-spacing: -1px;
     }
   }

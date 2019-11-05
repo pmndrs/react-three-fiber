@@ -26,9 +26,9 @@ function Circle() {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#272730' }}>
+    <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 150 }} style={{ background: '#272730' }}>
       <group
-        position={[-1.5, 0, 0]}
+        position={[-1.25, 0, 0]}
         onPointerOver={e => console.log('group1 over')}
         onPointerOut={e => console.log('group1 out')}>
         <group
@@ -59,7 +59,7 @@ export default function App() {
           </new>
         </group>
       </group>
-      <group position={[1.5, 0, 0]}>
+      <group position={[1.25, 0, 0]}>
         <Circle />
         <Sphere />
       </group>

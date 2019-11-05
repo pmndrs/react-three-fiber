@@ -1,6 +1,6 @@
 import ReactDOM from 'react-dom'
 import React, { Suspense, useState } from 'react'
-import { unstable_createResource as createResource } from '../resources/cache'
+import { unstable_createResource as createResource } from '../../resources/cache'
 // react-cache is still experimental and isn't currently compatible with react 16.8.x
 //import { unstable_createResource as createResource } from 'react-cache'
 import { Canvas } from 'react-three-fiber'

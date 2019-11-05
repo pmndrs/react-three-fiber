@@ -336,16 +336,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   )
 
   /** Sets up defaultRaycaster */
-  const prepareRay = useCallback(event => {
-    if (event.clientX !== void 0) {
+  const prepareRay = useCallback(({ clientX, clientY }) => {
+    if (clientX !== void 0) {
       const { left, right, top, bottom } = state.current.size
-      let { clientX, clientY } = event
-
-      if (typeof window !== 'undefined') {
-        clientX += window.pageXOffset
-        clientY += window.pageYOffset
-      }
-
       mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
@@ -423,6 +416,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           stopPropagation: () => (stopped.current = true),
           sourceEvent: event,
         }
+        //console.log(raycastEvent)
         fn(raycastEvent)
         if (stopped.current === true) {
           // Propagation is stopped, remove all other hover records

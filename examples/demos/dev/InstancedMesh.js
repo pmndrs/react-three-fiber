@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useFrame, useLoader } from 'react-three-fiber'
-import suzanne from 'file-loader!../resources/gltf/suzanne.blob'
+import suzanne from 'file-loader!../../resources/gltf/suzanne.blob'
 
 const dummy = new THREE.Object3D()
 function Suzanne() {

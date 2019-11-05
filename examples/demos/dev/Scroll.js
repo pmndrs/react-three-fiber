@@ -3,12 +3,12 @@ import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } 
 import { apply as extendSpring, useSpring, a, interpolate } from 'react-spring/three'
 import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-fiber'
 import styled from 'styled-components'
-import data from './../resources/data'
+import data from '../../resources/data'
 
 // Import and register postprocessing classes as three-native-elements
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-import { GlitchPass } from './../resources/postprocessing/GlitchPass'
+import { GlitchPass } from '../../resources/postprocessing/GlitchPass'
 
 extendSpring({ EffectComposer, RenderPass, GlitchPass })
 extendThree({ EffectComposer, RenderPass, GlitchPass })

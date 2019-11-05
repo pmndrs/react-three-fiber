@@ -5,7 +5,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
-import { WaterPass } from './../resources/postprocessing/WaterPass'
+import { WaterPass } from '../../resources/postprocessing/WaterPass'
 extend({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
 
 function Main() {
