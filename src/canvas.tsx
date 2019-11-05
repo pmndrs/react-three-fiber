@@ -69,12 +69,18 @@ export type CanvasContext = SharedCanvasContext & {
 
 export type FilterFunction = (items: THREE.Intersection[], state: SharedCanvasContext) => THREE.Intersection[]
 
+export type ResizeOptions = {
+  debounce?: number | { scroll: number; resize: number }
+  scroll?: boolean
+}
+
 export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
   gl2?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
+  resize?: ResizeOptions
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
   noEvents?: boolean

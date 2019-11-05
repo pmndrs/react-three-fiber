@@ -43,6 +43,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
     gl2,
     shadowMap,
     orthographic,
+    resize,
     invalidateFrameloop,
     updateDefaultCamera,
     noEvents,
@@ -58,7 +59,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
-  const [bind, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 } })
+  const [bind, size] = useMeasure(resize || { scroll: true, debounce: { scroll: 50, resize: 0 } })
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.

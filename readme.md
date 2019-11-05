@@ -70,6 +70,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   gl2 = false                   // Enabled webgl2
+  resize = undefined             // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
   noEvents = false              // Switch off raytracing and event support
   pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
@@ -92,6 +93,8 @@ A default _orthographic camera_ if Canvas.orthographic is true: `near: 0.1, far:
 A default _shadowMap_ if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
 
 A default _scene_ (into which all the JSX is rendered) and a _raycaster_.
+
+A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }`
 
 You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
