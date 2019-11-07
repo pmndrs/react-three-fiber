@@ -1,20 +1,25 @@
 {
   "name": "react-three-fiber",
+  "private": true,
   "version": "3.0.11",
   "description": "React-fiber renderer for THREE.js",
-  "main": "./dist/web.cjs.js",
-  "module": "./dist/web.js",
-  "react-native": "./dist/native.js",
-  "types": "./types/src/targets/web/index.d.ts",
+  "main": "web.cjs.js",
+  "module": "web.js",
+  "react-native": "native.js",
+  "types": "types/src/targets/web/index.d.ts",
+  "files": [
+    "**"
+  ],
   "sideEffects": false,
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c",
+    "build": "rollup -c && yarn copy",
     "prepare": "npm run build",
     "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typecheck": "tsc --noEmit --strict --jsx react src/*",
-    "typegen": "tsc || true && prettier types/**/** --write"
+    "typegen": "tsc || true && prettier types/**/** --write",
+    "copy": "copyfiles types/**/* types/* package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
@@ -87,6 +92,7 @@
     "@typescript-eslint/parser": "^2.6.1",
     "babel-eslint": "^10.0.3",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "copyfiles": "^2.1.1",
     "cypress": "^3.6.0",
     "eslint": "^6.6.0",
     "eslint-config-prettier": "^6.5.0",
@@ -96,6 +102,7 @@
     "expo-gl": "^7.0.0",
     "expo-three": "^5.2.0",
     "husky": "^3.0.9",
+    "json": "^9.0.6",
     "lint-staged": "^9.4.2",
     "prettier": "^1.18.2",
     "react": "^16.11.0",

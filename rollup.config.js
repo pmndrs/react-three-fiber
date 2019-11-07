@@ -27,7 +27,7 @@ const getBabelOptions = ({ useESModules }, targets) => ({
 function createConfig(entry, out) {
   return [
     {
-      input: `./src/${entry}/index`,
+      input: `./src/${entry}`,
       output: { file: `dist/${out}.js`, format: 'esm' },
       external,
       plugins: [
@@ -38,7 +38,7 @@ function createConfig(entry, out) {
       ],
     },
     {
-      input: `./src/${entry}/index`,
+      input: `./src/${entry}`,
       output: { file: `dist/${out}.cjs.js`, format: 'cjs' },
       external,
       plugins: [json(), babel(getBabelOptions({ useESModules: false })), sizeSnapshot(), resolve({ extensions })],
@@ -46,4 +46,8 @@ function createConfig(entry, out) {
   ]
 }
 
-export default [...createConfig('targets/web', 'web'), ...createConfig('targets/native', 'native')]
+export default [
+  ...createConfig('targets/web/index', 'web'),
+  //...createConfig('extras/index', 'extras'),
+  ...createConfig('targets/native/index', 'native'),
+]

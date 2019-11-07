@@ -12,8 +12,13 @@
     "removeComments": true,
     "emitDeclarationOnly": true,
     "outDir": "types",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "noImplicitThis": false,
+    "baseUrl": "./src",
+    "paths": {
+      "react-three-fiber": ["./"],
+    }
   },
-  "include": ["./src"],
+  "include": ["./src", "extras"],
   "exclude": ["./node_modules/**/*"]
 }

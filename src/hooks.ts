@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
+import { SharedCanvasContext, RenderCallback, stateContext, Camera } from './canvas'
+import { applyProps } from './reconciler'
 //@ts-ignore
 import usePromise from 'react-promise-suspense'
 
@@ -142,4 +143,21 @@ export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extens
 
   // Return the object itself and a list of pruned props
   return isArray ? results : results[0]
+}
+
+export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
+  const { mouse } = useThree()
+  const raycast = useMemo(() => {
+    let raycaster = new THREE.Raycaster()
+    if (props) applyProps(raycaster, props, {})
+    let originalRaycast:
+      | ((raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void)
+      | undefined = undefined
+    return function(_: THREE.Raycaster, intersects: THREE.Intersection[]): void {
+      raycaster.setFromCamera(mouse, camera)
+      if (!originalRaycast) originalRaycast = this.constructor.prototype.raycast.bind(this)
+      if (originalRaycast) originalRaycast(raycaster, intersects)
+    }
+  }, [])
+  return raycast
 }

@@ -375,6 +375,16 @@ It can also make multiple requests in parallel:
 const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
 ```
 
+#### useCamera(camera, props) (experimental!)
+
+This is a special purpose hook for the rare case when you are using non-default cameras for heads-up-displays or portals, and you need events/raytracing to function properly (raycasting uses the default camera otherwise).
+
+```jsx
+import { useCamera } from 'react-three-fiber'
+
+<mesh raycast={useCamera(customCamera)} onPointerMove={e => console.log('move')}>
+```
+
 # Additional exports
 
 ```jsx
