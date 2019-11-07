@@ -17,9 +17,12 @@ function Controls() {
 function Viewcube() {
   const { mouse, gl, camera, size } = useThree()
   const virtualScene = useMemo(() => new THREE.Scene(), [])
-  const virtualCam = useMemo(() => new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000), [])
+  const virtualCam = useMemo(() => {
+    const cam = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+    cam.position.z = 200
+    return cam
+  }, [])
   useMemo(() => {
-    virtualCam.position.z = 200
     virtualCam.left = size.width / -2
     virtualCam.right = size.width / 2
     virtualCam.top = size.height / 2
