@@ -7,7 +7,7 @@ extend({ OrbitControls })
 
 function Controls() {
   const controls = useRef()
-  const { camera, gl } = useThree()
+  const { scene, camera, gl } = useThree()
   useFrame(() => controls.current.update())
   return (
     <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
@@ -17,12 +17,9 @@ function Controls() {
 function Viewcube() {
   const { mouse, gl, camera, size } = useThree()
   const virtualScene = useMemo(() => new THREE.Scene(), [])
-  const virtualCam = useMemo(() => {
-    const cam = new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-    cam.position.z = 200
-    return cam
-  }, [])
+  const virtualCam = useMemo(() => new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000), [])
   useMemo(() => {
+    virtualCam.position.z = 200
     virtualCam.left = size.width / -2
     virtualCam.right = size.width / 2
     virtualCam.top = size.height / 2
@@ -36,10 +33,12 @@ function Viewcube() {
   useFrame(() => {
     matrix.getInverse(camera.matrix)
     ref.current.quaternion.setFromRotationMatrix(matrix)
+    gl.autoClear = true
+    gl.render(scene, camera)
     gl.autoClear = false
     gl.clearDepth()
     gl.render(virtualScene, virtualCam)
-  }, 2)
+  }, 1)
 
   return createPortal(
     <mesh
@@ -54,29 +53,13 @@ function Viewcube() {
   )
 }
 
-function AutoClear() {
-  const { gl, scene, camera } = useThree()
-  useFrame(() => {
-    gl.autoClear = true
-    gl.render(scene, camera)
-  }, 1)
-  return null
-}
-
-function Thing() {
-  return (
-    <mesh>
-      <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
-      <meshNormalMaterial attach="material" />
-    </mesh>
-  )
-}
-
 export default function() {
   return (
     <Canvas style={{ background: '#272730' }}>
-      <AutoClear />
-      <Thing />
+      <mesh>
+        <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
+        <meshNormalMaterial attach="material" />
+      </mesh>
       <Controls />
       <Viewcube />
     </Canvas>
