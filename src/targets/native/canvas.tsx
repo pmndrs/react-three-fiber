@@ -77,7 +77,19 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
   const [renderer, setRenderer] = useState()
 
   // Handle size changes
-  const onLayout = (e: LayoutChangeEvent) => setSize(e.nativeEvent.layout as any)
+  const onLayout = (e: LayoutChangeEvent) => {
+    const { x, y, width, height } = e.nativeEvent.layout
+    setSize({
+      x,
+      y,
+      width,
+      height,
+      left: x,
+      right: x + width,
+      top: y,
+      bottom: y + height,
+    })
+  }
 
   // Fired when EXGL context is initialized
   const onContextCreate = async (gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
