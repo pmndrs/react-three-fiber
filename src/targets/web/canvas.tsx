@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
+import ResizeObserver from '@juggle/resize-observer'
 import { useCanvas, CanvasProps, PointerEvents } from '../../canvas'
 
 const IsReady = React.memo(
@@ -59,7 +60,13 @@ export const Canvas = React.memo((props: CanvasProps) => {
 
   const canvasRef = useRef<HTMLCanvasElement>()
   const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
-  const [bind, size] = useMeasure(resize || { scroll: true, debounce: { scroll: 50, resize: 0 } })
+  const [bind, size] = useMeasure(
+    resize || {
+      scroll: true,
+      debounce: { scroll: 50, resize: 0 },
+      polyfill: typeof window === 'undefined' ? ResizeObserver : undefined,
+    }
+  )
 
   // Allow Gatsby, Next and other server side apps to run.
   // Will output styles to reduce flickering.
