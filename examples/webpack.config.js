@@ -68,7 +68,7 @@ module.exports = mode => {
         '../../../build/three.module.js': path.resolve('./resources/three.js'),
         'react-spring/three': createAlias('react-spring/src/targets/three', 'react-spring/three'),
         'react-use-gesture': createAlias('react-use-gesture/index.js', 'react-use-gesture'),
-        'react-use-measure': createAlias('react-use-measure/src/web', '../node_modules/react-use-measure'),
+        //'react-use-measure': createAlias('react-use-measure/src/web', '../node_modules/react-use-measure'),
         //'pointer-events-polyfill': createAlias('pointer-events-polyfill/dist/pep.js', 'pointer-events-polyfill'),
       },
     },
