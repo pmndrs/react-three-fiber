@@ -24,6 +24,7 @@ export type PointerEvent = DomEvent &
     stopped: React.MutableRefObject<boolean>
     unprojectedPoint: THREE.Vector3
     ray: THREE.Ray
+    camera: THREE.Camera
     stopPropagation: () => void
     sourceEvent: DomEvent
     delta: number
@@ -421,6 +422,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           delta,
           unprojectedPoint,
           ray: defaultRaycaster.ray,
+          camera: state.current.camera,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => (stopped.current = true),
           sourceEvent: event,

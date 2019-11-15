@@ -216,6 +216,7 @@ Additionally there's a special `onUpdate` that is called every time the object g
   eventObject: Object3D         // The object that registered the event
   unprojectedPoint: Vector3     // Camera-unprojected point
   ray: Ray                      // The ray that was used to strike the object
+  camera: Camera                // The camera that was used in the raycaster
   sourceEvent: DomEvent         // A reference to the host event
   delta: number                 // Initial-click delta
 }) => ...
