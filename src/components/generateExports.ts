@@ -76,8 +76,7 @@ const outPath = join(__dirname, 'generated.ts')
 const text = `\
 import { ${exportTypeName} } from './types';
 
-type TFC = ${exportTypeName}
-${generateNamedExports(getInterfacePropertyNames(exportTypeName), 'TFC')}
+${generateNamedExports(getInterfacePropertyNames(exportTypeName), exportTypeName)}
 `
 
 writeFileSync(outPath, text)

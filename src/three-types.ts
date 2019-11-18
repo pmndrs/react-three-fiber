@@ -27,23 +27,22 @@ export declare namespace ReactThreeFiber {
     onWheel?: (e: PointerEvent) => void
   }
 
-  export type Node<T, P> = Overwrite<
-    Partial<T>,
-    {
-      /** Attaches this class onto the parent under the given name and nulls it on unmount */
-      attach?: string
-      /** Appends this class to an array on the parent under the given name and removes it on unmount */
-      attachArray?: string
-      /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-      attachObject?: [string, string]
-      /** Constructor arguments */
-      args?: Args<P>
-      children?: React.ReactNode
-      ref?: React.Ref<React.ReactNode>
-      key?: React.Key
-      onUpdate?: (self: T) => void
-    }
-  >
+  export interface NodeProps<T, P> {
+    /** Attaches this class onto the parent under the given name and nulls it on unmount */
+    attach?: string
+    /** Appends this class to an array on the parent under the given name and removes it on unmount */
+    attachArray?: string
+    /** Adds this class to an object on the parent under the given name and deletes it on unmount */
+    attachObject?: [string, string]
+    /** Constructor arguments */
+    args?: Args<P>
+    children?: React.ReactNode
+    ref?: React.Ref<React.ReactNode>
+    key?: React.Key
+    onUpdate?: (self: T) => void
+  }
+
+  export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
 
   export type Object3DNode<T, P> = Overwrite<
     Node<T, P>,

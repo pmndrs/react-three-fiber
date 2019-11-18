@@ -36,4 +36,6 @@ type __ThreeFiberComponents = {
     : never
 }
 
+export { OmitByValue }
+
 export interface ThreeFiberComponents extends OmitByValue<__ThreeFiberComponents, never> {}
