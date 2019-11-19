@@ -11,12 +11,12 @@
     "declaration": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
-    "outDir": "types",
+    "outDir": "dist",
     "resolveJsonModule": true,
     "noImplicitThis": false,
     "baseUrl": "./src",
     "paths": {
-      "react-three-fiber": ["./"],
+      "react-three-fiber": ["./"]
     }
   },
   "include": ["./src", "extras"],
