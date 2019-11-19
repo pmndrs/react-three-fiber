@@ -1,9 +1,7 @@
 export * from '../index'
 export * from '../canvas'
 
-import * as THREE from 'three'
 import React from 'react'
-// @ts-ignore
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { ResizeContainer } from './shared/web/ResizeContainer'
 import { CanvasProps } from '../canvas'

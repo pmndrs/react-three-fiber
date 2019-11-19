@@ -3,7 +3,6 @@ export * from '../canvas'
 
 import * as THREE from 'three'
 import React, { useRef } from 'react'
-// @ts-ignore
 import { ResizeContainer } from './shared/web/ResizeContainer'
 import { CanvasProps } from '../canvas'
 

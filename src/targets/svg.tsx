@@ -3,7 +3,6 @@ export * from '../canvas'
 
 import * as THREE from 'three'
 import React from 'react'
-// @ts-ignore
 import { SVGRenderer } from 'three/examples/jsm/renderers/SVGRenderer'
 import { ResizeContainer } from './shared/web/ResizeContainer'
 import { CanvasProps } from '../canvas'
