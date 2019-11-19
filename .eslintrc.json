@@ -47,6 +47,7 @@
       ],
       "rules": {
         "import/no-unresolved": "off",
+        "import/named": "off",
         "no-useless-constructor": "off",
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/no-namespace": "off",
