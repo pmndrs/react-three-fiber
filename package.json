@@ -63,6 +63,7 @@
   "dependencies": {
     "@babel/runtime": "^7.7.1",
     "@juggle/resize-observer": "^2.4.0",
+    "react-merge-refs": "^1.0.0",
     "react-promise-suspense": "^0.3.1",
     "react-reconciler": "0.23.0",
     "react-use-measure": "^2.0.0",
@@ -76,6 +77,7 @@
     "three": ">=0.110"
   },
   "devDependencies": {
+    "@ampproject/rollup-plugin-closure-compiler": "^0.12.1",
     "@babel/core": "7.7.0",
     "@babel/plugin-transform-modules-commonjs": "7.7.0",
     "@babel/plugin-transform-parameters": "7.4.4",

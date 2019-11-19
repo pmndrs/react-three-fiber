@@ -332,8 +332,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   useEffect(
     () => () => {
       if (state.current.gl) {
-        state.current.gl.forceContextLoss!()
-        state.current.gl.dispose!()
+        state.current.gl.forceContextLoss && state.current.gl.forceContextLoss!()
+        state.current.gl.dispose && state.current.gl.dispose!()
         ;(state.current as any).gl = undefined
         unmountComponentAtNode(state.current.scene)
         state.current.active = false
@@ -510,14 +510,19 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     [onPointerMissed]
   )
 
-  return {
-    onClick: handlePointer('click'),
-    onWheel: handlePointer('wheel'),
-    onPointerDown: handlePointer('pointerDown'),
-    onPointerUp: handlePointer('pointerUp'),
-    onPointerLeave: (e: any) => handlePointerCancel(e, []),
-    onPointerMove: handlePointerMove,
-    onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
-    onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
-  }
+  const events = useMemo(
+    () => ({
+      onClick: handlePointer('click'),
+      onWheel: handlePointer('wheel'),
+      onPointerDown: handlePointer('pointerDown'),
+      onPointerUp: handlePointer('pointerUp'),
+      onPointerLeave: (e: any) => handlePointerCancel(e, []),
+      onPointerMove: handlePointerMove,
+      onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
+      onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
+    }),
+    [onPointerMissed]
+  )
+
+  return events
 }

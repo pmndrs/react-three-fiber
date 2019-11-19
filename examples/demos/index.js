@@ -13,6 +13,9 @@ const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./V
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
+const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
+const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
+const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
 const Selection = { descr: '', tags: [], Component: lazy(() => import('./dev/Selection')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./dev/Pointcloud')), dev: true }
 const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/Reparenting')), dev: true }
@@ -59,4 +62,7 @@ export {
   Test,
   VR,
   Selection,
+  SVGRenderer,
+  CSS2DRenderer,
+  CSS3DRenderer,
 }
