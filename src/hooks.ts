@@ -92,16 +92,25 @@ function prune(props: any) {
   return reducedProps
 }
 
-export function useLoader<T>(Proto: THREE.Loader, url: string | string[], extensions?: Extensions): T {
+export interface Loader<T> extends THREE.Loader {
+  load(
+    url: string,
+    onLoad?: (result: T) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (event: ErrorEvent) => void
+  ): unknown
+}
+
+export function useLoader<T>(Proto: new () => Loader<T>, url: string | string[], extensions?: Extensions): T {
   const loader = useMemo(() => {
     // Construct new loader
-    const temp = new (Proto as any)()
+    const temp = new Proto()
     // Run loader extensions
     if (extensions) extensions(temp)
     return temp
   }, [Proto])
   // Use suspense to load async assets
-  let results = usePromise<LoaderData>(
+  const results = usePromise<LoaderData>(
     (Proto: THREE.Loader, url: string | string[]) => {
       const urlArray = Array.isArray(url) ? url : [url]
       return Promise.all(
