@@ -46,6 +46,7 @@ export type SharedCanvasContext = {
   scene: THREE.Scene
   size: RectReadOnly
   viewport: { width: number; height: number; factor: number }
+  events: PointerEvents
 }
 
 export type Subscription = {
@@ -192,6 +193,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     initialHits: [],
     pointer: new TinyEmitter(),
     captured: undefined,
+    events: (undefined as unknown) as PointerEvents,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
       // If this subscription was given a priority, it takes rendering into its own hands
@@ -263,84 +265,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     if (ready) invalidate(state)
   }, [defaultCam, size, updateDefaultCamera])
 
-  // Only trigger the context provider when necessary
-  const sharedState = useRef<SharedCanvasContext>()
-  useMemo(() => {
-    const {
-      ready,
-      manual,
-      vr,
-      noEvents,
-      invalidateFrameloop,
-      frames,
-      subscribers,
-      captured,
-      initialClick,
-      initialHits,
-      ...props
-    } = state.current
-    sharedState.current = props
-  }, [size, defaultCam])
-
-  // Update pixel ratio
-  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
-  // Update shadowmap
-  useLayoutEffect(() => {
-    if (shadowMap) {
-      gl.shadowMap.enabled = true
-      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
-      else gl.shadowMap.type = THREE.PCFSoftShadowMap
-    }
-  }, [shadowMap])
-
-  // This component is a bridge into the three render context, when it gets rendererd
-  // we know we are ready to compile shaders, call subscribers, etc
-  const IsReady = useCallback(() => {
-    const activate = () => setReady(true)
-    useEffect(() => {
-      const result = onCreated && onCreated(state.current)
-      return void (result && result.then ? result.then(activate) : activate())
-    }, [])
-    return null
-  }, [])
-
-  // Render v-dom into scene
-  useLayoutEffect(() => {
-    render(
-      <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
-        {typeof children === 'function' ? children(state.current) : children}
-        <IsReady />
-      </stateContext.Provider>,
-      defaultScene,
-      state
-    )
-  }, [ready, children, sharedState.current])
-
-  useLayoutEffect(() => {
-    if (ready) {
-      // Start render-loop, either via RAF or setAnimationLoop for VR
-      if (!state.current.vr) {
-        invalidate(state)
-      } else if (gl.vr && gl.setAnimationLoop) {
-        gl.vr.enabled = true
-        gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
-      } else console.warn('the gl instance does not support VR!')
-    }
-  }, [ready])
-
-  // Dispose renderer on unmount
-  useEffect(
-    () => () => {
-      if (state.current.gl) {
-        state.current.gl.forceContextLoss!()
-        state.current.gl.dispose!()
-        ;(state.current as any).gl = undefined
-        unmountComponentAtNode(state.current.scene)
-        state.current.active = false
-      }
-    },
-    []
-  )
+  /** Events ------------------------------------------------------------------------------------------------ */
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(({ clientX, clientY }) => {
@@ -513,8 +438,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     [onPointerMissed]
   )
 
-  const events = useMemo(
-    () => ({
+  useMemo(() => {
+    state.current.events = {
       onClick: handlePointer('click'),
       onWheel: handlePointer('wheel'),
       onPointerDown: handlePointer('pointerDown'),
@@ -523,9 +448,89 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       onPointerMove: handlePointerMove,
       onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
       onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
-    }),
-    [onPointerMissed]
+    }
+  }, [onPointerMissed])
+
+  /** Events ------------------------------------------------------------------------------------------------- */
+
+  // Only trigger the context provider when necessary
+  const sharedState = useRef<SharedCanvasContext>()
+  useMemo(() => {
+    const {
+      ready,
+      manual,
+      vr,
+      noEvents,
+      invalidateFrameloop,
+      frames,
+      subscribers,
+      captured,
+      initialClick,
+      initialHits,
+      ...props
+    } = state.current
+    sharedState.current = props
+  }, [size, defaultCam])
+
+  // Update pixel ratio
+  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
+  // Update shadowmap
+  useLayoutEffect(() => {
+    if (shadowMap) {
+      gl.shadowMap.enabled = true
+      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
+      else gl.shadowMap.type = THREE.PCFSoftShadowMap
+    }
+  }, [shadowMap])
+
+  // This component is a bridge into the three render context, when it gets rendererd
+  // we know we are ready to compile shaders, call subscribers, etc
+  const IsReady = useCallback(() => {
+    const activate = () => setReady(true)
+    useEffect(() => {
+      const result = onCreated && onCreated(state.current)
+      return void (result && result.then ? result.then(activate) : activate())
+    }, [])
+    return null
+  }, [])
+
+  // Render v-dom into scene
+  useLayoutEffect(() => {
+    render(
+      <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
+        {typeof children === 'function' ? children(state.current) : children}
+        <IsReady />
+      </stateContext.Provider>,
+      defaultScene,
+      state
+    )
+  }, [ready, children, sharedState.current])
+
+  useLayoutEffect(() => {
+    if (ready) {
+      // Start render-loop, either via RAF or setAnimationLoop for VR
+      if (!state.current.vr) {
+        invalidate(state)
+      } else if (gl.vr && gl.setAnimationLoop) {
+        gl.vr.enabled = true
+        gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
+      } else console.warn('the gl instance does not support VR!')
+    }
+  }, [ready])
+
+  // Dispose renderer on unmount
+  useEffect(
+    () => () => {
+      if (state.current.gl) {
+        state.current.gl.forceContextLoss!()
+        state.current.gl.dispose!()
+        ;(state.current as any).gl = undefined
+        unmountComponentAtNode(state.current.scene)
+        state.current.active = false
+      }
+    },
+    []
   )
 
-  return events
+  return state.current.events
 }

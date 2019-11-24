@@ -20,8 +20,13 @@ function Image({ url, opacity, scale, ...props }) {
   const hover = useCallback(() => setHover(true), [])
   const unhover = useCallback(() => setHover(false), [])
   const { factor } = useSpring({ factor: hovered ? 1.1 : 1 })
+  console.log(hovered)
   return (
-    <a.mesh {...props} onHover={hover} onUnhover={unhover} scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
+    <a.mesh
+      {...props}
+      onPointerOver={hover}
+      onPointerOut={unhover}
+      scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
       <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
@@ -164,12 +169,13 @@ export default function Main() {
     []
   )
   const onScroll = useCallback(e => set({ top: e.target.scrollTop }), [])
+  const [events, setEvents] = useState({})
   return (
     <>
-      <Canvas className="canvas">
+      <Canvas className="canvas" onCreated={({ events }) => setEvents(events)}>
         <Scene top={top} mouse={mouse} />
       </Canvas>
-      <Container onScroll={onScroll} onMouseMove={onMouseMove}>
+      <Container onScroll={onScroll} onMouseMove={onMouseMove} {...events}>
         <div style={{ height: '525vh' }} />
       </Container>
     </>
