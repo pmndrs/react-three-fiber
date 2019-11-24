@@ -430,7 +430,10 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
         fn(raycastEvent)
         if (stopped.current === true) {
           // Propagation is stopped, remove all other hover records
-          handlePointerCancel(raycastEvent, [hit])
+          // An event handler is only allowed to flush other handlers if it is hovered itself
+          if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
+            handlePointerCancel(raycastEvent, [hit])
+          }
           break
         }
       }
