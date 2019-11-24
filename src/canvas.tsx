@@ -430,7 +430,10 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
         fn(raycastEvent)
         if (stopped.current === true) {
           // Propagation is stopped, remove all other hover records
-          handlePointerCancel(raycastEvent, [hit])
+          // An event handler is only allowed to flush other handlers if it is hovered itself
+          if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
+            handlePointerCancel(raycastEvent, [hit])
+          }
           break
         }
       }
@@ -510,14 +513,19 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     [onPointerMissed]
   )
 
-  return {
-    onClick: handlePointer('click'),
-    onWheel: handlePointer('wheel'),
-    onPointerDown: handlePointer('pointerDown'),
-    onPointerUp: handlePointer('pointerUp'),
-    onPointerLeave: (e: any) => handlePointerCancel(e, []),
-    onPointerMove: handlePointerMove,
-    onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
-    onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
-  }
+  const events = useMemo(
+    () => ({
+      onClick: handlePointer('click'),
+      onWheel: handlePointer('wheel'),
+      onPointerDown: handlePointer('pointerDown'),
+      onPointerUp: handlePointer('pointerUp'),
+      onPointerLeave: (e: any) => handlePointerCancel(e, []),
+      onPointerMove: handlePointerMove,
+      onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
+      onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
+    }),
+    [onPointerMissed]
+  )
+
+  return events
 }
