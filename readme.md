@@ -69,7 +69,8 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   raycaster                     // Props that go into the default raycaster
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
-  gl2 = false                   // Enabled webgl2
+  gl2 = false                   // Enables webgl2
+  concurrent = false            // Enables React concurrent mode
   resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
   noEvents = false              // Switch off raytracing and event support
@@ -397,7 +398,30 @@ import {
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
   applyProps,                   // Internal: Sets element properties
+  Dom,                          // Project HTML content
 } from 'react-three-fiber'
+```
+
+#### Dom (experimental, web-only!)
+
+Sometimes you want to project dom-content on top (or underneath) of the canvas. The experimental `Dom` component behaves like a generic `THREE.Group` internally, you can transform and nest it inside the canvas. It's children on the other hand will be rendered into a separate dom container. They will be projected to the groups whereabouts.
+
+```jsx
+import { Canvas, Dom } from 'react-three-fiber'
+
+function App() {
+  const ref = useRef()
+  return (
+    <>
+      <div ref={ref} style={{ position: "absolute", width: "100%", height: "100%" }} />
+      <Canvas>
+        <Dom container={ref.current} position={[100, 0, 100]}>
+          <h1>hello world!</h1>
+        </Dom>
+      </Canvas>
+    </>
+  )
+}
 ```
 
 # Further information
