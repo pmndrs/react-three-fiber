@@ -397,7 +397,11 @@ export function render(
   let root = roots.get(container)
   if (!root) {
     ;(container as any).__state = state
-    let newRoot = (root = Renderer.createContainer(container, false, false))
+    let newRoot = (root = Renderer.createContainer(
+      container,
+      state !== undefined ? state.current.concurrent : false,
+      false
+    ))
     roots.set(container, newRoot)
   }
   Renderer.updateContainer(element, root, null, () => undefined)

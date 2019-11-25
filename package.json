@@ -1,7 +1,7 @@
 {
   "name": "react-three-fiber",
   "private": true,
-  "version": "3.0.13",
+  "version": "4.0.0-beta.0",
   "description": "React-fiber renderer for THREE.js",
   "main": "web.cjs.js",
   "module": "web.js",
@@ -88,6 +88,7 @@
     "@babel/preset-typescript": "^7.7.0",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.9.11",
+    "@types/react-dom": "^16.9.4",
     "@types/react-native": "^0.60.22",
     "@types/react-reconciler": "^0.18.0",
     "@types/scheduler": "^0.16.1",

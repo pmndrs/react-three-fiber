@@ -61,6 +61,7 @@ export type CanvasContext = SharedCanvasContext & {
   active: boolean
   manual: number
   vr: boolean
+  concurrent: boolean
   invalidateFrameloop: boolean
   frames: number
   subscribers: Subscription[]
@@ -80,6 +81,7 @@ export type CanvasProps = {
   children: React.ReactNode
   vr?: boolean
   gl2?: boolean
+  concurrent?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   orthographic?: boolean
   resize?: ResizeOptions
@@ -131,6 +133,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     size,
     pixelRatio,
     vr = false,
+    concurrent = false,
     shadowMap = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
@@ -176,6 +179,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     active: true,
     manual: 0,
     vr,
+    concurrent,
     noEvents,
     invalidateFrameloop: false,
     frames: 0,
@@ -224,8 +228,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     state.current.invalidateFrameloop = invalidateFrameloop
     state.current.vr = vr
     state.current.gl = gl
+    state.current.concurrent = concurrent
     state.current.noEvents = noEvents
-  }, [invalidateFrameloop, vr, noEvents, ready, size, defaultCam, gl])
+  }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl])
 
   // Adjusts default camera
   useMemo(() => {

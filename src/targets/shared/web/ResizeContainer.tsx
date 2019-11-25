@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { createContext } from 'react'
+import React from 'react'
 import { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
 import ResizeObserver from '@juggle/resize-observer'
