@@ -20,7 +20,6 @@ function Image({ url, opacity, scale, ...props }) {
   const hover = useCallback(() => setHover(true), [])
   const unhover = useCallback(() => setHover(false), [])
   const { factor } = useSpring({ factor: hovered ? 1.1 : 1 })
-  console.log(hovered)
   return (
     <a.mesh
       {...props}
