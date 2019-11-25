@@ -1,5 +1,5 @@
 import React, { useRef, useMemo, useEffect } from 'react'
-import { Canvas, extend, useFrame, useThree } from '../../../src/targets/svg'
+import { Canvas, extend, useFrame, useThree } from '../../../dist/svg'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 extend({ OrbitControls })

@@ -412,14 +412,11 @@ import { Canvas, Dom } from 'react-three-fiber'
 function App() {
   const ref = useRef()
   return (
-    <>
-      <div ref={ref} style={{ position: "absolute", width: "100%", height: "100%" }} />
-      <Canvas>
-        <Dom container={ref.current} position={[100, 0, 100]}>
-          <h1>hello world!</h1>
-        </Dom>
-      </Canvas>
-    </>
+    <Canvas>
+      <Dom prepend position={[100, 0, 100]}>
+        <h1>hello world!</h1>
+      </Dom>
+    </Canvas>
   )
 }
 ```

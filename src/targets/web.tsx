@@ -2,13 +2,10 @@ export * from '../index'
 export * from '../canvas'
 export * from './shared/web/Dom'
 
-import { WebGLRenderer, Vector3, Group } from 'three'
-import React, { useRef, useMemo, useEffect } from 'react'
-import ReactDOM from 'react-dom'
+import { WebGLRenderer } from 'three'
+import React, { useRef } from 'react'
 import { ResizeContainer } from './shared/web/ResizeContainer'
 import { CanvasProps } from '../canvas'
-import { useFrame, useThree } from '../hooks'
-import { ReactThreeFiber } from '../three-types'
 
 export const Canvas = React.memo(({ children, ...props }: CanvasProps) => {
   const canvasRef = useRef<HTMLCanvasElement>()
