@@ -36,7 +36,7 @@ function createConfig(entry, out) {
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
         sizeSnapshot(),
         resolve({ extensions }),
-        compiler(),
+        //compiler(),
       ],
     },
     {

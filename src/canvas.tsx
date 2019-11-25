@@ -527,8 +527,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   useEffect(
     () => () => {
       if (state.current.gl) {
-        state.current.gl.forceContextLoss!()
-        state.current.gl.dispose!()
+        if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss!()
+        if (state.current.gl.dispose) state.current.gl.dispose!()
         ;(state.current as any).gl = undefined
         unmountComponentAtNode(state.current.scene)
         state.current.active = false

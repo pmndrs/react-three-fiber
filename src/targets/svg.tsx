@@ -1,7 +1,7 @@
 export * from '../index'
 export * from '../canvas'
 
-import * as THREE from 'three'
+import { Color } from 'three'
 import React from 'react'
 import { SVGRenderer } from 'three/examples/jsm/renderers/SVGRenderer'
 import { ResizeContainer } from './shared/web/ResizeContainer'
@@ -12,7 +12,7 @@ export const Canvas = React.memo(({ children, ...props }: CanvasProps) => (
     {...props}
     renderer={() => {
       const temp = new SVGRenderer()
-      temp.setClearColor(new THREE.Color(0x000000), 0)
+      temp.setClearColor(new Color(0x000000), 0)
       return temp
     }}
     effects={(gl, el) => (el.appendChild(gl.domElement), () => el.removeChild(gl.domElement))}>
