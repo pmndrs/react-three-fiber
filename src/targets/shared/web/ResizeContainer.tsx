@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import { WebGLRenderer } from 'three'
 import React from 'react'
 import { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
@@ -38,7 +38,7 @@ function Content({
   useEffect(() => effects && effects(gl, container), [])
 
   // Init canvas, fetch events, hand them back to the wrapping div
-  const events = useCanvas({ ...props, children, gl: (gl as unknown) as THREE.WebGLRenderer })
+  const events = useCanvas({ ...props, children, gl: (gl as unknown) as WebGLRenderer })
   useEffect(() => void setEvents(events), [events])
   return null
 }

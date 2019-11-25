@@ -1,6 +1,6 @@
 import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter } from 'three'
 import React, { Suspense, useMemo, useRef } from 'react'
-import { Canvas, useLoader, useThree, useFrame, Dom } from 'react-three-fiber'
+import { Canvas, useLoader, useThree, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import BackfaceMaterial from '../resources/shaders/Backface'
 import RefractionMaterial from '../resources/shaders/Refraction'

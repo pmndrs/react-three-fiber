@@ -1,5 +1,6 @@
 export * from '../index'
 export * from '../canvas'
+export * from './shared/web/Dom'
 
 import { Color } from 'three'
 import React from 'react'
