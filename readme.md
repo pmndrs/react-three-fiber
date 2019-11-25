@@ -409,16 +409,11 @@ Sometimes you want to project dom-content on top (or underneath) of the canvas. 
 ```jsx
 import { Canvas, Dom } from 'react-three-fiber'
 
-function App() {
-  const ref = useRef()
-  return (
-    <Canvas>
-      <Dom prepend position={[100, 0, 100]}>
-        <h1>hello world!</h1>
-      </Dom>
-    </Canvas>
-  )
-}
+<Canvas>
+  <Dom prepend position={[100, 0, 100]}>
+    <h1>hello world!</h1>
+  </Dom>
+</Canvas>
 ```
 
 # Further information
