@@ -48,7 +48,7 @@ function Content() {
 
 export default function() {
   return (
-    <Canvas style={{ background: '#272730' }} orthographic camera={{ zoom: 100 }}>
+    <Canvas concurrent style={{ background: '#272730' }} orthographic camera={{ zoom: 100 }}>
       <pointLight color="indianred" />
       <pointLight position={[10, 10, -10]} color="orange" />
       <pointLight position={[-10, -10, 10]} color="lightblue" />

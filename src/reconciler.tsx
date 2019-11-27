@@ -389,6 +389,11 @@ const Renderer = Reconciler({
   },
 })
 
+const LegacyRoot = 0
+const ConcurrentRoot = 2
+const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
+
 export function render(
   element: React.ReactNode,
   container: THREE.Object3D,
@@ -399,7 +404,7 @@ export function render(
     ;(container as any).__state = state
     let newRoot = (root = Renderer.createContainer(
       container,
-      state !== undefined ? state.current.concurrent : false,
+      state !== undefined && state.current.concurrent ? ConcurrentRoot : LegacyRoot,
       false
     ))
     roots.set(container, newRoot)
@@ -413,8 +418,6 @@ export function unmountComponentAtNode(container: THREE.Object3D) {
   if (root) Renderer.updateContainer(null, root, null, () => void roots.delete(container))
 }
 
-const hasSymbol = typeof Symbol === 'function' && Symbol.for
-const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
   return {
     $$typeof: REACT_PORTAL_TYPE,

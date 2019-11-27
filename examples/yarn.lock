@@ -5044,15 +5044,15 @@ react-dev-utils@^9.1.0:
     strip-ansi "5.2.0"
     text-table "0.2.0"
 
-react-dom@^0.0.0-experimental-5faf377df:
-  version "0.0.0-experimental-5faf377df"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-0.0.0-experimental-5faf377df.tgz#86a639c8fe2a66862991f3c8564c1a28173238e5"
-  integrity sha512-llGL18JvFCmQx87WiaiyP6zAjj9Y9EMU52YicV3uNfQMY7G2szkGJ6jd25HP2SeryHIuvqAwOnnIREG268tHtA==
+react-dom@^0.0.0-experimental-b53ea6ca0:
+  version "0.0.0-experimental-b53ea6ca0"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-0.0.0-experimental-b53ea6ca0.tgz#bde4f3fdff6d9d7b54b2325039f7a9602e868a6b"
+  integrity sha512-TBJoVJbu1zBEQwPF+T6nyQXZCNXkJfYvWlIVvKZOHfQz0+L95FCh3GInnDyPrH+k8K8mOXcuZ8D2mJxWueRm7Q==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
     prop-types "^15.6.2"
-    scheduler "0.0.0-experimental-5faf377df"
+    scheduler "0.0.0-experimental-b53ea6ca0"
 
 react-error-overlay@^6.0.3:
   version "6.0.3"
@@ -5067,6 +5067,16 @@ react-promise-suspense@^0.3.1:
   resolved "https://registry.yarnpkg.com/react-promise-suspense/-/react-promise-suspense-0.3.1.tgz#b4eb428c36efb27f0a3df265de4647acdb27aa1a"
   dependencies:
     fast-deep-equal "^2.0.1"
+
+react-reconciler@^0.0.0-experimental-b53ea6ca0:
+  version "0.0.0-experimental-b53ea6ca0"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.0.0-experimental-b53ea6ca0.tgz#a745d07a613d21fc93c95c960599ace136c03cec"
+  integrity sha512-rcUmHXtc7T6ahPk18vi+tcbsecWzeAmJ9TD1wT1N0tHvzOiYp/IaBeB7T7ScGpR6q804Qcp5kt3ZTc9e/xoaow==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+    prop-types "^15.6.2"
+    scheduler "0.0.0-experimental-b53ea6ca0"
 
 react-router-dom@^5.1.2:
   version "5.1.2"
@@ -5107,10 +5117,10 @@ react-use-gesture@6.0.12:
   resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-6.0.12.tgz#33574a2222eace64f0fe027c91e886463862b15c"
   integrity sha512-1BxbILSvhGmAjHttDhRKRzq+noHorfjPJAIGfGCiX1Dm2SerON6WiBOxK49qxFsiW8x8/uJixTcotb0BDfsUVA==
 
-react@^0.0.0-experimental-5faf377df:
-  version "0.0.0-experimental-5faf377df"
-  resolved "https://registry.yarnpkg.com/react/-/react-0.0.0-experimental-5faf377df.tgz#f4f33e25ba508b6bd8a4a578ae6f3365e5ed834c"
-  integrity sha512-S/oqv3L/rzEd3ynePCKlkgErthrKOEg+jTOQRLMTDKxWWKyWZszJrG/bVVdMU36xR/7nMld3pEQj/zH5Pm9sJw==
+react@^0.0.0-experimental-b53ea6ca0:
+  version "0.0.0-experimental-b53ea6ca0"
+  resolved "https://registry.yarnpkg.com/react/-/react-0.0.0-experimental-b53ea6ca0.tgz#268b9dcaee17f740c18b77d5689971d3902f6553"
+  integrity sha512-p2+cNr/nqb6JcMCLgpR9xR63RrnmfWxOWJAt2WRz9+Fpg8BMEdTb/gDnwMtCPCFF9nNtNHbhI3Cal53qlMN59Q==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
@@ -5357,10 +5367,10 @@ sax@^1.2.4, sax@~1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
 
-scheduler@0.0.0-experimental-5faf377df:
-  version "0.0.0-experimental-5faf377df"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.0.0-experimental-5faf377df.tgz#48d1a87898f44b6042193baa0b22da65979ae595"
-  integrity sha512-NcVYkok4zMoKEsgrXcXFmLrNp7qCKocZFpACnKQGylDzkzF/XUKjPGQ0f3Vj0QV3ijYhH4qSzLJwv1QdQe4DEw==
+scheduler@0.0.0-experimental-b53ea6ca0, scheduler@^0.0.0-experimental-b53ea6ca0:
+  version "0.0.0-experimental-b53ea6ca0"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.0.0-experimental-b53ea6ca0.tgz#b55499856375d94097a9b669f5f19cf55f048a19"
+  integrity sha512-mXHVx/g98NpUEnoAI25uvVHDuZs/PCMzQTOEfwjD9hbCQF92b0fXDSOahyiTlp0A++XwDil0wh2nvB8tDm6W/Q==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"

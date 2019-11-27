@@ -58,9 +58,10 @@ module.exports = mode => {
       alias: {
         'react-three-fiber': path.resolve(`../src/targets/web`),
         //'react-three-fiber/extras': path.resolve(`../src/extras/index.ts`),
-        //scheduler: path.resolve('node_modules/scheduler'),
         react: path.resolve('node_modules/react'),
         'react-dom': path.resolve('node_modules/react-dom'),
+        scheduler: path.resolve('node_modules/scheduler'),
+        'react-scheduler': path.resolve('node_modules/react-scheduler'),
         'prop-types': path.resolve('node_modules/prop-types'),
         //three: path.resolve('node_modules/three'),
         //three$: path.resolve('node_modules/three/src/Three'),

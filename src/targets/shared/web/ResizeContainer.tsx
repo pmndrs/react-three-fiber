@@ -51,6 +51,7 @@ const ResizeContainer = React.memo((props: CanvasProps & ResizeContainerProps) =
     children,
     vr,
     gl2,
+    concurrent,
     shadowMap,
     orthographic,
     resize,

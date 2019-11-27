@@ -11,14 +11,6 @@ function calculatePosition(el: Object3D, camera: Camera, viewport: { width: numb
   return [((vector.x + 1) * viewport.width) / 2, ((-vector.y + 1) * viewport.height) / 2]
 }
 
-function isVisible(el: Object3D, levels = 10) {
-  while (el.parent && levels--) {
-    if (!el.parent.visible) return false
-    el = el.parent
-  }
-  return true
-}
-
 export const Dom = ({
   children,
   eps = 0.001,
@@ -36,11 +28,10 @@ export const Dom = ({
   const [el] = useState(() => document.createElement('div'))
   const group = useRef<Group>(null)
   const old = useRef([0, 0])
-  const show = useRef(false)
 
   useEffect(() => {
     if (group.current) {
-      el.style.cssText = `position:absolute;top:0;left:0;visibility:hidden;`
+      el.style.cssText = `position:absolute;top:0;left:0;`
       if (gl.domElement.parentNode) {
         if (prepend) gl.domElement.parentNode.prepend(el)
         else gl.domElement.parentNode.appendChild(el)
@@ -57,16 +48,11 @@ export const Dom = ({
   useFrame(() => {
     if (group.current) {
       const vec = calculatePosition(group.current, camera, viewport)
-      if (!show.current) {
-        show.current = isVisible(group.current)
-        el.style.visibility = show.current ? 'visible' : 'hidden'
-      }
       if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
         el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0)`
       }
       old.current = vec
     }
-
     gl.render(scene, camera)
   }, 1)
 
