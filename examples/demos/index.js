@@ -13,6 +13,7 @@ const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./V
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
+const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
 const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
 const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
@@ -59,10 +60,10 @@ export {
   ShaderMaterial,
   Suspense,
   WebGL2,
-  Test,
-  VR,
   Selection,
   SVGRenderer,
   CSS2DRenderer,
   CSS3DRenderer,
+  Dom,
+  Test,
 }

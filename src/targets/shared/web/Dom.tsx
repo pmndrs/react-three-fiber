@@ -1,8 +1,23 @@
-import { Vector3, Group } from 'three'
-import React, { useRef, useMemo, useEffect, useLayoutEffect } from 'react'
+import { Vector3, Group, Object3D, Camera } from 'three'
+import React, { useRef, useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
 import { useFrame, useThree } from '../../../hooks'
 import { ReactThreeFiber } from '../../../three-types'
+
+const vector = new Vector3()
+function calculatePosition(el: Object3D, camera: Camera, viewport: { width: number; height: number; factor: number }) {
+  vector.setFromMatrixPosition(el.matrixWorld)
+  vector.project(camera)
+  return [((vector.x + 1) * viewport.width) / 2, ((-vector.y + 1) * viewport.height) / 2]
+}
+
+function isVisible(el: Object3D, levels = 10) {
+  while (el.parent && levels--) {
+    if (!el.parent.visible) return false
+    el = el.parent
+  }
+  return true
+}
 
 export const Dom = ({
   children,
@@ -12,56 +27,48 @@ export const Dom = ({
   prepend,
   ...props
 }: {
-  children: React.ReactNode
+  children: React.ReactElement
   prepend?: boolean
   eps?: number
 } & React.HTMLAttributes<HTMLDivElement> &
   ReactThreeFiber.Object3DNode<Group, typeof Group>) => {
-  const { gl, camera, viewport } = useThree()
-  const div = useRef<HTMLDivElement>(null)
+  const { gl, scene, camera, viewport } = useThree()
+  const [el] = useState(() => document.createElement('div'))
   const group = useRef<Group>(null)
-  const vector = useMemo(() => new Vector3(), [])
   const old = useRef([0, 0])
+  const show = useRef(false)
 
-  useFrame(() => {
-    if (div.current && group.current) {
-      group.current.updateMatrixWorld()
-      vector.setFromMatrixPosition(group.current.matrixWorld)
-      vector.project(camera)
-      const x = ((vector.x + 1) * viewport.width) / 2
-      const y = ((-vector.y + 1) * viewport.height) / 2
-      if (Math.abs(old.current[0] - x) > eps || Math.abs(old.current[1] - y) > eps) {
-        div.current.style.transform = `translate3d(${x}px,${y}px,0)`
+  useEffect(() => {
+    if (group.current) {
+      el.style.cssText = `position:absolute;top:0;left:0;visibility:hidden;`
+      if (gl.domElement.parentNode) {
+        if (prepend) gl.domElement.parentNode.prepend(el)
+        else gl.domElement.parentNode.appendChild(el)
       }
-      old.current = [x, y]
-    }
-  })
-
-  const elRef = useRef<HTMLDivElement>()
-  useLayoutEffect(() => {
-    const el = (elRef.current = document.createElement('div'))
-    el.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;'
-    if (gl.domElement.parentNode) {
-      if (prepend) gl.domElement.parentNode.prepend(el)
-      else gl.domElement.parentNode.appendChild(el)
-    }
-    return () => {
-      if (gl.domElement.parentNode) gl.domElement.parentNode.removeChild(el)
-      ReactDOM.unmountComponentAtNode(el)
+      return () => {
+        if (gl.domElement.parentNode) gl.domElement.parentNode.removeChild(el)
+        ReactDOM.unmountComponentAtNode(el)
+      }
     }
   }, [])
 
-  useEffect(
-    () =>
-      void (
-        elRef.current &&
-        ReactDOM.render(
-          <div style={{ position: 'absolute', ...style }} className={className} ref={div} children={children} />,
-          elRef.current
-        )
-      ),
-    [children]
-  )
+  useEffect(() => void ReactDOM.render(children, el), [children])
+
+  useFrame(() => {
+    if (group.current) {
+      const vec = calculatePosition(group.current, camera, viewport)
+      if (!show.current) {
+        show.current = isVisible(group.current)
+        el.style.visibility = show.current ? 'visible' : 'hidden'
+      }
+      if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
+        el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0)`
+      }
+      old.current = vec
+    }
+
+    gl.render(scene, camera)
+  }, 1)
 
   return <group {...props} ref={group} />
 }
