@@ -28,7 +28,7 @@ This is less of an abstraction and more of a pure reconciler (like react-dom in 
 
 #### Is it slower than raw Threejs?
 
-Rendering performance is fully up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React with zero overhead. React is otherwise very efficient in building and updating component-trees, this can make a positive difference over handling scenes manually.
+Rendering performance is fully up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React with zero overhead. React is otherwise very efficient in building and updating component-trees in scale, this can make a positive difference over handling scenes manually.
 
 # What it looks like ...
 
