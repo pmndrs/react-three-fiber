@@ -31,7 +31,9 @@ export const Dom = ({
 
   useEffect(() => {
     if (group.current) {
-      el.style.cssText = `position:absolute;top:0;left:0;`
+      scene.updateMatrixWorld()
+      const vec = calculatePosition(group.current, camera, viewport)
+      el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${vec[0]}px,${vec[1]}px,0);`
       if (gl.domElement.parentNode) {
         if (prepend) gl.domElement.parentNode.prepend(el)
         else gl.domElement.parentNode.appendChild(el)
