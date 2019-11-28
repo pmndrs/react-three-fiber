@@ -57,7 +57,7 @@ function ItemFast({ id }) {
       state => state.coords[id]
     )
   )
-  // useFrame is means we're in Threejs update loop. In there we can mutate state safely.
+  // useFrame means we're in the Threejs update loop. In there we can mutate state safely.
   useFrame(() => mesh.current && mesh.current.rotation.set(...coords.current))
   return (
     <mesh ref={mesh}>
