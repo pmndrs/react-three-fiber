@@ -3,11 +3,14 @@ import { Canvas, useFrame } from 'react-three-fiber'
 import create from 'zustand'
 import { Controls, useControl } from 'react-three-gui'
 
+// Returns a random angle
 const rpi = () => Math.random() * Math.PI
+// This is the store, we're using Zustand here
 const [useStore, api] = create(set => ({
   amount: 0,
   boxes: [],
   coords: [],
+  // create(n) adds coordinates
   create(amount) {
     const ids = new Array(parseInt(amount)).fill().map((_, i) => i)
     set({
@@ -16,6 +19,7 @@ const [useStore, api] = create(set => ({
       coords: ids.reduce((acc, id) => ({ ...acc, [id]: [rpi(), rpi(), rpi()] }), 0),
     })
   },
+  // advance() moves them one step
   advance(state) {
     set(state => {
       const coords = {}
@@ -29,6 +33,8 @@ const [useStore, api] = create(set => ({
   },
 }))
 
+// Slow items render through React by binding to the item in the state
+// They will be called to update every frame, which is massively taxing ...
 function ItemSlow({ id }) {
   const coords = useStore(state => state.coords[id])
   if (!coords) return null
@@ -40,6 +46,8 @@ function ItemSlow({ id }) {
   )
 }
 
+// Fast components are allowed to mutate their view, they're still connected
+// to the store, but it won't update/re-render these components. A Zustand feature.
 function ItemFast({ id }) {
   const mesh = useRef()
   const coords = useRef([0, 0, 0])
@@ -49,6 +57,7 @@ function ItemFast({ id }) {
       state => state.coords[id]
     )
   )
+  // useFrame is means we're in Threejs update loop. In there we can mutate state safely.
   useFrame(() => mesh.current && mesh.current.rotation.set(...coords.current))
   return (
     <mesh ref={mesh}>
@@ -76,6 +85,8 @@ export default function App() {
   const transient = flux === 'transient (fast)'
   const Component = transient ? ItemFast : ItemSlow
 
+  // This side-effect creates an infinite loop that updates *all* state items by
+  // advancing them one step further. This will call the components tied to them.
   useEffect(() => {
     let frame = undefined
     api.getState().create(amount)
@@ -94,6 +105,7 @@ export default function App() {
     return () => cancelAnimationFrame(frame)
   }, [amount, concurrent, transient])
 
+  // <Canvas concurrent={true/false} is all it takes ...
   return (
     <div style={{ background: transient || concurrent ? '#272737' : 'indianred', width: '100%', height: '100%' }}>
       <Canvas concurrent={concurrent} key={amount + root + flux}>
