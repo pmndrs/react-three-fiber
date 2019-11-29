@@ -114,7 +114,7 @@ export default function App() {
           <Component key={id} id={id} />
         ))}
       </Canvas>
-      <div ref={ref} style={{ position: 'absolute', top: 60, right: 60, color: 'white' }} />
+      <div ref={ref} style={{ position: 'absolute', top: 60, left: 450, color: 'white' }} />
       <Description amount={amount} concurrent={concurrent} transient={transient} />
       <Controls />
     </div>
@@ -125,7 +125,7 @@ function Description({ amount, transient, concurrent }) {
   const mode = concurrent ? 'Concurrent' : 'Legacy'
   const flux = transient ? 'Transient' : 'Reactive'
   return (
-    <div style={{ position: 'absolute', top: 100, right: 60, color: 'white', maxWidth: 350 }}>
+    <div style={{ position: 'absolute', top: 60, left: 60, color: 'white', maxWidth: 350 }}>
       <span>
         {amount} connected components update <b>{transient ? 'transiently' : 'reactively'}</b> 60 times/second in{' '}
         <b>{concurrent ? 'concurrent' : 'legacy'} mode</b>
