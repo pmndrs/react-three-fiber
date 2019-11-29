@@ -3,6 +3,7 @@ import { Canvas, useFrame } from 'react-three-fiber'
 import create from 'zustand'
 import { Controls, useControl } from 'react-three-gui'
 
+let guid = 0
 // Returns a random angle
 const rpi = () => Math.random() * Math.PI
 // This is the store, we're using Zustand here
@@ -12,7 +13,7 @@ const [useStore, api] = create(set => ({
   coords: [],
   // create(n) adds coordinates
   create(amount) {
-    const ids = new Array(parseInt(amount)).fill().map((_, i) => i)
+    const ids = new Array(parseInt(amount)).fill().map((_, i) => guid++)
     set({
       amount,
       boxes: ids,
@@ -113,7 +114,7 @@ export default function App() {
           <Component key={id} id={id} />
         ))}
       </Canvas>
-      <div ref={ref} style={{ position: 'absolute', bottom: 350, right: 50, color: 'white' }} />
+      <div ref={ref} style={{ position: 'absolute', top: 60, right: 60, color: 'white' }} />
       <Description amount={amount} concurrent={concurrent} transient={transient} />
       <Controls />
     </div>
@@ -124,7 +125,7 @@ function Description({ amount, transient, concurrent }) {
   const mode = concurrent ? 'Concurrent' : 'Legacy'
   const flux = transient ? 'Transient' : 'Reactive'
   return (
-    <div style={{ position: 'absolute', bottom: 100, right: 50, color: 'white', maxWidth: 600 }}>
+    <div style={{ position: 'absolute', top: 100, right: 60, color: 'white', maxWidth: 350 }}>
       <span>
         {amount} connected components update <b>{transient ? 'transiently' : 'reactively'}</b> 60 times/second in{' '}
         <b>{concurrent ? 'concurrent' : 'legacy'} mode</b>

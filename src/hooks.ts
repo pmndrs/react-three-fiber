@@ -156,7 +156,7 @@ export function useLoader<T>(Proto: new () => Loader<T>, url: string | string[],
 
 export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
   const { mouse } = useThree()
-  const raycast = useMemo(() => {
+  const [raycast] = useState(() => {
     let raycaster = new THREE.Raycaster()
     if (props) applyProps(raycaster, props, {})
     let originalRaycast:
@@ -167,6 +167,6 @@ export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
       if (!originalRaycast) originalRaycast = this.constructor.prototype.raycast.bind(this)
       if (originalRaycast) originalRaycast(raycaster, intersects)
     }
-  }, [])
+  })
   return raycast
 }

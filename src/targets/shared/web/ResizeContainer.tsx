@@ -31,7 +31,7 @@ function Content({
   ...props
 }: CanvasProps & ResizeContainerProps & ResizeContainerState) {
   // Create renderer
-  const gl = useMemo(renderer, [])
+  const [gl] = useState(renderer)
   if (!gl) console.warn('No renderer created!')
 
   // Mount and unmount managemenbt
