@@ -71,7 +71,7 @@ function ItemFast({ id }) {
 export default function App() {
   const ref = useRef()
   const boxes = useStore(state => state.boxes)
-  const amount = useControl('Amount️', { type: 'select', items: [20, 100, 200, 500, 1000, 2000] })
+  const amount = useControl('Amount️', { type: 'select', items: [20, 100, 200, 500, 1000, 2000, 10000] })
   const root = useControl('React', {
     type: 'select',
     group: 'performance',
