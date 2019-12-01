@@ -74,7 +74,7 @@ const ResizeContainer = React.memo((props: CanvasProps & ResizeContainerProps) =
     resize || {
       scroll: true,
       debounce: { scroll: 50, resize: 0 },
-      polyfill: typeof window === 'undefined' ? ResizeObserver : undefined,
+      polyfill: typeof window === 'undefined' || !(window as any).ResizeObserver ? ResizeObserver : undefined,
     }
   )
 
