@@ -13,7 +13,7 @@ const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./V
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
-const Benchmark = { descr: '', tags: [], Component: lazy(() => import('./dev/Benchmark')), dev: true }
+const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
 const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
 const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
@@ -66,6 +66,6 @@ export {
   CSS2DRenderer,
   CSS3DRenderer,
   Dom,
-  Benchmark,
+  Concurrent,
   Test,
 }

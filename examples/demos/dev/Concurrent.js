@@ -1,7 +1,11 @@
 import React, { useRef, useEffect } from 'react'
 import { Canvas, useFrame } from 'react-three-fiber'
-import create from 'zustand'
 import { Controls, useControl } from 'react-three-gui'
+import create from 'zustand'
+
+import ReactDOM from 'react-dom'
+
+console.log(ReactDOM)
 
 let guid = 0
 // Returns a random angle
@@ -52,11 +56,13 @@ function ItemSlow({ id }) {
 function ItemFast({ id }) {
   const mesh = useRef()
   const coords = useRef([0, 0, 0])
-  useEffect(() =>
-    api.subscribe(
-      xyz => (coords.current = xyz),
-      state => state.coords[id]
-    )
+  useEffect(
+    () =>
+      api.subscribe(
+        xyz => (coords.current = xyz),
+        state => state.coords[id]
+      ),
+    [id]
   )
   // useFrame means we're in the Threejs update loop. In there we can mutate state safely.
   useFrame(() => mesh.current && mesh.current.rotation.set(...coords.current))
@@ -99,7 +105,7 @@ export default function App() {
       fps = 1 / delta
       ref.current.innerText = 'fps ' + fps.toFixed()
       // Change state every frame
-      api.getState().advance()
+      ReactDOM.unstable_batchedUpdates(() => api.getState().advance())
       frame = requestAnimationFrame(renderLoop)
     }
     renderLoop()
