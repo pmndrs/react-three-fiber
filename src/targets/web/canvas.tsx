@@ -64,7 +64,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
     resize || {
       scroll: true,
       debounce: { scroll: 50, resize: 0 },
-      polyfill: typeof window === 'undefined' ? ResizeObserver : undefined,
+      polyfill: typeof window === 'undefined' || !window.ResizeObserver ? ResizeObserver : undefined,
     }
   )
 
