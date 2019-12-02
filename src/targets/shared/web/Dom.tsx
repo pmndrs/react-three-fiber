@@ -19,10 +19,12 @@ export const Dom = React.forwardRef(
       style,
       className,
       prepend,
+      center,
       ...props
     }: {
       children: React.ReactElement
       prepend?: boolean
+      center?: boolean
       eps?: number
     } & React.HTMLAttributes<HTMLDivElement> &
       ReactThreeFiber.Object3DNode<Group, typeof Group>,
@@ -52,7 +54,10 @@ export const Dom = React.forwardRef(
     useEffect(
       () =>
         void ReactDOM.render(
-          <div style={style} className={className} ref={ref}>
+          <div
+            style={{ transform: center ? 'translate3d(-50%,-50%,0)' : 'none', ...style }}
+            className={className}
+            ref={ref}>
             {children}
           </div>,
           el
