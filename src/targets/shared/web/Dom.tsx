@@ -61,8 +61,7 @@ export const Dom = React.forwardRef(
             {children}
           </div>,
           el
-        ),
-      [children]
+        )
     )
 
     useFrame(() => {
