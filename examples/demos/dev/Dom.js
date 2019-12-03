@@ -38,9 +38,9 @@ function Content() {
   useFrame(() => (ref.current.rotation.x = ref.current.rotation.y = ref.current.rotation.z += 0.025))
   return (
     <group ref={ref}>
-      <Suspend time={1000} position={[-2, 0, 0]} />
-      <Suspend time={2000} position={[0, -2, 0]} />
-      <Suspend time={3000} position={[2, 0, 0]} />
+      <Suspend time={500} position={[-2, 0, 0]} />
+      <Suspend time={1000} position={[0, -2, 0]} />
+      <Suspend time={1500} position={[2, 0, 0]} />
       <Sphere position={[0, 2, 0]}>No suspense</Sphere>
     </group>
   )

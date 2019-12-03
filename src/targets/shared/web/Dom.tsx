@@ -72,8 +72,7 @@ export const Dom = React.forwardRef(
         }
         old.current = vec
       }
-      gl.render(scene, camera)
-    }, 1)
+    })
 
     return <group {...props} ref={group} />
   }

@@ -1,154 +1,110 @@
-import React, { useRef, useEffect } from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
-import { Controls, useControl } from 'react-three-gui'
-import create from 'zustand'
-
 import ReactDOM from 'react-dom'
+import React, { useRef, useState, useEffect, useMemo } from 'react'
+import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
+import { Canvas, Dom, useFrame, useThree } from 'react-three-fiber'
+import { Controls, useControl } from 'react-three-gui'
+import { unstable_LowPriority as low, unstable_runWithPriority as run } from 'scheduler'
 
-console.log(ReactDOM)
-
-let guid = 0
-// Returns a random angle
+const SLOWDOWN = 1
+const ROW = 20
+const BLOCK_AMOUNT = 600
+const SPIKE_AMOUNT = 1000
+const geom = new BoxBufferGeometry(1, 1, 1)
+const matr = new MeshNormalMaterial()
 const rpi = () => Math.random() * Math.PI
-// This is the store, we're using Zustand here
-const [useStore, api] = create(set => ({
-  amount: 0,
-  boxes: [],
-  coords: [],
-  // create(n) adds coordinates
-  create(amount) {
-    const ids = new Array(parseInt(amount)).fill().map((_, i) => guid++)
-    set({
-      amount,
-      boxes: ids,
-      coords: ids.reduce((acc, id) => ({ ...acc, [id]: [rpi(), rpi(), rpi()] }), 0),
-    })
-  },
-  // advance() moves them one step
-  advance(state) {
-    set(state => {
-      const coords = {}
-      for (let i = 0; i < state.boxes.length; i++) {
-        const id = state.boxes[i]
-        const [x, y, z] = state.coords[id]
-        coords[id] = [x + 0.01, y + 0.01, z + 0.01]
-      }
-      return { ...state, coords }
-    })
-  },
-}))
 
-// Slow items render through React by binding to the item in the state
-// They will be called to update every frame, which is massively taxing ...
-function ItemSlow({ id }) {
-  const coords = useStore(state => state.coords[id])
-  if (!coords) return null
+function Block({ change, ...props }) {
+  const [color, set] = useState(0)
+
+  // Artificial slowdown ...
+  if (color > 0) {
+    const e = performance.now() + SLOWDOWN
+    while (performance.now() < e) {}
+  }
+
+  useEffect(() => {
+    if (change) setTimeout(() => run(low, () => set(Math.round(Math.random() * 0xffffff))), Math.random() * 1000)
+  }, [change])
+
   return (
-    <mesh rotation={coords}>
-      <boxBufferGeometry args={[2, 2, 2]} attach="geometry" />
-      <meshNormalMaterial attach="material" />
+    <mesh {...props} geometry={geom}>
+      <meshBasicMaterial attach="material" color={color} />
     </mesh>
   )
 }
 
-// Fast components are allowed to mutate their view, they're still connected
-// to the store, but it won't update/re-render these components. A Zustand feature.
-function ItemFast({ id }) {
+function Blocks() {
+  const [changeBlocks, set] = useState(false)
+  useEffect(() => {
+    const handler = setInterval(() => set(state => !state), 2000)
+    return () => clearInterval(handler)
+  })
+
+  console.log(changeBlocks)
+
+  const { viewport } = useThree()
+  const width = viewport.width / 100
+  const size = width / ROW
+  return new Array(BLOCK_AMOUNT).fill().map((_, i) => {
+    const left = -viewport.width / 100 / 2 + size / 2
+    const top = viewport.height / 100 / 2 - size / 2
+    const x = (i % ROW) * size
+    const y = Math.floor(i / ROW) * -size
+    return <Block key={i} change={changeBlocks} scale={[size, size, size]} position={[left + x, top + y, 0]} />
+  })
+}
+
+function Fps() {
+  let ref = useRef()
+  let last = Date.now()
+  let qty = 0
+  let currentAvg = 0
+  useFrame(() => {
+    let now = Date.now()
+    let fps = 1 / ((now - last) / 1000)
+    let avg = Math.round((fps - currentAvg) / ++qty)
+    if (currentAvg + avg !== currentAvg) {
+      ref.current.innerText =
+        `${SPIKE_AMOUNT} spikes\n${BLOCK_AMOUNT} blocks\n${BLOCK_AMOUNT * SLOWDOWN}ms potential load\nfps avg ` +
+        (currentAvg += avg)
+    }
+    last = now
+  })
+  return <Dom className="fps" center ref={ref} />
+}
+
+function Box() {
+  let t = 0
   const mesh = useRef()
-  const coords = useRef([0, 0, 0])
-  useEffect(
-    () =>
-      api.subscribe(
-        xyz => (coords.current = xyz),
-        state => state.coords[id]
-      ),
-    [id]
+  const [coords] = useState(() => [rpi(), rpi(), rpi()])
+  useFrame(
+    ({ clock }) => mesh.current && mesh.current.rotation.set(coords[0] + (t += 0.01), coords[1] + t, coords[2] + t)
   )
-  // useFrame means we're in the Threejs update loop. In there we can mutate state safely.
-  useFrame(() => mesh.current && mesh.current.rotation.set(...coords.current))
-  return (
-    <mesh ref={mesh}>
-      <boxBufferGeometry args={[2, 2, 2]} attach="geometry" />
-      <meshNormalMaterial attach="material" />
-    </mesh>
-  )
+  return <mesh ref={mesh} geometry={geom} material={matr} scale={[2, 2, 2]} />
+}
+
+function AnimatedSpikes() {
+  return new Array(SPIKE_AMOUNT).fill().map((_, i) => <Box key={i} />)
+}
+
+function Dolly() {
+  const { clock, camera } = useThree()
+  useFrame(() => camera.updateProjectionMatrix(void (camera.zoom = 130 + Math.sin(clock.getElapsedTime() * 3) * 30)))
+  return null
 }
 
 export default function App() {
-  const ref = useRef()
-  const boxes = useStore(state => state.boxes)
-  const amount = useControl('Amount️', { type: 'select', items: [20, 100, 200, 500, 1000, 2000, 10000] })
-  const root = useControl('React', {
-    type: 'select',
-    group: 'performance',
-    items: ['legacy (slow)', 'concurrent (fast)'],
-  })
-  const flux = useControl('Zustand', {
-    type: 'select',
-    group: 'performance',
-    items: ['reactive (slow)', 'transient (fast)'],
-  })
-  const concurrent = root === 'concurrent (fast)'
-  const transient = flux === 'transient (fast)'
-  const Component = transient ? ItemFast : ItemSlow
-
-  // This side-effect creates an infinite loop that updates *all* state items by
-  // advancing them one step further. This will call the components tied to them.
-  useEffect(() => {
-    let frame = undefined
-    api.getState().create(amount)
-    let lastCalledTime = Date.now()
-    let fps = 0
-    function renderLoop() {
-      let delta = (Date.now() - lastCalledTime) / 1000
-      lastCalledTime = Date.now()
-      fps = 1 / delta
-      ref.current.innerText = 'fps ' + fps.toFixed()
-      // Change state every frame
-      ReactDOM.unstable_batchedUpdates(() => api.getState().advance())
-      frame = requestAnimationFrame(renderLoop)
-    }
-    renderLoop()
-    return () => cancelAnimationFrame(frame)
-  }, [amount, concurrent, transient])
-
-  // <Canvas concurrent={true/false} is all it takes ...
+  const root = useControl('React', { type: 'select', group: 'Performance', items: ['Concurrent', 'Legacy'] })
+  const concurrent = root === 'Concurrent'
   return (
-    <div style={{ background: transient || concurrent ? '#272737' : 'indianred', width: '100%', height: '100%' }}>
-      <Canvas concurrent={concurrent} key={amount + root + flux}>
-        {boxes.map(id => (
-          <Component key={id} id={id} />
-        ))}
+    <>
+      <Canvas concurrent={concurrent} key={root} orthographic camera={{ zoom: 100 }} style={{ background: '#272737' }}>
+        <Fps />
+        <Blocks />
+        <AnimatedSpikes />
+        <Dolly />
       </Canvas>
-      <div ref={ref} style={{ position: 'absolute', top: 60, left: 450, color: 'white' }} />
-      <Description amount={amount} concurrent={concurrent} transient={transient} />
       <Controls />
-    </div>
-  )
-}
-
-function Description({ amount, transient, concurrent }) {
-  const mode = concurrent ? 'Concurrent' : 'Legacy'
-  const flux = transient ? 'Transient' : 'Reactive'
-  return (
-    <div style={{ position: 'absolute', top: 60, left: 60, color: 'white', maxWidth: 350 }}>
-      <span>
-        {amount} connected components update <b>{transient ? 'transiently' : 'reactively'}</b> 60 times/second in{' '}
-        <b>{concurrent ? 'concurrent' : 'legacy'} mode</b>
-      </span>
-      <hr />
-      <span>
-        <b>{mode} mode</b>{' '}
-        {concurrent
-          ? 'means that React renders asynchroneously. It will now batch updates and schedule render passes. If you give it an impossible amount of load, so many render requests that it must choke, it will start to manage these requests to establish a stable 60/fps, by updating components virtually and letting them retain their visual state, using back buffers, etc.'
-          : 'means that React renders synchroneously. This is how frameworks usually fare, despite micro-optimizations and good benchmarks. The renderer will eventually crumble under load, which in the web is easy, given that we only have more or less 20ms per frame on the javascript mainthread before we face jank.'}
-      </span>
-      <p>
-        <b>{flux} updates</b>{' '}
-        {transient
-          ? 'means that the state manager informs components of changes without re-rendering them. This is a Zustand feature, a Redux-like flux state manager.'
-          : 'means that the state manager informs components of changes by re-rendering them with fresh props. This is how most state managers, like Redux, usually work.'}
-      </p>
-    </div>
+    </>
   )
 }
