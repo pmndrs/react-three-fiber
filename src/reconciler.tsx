@@ -278,19 +278,24 @@ function removeChild(parentInstance: any, child: any) {
       }
     }
     invalidateInstance(child)
-    run(idlePriority, () => {
-      // Remove interactivity
-      if (child.__container)
-        child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
-      // Remove nested child objects
-      removeRecursive(child.__objects, child)
-      removeRecursive(child.children, child, true)
-      // Dispose item
-      if (child.dispose) child.dispose()
-      // Remove references
-      delete child.__container
-      delete child.__objects
-    })
+
+    // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
+    if (child.dispose !== null) {
+      console.log('removing', child.type)
+      run(idlePriority, () => {
+        // Remove interactivity
+        if (child.__container)
+          child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+        // Remove nested child objects
+        removeRecursive(child.__objects, child)
+        removeRecursive(child.children, child, true)
+        // Dispose item
+        if (child.dispose) child.dispose()
+        // Remove references
+        delete child.__container
+        delete child.__objects
+      })
+    }
   }
 }
 
