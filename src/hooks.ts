@@ -118,9 +118,11 @@ export function useLoader<T>(Proto: new () => Loader<T>, url: string | string[],
           url =>
             new Promise(res =>
               loader.load(url, (data: any) => {
-                const objects: any[] = []
-                if (data.scene) data.scene.traverse((props: any) => objects.push(prune(props)))
-                data.__$ = objects
+                if (data.scene) {
+                  const objects: any[] = []
+                  data.scene.traverse((props: any) => objects.push(prune(props)))
+                  data.__$ = objects
+                }
                 res(data)
               })
             )
