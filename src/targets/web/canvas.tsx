@@ -37,7 +37,9 @@ const IsReady = React.memo(
 
 const defaultStyles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
 
-export const Canvas = React.memo((props: CanvasProps) => {
+export interface WebCanvasProps extends CanvasProps, Omit<React.ComponentProps<'div'>, 'children'> {}
+
+export const Canvas = React.memo((props: WebCanvasProps) => {
   const {
     children,
     vr,
@@ -64,7 +66,7 @@ export const Canvas = React.memo((props: CanvasProps) => {
     resize || {
       scroll: true,
       debounce: { scroll: 50, resize: 0 },
-      polyfill: typeof window === 'undefined' || !window.ResizeObserver ? ResizeObserver : undefined,
+      polyfill: typeof window === 'undefined' || !(window as any).ResizeObserver ? ResizeObserver : undefined,
     }
   )
 
