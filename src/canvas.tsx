@@ -94,7 +94,6 @@ export type CanvasProps = {
   >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
-  style?: React.CSSProperties
   onCreated?: (props: CanvasContext) => Promise<any> | void
   onPointerMissed?: () => void
 }
