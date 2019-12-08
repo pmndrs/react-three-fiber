@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useRef, useEffect, useState, useMemo } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
-import ResizeObserver from '@juggle/resize-observer'
+import { ResizeObserver } from '@juggle/resize-observer'
 import { useCanvas, CanvasProps, PointerEvents } from '../../canvas'
 
 const IsReady = React.memo(
