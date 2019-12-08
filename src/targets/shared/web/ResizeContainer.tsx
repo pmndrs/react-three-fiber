@@ -2,7 +2,7 @@ import { WebGLRenderer } from 'three'
 import React from 'react'
 import { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
-import ResizeObserver from '@juggle/resize-observer'
+import { ResizeObserver } from '@juggle/resize-observer'
 // @ts-ignore
 import mergeRefs from 'react-merge-refs'
 import { useCanvas, CanvasProps, PointerEvents } from '../../../canvas'
