@@ -281,7 +281,6 @@ function removeChild(parentInstance: any, child: any) {
 
     // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
     if (child.dispose !== null) {
-      console.log('removing', child.type)
       run(idlePriority, () => {
         // Remove interactivity
         if (child.__container)

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useRef, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useRef, useContext as useContextImpl, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext, Camera } from './canvas'
 import { applyProps } from './reconciler'
 //@ts-ignore
@@ -7,6 +7,14 @@ import usePromise from 'react-promise-suspense'
 
 // helper type for omitting properties from types
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
+
+function useContext<T>(context: React.Context<T>) {
+  let result = useContextImpl(context)
+  if (!result) {
+    console.warn('hooks can only be used within the canvas! https://github.com/react-spring/react-three-fiber#hooks')
+  }
+  return result
+}
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): void {
   const { subscribe } = useContext(stateContext)
@@ -18,10 +26,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
     const unsubscribe = subscribe(ref, renderPriority)
     return () => unsubscribe()
   }, [renderPriority])
-}
-
-export function useRender(callback: RenderCallback, takeOver: boolean) {
-  return useFrame(callback, takeOver ? 1 : 0)
 }
 
 export function useThree(): SharedCanvasContext {
