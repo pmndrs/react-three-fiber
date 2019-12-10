@@ -16,7 +16,7 @@
     "noImplicitThis": false,
     "baseUrl": "./src",
     "paths": {
-      "react-three-fiber": ["./"],
+      "react-three-fiber": ["./"]
     }
   },
   "include": ["./src", "extras"],
