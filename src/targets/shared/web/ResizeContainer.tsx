@@ -1,35 +1,32 @@
-import { WebGLRenderer } from 'three'
-import React from 'react'
-import { useRef, useState, useMemo, useEffect } from 'react'
+import { WebGLRenderer, Renderer as ThreeRenderer } from 'three'
+import React, { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
 import { ResizeObserver } from '@juggle/resize-observer'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 import { useCanvas, CanvasProps, PointerEvents } from '../../../canvas'
 
 const defaultStyles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
 
-type ResizeContainerProps = {
+interface Renderer extends Omit<ThreeRenderer, 'domElement'> {}
+
+export interface ResizeContainerProps extends CanvasProps {
   children: React.ReactNode
-  renderer: () => any
+  renderer: () => Renderer | undefined | null
   effects?: (renderer: any, parent: HTMLDivElement) => () => any
   preRender?: React.ReactNode
+  className?: string
+  style: React.CSSProperties
 }
 
-type ResizeContainerState = {
+interface ResizeContainerState {
   size: RectReadOnly
   setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
   container: HTMLDivElement
 }
 
-function Content({
-  children,
-  setEvents,
-  container,
-  renderer,
-  effects,
-  ...props
-}: CanvasProps & ResizeContainerProps & ResizeContainerState) {
+interface ContentProps extends ResizeContainerProps, ResizeContainerState {}
+
+function Content({ children, setEvents, container, renderer, effects, ...props }: ContentProps) {
   // Create renderer
   const [gl] = useState(renderer)
   if (!gl) console.warn('No renderer created!')
@@ -43,18 +40,16 @@ function Content({
   return null
 }
 
-const ResizeContainer = React.memo((props: CanvasProps & ResizeContainerProps) => {
+const ResizeContainer = React.memo((props: ResizeContainerProps) => {
   const {
     renderer,
     effects,
-    preRender,
     children,
     vr,
     gl2,
     concurrent,
     shadowMap,
     orthographic,
-    resize,
     invalidateFrameloop,
     updateDefaultCamera,
     noEvents,
@@ -62,9 +57,11 @@ const ResizeContainer = React.memo((props: CanvasProps & ResizeContainerProps) =
     camera,
     raycaster,
     pixelRatio,
-    style,
     onCreated,
     onPointerMissed,
+    preRender,
+    resize,
+    style,
     ...restSpread
   } = props
 
@@ -84,7 +81,7 @@ const ResizeContainer = React.memo((props: CanvasProps & ResizeContainerProps) =
   const state = useMemo(() => ({ size, setEvents, container: containerRef.current as HTMLDivElement }), [size])
 
   // Allow Gatsby, Next and other server side apps to run. Will output styles to reduce flickering.
-  if (typeof window === 'undefined') return <div style={{ ...defaultStyles, ...style }} />
+  if (typeof window === 'undefined') return <div style={{ ...defaultStyles, ...style }} {...restSpread} />
 
   // Render the canvas into the dom
   return (

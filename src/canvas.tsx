@@ -17,7 +17,9 @@ export type DomEvent =
   | React.WheelEvent<HTMLDivElement>
   | React.PointerEvent<HTMLDivElement>
 
-export type Intersection = THREE.Intersection & { eventObject: THREE.Object3D }
+export interface Intersection extends THREE.Intersection {
+  eventObject: THREE.Object3D
+}
 
 export type PointerEvent = DomEvent &
   Intersection & {
@@ -77,7 +79,7 @@ export type ResizeOptions = {
   scroll?: boolean
 }
 
-export type CanvasProps = {
+export interface CanvasProps {
   children: React.ReactNode
   vr?: boolean
   gl2?: boolean
@@ -96,12 +98,11 @@ export type CanvasProps = {
   >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
-  style?: React.CSSProperties
   onCreated?: (props: CanvasContext) => Promise<any> | void
   onPointerMissed?: () => void
 }
 
-export type UseCanvasProps = CanvasProps & {
+export interface UseCanvasProps extends CanvasProps {
   gl: THREE.WebGLRenderer
   size: RectReadOnly
 }
@@ -492,6 +493,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   // we know we are ready to compile shaders, call subscribers, etc
   const IsReady = useCallback(() => {
     const activate = () => setReady(true)
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       const result = onCreated && onCreated(state.current)
       return void (result && result.then ? result.then(activate) : activate())

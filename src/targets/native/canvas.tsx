@@ -22,7 +22,7 @@ function clientXY(e: GestureResponderEvent) {
 
 const CLICK_DELTA = 20
 
-type NativeCanvasProps = Omit<CanvasProps, 'style'> & {
+interface NativeCanvasProps extends CanvasProps {
   style?: ViewStyle
   nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
   onContextCreated?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
