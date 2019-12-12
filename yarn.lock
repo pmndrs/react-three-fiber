@@ -969,10 +969,10 @@
   dependencies:
     "@hapi/hoek" "^8.3.0"
 
-"@juggle/resize-observer@^2.4.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-2.4.0.tgz#8693fc08e49625eabd146751870e95d7a1eb556f"
-  integrity sha512-iBxD3plYdW4+yryivUWtfHy+B2wwQsdET6eviABx9QJKjokf0lBOZH853I31sbccskPsagtulW0ik1SWDek4RQ==
+"@juggle/resize-observer@next":
+  version "3.0.0-0"
+  resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.0.0-0.tgz#2dea1c92b12212526fe6500261cdac5ebf98fd8e"
+  integrity sha512-cQFwTDB77F4SE+liyAd+deeyCJ3L9uTTBXX3+ArZu/jXL1LDMXIVsD7oI9qUS5RJu3G0pNZYd9GmbgrcvAeQ0w==
 
 "@nodelib/fs.scandir@2.1.3":
   version "2.1.3"

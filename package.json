@@ -1,7 +1,7 @@
 {
   "name": "react-three-fiber",
   "private": true,
-  "version": "4.0.0-beta.11",
+  "version": "4.0.0-beta.12",
   "description": "React-fiber renderer for THREE.js",
   "main": "web.cjs.js",
   "module": "web.js",
@@ -62,7 +62,7 @@
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
   "dependencies": {
     "@babel/runtime": "^7.7.1",
-    "@juggle/resize-observer": "^2.4.0",
+    "@juggle/resize-observer": "next",
     "react-merge-refs": "^1.0.0",
     "react-promise-suspense": "^0.3.1",
     "react-reconciler": "0.23.0",
