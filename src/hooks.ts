@@ -100,8 +100,12 @@ export interface Loader<T> extends THREE.Loader {
     onError?: (event: ErrorEvent) => void
   ): unknown
 }
-
-export function useLoader<T>(Proto: new () => Loader<T>, url: string | string[], extensions?: Extensions): T {
+type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
+export function useLoader<T>(
+  Proto: new () => LoaderResult<T>,
+  url: T extends any[] ? string[] : string,
+  extensions?: Extensions
+): T {
   const loader = useMemo(() => {
     // Construct new loader
     const temp = new Proto()
