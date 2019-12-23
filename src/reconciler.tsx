@@ -424,6 +424,7 @@ export function unmountComponentAtNode(container: THREE.Object3D) {
 }
 
 export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
+  if (!containerInfo.__objects) containerInfo.__objects = []
   return {
     $$typeof: REACT_PORTAL_TYPE,
     key: key == null ? null : '' + key,
