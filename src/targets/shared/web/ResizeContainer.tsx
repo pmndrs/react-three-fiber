@@ -81,7 +81,12 @@ const ResizeContainer = React.memo((props: ResizeContainerProps) => {
   const state = useMemo(() => ({ size, setEvents, container: containerRef.current as HTMLDivElement }), [size])
 
   // Allow Gatsby, Next and other server side apps to run. Will output styles to reduce flickering.
-  if (typeof window === 'undefined') return <div style={{ ...defaultStyles, ...style }} {...restSpread} />
+  if (typeof window === 'undefined')
+    return (
+      <div style={{ ...defaultStyles, ...style }} {...restSpread}>
+        {preRender}
+      </div>
+    )
 
   // Render the canvas into the dom
   return (
