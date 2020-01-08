@@ -29,7 +29,7 @@ React-three-fiber can opt into reacts new concurrent/async mode. React will rend
 
 Imagine you are creating assets at runtime, each has a slight setup cost (for instance TextGeometry having to calculate shapes). In blocking mode React or plain threejs enough of these will eventually create jank. In concurrent mode React will create as much as it can, and deal with the rest in a manner that always allows it to render uninterrupted.
 
-You can find a small stress-test here: https://github.com/drcmda/scheduler-test
+You can find a small stress-test here: https://github.com/drcmda/scheduler-test In that test React is facing 600ms of CPU processing cost, divided between a bunch of components. It will schedule the load away, not a single frame skipped.
 
 <p align="middle">
   <img width="100%" src="https://i.imgur.com/KXtHTLH.gif" />
