@@ -46,7 +46,7 @@ import { Suspense } from 'react'
 
 function AsyncResource() {
   const gltf = useLoader(GLTFLoader, "/model.glb")
-  return ...
+  return <primitive object={gltf.scene} />
 }
 
 function Startup() {
