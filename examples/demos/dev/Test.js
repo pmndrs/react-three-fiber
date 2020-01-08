@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Canvas } from 'react-three-fiber'
+import { Canvas, useFrame, invalidate } from 'react-three-fiber'
 
 function Contents() {
   return (
@@ -11,6 +11,10 @@ function Contents() {
 }
 
 function Test() {
+  useFrame(() => {
+    console.log('render')
+  })
+
   return (
     <mesh dispose={null}>
       <Contents />
@@ -20,6 +24,16 @@ function Test() {
 
 export default function() {
   const [show, set] = useState(true)
-  useEffect(() => setTimeout(() => set(false), 2000), [])
-  return <Canvas style={{ background: '#272730' }}>{show && <Test />}</Canvas>
+  useEffect(() => {
+    setTimeout(() => {
+      invalidate(true)
+      invalidate(true)
+      invalidate(true)
+    }, 1000)
+  }, [])
+  return (
+    <Canvas invalidateFrameloop style={{ background: '#272730' }}>
+      {show && <Test />}
+    </Canvas>
+  )
 }
