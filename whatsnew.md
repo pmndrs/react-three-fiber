@@ -15,7 +15,7 @@ import { Dom } from 'react-three-fiber'
 
 <group position={[100, 10, 0]}>
   <Dom>
-    <h1>hello</h2>
+    <h1>hello</h1>
   </Dom>
   <mesh>
     <sphereBufferGeometry attach="geometry" />
