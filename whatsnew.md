@@ -1,6 +1,6 @@
 # What's new in v4 🎉
 
-Version 4 represents a full refactor that has been made to accomodate future changes and challenges. There are technically no breaking-changes, except that some of the new features rely on React being up to date. Among countless of bugfixes and little tweaks and additions, these are the major changes:
+There are technically no breaking-changes, except that some of the new features rely on React being up to date (or even experimental). Among countless of bugfixes, little tweaks and additions, these are the major changes:
 
 ## HTML overlays
 
