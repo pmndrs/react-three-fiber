@@ -27,23 +27,22 @@ export declare namespace ReactThreeFiber {
     onWheel?: (e: PointerEvent) => void
   }
 
-  export type Node<T, P> = Overwrite<
-    Partial<T>,
-    {
-      /** Attaches this class onto the parent under the given name and nulls it on unmount */
-      attach?: string
-      /** Appends this class to an array on the parent under the given name and removes it on unmount */
-      attachArray?: string
-      /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-      attachObject?: [string, string]
-      /** Constructor arguments */
-      args?: Args<P>
-      children?: React.ReactNode
-      ref?: React.Ref<React.ReactNode>
-      key?: React.Key
-      onUpdate?: (self: T) => void
-    }
-  >
+  export interface NodeProps<T, P> {
+    /** Attaches this class onto the parent under the given name and nulls it on unmount */
+    attach?: string
+    /** Appends this class to an array on the parent under the given name and removes it on unmount */
+    attachArray?: string
+    /** Adds this class to an object on the parent under the given name and deletes it on unmount */
+    attachObject?: [string, string]
+    /** Constructor arguments */
+    args?: Args<P>
+    children?: React.ReactNode
+    ref?: React.Ref<React.ReactNode>
+    key?: React.Key
+    onUpdate?: (self: T) => void
+  }
+
+  export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
 
   export type Object3DNode<T, P> = Overwrite<
     Node<T, P>,
@@ -65,8 +64,8 @@ export declare namespace ReactThreeFiber {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      // @ts-ignore
-      audio: ReactThreeFiber.Object3DNode<THREE.Audio, typeof THREE.Audio>
+      // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
+      // audio: ReactThreeFiber.Object3DNode<THREE.Audio, typeof THREE.Audio>
       audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
       positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
 
@@ -80,8 +79,8 @@ declare global {
       bone: ReactThreeFiber.Object3DNode<THREE.Bone, typeof THREE.Bone>
       lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments, typeof THREE.LineSegments>
       lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
-      // @ts-ignore
-      line: ReactThreeFiber.Object3DNode<THREE.Line, typeof THREE.Line>
+      // see `audio`
+      // line: ReactThreeFiber.Object3DNode<THREE.Line, typeof THREE.Line>
       points: ReactThreeFiber.Object3DNode<THREE.Points, typeof THREE.Points>
       group: ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>
       immediateRenderObject: ReactThreeFiber.Object3DNode<

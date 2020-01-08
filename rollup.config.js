@@ -55,4 +55,5 @@ export default [
   ...createConfig('targets/css3d', 'css3d'),
   //...createConfig('extras/index', 'extras'),
   ...createConfig('targets/native/index', 'native'),
+  ...createConfig('components', 'components'),
 ]
