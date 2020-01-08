@@ -60,7 +60,7 @@ function Startup() {
 
 <Suspense fallback={<Dom>loading...</Dom>}>
   <AsyncResource />
-  <StartUp />
+  <Startup />
 </Suspense>
 ```
 
