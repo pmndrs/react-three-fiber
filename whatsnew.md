@@ -83,7 +83,7 @@ function TorusKnot() {
 }
 ```
 
-## dispose={null} to switch off recursive asset disposal
+## Switch off recursive asset disposal via dispose={null}
 
 If you are working with loaded assets (useLoader or THREE.Loader) you may have noticed that unmounting breaks these assets because react-three-fiber calls `.dispose()` on all objects that unmount. You can now control recursive disposal yourself, that way you can keep assets alive over route changes.
 
@@ -96,7 +96,11 @@ If you are working with loaded assets (useLoader or THREE.Loader) you may have n
 <group>
 ```
 
-## x-platform architecture (with targets for react-native, css2d, css3d and svg)
+## Auto-Resize
+
+We are using [react-use-measure](https://github.com/react-spring/react-use-measure). And [@juggle/resize-observer@3.x](https://github.com/juggle/resize-observer) to detect the actual position of the canvas (which is later necessary for things like raycasting). This ensures that even if the canvas is nested withing scroll-areas, everything will work.
+
+## X-platform architecture (with targets for react-native, css2d, css3d and svg)
 
 The codebase has been refactored to make creating specific target renderers easier.
 
