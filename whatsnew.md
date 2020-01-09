@@ -87,7 +87,7 @@ function TorusKnot() {
 
 ### Primitive and New
 
-'react-three-fiber/components' exports `Primitive` and `New` to provide better type safety.
+`react-three-fiber/components` exports `Primitive` and `New` to provide better type safety.
 
 ```tsx
 import { Primitive, New } from 'react-three-fiber/components'
