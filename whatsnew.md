@@ -135,7 +135,7 @@ If you are working with loaded assets (useLoader or THREE.Loader) you may have n
 
 ## Auto-Resize
 
-We are using [react-use-measure](https://github.com/react-spring/react-use-measure). And [@juggle/resize-observer@3.x](https://github.com/juggle/resize-observer) to detect the actual position of the canvas (which is later necessary for things like raycasting). This ensures that even if the canvas is nested withing scroll-areas, everything will work.
+We are using [react-use-measure](https://github.com/react-spring/react-use-measure) and [@juggle/resize-observer@3.x](https://github.com/juggle/resize-observer) to detect the actual position of the canvas (which is later necessary for things like raycasting). This ensures that even if the canvas is nested within scroll-areas, everything will work.
 
 ## X-platform architecture (with targets for react-native, css2d, css3d and svg)
 
