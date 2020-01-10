@@ -278,19 +278,23 @@ function removeChild(parentInstance: any, child: any) {
       }
     }
     invalidateInstance(child)
-    run(idlePriority, () => {
-      // Remove interactivity
-      if (child.__container)
-        child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
-      // Remove nested child objects
-      removeRecursive(child.__objects, child)
-      removeRecursive(child.children, child, true)
-      // Dispose item
-      if (child.dispose) child.dispose()
-      // Remove references
-      delete child.__container
-      delete child.__objects
-    })
+
+    // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
+    if (child.dispose !== null) {
+      run(idlePriority, () => {
+        // Remove interactivity
+        if (child.__container)
+          child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+        // Remove nested child objects
+        removeRecursive(child.__objects, child)
+        removeRecursive(child.children, child, true)
+        // Dispose item
+        if (child.dispose) child.dispose()
+        // Remove references
+        delete child.__container
+        delete child.__objects
+      })
+    }
   }
 }
 
@@ -324,6 +328,7 @@ const Renderer = Reconciler({
   // @ts-ignore
   scheduleTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
   cancelTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
+  noTimeout: -1,
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
   removeChildFromContainer: removeChild,
@@ -389,6 +394,11 @@ const Renderer = Reconciler({
   },
 })
 
+const LegacyRoot = 0
+const ConcurrentRoot = 2
+const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
+
 export function render(
   element: React.ReactNode,
   container: THREE.Object3D,
@@ -397,7 +407,11 @@ export function render(
   let root = roots.get(container)
   if (!root) {
     ;(container as any).__state = state
-    let newRoot = (root = Renderer.createContainer(container, false, false))
+    let newRoot = (root = Renderer.createContainer(
+      container,
+      state !== undefined && state.current.concurrent ? ConcurrentRoot : LegacyRoot,
+      false
+    ))
     roots.set(container, newRoot)
   }
   Renderer.updateContainer(element, root, null, () => undefined)
@@ -409,9 +423,8 @@ export function unmountComponentAtNode(container: THREE.Object3D) {
   if (root) Renderer.updateContainer(null, root, null, () => void roots.delete(container))
 }
 
-const hasSymbol = typeof Symbol === 'function' && Symbol.for
-const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
+  if (!containerInfo.__objects) containerInfo.__objects = []
   return {
     $$typeof: REACT_PORTAL_TYPE,
     key: key == null ? null : '' + key,

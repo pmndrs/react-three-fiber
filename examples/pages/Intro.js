@@ -46,13 +46,13 @@ export default function Intro() {
         </Switch>
       </Suspense>
       <Demos />
-      <h1 style={{ color: bright ? '#2c2d31' : 'white' }}>
+      {/*<h1 style={{ color: bright ? '#2c2d31' : 'white' }}>
         three
         <br />
         zero
         <br />
         seven.
-      </h1>
+      </h1>*/}
       <a href="https://github.com/drcmda/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
         Github
       </a>

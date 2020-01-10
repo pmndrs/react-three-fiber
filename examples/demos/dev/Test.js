@@ -1,67 +1,39 @@
-import * as THREE from 'three'
-import React, { useRef, useMemo, useEffect } from 'react'
-import { Canvas, extend, useFrame, useThree, createPortal, useCamera } from 'react-three-fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import React, { useEffect, useState } from 'react'
+import { Canvas, useFrame, invalidate } from 'react-three-fiber'
 
-extend({ OrbitControls })
-
-function Controls() {
-  const controls = useRef()
-  const { scene, camera, gl } = useThree()
-  useFrame(() => controls.current.update())
+function Contents() {
   return (
-    <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
+    <>
+      <sphereBufferGeometry attach="geometry" />
+      <meshBasicMaterial attach="material" color="hotpink" />
+    </>
   )
 }
 
-function Viewcube() {
-  const { mouse, gl, camera, size } = useThree()
-  const virtualScene = useMemo(() => new THREE.Scene(), [])
-  const virtualCam = useMemo(() => new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000), [])
-  useMemo(() => {
-    virtualCam.position.z = 200
-    virtualCam.left = size.width / -2
-    virtualCam.right = size.width / 2
-    virtualCam.top = size.height / 2
-    virtualCam.bottom = size.height / -2
-    virtualCam.updateProjectionMatrix()
-  }, [size])
-
-  const ref = useRef()
-  const matrix = new THREE.Matrix4()
-
+function Test() {
   useFrame(() => {
-    matrix.getInverse(camera.matrix)
-    ref.current.quaternion.setFromRotationMatrix(matrix)
-    gl.autoClear = true
-    gl.render(scene, camera)
-    gl.autoClear = false
-    gl.clearDepth()
-    gl.render(virtualScene, virtualCam)
-  }, 1)
+    console.log('render')
+  })
 
-  return createPortal(
-    <mesh
-      ref={ref}
-      raycast={useCamera(virtualCam)}
-      position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
-      onPointerMove={e => console.log('ah')}>
-      <meshNormalMaterial attach="material" />
-      <boxBufferGeometry attach="geometry" args={[60, 60, 60]} />
-    </mesh>,
-    virtualScene
+  return (
+    <mesh dispose={null}>
+      <Contents />
+    </mesh>
   )
 }
 
 export default function() {
+  const [show, set] = useState(true)
+  useEffect(() => {
+    setTimeout(() => {
+      invalidate(true)
+      invalidate(true)
+      invalidate(true)
+    }, 1000)
+  }, [])
   return (
-    <Canvas style={{ background: '#272730' }}>
-      <mesh>
-        <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
-        <meshNormalMaterial attach="material" />
-      </mesh>
-      <Controls />
-      <Viewcube />
+    <Canvas invalidateFrameloop style={{ background: '#272730' }}>
+      {show && <Test />}
     </Canvas>
   )
 }
