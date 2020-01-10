@@ -9,10 +9,8 @@ const defaultStyles: React.CSSProperties = { position: 'relative', width: '100%'
 
 interface Renderer extends Omit<ThreeRenderer, 'domElement'> {}
 
-export interface ContainerProps extends CanvasProps {
+export interface ContainerProps extends CanvasProps, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
-  className?: string
-  style: React.CSSProperties
 }
 
 export interface ResizeContainerProps extends CanvasProps, ContainerProps {
