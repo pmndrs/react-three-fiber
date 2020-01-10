@@ -14,7 +14,7 @@ export interface ContainerProps extends CanvasProps, React.HTMLAttributes<HTMLDi
 }
 
 export interface ResizeContainerProps extends CanvasProps, ContainerProps {
-  renderer: () => Renderer | undefined | null
+  renderer?: () => Renderer | undefined | null
   effects?: (renderer: any, parent: HTMLDivElement) => () => any
   preRender?: React.ReactNode
 }
