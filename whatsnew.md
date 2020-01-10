@@ -162,3 +162,11 @@ ReactDOM.render(
   document.getElementById("root")
 )
 ```
+
+Currently you can refer to the following targets:
+
+- react-three-fiber, webGL canvas
+- react-three-fiber (on react-native), react-native OPENGLES canvas
+- react-three-fiber/svg, renders into an svg
+- react-three-fiber/css2d, threejs Css2dRenderer
+- react-three-fiber/css3d, threejs Css3dRenderer
