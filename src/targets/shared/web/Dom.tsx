@@ -5,10 +5,12 @@ import { useFrame, useThree } from '../../../hooks'
 import { ReactThreeFiber } from '../../../three-types'
 
 const vector = new Vector3()
-function calculatePosition(el: Object3D, camera: Camera, viewport: { width: number; height: number; factor: number }) {
+function calculatePosition(el: Object3D, camera: Camera, size: { width: number; height: number }) {
   vector.setFromMatrixPosition(el.matrixWorld)
   vector.project(camera)
-  return [((vector.x + 1) * viewport.width) / 2, ((-vector.y + 1) * viewport.height) / 2]
+  let widthHalf = size.width / 2
+  let heightHalf = size.height / 2
+  return [vector.x * widthHalf + widthHalf, -(vector.y * heightHalf) + heightHalf]
 }
 
 export const Dom = React.forwardRef(
@@ -30,7 +32,7 @@ export const Dom = React.forwardRef(
       ReactThreeFiber.Object3DNode<Group, typeof Group>,
     ref: React.Ref<HTMLDivElement>
   ) => {
-    const { gl, scene, camera, viewport } = useThree()
+    const { gl, scene, camera, size } = useThree()
     const [el] = useState(() => document.createElement('div'))
     const group = useRef<Group>(null)
     const old = useRef([0, 0])
@@ -38,7 +40,7 @@ export const Dom = React.forwardRef(
     useEffect(() => {
       if (group.current) {
         scene.updateMatrixWorld()
-        const vec = calculatePosition(group.current, camera, viewport)
+        const vec = calculatePosition(group.current, camera, size)
         el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${vec[0]}px,${vec[1]}px,0);`
         if (gl.domElement.parentNode) {
           if (prepend) gl.domElement.parentNode.prepend(el)
@@ -66,7 +68,7 @@ export const Dom = React.forwardRef(
 
     useFrame(() => {
       if (group.current) {
-        const vec = calculatePosition(group.current, camera, viewport)
+        const vec = calculatePosition(group.current, camera, size)
         if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
           el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0)`
         }
