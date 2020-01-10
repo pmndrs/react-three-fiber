@@ -3,9 +3,9 @@ export * from '../canvas'
 
 import React from 'react'
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
-import { ResizeContainer, ResizeContainerProps } from './shared/web/ResizeContainer'
+import { ResizeContainer, ContainerProps } from './shared/web/ResizeContainer'
 
-export const Canvas = React.memo(({ children, ...props }: ResizeContainerProps) => (
+export const Canvas = React.memo(({ children, ...props }: ContainerProps) => (
   <ResizeContainer
     {...props}
     renderer={() => new CSS3DRenderer()}

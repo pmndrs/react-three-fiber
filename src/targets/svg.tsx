@@ -5,9 +5,9 @@ export * from './shared/web/Dom'
 import { Color } from 'three'
 import React from 'react'
 import { SVGRenderer } from 'three/examples/jsm/renderers/SVGRenderer'
-import { ResizeContainer, ResizeContainerProps } from './shared/web/ResizeContainer'
+import { ResizeContainer, ContainerProps } from './shared/web/ResizeContainer'
 
-export const Canvas = React.memo(({ children, ...props }: ResizeContainerProps) => (
+export const Canvas = React.memo(({ children, ...props }: ContainerProps) => (
   <ResizeContainer
     {...props}
     renderer={() => {
