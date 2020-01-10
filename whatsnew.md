@@ -1,3 +1,5 @@
+<a href="https://github.com/drcmda/r3fv4"><img width="100%" src="https://i.imgur.com/L3kZpJh.gif" /></a>
+
 # What's new in v4 🎉
 
 There are technically no breaking-changes, except that some of the new features rely on React being up to date (or even experimental). Among countless of bugfixes, little tweaks and additions, these are the major changes:
