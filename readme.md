@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/drcmda/r3fv4"><img width="100%" src="https://i.imgur.com/L3kZpJh.gif" /></a>
+  <a href="https://github.com/drcmda/r3fv4"><img width="880" src="https://i.imgur.com/L3kZpJh.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-untitled-game-i2160"><img width="288" height="160" src="https://i.imgur.com/2Ix4Du8.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-c671i"><img width="288" height="160" src="https://i.imgur.com/OwxJQfx.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gestures-dh2jc"><img width="288" height="160" src="https://i.imgur.com/ZJ04pRJ.gif" /></a>
