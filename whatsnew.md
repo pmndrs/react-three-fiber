@@ -25,6 +25,8 @@ import { Dom } from 'react-three-fiber'
 </group>
 ```
 
+Here's an example: https://codesandbox.io/s/react-three-fiber-suspense-zu2wo
+
 ## Concurrent mode (*experimental*)
 
 React-three-fiber can opt into reacts new concurrent/async mode. React will render asynchroneously from then on. It will try to keep a steady 60fps loop at all cost, it will schedule, defer or virtualize operations that threaten to blow the budget. 
