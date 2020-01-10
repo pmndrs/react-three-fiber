@@ -27,7 +27,7 @@ import { Dom } from 'react-three-fiber'
 
 React-three-fiber can opt into reacts new concurrent/async mode. React will render asynchroneously from then on. It will try to keep a steady 60fps loop at all cost, it will schedule, defer or virtualize operations that threaten to blow the budget. 
 
-Imagine you are creating assets at runtime, each has a slight setup cost (for instance TextGeometry having to calculate shapes). In blocking mode React or plain threejs enough of these will eventually create jank. In concurrent mode React will create as much as it can, and deal with the rest in a manner that always allows it to render uninterrupted.
+Imagine you are creating assets at runtime, each has a slight setup cost (for instance TextGeometry having to calculate shapes). In blocking mode React or plain threejs, too many of these will eventually create jank. In concurrent mode React will commit as much as it can, and deal with the rest in a manner that leaves the main thread uninterrupted.
 
 You can find a small stress-test here: https://github.com/drcmda/scheduler-test In that test React is facing 600ms of CPU processing cost, divided between a bunch of components. It will schedule the load away, not a single frame skipped.
 
