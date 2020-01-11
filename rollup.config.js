@@ -1,8 +1,8 @@
 import path from 'path'
+import { promises as fs } from 'fs'
 import babel from 'rollup-plugin-babel'
 import resolve from 'rollup-plugin-node-resolve'
 import json from 'rollup-plugin-json'
-import compiler from '@ampproject/rollup-plugin-closure-compiler'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
@@ -25,6 +25,16 @@ const getBabelOptions = ({ useESModules }, targets) => ({
   ],
 })
 
+function targetTypings(entry, out) {
+  return {
+    writeBundle() {
+      return fs.lstat(`dist/${out}`).catch(() => {
+        return fs.writeFile(`dist/${out}.d.ts`, `export * from "./${entry}"`)
+      })
+    },
+  }
+}
+
 function createConfig(entry, out) {
   return [
     {
@@ -36,6 +46,7 @@ function createConfig(entry, out) {
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
         sizeSnapshot(),
         resolve({ extensions }),
+        targetTypings(entry, out),
         //compiler(),
       ],
     },
@@ -43,7 +54,13 @@ function createConfig(entry, out) {
       input: `./src/${entry}`,
       output: { file: `dist/${out}.cjs.js`, format: 'cjs' },
       external,
-      plugins: [json(), babel(getBabelOptions({ useESModules: false })), sizeSnapshot(), resolve({ extensions })],
+      plugins: [
+        json(),
+        babel(getBabelOptions({ useESModules: false })),
+        sizeSnapshot(),
+        resolve({ extensions }),
+        targetTypings(entry, out),
+      ],
     },
   ]
 }
