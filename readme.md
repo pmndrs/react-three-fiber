@@ -268,7 +268,7 @@ function App() {
 
 #### useThree(): SharedCanvasContext
 
-This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates.
+This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser, for instance, and you get fresh measurements, same applies to any of the defaults you can change.
 
 ```jsx
 import { useThree } from 'react-three-fiber'
