@@ -16,7 +16,7 @@
     "build": "rollup -c && yarn copy",
     "prepare": "npm run build",
     "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc || true && prettier types/**/** --write",
     "typegen:components": "npx ts-node src/components/generateExports.ts",
