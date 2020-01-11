@@ -60,7 +60,7 @@ function Thing() {
 
 # Canvas
 
-The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_!
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_! It stretches to 100% of the next relative/absolute parent-container. Make sure your canvas is given space to show contents!
 
 ```jsx
 <Canvas
