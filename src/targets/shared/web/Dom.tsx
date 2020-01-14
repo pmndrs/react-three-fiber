@@ -1,6 +1,8 @@
 import { Vector3, Group, Object3D, Camera } from 'three'
 import React, { useRef, useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
+import { Assign } from 'utility-types'
+
 import { useFrame, useThree } from '../../../hooks'
 import { ReactThreeFiber } from '../../../three-types'
 
@@ -8,28 +10,22 @@ const vector = new Vector3()
 function calculatePosition(el: Object3D, camera: Camera, size: { width: number; height: number }) {
   vector.setFromMatrixPosition(el.matrixWorld)
   vector.project(camera)
-  let widthHalf = size.width / 2
-  let heightHalf = size.height / 2
+  const widthHalf = size.width / 2
+  const heightHalf = size.height / 2
   return [vector.x * widthHalf + widthHalf, -(vector.y * heightHalf) + heightHalf]
+}
+
+export interface DomProps
+  extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
+  children: React.ReactElement
+  prepend?: boolean
+  center?: boolean
+  eps?: number
 }
 
 export const Dom = React.forwardRef(
   (
-    {
-      children,
-      eps = 0.001,
-      style,
-      className,
-      prepend,
-      center,
-      ...props
-    }: {
-      children: React.ReactElement
-      prepend?: boolean
-      center?: boolean
-      eps?: number
-    } & React.HTMLAttributes<HTMLDivElement> &
-      ReactThreeFiber.Object3DNode<Group, typeof Group>,
+    { children, eps = 0.001, style, className, prepend, center, ...props }: DomProps,
     ref: React.Ref<HTMLDivElement>
   ) => {
     const { gl, scene, camera, size } = useThree()
@@ -51,6 +47,7 @@ export const Dom = React.forwardRef(
           ReactDOM.unmountComponentAtNode(el)
         }
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(
