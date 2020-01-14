@@ -149,18 +149,8 @@ export function useLoader<T>(
     []
   )
 
-  // Temporary hack to make the new api backwards compatible for a while ...
-  const isArray = Array.isArray(url)
-  if (!isArray) {
-    Object.assign(results[0], {
-      [Symbol.iterator]() {
-        console.warn('[value]=useLoader(...) is deprecated, please use value=useLoader(...) instead!')
-        return [results[0]][Symbol.iterator]()
-      },
-    })
-  }
-
   // Return the object itself and a list of pruned props
+  const isArray = Array.isArray(url)
   return isArray ? results : results[0]
 }
 
@@ -169,13 +159,10 @@ export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
   const [raycast] = useState(() => {
     let raycaster = new THREE.Raycaster()
     if (props) applyProps(raycaster, props, {})
-    let originalRaycast:
-      | ((raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void)
-      | undefined = undefined
     return function(_: THREE.Raycaster, intersects: THREE.Intersection[]): void {
       raycaster.setFromCamera(mouse, camera)
-      if (!originalRaycast) originalRaycast = this.constructor.prototype.raycast.bind(this)
-      if (originalRaycast) originalRaycast(raycaster, intersects)
+      const rc = this.constructor.prototype.raycast.bind(this)
+      if (rc) rc(raycaster, intersects)
     }
   })
   return raycast
