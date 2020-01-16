@@ -3,7 +3,7 @@ import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import stork from 'file-loader!../../resources/gltf/stork.glb'
+import stork from '../../resources/gltf/stork.glb'
 extend({ OrbitControls })
 
 function Model(props) {

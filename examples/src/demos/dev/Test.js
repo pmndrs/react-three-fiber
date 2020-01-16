@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import React, { useEffect, useState } from 'react'
 import { Canvas, useFrame, invalidate } from 'react-three-fiber'
 
@@ -11,12 +12,12 @@ function Contents() {
 }
 
 function Test() {
-  useFrame(() => {
-    console.log('render')
-  })
+  const [pos, set] = useState([0, 0, 0])
+  useEffect(() => void setTimeout(() => set(undefined), 1000), [])
+  useEffect(() => void setTimeout(() => set(new THREE.Vector3(1, 1, 1)), 2000), [])
 
   return (
-    <mesh dispose={null}>
+    <mesh position={pos}>
       <Contents />
     </mesh>
   )

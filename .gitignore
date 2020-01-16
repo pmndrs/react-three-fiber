@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 dist/
+build/
 types/
 Thumbs.db
 ehthumbs.db

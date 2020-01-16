@@ -4,13 +4,13 @@ import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import planet from 'file-loader!../resources/gltf/planet.gltf'
+import planet from '../resources/gltf/planet.gltf'
 
 function Planet(props) {
   const group = useRef()
   const gltf = useLoader(GLTFLoader, planet, loader => {
     const dracoLoader = new DRACOLoader()
-    dracoLoader.setDecoderPath('/public/draco-gltf/')
+    dracoLoader.decoderPath = '/draco-gltf/'
     loader.setDRACOLoader(dracoLoader)
   })
 

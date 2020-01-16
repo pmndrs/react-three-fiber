@@ -15,9 +15,9 @@ const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refrac
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
 const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
 const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
-const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
-const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
-const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
+//const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
+//const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
+//const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
 const Selection = { descr: '', tags: [], Component: lazy(() => import('./dev/Selection')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./dev/Pointcloud')), dev: true }
 const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/Reparenting')), dev: true }
@@ -26,7 +26,7 @@ const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./dev/Mu
 const Hud = { descr: '', tags: [], Component: lazy(() => import('./dev/Hud')), dev: true }
 const InstancedMesh = { descr: '', tags: [], Component: lazy(() => import('./dev/InstancedMesh')), dev: true }
 const GltfAnimation = { descr: '', tags: [], Component: lazy(() => import('./dev/GltfAnimation')), dev: true }
-const VR = { descr: '', tags: [], Component: lazy(() => import('./dev/VR')), dev: true }
+//const VR = { descr: '', tags: [], Component: lazy(() => import('./dev/VR')), dev: true }
 const ShaderMaterial = { descr: '', tags: [], Component: lazy(() => import('./dev/ShaderMaterial')), dev: true }
 const Suspense = { descr: '', tags: [], Component: lazy(() => import('./dev/Suspense')), dev: true }
 const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./dev/SelectiveBloom')), dev: true }
@@ -62,9 +62,9 @@ export {
   Suspense,
   WebGL2,
   Selection,
-  SVGRenderer,
-  CSS2DRenderer,
-  CSS3DRenderer,
+  //SVGRenderer,
+  //CSS2DRenderer,
+  //CSS3DRenderer,
   Dom,
   Concurrent,
   Test,

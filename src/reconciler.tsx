@@ -126,8 +126,19 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         }
         // Special treatment for objects with support for set/copy
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
-          if (target.copy && target.constructor.name === (value as any).constructor.name) target.copy(value)
-          else if (Array.isArray(value)) target.set(...value)
+          // If value is an array it has got to be the set function
+          if (Array.isArray(value)) target.set(...value)
+          // Test again target.copy(class) next ...
+          else if (
+            target.copy &&
+            value &&
+            (value as any).constructor &&
+            target.constructor.name === (value as any).constructor.name
+          )
+            target.copy(value)
+          // If nothing else fits, just set the single value
+          // TODO: Should we do something about the user trying to set "undefined"?
+          // https://github.com/react-spring/react-three-fiber/issues/274
           else target.set(value)
           // Else, just overwrite the value
         } else root[key] = value

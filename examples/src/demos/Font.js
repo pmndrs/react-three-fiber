@@ -2,10 +2,10 @@ import * as THREE from 'three'
 import React, { Suspense, useEffect, useRef, useState, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useUpdate } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import flamingo from 'file-loader!../resources/gltf/flamingo.glb'
-import parrot from 'file-loader!../resources/gltf/parrot.glb'
-import stork from 'file-loader!../resources/gltf/stork.glb'
-import bold from 'file-loader!../resources/fonts/bold.blob'
+import flamingo from '../resources/gltf/flamingo.glb'
+import parrot from '../resources/gltf/parrot.glb'
+import stork from '../resources/gltf/stork.glb'
+import bold from '../resources/fonts/bold.blob'
 
 const birds = [flamingo, parrot, stork]
 

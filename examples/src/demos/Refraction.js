@@ -4,8 +4,11 @@ import { Canvas, useLoader, useThree, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import BackfaceMaterial from '../resources/shaders/Backface'
 import RefractionMaterial from '../resources/shaders/Refraction'
-import diamondUrl from 'file-loader!../resources/gltf/diamond.glb'
+import diamondUrl from '../resources/gltf/diamond.glb'
 import textureUrl from '../resources/images/backdrop.jpg'
+
+console.log(diamondUrl)
+console.log(textureUrl)
 
 function Background() {
   const { viewport, aspect } = useThree()
