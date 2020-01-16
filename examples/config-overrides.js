@@ -4,7 +4,7 @@ const path = require('path')
 
 module.exports = (config, env) => {
   config.resolve.extensions = [...config.resolve.extensions, '.ts', '.tsx']
-  return (config = override(
+  return override(
     addReactRefresh(),
     removeModuleScopePlugin(),
     babelInclude([path.resolve('src'), path.resolve('../src')]),
@@ -20,5 +20,5 @@ module.exports = (config, env) => {
       //three$: path.resolve('./resources/three.js'),
       //'../../../build/three.module.js': path.resolve('./resources/three.js'),
     })
-  )(config, env))
+  )(config, env)
 }
