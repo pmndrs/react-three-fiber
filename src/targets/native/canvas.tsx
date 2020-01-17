@@ -69,7 +69,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
     []
   )
 
-  return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} />
+  return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} collapsable={false} />
 })
 
 export const Canvas = React.memo((props: NativeCanvasProps) => {
