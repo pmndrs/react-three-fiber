@@ -36,27 +36,51 @@ Rendering performance is up to Threejs and the GPU, react-three-fiber drives a r
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
 ```jsx
+import ReactDOM from 'react-dom'
+import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from 'react-three-fiber'
 
-function Thing() {
+function Thing(props) {
   const ref = useRef()
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
   useFrame(() => (ref.current.rotation.x = ref.current.rotation.y += 0.01))
   return (
     <mesh
       ref={ref}
-      onClick={e => console.log('click')}
-      onPointerOver={e => console.log('hover')}
-      onPointerOut={e => console.log('unhover')}>
+      {...props}
+      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      onClick={e => setActive(!active)}
+      onPointerOver={e => setHover(true)}
+      onPointerOut={e => setHover(false)}>
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-      <meshNormalMaterial attach="material" />
+      <meshStandardMaterial attach="material" color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
 }
 
-<Canvas>
-  <Thing />
-</Canvas>
+ReactDOM.render(
+  <Canvas>
+    <ambientLight />
+    <pointLight position={[10, 10, 10]} />
+    <Thing position={[-1.2, 0, 0]} />
+    <Thing position={[1.2, 0, 0]} />
+  </Canvas>,
+  document.getElementById('root')
+)
 ```
+
+# How to proceed?
+
+You need to have at least a basic background in threejs before you start. These resources will help:
+
+Threejs documentation: https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+
+Threejs fundamentals: https://threejsfundamentals.org/
+
+Discover Threejs: https://discoverthreejs.com/
+
+The [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to get familiar with reactr-three-fiber.
 
 # Canvas
 
