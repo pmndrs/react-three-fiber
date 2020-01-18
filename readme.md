@@ -76,11 +76,11 @@ You need to have at least a basic background in threejs before you start. These 
 
 Threejs documentation: https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
 
-Threejs fundamentals: https://threejsfundamentals.org/
+Threejs fundamentals: https://threejsfundamentals.org
 
-Discover Threejs: https://discoverthreejs.com/
+Discover Threejs: https://discoverthreejs.com
 
-The [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to get familiar with reactr-three-fiber.
+The [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to get familiar with react-three-fiber.
 
 # Canvas
 
