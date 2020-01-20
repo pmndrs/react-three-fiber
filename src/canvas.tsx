@@ -524,7 +524,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
         gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
       } else console.warn('the gl instance does not support VR!')
     }
-  }, [ready])
+  }, [ready, invalidateFrameloop])
 
   // Dispose renderer on unmount
   useEffect(

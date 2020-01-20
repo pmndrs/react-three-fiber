@@ -136,10 +136,9 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
             target.constructor.name === (value as any).constructor.name
           )
             target.copy(value)
-          // If nothing else fits, just set the single value
-          // TODO: Should we do something about the user trying to set "undefined"?
+          // If nothing else fits, just set the single value, ignore undefined
           // https://github.com/react-spring/react-three-fiber/issues/274
-          else target.set(value)
+          else if (value !== undefined) target.set(value)
           // Else, just overwrite the value
         } else root[key] = value
 

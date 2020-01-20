@@ -15,7 +15,8 @@
     "react-three-gui": "^0.1.5",
     "react-use-gesture": "^6.0.14",
     "styled-components": "^5.0.0",
-    "threejs-meshline": "^2.0.9"
+    "threejs-meshline": "^2.0.9",
+    "zustand": "^2.2.2"
   },
   "scripts": {
     "start": "react-app-rewired start",
