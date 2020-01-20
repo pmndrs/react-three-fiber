@@ -480,7 +480,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
   // Update pixel ratio
   useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [pixelRatio])
-  // Update shadowmap
+  // Update shadow map
   useLayoutEffect(() => {
     if (shadowMap) {
       gl.shadowMap.enabled = true
@@ -489,9 +489,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     }
   }, [shadowMap])
 
-  // This component is a bridge into the three render context, when it gets rendererd
+  // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
-  const IsReady = useCallback(() => {
+  const Bridge = useCallback(function Bridge() {
     const activate = () => setReady(true)
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -502,13 +502,24 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     return null
   }, [])
 
+  // This is just a simple wrapper component for cleaner debug experience
+  // in React Devtools each R3F Canvas will create its own independent "Scene" root.
+  // The issue was that stateContext.Provider is a "virtual" component and does not appear in React Devtools
+  // components tree, this in turn causes children of stateContext.Provider to be placed under its parent
+  // which is nothing (in this case), the Bridge component would then look like a global root component.
+  const Scene = function(props: any) {
+    return props.children
+  }
+
   // Render v-dom into scene
   useLayoutEffect(() => {
     render(
-      <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
-        {typeof children === 'function' ? children(state.current) : children}
-        <IsReady />
-      </stateContext.Provider>,
+      <Scene>
+        <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
+          {typeof children === 'function' ? children(state.current) : children }
+        </stateContext.Provider>
+        <Bridge />
+      </Scene>,
       defaultScene,
       state
     )
