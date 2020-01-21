@@ -41,7 +41,7 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
   return null
 }
 
-const ResizeContainer = React.memo((props: ResizeContainerProps) => {
+const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContainerProps) {
   const {
     renderer,
     effects,
