@@ -491,7 +491,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
-  const Bridge = useCallback(function Bridge() {
+  const Canvas = useCallback(function Canvas(props: { children: React.ReactElement }): JSX.Element {
     const activate = () => setReady(true)
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -499,27 +499,18 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       const result = onCreated && onCreated(state.current)
       return void (result && result.then ? result.then(activate) : activate())
     }, [])
-    return null
-  }, [])
 
-  // This is just a simple wrapper component for cleaner debug experience
-  // in React Devtools each R3F Canvas will create its own independent "Scene" root.
-  // The issue was that stateContext.Provider is a "virtual" component and does not appear in React Devtools
-  // components tree, this in turn causes children of stateContext.Provider to be placed under its parent
-  // which is nothing (in this case), the Bridge component would then look like a global root component.
-  const Scene = function(props: any) {
     return props.children
-  }
+  }, [])
 
   // Render v-dom into scene
   useLayoutEffect(() => {
     render(
-      <Scene>
+      <Canvas>
         <stateContext.Provider value={sharedState.current as SharedCanvasContext}>
-          {typeof children === 'function' ? children(state.current) : children }
+          {typeof children === 'function' ? children(state.current) : children}
         </stateContext.Provider>
-        <Bridge />
-      </Scene>,
+      </Canvas>,
       defaultScene,
       state
     )

@@ -5,7 +5,7 @@ import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fib
 
 function Content() {
   const { camera } = useThree()
-  console.log(camera)
+  //console.log(camera)
   const scene = useRef()
   useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 10)
   return (
