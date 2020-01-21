@@ -6,7 +6,7 @@ import { WebGLRenderer } from 'three'
 import React, { useRef } from 'react'
 import { ResizeContainer, ContainerProps } from './shared/web/ResizeContainer'
 
-export const Canvas = React.memo(({ children, ...props }: ContainerProps) => {
+export const Canvas = React.memo(function Canvas({ children, ...props }: ContainerProps) {
   const canvasRef = useRef<HTMLCanvasElement>()
   return (
     <ResizeContainer
