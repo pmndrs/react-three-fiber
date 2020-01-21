@@ -40,7 +40,7 @@ import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from 'react-three-fiber'
 
-function Thing(props) {
+function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
   
@@ -48,13 +48,13 @@ function Thing(props) {
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   
-  // Rotate the mesh a bit on every frame, this is outside of React without overhead
+  // Rotate mesh every frame, this is outside of React without overhead
   useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
   
   return (
     <mesh
-      ref={mesh}
       {...props}
+      ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={e => setActive(!active)}
       onPointerOver={e => setHover(true)}
@@ -69,8 +69,8 @@ ReactDOM.render(
   <Canvas>
     <ambientLight />
     <pointLight position={[10, 10, 10]} />
-    <Thing position={[-1.2, 0, 0]} />
-    <Thing position={[1.2, 0, 0]} />
+    <Box position={[-1.2, 0, 0]} />
+    <Box position={[1.2, 0, 0]} />
   </Canvas>,
   document.getElementById('root')
 )
