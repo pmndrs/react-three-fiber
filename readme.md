@@ -5,12 +5,12 @@
   <a href="https://codesandbox.io/embed/react-three-fiber-gestures-dh2jc"><img width="288" height="160" src="https://i.imgur.com/ZJ04pRJ.gif" /></a>
   <a href="https://codesandbox.io/embed/react-three-fiber-gltf-loader-animations-w633u"><img width="288" height="160" src="https://i.imgur.com/UzG518m.gif" /></a>
   <a href="https://github.com/drcmda/learnwithjason"><img width="288" height="160" src="https://i.imgur.com/1atWRR3.gif" /></a>
-  <a href="https://codesandbox.io/embed/react-three-fiber-suspense-gltf-loader-l900i"><img width="288" height="160" src="https://i.imgur.com/8xpKFkN.gif" /></a>
+  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="288" height="160" src="https://i.imgur.com/8xpKFkN.gif" /></a>
   <a href="https://codesandbox.io/embed/387z7o2zrq"><img width="288" height="160" src="https://i.imgur.com/YewcWL5.gif" /></a>
   <a href="https://codesandbox.io/embed/m7q0r29nn9"><img width="288" height="160" src="https://i.imgur.com/LDddjjC.gif" /></a>
   <a href="https://codesandbox.io/embed/jz9l97qn89"><img width="288" height="160" src="https://i.imgur.com/zrhe5Jc.gif" /></a>
   <a href="https://codesandbox.io/embed/kky7yk087v"><img width="288" height="160" src="https://i.imgur.com/jemlXzE.gif" /></a>
-  <a href="https://codesandbox.io/embed/ly0oxkp899"><img width="288" height="160" src="https://i.imgur.com/vjmDwpS.gif" /></a>
+  <a href="https://codesandbox.io/embed/react-three-fiber-react-spring-svg-parallax-ucnc8"><img width="288" height="160" src="https://i.imgur.com/vjmDwpS.gif" /></a>
   <a href="https://codesandbox.io/embed/y3j31r13zz"><img width="288" height="160" src="https://i.imgur.com/iFtjKHM.gif" /></a>
 </p>
 <p align="middle">
