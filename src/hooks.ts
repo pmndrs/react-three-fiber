@@ -16,7 +16,7 @@ function useContext<T>(context: React.Context<T>) {
   return result
 }
 
-export function useFrame(callback: RenderCallback, renderPriority: number = 0): void {
+export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
   const { subscribe } = useContext(stateContext)
   // Update ref
   const ref = useRef<RenderCallback>(callback)
@@ -26,6 +26,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
     const unsubscribe = subscribe(ref, renderPriority)
     return () => unsubscribe()
   }, [renderPriority])
+  return null
 }
 
 export function useThree(): SharedCanvasContext {

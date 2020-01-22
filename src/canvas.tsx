@@ -521,8 +521,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // Start render-loop, either via RAF or setAnimationLoop for VR
       if (!state.current.vr) {
         invalidate(state)
-      } else if (gl.vr && gl.setAnimationLoop) {
-        gl.vr.enabled = true
+      } else if ((gl.vr || (gl as any).xr) && gl.setAnimationLoop) {
+        ;(gl.vr || (gl as any).xr).enabled = true
         gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
       } else console.warn('the gl instance does not support VR!')
     }
