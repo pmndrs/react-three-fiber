@@ -31,7 +31,7 @@ This is less of an abstraction and more of a pure reconciler (like react-dom in 
 
 Rendering performance is up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React without overhead. React is otherwise very efficient in building and updating component-trees, which could allow it to potentially outperform manual apps at scale.
 
-# What it looks like ...
+#### What it looks like ...
 
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
@@ -76,19 +76,17 @@ ReactDOM.render(
 )
 ```
 
-# How to proceed?
+#### How to proceed?
 
-You need to have at least a basic background in threejs before you start. These resources will help:
+1. Before you start, make sure you have a [basic grasp of threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). 
+2. When you know what a scene is, how cameras, meshes, geometries and materials work, more or less, the [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to play around and get familiar with. 
+3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps and helps you to get familiar with react-three-fiber.
 
-Threejs documentation: https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
+You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) or [Discover Threejs](https://discoverthreejs.com). Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
 
-Threejs fundamentals: https://threejsfundamentals.org
+# API
 
-Discover Threejs: https://discoverthreejs.com
-
-The [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to get familiar with react-three-fiber.
-
-# Canvas
+## Canvas
 
 The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_! It stretches to 100% of the next relative/absolute parent-container. Make sure your canvas is given space to show contents!
 
@@ -114,7 +112,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
 
 You can give it additional properties like style and className, which will be added to the container (a div) that holds the dom-canvas element.
 
-# Defaults that the canvas component sets up
+## Defaults that the canvas component sets up
 
 Canvas will create a _translucent WebGL-renderer_ with the following properties: `antialias, alpha, setClearAlpha(0)`
 
@@ -130,7 +128,7 @@ A _wrapping container_ with a [resize observer](https://github.com/react-spring/
 
 You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
 
-# Objects and properties
+## Objects and properties
 
 You can use [Threejs's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
@@ -217,7 +215,7 @@ extend({ EffectComposer, RenderPass })
   <renderPass />
 ```
 
-# Automatic disposal
+## Automatic disposal
 
 Freeing resources is a [manual chore in threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
 
@@ -231,7 +229,7 @@ function Mesh() {
   return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
 ```
 
-# Events
+## Events
 
 Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc).
 
@@ -284,7 +282,7 @@ Additionally there's a special `onUpdate` that is called every time the object g
   }}
 ```
 
-# Hooks
+## Hooks
 
 Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
 
@@ -432,7 +430,7 @@ import { useCamera } from 'react-three-fiber'
 <mesh raycast={useCamera(customCamera)} onPointerMove={e => console.log('move')}>
 ```
 
-# Additional exports
+## Additional exports
 
 ```jsx
 import {
@@ -472,17 +470,17 @@ import { Canvas, Dom } from 'react-three-fiber'
 </Canvas>
 ```
 
-# Further information
-
-Robert Borghesi's Alligator.io tutorial: https://alligator.io/react/react-with-threejs
+# Links
 
 Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
+
+Robert Borghesi's Alligator.io tutorial: https://alligator.io/react/react-with-threejs
 
 GLTF-to-JSX converter: https://github.com/react-spring/gltfjsx
 
 Learn-with-jason: https://www.youtube.com/watch?v=1rP3nNY2hTo
 
-# Contributions
+# How to contribute
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto:
 
