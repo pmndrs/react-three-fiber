@@ -217,6 +217,20 @@ extend({ EffectComposer, RenderPass })
   <renderPass />
 ```
 
+# Disposal
+
+Unlike threejs, three-fiber knows the object lifecycle and will attempt to free resources for you by calling the `dispose` function, if present, on any of the objects and children it removes on unmount.
+
+If you manage assets by yourself, this may *not* be what you want, and you can recursively switch off dispose:
+
+```jsx
+const globalGeometry = new THREE.BoxBufferGeometry()
+const globalMaterial = new THREE.MeshBasicMatrial()
+
+function Mesh() {
+  return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
+```
+
 # Events
 
 Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc).
@@ -268,20 +282,6 @@ Additionally there's a special `onUpdate` that is called every time the object g
     // Optionally release capture
     e.target.releasePointerCapture(e.pointerId)
   }}
-```
-
-# Disposal
-
-Unlike threejs, three-fiber knows the object lifecycle and will attempt to free resources for you by calling the `dispose` function, if present, on any of the objects and children it removes on unmount.
-
-If you manage assets by yourself, this may *not* be what you want, and you can recursively switch off dispose:
-
-```jsx
-const globalGeometry = new THREE.BoxBufferGeometry()
-const globalMaterial = new THREE.MeshBasicMatrial()
-
-function Mesh() {
-  return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
 ```
 
 # Hooks
