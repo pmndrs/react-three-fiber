@@ -270,6 +270,20 @@ Additionally there's a special `onUpdate` that is called every time the object g
   }}
 ```
 
+# Disposal
+
+Unlike threejs, three-fiber knows the object lifecycle and will attempt to free resources for you by calling the `dispose` function, if present, on any of the objects and children it removes on unmount.
+
+If you manage assets by yourself, this may *not* be what you want, and you can recursively switch off dispose:
+
+```jsx
+const globalGeometry = new THREE.BoxBufferGeometry()
+const globalMaterial = new THREE.MeshBasicMatrial()
+
+function Mesh() {
+  return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
+```
+
 # Hooks
 
 Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
@@ -382,7 +396,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 function Asset({ url }) {
   const gltf = useLoader(GLTFLoader, url)
-  return <primitive object={gltf.scene} />
+  return <primitive object={gltf.scene} dispose={null} />
 }
 
 <Suspense fallback={<Cube />}>
