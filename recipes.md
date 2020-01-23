@@ -71,7 +71,7 @@ function HeadsUpDisplay() {
 function App() {
   const camera = useRef()
   const { size, setDefaultCamera } = useThree()
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useEffect(() => void setDefaultCamera(camera.current), [])
   useFrame(() => camera.current.updateMatrixWorld())
   return (
     <>
