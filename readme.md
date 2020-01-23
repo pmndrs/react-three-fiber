@@ -217,11 +217,11 @@ extend({ EffectComposer, RenderPass })
   <renderPass />
 ```
 
-# Disposal
+# Automatic disposal
 
-Unlike threejs, three-fiber knows the object lifecycle and will attempt to free resources for you by calling the `dispose` function, if present, on any of the objects and children it removes on unmount.
+Freeing resources is a [manual chore in threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
 
-If you manage assets by yourself, this may *not* be what you want, and you can recursively switch off dispose:
+If you manage assets by yourself, globally or in a cache, this may *not* be what you want, and you can recursively switch it off:
 
 ```jsx
 const globalGeometry = new THREE.BoxBufferGeometry()
