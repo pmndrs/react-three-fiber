@@ -78,11 +78,11 @@ ReactDOM.render(
 
 #### How to proceed?
 
-1. Before you start, make sure you have a [basic grasp of threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). 
+1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). 
 2. When you know what a scene is, how cameras, meshes, geometries and materials work, more or less, the [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to play around and get familiar with. 
-3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps and helps you to get familiar with react-three-fiber.
+3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps.
 
-You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) or [Discover Threejs](https://discoverthreejs.com). Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
+You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
 
 # API
 
@@ -217,7 +217,7 @@ extend({ EffectComposer, RenderPass })
 
 ## Automatic disposal
 
-Freeing resources is a [manual chore in threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
+Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
 
 If you manage assets by yourself, globally or in a cache, this may *not* be what you want. You can recursively switch it off:
 
