@@ -79,7 +79,7 @@ ReactDOM.render(
 #### How to proceed?
 
 1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). 
-2. When you know what a scene is, how cameras, meshes, geometries and materials work, more or less, the [sandbox above](https://github.com/react-spring/react-three-fiber#what-it-looks-like-) is a good start to play around and get familiar with. 
+2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [sandbox above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like). 
 3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps.
 
 You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
