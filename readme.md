@@ -472,13 +472,11 @@ import { Canvas, Dom } from 'react-three-fiber'
 
 # Links
 
+News and examples via Twitter: [@0xca0a](https://twitter.com/0xca0a)
+
 Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
 
-Robert Borghesi's Alligator.io tutorial: https://alligator.io/react/react-with-threejs
-
 GLTF-to-JSX converter: https://github.com/react-spring/gltfjsx
-
-Learn-with-jason: https://www.youtube.com/watch?v=1rP3nNY2hTo
 
 # How to contribute
 
