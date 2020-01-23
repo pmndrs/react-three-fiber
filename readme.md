@@ -162,7 +162,7 @@ All properties that have a `.set()` method can be given a shortcut. For example 
 
 Stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
 
-You can nest primitive objects, too, which is good for awaiting async textures and such. You could use React-suspense if you wanted!
+You can nest primitive objects, too:
 
 ```jsx
 <meshBasicMaterial attach="material">
@@ -194,7 +194,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 #### Putting already existing objects into the scene-graph
 
-You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it.
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiples times, this is not allowed in Threejs!
 
 ```jsx
 const mesh = new THREE.Mesh()
