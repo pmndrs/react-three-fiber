@@ -31,7 +31,7 @@ This is less of an abstraction and more of a pure reconciler (like react-dom in 
 
 Rendering performance is up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React without overhead. React is otherwise very efficient in building and updating component-trees, which could allow it to potentially outperform manual apps at scale.
 
-#### What it looks like ...
+#### What does it look like?
 
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
