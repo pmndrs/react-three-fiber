@@ -1,4 +1,4 @@
-This is a React renderer for Threejs on the web and react-native.
+`react-three-fiber` is a React renderer for Threejs on the web and react-native.
 
     npm install three react-three-fiber
 
@@ -34,7 +34,7 @@ None whatsoever! Everything that works in Threejs will work here. It just transl
 
 #### Is it slower than raw Threejs?
 
-No. Rendering performance is up to Threejs and the GPU, three-fiber drives a renderloop outside of React without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
+No. Rendering performance is up to Threejs and the GPU, three-fiber drives a renderloop *outside of React* without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
 
 #### What does it look like?
 
