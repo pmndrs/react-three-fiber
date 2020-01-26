@@ -27,7 +27,7 @@ This is a React renderer for Threejs on the web and react-native. Why? Because b
 
 #### Does it have limitations?
 
-None whatsoever! Everything that works in Threejs will work here. This is just a [reconciler](https://github.com/facebook/react/tree/master/packages/react-reconciler) that translates JSX to pure Threejs, similar to react-dom in relation to HTML. It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
+None whatsoever! Everything that works in Threejs will work here. It just translates JSX to pure Threejs, similar to react-dom in relation to HTML. It does not target a specific version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
 
 #### Is it slower than raw Threejs?
 
