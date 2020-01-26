@@ -1,3 +1,5 @@
+This is a React renderer for Threejs on the web and react-native. Why? Because building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
+
     npm install three react-three-fiber
 
 <br />
@@ -21,10 +23,6 @@
 <p align="middle">
   <i>These demos are real, you can click them! They contain the full code, too.</i>
 </p>
-
-#### What is it?
-
-This is a React renderer for Threejs on the web and react-native. Why? Because building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
 
 #### Does it have limitations?
 
