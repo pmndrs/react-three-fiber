@@ -35,11 +35,9 @@ Rendering performance is up to Threejs and the GPU, react-three-fiber drives a r
 
 #### What does it look like?
 
-Let's make a re-usable component that has it's own state, reacts to user-input and participates in the render-loop:
-
-<p align="center">
-  <a href="https://codesandbox.io/s/rrppl0y8l4"><img src="https://i.imgur.com/sS4ArrZ.gif" /></a>
-</p>
+| | | |
+|-|-|-|
+Let's make a re-usable component that has it's own state, reacts to user-input and participates in the render-loop: | ![https://codesandbox.io/s/rrppl0y8l4](https://i.imgur.com/sS4ArrZ.gif)
 
 ```jsx
 import ReactDOM from 'react-dom'
