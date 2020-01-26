@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="872" src="https://i.imgur.com/e6NhRz6.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="400" src="https://i.imgur.com/e6NhRz6.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-sparks-sbf2i"><img width="288" src="https://i.imgur.com/Fk44Tu6.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-instanced-colors-8fo01"><img width="288" src="https://i.imgur.com/daJIDVE.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-moksha-f1ixt"><img width="288" src="https://i.imgur.com/ltznOJ1.gif" /></a>
