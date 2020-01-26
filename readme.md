@@ -31,7 +31,7 @@ None whatsoever! Everything that works in Threejs will work here. It just transl
 
 #### Is it slower than raw Threejs?
 
-Rendering performance is up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
+No. Rendering performance is up to Threejs and the GPU, react-three-fiber drives a renderloop outside of React without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
 
 #### What does it look like?
 
