@@ -7,7 +7,7 @@
   <a href="https://codesandbox.io/embed/r3f-moksha-f1ixt"><img width="288" src="https://i.imgur.com/ltznOJ1.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-bones-3i7iu"><img width="288" src="https://i.imgur.com/OZdSyQy.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-floating-diamonds-prb9t"><img width="288" src="https://i.imgur.com/WWDbcWG.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-volumetric-light-w633u"><img width="288" src="https://i.imgur.com/xyJk9VH.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-volumetric-light-w633u"><img width="288" src="https://i.imgur.com/7E3XKSG.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-particles-ii-pjcc1"><img width="288" src="https://i.imgur.com/QG14IAC.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-gltf-fonts-c671i"><img width="288" src="https://i.imgur.com/SHPhIls.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-cannon-physics-nr84m"><img width="288" src="https://i.imgur.com/M9rupWP.gif" /></a>
