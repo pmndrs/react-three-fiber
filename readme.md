@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="400" src="https://i.imgur.com/e6NhRz6.gif" /></a>
-</p>
-<p align="center">
+  <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="288" src="https://i.imgur.com/VydCh6W.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="428800" src="https://i.imgur.com/e6NhRz6.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-montage-jz9l97qn89"><img width="288" src="https://i.imgur.com/nxRStP8.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-sparks-sbf2i"><img width="288" src="https://i.imgur.com/Fk44Tu6.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-instanced-colors-8fo01"><img width="288" src="https://i.imgur.com/daJIDVE.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-moksha-f1ixt"><img width="288" src="https://i.imgur.com/ltznOJ1.gif" /></a>
@@ -9,7 +9,7 @@
   <a href="https://codesandbox.io/embed/r3f-floating-diamonds-prb9t"><img width="288" src="https://i.imgur.com/WWDbcWG.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-volumetric-light-w633u"><img width="288" src="https://i.imgur.com/xyJk9VH.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-particles-ii-pjcc1"><img width="288" src="https://i.imgur.com/QG14IAC.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-montage-jz9l97qn89"><img width="288" src="https://i.imgur.com/nxRStP8.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-gltf-fonts-c671i"><img width="288" src="https://i.imgur.com/SHPhIls.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-cannon-physics-nr84m"><img width="288" src="https://i.imgur.com/M9rupWP.gif" /></a>
   <a href="https://codesandbox.io/embed/wonderful-chandrasekhar-8l9rrj36j0"><img width="288" src="https://i.imgur.com/HSTGdcO.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-train-l900i"><img width="288" src="https://i.imgur.com/B3AzZVH.gif" /></a>
