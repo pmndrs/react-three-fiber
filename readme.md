@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="288" src="https://i.imgur.com/VydCh6W.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="428800" src="https://i.imgur.com/e6NhRz6.gif" /></a>
+  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="288" src="https://i.imgur.com/e6NhRz6.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-montage-jz9l97qn89"><img width="288" src="https://i.imgur.com/nxRStP8.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-sparks-sbf2i"><img width="288" src="https://i.imgur.com/Fk44Tu6.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-instanced-colors-8fo01"><img width="288" src="https://i.imgur.com/daJIDVE.gif" /></a>
