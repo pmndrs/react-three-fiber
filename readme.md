@@ -23,11 +23,11 @@
 
 #### What is it?
 
-This is a React renderer for Threejs on the web and react-native. Building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
+This is a React renderer for Threejs on the web and react-native. Why? Because building a dynamic scene graph becomes so much easier when you can break it up into declarative, re-usable components that react to state changes.
 
-#### Does it have regressions?
+#### Does it have limitations?
 
-This is less of an abstraction and more of a pure reconciler (like react-dom in relation to HTML). It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules. There are zero limitations.
+None whatsoever! Everything that works in Threejs will work here. This is just a [reconciler](https://github.com/facebook/react/tree/master/packages/react-reconciler) that translates JSX to pure Threejs, similar to react-dom in relation to HTML. It does not target a specific Threejs version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
 
 #### Is it slower than raw Threejs?
 
