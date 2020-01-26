@@ -30,7 +30,7 @@
 
 #### Why?
 
-You get to build dynamic scene graphs declaratively, using re-usable components that react to state changes and props. A proper component model will bring order and santiy to your codebase.
+Build dynamic scene graphs declaratively, with re-usable components that react to state changes and props. A component model will bring order and santiy to your codebase.
 
 #### Does it have limitations?
 
