@@ -37,6 +37,10 @@ Rendering performance is up to Threejs and the GPU, react-three-fiber drives a r
 
 Copy the following into a project to get going. [Here's the same](https://codesandbox.io/s/rrppl0y8l4) running in a code sandbox.
 
+<p align="center>
+  <img src="https://i.imgur.com/sS4ArrZ.gif" />
+</p>
+
 ```jsx
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
