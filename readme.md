@@ -1,3 +1,6 @@
+    npm install three react-three-fiber
+
+<br />
 <p align="center">
   <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="288" src="https://i.imgur.com/VydCh6W.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="288" src="https://i.imgur.com/e6NhRz6.gif" /></a>
@@ -18,8 +21,6 @@
 <p align="middle">
   <i>These demos are real, you can click them! They contain the full code, too.</i>
 </p>
-
-    npm install three react-three-fiber
 
 #### What is it?
 
