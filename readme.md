@@ -30,7 +30,7 @@
 
 #### Why?
 
-Build dynamic scene graphs declaratively, with re-usable components that react to state changes and can repond to interaction out of the box. A component model will bring order and santiy to your codebase and will make handling Threejs easier.
+Building dynamic scene graphs declaratively with re-usable components that respond to state changes and interaction makes handling Threejs easier and brings order and santiy to your codebase. This library is react based and therefore can participate in reacts near infitine eco system of components, tools and add-ons, many of which are cross platform and can directly operate on your meshes and materials.
 
 #### Does it have limitations?
 
