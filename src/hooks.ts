@@ -128,9 +128,17 @@ export function useLoader<T>(
             new Promise(res =>
               loader.load(url, (data: any) => {
                 if (data.scene) {
-                  const objects: any[] = []
-                  data.scene.traverse((props: any) => objects.push(prune(props)))
-                  data.__$ = objects
+                  // This has to be deprecated at some point!
+                  data.__$ = []
+                  // Nodes and materials are better
+                  data.nodes = {}
+                  data.materials = {}
+                  data.scene.traverse((obj: any) => {
+                    data.__$.push(prune(obj))
+                    if (obj.name) data.nodes = { ...data.nodes, [obj.name]: obj }
+                    if (obj.material && !data.materials[obj.material.name])
+                      data.materials[obj.material.name] = obj.material
+                  })
                 }
                 res(data)
               })
@@ -140,19 +148,9 @@ export function useLoader<T>(
     },
     [Proto, url]
   )
-  // Dispose objects on unmount
-  useEffect(
-    () => () =>
-      results.forEach((data: any) => {
-        if (data.dispose) data.dispose()
-        if (data.scene && data.scene.dispose) data.scene.dispose()
-      }),
-    []
-  )
 
-  // Return the object itself and a list of pruned props
-  const isArray = Array.isArray(url)
-  return isArray ? results : results[0]
+  // Return the object/s
+  return Array.isArray(url) ? results : results[0]
 }
 
 export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
