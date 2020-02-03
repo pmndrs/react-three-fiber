@@ -107,7 +107,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   }, newProps)
 
   // Add left-overs as undefined props so they can be removed
-  leftOvers.forEach(key => (filteredProps[key] = undefined))
+  leftOvers.forEach(key => key !== 'children' && (filteredProps[key] = undefined))
 
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
