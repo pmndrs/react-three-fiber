@@ -1,23 +1,23 @@
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
+import * as THREE from 'three'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { Canvas, createPortal, extend, useFrame, useThree, useResource } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 import { WaterPass } from '../../resources/postprocessing/WaterPass'
+
 extend({ OrbitControls, EffectComposer, ShaderPass, RenderPass, WaterPass })
 
 function Main() {
-  const [sceneRef, scene] = useResource()
+  const [scene] = useState(() => new THREE.Scene())
   const composer = useRef()
   const { gl, size, camera } = useThree()
-
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
-
-  return (
-    <scene ref={sceneRef}>
+  return createPortal(
+    <>
       <effectComposer ref={composer} args={[gl]}>
         {scene && (
           <>
@@ -38,62 +38,54 @@ function Main() {
         <boxBufferGeometry attach="geometry" args={[2, 2, 2]} />
         <meshStandardMaterial attach="material" color="lightgreen" />
       </mesh>
-    </scene>
+    </>,
+    scene
   )
 }
 
 function Hud() {
-  const scene = useRef()
+  const [scene] = useState(() => new THREE.Scene())
   const { camera } = useThree()
-  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
+  useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene, camera)), 10)
   const [hovered, set] = useState(false)
-  const hover = useCallback(() => set(true), [])
-  const unhover = useCallback(() => set(false), [])
-  return (
-    <scene ref={scene}>
-      <mesh onPointerOver={hover} onPointerOut={unhover}>
-        <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
-        <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'black'} />
-      </mesh>
-    </scene>
+  return createPortal(
+    <mesh onPointerOver={() => set(true)} onPointerOut={() => set(false)}>
+      <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
+      <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'black'} />
+    </mesh>,
+    scene
   )
+}
+
+const Controls = () => {
+  const { camera, gl } = useThree()
+  const ref = useRef()
+  useFrame(() => ref.current.update())
+  return <orbitControls ref={ref} target={[0, 0, 0]} enableDamping args={[camera, gl.domElement]} />
 }
 
 function Content() {
   const { size, setDefaultCamera } = useThree()
-  const camera = useRef()
-  const controls = useRef()
-
-  useEffect(() => void setDefaultCamera(camera.current), [])
-  useFrame(() => {
-    if (controls.current) controls.current.update()
-    if (camera.current) camera.current.updateMatrixWorld()
-  }, 1000)
-
+  const [camera] = useState(() => {
+    const cam = new THREE.PerspectiveCamera(55, size.width / size.height)
+    cam.position.set(0, 0, 5)
+    setDefaultCamera(cam)
+    return cam
+  })
+  useMemo(() => (camera.aspect = size.width / size.height), [size])
+  useFrame(() => camera.updateMatrixWorld())
   return (
-    <>
-      <perspectiveCamera
-        ref={camera}
-        aspect={size.width / size.height}
-        radius={(size.width + size.height) / 4}
-        fov={55}
-        position={[0, 0, 5]}
-        onUpdate={self => self.updateProjectionMatrix()}
-      />
-      {camera.current && (
-        <group>
-          <orbitControls ref={controls} args={[camera.current]} enableDamping dampingFactor={0.1} rotateSpeed={0.1} />
-          <Main />
-          <Hud />
-        </group>
-      )}
-    </>
+    <group>
+      <Controls />
+      <Main />
+      <Hud />
+    </group>
   )
 }
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas style={{ background: '#171720' }}>
       <Content />
     </Canvas>
   )

@@ -20,8 +20,8 @@ const is = {
   und: (a: any) => a === void 0,
   arr: (a: any) => Array.isArray(a),
   equ(a: any, b: any) {
-    // Wrong type, doesn't match
-    if (typeof a !== typeof b) return false
+    // Wrong type or one of the two undefined, doesn't match
+    if (typeof a !== typeof b || !!a !== !!b) return false
     // Atomic, just compare a against b
     if (is.str(a) || is.num(a) || is.obj(a)) return a === b
     // Array, shallow compare first to see if it's a match
