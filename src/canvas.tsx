@@ -90,7 +90,7 @@ export interface CanvasProps {
   invalidateFrameloop?: boolean
   updateDefaultCamera?: boolean
   noEvents?: boolean
-  gl?: Partial<THREE.WebGLRenderer>
+  gl?: Partial<THREE.WebGLRendererParameters>
   camera?: Partial<
     ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
       ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
