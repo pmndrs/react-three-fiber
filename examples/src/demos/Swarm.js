@@ -71,7 +71,7 @@ function Swarm({ count, mouse }) {
       </pointLight>
       <instancedMesh ref={mesh} args={[null, null, count]}>
         <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
-        <meshStandardMaterial attach="material" color="#020000" />
+        <meshStandardMaterial attach="material" color="#020000" roughness={0.5} metalness={0.5} />
       </instancedMesh>
     </>
   )

@@ -77,7 +77,7 @@
   "peerDependencies": {
     "react": ">=16.12",
     "react-dom": ">=16.12",
-    "three": ">=0.112"
+    "three": ">=0.113"
   },
   "devDependencies": {
     "@ampproject/rollup-plugin-closure-compiler": "^0.18.1",
@@ -125,7 +125,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.10.0",
-    "three": "^0.109.0",
+    "three": "^0.113.2",
     "typescript": "^3.7.4",
     "ts-jest": "^24.3.0",
     "wait-on": "^3.3.0"

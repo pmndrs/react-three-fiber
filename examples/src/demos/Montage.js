@@ -35,7 +35,7 @@ function Content() {
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
       <boxBufferGeometry attach="geometry" args={d.args} />
-      <a.meshStandardMaterial attach="material" color={springs[index].color} roughness={0.75} />
+      <a.meshStandardMaterial attach="material" color={springs[index].color} roughness={0.75} metalness={0.5} />
     </a.mesh>
   ))
 }

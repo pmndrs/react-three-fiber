@@ -70,6 +70,7 @@ declare global {
       positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
 
       mesh: ReactThreeFiber.Object3DNode<THREE.Mesh, typeof THREE.Mesh>
+      instancedMesh: ReactThreeFiber.Object3DNode<THREE.InstancedMesh, typeof THREE.InstancedMesh>
       scene: ReactThreeFiber.Object3DNode<THREE.Scene, typeof THREE.Scene>
       sprite: ReactThreeFiber.Object3DNode<THREE.Sprite, typeof THREE.Sprite>
       lOD: ReactThreeFiber.Object3DNode<THREE.LOD, typeof THREE.LOD>
@@ -244,22 +245,15 @@ declare global {
       lightProbe: ReactThreeFiber.Object3DNode<THREE.LightProbe, typeof THREE.LightProbe>
 
       // helpers
-      vertexNormalsHelper: ReactThreeFiber.Object3DNode<THREE.VertexNormalsHelper, typeof THREE.VertexNormalsHelper>
       spotLightHelper: ReactThreeFiber.Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
       skeletonHelper: ReactThreeFiber.Object3DNode<THREE.SkeletonHelper, typeof THREE.SkeletonHelper>
       pointLightHelper: ReactThreeFiber.Object3DNode<THREE.PointLightHelper, typeof THREE.PointLightHelper>
-      rectAreaLightHelper: ReactThreeFiber.Node<THREE.RectAreaLightHelper, typeof THREE.RectAreaLightHelper>
       hemisphereLightHelper: ReactThreeFiber.Object3DNode<
         THREE.HemisphereLightHelper,
         typeof THREE.HemisphereLightHelper
       >
       gridHelper: ReactThreeFiber.Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
       polarGridHelper: ReactThreeFiber.Node<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
-      positionalAudioHelper: ReactThreeFiber.Object3DNode<
-        THREE.PositionalAudioHelper,
-        typeof THREE.PositionalAudioHelper
-      >
-      faceNormalsHelper: ReactThreeFiber.Object3DNode<THREE.FaceNormalsHelper, typeof THREE.FaceNormalsHelper>
       directionalLightHelper: ReactThreeFiber.Object3DNode<
         THREE.DirectionalLightHelper,
         typeof THREE.DirectionalLightHelper

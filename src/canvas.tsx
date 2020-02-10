@@ -242,7 +242,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     } else {
       const target = new THREE.Vector3(0, 0, 0)
       const distance = defaultCam.position.distanceTo(target)
-      const fov = THREE.Math.degToRad(defaultCam.fov) // convert vertical fov to radians
+      const fov = (defaultCam.fov * Math.PI) / 180 // convert vertical fov to radians
       const height = 2 * Math.tan(fov / 2) * distance // visible height
       const width = height * state.current.aspect
       state.current.viewport = { width, height, factor: size.width / width }
