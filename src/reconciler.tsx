@@ -34,11 +34,16 @@ const is = {
   },
 }
 
-let globalEffects: GlobalRenderCallback[] = []
-
-export function addEffect(callback: GlobalRenderCallback) {
-  globalEffects.push(callback)
+function createSubs(callback: GlobalRenderCallback, subs: GlobalRenderCallback[]): () => void {
+  const index = subs.length
+  subs.push(callback)
+  return () => void subs.splice(index, 1)
 }
+
+let globalEffects: GlobalRenderCallback[] = []
+let globalTailEffects: GlobalRenderCallback[] = []
+export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalEffects)
+export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 export function renderGl(
   state: React.MutableRefObject<CanvasContext>,
@@ -76,6 +81,10 @@ function renderLoop(timestamp: number) {
   })
 
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
+  else {
+    // Tail call effects, they are called when rendering stops
+    globalTailEffects.forEach(effect => effect(timestamp))
+  }
   // Flag end of operation
   running = false
 }

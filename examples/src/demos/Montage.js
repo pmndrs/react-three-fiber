@@ -70,5 +70,3 @@ export default function App() {
     </Canvas>
   )
 }
-
-//       <spotLight intensity={0.5} position={[300, 300, 4000]} />

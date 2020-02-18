@@ -448,6 +448,7 @@ import { useCamera } from 'react-three-fiber'
 ```jsx
 import {
   addEffect,                    // Adds a global callback which is called each frame
+  addTail,                      // Adds a global callback which is called when rendering stops
   invalidate,                   // Forces view global invalidation
   extend,                       // Extends the native-object catalogue
   createPortal,                 // Creates a portal (it's a React feature for re-parenting)
