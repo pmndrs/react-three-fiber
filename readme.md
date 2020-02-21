@@ -38,7 +38,7 @@ None. Everything that works in Threejs will work here. In contrast to "bindings"
 
 #### Is it slower than raw Threejs?
 
-No. Rendering performance is up to Threejs and the GPU. Components are allowed to participate in the renderloop outside of React without any additional overhead. React is otherwise very efficient in building and managing component-trees, which allows it to potentially outperform manual apps at scale.
+No. Rendering performance is up to Threejs and the GPU. Components may participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
 
 #### What does it look like?
 
