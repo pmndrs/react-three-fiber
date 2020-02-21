@@ -34,11 +34,11 @@ Building dynamic scene graphs declaratively with re-usable components that respo
 
 #### Does it have limitations?
 
-None whatsoever! Everything that works in Threejs will work here. It just translates JSX to pure Threejs, similar to react-dom in relation to HTML. It does not target a specific version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
+None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships and maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically. Writing `<mesh />` is simply another expression for `new THREE.Mesh()`. It does not know or target a specific version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
 
 #### Is it slower than raw Threejs?
 
-No. Rendering performance is up to Threejs and the GPU, three-fiber drives a renderloop *outside of React* without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
+No. Rendering performance is up to Threejs and the GPU. Components are allowed to participate in the renderloop outside of React without any additional overhead. React is otherwise very efficient in building and managing component-trees, which allows it to potentially outperform manual apps at scale.
 
 #### What does it look like?
 
