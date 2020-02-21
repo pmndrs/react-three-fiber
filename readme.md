@@ -34,7 +34,7 @@ Building dynamic scene graphs declaratively with re-usable components that respo
 
 #### Does it have limitations?
 
-None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships and maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically. Writing `<mesh />` is simply another expression for `new THREE.Mesh()`. It does not know or target a specific version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
+None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
 
 #### Is it slower than raw Threejs?
 
