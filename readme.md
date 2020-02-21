@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master)](https://travis-ci.org/react-spring/react-three-fiber) [![npm version](https://badge.fury.io/js/react-three-fiber.svg)](https://badge.fury.io/js/react-three-fiber) ![npm](https://img.shields.io/npm/dt/react-three-fiber.svg)
 
-`react-three-fiber` is a React renderer for Threejs on the web and react-native.
+`react-three-fiber` is a React [reconciler](https://github.com/facebook/react/tree/master/packages/react-reconciler) for Threejs on the web and react-native.
 
 <br />
 
