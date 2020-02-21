@@ -30,7 +30,7 @@
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components that respond to state changes and interactions makes handling Threejs easier and brings order and santiy to your codebase. This library is React based and therefore can participate in its near infitine eco system of components, tools and add-ons, many of which are cross platform ootb and can directly operate on your meshes and materials.
+Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and santiy to your codebase. These components react to state changes, are interactive out of the box and can tap into Reacts infitine eco system.
 
 #### Does it have limitations?
 
