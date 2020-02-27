@@ -253,14 +253,14 @@ declare global {
         typeof THREE.HemisphereLightHelper
       >
       gridHelper: ReactThreeFiber.Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
-      polarGridHelper: ReactThreeFiber.Node<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
+      polarGridHelper: ReactThreeFiber.Object3DNode<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
       directionalLightHelper: ReactThreeFiber.Object3DNode<
         THREE.DirectionalLightHelper,
         typeof THREE.DirectionalLightHelper
       >
       cameraHelper: ReactThreeFiber.Object3DNode<THREE.CameraHelper, typeof THREE.CameraHelper>
       boxHelper: ReactThreeFiber.Object3DNode<THREE.BoxHelper, typeof THREE.BoxHelper>
-      box3Helper: ReactThreeFiber.Node<THREE.Box3Helper, typeof THREE.Box3Helper>
+      box3Helper: ReactThreeFiber.Object3DNode<THREE.Box3Helper, typeof THREE.Box3Helper>
       planeHelper: ReactThreeFiber.Object3DNode<THREE.PlaneHelper, typeof THREE.PlaneHelper>
       arrowHelper: ReactThreeFiber.Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
       axesHelper: ReactThreeFiber.Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>
