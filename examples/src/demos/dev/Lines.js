@@ -88,7 +88,7 @@ function Line({ defaultStart, defaultEnd }) {
 
 const camContext = React.createContext()
 function Controls({ children }) {
-  const { camera, invalidate, intersect } = useThree()
+  const { gl, camera, invalidate, intersect } = useThree()
   const api = useState(true)
   const ref = useRef()
   useEffect(() => {
@@ -100,7 +100,7 @@ function Controls({ children }) {
 
   return (
     <>
-      <orbitControls ref={ref} args={[camera]} enabled={api[0]} />
+      <orbitControls ref={ref} args={[camera, gl.domElement]} enableDamping enabled={api[0]} />
       <camContext.Provider value={api}>{children}</camContext.Provider>
     </>
   )
