@@ -12,10 +12,10 @@ export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
 
 export declare namespace ReactThreeFiber {
-  type Euler = THREE.Euler | number[]
-  type Matrix4 = THREE.Matrix4 | number[]
-  type Vector3 = THREE.Vector3 | number[]
-  type Color = THREE.Color | number | string
+  type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
+  type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
+  type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
+  type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
 
   export type Events = {
     onClick?: (e: PointerEvent) => void
@@ -253,14 +253,14 @@ declare global {
         typeof THREE.HemisphereLightHelper
       >
       gridHelper: ReactThreeFiber.Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
-      polarGridHelper: ReactThreeFiber.Node<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
+      polarGridHelper: ReactThreeFiber.Object3DNode<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
       directionalLightHelper: ReactThreeFiber.Object3DNode<
         THREE.DirectionalLightHelper,
         typeof THREE.DirectionalLightHelper
       >
       cameraHelper: ReactThreeFiber.Object3DNode<THREE.CameraHelper, typeof THREE.CameraHelper>
       boxHelper: ReactThreeFiber.Object3DNode<THREE.BoxHelper, typeof THREE.BoxHelper>
-      box3Helper: ReactThreeFiber.Node<THREE.Box3Helper, typeof THREE.Box3Helper>
+      box3Helper: ReactThreeFiber.Object3DNode<THREE.Box3Helper, typeof THREE.Box3Helper>
       planeHelper: ReactThreeFiber.Object3DNode<THREE.PlaneHelper, typeof THREE.PlaneHelper>
       arrowHelper: ReactThreeFiber.Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
       axesHelper: ReactThreeFiber.Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>
