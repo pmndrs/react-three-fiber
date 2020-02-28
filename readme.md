@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master)](https://travis-ci.org/react-spring/react-three-fiber) [![npm version](https://badge.fury.io/js/react-three-fiber.svg)](https://badge.fury.io/js/react-three-fiber) ![npm](https://img.shields.io/npm/dt/react-three-fiber.svg)
 
-`react-three-fiber` is a React renderer for Threejs on the web and react-native.
+`react-three-fiber` is a React [reconciler](https://github.com/facebook/react/tree/master/packages/react-reconciler) for Threejs on the web and react-native.
 
 <br />
 
@@ -30,15 +30,15 @@
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components that respond to state changes and interactions makes handling Threejs easier and brings order and santiy to your codebase. This library is React based and therefore can participate in its near infitine eco system of components, tools and add-ons, many of which are cross platform ootb and can directly operate on your meshes and materials.
+Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and santiy to your codebase. These components react to state changes, are interactive out of the box and can tap into Reacts infitine eco system.
 
 #### Does it have limitations?
 
-None whatsoever! Everything that works in Threejs will work here. It just translates JSX to pure Threejs, similar to react-dom in relation to HTML. It does not target a specific version nor does it need updates when Threejs alters, adds or removes features. It won't change any specifics or rules.
+None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
 
 #### Is it slower than raw Threejs?
 
-No. Rendering performance is up to Threejs and the GPU, three-fiber drives a renderloop *outside of React* without overhead. React is otherwise very efficient in building and updating component-trees, which allows it to potentially outperform manual apps at scale.
+No. Rendering performance is up to Threejs and the GPU. Components may participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
 
 #### What does it look like?
 
