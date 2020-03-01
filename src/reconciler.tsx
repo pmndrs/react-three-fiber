@@ -260,13 +260,10 @@ function insertBefore(parentInstance: any, child: any, beforeChild: any) {
     if (child.isObject3D) {
       child.parent = parentInstance
       child.dispatchEvent({ type: 'added' })
+      const restSiblings = parentInstance.children.filter((sibling: any) => sibling !== child)
       // TODO: the order is out of whack if data objects are present, has to be recalculated
-      const index = parentInstance.children.indexOf(beforeChild)
-      parentInstance.children = [
-        ...parentInstance.children.slice(0, index),
-        child,
-        ...parentInstance.children.slice(index),
-      ]
+      const index = restSiblings.indexOf(beforeChild)
+      parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
       updateInstance(child)
     } else appendChild(parentInstance, child) // TODO: order!!!
     invalidateInstance(child)
