@@ -85,6 +85,7 @@ export interface CanvasProps {
   gl2?: boolean
   concurrent?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
+  sRGB?: boolean
   orthographic?: boolean
   resize?: ResizeOptions
   invalidateFrameloop?: boolean
@@ -136,6 +137,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     vr = false,
     concurrent = false,
     shadowMap = false,
+    sRGB = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     noEvents = false,
@@ -169,6 +171,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     cam.position.z = 5
     if (camera) applyProps(cam, camera, {})
+    // Always look at [0, 0, 0]
+    cam.lookAt(0, 0, 0)
     return cam
   })
 
@@ -487,7 +491,11 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
       else gl.shadowMap.type = THREE.PCFSoftShadowMap
     }
-  }, [shadowMap])
+    if (sRGB) {
+      gl.toneMapping = THREE.ACESFilmicToneMapping
+      gl.outputEncoding = THREE.sRGBEncoding
+    }
+  }, [shadowMap, sRGB])
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc

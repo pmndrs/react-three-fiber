@@ -110,6 +110,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
+  sRGB = false                  // Sets encoding to sRGBEncoding, tonemapping to ACESFilmicToneMapping
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   gl2 = false                   // Enables webgl2
   concurrent = false            // Enables React concurrent mode
@@ -129,9 +130,9 @@ You can give it additional properties like style and className, which will be ad
 
 Canvas will create a _translucent WebGL-renderer_ with the following properties: `antialias, alpha, setClearAlpha(0)`
 
-A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, position.z: 5`
+A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, z: 5, lookAt: [0,0,0]`
 
-A default _orthographic camera_ if Canvas.orthographic is true: `near: 0.1, far: 1000, position.z: 5`
+A default _orthographic camera_ if Canvas.orthographic is true: `near: 0.1, far: 1000, z: 5, lookAt: [0,0,0]`
 
 A default _shadowMap_ if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
 
