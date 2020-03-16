@@ -74,7 +74,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
 
 export const Canvas = React.memo((props: NativeCanvasProps) => {
   const [size, setSize] = useState<RectReadOnly | null>(null)
-  const [renderer, setRenderer] = useState()
+  const [renderer, setRenderer] = useState<Renderer>()
 
   // Handle size changes
   const onLayout = (e: LayoutChangeEvent) => {

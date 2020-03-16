@@ -3,21 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^4.2.4",
-    "@testing-library/react": "^9.3.2",
-    "@testing-library/user-event": "^7.1.2",
+    "@testing-library/jest-dom": "^5.1.1",
+    "@testing-library/react": "^10.0.1",
+    "@testing-library/user-event": "^10.0.0",
     "cannon": "^0.6.2",
-    "react": "^16.12.0",
-    "react-dom": "^16.12.0",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
     "react-merge-refs": "^1.0.0",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "3.3.0",
+    "react-scripts": "3.4.0",
     "react-spring": "^8.0.27",
     "react-three-gui": "^0.1.5",
-    "react-use-gesture": "^6.0.14",
-    "styled-components": "^5.0.0",
-    "threejs-meshline": "^2.0.9",
-    "zustand": "^2.2.2"
+    "react-use-gesture": "^7.0.5",
+    "styled-components": "^5.0.1",
+    "threejs-meshline": "^2.0.10",
+    "zustand": "^2.2.3"
   },
   "scripts": {
     "start": "react-app-rewired start",
@@ -63,8 +63,8 @@
     "@babel/preset-typescript": "^7.8.3",
     "customize-cra": "^0.9.1",
     "customize-cra-react-refresh": "^1.0.1",
-    "husky": "^4.0.10",
-    "lint-staged": "^9.5.0",
+    "husky": "^4.2.3",
+    "lint-staged": "^10.0.8",
     "prettier": "^1.19.1",
     "react-app-rewired": "^2.1.5"
   }
