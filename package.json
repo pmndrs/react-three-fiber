@@ -25,7 +25,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged"
+      "pre-commit": "pretty-quick --staged"
     }
   },
   "prettier": {
@@ -35,12 +35,6 @@
     "jsxBracketSameLine": true,
     "tabWidth": 2,
     "printWidth": 120
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "prettier --write",
-      "git add"
-    ]
   },
   "repository": {
     "type": "git",
@@ -95,11 +89,11 @@
     "@types/react-dom": "^16.9.5",
     "@types/react-native": "^0.61.22",
     "@types/react-reconciler": "^0.18.0",
+    "@types/react-test-renderer": "^16.9.2",
     "@types/scheduler": "^0.16.1",
     "@typescript-eslint/eslint-plugin": "^2.23.0",
     "@typescript-eslint/parser": "^2.23.0",
     "babel-eslint": "^10.1.0",
-    "@types/react-test-renderer": "^16.9.2",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
     "copyfiles": "^2.2.0",
     "cypress": "^4.1.0",
@@ -111,13 +105,13 @@
     "expo-gl": "^8.0.0",
     "expo-three": "^5.4.0",
     "husky": "^4.2.3",
-    "json": "^9.0.6",
-    "lint-staged": "^10.0.8",
-    "prettier": "^1.19.1",
     "jest": "^25.1.0",
+    "json": "^9.0.6",
+    "prettier": "^1.19.1",
+    "pretty-quick": "^2.0.1",
+    "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-test-renderer": "^16.13.0",
-    "react": "^16.11.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.0.6",
     "rollup-plugin-babel": "^4.4.0",
@@ -126,8 +120,8 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.11.0",
     "three": "^0.113.2",
-    "typescript": "^3.8.3",
     "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3",
     "wait-on": "^4.0.1"
   },
   "collective": {
