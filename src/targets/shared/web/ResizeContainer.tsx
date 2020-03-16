@@ -50,6 +50,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
     gl2,
     concurrent,
     shadowMap,
+    sRGB,
     orthographic,
     invalidateFrameloop,
     updateDefaultCamera,
