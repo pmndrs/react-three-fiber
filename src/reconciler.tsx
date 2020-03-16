@@ -345,6 +345,10 @@ const Renderer = Reconciler({
   isPrimaryRenderer: false,
   scheduleTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
   cancelTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
+  // @ts-ignore
+  setTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
+  // @ts-ignore
+  clearTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
   noTimeout: -1,
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
