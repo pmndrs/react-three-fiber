@@ -140,7 +140,7 @@ A default _scene_ (into which all the JSX is rendered) and a _raycaster_.
 
 A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }`
 
-You do not have to use any of these objects, look under "receipes" down below if you want to bring your own.
+You do not have to use any of these objects, look under "Recipes" down below if you want to bring your own.
 
 ## Objects and properties
 
