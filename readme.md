@@ -95,7 +95,7 @@ ReactDOM.render(
 2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [sandbox above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like). 
 3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps.
 
-You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
+You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Here are some general [do's and don't](https://discoverthreejs.com/tips-and-tricks) for performance and best practices. Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
 
 # API
 
