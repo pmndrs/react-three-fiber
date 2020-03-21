@@ -68,7 +68,8 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   } = props
 
   const containerRef = useRef<HTMLDivElement>()
-  const [events, setEvents] = useState<PointerEvents>({} as PointerEvents)
+  // onGotPointerCaptureLegacy is a fake event used by non-web targets to simulate poinzter capture
+  const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<PointerEvents>({} as PointerEvents)
   const [bind, size] = useMeasure(
     resize || {
       scroll: true,

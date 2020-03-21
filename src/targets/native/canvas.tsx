@@ -39,7 +39,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
     () =>
       PanResponder.create({
         onStartShouldSetPanResponderCapture(e) {
-          events.onGotPointerCapture(clientXY(e))
+          events.onGotPointerCaptureLegacy(clientXY(e))
           return true
         },
         onStartShouldSetPanResponder: () => true,

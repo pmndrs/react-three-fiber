@@ -1,6 +1,5 @@
-import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef } from 'react'
-import { Canvas, useThree, useLoader } from 'react-three-fiber'
+import React from 'react'
+import { Canvas, useThree } from 'react-three-fiber'
 import { useDrag } from 'react-use-gesture'
 import { useSpring, a } from 'react-spring/three'
 
@@ -18,7 +17,7 @@ function Obj() {
         position: [x / aspect, -y / aspect, 0],
         rotation: [y / aspect, x / aspect, 0],
       }),
-    { pointerEvents: true }
+    { eventOptions: { pointer: true } }
   )
 
   return (

@@ -23,7 +23,7 @@ export interface Intersection extends THREE.Intersection {
 
 export type PointerEvent = DomEvent &
   Intersection & {
-    stopped: React.MutableRefObject<boolean>
+    stopped: boolean
     unprojectedPoint: THREE.Vector3
     ray: THREE.Ray
     camera: THREE.Camera
@@ -115,7 +115,7 @@ export type PointerEvents = {
   onPointerUp(e: any): void
   onPointerLeave(e: any): void
   onPointerMove(e: any): void
-  onGotPointerCapture(e: any): void
+  onGotPointerCaptureLegacy(e: any): void
   onLostPointerCapture(e: any): void
 }
 
@@ -333,10 +333,11 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   const hovered = useMemo(() => new Map<string, PointerEvent>(), [])
 
   /**  Handles intersections by forwarding them to handlers */
+  const temp = new THREE.Vector3()
   const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
     prepareRay(event)
     // Get fresh intersects
-    const hits: Intersection[] = intersect(event, false)
+    let hits: Intersection[] = intersect(event, false)
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
     if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
       state.current.captured.forEach(captured => {
@@ -345,25 +346,49 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     }
     // If anything has been found, forward it to the event listeners
     if (hits.length) {
-      const unprojectedPoint = new THREE.Vector3(mouse.x, mouse.y, 0).unproject(state.current.camera)
+      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
       const delta = event.type === 'click' ? calculateDistance(event) : 0
+      const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
+      const localState = {
+        stopped: false,
+        captured: false,
+      }
 
       for (let hit of hits) {
-        let stopped = { current: false }
+        const setPointerCapture = (id: any) => {
+          // If the hit is going to be captured flag that we're in captured state
+          if (!localState.captured) {
+            localState.captured = true
+            // The captured hit array is reset to collect hits
+            state.current.captured = []
+          }
+          // Push hits to the array
+          if (state.current.captured)
+            state.current.captured.push(hit)
+            // Call the original event now
+          ;(event.target as any).setPointerCapture(id)
+        }
+
         let raycastEvent = {
           ...event,
           ...hit,
-          stopped,
+          stopped: localState.stopped,
           delta,
           unprojectedPoint,
           ray: defaultRaycaster.ray,
           camera: state.current.camera,
           // Hijack stopPropagation, which just sets a flag
-          stopPropagation: () => (stopped.current = true),
+          stopPropagation: () => (raycastEvent.stopped = localState.stopped = true),
+          // Pointer-capture needs the hit, on which the user may call stopPropagation()
+          // This makes it harder to use the actual event, because then we loose the connection
+          // to the actual hit, which would mean it's picking up all intersects ...
+          target: { ...event.target, setPointerCapture, releasePointerCapture },
+          currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
           sourceEvent: event,
         }
+
         fn(raycastEvent)
-        if (stopped.current === true) {
+        if (localState.stopped === true) {
           // Propagation is stopped, remove all other hover records
           // An event handler is only allowed to flush other handlers if it is hovered itself
           if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
@@ -394,7 +419,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           hovered.set(id, data)
           if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
           if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerEnter' })
-        } else if (hoveredItem.stopped.current) {
+        } else if (hoveredItem.stopped) {
           // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
           data.stopPropagation()
         }
@@ -456,7 +481,10 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       onPointerUp: handlePointer('pointerUp'),
       onPointerLeave: (e: any) => handlePointerCancel(e, []),
       onPointerMove: handlePointerMove,
-      onGotPointerCapture: (e: any) => (state.current.captured = intersect(e, false)),
+      // onGotPointerCapture is not needed any longer because the behaviour is hacked into
+      // the event itself (see handleIntersects). But in order for non-web targets to simulate
+      // it we keep the legacy event, which simply flags all current intersects as captured
+      onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect(e, false)),
       onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
     }
   }, [onPointerMissed])
