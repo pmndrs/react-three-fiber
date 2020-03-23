@@ -30,7 +30,7 @@
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and santiy to your codebase. These components react to state changes, are interactive out of the box and can tap into Reacts infitine eco system.
+Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into Reacts infitine eco system.
 
 #### Does it have limitations?
 
