@@ -287,41 +287,47 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   }, [])
 
   /** Intersects interaction objects using the event input */
-  const intersect = useCallback((event: DomEvent, prepare = true): Intersection[] => {
-    // Skip event handling when noEvents is set
-    if (state.current.noEvents) return []
+  const intersect = useCallback(
+    (event: DomEvent, prepare = true, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
+      // Skip event handling when noEvents is set
+      if (state.current.noEvents) return []
 
-    if (prepare) prepareRay(event)
+      if (prepare) prepareRay(event)
 
-    const seen = new Set<string>()
-    const hits: Intersection[] = []
+      const seen = new Set<string>()
+      const hits: Intersection[] = []
 
-    // Intersect known handler objects and filter against duplicates
-    let intersects = defaultRaycaster
-      .intersectObjects((state.current.scene as any).__interaction, true)
-      .filter(item => {
+      // Allow callers to eliminate event objects
+      const eventsObjects = filter
+        ? filter((state.current.scene as any).__interaction)
+        : (state.current.scene as any).__interaction
+
+      // Intersect known handler objects and filter against duplicates
+      let intersects = defaultRaycaster.intersectObjects(eventsObjects, true).filter(item => {
         const id = makeId(item as PointerEvent)
         if (seen.has(id)) return false
         seen.add(id)
         return true
       })
 
-    // #16031: (https://github.com/mrdoob/three.js/issues/16031)
-    // Allow custom userland intersect sort order
-    if (raycaster && raycaster.filter && sharedState.current)
-      intersects = raycaster.filter(intersects, sharedState.current)
+      // #16031: (https://github.com/mrdoob/three.js/issues/16031)
+      // Allow custom userland intersect sort order
+      if (raycaster && raycaster.filter && sharedState.current)
+        intersects = raycaster.filter(intersects, sharedState.current)
 
-    for (let intersect of intersects) {
-      let eventObject: THREE.Object3D | null = intersect.object
-      // Bubble event up
-      while (eventObject) {
-        const handlers = (eventObject as any).__handlers
-        if (handlers) hits.push({ ...intersect, eventObject })
-        eventObject = eventObject.parent
+      for (let intersect of intersects) {
+        let eventObject: THREE.Object3D | null = intersect.object
+        // Bubble event up
+        while (eventObject) {
+          const handlers = (eventObject as any).__handlers
+          if (handlers) hits.push({ ...intersect, eventObject })
+          eventObject = eventObject.parent
+        }
       }
-    }
-    return hits
-  }, [])
+      return hits
+    },
+    []
+  )
 
   /**  Calculates click deltas */
   const calculateDistance = useCallback((event: DomEvent) => {
@@ -334,97 +340,112 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
   /**  Handles intersections by forwarding them to handlers */
   const temp = new THREE.Vector3()
-  const handleIntersects = useCallback((event: DomEvent, fn: (event: PointerEvent) => void): Intersection[] => {
-    prepareRay(event)
-    // Get fresh intersects
-    let hits: Intersection[] = intersect(event, false)
-    // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
-      state.current.captured.forEach(captured => {
-        if (!hits.find(hit => hit.eventObject === captured.eventObject)) hits.push(captured)
-      })
-    }
-    // If anything has been found, forward it to the event listeners
-    if (hits.length) {
-      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
-      const delta = event.type === 'click' ? calculateDistance(event) : 0
-      const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
-      const localState = {
-        stopped: false,
-        captured: false,
+  const handleIntersects = useCallback(
+    (
+      event: DomEvent,
+      fn: (event: PointerEvent) => void,
+      filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
+    ): Intersection[] => {
+      prepareRay(event)
+      // Get fresh intersects
+      let hits: Intersection[] = intersect(event, false, filter)
+      // If the interaction is captured take that into account, the captured event has to be part of the intersects
+      if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
+        state.current.captured.forEach(captured => {
+          if (!hits.find(hit => hit.eventObject === captured.eventObject)) hits.push(captured)
+        })
       }
-
-      for (let hit of hits) {
-        const setPointerCapture = (id: any) => {
-          // If the hit is going to be captured flag that we're in captured state
-          if (!localState.captured) {
-            localState.captured = true
-            // The captured hit array is reset to collect hits
-            state.current.captured = []
-          }
-          // Push hits to the array
-          if (state.current.captured)
-            state.current.captured.push(hit)
-            // Call the original event now
-          ;(event.target as any).setPointerCapture(id)
+      // If anything has been found, forward it to the event listeners
+      if (hits.length) {
+        const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
+        const delta = event.type === 'click' ? calculateDistance(event) : 0
+        const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
+        const localState = {
+          stopped: false,
+          captured: false,
         }
 
-        let raycastEvent = {
-          ...event,
-          ...hit,
-          stopped: localState.stopped,
-          delta,
-          unprojectedPoint,
-          ray: defaultRaycaster.ray,
-          camera: state.current.camera,
-          // Hijack stopPropagation, which just sets a flag
-          stopPropagation: () => (raycastEvent.stopped = localState.stopped = true),
-          // Pointer-capture needs the hit, on which the user may call stopPropagation()
-          // This makes it harder to use the actual event, because then we loose the connection
-          // to the actual hit, which would mean it's picking up all intersects ...
-          target: { ...event.target, setPointerCapture, releasePointerCapture },
-          currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
-          sourceEvent: event,
-        }
-
-        fn(raycastEvent)
-        if (localState.stopped === true) {
-          // Propagation is stopped, remove all other hover records
-          // An event handler is only allowed to flush other handlers if it is hovered itself
-          if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
-            handlePointerCancel(raycastEvent, [hit])
+        for (let hit of hits) {
+          const setPointerCapture = (id: any) => {
+            // If the hit is going to be captured flag that we're in captured state
+            if (!localState.captured) {
+              localState.captured = true
+              // The captured hit array is reset to collect hits
+              state.current.captured = []
+            }
+            // Push hits to the array
+            if (state.current.captured)
+              state.current.captured.push(hit)
+              // Call the original event now
+            ;(event.target as any).setPointerCapture(id)
           }
-          break
+
+          let raycastEvent = {
+            ...event,
+            ...hit,
+            stopped: localState.stopped,
+            delta,
+            unprojectedPoint,
+            ray: defaultRaycaster.ray,
+            camera: state.current.camera,
+            // Hijack stopPropagation, which just sets a flag
+            stopPropagation: () => (raycastEvent.stopped = localState.stopped = true),
+            // Pointer-capture needs the hit, on which the user may call stopPropagation()
+            // This makes it harder to use the actual event, because then we loose the connection
+            // to the actual hit, which would mean it's picking up all intersects ...
+            target: { ...event.target, setPointerCapture, releasePointerCapture },
+            currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
+            sourceEvent: event,
+          }
+
+          fn(raycastEvent)
+          if (localState.stopped === true) {
+            // Propagation is stopped, remove all other hover records
+            // An event handler is only allowed to flush other handlers if it is hovered itself
+            if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
+              handlePointerCancel(raycastEvent, [hit])
+            }
+            break
+          }
         }
       }
-    }
-    return hits
-  }, [])
+      return hits
+    },
+    []
+  )
 
   const handlePointerMove = useCallback((event: DomEvent) => {
     state.current.pointer.emit('pointerMove', event)
-    const hits = handleIntersects(event, data => {
-      const eventObject = data.eventObject
-      const handlers = (eventObject as any).__handlers
-      // Check presence of handlers
-      if (!handlers) return
-      // Call mouse move
-      if (handlers.pointerMove) handlers.pointerMove(data)
-      // Check if mouse enter or out is present
-      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
-        const id = makeId(data)
-        const hoveredItem = hovered.get(id)
-        if (!hoveredItem) {
-          // If the object wasn't previously hovered, book it and call its handler
-          hovered.set(id, data)
-          if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
-          if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerEnter' })
-        } else if (hoveredItem.stopped) {
-          // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
-          data.stopPropagation()
+    const hits = handleIntersects(
+      event,
+      data => {
+        const eventObject = data.eventObject
+        const handlers = (eventObject as any).__handlers
+        // Check presence of handlers
+        if (!handlers) return
+        // Call mouse move
+        if (handlers.pointerMove) handlers.pointerMove(data)
+        // Check if mouse enter or out is present
+        if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
+          const id = makeId(data)
+          const hoveredItem = hovered.get(id)
+          if (!hoveredItem) {
+            // If the object wasn't previously hovered, book it and call its handler
+            hovered.set(id, data)
+            if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
+            if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerEnter' })
+          } else if (hoveredItem.stopped) {
+            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+            data.stopPropagation()
+          }
         }
-      }
-    })
+      },
+      // This is onPointerMove, we're only interested in events that exhibit this particular event
+      objects =>
+        objects.filter(obj =>
+          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(name => (obj as any).__handlers['pointer' + name])
+        )
+    )
     // Take care of unhover
     handlePointerCancel(event, hits)
     return hits
