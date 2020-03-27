@@ -389,6 +389,11 @@ const Renderer = Reconciler({
       invalidateInstance(instance)
     }
   },
+  hideTextInstance() {
+    throw new Error(
+      'Text is not allowed in the react-three-fibre tree. You may have extraneous whitespace between components.'
+    )
+  },
   getPublicInstance(instance: any) {
     return instance
   },
