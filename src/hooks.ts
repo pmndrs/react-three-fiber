@@ -5,9 +5,6 @@ import { applyProps } from './reconciler'
 //@ts-ignore
 import usePromise from 'react-promise-suspense'
 
-// helper type for omitting properties from types
-type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>
-
 function useContext<T>(context: React.Context<T>) {
   let result = useContextImpl(context)
   if (!result) {
@@ -41,8 +38,7 @@ export function useUpdate<T>(
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (ref.current) {
       callback(ref.current)
       invalidate()
@@ -55,13 +51,8 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): [React.
   const [_, forceUpdate] = useState(false)
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
-  useEffect(() => void forceUpdate(i => !i), [ref.current])
+  useLayoutEffect(() => void forceUpdate(i => !i), [ref.current])
   return [ref, ref.current]
-}
-
-type Content = {
-  geometry: THREE.Geometry | THREE.BufferGeometry
-  material: THREE.Material | THREE.Material[]
 }
 
 type Extensions = (loader: THREE.Loader) => void
