@@ -14,7 +14,7 @@ const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
 
 const emptyObject = {}
 const is = {
-  obj: (a: any) => a === Object(a),
+  obj: (a: any) => a === Object(a) && !is.arr(a),
   str: (a: any) => typeof a === 'string',
   num: (a: any) => typeof a === 'number',
   und: (a: any) => a === void 0,
@@ -52,11 +52,11 @@ export function renderGl(
   runGlobalEffects: boolean = false
 ) {
   // Run global effects
-  if (runGlobalEffects) globalEffects.forEach(effect => effect(timestamp) && repeat++)
+  if (runGlobalEffects) globalEffects.forEach((effect) => effect(timestamp) && repeat++)
 
   // Run local effects
   const delta = state.current.clock.getDelta()
-  state.current.subscribers.forEach(sub => sub.ref.current(state.current, delta))
+  state.current.subscribers.forEach((sub) => sub.ref.current(state.current, delta))
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
@@ -71,9 +71,9 @@ function renderLoop(timestamp: number) {
   let repeat = 0
 
   // Run global effects
-  globalEffects.forEach(effect => effect(timestamp) && repeat++)
+  globalEffects.forEach((effect) => effect(timestamp) && repeat++)
 
-  roots.forEach(root => {
+  roots.forEach((root) => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
     if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
@@ -83,14 +83,14 @@ function renderLoop(timestamp: number) {
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
   else {
     // Tail call effects, they are called when rendering stops
-    globalTailEffects.forEach(effect => effect(timestamp))
+    globalTailEffects.forEach((effect) => effect(timestamp))
   }
   // Flag end of operation
   running = false
 }
 
 export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames: number = 2) {
-  if (state === true) roots.forEach(root => (root.containerInfo.__state.current.frames = frames))
+  if (state === true) roots.forEach((root) => (root.containerInfo.__state.current.frames = frames))
   else if (state && state.current) {
     if (state.current.vr) return
     state.current.frames = frames
@@ -107,16 +107,16 @@ export const extend = (objects: object): void => void (catalogue = { ...catalogu
 export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative: boolean = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
-  const sameProps = Object.keys(newProps).filter(key => is.equ(newProps[key], oldProps[key]))
-  const handlers = Object.keys(newProps).filter(key => typeof newProps[key] === 'function' && key.startsWith('on'))
-  const leftOvers = accumulative ? Object.keys(oldProps).filter(key => newProps[key] === void 0) : []
+  const sameProps = Object.keys(newProps).filter((key) => is.equ(newProps[key], oldProps[key]))
+  const handlers = Object.keys(newProps).filter((key) => typeof newProps[key] === 'function' && key.startsWith('on'))
+  const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
     return rest
   }, newProps)
 
   // Add left-overs as undefined props so they can be removed
-  leftOvers.forEach(key => key !== 'children' && (filteredProps[key] = undefined))
+  leftOvers.forEach((key) => key !== 'children' && (filteredProps[key] = undefined))
 
   if (Object.keys(filteredProps).length > 0) {
     Object.entries(filteredProps).forEach(([key, value]) => {
@@ -322,7 +322,7 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021
-  ;[fiber, fiber.alternate].forEach(fiber => {
+  ;[fiber, fiber.alternate].forEach((fiber) => {
     if (fiber !== null) {
       fiber.stateNode = newInstance
       if (fiber.ref) {
