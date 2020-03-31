@@ -93,7 +93,12 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
 
   // Render the canvas into the dom
   return (
-    <div ref={mergeRefs([bind, containerRef])} style={{ ...defaultStyles, ...style }} {...events} {...restSpread}>
+    <div
+      role="application"
+      ref={mergeRefs([bind, containerRef])}
+      style={{ ...defaultStyles, ...style }}
+      {...events}
+      {...restSpread}>
       {preRender}
       {ready && <Content {...props} {...state} />}
     </div>
