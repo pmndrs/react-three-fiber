@@ -15,6 +15,7 @@ const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
 const emptyObject = {}
 const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a),
+  fun: (a: any) => typeof a === 'function',
   str: (a: any) => typeof a === 'string',
   num: (a: any) => typeof a === 'number',
   und: (a: any) => a === void 0,
@@ -108,7 +109,15 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   // Filter equals, events and reserved props
   const container = instance.__container
   const sameProps = Object.keys(newProps).filter((key) => is.equ(newProps[key], oldProps[key]))
-  const handlers = Object.keys(newProps).filter((key) => typeof newProps[key] === 'function' && key.startsWith('on'))
+  const handlers = Object.keys(newProps).filter((key) => {
+    // Event-handlers ...
+    //   are functions, that
+    //   start with "on", and
+    //   contain the name "pointer", or "wheel", or "click"
+    if (is.fun(newProps[key]) && key.startsWith('on')) {
+      return key.includes('Pointer') || key.includes('Click') || key.includes('Wheel')
+    }
+  })
   const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
@@ -165,10 +174,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     // Prep interaction handlers
     if (handlers.length) {
       // Add interactive object to central container
-      if (container && instance.raycast) {
-        // Unless the only onUpdate is the only event present we flag the instance as interactive
-        if (!(handlers.length === 1 && handlers[0] === 'onUpdate')) container.__interaction.push(instance)
-      }
+      if (container && instance.raycast) container.__interaction.push(instance)
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce(
         (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
@@ -185,7 +191,7 @@ function invalidateInstance(instance: any) {
 }
 
 function updateInstance(instance: any) {
-  if (instance.__handlers && instance.__handlers.update) instance.__handlers.update(instance)
+  if (instance.onUpdate) instance.onUpdate(instance)
 }
 
 function createInstance(
@@ -322,11 +328,11 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021
-  ;[fiber, fiber.alternate].forEach((fiber) => {
+  ;[fiber, fiber.alternate].forEach((fiber: any) => {
     if (fiber !== null) {
       fiber.stateNode = newInstance
       if (fiber.ref) {
-        if (typeof fiber.ref === 'function') fiber.ref(newInstance)
+        if (is.fun(fiber.ref)) fiber.ref(newInstance)
         else (fiber.ref as Reconciler.RefObject).current = newInstance
       }
     }
@@ -343,12 +349,12 @@ const Renderer = Reconciler({
   warnsIfNotActing: true,
   supportsMutation: true,
   isPrimaryRenderer: false,
-  scheduleTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
-  cancelTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
+  scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
+  cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
   // @ts-ignore
-  setTimeout: typeof setTimeout === 'function' ? setTimeout : undefined,
+  setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
   // @ts-ignore
-  clearTimeout: typeof clearTimeout === 'function' ? clearTimeout : undefined,
+  clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
   noTimeout: -1,
   appendInitialChild: appendChild,
   appendChildToContainer: appendChild,
@@ -422,7 +428,7 @@ const Renderer = Reconciler({
 
 const LegacyRoot = 0
 const ConcurrentRoot = 2
-const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const hasSymbol = is.fun(Symbol) && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 
 export function render(

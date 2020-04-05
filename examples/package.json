@@ -14,7 +14,7 @@
     "react-scripts": "3.4.1",
     "react-spring": "^8.0.27",
     "react-three-gui": "^0.1.5",
-    "react-use-gesture": "^7.0.6",
+    "react-use-gesture": "^7.0.9",
     "styled-components": "^5.0.1",
     "threejs-meshline": "^2.0.10",
     "zustand": "^2.2.3"
@@ -64,7 +64,7 @@
     "customize-cra": "^0.9.1",
     "customize-cra-react-refresh": "^1.0.1",
     "husky": "^4.2.3",
-    "lint-staged": "^10.1.0",
+    "lint-staged": "^10.1.2",
     "prettier": "^2.0.2",
     "react-app-rewired": "^2.1.5"
   }

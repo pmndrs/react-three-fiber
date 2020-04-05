@@ -6,11 +6,11 @@ extend({ OrbitControls })
 
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)
-  const hover = useCallback(e => {
+  const hover = useCallback((e) => {
     if (stopPropagation) e.stopPropagation()
     setHover(true)
   }, [])
-  const unhover = useCallback(e => {
+  const unhover = useCallback((e) => {
     if (stopPropagation) e.stopPropagation()
     setHover(false)
   }, [])
@@ -22,14 +22,14 @@ function useDrag(onDrag, onEnd) {
   const [active, setActive] = useState(false)
   const [, toggle] = useContext(camContext)
 
-  const down = useCallback(e => {
+  const down = useCallback((e) => {
     setActive(true)
     toggle(false)
     e.stopPropagation()
     e.target.setPointerCapture(e.pointerId)
   }, [])
 
-  const up = useCallback(e => {
+  const up = useCallback((e) => {
     setActive(false)
     toggle(true)
     e.stopPropagation()
@@ -39,7 +39,7 @@ function useDrag(onDrag, onEnd) {
 
   const activeRef = useRef()
   useEffect(() => void (activeRef.current = active))
-  const move = useCallback(event => {
+  const move = useCallback((event) => {
     if (activeRef.current) {
       event.stopPropagation()
       onDrag(event.unprojectedPoint)
@@ -53,16 +53,8 @@ function useDrag(onDrag, onEnd) {
 function EndPoint({ position, onDrag, onEnd }) {
   let [bindHover, hovered] = useHover(false)
   let bindDrag = useDrag(onDrag, onEnd)
-
-  /*const [active, setActive] = useState(true)
-  if (!active) bindDrag = undefined
-  if (!active) bindHover = undefined
-
-  useEffect(() => void setTimeout(() => console.log('________inactive') || setActive(false), 2000), [])
-  useEffect(() => void setTimeout(() => console.log('________active!!') || setActive(true), 6000), [])*/
-
   return (
-    <mesh position={position} {...bindDrag} {...bindHover} onClick={e => console.log(e)}>
+    <mesh position={position} {...bindDrag} {...bindHover}>
       <sphereBufferGeometry attach="geometry" args={[7.5, 16, 16]} />
       <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'white'} />
     </mesh>
@@ -72,16 +64,16 @@ function EndPoint({ position, onDrag, onEnd }) {
 function Line({ defaultStart, defaultEnd }) {
   const [start, setStart] = useState(defaultStart)
   const [end, setEnd] = useState(defaultEnd)
-  const vertices = useMemo(() => [start, end].map(v => new THREE.Vector3(...v)), [start, end])
-  const update = useCallback(self => ((self.verticesNeedUpdate = true), self.computeBoundingSphere()), [])
+  const vertices = useMemo(() => [start, end].map((v) => new THREE.Vector3(...v)), [start, end])
+  const update = useCallback((self) => ((self.verticesNeedUpdate = true), self.computeBoundingSphere()), [])
   return (
     <>
       <line>
         <geometry attach="geometry" vertices={vertices} onUpdate={update} />
         <lineBasicMaterial attach="material" color="white" />
       </line>
-      <EndPoint position={start} onDrag={v => setStart(v.toArray())} />
-      <EndPoint position={end} onDrag={v => setEnd(v.toArray())} />
+      <EndPoint position={start} onDrag={(v) => setStart(v.toArray())} />
+      <EndPoint position={end} onDrag={(v) => setEnd(v.toArray())} />
     </>
   )
 }
@@ -95,8 +87,6 @@ function Controls({ children }) {
     const handler = ref.current.addEventListener('change', invalidate)
     return () => ref.current.removeEventListener('change', handler)
   }, [])
-
-  //useEffect(() => setTimeout(() => console.log(intersect()), 3000), [])
 
   return (
     <>
