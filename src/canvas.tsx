@@ -217,12 +217,12 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       return () => {
         // Decrease manual flag if this subscription had a priority
         if (priority) state.current.manual--
-        state.current.subscribers = state.current.subscribers.filter(s => s.ref !== ref)
+        state.current.subscribers = state.current.subscribers.filter((s) => s.ref !== ref)
       }
     },
     setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
     invalidate: () => invalidate(state),
-    intersect: (event?: DomEvent) => handlePointerMove(event || ({} as DomEvent)),
+    intersect: (event: DomEvent = {} as DomEvent, prepare: boolean = true) => handlePointerMove(event, prepare),
   })
 
   // Writes locals into public state for distribution among subscribers, context, etc
@@ -288,11 +288,9 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
   /** Intersects interaction objects using the event input */
   const intersect = useCallback(
-    (event: DomEvent, prepare = true, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
+    (event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
       // Skip event handling when noEvents is set
       if (state.current.noEvents) return []
-
-      if (prepare) prepareRay(event)
 
       const seen = new Set<string>()
       const hits: Intersection[] = []
@@ -303,7 +301,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
         : (state.current.scene as any).__interaction
 
       // Intersect known handler objects and filter against duplicates
-      let intersects = defaultRaycaster.intersectObjects(eventsObjects, true).filter(item => {
+      let intersects = defaultRaycaster.intersectObjects(eventsObjects, true).filter((item) => {
         const id = makeId(item as PointerEvent)
         if (seen.has(id)) return false
         seen.add(id)
@@ -346,13 +344,12 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       fn: (event: PointerEvent) => void,
       filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
     ): Intersection[] => {
-      prepareRay(event)
       // Get fresh intersects
-      let hits: Intersection[] = intersect(event, false, filter)
+      let hits: Intersection[] = intersect(event, filter)
       // If the interaction is captured take that into account, the captured event has to be part of the intersects
       if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
-        state.current.captured.forEach(captured => {
-          if (!hits.find(hit => hit.eventObject === captured.eventObject)) hits.push(captured)
+        state.current.captured.forEach((captured) => {
+          if (!hits.find((hit) => hit.eventObject === captured.eventObject)) hits.push(captured)
         })
       }
       // If anything has been found, forward it to the event listeners
@@ -402,7 +399,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           if (localState.stopped === true) {
             // Propagation is stopped, remove all other hover records
             // An event handler is only allowed to flush other handlers if it is hovered itself
-            if (hovered.size && Array.from(hovered.values()).find(i => i.object === hit.object)) {
+            if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object)) {
               handlePointerCancel(raycastEvent, [hit])
             }
             break
@@ -414,11 +411,12 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     []
   )
 
-  const handlePointerMove = useCallback((event: DomEvent) => {
+  const handlePointerMove = useCallback((event: DomEvent, prepare: boolean = true) => {
     state.current.pointer.emit('pointerMove', event)
+    if (prepare) prepareRay(event)
     const hits = handleIntersects(
       event,
-      data => {
+      (data) => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         // Check presence of handlers
@@ -441,23 +439,24 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
         }
       },
       // This is onPointerMove, we're only interested in events that exhibit this particular event
-      objects =>
-        objects.filter(obj =>
-          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(name => (obj as any).__handlers['pointer' + name])
+      (objects) =>
+        objects.filter((obj) =>
+          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__handlers['pointer' + name])
         )
     )
     // Take care of unhover
-    handlePointerCancel(event, hits)
+    handlePointerCancel(event, hits, prepare)
     return hits
   }, [])
 
-  const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[]) => {
+  const handlePointerCancel = useCallback((event: DomEvent, hits?: Intersection[], prepare: boolean = true) => {
     state.current.pointer.emit('pointerCancel', event)
+    if (prepare) prepareRay(event)
     if (!hits) hits = handleIntersects(event, () => null)
-    Array.from(hovered.values()).forEach(data => {
+    Array.from(hovered.values()).forEach((data) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
-      if (hits && (!hits.length || !hits.find(i => i.eventObject === data.eventObject))) {
+      if (hits && (!hits.length || !hits.find((i) => i.eventObject === data.eventObject))) {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers) {
@@ -470,10 +469,10 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
   }, [])
 
   const handlePointer = useCallback(
-    (name: string) => (event: DomEvent) => {
+    (name: string) => (event: DomEvent, prepare: boolean = true) => {
       state.current.pointer.emit(name, event)
-      // Collect hits
-      const hits = handleIntersects(event, data => {
+      if (prepare) prepareRay(event)
+      const hits = handleIntersects(event, (data) => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
@@ -485,7 +484,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // If a click yields no results, pass it back to the user as a miss
       if (name === 'pointerDown') {
         state.current.initialClick = [event.clientX, event.clientY]
-        state.current.initialHits = hits.map(hit => hit.eventObject)
+        state.current.initialHits = hits.map((hit) => hit.eventObject)
       }
       if (name === 'click' && !hits.length && onPointerMissed) {
         if (calculateDistance(event) <= 2) onPointerMissed()
@@ -505,7 +504,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       // onGotPointerCapture is not needed any longer because the behaviour is hacked into
       // the event itself (see handleIntersects). But in order for non-web targets to simulate
       // it we keep the legacy event, which simply flags all current intersects as captured
-      onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect(e, false)),
+      onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect(e)),
       onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
     }
   }, [onPointerMissed])
