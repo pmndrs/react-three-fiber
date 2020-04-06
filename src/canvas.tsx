@@ -222,7 +222,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     },
     setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
     invalidate: () => invalidate(state),
-    intersect: (event: DomEvent = {} as DomEvent, prepare: boolean = true) => handlePointerMove(event, prepare),
+    intersect: (event: DomEvent | undefined = {} as DomEvent, prepare: boolean = true) =>
+      handlePointerMove(event, prepare),
   })
 
   // Writes locals into public state for distribution among subscribers, context, etc
