@@ -366,7 +366,7 @@ useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
 
 #### useResource(optionalRef=undefined)
 
-When you want to share and re-use resources. `useResource` creates a ref and re-renders the component when it becomes available next frame.
+Take advantage of React's `useRef` with the added consideration of rendering when a component is available (e.g. in the next frame). Useful when you want to share and re-use resources across components.
 
 ```jsx
 import { useResource } from 'react-three-fiber'
@@ -378,6 +378,8 @@ return (
     <mesh material={material} />
     <mesh material={material} />
     <mesh material={material} />
+  )}
+)
 ```
 
 #### useUpdate(callback, dependencies, optionalRef=undefined)
