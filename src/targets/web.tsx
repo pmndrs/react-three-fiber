@@ -22,7 +22,7 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
           return temp
         }
       }}
-      preRender={<canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block' }} />}>
+      preRender={<canvas ref={canvasRef as React.MutableRefObject<HTMLCanvasElement>} style={{ display: 'block'; position: 'absolute' }} />}>
       {children}
     </ResizeContainer>
   )
