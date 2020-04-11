@@ -13,6 +13,7 @@ const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./V
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
+const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./dev/Viewcube')), dev: true }
 const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
 const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
 //const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
@@ -67,5 +68,6 @@ export {
   //CSS3DRenderer,
   Dom,
   Concurrent,
+  Viewcube,
   Test,
 }

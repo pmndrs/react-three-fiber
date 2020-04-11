@@ -285,6 +285,8 @@ declare global {
       matrix4: ReactThreeFiber.Node<THREE.Matrix4, typeof THREE.Matrix4>
       quaternion: ReactThreeFiber.Node<THREE.Quaternion, typeof THREE.Quaternion>
       bufferAttribute: ReactThreeFiber.Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
+      face3: ReactThreeFiber.Node<THREE.Face3, typeof THREE.Face3>
+      color: ReactThreeFiber.Node<THREE.Color, typeof THREE.Color>
     }
   }
 }
