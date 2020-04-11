@@ -52,6 +52,7 @@ export declare namespace ReactThreeFiber {
       scale?: Vector3
       rotation?: Euler
       matrix?: Matrix4
+      dispose?: (() => void) | null
     }
   > &
     ReactThreeFiber.Events
