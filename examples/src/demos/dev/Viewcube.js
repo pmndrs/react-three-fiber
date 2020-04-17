@@ -15,7 +15,7 @@ function Controls() {
 }
 
 function Viewcube() {
-  const { mouse, gl, camera, size } = useThree()
+  const { mouse, gl, camera, size,scene } = useThree()
   const virtualScene = useMemo(() => new THREE.Scene(), [])
   const virtualCam = useMemo(() => new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000), [])
   useMemo(() => {
