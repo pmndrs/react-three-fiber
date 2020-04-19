@@ -46,6 +46,7 @@
         "prettier/@typescript-eslint"
       ],
       "rules": {
+        "prefer-const": "off",
         "import/no-unresolved": "off",
         "import/named": "off",
         "no-useless-constructor": "off",
@@ -58,7 +59,8 @@
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-inferrable-types": "warn",
         "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/no-empty-interface": "off"
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/ban-ts-ignore": "off"
       }
     }
   ],

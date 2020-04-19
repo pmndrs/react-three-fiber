@@ -143,6 +143,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
         }
         // Special treatment for objects with support for set/copy
+        const isColorManagement = instance.__container?.__state.current.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) target.set(...value)
@@ -156,9 +157,25 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
             target.copy(value)
           // If nothing else fits, just set the single value, ignore undefined
           // https://github.com/react-spring/react-three-fiber/issues/274
-          else if (value !== undefined) target.set(value)
+          else if (value !== undefined) {
+            target.set(value)
+
+            // Auto-convert sRGB colors, for now ...
+            // https://github.com/react-spring/react-three-fiber/issues/344
+            if (isColorManagement && target instanceof THREE.Color) {
+              target.convertSRGBToLinear()
+            }
+          }
           // Else, just overwrite the value
-        } else root[key] = value
+        } else {
+          root[key] = value
+
+          // Auto-convert sRGB textures, for now ...
+          // https://github.com/react-spring/react-three-fiber/issues/344
+          if (isColorManagement && root[key] instanceof THREE.Texture) {
+            root[key].encoding = THREE.sRGBEncoding
+          }
+        }
 
         invalidateInstance(instance)
       }

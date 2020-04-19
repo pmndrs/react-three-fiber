@@ -62,6 +62,8 @@ export type CanvasContext = SharedCanvasContext & {
   ready: boolean
   active: boolean
   manual: number
+  sRGB: boolean
+  colorManagement: boolean
   vr: boolean
   concurrent: boolean
   invalidateFrameloop: boolean
@@ -86,6 +88,7 @@ export interface CanvasProps {
   concurrent?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   sRGB?: boolean
+  colorManagement?: boolean
   orthographic?: boolean
   resize?: ResizeOptions
   invalidateFrameloop?: boolean
@@ -138,6 +141,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     concurrent = false,
     shadowMap = false,
     sRGB = false,
+    colorManagement = false,
     invalidateFrameloop = false,
     updateDefaultCamera = true,
     noEvents = false,
@@ -183,6 +187,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     ready: false,
     active: true,
     manual: 0,
+    colorManagement,
+    sRGB,
     vr,
     concurrent,
     noEvents,
@@ -540,11 +546,11 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
       else gl.shadowMap.type = THREE.PCFSoftShadowMap
     }
-    if (sRGB) {
+    if (sRGB || colorManagement) {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.outputEncoding = THREE.sRGBEncoding
     }
-  }, [shadowMap, sRGB])
+  }, [shadowMap, sRGB, colorManagement])
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
