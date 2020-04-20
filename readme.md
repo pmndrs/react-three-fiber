@@ -111,7 +111,6 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   raycaster                     // Props that go into the default raycaster
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   colorManagement = false       // Auto sRGBEncoding encoding for all colors and textures + ACESFilmic
-  sRGB = false                  // Eencoding = sRGBEncoding, tonemapping =ACESFilmicToneMapping (obsolete)
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   gl2 = false                   // Enables webgl2
   concurrent = false            // Enables React concurrent mode
