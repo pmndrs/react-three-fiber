@@ -6,6 +6,10 @@ This is a collection of useful helpers and abstractions for [react-three-fiber](
 
     npm install drei
 
+```jsx
+import { ... } from 'drei'
+```
+
 <br />
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
