@@ -2,7 +2,7 @@ import React, { useRef } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame } from 'react-three-fiber'
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 
-extend({ OrbitControlsImpl })
+extend({ OrbitControls: OrbitControlsImpl })
 
 type OrbitControlsT = ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>
 
