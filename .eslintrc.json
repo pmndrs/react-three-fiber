@@ -1,0 +1,75 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true,
+    "node": true
+  },
+  "parser": "babel-eslint",
+  "extends": ["eslint:recommended", "plugin:import/errors", "plugin:import/warnings", "prettier"],
+  "plugins": ["react-hooks", "react"],
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "rules": {
+    "curly": ["warn", "multi-line", "consistent"],
+    "no-console": "off",
+    "no-dupe-class-members": "error",
+    "no-empty": "warn",
+    "no-undef": "error",
+    "no-unused-expressions": "error",
+    "no-unused-vars": "error",
+    "no-var": "warn",
+    "prefer-const": "warn",
+    "no-shadow": "warn",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-uses-vars": "error",
+    "react/jsx-uses-react": "error"
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"],
+      "parserOptions": {
+        "ecmaFeatures": { "jsx": true },
+        "ecmaVersion": 2018,
+        "project": "./tsconfig.json",
+        "sourceType": "module"
+      },
+      "extends": [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "prettier/@typescript-eslint"
+      ],
+      "rules": {
+        "prefer-const": "off",
+        "import/no-unresolved": "off",
+        "import/named": "off",
+        "no-useless-constructor": "off",
+        "@typescript-eslint/no-useless-constructor": "error",
+        "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-use-before-define": "off",
+        "@typescript-eslint/no-parameter-properties": "off",
+        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "@typescript-eslint/no-inferrable-types": "warn",
+        "@typescript-eslint/no-empty-function": "off",
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/ban-ts-ignore": "off"
+      }
+    }
+  ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".json", ".ts", ".tsx"],
+        "paths": ["src"]
+      }
+    }
+  }
+}

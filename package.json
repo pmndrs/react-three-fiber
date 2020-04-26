@@ -1,0 +1,93 @@
+{
+  "name": "drei",
+  "version": "0.0.1",
+  "description": "useful add-ons for react-three-fiber",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "sideEffects": false,
+  "scripts": {
+    "prebuild": "rimraf dist && npm run typegen",
+    "build": "rollup -c",
+    "prepare": "npm run build",
+    "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
+    "test": "jest",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
+    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 120
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drcmda/drei.git"
+  },
+  "keywords": [
+    "react",
+    "three",
+    "threejs",
+    "react-three-fiber"
+  ],
+  "author": "Paul Henschel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/drcmda/drei/issues"
+  },
+  "homepage": "https://github.com/drcmda/drei#readme",
+  "dependencies": {
+    "@babel/runtime": "^7.9.2"
+  },
+  "devDependencies": {
+    "@babel/core": "7.9.0",
+    "@babel/plugin-transform-modules-commonjs": "7.9.0",
+    "@babel/plugin-transform-parameters": "7.9.5",
+    "@babel/plugin-transform-runtime": "7.9.0",
+    "@babel/plugin-transform-template-literals": "7.8.3",
+    "@babel/preset-env": "7.9.5",
+    "@babel/preset-react": "7.9.4",
+    "@babel/preset-typescript": "^7.9.0",
+    "@types/jest": "^25.2.1",
+    "@types/lodash-es": "^4.17.3",
+    "@types/react": "^16.9.34",
+    "@types/react-dom": "^16.9.6",
+    "@types/react-test-renderer": "^16.9.2",
+    "@typescript-eslint/eslint-plugin": "^2.29.0",
+    "@typescript-eslint/parser": "^2.29.0",
+    "babel-eslint": "^10.1.0",
+    "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-react": "^7.19.0",
+    "eslint-plugin-react-hooks": "^3.0.0",
+    "husky": "^4.2.5",
+    "prettier": "^2.0.5",
+    "pretty-quick": "^2.0.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-three-fiber": "^4.1.1",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.7.2",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-size-snapshot": "^0.11.0",
+    "three": "^0.115.0",
+    "typescript": "^3.8.3"
+  },
+  "peerDependencies": {
+    "react": ">=16.13",
+    "react-dom": ">=16.13",
+    "three-three-fiber": ">=4.0"
+  }
+}
