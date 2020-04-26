@@ -10,7 +10,7 @@
     "build": "rollup -c",
     "prepare": "npm run build",
     "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
-    "test": "jest",
+    "test": "echo no tests yet",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true"
   },
@@ -70,6 +70,7 @@
     "eslint-plugin-react": "^7.19.0",
     "eslint-plugin-react-hooks": "^3.0.0",
     "husky": "^4.2.5",
+    "jest": "^25.4.0",
     "prettier": "^2.0.5",
     "pretty-quick": "^2.0.1",
     "react": "^16.13.1",
