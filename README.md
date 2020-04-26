@@ -6,7 +6,7 @@ This is a collection of useful helpers and abstractions for [react-three-fiber](
 
 <br />
 
-    npm install drei
+    yarn add drei
 
 ```jsx
 import { ... } from 'drei'
