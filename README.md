@@ -6,4 +6,4 @@ This is a collection of useful add-ons for [react-three-fiber](https://github.co
 
 <br />
 
-- OrbitControls
+- [x] OrbitControls
