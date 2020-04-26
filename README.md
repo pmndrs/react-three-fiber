@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/drcmda/drei.svg?branch=master)](https://travis-ci.org/drcmda/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg)
 
-This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate. It comes as a flat-bundle, your bundler will tree-shake the parts that you pick.
+This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
 **PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits. 
 
