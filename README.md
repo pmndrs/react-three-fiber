@@ -2,6 +2,8 @@
 
 This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
+PR's more than welcome! If you find yourself repeating set-up code often and if it's generic enough to be useful to others, add it here.
+
 <br />
 
     npm install drei
