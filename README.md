@@ -37,7 +37,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudo />`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0)
+- [x] `<PositionalAudio />`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0)
 
 ```jsx
 <mesh>
