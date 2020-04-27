@@ -41,7 +41,9 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Abstractions
 
-- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+- [x] `<Detailed />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+
+A wrapper around THREE.LOD (Level of detail)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
@@ -51,7 +53,9 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+- [x] `<PositionalAudio distance=1 loop=true/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+
+A wrapper around THREE.PositionalAudio.
 
 ```jsx
 <mesh>
@@ -61,15 +65,17 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- [x] `draco(url = "/draco-gtltf/")` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+
+Adds the Draco extension to your GLTFLoader.
 
 ```jsx
 useLoader(GLTFLoader, url, draco())
 ```
 
-- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
+- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
-Using the [postprocessing](https://github.com/vanruesc/postprocessing) library. [Ambient-occlusion-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [Bloom-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor)
+Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
 
 ```jsx
 <StandardEffects />
