@@ -10,10 +10,41 @@ import { ... } from 'drei'
 
 ## Exports
 
+#### Controls
+
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
 - [x] MapControls, `<MapControls enableDamping ... />`
 - [x] TrackballControls, `<TrackballControls ... />`
-- [x] TransformControls, `<TransformControls ... >{child}</TransformControls>`
+- [x] TransformControls
+
+```jsx
+<TransformControls>
+  <mesh />
+</TransformControls>
+```
+
+#### Abstractions
+
+- [x] Detailed, a wrapper around THREE.LOD (Level of detail)
+
+```jsx
+<Detailed distances={[0, 10, 20]}>
+  <mesh />
+  <mesh />
+  <mesh />
+</Detailed>
+```
+
+- [x] PositionalAudo, a wrapper around THREE.PositionalAudio
+
+```jsx
+<mesh>
+  <PositionalAudo url="/song.mp3" />
+</mesh>
+```
+
+#### Misc
+
 - [x] draco, `useLoader(GLTFLoader, url, draco())`
 
 ## Contributions
