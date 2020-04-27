@@ -4,13 +4,13 @@ import { useThree, useLoader } from 'react-three-fiber'
 // @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
-type Props = {
+type Props = JSX.IntrinsicElements['positionalAudio'] & {
   url: string
   distance: number
   loop: boolean
 }
 
-export const PositionalAudio = forwardRef(({ url, distance = 1, loop = true }: Props, ref) => {
+export const PositionalAudio = forwardRef(({ url, distance = 1, loop = true, ...props }: Props, ref) => {
   const sound = useRef<PositionalAudioImpl>()
   const { camera } = useThree()
   const [listener] = useState(() => new AudioListener())
@@ -23,5 +23,5 @@ export const PositionalAudio = forwardRef(({ url, distance = 1, loop = true }: P
     camera.add(listener)
     return () => void camera.remove(listener)
   }, [])
-  return <positionalAudio ref={mergeRefs([sound, ref])} args={[listener]} />
+  return <positionalAudio ref={mergeRefs([sound, ref])} args={[listener]} {...props} />
 })
