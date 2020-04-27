@@ -12,10 +12,12 @@ import { ... } from 'drei'
 
 #### Controls
 
-- [x] OrbitControls, `<OrbitControls enableDamping ... />`
-- [x] MapControls, `<MapControls enableDamping ... />`
-- [x] TrackballControls, `<TrackballControls ... />`
-- [x] TransformControls
+All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
+
+- [x] `<OrbitControls />`
+- [x] `<MapControls />`
+- [x] `<TrackballControls />`
+- [x] `<TransformControls />`
 
 ```jsx
 <TransformControls>
@@ -25,7 +27,7 @@ import { ... } from 'drei'
 
 #### Abstractions
 
-- [x] Detailed, a wrapper around THREE.LOD (Level of detail)
+- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
@@ -35,7 +37,7 @@ import { ... } from 'drei'
 </Detailed>
 ```
 
-- [x] PositionalAudo, a wrapper around THREE.PositionalAudio
+- [x] `<PositionalAudo />`, a wrapper around THREE.PositionalAudio
 
 ```jsx
 <mesh>
@@ -45,7 +47,11 @@ import { ... } from 'drei'
 
 #### Misc
 
-- [x] draco, `useLoader(GLTFLoader, url, draco())`
+- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader
+
+```jsx
+useLoader(GLTFLoader, url, draco())
+```
 
 ## Contributions
 
