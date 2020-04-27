@@ -2,22 +2,22 @@ import React, { useRef } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame } from 'react-three-fiber'
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 
-extend({ OrbitControls: OrbitControlsImpl })
+extend({ OrbitControlsImpl })
 
-type OrbitControlsT = ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>
+type OrbitControls = ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>
 
 declare global {
   namespace JSX {
     // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
-      orbitControls: OrbitControlsT
+      orbitControlsImpl: OrbitControls
     }
   }
 }
 
-export function OrbitControls(props: OrbitControlsT = { enableDamping: true, dampingFactor: 0.1, rotateSpeed: 0.5 }) {
+export function OrbitControls(props: OrbitControls = { enableDamping: true }) {
   const controls = useRef<OrbitControlsImpl>()
   const { camera, gl } = useThree()
-  useFrame(() => controls.current && controls.current.update())
-  return <orbitControls ref={controls} args={[camera, gl.domElement]} {...props} />
+  useFrame(() => controls.current?.update())
+  return <orbitControlsImpl ref={controls} args={[camera, gl.domElement]} {...props} />
 }

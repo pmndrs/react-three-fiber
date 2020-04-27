@@ -16,4 +16,6 @@ import { ... } from 'drei'
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
 - [x] MapControls, `<MapControls enableDamping ... />`
+- [x] TrackballControls, `<TrackballControls ... />`
+- [x] TransformControls, `<TransformControls ... >{child}</TransformControls>`
 - [x] draco, `useLoader(GLTFLoader, url, draco())`
