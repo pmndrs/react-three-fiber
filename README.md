@@ -28,10 +28,10 @@ import { ... } from 'drei'
 
 All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
-- [x] `<OrbitControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
-- [x] `<MapControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+- [x] `<OrbitControls enableDamping=true />` | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- [x] `<MapControls enableDamping=true />` | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 - [x] `<TrackballControls />`
-- [x] `<TransformControls />` | [sandbox](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
+- [x] `<TransformControls />` | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ```jsx
 <TransformControls>
@@ -41,7 +41,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Abstractions
 
-- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail) | [sandbox](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail) | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
@@ -51,7 +51,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/suspense-ready-brightgreen)
+- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
 ```jsx
 <mesh>
@@ -61,13 +61,13 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 ```jsx
 useLoader(GLTFLoader, url, draco())
 ```
 
-- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA | [sandbox](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/suspense-ready-brightgreen)
+- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA | [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
 Using the [postprocessing](https://github.com/vanruesc/postprocessing) library. [Ambient-occlusion-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [Bloom-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor)
 
