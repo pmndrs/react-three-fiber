@@ -1,10 +1,10 @@
 [![Build Status](https://travis-ci.org/react-spring/drei.svg?branch=master)](https://travis-ci.org/react-spring/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg)
 
 <p align="center">
-    <img width="600" src="https://imgur.com/IoJk0nn.jpg" alt="logo" />
+    <img width="500" src="https://imgur.com/WVLtwnn.jpg" alt="logo" />
 </p>
 
-This is a growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
+A growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
     yarn add drei
 
