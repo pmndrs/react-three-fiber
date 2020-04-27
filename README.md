@@ -12,10 +12,10 @@ import { ... } from 'drei'
 
 #### Controls
 
-- [x] OrbitControls, `<OrbitControls enableDamping ... />`
-- [x] MapControls, `<MapControls enableDamping ... />`
-- [x] TrackballControls, `<TrackballControls ... />`
-- [x] TransformControls
+- [x] <OrbitControls />, `<OrbitControls enableDamping ... />`
+- [x] <MapControls />, `<MapControls enableDamping ... />`
+- [x] <TrackballControls />, `<TrackballControls ... />`
+- [x] <TransformControls />
 
 ```jsx
 <TransformControls>
@@ -25,7 +25,7 @@ import { ... } from 'drei'
 
 #### Abstractions
 
-- [x] Detailed, a wrapper around THREE.LOD (Level of detail)
+- [x] <Detailed />, a wrapper around THREE.LOD (Level of detail)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
@@ -35,7 +35,7 @@ import { ... } from 'drei'
 </Detailed>
 ```
 
-- [x] PositionalAudo, a wrapper around THREE.PositionalAudio
+- [x] <PositionalAudo />, a wrapper around THREE.PositionalAudio
 
 ```jsx
 <mesh>
