@@ -22,12 +22,12 @@ import { ... } from 'drei'
 
 #### Controls
 
-If possible damping is enabled by default, all controls manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
+All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
-- [x] `<OrbitControls enableDamping=true />`
-- [x] `<MapControls enableDamping=true />`
+- [x] `<OrbitControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- [x] `<MapControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 - [x] `<TrackballControls />`
-- [x] `<TransformControls />`
+- [x] `<TransformControls />` | [sandbox](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ```jsx
 <TransformControls>
@@ -57,7 +57,7 @@ If possible damping is enabled by default, all controls manage their own updates
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader
+- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 ```jsx
 useLoader(GLTFLoader, url, draco())
