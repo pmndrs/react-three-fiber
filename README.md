@@ -16,7 +16,9 @@ import { ... } from 'drei'
 
 #### Cameras
 
-- [x] PerspectiveCamera `makeDefault=true`, can take children (which are then moved w/ the cam)
+- [x] PerspectiveCamera `makeDefault=true`
+
+A perspective camera that sets itself as the default. Can take children, which from then on move along.
 
 ```jsx
 <PerspectiveCamera>
