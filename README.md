@@ -17,7 +17,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 - [x] `<OrbitControls />`
 - [x] `<MapControls />`
 - [x] `<TrackballControls />`
-- [x] `<TransformControls />`
+- [x] `<TransformControls />` | [sandbox](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ```jsx
 <TransformControls>
