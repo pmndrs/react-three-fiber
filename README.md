@@ -10,12 +10,22 @@ import { ... } from 'drei'
 
 ## Exports
 
+#### Cameras
+
+- [x] `<PerspectiveCamera makeDefault=true />`, can take children (which are then moved w/ the cam)
+
+```jsx
+<PerspectiveCamera>
+  <mesh />
+</PerspectiveCamera>
+```
+
 #### Controls
 
-All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
+If possible damping is enabled by default, all controls manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
 
-- [x] `<OrbitControls />`
-- [x] `<MapControls />`
+- [x] `<OrbitControls enableDamping=true />`
+- [x] `<MapControls enableDamping=true />`
 - [x] `<TrackballControls />`
 - [x] `<TransformControls />`
 
@@ -37,7 +47,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudio />`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0)
+- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0)
 
 ```jsx
 <mesh>
