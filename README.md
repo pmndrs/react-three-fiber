@@ -51,7 +51,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) \*suspense
+- [x] `<PositionalAudio distance=1 loop=true/>`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/suspense-ready-brightgreen)
 
 ```jsx
 <mesh>
@@ -67,7 +67,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 useLoader(GLTFLoader, url, draco())
 ```
 
-- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA | [sandbox](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) \*suspense
+- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA | [sandbox](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/suspense-ready-brightgreen)
 
 Using the [postprocessing](https://github.com/vanruesc/postprocessing) library. [Ambient-occlusion-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [Bloom-props](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor)
 
