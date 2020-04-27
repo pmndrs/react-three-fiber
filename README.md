@@ -27,7 +27,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Abstractions
 
-- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail)
+- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail) | [sandbox](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
@@ -37,7 +37,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 </Detailed>
 ```
 
-- [x] `<PositionalAudo />`, a wrapper around THREE.PositionalAudio [[sandbox]](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) [suspense]
+- [x] `<PositionalAudio />`, a wrapper around THREE.PositionalAudio | [sandbox](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0)
 
 ```jsx
 <mesh>
