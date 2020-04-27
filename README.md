@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/react-spring/drei.svg?branch=master)](https://travis-ci.org/react-spring/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg)
 
-This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
+This is a growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
     yarn add drei
 
@@ -51,9 +51,9 @@ import { ... } from 'drei'
 
 If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
 
-### Requirements
+#### Requirements
 
 - Types
-- ForwardRefs if possible, so that objects can be referenced
-- Invalidate frames on any movement
-- Cleanup on unmount, no left-overs
+- ForwardRefs if possible, so that objects can be referenced back
+- Invalidate frames on any movement for those using invalidateFrameloop
+- Cleanup on unmount, no left-overs, restore previous states
