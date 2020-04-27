@@ -1,3 +1,7 @@
 export * from './OrbitControls'
 export * from './MapControls'
+export * from './TrackballControls'
+export * from './TransformControls'
+export * from './Detailed'
+export * from './PositionalAudio'
 export * from './draco'
