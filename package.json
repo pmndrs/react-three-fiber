@@ -44,7 +44,8 @@
   },
   "homepage": "https://github.com/drcmda/drei#readme",
   "dependencies": {
-    "@babel/runtime": "^7.9.2"
+    "@babel/runtime": "^7.9.2",
+    "react-merge-refs": "^1.0.0"
   },
   "devDependencies": {
     "@babel/core": "7.9.0",

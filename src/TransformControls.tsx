@@ -1,7 +1,9 @@
-import React, { useRef, useLayoutEffect } from 'react'
-import { ReactThreeFiber, extend, useThree, useFrame } from 'react-three-fiber'
-import { TransformControls as TransformControlsImpl } from 'three/examples/jsm/controls/TransformControls'
 import { Object3D, Group } from 'three'
+import React, { forwardRef, useRef, useLayoutEffect } from 'react'
+import { ReactThreeFiber, extend, useThree } from 'react-three-fiber'
+import { TransformControls as TransformControlsImpl } from 'three/examples/jsm/controls/TransformControls'
+// @ts-ignore
+import mergeRefs from 'react-merge-refs'
 
 extend({ TransformControlsImpl })
 
@@ -16,18 +18,17 @@ declare global {
   }
 }
 
-export function TransformControls({
-  children,
-  ...props
-}: { children: React.ReactElement<Object3D> } & TransformControls) {
-  const controls = useRef<TransformControlsImpl>()
-  const group = useRef<Group>()
-  const { camera, gl } = useThree()
-  useLayoutEffect(() => void controls.current?.attach(group.current as Object3D), [children])
-  return (
-    <>
-      <transformControlsImpl ref={controls} args={[camera, gl.domElement]} {...props} />
-      <group ref={group}>{children}</group>
-    </>
-  )
-}
+export const TransformControls = forwardRef(
+  ({ children, ...props }: { children: React.ReactElement<Object3D> } & TransformControls, ref) => {
+    const controls = useRef<TransformControlsImpl>()
+    const group = useRef<Group>()
+    const { camera, gl } = useThree()
+    useLayoutEffect(() => void controls.current?.attach(group.current as Object3D), [children])
+    return (
+      <>
+        <transformControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
+        <group ref={group}>{children}</group>
+      </>
+    )
+  }
+)

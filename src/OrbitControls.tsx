@@ -1,6 +1,8 @@
-import React, { useRef } from 'react'
+import React, { forwardRef, useRef } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame } from 'react-three-fiber'
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
+// @ts-ignore
+import mergeRefs from 'react-merge-refs'
 
 extend({ OrbitControlsImpl })
 
@@ -15,9 +17,9 @@ declare global {
   }
 }
 
-export function OrbitControls(props: OrbitControls = { enableDamping: true }) {
+export const OrbitControls = forwardRef((props: OrbitControls = { enableDamping: true }, ref) => {
   const controls = useRef<OrbitControlsImpl>()
   const { camera, gl } = useThree()
   useFrame(() => controls.current?.update())
-  return <orbitControlsImpl ref={controls} args={[camera, gl.domElement]} {...props} />
-}
+  return <orbitControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
+})
