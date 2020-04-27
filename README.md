@@ -47,7 +47,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader
+- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 ```jsx
 useLoader(GLTFLoader, url, draco())
