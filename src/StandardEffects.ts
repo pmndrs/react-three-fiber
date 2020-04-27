@@ -65,16 +65,16 @@ export function StandardEffects({ ao = true, bloom = true, edgeDetectionThreshol
       rangeFalloff: 0.1,
       luminanceInfluence: 0.9,
       radius: 20,
-      scale: 0.25,
-      bias: 0.25,
+      scale: 0.5,
+      bias: 0.5,
       ...(ao as AOProps),
     })
 
     const bloomEffect = new BloomEffect({
       opacity: 1,
-      blendFunction: BlendFunction.ADD,
-      kernelSize: KernelSize.SMALL,
-      luminanceThreshold: 0.65,
+      blendFunction: BlendFunction.SCREEN,
+      kernelSize: KernelSize.VERY_LARGE,
+      luminanceThreshold: 0.9,
       luminanceSmoothing: 0.07,
       height: 600,
       ...(bloom as BloomProps),
