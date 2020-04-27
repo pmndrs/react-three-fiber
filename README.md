@@ -45,7 +45,7 @@ import { ... } from 'drei'
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, add Draco extension to GLTFLoader
+- [x] `draco(url = "/draco-gtltf/")`, adds Draco extension to GLTFLoader
 
 ```jsx
 useLoader(GLTFLoader, url, draco())
