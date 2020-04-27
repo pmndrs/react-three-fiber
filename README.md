@@ -8,7 +8,7 @@ This is a collection of useful helpers and abstractions for [react-three-fiber](
 import { ... } from 'drei'
 ```
 
-### Exports
+## Exports
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
 - [x] MapControls, `<MapControls enableDamping ... />`
