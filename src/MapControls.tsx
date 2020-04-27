@@ -25,5 +25,5 @@ export const MapControls = forwardRef((props: MapControls = { enableDamping: tru
     controls.current?.addEventListener('change', invalidate)
     return () => controls.current?.removeEventListener('change', invalidate)
   }, [controls.current])
-  return <mapControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
+  return <mapControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} enableDamping {...props} />
 })
