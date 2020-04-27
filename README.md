@@ -12,6 +12,8 @@ import { ... } from 'drei'
 
 #### Controls
 
+All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
+
 - [x] `<OrbitControls />`
 - [x] `<MapControls />`
 - [x] `<TrackballControls />`
