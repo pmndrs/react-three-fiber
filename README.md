@@ -63,7 +63,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 useLoader(GLTFLoader, url, draco())
 ```
 
-- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />, adds AO, bloom and SMAA \*suspense
+- [x] `<StandardEffects ao=true|{...} bloom=true|{...} />`, adds AO, bloom and SMAA \*suspense
 
 Ambient-occlusion-props: https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor
 Bloom-props: https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor
