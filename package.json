@@ -1,6 +1,6 @@
 {
   "name": "drei",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "useful add-ons for react-three-fiber",
   "main": "dist/index.cjs.js",
   "module": "dist/index.js",
