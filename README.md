@@ -2,7 +2,7 @@
 
 This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
-**PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits. 
+**PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits.
 
 <br />
 
@@ -15,4 +15,5 @@ import { ... } from 'drei'
 <br />
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
+- [x] MapControls, `<MapControls enableDamping ... />`
 - [x] draco, `useLoader(GLTFLoader, url, draco())`
