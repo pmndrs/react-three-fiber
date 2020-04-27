@@ -27,7 +27,7 @@ All controls have damping enabled by default, they manage their own updates, rem
 
 #### Abstractions
 
-- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail)
+- [x] `<Detailed />`, a wrapper around THREE.LOD (Level of detail) | [sandbox](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
