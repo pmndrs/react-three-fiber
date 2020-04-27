@@ -24,7 +24,7 @@ import { ... } from 'drei'
 
 All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
-- [x] `<OrbitControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm)
+- [x] `<OrbitControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 - [x] `<MapControls enableDamping=true />` | [sandbox](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 - [x] `<TrackballControls />`
 - [x] `<TransformControls />` | [sandbox](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
