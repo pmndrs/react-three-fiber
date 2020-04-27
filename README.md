@@ -2,17 +2,13 @@
 
 This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
-<br />
-
     yarn add drei
 
 ```jsx
 import { ... } from 'drei'
 ```
 
-<br />
-
-## Exports
+### Exports
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
 - [x] MapControls, `<MapControls enableDamping ... />`
@@ -22,7 +18,7 @@ import { ... } from 'drei'
 
 ## Contributions
 
-**PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits.
+If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
 
 ### Requirements
 
