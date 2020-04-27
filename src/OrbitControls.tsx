@@ -23,7 +23,7 @@ export const OrbitControls = forwardRef((props: OrbitControls = { enableDamping:
   useFrame(() => controls.current?.update())
   useEffect(() => {
     controls.current?.addEventListener('change', invalidate)
-    return controls.current?.removeEventListener('change', invalidate)
+    return () => controls.current?.removeEventListener('change', invalidate)
   }, [controls.current])
   return <orbitControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
 })

@@ -23,7 +23,7 @@ export const TrackballControls = forwardRef((props: TrackballControls, ref) => {
   useFrame(() => controls.current?.update())
   useEffect(() => {
     controls.current?.addEventListener('change', invalidate)
-    return controls.current?.removeEventListener('change', invalidate)
+    return () => controls.current?.removeEventListener('change', invalidate)
   }, [controls.current])
   return <trackballControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
 })
