@@ -18,7 +18,7 @@ import { ... } from 'drei'
 
 #### ⚡️ PerspectiveCamera `makeDefault=true`
 
-A perspective camera that sets itself as the default. Can take children, which from then on move along.
+A responsive, perspective camera that sets itself as the default. Can take children, which from then on move along.
 
 ```jsx
 <PerspectiveCamera>
