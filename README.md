@@ -2,15 +2,11 @@
 
 This is a collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
-<br />
-
     yarn add drei
 
 ```jsx
 import { ... } from 'drei'
 ```
-
-<br />
 
 ### Exports
 
