@@ -12,7 +12,7 @@ import { ... } from 'drei'
 
 #### Controls
 
-All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop`.
+All controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
 - [x] `<OrbitControls />`
 - [x] `<MapControls />`
