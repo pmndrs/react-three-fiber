@@ -23,6 +23,6 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 #### Requirements
 
 - Types
-- ForwardRefs if possible, so that objects can be referenced
-- Invalidate frames on any movement
-- Cleanup on unmount, no left-overs
+- ForwardRefs if possible, so that objects can be referenced back
+- Invalidate frames on any movement for those using invalidateFrameloop
+- Cleanup on unmount, no left-overs, restore previous states
