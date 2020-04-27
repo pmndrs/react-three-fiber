@@ -18,7 +18,7 @@ import { ... } from 'drei'
 
 ### Contributions
 
-**PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits.
+**PR's are welcome!** If you find yourself repeating code often and if it's generic enough, add it here, everyone benefits.
 
 ### Requirements
 
