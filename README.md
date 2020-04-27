@@ -12,9 +12,9 @@ import { ... } from 'drei'
 
 #### Controls
 
-- [x] `<OrbitControls />`, `<OrbitControls enableDamping ... />`
-- [x] `<MapControls />`, `<MapControls enableDamping ... />`
-- [x] `<TrackballControls />`, `<TrackballControls ... />`
+- [x] `<OrbitControls />`
+- [x] `<MapControls />`
+- [x] `<TrackballControls />`
 - [x] `<TransformControls />`
 
 ```jsx
@@ -45,7 +45,11 @@ import { ... } from 'drei'
 
 #### Misc
 
-- [x] `draco(url = "/draco-gtltf/")`, `useLoader(GLTFLoader, url, draco())`
+- [x] `draco(url = "/draco-gtltf/")`, add Draco extension to GLTFLoader
+
+```jsx
+useLoader(GLTFLoader, url, draco())
+```
 
 ## Contributions
 
