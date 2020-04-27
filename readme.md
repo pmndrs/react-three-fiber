@@ -97,6 +97,20 @@ ReactDOM.render(
 
 You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Here are some general [do's and don't](https://discoverthreejs.com/tips-and-tricks) for performance and best practices. Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
 
+#### Useful add-ons
+
+Helpers: https://github.com/react-spring/drei
+
+GLTFJSX: https://github.com/react-spring/gltfjsx
+
+THREE-GUI: https://github.com/ueno-llc/react-three-gui
+
+#### News, updates, recipes, faqs
+
+News and examples via Twitter: [@0xca0a](https://twitter.com/0xca0a)
+
+Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
+
 # API
 
 ## Canvas
@@ -486,14 +500,6 @@ import { Canvas, Dom } from 'react-three-fiber'
   </Dom>
 </Canvas>
 ```
-
-# Links
-
-News and examples via Twitter: [@0xca0a](https://twitter.com/0xca0a)
-
-Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
-
-GLTF-to-JSX converter: https://github.com/react-spring/gltfjsx
 
 # How to contribute
 
