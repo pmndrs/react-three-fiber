@@ -12,7 +12,7 @@ import { ... } from 'drei'
 
 <br />
 
-### Exports
+## Exports
 
 - [x] OrbitControls, `<OrbitControls enableDamping ... />`
 - [x] MapControls, `<MapControls enableDamping ... />`
@@ -20,7 +20,7 @@ import { ... } from 'drei'
 - [x] TransformControls, `<TransformControls ... >{child}</TransformControls>`
 - [x] draco, `useLoader(GLTFLoader, url, draco())`
 
-### Contributions
+## Contributions
 
 **PR's are more than welcome!** If you find yourself repeating set-up code often and if it's generic enough to be useful, add it here, everyone benefits.
 
@@ -28,4 +28,5 @@ import { ... } from 'drei'
 
 - Types
 - ForwardRefs if possible, so that objects can be referenced
+- Invalidate frames on any movement
 - Cleanup on unmount, no left-overs
