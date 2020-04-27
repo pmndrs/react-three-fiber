@@ -45,24 +45,22 @@ If available controls have damping enabled by default, they manage their own upd
 
 #### ⚡️ Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
-A wrapper around THREE.LOD (Level of detail)
+A wrapper around THREE.LOD (Level of detail). The number of distances corresponds to the direct children you add. Only one of the children will be shown according to how close the camera is to it.
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
-  <mesh />
-  <mesh />
-  <mesh />
+  <mesh geometry={highDetail} />
+  <mesh geometry={mediumDetail} />
+  <mesh geometry={lowDetail} />
 </Detailed>
 ```
 
-#### ⚡️ PositionalAudio `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+#### ⚡️ PositionalAudio `url` `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
-A wrapper around THREE.PositionalAudio.
+A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them to a sound or a loop that plays when the camera comes near.
 
 ```jsx
-<mesh>
-  <PositionalAudo url="/song.mp3" />
-</mesh>
+<PositionalAudo url="/song.mp3" />
 ```
 
 ### Misc
