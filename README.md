@@ -80,19 +80,9 @@ useLoader(GLTFLoader, url, draco())
 
 Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
 
-```jsx
-<StandardEffects />
-```
-
 ## Shaders
 
-#### ⚡️ Sky
-
-Adds [sky shader](https://threejs.org/examples/?q=sky#webgl_shaders_sky) to the scene.
-
-```jsx
-<Sky distance={50000} />
-```
+#### ⚡️ Sky `distance=450000` `sunPosition=[0, 1, 0]` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
 # Contributions
 
