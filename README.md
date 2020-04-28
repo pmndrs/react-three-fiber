@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/react-spring/drei.svg?branch=master)](https://travis-ci.org/react-spring/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg)
 
 <p align="center">
-    <img width="500" src="https://imgur.com/WVLtwnn.jpg" alt="logo" />
+    <img width="500" src="https://imgur.com/arDsXO6.jpg" alt="logo" />
 </p>
 
 A growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
@@ -12,13 +12,13 @@ A growing collection of useful helpers and abstractions for [react-three-fiber](
 import { ... } from 'drei'
 ```
 
-## Exports
+# Exports
 
-#### Cameras
+## Cameras
 
-- [x] PerspectiveCamera `makeDefault=true`
+#### ⚡️ PerspectiveCamera `makeDefault=true`
 
-A perspective camera that sets itself as the default. Can take children, which from then on move along.
+A responsive, perspective camera that sets itself as the default. Can take children, which from then on move along.
 
 ```jsx
 <PerspectiveCamera>
@@ -26,14 +26,17 @@ A perspective camera that sets itself as the default. Can take children, which f
 </PerspectiveCamera>
 ```
 
-#### Controls
+## Controls
 
 If available controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
-- [x] OrbitControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
-- [x] MapControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
-- [x] TrackballControls
-- [x] TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
+#### ⚡️ OrbitControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+
+#### ⚡️ MapControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+
+#### ⚡️ TrackballControls
+
+#### ⚡️ TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ```jsx
 <TransformControls>
@@ -41,33 +44,31 @@ If available controls have damping enabled by default, they manage their own upd
 </TransformControls>
 ```
 
-#### Abstractions
+## Abstractions
 
-- [x] Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+#### ⚡️ Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
-A wrapper around THREE.LOD (Level of detail)
+A wrapper around THREE.LOD (Level of detail). The number of distances corresponds to the direct children you add. Only one of the children will be shown according to how close the camera is to it.
 
 ```jsx
 <Detailed distances={[0, 10, 20]}>
-  <mesh />
-  <mesh />
-  <mesh />
+  <mesh geometry={highDetail} />
+  <mesh geometry={mediumDetail} />
+  <mesh geometry={lowDetail} />
 </Detailed>
 ```
 
-- [x] PositionalAudio `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+#### ⚡️ PositionalAudio `url` `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
-A wrapper around THREE.PositionalAudio.
+A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them to a sound or a loop that plays when the camera comes near.
 
 ```jsx
-<mesh>
-  <PositionalAudo url="/song.mp3" />
-</mesh>
+<PositionalAudo url="/song.mp3" />
 ```
 
-#### Misc
+## Misc
 
-- [x] draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+#### ⚡️ draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 Adds the Draco extension to your GLTFLoader.
 
@@ -75,7 +76,7 @@ Adds the Draco extension to your GLTFLoader.
 useLoader(GLTFLoader, url, draco())
 ```
 
-- [x] StandardEffects `ao=true|{...}` `bloom=true|{...}` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
+#### ⚡️ StandardEffects `ao=true|{...}` `bloom=true|{...}` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
 Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
 
@@ -83,11 +84,21 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 <StandardEffects />
 ```
 
-## Contributions
+## Shaders
+
+#### ⚡️ Sky
+
+Adds [sky shader](https://threejs.org/examples/?q=sky#webgl_shaders_sky) to the scene.
+
+```jsx
+<Sky distance={50000} />
+```
+
+# Contributions
 
 If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
 
-#### Requirements
+### Requirements
 
 - Types
 - ForwardRefs if possible, so that objects can be referenced back
