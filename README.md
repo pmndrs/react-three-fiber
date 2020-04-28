@@ -31,8 +31,11 @@ A responsive, perspective camera that sets itself as the default. Can take child
 If available controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
 #### ⚡️ OrbitControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+
 #### ⚡️ MapControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+
 #### ⚡️ TrackballControls
+
 #### ⚡️ TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ```jsx
@@ -79,6 +82,16 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 
 ```jsx
 <StandardEffects />
+```
+
+## Shaders
+
+#### ⚡️ Sky
+
+Adds [sky shader](https://threejs.org/examples/?q=sky#webgl_shaders_sky) to the scene.
+
+```jsx
+<Sky distance={50000} />
 ```
 
 # Contributions
