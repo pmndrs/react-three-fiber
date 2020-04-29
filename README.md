@@ -6,6 +6,15 @@
 
 A growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
+If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
+
+#### Requirements
+
+- Types
+- ForwardRefs if possible, so that objects can be referenced back
+- Invalidate frames on any movement for those using invalidateFrameloop
+- Cleanup on unmount, no left-overs, restore previous states
+
     yarn add drei
 
 ```jsx
@@ -85,14 +94,3 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 #### ⚡️ Sky `distance=450000` `sunPosition=[0, 1, 0]` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
 From: https://threejs.org/examples/webgl_shaders_sky.html
-
-# Contributions
-
-If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
-
-### Requirements
-
-- Types
-- ForwardRefs if possible, so that objects can be referenced back
-- Invalidate frames on any movement for those using invalidateFrameloop
-- Cleanup on unmount, no left-overs, restore previous states
