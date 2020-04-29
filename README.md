@@ -4,14 +4,6 @@
     <img width="500" src="https://imgur.com/arDsXO6.jpg" alt="logo" />
 </p>
 
-```
-yarn add drei
-```
-
-```jsx
-import { ... } from 'drei'
-```
-
 A growing collection of useful helpers and abstractions for [react-three-fiber](https://github.com/react-spring/react-three-fiber), saving you some boilerplate.
 
 If you find yourself repeating set-up code often and if it's generic enough, add it here, everyone benefits!
@@ -22,6 +14,15 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - ForwardRefs if possible, so that objects can be referenced back
 - Invalidate frames on any movement for those using invalidateFrameloop
 - Cleanup on unmount, no left-overs, restore previous states
+
+
+```
+yarn add drei
+```
+
+```jsx
+import { ... } from 'drei'
+```
 
 ## Cameras
 
