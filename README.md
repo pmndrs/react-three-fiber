@@ -15,7 +15,9 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Invalidate frames on any movement for those using invalidateFrameloop
 - Cleanup on unmount, no left-overs, restore previous states
 
-    yarn add drei
+```
+yarn add drei
+```
 
 ```jsx
 import { ... } from 'drei'
