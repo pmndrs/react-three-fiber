@@ -25,7 +25,7 @@ import { ... } from 'drei'
 
 ## Cameras
 
-### ⚡️ PerspectiveCamera `makeDefault=true`
+##### ⚡️ PerspectiveCamera `makeDefault=true`
 
 A responsive, perspective camera that sets itself as the default. Can take children, which from then on move along.
 
@@ -39,17 +39,17 @@ A responsive, perspective camera that sets itself as the default. Can take child
 
 If available controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag.
 
-### ⚡️ OrbitControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+##### ⚡️ OrbitControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
-### ⚡️ MapControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+##### ⚡️ MapControls `enableDamping=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 
-### ⚡️ TrackballControls
+##### ⚡️ TrackballControls
 
-### ⚡️ TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
+##### ⚡️ TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ## Abstractions
 
-### ⚡️ Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+##### ⚡️ Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
 A wrapper around THREE.LOD (Level of detail). The number of distances corresponds to the direct children you add. Only one of the children will be shown according to how close the camera is to it.
 
@@ -61,23 +61,23 @@ A wrapper around THREE.LOD (Level of detail). The number of distances correspond
 </Detailed>
 ```
 
-### ⚡️ PositionalAudio `url` `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+##### ⚡️ PositionalAudio `url` `distance=1` `loop=true` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
 A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them to a sound or a loop that plays when the camera comes near.
 
-### ⚡️ StandardEffects `ao=true|{...}` `bloom=true|{...}` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
+##### ⚡️ StandardEffects `ao=true|{...}` `bloom=true|{...}` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
 Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
 
 ## Shaders
 
-### ⚡️ Sky `distance=450000` `sunPosition=[0, 1, 0]` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
+##### ⚡️ Sky `distance=450000` `sunPosition=[0, 1, 0]` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
 From: https://threejs.org/examples/webgl_shaders_sky.html
 
 ## Misc
 
-### ⚡️ draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+##### ⚡️ draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 Adds the Draco extension to your GLTFLoader.
 
