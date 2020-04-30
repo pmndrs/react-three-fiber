@@ -3,7 +3,7 @@ import { useFrame } from 'react-three-fiber'
 // @ts-ignore
 import StatsImpl from 'stats.js'
 
-export default function Stats({ showPanel = 0 }) {
+export function Stats({ showPanel = 0 }) {
   const [stats] = useState(() => new (StatsImpl as any)())
   useEffect(() => {
     stats.showPanel(showPanel)
