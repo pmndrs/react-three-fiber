@@ -23,6 +23,22 @@ yarn add drei
 import { ... } from 'drei'
 ```
 
+# Index
+
+###### ⚡️ `<PerspectiveCamera />`
+###### ⚡️ `<OrbitControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+###### ⚡️ `<MapControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+###### ⚡️ `<TrackballControls />`
+###### ⚡️ `<TransformControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
+###### ⚡️ `<Detailed />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+###### ⚡️ `<PositionalAudio />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
+###### ⚡️ `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen)
+###### ⚡️ `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
+###### ⚡️ `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+###### ⚡️ draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+
+# Exports
+
 ## Cameras
 
 ##### ⚡️ PerspectiveCamera `makeDefault=true`
@@ -77,6 +93,10 @@ From: https://threejs.org/examples/webgl_shaders_sky.html
 
 ## Misc
 
+#### ⚡️ Stats `showPanel=0` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+
+Adds stats to document.body. It takes over the render-loop!
+
 ##### ⚡️ draco(`url = '/draco-gtltf/'`) [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 Adds the Draco extension to your GLTFLoader.
@@ -84,7 +104,3 @@ Adds the Draco extension to your GLTFLoader.
 ```jsx
 useLoader(GLTFLoader, url, draco())
 ```
-
-#### ⚡️ Stats `showPanel=0` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
-
-Adds stats to document.body. It takes over the render-loop!
