@@ -15,7 +15,6 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Invalidate frames on any movement for those using invalidateFrameloop
 - Cleanup on unmount, no left-overs, restore previous states
 
-
 ```
 yarn add drei
 ```
@@ -85,3 +84,7 @@ Adds the Draco extension to your GLTFLoader.
 ```jsx
 useLoader(GLTFLoader, url, draco())
 ```
+
+#### ⚡️ Stats `showPanel=0` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+
+Adds stats to document.body. It takes over the render-loop!
