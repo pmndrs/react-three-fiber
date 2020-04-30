@@ -288,6 +288,7 @@ declare global {
       bufferAttribute: ReactThreeFiber.Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
       face3: ReactThreeFiber.Node<THREE.Face3, typeof THREE.Face3>
       color: ReactThreeFiber.Node<THREE.Color, typeof THREE.Color>
+      fog: ReactThreeFiber.Node<THREE.Fog, typeof THREE.Fog>
     }
   }
 }
