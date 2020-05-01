@@ -41,8 +41,8 @@ function objectScale(el: Object3D, camera: Camera) {
 function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) {
   if (camera instanceof PerspectiveCamera || camera instanceof OrthographicCamera) {
     const dist = el.position.distanceTo(camera.position)
-    const A = (zIndexRange[0] - zIndexRange[1]) / (camera.far - camera.near)
-    const B = zIndexRange[0] - A * camera.far
+    const A = (zIndexRange[1] - zIndexRange[0]) / (camera.far - camera.near)
+    const B = zIndexRange[1] - A * camera.far
     return Math.round(A * dist + B)
   }
   return undefined
@@ -70,7 +70,7 @@ export const Dom = React.forwardRef(
       center,
       portal,
       scaleFactor,
-      zIndexRange = [0, 16777271],
+      zIndexRange = [16777271, 0],
       ...props
     }: DomProps,
     ref: React.Ref<HTMLDivElement>
