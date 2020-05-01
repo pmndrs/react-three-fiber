@@ -42,9 +42,9 @@ No. Rendering performance is up to Threejs and the GPU. Components may participa
 
 #### What does it look like?
 
-|                                                                                                                     |                                                                         |
-| ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Let's make a re-usable component that has it's own state, reacts to user-input and participates in the render-loop: | ![https://codesandbox.io/s/rrppl0y8l4](https://i.imgur.com/sS4ArrZ.gif) |
+| | |
+|-|-|
+Let's make a re-usable component that has it's own state, reacts to user-input and participates in the render-loop: | ![https://codesandbox.io/s/rrppl0y8l4](https://i.imgur.com/sS4ArrZ.gif)
 
 ```jsx
 import ReactDOM from 'react-dom'
@@ -54,22 +54,22 @@ import { Canvas, useFrame } from 'react-three-fiber'
 function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
-
+  
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-
+  
   // Rotate mesh every frame, this is outside of React without overhead
   useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
-
+  
   return (
     <mesh
       {...props}
       ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-      onClick={(e) => setActive(!active)}
-      onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}>
+      onClick={e => setActive(!active)}
+      onPointerOver={e => setHover(true)}
+      onPointerOut={e => setHover(false)}>
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
       <meshStandardMaterial attach="material" color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -91,9 +91,9 @@ ReactDOM.render(
 
 #### How to proceed?
 
-1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
-2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [sandbox above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
-3. Robert Borghesi's ([@dghez\_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps.
+1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). 
+2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [sandbox above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like). 
+3. Robert Borghesi's ([@dghez_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs) will lead you through the next steps.
 
 You can advance your knowledge by reading into [Threejs-fundamentals](https://threejsfundamentals.org) and [Discover Threejs](https://discoverthreejs.com). Here are some general [do's and don't](https://discoverthreejs.com/tips-and-tricks) for performance and best practices. Looking into the source of the [original threejs-examples](https://threejs.org/examples) couldn't hurt.
 
@@ -237,14 +237,17 @@ The `extend` function extends three-fibers catalogue of known native JSX element
 import { extend } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
+extend({ EffectComposer, RenderPass })
+
+<effectComposer>
+  <renderPass />
 ```
 
 ## Automatic disposal
 
 Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
 
-If you manage assets by yourself, globally or in a cache, this may _not_ be what you want. You can recursively switch it off:
+If you manage assets by yourself, globally or in a cache, this may *not* be what you want. You can recursively switch it off:
 
 ```jsx
 const globalGeometry = new THREE.BoxBufferGeometry()
@@ -262,16 +265,16 @@ Additionally there's a special `onUpdate` that is called every time the object g
 
 ```jsx
 <mesh
-  onClick={(e) => console.log('click')}
-  onWheel={(e) => console.log('wheel spins')}
-  onPointerUp={(e) => console.log('up')}
-  onPointerDown={(e) => console.log('down')}
-  onPointerOver={(e) => console.log('over')}
-  onPointerOut={(e) => console.log('out')}
-  onPointerEnter={(e) => console.log('enter')}
-  onPointerLeave={(e) => console.log('leave')}
-  onPointerMove={(e) => console.log('move')}
-  onUpdate={(self) => console.log('props have been updated')}
+  onClick={e => console.log('click')}
+  onWheel={e => console.log('wheel spins')}
+  onPointerUp={e => console.log('up')}
+  onPointerDown={e => console.log('down')}
+  onPointerOver={e => console.log('over')}
+  onPointerOut={e => console.log('out')}
+  onPointerEnter={e => console.log('enter')}
+  onPointerLeave={e => console.log('leave')}
+  onPointerMove={e => console.log('move')}
+  onUpdate={self => console.log('props have been updated')}
 />
 ```
 
@@ -341,19 +344,19 @@ This hooks gives you access to all the basic objects that are kept internally, l
 import { useThree } from 'react-three-fiber'
 
 const {
-  gl, // WebGL renderer
-  scene, // Default scene
-  camera, // Default camera
-  raycaster, // Default raycaster
-  size, // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport, // Bounds of the viewport in 3d units + factor (size/viewport)
-  aspect, // Aspect ratio (size.width / size.height)
-  mouse, // Current, centered, normalized 2D mouse coordinates
-  raycaster, // Intternal raycaster instance
-  clock, // THREE.Clock (useful for useFrame deltas)
-  invalidate, // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect, // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera, // Sets the default camera
+  gl,                           // WebGL renderer
+  scene,                        // Default scene
+  camera,                       // Default camera
+  raycaster,                    // Default raycaster
+  size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
+  aspect,                       // Aspect ratio (size.width / size.height)
+  mouse,                        // Current, centered, normalized 2D mouse coordinates
+  raycaster,                    // Intternal raycaster instance
+  clock,                        // THREE.Clock (useful for useFrame deltas)
+  invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
+  setDefaultCamera,             // Sets the default camera
 } = useThree()
 ```
 
@@ -367,7 +370,7 @@ Updating controls:
 import { useFrame } from 'react-three-fiber'
 
 const controls = useRef()
-useFrame((state) => controls.current.update())
+useFrame(state => controls.current.update())
 return <orbitControls ref={controls} />
 ```
 
@@ -403,7 +406,7 @@ When objects need to be updated imperatively.
 import { useUpdate } from 'react-three-fiber'
 
 const ref = useUpdate(
-  (geometry) => {
+  geometry => {
     geometry.addAttribute('position', getVertices(x, y, z))
     geometry.attributes.position.needsUpdate = true
   },
@@ -426,7 +429,7 @@ function Asset({ url }) {
   return <primitive object={gltf.scene} dispose={null} />
 }
 
-;<Suspense fallback={<Cube />}>
+<Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
 ```
@@ -436,7 +439,7 @@ You can provide a callback if you need to configure your loader:
 ```jsx
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 
-useLoader(GLTFLoader, url, (loader) => {
+useLoader(GLTFLoader, url, loader => {
   const dracoLoader = new DRACOLoader()
   dracoLoader.setDecoderPath('/draco-gltf/')
   loader.setDRACOLoader(dracoLoader)
@@ -453,15 +456,15 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 
 ```jsx
 import {
-  addEffect, // Adds a global callback which is called each frame
-  addTail, // Adds a global callback which is called when rendering stops
-  invalidate, // Forces view global invalidation
-  extend, // Extends the native-object catalogue
-  createPortal, // Creates a portal (it's a React feature for re-parenting)
-  render, // Internal: Renders three jsx into a scene
-  unmountComponentAtNode, // Internal: Unmounts root scene
-  applyProps, // Internal: Sets element properties
-  Dom, // Project HTML content
+  addEffect,                    // Adds a global callback which is called each frame
+  addTail,                      // Adds a global callback which is called when rendering stops
+  invalidate,                   // Forces view global invalidation
+  extend,                       // Extends the native-object catalogue
+  createPortal,                 // Creates a portal (it's a React feature for re-parenting)
+  render,                       // Internal: Renders three jsx into a scene
+  unmountComponentAtNode,       // Internal: Unmounts root scene
+  applyProps,                   // Internal: Sets element properties
+  Dom,                          // Project HTML content
 } from 'react-three-fiber'
 ```
 
@@ -484,7 +487,7 @@ Sometimes you want to project dom-content on top (or underneath) of the canvas. 
 ```jsx
 import { Canvas, Dom } from 'react-three-fiber'
 
-;<Canvas>
+<Canvas>
   <Dom position={[100, 0, 100]}>
     <h1>hello world!</h1>
   </Dom>
