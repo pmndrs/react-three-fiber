@@ -350,7 +350,8 @@ const {
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
   viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,                       // Aspect ratio (size.width / size.height)
-  mouse,                        // Current 2D mouse coordinates
+  mouse,                        // Current, centered, normalized 2D mouse coordinates
+  raycaster,                    // Intternal raycaster instance
   clock,                        // THREE.Clock (useful for useFrame deltas)
   invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
   intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
@@ -450,16 +451,6 @@ It can also make multiple requests in parallel:
 const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
 ```
 
-#### useCamera(camera, props) (experimental!)
-
-This is a special purpose hook for the rare case when you are using non-default cameras for heads-up-displays or portals, and you need events/raytracing to function properly (raycasting uses the default camera otherwise).
-
-```jsx
-import { useCamera } from 'react-three-fiber'
-
-<mesh raycast={useCamera(customCamera)} onPointerMove={e => console.log('move')}>
-```
-
 ## Additional exports
 
 ```jsx
@@ -485,6 +476,7 @@ Sometimes you want to project dom-content on top (or underneath) of the canvas. 
   children                      // Regular dom content, text, images, divs, etc
   prepend = false               // Will be projected in front of the canvas
   center = false                // Adds a -50%/-50% css transform
+  portal                        // Optional reference to target container
   style                         // Regular css styles, will be added to the inner div container
   className                     // ..
   onClick                       // ..
