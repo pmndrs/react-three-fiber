@@ -38,6 +38,16 @@ function objectScale(el: Object3D, camera: Camera) {
   return 1
 }
 
+function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) {
+  if (camera instanceof PerspectiveCamera || camera instanceof OrthographicCamera) {
+    const dist = el.position.distanceTo(camera.position)
+    const A = (zIndexRange[0] - zIndexRange[1]) / (camera.far - camera.near)
+    const B = zIndexRange[0] - A * camera.far
+    return Math.round(A * dist + B)
+  }
+  return undefined
+}
+
 export interface DomProps
   extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
   children: React.ReactElement
@@ -45,11 +55,22 @@ export interface DomProps
   center?: boolean
   eps?: number
   scaleFactor?: number
+  zIndexRange?: Array<number>
 }
 
 export const Dom = React.forwardRef(
   (
-    { children, eps = 0.001, style, className, prepend, center, scaleFactor, ...props }: DomProps,
+    {
+      children,
+      eps = 0.001,
+      style,
+      className,
+      prepend,
+      center,
+      scaleFactor,
+      zIndexRange = [0, 16777271],
+      ...props
+    }: DomProps,
     ref: React.Ref<HTMLDivElement>
   ) => {
     const { gl, scene, camera, size } = useThree()
@@ -92,8 +113,10 @@ export const Dom = React.forwardRef(
         const vec = calculatePosition(group.current, camera, size)
         if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
           const scale = scaleFactor === undefined ? 1 : objectScale(group.current, camera) * scaleFactor
+          const zIndex = objectZIndex(group.current, camera, zIndexRange)
           el.style.display = !isObjectBehindCamera(group.current, camera) ? 'block' : 'none'
           el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0) scale(${scale})`
+          el.style.zIndex = `${zIndex}`
         }
         old.current = vec
       }
