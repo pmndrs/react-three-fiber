@@ -54,6 +54,7 @@ export interface DomProps
   prepend?: boolean
   center?: boolean
   eps?: number
+  portal?: React.MutableRefObject<HTMLElement>
   scaleFactor?: number
   zIndexRange?: Array<number>
 }
@@ -67,6 +68,7 @@ export const Dom = React.forwardRef(
       className,
       prepend,
       center,
+      portal,
       scaleFactor,
       zIndexRange = [0, 16777271],
       ...props
@@ -77,18 +79,19 @@ export const Dom = React.forwardRef(
     const [el] = useState(() => document.createElement('div'))
     const group = useRef<Group>(null)
     const old = useRef([0, 0])
+    const target = portal?.current ?? gl.domElement.parentNode
 
     useEffect(() => {
       if (group.current) {
         scene.updateMatrixWorld()
         const vec = calculatePosition(group.current, camera, size)
         el.style.cssText = `position:absolute;top:0;left:0;transform:translate3d(${vec[0]}px,${vec[1]}px,0);transform-origin:0 0;`
-        if (gl.domElement.parentNode) {
-          if (prepend) gl.domElement.parentNode.prepend(el)
-          else gl.domElement.parentNode.appendChild(el)
+        if (target) {
+          if (prepend) target.prepend(el)
+          else target.appendChild(el)
         }
         return () => {
-          if (gl.domElement.parentNode) gl.domElement.parentNode.removeChild(el)
+          if (target) target.removeChild(el)
           ReactDOM.unmountComponentAtNode(el)
         }
       }

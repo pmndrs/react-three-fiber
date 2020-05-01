@@ -227,6 +227,11 @@ function createInstance(
     instance = new props.object(args)
   } else {
     const target = (catalogue as any)[name] || (THREE as any)[name]
+
+    if (!target) {
+      throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/react-spring/react-three-fiber#using-3rd-party-non-three-namespaced-objects-in-the-scene-graph`
+    }
+
     instance = is.arr(args) ? new target(...args) : new target(args)
   }
 
