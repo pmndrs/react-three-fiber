@@ -15,6 +15,18 @@ function calculatePosition(el: Object3D, camera: Camera, size: { width: number; 
   return [vector.x * widthHalf + widthHalf, -(vector.y * heightHalf) + heightHalf]
 }
 
+function isObjectBehindCamera(el: Object3D, camera: Camera) {
+  const objectPos = new Vector3().setFromMatrixPosition(el.matrixWorld)
+  const cameraPos = new Vector3().setFromMatrixPosition(camera.matrixWorld)
+  const deltaCamObj = objectPos.sub(cameraPos)
+  const camDir = new Vector3()
+  camera.getWorldDirection(camDir)
+
+  return deltaCamObj.angleTo(camDir) > Math.PI / 2
+}
+
+}
+
 export interface DomProps
   extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
   children: React.ReactElement
@@ -67,7 +79,7 @@ export const Dom = React.forwardRef(
       if (group.current) {
         const vec = calculatePosition(group.current, camera, size)
         if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
-          el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0)`
+          el.style.display = !isObjectBehindCamera(group.current, camera) ? 'block' : 'none'
         }
         old.current = vec
       }
