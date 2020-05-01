@@ -115,11 +115,10 @@ export const Dom = React.forwardRef(
       if (group.current) {
         const vec = calculatePosition(group.current, camera, size)
         if (Math.abs(old.current[0] - vec[0]) > eps || Math.abs(old.current[1] - vec[1]) > eps) {
-          const scale = scaleFactor === undefined ? 1 : objectScale(group.current, camera) * scaleFactor
-          const zIndex = objectZIndex(group.current, camera, zIndexRange)
           el.style.display = !isObjectBehindCamera(group.current, camera) ? 'block' : 'none'
+          const scale = scaleFactor === undefined ? 1 : objectScale(group.current, camera) * scaleFactor
           el.style.transform = `translate3d(${vec[0]}px,${vec[1]}px,0) scale(${scale})`
-          el.style.zIndex = `${zIndex}`
+          el.style.zIndex = `${objectZIndex(group.current, camera, zIndexRange)}`
         }
         old.current = vec
       }
