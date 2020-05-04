@@ -44,7 +44,7 @@ import { ... } from 'drei'
 
 ##### ⚡️ `<PerspectiveCamera />`
 
-A responsive, perspective camera that sets itself as the default. Can take children, which from then on move along.
+A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) that sets itself as the default.
 
 ```jsx
 <PerspectiveCamera
@@ -57,7 +57,7 @@ A responsive, perspective camera that sets itself as the default. Can take child
 
 ## Controls
 
-If available controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag. They inherit all props from their underlying THREE controls.
+If available controls have damping enabled by default, they manage their own updates, remove themselves on unmount, are compatible with the `invalidateFrameloop` canvas-flag. They inherit all props from their underlying [THREE controls](https://github.com/mrdoob/three.js/tree/dev/examples/jsm/controls).
 
 ##### ⚡️ `<OrbitControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
@@ -86,17 +86,15 @@ A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/
 
 ##### ⚡️ `<PositionalAudio />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
-A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them to a sound that plays when the camera comes near.
+A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api/en/audio/PositionalAudio). Add this to groups or meshes to tie them to a sound that plays when the camera comes near.
 
 ```jsx
-<mesh>
-  <PositionalAudio
-    url="/sound.mp3"        // Url of the sound file
-    distance={1}            // Camera distance (default=1)
-    loop                    // Repat play (default=true)
-    {...props}              // All THREE.PositionalAudio props are valid
-  />
-</mesh>
+<PositionalAudio
+  url="/sound.mp3"          // Url of the sound file
+  distance={1}              // Camera distance (default=1)
+  loop                      // Repat play (default=true)
+  {...props}                // All THREE.PositionalAudio props are valid
+/>
 ```
 
 ##### ⚡️ `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
@@ -108,17 +106,17 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
   smaa                      // Can be a boolean (default=true)
   ao                        // Can be a boolean or all valid postprocessing AO props (default=true)
   bloom                     // Can be a boolean or all valid postprocessing Bloom props (default=true)
-  edgeDetection = 0.1       // Optional, SMAA precision
-  bloomOpacity = 1          // Optional, Bloom blendMode opacity
-  effects                   // Optional, define your own effect: ([smaa, ao, bloom]) => [...effects]
-  />
+  edgeDetection={0.1}       // SMAA precision (default=0.1)
+  bloomOpacity={1}          // Bloom blendMode opacity (default=1)
+  effects={() => [...fx]}   // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
+/>
 ```
 
 ## Shaders
 
 ##### ⚡️ `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
-From: https://threejs.org/examples/webgl_shaders_sky.html
+Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 
 ```jsx
 <Sky
@@ -136,11 +134,11 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 
 ```jsx
 <HTML
-  prepend = false           // Will be projected in front of the canvas
-  center = false            // Adds a -50%/-50% css transform
-  scaleFactor               // Optional, scales children if set to a number (default=undefined)
-  zIndexRange               // Optional, handles z-order (default=[16777271, 0])
-  portal                    // Optional reference to target container
+  prepend                   // Project content behind the canvas (default: false)
+  center                    // Adds a -50%/-50% css transform (default: false)
+  scaleFactor={10}          // Scales children if set to a number (default=undefined)
+  zIndexRange={[100, 0]}    // Z-order range (default=[16777271, 0])
+  portal={domnodeRef}       // Reference to target container (default=undefined)
   {...groupProps}           // All THREE.Group props are valid
   {...divProps}             // All HTMLDivElement props are valid
   >
@@ -168,6 +166,8 @@ Adds the Draco extension to your GLTFLoader.
 useLoader(
   GLTFLoader,
   url,
-  draco(binUrl)             // default='/draco-gtltf/'
+  draco(
+    '/draco-gtltf/'         // Path to the Draco binaries (default='/draco-gtltf/')
+  )
 )
 ```
