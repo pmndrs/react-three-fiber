@@ -44,7 +44,7 @@ import { ... } from 'drei'
 
 ##### ⚡️ `<PerspectiveCamera />`
 
-A responsive, perspective camera that sets itself as the default. Can take children, which from then on move along.
+A responsive [THREE.Perspective](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) camera that sets itself as the default.
 
 ```jsx
 <PerspectiveCamera
@@ -86,7 +86,7 @@ A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/
 
 ##### ⚡️ `<PositionalAudio />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 
-A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them to a sound that plays when the camera comes near.
+A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api/en/audio/PositionalAudio). Add this to groups or meshes to tie them to a sound that plays when the camera comes near.
 
 ```jsx
 <mesh>
@@ -118,7 +118,7 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 
 ##### ⚡️ `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
-From: https://threejs.org/examples/webgl_shaders_sky.html
+Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 
 ```jsx
 <Sky
