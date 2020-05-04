@@ -110,7 +110,7 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
   bloom                     // Can be a boolean or all valid postprocessing Bloom props (default=true)
   edgeDetection={0.1}       // SMAA precision (default=0.1)
   bloomOpacity={1}          // Bloom blendMode opacity (default=1)
-  effects={() => [...fx]}   // Define your own effect: ([smaa, ao, bloom]) => [...effects] (default=undefined)
+  effects={() => [...fx]}   // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
 />
 ```
 
