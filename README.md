@@ -111,7 +111,7 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
   edgeDetection = 0.1       // Optional, SMAA precision
   bloomOpacity = 1          // Optional, Bloom blendMode opacity
   effects                   // Optional, define your own effect: ([smaa, ao, bloom]) => [...effects]
-  />
+/>
 ```
 
 ## Shaders
