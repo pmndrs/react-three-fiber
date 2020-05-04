@@ -1,5 +1,5 @@
 import { Vector3, Group, Object3D, Camera, PerspectiveCamera, OrthographicCamera } from 'three'
-import React, { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect, useMemo } from 'react'
 import ReactDOM from 'react-dom'
 import { Assign } from 'utility-types'
 import { ReactThreeFiber, useFrame, useThree } from 'react-three-fiber'
@@ -52,6 +52,7 @@ export interface HTMLProps
   children: React.ReactElement
   prepend?: boolean
   center?: boolean
+  fullscreen?: boolean
   eps?: number
   portal?: React.MutableRefObject<HTMLElement>
   scaleFactor?: number
@@ -67,6 +68,7 @@ export const HTML = React.forwardRef(
       className,
       prepend,
       center,
+      fullscreen,
       portal,
       scaleFactor,
       zIndexRange = [16777271, 0],
@@ -97,17 +99,23 @@ export const HTML = React.forwardRef(
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [target])
 
+    const styles: React.CSSProperties = useMemo(
+      () => ({
+        position: 'absolute',
+        transform: center ? 'translate3d(-50%,-50%,0)' : 'none',
+        ...(fullscreen && {
+          top: -size.height / 2,
+          left: -size.width / 2,
+          width: size.width,
+          height: size.height,
+        }),
+        ...style,
+      }),
+      [style, center, fullscreen, size]
+    )
+
     useEffect(
-      () =>
-        void ReactDOM.render(
-          <div
-            style={{ transform: center ? 'translate3d(-50%,-50%,0)' : 'none', ...style }}
-            className={className}
-            ref={ref}>
-            {children}
-          </div>,
-          el
-        )
+      () => void ReactDOM.render(<div ref={ref} style={styles} className={className} children={children} />, el)
     )
 
     useFrame(() => {
