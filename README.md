@@ -136,6 +136,7 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 <HTML
   prepend                   // Project content behind the canvas (default: false)
   center                    // Adds a -50%/-50% css transform (default: false)
+  fullscreen                // Aligns to the upper-left corner, fills the screen (default:false)
   scaleFactor={10}          // Scales children if set to a number (default=undefined)
   zIndexRange={[100, 0]}    // Z-order range (default=[16777271, 0])
   portal={domnodeRef}       // Reference to target container (default=undefined)
