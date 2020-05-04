@@ -4,41 +4,42 @@ import ReactDOM from 'react-dom'
 import { Assign } from 'utility-types'
 import { ReactThreeFiber, useFrame, useThree } from 'react-three-fiber'
 
-const vector = new Vector3()
+const v1 = new Vector3()
+const v2 = new Vector3()
+const v3 = new Vector3()
 function calculatePosition(el: Object3D, camera: Camera, size: { width: number; height: number }) {
-  vector.setFromMatrixPosition(el.matrixWorld)
-  vector.project(camera)
+  const objectPos = v1.setFromMatrixPosition(el.matrixWorld)
+  objectPos.project(camera)
   const widthHalf = size.width / 2
   const heightHalf = size.height / 2
-  return [vector.x * widthHalf + widthHalf, -(vector.y * heightHalf) + heightHalf]
+  return [objectPos.x * widthHalf + widthHalf, -(objectPos.y * heightHalf) + heightHalf]
 }
 
 function isObjectBehindCamera(el: Object3D, camera: Camera) {
-  const objectPos = new Vector3().setFromMatrixPosition(el.matrixWorld)
-  const cameraPos = new Vector3().setFromMatrixPosition(camera.matrixWorld)
+  const objectPos = v1.setFromMatrixPosition(el.matrixWorld)
+  const cameraPos = v2.setFromMatrixPosition(camera.matrixWorld)
   const deltaCamObj = objectPos.sub(cameraPos)
-  const camDir = new Vector3()
-  camera.getWorldDirection(camDir)
-
+  const camDir = camera.getWorldDirection(v3)
   return deltaCamObj.angleTo(camDir) > Math.PI / 2
 }
 
 function objectScale(el: Object3D, camera: Camera) {
   if (camera instanceof PerspectiveCamera) {
+    const objectPos = v1.setFromMatrixPosition(el.matrixWorld)
+    const cameraPos = v2.setFromMatrixPosition(camera.matrixWorld)
     const vFOV = (camera.fov * Math.PI) / 180
-    const dist = el.position.distanceTo(camera.position)
-
+    const dist = objectPos.distanceTo(cameraPos)
     return 1 / (2 * Math.tan(vFOV / 2) * dist)
   }
-  if (camera instanceof OrthographicCamera) {
-    return camera.zoom
-  }
+  if (camera instanceof OrthographicCamera) return camera.zoom
   return 1
 }
 
 function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) {
   if (camera instanceof PerspectiveCamera || camera instanceof OrthographicCamera) {
-    const dist = el.position.distanceTo(camera.position)
+    const objectPos = v1.setFromMatrixPosition(el.matrixWorld)
+    const cameraPos = v2.setFromMatrixPosition(camera.matrixWorld)
+    const dist = objectPos.distanceTo(cameraPos)
     const A = (zIndexRange[1] - zIndexRange[0]) / (camera.far - camera.near)
     const B = zIndexRange[1] - A * camera.far
     return Math.round(A * dist + B)
@@ -46,7 +47,7 @@ function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) 
   return undefined
 }
 
-export interface DomProps
+export interface HTMLProps
   extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
   children: React.ReactElement
   prepend?: boolean
@@ -70,7 +71,7 @@ export const HTML = React.forwardRef(
       scaleFactor,
       zIndexRange = [16777271, 0],
       ...props
-    }: DomProps,
+    }: HTMLProps,
     ref: React.Ref<HTMLDivElement>
   ) => {
     const { gl, scene, camera, size } = useThree()
