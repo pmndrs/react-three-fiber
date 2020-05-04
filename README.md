@@ -136,8 +136,8 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 
 ```jsx
 <HTML
-  prepend = false           // Will be projected in front of the canvas
-  center = false            // Adds a -50%/-50% css transform
+  prepend                   // Optional, project content behind the canvas (default: false)
+  center                    // Optional, adds a -50%/-50% css transform (default: false)
   scaleFactor               // Optional, scales children if set to a number (default=undefined)
   zIndexRange               // Optional, handles z-order (default=[16777271, 0])
   portal                    // Optional reference to target container
