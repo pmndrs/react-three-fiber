@@ -50,7 +50,7 @@ export const Dom = React.forwardRef(
         }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [target])
 
     useEffect(
       () =>
