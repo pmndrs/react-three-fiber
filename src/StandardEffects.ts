@@ -18,8 +18,10 @@ import {
 type Props = {
   bloom: boolean | BloomProps
   ao: boolean | AOProps
+  smaa: boolean
   edgeDetection: number
   bloomOpacity: number
+  effects?: (effects: any[]) => any[]
 }
 
 type BloomProps = {
@@ -45,7 +47,14 @@ type AOProps = {
   bias?: number
 }
 
-export function StandardEffects({ ao = true, bloom = true, edgeDetection = 0.1, bloomOpacity = 1 }: Props) {
+export function StandardEffects({
+  smaa = true,
+  ao = true,
+  bloom = true,
+  edgeDetection = 0.1,
+  bloomOpacity = 1,
+  effects,
+}: Props) {
   const { gl, scene, camera, size } = useThree()
   const smaa: any = useLoader(SMAAImageLoader, '')
   const composer = useMemo(() => {
@@ -82,11 +91,15 @@ export function StandardEffects({ ao = true, bloom = true, edgeDetection = 0.1, 
 
     bloomEffect.blendMode.opacity.value = bloomOpacity
 
-    const effects = [camera, smaaEffect, ssaoEffect]
-    if (ao) effects.push(ssaoEffect)
-    if (bloom) effects.push(bloomEffect)
+    let effectsArray: any[] = []
+    if (effects) effectsArray = effects([smaaEffect, ssaoEffect, bloomEffect])
+    else {
+      if (smaa) effectsArray.push(smaaEffect)
+      if (ao) effectsArray.push(ssaoEffect)
+      if (bloom) effectsArray.push(bloomEffect)
+    }
 
-    const effectPass = new EffectPass(...effects)
+    const effectPass = new EffectPass(camera, ...effectsArray)
     effectPass.renderToScreen = true
     composer.addPass(normalPass)
     composer.addPass(effectPass)

@@ -105,10 +105,12 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 
 ```jsx
 <StandardEffects
-  ao                        // Can be a boolean or all valid postprocessing AO props
-  bloom                     // Can be a boolean or all valid postprocessing Bloom props
+  smaa                      // Can be a boolean (default=true)
+  ao                        // Can be a boolean or all valid postprocessing AO props (default=true)
+  bloom                     // Can be a boolean or all valid postprocessing Bloom props (default=true)
   edgeDetection = 0.1       // Optional, SMAA precision
   bloomOpacity = 1          // Optional, Bloom blendMode opacity
+  effects                   // Optional, define your own effect: ([smaa, ao, bloom]) => [...effects]
   />
 ```
 
