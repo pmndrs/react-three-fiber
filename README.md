@@ -48,7 +48,7 @@ A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/e
 
 ```jsx
 <PerspectiveCamera
-  makeDefault               // Registers it as the default camera system-wide (default=true)
+  makeDefault               // Optional, registers it as the default camera system-wide (default=true)
   {...props}                // All THREE.PerspectiveCamera props are valid
 >
   <mesh />
@@ -92,8 +92,8 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 <mesh>
   <PositionalAudio
     url="/sound.mp3"        // Url of the sound file
-    distance={1}            // Camera distance (default=1)
-    loop                    // Repat play (default=true)
+    distance={1}            // Optional, camera distance (default=1)
+    loop                    // Optional, repat play (default=true)
     {...props}              // All THREE.PositionalAudio props are valid
   />
 </mesh>
@@ -122,8 +122,8 @@ Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 
 ```jsx
 <Sky
-  distance={450000}         // Camera distance (default=450000)
-  sunPosition={[0, 1, 0]}   // Sun position normal (default=[0, 1, 0])
+  distance={450000}         // Optional, camera distance (default=450000)
+  sunPosition={[0, 1, 0]}   // Optional, sun position normal (default=[0, 1, 0])
   {...props}                // All three/examples/jsm/objects/Sky props are valid
 />
 ```
@@ -138,9 +138,9 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 <HTML
   prepend                   // Optional, project content behind the canvas (default: false)
   center                    // Optional, adds a -50%/-50% css transform (default: false)
-  scaleFactor               // Optional, scales children if set to a number (default=undefined)
-  zIndexRange               // Optional, handles z-order (default=[16777271, 0])
-  portal                    // Optional reference to target container
+  scaleFactor={10}          // Optional, scales children if set to a number (default=undefined)
+  zIndexRange={[100, 0]}    // Optional, handles z-order (default=[16777271, 0])
+  portal={domnodeRef}       // Optional, reference to target container
   {...groupProps}           // All THREE.Group props are valid
   {...divProps}             // All HTMLDivElement props are valid
   >
