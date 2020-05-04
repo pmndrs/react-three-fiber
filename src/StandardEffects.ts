@@ -18,7 +18,7 @@ import {
 type Props = {
   bloom: boolean | BloomProps
   ao: boolean | AOProps
-  edgeDetectionThreshold: number
+  edgeDetection: number
   bloomOpacity: number
 }
 
@@ -45,14 +45,14 @@ type AOProps = {
   bias?: number
 }
 
-export function StandardEffects({ ao = true, bloom = true, edgeDetectionThreshold = 0.1, bloomOpacity = 1 }: Props) {
+export function StandardEffects({ ao = true, bloom = true, edgeDetection = 0.1, bloomOpacity = 1 }: Props) {
   const { gl, scene, camera, size } = useThree()
   const smaa: any = useLoader(SMAAImageLoader, '')
   const composer = useMemo(() => {
     const composer = new EffectComposer(gl, { frameBufferType: HalfFloatType })
     composer.addPass(new RenderPass(scene, camera))
     const smaaEffect = new SMAAEffect(...smaa)
-    smaaEffect.colorEdgesMaterial.setEdgeDetectionThreshold(edgeDetectionThreshold)
+    smaaEffect.colorEdgesMaterial.setEdgeDetectionThreshold(edgeDetection)
 
     const normalPass = new NormalPass(scene, camera)
     const ssaoEffect = new SSAOEffect(camera, normalPass.renderTarget.texture, {

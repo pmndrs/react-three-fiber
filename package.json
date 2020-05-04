@@ -48,7 +48,8 @@
     "@babel/runtime": "^7.9.2",
     "postprocessing": "^6.13.3",
     "react-merge-refs": "^1.0.0",
-    "stats.js": "^0.17.0"
+    "stats.js": "^0.17.0",
+    "utility-types": "^3.10.0"
   },
   "devDependencies": {
     "@babel/core": "7.9.0",
