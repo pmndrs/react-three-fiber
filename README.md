@@ -89,14 +89,12 @@ A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/
 A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api/en/audio/PositionalAudio). Add this to groups or meshes to tie them to a sound that plays when the camera comes near.
 
 ```jsx
-<mesh>
-  <PositionalAudio
-    url="/sound.mp3"        // Url of the sound file
-    distance={1}            // Camera distance (default=1)
-    loop                    // Repat play (default=true)
-    {...props}              // All THREE.PositionalAudio props are valid
-  />
-</mesh>
+<PositionalAudio
+  url="/sound.mp3"          // Url of the sound file
+  distance={1}              // Camera distance (default=1)
+  loop                      // Repat play (default=true)
+  {...props}                // All THREE.PositionalAudio props are valid
+/>
 ```
 
 ##### ⚡️ `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
