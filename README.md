@@ -48,8 +48,8 @@ A responsive, perspective camera that sets itself as the default. Can take child
 
 ```jsx
 <PerspectiveCamera
-  makeDefault // Registers it as the default camera system-wide (default=true)
-  {...props} // All THREE.PerspectiveCamera props are valid
+  makeDefault               // Registers it as the default camera system-wide (default=true)
+  {...props}                // All THREE.PerspectiveCamera props are valid
 >
   <mesh />
 </PerspectiveCamera>
@@ -75,8 +75,8 @@ A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/
 
 ```jsx
 <Detailed
-  distances={[0, 10, 20]} // Camera distances, correspends to the # of the children
-  {...props} // All THREE.LOD props are valid
+  distances={[0, 10, 20]}   // Camera distances, correspends to the # of the children
+  {...props}                // All THREE.LOD props are valid
 >
   <mesh geometry={highDetail} />
   <mesh geometry={mediumDetail} />
@@ -91,10 +91,10 @@ A wrapper around THREE.PositionalAudio. Add this to groups or meshes to tie them
 ```jsx
 <mesh>
   <PositionalAudio
-    url="/sound.mp3" // Url of the sound file
-    distance={1} // Camera distance (default=1)
-    loop // Repat play (default=true)
-    {...props} // All THREE.PositionalAudio props are valid
+    url="/sound.mp3"        // Url of the sound file
+    distance={1}            // Camera distance (default=1)
+    loop                    // Repat play (default=true)
+    {...props}              // All THREE.PositionalAudio props are valid
   />
 </mesh>
 ```
@@ -120,9 +120,9 @@ From: https://threejs.org/examples/webgl_shaders_sky.html
 
 ```jsx
 <Sky
-  distance={450000} // Camera distance (default=450000)
-  sunPosition={[0, 1, 0]} // Sun position normal (default=[0, 1, 0])
-  {...props} // All three/examples/jsm/objects/Sky props are valid
+  distance={450000}         // Camera distance (default=450000)
+  sunPosition={[0, 1, 0]}   // Sun position normal (default=[0, 1, 0])
+  {...props}                // All three/examples/jsm/objects/Sky props are valid
 />
 ```
 
@@ -153,8 +153,8 @@ Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes ove
 
 ```jsx
 <Stats
-  showPanel={0} // Start-up panel (default=0)
-  {...props} // All stats.js props are valid
+  showPanel={0}             // Start-up panel (default=0)
+  {...props}                // All stats.js props are valid
 />
 ```
 
@@ -166,6 +166,6 @@ Adds the Draco extension to your GLTFLoader.
 useLoader(
   GLTFLoader,
   url,
-  draco(binUrl) // default='/draco-gtltf/'
+  draco(binUrl)             // default='/draco-gtltf/'
 )
 ```
