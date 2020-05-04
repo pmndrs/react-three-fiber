@@ -44,7 +44,7 @@ import { ... } from 'drei'
 
 ##### ⚡️ `<PerspectiveCamera />`
 
-A responsive [THREE.Perspective](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) camera that sets itself as the default.
+A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) that sets itself as the default.
 
 ```jsx
 <PerspectiveCamera
