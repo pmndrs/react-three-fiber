@@ -142,7 +142,7 @@ Allows you to tie HTML content to any object of your scene. It will be projected
   portal={domnodeRef}       // Reference to target container (default=undefined)
   {...groupProps}           // All THREE.Group props are valid
   {...divProps}             // All HTMLDivElement props are valid
-  >
+>
   <h1>hello</h1>
   <p>world</p>
 </HTML>
