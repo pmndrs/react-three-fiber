@@ -48,7 +48,7 @@ A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/e
 
 ```jsx
 <PerspectiveCamera
-  makeDefault               // Optional, registers it as the default camera system-wide (default=true)
+  makeDefault               // Registers it as the default camera system-wide (default=true)
   {...props}                // All THREE.PerspectiveCamera props are valid
 >
   <mesh />
@@ -92,8 +92,8 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 <mesh>
   <PositionalAudio
     url="/sound.mp3"        // Url of the sound file
-    distance={1}            // Optional, camera distance (default=1)
-    loop                    // Optional, repat play (default=true)
+    distance={1}            // Camera distance (default=1)
+    loop                    // Repat play (default=true)
     {...props}              // All THREE.PositionalAudio props are valid
   />
 </mesh>
@@ -108,9 +108,9 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
   smaa                      // Can be a boolean (default=true)
   ao                        // Can be a boolean or all valid postprocessing AO props (default=true)
   bloom                     // Can be a boolean or all valid postprocessing Bloom props (default=true)
-  edgeDetection = 0.1       // Optional, SMAA precision
-  bloomOpacity = 1          // Optional, Bloom blendMode opacity
-  effects                   // Optional, define your own effect: ([smaa, ao, bloom]) => [...effects]
+  edgeDetection={0.1}       // SMAA precision (default=0.1)
+  bloomOpacity={1}          // Bloom blendMode opacity (default=1)
+  effects={() => [...fx]}   // Define your own effect: ([smaa, ao, bloom]) => [...effects] (default=undefined)
 />
 ```
 
@@ -122,8 +122,8 @@ Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 
 ```jsx
 <Sky
-  distance={450000}         // Optional, camera distance (default=450000)
-  sunPosition={[0, 1, 0]}   // Optional, sun position normal (default=[0, 1, 0])
+  distance={450000}         // Camera distance (default=450000)
+  sunPosition={[0, 1, 0]}   // Sun position normal (default=[0, 1, 0])
   {...props}                // All three/examples/jsm/objects/Sky props are valid
 />
 ```
@@ -136,11 +136,11 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 
 ```jsx
 <HTML
-  prepend                   // Optional, project content behind the canvas (default: false)
-  center                    // Optional, adds a -50%/-50% css transform (default: false)
-  scaleFactor={10}          // Optional, scales children if set to a number (default=undefined)
-  zIndexRange={[100, 0]}    // Optional, handles z-order (default=[16777271, 0])
-  portal={domnodeRef}       // Optional, reference to target container
+  prepend                   // Project content behind the canvas (default: false)
+  center                    // Adds a -50%/-50% css transform (default: false)
+  scaleFactor={10}          // Scales children if set to a number (default=undefined)
+  zIndexRange={[100, 0]}    // Z-order range (default=[16777271, 0])
+  portal={domnodeRef}       // Reference to target container (default=undefined)
   {...groupProps}           // All THREE.Group props are valid
   {...divProps}             // All HTMLDivElement props are valid
   >
@@ -168,6 +168,8 @@ Adds the Draco extension to your GLTFLoader.
 useLoader(
   GLTFLoader,
   url,
-  draco(binUrl)             // default='/draco-gtltf/'
+  draco(
+    '/draco-gtltf/'         // Path to the Draco binaries (default='/draco-gtltf/')
+  )
 )
 ```
