@@ -56,11 +56,11 @@ export function StandardEffects({
   effects,
 }: Props) {
   const { gl, scene, camera, size } = useThree()
-  const smaa: any = useLoader(SMAAImageLoader, '')
+  const smaaProps: any = useLoader(SMAAImageLoader, '')
   const composer = useMemo(() => {
     const composer = new EffectComposer(gl, { frameBufferType: HalfFloatType })
     composer.addPass(new RenderPass(scene, camera))
-    const smaaEffect = new SMAAEffect(...smaa)
+    const smaaEffect = new SMAAEffect(...smaaProps)
     smaaEffect.colorEdgesMaterial.setEdgeDetectionThreshold(edgeDetection)
 
     const normalPass = new NormalPass(scene, camera)
