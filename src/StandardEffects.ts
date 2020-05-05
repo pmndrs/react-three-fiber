@@ -16,11 +16,11 @@ import {
 } from 'postprocessing'
 
 type Props = {
-  bloom: boolean | BloomProps
-  ao: boolean | AOProps
-  smaa: boolean
-  edgeDetection: number
-  bloomOpacity: number
+  bloom?: boolean | BloomProps
+  ao?: boolean | AOProps
+  smaa?: boolean
+  edgeDetection?: number
+  bloomOpacity?: number
   effects?: (effects: any[]) => any[]
 }
 
@@ -104,7 +104,7 @@ export function StandardEffects({
     composer.addPass(normalPass)
     composer.addPass(effectPass)
     return composer
-  }, [camera, gl, scene, smaa])
+  }, [camera, gl, scene, smaa, ao, bloom, edgeDetection, bloomOpacity])
 
   useEffect(() => void composer.setSize(size.width, size.height), [composer, size])
   return useFrame((_, delta) => composer.render(delta), 1)
