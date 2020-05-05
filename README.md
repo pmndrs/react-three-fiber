@@ -117,6 +117,8 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 />
 ```
 
+⚠️ AO relies on the depthbuffer! Make sure your near and far clipping planes are narrow enough, or use `<Canvas gl={{ logarithmicDepthBuffer: true }} ... />`.
+
 ## Shaders
 
 ##### ⚡️ `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)

@@ -66,16 +66,16 @@ export function StandardEffects({
     const normalPass = new NormalPass(scene, camera)
     const ssaoEffect = new SSAOEffect(camera, normalPass.renderTarget.texture, {
       blendFunction: BlendFunction.MULTIPLY,
-      samples: 30,
-      rings: 4,
+      samples: 21, // May get away with less samples
+      rings: 4, // Just make sure this isn't a multiple of samples
       distanceThreshold: 1.0,
       distanceFalloff: 0.0,
-      rangeThreshold: 0.5,
-      rangeFalloff: 0.1,
+      rangeThreshold: 0.015, // Controls sensitivity based on camera view distance **
+      rangeFalloff: 0.002,
       luminanceInfluence: 0.9,
-      radius: 20,
-      scale: 0.5,
-      bias: 0.5,
+      radius: 20, // Spread range
+      scale: 1.0, // Controls intensity **
+      bias: 0.05,
       ...(ao as AOProps),
     })
 
