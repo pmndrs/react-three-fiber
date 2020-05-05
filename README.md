@@ -106,6 +106,8 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 
 Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
 
+⚠️ AO relies on the depthbuffer! Make sure your near and far clipping planes are narrow enough, or use `<Canvas gl={{ logarithmicDepthBuffer: true }} ... />`.
+
 ```jsx
 <StandardEffects
   smaa                      // Can be a boolean (default=true)
@@ -116,8 +118,6 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
   effects={() => [...fx]}   // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
 />
 ```
-
-⚠️ AO relies on the depthbuffer! Make sure your near and far clipping planes are narrow enough, or use `<Canvas gl={{ logarithmicDepthBuffer: true }} ... />`.
 
 ## Shaders
 
