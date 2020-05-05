@@ -25,7 +25,7 @@ import { ... } from 'drei'
 
 # Index
 
-- `<PerspectiveCamera />`
+- `<PerspectiveCamera />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-qgcrx)
 - `<OrbitControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 - `<MapControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 - `<TrackballControls />`
@@ -42,7 +42,7 @@ import { ... } from 'drei'
 
 ## Cameras
 
-##### ⚡️ `<PerspectiveCamera />`
+##### ⚡️ `<PerspectiveCamera />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-qgcrx)
 
 A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) that sets itself as the default.
 
