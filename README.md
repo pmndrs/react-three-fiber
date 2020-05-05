@@ -26,6 +26,7 @@ import { ... } from 'drei'
 # Index
 
 - `<PerspectiveCamera />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-qgcrx)
+- `<OrthographicCamera />`
 - `<OrbitControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 - `<MapControls />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
 - `<TrackballControls />`
@@ -54,6 +55,10 @@ A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/e
   <mesh />
 </PerspectiveCamera>
 ```
+
+##### ⚡️ `<OrthographicCamera />`
+
+A responsive [THREE.OrthographicCamera](https://threejs.org/docs/index.html#api/en/cameras/OrthographicCamera) that sets itself as the default.
 
 ## Controls
 
