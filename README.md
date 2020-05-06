@@ -36,6 +36,7 @@ import { ... } from 'drei'
 - `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
 - `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 - `<HTML />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
+- `<Shadow />`
 - `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
@@ -153,6 +154,19 @@ Allows you to tie HTML content to any object of your scene. It will be projected
   <h1>hello</h1>
   <p>world</p>
 </HTML>
+```
+
+#### ⚡️ `<Shadow />`
+
+A cheap canvas-texture-based circular gradient.
+
+```jsx
+<Shadow
+  color="black"             // Color (default:black)
+  colorStop={0}             // First gradient-stop (default:0)
+  opacity={0.5}             // Alpha (default:0.5)
+  fog={false}               // Reacts to fog (default=false)
+/>
 ```
 
 #### ⚡️ `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
