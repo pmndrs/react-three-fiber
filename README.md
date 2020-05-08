@@ -38,6 +38,7 @@ import { ... } from 'drei'
 - `<HTML />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
 - `<Shadow />`
 - `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+- `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 # Exports
@@ -178,6 +179,20 @@ Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes ove
   showPanel={0}             // Start-up panel (default=0)
   {...props}                // All stats.js props are valid
 />
+```
+
+#### ⚡️ `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
+
+Injects [percent closer soft shadows (pcss)](https://threejs.org/examples/?q=pcss#webgl_shadowmap_pcss) into threes shader chunk.
+
+```jsx
+softShadows({
+  frustrum: 3.75,           // Frustrum width (default: 3.75)
+  size: 0.005,              // World size (default: 0.005)
+  near: 9.5,                // Near plane (default: 9.5)
+  samples: 17,              // Samples (default: 17)
+  rings: 11,                // Rings (default: 11)
+})
 ```
 
 ##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
