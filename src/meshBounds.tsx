@@ -5,7 +5,7 @@ let _ray = new Ray()
 let _sphere = new Sphere()
 let _vA = new Vector3()
 
-export function cheapMeshRaycast(raycaster: Raycaster, intersects: Intersection[]) {
+export function meshBounds(raycaster: Raycaster, intersects: Intersection[]) {
   let geometry = this.geometry
   let material = this.material
   let matrixWorld = this.matrixWorld
