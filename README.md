@@ -40,6 +40,7 @@ import { ... } from 'drei'
 - `<Shadow />`
 - `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- `cheapMeshRaycast()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
 
 # Exports
 
@@ -208,4 +209,12 @@ useLoader(
     '/draco-gtltf/'         // Path to the Draco binaries (default='/draco-gtltf/')
   )
 )
+```
+
+##### ⚡️ `cheapMeshRaycast()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
+
+A very fast, but often good-enough bounds-only raycast for meshes. You can use this if performance has precidence over pointer precision.
+
+```jsx
+<mesh raycast={cheapRaycast} />
 ```
