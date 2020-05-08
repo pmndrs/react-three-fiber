@@ -84,7 +84,7 @@ float PCSS(sampler2D shadowMap, vec4 coords) {
 
 export const softShadows = (props: Props) => {
   let shader = THREE.ShaderChunk.shadowmap_pars_fragment
-  shader = shader.replace('#ifdef USE_SHADOWMAP', '#ifdef USE_SHADOWMAP\n' + pcss(props))
+  shader = shader.replace('#ifdef USE_SHADOWMAP', '#ifdef USE_SHADOWMAP\n' + pcss({ ...props }))
   shader = shader.replace(
     '#if defined( SHADOWMAP_TYPE_PCF )',
     '\nreturn PCSS(shadowMap, shadowCoord);\n#if defined( SHADOWMAP_TYPE_PCF )'
