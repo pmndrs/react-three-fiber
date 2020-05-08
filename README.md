@@ -35,10 +35,10 @@ import { ... } from 'drei'
 - `<PositionalAudio />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
 - `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
 - `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
+- `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - `<HTML />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
 - `<Shadow />`
 - `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
-- `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 # Exports
@@ -135,6 +135,21 @@ Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 />
 ```
 
+
+#### ⚡️ `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
+
+Injects [percent closer soft shadows (pcss)](https://threejs.org/examples/?q=pcss#webgl_shadowmap_pcss) into threes shader chunk.
+
+```jsx
+softShadows({
+  frustrum: 3.75,           // Frustrum width (default: 3.75)
+  size: 0.005,              // World size (default: 0.005)
+  near: 9.5,                // Near plane (default: 9.5)
+  samples: 17,              // Samples (default: 17)
+  rings: 11,                // Rings (default: 11)
+})
+```
+
 ## Misc
 
 #### ⚡️ `<HTML />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
@@ -179,20 +194,6 @@ Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes ove
   showPanel={0}             // Start-up panel (default=0)
   {...props}                // All stats.js props are valid
 />
-```
-
-#### ⚡️ `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
-
-Injects [percent closer soft shadows (pcss)](https://threejs.org/examples/?q=pcss#webgl_shadowmap_pcss) into threes shader chunk.
-
-```jsx
-softShadows({
-  frustrum: 3.75,           // Frustrum width (default: 3.75)
-  size: 0.005,              // World size (default: 0.005)
-  near: 9.5,                // Near plane (default: 9.5)
-  samples: 17,              // Samples (default: 17)
-  rings: 11,                // Rings (default: 11)
-})
 ```
 
 ##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
