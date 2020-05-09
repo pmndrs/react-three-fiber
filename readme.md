@@ -44,7 +44,7 @@ No. Rendering performance is up to Threejs and the GPU. Components may participa
 
 | | |
 |-|-|
-Let's make a re-usable component that has it's own state, reacts to user-input and participates in the render-loop: | ![https://codesandbox.io/s/rrppl0y8l4](https://i.imgur.com/sS4ArrZ.gif)
+Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop: | [![](https://i.imgur.com/sS4ArrZ.gif)](https://codesandbox.io/s/rrppl0y8l4)
 
 ```jsx
 import ReactDOM from 'react-dom'
