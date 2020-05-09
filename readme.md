@@ -464,34 +464,7 @@ import {
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
   applyProps,                   // Internal: Sets element properties
-  Dom,                          // Project HTML content
 } from 'react-three-fiber'
-```
-
-#### Dom (experimental, web-only!)
-
-Sometimes you want to project dom-content on top (or underneath) of the canvas. The experimental `Dom` component behaves like an empty `THREE.Group` internally, you can transform and nest it inside the canvas. It's children on the other hand will be rendered into a div element and projected to the groups whereabouts.
-
-```jsx
-<Dom
-  children                      // Regular dom content, text, images, divs, etc
-  prepend = false               // Will be projected in front of the canvas
-  center = false                // Adds a -50%/-50% css transform
-  portal                        // Optional reference to target container
-  style                         // Regular css styles, will be added to the inner div container
-  className                     // ..
-  onClick                       // ..
-  ... />
-```
-
-```jsx
-import { Canvas, Dom } from 'react-three-fiber'
-
-<Canvas>
-  <Dom position={[100, 0, 100]}>
-    <h1>hello world!</h1>
-  </Dom>
-</Canvas>
 ```
 
 # How to contribute
