@@ -81,12 +81,11 @@ function renderLoop(timestamp: number) {
       repeat = renderGl(state, timestamp, repeat)
   })
 
-  if (repeat !== 0) {
-    return invalidate(false)
+  if (repeat !== 0) return requestAnimationFrame(renderLoop)
+  else {
+    // Tail call effects, they are called when rendering stops
+    globalTailEffects.forEach((effect) => effect(timestamp))
   }
-
-  // Tail call effects, they are called when rendering stops
-  globalTailEffects.forEach((effect) => effect(timestamp))
 }
 
 export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames: number = 2) {
