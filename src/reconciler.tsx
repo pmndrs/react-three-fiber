@@ -66,9 +66,9 @@ export function renderGl(
   return repeat
 }
 
-let queued = false
+let running = false
 function renderLoop(timestamp: number) {
-  queued = false
+  running = true
   let repeat = 0
 
   // Run global effects
@@ -86,6 +86,8 @@ function renderLoop(timestamp: number) {
     // Tail call effects, they are called when rendering stops
     globalTailEffects.forEach((effect) => effect(timestamp))
   }
+  // Flag end of operation
+  running = false
 }
 
 export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames: number = 2) {
@@ -94,8 +96,8 @@ export function invalidate(state: React.MutableRefObject<CanvasContext> | boolea
     if (state.current.vr) return
     state.current.frames = frames
   }
-  if (!queued) {
-    queued = true
+  if (!running) {
+    running = true
     requestAnimationFrame(renderLoop)
   }
 }
