@@ -1,15 +1,5 @@
 # Recipes
 
-## Handling loaders
-
-You can use React's built-in memoizing-features (as well as suspense) to build async dependency graphs.
-
-```jsx
-const texture = useMemo(() => new THREE.TextureLoader().load(url), [url])
-
-<meshLambertMaterial attach="material" map={texture}>
-```
-
 ## Dealing with effects (hijacking main render-loop)
 
 Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
@@ -116,10 +106,8 @@ function Extrusion({ start = [0,0], paths, ...props }) {
 
 ```jsx
 function CrossFade({ url1, url2, disp }) {
-  const [texture1, texture2, dispTexture] = useMemo(() => {
-    const loader = new THREE.TextureLoader()
-    return [loader.load(url1), loader.load(url2), loader.load(disp)]
-  }, [url1, url2, disp])
+  const [texture1, texture2, dispTexture] = useLoader(THREE.TextureLoader, [url1, url2, disp])
+  
   return (
     <mesh>
       <planeBufferGeometry attach="geometry" args={[1, 1]} />
@@ -130,6 +118,8 @@ function CrossFade({ url1, url2, disp }) {
         uniforms-texture2-value={texture2}
         uniforms-disp-value={dispTexture}
         uniforms-dispFactor-value={0.5} />
+    </mesh>
+  )
 ```
 
 ## Re-parenting
