@@ -23,6 +23,7 @@ export interface Intersection extends THREE.Intersection {
 
 export type PointerEvent = DomEvent &
   Intersection & {
+    intersections: Intersection[]
     stopped: boolean
     unprojectedPoint: THREE.Vector3
     ray: THREE.Ray
@@ -352,15 +353,15 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
     ): Intersection[] => {
       // Get fresh intersects
-      let hits: Intersection[] = intersect(event, filter)
+      let intersections: Intersection[] = intersect(event, filter)
       // If the interaction is captured take that into account, the captured event has to be part of the intersects
       if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
         state.current.captured.forEach((captured) => {
-          if (!hits.find((hit) => hit.eventObject === captured.eventObject)) hits.push(captured)
+          if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
         })
       }
       // If anything has been found, forward it to the event listeners
-      if (hits.length) {
+      if (intersections.length) {
         const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
         const delta = event.type === 'click' ? calculateDistance(event) : 0
         const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
@@ -369,7 +370,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           captured: false,
         }
 
-        for (let hit of hits) {
+        for (let hit of intersections) {
           const setPointerCapture = (id: any) => {
             // If the hit is going to be captured flag that we're in captured state
             if (!localState.captured) {
@@ -387,6 +388,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           let raycastEvent = {
             ...event,
             ...hit,
+            intersections,
             stopped: localState.stopped,
             delta,
             unprojectedPoint,
@@ -413,7 +415,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
           }
         }
       }
-      return hits
+      return intersections
     },
     []
   )
@@ -546,7 +548,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
       else gl.shadowMap.type = THREE.PCFSoftShadowMap
     }
-    if (sRGB || colorManagement) {
+    if (sRGB || colorManagement) {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.outputEncoding = THREE.sRGBEncoding
     }

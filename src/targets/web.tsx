@@ -1,6 +1,5 @@
 export * from '../index'
 export * from '../canvas'
-export * from './shared/web/Dom'
 
 import { WebGLRenderer } from 'three'
 import React, { useRef } from 'react'
@@ -27,3 +26,8 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
     </ResizeContainer>
   )
 })
+
+export const Dom = () => {
+  console.warn("The experimental Dom component was moved to: https://github.com/react-spring/drei")
+  return null
+}

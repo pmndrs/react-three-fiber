@@ -144,16 +144,7 @@ export function useLoader<T>(
   return Array.isArray(url) ? results : results[0]
 }
 
-export function useCamera(camera: Camera, props?: Partial<THREE.Raycaster>) {
-  const { mouse } = useThree()
-  const [raycast] = useState(() => {
-    let raycaster = new THREE.Raycaster()
-    if (props) applyProps(raycaster, props, {})
-    return function(_: THREE.Raycaster, intersects: THREE.Intersection[]): void {
-      raycaster.setFromCamera(mouse, camera)
-      const rc = this.constructor.prototype.raycast.bind(this)
-      if (rc) rc(raycaster, intersects)
-    }
-  })
-  return raycast
+export const useCamera = () => {
+  console.warn("The useCamera hook was moved to: https://github.com/react-spring/drei")
+  return null
 }
