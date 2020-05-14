@@ -40,6 +40,8 @@ import { ... } from 'drei'
 - `<Shadow />`
 - `<Stats />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+- `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
+- `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
 
 # Exports
 
@@ -208,4 +210,20 @@ useLoader(
     '/draco-gtltf/'         // Path to the Draco binaries (default='/draco-gtltf/')
   )
 )
+```
+
+##### ⚡️ `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
+
+A very fast, but often good-enough bounds-only raycast for meshes. You can use this if performance has precidence over pointer precision.
+
+```jsx
+<mesh raycast={meshBounds} />
+```
+
+##### ⚡️ `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
+
+A hook for the rare case when you are using non-default cameras for heads-up-displays or portals, and you need events/raytracing to function properly (raycasting uses the default camera otherwise).
+
+```jsx
+<mesh raycast={useCamera(customCamera)} />
 ```
