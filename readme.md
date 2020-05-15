@@ -1,6 +1,12 @@
-[![Build Status](https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master)](https://travis-ci.org/react-spring/react-three-fiber) [![npm version](https://badge.fury.io/js/react-three-fiber.svg)](https://badge.fury.io/js/react-three-fiber) ![npm](https://img.shields.io/npm/dt/react-three-fiber.svg)
+<h1 align="center">react-three-fiber</h1>
 
-`react-three-fiber` is a React [reconciler](https://github.com/facebook/react/tree/master/packages/react-reconciler) for Threejs on the web and react-native.
+<p align="center">
+  <a href="https://travis-ci.org/react-spring/react-three-fiber"><img src="https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master" alt="Build Status"></a> 
+  <a href="https://badge.fury.io/js/react-three-fiber"><img src="https://badge.fury.io/js/react-three-fiber.svg" alt="npm version"></a>
+  <img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
+</p>
+
+<p align="center">react-three-fiber is a React <a href="https://github.com/facebook/react/tree/master/packages/react-reconciler">reconciler</a> for Threejs on the web and react-native.</p>
 
 <br />
 
@@ -42,9 +48,15 @@ No. Rendering performance is up to Threejs and the GPU. Components may participa
 
 #### What does it look like?
 
-|                                                                                                                    |                                                                             |
-| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
-| Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop: | [![](https://i.imgur.com/sS4ArrZ.gif)](https://codesandbox.io/s/rrppl0y8l4) |
+<table>
+  <tr>
+    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop:</td>
+    <td>
+      <a href="https://codesandbox.io/s/rrppl0y8l4">
+        <img src="https://i.imgur.com/sS4ArrZ.gif" /></td>
+      </a>
+  </tr>
+</table>
 
 ```jsx
 import ReactDOM from 'react-dom'
@@ -111,7 +123,23 @@ News and examples via Twitter: [@0xca0a](https://twitter.com/0xca0a)
 
 Recipes and FAQ: [/react-three-fiber/recipes.md](recipes.md)
 
+---
+
 # API
+
+- [Canvas](#canvas)
+- [Objects and properties](#objects-and-properties)
+- [Automatic disposal](#automatic-disposal)
+- [Events](#events)
+- [Hooks](#hooks)
+  - [useThree](#useThree)
+  - [useFrame](#useFrame)
+  - [useResource](#useResource)
+  - [useUpdate](#useUpdate)
+  - [useLoader (experimental!)](<#useLoader-(experimental!)>)
+- [Additional exports](#additional-exports)
+
+<br />
 
 ## Canvas
 
@@ -140,7 +168,7 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
 
 You can give it additional properties like style and className, which will be added to the container (a div) that holds the dom-canvas element.
 
-## Defaults that the canvas component sets up
+### Defaults that the canvas component sets up
 
 Canvas will create a _translucent WebGL-renderer_ with the following properties: `antialias, alpha, setClearAlpha(0)`
 
@@ -155,6 +183,8 @@ A default _scene_ (into which all the JSX is rendered) and a _raycaster_.
 A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }`
 
 You do not have to use any of these objects, look under "Recipes" down below if you want to bring your own.
+
+<br />
 
 ## Objects and properties
 
@@ -240,6 +270,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
 ```
 
+<br />
+
 ## Automatic disposal
 
 Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
@@ -253,6 +285,8 @@ const globalMaterial = new THREE.MeshBasicMatrial()
 function Mesh() {
   return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
 ```
+
+<br />
 
 ## Events
 
@@ -308,6 +342,8 @@ Additionally there's a special `onUpdate` that is called every time the object g
   }}
 ```
 
+<br />
+
 ## Hooks
 
 Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
@@ -334,7 +370,11 @@ function App() {
       <SomeComponent />
 ```
 
-#### useThree(): SharedCanvasContext
+#### useThree
+
+```jsx
+useThree(): SharedCanvasContext
+```
 
 This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser, for instance, and you get fresh measurements, same applies to any of the defaults you can change.
 
@@ -358,7 +398,11 @@ const {
 } = useThree()
 ```
 
-#### useFrame(callback: (state, delta) => void, renderPriority: number = 0)
+#### useFrame
+
+```jsx
+useFrame((callback: (state, delta) => void), (renderPriority: number = 0))
+```
 
 This hooks calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.
 
@@ -378,7 +422,11 @@ Taking over the render-loop:
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
 ```
 
-#### useResource(optionalRef=undefined)
+#### useResource
+
+```jsx
+useResource((optionalRef = undefined))
+```
 
 Take advantage of React's `useRef` with the added consideration of rendering when a component is available (e.g. in the next frame). Useful when you want to share and re-use resources across components.
 
@@ -396,7 +444,11 @@ return (
 )
 ```
 
-#### useUpdate(callback, dependencies, optionalRef=undefined)
+#### useUpdate
+
+```jsx
+useUpdate(callback, dependencies, (optionalRef = undefined))
+```
 
 When objects need to be updated imperatively.
 
@@ -413,7 +465,11 @@ const ref = useUpdate(
 return <bufferGeometry ref={ref} />
 ```
 
-#### useLoader(loader, url: string | string[], extensions?) (experimental!)
+#### useLoader (experimental!)
+
+```jsx
+useLoader(loader, url: string | string[], extensions?)
+```
 
 This hooks loads assets and suspends for easier fallback- and error-handling. If you need to lay out GLTF's declaratively check out [gltfjsx](https://github.com/react-spring/gltfjsx).
 
@@ -464,6 +520,8 @@ import {
   applyProps, // Internal: Sets element properties
 } from 'react-three-fiber'
 ```
+
+---
 
 # How to contribute
 
