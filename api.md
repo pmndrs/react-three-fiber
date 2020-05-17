@@ -139,7 +139,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiples times, this is not allowed in Threejs!
 
 ```jsx
-const mesh = new THREE.Mesh()
+const mesh = useMemo(() => new THREE.Mesh(), [])
 return <primitive object={mesh} position={[0, 0, 0]} />
 ```
 
@@ -149,9 +149,15 @@ The `extend` function extends three-fibers catalogue of known native JSX element
 
 ```jsx
 import { extend } from 'react-three-fiber'
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
-extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
+extend({ OrbitControls, TransformControls })
+
+// ...
+return (
+  <>
+    <orbitControls />
+    <transformControls />
 ```
 
 # Automatic disposal
