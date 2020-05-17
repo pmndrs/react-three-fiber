@@ -13,7 +13,7 @@
   - [useLoader (experimental!)](<#useLoader-(experimental!)>)
 - [Additional exports](#additional-exports)
 
-## Fundamentals
+# Fundamentals
 
 1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
 2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [frontpages demo sandbox](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try some of the things you learn here out.
@@ -27,9 +27,7 @@ Some reading material:
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
 - [Threejs-examples](https://threejs.org/examples)
 
-<br />
-
-## Canvas
+# Canvas
 
 The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_! It stretches to 100% of the next relative/absolute parent-container. Make sure your canvas is given space to show contents!
 
@@ -44,10 +42,10 @@ The `Canvas` object is your portal into Threejs. It renders Threejs elements, _n
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   gl2 = false                   // Enables webgl2
   concurrent = false            // Enables React concurrent mode
-  resize = undefined             // Resize config, see react-use-measure's options
+  resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
   noEvents = false              // Switch off raytracing and event support
-  pixelRatio = undefined         // You could provide window.devicePixelRatio if you like
+  pixelRatio = undefined        // You could provide window.devicePixelRatio if you like
   invalidateFrameloop = false   // When true it only renders on changes, when false it's a game loop
   updateDefaultCamera = true    // Adjusts default camera on size changes
   onCreated                     // Callback when vdom is ready (you can block first render via promise)
@@ -72,9 +70,7 @@ A _wrapping container_ with a [resize observer](https://github.com/react-spring/
 
 You do not have to use any of these objects, look under "Recipes" down below if you want to bring your own.
 
-<br />
-
-## Objects and properties
+# Objects and properties
 
 You can use [Threejs's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
@@ -158,9 +154,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 extend({ EffectComposer, RenderPass }) < effectComposer > <renderPass />
 ```
 
-<br />
-
-## Automatic disposal
+# Automatic disposal
 
 Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
 
@@ -174,9 +168,7 @@ function Mesh() {
   return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
 ```
 
-<br />
-
-## Events
+# Events
 
 Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc).
 
@@ -230,9 +222,7 @@ Additionally there's a special `onUpdate` that is called every time the object g
   }}
 ```
 
-<br />
-
-## Hooks
+# Hooks
 
 Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
 
@@ -394,9 +384,7 @@ It can also make multiple requests in parallel:
 const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
 ```
 
-<br />
-
-## Additional exports
+# Additional exports
 
 ```jsx
 import {
