@@ -151,7 +151,7 @@ The `extend` function extends three-fibers catalogue of known native JSX element
 import { extend } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
-extend({ OrbitControls, TransformControls })
+extend({ OrbitControls, TransformControls }) 
 
 // ...
 return (
@@ -266,19 +266,19 @@ This hooks gives you access to all the basic objects that are kept internally, l
 import { useThree } from 'react-three-fiber'
 
 const {
-  gl, // WebGL renderer
-  scene, // Default scene
-  camera, // Default camera
-  raycaster, // Default raycaster
-  size, // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport, // Bounds of the viewport in 3d units + factor (size/viewport)
-  aspect, // Aspect ratio (size.width / size.height)
-  mouse, // Current, centered, normalized 2D mouse coordinates
-  raycaster, // Intternal raycaster instance
-  clock, // THREE.Clock (useful for useFrame deltas)
-  invalidate, // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect, // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera, // Sets the default camera
+  gl,                           // WebGL renderer
+  scene,                        // Default scene
+  camera,                       // Default camera
+  raycaster,                    // Default raycaster
+  size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
+  viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
+  aspect,                       // Aspect ratio (size.width / size.height)
+  mouse,                        // Current, centered, normalized 2D mouse coordinates
+  raycaster,                    // Intternal raycaster instance
+  clock,                        // THREE.Clock (useful for useFrame deltas)
+  invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
+  intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
+  setDefaultCamera,             // Sets the default camera
 } = useThree()
 ```
 
@@ -394,13 +394,13 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 
 ```jsx
 import {
-  addEffect, // Adds a global callback which is called each frame
-  addTail, // Adds a global callback which is called when rendering stops
-  invalidate, // Forces view global invalidation
-  extend, // Extends the native-object catalogue
-  createPortal, // Creates a portal (it's a React feature for re-parenting)
-  render, // Internal: Renders three jsx into a scene
-  unmountComponentAtNode, // Internal: Unmounts root scene
-  applyProps, // Internal: Sets element properties
+  addEffect,                    // Adds a global callback which is called each frame
+  addTail,                      // Adds a global callback which is called when rendering stops
+  invalidate,                   // Forces view global invalidation
+  extend,                       // Extends the native-object catalogue
+  createPortal,                 // Creates a portal (it's a React feature for re-parenting)
+  render,                       // Internal: Renders three jsx into a scene
+  unmountComponentAtNode,       // Internal: Unmounts root scene
+  applyProps,                   // Internal: Sets element properties
 } from 'react-three-fiber'
 ```
