@@ -104,11 +104,9 @@ ReactDOM.render(
 - [api.md](api.md)
 - [recipes.md](recipes.md)
 
-# Our official eco system
+# Eco system
 
-The following libraries are either made for react-three-fiber or guaranteed to be fully compatible with it.
-
-- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber (this is a must have)
+- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
 - 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
 - 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR controllers and events
 - 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
