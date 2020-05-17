@@ -106,13 +106,13 @@ ReactDOM.render(
 
 # Eco system
 
-- 🌭  [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
-- 💣  [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks for react-three-fiber
-- 🤳  [react-xr](https://github.com/react-spring/react-xr), VR/AR with react-three-fiber
-- 🎮  [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
-- 🐻  [zustand](https://github.com/react-spring/zustand), state management (with a few tricks relevant to react-three-fiber)
-- ✌️  [react-spring](https://github.com/react-spring/react-spring), react-three-fiber compatible animation library
-- 🧪  [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI tools for react-three-fiber
+- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
+- 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks for react-three-fiber
+- 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR with react-three-fiber
+- 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
+- 🐻 [zustand](https://github.com/react-spring/zustand), state management (with a few tricks relevant to react-three-fiber)
+- ✌️ [react-spring](https://github.com/react-spring/react-spring), react-three-fiber compatible animation library
+- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI tools for react-three-fiber
 
 # News, updates, community
 

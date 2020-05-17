@@ -16,7 +16,7 @@
 # Fundamentals
 
 1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
-2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [frontpages demo sandbox](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try some of the things you learn here out.
+2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [demo sandbox on the frontpage](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try some of the things you learn here out.
 3. Don't break your head, three-fiber is Threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative, use it 1:1 as it is.
 
 Some reading material:
