@@ -21,11 +21,12 @@
 
 Some reading material:
 
-- Robert Borghesi's ([@dghez\_](https://twitter.com/dghez_)) [Alligator.io tutorial](https://alligator.io/react/react-with-threejs)
+- [Threejs-docs](https://threejs.org/docs)
+- [Threejs-examples](https://threejs.org/examples)
 - [Threejs-fundamentals](https://threejsfundamentals.org)
 - [Discover Threejs](https://discoverthreejs.com)
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
-- [Threejs-examples](https://threejs.org/examples)
+- [react-three-fiber alligator.io tutorial](https://alligator.io/react/react-with-threejs) by [@dghez\_](https://twitter.com/dghez_)
 
 # Canvas
 
@@ -38,10 +39,10 @@ import { Canvas } from 'react-three-fiber'
 
 ReactDOM.render(
   <Canvas>
-    <ambientLight />
+    <pointLight position={[10, 10, 10]} />
     <mesh>
-      <boxBufferGeometry attach="geometry" />
-      <meshBasicMaterial attach="material" color="hotpink" />
+      <sphereBufferGeometry attach="geometry" />
+      <meshStandardMaterial attach="material" color="hotpink" />
     </mesh>
   </Canvas>,
   document.getElementById('root')
