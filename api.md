@@ -17,7 +17,7 @@
 
 1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
 2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [frontpages demo sandbox](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try some of the things you learn here out.
-3. Don't break your head, react-three-fiber is Threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative, use it 1:1 as it is.
+3. Don't break your head, three-fiber is Threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative, use it 1:1 as it is.
 
 Some reading material:
 
@@ -118,20 +118,21 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 #### Shortcuts (set)
 
-All properties that have a `.set()` method can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, hence instead of `color={new THREE.Color('hotpink')}` you can do `color="hotpink"`. Some `set` methods take multiple arguments ([THREE.Vector3.set](https://threejs.org/docs/index.html#api/en/math/Vector3.set)), so you can pass an array `position={[100, 0, 0]}`.
+All properties that have a `.set()` method can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can do `color="hotpink"`. Some `set` methods, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), take multiple arguments, give it an array in that case `position={[100, 0, 0]}`.
 
-#### Shortcuts and non-Object3D stow-away
+#### Dealing with non-Object3D's
 
-Stow away non-Object3D primitives (geometries, materials, etc) into the render tree so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed with `args`. Using the `attach` property objects bind automatically to their parent and are taken off it once they unmount.
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args changes later on, the object get re-constructed from scratch! Using the `attach` property objects bind to their parent and are taken off once they unmount.
 
 You can nest primitive objects, too:
 
 ```jsx
-<meshBasicMaterial attach="material">
-  <texture attach="map" image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+<mesh>
+  <meshBasicMaterial attach="material">
+    <texture attach="map" image={img} onUpdate={self => img && (self.needsUpdate = true)} />
 ```
 
-Sometimes attaching isn't enough. For example, this code attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
+Sometimes attaching isn't enough. For example, the following example attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
 
 ```jsx
 <effectComposer>
@@ -148,7 +149,7 @@ You can also attach to named parent properties using `attachObject={[target, nam
 
 #### Piercing into nested properties
 
-If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case:
+If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case.
 
 ```jsx
 <mesh rotation-x={1} material-uniforms-resolution-value={[1 / size.width, 1 / size.height]} />
@@ -163,9 +164,9 @@ const mesh = useMemo(() => new THREE.Mesh(), [])
 return <primitive object={mesh} position={[0, 0, 0]} />
 ```
 
-#### Using 3rd-party (non THREE namespaced) objects in the scene-graph
+#### Using 3rd-party objects declaratively
 
-The `extend` function extends three-fibers catalogue of known native JSX elements.
+The `extend` function extends three-fibers catalogue of JSX elements.
 
 ```jsx
 import { extend } from 'react-three-fiber'
@@ -182,23 +183,27 @@ return (
 
 # Automatic disposal
 
-Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but react is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()` (if present) on all unmounted objects.
+Freeing resources is a [manual chore in Threejs](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but React is aware of object-lifecycles, hence three-fiber will attempt to free resources for you by calling `object.dispose()`, if present, on all unmounted objects.
 
-If you manage assets by yourself, globally or in a cache, this may _not_ be what you want. You can recursively switch it off:
+If you manage assets by yourself, globally or in a cache, this may _not_ be what you want. You can switch it off by placing `dispose={null}` onto meshes, materials, etc, or even on parent containers like groups, it is now valid for the entire tree.
 
 ```jsx
 const globalGeometry = new THREE.BoxBufferGeometry()
 const globalMaterial = new THREE.MeshBasicMatrial()
 
 function Mesh() {
-  return <mesh geometry={globalGeometry} material={globalMaterial} dispose={null} />
+  return (
+    <group dispose={null}>
+      <mesh geometry={globalGeometry} material={globalMaterial} />
 ```
 
 # Events
 
-Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on the object. We support pointer events ([you need to polyfill them yourself](https://github.com/jquery/PEP)), clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc).
+Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc). You need to [polyfill](https://github.com/jquery/PEP) them yourself, if that's a concern.
 
 Additionally there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
+
+Also notcice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit any meshes.
 
 ```jsx
 <mesh
@@ -375,7 +380,7 @@ return <bufferGeometry ref={ref} />
 useLoader(loader, url: string | string[], extensions?)
 ```
 
-This hooks loads assets and suspends for easier fallback- and error-handling. If you need to lay out GLTF's declaratively check out [gltfjsx](https://github.com/react-spring/gltfjsx).
+This hooks loads assets and suspends for easier fallback- and error-handling.
 
 ```jsx
 import React, { Suspense } from 'react'
