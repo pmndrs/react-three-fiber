@@ -81,7 +81,7 @@ If available controls have damping enabled by default, they manage their own upd
 
 ##### ⚡️ `<Text />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
 
-High quality text rendering with signed distance fields (SDF) and antialiasing, using [troike-3d-text](https://github.com/protectwise/troika/tree/master/packages/troika-3d-text). All of troikas properties are valid! 
+Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, using [troika-3d-text](https://github.com/protectwise/troika/tree/master/packages/troika-3d-text). All of troikas props are valid! 
 
 ```jsx
 <Text>hello world!</Text>
