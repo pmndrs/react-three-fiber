@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
 // @ts-ignore
-import { TextMeshImpl } from 'troika-3d-text/dist/textmesh-standalone.esm'
+import { TextMesh as TextMeshImpl } from 'troika-3d-text/dist/textmesh-standalone.esm'
 import { extend, ReactThreeFiber } from 'react-three-fiber'
 
 extend({ TextMeshImpl })
