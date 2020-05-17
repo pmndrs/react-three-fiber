@@ -106,14 +106,16 @@ ReactDOM.render(
 
 # Our official eco system
 
-- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
-- 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks for react-three-fiber
-- 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR with react-three-fiber
+The following libraries are either made for react-three-fiber or guaranteed to be fully compatible with it.
+
+- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber (this is a must have)
+- 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
+- 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR controllers and events
 - 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
-- 🐻 [zustand](https://github.com/react-spring/zustand), state management (with a few tricks relevant to react-three-fiber)
-- ✌️ [react-spring](https://github.com/react-spring/react-spring), react-three-fiber compatible animation library
-- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures (compatible with react-three-fiber)
-- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI tools for react-three-fiber
+- 🐻 [zustand](https://github.com/react-spring/zustand), state management
+- ✌️ [react-spring](https://github.com/react-spring/react-spring), a spring-physics-based animation library
+- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures
+- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI/debug tools
 
 # News, updates, community
 
