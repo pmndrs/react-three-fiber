@@ -6537,6 +6537,46 @@ tr46@^1.0.1:
   dependencies:
     punycode "^2.1.0"
 
+troika-3d-text@^0.24.1:
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/troika-3d-text/-/troika-3d-text-0.24.1.tgz#8ce0c02dc91011bdc99d9192bb02f6f27acb1f44"
+  integrity sha512-ISsgALd0bxgxUreKWxWYgakG5nNB3IS11ZsV0o3cJ+vIAw/HLpexjeYXdGoP9Oz7KWdCQyebKJB22WcjpAl8pQ==
+  dependencies:
+    troika-3d "^0.24.0"
+    troika-three-utils "^0.24.0"
+    troika-worker-utils "^0.24.0"
+
+troika-3d@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/troika-3d/-/troika-3d-0.24.0.tgz#817d215340a1b2e6487b247b9ed9ec30b01bd2f1"
+  integrity sha512-ERjQJPy04wk3SRwfAutt+rXAoYZIf4em8y4GyW0XTBZuny2u/9zX+D8EXkqXXBFDTsMbeUHNgZpUSBculVBiiQ==
+  dependencies:
+    troika-core "^0.24.0"
+    troika-three-utils "^0.24.0"
+
+troika-animation@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/troika-animation/-/troika-animation-0.24.0.tgz#a123fab5694516ed44f2b27174c9debb005b9068"
+  integrity sha512-yYOZaHYETwpiiAh5fYOVXCyc/c2FUsd9GVgaOs9zzeHOFxQ86YLP1ALt4Ck31HElRgjZZW/Ct6NK7RBnaOxWOQ==
+
+troika-core@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/troika-core/-/troika-core-0.24.0.tgz#8a54f9948b83cf87c1140afa2f63251794bfb23e"
+  integrity sha512-bt4cOHyjBaT8JTIyqEcpNmJG7RYCwxeBsQ6G0s/MALno6BpHCHx4RQgWkz36g2DiOnlB+AYvdhQQBRUe1dUDpQ==
+  dependencies:
+    prop-types "^15.6.2"
+    troika-animation "^0.24.0"
+
+troika-three-utils@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/troika-three-utils/-/troika-three-utils-0.24.0.tgz#07702cecc05b72d568dd9d768bd9ea9784a7ec8c"
+  integrity sha512-GXtDKG5KHEbUxDut8Qx00FQrd+eVWgXXVK2H/ZH1ejdZ74aXVRFDOb36ZRLlez3Kdwvm+9EryxGklDEHsLkZtg==
+
+troika-worker-utils@^0.24.0:
+  version "0.24.0"
+  resolved "https://registry.yarnpkg.com/troika-worker-utils/-/troika-worker-utils-0.24.0.tgz#15bfc6c4b8f4d83bfef8a93fb859566777091e60"
+  integrity sha512-mg+00Z76VjzTosTjLDV4HuM7hSC7rgMTUq5x/Th++KMpbs7MnxLOZ7p6iFFO2LE4DLgn9FEhdKiNJNW/TzTl7g==
+
 tslib@^1.8.1, tslib@^1.9.0:
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.11.1.tgz#eb15d128827fbee2841549e171f45ed338ac7e35"
