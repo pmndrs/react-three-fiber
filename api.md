@@ -29,7 +29,26 @@ Some reading material:
 
 # Canvas
 
-The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_! It stretches to 100% of the next relative/absolute parent-container. Make sure your canvas is given space to show contents!
+The `Canvas` object is your portal into Threejs. It renders Threejs elements, _not DOM elements_! Here is a small hello-world that you can try out:
+
+```jsx
+import ReactDOM from 'react-dom'
+import React from 'react'
+import { Canvas } from 'react-three-fiber'
+
+ReactDOM.render(
+  <Canvas>
+    <ambientLight />
+    <mesh>
+      <boxBufferGeometry attach="geometry" />
+      <meshBasicMaterial attach="material" color="hotpink" />
+    </mesh>
+  </Canvas>,
+  document.getElementById('root')
+)
+```
+
+The canvas stretches to 100% of the next relative/absolute parent-container. Make sure your canvas is given space to show contents!
 
 ```jsx
 <Canvas
