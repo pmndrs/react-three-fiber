@@ -104,7 +104,7 @@ ReactDOM.render(
 - [api.md](api.md)
 - [recipes.md](recipes.md)
 
-# Eco system
+# Our official eco system
 
 - 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
 - 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks for react-three-fiber
@@ -112,6 +112,7 @@ ReactDOM.render(
 - 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
 - 🐻 [zustand](https://github.com/react-spring/zustand), state management (with a few tricks relevant to react-three-fiber)
 - ✌️ [react-spring](https://github.com/react-spring/react-spring), react-three-fiber compatible animation library
+- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures (compatible with react-three-fiber)
 - 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI tools for react-three-fiber
 
 # News, updates, community
