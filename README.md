@@ -43,6 +43,7 @@ import { ... } from 'drei'
 - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 - `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
 - `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
+- `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-bm2qu) ![](https://img.shields.io/badge/-useFrame-red)
 
 # Exports
 
@@ -235,4 +236,14 @@ A hook for the rare case when you are using non-default cameras for heads-up-dis
 
 ```jsx
 <mesh raycast={useCamera(customCamera)} />
+```
+
+
+##### `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-bm2qu)
+
+A hook for a quick way to add helpers to existing nodes in the scene. It handles removal of the helper on unmount and auto-updates it by default.
+
+```jsx
+const mesh = useRef()
+useHelper(mesh, BoxHelper, "cyan")
 ```
