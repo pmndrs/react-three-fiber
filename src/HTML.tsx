@@ -49,7 +49,6 @@ function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) 
 
 export interface HTMLProps
   extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
-  children: React.ReactElement
   prepend?: boolean
   center?: boolean
   fullscreen?: boolean
