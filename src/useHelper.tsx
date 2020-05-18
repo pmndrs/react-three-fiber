@@ -6,12 +6,7 @@ type Helper = Object3D & {
   update: () => void
 }
 
-// see https://github.com/react-spring/react-three-fiber/blob/master/src/three-types.ts
-type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : any[]
-
-type Proto<T> = T extends new (...args: any) => any ? T : any
-
-export function useHelper<T>(object3D: React.MutableRefObject<Object3D | undefined>, proto: Proto<T>, args: Args<T>) {
+export function useHelper<T>(object3D: React.MutableRefObject<Object3D | undefined>, proto: T, ...args: any[]) {
   const helper = React.useRef<Helper>()
 
   const { scene } = useThree()
