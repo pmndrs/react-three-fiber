@@ -10,7 +10,7 @@
   - [useFrame](#useFrame)
   - [useResource](#useResource)
   - [useUpdate](#useUpdate)
-  - [useLoader (experimental!)](<#useLoader-(experimental!)>)
+  - [useLoader (experimental!)](#useloader-experimental)
 - [Additional exports](#additional-exports)
 
 # Fundamentals
