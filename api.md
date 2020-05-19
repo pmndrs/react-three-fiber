@@ -374,6 +374,25 @@ const ref = useUpdate(
 return <bufferGeometry ref={ref} />
 ```
 
+You can also use an existing ref by passing it as the third argument:
+
+```jsx
+import { useUpdate } from 'react-three-fiber'
+
+const ref = useRef()
+
+useUpdate(
+(geometry) => {
+    geometry.addAttribute('position', getVertices(x, y, z))
+    geometry.attributes.position.needsUpdate = true
+  },
+  [x, y, z],
+  ref
+)
+
+return <bufferGeometry ref={ref} />
+```
+
 #### useLoader (experimental!)
 
 ```jsx
