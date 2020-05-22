@@ -99,7 +99,7 @@ You could lay out an object like this:
 ```jsx
 <mesh
   visible
-  userData={{ test: 'hello' }}
+  userData={{ hello: 'world' }}
   position={new THREE.Vector3(1, 2, 3)}
   rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
@@ -110,7 +110,7 @@ You could lay out an object like this:
 The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
 
 ```jsx
-<mesh visible userData={{ test: 'hello' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
+<mesh visible userData={{ hello: 'world' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
   <sphereGeometry attach="geometry" args={[1, 16, 16]} />
   <meshStandardMaterial attach="material" color="hotpink" transparent />
 </mesh>
