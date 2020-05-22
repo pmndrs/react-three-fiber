@@ -99,9 +99,9 @@ You could lay out an object like this:
 ```jsx
 <mesh
   visible
-  userData={{ test: 'hello' }}
+  userData={{ hello: 'world' }}
   position={new THREE.Vector3(1, 2, 3)}
-  rotation={new THREE.Euler(0, 0, 0)}
+  rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
   geometry={new THREE.SphereGeometry(1, 16, 16)}
   material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })}
 />
@@ -110,7 +110,7 @@ You could lay out an object like this:
 The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
 
 ```jsx
-<mesh visible userData={{ test: 'hello' }} position={[1, 2, 3]} rotation={[0, 0, 0]}>
+<mesh visible userData={{ hello: 'world' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
   <sphereGeometry attach="geometry" args={[1, 16, 16]} />
   <meshStandardMaterial attach="material" color="hotpink" transparent />
 </mesh>
@@ -118,7 +118,7 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 #### Shortcuts (set)
 
-All properties that have a `.set()` method can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can do `color="hotpink"`. Some `set` methods, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), take multiple arguments, give it an array in that case `position={[100, 0, 0]}`.
+All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
 
 #### Dealing with non-Object3D's
 
