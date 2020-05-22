@@ -118,7 +118,7 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 #### Shortcuts (set)
 
-All properties that have a `.set()` method can be given a shortcut. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can do `color="hotpink"`. Some `set` methods, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), take multiple arguments, give it an array in that case `position={[100, 0, 0]}`.
+All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
 
 #### Dealing with non-Object3D's
 
