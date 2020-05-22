@@ -16,6 +16,8 @@ export declare namespace ReactThreeFiber {
   type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
   type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
   type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
+  type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
+  type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
   export type Events = {
     onClick?: (e: PointerEvent) => void
@@ -52,6 +54,8 @@ export declare namespace ReactThreeFiber {
       scale?: Vector3
       rotation?: Euler
       matrix?: Matrix4
+      quaternion?: Quaternion
+      layers?: Layers
       dispose?: (() => void) | null
     }
   > &
