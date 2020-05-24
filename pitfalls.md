@@ -71,3 +71,15 @@ const ref = useRef()
 useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x), [])
 return <mesh ref={ref} />
 ```
+
+❌ Do not mount/unmount things indiscriminately
+
+In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
+
+✅ Use concurrent mode:
+
+Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
+
+```jsx
+<Canvas concurrent />
+```
