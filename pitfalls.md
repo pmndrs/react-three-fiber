@@ -35,7 +35,7 @@ function Signal({ active }) {
   return <mesh ref={ref} />
 ```
 
-✅ Or [react-spring](https://github.com/react-spring/react-spring), which avoids React:
+✅ Or [react-spring](https://github.com/react-spring/react-spring), which animates outside of React:
 
 ```jsx
 import { a, useSpring } from 'react-spring/three'
