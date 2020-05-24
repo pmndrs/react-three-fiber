@@ -24,7 +24,7 @@ return <mesh ref={ref} />
 
 Instead use animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
-✅ For instance [lerp](https://github.com/mattdesl/lerp):
+✅ Using [lerp](https://github.com/mattdesl/lerp):
 
 ```jsx
 import lerp from 'lerp'
