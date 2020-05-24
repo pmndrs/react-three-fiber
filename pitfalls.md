@@ -55,7 +55,7 @@ const x = useSelector(state => state.x)
 return <mesh position-x={x} />
 ```
 
-✅ Use [zustand](https://github.com/react-spring/zustand), redux, or anything that lets you fetch state directly. 
+✅ Fetch state directly, for instance using [zustand](https://github.com/react-spring/zustand):
 
 ```jsx
 useFrame(() => ref.current.position.x = api.getState().x)
