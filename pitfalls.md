@@ -10,7 +10,7 @@ useFrame(() => setX(x => x + 0.01))
 return <mesh position-x={x} />
 ```
 
-You are forcing a full component through React and its diffing mechanism 60 times per second.
+You are forcing a full component (+ its children) through React and its diffing mechanism 60 times per second.
 
 ✅ Instead, use refs and mutate! This is totally fine and that's how you would do it in plain Threejs as well.
 
