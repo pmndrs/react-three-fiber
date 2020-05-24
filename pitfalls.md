@@ -1,4 +1,4 @@
-# Performance pitfalls ☠️
+# React specific performance pitfalls ☠️
 
 ❌ **Never, ever, setState animations:**
 
