@@ -22,7 +22,7 @@ return <mesh ref={ref} />
 
 ❌ **Never let React anywhere near animated updates!**
 
-Instead use animation libraries that animate outside of React! Avoid libraries like react-motion that re-render the component 60fps!
+Instead use animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
 ✅ For instance [lerp](https://github.com/mattdesl/lerp):
 
