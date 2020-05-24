@@ -64,7 +64,7 @@ useFrame(() => ref.current.position.x = api.getState().x)
 return <mesh ref={ref} />
 ```
 
-✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes):
+✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes) the component:
 
 ```jsx
 const ref = useRef()
