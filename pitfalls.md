@@ -45,6 +45,16 @@ function Signal({ active }) {
 
 ❌ **Never bind often occuring reactive state to a component**
 
+Using state-managers and selected state is fine, but not for updates that happen rapidly!
+
+```jsx
+import { useSelector } from 'react-redux'
+
+// Assuming that x gets animated inside the store, triggering the component 60fps
+const x = useSelector(state => state.x)
+return <mesh position-x={x} />
+```
+
 ✅ Use [zustand](https://github.com/react-spring/zustand), redux, or anything that lets you fetch state directly. 
 
 ```jsx
