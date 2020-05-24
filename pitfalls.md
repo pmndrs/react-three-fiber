@@ -24,7 +24,7 @@ return <mesh ref={ref} />
 
 Instead use animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
-✅ Using [lerp](https://github.com/mattdesl/lerp):
+✅ Using [lerp](https://github.com/mattdesl/lerp) + useFrame:
 
 ```jsx
 import lerp from 'lerp'
@@ -35,7 +35,7 @@ function Signal({ active }) {
   return <mesh ref={ref} />
 ```
 
-✅ Or [react-spring](https://github.com/react-spring/react-spring):
+✅ Or [react-spring](https://github.com/react-spring/react-spring), which avoids React:
 
 ```jsx
 import { a, useSpring } from 'react-spring/three'
