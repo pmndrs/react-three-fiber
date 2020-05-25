@@ -255,6 +255,13 @@ function createInstance(
   instance.__objects = []
   instance.__container = container
 
+  // Auto-attach geometries and materials
+  if (name.endsWith('Geometry')) {
+    props = { attach: 'geometry', ...props }
+  } else if (name.endsWith('Material')) {
+    props = { attach: 'material', ...props }
+  }
+
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
   // why it passes "false" here
@@ -448,8 +455,6 @@ const Renderer = Reconciler({
   },
 })
 
-const LegacyRoot = 0
-const ConcurrentRoot = 2
 const hasSymbol = is.fun(Symbol) && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 
@@ -461,11 +466,7 @@ export function render(
   let root = roots.get(container)
   if (!root) {
     ;(container as any).__state = state
-    let newRoot = (root = Renderer.createContainer(
-      container,
-      state !== undefined && state.current.concurrent ? ConcurrentRoot : LegacyRoot,
-      false
-    ))
+    let newRoot = (root = Renderer.createContainer(container, state !== undefined && state.current.concurrent, false))
     roots.set(container, newRoot)
   }
   Renderer.updateContainer(element, root, null, () => undefined)
@@ -492,6 +493,7 @@ Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   version: version,
   rendererPackageName: 'react-three-fiber',
+  //@ts-ignore
   findHostInstanceByFiber: Renderer.findHostInstance,
 })
 

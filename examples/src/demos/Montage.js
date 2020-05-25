@@ -6,7 +6,7 @@ import { useSprings, a } from 'react-spring/three'
 const number = 35
 const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']
 const shapes = ['planeBufferGeometry', 'planeBufferGeometry', 'planeBufferGeometry']
-const random = i => {
+const random = (i) => {
   const r = Math.random()
   return {
     position: [100 - Math.random() * 200, 100 - Math.random() * 200, i * 1.5],
@@ -26,16 +26,16 @@ const data = new Array(number).fill().map(() => {
 })
 
 function Content() {
-  const [springs, set] = useSprings(number, i => ({
+  const [springs, set] = useSprings(number, (i) => ({
     from: random(i),
     ...random(i),
     config: { mass: 20, tension: 150, friction: 50 },
   }))
-  useEffect(() => void setInterval(() => set(i => ({ ...random(i), delay: i * 40 })), 3000), [])
+  useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [])
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
-      <boxBufferGeometry attach="geometry" args={d.args} />
-      <a.meshStandardMaterial attach="material" color={springs[index].color} roughness={0.75} metalness={0.5} />
+      <boxBufferGeometry args={d.args} />
+      <a.meshStandardMaterial color={springs[index].color} roughness={0.75} metalness={0.5} />
     </a.mesh>
   ))
 }
@@ -63,8 +63,8 @@ export default function App() {
     <Canvas shadowMap style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 100], fov: 100 }}>
       <Lights />
       <mesh receiveShadow>
-        <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
-        <meshStandardMaterial attach="material" color="#A2ACB6" roughness={1} />
+        <planeBufferGeometry args={[1000, 1000]} />
+        <meshStandardMaterial color="#A2ACB6" roughness={1} />
       </mesh>
       <Content />
     </Canvas>

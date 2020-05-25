@@ -26,8 +26,3 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
     </ResizeContainer>
   )
 })
-
-export const Dom = () => {
-  console.warn("The experimental Dom component was moved to: https://github.com/react-spring/drei")
-  return null
-}

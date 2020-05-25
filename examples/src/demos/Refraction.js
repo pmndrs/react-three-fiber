@@ -29,7 +29,7 @@ function Background() {
 function Diamonds() {
   const { size, viewport, gl, scene, camera, clock } = useThree()
   const model = useRef()
-  const gltf = useLoader(GLTFLoader, diamondUrl)
+  const { nodes, ...gltf } = useLoader(GLTFLoader, diamondUrl)
 
   // Create Fbo's and materials
   const [envFbo, backfaceFbo, backfaceMaterial, refractionMaterial] = useMemo(() => {
@@ -108,8 +108,7 @@ function Diamonds() {
   }, 1)
 
   return (
-    <instancedMesh ref={model} args={[null, null, diamonds.length]}>
-      <bufferGeometry dispose={false} attach="geometry" {...gltf.__$[1].geometry} />
+    <instancedMesh ref={model} args={[nodes.Cylinder.geometry, null, diamonds.length]} dispose={false}>
       <meshBasicMaterial attach="material" />
     </instancedMesh>
   )
