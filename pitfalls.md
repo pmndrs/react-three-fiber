@@ -72,7 +72,7 @@ useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x)
 return <mesh ref={ref} />
 ```
 
-❌ Do not mount/unmount things indiscriminately
+❌ **Do not mount/unmount things indiscriminately**
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
