@@ -14,7 +14,7 @@ type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : 
 export declare namespace ReactThreeFiber {
   type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
   type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
-  type Vector2 = THREE.Vector2 | Paramaters<THREE.Vector2['set']>
+  type Vector2 = THREE.Vector2 | Parameters<THREE.Vector2['set']>
   type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
   type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
   type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
