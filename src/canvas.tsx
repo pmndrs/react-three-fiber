@@ -440,7 +440,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
             // If the object wasn't previously hovered, book it and call its handler
             hovered.set(id, data)
             if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
-            if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerEnter' })
+            if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerenter' })
           } else if (hoveredItem.stopped) {
             // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
             data.stopPropagation()
