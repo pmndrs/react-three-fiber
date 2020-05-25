@@ -102,6 +102,7 @@ ReactDOM.render(
 # API
 
 - [api.md](api.md)
+- [pitfalls.md](pitfalls.md)
 - [recipes.md](recipes.md)
 
 # Eco system
