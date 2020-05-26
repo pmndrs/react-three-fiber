@@ -13,7 +13,7 @@
     "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
     "test": "echo no tests yet",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
-    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true"
+    "typegen": "tsc --emitDeclarationOnly"
   },
   "husky": {
     "hooks": {
