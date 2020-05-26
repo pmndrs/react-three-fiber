@@ -35,7 +35,7 @@ function create<T>(type: string) {
   )
 }
 
-export const Box = create<typeof BoxBufferGeometry>('boxBufferGeometry')
+export const Box = create<typeof BoxBufferGeometry>('box')
 export const Circle = create<typeof CircleBufferGeometry>('circle')
 export const Cone = create<typeof ConeBufferGeometry>('cone')
 export const Cylinder = create<typeof CylinderBufferGeometry>('cylinder')
