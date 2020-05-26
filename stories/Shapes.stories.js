@@ -24,36 +24,34 @@ function Setup({ children }) {
   )
 }
 
-function makeStory(name, ...args) {
-  const Comp = shapes[name]
+function Story({ comp, args }) {
+  const Comp = shapes[comp]
 
-  return function MyStory() {
-    const ref = React.useRef()
+  const ref = React.useRef()
 
-    // @TODO doesn't seem to work
-    // useFrame(() => {
-    //   ref.current.rotation.x += 0.01
-    // })
+  // @TODO doesn't seem to work
+  useFrame(() => {
+    ref.current.rotation.y += 0.01
+  })
 
-    return (
-      <Comp ref={ref} args={args}>
-        <meshPhongMaterial attach="material" color="#f3f3f3" wireframe />
-      </Comp>
-    )
-  }
+  return (
+    <Comp ref={ref} args={args}>
+      <meshPhongMaterial attach="material" color="#f3f3f3" wireframe />
+    </Comp>
+  )
 }
 
-export const Box = makeStory('Box')
-export const Circle = makeStory('Circle')
-export const Cone = makeStory('Cone')
-export const Cylinder = makeStory('Cylinder')
-export const Sphere = makeStory('Sphere')
-export const Plane = makeStory('Plane')
-export const Tube = makeStory('Tube')
-export const Torus = makeStory('Torus')
-export const TorusKnot = makeStory('TorusKnot')
-export const Tetrahedron = makeStory('Tetrahedron')
-export const Ring = makeStory('Ring')
+export const Box = () => <Story comp='Box' />
+export const Circle = () => <Story comp='Circle' />
+export const Cone = () => <Story comp='Cone' />
+export const Cylinder = () => <Story comp='Cylinder' />
+export const Sphere = () => <Story comp='Sphere' />
+export const Plane = () => <Story comp='Plane' />
+export const Tube = () => <Story comp='Tube' />
+export const Torus = () => <Story comp='Torus' />
+export const TorusKnot = () => <Story comp='TorusKnot' />
+export const Tetrahedron = () => <Story comp='Tetrahedron' />
+export const Ring = () => <Story comp='Ring' />
 
 var verticesOfCube = [-1, -1, -1, 1, -1, -1, 1, 1, -1, -1, 1, -1, -1, -1, 1, 1, -1, 1, 1, 1, 1, -1, 1, 1]
 
@@ -96,10 +94,10 @@ var indicesOfFaces = [
   4,
 ]
 
-export const Polyhedron = makeStory('Polyhedron', verticesOfCube, indicesOfFaces)
-export const Icosahedron = makeStory('Icosahedron')
-export const Octahedron = makeStory('Octahedron')
-export const Dodecahedron = makeStory('Dodecahedron')
-export const Extrude = makeStory('Extrude')
-export const Lathe = makeStory('Lathe')
-export const Parametric = makeStory('Parametric')
+export const Polyhedron = () => <Story comp='Polyhedron' args={[verticesOfCube, indicesOfFaces]} />
+export const Icosahedron = () => <Story comp='Icosahedron' />
+export const Octahedron = () => <Story comp='Octahedron' />
+export const Dodecahedron = () => <Story comp='Dodecahedron' />
+export const Extrude = () => <Story comp='Extrude' />
+export const Lathe = () => <Story comp='Lathe' />
+export const Parametric = () => <Story comp='Parametric' />
