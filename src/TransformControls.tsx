@@ -19,7 +19,7 @@ declare global {
 }
 
 export const TransformControls = forwardRef(
-  ({ children, ...props }: { children: React.ReactElement<Object3D> } & TransformControls, ref) => {
+  ({ children, position, rotation, scale, ...props }: { children: React.ReactElement<Object3D> } & TransformControls, ref) => {
     const controls = useRef<TransformControlsImpl>()
     const group = useRef<Group>()
     const { camera, gl, invalidate } = useThree()
@@ -31,7 +31,7 @@ export const TransformControls = forwardRef(
     return (
       <>
         <transformControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
-        <group ref={group}>{children}</group>
+        <group ref={group} position={position} rotation={rotation} scale={scale}>{children}</group>
       </>
     )
   }
