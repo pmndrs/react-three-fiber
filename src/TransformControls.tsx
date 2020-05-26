@@ -18,8 +18,28 @@ declare global {
   }
 }
 
+type Props = TransformControls & { children: React.ReactElement<Object3D>; scaleSnap?: number | null }
+
 export const TransformControls = forwardRef(
-  ({ children, enabled, axis, mode, translationSnap, rotationSnap, scaleSnap, space, size, dragging, showX, showY, showZ, ...props }: { children: React.ReactElement<Object3D> } & TransformControls, ref) => {
+  (
+    {
+      children,
+      enabled,
+      axis,
+      mode,
+      translationSnap,
+      rotationSnap,
+      scaleSnap,
+      space,
+      size,
+      dragging,
+      showX,
+      showY,
+      showZ,
+      ...props
+    }: Props,
+    ref
+  ) => {
     const controls = useRef<TransformControlsImpl>()
     const group = useRef<Group>()
     const { camera, gl, invalidate } = useThree()
@@ -30,8 +50,26 @@ export const TransformControls = forwardRef(
     }, [controls.current])
     return (
       <>
-        <transformControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} enabled={enabled} axis={axis} mode={mode} translationSnap={translationSnap} rotationSnap={rotationSnap} scaleSnap={scaleSnap} space={space} size={size} dragging={dragging} showX={showX} showY={showY} showZ={showZ} />
-        <group ref={group} {...props}>{children}</group>
+        <transformControlsImpl
+          ref={mergeRefs([controls, ref])}
+          args={[camera, gl.domElement]}
+          enabled={enabled}
+          axis={axis}
+          mode={mode}
+          translationSnap={translationSnap}
+          rotationSnap={rotationSnap}
+          //@ts-ignore
+          scaleSnap={scaleSnap}
+          space={space}
+          size={size}
+          dragging={dragging}
+          showX={showX}
+          showY={showY}
+          showZ={showZ}
+        />
+        <group ref={group} {...props}>
+          {children}
+        </group>
       </>
     )
   }
