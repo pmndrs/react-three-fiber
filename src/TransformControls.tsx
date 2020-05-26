@@ -18,7 +18,20 @@ declare global {
   }
 }
 
-type Props = TransformControls & { children: React.ReactElement<Object3D>; scaleSnap?: number | null }
+type Props = JSX.IntrinsicElements['group'] & {
+  enabled: boolean
+  axis: string | null
+  mode: string
+  translationSnap: number | null
+  rotationSnap: number | null
+  scaleSnap?: number | null
+  space: string
+  size: number
+  dragging: boolean
+  showX: boolean
+  showY: boolean
+  showZ: boolean
+}
 
 export const TransformControls = forwardRef(
   (
@@ -67,7 +80,7 @@ export const TransformControls = forwardRef(
           showY={showY}
           showZ={showZ}
         />
-        <group ref={group} {...props}>
+        <group ref={group as any} {...props}>
           {children}
         </group>
       </>
