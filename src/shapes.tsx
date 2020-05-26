@@ -21,19 +21,12 @@ import {
 } from 'three'
 import React, { forwardRef } from 'react'
 
-function create<T>(type: any) {
+type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
+
+function create<T>(type: string) {
   const El: any = type + 'bufferGeometry'
   return forwardRef(
-    (
-      {
-        args,
-        children,
-        ...props
-      }: JSX.IntrinsicElements['mesh'] & {
-        args?: ConstructorParameters<typeof T>
-      },
-      ref
-    ) => (
+    ({ args, children, ...props }: Omit<JSX.IntrinsicElements['mesh'], 'args'> & { args?: Args<T> }, ref) => (
       <mesh ref={ref as React.MutableRefObject<Mesh>} {...props}>
         <El attach="geometry" args={args} />
         {children}
@@ -42,21 +35,21 @@ function create<T>(type: any) {
   )
 }
 
-export const Box = create<BoxBufferGeometry>('box')
-export const Circle = create<CircleBufferGeometry>('circle')
-export const Cone = create<ConeBufferGeometry>('cone')
-export const Cylinder = create<CylinderBufferGeometry>('cylinder')
-export const Sphere = create<SphereBufferGeometry>('sphere')
-export const Plane = create<PlaneBufferGeometry>('plane')
-export const Tube = create<TubeBufferGeometry>('tube')
-export const Torus = create<TorusBufferGeometry>('torus')
-export const TorusKnot = create<TorusKnotBufferGeometry>('torusKnot')
-export const Tetrahedron = create<TetrahedronBufferGeometry>('tetrahedron')
-export const Ring = create<RingBufferGeometry>('ring')
-export const Polyhedron = create<PolyhedronBufferGeometry>('polyhedron')
-export const Icosahedron = create<IcosahedronBufferGeometry>('icosahedron')
-export const Octahedron = create<OctahedronBufferGeometry>('octahedron')
-export const Dodecahedron = create<DodecahedronBufferGeometry>('dodecahedron')
-export const Extrude = create<ExtrudeBufferGeometry>('extrude')
-export const Lathe = create<LatheBufferGeometry>('lathe')
-export const Parametric = create<ParametricBufferGeometry>('parametric')
+export const Box = create<typeof BoxBufferGeometry>('boxBufferGeometry')
+export const Circle = create<typeof CircleBufferGeometry>('circle')
+export const Cone = create<typeof ConeBufferGeometry>('cone')
+export const Cylinder = create<typeof CylinderBufferGeometry>('cylinder')
+export const Sphere = create<typeof SphereBufferGeometry>('sphere')
+export const Plane = create<typeof PlaneBufferGeometry>('plane')
+export const Tube = create<typeof TubeBufferGeometry>('tube')
+export const Torus = create<typeof TorusBufferGeometry>('torus')
+export const TorusKnot = create<typeof TorusKnotBufferGeometry>('torusKnot')
+export const Tetrahedron = create<typeof TetrahedronBufferGeometry>('tetrahedron')
+export const Ring = create<typeof RingBufferGeometry>('ring')
+export const Polyhedron = create<typeof PolyhedronBufferGeometry>('polyhedron')
+export const Icosahedron = create<typeof IcosahedronBufferGeometry>('icosahedron')
+export const Octahedron = create<typeof OctahedronBufferGeometry>('octahedron')
+export const Dodecahedron = create<typeof DodecahedronBufferGeometry>('dodecahedron')
+export const Extrude = create<typeof ExtrudeBufferGeometry>('extrude')
+export const Lathe = create<typeof LatheBufferGeometry>('lathe')
+export const Parametric = create<typeof ParametricBufferGeometry>('parametric')
