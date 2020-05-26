@@ -36,10 +36,22 @@ import { ... } from 'drei'
 - Shapes
   - `<Plane />`
   - `<Box />`
+  - `<Sphere />`
   - `<Circle />`
   - `<Cone />`
   - `<Cylinder />`
-  - `<Sphere />`
+  - `<Tube />`
+  - `<Torus />`
+  - `<TorusKnot />`
+  - `<Ring />`
+  - `<Tetrahedron />`
+  - `<Polyhedron />`
+  - `<Icosahedron />`
+  - `<Octahedron />`
+  - `<Dodecahedron />`
+  - `<Extrude />`
+  - `<Lathe />`
+  - `<Parametric />`
 - Abstractions
   - `<Text />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
   - `<Detailed />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
@@ -105,13 +117,37 @@ Buffer-geometry short-cuts:
 
 ##### ⚡️ `<Box />`
 
+##### ⚡️ `<Sphere />`
+
 ##### ⚡️ `<Circle />`
 
 ##### ⚡️ `<Cone />`
 
 ##### ⚡️ `<Cylinder />`
 
-##### ⚡️ `<Sphere />`
+##### ⚡️ `<Tube />`
+
+##### ⚡️ `<Torus />`
+
+##### ⚡️ `<TorusKnot />`
+
+##### ⚡️ `<Ring />`
+
+##### ⚡️ `<Tetrahedron />`
+
+##### ⚡️ `<Polyhedron />`
+
+##### ⚡️ `<Icosahedron />`
+
+##### ⚡️ `<Octahedron />`
+
+##### ⚡️ `<Dodecahedron />`
+
+##### ⚡️ `<Extrude />`
+
+##### ⚡️ `<Lathe />`
+
+##### ⚡️ `<Parametric />`
 
 ## Abstractions
 
