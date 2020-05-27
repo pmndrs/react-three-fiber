@@ -1,4 +1,4 @@
-import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter } from 'three'
+import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter, Vector3 } from 'three'
 import React, { Suspense, useMemo, useRef } from 'react'
 import { Canvas, useLoader, useThree, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -7,17 +7,14 @@ import RefractionMaterial from '../resources/shaders/Refraction'
 import diamondUrl from '../resources/gltf/diamond.glb'
 import textureUrl from '../resources/images/backdrop.jpg'
 
-console.log(diamondUrl)
-console.log(textureUrl)
-
 function Background() {
   const { viewport, aspect } = useThree()
   const texture = useLoader(TextureLoader, textureUrl)
   useMemo(() => (texture.minFilter = LinearFilter), [texture.minFilter])
   // Calculates a plane filling the screen similar to background-size: cover
-  const adaptedHeight = 3800 * (aspect > 5000 / 3800 ? viewport.width / 5000 : viewport.height / 3800)
-  const adaptedWidth = 5000 * (aspect > 5000 / 3800 ? viewport.width / 5000 : viewport.height / 3800)
-
+  const { width, height } = viewport(new Vector3())
+  const adaptedHeight = 3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
+  const adaptedWidth = 5000 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
   return (
     <mesh layers={1} scale={[adaptedWidth, adaptedHeight, 1]}>
       <planeBufferGeometry attach="geometry" />
@@ -29,8 +26,7 @@ function Background() {
 function Diamonds() {
   const { size, viewport, gl, scene, camera, clock } = useThree()
   const model = useRef()
-  const { nodes, ...gltf } = useLoader(GLTFLoader, diamondUrl)
-
+  const { nodes } = useLoader(GLTFLoader, diamondUrl)
   // Create Fbo's and materials
   const [envFbo, backfaceFbo, backfaceMaterial, refractionMaterial] = useMemo(() => {
     const envFbo = new WebGLRenderTarget(size.width, size.height)
@@ -46,24 +42,23 @@ function Diamonds() {
 
   // Create random position data
   const dummy = useMemo(() => new Object3D(), [])
-  const diamonds = useMemo(
-    () =>
-      new Array(80).fill().map((_, i) => ({
-        position: [
-          i < 5 ? 0 : viewport.width / 2 - Math.random() * viewport.width,
-          40 - Math.random() * 40,
-          i < 5 ? 26 : 10 - Math.random() * 20,
-        ],
-        factor: 0.1 + Math.random(),
-        direction: Math.random() < 0.5 ? -1 : 1,
-        rotation: [
-          Math.sin(Math.random()) * Math.PI,
-          Math.sin(Math.random()) * Math.PI,
-          Math.cos(Math.random()) * Math.PI,
-        ],
-      })),
-    [viewport.width]
-  )
+  const diamonds = useMemo(() => {
+    const { width } = viewport()
+    return new Array(80).fill().map((_, i) => ({
+      position: [
+        i < 5 ? 0 : width / 2 - Math.random() * width,
+        40 - Math.random() * 40,
+        i < 5 ? 26 : 10 - Math.random() * 20,
+      ],
+      factor: 0.1 + Math.random(),
+      direction: Math.random() < 0.5 ? -1 : 1,
+      rotation: [
+        Math.sin(Math.random()) * Math.PI,
+        Math.sin(Math.random()) * Math.PI,
+        Math.cos(Math.random()) * Math.PI,
+      ],
+    }))
+  }, [viewport])
 
   // Render-loop
   useFrame(() => {

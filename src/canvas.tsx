@@ -50,8 +50,7 @@ export type SharedCanvasContext = {
   clock: THREE.Clock
   scene: THREE.Scene
   size: RectReadOnly
-  viewport: Viewport
-  getCurrentViewport: (target?: THREE.Vector3) => Viewport
+  viewport: (target?: THREE.Vector3) => Viewport
   events: PointerEvents
 }
 
@@ -203,8 +202,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     clock,
     gl,
     size,
-    viewport: { width: 0, height: 0, factor: 0, distance: 0 },
-    getCurrentViewport: (null as unknown) as () => Viewport,
+    viewport: (null as unknown) as () => Viewport,
     initialClick: [0, 0],
     initialHits: [],
     pointer: new TinyEmitter(),
@@ -256,13 +254,12 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     state.current.gl = gl
     state.current.concurrent = concurrent
     state.current.noEvents = noEvents
-    state.current.getCurrentViewport = getCurrentViewport
+    state.current.viewport = getCurrentViewport
   }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl])
 
   // Adjusts default camera
   useMemo(() => {
     state.current.aspect = size.width / size.height
-    state.current.viewport = getCurrentViewport()
 
     // #92 (https://github.com/drcmda/react-three-fiber/issues/92)
     // Sometimes automatic default camera adjustment isn't wanted behaviour

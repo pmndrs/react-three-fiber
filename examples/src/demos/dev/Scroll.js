@@ -25,7 +25,7 @@ function Image({ url, opacity, scale, ...props }) {
       {...props}
       onPointerOver={hover}
       onPointerOut={unhover}
-      scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
+      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}>
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
       <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
@@ -37,10 +37,10 @@ function Image({ url, opacity, scale, ...props }) {
 /** This renders text via canvas and projects it as a sprite */
 function Text({ children, position, opacity, color = 'white', fontSize = 410 }) {
   const {
-    camera,
     size: { width, height },
-    viewport: { width: viewportWidth, height: viewportHeight },
+    viewport,
   } = useThree()
+  const { width: viewportWidth, height: viewportHeight } = viewport()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
   const canvas = useMemo(() => {
     const canvas = document.createElement('canvas')
@@ -55,8 +55,8 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
   }, [children, width, height])
   return (
     <a.sprite scale={[scale, scale, 1]} position={position}>
-      <a.spriteMaterial attach="material" transparent opacity={opacity}>
-        <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={s => (s.needsUpdate = true)} />
+      <a.spriteMaterial transparent opacity={opacity}>
+        <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={(s) => (s.needsUpdate = true)} />
       </a.spriteMaterial>
     </a.sprite>
   )
@@ -64,12 +64,12 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
-  const { size, viewport } = useThree()
-  console.log(viewport)
+  const { viewport } = useThree()
+  const { width, height } = viewport()
   return (
-    <mesh scale={[viewport.width, viewport.height, 1]}>
-      <planeBufferGeometry attach="geometry" args={[1, 1]} />
-      <a.meshBasicMaterial attach="material" color={color} depthTest={false} />
+    <mesh scale={[width, height, 1]}>
+      <planeBufferGeometry args={[1, 1]} />
+      <a.meshBasicMaterial color={color} depthTest={false} />
     </mesh>
   )
 }
@@ -89,7 +89,7 @@ function Stars({ position }) {
     const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color('peachpuff') })
     const coords = new Array(1000)
       .fill()
-      .map(i => [Math.random() * 800 - 400, Math.random() * 800 - 400, Math.random() * 800 - 400])
+      .map((i) => [Math.random() * 800 - 400, Math.random() * 800 - 400, Math.random() * 800 - 400])
     return [geo, mat, coords]
   }, [])
   return (
@@ -147,12 +147,15 @@ function Scene({ top, mouse }) {
           ['#27282F', '#247BA0', '#70C1B3', '#f8f3f1']
         )}
       />
-      <Stars position={top.interpolate(top => [0, -1 + top / 20, 0])} />
+      <Stars position={top.interpolate((top) => [0, -1 + top / 20, 0])} />
       <Images top={top} mouse={mouse} scrollMax={scrollMax} />
-      <Text opacity={top.interpolate([0, 200], [1, 0])} position={top.interpolate(top => [0, -1 + top / 200, 0])}>
+      <Text opacity={top.interpolate([0, 200], [1, 0])} position={top.interpolate((top) => [0, -1 + top / 200, 0])}>
         lorem
       </Text>
-      <Text position={top.interpolate(top => [0, -20 + ((top * 10) / scrollMax) * 2, 0])} color="black" fontSize={150}>
+      <Text
+        position={top.interpolate((top) => [0, -20 + ((top * 10) / scrollMax) * 2, 0])}
+        color="black"
+        fontSize={150}>
         Ipsum
       </Text>
     </>
@@ -167,7 +170,7 @@ export default function Main() {
     ({ clientX: x, clientY: y }) => set({ mouse: [x - window.innerWidth / 2, y - window.innerHeight / 2] }),
     []
   )
-  const onScroll = useCallback(e => set({ top: e.target.scrollTop }), [])
+  const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [])
   const [events, setEvents] = useState({})
   return (
     <>

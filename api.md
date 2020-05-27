@@ -298,16 +298,25 @@ const {
   camera,                       // Default camera
   raycaster,                    // Default raycaster
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport,                     // Bounds of the viewport in 3d units + factor and distance
-  getCurrentViewport,           // getCurrentViewport(target?) Calculates a precise viewport
   aspect,                       // Aspect ratio (size.width / size.height)
   mouse,                        // Current, centered, normalized 2D mouse coordinates
   raycaster,                    // Intternal raycaster instance
   clock,                        // THREE.Clock (useful for useFrame deltas)
-  invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera,             // Sets the default camera
+  invalidate,
+  intersect,
+  setDefaultCamera,
+  viewport,
 } = useThree()
+
+// Calculates precise viewport bounds
+const { width, height, factor, distance } = viewport(optionalTarget?: THREE.Vector3)
+// Flags the canvas as "dirty" and forces a single frame
+// Use this to inform your canvas of changes when it is set to "invalidateFrameloop"
+invalidate()
+// Exchanges the default camera
+setDefaultCamera(camera)
+// Trigger an intersect/raycast as well as event handlers that may respond
+intersect(optionalEvent?: PointerEvent)
 ```
 
 #### useFrame

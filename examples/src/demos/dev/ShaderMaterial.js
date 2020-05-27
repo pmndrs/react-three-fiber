@@ -66,6 +66,7 @@ const data = [
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { progress } = useSpring({ progress: hovered ? 1 : 0 })
   const { gl, invalidate, viewport } = useThree()
+  const { width, height } = viewport()
 
   const args = useMemo(() => {
     const loader = new THREE.TextureLoader()
@@ -93,7 +94,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   }, [url1, url2, disp])
 
   return (
-    <mesh scale={[viewport.width, viewport.height, 1]}>
+    <mesh scale={[width, height, 1]}>
       <planeBufferGeometry attach="geometry" args={[1, 1]} />
       <a.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>

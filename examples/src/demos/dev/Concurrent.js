@@ -36,18 +36,18 @@ function Block({ change, ...props }) {
 function Blocks() {
   const [changeBlocks, set] = useState(false)
   useEffect(() => {
-    const handler = setInterval(() => set(state => !state), 2000)
+    const handler = setInterval(() => set((state) => !state), 2000)
     return () => clearInterval(handler)
   })
 
   console.log(changeBlocks)
 
   const { viewport } = useThree()
-  const width = viewport.width / 100
-  const size = width / ROW
+  const { width, height } = viewport().factor
+  const size = width / 100 / ROW
   return new Array(BLOCK_AMOUNT).fill().map((_, i) => {
-    const left = -viewport.width / 100 / 2 + size / 2
-    const top = viewport.height / 100 / 2 - size / 2
+    const left = -width / 100 / 2 + size / 2
+    const top = height / 100 / 2 - size / 2
     const x = (i % ROW) * size
     const y = Math.floor(i / ROW) * -size
     return <Block key={i} change={changeBlocks} scale={[size, size, size]} position={[left + x, top + y, 0]} />
