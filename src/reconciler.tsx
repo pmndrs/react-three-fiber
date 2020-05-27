@@ -276,14 +276,13 @@ function appendChild(parentInstance: any, child: any) {
       parentInstance.__objects.push(child)
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
-      if (child.attach) parentInstance[child.attach] = child
-      else if (child.attachArray) {
+      if (child.attachArray) {
         if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
         parentInstance[child.attachArray].push(child)
       } else if (child.attachObject) {
         if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
-      }
+      } else if (child.attach) parentInstance[child.attach] = child
     }
     updateInstance(child)
     invalidateInstance(child)
@@ -321,12 +320,10 @@ function removeChild(parentInstance: any, child: any) {
       child.parent = null
       parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
       // Remove attachment
-      if (child.attach) parentInstance[child.attach] = null
-      else if (child.attachArray)
+      if (child.attachArray)
         parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: any) => x !== child)
-      else if (child.attachObject) {
-        delete parentInstance[child.attachObject[0]][child.attachObject[1]]
-      }
+      else if (child.attachObject) delete parentInstance[child.attachObject[0]][child.attachObject[1]]
+      else if (child.attach) parentInstance[child.attach] = null
     }
     invalidateInstance(child)
 

@@ -35,6 +35,8 @@ export type PointerEvent = DomEvent &
 
 export type RenderCallback = (state: CanvasContext, delta: number) => void
 
+export type Viewport = { width: number; height: number; factor: number; distance: number }
+
 export type SharedCanvasContext = {
   gl: THREE.WebGLRenderer
   aspect: number
@@ -48,7 +50,8 @@ export type SharedCanvasContext = {
   clock: THREE.Clock
   scene: THREE.Scene
   size: RectReadOnly
-  viewport: { width: number; height: number; factor: number }
+  viewport: Viewport
+  getCurrentViewport: (target?: THREE.Vector3) => Viewport
   events: PointerEvents
 }
 
@@ -200,7 +203,8 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     clock,
     gl,
     size,
-    viewport: { width: 0, height: 0, factor: 0 },
+    viewport: { width: 0, height: 0, factor: 0, distance: 0 },
+    getCurrentViewport: (null as unknown) as () => Viewport,
     initialClick: [0, 0],
     initialHits: [],
     pointer: new TinyEmitter(),
@@ -229,6 +233,19 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       handlePointerMove(event, prepare),
   })
 
+  const getCurrentViewport = useCallback((target: THREE.Vector3 = new THREE.Vector3(0, 0, 0)) => {
+    const { width, height } = state.current.size
+    const distance = state.current.camera.position.distanceTo(target)
+    if (isOrthographicCamera(state.current.camera)) {
+      return { width, height, factor: 1, distance }
+    } else {
+      const fov = (state.current.camera.fov * Math.PI) / 180 // convert vertical fov to radians
+      const h = 2 * Math.tan(fov / 2) * distance // visible height
+      const w = h * (width / height)
+      return { width: w, height: h, factor: width / w, distance }
+    }
+  }, [])
+
   // Writes locals into public state for distribution among subscribers, context, etc
   useMemo(() => {
     state.current.ready = ready
@@ -239,22 +256,13 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     state.current.gl = gl
     state.current.concurrent = concurrent
     state.current.noEvents = noEvents
+    state.current.getCurrentViewport = getCurrentViewport
   }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl])
 
   // Adjusts default camera
   useMemo(() => {
     state.current.aspect = size.width / size.height
-
-    if (isOrthographicCamera(defaultCam)) {
-      state.current.viewport = { width: size.width, height: size.height, factor: 1 }
-    } else {
-      const target = new THREE.Vector3(0, 0, 0)
-      const distance = defaultCam.position.distanceTo(target)
-      const fov = (defaultCam.fov * Math.PI) / 180 // convert vertical fov to radians
-      const height = 2 * Math.tan(fov / 2) * distance // visible height
-      const width = height * state.current.aspect
-      state.current.viewport = { width, height, factor: size.width / width }
-    }
+    state.current.viewport = getCurrentViewport()
 
     // #92 (https://github.com/drcmda/react-three-fiber/issues/92)
     // Sometimes automatic default camera adjustment isn't wanted behaviour

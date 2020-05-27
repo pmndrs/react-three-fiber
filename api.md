@@ -298,7 +298,8 @@ const {
   camera,                       // Default camera
   raycaster,                    // Default raycaster
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
+  viewport,                     // Bounds of the viewport in 3d units + factor and distance
+  getCurrentViewport,           // Calculates the current, precise viewport
   aspect,                       // Aspect ratio (size.width / size.height)
   mouse,                        // Current, centered, normalized 2D mouse coordinates
   raycaster,                    // Intternal raycaster instance
