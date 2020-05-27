@@ -3,6 +3,10 @@ import React, { forwardRef, useRef, useLayoutEffect, useEffect } from 'react'
 import { ReactThreeFiber, extend, useThree } from 'react-three-fiber'
 import { TransformControls as TransformControlsImpl } from 'three/examples/jsm/controls/TransformControls'
 // @ts-ignore
+import pick from 'lodash.pick';
+// @ts-ignore
+import omit from 'lodash.omit';
+// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ TransformControlsImpl })
@@ -34,25 +38,10 @@ type Props = JSX.IntrinsicElements['group'] & {
 }
 
 export const TransformControls = forwardRef(
-  (
-    {
-      children,
-      enabled,
-      axis,
-      mode,
-      translationSnap,
-      rotationSnap,
-      scaleSnap,
-      space,
-      size,
-      dragging,
-      showX,
-      showY,
-      showZ,
-      ...props
-    }: Props,
-    ref
-  ) => {
+  ({ children, ...props }: { children: React.ReactElement<Object3D> } & TransformControls, ref) => {
+    const transformOnlyPropNames = ["enabled" ,"axis" ,"mode" ,"translationSnap" ,"rotationSnap" ,"scaleSnap" ,"space" ,"size" ,"dragging" ,"showX" ,"showY" ,"showZ"];
+    const transformProps = pick(props, transformOnlyPropNames);
+    const objectProps = omit(props, transformOnlyPropNames);
     const controls = useRef<TransformControlsImpl>()
     const group = useRef<Group>()
     const { camera, gl, invalidate } = useThree()
@@ -63,26 +52,8 @@ export const TransformControls = forwardRef(
     }, [controls.current])
     return (
       <>
-        <transformControlsImpl
-          ref={mergeRefs([controls, ref])}
-          args={[camera, gl.domElement]}
-          enabled={enabled}
-          axis={axis}
-          mode={mode}
-          translationSnap={translationSnap}
-          rotationSnap={rotationSnap}
-          //@ts-ignore
-          scaleSnap={scaleSnap}
-          space={space}
-          size={size}
-          dragging={dragging}
-          showX={showX}
-          showY={showY}
-          showZ={showZ}
-        />
-        <group ref={group as any} {...props}>
-          {children}
-        </group>
+        <transformControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...transformProps} />
+        <group ref={group} {...objectProps}>{children}</group>
       </>
     )
   }

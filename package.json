@@ -46,6 +46,8 @@
   "homepage": "https://github.com/drcmda/drei#readme",
   "dependencies": {
     "@babel/runtime": "^7.9.6",
+    "lodash.omit": "^4.5.0",
+    "lodash.pick": "^4.4.0",
     "postprocessing": "^6.13.5",
     "react-merge-refs": "^1.0.0",
     "stats.js": "^0.17.0",
