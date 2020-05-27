@@ -9,7 +9,7 @@ type Props = JSX.IntrinsicElements['perspectiveCamera'] & {
   children: React.ReactNode
 }
 
-export const PerspectiveCamera = forwardRef(({ children, makeDefault = true, ...props }: Props, ref) => {
+export const PerspectiveCamera = forwardRef(({ children, makeDefault = false, ...props }: Props, ref) => {
   const { setDefaultCamera, camera, size } = useThree()
   const cameraRef = useUpdate<PerspectiveCameraImpl>(
     (cam) => {

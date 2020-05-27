@@ -75,11 +75,11 @@ import { ... } from 'drei'
 
 ##### ⚡️ `<PerspectiveCamera />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-qgcrx)
 
-A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) that sets itself as the default.
+A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/en/cameras/PerspectiveCamera) that can set itself as the default.
 
 ```jsx
 <PerspectiveCamera
-  makeDefault               // Registers it as the default camera system-wide (default=true)
+  makeDefault               // Registers it as the default camera system-wide (default=false)
   {...props}                // All THREE.PerspectiveCamera props are valid
 >
   <mesh />
@@ -88,7 +88,7 @@ A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/e
 
 ##### ⚡️ `<OrthographicCamera />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-kdj94)
 
-A responsive [THREE.OrthographicCamera](https://threejs.org/docs/index.html#api/en/cameras/OrthographicCamera) that sets itself as the default.
+A responsive [THREE.OrthographicCamera](https://threejs.org/docs/index.html#api/en/cameras/OrthographicCamera) that can set itself as the default.
 
 ## Controls
 
