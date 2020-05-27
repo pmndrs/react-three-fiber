@@ -24,7 +24,7 @@ import React, { forwardRef } from 'react'
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
 
 function create<T>(type: string) {
-  const El: any = type + 'bufferGeometry'
+  const El: any = type + 'BufferGeometry'
   return forwardRef(
     ({ args, children, ...props }: Omit<JSX.IntrinsicElements['mesh'], 'args'> & { args?: Args<T> }, ref) => (
       <mesh ref={ref as React.MutableRefObject<Mesh>} {...props}>
