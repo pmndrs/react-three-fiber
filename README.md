@@ -68,6 +68,7 @@ import { ... } from 'drei'
   - `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
   - `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
   - `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw) ![](https://img.shields.io/badge/-useFrame-red)
+   - `useAspect()`
 
 # Exports
 
@@ -309,7 +310,6 @@ A hook for the rare case when you are using non-default cameras for heads-up-dis
 <mesh raycast={useCamera(customCamera)} />
 ```
 
-
 ##### ⚡️ `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw)
 
 A hook for a quick way to add helpers to existing nodes in the scene. It handles removal of the helper on unmount and auto-updates it by default.
@@ -317,4 +317,19 @@ A hook for a quick way to add helpers to existing nodes in the scene. It handles
 ```jsx
 const mesh = useRef()
 useHelper(mesh, BoxHelper, "cyan")
+```
+
+##### ⚡️ `useAspect()`
+
+This hook calculates aspect ratios (for now only what in css would be `image-size: cover` is supported). You can use it to make an image fill the screen. It is responsive and adapts to viewport resize. Just give the hook the image bounds in pixels. It returns an array: `[width, height, 1]`.
+
+```jsx
+const scale = useAspect(
+  1024,                     // pixel-width
+  512                       // pixel-height
+)
+return (
+  <mesh scale={scale}>
+    <planeBufferGeometry />
+    <meshBasicMaterial map={imageTexture} />
 ```
