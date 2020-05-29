@@ -228,7 +228,7 @@ Also notcice the `onPointerMissed` on the canvas element, which fires on clicks 
 ({
   ...DomEvent                   // All the original event data
   ...ThreeEvent                 // All of Three's intersection data
-  intersects: Intersect[]       // All intersects
+  intersections: Intersect[]    // All intersections
   object: Object3D              // The object that was actually hit
   eventObject: Object3D         // The object that registered the event
   unprojectedPoint: Vector3     // Camera-unprojected point
