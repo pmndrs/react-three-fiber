@@ -4,5 +4,5 @@ export function useAspect(type: string, width: number, height: number, factor: n
   const { viewport: v, aspect } = useThree()
   const adaptedHeight = height * (aspect > width / height ? v.width / width : v.height / height)
   const adaptedWidth = width * (aspect > width / height ? v.width / width : v.height / height)
-  return [adaptedHeight * factor, adaptedWidth * factor, 1]
+  return [adaptedWidth * factor, adaptedHeight * factor, 1]
 }
