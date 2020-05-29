@@ -326,7 +326,8 @@ This hook calculates aspect ratios (for now only what in css would be `image-siz
 ```jsx
 const scale = useAspect(
   1024,                     // pixel-width
-  512                       // pixel-height
+  512,                      // pixel-height
+  "cover"                   // aspect ratio, default: "cover"
 )
 return (
   <mesh scale={scale}>
