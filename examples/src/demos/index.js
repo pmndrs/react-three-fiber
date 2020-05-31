@@ -20,16 +20,22 @@ const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), d
 //const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
 //const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
 const Selection = { descr: '', tags: [], Component: lazy(() => import('./dev/Selection')), dev: true }
-const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./dev/Pointcloud')), dev: true }
-const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/Reparenting')), dev: true }
-const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./dev/MultiRender')), dev: true }
+const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./dev/Pointcloud')), dev: true, bright: true }
+const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/Reparenting')), dev: true, bright: true }
+const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./dev/MultiRender')), dev: true, bright: true }
 const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./dev/MultiScene')), dev: true }
 const Hud = { descr: '', tags: [], Component: lazy(() => import('./dev/Hud')), dev: true }
-const InstancedMesh = { descr: '', tags: [], Component: lazy(() => import('./dev/InstancedMesh')), dev: true }
+const InstanceMesh = {
+  descr: '',
+  tags: [],
+  Component: lazy(() => import('./dev/InstancedMesh')),
+  dev: true,
+  bright: true,
+}
 const GltfAnimation = { descr: '', tags: [], Component: lazy(() => import('./dev/GltfAnimation')), dev: true }
 //const VR = { descr: '', tags: [], Component: lazy(() => import('./dev/VR')), dev: true }
 const ShaderMaterial = { descr: '', tags: [], Component: lazy(() => import('./dev/ShaderMaterial')), dev: true }
-const Suspense = { descr: '', tags: [], Component: lazy(() => import('./dev/Suspense')), dev: true }
+const Suspense = { descr: '', tags: [], Component: lazy(() => import('./dev/Suspense')), dev: true, bright: true }
 const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./dev/SelectiveBloom')), dev: true }
 const Scroll = { descr: '', tags: [], Component: lazy(() => import('./dev/Scroll')), dev: true }
 const Lines = { descr: '', tags: [], Component: lazy(() => import('./dev/Lines')), dev: true }
