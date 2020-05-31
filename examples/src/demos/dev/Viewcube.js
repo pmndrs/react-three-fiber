@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useRef, useMemo, useEffect } from 'react'
+import React, { useRef, useMemo } from 'react'
 import { Canvas, extend, useFrame, useThree, createPortal, useCamera } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
@@ -7,7 +7,7 @@ extend({ OrbitControls })
 
 function Controls() {
   const controls = useRef()
-  const { scene, camera, gl } = useThree()
+  const { camera, gl } = useThree()
   useFrame(() => controls.current.update())
   return (
     <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
@@ -15,7 +15,7 @@ function Controls() {
 }
 
 function Viewcube() {
-  const { mouse, gl, camera, size,scene } = useThree()
+  const { gl, camera, size, scene } = useThree()
   const virtualScene = useMemo(() => new THREE.Scene(), [])
   const virtualCam = useMemo(() => new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000), [])
   useMemo(() => {
@@ -25,7 +25,7 @@ function Viewcube() {
     virtualCam.top = size.height / 2
     virtualCam.bottom = size.height / -2
     virtualCam.updateProjectionMatrix()
-  }, [size])
+  }, [size, virtualCam])
 
   const ref = useRef()
   const matrix = new THREE.Matrix4()
@@ -45,7 +45,7 @@ function Viewcube() {
       ref={ref}
       raycast={useCamera(virtualCam)}
       position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
-      onPointerMove={e => console.log('ah')}>
+      onPointerMove={(e) => console.log('ah')}>
       <meshNormalMaterial attach="material" />
       <boxBufferGeometry attach="geometry" args={[60, 60, 60]} />
     </mesh>,
@@ -53,7 +53,7 @@ function Viewcube() {
   )
 }
 
-export default function() {
+export default function () {
   return (
     <Canvas style={{ background: '#272730' }}>
       <mesh>
