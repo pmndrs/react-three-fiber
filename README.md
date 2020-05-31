@@ -59,6 +59,7 @@ import { ... } from 'drei'
   - `<StandardEffects />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
 - Shaders
   - `<Sky />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
+  - `<Stars />`
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - Misc
   - `<HTML />` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
@@ -219,6 +220,18 @@ Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 />
 ```
 
+##### ⚡️ `<Stars />`
+
+Adds blinking shader-based starfield to your scene. Caveats:
+* In order to maintain z-buffer sorting for proper blending, the distribution within `[radius, radius + depth]` interval is not really random, each star is added one proportional increment closer to the center from `radius + depth`.
+
+```jsx
+<Stars
+  radius={10}         // Radius of the inner sphere (lower bound)
+  depth={2}           // Depth of area where stars should fit
+  count={10000}       // Amount of stars
+/>
+```
 
 #### ⚡️ `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 
