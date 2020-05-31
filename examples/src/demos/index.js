@@ -25,7 +25,7 @@ const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/R
 const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./dev/MultiRender')), dev: true, bright: true }
 const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./dev/MultiScene')), dev: true }
 const Hud = { descr: '', tags: [], Component: lazy(() => import('./dev/Hud')), dev: true }
-const InstanceMesh = {
+const InstancedMesh = {
   descr: '',
   tags: [],
   Component: lazy(() => import('./dev/InstancedMesh')),
