@@ -309,7 +309,7 @@ const {
 } = useThree()
 
 // Calculates precise viewport bounds
-const { width, height, factor, distance } = viewport(optionalTarget?: THREE.Vector3)
+const { width, height, factor, distance } = viewport(camera?: THREE.Camera, target?: THREE.Vector3)
 // Flags the canvas as "dirty" and forces a single frame
 // Use this to inform your canvas of changes when it is set to "invalidateFrameloop"
 invalidate()

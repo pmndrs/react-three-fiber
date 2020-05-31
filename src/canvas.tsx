@@ -27,7 +27,7 @@ export type PointerEvent = DomEvent &
     stopped: boolean
     unprojectedPoint: THREE.Vector3
     ray: THREE.Ray
-    camera: THREE.Camera
+    camera: Camera
     stopPropagation: () => void
     sourceEvent: DomEvent
     delta: number
@@ -36,7 +36,7 @@ export type PointerEvent = DomEvent &
 export type RenderCallback = (state: CanvasContext, delta: number) => void
 
 export type Viewport = { width: number; height: number; factor: number; distance: number }
-export type ViewportData = Viewport & ((target?: THREE.Vector3) => Viewport)
+export type ViewportData = Viewport & ((camera: Camera, target: THREE.Vector3) => Viewport)
 
 export type SharedCanvasContext = {
   gl: THREE.WebGLRenderer
@@ -232,18 +232,21 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       handlePointerMove(event, prepare),
   })
 
-  const getCurrentViewport = useCallback((target: THREE.Vector3 = new THREE.Vector3(0, 0, 0)) => {
-    const { width, height } = state.current.size
-    const distance = state.current.camera.position.distanceTo(target)
-    if (isOrthographicCamera(state.current.camera)) {
-      return { width, height, factor: 1, distance }
-    } else {
-      const fov = (state.current.camera.fov * Math.PI) / 180 // convert vertical fov to radians
-      const h = 2 * Math.tan(fov / 2) * distance // visible height
-      const w = h * (width / height)
-      return { width: w, height: h, factor: width / w, distance }
-    }
-  }, [])
+  const getCurrentViewport = useCallback(
+    (camera: Camera = state.current.camera, target: THREE.Vector3 = new THREE.Vector3(0, 0, 0)) => {
+      const { width, height } = state.current.size
+      const distance = camera.position.distanceTo(target)
+      if (isOrthographicCamera(camera)) {
+        return { width, height, factor: 1, distance }
+      } else {
+        const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
+        const h = 2 * Math.tan(fov / 2) * distance // visible height
+        const w = h * (width / height)
+        return { width: w, height: h, factor: width / w, distance }
+      }
+    },
+    []
+  )
 
   // Writes locals into public state for distribution among subscribers, context, etc
   useMemo(() => {
