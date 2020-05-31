@@ -1,4 +1,18 @@
-# React specific performance pitfalls ☠️
+# WebGL performance pitfalls ☠️
+
+This is the overview i could find: https://discoverthreejs.com/tips-and-tricks
+
+The most important is, creating objects in Threejs is expensive, think twice before you mount/unmnount things, because every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+
+```jsx
+const geom = useMemo(() => new BoxBufferGeometry(), [])
+const mat = useMemo(() => new MeshBasicMaterial(), [])
+return items.map(i => <mesh geometry={geom} material={mat} ...
+```
+
+and use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) when you need to present many objects of a similar type.
+
+# React performance pitfalls ☠️
 
 ❌ **Never, ever, setState animations:**
 
