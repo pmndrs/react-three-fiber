@@ -1,4 +1,3 @@
-import ReactDOM from 'react-dom'
 import React, { Suspense, useState } from 'react'
 import { unstable_createResource as createResource } from '../../resources/cache'
 // react-cache is still experimental and isn't currently compatible with react 16.8.x
@@ -8,12 +7,13 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 // Creates a cached async resource
 const resource = createResource(
-  file =>
+  (file) =>
     new Promise(
-      async res => (
-        await new Promise(r => setTimeout(r, 1000)),
-        new GLTFLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models' + file, res)
-      )
+      async (res) =>
+        await [
+          new Promise((r) => setTimeout(r, 1000)),
+          new GLTFLoader().load('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models' + file, res),
+        ]
     )
 )
 
