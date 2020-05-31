@@ -1,6 +1,6 @@
 # WebGL performance pitfalls ☠️
 
-This is the overview i could find: https://discoverthreejs.com/tips-and-tricks
+This is the best overview i could find: https://discoverthreejs.com/tips-and-tricks
 
 The most important is, creating objects in Threejs is expensive, think twice before you mount/unmnount things, because every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
