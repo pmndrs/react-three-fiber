@@ -1,5 +1,9 @@
+# Explore Examples
+
+You can explore additional examples locally:
+
 ```shell
-git clone https://github.com/drcmda/react-three-fiber
+git clone https://github.com/react-spring/react-three-fiber
 cd react-three-fiber
 yarn
 cd examples
@@ -7,4 +11,4 @@ yarn
 yarn start
 ```
 
-Edit examples/index.js to import the demo you're interested in. I use this mainly for debugging and testing, a real showcase will follow.
+After playing with the examples you can explore the src code. Each example URL maps to a file name in the `src/demos` folder.
