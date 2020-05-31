@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Canvas, createPortal, extend, useFrame, useThree, useResource } from 'react-three-fiber'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
+import { Canvas, createPortal, extend, useFrame, useThree } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
@@ -14,7 +14,7 @@ function Main() {
   const [scene] = useState(() => new THREE.Scene())
   const composer = useRef()
   const { gl, size, camera } = useThree()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  useEffect(() => void composer.current.setSize(size.width, size.height), [size.width, size.height])
   useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
   return createPortal(
     <>
@@ -72,7 +72,7 @@ function Content() {
     setDefaultCamera(cam)
     return cam
   })
-  useMemo(() => (camera.aspect = size.width / size.height), [size])
+  useMemo(() => (camera.aspect = size.width / size.height), [camera.aspect, size.width, size.height])
   useFrame(() => camera.updateMatrixWorld())
   return (
     <group>
