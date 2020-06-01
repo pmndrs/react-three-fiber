@@ -1,5 +1,5 @@
 import { WebGLMultisampleRenderTarget as MSRT, RGBFormat } from 'three'
-import React, { useCallback, useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import { Canvas, extend, useThree, useFrame } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
@@ -28,7 +28,7 @@ function Effects() {
     const target = new MSRT(width, height, { format: RGBFormat, stencilBuffer: false })
     target.samples = 8
     return target
-  }, [])
+  }, [width, height])
   useEffect(() => void composer.current.setSize(width, height), [width, height])
   useFrame(() => composer.current.render(), 1)
   return (
