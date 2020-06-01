@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from 'react-three-fiber'
+import React, { useEffect } from 'react'
+import { Canvas } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
 
 const number = 35
 const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']
 const shapes = ['planeBufferGeometry', 'planeBufferGeometry', 'planeBufferGeometry']
-const random = i => {
+const random = (i) => {
   const r = Math.random()
   return {
     position: [100 - Math.random() * 200, 100 - Math.random() * 200, i * 1.5],
@@ -26,12 +26,12 @@ const data = new Array(number).fill().map(() => {
 })
 
 function Content() {
-  const [springs, set] = useSprings(number, i => ({
+  const [springs, set] = useSprings(number, (i) => ({
     from: random(i),
     ...random(i),
     config: { mass: 20, tension: 150, friction: 50 },
   }))
-  useEffect(() => void setInterval(() => set(i => ({ ...random(i), delay: i * 40 })), 3000), [])
+  useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [set])
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
       <boxBufferGeometry attach="geometry" args={d.args} />
