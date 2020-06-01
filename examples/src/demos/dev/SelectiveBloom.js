@@ -41,7 +41,7 @@ function Bloom({ children }) {
     composer.current = new EffectComposer(gl)
     composer.current.addPass(new RenderPass(scene.current, camera))
     composer.current.addPass(new UnrealBloomPass(new THREE.Vector2(size.width, size.height), 1.5, 1, 0))
-  }, [])
+  }, [gl, camera, size.height, size.width])
   useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(() => composer.current.render(), 1)
   return <scene ref={scene}>{children}</scene>
