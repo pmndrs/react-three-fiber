@@ -3,7 +3,7 @@ import { Canvas, useResource, createPortal } from 'react-three-fiber'
 
 function Icosahedron() {
   const [active, set] = useState(false)
-  const handleClick = useCallback(e => set(state => !state), [])
+  const handleClick = useCallback((e) => set((state) => !state), [])
   return (
     <mesh scale={active ? [2, 2, 2] : [1, 1, 1]} onClick={handleClick}>
       <icosahedronBufferGeometry attach="geometry" args={[1, 0]} />
@@ -14,7 +14,7 @@ function Icosahedron() {
 
 function RenderToPortal({ targets }) {
   const [target, set] = useState(targets[0])
-  useEffect(() => void setTimeout(() => set(targets[1]), 1000), [])
+  useEffect(() => void setTimeout(() => set(targets[1]), 1000), [targets])
   return (
     <>
       <mesh position={[-2, 0, 0]}>
