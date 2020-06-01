@@ -1,7 +1,6 @@
-import * as THREE from 'three'
-import React, { Suspense, useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { Canvas, useThree, useLoader } from 'react-three-fiber'
-import { update, useTransition, useSpring, a } from 'react-spring/three'
+import React, { Suspense, useState, useEffect, useMemo } from 'react'
+import { Canvas, useLoader } from 'react-three-fiber'
+import { useTransition, useSpring, a } from 'react-spring/three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import night from '../resources/images/svg/night.svg'
 import city from '../resources/images/svg/city.svg'
@@ -13,8 +12,6 @@ import beach from '../resources/images/svg/beach.svg'
 const colors = ['#21242d', '#ea5158', '#0d4663', '#ffbcb7', '#2d4a3e', '#8bd8d2']
 
 const Scene = React.memo(({ urls }) => {
-  const { viewport } = useThree()
-
   const svgs = useLoader(SVGLoader, urls)
   const shapes = useMemo(
     () =>
@@ -22,14 +19,14 @@ const Scene = React.memo(({ urls }) => {
         paths.flatMap((path, index) =>
           path
             .toShapes(true)
-            .map(shape => ({ shape, color: path.color, fillOpacity: path.userData.style.fillOpacity, index }))
+            .map((shape) => ({ shape, color: path.color, fillOpacity: path.userData.style.fillOpacity, index }))
         )
       ),
     [svgs]
   )
 
   const [page, setPage] = useState(0)
-  useEffect(() => void setInterval(() => setPage(i => (i + 1) % urls.length), 3000), [])
+  useEffect(() => void setInterval(() => setPage((i) => (i + 1) % urls.length), 3000), [urls.length])
 
   const { color } = useSpring({
     from: { color: colors[0] },
@@ -38,7 +35,7 @@ const Scene = React.memo(({ urls }) => {
     config: { mass: 5, tension: 800, friction: 400 },
   })
 
-  const transitions = useTransition(shapes[page], item => item.shape.uuid, {
+  const transitions = useTransition(shapes[page], (item) => item.shape.uuid, {
     from: { rotation: [0, 0.4, 0], position: [-500, 0, 0], opacity: 0 },
     enter: { rotation: [0, 0, 0], position: [0, 0, 0], opacity: 1 },
     leave: { rotation: [0, -0.4, 0], position: [500, 0, 0], opacity: 0 },
@@ -64,7 +61,7 @@ const Scene = React.memo(({ urls }) => {
               <a.meshPhongMaterial
                 attach="material"
                 color={color}
-                opacity={opacity.interpolate(o => o * fillOpacity)}
+                opacity={opacity.interpolate((o) => o * fillOpacity)}
                 depthWrite={false}
                 transparent
               />
