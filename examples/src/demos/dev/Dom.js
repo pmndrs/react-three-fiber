@@ -1,4 +1,4 @@
-import React, { Suspense, createRef, useEffect, useRef, useContext } from 'react'
+import React, { Suspense, createRef, useEffect, useRef } from 'react'
 import { Canvas, Dom, useFrame } from 'react-three-fiber'
 import usePromise from 'react-promise-suspense'
 
@@ -23,7 +23,7 @@ function Sphere({ children, ...props }) {
 
 function Suspend({ time, ...props }) {
   usePromise((ms) => new Promise((res) => setTimeout(res, ms)), [time])
-  useEffect(() => console.log(`---suspended component (${time}ms) ready`), [])
+  useEffect(() => console.log(`---suspended component (${time}ms) ready`), [time])
   return (
     <Sphere {...props}>
       Suspense
