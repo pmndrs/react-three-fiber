@@ -1,5 +1,4 @@
-import ReactDOM from 'react-dom'
-import React, { useRef, useState, useEffect, useMemo } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
 import { Canvas, Dom, useFrame, useThree } from 'react-three-fiber'
 import { Controls, useControl } from 'react-three-gui'
@@ -36,7 +35,7 @@ function Block({ change, ...props }) {
 function Blocks() {
   const [changeBlocks, set] = useState(false)
   useEffect(() => {
-    const handler = setInterval(() => set(state => !state), 2000)
+    const handler = setInterval(() => set((state) => !state), 2000)
     return () => clearInterval(handler)
   })
 
