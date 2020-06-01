@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { apply as extendSpring, useSpring, a, interpolate } from 'react-spring/three'
 import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-fiber'
 import styled from 'styled-components'
@@ -25,7 +25,7 @@ function Image({ url, opacity, scale, ...props }) {
       {...props}
       onPointerOver={hover}
       onPointerOut={unhover}
-      scale={factor.interpolate(f => [scale * f, scale * f, 1])}>
+      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}>
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
       <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
@@ -37,8 +37,6 @@ function Image({ url, opacity, scale, ...props }) {
 /** This renders text via canvas and projects it as a sprite */
 function Text({ children, position, opacity, color = 'white', fontSize = 410 }) {
   const {
-    camera,
-    size: { width, height },
     viewport: { width: viewportWidth, height: viewportHeight },
   } = useThree()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
@@ -52,11 +50,11 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
     context.fillStyle = color
     context.fillText(children, 1024, 1024 - 410 / 2)
     return canvas
-  }, [children, width, height])
+  }, [children, color, fontSize])
   return (
     <a.sprite scale={[scale, scale, 1]} position={position}>
       <a.spriteMaterial attach="material" transparent opacity={opacity}>
-        <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={s => (s.needsUpdate = true)} />
+        <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={(s) => (s.needsUpdate = true)} />
       </a.spriteMaterial>
     </a.sprite>
   )
@@ -64,7 +62,7 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
-  const { size, viewport } = useThree()
+  const { viewport } = useThree()
   console.log(viewport)
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
@@ -89,7 +87,7 @@ function Stars({ position }) {
     const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color('peachpuff') })
     const coords = new Array(1000)
       .fill()
-      .map(i => [Math.random() * 800 - 400, Math.random() * 800 - 400, Math.random() * 800 - 400])
+      .map((i) => [Math.random() * 800 - 400, Math.random() * 800 - 400, Math.random() * 800 - 400])
     return [geo, mat, coords]
   }, [])
   return (
@@ -147,13 +145,16 @@ function Scene({ top, mouse }) {
           ['#27282F', '#247BA0', '#70C1B3', '#f8f3f1']
         )}
       />
-      <Stars position={top.interpolate(top => [0, -1 + top / 20, 0])} />
+      <Stars position={top.interpolate((top) => [0, -1 + top / 20, 0])} />
       <Images top={top} mouse={mouse} scrollMax={scrollMax} />
-      <Text opacity={top.interpolate([0, 200], [1, 0])} position={top.interpolate(top => [0, -1 + top / 200, 0])}>
-        lorem
+      <Text opacity={top.interpolate([0, 200], [1, 0])} position={top.interpolate((top) => [0, -1 + top / 200, 0])}>
+        scroll
       </Text>
-      <Text position={top.interpolate(top => [0, -20 + ((top * 10) / scrollMax) * 2, 0])} color="black" fontSize={150}>
-        Ipsum
+      <Text
+        position={top.interpolate((top) => [0, -20 + ((top * 10) / scrollMax) * 2, 0])}
+        color="black"
+        fontSize={150}>
+        down
       </Text>
     </>
   )
@@ -165,9 +166,9 @@ export default function Main() {
   const [{ top, mouse }, set] = useSpring(() => ({ top: 0, mouse: [0, 0] }))
   const onMouseMove = useCallback(
     ({ clientX: x, clientY: y }) => set({ mouse: [x - window.innerWidth / 2, y - window.innerHeight / 2] }),
-    []
+    [set]
   )
-  const onScroll = useCallback(e => set({ top: e.target.scrollTop }), [])
+  const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [set])
   const [events, setEvents] = useState({})
   return (
     <>
