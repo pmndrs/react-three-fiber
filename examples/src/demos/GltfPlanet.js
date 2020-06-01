@@ -1,5 +1,4 @@
-import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef, useMemo } from 'react'
+import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
@@ -8,7 +7,7 @@ import planet from '../resources/gltf/planet.gltf'
 
 function Planet(props) {
   const group = useRef()
-  const gltf = useLoader(GLTFLoader, planet, loader => {
+  const gltf = useLoader(GLTFLoader, planet, (loader) => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.decoderPath = '/draco-gltf/'
     loader.setDRACOLoader(dracoLoader)
@@ -68,7 +67,7 @@ function Stars({ count = 5000 }) {
 }
 
 extend({ OrbitControls })
-const Controls = props => {
+const Controls = (props) => {
   const { gl, camera } = useThree()
   const ref = useRef()
   useFrame(() => ref.current.update())
