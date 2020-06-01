@@ -1,7 +1,5 @@
-import * as THREE from 'three'
-import React, { useState, useRef, useContext, useLayoutEffect, useCallback, useMemo } from 'react'
-import { useSpring, animated } from 'react-spring/three'
-import { extend, Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
+import React, { useRef, useLayoutEffect } from 'react'
+import { Canvas, useFrame, useThree, useResource } from 'react-three-fiber'
 
 function Content() {
   const { camera } = useThree()
@@ -40,7 +38,7 @@ function Main() {
   // The camera needs to be updated every frame
   // We give this frame a priority so that automatic rendering will be switched off right away
   useFrame(() => camera.updateMatrixWorld())
-  useLayoutEffect(() => void setDefaultCamera(ref.current), [])
+  useLayoutEffect(() => void setDefaultCamera(ref.current), [ref, setDefaultCamera])
 
   return (
     <>
@@ -50,7 +48,7 @@ function Main() {
         radius={(size.width + size.height) / 4}
         fov={100}
         position={[0, 0, 2.5]}
-        onUpdate={self => self.updateProjectionMatrix()}
+        onUpdate={(self) => self.updateProjectionMatrix()}
       />
       <Content />
       <HeadsUpDisplay />
