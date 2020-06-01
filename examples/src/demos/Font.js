@@ -26,7 +26,7 @@ function Text({ children, vAlign = 'center', hAlign = 'center', size = 1, color 
     [font]
   )
   const mesh = useUpdate(
-    self => {
+    (self) => {
       const size = new THREE.Vector3()
       self.geometry.computeBoundingBox()
       self.geometry.boundingBox.getSize(size)
@@ -68,7 +68,7 @@ function Bird({ speed, factor, url, ...props }) {
   const gltf = useLoader(GLTFLoader, url)
   const group = useRef()
   const [mixer] = useState(() => new THREE.AnimationMixer())
-  useEffect(() => void mixer.clipAction(gltf.animations[0], group.current).play(), [])
+  useEffect(() => void mixer.clipAction(gltf.animations[0], group.current).play(), [gltf.animations, mixer])
   useFrame((state, delta) => {
     group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
     mixer.update(delta * speed)
