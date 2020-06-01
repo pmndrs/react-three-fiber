@@ -5,7 +5,7 @@ const path = require('path')
 module.exports = (config, env) => {
   config.resolve.extensions = [...config.resolve.extensions, '.ts', '.tsx']
   return override(
-    addReactRefresh(),
+    addReactRefresh({ disableRefreshCheck: true }),
     removeModuleScopePlugin(),
     babelInclude([path.resolve('src'), path.resolve('../src')]),
     addWebpackAlias({
