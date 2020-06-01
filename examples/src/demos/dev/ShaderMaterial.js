@@ -15,10 +15,10 @@ import img5 from '../../resources/images/crop-5.jpg'
 import img6 from '../../resources/images/crop-6.jpg'
 import img7 from '../../resources/images/crop-7.jpg'
 import img8 from '../../resources/images/crop-8.jpg'
-import img9 from '../../resources/images/crop-9.jpg'
+// import img9 from '../../resources/images/crop-9.jpg'
 import img10 from '../../resources/images/crop-10.jpg'
 import img11 from '../../resources/images/crop-11.jpg'
-import img12 from '../../resources/images/crop-12.jpg'
+// import img12 from '../../resources/images/crop-12.jpg'
 import img13 from '../../resources/images/crop-13.jpg'
 import img14 from '../../resources/images/crop-14.jpg'
 import img15 from '../../resources/images/crop-1.jpg'
@@ -37,17 +37,15 @@ import disp1 from '../../resources/images/crop-13.jpg'
 import disp2 from '../../resources/images/crop-14.jpg'
 import disp3 from '../../resources/images/crop-1.jpg'
 import disp4 from '../../resources/images/crop-2.jpg'
-import disp5 from '../../resources/images/crop-3.jpg'
+// import disp5 from '../../resources/images/crop-3.jpg'
 import disp6 from '../../resources/images/crop-4.jpg'
 import disp7 from '../../resources/images/crop-5.jpg'
 import disp8 from '../../resources/images/crop-6.jpg'
-import disp9 from '../../resources/images/crop-7.jpg'
+// import disp9 from '../../resources/images/crop-7.jpg'
 import disp10 from '../../resources/images/crop-8.jpg'
 import disp11 from '../../resources/images/crop-9.jpg'
 import disp13 from '../../resources/images/crop-10.jpg'
 import disp15 from '../../resources/images/crop-11.jpg'
-
-// data.map(([url1, url2, disp, intensity, x, y, factor, z, scale], index) => (
 
 const data = [
   [img22, img21, disp8, -0.65],
@@ -61,6 +59,7 @@ const data = [
   [img7, img14, disp15, -0.1],
   [img8, img15, disp13, 0.2],
   [img26, img25, disp8, -0.8],
+  [img17, img16, disp3, -0.8],
 ]
 
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
@@ -90,7 +89,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
       vertexShader,
       fragmentShader,
     }
-  }, [url1, url2, disp])
+  }, [url1, url2, disp, gl.capabilities, intensity, invalidate])
 
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
