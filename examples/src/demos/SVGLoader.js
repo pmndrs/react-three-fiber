@@ -1,7 +1,6 @@
-import * as THREE from 'three'
-import React, { Suspense, useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { Canvas, useThree, useLoader } from 'react-three-fiber'
-import { update, useTransition, useSpring, a } from 'react-spring/three'
+import React, { Suspense, useState, useEffect, useMemo } from 'react'
+import { Canvas, useLoader } from 'react-three-fiber'
+import { useTransition, useSpring, a } from 'react-spring/three'
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import night from '../resources/images/svg/night.svg'
 import city from '../resources/images/svg/city.svg'
@@ -27,7 +26,7 @@ const Scene = React.memo(({ urls }) => {
   )
 
   const [page, setPage] = useState(0)
-  useEffect(() => void setInterval(() => setPage((i) => (i + 1) % urls.length), 3000), [])
+  useEffect(() => void setInterval(() => setPage((i) => (i + 1) % urls.length), 3000), [urls.length])
 
   const { color } = useSpring({
     from: { color: colors[0] },

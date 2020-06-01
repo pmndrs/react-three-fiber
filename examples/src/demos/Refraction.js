@@ -12,7 +12,7 @@ function Background() {
   const texture = useLoader(TextureLoader, textureUrl)
   useMemo(() => (texture.minFilter = LinearFilter), [texture.minFilter])
   // Calculates a plane filling the screen similar to background-size: cover
-  const { width, height } = viewport(new Vector3())
+  const { width, height } = viewport()
   const adaptedHeight = 3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
   const adaptedWidth = 5000 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
   return (

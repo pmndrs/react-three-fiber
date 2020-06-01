@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from 'react-three-fiber'
+import React, { useEffect } from 'react'
+import { Canvas } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
 
 const number = 35
@@ -31,7 +31,7 @@ function Content() {
     ...random(i),
     config: { mass: 20, tension: 150, friction: 50 },
   }))
-  useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [])
+  useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [set])
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
       <boxBufferGeometry args={d.args} />

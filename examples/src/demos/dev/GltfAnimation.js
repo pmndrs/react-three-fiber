@@ -15,8 +15,8 @@ function Model(props) {
   useEffect(() => {
     const root = group.current
     actions.current = { storkFly_B_: mixer.clipAction(gltf.animations[0], root) }
-    return () => gltf.animations.forEach(clip => mixer.uncacheClip(clip))
-  }, [])
+    return () => gltf.animations.forEach((clip) => mixer.uncacheClip(clip))
+  }, [gltf.animations, mixer])
   useEffect(() => void actions.current.storkFly_B_.play(), [])
   return (
     <group ref={group} {...props}>

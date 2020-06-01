@@ -7,4 +7,4 @@ assignees: ''
 
 ---
 
-👋 hi there, for issues that aren't that pressing, that could be related to threejs etc, please consider [spectrum](https://spectrum.chat/react-three-fiber).
+👋 hi there, for issues that aren't that pressing, that could be related to threejs etc, please consider [github discussions](https://github.com/react-spring/react-three-fiber/discussions).

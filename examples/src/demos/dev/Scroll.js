@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useRef, useContext, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { apply as extendSpring, useSpring, a, interpolate } from 'react-spring/three'
 import { extend as extendThree, Canvas, useFrame, useThree } from 'react-three-fiber'
 import styled from 'styled-components'
@@ -36,10 +36,7 @@ function Image({ url, opacity, scale, ...props }) {
 
 /** This renders text via canvas and projects it as a sprite */
 function Text({ children, position, opacity, color = 'white', fontSize = 410 }) {
-  const {
-    size: { width, height },
-    viewport,
-  } = useThree()
+  const { viewport } = useThree()
   const { width: viewportWidth, height: viewportHeight } = viewport()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
   const canvas = useMemo(() => {
@@ -52,10 +49,10 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
     context.fillStyle = color
     context.fillText(children, 1024, 1024 - 410 / 2)
     return canvas
-  }, [children, width, height])
+  }, [children, color, fontSize])
   return (
     <a.sprite scale={[scale, scale, 1]} position={position}>
-      <a.spriteMaterial transparent opacity={opacity}>
+      <a.spriteMaterial attach="material" transparent opacity={opacity}>
         <canvasTexture attach="map" image={canvas} premultiplyAlpha onUpdate={(s) => (s.needsUpdate = true)} />
       </a.spriteMaterial>
     </a.sprite>
@@ -150,13 +147,13 @@ function Scene({ top, mouse }) {
       <Stars position={top.interpolate((top) => [0, -1 + top / 20, 0])} />
       <Images top={top} mouse={mouse} scrollMax={scrollMax} />
       <Text opacity={top.interpolate([0, 200], [1, 0])} position={top.interpolate((top) => [0, -1 + top / 200, 0])}>
-        lorem
+        scroll
       </Text>
       <Text
         position={top.interpolate((top) => [0, -20 + ((top * 10) / scrollMax) * 2, 0])}
         color="black"
         fontSize={150}>
-        Ipsum
+        down
       </Text>
     </>
   )
@@ -168,9 +165,9 @@ export default function Main() {
   const [{ top, mouse }, set] = useSpring(() => ({ top: 0, mouse: [0, 0] }))
   const onMouseMove = useCallback(
     ({ clientX: x, clientY: y }) => set({ mouse: [x - window.innerWidth / 2, y - window.innerHeight / 2] }),
-    []
+    [set]
   )
-  const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [])
+  const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [set])
   const [events, setEvents] = useState({})
   return (
     <>

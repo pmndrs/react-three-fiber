@@ -9,7 +9,6 @@ import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 
 function Sphere({ geometry, x, y, z, s }) {
   const [active, set] = useState(false)
-  let t = useMemo(() => Math.random() * 1000, [])
   const ref = useRef()
   useFrame(({ clock }, delta) => {
     ref.current.position.x = x + (Math.sin(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
@@ -45,9 +44,10 @@ function Spheres() {
 
 const materials = {}
 const darkMaterial = new THREE.MeshBasicMaterial({ color: 'black' })
-const darkenNonBloomed = obj =>
+const darkenNonBloomed = (obj) =>
   obj.isMesh && !obj.userData.active && ((materials[obj.uuid] = obj.material), (obj.material = darkMaterial))
-const restoreMaterial = obj => materials[obj.uuid] && ((obj.material = materials[obj.uuid]), delete materials[obj.uuid])
+const restoreMaterial = (obj) =>
+  materials[obj.uuid] && ((obj.material = materials[obj.uuid]), delete materials[obj.uuid])
 function Effect() {
   const { gl, scene, camera, size } = useThree()
 
@@ -80,7 +80,7 @@ function Effect() {
     finalComposer.addPass(fxaa)
 
     return [comp, finalComposer]
-  }, [])
+  }, [gl, scene, camera, size.width, size.height])
 
   useEffect(() => {
     bloom.setSize(size.width, size.height)

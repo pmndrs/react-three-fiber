@@ -1,20 +1,8 @@
-import {
-  DataTexture,
-  FloatType,
-  Math as _Math,
-  Mesh,
-  OrthographicCamera,
-  PlaneBufferGeometry,
-  RGBFormat,
-  Scene,
-  ShaderMaterial,
-  UniformsUtils,
-  Vector2,
-} from 'three'
+import { Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial, UniformsUtils, Vector2 } from 'three'
 import { WaterShader } from '../shaders/WaterShader.js'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass'
 
-var WaterPass = function(dt_size) {
+var WaterPass = function (dt_size) {
   Pass.call(this)
   if (WaterShader === undefined) console.error('THREE.WaterPass relies on THREE.WaterShader')
   var shader = WaterShader
@@ -38,7 +26,7 @@ var WaterPass = function(dt_size) {
 WaterPass.prototype = Object.assign(Object.create(Pass.prototype), {
   constructor: WaterPass,
 
-  render: function(renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
+  render: function (renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
     const factor = Math.max(0, this.factor)
     this.uniforms['byp'].value = factor ? 0 : 1
     this.uniforms['texture'].value = readBuffer.texture
