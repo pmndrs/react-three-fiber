@@ -237,7 +237,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
       const { width, height } = state.current.size
       const distance = camera.position.distanceTo(target)
       if (isOrthographicCamera(camera)) {
-        return { width, height, factor: 1, distance }
+        return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance }
       } else {
         const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
         const h = 2 * Math.tan(fov / 2) * distance // visible height
