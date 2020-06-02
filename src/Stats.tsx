@@ -13,7 +13,7 @@ export function Stats({ showPanel = 0, className }: Props): null {
   useEffect(() => {
     stats.showPanel(showPanel)
     document.body.appendChild(stats.dom)
-    stats.dom.classList.add(className)
+    if (className) stats.dom.classList.add(className)
     return () => document.body.removeChild(stats.dom)
   }, [])
   return useFrame((state) => {
