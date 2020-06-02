@@ -41,6 +41,7 @@ import { ... } from 'drei'
   - `<PositionalAudio/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
   - `<StandardEffects/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
 - Shaders
+  - `<MeshWobbleMaterial/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-g5373)
   - `<Sky/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
@@ -52,7 +53,7 @@ import { ... } from 'drei'
   - `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
   - `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
   - `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw) ![](https://img.shields.io/badge/-useFrame-red)
-   - `useAspect()`
+  - `useAspect()`
 
 # Exports
 
@@ -107,7 +108,13 @@ Buffer-geometry short-cuts:
 Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, using [troika-3d-text](https://github.com/protectwise/troika/tree/master/packages/troika-3d-text). All of troikas props are valid! 
 
 ```jsx
-<Text>hello world!</Text>
+<Text
+  color="black"             // default
+  anchorX="center"          // default
+  anchorY="middle"          // default
+>
+  hello world!
+</Text>
 ```
 
 ##### ⚡️ `<Detailed`> [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
@@ -156,6 +163,21 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 ```
 
 ## Shaders
+
+##### ⚡️ `<MeshWobbleMaterial/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-g5373)
+
+This material makes your geometry wobble and wave around. It was taken from the [threejs-examples](https://threejs.org/examples/#webgl_materials_modified) and adapted into a self-contained material.
+
+```jsx
+<mesh>
+  <boxBufferGeometry attach="geometry" />
+  <MeshWobbleMaterial
+    attach="material"
+    factor={1}              // Strength, 0 disables the effect (default=1)
+    speed={10}              // Speed (default=1)
+  />
+</mesh>
+```
 
 ##### ⚡️ `<Sky/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
 
