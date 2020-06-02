@@ -3,11 +3,17 @@ import { useFrame } from 'react-three-fiber'
 // @ts-ignore
 import StatsImpl from 'stats.js'
 
-export function Stats({ showPanel = 0 }) {
+type Props = {
+  showPanel?: number
+  className?: string
+}
+
+export function Stats({ showPanel = 0, className }: Props): null {
   const [stats] = useState(() => new (StatsImpl as any)())
   useEffect(() => {
     stats.showPanel(showPanel)
     document.body.appendChild(stats.dom)
+    if (className) stats.dom.classList.add(className)
     return () => document.body.removeChild(stats.dom)
   }, [])
   return useFrame((state) => {

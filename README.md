@@ -262,6 +262,7 @@ Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes ove
 ```jsx
 <Stats
   showPanel={0}             // Start-up panel (default=0)
+  className='stats'         // Optional className to add to the stats container dom element
   {...props}                // All stats.js props are valid
 />
 ```
