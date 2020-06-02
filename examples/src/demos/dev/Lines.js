@@ -6,14 +6,24 @@ extend({ OrbitControls })
 
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)
-  const hover = useCallback((e) => {
-    if (stopPropagation) e.stopPropagation()
-    setHover(true)
-  }, [])
-  const unhover = useCallback((e) => {
-    if (stopPropagation) e.stopPropagation()
-    setHover(false)
-  }, [])
+  const hover = useCallback(
+    (e) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
+      setHover(true)
+    },
+    [stopPropagation]
+  )
+  const unhover = useCallback(
+    (e) => {
+      if (stopPropagation) {
+        e.stopPropagation()
+      }
+      setHover(false)
+    },
+    [stopPropagation]
+  )
   const [bind] = useState(() => ({ onPointerOver: hover, onPointerOut: unhover }))
   return [bind, hovered]
 }
@@ -22,29 +32,38 @@ function useDrag(onDrag, onEnd) {
   const [active, setActive] = useState(false)
   const [, toggle] = useContext(camContext)
 
-  const down = useCallback((e) => {
-    setActive(true)
-    toggle(false)
-    e.stopPropagation()
-    e.target.setPointerCapture(e.pointerId)
-  }, [])
+  const down = useCallback(
+    (e) => {
+      setActive(true)
+      toggle(false)
+      e.stopPropagation()
+      e.target.setPointerCapture(e.pointerId)
+    },
+    [toggle]
+  )
 
-  const up = useCallback((e) => {
-    setActive(false)
-    toggle(true)
-    e.stopPropagation()
-    e.target.releasePointerCapture(e.pointerId)
-    if (onEnd) onEnd()
-  }, [])
+  const up = useCallback(
+    (e) => {
+      setActive(false)
+      toggle(true)
+      e.stopPropagation()
+      e.target.releasePointerCapture(e.pointerId)
+      if (onEnd) onEnd()
+    },
+    [onEnd, toggle]
+  )
 
   const activeRef = useRef()
   useEffect(() => void (activeRef.current = active))
-  const move = useCallback((event) => {
-    if (activeRef.current) {
-      event.stopPropagation()
-      onDrag(event.unprojectedPoint)
-    }
-  }, [])
+  const move = useCallback(
+    (event) => {
+      if (activeRef.current) {
+        event.stopPropagation()
+        onDrag(event.unprojectedPoint)
+      }
+    },
+    [onDrag]
+  )
 
   const [bind] = useState(() => ({ onPointerDown: down, onPointerUp: up, onPointerMove: move }))
   return bind
@@ -65,7 +84,10 @@ function Line({ defaultStart, defaultEnd }) {
   const [start, setStart] = useState(defaultStart)
   const [end, setEnd] = useState(defaultEnd)
   const vertices = useMemo(() => [start, end].map((v) => new THREE.Vector3(...v)), [start, end])
-  const update = useCallback((self) => ((self.verticesNeedUpdate = true), self.computeBoundingSphere()), [])
+  const update = useCallback((self) => {
+    self.verticesNeedUpdate = true
+    self.computeBoundingSphere()
+  }, [])
   return (
     <>
       <line>
@@ -80,13 +102,14 @@ function Line({ defaultStart, defaultEnd }) {
 
 const camContext = React.createContext()
 function Controls({ children }) {
-  const { gl, camera, invalidate, intersect } = useThree()
+  const { gl, camera, invalidate } = useThree()
   const api = useState(true)
   const ref = useRef()
   useEffect(() => {
-    const handler = ref.current.addEventListener('change', invalidate)
-    return () => ref.current.removeEventListener('change', handler)
-  }, [])
+    const current = ref.current
+    const handler = current.addEventListener('change', invalidate)
+    return () => current.removeEventListener('change', handler)
+  }, [invalidate])
 
   return (
     <>
