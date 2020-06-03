@@ -116,6 +116,12 @@ ReactDOM.render(
 - 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures
 - 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI/debug tools
 
+# Introduction resources
+
+- [Bringing WebGL to React - Paul Henschel aka @0xca0a at @ReactEurope 2020](https://www.youtube.com/watch?v=YyqBdN71nFs)
+- [Animation and 3D in react-three-fiber (with Paul Henschel) — Learn With Jason](https://www.youtube.com/watch?v=1rP3nNY2hTo)
+- [Scroll, Refraction and Shader Effects in Three.js and React](https://tympanus.net/codrops/2019/12/16/scroll-refraction-and-shader-effects-in-three-js-and-react/)
+
 # News, updates, community
 
 - [@0xca0a](https://twitter.com/0xca0a)'s twitter
