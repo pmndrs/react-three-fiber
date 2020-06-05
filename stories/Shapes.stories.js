@@ -2,34 +2,20 @@ import React from 'react'
 import { linkTo } from '@storybook/addon-links'
 import { Canvas, useFrame } from 'react-three-fiber'
 
-import '../.storybook/index.css'
+import { Setup } from '../.storybook/Setup'
 
-import { OrbitControls } from '../src/OrbitControls'
 import * as shapes from '../src/shapes'
 
 export default {
-  title: 'Shape',
+  title: 'Shapes',
   component: shapes,
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
-}
-
-function Setup({ children }) {
-  return (
-    <Canvas colorManagement shadowMap camera={{ position: [-5, 5, 5] }} pixelRatio={window.devicePixelRatio}>
-      {children}
-      <ambientLight intensity={0.8} />
-      <pointLight intensity={1} color={'ffffff'} position={[0, 6, 0]} />
-      <OrbitControls />
-    </Canvas>
-  )
 }
 
 function Story({ comp, args }) {
   const Comp = shapes[comp]
 
   const ref = React.useRef()
-
-  // @TODO doesn't seem to work
   useFrame(() => {
     ref.current.rotation.y += 0.01
   })
