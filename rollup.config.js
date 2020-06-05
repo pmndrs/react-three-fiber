@@ -19,6 +19,7 @@ const getBabelOptions = ({ useESModules }, targets) => ({
     '@babel/preset-typescript',
   ],
   plugins: [
+    '@babel/plugin-proposal-class-properties',
     ['transform-react-remove-prop-types', { removeImport: true }],
     ['@babel/transform-runtime', { regenerator: false, useESModules }],
   ],

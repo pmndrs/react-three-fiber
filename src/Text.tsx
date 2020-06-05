@@ -1,7 +1,9 @@
-import React, { forwardRef } from 'react'
+import React, { Children, createElement, forwardRef, useMemo, useRef, useLayoutEffect, useState } from 'react'
 // @ts-ignore
 import { TextMesh as TextMeshImpl } from 'troika-3d-text/dist/textmesh-standalone.umd'
 import { extend, ReactThreeFiber } from 'react-three-fiber'
+// @ts-ignore
+import mergeRefs from 'react-merge-refs'
 
 extend({ TextMeshImpl })
 
@@ -17,7 +19,7 @@ declare global {
 }
 
 type Props = JSX.IntrinsicElements['mesh'] & {
-  children: string
+  children: React.ReactNode
   color?: ReactThreeFiber.Color
   fontSize?: number
   maxWidth?: number
@@ -33,6 +35,42 @@ type Props = JSX.IntrinsicElements['mesh'] & {
   whiteSpace?: 'normal' | 'overflowWrap' | 'overflowWrap'
 }
 
-export const Text = forwardRef(({ children, ...props }: Props, ref) => {
-  return <textMeshImpl ref={ref} text={children} {...props} />
-})
+export const Text = forwardRef(
+  ({ color = 'black', anchorX = 'center', anchorY = 'middle', children, ...props }: Props, ref) => {
+    const textRef = useRef<TextMeshImpl>()
+    const [baseMtl, setBaseMtl] = useState()
+    const [nodes, text] = useMemo(() => {
+      let n: React.ReactNode[] = []
+      let t = ''
+      Children.forEach(children, (child) => {
+        if (typeof child === 'string') t += child
+        else if (child && typeof child === 'object' && (child as React.ReactElement).props.attach === 'material') {
+          // Instantiate the base material and grab a reference to it, but don't assign any
+          // props, and assign it as the `material`, which Troika will replace behind the scenes.
+          n.push(createElement((child as React.ReactElement).type, { ref: setBaseMtl, attach: 'material' }))
+          // Once the base material has been assigned, grab the resulting upgraded material,
+          // and apply the original material props to that.
+          if (baseMtl) {
+            n.push(
+              <primitive object={textRef.current.material} {...(child as React.ReactElement).props} attach={null} />
+            )
+          }
+        } else n.push(child)
+      })
+      return [n, t]
+    }, [children, baseMtl])
+    useLayoutEffect(() => void textRef.current.sync())
+
+    return (
+      <textMeshImpl
+        ref={mergeRefs([textRef, ref])}
+        text={text}
+        color={color}
+        anchorX={anchorX}
+        anchorY={anchorY}
+        {...props}>
+        {nodes}
+      </textMeshImpl>
+    )
+  }
+)

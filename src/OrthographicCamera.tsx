@@ -9,7 +9,7 @@ type Props = JSX.IntrinsicElements['orthographicCamera'] & {
   children: React.ReactNode
 }
 
-export const OrthographicCamera = forwardRef(({ children, makeDefault = true, ...props }: Props, ref) => {
+export const OrthographicCamera = forwardRef(({ children, makeDefault = false, ...props }: Props, ref) => {
   const { setDefaultCamera, camera, size } = useThree()
   const cameraRef = useUpdate<OrthographicCameraImpl>((cam) => cam.updateProjectionMatrix(), [size, props])
 
