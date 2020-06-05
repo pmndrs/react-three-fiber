@@ -68,6 +68,8 @@
     "@storybook/addons": "^5.3.19",
     "@storybook/preset-typescript": "^3.0.0",
     "@storybook/react": "^5.3.19",
+    "@storybook/addon-info": "^5.3.19",
+    "@storybook/theming": "^5.3.19",
     "@types/jest": "^25.2.3",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.9.35",
