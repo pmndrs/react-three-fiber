@@ -6,7 +6,7 @@ export function Setup({ children }) {
         <Canvas colorManagement shadowMap camera={{ position: [-5, 5, 5] }} pixelRatio={window.devicePixelRatio}>
             {children}
             <ambientLight intensity={0.8} />
-            <pointLight intensity={1} color={'ffffff'} position={[0, 6, 0]} />
+            <pointLight intensity={1} position={[0, 6, 0]} />
         </Canvas>
     )
 }
