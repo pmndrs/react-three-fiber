@@ -1,10 +1,12 @@
-import React from 'react'
+import React, { useMemo, useRef, useEffect } from 'react'
 import { linkTo } from '@storybook/addon-links'
 import { Canvas, useFrame } from 'react-three-fiber'
+import * as THREE from 'three'
 
 import { Setup } from '../.storybook/Setup'
 
 import * as shapes from '../src/shapes'
+import { Extrude } from '../src/shapes'
 
 export default {
   title: 'Shapes',
@@ -12,13 +14,21 @@ export default {
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
 }
 
-function Story({ comp, args }) {
-  const Comp = shapes[comp]
+function useTurntable() {
 
   const ref = React.useRef()
   useFrame(() => {
     ref.current.rotation.y += 0.01
   })
+
+  return ref
+
+}
+
+function Story({ comp, args }) {
+  const Comp = shapes[comp]
+
+  const ref = useTurntable()
 
   return (
     <Comp ref={ref} args={args}>
@@ -59,6 +69,6 @@ export const Polyhedron = () => <Story comp="Polyhedron" args={[verticesOfCube, 
 export const Icosahedron = () => <Story comp="Icosahedron" />
 export const Octahedron = () => <Story comp="Octahedron" />
 export const Dodecahedron = () => <Story comp="Dodecahedron" />
-export const Extrude = () => <Story comp="Extrude" />
+
 export const Lathe = () => <Story comp="Lathe" />
 export const Parametric = () => <Story comp="Parametric" />
