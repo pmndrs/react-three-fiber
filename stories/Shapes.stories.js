@@ -69,5 +69,3 @@ export const Polyhedron = () => <Story comp="Polyhedron" args={[verticesOfCube, 
 export const Icosahedron = () => <Story comp="Icosahedron" />
 export const Octahedron = () => <Story comp="Octahedron" />
 export const Dodecahedron = () => <Story comp="Dodecahedron" />
-
-export const Parametric = () => <Story comp="Parametric" />
