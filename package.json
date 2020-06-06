@@ -48,6 +48,7 @@
   "homepage": "https://github.com/drcmda/drei#readme",
   "dependencies": {
     "@babel/runtime": "^7.10.1",
+    "@storybook/addon-storysource": "^5.3.19",
     "lodash.omit": "^4.5.0",
     "lodash.pick": "^4.4.0",
     "postprocessing": "^6.13.5",
