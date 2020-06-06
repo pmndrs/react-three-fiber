@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
-import { Canvas, Dom, useFrame, useThree } from 'react-three-fiber'
+import { Canvas, useFrame, useThree } from 'react-three-fiber'
 import { Controls, useControl } from 'react-three-gui'
+import { HTML } from 'drei'
 import { unstable_LowPriority as low, unstable_runWithPriority as run } from 'scheduler'
 
 const SLOWDOWN = 1
@@ -39,8 +40,6 @@ function Blocks() {
     return () => clearInterval(handler)
   })
 
-  console.log(changeBlocks)
-
   const { viewport } = useThree()
   const { width, height } = viewport().factor
   const size = width / 100 / ROW
@@ -69,16 +68,14 @@ function Fps() {
     }
     last = now
   })
-  return <Dom className="fps" center ref={ref} />
+  return <HTML className="fps" center ref={ref} />
 }
 
 function Box() {
   let t = 0
   const mesh = useRef()
   const [coords] = useState(() => [rpi(), rpi(), rpi()])
-  useFrame(
-    ({ clock }) => mesh.current && mesh.current.rotation.set(coords[0] + (t += 0.01), coords[1] + t, coords[2] + t)
-  )
+  useFrame(() => mesh.current && mesh.current.rotation.set(coords[0] + (t += 0.01), coords[1] + t, coords[2] + t))
   return <mesh ref={mesh} geometry={geom} material={matr} scale={[2, 2, 2]} />
 }
 

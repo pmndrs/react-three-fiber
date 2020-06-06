@@ -223,11 +223,29 @@ Threejs is quite heavy and tree-shaking doesn't yet yield the results you would 
 
 ## Usage with React Native
 
-You can leverage Expo's WebGL port to react-native and use react-three-fiber as the renderer.
+You can use `react-three-fiber` to build universal (native and web) apps via Expo's WebGL package ([expo-gl](https://docs.expo.io/versions/latest/sdk/gl-view/)). 
 
+> 💡 **Bootstrap**: `npx create-react-native-app -t with-react-three-fiber`
+
+Be sure to use a physical iOS or Android device for testing because the simulator can have issues running graphics heavy apps.
+
+### Manual setup
+  
 ```bash
+# Install the Expo CLI
+
+npm i -g expo-cli
+
+# Create a new project
+
 expo init myapp
 cd myapp
+
+# Install packages
+
 yarn add expo-gl expo-three three@latest react-three-fiber@beta
+
+# Start the project
+
 yarn start
 ```

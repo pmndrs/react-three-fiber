@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react'
 import styled from 'styled-components'
 import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
-import Label from './components/Label'
 import * as demos from '../demos'
 import { Page as PageImpl } from '../styles'
 

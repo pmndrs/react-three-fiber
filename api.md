@@ -174,7 +174,7 @@ The `extend` function extends three-fibers catalogue of JSX elements.
 import { extend } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
-extend({ OrbitControls, TransformControls }) 
+extend({ OrbitControls, TransformControls })
 
 // ...
 return (
@@ -203,9 +203,9 @@ function Mesh() {
 
 Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc). You need to [polyfill](https://github.com/jquery/PEP) them yourself, if that's a concern.
 
-Additionally there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
+Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
-Also notcice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit any meshes.
+Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit any meshes.
 
 ```jsx
 <mesh
@@ -287,7 +287,7 @@ function App() {
 useThree(): SharedCanvasContext
 ```
 
-This hooks gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser, for instance, and you get fresh measurements, same applies to any of the defaults you can change.
+This hook gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser, for instance, and you get fresh measurements, same applies to any of the defaults you can change.
 
 ```jsx
 import { useThree } from 'react-three-fiber'
@@ -325,7 +325,7 @@ intersect(optionalEvent?: PointerEvent)
 useFrame((callback: (state, delta) => void), (renderPriority: number = 0))
 ```
 
-This hooks calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.
+This hook calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.
 
 Updating controls:
 
@@ -392,7 +392,7 @@ return <bufferGeometry ref={ref} />
 useLoader(loader, url: string | string[], extensions?)
 ```
 
-This hooks loads assets and suspends for easier fallback- and error-handling.
+This hook loads assets and suspends for easier fallback- and error-handling.
 
 ```jsx
 import React, { Suspense } from 'react'
@@ -404,7 +404,7 @@ function Asset({ url }) {
   return <primitive object={gltf.scene} dispose={null} />
 }
 
-;<Suspense fallback={<Cube />}>
+<Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
 ```
