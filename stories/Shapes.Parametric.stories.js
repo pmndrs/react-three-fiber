@@ -1,9 +1,5 @@
-import React, { useMemo, useRef, useEffect } from 'react'
-import { linkTo } from '@storybook/addon-links'
-import { Canvas, useFrame } from 'react-three-fiber'
-import * as THREE from 'three'
+import React from 'react'
 import { ParametricGeometries } from 'three/examples/jsm/geometries/ParametricGeometries.js';
-
 
 import { Setup } from '../.storybook/Setup'
 import { useTurntable } from '../.storybook/useTurntable'

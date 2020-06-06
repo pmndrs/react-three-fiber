@@ -1,12 +1,9 @@
-import React, { useMemo, useRef, useEffect } from 'react'
-import { linkTo } from '@storybook/addon-links'
-import { Canvas, useFrame } from 'react-three-fiber'
-import * as THREE from 'three'
+import React from 'react'
+import { useFrame } from 'react-three-fiber'
 
 import { Setup } from '../.storybook/Setup'
 
 import * as shapes from '../src/shapes'
-import { Extrude } from '../src/shapes'
 
 export default {
   title: 'Shapes',

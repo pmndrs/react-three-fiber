@@ -1,6 +1,4 @@
 import React from 'react'
-import { linkTo } from '@storybook/addon-links'
-import { Canvas, useFrame } from 'react-three-fiber'
 
 import { Setup } from '../.storybook/Setup'
 
