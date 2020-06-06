@@ -70,5 +70,4 @@ export const Icosahedron = () => <Story comp="Icosahedron" />
 export const Octahedron = () => <Story comp="Octahedron" />
 export const Dodecahedron = () => <Story comp="Dodecahedron" />
 
-export const Lathe = () => <Story comp="Lathe" />
 export const Parametric = () => <Story comp="Parametric" />
