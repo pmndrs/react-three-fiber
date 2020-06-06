@@ -4,25 +4,14 @@ import { Canvas, useFrame } from 'react-three-fiber'
 import * as THREE from 'three'
 
 import { Setup } from '../.storybook/Setup'
+import { useTurntable } from '../.storybook/useTurntable'
 
 import { Extrude } from '../src/shapes'
-import { OrbitControls } from '../src/OrbitControls'
 
 export default {
     title: 'Shapes.Extrude',
     component: Extrude,
     decorators: [(storyFn) => <Setup cameraPosition={[-30, 30, 30]}>{storyFn()}</Setup>],
-}
-
-function useTurntable() {
-
-    const ref = React.useRef()
-    useFrame(() => {
-        ref.current.rotation.y += 0.01
-    })
-
-    return ref
-
 }
 
 function ExtrudeScene() {
@@ -53,12 +42,11 @@ function ExtrudeScene() {
         bevelSegments: 1
     }), []);
 
-    console.log(shape)
+    const ref = useTurntable()
 
     return (
         <>
-            <OrbitControls />
-            <Extrude args={[shape, extrudeSettings]}>
+            <Extrude ref={ref} args={[shape, extrudeSettings]}>
                 <meshPhongMaterial attach="material" color="#f3f3f3" wireframe />
             </Extrude>
         </>

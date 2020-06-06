@@ -25,5 +25,5 @@ OrbitControlsStory.story = {
 export default {
   title: 'Controls/OrbitControls',
   component: OrbitControls,
-  decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
+  decorators: [(storyFn) => <Setup controls={false}>{storyFn()}</Setup>],
 }
