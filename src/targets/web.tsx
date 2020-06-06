@@ -28,6 +28,6 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
 })
 
 export const Dom = () => {
-  console.warn("The experimental Dom component was moved to: https://github.com/react-spring/drei")
+  console.warn("The experimental <Dom> component was renamed to <HTML> and moved to: https://github.com/react-spring/drei")
   return null
 }
