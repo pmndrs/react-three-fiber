@@ -11,7 +11,7 @@ import { OrbitControls } from '../src/OrbitControls'
 export default {
     title: 'Shapes.Extrude',
     component: Extrude,
-    decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
+    decorators: [(storyFn) => <Setup cameraPosition={[-30, 30, 30]}>{storyFn()}</Setup>],
 }
 
 function useTurntable() {
