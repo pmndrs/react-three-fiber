@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { Suspense } from 'react'
-import { Canvas, useLoader } from 'react-three-fiber'
+import { Canvas, useLoader, useThree } from 'react-three-fiber'
 
 function M() {
   const t = useLoader(

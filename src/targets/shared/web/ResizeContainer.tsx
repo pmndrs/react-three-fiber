@@ -70,7 +70,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   const containerRef = useRef<HTMLDivElement>()
   // onGotPointerCaptureLegacy is a fake event used by non-web targets to simulate poinzter capture
   const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<PointerEvents>({} as PointerEvents)
-  const [bind, size] = useMeasure(
+  const [bind, size, forceResize] = useMeasure(
     resize || {
       scroll: true,
       debounce: { scroll: 50, resize: 0 },
@@ -81,7 +81,9 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   // Flag view ready once it's been measured out
   const readyFlag = useRef(false)
   const ready = useMemo(() => (readyFlag.current = readyFlag.current || (!!size.width && !!size.height)), [size])
-  const state = useMemo(() => ({ size, setEvents, container: containerRef.current as HTMLDivElement }), [size])
+  const state = useMemo(() => ({ size, forceResize, setEvents, container: containerRef.current as HTMLDivElement }), [
+    size,
+  ])
 
   // Allow Gatsby, Next and other server side apps to run. Will output styles to reduce flickering.
   if (typeof window === 'undefined')

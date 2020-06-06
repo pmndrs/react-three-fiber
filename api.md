@@ -306,6 +306,7 @@ const {
   intersect,
   setDefaultCamera,
   viewport,
+  forceResize,
 } = useThree()
 
 // Calculates precise viewport bounds
@@ -317,6 +318,8 @@ invalidate()
 setDefaultCamera(camera)
 // Trigger an intersect/raycast as well as event handlers that may respond
 intersect(optionalEvent?: PointerEvent)
+// Force size/viewport recalculation
+forceResize()
 ```
 
 #### useFrame

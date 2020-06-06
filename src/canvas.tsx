@@ -53,6 +53,7 @@ export type SharedCanvasContext = {
   size: RectReadOnly
   viewport: ViewportData
   events: PointerEvents
+  forceResize: () => void
 }
 
 export type Subscription = {
@@ -111,6 +112,7 @@ export interface CanvasProps {
 export interface UseCanvasProps extends CanvasProps {
   gl: THREE.WebGLRenderer
   size: RectReadOnly
+  forceResize: () => void
 }
 
 export type PointerEvents = {
@@ -148,6 +150,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     noEvents = false,
     onCreated,
     onPointerMissed,
+    forceResize,
   } = props
 
   // Local, reactive state
@@ -230,6 +233,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     invalidate: () => invalidate(state),
     intersect: (event: DomEvent | undefined = {} as DomEvent, prepare: boolean = true) =>
       handlePointerMove(event, prepare),
+    forceResize,
   })
 
   const getCurrentViewport = useCallback(
