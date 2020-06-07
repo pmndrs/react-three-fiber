@@ -1,5 +1,19 @@
 # Recipes
 
+## Table of Contents
+1. [Animating with react-spring](#-animating-with-react-spring)
+2. [Dealing with effects (hijacking main render-loop)](#-dealing-with-effects-(hijacking-main-render-loop))
+3. [Using your own camera rig](#-using-your-own-camera-rig)
+4. [Heads-up display (rendering multiple scenes)](#-heads-up-display-(rendering-multiple-scenes))
+5. [Managing imperative code](#-managing-imperative-code)
+6. [ShaderMaterials](#-shaderMaterials)
+7. [Re-parenting](#-re-parenting)
+8. [Rendering only when needed](#-rendering-only-when-needed)
+9. [Enabling VR](#-enabling-VR)
+10. [Switching the default renderer](#-switching-the-default-renderer)
+11. [Reducing bundle-size](#-reducing-bundle-size)
+12. [Usage with React Native](#-usage-with-React-Native)
+
 ## Animating with react-spring
 
 [react-spring](https://www.react-spring.io/) supports react-three-fiber out of the box:
@@ -142,7 +156,7 @@ function Extrusion({ start = [0,0], paths, ...props }) {
 ```jsx
 function CrossFade({ url1, url2, disp }) {
   const [texture1, texture2, dispTexture] = useLoader(THREE.TextureLoader, [url1, url2, disp])
-  
+
   return (
     <mesh>
       <planeBufferGeometry attach="geometry" args={[1, 1]} />
@@ -197,7 +211,7 @@ import { Canvas } from 'react-three-fiber'
 
 ## Switching the default renderer
 
-If you want to exchange the default renderer you can. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example. 
+If you want to exchange the default renderer you can. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example.
 
 ```jsx
 import { render, unmountComponentAtNode } from 'react-three-fiber'
@@ -223,14 +237,14 @@ Threejs is quite heavy and tree-shaking doesn't yet yield the results you would 
 
 ## Usage with React Native
 
-You can use `react-three-fiber` to build universal (native and web) apps via Expo's WebGL package ([expo-gl](https://docs.expo.io/versions/latest/sdk/gl-view/)). 
+You can use `react-three-fiber` to build universal (native and web) apps via Expo's WebGL package ([expo-gl](https://docs.expo.io/versions/latest/sdk/gl-view/)).
 
 > 💡 **Bootstrap**: `npx create-react-native-app -t with-react-three-fiber`
 
 Be sure to use a physical iOS or Android device for testing because the simulator can have issues running graphics heavy apps.
 
 ### Manual setup
-  
+
 ```bash
 # Install the Expo CLI
 
