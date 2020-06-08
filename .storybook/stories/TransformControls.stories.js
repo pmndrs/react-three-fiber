@@ -1,9 +1,9 @@
 import React from 'react'
 
-import { Setup } from '../.storybook/Setup'
+import { Setup } from '../Setup'
 
-import { TransformControls } from '../src/TransformControls'
-import { Box } from '../src/shapes'
+import { TransformControls } from '../../src/TransformControls'
+import { Box } from '../../src/shapes'
 
 export function TransformControlsStory() {
   return (

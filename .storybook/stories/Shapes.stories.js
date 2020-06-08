@@ -1,9 +1,9 @@
 import React from 'react'
 import { useFrame } from 'react-three-fiber'
 
-import { Setup } from '../.storybook/Setup'
+import { Setup } from '../Setup'
 
-import * as shapes from '../src/shapes'
+import * as shapes from '../../src/shapes'
 
 export default {
   title: 'Shapes',
@@ -12,14 +12,12 @@ export default {
 }
 
 function useTurntable() {
-
   const ref = React.useRef()
   useFrame(() => {
     ref.current.rotation.y += 0.01
   })
 
   return ref
-
 }
 
 function Story({ comp, args }) {
