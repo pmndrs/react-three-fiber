@@ -1,9 +1,9 @@
 import React from 'react'
 
-import { Setup } from '../.storybook/Setup'
+import { Setup } from '../Setup'
 
-import { OrbitControls } from '../src/OrbitControls'
-import { Box } from '../src/shapes'
+import { OrbitControls } from '../../src/OrbitControls'
+import { Box } from '../../src/shapes'
 
 export function OrbitControlsStory() {
   return (
