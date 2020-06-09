@@ -15,32 +15,36 @@ export default {
 function HTMLScene() {
 
     const ref = useTurntable()
-
-    function renderHTML() {
-        return (
-            <HTML
-                scaleFactor={30}
-                className="html-story-block"
-            >
-                Lorem ipsum
-            </HTML>)
-    }
-
     return (
         <group ref={ref}>
             <Icosahedron args={[2, 2]} position={[3, 6, 4]}>
                 <meshBasicMaterial attach="material" color="hotpink" wireframe />
-                {renderHTML()}
+                <HTML
+                    scaleFactor={30}
+                    className="html-story-block"
+                >
+                    First
+            </HTML>
             </Icosahedron>
 
             <Icosahedron args={[2, 2]} position={[10, 0, 10]}>
                 <meshBasicMaterial attach="material" color="hotpink" wireframe />
-                {renderHTML()}
+                <HTML
+                    scaleFactor={30}
+                    className="html-story-block"
+                >
+                    Second
+            </HTML>
             </Icosahedron>
 
             <Icosahedron args={[2, 2]} position={[-10, 0, -10]}>
                 <meshBasicMaterial attach="material" color="hotpink" wireframe />
-                {renderHTML()}
+                <HTML
+                    scaleFactor={30}
+                    className="html-story-block"
+                >
+                    Third
+            </HTML>
             </Icosahedron>
         </group>
     )
