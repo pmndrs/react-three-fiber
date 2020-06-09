@@ -105,7 +105,7 @@ ReactDOM.render(
 - [pitfalls.md](pitfalls.md)
 - [recipes.md](recipes.md)
 
-# Eco system
+# Ecosystem
 
 - 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
 - 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
