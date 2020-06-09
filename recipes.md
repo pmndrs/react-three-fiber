@@ -1,18 +1,18 @@
 # Recipes
 
 ## Table of Contents
-1. [Animating with react-spring](#-animating-with-react-spring)
-2. [Dealing with effects (hijacking main render-loop)](#-dealing-with-effects-(hijacking-main-render-loop))
-3. [Using your own camera rig](#-using-your-own-camera-rig)
-4. [Heads-up display (rendering multiple scenes)](#-heads-up-display-(rendering-multiple-scenes))
-5. [Managing imperative code](#-managing-imperative-code)
-6. [ShaderMaterials](#-shaderMaterials)
-7. [Re-parenting](#-re-parenting)
-8. [Rendering only when needed](#-rendering-only-when-needed)
-9. [Enabling VR](#-enabling-VR)
-10. [Switching the default renderer](#-switching-the-default-renderer)
-11. [Reducing bundle-size](#-reducing-bundle-size)
-12. [Usage with React Native](#-usage-with-React-Native)
+- [Animating with react-spring](#animating-with-react-spring)
+- [Dealing with effects (hijacking main render-loop)](#dealing-with-effects-hijacking-main-render-loop)
+- [Using your own camera rig](#using-your-own-camera-rig)
+- [Heads-up display (rendering multiple scenes)](#heads-up-display-rendering-multiple-scenes)
+- [Managing imperative code](#managing-imperative-code)
+- [ShaderMaterials](#shadermaterials)
+- [Re-parenting](#re-parenting)
+- [Rendering only when needed](#rendering-only-when-needed)
+- [Enabling VR](#enabling-vr)
+- [Switching the default renderer](#switching-the-default-renderer)
+- [Reducing bundle-size](#reducing-bundle-size)
+- [Usage with React Native](#usage-with-react-native)
 
 ## Animating with react-spring
 
