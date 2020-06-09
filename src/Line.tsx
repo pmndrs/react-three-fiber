@@ -2,29 +2,26 @@ import React, { useMemo, useEffect } from 'react'
 import { useThree } from 'react-three-fiber'
 import * as THREE from 'three'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
+import { LineMaterial, LineMaterialParameters } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
 
-interface Props {
+type Props = {
   points: [number, number, number][]
   lineWidth?: number
   color?: THREE.Color | string | number
   vertexColors?: [number, number, number][]
   dashed?: boolean
-}
+} & JSX.IntrinsicElements['mesh'] &
+  Omit<LineMaterialParameters, 'color' | 'linewidth' | 'vertexColors' | 'resolution' | 'dashed'>
 
 function concat<T>(xs: T[][]) {
   return xs.reduce((acc, x) => acc.concat(x), [])
 }
 
-export default function Line({
-  lineWidth = 1,
-  points,
-  color = 'black',
-  vertexColors,
-  dashed,
-  ...rest
-}: Props & JSX.IntrinsicElements['mesh']) {
+export default React.forwardRef<Line2, Props>(function Line(
+  { lineWidth = 1, points, color = 'black', vertexColors, dashed, ...rest },
+  ref
+) {
   const { size } = useThree()
 
   const colorArray = useMemo(
@@ -40,9 +37,10 @@ export default function Line({
         linewidth: lineWidth,
         vertexColors: Boolean(vertexColors),
         resolution: new THREE.Vector2(size.width, size.height),
-        dashed,
+        dashed: Boolean(dashed),
+        ...rest,
       }),
-    [colorArray, lineWidth, vertexColors, size, dashed]
+    [colorArray, lineWidth, vertexColors, size, dashed, rest]
   )
 
   const geometry = useMemo(() => new LineGeometry(), [])
@@ -60,5 +58,5 @@ export default function Line({
     lineObj.computeLineDistances()
   }, [points, geometry, vertexColors, lineObj])
 
-  return <primitive object={lineObj} dispose={null} {...rest} />
-}
+  return <primitive ref={ref} object={lineObj} dispose={null} {...rest} />
+})

@@ -129,6 +129,8 @@ Renders a line using LineGeometry. It can use a single color or per-vertex.
   lineWidth={1}                   // In pixels (default)
   dashed={false}                  // Default
   vertexColorsValues={[[0,0,0]]}  // Array of RGB for each point
+  {...lineProps}                  // All THREE.Line2 props are valid
+  {...materialProps}              // All THREE.LineMaterial props are valid
 />
 ```
 
