@@ -1,4 +1,4 @@
-import useRef from 'react'
+import { useRef } from 'react'
 import { useFrame } from 'react-three-fiber'
 
 export function useTurntable() {
