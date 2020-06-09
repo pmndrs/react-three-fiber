@@ -38,7 +38,6 @@ export const Cone = () => <Story comp="Cone" />
 export const Cylinder = () => <Story comp="Cylinder" />
 export const Sphere = () => <Story comp="Sphere" />
 export const Plane = () => <Story comp="Plane" />
-export const Tube = () => <Story comp="Tube" />
 export const Torus = () => <Story comp="Torus" />
 export const TorusKnot = () => <Story comp="TorusKnot" />
 export const Tetrahedron = () => <Story comp="Tetrahedron" />
