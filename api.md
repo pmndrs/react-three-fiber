@@ -1,5 +1,6 @@
-# Index
+# API
 
+## Table of Contents
 - [Fundamentals](#fundamentals)
 - [Canvas](#canvas)
 - [Objects and properties](#objects-and-properties)
