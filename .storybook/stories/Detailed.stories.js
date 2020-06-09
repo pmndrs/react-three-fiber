@@ -5,7 +5,6 @@ import { Setup } from '../Setup'
 import { Detailed } from '../../src/Detailed'
 import { Icosahedron } from '../../src/shapes'
 import { OrbitControls } from '../../src/OrbitControls'
-import { useTurntable } from '../useTurntable'
 
 export default {
     title: 'Abstractions.Detailed',

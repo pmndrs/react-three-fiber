@@ -18,3 +18,23 @@ body,
 #root {
   overflow: auto;
 }
+
+.html-story-block {
+  color: white;
+  width: 120px;
+  position: relative;
+  margin-left: 100px;
+}
+
+.html-story-block:before {
+  content: '';
+  display: block;
+  position: absolute;
+  
+  top: 50%;
+  left: -60px;
+
+  width: 60px;
+  height: 1px;
+  background-color: white;
+}
