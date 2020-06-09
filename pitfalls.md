@@ -1,18 +1,17 @@
 # Performance pitfalls
 
 ## Table of Contents
-1. [WebGL performance pitfalls](#webgl-pitfalls)
-    1. [Tips and Tricks](#-tips-and-tricks)
-2. [React performance pitfalls](#react-pitfalls)
-    1. [Never, ever, setState animations](#never-ever-set-state)
-    2. [Never let React anywhere near animated updates](#never-let-react-animate)
-    3. [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
-    4. [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
-
+- [WebGL performance pitfalls](#webgl-pitfalls)
+    - [Tips and Tricks](#tips-and-tricks)
+- [React performance pitfalls](#react-pitfalls)
+    - [Never, ever, setState animations](#never-ever-set-state)
+    - [Never let React anywhere near animated updates](#never-let-react-animate)
+    - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
+    - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
-### Tips and Tricks
+### Tips and Tricks <a id="tip-and-tricks"></a>
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
