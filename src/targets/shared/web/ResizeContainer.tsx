@@ -3,7 +3,7 @@ import React, { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
 import { ResizeObserver } from '@juggle/resize-observer'
 import mergeRefs from 'react-merge-refs'
-import { useCanvas, CanvasProps, PointerEvents } from '../../../canvas'
+import { useCanvas, CanvasProps, DomEventHandlers } from '../../../canvas'
 
 const defaultStyles: React.CSSProperties = { position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }
 
@@ -21,7 +21,7 @@ export interface ResizeContainerProps extends CanvasProps, ContainerProps {
 
 interface ResizeContainerState {
   size: RectReadOnly
-  setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
+  setEvents: React.Dispatch<React.SetStateAction<DomEventHandlers>>
   container: HTMLDivElement
 }
 
@@ -70,7 +70,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
 
   const containerRef = useRef<HTMLDivElement>()
   // onGotPointerCaptureLegacy is a fake event used by non-web targets to simulate poinzter capture
-  const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<PointerEvents>({} as PointerEvents)
+  const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<DomEventHandlers>({} as DomEventHandlers)
   const [bind, size] = useMeasure(
     resize || {
       scroll: true,

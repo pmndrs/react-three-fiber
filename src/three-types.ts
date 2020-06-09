@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-ignore */
 
 import * as THREE from 'three'
-import { PointerEvent } from './canvas'
+import { MouseEvent, PointerEvent, WheelEvent } from './canvas'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
@@ -20,14 +20,14 @@ export declare namespace ReactThreeFiber {
   type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
   type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
-  export type Events = {
-    onClick?: (e: PointerEvent) => void
-    onPointerUp?: (e: PointerEvent) => void
-    onPointerDown?: (e: PointerEvent) => void
-    onPointerOver?: (e: PointerEvent) => void
-    onPointerOut?: (e: PointerEvent) => void
-    onPointerMove?: (e: PointerEvent) => void
-    onWheel?: (e: PointerEvent) => void
+  export type EventHandlers = {
+    onClick?: (event: MouseEvent) => void
+    onPointerUp?: (event: PointerEvent) => void
+    onPointerDown?: (event: PointerEvent) => void
+    onPointerOver?: (event: PointerEvent) => void
+    onPointerOut?: (event: PointerEvent) => void
+    onPointerMove?: (event: PointerEvent) => void
+    onWheel?: (event: WheelEvent) => void
   }
 
   export interface NodeProps<T, P> {
@@ -60,7 +60,7 @@ export declare namespace ReactThreeFiber {
       dispose?: (() => void) | null
     }
   > &
-    ReactThreeFiber.Events
+    EventHandlers
 
   export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
   export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
