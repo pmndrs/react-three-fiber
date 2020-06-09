@@ -1,4 +1,5 @@
 import React from 'react'
+import { withKnobs, text, boolean, number } from "@storybook/addon-knobs";
 
 import { Setup } from '../Setup'
 
@@ -8,7 +9,11 @@ import { Box } from '../../src/shapes'
 export function OrbitControlsStory() {
   return (
     <>
-      <OrbitControls />
+      <OrbitControls
+        enablePan={boolean("Pan", true)}
+        enableZoom={boolean("Zoom", true)}
+        enableRotate={boolean("Rotate", true)}
+      />
       <Box>
         <meshBasicMaterial attach="material" wireframe />
       </Box>
@@ -23,5 +28,5 @@ OrbitControlsStory.story = {
 export default {
   title: 'Controls/OrbitControls',
   component: OrbitControls,
-  decorators: [(storyFn) => <Setup controls={false}>{storyFn()}</Setup>],
+  decorators: [withKnobs, (storyFn) => <Setup controls={false}>{storyFn()}</Setup>],
 }
