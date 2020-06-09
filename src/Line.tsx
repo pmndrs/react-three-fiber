@@ -17,7 +17,14 @@ function concat<T>(xs: T[][]) {
   return xs.reduce((acc, x) => acc.concat(x), [])
 }
 
-export default function Line({ lineWidth = 1, points, color = 'black', vertexColors, dashed }: Props) {
+export default function Line({
+  lineWidth = 1,
+  points,
+  color = 'black',
+  vertexColors,
+  dashed,
+  ...rest
+}: Props & JSX.IntrinsicElements['mesh']) {
   const { size } = useThree()
 
   const colorArray = useMemo(
@@ -29,13 +36,13 @@ export default function Line({ lineWidth = 1, points, color = 'black', vertexCol
   const matLine = useMemo(
     () =>
       new LineMaterial({
-        color: colorArray,
+        color: Boolean(vertexColors) ? 0xffffff : colorArray,
         linewidth: lineWidth,
         vertexColors: Boolean(vertexColors),
         resolution: new THREE.Vector2(size.width, size.height),
         dashed,
       }),
-    [color, lineWidth, vertexColors, size, dashed]
+    [colorArray, lineWidth, vertexColors, size, dashed]
   )
 
   const geometry = useMemo(() => new LineGeometry(), [])
@@ -53,5 +60,5 @@ export default function Line({ lineWidth = 1, points, color = 'black', vertexCol
     lineObj.computeLineDistances()
   }, [points, geometry, vertexColors, lineObj])
 
-  return <primitive object={lineObj} dispose={null} />
+  return <primitive object={lineObj} dispose={null} {...rest} />
 }
