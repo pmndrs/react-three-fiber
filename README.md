@@ -37,6 +37,7 @@ import { ... } from 'drei'
   - `<Plane/>`, `<Box/>`, `<Sphere/>`, `<Circle/>`, `<Cone/>`, `<Cylinder/>`, `<Tube/>`, `<Torus/>`, `<TorusKnot/>`, `<Ring/>`, `<Tetrahedron/>`, `<Polyhedron/>`, `<Icosahedron/>`, `<Octahedron/>`, `<Dodecahedron/>`, `<Extrude/>`, `<Lathe/>`, `<Parametric/>`
 - Abstractions
   - `<Text/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
+  - `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
   - `<Detailed/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
   - `<PositionalAudio/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
   - `<StandardEffects/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
@@ -115,6 +116,22 @@ Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, usin
 >
   hello world!
 </Text>
+```
+
+##### ⚡️ `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
+
+Renders a line using LineGeometry. It can use a single color or per-vertex.
+
+```jsx
+<Line
+  points={[[0,0,0]]}              // Array of arrays XYZ
+  color="black"                   // Hex number, string or THREE.Color (default)
+  lineWidth={1}                   // In pixels (default)
+  dashed={false}                  // Default
+  vertexColorsValues={[[0,0,0]]}  // Array of RGB for each point
+  {...lineProps}                  // All THREE.Line2 props are valid
+  {...materialProps}              // All THREE.LineMaterial props are valid
+/>
 ```
 
 ##### ⚡️ `<Detailed`> [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
