@@ -120,15 +120,15 @@ Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, usin
 
 ##### ⚡️ `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
 
-Renders a line using LineGeometry. It can use a single color or per-vertex.
+Renders a THREE.Line2.
 
 ```jsx
 <Line
-  points={[[0,0,0]]}              // Array of arrays XYZ
-  color="black"                   // Hex number, string or THREE.Color (default)
+  points={[[0, 0, 0], ...]}       // Array of points
+  color="black"                   // Default
   linewidth={1}                   // In pixels (default)
   dashed={false}                  // Default
-  vertexColorsValues={[[0,0,0]]}  // Array of RGB for each point, disables color (forces white)
+  vertexColors={[[0, 0, 0], ...]} // Optional array of RGB values for each point
   {...lineProps}                  // All THREE.Line2 props are valid
   {...materialProps}              // All THREE.LineMaterial props are valid
 />
