@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 
+import { withKnobs, optionsKnob, boolean } from "@storybook/addon-knobs";
+
 import { Setup } from '../Setup'
 
 import { TransformControls } from '../../src/TransformControls'
@@ -41,9 +43,30 @@ function TransformControlsLockScene() {
     }
   })
 
+  // story data
+  const modesObj = {
+    scale: "scale",
+    rotate: "rotate",
+    translate: "translate"
+  }
+
+  const mode = optionsKnob("mode", modesObj, "translate", {
+    display: 'radio'
+  })
+
+  const showX = boolean("showX", true)
+  const showY = boolean("showY", true)
+  const showZ = boolean("showZ", true)
+
   return (
     <>
-      <TransformControls ref={transformControls}>
+      <TransformControls
+        ref={transformControls}
+        mode={mode}
+        showX={showX}
+        showY={showY}
+        showZ={showZ}
+      >
         <Box>
           <meshBasicMaterial attach="material" wireframe />
         </Box>
@@ -57,5 +80,5 @@ export const TransformControlsLockSt = () => <TransformControlsLockScene />
 
 TransformControlsLockSt.story = {
   name: 'lock orbit controls while transforming',
-  decorators: [(storyFn) => <Setup controls={false} >{storyFn()}</Setup>],
+  decorators: [withKnobs, (storyFn) => <Setup controls={false} >{storyFn()}</Setup>],
 }
