@@ -1,62 +1,74 @@
-import React, { useMemo, useEffect } from 'react'
-import { useThree } from 'react-three-fiber'
+import React, { useMemo, useEffect, useRef } from 'react'
 import * as THREE from 'three'
+import { extend, useThree, ReactThreeFiber } from 'react-three-fiber'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
-import { LineMaterial, LineMaterialParameters } from 'three/examples/jsm/lines/LineMaterial'
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
+// @ts-ignore
+import mergeRefs from 'react-merge-refs'
+
+extend({ Line2, LineGeometry, LineMaterial })
+
+declare global {
+  namespace JSX {
+    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
+    interface IntrinsicElements {
+      line2: ReactThreeFiber.Object3DNode<Line2, typeof Line2>
+      lineGeometry: ReactThreeFiber.Object3DNode<LineGeometry, typeof LineGeometry>
+      lineMaterial: ReactThreeFiber.Object3DNode<LineMaterial, typeof LineMaterial>
+    }
+  }
+}
 
 type Props = {
   points: [number, number, number][]
-  lineWidth?: number
   color?: THREE.Color | string | number
   vertexColors?: [number, number, number][]
-  dashed?: boolean
-} & JSX.IntrinsicElements['mesh'] &
-  Omit<LineMaterialParameters, 'color' | 'linewidth' | 'vertexColors' | 'resolution' | 'dashed'>
+} & Omit<JSX.IntrinsicElements['line2'], 'args'> &
+  Omit<JSX.IntrinsicElements['lineMaterial'], 'color' | 'vertexColors' | 'resolution' | 'args'>
 
 function concat<T>(xs: T[][]) {
   return xs.reduce((acc, x) => acc.concat(x), [])
 }
 
-export default React.forwardRef<Line2, Props>(function Line(
-  { lineWidth = 1, points, color = 'black', vertexColors, dashed, ...rest },
-  ref
-) {
+const white = new THREE.Color('white')
+
+export default React.forwardRef<Line2, Props>(function Line({ points, color = 'white', vertexColors, ...rest }, ref) {
   const { size } = useThree()
 
-  const colorArray = useMemo(
+  const colorThree = useMemo(
     () =>
-      typeof color === 'number' ? color : typeof color === 'string' ? new THREE.Color(color).getHex() : color.getHex(),
+      typeof color === 'number' ? new THREE.Color(color) : typeof color === 'string' ? new THREE.Color(color) : color,
     [color]
   )
 
-  const matLine = useMemo(
-    () =>
-      new LineMaterial({
-        color: Boolean(vertexColors) ? 0xffffff : colorArray,
-        linewidth: lineWidth,
-        vertexColors: Boolean(vertexColors),
-        resolution: new THREE.Vector2(size.width, size.height),
-        dashed: Boolean(dashed),
-        ...rest,
-      }),
-    [colorArray, lineWidth, vertexColors, size, dashed, rest]
-  )
-
-  const geometry = useMemo(() => new LineGeometry(), [])
-  const lineObj = useMemo(() => new Line2(geometry, matLine), [geometry, matLine])
+  const lineRef = useRef<Line2>()
+  const geomRef = useRef<LineGeometry>()
 
   useEffect(() => {
+    if (!geomRef.current || !lineRef.current) return
+
     const pointsFlat = concat(points)
-    geometry.setPositions(pointsFlat)
+    geomRef.current.setPositions(pointsFlat)
 
     if (vertexColors) {
       const colorsFlat = concat(vertexColors)
-      geometry.setColors(colorsFlat)
+      geomRef.current.setColors(colorsFlat)
     }
 
-    lineObj.computeLineDistances()
-  }, [points, geometry, vertexColors, lineObj])
+    lineRef.current.computeLineDistances()
+  }, [points, vertexColors])
 
-  return <primitive ref={ref} object={lineObj} dispose={null} {...rest} />
+  return (
+    <line2 ref={mergeRefs([lineRef, ref])} {...rest}>
+      <lineGeometry attach="geometry" ref={geomRef} />
+      <lineMaterial
+        attach="material"
+        color={Boolean(vertexColors) ? white : colorThree}
+        vertexColors={Boolean(vertexColors)}
+        resolution={new THREE.Vector2(size.width, size.height)}
+        {...rest}
+      />
+    </line2>
+  )
 })
