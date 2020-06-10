@@ -26,11 +26,11 @@ TransformControlsStory.story = {
 
 export default {
   title: 'Controls.TransformControls',
-  component: TransformControls,
+  component: TransformControls
 }
 
 
-function TransformControlsLockScene() {
+function TransformControlsLockScene({ mode, showX, showY, showZ }) {
   const orbitControls = useRef()
   const transformControls = useRef()
 
@@ -42,21 +42,6 @@ function TransformControlsLockScene() {
       return () => controls.removeEventListener("dragging-changed", callback)
     }
   })
-
-  // story data
-  const modesObj = {
-    scale: "scale",
-    rotate: "rotate",
-    translate: "translate"
-  }
-
-  const mode = optionsKnob("mode", modesObj, "translate", {
-    display: 'radio'
-  })
-
-  const showX = boolean("showX", true)
-  const showY = boolean("showY", true)
-  const showZ = boolean("showZ", true)
 
   return (
     <>
@@ -76,7 +61,23 @@ function TransformControlsLockScene() {
   )
 }
 
-export const TransformControlsLockSt = () => <TransformControlsLockScene />
+export const TransformControlsLockSt = () => {
+
+  const modesObj = {
+    scale: "scale",
+    rotate: "rotate",
+    translate: "translate"
+  }
+
+  return <TransformControlsLockScene
+    mode={optionsKnob("mode", modesObj, "translate", {
+      display: 'radio'
+    })}
+    showX={boolean("showX", true)}
+    showY={boolean("showY", true)}
+    showZ={boolean("showZ", true)}
+  />
+}
 
 TransformControlsLockSt.story = {
   name: 'lock orbit controls while transforming',
