@@ -27,7 +27,10 @@ type Props = {
 } & Omit<JSX.IntrinsicElements['line2'], 'args'> &
   Omit<JSX.IntrinsicElements['lineMaterial'], 'color' | 'vertexColors' | 'resolution' | 'args'>
 
-export default React.forwardRef<Line2, Props>(function Line({ points, color = 'black', vertexColors, ...rest }, ref) {
+export const Line = React.forwardRef<Line2, Props>(function Line(
+  { points, color = 'black', vertexColors, ...rest },
+  ref
+) {
   const lineRef = useRef<Line2>()
   const geomRef = useRef<LineGeometry>()
   const resolution = useMemo(() => new THREE.Vector2(512, 512), [])
