@@ -377,7 +377,7 @@ return <bufferGeometry ref={ref} />
 #### useLoader (experimental!)
 
 ```jsx
-useLoader(loader, url: string | string[], extensions?)
+useLoader(loader, url: string | string[], extensions?, xhr?)
 ```
 
 This hook loads assets and suspends for easier fallback- and error-handling.
