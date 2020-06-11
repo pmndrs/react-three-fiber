@@ -21,6 +21,7 @@ export interface ResizeContainerProps extends CanvasProps, ContainerProps {
 
 interface ResizeContainerState {
   size: RectReadOnly
+  forceResize: () => void
   setEvents: React.Dispatch<React.SetStateAction<PointerEvents>>
   container: HTMLDivElement
 }

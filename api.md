@@ -357,13 +357,13 @@ Take advantage of React's `useRef` with the added consideration of rendering whe
 ```jsx
 import { useResource } from 'react-three-fiber'
 
-const [ref, material] = useResource()
+const material = useResource()
 return (
-  <meshBasicMaterial ref={ref} />
-  {material && (
-    <mesh material={material} />
-    <mesh material={material} />
-    <mesh material={material} />
+  <meshBasicMaterial ref={material} />
+  {material.current && (
+    <mesh material={material.current} />
+    <mesh material={material.current} />
+    <mesh material={material.current} />
   )}
 )
 ```
@@ -442,5 +442,6 @@ import {
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
   applyProps,                   // Internal: Sets element properties
+  forceResize,                  // Internal: Force size/viewport recalculation of all canvases
 } from 'react-three-fiber'
 ```

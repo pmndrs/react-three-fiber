@@ -46,12 +46,12 @@ export function useUpdate<T>(
   return ref
 }
 
-export function useResource<T>(optionalRef?: React.MutableRefObject<T>): [React.MutableRefObject<T>, T] {
+export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.MutableRefObject<T> {
   const [_, forceUpdate] = useState(false)
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
   useLayoutEffect(() => void forceUpdate((i) => !i), [ref.current])
-  return [ref, ref.current]
+  return ref
 }
 
 type Extensions = (loader: THREE.Loader) => void
@@ -68,7 +68,8 @@ type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 export function useLoader<T>(
   Proto: new () => LoaderResult<T>,
   url: T extends any[] ? string[] : string,
-  extensions?: Extensions
+  extensions?: Extensions,
+  onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): T {
   const loader = useMemo(() => {
     // Construct new loader
@@ -84,19 +85,24 @@ export function useLoader<T>(
       return Promise.all(
         urlArray.map(
           (url) =>
-            new Promise((res) =>
-              loader.load(url, (data: any) => {
-                if (data.scene) {
-                  data.nodes = {}
-                  data.materials = {}
-                  data.scene.traverse((obj: any) => {
-                    if (obj.name) data.nodes = { ...data.nodes, [obj.name]: obj }
-                    if (obj.material && !data.materials[obj.material.name])
-                      data.materials[obj.material.name] = obj.material
-                  })
-                }
-                res(data)
-              })
+            new Promise((res, reject) =>
+              loader.load(
+                url,
+                (data: any) => {
+                  if (data.scene) {
+                    data.nodes = {}
+                    data.materials = {}
+                    data.scene.traverse((obj: any) => {
+                      if (obj.name) data.nodes = { ...data.nodes, [obj.name]: obj }
+                      if (obj.material && !data.materials[obj.material.name])
+                        data.materials[obj.material.name] = obj.material
+                    })
+                  }
+                  res(data)
+                },
+                onProgress,
+                (error) => reject(error.message)
+              )
             )
         )
       )

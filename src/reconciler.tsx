@@ -102,6 +102,10 @@ export function invalidate(state: React.MutableRefObject<CanvasContext> | boolea
   }
 }
 
+export function forceResize() {
+  roots.forEach((root) => root.containerInfo.__state.current.forceResize())
+}
+
 let catalogue: ObjectHash = {}
 export const extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
@@ -318,8 +322,7 @@ function removeChild(parentInstance: any, child: any) {
       parentInstance.remove(child)
     } else {
       child.parent = null
-      if (parentInstance.__objects)
-        parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
+      if (parentInstance.__objects) parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
       // Remove attachment
       if (child.attachArray)
         parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: any) => x !== child)
