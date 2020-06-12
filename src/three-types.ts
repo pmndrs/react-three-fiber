@@ -65,7 +65,7 @@ export declare namespace ReactThreeFiber {
   export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
   export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
   export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
-  export type LightNode<T extends THREE.Light, P> = Overwrite<Node<T, P>, { color?: Color }>
+  export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
 }
 
 declare global {
