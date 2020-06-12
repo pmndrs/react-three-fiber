@@ -11,7 +11,7 @@
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
-### Tips and Tricks <a id="tip-and-tricks"></a>
+### Tips and Tricks <a id="tips-and-tricks"></a>
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
