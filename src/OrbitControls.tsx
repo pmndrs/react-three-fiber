@@ -1,12 +1,15 @@
 import React, { forwardRef, useRef, useEffect } from 'react'
-import { ReactThreeFiber, extend, useThree, useFrame } from 'react-three-fiber'
+import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 // @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ OrbitControlsImpl })
 
-type OrbitControls = ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>
+export type OrbitControls = Overwrite<
+  ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>,
+  { target?: ReactThreeFiber.Vector3 }
+>
 
 declare global {
   namespace JSX {
