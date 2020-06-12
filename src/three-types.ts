@@ -65,6 +65,7 @@ export declare namespace ReactThreeFiber {
   export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
   export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
   export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
+  export type LightNode<T extends THREE.Light, P> = Overwrite<Node<T, P>, { color?: Color }>
 }
 
 declare global {
@@ -233,22 +234,19 @@ declare global {
       primitive: { object: any } & { [properties: string]: any }
 
       // lights and other
-      light: ReactThreeFiber.Object3DNode<THREE.Light, typeof THREE.Light>
+      light: ReactThreeFiber.LightNode<THREE.Light, typeof THREE.Light>
       spotLightShadow: ReactThreeFiber.Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
-      spotLight: ReactThreeFiber.Object3DNode<THREE.SpotLight, typeof THREE.SpotLight>
-      pointLight: ReactThreeFiber.Object3DNode<THREE.PointLight, typeof THREE.PointLight>
-      rectAreaLight: ReactThreeFiber.Object3DNode<THREE.RectAreaLight, typeof THREE.RectAreaLight>
-      hemisphereLight: ReactThreeFiber.Object3DNode<THREE.HemisphereLight, typeof THREE.HemisphereLight>
+      spotLight: ReactThreeFiber.LightNode<THREE.SpotLight, typeof THREE.SpotLight>
+      pointLight: ReactThreeFiber.LightNode<THREE.PointLight, typeof THREE.PointLight>
+      rectAreaLight: ReactThreeFiber.LightNode<THREE.RectAreaLight, typeof THREE.RectAreaLight>
+      hemisphereLight: ReactThreeFiber.LightNode<THREE.HemisphereLight, typeof THREE.HemisphereLight>
       directionalLightShadow: ReactThreeFiber.Node<THREE.DirectionalLightShadow, typeof THREE.DirectionalLightShadow>
-      directionalLight: ReactThreeFiber.Object3DNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
-      ambientLight: ReactThreeFiber.Object3DNode<THREE.AmbientLight, typeof THREE.AmbientLight>
+      directionalLight: ReactThreeFiber.LightNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
+      ambientLight: ReactThreeFiber.LightNode<THREE.AmbientLight, typeof THREE.AmbientLight>
       lightShadow: ReactThreeFiber.Node<THREE.LightShadow, typeof THREE.LightShadow>
-      // @ts-ignore
-      ambientLightProbe: ReactThreeFiber.Object3DNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
-      // @ts-ignore
-      hemisphereLightProbe: ReactThreeFiber.Object3DNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
-      // @ts-ignore
-      lightProbe: ReactThreeFiber.Object3DNode<THREE.LightProbe, typeof THREE.LightProbe>
+      ambientLightProbe: ReactThreeFiber.LightNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
+      hemisphereLightProbe: ReactThreeFiber.LightNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
+      lightProbe: ReactThreeFiber.LightNode<THREE.LightProbe, typeof THREE.LightProbe>
 
       // helpers
       spotLightHelper: ReactThreeFiber.Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
