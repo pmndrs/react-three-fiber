@@ -63,7 +63,6 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
   const { viewport } = useThree()
-  console.log(viewport)
   return (
     <mesh scale={[viewport.width, viewport.height, 1]}>
       <planeBufferGeometry attach="geometry" args={[1, 1]} />
@@ -169,13 +168,13 @@ export default function Main() {
     [set]
   )
   const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [set])
-  const [events, setEvents] = useState({})
+  const setEvents = useState({})[1]
   return (
     <>
       <Canvas className="canvas" onCreated={({ events }) => setEvents(events)}>
         <Scene top={top} mouse={mouse} />
       </Canvas>
-      <Container onScroll={onScroll} onMouseMove={onMouseMove} {...events}>
+      <Container onScroll={onScroll} onMouseMove={onMouseMove}>
         <div style={{ height: '525vh' }} />
       </Container>
     </>
