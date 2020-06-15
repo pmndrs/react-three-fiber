@@ -10,7 +10,7 @@ import { Sphere } from '../../src/shapes'
 import { useHelper } from '../../src/useHelper'
 
 export default {
-  title: 'misc.useHelper',
+  title: 'Misc.useHelper',
   component: useHelper,
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
 }
