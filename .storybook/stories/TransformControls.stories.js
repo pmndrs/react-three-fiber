@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react'
 
-import { withKnobs, optionsKnob, boolean } from "@storybook/addon-knobs";
+import { withKnobs, optionsKnob, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 
@@ -10,7 +10,7 @@ import { OrbitControls } from '../../src/OrbitControls'
 
 export function TransformControlsStory() {
   return (
-    <Setup >
+    <Setup>
       <TransformControls>
         <Box>
           <meshBasicMaterial attach="material" wireframe />
@@ -26,9 +26,8 @@ TransformControlsStory.story = {
 
 export default {
   title: 'Controls.TransformControls',
-  component: TransformControls
+  component: TransformControls,
 }
-
 
 function TransformControlsLockScene({ mode, showX, showY, showZ }) {
   const orbitControls = useRef()
@@ -37,21 +36,15 @@ function TransformControlsLockScene({ mode, showX, showY, showZ }) {
   useEffect(() => {
     if (transformControls.current) {
       const controls = transformControls.current
-      const callback = event => (orbitControls.current.enabled = !event.value)
-      controls.addEventListener("dragging-changed", callback)
-      return () => controls.removeEventListener("dragging-changed", callback)
+      const callback = (event) => (orbitControls.current.enabled = !event.value)
+      controls.addEventListener('dragging-changed', callback)
+      return () => controls.removeEventListener('dragging-changed', callback)
     }
   })
 
   return (
     <>
-      <TransformControls
-        ref={transformControls}
-        mode={mode}
-        showX={showX}
-        showY={showY}
-        showZ={showZ}
-      >
+      <TransformControls ref={transformControls} mode={mode} showX={showX} showY={showY} showZ={showZ}>
         <Box>
           <meshBasicMaterial attach="material" wireframe />
         </Box>
@@ -62,24 +55,25 @@ function TransformControlsLockScene({ mode, showX, showY, showZ }) {
 }
 
 export const TransformControlsLockSt = () => {
-
   const modesObj = {
-    scale: "scale",
-    rotate: "rotate",
-    translate: "translate"
+    scale: 'scale',
+    rotate: 'rotate',
+    translate: 'translate',
   }
 
-  return <TransformControlsLockScene
-    mode={optionsKnob("mode", modesObj, "translate", {
-      display: 'radio'
-    })}
-    showX={boolean("showX", true)}
-    showY={boolean("showY", true)}
-    showZ={boolean("showZ", true)}
-  />
+  return (
+    <TransformControlsLockScene
+      mode={optionsKnob('mode', modesObj, 'translate', {
+        display: 'radio',
+      })}
+      showX={boolean('showX', true)}
+      showY={boolean('showY', true)}
+      showZ={boolean('showZ', true)}
+    />
+  )
 }
 
 TransformControlsLockSt.story = {
-  name: 'lock orbit controls while transforming',
-  decorators: [withKnobs, (storyFn) => <Setup controls={false} >{storyFn()}</Setup>],
+  name: 'Lock orbit controls while transforming',
+  decorators: [withKnobs, (storyFn) => <Setup controls={false}>{storyFn()}</Setup>],
 }
