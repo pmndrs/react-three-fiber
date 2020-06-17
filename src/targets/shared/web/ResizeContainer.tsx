@@ -33,7 +33,7 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
   const [gl] = useState(renderer)
   if (!gl) console.warn('No renderer created!')
 
-  // Mount and unmount managemenbt
+  // Mount and unmount management
   useEffect(() => effects && effects(gl, container), [])
 
   // Init canvas, fetch events, hand them back to the wrapping div

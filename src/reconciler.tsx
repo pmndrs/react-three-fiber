@@ -476,9 +476,13 @@ export function render(
   return Renderer.getPublicRootInstance(root)
 }
 
-export function unmountComponentAtNode(container: THREE.Object3D) {
+export function unmountComponentAtNode(container: THREE.Object3D, callback?: (c: THREE.Object3D) => void) {
   const root = roots.get(container)
-  if (root) Renderer.updateContainer(null, root, null, () => void roots.delete(container))
+  if (root)
+    Renderer.updateContainer(null, root, null, () => {
+      roots.delete(container)
+      if (callback) callback(container)
+    })
 }
 
 export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {

@@ -499,7 +499,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
           // Forward all events back to their respective handlers with the exception of click,
-          // which must must the initial target
+          // which must must match the initial target
           if (name !== 'click' || state.current.initialHits.includes(eventObject)) handlers[name](data)
         }
       })
@@ -610,15 +610,26 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   useEffect(
     () => () => {
       if (state.current.gl) {
-        if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss!()
-        if (state.current.gl.dispose) state.current.gl.dispose!()
-        ;(state.current as any).gl = undefined
-        unmountComponentAtNode(state.current.scene)
-        state.current.active = false
+        state.current.gl.renderLists.dispose()
+        if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss()
+        dispose((state.current as any).gl)
       }
+      unmountComponentAtNode(state.current.scene, () => {
+        dispose(state.current.scene)
+        dispose(state.current.raycaster)
+        dispose(state.current.camera)
+        dispose(state.current)
+      })
     },
     []
   )
-
   return state.current.events
+}
+
+function dispose(obj: any) {
+  if (obj.dispose) obj.dispose()
+  for (let p in obj) {
+    if (typeof p === 'object' && (p as any).dispose) (p as any).dispose()
+    delete obj[p]
+  }
 }
