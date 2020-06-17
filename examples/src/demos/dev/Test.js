@@ -1,32 +1,16 @@
-import * as THREE from 'three'
-import React, { Suspense } from 'react'
-import { Canvas, useLoader, useThree } from 'react-three-fiber'
-
-function M() {
-  const t = useLoader(
-    THREE.TextureLoader,
-    `https://raw.githubusercontent.com/flowers1225/threejs-earth/master/src/img/earth4.jpg`
-  )
-  return (
-    <>
-      <mesh position={[-1, 0, 0]}>
-        <boxBufferGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" color="hotpink" />
-      </mesh>
-      <mesh position={[1, 0, 0]}>
-        <boxBufferGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" map={t} />
-      </mesh>
-    </>
-  )
-}
+import React, { useState, useCallback } from 'react'
+import { Canvas } from 'react-three-fiber'
 
 export default function App() {
+  const [count, setCount] = useState(0)
+
+  const onButtonClick = useCallback(() => setCount(count + 1), [count])
+
   return (
-    <Canvas colorManagement style={{ background: '#272730' }}>
-      <Suspense fallback={null}>
-        <M />
-      </Suspense>
-    </Canvas>
+    <div className="App">
+      <h1>Hello Leak {count}</h1>
+      <Canvas key={count} style={{ backgroundColor: 'blue' }}></Canvas>
+      <button onClick={onButtonClick}>Recreate Canvas</button>
+    </div>
   )
 }
