@@ -225,6 +225,8 @@ function createInstance(
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
   if (type === 'primitive') {
+    // Switch off dispose for primitive objects
+    props = { dispose: null, ...props }
     instance = props.object
     instance.__instance = true
   } else if (type === 'new') {
@@ -233,7 +235,7 @@ function createInstance(
     const target = (catalogue as any)[name] || (THREE as any)[name]
 
     if (!target) {
-      throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/react-spring/react-three-fiber#using-3rd-party-non-three-namespaced-objects-in-the-scene-graph`
+      throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/react-spring/react-three-fiber/blob/master/api.md#putting-already-existing-objects-into-the-scene-graph`
     }
 
     instance = is.arr(args) ? new target(...args) : new target(args)
