@@ -12,16 +12,11 @@ export function isOrthographicCamera(def: THREE.Camera): def is THREE.Orthograph
   return (def as THREE.OrthographicCamera).isOrthographicCamera
 }
 
-export type DomEvent =
-  | React.MouseEvent<HTMLDivElement, MouseEvent>
-  | React.WheelEvent<HTMLDivElement>
-  | React.PointerEvent<HTMLDivElement>
-
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export type PointerEvent = DomEvent &
+type ThreeEvent<T> = T &
   Intersection & {
     intersections: Intersection[]
     stopped: boolean
@@ -29,9 +24,15 @@ export type PointerEvent = DomEvent &
     ray: THREE.Ray
     camera: Camera
     stopPropagation: () => void
-    sourceEvent: DomEvent
+    sourceEvent: T
     delta: number
   }
+
+export type PointerEvent = ThreeEvent<React.PointerEvent>
+export type MouseEvent = ThreeEvent<React.MouseEvent>
+export type WheelEvent = ThreeEvent<React.WheelEvent>
+
+type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
 export type RenderCallback = (state: CanvasContext, delta: number) => void
 
@@ -52,7 +53,7 @@ export type SharedCanvasContext = {
   scene: THREE.Scene
   size: RectReadOnly
   viewport: ViewportData
-  events: PointerEvents
+  events: DomEventHandlers
   forceResize: () => void
 }
 
@@ -115,7 +116,7 @@ export interface UseCanvasProps extends CanvasProps {
   forceResize: () => void
 }
 
-export type PointerEvents = {
+export type DomEventHandlers = {
   onClick(e: any): void
   onWheel(e: any): void
   onPointerDown(e: any): void
@@ -126,13 +127,13 @@ export type PointerEvents = {
   onLostPointerCapture(e: any): void
 }
 
-function makeId(event: PointerEvent) {
+function makeId(event: DomEvent) {
   return (event.eventObject || event.object).uuid + '/' + event.index
 }
 
 export const stateContext = createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
-export const useCanvas = (props: UseCanvasProps): PointerEvents => {
+export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const {
     children,
     gl,
@@ -211,7 +212,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     initialHits: [],
     pointer: new TinyEmitter(),
     captured: undefined,
-    events: (undefined as unknown) as PointerEvents,
+    events: (undefined as unknown) as DomEventHandlers,
 
     subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number = 0) => {
       // If this subscription was given a priority, it takes rendering into its own hands
@@ -322,7 +323,7 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
 
       // Intersect known handler objects and filter against duplicates
       let intersects = defaultRaycaster.intersectObjects(eventsObjects, true).filter((item) => {
-        const id = makeId(item as PointerEvent)
+        const id = makeId(item as DomEvent)
         if (seen.has(id)) return false
         seen.add(id)
         return true
@@ -354,14 +355,14 @@ export const useCanvas = (props: UseCanvasProps): PointerEvents => {
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
-  const hovered = useMemo(() => new Map<string, PointerEvent>(), [])
+  const hovered = useMemo(() => new Map<string, DomEvent>(), [])
 
   /**  Handles intersections by forwarding them to handlers */
   const temp = new THREE.Vector3()
   const handleIntersects = useCallback(
     (
       event: DomEvent,
-      fn: (event: PointerEvent) => void,
+      fn: (event: DomEvent) => void,
       filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
     ): Intersection[] => {
       // Get fresh intersects

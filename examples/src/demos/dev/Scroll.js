@@ -168,7 +168,7 @@ export default function Main() {
     [set]
   )
   const onScroll = useCallback((e) => set({ top: e.target.scrollTop }), [set])
-  const [events, setEvents] = useState({})
+  const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState({})
   return (
     <>
       <Canvas className="canvas" onCreated={({ events }) => setEvents(events)}>
