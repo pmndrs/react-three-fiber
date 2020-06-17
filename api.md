@@ -389,7 +389,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 function Asset({ url }) {
   const gltf = useLoader(GLTFLoader, url)
-  return <primitive object={gltf.scene} dispose={null} />
+  return <primitive object={gltf.scene} />
 }
 
 <Suspense fallback={<Cube />}>

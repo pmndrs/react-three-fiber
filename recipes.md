@@ -20,9 +20,7 @@
 
 ```jsx
 import { Canvas } from 'react-three-fiber'
-// this example is using react-spring@9
-import { useSpring } from '@react-spring/core'
-import { a } from '@react-spring/three'
+import { a, useSpring } from '@react-spring/three'
 
 function Box(props) {
   const [active, setActive] = useState(0)
