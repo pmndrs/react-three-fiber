@@ -28,9 +28,7 @@ export const DefaultStory = () => (
     <Simple />
   </Suspense>
 )
-DefaultStory.story = {
-  name: 'Default',
-}
+DefaultStory.storyName = 'Default'
 
 function WithTexture(props) {
   const scale = useAspect('cover', 1920, 1080, 1)
@@ -49,6 +47,4 @@ export const TextureStory = () => (
     <WithTexture />
   </Suspense>
 )
-TextureStory.story = {
-  name: 'With Texture',
-}
+TextureStory.storyName = 'With Texture'

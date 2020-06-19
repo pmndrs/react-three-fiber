@@ -23,6 +23,4 @@ function ParametricScene() {
 }
 
 export const ParametricSt = () => <ParametricScene />
-ParametricSt.story = {
-  name: 'Default',
-}
+ParametricSt.storyName = 'Default'

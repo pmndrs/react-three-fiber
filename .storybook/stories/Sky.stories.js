@@ -24,6 +24,4 @@ function SkyScene() {
 }
 
 export const SkySt = () => <SkyScene />
-SkySt.story = {
-  name: 'Default',
-}
+SkySt.storyName = 'Default'

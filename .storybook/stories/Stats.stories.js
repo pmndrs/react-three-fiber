@@ -21,6 +21,4 @@ function Scene() {
 }
 
 export const DefaultStory = () => <Scene />
-DefaultStory.story = {
-  name: 'Default',
-}
+DefaultStory.storyName = 'Default'

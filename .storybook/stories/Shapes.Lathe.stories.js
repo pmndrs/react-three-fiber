@@ -32,6 +32,4 @@ function LatheScene() {
 }
 
 export const LatheSt = () => <LatheScene />
-LatheSt.story = {
-  name: 'Default',
-}
+LatheSt.storyName = 'Default'

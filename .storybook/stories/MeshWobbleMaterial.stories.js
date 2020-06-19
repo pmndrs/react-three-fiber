@@ -7,21 +7,18 @@ import { Torus } from '../../src/shapes'
 import { useTurntable } from '../useTurntable'
 
 export default {
-    title: 'Shaders.MeshWobbleMaterial',
-    component: MeshWobbleMaterial,
-    decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
+  title: 'Shaders.MeshWobbleMaterial',
+  component: MeshWobbleMaterial,
+  decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }
 
 function MeshWobbleMaterialScene() {
-
-    return (
-        <Torus args={[1, 0.25, 16, 100]}>
-            <MeshWobbleMaterial attach="material" color="#f25042" speed={1} factor={1} />
-        </Torus>
-    )
+  return (
+    <Torus args={[1, 0.25, 16, 100]}>
+      <MeshWobbleMaterial attach="material" color="#f25042" speed={1} factor={1} />
+    </Torus>
+  )
 }
 
 export const MeshWobbleMaterialSt = () => <MeshWobbleMaterialScene />
-MeshWobbleMaterialSt.story = {
-    name: 'Default',
-}
+MeshWobbleMaterialSt.storyName = 'Default'

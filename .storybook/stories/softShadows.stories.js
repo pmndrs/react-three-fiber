@@ -59,6 +59,4 @@ export const SoftShadowsSt = () => {
   return <SoftShadowsScene />
 }
 
-SoftShadowsSt.story = {
-  name: 'Default',
-}
+SoftShadowsSt.storyName = 'Default'

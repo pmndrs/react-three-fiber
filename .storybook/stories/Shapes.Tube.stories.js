@@ -16,27 +16,23 @@ function TubeScene() {
   // curve example from https://threejs.org/docs/#api/en/geometries/TubeGeometry
   const path = useMemo(() => {
     function CustomSinCurve(scale) {
+      THREE.Curve.call(this)
 
-      THREE.Curve.call(this);
-
-      this.scale = (scale === undefined) ? 1 : scale;
-
+      this.scale = scale === undefined ? 1 : scale
     }
 
-    CustomSinCurve.prototype = Object.create(THREE.Curve.prototype);
-    CustomSinCurve.prototype.constructor = CustomSinCurve;
+    CustomSinCurve.prototype = Object.create(THREE.Curve.prototype)
+    CustomSinCurve.prototype.constructor = CustomSinCurve
 
     CustomSinCurve.prototype.getPoint = function (t) {
+      var tx = t * 3 - 1.5
+      var ty = Math.sin(2 * Math.PI * t)
+      var tz = 0
 
-      var tx = t * 3 - 1.5;
-      var ty = Math.sin(2 * Math.PI * t);
-      var tz = 0;
+      return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale)
+    }
 
-      return new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
-
-    };
-
-    return new CustomSinCurve(10);
+    return new CustomSinCurve(10)
   }, [])
 
   console.log(path)
@@ -51,6 +47,4 @@ function TubeScene() {
 }
 
 export const TubeSt = () => <TubeScene />
-TubeSt.story = {
-  name: 'Default',
-}
+TubeSt.storyName = 'Default'

@@ -25,17 +25,16 @@ export function BasicLine() {
     </>
   )
 }
-BasicLine.story = {
-  name: 'Basic',
-  decorators: [
-    withKnobs,
-    (storyFn) => (
-      <Setup controls={false} cameraPosition={[0, 0, 17]}>
-        {storyFn()}
-      </Setup>
-    ),
-  ],
-}
+BasicLine.storyName = 'Basic'
+
+BasicLine.decorators = [
+  withKnobs,
+  (storyFn) => (
+    <Setup controls={false} cameraPosition={[0, 0, 17]}>
+      {storyFn()}
+    </Setup>
+  ),
+]
 
 export function VertexColorsLine() {
   return (
@@ -45,14 +44,13 @@ export function VertexColorsLine() {
     </>
   )
 }
-VertexColorsLine.story = {
-  name: 'VertexColors',
-  decorators: [
-    withKnobs,
-    (storyFn) => (
-      <Setup controls={false} cameraPosition={[0, 0, 17]}>
-        {storyFn()}
-      </Setup>
-    ),
-  ],
-}
+VertexColorsLine.storyName = 'VertexColors'
+
+VertexColorsLine.decorators = [
+  withKnobs,
+  (storyFn) => (
+    <Setup controls={false} cameraPosition={[0, 0, 17]}>
+      {storyFn()}
+    </Setup>
+  ),
+]

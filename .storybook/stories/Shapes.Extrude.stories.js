@@ -53,6 +53,4 @@ function ExtrudeScene() {
 }
 
 export const ExtrudeSt = () => <ExtrudeScene />
-ExtrudeSt.story = {
-  name: 'Default',
-}
+ExtrudeSt.storyName = 'Default'
