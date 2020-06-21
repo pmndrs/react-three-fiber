@@ -141,7 +141,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     orthographic,
     raycaster,
     size,
-    pixelRatio,
+    pixelRatio = window.devicePixelRatio,
     vr = false,
     concurrent = false,
     shadowMap = false,
