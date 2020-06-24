@@ -488,8 +488,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
-          // Forward all events back to their respective handlers with the exception of click,
-          // which must must the initial target
+          // Forward all events back to their respective handlers with the exception of click events,
+          // which must use the initial target
           if (
             (name !== 'click' && name !== 'contextMenu' && name !== 'doubleClick') ||
             state.current.initialHits.includes(eventObject)
