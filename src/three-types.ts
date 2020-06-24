@@ -22,6 +22,8 @@ export declare namespace ReactThreeFiber {
 
   export type EventHandlers = {
     onClick?: (event: MouseEvent) => void
+    onContextMenu?: (event: MouseEvent) => void
+    onDoubleClick?: (event: MouseEvent) => void
     onPointerUp?: (event: PointerEvent) => void
     onPointerDown?: (event: PointerEvent) => void
     onPointerOver?: (event: PointerEvent) => void
