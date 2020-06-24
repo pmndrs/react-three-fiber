@@ -117,9 +117,9 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     // Event-handlers ...
     //   are functions, that
     //   start with "on", and
-    //   contain the name "pointer", or "wheel", or "click"
+    //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
     if (is.fun(newProps[key]) && key.startsWith('on')) {
-      return key.includes('Pointer') || key.includes('Click') || key.includes('Wheel')
+      return key.includes('Pointer') || key.includes('Click') || key.includes('ContextMenu') || key.includes('Wheel')
     }
   })
   const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
