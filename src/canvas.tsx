@@ -115,6 +115,8 @@ export interface UseCanvasProps extends CanvasProps {
 
 export type DomEventHandlers = {
   onClick(e: any): void
+  onContextMenu(e: any): void
+  onDoubleClick(e: any): void
   onWheel(e: any): void
   onPointerDown(e: any): void
   onPointerUp(e: any): void
@@ -486,9 +488,14 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
-          // Forward all events back to their respective handlers with the exception of click,
-          // which must must the initial target
-          if (name !== 'click' || state.current.initialHits.includes(eventObject)) handlers[name](data)
+          // Forward all events back to their respective handlers with the exception of click events,
+          // which must use the initial target
+          if (
+            (name !== 'click' && name !== 'contextMenu' && name !== 'doubleClick') ||
+            state.current.initialHits.includes(eventObject)
+          ) {
+            handlers[name](data)
+          }
         }
       })
       // If a click yields no results, pass it back to the user as a miss
@@ -496,7 +503,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         state.current.initialClick = [event.clientX, event.clientY]
         state.current.initialHits = hits.map((hit) => hit.eventObject)
       }
-      if (name === 'click' && !hits.length && onPointerMissed) {
+
+      if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length && onPointerMissed) {
         if (calculateDistance(event) <= 2) onPointerMissed()
       }
     },
@@ -506,6 +514,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   useMemo(() => {
     state.current.events = {
       onClick: handlePointer('click'),
+      onContextMenu: handlePointer('contextMenu'),
+      onDoubleClick: handlePointer('doubleClick'),
       onWheel: handlePointer('wheel'),
       onPointerDown: handlePointer('pointerDown'),
       onPointerUp: handlePointer('pointerUp'),
