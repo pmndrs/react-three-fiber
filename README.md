@@ -329,7 +329,7 @@ This hook calculates aspect ratios (for now only what in css would be `image-siz
 
 ```jsx
 const scale = useAspect(
-  "cover"                   // Aspect ratio: cover | ... more to come, PR's welcome ;)
+  "cover",                  // Aspect ratio: cover | ... more to come, PR's welcome ;)
   1024,                     // Pixel-width
   512,                      // Pixel-height
   1                         // Optional scaling factor

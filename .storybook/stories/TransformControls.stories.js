@@ -20,9 +20,7 @@ export function TransformControlsStory() {
   )
 }
 
-TransformControlsStory.story = {
-  name: 'Default',
-}
+TransformControlsStory.storyName = 'Default'
 
 export default {
   title: 'Controls.TransformControls',
@@ -73,7 +71,5 @@ export const TransformControlsLockSt = () => {
   )
 }
 
-TransformControlsLockSt.story = {
-  name: 'Lock orbit controls while transforming',
-  decorators: [withKnobs, (storyFn) => <Setup controls={false}>{storyFn()}</Setup>],
-}
+TransformControlsLockSt.storyName = 'Lock orbit controls while transforming'
+TransformControlsLockSt.decorators = [withKnobs, (storyFn) => <Setup controls={false}>{storyFn()}</Setup>]

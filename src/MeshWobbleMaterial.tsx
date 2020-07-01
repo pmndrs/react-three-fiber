@@ -5,7 +5,7 @@ import { extend, useFrame, ReactThreeFiber } from 'react-three-fiber'
 import mergeRefs from 'react-merge-refs'
 
 type WobbleMaterialType = JSX.IntrinsicElements['meshStandardMaterial'] & {
-  time: number
+  time?: number
   factor: number
 }
 

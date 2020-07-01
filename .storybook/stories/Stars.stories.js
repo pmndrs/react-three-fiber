@@ -24,6 +24,4 @@ function StarsScene() {
 }
 
 export const StarsSt = () => <StarsScene />
-StarsSt.story = {
-  name: 'Default',
-}
+StarsSt.storyName = 'Default'
