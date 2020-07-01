@@ -1,10 +1,8 @@
 import React from 'react'
 
 import { Setup } from '../Setup'
-
 import { MeshWobbleMaterial } from '../../src/MeshWobbleMaterial'
 import { Torus } from '../../src/shapes'
-import { useTurntable } from '../useTurntable'
 
 export default {
     title: 'Shaders.MeshWobbleMaterial',

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
+import { Canvas } from 'react-three-fiber'
 
 import { OrbitControls } from '../src/OrbitControls'
 
