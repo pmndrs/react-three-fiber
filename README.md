@@ -248,7 +248,7 @@ Allows you to tie HTML content to any object of your scene. It will be projected
   prepend                   // Project content behind the canvas (default: false)
   center                    // Adds a -50%/-50% css transform (default: false)
   fullscreen                // Aligns to the upper-left corner, fills the screen (default:false)
-  scaleFactor={10}          // Scales children if set to a number (default=undefined)
+  scaleFactor={10}          // If set (default: undefined), children will be scaled by this factor, and also by distance to a PerspectiveCamera.
   zIndexRange={[100, 0]}    // Z-order range (default=[16777271, 0])
   portal={domnodeRef}       // Reference to target container (default=undefined)
   {...groupProps}           // All THREE.Group props are valid
