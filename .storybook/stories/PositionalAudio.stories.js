@@ -3,10 +3,6 @@ import React, { Suspense } from 'react'
 import { Setup } from '../Setup'
 import { OrbitControls } from '../../src/OrbitControls'
 import { PositionalAudio } from '../../src/PositionalAudio'
-import audio1 from '../sounds/1.mp3'
-import audio2 from '../sounds/2.mp3'
-import audio3 from '../sounds/3.mp3'
-import audio4 from '../sounds/4.mp3'
 
 export default {
     title: 'Abstractions.PositionalAudio',
@@ -18,19 +14,19 @@ function PositionalAudioScene() {
     const args = [
         {
           position: [10, 0, 10],
-          url: audio1
+          url: '../sounds/1.mp3'
         },
         {
           position: [-10, 0, 10],
-          url: audio2
+          url: '../sounds/2.mp3'
         },
         {
           position: [10, 0, -10],
-          url: audio3
+          url: '../sounds/3.mp3'
         },
         {
           position: [-10, 0, -10],
-          url: audio4
+          url: '../sounds/4.mp3'
         }
       ]
     
