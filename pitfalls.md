@@ -79,7 +79,7 @@ Using state-managers and selected state is fine, but not for updates that happen
 ```jsx
 import { useSelector } from 'react-redux'
 
-// Assuming that x gets animated inside the store, triggering the component 60fps
+// Assuming that x gets animated inside the store 60fps
 const x = useSelector(state => state.x)
 return <mesh position-x={x} />
 ```
