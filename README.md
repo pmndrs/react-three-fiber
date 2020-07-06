@@ -284,6 +284,27 @@ Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes ove
 />
 ```
 
+You can choose to mount Stats to a different DOM Element - for example, for custom styling:
+
+```jsx
+
+const node = useRef(document.createElement('div'))
+
+useEffect(() => {
+  node.current.id = 'test'
+  document.body.appendChild(node.current)
+
+  return () => document.body.removeChild(node.current)
+}, [])
+
+return (
+  <Stats
+    parent={parent}
+  />
+)
+```
+
+
 ##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
 
 Adds the Draco extension to your GLTFLoader.

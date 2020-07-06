@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, RefObject } from 'react'
 import { useFrame } from 'react-three-fiber'
 // @ts-ignore
 import StatsImpl from 'stats.js'
@@ -6,16 +6,22 @@ import StatsImpl from 'stats.js'
 type Props = {
   showPanel?: number
   className?: string
+  parent?: RefObject<HTMLElement>
 }
 
-export function Stats({ showPanel = 0, className }: Props): null {
+export function Stats({ showPanel = 0, className, parent }: Props): null {
   const [stats] = useState(() => new (StatsImpl as any)())
   useEffect(() => {
+    const node = (parent && parent.current) || document.body
+
     stats.showPanel(showPanel)
-    document.body.appendChild(stats.dom)
+    node?.appendChild(stats.dom)
+
     if (className) stats.dom.classList.add(className)
-    return () => document.body.removeChild(stats.dom)
-  }, [])
+
+    return () => node?.removeChild(stats.dom)
+  }, [parent])
+
   return useFrame((state) => {
     stats.begin()
     state.gl.render(state.scene, state.camera)
