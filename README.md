@@ -47,7 +47,7 @@ import { ... } from 'drei'
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - Misc
-  - `<HTML/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
+  - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
   - `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
   - `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
   - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
@@ -239,12 +239,12 @@ softShadows({
 
 ## Misc
 
-#### ⚡️ `<HTML/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
+#### ⚡️ `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
 
 Allows you to tie HTML content to any object of your scene. It will be projected to the objects whereabouts automatically.
 
 ```jsx
-<HTML
+<Html
   prepend                   // Project content behind the canvas (default: false)
   center                    // Adds a -50%/-50% css transform (default: false)
   fullscreen                // Aligns to the upper-left corner, fills the screen (default:false)
@@ -256,7 +256,7 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 >
   <h1>hello</h1>
   <p>world</p>
-</HTML>
+</Html>
 ```
 
 #### ⚡️ `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)

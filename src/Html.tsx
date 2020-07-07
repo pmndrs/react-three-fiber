@@ -47,7 +47,7 @@ function objectZIndex(el: Object3D, camera: Camera, zIndexRange: Array<number>) 
   return undefined
 }
 
-export interface HTMLProps
+export interface HtmlProps
   extends Omit<Assign<React.HTMLAttributes<HTMLDivElement>, ReactThreeFiber.Object3DNode<Group, typeof Group>>, 'ref'> {
   prepend?: boolean
   center?: boolean
@@ -58,7 +58,7 @@ export interface HTMLProps
   zIndexRange?: Array<number>
 }
 
-export const HTML = React.forwardRef(
+export const Html = React.forwardRef(
   (
     {
       children,
@@ -72,7 +72,7 @@ export const HTML = React.forwardRef(
       scaleFactor,
       zIndexRange = [16777271, 0],
       ...props
-    }: HTMLProps,
+    }: HtmlProps,
     ref: React.Ref<HTMLDivElement>
   ) => {
     const { gl, scene, camera, size } = useThree()
@@ -133,3 +133,8 @@ export const HTML = React.forwardRef(
     return <group {...props} ref={group} />
   }
 )
+
+export const HTML = React.forwardRef((props: HtmlProps, ref: React.Ref<HTMLDivElement>) => {
+  useEffect(() => void console.warn('The <HTML> component was renamed to <Html>'), [])
+  return <Html {...props} ref={ref} />
+})
