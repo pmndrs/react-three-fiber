@@ -34,7 +34,7 @@ export function useUpdate<T>(
   callback: (props: T) => void,
   dependents: any[],
   optionalRef?: React.MutableRefObject<T>
-): React.MutableRefObject<any> {
+): React.MutableRefObject<T> | React.MutableRefObject<undefined> {
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
@@ -51,7 +51,7 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): [React.
   const [_, forceUpdate] = useState(false)
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
-  useLayoutEffect(() => void forceUpdate(i => !i), [ref.current])
+  useLayoutEffect(() => void forceUpdate((i) => !i), [ref.current])
   return [ref, ref.current]
 }
 
@@ -78,9 +78,9 @@ const blackList = [
 function prune(props: any) {
   const reducedProps = { ...props }
   // Remove black listed props
-  blackList.forEach(name => delete reducedProps[name])
+  blackList.forEach((name) => delete reducedProps[name])
   // Remove functions
-  Object.keys(reducedProps).forEach(name => typeof reducedProps[name] === 'function' && delete reducedProps[name])
+  Object.keys(reducedProps).forEach((name) => typeof reducedProps[name] === 'function' && delete reducedProps[name])
   // Prune materials and geometries
   if (reducedProps.material) reducedProps.material = prune(reducedProps.material)
   if (reducedProps.geometry) reducedProps.geometry = prune(reducedProps.geometry)
@@ -115,8 +115,8 @@ export function useLoader<T>(
       const urlArray = Array.isArray(url) ? url : [url]
       return Promise.all(
         urlArray.map(
-          url =>
-            new Promise(res =>
+          (url) =>
+            new Promise((res) =>
               loader.load(url, (data: any) => {
                 if (data.scene) {
                   // This has to be deprecated at some point!
@@ -145,6 +145,6 @@ export function useLoader<T>(
 }
 
 export const useCamera = () => {
-  console.warn("The useCamera hook was moved to: https://github.com/react-spring/drei")
+  console.warn('The useCamera hook was moved to: https://github.com/react-spring/drei')
   return null
 }
