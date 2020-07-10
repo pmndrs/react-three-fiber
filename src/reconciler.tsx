@@ -1,8 +1,8 @@
 import * as THREE from 'three'
+import React from 'react'
 import Reconciler from 'react-reconciler'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
-import { version } from '../package.json'
 
 export type GlobalRenderCallback = (timeStamp: number) => boolean
 
@@ -469,7 +469,14 @@ export function render(
   let root = roots.get(container)
   if (!root) {
     ;(container as any).__state = state
-    let newRoot = (root = Renderer.createContainer(container, state !== undefined && state.current.concurrent, false))
+    // @ts-ignore
+    let newRoot = (root = Renderer.createContainer(
+      container,
+      state !== undefined && state.current.concurrent ? 2 : 0,
+      false,
+      // @ts-ignore
+      null
+    ))
     roots.set(container, newRoot)
   }
   Renderer.updateContainer(element, root, null, () => undefined)
@@ -498,10 +505,10 @@ export function createPortal(children: React.ReactNode, containerInfo: any, impl
 
 Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  version: version,
-  rendererPackageName: 'react-three-fiber',
   //@ts-ignore
-  findHostInstanceByFiber: Renderer.findHostInstance,
+  findHostInstanceByFiber: () => null,
+  version: React.version,
+  rendererPackageName: 'react-three-fiber',
 })
 
 export { Renderer }

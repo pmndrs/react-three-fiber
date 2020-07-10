@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.9.0",
-    "@testing-library/react": "^10.0.4",
-    "@testing-library/user-event": "^10.4.0",
+    "@testing-library/jest-dom": "^5.11.0",
+    "@testing-library/react": "^10.4.4",
+    "@testing-library/user-event": "^12.0.11",
     "cannon": "^0.6.2",
+    "drei": "^0.0.60",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-merge-refs": "^1.0.0",
@@ -60,11 +61,11 @@
     ]
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.10.1",
+    "@babel/preset-typescript": "^7.10.4",
     "customize-cra": "^1.0.0",
-    "customize-cra-react-refresh": "^1.0.6",
+    "customize-cra-react-refresh": "^1.1.0",
     "husky": "^4.2.5",
-    "lint-staged": "^10.2.7",
+    "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
     "react-app-rewired": "^2.1.6"
   }
