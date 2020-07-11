@@ -7,6 +7,7 @@
     "@testing-library/react": "^10.0.2",
     "@testing-library/user-event": "^10.0.1",
     "cannon": "^0.6.2",
+    "drei": "^0.0.60",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-merge-refs": "^1.0.0",
