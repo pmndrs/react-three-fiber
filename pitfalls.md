@@ -15,7 +15,7 @@
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
-The most important is, creating objects in Threejs is expensive, think twice before you mount/unmnount things, because every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
 const geom = useMemo(() => new BoxBufferGeometry(), [])
@@ -23,7 +23,7 @@ const mat = useMemo(() => new MeshBasicMaterial(), [])
 return items.map(i => <mesh geometry={geom} material={mat} ...
 ```
 
-and use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) when you need to present many objects of a similar type.
+Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as much as you can when you need to display many objects of a similar type!
 
 ## React performance pitfalls ☠️ <a id="react-pitfalls"></a>
 
@@ -79,7 +79,7 @@ Using state-managers and selected state is fine, but not for updates that happen
 ```jsx
 import { useSelector } from 'react-redux'
 
-// Assuming that x gets animated inside the store, triggering the component 60fps
+// Assuming that x gets animated inside the store 60fps
 const x = useSelector(state => state.x)
 return <mesh position-x={x} />
 ```

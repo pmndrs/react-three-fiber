@@ -33,7 +33,7 @@ export function useUpdate<T>(
   callback: (props: T) => void,
   dependents: any[],
   optionalRef?: React.MutableRefObject<T>
-): React.MutableRefObject<any> {
+): React.MutableRefObject<T> | React.MutableRefObject<undefined> {
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
@@ -51,7 +51,7 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.M
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
   useLayoutEffect(() => void forceUpdate((i) => !i), [ref.current])
-  return ref
+  return [ref, ref.current]
 }
 
 type Extensions = (loader: THREE.Loader) => void

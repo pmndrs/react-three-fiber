@@ -1764,13 +1764,18 @@
   dependencies:
     regenerator-runtime "^0.13.2"
 
+<<<<<<< HEAD
 "@babel/runtime@^7.10.2", "@babel/runtime@^7.10.3":
+=======
+"@babel/runtime@^7.10.2":
+>>>>>>> eedb5c226fa2b8636879de4fc26e3485bfd69f08
   version "7.10.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.10.4.tgz#a6724f1a6b8d2f6ea5236dbfe58c7d7ea9c5eb99"
   integrity sha512-UpTN5yUJr9b4EX2CnGNWIvER7Ab83ibv0pcvvHc4UOdrBI5jb8bj+32cCwPX6xu0mt2daFNjYhoi+X7beH0RSw==
   dependencies:
     regenerator-runtime "^0.13.4"
 
+<<<<<<< HEAD
 "@babel/runtime@^7.5.5":
   version "7.9.6"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.9.6.tgz#a9102eb5cadedf3f31d08a9ecf294af7827ea29f"
@@ -1778,6 +1783,8 @@
   dependencies:
     regenerator-runtime "^0.13.4"
 
+=======
+>>>>>>> eedb5c226fa2b8636879de4fc26e3485bfd69f08
 "@babel/runtime@^7.8.4":
   version "7.8.7"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.8.7.tgz#8fefce9802db54881ba59f90bb28719b4996324d"
@@ -9996,9 +10003,15 @@ postcss@^7, postcss@^7.0.0, postcss@^7.0.1, postcss@^7.0.14, postcss@^7.0.16, po
     supports-color "^6.1.0"
 
 postprocessing@^6.14.0:
+<<<<<<< HEAD
   version "6.15.1"
   resolved "https://registry.yarnpkg.com/postprocessing/-/postprocessing-6.15.1.tgz#bfd385c5359a11586fe090fada6d9f321821bce7"
   integrity sha512-3zJTd5zXYt/phuc+yrXlQv8Aj0BazqyIOe0ZCIKqs4eupyUdFpyFu2UiHY8iMdmlMQUmHC2zocpTaYcJiayxzw==
+=======
+  version "6.16.0"
+  resolved "https://registry.yarnpkg.com/postprocessing/-/postprocessing-6.16.0.tgz#9028c3db08805193d8dc9a5d765122d40976edbb"
+  integrity sha512-hw79kzQjSiQhYlHTyRECJMotQ1yRhkzw9tHprxSJF0z/qMx5e9TS4jpAAQOfSbnIr+0vqQG2K0HO23JA/9t3hw==
+>>>>>>> eedb5c226fa2b8636879de4fc26e3485bfd69f08
 
 prelude-ls@~1.1.2:
   version "1.1.2"
