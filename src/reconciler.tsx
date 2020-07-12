@@ -312,8 +312,7 @@ function removeChild(parentInstance: any, child: any) {
       parentInstance.remove(child)
     } else {
       child.parent = null
-      if (parentInstance.__objects)
-        parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
+      if (parentInstance.__objects) parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
       // Remove attachment
       if (child.attach) parentInstance[child.attach] = null
       else if (child.attachArray)
@@ -464,6 +463,7 @@ export function render(
     ;(container as any).__state = state
     let newRoot = (root = Renderer.createContainer(
       container,
+      //@ts-ignore
       state !== undefined && state.current.concurrent ? ConcurrentRoot : LegacyRoot,
       false
     ))
@@ -493,6 +493,7 @@ Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   version: version,
   rendererPackageName: 'react-three-fiber',
+  //@ts-ignore
   findHostInstanceByFiber: Renderer.findHostInstance,
 })
 

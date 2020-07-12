@@ -61,7 +61,12 @@ You can give it additional properties like style and className, which will be ad
 
 ### Defaults that the canvas component sets up
 
-Canvas will create a _translucent WebGL-renderer_ with the following properties: `antialias, alpha, setClearAlpha(0)`
+Canvas will create a _translucent WebGL-renderer_ with the following properties:
+
+- antialias=true
+- alpha=true
+- powerPreference="high-performance"
+- setClearAlpha(0)`
 
 A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, z: 5, lookAt: [0,0,0]`
 
