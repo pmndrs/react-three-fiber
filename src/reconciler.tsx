@@ -42,8 +42,10 @@ function createSubs(callback: GlobalRenderCallback, subs: GlobalRenderCallback[]
 }
 
 let globalEffects: GlobalRenderCallback[] = []
+let globalAfterEffects: GlobalRenderCallback[] = []
 let globalTailEffects: GlobalRenderCallback[] = []
 export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalEffects)
+export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalAfterEffects)
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 export function renderGl(
@@ -54,7 +56,6 @@ export function renderGl(
 ) {
   // Run global effects
   if (runGlobalEffects) globalEffects.forEach((effect) => effect(timestamp) && repeat++)
-
   // Run local effects
   const delta = state.current.clock.getDelta()
   state.current.subscribers.forEach((sub) => sub.ref.current(state.current, delta))
@@ -63,6 +64,8 @@ export function renderGl(
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
+  // Run global effects
+  if (runGlobalEffects) globalAfterEffects.forEach((effect) => effect(timestamp) && repeat++)
   return repeat
 }
 
@@ -70,22 +73,21 @@ let running = false
 function renderLoop(timestamp: number) {
   running = true
   let repeat = 0
-
   // Run global effects
   globalEffects.forEach((effect) => effect(timestamp) && repeat++)
-
   roots.forEach((root) => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
     if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
       repeat = renderGl(state, timestamp, repeat)
   })
-
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
   else {
     // Tail call effects, they are called when rendering stops
     globalTailEffects.forEach((effect) => effect(timestamp))
   }
+  // Run global after-effects
+  globalAfterEffects.forEach((effect) => effect(timestamp) && repeat++)
   // Flag end of operation
   running = false
 }

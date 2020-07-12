@@ -409,7 +409,8 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 
 ```jsx
 import {
-  addEffect,                    // Adds a global callback which is called each frame
+  addEffect,                    // Adds a global render callback which is called each frame
+  addAfterEffect,               // Adds a global after-render callback which is called each frame
   addTail,                      // Adds a global callback which is called when rendering stops
   invalidate,                   // Forces view global invalidation
   extend,                       // Extends the native-object catalogue
