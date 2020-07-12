@@ -66,7 +66,7 @@ Canvas will create a _translucent WebGL-renderer_ with the following properties:
 - antialias=true
 - alpha=true
 - powerPreference="high-performance"
-- setClearAlpha(0)`
+- setClearAlpha(0)
 
 A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, z: 5, lookAt: [0,0,0]`
 
