@@ -1,6 +1,6 @@
 import React, { Children, createElement, forwardRef, useMemo, useRef, useLayoutEffect, useState } from 'react'
 // @ts-ignore
-import { TextMesh as TextMeshImpl } from 'troika-three-text'
+import { Text as TextMeshImpl } from 'troika-three-text'
 import { extend, ReactThreeFiber } from 'react-three-fiber'
 // @ts-ignore
 import mergeRefs from 'react-merge-refs'
