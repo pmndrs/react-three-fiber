@@ -51,7 +51,7 @@
     "postprocessing": "^6.14.0",
     "react-merge-refs": "^1.0.0",
     "stats.js": "^0.17.0",
-    "troika-3d-text": "^0.28.0",
+    "troika-three-text": "^0.29.0",
     "utility-types": "^3.10.0"
   },
   "devDependencies": {
