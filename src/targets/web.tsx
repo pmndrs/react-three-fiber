@@ -15,8 +15,8 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
           const params = { antialias: true, alpha: true, ...props.gl }
           const temp = new WebGLRenderer({
             powerPreference: 'high-performance',
-            stencil: false,
-            depth: false,
+            //stencil: false,
+            //depth: false,
             canvas: canvasRef.current,
             context: props.gl2 ? (canvasRef.current.getContext('webgl2', params) as WebGLRenderingContext) : undefined,
             ...params,
