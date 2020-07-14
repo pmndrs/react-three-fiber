@@ -1,6 +1,7 @@
 # Performance pitfalls
 
 ## Table of Contents
+- [State management and React Context](#state-context)
 - [WebGL performance pitfalls](#webgl-pitfalls)
     - [Tips and Tricks](#tips-and-tricks)
 - [React performance pitfalls](#react-pitfalls)
@@ -8,6 +9,56 @@
     - [Never let React anywhere near animated updates](#never-let-react-animate)
     - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
     - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
+    
+## State Management and React Context 🦄
+
+React Three Fiber is built as a custom [React reconciler](https://reactjs.org/docs/reconciliation.html), meaning that the default reconcilar and r3f, while looking like a single entity in the code, are two separate trees. 
+This implies that `context` IS NOT shared between different reconcilers, making it impossible to use the popular pattern of a central context-based state solution.
+
+### Workaround using context forwarding
+
+A possible workaround is recreating the context INSIDE the `Canvas` component while making sure you keep its value updated
+
+```jsx
+// this component will take a context and render inside our Canvas root node
+function ForwardCanvas({ children }) {
+  const value = useContext(context)
+  return (
+    <Canvas>
+      <context.Provider value={value}>
+        {children}
+      </context.Provider>
+    </Canvas>
+  )
+}
+
+function Test() {
+  const value = useContext(context)
+  console.log(value) // 123
+  return null
+}
+
+const context = createContext()
+function App() {
+  return (
+    // we will use ForwardCanvas to keep the two contexts in sync
+    <context.Provider value={123}>
+      <ForwardCanvas>
+        <Test />
+      </ForwardCanvas>
+    </context.Provider>
+  )
+}
+```
+
+### Use a state solution that doesn't need context
+
+An emergin pattern is using state libraries that don't need context, but used different strategies to share data and keep it updated. 
+[Zustand](https://github.com/react-spring/zustand) was created with this problem in mind, as it uses a hooks-based API that doesn't need `context` providers.
+
+
+### Note
+This is a known problem in React and while there is no solution at the moment, the team is aware we will probably see some change on this front in the future.
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
