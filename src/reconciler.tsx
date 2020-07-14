@@ -81,13 +81,13 @@ function renderLoop(timestamp: number) {
     if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
       repeat = renderGl(state, timestamp, repeat)
   })
+  // Run global after-effects
+  globalAfterEffects.forEach((effect) => effect(timestamp))
   if (repeat !== 0) return requestAnimationFrame(renderLoop)
   else {
     // Tail call effects, they are called when rendering stops
     globalTailEffects.forEach((effect) => effect(timestamp))
   }
-  // Run global after-effects
-  globalAfterEffects.forEach((effect) => effect(timestamp))
   // Flag end of operation
   running = false
 }
