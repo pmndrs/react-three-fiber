@@ -426,7 +426,7 @@ import {
 
 #### Consuming context from a foreign provider
 
-At the moment React context [can not be readily used between two reconcilers](https://github.com/react-spring/react-three-fiber/issues/43), this is due to a problem within React. If react-dom opens up a provider, you will not be able to consume it within `<Canvas>`. The only solution is forwarding:
+At the moment React context [can not be readily used between two reconcilers](https://github.com/react-spring/react-three-fiber/issues/43), this is due to a problem within React. If react-dom opens up a provider, you will not be able to consume it within `<Canvas>`. If managing state (like Redux) is your problem, then [zustand](https://github.com/react-spring/zustand) is likely the best solution, otherwise you can solve it by forwarding the context object that you are trying to access:
 
 ```jsx
 const forwardContext = React.createContext()
