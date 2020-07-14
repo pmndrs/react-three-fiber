@@ -12,6 +12,7 @@
   - [useUpdate](#useUpdate)
   - [useLoader (experimental!)](#useloader-experimental)
 - [Additional exports](#additional-exports)
+- [Gotchas](#gotchas)
 
 # Canvas
 
@@ -419,4 +420,21 @@ import {
   unmountComponentAtNode,       // Internal: Unmounts root scene
   applyProps,                   // Internal: Sets element properties
 } from 'react-three-fiber'
+```
+
+# Gotchas
+
+#### Consuming context from a foreign provider
+
+At the moment React context [can not be readily used between two reconcilers](https://github.com/react-spring/react-three-fiber/issues/43), this is due to a problem within React. If react-dom opens up a provider, you will not be able to consume it within `<Canvas>`. The only solution is forwarding:
+
+```jsx
+const forwardContext = React.createContext()
+
+function App() {
+  const state = useContext(myContext)
+  return (
+    <Canvas>
+      <forwardContext.Provider value={state}>
+        {/* children can now read from forwardContext */}
 ```
