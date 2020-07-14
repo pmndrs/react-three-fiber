@@ -65,7 +65,7 @@ export function renderGl(
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
   // Run global effects
-  if (runGlobalEffects) globalAfterEffects.forEach((effect) => effect(timestamp) && repeat++)
+  if (runGlobalEffects) globalAfterEffects.forEach((effect) => effect(timestamp))
   return repeat
 }
 
@@ -87,7 +87,7 @@ function renderLoop(timestamp: number) {
     globalTailEffects.forEach((effect) => effect(timestamp))
   }
   // Run global after-effects
-  globalAfterEffects.forEach((effect) => effect(timestamp) && repeat++)
+  globalAfterEffects.forEach((effect) => effect(timestamp))
   // Flag end of operation
   running = false
 }
