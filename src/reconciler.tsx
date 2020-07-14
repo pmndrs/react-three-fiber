@@ -88,8 +88,6 @@ function renderLoop(timestamp: number) {
     // Tail call effects, they are called when rendering stops
     globalTailEffects.forEach((effect) => effect(timestamp))
   }
-  // Run global after-effects
-  globalAfterEffects.forEach((effect) => effect(timestamp))
   // Flag end of operation
   running = false
 }
