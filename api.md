@@ -199,6 +199,8 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
 ```jsx
 <mesh
   onClick={(e) => console.log('click')}
+  onContextMenu={(e) => console.log('context menu')}
+  onDoubleClick={(e) => console.log('double click')}
   onWheel={(e) => console.log('wheel spins')}
   onPointerUp={(e) => console.log('up')}
   onPointerDown={(e) => console.log('down')}
@@ -432,7 +434,7 @@ At the moment React context [can not be readily used between two reconcilers](ht
 const forwardContext = React.createContext()
 
 function App() {
-  const state = useContext(myContext)
+  const state = useContext(forwardContext)
   return (
     <Canvas>
       <forwardContext.Provider value={state}>
