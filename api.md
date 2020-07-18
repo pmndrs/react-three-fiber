@@ -434,7 +434,7 @@ At the moment React context [can not be readily used between two reconcilers](ht
 const forwardContext = React.createContext()
 
 function App() {
-  const state = useContext(myContext)
+  const state = useContext(forwardContext)
   return (
     <Canvas>
       <forwardContext.Provider value={state}>
