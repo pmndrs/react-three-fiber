@@ -292,7 +292,7 @@ const {
   viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,                       // Aspect ratio (size.width / size.height)
   mouse,                        // Current, centered, normalized 2D mouse coordinates
-  raycaster,                    // Intternal raycaster instance
+  raycaster,                    // Internal raycaster instance
   clock,                        // THREE.Clock (useful for useFrame deltas)
   invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
   intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
