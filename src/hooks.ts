@@ -93,7 +93,7 @@ export function useLoader<T>(
                     data.nodes = {}
                     data.materials = {}
                     data.scene.traverse((obj: any) => {
-                      if (obj.name) data.nodes = { ...data.nodes, [obj.name]: obj }
+                      if (obj.name) data.nodes[obj.name] = obj
                       if (obj.material && !data.materials[obj.material.name])
                         data.materials[obj.material.name] = obj.material
                     })
