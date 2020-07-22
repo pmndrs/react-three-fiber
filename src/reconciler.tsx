@@ -114,16 +114,21 @@ export const extend = (objects: object): void => void (catalogue = { ...catalogu
 export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative: boolean = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
-  const sameProps = Object.keys(newProps).filter((key) => is.equ(newProps[key], oldProps[key]))
-  const handlers = Object.keys(newProps).filter((key) => {
+  const {sameProps, handlers} = Object.keys(newProps).reduce((acc, key) => {
+    if (is.equ(newProps[key], oldProps[key])) acc.sameProps.push(key)
+
     // Event-handlers ...
     //   are functions, that
     //   start with "on", and
     //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
     if (is.fun(newProps[key]) && key.startsWith('on')) {
-      return key.includes('Pointer') || key.includes('Click') || key.includes('ContextMenu') || key.includes('Wheel')
+      if (key.includes('Pointer') || key.includes('Click') || key.includes('ContextMenu') || key.includes('Wheel')) {
+        acc.handlers.push(key)
+      }
     }
-  })
+    return acc
+  }, {sameProps: [] as string[], handlers: [] as string[]})
+
   const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
   const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
@@ -133,8 +138,9 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   // Add left-overs as undefined props so they can be removed
   leftOvers.forEach((key) => key !== 'children' && (filteredProps[key] = undefined))
 
-  if (Object.keys(filteredProps).length > 0) {
-    Object.entries(filteredProps).forEach(([key, value]) => {
+  const filteredPropsEntries = Object.entries(filteredProps)
+  if (filteredPropsEntries.length > 0) {
+    filteredPropsEntries.forEach(([key, value]) => {
       if (!handlers.includes(key)) {
         let root = instance
         let target = root[key]
@@ -200,8 +206,11 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
       if (container && instance.raycast) container.__interaction.push(instance)
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce(
-        (acc, key) => ({ ...acc, [key.charAt(2).toLowerCase() + key.substr(3)]: newProps[key] }),
-        {}
+        (acc, key) => {
+          acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
+          return acc
+        },
+        {} as {[key: string]: any}
       )
     }
     // Call the update lifecycle when it is being updated, but only when it is part of the scene
