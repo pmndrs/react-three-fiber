@@ -210,7 +210,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
           return acc
         },
-        {}
+        {} as {[key: string]: any}
       )
     }
     // Call the update lifecycle when it is being updated, but only when it is part of the scene
