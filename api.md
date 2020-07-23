@@ -159,7 +159,7 @@ return <primitive object={mesh} position={[0, 0, 0]} />
 
 #### Using 3rd-party objects declaratively
 
-The `extend` function extends three-fibers catalogue of JSX elements.
+The `extend` function extends three-fiber's catalogue of JSX elements. Components added this way can then be referenced in the scene-graph using camel casing similar to other primitives.
 
 ```jsx
 import { extend } from 'react-three-fiber'
