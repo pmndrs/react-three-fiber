@@ -48,6 +48,7 @@ Run the demo storybook on your computer:
 - Controls
   - `<OrbitControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
   - `<MapControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-map-mkq8e)
+  - `<DeviceOrientationControls/>`
   - `<TrackballControls/>`
   - `<TransformControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 - Shapes
