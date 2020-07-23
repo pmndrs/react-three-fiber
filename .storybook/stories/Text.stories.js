@@ -6,7 +6,7 @@ import { Text } from '../../src/Text'
 import { useTurntable } from '../useTurntable'
 
 export default {
-  title: 'Abstractions.Text',
+  title: 'Abstractions/Text',
   component: Text,
   decorators: [(storyFn) => <Setup cameraPosition={[0, 0, 200]}>{storyFn()}</Setup>],
 }

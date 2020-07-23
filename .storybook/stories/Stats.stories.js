@@ -6,7 +6,7 @@ import { Sphere } from '../../src/shapes'
 import { Stats } from '../../src/Stats'
 
 export default {
-  title: 'Misc.Stats',
+  title: 'Misc/Stats',
   component: Stats,
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
 }

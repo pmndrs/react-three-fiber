@@ -7,7 +7,7 @@ import { Icosahedron } from '../../src/shapes'
 import { OrbitControls } from '../../src/OrbitControls'
 
 export default {
-  title: 'Abstractions.Detailed',
+  title: 'Abstractions/Detailed',
   component: Detailed,
   decorators: [
     (storyFn) => (

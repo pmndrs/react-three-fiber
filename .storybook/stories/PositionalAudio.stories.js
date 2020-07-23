@@ -5,7 +5,7 @@ import { OrbitControls } from '../../src/OrbitControls'
 import { PositionalAudio } from '../../src/PositionalAudio'
 
 export default {
-  title: 'Abstractions.PositionalAudio',
+  title: 'Abstractions/PositionalAudio',
   component: PositionalAudioScene,
   decorators: [(storyFn) => <Setup cameraPosition={[0, 0, 20]}>{storyFn()}</Setup>],
 }

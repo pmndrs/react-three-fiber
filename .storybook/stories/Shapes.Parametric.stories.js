@@ -7,7 +7,7 @@ import { useTurntable } from '../useTurntable'
 import { Parametric } from '../../src/shapes'
 
 export default {
-  title: 'Shapes.Parametric',
+  title: 'Shapes/Parametric',
   component: Parametric,
   decorators: [(storyFn) => <Setup cameraPosition={[-30, 30, 30]}>{storyFn()}</Setup>],
 }

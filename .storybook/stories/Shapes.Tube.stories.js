@@ -7,7 +7,7 @@ import { useTurntable } from '../useTurntable'
 import { Tube } from '../../src/shapes'
 
 export default {
-  title: 'Shapes.Tube',
+  title: 'Shapes/Tube',
   component: Tube,
   decorators: [(storyFn) => <Setup cameraPosition={[-30, 30, 30]}>{storyFn()}</Setup>],
 }

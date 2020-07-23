@@ -7,7 +7,7 @@ import { HTML } from '../../src/HTML'
 import { useTurntable } from '../useTurntable'
 
 export default {
-  title: 'Abstractions.HTML',
+  title: 'Abstractions/HTML',
   component: HTML,
   decorators: [(storyFn) => <Setup cameraPosition={[-20, 20, -20]}> {storyFn()}</Setup>],
 }

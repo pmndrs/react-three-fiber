@@ -6,7 +6,7 @@ import { Sky } from '../../src/Sky'
 import { Plane } from '../../src/shapes'
 
 export default {
-  title: 'Abstractions.Sky',
+  title: 'Abstractions/Sky',
   component: Sky,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

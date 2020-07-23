@@ -6,7 +6,7 @@ import { useLoader, Canvas } from 'react-three-fiber'
 import { MapControls } from '../../src/MapControls'
 
 export default {
-  title: 'Controls.MapControls',
+  title: 'Controls/MapControls',
   component: MapControlsScene,
 }
 

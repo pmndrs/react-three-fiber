@@ -6,7 +6,7 @@ import { Setup } from '../Setup'
 import { draco } from '../../src/draco'
 
 export default {
-  title: 'Misc.draco',
+  title: 'Misc/draco',
   component: DracoScene,
   decorators: [(storyFn) => <Setup cameraPosition={[0, 0, 5]}>{storyFn()}</Setup>],
 }

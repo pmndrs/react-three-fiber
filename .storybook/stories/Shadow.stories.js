@@ -7,7 +7,7 @@ import { Shadow } from '../../src/Shadow'
 import { Icosahedron, Plane } from '../../src/shapes'
 
 export default {
-  title: 'Misc.Shadow',
+  title: 'Misc/Shadow',
   component: Shadow,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

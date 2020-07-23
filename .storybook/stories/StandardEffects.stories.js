@@ -8,7 +8,7 @@ import { useTurntable } from '../useTurntable'
 import { Box, Sphere, Icosahedron, Plane } from '../../src/shapes'
 
 export default {
-  title: 'Abstractions.StandardEffects',
+  title: 'Abstractions/StandardEffects',
   component: StandardEffects,
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
 }

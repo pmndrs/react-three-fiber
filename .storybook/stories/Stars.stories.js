@@ -6,7 +6,7 @@ import { Stars } from '../../src/Stars'
 import { Plane } from '../../src/shapes'
 
 export default {
-  title: 'Abstractions.Stars',
+  title: 'Abstractions/Stars',
   component: Stars,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

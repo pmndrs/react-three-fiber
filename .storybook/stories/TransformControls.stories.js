@@ -23,7 +23,7 @@ export function TransformControlsStory() {
 TransformControlsStory.storyName = 'Default'
 
 export default {
-  title: 'Controls.TransformControls',
+  title: 'Controls/TransformControls',
   component: TransformControls,
 }
 

@@ -5,9 +5,9 @@ import { meshBounds } from '../../src/meshBounds'
 import { useTurntable } from '../useTurntable'
 
 export default {
-    title: 'Misc.meshBounds',
-    component: MeshBounds,
-    decorators: [(storyFn) => <Setup cameraPosition={[0, 0, 5]}>{storyFn()}</Setup>],
+  title: 'Misc/meshBounds',
+  component: MeshBounds,
+  decorators: [(storyFn) => <Setup cameraPosition={[0, 0, 5]}>{storyFn()}</Setup>],
 }
 function MeshBounds(props) {
   const mesh = useTurntable()
@@ -19,10 +19,10 @@ function MeshBounds(props) {
       {...props}
       raycast={meshBounds}
       ref={mesh}
-      onPointerOver={e => setHover(true)}
-      onPointerOut={e => setHover(false)}>
+      onPointerOver={(e) => setHover(true)}
+      onPointerOut={(e) => setHover(false)}>
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-      <meshStandardMaterial attach="material" color='hotpink' wireframe={!hovered} />
+      <meshStandardMaterial attach="material" color="hotpink" wireframe={!hovered} />
     </mesh>
   )
 }
@@ -36,5 +36,5 @@ export const MeshBoundsSt = () => (
 )
 
 MeshBoundsSt.story = {
-    name: 'Default',
+  name: 'Default',
 }

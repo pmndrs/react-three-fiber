@@ -5,7 +5,7 @@ import { MeshWobbleMaterial } from '../../src/MeshWobbleMaterial'
 import { Torus } from '../../src/shapes'
 
 export default {
-  title: 'Shaders.MeshWobbleMaterial',
+  title: 'Shaders/MeshWobbleMaterial',
   component: MeshWobbleMaterial,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

@@ -10,7 +10,7 @@ import { Line } from '../../src/Line'
 import { OrbitControls } from '../../src/OrbitControls'
 
 export default {
-  title: 'Abstractions.Line',
+  title: 'Abstractions/Line',
   component: Line,
 }
 

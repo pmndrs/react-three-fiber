@@ -11,7 +11,7 @@ import { useHelper } from '../../src/useHelper'
 import { PerspectiveCamera } from '../../src/PerspectiveCamera'
 
 export default {
-  title: 'Misc.useHelper',
+  title: 'Misc/useHelper',
   component: useHelper,
   decorators: [(storyFn) => <Setup>{storyFn()}</Setup>],
 }

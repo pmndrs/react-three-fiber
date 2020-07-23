@@ -10,7 +10,7 @@ import { useFrame } from 'react-three-fiber'
 softShadows()
 
 export default {
-  title: 'Abstractions.softShadows',
+  title: 'Abstractions/softShadows',
   component: softShadows,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

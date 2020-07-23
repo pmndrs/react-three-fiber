@@ -8,7 +8,7 @@ import { Setup } from '../Setup'
 import { TextureLoader } from 'three'
 
 export default {
-  title: 'Misc.useAspect',
+  title: 'Misc/useAspect',
   component: useAspect,
   decorators: [(storyFn) => <Setup cameraPosition={[0, -10, 0]}>{storyFn()}</Setup>],
 }

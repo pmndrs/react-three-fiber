@@ -7,7 +7,7 @@ import { useTurntable } from '../useTurntable'
 import { Extrude } from '../../src/shapes'
 
 export default {
-  title: 'Shapes.Extrude',
+  title: 'Shapes/Extrude',
   component: Extrude,
   decorators: [(storyFn) => <Setup cameraPosition={[-30, 30, 30]}>{storyFn()}</Setup>],
 }
