@@ -1,8 +1,7 @@
-import React, { useRef } from 'react'
+import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Sphere } from '../../src/shapes'
 import { Stats } from '../../src/Stats'
 
 export default {

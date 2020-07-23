@@ -1,5 +1,5 @@
 import React from 'react'
-import { withKnobs, text, boolean, number } from '@storybook/addon-knobs'
+import { withKnobs, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 

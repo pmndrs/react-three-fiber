@@ -3,9 +3,8 @@ import React, { Suspense } from 'react'
 import { Setup } from '../Setup'
 
 import { StandardEffects } from '../../src/StandardEffects'
-import { useTurntable } from '../useTurntable'
 
-import { Box, Sphere, Icosahedron, Plane } from '../../src/shapes'
+import { Box, Plane } from '../../src/shapes'
 
 export default {
   title: 'Abstractions/StandardEffects',

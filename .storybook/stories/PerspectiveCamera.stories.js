@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react'
+import { Canvas } from 'react-three-fiber'
 
 import { Icosahedron } from '../../src/shapes'
 import { PerspectiveCamera } from '../../src/PerspectiveCamera'
-import { Canvas } from 'react-three-fiber'
 import { OrbitControls } from '../../src/OrbitControls'
 
 export default {
@@ -27,7 +27,7 @@ function PerspectiveCameraScene() {
     }
 
     return pos
-  })
+  }, [])
 
   return (
     <Canvas>

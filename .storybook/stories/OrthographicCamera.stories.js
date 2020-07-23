@@ -27,7 +27,7 @@ function OrthographicCameraScene() {
     }
 
     return pos
-  })
+  }, [])
 
   return (
     <Canvas>

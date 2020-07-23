@@ -19,8 +19,8 @@ function MeshBounds(props) {
       {...props}
       raycast={meshBounds}
       ref={mesh}
-      onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}>
+      onPointerOver={() => setHover(true)}
+      onPointerOut={() => setHover(false)}>
       <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
       <meshStandardMaterial attach="material" color="hotpink" wireframe={!hovered} />
     </mesh>

@@ -14,18 +14,18 @@ export default {
 
 function ExtrudeScene() {
   const shape = useMemo(() => {
-    const shape = new THREE.Shape()
+    const _shape = new THREE.Shape()
 
     const width = 8,
       length = 12
 
-    shape.moveTo(0, 0)
-    shape.lineTo(0, width)
-    shape.lineTo(length, width)
-    shape.lineTo(length, 0)
-    shape.lineTo(0, 0)
+    _shape.moveTo(0, 0)
+    _shape.lineTo(0, width)
+    _shape.lineTo(length, width)
+    _shape.lineTo(length, 0)
+    _shape.lineTo(0, 0)
 
-    return shape
+    return _shape
   }, [])
 
   const extrudeSettings = useMemo(

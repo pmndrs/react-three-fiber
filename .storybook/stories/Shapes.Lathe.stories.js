@@ -14,12 +14,12 @@ export default {
 
 function LatheScene() {
   const points = useMemo(() => {
-    const points = []
+    const _points = []
     for (let i = 0; i < 10; i++) {
-      points.push(new THREE.Vector2(Math.sin(i * 0.2) * 10 + 5, (i - 5) * 2))
+      _points.push(new THREE.Vector2(Math.sin(i * 0.2) * 10 + 5, (i - 5) * 2))
     }
 
-    return points
+    return _points
   }, [])
 
   const ref = useTurntable()

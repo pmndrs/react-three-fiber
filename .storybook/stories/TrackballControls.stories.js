@@ -29,7 +29,7 @@ function TrackballControlsScene() {
     }
 
     return pos
-  })
+  }, [])
 
   return (
     <>

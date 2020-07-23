@@ -13,7 +13,7 @@ export default {
   decorators: [(storyFn) => <Setup cameraPosition={[0, -10, 0]}>{storyFn()}</Setup>],
 }
 
-function Simple(props) {
+function Simple() {
   const scale = useAspect('cover', 1920, 1080, 1)
 
   return (
@@ -30,7 +30,7 @@ export const DefaultStory = () => (
 )
 DefaultStory.storyName = 'Default'
 
-function WithTexture(props) {
+function WithTexture() {
   const scale = useAspect('cover', 1920, 1080, 1)
 
   const [map] = useLoader(TextureLoader, [`https://source.unsplash.com/random/1920x1080`])
