@@ -64,7 +64,7 @@ export const Stars = forwardRef(
       const color = new Color()
       let r = radius + depth
       const increment = depth / count
-      for (var i = 0; i < count; i++) {
+      for (let i = 0; i < count; i++) {
         r -= increment * Math.random()
         positions.push(...genStar(r).toArray())
         color.setHSL(i / count, saturation, 0.9)
