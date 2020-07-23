@@ -20,7 +20,7 @@ export const PerspectiveCamera = forwardRef(({ children, makeDefault = false, ..
   )
 
   useLayoutEffect(() => {
-    if (makeDefault) {
+    if (makeDefault && cameraRef.current) {
       const oldCam = camera
       setDefaultCamera(cameraRef.current)
       return () => setDefaultCamera(oldCam)

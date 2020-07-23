@@ -3,12 +3,12 @@ import React from 'react'
 import { Setup } from '../Setup'
 
 import { Icosahedron } from '../../src/shapes'
-import { HTML } from '../../src/HTML'
+import { Html } from '../../src/Html'
 import { useTurntable } from '../useTurntable'
 
 export default {
-  title: 'Abstractions/HTML',
-  component: HTML,
+  title: 'Abstractions/Html',
+  component: Html,
   decorators: [(storyFn) => <Setup cameraPosition={[-20, 20, -20]}> {storyFn()}</Setup>],
 }
 
@@ -18,23 +18,23 @@ function HTMLScene() {
     <group ref={ref}>
       <Icosahedron args={[2, 2]} position={[3, 6, 4]}>
         <meshBasicMaterial attach="material" color="hotpink" wireframe />
-        <HTML scaleFactor={30} className="html-story-block">
+        <Html scaleFactor={30} className="html-story-block">
           First
-        </HTML>
+        </Html>
       </Icosahedron>
 
       <Icosahedron args={[2, 2]} position={[10, 0, 10]}>
         <meshBasicMaterial attach="material" color="hotpink" wireframe />
-        <HTML scaleFactor={30} className="html-story-block">
+        <Html scaleFactor={30} className="html-story-block">
           Second
-        </HTML>
+        </Html>
       </Icosahedron>
 
       <Icosahedron args={[2, 2]} position={[-10, 0, -10]}>
         <meshBasicMaterial attach="material" color="hotpink" wireframe />
-        <HTML scaleFactor={30} className="html-story-block">
+        <Html scaleFactor={30} className="html-story-block">
           Third
-        </HTML>
+        </Html>
       </Icosahedron>
     </group>
   )

@@ -6,8 +6,8 @@ import mergeRefs from 'react-merge-refs'
 
 type Props = JSX.IntrinsicElements['positionalAudio'] & {
   url: string
-  distance: number
-  loop: boolean
+  distance?: number
+  loop?: boolean
 }
 
 export const PositionalAudio = forwardRef(({ url, distance = 1, loop = true, ...props }: Props, ref) => {

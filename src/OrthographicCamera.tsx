@@ -14,7 +14,7 @@ export const OrthographicCamera = forwardRef(({ children, makeDefault = false, .
   const cameraRef = useUpdate<OrthographicCameraImpl>((cam) => cam.updateProjectionMatrix(), [size, props])
 
   useLayoutEffect(() => {
-    if (makeDefault) {
+    if (makeDefault && cameraRef.current) {
       const oldCam = camera
       setDefaultCamera(cameraRef.current)
       return () => setDefaultCamera(oldCam)

@@ -16,12 +16,29 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Cleanup on unmount, no left-overs, restore previous states
 
 ```
+# Using npm
+npm i drei --save
+
+# Using yarn
 yarn add drei
 ```
 
 ```jsx
 import { ... } from 'drei'
 ```
+
+#### Live Playground
+
+For examples of _drei_ in action, visit https://drei-storybook-beta.netlify.app/.
+
+OR
+
+Run the demo storybook on your computer:
+
+- Clone this repository
+- `yarn`
+- `yarn storybook`
+- Visit http://localhost:6006/
 
 # Index
 
@@ -47,9 +64,9 @@ import { ... } from 'drei'
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - Misc
-  - `<HTML/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
+  - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
   - `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
-  - `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+  - `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph)
   - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
   - `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
   - `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
@@ -66,8 +83,8 @@ A responsive [THREE.PerspectiveCamera](https://threejs.org/docs/index.html#api/e
 
 ```jsx
 <PerspectiveCamera
-  makeDefault               // Registers it as the default camera system-wide (default=false)
-  {...props}                // All THREE.PerspectiveCamera props are valid
+  makeDefault // Registers it as the default camera system-wide (default=false)
+  {...props} // All THREE.PerspectiveCamera props are valid
 >
   <mesh />
 </PerspectiveCamera>
@@ -106,13 +123,13 @@ Buffer-geometry short-cuts:
 
 ##### ⚡️ `<Text/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
 
-Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, using [troika-3d-text](https://github.com/protectwise/troika/tree/master/packages/troika-3d-text). All of troikas props are valid! 
+Hi-quality text rendering w/ signed distance fields (SDF) and antialiasing, using [troika-3d-text](https://github.com/protectwise/troika/tree/master/packages/troika-3d-text). All of troikas props are valid!
 
 ```jsx
 <Text
-  color="black"             // default
-  anchorX="center"          // default
-  anchorY="middle"          // default
+  color="black" // default
+  anchorX="center" // default
+  anchorY="middle" // default
 >
   hello world!
 </Text>
@@ -140,8 +157,8 @@ A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/
 
 ```jsx
 <Detailed
-  distances={[0, 10, 20]}   // Camera distances, correspends to the # of the children
-  {...props}                // All THREE.LOD props are valid
+  distances={[0, 10, 20]} // Camera distances, correspends to the # of the children
+  {...props} // All THREE.LOD props are valid
 >
   <mesh geometry={highDetail} />
   <mesh geometry={mediumDetail} />
@@ -155,10 +172,10 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 
 ```jsx
 <PositionalAudio
-  url="/sound.mp3"          // Url of the sound file
-  distance={1}              // Camera distance (default=1)
-  loop                      // Repat play (default=true)
-  {...props}                // All THREE.PositionalAudio props are valid
+  url="/sound.mp3" // Url of the sound file
+  distance={1} // Camera distance (default=1)
+  loop // Repat play (default=true)
+  {...props} // All THREE.PositionalAudio props are valid
 />
 ```
 
@@ -170,12 +187,12 @@ Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/c
 
 ```jsx
 <StandardEffects
-  smaa                      // Can be a boolean (default=true)
-  ao                        // Can be a boolean or all valid postprocessing AO props (default=true)
-  bloom                     // Can be a boolean or all valid postprocessing Bloom props (default=true)
-  edgeDetection={0.1}       // SMAA precision (default=0.1)
-  bloomOpacity={1}          // Bloom blendMode opacity (default=1)
-  effects={() => [...fx]}   // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
+  smaa // Can be a boolean (default=true)
+  ao // Can be a boolean or all valid postprocessing AO props (default=true)
+  bloom // Can be a boolean or all valid postprocessing Bloom props (default=true)
+  edgeDetection={0.1} // SMAA precision (default=0.1)
+  bloomOpacity={1} // Bloom blendMode opacity (default=1)
+  effects={() => [...fx]} // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
 />
 ```
 
@@ -190,8 +207,8 @@ This material makes your geometry wobble and wave around. It was taken from the 
   <boxBufferGeometry attach="geometry" />
   <MeshWobbleMaterial
     attach="material"
-    factor={1}              // Strength, 0 disables the effect (default=1)
-    speed={10}              // Speed (default=1)
+    factor={1} // Strength, 0 disables the effect (default=1)
+    speed={10} // Speed (default=1)
   />
 </mesh>
 ```
@@ -202,9 +219,9 @@ Adds a [sky](https://threejs.org/examples/webgl_shaders_sky.html) to your scene.
 
 ```jsx
 <Sky
-  distance={450000}         // Camera distance (default=450000)
-  sunPosition={[0, 1, 0]}   // Sun position normal (default=[0, 1, 0])
-  {...props}                // All three/examples/jsm/objects/Sky props are valid
+  distance={450000} // Camera distance (default=450000)
+  sunPosition={[0, 1, 0]} // Sun position normal (default=[0, 1, 0])
+  {...props} // All three/examples/jsm/objects/Sky props are valid
 />
 ```
 
@@ -214,12 +231,12 @@ Adds a blinking shader-based starfield to your scene.
 
 ```jsx
 <Stars
-  radius={100}              // Radius of the inner sphere (default=100)
-  depth={50}                // Depth of area where stars should fit (default=50)
-  count={5000}              // Amount of stars (default=5000)
-  factor={4}                // Size factor (default=4)
-  saturation={0}            // Saturation 0-1 (default=0)
-  fade                      // Faded dots (default=false)
+  radius={100} // Radius of the inner sphere (default=100)
+  depth={50} // Depth of area where stars should fit (default=50)
+  count={5000} // Amount of stars (default=5000)
+  factor={4} // Size factor (default=4)
+  saturation={0} // Saturation 0-1 (default=0)
+  fade // Faded dots (default=false)
 />
 ```
 
@@ -229,34 +246,34 @@ Injects [percent closer soft shadows (pcss)](https://threejs.org/examples/?q=pcs
 
 ```jsx
 softShadows({
-  frustrum: 3.75,           // Frustrum width (default: 3.75)
-  size: 0.005,              // World size (default: 0.005)
-  near: 9.5,                // Near plane (default: 9.5)
-  samples: 17,              // Samples (default: 17)
-  rings: 11,                // Rings (default: 11)
+  frustrum: 3.75, // Frustrum width (default: 3.75)
+  size: 0.005, // World size (default: 0.005)
+  near: 9.5, // Near plane (default: 9.5)
+  samples: 17, // Samples (default: 17)
+  rings: 11, // Rings (default: 11)
 })
 ```
 
 ## Misc
 
-#### ⚡️ `<HTML/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
+#### ⚡️ `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
 
 Allows you to tie HTML content to any object of your scene. It will be projected to the objects whereabouts automatically.
 
 ```jsx
-<HTML
-  prepend                   // Project content behind the canvas (default: false)
-  center                    // Adds a -50%/-50% css transform (default: false)
-  fullscreen                // Aligns to the upper-left corner, fills the screen (default:false)
-  scaleFactor={10}          // Scales children if set to a number (default=undefined)
-  zIndexRange={[100, 0]}    // Z-order range (default=[16777271, 0])
-  portal={domnodeRef}       // Reference to target container (default=undefined)
-  {...groupProps}           // All THREE.Group props are valid
-  {...divProps}             // All HTMLDivElement props are valid
+<Html
+  prepend // Project content behind the canvas (default: false)
+  center // Adds a -50%/-50% css transform (default: false)
+  fullscreen // Aligns to the upper-left corner, fills the screen (default:false)
+  scaleFactor={10} // If set (default: undefined), children will be scaled by this factor, and also by distance to a PerspectiveCamera.
+  zIndexRange={[100, 0]} // Z-order range (default=[16777271, 0])
+  portal={domnodeRef} // Reference to target container (default=undefined)
+  {...groupProps} // All THREE.Group props are valid
+  {...divProps} // All HTMLDivElement props are valid
 >
   <h1>hello</h1>
   <p>world</p>
-</HTML>
+</Html>
 ```
 
 #### ⚡️ `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
@@ -265,23 +282,38 @@ A cheap canvas-texture-based circular gradient.
 
 ```jsx
 <Shadow
-  color="black"             // Color (default:black)
-  colorStop={0}             // First gradient-stop (default:0)
-  opacity={0.5}             // Alpha (default:0.5)
-  fog={false}               // Reacts to fog (default=false)
+  color="black" // Color (default:black)
+  colorStop={0} // First gradient-stop (default:0)
+  opacity={0.5} // Alpha (default:0.5)
+  fog={false} // Reacts to fog (default=false)
 />
 ```
 
-#### ⚡️ `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph) ![](https://img.shields.io/badge/-useFrame-red)
+#### ⚡️ `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph)
 
 Adds [stats](https://github.com/mrdoob/stats.js/) to document.body. It takes over the render-loop!
 
 ```jsx
 <Stats
-  showPanel={0}             // Start-up panel (default=0)
-  className='stats'         // Optional className to add to the stats container dom element
-  {...props}                // All stats.js props are valid
+  showPanel={0} // Start-up panel (default=0)
+  className="stats" // Optional className to add to the stats container dom element
+  {...props} // All stats.js props are valid
 />
+```
+
+You can choose to mount Stats to a different DOM Element - for example, for custom styling:
+
+```jsx
+const node = useRef(document.createElement('div'))
+
+useEffect(() => {
+  node.current.id = 'test'
+  document.body.appendChild(node.current)
+
+  return () => document.body.removeChild(node.current)
+}, [])
+
+return <Stats parent={parent} />
 ```
 
 ##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
@@ -293,7 +325,7 @@ useLoader(
   GLTFLoader,
   url,
   draco(
-    '/draco-gtltf/'         // Path to the Draco binaries (default='/draco-gtltf/')
+    '/draco-gtltf/' // Path to the Draco binaries (default='/draco-gtltf/')
   )
 )
 ```
@@ -320,7 +352,7 @@ A hook for a quick way to add helpers to existing nodes in the scene. It handles
 
 ```jsx
 const mesh = useRef()
-useHelper(mesh, BoxHelper, "cyan")
+useHelper(mesh, BoxHelper, 'cyan')
 ```
 
 ##### ⚡️ `useAspect()`
