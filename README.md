@@ -15,7 +15,7 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Invalidate frames on any movement for those using invalidateFrameloop
 - Cleanup on unmount, no left-overs, restore previous states
 
-```
+```bash
 # Using npm
 npm i drei --save
 
