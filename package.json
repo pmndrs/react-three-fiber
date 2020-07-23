@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc --emitDeclarationOnly",
     "storybook": "start-storybook  -s ./.storybook/public -p 6006",
-    "build-storybook": "build-storybook"
+    "build-storybook": "build-storybook -s ./.storybook/public"
   },
   "husky": {
     "hooks": {
