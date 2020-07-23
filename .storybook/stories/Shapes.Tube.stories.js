@@ -35,8 +35,6 @@ function TubeScene() {
     return new CustomSinCurve(10)
   }, [])
 
-  console.log(path)
-
   const ref = useTurntable()
 
   return (
