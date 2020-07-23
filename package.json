@@ -11,6 +11,7 @@
     "build": "rollup -c",
     "prepare": "npm run build",
     "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
+    "eslint:storybook": "eslint .storybook/**/*.js  --ignore-pattern !.storybook",
     "test": "echo no tests yet",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc --emitDeclarationOnly",
