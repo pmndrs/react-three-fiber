@@ -154,8 +154,8 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   const sameProps = [] as string[]
   const handlers = [] as string[]
 
-  let i,
-    keys = Object.keys(newProps)
+  let i
+  let keys = Object.keys(newProps)
 
   for (i = 0; i < keys.length; i++) {
     if (is.equ(newProps[keys[i]], oldProps[keys[i]])) {
