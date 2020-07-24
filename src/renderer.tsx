@@ -151,32 +151,61 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   // Filter equals, events and reserved props
   const container = instance.__container
 
-  const { sameProps, handlers } = Object.keys(newProps).reduce(
-    (acc, key) => {
-      if (is.equ(newProps[key], oldProps[key])) acc.sameProps.push(key)
+  const sameProps = [] as string[]
+  const handlers = [] as string[]
 
-      // Event-handlers ...
-      //   are functions, that
-      //   start with "on", and
-      //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[key]) && key.startsWith('on')) {
-        if (key.includes('Pointer') || key.includes('Click') || key.includes('ContextMenu') || key.includes('Wheel')) {
-          acc.handlers.push(key)
-        }
+  let i,
+    keys = Object.keys(newProps)
+
+  for (i = 0; i < keys.length; i++) {
+    if (is.equ(newProps[keys[i]], oldProps[keys[i]])) {
+      sameProps.push(keys[i])
+    }
+
+    // Event-handlers ...
+    //   are functions, that
+    //   start with "on", and
+    //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
+    if (is.fun(newProps[keys[i]]) && keys[i].startsWith('on')) {
+      if (
+        keys[i].includes('Pointer') ||
+        keys[i].includes('Click') ||
+        keys[i].includes('ContextMenu') ||
+        keys[i].includes('Wheel')
+      ) {
+        handlers.push(keys[i])
       }
-      return acc
-    },
-    { sameProps: [] as string[], handlers: [] as string[] }
-  )
+    }
+  }
 
-  const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
-  const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
-    let { [prop]: _, ...rest } = acc
-    return rest
-  }, newProps)
+  const leftOvers = [] as string[]
+  keys = Object.keys(oldProps)
+  if (accumulative) {
+    for (i = 0; i < keys.length; i++) {
+      if (newProps[keys[i]] === void 0) {
+        leftOvers.push(keys[i])
+      }
+    }
+  }
+
+  const toFilter = [...sameProps, 'children', 'key', 'ref']
+  const filteredProps = { ...newProps }
+
+  // removes sameProps and reserved props from newProps
+  keys = Object.keys(filteredProps)
+  for (i = 0; i < keys.length; i++) {
+    if (toFilter.indexOf(keys[i]) > -1) {
+      delete filteredProps[keys[i]]
+    }
+  }
 
   // Add left-overs as undefined props so they can be removed
-  leftOvers.forEach((key) => key !== 'children' && (filteredProps[key] = undefined))
+  keys = Object.keys(leftOvers)
+  for (i = 0; i < keys.length; i++) {
+    if (keys[i] !== 'children') {
+      filteredProps[keys[i]] = undefined
+    }
+  }
 
   const filteredPropsEntries = Object.entries(filteredProps)
   if (filteredPropsEntries.length > 0) {
