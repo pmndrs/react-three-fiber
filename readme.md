@@ -4,7 +4,7 @@
 <a href="https://badge.fury.io/js/react-three-fiber"><img src="https://badge.fury.io/js/react-three-fiber.svg" alt="npm version"></a>
 <img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
 
-react-three-fiber is a React <a href="https://github.com/facebook/react/tree/master/packages/react-reconciler">reconciler</a> for Threejs on the web and react-native.
+react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for Threejs on the web and react-native.
 
 <br />
 
@@ -38,7 +38,7 @@ Building dynamic scene graphs declaratively with re-usable components makes deal
 
 #### Does it have limitations?
 
-None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
+None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
 
 #### Is it slower than raw Threejs?
 
