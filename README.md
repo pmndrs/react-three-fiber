@@ -29,7 +29,7 @@ import { ... } from 'drei'
 
 #### Live Playground
 
-For examples of _drei_ in action, visit https://drei-storybook-beta.netlify.app/.
+For examples of _drei_ in action, visit https://drei-storybook.netlify.app/.
 
 OR
 
