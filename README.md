@@ -110,6 +110,8 @@ If available controls have damping enabled by default, they manage their own upd
 
 ##### ⚡️ `<TrackballControls/>`
 
+##### ⚡️ `<DeviceOrientationControls/>`
+
 ##### ⚡️ `<TransformControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 
 ## Shapes
