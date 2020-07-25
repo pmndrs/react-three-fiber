@@ -65,14 +65,19 @@ Run the demo storybook on your computer:
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
 - Misc
+
   - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
   - `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
   - `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph)
-  - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
   - `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
   - `useCamera()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/react-three-fiber-viewcube-py4db)
   - `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw) ![](https://img.shields.io/badge/-useFrame-red)
   - `useAspect()`
+
+- Loaders
+  - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+  - `useGLTFLoader()`
+  - `useTextureLoader()`
 
 # Exports
 
@@ -317,20 +322,6 @@ useEffect(() => {
 return <Stats parent={parent} />
 ```
 
-##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
-
-Adds the Draco extension to your GLTFLoader.
-
-```jsx
-useLoader(
-  GLTFLoader,
-  url,
-  draco(
-    '/draco-gtltf/' // Path to the Draco binaries (default='/draco-gtltf/')
-  )
-)
-```
-
 ##### ⚡️ `meshBounds()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-basic-demo-8fpip)
 
 A very fast, but often good-enough bounds-only raycast for meshes. You can use this if performance has precidence over pointer precision.
@@ -371,4 +362,46 @@ return (
   <mesh scale={scale}>
     <planeBufferGeometry />
     <meshBasicMaterial map={imageTexture} />
+```
+
+## ⚡️ Loaders
+
+#### ⚡️ `useGLTFLoader()`
+
+A convenience hook that uses `useLoader`, `GLTFLoader` and `draco`:
+
+```jsx
+useGLTFLoader(
+  url,
+  true // use draco binaries in /draco-gltf/
+)
+
+useGLFTLoader(
+  url,
+  '/my-draco-binaries' // use draco binaries from a custom path
+)
+```
+
+#### ⚡️ `useTextureLoader()`
+
+A convenience hook that uses `useLoader` and `TextureLoader`
+
+```jsx
+const texture = useTextureLoader(url)
+
+const [texture1, texture2] = useTextureLoader([texture1, texture2])
+```
+
+##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
+
+Adds the Draco extension to your GLTFLoader, to be used in conjuction with `useLoader` and `GLTFLoader` when more control is needed.
+
+```jsx
+useLoader(
+  GLTFLoader,
+  url,
+  draco(
+    '/draco-gtltf/' // Path to the Draco binaries (default='/draco-gtltf/')
+  )
+)
 ```
