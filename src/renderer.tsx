@@ -89,8 +89,8 @@ export function renderGl(
 let running = false
 function renderLoop(timestamp: number) {
   running = true
+  
   let repeat = 0
-  // Run global effects
   let i
   // Run global effects
   for (i = 0; i < globalEffects.length; i++) {
