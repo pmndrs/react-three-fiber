@@ -51,7 +51,7 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.M
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
   useLayoutEffect(() => void forceUpdate((i) => !i), [ref.current])
-  return [ref, ref.current]
+  return ref
 }
 
 type Extensions = (loader: THREE.Loader) => void
