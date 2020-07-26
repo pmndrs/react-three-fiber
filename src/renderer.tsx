@@ -51,50 +51,86 @@ export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, 
 export function renderGl(
   state: React.MutableRefObject<CanvasContext>,
   timestamp: number,
-  repeat: number = 0,
-  runGlobalEffects: boolean = false
+  repeat = 0,
+  runGlobalEffects = false
 ) {
+  let i
   // Run global effects
-  if (runGlobalEffects) globalEffects.forEach((effect) => effect(timestamp) && repeat++)
+  if (runGlobalEffects) {
+    for (i = 0; i < globalEffects.length; i++) {
+      globalEffects[i](timestamp)
+      repeat++
+    }
+  }
+
   // Run local effects
   const delta = state.current.clock.getDelta()
-  state.current.subscribers.forEach((sub) => sub.ref.current(state.current, delta))
+
+  for (i = 0; i < state.current.subscribers.length; i++) {
+    state.current.subscribers[i].ref.current(state.current, delta)
+  }
+
   // Decrease frame count
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Render content
   if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
-  // Run global effects
-  if (runGlobalEffects) globalAfterEffects.forEach((effect) => effect(timestamp))
+
+  // Run global after-effects
+  if (runGlobalEffects) {
+    for (i = 0; i < globalAfterEffects.length; i++) {
+      globalAfterEffects[i](timestamp)
+    }
+  }
+
   return repeat
 }
 
 let running = false
 function renderLoop(timestamp: number) {
   running = true
+  
   let repeat = 0
+  let i
   // Run global effects
-  globalEffects.forEach((effect) => effect(timestamp) && repeat++)
+  for (i = 0; i < globalEffects.length; i++) {
+    globalEffects[i](timestamp)
+    repeat++
+  }
+
   roots.forEach((root) => {
     const state = root.containerInfo.__state
     // If the frameloop is invalidated, do not run another frame
-    if (state.current.active && state.current.ready && (!state.current.invalidateFrameloop || state.current.frames > 0))
+    if (
+      state.current.active &&
+      state.current.ready &&
+      (!state.current.invalidateFrameloop || state.current.frames > 0)
+    ) {
       repeat = renderGl(state, timestamp, repeat)
+    }
   })
+
   // Run global after-effects
-  globalAfterEffects.forEach((effect) => effect(timestamp))
-  if (repeat !== 0) return requestAnimationFrame(renderLoop)
-  else {
+  for (i = 0; i < globalAfterEffects.length; i++) {
+    globalAfterEffects[i](timestamp)
+  }
+
+  if (repeat !== 0) {
+    return requestAnimationFrame(renderLoop)
+  } else {
     // Tail call effects, they are called when rendering stops
-    globalTailEffects.forEach((effect) => effect(timestamp))
+    for (i = 0; i < globalTailEffects.length; i++) {
+      globalTailEffects[i](timestamp)
+    }
   }
   // Flag end of operation
   running = false
 }
 
-export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames: number = 2) {
-  if (state === true) roots.forEach((root) => (root.containerInfo.__state.current.frames = frames))
-  else if (state && state.current) {
+export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 2) {
+  if (state === true) {
+    roots.forEach((root) => (root.containerInfo.__state.current.frames = frames))
+  } else if (state && state.current) {
     if (state.current.vr) return
     state.current.frames = frames
   }
@@ -111,35 +147,65 @@ export function forceResize() {
 let catalogue: ObjectHash = {}
 export const extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative: boolean = false) {
+export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
-  const { sameProps, handlers } = Object.keys(newProps).reduce(
-    (acc, key) => {
-      if (is.equ(newProps[key], oldProps[key])) acc.sameProps.push(key)
 
-      // Event-handlers ...
-      //   are functions, that
-      //   start with "on", and
-      //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[key]) && key.startsWith('on')) {
-        if (key.includes('Pointer') || key.includes('Click') || key.includes('ContextMenu') || key.includes('Wheel')) {
-          acc.handlers.push(key)
-        }
+  const sameProps = [] as string[]
+  const handlers = [] as string[]
+
+  let i
+  let keys = Object.keys(newProps)
+
+  for (i = 0; i < keys.length; i++) {
+    if (is.equ(newProps[keys[i]], oldProps[keys[i]])) {
+      sameProps.push(keys[i])
+    }
+
+    // Event-handlers ...
+    //   are functions, that
+    //   start with "on", and
+    //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
+    if (is.fun(newProps[keys[i]]) && keys[i].startsWith('on')) {
+      if (
+        keys[i].includes('Pointer') ||
+        keys[i].includes('Click') ||
+        keys[i].includes('ContextMenu') ||
+        keys[i].includes('Wheel')
+      ) {
+        handlers.push(keys[i])
       }
-      return acc
-    },
-    { sameProps: [] as string[], handlers: [] as string[] }
-  )
+    }
+  }
 
-  const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
-  const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
-    let { [prop]: _, ...rest } = acc
-    return rest
-  }, newProps)
+  const leftOvers = [] as string[]
+  keys = Object.keys(oldProps)
+  if (accumulative) {
+    for (i = 0; i < keys.length; i++) {
+      if (newProps[keys[i]] === void 0) {
+        leftOvers.push(keys[i])
+      }
+    }
+  }
+
+  const toFilter = [...sameProps, 'children', 'key', 'ref']
+  const filteredProps = { ...newProps }
+
+  // removes sameProps and reserved props from newProps
+  keys = Object.keys(filteredProps)
+  for (i = 0; i < keys.length; i++) {
+    if (toFilter.indexOf(keys[i]) > -1) {
+      delete filteredProps[keys[i]]
+    }
+  }
 
   // Add left-overs as undefined props so they can be removed
-  leftOvers.forEach((key) => key !== 'children' && (filteredProps[key] = undefined))
+  keys = Object.keys(leftOvers)
+  for (i = 0; i < keys.length; i++) {
+    if (keys[i] !== 'children') {
+      filteredProps[keys[i]] = undefined
+    }
+  }
 
   const filteredPropsEntries = Object.entries(filteredProps)
   if (filteredPropsEntries.length > 0) {
@@ -161,15 +227,18 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         const isColorManagement = instance.__container?.__state.current.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
-          if (Array.isArray(value)) target.set(...value)
+          if (Array.isArray(value)) {
+            target.set(...value)
+          }
           // Test again target.copy(class) next ...
           else if (
             target.copy &&
             value &&
             (value as any).constructor &&
             target.constructor.name === (value as any).constructor.name
-          )
+          ) {
             target.copy(value)
+          }
           // If nothing else fits, just set the single value, ignore undefined
           // https://github.com/react-spring/react-three-fiber/issues/274
           else if (value !== undefined) {
@@ -288,8 +357,9 @@ function createInstance(
 
 function appendChild(parentInstance: any, child: any) {
   if (child) {
-    if (child.isObject3D) parentInstance.add(child)
-    else {
+    if (child.isObject3D) {
+      parentInstance.add(child)
+    } else {
       parentInstance.__objects.push(child)
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
@@ -299,7 +369,9 @@ function appendChild(parentInstance: any, child: any) {
       } else if (child.attachObject) {
         if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
-      } else if (child.attach) parentInstance[child.attach] = child
+      } else if (child.attach) {
+        parentInstance[child.attach] = child
+      }
     }
     updateInstance(child)
     invalidateInstance(child)
@@ -316,12 +388,14 @@ function insertBefore(parentInstance: any, child: any, beforeChild: any) {
       const index = restSiblings.indexOf(beforeChild)
       parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
       updateInstance(child)
-    } else appendChild(parentInstance, child) // TODO: order!!!
+    } else {
+      appendChild(parentInstance, child)
+    } // TODO: order!!!
     invalidateInstance(child)
   }
 }
 
-function removeRecursive(array: any, parent: any, clone: boolean = false) {
+function removeRecursive(array: any, parent: any, clone = false) {
   if (array) {
     // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
     const target = clone ? [...array] : array
@@ -337,10 +411,13 @@ function removeChild(parentInstance: any, child: any) {
       child.parent = null
       if (parentInstance.__objects) parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
       // Remove attachment
-      if (child.attachArray)
+      if (child.attachArray) {
         parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: any) => x !== child)
-      else if (child.attachObject) delete parentInstance[child.attachObject[0]][child.attachObject[1]]
-      else if (child.attach) parentInstance[child.attach] = null
+      } else if (child.attachObject) {
+        delete parentInstance[child.attachObject[0]][child.attachObject[1]]
+      } else if (child.attach) {
+        parentInstance[child.attach] = null
+      }
     }
     invalidateInstance(child)
 
@@ -348,8 +425,9 @@ function removeChild(parentInstance: any, child: any) {
     if (child.dispose !== null) {
       run(idlePriority, () => {
         // Remove interactivity
-        if (child.__container)
+        if (child.__container) {
           child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+        }
         // Remove nested child objects
         removeRecursive(child.__objects, child)
         removeRecursive(child.children, child, true)
@@ -496,11 +574,12 @@ export function render(
 
 export function unmountComponentAtNode(container: THREE.Object3D, callback?: (c: THREE.Object3D) => void) {
   const root = roots.get(container)
-  if (root)
+  if (root) {
     Renderer.updateContainer(null, root, null, () => {
       roots.delete(container)
       if (callback) callback(container)
     })
+  }
 }
 
 export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
