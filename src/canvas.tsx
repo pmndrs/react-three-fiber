@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { useMemo, useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
-import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './reconciler'
+import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './renderer'
 import { TinyEmitter } from 'tiny-emitter'
 import { ReactThreeFiber } from './three-types'
 import { RectReadOnly } from 'react-use-measure'
