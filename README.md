@@ -285,6 +285,16 @@ Allows you to tie HTML content to any object of your scene. It will be projected
 </Html>
 ```
 
+#### ⚡️ `<Reflector/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/jolly-benz-pmk9j)
+
+Easily add reflection to any object
+
+```jsx
+<Reflector>
+  <planeBufferGeometry args={[2, 5]} attach="geometry" />
+</Reflector>
+```
+
 #### ⚡️ `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
 
 A cheap canvas-texture-based circular gradient.
