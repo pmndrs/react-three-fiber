@@ -3,6 +3,7 @@ coverage/
 dist/
 build/
 types/
+storybook-static/
 Thumbs.db
 ehthumbs.db
 Desktop.ini

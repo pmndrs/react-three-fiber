@@ -21,7 +21,11 @@ export const PositionalAudio = forwardRef(({ url, distance = 1, loop = true, ...
     sound.current?.setLoop(loop)
     sound.current?.play()
     camera.add(listener)
-    return () => void camera.remove(listener)
+    return () => {
+      camera.remove(listener)
+      sound.current?.stop()
+      sound.current?.disconnect()
+    }
   }, [])
   return <positionalAudio ref={mergeRefs([sound, ref])} args={[listener]} {...props} />
 })
