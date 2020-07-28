@@ -1,7 +1,7 @@
 {
   "name": "react-three-fiber",
   "private": true,
-  "version": "5.0.0-beta.11",
+  "version": "5.0.0-beta.12",
   "description": "React-fiber renderer for THREE.js",
   "main": "web.cjs.js",
   "module": "web.js",
@@ -85,6 +85,8 @@
     "@babel/preset-react": "7.10.4",
     "@babel/preset-typescript": "^7.10.4",
     "@rollup/plugin-commonjs": "^14.0.0",
+    "@rollup/plugin-inject": "^4.0.2",
+    "@rollup/plugin-strip": "^2.0.0",
     "@types/jest": "^26.0.7",
     "@types/lodash-es": "^4.17.3",
     "@types/react": "^16.9.43",

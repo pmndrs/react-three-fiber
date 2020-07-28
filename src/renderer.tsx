@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { Layers, Color, Texture, sRGBEncoding } from 'three'
 import React from 'react'
 //@ts-ignore
 import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
@@ -227,7 +226,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         }
         // Special treatment for objects with support for set/copy
         const isColorManagement = instance.__container?.__state.current.colorManagement
-        if (target && target.set && (target.copy || target instanceof Layers)) {
+        if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {
             target.set(...value)
@@ -248,7 +247,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
 
             // Auto-convert sRGB colors, for now ...
             // https://github.com/react-spring/react-three-fiber/issues/344
-            if (isColorManagement && target instanceof Color) {
+            if (isColorManagement && target instanceof THREE.Color) {
               target.convertSRGBToLinear()
             }
           }
@@ -258,8 +257,8 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
 
           // Auto-convert sRGB textures, for now ...
           // https://github.com/react-spring/react-three-fiber/issues/344
-          if (isColorManagement && root[key] instanceof Texture) {
-            root[key].encoding = sRGBEncoding
+          if (isColorManagement && root[key] instanceof THREE.Texture) {
+            root[key].encoding = THREE.sRGBEncoding
           }
         }
 

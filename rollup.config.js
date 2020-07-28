@@ -40,7 +40,25 @@ function targetTypings(entry, out) {
   }
 }
 
-function createConfig(entry, out) {
+// https://github.com/google/closure-compiler/issues/3650
+// Prepends a three import statement at the top of all exports
+// This is because the closure compiler removes it for no reason
+function addImport(out) {
+  return {
+    writeBundle() {
+      return fs.lstat(out).then(async () => {
+        const data = await fs.readFile(out)
+        const fd = await fs.open(out, 'w+')
+        const insert = new Buffer.from(`import * as THREE from "three";`)
+        await fd.write(insert, 0, insert.length, 0)
+        await fd.write(data, 0, data.length, insert.length)
+        await fd.close()
+      })
+    },
+  }
+}
+
+function createConfig(entry, out, closure = true) {
   return [
     {
       input: `./src/${entry}`,
@@ -52,10 +70,12 @@ function createConfig(entry, out) {
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
         resolve({ extensions }),
         targetTypings(entry, out),
-        /*compiler({
-          compilation_level: 'SIMPLE_OPTIMIZATIONS',
-          jscomp_off: 'checkVars',
-        }),*/
+        closure &&
+          compiler({
+            compilation_level: 'SIMPLE',
+            jscomp_off: 'checkVars',
+          }),
+        closure && addImport(`dist/${out}.js`),
         sizeSnapshot(),
       ],
     },
@@ -70,6 +90,12 @@ function createConfig(entry, out) {
         sizeSnapshot(),
         resolve({ extensions }),
         targetTypings(entry, out),
+        closure &&
+          compiler({
+            compilation_level: 'SIMPLE',
+            jscomp_off: 'checkVars',
+          }),
+        closure && addImport(`dist/${out}.cjs.js`),
       ],
     },
   ]
@@ -80,7 +106,6 @@ export default [
   ...createConfig('targets/svg', 'svg'),
   ...createConfig('targets/css2d', 'css2d'),
   ...createConfig('targets/css3d', 'css3d'),
-  //...createConfig('extras/index', 'extras'),
-  ...createConfig('targets/native/index', 'native'),
-  ...createConfig('components', 'components'),
+  ...createConfig('targets/native/index', 'native', false),
+  ...createConfig('components', 'components', false),
 ]
