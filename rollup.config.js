@@ -43,13 +43,13 @@ function targetTypings(entry, out) {
 // https://github.com/google/closure-compiler/issues/3650
 // Prepends a three import statement at the top of all exports
 // This is because the closure compiler removes it for no reason
-function addImport(out) {
+function addImport(out, text) {
   return {
     writeBundle() {
       return fs.lstat(out).then(async () => {
         const data = await fs.readFile(out)
         const fd = await fs.open(out, 'w+')
-        const insert = new Buffer.from(`import * as THREE from "three";`)
+        const insert = new Buffer.from(text)
         await fd.write(insert, 0, insert.length, 0)
         await fd.write(data, 0, data.length, insert.length)
         await fd.close()
@@ -75,7 +75,7 @@ function createConfig(entry, out, closure = true) {
             compilation_level: 'SIMPLE',
             jscomp_off: 'checkVars',
           }),
-        closure && addImport(`dist/${out}.js`),
+        closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),
         sizeSnapshot(),
       ],
     },
@@ -90,12 +90,6 @@ function createConfig(entry, out, closure = true) {
         sizeSnapshot(),
         resolve({ extensions }),
         targetTypings(entry, out),
-        closure &&
-          compiler({
-            compilation_level: 'SIMPLE',
-            jscomp_off: 'checkVars',
-          }),
-        closure && addImport(`dist/${out}.cjs.js`),
       ],
     },
   ]
