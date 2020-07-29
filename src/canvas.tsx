@@ -417,9 +417,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           }
 
           fn(raycastEvent)
-          // Event bubbling may me interrupted by stopPropagation, but that should only include
-          // events that aren't capturing, since these are in the middle of a gesture and should not
-          // be disturbed until they resolve.
           if (localState.stopped === true) {
             // Propagation is stopped, remove all other hover records
             // An event handler is only allowed to flush other handlers if it is hovered itself
