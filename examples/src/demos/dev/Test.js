@@ -1,32 +1,67 @@
+import React, { useState, useCallback, useRef } from 'react'
+import { Canvas } from 'react-three-fiber'
 import * as THREE from 'three'
-import React, { Suspense } from 'react'
-import { Canvas, useLoader } from 'react-three-fiber'
 
-function M() {
-  const t = useLoader(
-    THREE.TextureLoader,
-    `https://raw.githubusercontent.com/flowers1225/threejs-earth/master/src/img/earth4.jpg`
-  )
+function Ball() {
+  const [pos, setPos] = useState(new THREE.Vector3())
+  const isPressed = useRef(false)
+
+  const onPointerDown = useCallback((e) => {
+    isPressed.current = true
+    e.target.setPointerCapture(e.pointerId)
+  }, [])
+
+  const onPointerUp = useCallback((e) => {
+    isPressed.current = false
+    e.target.releasePointerCapture(e.pointerId)
+  }, [])
+
+  const onPointerMove = useCallback((e) => {
+    if (isPressed.current) {
+      setPos(e.unprojectedPoint.clone().setZ(0))
+    }
+  }, [])
+
   return (
-    <>
-      <mesh position={[-1, 0, 0]}>
-        <boxBufferGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" color="hotpink" />
-      </mesh>
-      <mesh position={[1, 0, 0]}>
-        <boxBufferGeometry attach="geometry" />
-        <meshBasicMaterial attach="material" map={t} />
-      </mesh>
-    </>
+    <mesh position={pos} onPointerMove={onPointerMove} onPointerDown={onPointerDown} onPointerUp={onPointerUp}>
+      <boxBufferGeometry attach="geometry" args={[10, 32, 32]} />
+      <meshBasicMaterial attach="material" color={0x000000} />
+    </mesh>
+  )
+}
+
+function Cube() {
+  const onPointerOver = useCallback((e) => {
+    e.stopPropagation()
+  }, [])
+
+  return (
+    <mesh onPointerOver={onPointerOver} position={new THREE.Vector3(0, 0, -20)}>
+      <boxBufferGeometry attach="geometry" args={[800, 400, 40]} />
+      <meshBasicMaterial attach="material" color={0xfcfc00} />
+    </mesh>
   )
 }
 
 export default function App() {
   return (
-    <Canvas colorManagement style={{ background: '#272730' }}>
-      <Suspense fallback={null}>
-        <M />
-      </Suspense>
-    </Canvas>
+    <>
+      <Canvas
+        gl={{ alpha: false, antialias: false, logarithmicDepthBuffer: true }}
+        camera={{ fov: 75, position: [0, 0, 70] }}
+        orthographic
+        onCreated={({ gl }) => {
+          gl.setClearColor('white')
+          gl.toneMapping = THREE.ACESFilmicToneMapping
+          gl.outputEncoding = THREE.sRGBEncoding
+        }}>
+        <ambientLight intensity={1.1} />
+        <pointLight position={[100, 100, 100]} intensity={2.2} />
+        <pointLight position={[-100, -100, -100]} intensity={5} color="red" />
+
+        <Ball />
+        <Cube />
+      </Canvas>
+    </>
   )
 }

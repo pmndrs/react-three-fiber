@@ -321,8 +321,9 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
       // #16031: (https://github.com/mrdoob/three.js/issues/16031)
       // Allow custom userland intersect sort order
-      if (raycaster && raycaster.filter && sharedState.current)
+      if (raycaster && raycaster.filter && sharedState.current) {
         intersects = raycaster.filter(intersects, sharedState.current)
+      }
 
       for (let intersect of intersects) {
         let eventObject: THREE.Object3D | null = intersect.object
@@ -382,9 +383,10 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
               state.current.captured = []
             }
             // Push hits to the array
-            if (state.current.captured)
+            if (state.current.captured) {
               state.current.captured.push(hit)
-              // Call the original event now
+            }
+            // Call the original event now
             ;(event.target as any).setPointerCapture(id)
           }
 
@@ -398,7 +400,14 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
             ray: defaultRaycaster.ray,
             camera: state.current.camera,
             // Hijack stopPropagation, which just sets a flag
-            stopPropagation: () => (raycastEvent.stopped = localState.stopped = true),
+            stopPropagation: () => {
+              // https://github.com/react-spring/react-three-fiber/issues/596
+              // Events are not allowed to stop propagation if the pointer has been captured
+              const cap = state.current.captured
+              if (!cap || cap.find((h) => h.eventObject.id === hit.eventObject.id)) {
+                raycastEvent.stopped = localState.stopped = true
+              }
+            },
             // Pointer-capture needs the hit, on which the user may call stopPropagation()
             // This makes it harder to use the actual event, because then we loose the connection
             // to the actual hit, which would mean it's picking up all intersects ...
@@ -411,7 +420,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           // Event bubbling may me interrupted by stopPropagation, but that should only include
           // events that aren't capturing, since these are in the middle of a gesture and should not
           // be disturbed until they resolve.
-          if (localState.stopped === true && localState.captured == false) {
+          if (localState.stopped === true) {
             // Propagation is stopped, remove all other hover records
             // An event handler is only allowed to flush other handlers if it is hovered itself
             if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object)) {
