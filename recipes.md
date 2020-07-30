@@ -10,7 +10,6 @@
 - [Re-parenting](#re-parenting)
 - [Rendering only when needed](#rendering-only-when-needed)
 - [Enabling VR](#enabling-vr)
-- [Switching the default renderer](#switching-the-default-renderer)
 - [Reducing bundle-size](#reducing-bundle-size)
 - [Usage with React Native](#usage-with-react-native)
 
@@ -207,27 +206,6 @@ import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
 import { Canvas } from 'react-three-fiber'
 
 <Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
-```
-
-## Switching the default renderer
-
-If you want to exchange the default renderer you can. [Here's](https://codesandbox.io/s/yq90n32zmx) a small example.
-
-```jsx
-import { render, unmountComponentAtNode } from 'react-three-fiber'
-
-const renderer = new THREE.SVGRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-const scene = new THREE.Scene()
-
-render((
-  <mesh>
-    <sphereGeometry name="geometry" args={[1, 16, 16]} />
-    <meshBasicMaterial name="material" />
-  </mesh>
-), scene)
 ```
 
 ## Reducing bundle-size
