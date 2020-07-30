@@ -82,12 +82,17 @@ float PCSS(sampler2D shadowMap, vec4 coords) {
 	return PCF_Filter(shadowMap, uv, zReceiver, filterRadius);
 }`
 
+let deployed = false
 export const softShadows = (props: Props) => {
-  let shader = THREE.ShaderChunk.shadowmap_pars_fragment
-  shader = shader.replace('#ifdef USE_SHADOWMAP', '#ifdef USE_SHADOWMAP\n' + pcss({ ...props }))
-  shader = shader.replace(
-    '#if defined( SHADOWMAP_TYPE_PCF )',
-    '\nreturn PCSS(shadowMap, shadowCoord);\n#if defined( SHADOWMAP_TYPE_PCF )'
-  )
-  THREE.ShaderChunk.shadowmap_pars_fragment = shader
+  // Avoid adding the effect twice, which may happen in HMR scenarios
+  if (!deployed) {
+    deployed = true
+    let shader = THREE.ShaderChunk.shadowmap_pars_fragment
+    shader = shader.replace('#ifdef USE_SHADOWMAP', '#ifdef USE_SHADOWMAP\n' + pcss({ ...props }))
+    shader = shader.replace(
+      '#if defined( SHADOWMAP_TYPE_PCF )',
+      '\nreturn PCSS(shadowMap, shadowCoord);\n#if defined( SHADOWMAP_TYPE_PCF )'
+    )
+    THREE.ShaderChunk.shadowmap_pars_fragment = shader
+  }
 }
