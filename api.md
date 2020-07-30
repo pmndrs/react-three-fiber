@@ -434,9 +434,8 @@ At the moment React context [can not be readily used between two renderers](http
 const forwardContext = React.createContext()
 
 function App() {
-  const state = useContext(forwardContext)
   return (
     <Canvas>
-      <forwardContext.Provider value={state}>
-        {/* children can now read from forwardContext */}
+      <forwardContext.Provider value={useContext(originalContext)}>
+        {/* children can now read state from forwardContext */}
 ```
