@@ -125,6 +125,7 @@ Some reading material:
 - 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
 - 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
 - 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR controllers and events
+- 📬 [react-postprocessing](https://github.com/react-spring/react-postprocessing), post-processing effects
 - 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
 - 🐻 [zustand](https://github.com/react-spring/zustand), state management
 - ✌️ [react-spring](https://github.com/react-spring/react-spring), a spring-physics-based animation library
