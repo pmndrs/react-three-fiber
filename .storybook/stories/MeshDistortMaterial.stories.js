@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { withKnobs, number, boolean } from '@storybook/addon-knobs'
+import { withKnobs, number } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 import { MeshDistortMaterial } from '../../src/MeshDistortMaterial'
