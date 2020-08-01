@@ -62,6 +62,7 @@ Run the demo storybook on your computer:
   - `<StandardEffects/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
 - Shaders
   - `<MeshWobbleMaterial/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-g5373)
+  - `<MeshDistortMaterial/>`
   - `<Sky/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
@@ -220,6 +221,21 @@ This material makes your geometry wobble and wave around. It was taken from the 
   <MeshWobbleMaterial
     attach="material"
     factor={1} // Strength, 0 disables the effect (default=1)
+    speed={10} // Speed (default=1)
+  />
+</mesh>
+```
+
+##### ⚡️ `<MeshDistortMaterial/>`
+
+This material makes your geometry distort following simplex noise.
+
+```jsx
+<mesh>
+  <boxBufferGeometry attach="geometry" />
+  <MeshDistortMaterial
+    attach="material"
+    distort={1} // Strength, 0 disables the effect (default=1)
     speed={10} // Speed (default=1)
   />
 </mesh>
