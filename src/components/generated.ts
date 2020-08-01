@@ -104,7 +104,6 @@ export const LoaderUtils = ('loaderUtils' as any) as ThreeFiberComponents['Loade
 export const AudioLoader = ('audioLoader' as any) as ThreeFiberComponents['AudioLoader']
 export const SpotLightShadow = ('spotLightShadow' as any) as ThreeFiberComponents['SpotLightShadow']
 export const SpotLight = ('spotLight' as any) as ThreeFiberComponents['SpotLight']
-export const PointLightShadow = ('pointLightShadow' as any) as ThreeFiberComponents['PointLightShadow']
 export const PointLight = ('pointLight' as any) as ThreeFiberComponents['PointLight']
 export const RectAreaLight = ('rectAreaLight' as any) as ThreeFiberComponents['RectAreaLight']
 export const HemisphereLight = ('hemisphereLight' as any) as ThreeFiberComponents['HemisphereLight']
