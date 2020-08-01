@@ -81,6 +81,7 @@ Run the demo storybook on your computer:
   - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
   - `useGLTFLoader()`
   - `useTextureLoader()`
+  - `useCubeTextureLoader()`
 
 # Exports
 
@@ -405,6 +406,17 @@ A convenience hook that uses `useLoader` and `TextureLoader`
 const texture = useTextureLoader(url)
 
 const [texture1, texture2] = useTextureLoader([texture1, texture2])
+```
+
+#### ⚡️ `useCubeTextureLoader()`
+
+A convenience hook that uses `useLoader` and `CubeTextureLoader`
+
+```jsx
+const envMap = useCubeTextureLoader(
+  ['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'], 
+  { path: 'cube/' }
+)
 ```
 
 ##### ⚡️ `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
