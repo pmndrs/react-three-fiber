@@ -7,7 +7,7 @@ import { ResizeContainer, ContainerProps } from './shared/web/ResizeContainer'
 
 export const Canvas = React.memo(function Canvas({ children, ...props }: ContainerProps) {
   const canvasRef = useRef<HTMLCanvasElement>()
-  const renderer = WebGL1Renderer ? (props.gl2 ? WebGLRenderer : WebGL1Renderer) : WebGLRenderer
+  const renderer = props.webgl1 ? WebGL1Renderer : WebGLRenderer
   return (
     <ResizeContainer
       {...props}
@@ -19,7 +19,6 @@ export const Canvas = React.memo(function Canvas({ children, ...props }: Contain
             //stencil: false,
             //depth: false,
             canvas: canvasRef.current,
-            context: props.gl2 ? (canvasRef.current.getContext('webgl2', params) as WebGLRenderingContext) : undefined,
             ...params,
           })
           return temp

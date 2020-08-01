@@ -48,7 +48,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
     effects,
     children,
     vr,
-    gl2,
+    webgl1,
     concurrent,
     shadowMap,
     colorManagement,
