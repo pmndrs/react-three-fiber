@@ -1,4 +1,4 @@
-import React, {useRef} from 'react'
+import React, { useRef } from 'react'
 import { MeshPhysicalMaterial, MeshPhysicalMaterialParameters, Shader } from 'three'
 import { extend, useFrame } from 'react-three-fiber'
 // eslint-disable-next-line
@@ -9,33 +9,33 @@ import mergeRefs from 'react-merge-refs'
 import distort from './glsl/distort.vert'
 
 type DistortMaterialType = JSX.IntrinsicElements['meshPhysicalMaterial'] & {
-    time?: number
-    distort: number
-    radius: number
-  }
+  time?: number
+  distort: number
+  radius: number
+}
 
-  type Props = DistortMaterialType & {
-    speed?: number
-    factor?: number
-  } 
+type Props = DistortMaterialType & {
+  speed?: number
+  factor?: number
+}
 
 declare global {
-    namespace JSX {
-        // eslint-disable-next-line @typescript-eslint/interface-name-prefix
-        interface IntrinsicElements {
-        distortMaterialImpl: DistortMaterialType
-        }
+  namespace JSX {
+    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
+    interface IntrinsicElements {
+      distortMaterialImpl: DistortMaterialType
     }
+  }
 }
 
 interface Uniform<T> {
-    value: T
+  value: T
 }
 
-class DistortMaterialImpl extends MeshPhysicalMaterial{
-    _time: Uniform<number>; 
-    _distort: Uniform<number>;
-    _radius: Uniform<number>;
+class DistortMaterialImpl extends MeshPhysicalMaterial {
+  _time: Uniform<number>
+  _distort: Uniform<number>
+  _radius: Uniform<number>
 
   constructor(parameters: MeshPhysicalMaterialParameters) {
     super(parameters)
@@ -95,9 +95,8 @@ class DistortMaterialImpl extends MeshPhysicalMaterial{
 extend({ DistortMaterialImpl })
 
 export const MeshDistortMaterial = React.forwardRef(({ speed = 1, ...props }: Props, ref) => {
-    const material = useRef<DistortMaterialType>()
-    useFrame((state) => material.current && (material.current.time = state.clock.getElapsedTime() * speed))
-    
-    return <distortMaterialImpl ref={mergeRefs([ref, material])} attach="material" {...props} />
-  })
-  
+  const material = useRef<DistortMaterialType>()
+  useFrame((state) => material.current && (material.current.time = state.clock.getElapsedTime() * speed))
+
+  return <distortMaterialImpl ref={mergeRefs([ref, material])} attach="material" {...props} />
+})
