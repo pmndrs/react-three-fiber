@@ -23,15 +23,30 @@ declare global {
   }
 }
 
-function WobbleMaterialImpl(parameters: MeshStandardMaterialParameters) {
-  MeshStandardMaterial.call(this)
-  this.setValues(parameters)
-  this._time = { value: 0 }
-  this._factor = { value: 1 }
-  this.onBeforeCompile = (shader: Shader) => {
+interface Uniform<T> {
+  value: T
+}
+
+class WobbleMaterialImpl extends MeshStandardMaterial {
+  _time: Uniform<number>
+  _factor: Uniform<number>
+
+  constructor(parameters: MeshStandardMaterialParameters) {
+    super(parameters)
+    this.setValues(parameters)
+    this._time = { value: 0 }
+    this._factor = { value: 1 }
+  }
+
+  onBeforeCompile(shader: Shader) {
     shader.uniforms.time = this._time
     shader.uniforms.factor = this._factor
-    shader.vertexShader = 'uniform float time; uniform float factor;\n' + shader.vertexShader
+
+    shader.vertexShader = `
+      uniform float time;
+      uniform float factor;
+      ${shader.vertexShader}
+    `
     shader.vertexShader = shader.vertexShader.replace(
       '#include <begin_vertex>',
       `float theta = sin( time + position.y ) / 2.0 * factor;
@@ -42,19 +57,23 @@ function WobbleMaterialImpl(parameters: MeshStandardMaterialParameters) {
         vNormal = vNormal * m;`
     )
   }
-  Object.defineProperty(this, 'time', {
-    get: () => this._time,
-    set: (val) => (this._time.value = val),
-  })
-  Object.defineProperty(this, 'factor', {
-    get: () => this._factor,
-    set: (val) => (this._factor.value = val),
-  })
-}
 
-WobbleMaterialImpl.prototype = Object.create(MeshStandardMaterial.prototype)
-WobbleMaterialImpl.prototype.constructor = MeshStandardMaterial
-WobbleMaterialImpl.prototype.isMeshStandardMaterial = true
+  get time() {
+    return this._time.value
+  }
+
+  set time(v) {
+    this._time.value = v
+  }
+
+  get factor() {
+    return this._factor.value
+  }
+
+  set factor(v) {
+    this._factor.value = v
+  }
+}
 
 extend({ WobbleMaterialImpl })
 
