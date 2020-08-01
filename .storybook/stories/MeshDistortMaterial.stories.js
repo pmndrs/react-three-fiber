@@ -18,7 +18,8 @@ function MeshDistortMaterialScene() {
       <MeshDistortMaterial
         attach="material"
         color="#f25042"
-        distort={number('Distort', 0.4, { range: true, min: 0, max: 1, step: 0.1 })}
+        speed={number('Speed', 1, { range: true, max: 10, step: 0.1 })}
+        distort={number('Distort', 0.6, { range: true, min: 0, max: 1, step: 0.1 })}
         radius={number('Radius', 1, { range: true, min: 0, max: 1, step: 0.1 })}
       />
     </Icosahedron>
