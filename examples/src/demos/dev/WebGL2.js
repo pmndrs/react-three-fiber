@@ -55,7 +55,7 @@ export default function App() {
       no webgl2
     </h1>
   ) : (
-    <Canvas gl2 style={{ background: 'lightblue' }}>
+    <Canvas style={{ background: 'lightblue' }}>
       <color attach="background" args={['lightblue']} />
       <Dodecahedron />
       <Effects />

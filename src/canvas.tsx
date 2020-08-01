@@ -89,7 +89,7 @@ export type ResizeOptions = {
 export interface CanvasProps {
   children: React.ReactNode
   vr?: boolean
-  gl2?: boolean
+  webgl1?: boolean
   concurrent?: boolean
   shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
   colorManagement?: boolean
@@ -101,8 +101,8 @@ export interface CanvasProps {
   gl?: Partial<THREE.WebGLRendererParameters>
   camera?: Partial<
     ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-    ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-    ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+      ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
+      ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
   pixelRatio?: number
@@ -171,8 +171,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   const [defaultScene] = useState(() => {
     const scene = new THREE.Scene()
-      ; (scene as any).__interaction = []
-      ; (scene as any).__objects = []
+    ;(scene as any).__interaction = []
+    ;(scene as any).__objects = []
     return scene
   })
 
@@ -613,7 +613,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       if (!state.current.vr) {
         invalidate(state)
       } else if (((gl as any).xr || gl.vr) && gl.setAnimationLoop) {
-        ; ((gl as any).xr || gl.vr).enabled = true
+        ;((gl as any).xr || gl.vr).enabled = true
         gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))
       } else console.warn('the gl instance does not support VR!')
     }
