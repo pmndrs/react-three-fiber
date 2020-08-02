@@ -1,6 +1,7 @@
 export * from './OrbitControls'
 export * from './MapControls'
 export * from './TrackballControls'
+export * from './DeviceOrientationControls'
 export * from './TransformControls'
 export * from './FlyControls'
 export * from './Detailed'
