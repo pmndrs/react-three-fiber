@@ -59,7 +59,7 @@ Run the demo storybook on your computer:
   - `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
   - `<Detailed/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
   - `<PositionalAudio/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
-  - `<StandardEffects/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
+  - `<StandardEffects/>` 
 - Shaders
   - `<MeshWobbleMaterial/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-g5373)
   - `<MeshDistortMaterial/>`
@@ -192,22 +192,9 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 />
 ```
 
-##### ⚡️ `<StandardEffects/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-standardeffects-frcmm) ![](https://img.shields.io/badge/-suspense-brightgreen) ![](https://img.shields.io/badge/-useFrame-red)
+##### ⚡️ `<StandardEffects/>`
 
-Adds [ambient-occlusion](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/SSAOEffect.js~SSAOEffect.html#instance-constructor-constructor), [bloom](https://vanruesc.github.io/postprocessing/public/docs/class/src/effects/BloomEffect.js~BloomEffect.html#instance-constructor-constructor) and SMAA using the [postprocessing](https://github.com/vanruesc/postprocessing) library.
-
-⚠️ AO relies on the depthbuffer! Make sure your near and far clipping planes are narrow enough, or use `<Canvas gl={{ logarithmicDepthBuffer: true }} .../>`.
-
-```jsx
-<StandardEffects
-  smaa // Can be a boolean (default=true)
-  ao // Can be a boolean or all valid postprocessing AO props (default=true)
-  bloom // Can be a boolean or all valid postprocessing Bloom props (default=true)
-  edgeDetection={0.1} // SMAA precision (default=0.1)
-  bloomOpacity={1} // Bloom blendMode opacity (default=1)
-  effects={() => [...fx]} // Define your own: ([smaa, ao, bloom]) => [...effects] (default=undefined)
-/>
-```
+Standard Effects has been removed from drei in favour of (react-postprocessing)[https://github.com/react-spring/react-postprocessing]
 
 ## Shaders
 
