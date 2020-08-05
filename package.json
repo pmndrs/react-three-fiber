@@ -2,44 +2,7 @@
   "name": "react-three-fiber",
   "private": true,
   "version": "5.0.0-alpha.0",
-  "description": "React-fiber renderer for THREE.js",
-  "main": "web.cjs.js",
-  "module": "web.js",
-  "react-native": "native.js",
-  "types": "targets/web.d.ts",
-  "files": [
-    "**"
-  ],
-  "sideEffects": false,
-  "scripts": {
-    "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c && yarn copy",
-    "prepare": "npm run build",
-    "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
-    "test": "jest",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
-    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true",
-    "typegen:components": "npx ts-node src/components/generateExports.ts",
-    "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
-    "pack-dist": "cd dist && yarn pack && mv *.tgz .."
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged --pattern \"**/*.*(js|jsx|ts|tsx)\""
-    }
-  },
-  "prettier": {
-    "semi": false,
-    "trailingComma": "es5",
-    "singleQuote": true,
-    "jsxBracketSameLine": true,
-    "tabWidth": 2,
-    "printWidth": 120
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drcmda/react-three-fiber.git"
-  },
+  "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
     "react",
     "renderer",
@@ -48,14 +11,46 @@
     "threejs"
   ],
   "author": "Paul Henschel",
-  "contributors": [
-    "Birkir Gudjonsson <birkir.gudjonsson@gmail.com>"
-  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/drcmda/react-three-fiber/issues"
   },
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
+  "main": "web.cjs.js",
+  "module": "web.js",
+  "react-native": "native.js",
+  "types": "targets/web.d.ts",
+  "files": [
+    "**"
+  ],
+  "sideEffects": false,
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drcmda/react-three-fiber.git"
+  },
+  "scripts": {
+    "prebuild": "rimraf dist && npm run typegen",
+    "build": "rollup -c && yarn copy",
+    "prepare": "npm run build",
+    "eslint": "eslint --fix {src,examples/src}/**/*.{js,ts,jsx,tsx}",
+    "test": "jest",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
+    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true",
+    "typegen:components": "npx ts-node src/components/generateExports.ts",
+    "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
+    "pack-dist": "cd dist && yarn pack && mv *.tgz .."
+  },
   "dependencies": {
     "@babel/runtime": "^7.10.5",
     "@juggle/resize-observer": "^3.2.0",
@@ -104,17 +99,21 @@
     "eslint": "^7.5.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.3",
     "eslint-plugin-react-hooks": "^4.0.8",
+    "eslint-plugin-jest": "^23.17.1",
     "expo-gl": "^8.3.1",
     "expo-three": "^5.5.1",
     "husky": "^4.2.5",
     "jest": "^26.1.0",
     "json": "^9.0.6",
+    "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
-    "pretty-quick": "^2.0.1",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
+    "react-native": "^0.63.2",
     "react-test-renderer": "^16.13.1",
     "rimraf": "^3.0.2",
     "rollup": "^2.23.0",

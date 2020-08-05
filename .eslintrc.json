@@ -4,72 +4,69 @@
     "es6": true,
     "node": true
   },
-  "parser": "babel-eslint",
-  "extends": ["eslint:recommended", "plugin:import/errors", "plugin:import/warnings", "prettier"],
-  "plugins": ["react-hooks", "react"],
+  "extends": [
+    "prettier",
+    "prettier/react",
+    "prettier/@typescript-eslint",
+    "plugin:prettier/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings"
+  ],
+  "plugins": ["@typescript-eslint", "react", "prettier", "react-hooks", "import", "jest"],
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
     },
-    "sourceType": "module"
+    "ecmaVersion": 2018,
+    "sourceType": "module",
+    "rules": {
+      "curly": ["warn", "multi-line", "consistent"],
+      "no-console": "off",
+      "no-empty-pattern": "warn",
+      "no-duplicate-imports": "error",
+      "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
+      "import/export": "error",
+      // https://github.com/typescript-eslint/typescript-eslint/blob/master/docs/getting-started/linting/FAQ.md#eslint-plugin-import
+      // We recommend you do not use the following import/* rules, as TypeScript provides the same checks as part of standard type checking:
+      "import/named": "off",
+      "import/namespace": "off",
+      "import/default": "off",
+      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-use-before-define": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-empty-interface": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
+    }
   },
-  "rules": {
-    "curly": ["warn", "multi-line", "consistent"],
-    "no-console": "off",
-    "no-dupe-class-members": "error",
-    "no-empty": "warn",
-    "no-undef": "error",
-    "no-unused-expressions": "error",
-    "no-unused-vars": "error",
-    "no-var": "warn",
-    "prefer-const": "warn",
-    "no-shadow": "warn",
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "react/jsx-uses-vars": "error",
-    "react/jsx-uses-react": "error"
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
+    "import/parsers": {
+      "@typescript-eslint/parser": [".js", ".jsx", ".ts", ".tsx"]
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
+        "paths": ["src"]
+      },
+      "alias": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
+        "map": [["react-three-fiber", "./src/targets/web.tsx"]]
+      }
+    }
   },
   "overrides": [
     {
-      "files": ["*.ts", "*.tsx"],
-      "parser": "@typescript-eslint/parser",
-      "plugins": ["@typescript-eslint"],
+      "files": ["src"],
       "parserOptions": {
-        "ecmaFeatures": { "jsx": true },
-        "ecmaVersion": 2018,
-        "project": "./tsconfig.json",
-        "sourceType": "module"
-      },
-      "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/eslint-recommended",
-        "prettier/@typescript-eslint"
-      ],
-      "rules": {
-        "prefer-const": "off",
-        "import/no-unresolved": "off",
-        "import/named": "off",
-        "no-useless-constructor": "off",
-        "@typescript-eslint/no-useless-constructor": "error",
-        "@typescript-eslint/no-namespace": "off",
-        "@typescript-eslint/no-explicit-any": "off",
-        "@typescript-eslint/no-use-before-define": "off",
-        "@typescript-eslint/no-parameter-properties": "off",
-        "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-        "@typescript-eslint/explicit-function-return-type": "off",
-        "@typescript-eslint/no-inferrable-types": "warn",
-        "@typescript-eslint/no-empty-function": "off",
-        "@typescript-eslint/no-empty-interface": "off",
-        "@typescript-eslint/ban-ts-ignore": "off"
+        "project": "./tsconfig.json"
       }
     }
-  ],
-  "settings": {
-    "import/resolver": {
-      "node": {
-        "extensions": [".js", ".jsx", ".json", ".ts", ".tsx"],
-        "paths": ["src"]
-      }
-    }
-  }
+  ]
 }
