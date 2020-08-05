@@ -147,7 +147,7 @@ export { Clock } from 'three/src/core/Clock.js'
 // export { CubicInterpolant } from 'three/src/math/interpolants/CubicInterpolant.js';
 export { Interpolant } from 'three/src/math/Interpolant.js'
 // export { Triangle } from 'three/src/math/Triangle.js';
-export { _Math as Math } from 'three/src/math/Math.js'
+// export { _Math as Math } from 'three/src/math/Math.js'
 export { Spherical } from 'three/src/math/Spherical.js'
 // export { Cylindrical } from 'three/src/math/Cylindrical.js';
 // export { Plane } from 'three/src/math/Plane.js';

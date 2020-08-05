@@ -1,4 +1,4 @@
-import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter, Vector3 } from 'three'
+import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter } from 'three'
 import React, { Suspense, useMemo, useRef } from 'react'
 import { Canvas, useLoader, useThree, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -10,7 +10,7 @@ import textureUrl from '../resources/images/backdrop.jpg'
 function Background() {
   const { viewport, aspect } = useThree()
   const texture = useLoader(TextureLoader, textureUrl)
-  useMemo(() => (texture.minFilter = LinearFilter), [texture.minFilter])
+  useMemo(() => (texture.minFilter = LinearFilter), [texture])
   // Calculates a plane filling the screen similar to background-size: cover
   const { width, height } = viewport()
   const adaptedHeight = 3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)

@@ -27,7 +27,8 @@ function Model(props) {
           name="Object_0"
           morphTargetDictionary={gltf.__$[1].morphTargetDictionary}
           morphTargetInfluences={gltf.__$[1].morphTargetInfluences}
-          rotation={[1.5707964611537577, 0, 0]}>
+          rotation={[1.5707964611537577, 0, 0]}
+        >
           <bufferGeometry attach="geometry" {...gltf.__$[1].geometry} />
           <meshStandardMaterial attach="material" {...gltf.__$[1].material} />
         </mesh>

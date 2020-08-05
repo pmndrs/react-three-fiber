@@ -14,7 +14,8 @@ export const Canvas = React.memo(({ children, ...props }: ContainerProps) => (
       temp.setClearColor(new Color(0x000000), 0)
       return temp
     }}
-    effects={(gl, el) => (el.appendChild(gl.domElement), () => el.removeChild(gl.domElement))}>
+    effects={(gl, el) => (el.appendChild(gl.domElement), () => el.removeChild(gl.domElement))}
+  >
     {children}
   </ResizeContainer>
 ))

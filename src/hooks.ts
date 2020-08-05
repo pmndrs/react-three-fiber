@@ -21,7 +21,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   useEffect(() => {
     const unsubscribe = subscribe(ref, renderPriority)
     return () => unsubscribe()
-  }, [renderPriority])
+  }, [renderPriority, subscribe])
   return null
 }
 
@@ -37,12 +37,18 @@ export function useUpdate<T>(
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
+  const prevDependentsRef = useRef(dependents)
+
+  useEffect(() => {
+    prevDependentsRef.current = dependents
+  })
+
   useLayoutEffect(() => {
-    if (ref.current) {
+    if (ref.current && prevDependentsRef.current !== dependents) {
       callback(ref.current)
       invalidate()
     }
-  }, dependents)
+  }, [callback, dependents, invalidate, ref])
   return ref
 }
 
@@ -50,7 +56,7 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.M
   const [_, forceUpdate] = useState(false)
   const localRef = useRef<T>((undefined as unknown) as T)
   const ref = optionalRef ? optionalRef : localRef
-  useLayoutEffect(() => void forceUpdate((i) => !i), [ref.current])
+  useLayoutEffect(() => void forceUpdate((i) => !i), [])
   return ref
 }
 
@@ -77,7 +83,7 @@ export function useLoader<T>(
     // Run loader extensions
     if (extensions) extensions(temp)
     return temp
-  }, [Proto])
+  }, [Proto, extensions])
   // Use suspense to load async assets
   const results = usePromise(
     (Proto: THREE.Loader, url: string | string[]) => {

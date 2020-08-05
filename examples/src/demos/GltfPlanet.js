@@ -23,7 +23,8 @@ function Planet(props) {
                 name="planet001"
                 position={[-0.0032900000000000013, 0.023690000000000006, -6.33114]}
                 rotation={[0.23801904073457583, -0.5453875094307201, 0.5622765917510457]}
-                scale={[7.0000020953568285, 6.999997807471086, 6.999999297157107]}>
+                scale={[7.0000020953568285, 6.999997807471086, 6.999999297157107]}
+              >
                 <mesh name="planet001">
                   <bufferGeometry attach="geometry" {...gltf.__$[5].geometry} />
                   <meshStandardMaterial attach="material" {...gltf.__$[5].material} name="scene" roughness={1} />
@@ -79,7 +80,8 @@ export default function App() {
     <Canvas
       style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
       camera={{ position: [0, 0, 15] }}
-      shadowMap>
+      shadowMap
+    >
       <ambientLight intensity={0.4} />
       <pointLight intensity={20} position={[-10, -25, -10]} color="#200f20" />
       <spotLight
