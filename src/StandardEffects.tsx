@@ -107,5 +107,8 @@ export function StandardEffects({
   }, [camera, gl, scene, smaa, ao, bloom, edgeDetection, bloomOpacity])
 
   useEffect(() => void composer.setSize(size.width, size.height), [composer, size])
+
+  useEffect(() => void console.warn("⚡️ StandardEffects will be removed in drei v1.0.0; use react-postprocessing instead https://github.com/react-spring/react-postprocessing"), [])
+  
   return useFrame((_, delta) => composer.render(delta), 1)
 }
