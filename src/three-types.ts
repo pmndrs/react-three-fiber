@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
-
 import * as THREE from 'three'
 import { MouseEvent, PointerEvent, WheelEvent } from './canvas'
 

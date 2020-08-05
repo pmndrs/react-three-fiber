@@ -14,7 +14,8 @@ function Sphere({ geometry, x, y, z, s }) {
       position={[x, y, z]}
       scale={[s, s, s]}
       geometry={geometry}
-      userData={{ active }}>
+      userData={{ active }}
+    >
       <meshStandardMaterial attach="material" color="hotpink" roughness={1} />
     </mesh>
   )

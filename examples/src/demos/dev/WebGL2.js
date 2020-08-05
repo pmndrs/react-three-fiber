@@ -49,7 +49,8 @@ export default function App() {
         top: '50%',
         lineHeight: '0.8em',
         transform: 'translate3d(-50%,-50%,0)',
-      }}>
+      }}
+    >
       sorry,
       <br />
       no webgl2

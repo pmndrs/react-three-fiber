@@ -1,8 +1,9 @@
 import React, { Suspense, createRef, useEffect, useRef } from 'react'
-import { Canvas, Dom, useFrame } from 'react-three-fiber'
+import { Html } from 'drei'
+import { Canvas, useFrame } from 'react-three-fiber'
 import usePromise from 'react-promise-suspense'
 
-/** The <Dom /> component creates its own render-root in a useEffect
+/** The <Html /> component creates its own render-root in a useEffect
  *  Why does useEffect fire before the component renders when it's wrapped in Suspense?
  *  It should put out the dom text only after the parent component has rendered
  *
@@ -14,9 +15,9 @@ function Sphere({ children, ...props }) {
     <mesh {...props}>
       <dodecahedronBufferGeometry attach="geometry" />
       <meshStandardMaterial attach="material" roughness={0.75} emissive="#404057" />
-      <Dom portal={portal}>
+      <Html portal={portal}>
         <div style={{ color: 'white', transform: 'translate3d(-50%,-50%,0)', textAlign: 'center' }}>{children}</div>
-      </Dom>
+      </Html>
     </mesh>
   )
 }

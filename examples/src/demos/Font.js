@@ -80,7 +80,8 @@ function Bird({ speed, factor, url, ...props }) {
           name="Object_0"
           morphTargetDictionary={gltf.__$[1].morphTargetDictionary}
           morphTargetInfluences={gltf.__$[1].morphTargetInfluences}
-          rotation={[1.5707964611537577, 0, 0]}>
+          rotation={[1.5707964611537577, 0, 0]}
+        >
           <bufferGeometry attach="geometry" {...gltf.__$[1].geometry} />
           <meshStandardMaterial attach="material" {...gltf.__$[1].material} name="Material_0_COLOR_0" />
         </mesh>
@@ -115,7 +116,8 @@ export default function App() {
   return (
     <Canvas
       camera={{ position: [0, 0, 35] }}
-      style={{ background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }}>
+      style={{ background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }}
+    >
       <ambientLight intensity={2} />
       <pointLight position={[40, 40, 40]} />
       <Suspense fallback={null}>
