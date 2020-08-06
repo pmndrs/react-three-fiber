@@ -16,6 +16,14 @@
     "url": "https://github.com/drcmda/react-three-fiber/issues"
   },
   "homepage": "https://github.com/drcmda/react-three-fiber#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drcmda/react-three-fiber.git"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
+  },
   "main": "web.cjs.js",
   "module": "web.js",
   "react-native": "native.js",
@@ -31,13 +39,8 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "git add"
+      "eslint --fix"
     ]
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drcmda/react-three-fiber.git"
   },
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
@@ -126,9 +129,5 @@
     "ts-jest": "^26.1.3",
     "typescript": "^3.9.7",
     "wait-on": "^5.1.0"
-  },
-  "collective": {
-    "type": "opencollective",
-    "url": "https://opencollective.com/react-three-fiber"
   }
 }
