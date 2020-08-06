@@ -105,7 +105,8 @@ export default function App() {
       style={{ width: '100%', height: '100%' }}
       onMouseMove={onMouseMove}
       onMouseUp={() => set(false)}
-      onMouseDown={() => set(true)}>
+      onMouseDown={() => set(true)}
+    >
       <Canvas camera={{ fov: 100, position: [0, 0, 30] }}>
         <pointLight distance={60} intensity={2} color="white" />
         <spotLight intensity={2} position={[0, 0, 70]} penumbra={1} color="red" />

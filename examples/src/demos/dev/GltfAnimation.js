@@ -6,32 +6,26 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import stork from '../../resources/gltf/stork.glb'
 extend({ OrbitControls })
 
-function Model(props) {
+function Model({ factor = 1, speed = 1, ...props }) {
   const group = useRef()
-  const gltf = useLoader(GLTFLoader, stork)
-  const actions = useRef()
+  const { nodes, materials, animations } = useLoader(GLTFLoader, stork)
+
   const [mixer] = useState(() => new THREE.AnimationMixer())
-  useFrame((state, delta) => mixer.update(delta))
-  useEffect(() => {
-    const root = group.current
-    actions.current = { storkFly_B_: mixer.clipAction(gltf.animations[0], root) }
-    return () => gltf.animations.forEach((clip) => mixer.uncacheClip(clip))
-  }, [gltf.animations, mixer])
-  useEffect(() => void actions.current.storkFly_B_.play(), [])
+  useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [animations, mixer])
+  useFrame((state, delta) => {
+    mixer.update(delta * speed)
+  })
+
   return (
-    <group ref={group} {...props}>
-      <scene name="AuxScene">
-        <mesh
-          castShadow
-          receiveShadow
-          name="Object_0"
-          morphTargetDictionary={gltf.__$[1].morphTargetDictionary}
-          morphTargetInfluences={gltf.__$[1].morphTargetInfluences}
-          rotation={[1.5707964611537577, 0, 0]}>
-          <bufferGeometry attach="geometry" {...gltf.__$[1].geometry} />
-          <meshStandardMaterial attach="material" {...gltf.__$[1].material} />
-        </mesh>
-      </scene>
+    <group ref={group} {...props} dispose={null}>
+      <mesh
+        name="Object_0"
+        material={materials.Material_0_COLOR_0}
+        geometry={nodes.Object_0.geometry}
+        morphTargetDictionary={nodes.Object_0.morphTargetDictionary}
+        morphTargetInfluences={nodes.Object_0.morphTargetInfluences}
+        rotation={[Math.PI / 2, 0, 0]}
+      />
     </group>
   )
 }

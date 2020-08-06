@@ -34,11 +34,15 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
   if (!gl) console.warn('No renderer created!')
 
   // Mount and unmount management
-  useEffect(() => effects && effects(gl, container), [])
+  useEffect(() => {
+    if (effects) effects(gl, container)
+  }, [container, effects, gl])
 
   // Init canvas, fetch events, hand them back to the wrapping div
   const events = useCanvas({ ...props, children, gl: (gl as unknown) as WebGLRenderer })
-  useEffect(() => void setEvents(events), [events])
+  useEffect(() => {
+    setEvents(events)
+  }, [events, setEvents])
   return null
 }
 
@@ -48,7 +52,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
     effects,
     children,
     vr,
-    gl2,
+    webgl1,
     concurrent,
     shadowMap,
     colorManagement,
@@ -83,6 +87,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   const readyFlag = useRef(false)
   const ready = useMemo(() => (readyFlag.current = readyFlag.current || (!!size.width && !!size.height)), [size])
   const state = useMemo(() => ({ size, forceResize, setEvents, container: containerRef.current as HTMLDivElement }), [
+    forceResize,
     size,
   ])
 

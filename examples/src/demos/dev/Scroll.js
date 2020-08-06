@@ -25,7 +25,8 @@ function Image({ url, opacity, scale, ...props }) {
       {...props}
       onPointerOver={hover}
       onPointerOut={unhover}
-      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}>
+      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}
+    >
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
       <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
@@ -152,7 +153,8 @@ function Scene({ top, mouse }) {
       <Text
         position={top.interpolate((top) => [0, -20 + ((top * 10) / scrollMax) * 2, 0])}
         color="black"
-        fontSize={150}>
+        fontSize={150}
+      >
         down
       </Text>
     </>

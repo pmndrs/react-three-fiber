@@ -8,10 +8,11 @@ describe('components', () => {
     expect(
       TestRenderer.create(
         <Mesh
-          onUpdate={mesh => console.log(mesh.geometry)}
+          onUpdate={(mesh) => console.log(mesh.geometry)}
           onClick={() => console.log('click')}
           onPointerOver={() => console.log('hover')}
-          onPointerOut={() => console.log('unhover')}>
+          onPointerOut={() => console.log('unhover')}
+        >
           <BoxBufferGeometry attach="geometry" args={[1, 1, 1]} />
           <MeshNormalMaterial attach="material" />
         </Mesh>

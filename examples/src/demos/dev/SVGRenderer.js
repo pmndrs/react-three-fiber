@@ -28,7 +28,7 @@ function TorusKnot() {
   )
 }
 
-export default function() {
+export default function () {
   return (
     <Canvas style={{ background: '#272730' }} camera={{ position: [0, 0, 50] }}>
       <TorusKnot />

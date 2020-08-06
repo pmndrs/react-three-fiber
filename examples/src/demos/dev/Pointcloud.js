@@ -20,7 +20,7 @@ function Particles({ pointCount }) {
   }, [pointCount])
 
   const attrib = useRef()
-  const hover = useCallback(e => {
+  const hover = useCallback((e) => {
     e.stopPropagation()
     attrib.current.array[e.index * 3] = 1
     attrib.current.array[e.index * 3 + 1] = 1
@@ -28,7 +28,7 @@ function Particles({ pointCount }) {
     attrib.current.needsUpdate = true
   }, [])
 
-  const unhover = useCallback(e => {
+  const unhover = useCallback((e) => {
     attrib.current.array[e.index * 3] = 1
     attrib.current.array[e.index * 3 + 1] = 0.5
     attrib.current.array[e.index * 3 + 2] = 0.5

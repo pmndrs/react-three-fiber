@@ -126,7 +126,8 @@ export default function App() {
       orthographic
       style={{ background: '#272727', touchAction: 'none' }}
       raycaster={{ linePrecision: 5 }}
-      camera={{ position: [0, 0, 500] }}>
+      camera={{ position: [0, 0, 500] }}
+    >
       <Controls>
         <Line defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
         <Line defaultStart={[0, 100, 0]} defaultEnd={[100, -100, 0]} />

@@ -46,7 +46,7 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
   colorManagement = true        // Auto sRGBEncoding encoding for all colors and textures + ACESFilmic
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
-  gl2 = false                   // Enables webgl2
+  webgl1 = false                // Forces THREE to WebGL1, instead of WebGL2 (default)
   concurrent = false            // Enables React concurrent mode
   resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
