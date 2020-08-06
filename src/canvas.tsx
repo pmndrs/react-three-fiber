@@ -420,9 +420,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
                 raycastEvent.stopped = localState.stopped = true
               }
             },
-            // Pointer-capture needs the hit, on which the user may call stopPropagation()
-            // This makes it harder to use the actual event, because then we loose the connection
-            // to the actual hit, which would mean it's picking up all intersects ...
             target: { ...event.target, setPointerCapture, releasePointerCapture },
             currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
             sourceEvent: event,
