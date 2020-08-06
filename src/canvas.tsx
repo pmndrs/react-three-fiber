@@ -580,7 +580,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   useLayoutEffect(() => {
     if (shadowMap) {
       gl.shadowMap.enabled = true
-      if (typeof shadowMap === 'object') Object.assign(gl, shadowMap)
+      if (typeof shadowMap === 'object') Object.assign(gl.shadowMap, shadowMap)
       else gl.shadowMap.type = THREE.PCFSoftShadowMap
     }
     if (colorManagement) {
