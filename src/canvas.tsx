@@ -294,7 +294,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     gl.setSize(size.width, size.height)
 
     if (ready) invalidate(state)
-  }, [defaultCam, size, updateDefaultCamera])
+  }, [defaultCam, gl, size, updateDefaultCamera])
 
   /** Events ------------------------------------------------------------------------------------------------ */
 
