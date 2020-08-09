@@ -16,11 +16,7 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Cleanup on unmount, no left-overs, restore previous states
 
 ```bash
-# Using npm
-npm i drei --save
-
-# Using yarn
-yarn add drei
+npm install drei
 ```
 
 ```jsx
@@ -31,14 +27,14 @@ import { ... } from 'drei'
 
 For examples of _drei_ in action, visit https://drei-storybook.netlify.app/.
 
-OR
+Or, run the demo storybook on your computer:
 
-Run the demo storybook on your computer:
-
-- Clone this repository
-- `yarn`
-- `yarn storybook`
-- Visit http://localhost:6006/
+```bash
+git clone https://github.com/react-spring/drei
+cd drei
+npm install
+npm run storybook
+```
 
 # Index
 
