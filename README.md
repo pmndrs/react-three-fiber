@@ -66,6 +66,7 @@ Run the demo storybook on your computer:
   - `<Sky/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
+  - `shaderMaterial()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-shader-material-yltgr)
 - Misc
 
   - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
@@ -280,6 +281,35 @@ softShadows({
   samples: 17, // Samples (default: 17)
   rings: 11, // Rings (default: 11)
 })
+```
+
+#### ⚡️ `shaderMaterial()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-shader-material-yltgr)
+
+Creates a THREE.ShaderMaterial for you with easier handling of uniforms, which are also automatically declared as setter/getters on the object.
+
+```jsx
+import { extend } from "react-three-fiber"
+import glsl from "babel-plugin-glsl/macro"
+
+const ColorShiftMaterial = shaderMaterial(
+  { time: 0, color: new THREE.Color(0.2, 0.0, 0.1) },
+  glsl`varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }`,
+  glsl`uniform float time;
+    uniform vec3 color;
+    varying vec2 vUv;
+    void main() {
+      gl_FragColor.rgba = vec4(0.5 + 0.3 * sin(vUv.yxx + time) + color, 1.0);
+    }`
+)
+
+extend({ ColorShiftMaterial })
+
+<mesh>
+  <colorShiftMaterial attach="material" color="hotpink" time={1} />
 ```
 
 ## Misc
