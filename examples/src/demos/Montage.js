@@ -60,7 +60,12 @@ function Lights() {
 
 export default function App() {
   return (
-    <Canvas shadowMap style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 100], fov: 100 }}>
+    <Canvas
+      colorManagement={false}
+      shadowMap
+      style={{ background: '#A2CCB6' }}
+      camera={{ position: [0, 0, 100], fov: 100 }}
+    >
       <Lights />
       <mesh receiveShadow>
         <planeBufferGeometry args={[1000, 1000]} />

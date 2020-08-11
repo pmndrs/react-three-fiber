@@ -226,9 +226,11 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
       state.current.subscribers = state.current.subscribers.sort((a, b) => a.priority - b.priority)
       return () => {
-        // Decrease manual flag if this subscription had a priority
-        if (priority) state.current.manual--
-        state.current.subscribers = state.current.subscribers.filter((s) => s.ref !== ref)
+        if (state.current?.subscribers) {
+          // Decrease manual flag if this subscription had a priority
+          if (priority) state.current.manual--
+          state.current.subscribers = state.current.subscribers.filter((s) => s.ref !== ref)
+        }
       }
     },
     setDefaultCamera: (camera: Camera) => setDefaultCamera(camera),
@@ -629,6 +631,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   // Dispose renderer on unmount
   useEffect(
     () => () => {
+      console.log('dispose')
       if (state.current.gl) {
         state.current.gl.renderLists.dispose()
         if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss()

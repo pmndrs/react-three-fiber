@@ -29,7 +29,7 @@ WaterPass.prototype = Object.assign(Object.create(Pass.prototype), {
   render: function (renderer, writeBuffer, readBuffer, deltaTime, maskActive) {
     const factor = Math.max(0, this.factor)
     this.uniforms['byp'].value = factor ? 0 : 1
-    this.uniforms['texture'].value = readBuffer.texture
+    this.uniforms['tex'].value = readBuffer.texture
     this.uniforms['time'].value = this.time
     this.uniforms['factor'].value = this.factor
     this.time += 0.05

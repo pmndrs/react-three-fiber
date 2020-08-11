@@ -23,7 +23,7 @@
 var WaterShader = {
   uniforms: {
     byp: { value: 0 }, //apply the glitch ?
-    texture: { type: 't', value: null },
+    tex: { type: 't', value: null },
     time: { type: 'f', value: 0.0 },
     factor: { type: 'f', value: 0.0 },
     resolution: { type: 'v2', value: null },
@@ -43,7 +43,7 @@ var WaterShader = {
     uniform float time;
     uniform float factor;
     uniform vec2 resolution;
-    uniform sampler2D texture;
+    uniform sampler2D tex;
     
     varying vec2 vUv;
     
@@ -57,10 +57,10 @@ var WaterShader = {
         float y = uv1.x * frequency + time * .3;
         uv1.x += cos(x+y) * amplitude * cos(y);
         uv1.y += sin(x-y) * amplitude * cos(y);
-        vec4 rgba = texture2D(texture, uv1);
+        vec4 rgba = texture2D(tex, uv1);
         gl_FragColor = rgba;
       } else {
-        gl_FragColor = texture2D(texture, vUv);
+        gl_FragColor = texture2D(tex, vUv);
       }
     }`,
   ].join('\n'),

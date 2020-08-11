@@ -63,6 +63,7 @@ const Controls = (props) => {
 export default function App() {
   return (
     <Canvas
+      colorManagement={false}
       style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
       camera={{ position: [0, 0, 15] }}
       shadowMap

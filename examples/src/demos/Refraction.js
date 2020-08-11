@@ -111,7 +111,7 @@ function Diamonds() {
 
 export default function App() {
   return (
-    <Canvas camera={{ fov: 50, position: [0, 0, 30] }}>
+    <Canvas colorManagement={false} camera={{ fov: 50, position: [0, 0, 30] }}>
       <Suspense fallback={null}>
         <Background />
         <Diamonds />

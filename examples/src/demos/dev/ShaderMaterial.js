@@ -99,8 +99,8 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
       uniforms: {
         effectFactor: { type: 'f', value: intensity },
         dispFactor: { type: 'f', value: 0 },
-        texture: { type: 't', value: texture1 },
-        texture2: { type: 't', value: texture2 },
+        tex: { type: 't', value: texture1 },
+        tex2: { type: 't', value: texture2 },
         disp: { type: 't', value: dispTexture },
       },
       vertexShader,

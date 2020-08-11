@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import React from 'react'
 //@ts-ignore
-import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
+//import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
+import Reconciler from 'react-reconciler'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
 
@@ -541,9 +542,17 @@ const Renderer = Reconciler({
   shouldDeprioritizeSubtree() {
     return false
   },
-  prepareForCommit() {},
+  prepareForCommit() {
+    return null
+  },
+  preparePortalMount() {
+    return null
+  },
   resetAfterCommit() {},
   shouldSetTextContent() {
+    return false
+  },
+  clearContainer() {
     return false
   },
 })
