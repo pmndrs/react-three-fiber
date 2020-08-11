@@ -631,7 +631,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   // Dispose renderer on unmount
   useEffect(
     () => () => {
-      console.log('dispose')
       if (state.current.gl) {
         state.current.gl.renderLists.dispose()
         if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss()
