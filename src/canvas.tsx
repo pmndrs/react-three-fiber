@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import React, { useMemo, useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './renderer'
 import { TinyEmitter } from 'tiny-emitter'
-import { ReactThreeFiber } from './three-types'
+import { NamedArrayTuple, ReactThreeFiber } from './three-types'
 import { RectReadOnly } from 'react-use-measure'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -73,7 +73,7 @@ export type CanvasContext = SharedCanvasContext & {
   invalidateFrameloop: boolean
   frames: number
   subscribers: Subscription[]
-  initialClick: [number, number]
+  initialClick: NamedArrayTuple<(x: number, y: number) => void>
   initialHits: THREE.Object3D[]
   pointer: TinyEmitter
 }
