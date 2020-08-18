@@ -73,7 +73,7 @@ export type CanvasContext = SharedCanvasContext & {
   invalidateFrameloop: boolean
   frames: number
   subscribers: Subscription[]
-  initialClick: [number, number]
+  initialClick: Parameters<(x: number, y: number) => void>
   initialHits: THREE.Object3D[]
   pointer: TinyEmitter
 }
