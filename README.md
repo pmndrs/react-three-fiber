@@ -50,6 +50,7 @@ npm run storybook
   - `<TransformControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 - Shapes
   - `<Plane/>`, `<Box/>`, `<Sphere/>`, `<Circle/>`, `<Cone/>`, `<Cylinder/>`, `<Tube/>`, `<Torus/>`, `<TorusKnot/>`, `<Ring/>`, `<Tetrahedron/>`, `<Polyhedron/>`, `<Icosahedron/>`, `<Octahedron/>`, `<Dodecahedron/>`, `<Extrude/>`, `<Lathe/>`, `<Parametric/>`
+  - `<RoundedBox />`
 - Abstractions
   - `<Text/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
   - `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
@@ -128,6 +129,21 @@ Buffer-geometry short-cuts:
 ```
 
 ##### ⚡️ `<Plane/>`, `<Box/>`, `<Sphere/>`, `<Circle/>`, `<Cone/>`, `<Cylinder/>`, `<Tube/>`, `<Torus/>`, `<TorusKnot/>`, `<Ring/>`, `<Tetrahedron/>`, `<Polyhedron/>`, `<Icosahedron/>`, `<Octahedron/>`, `<Dodecahedron/>`, `<Extrude/>`, `<Lathe/>`, `<Parametric/>`
+
+##### ⚡️ `<RoundedBox/>`
+
+A box buffer geometry with rounded corners, done with extrusion.
+
+```jsx
+<RoundedBox
+  args={[1, 1, 1]}  // Width, Height and Depth of the box
+  radius={0.05}     // Border-Radius of the box
+  smoothness={4}    // Optional, number of subdivisions
+  {...meshProps}    // All THREE.Mesh props are valid
+>
+  <meshPhongMaterial attach="material" color="#f3f3f3" wireframe />
+</RoundedBox>
+```
 
 ## Abstractions
 
