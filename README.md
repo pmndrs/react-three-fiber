@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/react-spring/drei.svg?branch=master)](https://travis-ci.org/react-spring/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg)
+[![Build Status](https://travis-ci.org/react-spring/drei.svg?branch=master)](https://travis-ci.org/react-spring/drei) [![npm version](https://badge.fury.io/js/drei.svg)](https://badge.fury.io/js/drei) ![npm](https://img.shields.io/npm/dt/drei.svg) [![Discord Shield](https://discordapp.com/api/guilds/740090768164651008/widget.png?style=shield)](https://discord.gg/ZZjjNvJ)
 
 <p align="center">
     <img width="500" src="https://imgur.com/arDsXO6.jpg" alt="logo" />
@@ -16,11 +16,7 @@ If you find yourself repeating set-up code often and if it's generic enough, add
 - Cleanup on unmount, no left-overs, restore previous states
 
 ```bash
-# Using npm
-npm i drei --save
-
-# Using yarn
-yarn add drei
+npm install drei
 ```
 
 ```jsx
@@ -31,14 +27,14 @@ import { ... } from 'drei'
 
 For examples of _drei_ in action, visit https://drei-storybook.netlify.app/.
 
-OR
+Or, run the demo storybook on your computer:
 
-Run the demo storybook on your computer:
-
-- Clone this repository
-- `yarn`
-- `yarn storybook`
-- Visit http://localhost:6006/
+```bash
+git clone https://github.com/react-spring/drei
+cd drei
+npm install
+npm run storybook
+```
 
 # Index
 
@@ -54,6 +50,7 @@ Run the demo storybook on your computer:
   - `<TransformControls/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
 - Shapes
   - `<Plane/>`, `<Box/>`, `<Sphere/>`, `<Circle/>`, `<Cone/>`, `<Cylinder/>`, `<Tube/>`, `<Torus/>`, `<TorusKnot/>`, `<Ring/>`, `<Tetrahedron/>`, `<Polyhedron/>`, `<Icosahedron/>`, `<Octahedron/>`, `<Dodecahedron/>`, `<Extrude/>`, `<Lathe/>`, `<Parametric/>`
+  - `<RoundedBox />`
 - Abstractions
   - `<Text/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
   - `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
@@ -66,6 +63,7 @@ Run the demo storybook on your computer:
   - `<Sky/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-3q4ev)
   - `<Stars/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-m2ci7)
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
+  - `shaderMaterial()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-shader-material-yltgr)
 - Misc
 
   - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
@@ -132,6 +130,21 @@ Buffer-geometry short-cuts:
 
 ##### ⚡️ `<Plane/>`, `<Box/>`, `<Sphere/>`, `<Circle/>`, `<Cone/>`, `<Cylinder/>`, `<Tube/>`, `<Torus/>`, `<TorusKnot/>`, `<Ring/>`, `<Tetrahedron/>`, `<Polyhedron/>`, `<Icosahedron/>`, `<Octahedron/>`, `<Dodecahedron/>`, `<Extrude/>`, `<Lathe/>`, `<Parametric/>`
 
+##### ⚡️ `<RoundedBox/>`
+
+A box buffer geometry with rounded corners, done with extrusion.
+
+```jsx
+<RoundedBox
+  args={[1, 1, 1]}  // Width, Height and Depth of the box
+  radius={0.05}     // Border-Radius of the box
+  smoothness={4}    // Optional, number of subdivisions
+  {...meshProps}    // All THREE.Mesh props are valid
+>
+  <meshPhongMaterial attach="material" color="#f3f3f3" wireframe />
+</RoundedBox>
+```
+
 ## Abstractions
 
 ##### ⚡️ `<Text/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-troika-text-eb4mx)
@@ -194,7 +207,7 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 
 ##### ⚡️ `<StandardEffects/>`
 
-Standard Effects has been removed from drei in favour of (react-postprocessing)[https://github.com/react-spring/react-postprocessing]
+Standard Effects has been removed from drei in favour of (react-spring/react-postprocessing)[https://github.com/react-spring/react-postprocessing]
 
 ## Shaders
 
@@ -267,6 +280,41 @@ softShadows({
   samples: 17, // Samples (default: 17)
   rings: 11, // Rings (default: 11)
 })
+```
+
+#### ⚡️ `shaderMaterial()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-shader-material-yltgr)
+
+Creates a THREE.ShaderMaterial for you with easier handling of uniforms, which are also automatically declared as setter/getters on the object.
+
+```jsx
+import { extend } from "react-three-fiber"
+import glsl from "babel-plugin-glsl/macro"
+
+const ColorShiftMaterial = shaderMaterial(
+  { time: 0, color: new THREE.Color(0.2, 0.0, 0.1) },
+  // vertex shader
+  glsl`
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  // fragment shader
+  glsl`
+    uniform float time;
+    uniform vec3 color;
+    varying vec2 vUv;
+    void main() {
+      gl_FragColor.rgba = vec4(0.5 + 0.3 * sin(vUv.yxx + time) + color, 1.0);
+    }
+  `
+)
+
+extend({ ColorShiftMaterial })
+
+<mesh>
+  <colorShiftMaterial attach="material" color="hotpink" time={1} />
 ```
 
 ## Misc
@@ -435,3 +483,7 @@ useLoader(
   )
 )
 ```
+---
+<a href="https://www.netlify.com">
+  <img src="https://www.netlify.com/img/global/badges/netlify-color-bg.svg" alt="Deploys by Netlify" />
+</a>
