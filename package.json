@@ -23,14 +23,6 @@
       "pre-commit": "pretty-quick --staged --pattern '**/*.*(js|jsx|ts|tsx)'"
     }
   },
-  "prettier": {
-    "semi": false,
-    "trailingComma": "es5",
-    "singleQuote": true,
-    "jsxBracketSameLine": true,
-    "tabWidth": 2,
-    "printWidth": 120
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/drcmda/drei.git"
