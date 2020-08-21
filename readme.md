@@ -6,11 +6,10 @@
 
 react-three-fiber is a React <a href="https://github.com/facebook/react/tree/master/packages/react-reconciler">reconciler</a> for Threejs on the web and react-native.
 
-<br />
+```bash
+npm install three react-three-fiber
+```
 
-    npm install three react-three-fiber
-
-<br />
 <p align="center">
   <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="274" src="https://i.imgur.com/VydCh6W.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="274" src="https://i.imgur.com/e6NhRz6.gif" /></a>
