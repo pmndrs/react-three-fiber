@@ -56,7 +56,8 @@ npm run storybook
   - `<Line/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-line-7mtjx)
   - `<Detailed/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
   - `<PositionalAudio/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-positionalaudio-yi1o0) ![](https://img.shields.io/badge/-suspense-brightgreen)
-  - `<StandardEffects/>` 
+  - `<StandardEffects/>`
+  - `<Billboard>`
 - Shaders
   - `<MeshWobbleMaterial/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-sky-g5373)
   - `<MeshDistortMaterial/>`
@@ -208,6 +209,19 @@ A wrapper around [THREE.PositionalAudio](https://threejs.org/docs/index.html#api
 ##### ⚡️ `<StandardEffects/>`
 
 Standard Effects has been removed from drei in favour of (react-spring/react-postprocessing)[https://github.com/react-spring/react-postprocessing]
+
+##### ⚡️ `<Billboard/>`
+
+Adds a `<Plane />` that always faces the camera.
+
+```jsx
+<Billboard
+  follow={true} // Follow the camera (default=true)
+  lockX={false} // Lock the rotation on the x axis (default=false)
+  lockY={false} // Lock the rotation on the y axis (default=false)
+  lockZ={false} // Lock the rotation on the z axis (default=false)
+/>
+```
 
 ## Shaders
 
