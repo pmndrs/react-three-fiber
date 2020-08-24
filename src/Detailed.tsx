@@ -1,7 +1,6 @@
 import { LOD, Object3D } from 'three'
 import React, { forwardRef } from 'react'
 import { useUpdate, useFrame } from 'react-three-fiber'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 type Props = JSX.IntrinsicElements['lOD'] & {

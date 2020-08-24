@@ -1,15 +1,13 @@
 import { PerspectiveCamera as PerspectiveCameraImpl } from 'three'
 import React, { forwardRef, useLayoutEffect } from 'react'
 import { useThree, useUpdate } from 'react-three-fiber'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 type Props = JSX.IntrinsicElements['perspectiveCamera'] & {
-  makeDefault: boolean
-  children: React.ReactNode
+  makeDefault?: boolean
 }
 
-export const PerspectiveCamera = forwardRef(({ children, makeDefault = false, ...props }: Props, ref) => {
+export const PerspectiveCamera = forwardRef(({ makeDefault = false, ...props }: Props, ref) => {
   const { setDefaultCamera, camera, size } = useThree()
   const cameraRef = useUpdate<PerspectiveCameraImpl>(
     (cam) => {
@@ -25,11 +23,7 @@ export const PerspectiveCamera = forwardRef(({ children, makeDefault = false, ..
       setDefaultCamera(cameraRef.current)
       return () => setDefaultCamera(oldCam)
     }
-  }, [])
+  }, [camera, cameraRef, makeDefault, setDefaultCamera])
 
-  return (
-    <perspectiveCamera ref={mergeRefs([cameraRef, ref])} {...props}>
-      {children}
-    </perspectiveCamera>
-  )
+  return <perspectiveCamera ref={mergeRefs([cameraRef, ref])} {...props} />
 })

@@ -43,7 +43,6 @@ extend({ StarfieldMaterial })
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       starfieldMaterial: ReactThreeFiber.MaterialNode<StarfieldMaterial, []>
     }
@@ -58,8 +57,8 @@ export const Stars = forwardRef(
   ({ radius = 100, depth = 50, count = 5000, saturation = 0, factor = 4, fade = false }: Props, ref) => {
     const material = useRef<StarfieldMaterial>()
     const [position, color, size] = useMemo(() => {
-      const positions = []
-      const colors = []
+      const positions: any[] = []
+      const colors: any[] = []
       const sizes = Array.from({ length: count }, () => (0.5 + 0.5 * Math.random()) * factor)
       const color = new Color()
       let r = radius + depth
@@ -71,7 +70,7 @@ export const Stars = forwardRef(
         colors.push(color.r, color.g, color.b)
       }
       return [new Float32Array(positions), new Float32Array(colors), new Float32Array(sizes)]
-    }, [])
+    }, [count, depth, factor, radius, saturation])
     useFrame((state) => material.current && (material.current.uniforms.time.value = state.clock.getElapsedTime()))
     return (
       <points ref={ref as React.MutableRefObject<Points>}>

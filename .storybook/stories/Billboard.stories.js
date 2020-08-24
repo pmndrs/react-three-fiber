@@ -78,4 +78,4 @@ function BillboardStory() {
 }
 
 export const BillboardSt = () => <BillboardStory />
-BillboardSt.storyName = 'Billboard'
+BillboardSt.storyName = 'Default'

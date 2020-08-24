@@ -1,7 +1,6 @@
 import { useState, useEffect, RefObject } from 'react'
 import { addEffect, addAfterEffect } from 'react-three-fiber'
-// @ts-ignore
-import StatsImpl from 'stats.js'
+import * as StatsImpl from 'stats.js'
 
 type Props = {
   showPanel?: number

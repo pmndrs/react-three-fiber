@@ -1,7 +1,6 @@
 import React, { forwardRef, useRef, useEffect } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { MapControls as MapControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ MapControlsImpl })
@@ -13,7 +12,6 @@ export type MapControls = Overwrite<
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       mapControlsImpl: MapControls
     }
@@ -25,8 +23,9 @@ export const MapControls = forwardRef((props: MapControls = { enableDamping: tru
   const { camera, gl, invalidate } = useThree()
   useFrame(() => controls.current?.update())
   useEffect(() => {
-    controls.current?.addEventListener('change', invalidate)
-    return () => controls.current?.removeEventListener('change', invalidate)
-  }, [controls.current])
+    const _controls = controls.current
+    _controls?.addEventListener('change', invalidate)
+    return () => _controls?.removeEventListener('change', invalidate)
+  }, [invalidate])
   return <mapControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} enableDamping {...props} />
 })

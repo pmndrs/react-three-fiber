@@ -1,7 +1,6 @@
 import React, { forwardRef, useRef, useEffect } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { DeviceOrientationControls as DeviceOrientationControlsImp } from 'three/examples/jsm/controls/DeviceOrientationControls'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ DeviceOrientationControlsImp })
@@ -13,7 +12,6 @@ export type DeviceOrientationControls = Overwrite<
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       deviceOrientationControlsImp: DeviceOrientationControls
     }

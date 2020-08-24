@@ -2,7 +2,6 @@ import React, { useRef } from 'react'
 import { MeshPhysicalMaterial, MeshPhysicalMaterialParameters, Shader } from 'three'
 import { extend, useFrame } from 'react-three-fiber'
 // eslint-disable-next-line
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 // eslint-disable-next-line
 // @ts-ignore
@@ -21,7 +20,6 @@ type Props = DistortMaterialType & {
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       distortMaterialImpl: DistortMaterialType
     }

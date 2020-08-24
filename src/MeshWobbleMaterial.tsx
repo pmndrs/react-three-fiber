@@ -1,7 +1,6 @@
 import { MeshStandardMaterial, MeshStandardMaterialParameters, Shader } from 'three'
 import React, { useRef } from 'react'
-import { extend, useFrame, ReactThreeFiber } from 'react-three-fiber'
-// @ts-ignore
+import { extend, useFrame } from 'react-three-fiber'
 import mergeRefs from 'react-merge-refs'
 
 type WobbleMaterialType = JSX.IntrinsicElements['meshStandardMaterial'] & {
@@ -16,7 +15,6 @@ type Props = WobbleMaterialType & {
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       wobbleMaterialImpl: WobbleMaterialType
     }
