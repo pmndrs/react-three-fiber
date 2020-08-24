@@ -22,11 +22,12 @@ type Props = {
   points: [number, number, number][]
   color?: THREE.Color | string | number
   vertexColors?: [number, number, number][]
+  lineWidth?: number
 } & Omit<JSX.IntrinsicElements['line2'], 'args'> &
   Omit<JSX.IntrinsicElements['lineMaterial'], 'color' | 'vertexColors' | 'resolution' | 'args'>
 
 export const Line = React.forwardRef<Line2, Props>(function Line(
-  { points, color = 'black', vertexColors, ...rest },
+  { points, color = 'black', vertexColors, lineWidth, ...rest },
   ref
 ) {
   const lineRef = useRef<Line2>()
@@ -46,6 +47,7 @@ export const Line = React.forwardRef<Line2, Props>(function Line(
         color={color}
         vertexColors={Boolean(vertexColors)}
         resolution={resolution}
+        linewidth={lineWidth}
         {...rest}
       />
     </line2>

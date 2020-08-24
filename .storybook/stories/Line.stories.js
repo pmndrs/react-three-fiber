@@ -20,7 +20,7 @@ const colors = new Array(points.length).fill().map(() => [Math.random(), Math.ra
 export function BasicLine() {
   return (
     <>
-      <Line points={points} color={color('color', 'red')} linewidth={number('linewidth', 3)} />
+      <Line points={points} color={color('color', 'red')} lineWidth={number('lineWidth', 3)} />
       <OrbitControls zoomSpeed={0.5} />
     </>
   )
@@ -39,7 +39,7 @@ BasicLine.decorators = [
 export function VertexColorsLine() {
   return (
     <>
-      <Line points={points} color={color('color', 'white')} vertexColors={colors} linewidth={number('linewidth', 3)} />
+      <Line points={points} color={color('color', 'white')} vertexColors={colors} lineWidth={number('lineWidth', 3)} />
       <OrbitControls zoomSpeed={0.5} />
     </>
   )
