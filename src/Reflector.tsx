@@ -35,7 +35,8 @@ export const Reflector = forwardRef(
           encoding,
         },
       ]}
-      {...props}>
+      {...props}
+    >
       {React.Children.only(children)}
     </reflectorImpl>
   )

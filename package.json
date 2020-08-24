@@ -2,43 +2,47 @@
   "name": "drei",
   "version": "1.2.0",
   "description": "useful add-ons for react-three-fiber",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "sideEffects": false,
-  "scripts": {
-    "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c",
-    "prepare": "npm run build",
-    "eslint": "eslint src/**/*.{js,ts,jsx,tsx}",
-    "eslint:storybook": "eslint .storybook/**/*.js  --ignore-pattern !.storybook",
-    "test": "echo no tests yet",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
-    "typegen": "tsc --emitDeclarationOnly",
-    "storybook": "start-storybook  -s ./.storybook/public -p 6006",
-    "build-storybook": "build-storybook -s ./.storybook/public"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged --pattern '**/*.*(js|jsx|ts|tsx)'"
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drcmda/drei.git"
-  },
   "keywords": [
     "react",
     "three",
     "threejs",
     "react-three-fiber"
   ],
-  "author": "Paul Henschel",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-spring/drei.git"
+  },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/drcmda/drei/issues"
+    "url": "https://github.com/react-spring/drei/issues"
   },
-  "homepage": "https://github.com/drcmda/drei#readme",
+  "homepage": "https://github.com/react-spring/drei",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
+  },
+  "scripts": {
+    "prebuild": "rimraf dist && npm run typegen",
+    "build": "rollup -c",
+    "prepare": "npm run build",
+    "eslint": "eslint --fix {src,.storybook}/**/*.{js,ts,jsx,tsx}",
+    "eslint:ci": "eslint {src,.storybook}/**/*.{js,ts,jsx,tsx}",
+    "test": "echo no tests yet",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
+    "typegen": "tsc --emitDeclarationOnly",
+    "storybook": "start-storybook  -s ./.storybook/public -p 6006",
+    "build-storybook": "build-storybook -s ./.storybook/public"
+  },
   "dependencies": {
     "@babel/runtime": "^7.11.2",
     "glsl-noise": "^0.0.0",
@@ -79,13 +83,15 @@
     "eslint": "^7.7.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.20.0",
+    "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.1.0",
     "glslify-loader": "^2.0.0",
     "husky": "^4.2.5",
     "jest": "^26.4.1",
+    "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
-    "pretty-quick": "^2.0.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-three-fiber": "^4.2.16",

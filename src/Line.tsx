@@ -4,14 +4,12 @@ import { extend, ReactThreeFiber } from 'react-three-fiber'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
 import { LineMaterial, LineMaterialParameters } from 'three/examples/jsm/lines/LineMaterial'
 import { Line2 } from 'three/examples/jsm/lines/Line2'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ Line2, LineGeometry, LineMaterial })
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       line2: ReactThreeFiber.Object3DNode<Line2, typeof Line2>
       lineGeometry: ReactThreeFiber.Object3DNode<LineGeometry, typeof LineGeometry>

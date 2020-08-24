@@ -1,8 +1,6 @@
 import React, { Children, createElement, forwardRef, useMemo, useRef, useLayoutEffect, useState } from 'react'
-// @ts-ignore
 import { Text as TextMeshImpl } from 'troika-three-text'
 import { extend, ReactThreeFiber } from 'react-three-fiber'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ TextMeshImpl })
@@ -11,7 +9,6 @@ type TextMesh = ReactThreeFiber.Object3DNode<TextMeshImpl, typeof TextMeshImpl>
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       textMeshImpl: TextMesh
     }
@@ -42,8 +39,9 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
     let n: React.ReactNode[] = []
     let t = ''
     Children.forEach(children, (child) => {
-      if (typeof child === 'string') t += child
-      else if (child && typeof child === 'object' && (child as React.ReactElement).props.attach === 'material') {
+      if (typeof child === 'string') {
+        t += child
+      } else if (child && typeof child === 'object' && (child as React.ReactElement).props.attach === 'material') {
         // Instantiate the base material and grab a reference to it, but don't assign any
         // props, and assign it as the `material`, which Troika will replace behind the scenes.
         n.push(createElement((child as React.ReactElement).type, { ref: setBaseMtl, attach: 'material' }))
@@ -52,7 +50,9 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
         if (baseMtl) {
           n.push(<primitive object={textRef.current.material} {...(child as React.ReactElement).props} attach={null} />)
         }
-      } else n.push(child)
+      } else {
+        n.push(child)
+      }
     })
     return [n, t]
   }, [children, baseMtl])

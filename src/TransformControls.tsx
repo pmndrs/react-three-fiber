@@ -2,11 +2,8 @@ import { Object3D, Group } from 'three'
 import React, { forwardRef, useRef, useLayoutEffect, useEffect } from 'react'
 import { ReactThreeFiber, extend, useThree, Overwrite } from 'react-three-fiber'
 import { TransformControls as TransformControlsImpl } from 'three/examples/jsm/controls/TransformControls'
-// @ts-ignore
 import pick from 'lodash.pick'
-// @ts-ignore
 import omit from 'lodash.omit'
-// @ts-ignore
 import mergeRefs from 'react-merge-refs'
 
 extend({ TransformControlsImpl })
@@ -18,7 +15,6 @@ export type TransformControls = Overwrite<
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       transformControlsImpl: TransformControls
     }
@@ -63,9 +59,10 @@ export const TransformControls = forwardRef(
     const { camera, gl, invalidate } = useThree()
     useLayoutEffect(() => void controls.current?.attach(group.current as Object3D), [children])
     useEffect(() => {
-      controls.current?.addEventListener('change', invalidate)
-      return () => controls.current?.removeEventListener('change', invalidate)
-    }, [controls.current])
+      const _controls = controls.current
+      _controls?.addEventListener('change', invalidate)
+      return () => _controls?.removeEventListener('change', invalidate)
+    }, [invalidate])
     return (
       <>
         <transformControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...transformProps} />

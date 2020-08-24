@@ -28,7 +28,7 @@ export const Shadow = forwardRef(
       context.fillStyle = gradient
       context.fillRect(0, 0, canvas.width, canvas.height)
       return canvas
-    }, [color, stop])
+    }, [color, colorStop])
     return (
       <mesh ref={ref as React.MutableRefObject<Mesh>} {...props}>
         <planeBufferGeometry attach="geometry" args={[1, 1]} />

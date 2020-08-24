@@ -12,7 +12,6 @@ export type Sky = {
 
 declare global {
   namespace JSX {
-    // eslint-disable-next-line @typescript-eslint/interface-name-prefix
     interface IntrinsicElements {
       skyImpl: Sky
     }
