@@ -169,7 +169,7 @@ Renders a THREE.Line2.
 <Line
   points={[[0, 0, 0], ...]}       // Array of points
   color="black"                   // Default
-  linewidth={1}                   // In pixels (default)
+  lineWidth={1}                   // In pixels (default)
   dashed={false}                  // Default
   vertexColors={[[0, 0, 0], ...]} // Optional array of RGB values for each point
   {...lineProps}                  // All THREE.Line2 props are valid
