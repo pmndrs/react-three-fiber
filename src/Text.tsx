@@ -1,6 +1,6 @@
 import React, { Children, createElement, forwardRef, useMemo, useRef, useLayoutEffect, useState } from 'react'
 import { Text as TextMeshImpl } from 'troika-three-text'
-import { extend, ReactThreeFiber } from 'react-three-fiber'
+import { extend, ReactThreeFiber, useThree } from 'react-three-fiber'
 import mergeRefs from 'react-merge-refs'
 
 extend({ TextMeshImpl })
@@ -33,6 +33,7 @@ type Props = JSX.IntrinsicElements['mesh'] & {
 }
 
 export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', children, ...props }: Props, ref) => {
+  const { invalidate } = useThree()
   const textRef = useRef<TextMeshImpl>()
   const [baseMtl, setBaseMtl] = useState()
   const [nodes, text] = useMemo(() => {
@@ -56,7 +57,7 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
     })
     return [n, t]
   }, [children, baseMtl])
-  useLayoutEffect(() => void textRef.current.sync())
+  useLayoutEffect(() => void textRef.current.sync(invalidate))
 
   return (
     <textMeshImpl ref={mergeRefs([textRef, ref])} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
