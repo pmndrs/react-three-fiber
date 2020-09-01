@@ -180,7 +180,7 @@ If you manage assets by yourself, globally or in a cache, this may _not_ be what
 
 ```jsx
 const globalGeometry = new THREE.BoxBufferGeometry()
-const globalMaterial = new THREE.MeshBasicMatrial()
+const globalMaterial = new THREE.MeshBasicMaterial()
 
 function Mesh() {
   return (
