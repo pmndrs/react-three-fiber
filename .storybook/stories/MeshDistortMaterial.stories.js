@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useRef } from 'react'
 
 import { withKnobs, number } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 import { MeshDistortMaterial } from '../../src/shaders/MeshDistortMaterial'
 import { Icosahedron } from '../../src/shapes'
+import { useFrame } from 'react-three-fiber'
 
 export default {
   title: 'Shaders/MeshDistortMaterial',
@@ -28,3 +29,25 @@ function MeshDistortMaterialScene() {
 
 export const MeshDistortMaterialSt = () => <MeshDistortMaterialScene />
 MeshDistortMaterialSt.storyName = 'Default'
+
+function MeshDistortMaterialRefScene() {
+
+  const material = useRef()
+
+  useFrame(({ clock }) => {
+    material.current.distort = Math.sin(clock.getElapsedTime())
+  })
+  
+  return (
+    <Icosahedron args={[1, 4]}>
+      <MeshDistortMaterial
+        attach="material"
+        color="#f25042"
+        ref={material}
+      />
+    </Icosahedron>
+  )
+}
+
+export const MeshDistortMaterialRefSt = () => <MeshDistortMaterialRefScene />
+MeshDistortMaterialRefSt.storyName = 'Ref'

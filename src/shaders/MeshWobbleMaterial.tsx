@@ -1,5 +1,5 @@
 import { MeshStandardMaterial, MeshStandardMaterialParameters, Shader } from 'three'
-import React, { useRef } from 'react'
+import React, { useMemo } from 'react'
 import { extend, useFrame } from 'react-three-fiber'
 import mergeRefs from 'react-merge-refs'
 
@@ -73,10 +73,8 @@ class WobbleMaterialImpl extends MeshStandardMaterial {
   }
 }
 
-extend({ WobbleMaterialImpl })
-
 export const MeshWobbleMaterial = React.forwardRef(({ speed = 1, ...props }: Props, ref) => {
-  const material = useRef<WobbleMaterialType>()
-  useFrame((state) => material.current && (material.current.time = state.clock.getElapsedTime() * speed))
-  return <wobbleMaterialImpl ref={mergeRefs([ref, material])} attach="material" {...props} />
+  const material = useMemo(() => new WobbleMaterialImpl(), [])
+  useFrame((state) => material && (material.time = state.clock.getElapsedTime() * speed))
+  return <primitive object={material} ref={ref} attach="material" {...props} />
 })
