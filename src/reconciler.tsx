@@ -121,7 +121,12 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     }
   })
   const leftOvers = accumulative ? Object.keys(oldProps).filter((key) => newProps[key] === void 0) : []
-  const filteredProps = [...sameProps, 'children', 'key', 'ref'].reduce((acc, prop) => {
+
+  const toFilter = [...sameProps, 'children', 'key', 'ref']
+    // Instances use "object" as a reserved identifier
+  if (instance.__instance) toFilter.push('object')
+
+  const filteredProps = toFilter.reduce((acc, prop) => {
     let { [prop]: _, ...rest } = acc
     return rest
   }, newProps)
