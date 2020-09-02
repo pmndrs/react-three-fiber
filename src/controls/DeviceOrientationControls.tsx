@@ -10,7 +10,7 @@ export type DeviceOrientationControls = Overwrite<
 export const DeviceOrientationControls = forwardRef((props: DeviceOrientationControls, ref) => {
   const { camera } = useThree()
   const controls = useMemo(() => new DeviceOrientationControlsImp(camera), [camera])
-  useFrame(() => controls.enabled && controls.update())
+  useFrame((state, delta) => controls.update(delta))
   useEffect(() => {
     const current = controls
     current.connect()
