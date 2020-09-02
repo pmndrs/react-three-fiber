@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo, useEffect } from 'react'
-import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
+import { ReactThreeFiber, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { MapControls as MapControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 import mergeRefs from 'react-merge-refs'
 

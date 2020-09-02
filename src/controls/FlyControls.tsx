@@ -10,6 +10,7 @@ export type FlyControls = Overwrite<
 export const FlyControls = forwardRef((props: FlyControls, ref) => {
   const { camera, gl } = useThree()
   const controls = useMemo(() => new FlyControlsImpl(camera, gl.domElement), [camera, gl.domElement])
-  useFrame((state, delta) => controls.update(delta))
+  useFrame((_, delta) => controls.update(delta))
+
   return <primitive object={controls} ref={ref} {...props} />
 })

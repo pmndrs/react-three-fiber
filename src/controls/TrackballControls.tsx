@@ -1,9 +1,7 @@
-import React, { forwardRef, useRef, useEffect } from 'react'
-import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
+import React, { forwardRef, useMemo, useEffect } from 'react'
+import { ReactThreeFiber, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { TrackballControls as TrackballControlsImpl } from 'three/examples/jsm/controls/TrackballControls'
 import mergeRefs from 'react-merge-refs'
-
-extend({ TrackballControlsImpl })
 
 export type TrackballControls = Overwrite<
   ReactThreeFiber.Object3DNode<TrackballControlsImpl, typeof TrackballControlsImpl>,
@@ -19,13 +17,14 @@ declare global {
 }
 
 export const TrackballControls = forwardRef((props: TrackballControls, ref) => {
-  const controls = useRef<TrackballControlsImpl>()
   const { camera, gl, invalidate } = useThree()
-  useFrame(() => controls.current?.update())
+  const controls = useMemo(() => new TrackballControlsImpl(camera, gl.domElement), [camera, gl])
+
+  useFrame(() => controls.update())
   useEffect(() => {
-    const _controls = controls.current
-    _controls?.addEventListener('change', invalidate)
-    return () => _controls?.removeEventListener('change', invalidate)
-  }, [invalidate])
-  return <trackballControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} {...props} />
+    controls.addEventListener('change', invalidate)
+    return () => controls.removeEventListener('change', invalidate)
+  }, [controls, invalidate])
+
+  return <primitive object={controls} ref={mergeRefs([controls, ref])} {...props} />
 })
