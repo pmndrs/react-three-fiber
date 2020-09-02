@@ -189,9 +189,11 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   }
 
   const toFilter = [...sameProps, 'children', 'key', 'ref']
+  // Instances use "object" as a reserved identifier
+  if (instance.__instance) toFilter.push('object')
   const filteredProps = { ...newProps }
 
-  // removes sameProps and reserved props from newProps
+  // Removes sameProps and reserved props from newProps
   keys = Object.keys(filteredProps)
   for (i = 0; i < keys.length; i++) {
     if (toFilter.indexOf(keys[i]) > -1) {
