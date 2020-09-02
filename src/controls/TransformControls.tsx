@@ -60,8 +60,8 @@ export const TransformControls = forwardRef(
     useLayoutEffect(() => void controls.attach(group.current as Object3D), [children, controls])
 
     useEffect(() => {
-      controls.addEventListener('change', invalidate)
-      return () => controls.removeEventListener('change', invalidate)
+      controls?.addEventListener?.('change', invalidate)
+      return () => controls?.removeEventListener?.('change', invalidate)
     }, [controls, invalidate])
 
     return (

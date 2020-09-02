@@ -103,7 +103,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
-    "three": "^0.119.1",
+    "three": "^0.120.1",
     "typescript": "^3.9.7"
   },
   "peerDependencies": {

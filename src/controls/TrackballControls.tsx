@@ -22,8 +22,8 @@ export const TrackballControls = forwardRef((props: TrackballControls, ref) => {
 
   useFrame(() => controls.update())
   useEffect(() => {
-    controls.addEventListener('change', invalidate)
-    return () => controls.removeEventListener('change', invalidate)
+    controls?.addEventListener?.('change', invalidate)
+    return () => controls?.removeEventListener?.('change', invalidate)
   }, [controls, invalidate])
 
   return <primitive object={controls} ref={mergeRefs([controls, ref])} {...props} />
