@@ -51,7 +51,8 @@
     "react-merge-refs": "^1.0.0",
     "stats.js": "^0.17.0",
     "troika-three-text": "^0.31.0",
-    "utility-types": "^3.10.0"
+    "utility-types": "^3.10.0",
+    "zustand": "^3.0.3"
   },
   "devDependencies": {
     "@babel/core": "7.11.1",

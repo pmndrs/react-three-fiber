@@ -81,6 +81,7 @@ npm run storybook
   - `useGLTFLoader()`
   - `useTextureLoader()`
   - `useCubeTextureLoader()`
+  - `useProgress()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/cranky-newton-k7f9x)
 
 # Exports
 
@@ -496,6 +497,32 @@ useLoader(
   )
 )
 ```
+
+#### ⚡️ `useProgress()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/cranky-newton-k7f9x)
+
+A convenience hook that wraps `THREE.DefaultLoadingManager`'s progress status.
+
+```jsx
+function Loader() {
+  const { active, progress, errors, item, loaded, total } = useProgress()
+  return <Html center>{progress} % loaded</Html>
+}
+
+<Suspense fallback={<Loader />}>
+  <GLTFModel />
+  <CubeMapEnv />
+  <TexturedPlane />
+</Suspense>
+```
+
+If you don't want your progress component to re-render on all changes you can be specific as to what you need, for instance if the component is supposed to collect errors only. Look into [zustand](https://github.com/react-spring/zustand) for more info about selectors. 
+
+```jsx
+const errors = useProgress(state => state.errors)
+```
+
+👉 Note that your loading component does not have to be a suspense fallback. You can use it anywhere, even in your dom tree, for instance for overlays.
+
 ---
 <a href="https://www.netlify.com">
   <img src="https://www.netlify.com/img/global/badges/netlify-color-bg.svg" alt="Deploys by Netlify" />
