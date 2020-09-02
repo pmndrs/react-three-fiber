@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef, useEffect } from 'react'
+import React, { forwardRef, useMemo, useEffect } from 'react'
 import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { MapControls as MapControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 import mergeRefs from 'react-merge-refs'
@@ -19,13 +19,14 @@ declare global {
 }
 
 export const MapControls = forwardRef((props: MapControls = { enableDamping: true }, ref) => {
-  const controls = useRef<MapControlsImpl>()
   const { camera, gl, invalidate } = useThree()
-  useFrame(() => controls.current?.update())
+  const controls = useMemo(() => new MapControlsImpl(camera, gl.domElement), [camera, gl])
+
+  useFrame(() => controls.update())
   useEffect(() => {
-    const _controls = controls.current
-    _controls?.addEventListener('change', invalidate)
-    return () => _controls?.removeEventListener('change', invalidate)
-  }, [invalidate])
-  return <mapControlsImpl ref={mergeRefs([controls, ref])} args={[camera, gl.domElement]} enableDamping {...props} />
+    controls.addEventListener('change', invalidate)
+    return () => controls.removeEventListener('change', invalidate)
+  }, [controls, invalidate])
+
+  return <primitive object={controls} ref={mergeRefs([controls, ref])} enableDamping {...props} />
 })
