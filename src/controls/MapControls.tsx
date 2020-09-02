@@ -3,8 +3,6 @@ import { ReactThreeFiber, extend, useThree, useFrame, Overwrite } from 'react-th
 import { MapControls as MapControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
 import mergeRefs from 'react-merge-refs'
 
-extend({ MapControlsImpl })
-
 export type MapControls = Overwrite<
   ReactThreeFiber.Object3DNode<MapControlsImpl, typeof MapControlsImpl>,
   { target?: ReactThreeFiber.Vector3 }
