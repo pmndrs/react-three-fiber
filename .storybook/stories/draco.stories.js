@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useLoader } from 'react-three-fiber'
 
 import { Setup } from '../Setup'
-import { draco } from '../../src/draco'
+import { draco } from '../../src/loaders/draco'
 
 export default {
   title: 'Loaders/draco',

@@ -2,7 +2,7 @@ import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Text } from '../../src/Text'
+import { Text } from '../../src/abstractions/Text'
 import { useTurntable } from '../useTurntable'
 
 export default {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Canvas } from 'react-three-fiber'
 
-import { OrbitControls } from '../src/OrbitControls'
+import { OrbitControls } from '../src/controls/OrbitControls'
 
 export function Setup({ children, cameraPosition = [-5, 5, 5], controls = true }) {
   return (

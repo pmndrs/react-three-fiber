@@ -2,7 +2,7 @@ import React, { Suspense } from 'react'
 
 import { Setup } from '../Setup'
 
-import { useCubeTextureLoader } from '../../src/useCubeTextureLoader'
+import { useCubeTextureLoader } from '../../src/loaders/useCubeTextureLoader'
 import { Icosahedron, Sphere } from '../../src/shapes'
 
 export default {

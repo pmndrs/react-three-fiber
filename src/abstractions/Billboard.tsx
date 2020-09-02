@@ -1,7 +1,7 @@
 import React, { forwardRef, useRef } from 'react'
 import { Mesh } from 'three'
 import { useFrame } from 'react-three-fiber'
-import { Plane } from './shapes/generated'
+import { Plane } from '../shapes/generated'
 import mergeRefs from 'react-merge-refs'
 
 export type BillboardProps = { follow?: boolean; lockX?: boolean; lockY?: boolean; lockZ?: boolean } & typeof Plane

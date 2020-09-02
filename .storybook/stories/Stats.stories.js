@@ -2,7 +2,7 @@ import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Stats } from '../../src/Stats'
+import { Stats } from '../../src/misc/Stats'
 
 export default {
   title: 'Misc/Stats',

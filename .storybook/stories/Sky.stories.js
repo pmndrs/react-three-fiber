@@ -2,11 +2,11 @@ import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Sky } from '../../src/Sky'
+import { Sky } from '../../src/shaders/Sky'
 import { Plane } from '../../src/shapes'
 
 export default {
-  title: 'Abstractions/Sky',
+  title: 'Shaders/Sky',
   component: Sky,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

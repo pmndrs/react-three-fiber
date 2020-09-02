@@ -3,7 +3,7 @@ import React from 'react'
 import { withKnobs, number } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
-import { MeshDistortMaterial } from '../../src/MeshDistortMaterial'
+import { MeshDistortMaterial } from '../../src/shaders/MeshDistortMaterial'
 import { Icosahedron } from '../../src/shapes'
 
 export default {

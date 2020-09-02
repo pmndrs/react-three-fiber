@@ -3,7 +3,7 @@ import React from 'react'
 import { withKnobs, number } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
-import { MeshWobbleMaterial } from '../../src/MeshWobbleMaterial'
+import { MeshWobbleMaterial } from '../../src/shaders/MeshWobbleMaterial'
 import { Torus } from '../../src/shapes'
 
 export default {

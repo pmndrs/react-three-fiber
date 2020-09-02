@@ -3,7 +3,7 @@ import { useFrame } from 'react-three-fiber'
 
 import { Setup } from '../Setup'
 
-import { Shadow } from '../../src/Shadow'
+import { Shadow } from '../../src/misc/Shadow'
 import { Icosahedron, Plane } from '../../src/shapes'
 
 export default {

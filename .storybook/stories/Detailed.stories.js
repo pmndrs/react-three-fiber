@@ -2,9 +2,9 @@ import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Detailed } from '../../src/Detailed'
+import { Detailed } from '../../src/abstractions/Detailed'
 import { Icosahedron } from '../../src/shapes'
-import { OrbitControls } from '../../src/OrbitControls'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 
 export default {
   title: 'Abstractions/Detailed',

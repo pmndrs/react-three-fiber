@@ -2,8 +2,8 @@ import React, { useRef, useMemo, useState } from 'react'
 import { useFrame, useThree, createPortal } from 'react-three-fiber'
 import * as THREE from 'three'
 import { Setup } from '../Setup'
-import { useCamera } from '../../src/useCamera'
-import { OrthographicCamera } from '../../src/OrthographicCamera'
+import { useCamera } from '../../src/misc/useCamera'
+import { OrthographicCamera } from '../../src/cameras/OrthographicCamera'
 
 export default {
   title: 'Misc/useCamera',

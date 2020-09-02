@@ -3,7 +3,7 @@ import { withKnobs, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 
-import { OrbitControls } from '../../src/OrbitControls'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 import { Box } from '../../src/shapes'
 
 export function OrbitControlsStory() {

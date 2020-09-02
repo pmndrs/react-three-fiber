@@ -4,9 +4,9 @@ import { withKnobs, optionsKnob, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 
-import { TransformControls } from '../../src/TransformControls'
+import { TransformControls } from '../../src/controls/TransformControls'
 import { Box } from '../../src/shapes'
-import { OrbitControls } from '../../src/OrbitControls'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 
 export function TransformControlsStory() {
   return (

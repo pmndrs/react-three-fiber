@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { Setup } from '../Setup'
-import { MeshWobbleMaterial, Reflector } from '../../src/Reflector'
+import { MeshWobbleMaterial, Reflector } from '../../src/misc/Reflector'
 
 export default {
   title: 'Misc/Reflector',

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import { Setup } from '../Setup'
-import { meshBounds } from '../../src/meshBounds'
+import { meshBounds } from '../../src/misc/meshBounds'
 import { useTurntable } from '../useTurntable'
 
 export default {

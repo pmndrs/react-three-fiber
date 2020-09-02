@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react'
 import { useLoader } from 'react-three-fiber'
-import { useAspect } from '../../src/useAspect'
+import { useAspect } from '../../src/misc/useAspect'
 
 import { Plane } from '../../src/shapes'
 

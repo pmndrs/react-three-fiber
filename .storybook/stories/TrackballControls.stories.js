@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { TrackballControls } from '../../src/TrackballControls'
+import { TrackballControls } from '../../src/controls/TrackballControls'
 import { Setup } from '../Setup'
 import { Icosahedron } from '../../src/shapes'
 

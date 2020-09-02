@@ -3,11 +3,11 @@ import React from 'react'
 import { Setup } from '../Setup'
 
 import { Icosahedron } from '../../src/shapes'
-import { Html } from '../../src/Html'
+import { Html } from '../../src/misc/Html'
 import { useTurntable } from '../useTurntable'
 
 export default {
-  title: 'Abstractions/Html',
+  title: 'Misc/Html',
   component: Html,
   decorators: [(storyFn) => <Setup cameraPosition={[-20, 20, -20]}> {storyFn()}</Setup>],
 }

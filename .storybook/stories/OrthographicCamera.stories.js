@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react'
 
 import { Icosahedron } from '../../src/shapes'
-import { OrthographicCamera } from '../../src/OrthographicCamera'
+import { OrthographicCamera } from '../../src/cameras/OrthographicCamera'
 import { Canvas } from 'react-three-fiber'
-import { OrbitControls } from '../../src/OrbitControls'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 
 export default {
   title: 'Camera/OrthographicCamera',

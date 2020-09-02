@@ -7,8 +7,8 @@ import { FaceNormalsHelper } from 'three/examples/jsm/helpers/FaceNormalsHelper'
 import { Setup } from '../Setup'
 
 import { Sphere } from '../../src/shapes'
-import { useHelper } from '../../src/useHelper'
-import { PerspectiveCamera } from '../../src/PerspectiveCamera'
+import { useHelper } from '../../src/misc/useHelper'
+import { PerspectiveCamera } from '../../src/cameras/PerspectiveCamera'
 
 export default {
   title: 'Misc/useHelper',

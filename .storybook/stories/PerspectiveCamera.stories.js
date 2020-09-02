@@ -2,8 +2,8 @@ import React, { useMemo } from 'react'
 import { Canvas } from 'react-three-fiber'
 
 import { Icosahedron } from '../../src/shapes'
-import { PerspectiveCamera } from '../../src/PerspectiveCamera'
-import { OrbitControls } from '../../src/OrbitControls'
+import { PerspectiveCamera } from '../../src/cameras/PerspectiveCamera'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 
 export default {
   title: 'Camera/PerspectiveCamera',

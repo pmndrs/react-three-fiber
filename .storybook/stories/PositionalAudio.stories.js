@@ -1,8 +1,8 @@
 import React, { Suspense } from 'react'
 
 import { Setup } from '../Setup'
-import { OrbitControls } from '../../src/OrbitControls'
-import { PositionalAudio } from '../../src/PositionalAudio'
+import { OrbitControls } from '../../src/controls/OrbitControls'
+import { PositionalAudio } from '../../src/abstractions/PositionalAudio'
 
 export default {
   title: 'Abstractions/PositionalAudio',

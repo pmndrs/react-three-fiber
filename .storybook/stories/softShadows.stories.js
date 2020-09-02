@@ -4,13 +4,13 @@ import { Setup } from '../Setup'
 
 import { Plane, Sphere } from '../../src/shapes'
 
-import { softShadows } from '../../src/softShadows'
+import { softShadows } from '../../src/shaders/softShadows'
 import { useFrame } from 'react-three-fiber'
 
 softShadows()
 
 export default {
-  title: 'Abstractions/softShadows',
+  title: 'Shaders/softShadows',
   component: softShadows,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }

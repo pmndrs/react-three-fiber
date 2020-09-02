@@ -3,7 +3,7 @@ import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import { Box3, Sphere } from 'three'
 import { useLoader, Canvas } from 'react-three-fiber'
 
-import { MapControls } from '../../src/MapControls'
+import { MapControls } from '../../src/controls/MapControls'
 
 export default {
   title: 'Controls/MapControls',

@@ -2,8 +2,8 @@ import React from 'react'
 import { withKnobs, boolean } from '@storybook/addon-knobs'
 import { Setup } from '../Setup'
 
-import { Billboard } from '../../src/Billboard'
-import { OrbitControls } from '../../src/OrbitControls'
+import { Billboard } from '../../src/abstractions/Billboard'
+import { OrbitControls } from '../../src/controls/OrbitControls'
 
 export default {
   title: 'Abstractions/Billboard',

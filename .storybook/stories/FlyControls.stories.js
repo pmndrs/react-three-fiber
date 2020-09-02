@@ -3,7 +3,7 @@ import { withKnobs, number, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 
-import { FlyControls } from '../../src/FlyControls'
+import { FlyControls } from '../../src/controls/FlyControls'
 import { Box } from '../../src/shapes'
 
 export function FlyControlsStory() {

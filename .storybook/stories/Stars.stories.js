@@ -2,11 +2,11 @@ import React from 'react'
 
 import { Setup } from '../Setup'
 
-import { Stars } from '../../src/Stars'
+import { Stars } from '../../src/shaders/Stars'
 import { Plane } from '../../src/shapes'
 
 export default {
-  title: 'Abstractions/Stars',
+  title: 'Shaders/Stars',
   component: Stars,
   decorators: [(storyFn) => <Setup> {storyFn()}</Setup>],
 }
