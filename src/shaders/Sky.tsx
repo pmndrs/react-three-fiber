@@ -6,8 +6,10 @@ import { Vector3 } from 'three'
 export type Sky = {
   distance?: number
   sunPosition?: ReactThreeFiber.Vector3
-  turbidity?: number
+  mieCoefficient?: number
+  mieDirectionalG?: number
   rayleigh?: number
+  turbidity?: number
 } & ReactThreeFiber.Object3DNode<SkyImpl, typeof SkyImpl>
 
 declare global {
@@ -19,7 +21,18 @@ declare global {
 }
 
 export const Sky = forwardRef<Sky>(
-  ({ distance = 100, turbidity = 2, rayleigh = 1, sunPosition = [0, Math.PI, 0], ...props }: Sky, ref) => {
+  (
+    {
+      distance = 100,
+      mieCoefficient = 0.005,
+      mieDirectionalG = 0.8,
+      rayleigh = 1,
+      turbidity = 2,
+      sunPosition = [0, Math.PI, 0],
+      ...props
+    }: Sky,
+    ref
+  ) => {
     const scale = useMemo(() => new Vector3().setScalar(distance), [distance])
     const sky = useMemo(() => new SkyImpl(), [])
 
@@ -27,9 +40,11 @@ export const Sky = forwardRef<Sky>(
       <primitive
         object={sky}
         ref={ref}
-        material-uniforms-turbidity-value={turbidity}
+        material-uniforms-mieCoefficient-value={mieCoefficient}
+        material-uniforms-mieDirectionalG-value={mieDirectionalG}
         material-uniforms-rayleigh-value={rayleigh}
         material-uniforms-sunPosition-value={sunPosition}
+        material-uniforms-turbidity-value={turbidity}
         scale={scale}
         {...props}
       />
