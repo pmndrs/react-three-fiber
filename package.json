@@ -94,7 +94,7 @@
     "prettier": "^2.0.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
-    "react-three-fiber": "^4.2.16",
+    "react-three-fiber": "^4.2.21",
     "rimraf": "^3.0.2",
     "rollup": "^2.26.4",
     "rollup-plugin-babel": "^4.4.0",
