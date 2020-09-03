@@ -49,7 +49,7 @@ No. Rendering performance is up to threejs and the GPU. Components participate i
 
 <table>
   <tr>
-    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4">live demo</a>).</td>
+    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).</td>
     <td>
       <a href="https://codesandbox.io/s/rrppl0y8l4">
         <img src="https://i.imgur.com/sS4ArrZ.gif" /></td>
