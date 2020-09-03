@@ -28,7 +28,7 @@ class WobbleMaterialImpl extends MeshStandardMaterial {
   _time: Uniform<number>
   _factor: Uniform<number>
 
-  constructor(parameters: MeshStandardMaterialParameters) {
+  constructor(parameters: MeshStandardMaterialParameters = {}) {
     super(parameters)
     this.setValues(parameters)
     this._time = { value: 0 }

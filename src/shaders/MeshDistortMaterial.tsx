@@ -33,7 +33,7 @@ class DistortMaterialImpl extends MeshPhysicalMaterial {
   _distort: Uniform<number>
   _radius: Uniform<number>
 
-  constructor(parameters: MeshPhysicalMaterialParameters) {
+  constructor(parameters: MeshPhysicalMaterialParameters = {}) {
     super(parameters)
     this.setValues(parameters)
     this._time = { value: 0 }
