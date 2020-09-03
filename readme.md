@@ -138,6 +138,7 @@ Some reading material:
 # News, updates, community
 
 - [@0xca0a](https://twitter.com/0xca0a)'s twitter
+- [discord](https://discord.gg/ZZjjNvJ)
 - [github discussions](https://github.com/react-spring/react-three-fiber/discussions)
 
 # How to contribute
