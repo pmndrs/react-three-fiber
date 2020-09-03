@@ -74,6 +74,7 @@ npm run storybook
   - `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw) ![](https://img.shields.io/badge/-useFrame-red)
   - `useAspect()`
   - `<Reflector/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/jolly-benz-pmk9j)
+  - `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision--use-subdivision-scene-st)
 
 
 - Loaders
@@ -443,6 +444,22 @@ return (
   <mesh scale={scale}>
     <planeBufferGeometry />
     <meshBasicMaterial map={imageTexture} />
+```
+
+##### ⚡️ `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision--use-subdivision-scene-st)
+
+This hook mutates a mesh geometry using [three's Subdivision modifier](https://threejs.org/examples/webgl_modifier_subdivision.html). 
+
+👉 Vertex count is quadrupled for each subdivision.
+
+```jsx
+const meshRef = useSubdivision(4)
+
+return (
+  <mesh ref={meshRef}>
+    <boxBufferGeometry args={[10, 10]} />
+  </mesh>
+)
 ```
 
 ## ⚡️ Loaders
