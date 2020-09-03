@@ -106,7 +106,6 @@ ReactDOM.render(
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), *all* threejs exports are native to three-fiber.
 4. Try changing some values, scroll though our [Api](api.md) to see what the various settings and hooks do.
-3. Don't break your head, three-fiber is threejs, it does not introduce new rules or assumptions.
 
 Some reading material:
 
