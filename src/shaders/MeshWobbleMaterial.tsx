@@ -1,7 +1,6 @@
 import { MeshStandardMaterial, MeshStandardMaterialParameters, Shader } from 'three'
 import React, { useMemo } from 'react'
-import { extend, useFrame } from 'react-three-fiber'
-import mergeRefs from 'react-merge-refs'
+import { useFrame } from 'react-three-fiber'
 
 type WobbleMaterialType = JSX.IntrinsicElements['meshStandardMaterial'] & {
   time?: number

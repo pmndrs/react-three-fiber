@@ -1,8 +1,6 @@
-import React, { useMemo, useRef } from 'react'
+import React, { useMemo } from 'react'
 import { MeshPhysicalMaterial, MeshPhysicalMaterialParameters, Shader } from 'three'
-import { extend, useFrame } from 'react-three-fiber'
-// eslint-disable-next-line
-import mergeRefs from 'react-merge-refs'
+import { useFrame } from 'react-three-fiber'
 // eslint-disable-next-line
 // @ts-ignore
 import distort from './glsl/distort.vert'
