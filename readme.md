@@ -5,7 +5,7 @@
 <img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
 [![Discord Shield](https://discordapp.com/api/guilds/740090768164651008/widget.png?style=shield)](https://discord.gg/ZZjjNvJ)
 
-react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for Threejs on the web and react-native.
+react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
 <br />
 
@@ -35,15 +35,15 @@ react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
+Building dynamic scene graphs declaratively with re-usable components makes dealing with threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
 
 #### Does it have limitations?
 
-None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
+None. Everything that works in threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed upstream features.
 
-#### Is it slower than raw Threejs?
+#### Is it slower than raw threejs?
 
-No. Rendering performance is up to Threejs and the GPU. Components participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
+No. Rendering performance is up to threejs and the GPU. Components participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
 
 #### What does it look like?
 
@@ -102,9 +102,11 @@ ReactDOM.render(
 
 # Fundamentals
 
-1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
-2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [demo sandbox on the frontpage](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try out some of the things you learn here.
-3. Don't break your head, three-fiber is Threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative yet, use it 1:1 as it is.
+1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
+2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [demo sandbox on the frontpage](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
+3. [Look up](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene) the native JSX elements that you see in that code (`<mesh/>`, `<ambientLight/>`, etc) in the threejs docs, *all* the objects that threejs exposes are available to three-fiber.
+4. Try changing some values, scroll though our [api.md](api) to see what the various settings and hooks do.
+3. Don't break your head, three-fiber is threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative yet, use it 1:1 as it is.
 
 Some reading material:
 
