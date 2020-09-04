@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { useEffect, useRef } from 'react'
-import { SubdivisionModifier } from 'three/examples/jsm/modifiers/SubdivisionModifier.js'
+import { SubdivisionModifier } from 'three/examples/jsm/modifiers/SubdivisionModifier'
 
 export function useSubdivision(subdivisions) {
   const ref = useRef<THREE.Mesh>()
