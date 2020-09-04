@@ -488,8 +488,6 @@ return (
 
 This hook mutates a mesh geometry using [three's Tessellation modifier](hhttps://threejs.org/examples/?q=tess#webgl_modifier_tessellation). It will break-up faces withe edge longer than the maxEdgeLength parameter.
 
-👉 The simplification code is based on [this algorithm](http://www.melax.com/polychop/).
-
 ```jsx
 const meshRef = useSimplification(
   2, // passes - number of times the geometry will be subdivided
