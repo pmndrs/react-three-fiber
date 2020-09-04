@@ -66,7 +66,7 @@ export const TransformControls = forwardRef(
 
     return (
       <>
-        <primitive object={controls} ref={mergeRefs([controls, ref])} {...transformProps} />
+        <primitive dispose={null} object={controls} ref={mergeRefs([controls, ref])} {...transformProps} />
         <group ref={group} {...objectProps}>
           {children}
         </group>

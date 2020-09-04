@@ -18,5 +18,5 @@ export const FlyControls = forwardRef((props: FlyControls, ref) => {
 
   useFrame((_, delta) => controls.update(delta))
 
-  return <primitive object={controls} ref={ref} {...props} />
+  return <primitive dispose={null} object={controls} ref={ref} {...props} />
 })

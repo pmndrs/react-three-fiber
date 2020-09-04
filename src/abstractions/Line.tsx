@@ -30,9 +30,10 @@ export const Line = React.forwardRef<Line2, Props>(function Line(
     line2.computeLineDistances()
   }, [points, vertexColors, line2, lineGeometry])
   return (
-    <primitive object={line2} ref={ref} {...rest}>
-      <primitive object={lineGeometry} attach="geometry" />
+    <primitive dispose={null} object={line2} ref={ref} {...rest}>
+      <primitive dispose={null} object={lineGeometry} attach="geometry" />
       <primitive
+        dispose={null}
         object={lineMaterial}
         attach="material"
         color={color}

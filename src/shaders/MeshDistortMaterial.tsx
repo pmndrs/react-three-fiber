@@ -92,5 +92,5 @@ export const MeshDistortMaterial = React.forwardRef(({ speed = 1, ...props }: Pr
   const material = useMemo(() => new DistortMaterialImpl(), [])
   useFrame((state) => material && (material.time = state.clock.getElapsedTime() * speed))
 
-  return <primitive object={material} ref={ref} attach="material" {...props} />
+  return <primitive dispose={null} object={material} ref={ref} attach="material" {...props} />
 })

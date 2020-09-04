@@ -36,7 +36,14 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
         // Once the base material has been assigned, grab the resulting upgraded material,
         // and apply the original material props to that.
         if (baseMtl) {
-          n.push(<primitive object={troikaMesh.material} {...(child as React.ReactElement).props} attach={null} />)
+          n.push(
+            <primitive
+              dispose={null}
+              object={troikaMesh.material}
+              {...(child as React.ReactElement).props}
+              attach={null}
+            />
+          )
         }
       } else {
         n.push(child)
@@ -46,7 +53,7 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
   }, [children, baseMtl, troikaMesh.material])
   useLayoutEffect(() => void troikaMesh.sync(invalidate))
   return (
-    <primitive object={troikaMesh} ref={ref} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
+    <primitive dispose={null} object={troikaMesh} ref={ref} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
       {nodes}
     </primitive>
   )

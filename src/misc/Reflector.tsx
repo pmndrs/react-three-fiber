@@ -34,7 +34,7 @@ export const Reflector = forwardRef(
     )
 
     return (
-      <primitive object={reflector} ref={ref as React.MutableRefObject<Mesh>} {...props}>
+      <primitive dispose={null} object={reflector} ref={ref as React.MutableRefObject<Mesh>} {...props}>
         {React.Children.only(children)}
       </primitive>
     )

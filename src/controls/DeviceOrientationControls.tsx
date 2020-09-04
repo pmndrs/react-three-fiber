@@ -24,5 +24,5 @@ export const DeviceOrientationControls = forwardRef((props: DeviceOrientationCon
     return () => current.dispose()
   }, [controls])
 
-  return <primitive object={controls} ref={ref} {...props} />
+  return <primitive dispose={null} object={controls} ref={ref} {...props} />
 })
