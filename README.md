@@ -451,7 +451,7 @@ return (
 
 ## Modifiers
 
-##### ⚡️ `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision)
+##### ⚡️ `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usesubdivision)
 
 This hook mutates a mesh geometry using [three's Subdivision modifier](https://threejs.org/examples/webgl_modifier_subdivision.html). 
 
