@@ -65,7 +65,6 @@ npm run storybook
   - `softShadows()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-soft-shadows-dh2jc)
   - `shaderMaterial()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-shader-material-yltgr)
 - Misc
-
   - `<Html/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-suspense-zu2wo)
   - `<Shadow/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-render-target-t5fv8)
   - `<Stats/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-stats-8p4ph)
@@ -74,8 +73,6 @@ npm run storybook
   - `useHelper()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-use-helper-ly6kw) ![](https://img.shields.io/badge/-useFrame-red)
   - `useAspect()`
   - `<Reflector/>` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/jolly-benz-pmk9j)
-  - `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision--use-subdivision-scene-st)
-
 
 - Loaders
   - `draco()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-contact-shadow-h5xcw)
@@ -83,6 +80,12 @@ npm run storybook
   - `useTextureLoader()`
   - `useCubeTextureLoader()`
   - `useProgress()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/cranky-newton-k7f9x)
+
+- Modifiers
+  - `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usesubdivision)
+  - `useTessellation()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usetessellation)
+  - `useSimplification()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usesimplification)
+
 
 # Exports
 
@@ -446,7 +449,9 @@ return (
     <meshBasicMaterial map={imageTexture} />
 ```
 
-##### ⚡️ `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision--use-subdivision-scene-st)
+## Modifiers
+
+##### ⚡️ `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/misc-usesubdivision)
 
 This hook mutates a mesh geometry using [three's Subdivision modifier](https://threejs.org/examples/webgl_modifier_subdivision.html). 
 
@@ -462,7 +467,43 @@ return (
 )
 ```
 
-## ⚡️ Loaders
+##### ⚡️ `useSimplification()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usetessellation)
+
+This hook mutates a mesh geometry using [three's Simplification modifier](https://threejs.org/examples/webgl_modifier_subdivision.html). 
+
+👉 The simplification code is based on [this algorithm](http://www.melax.com/polychop/).
+
+```jsx
+const meshRef = useSimplification(0.5) // the vertices will be halved
+
+return (
+  <mesh ref={meshRef}>
+    <octahedronBufferGeometry args={[2, 5]} />
+  </mesh>
+)
+```
+
+
+##### ⚡️ `useTessellation()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usetessellation)
+
+This hook mutates a mesh geometry using [three's Tessellation modifier](hhttps://threejs.org/examples/?q=tess#webgl_modifier_tessellation). It will break-up faces withe edge longer than the maxEdgeLength parameter.
+
+👉 The simplification code is based on [this algorithm](http://www.melax.com/polychop/).
+
+```jsx
+const meshRef = useSimplification(
+  2, // passes - number of times the geometry will be subdivided
+  8, // maxEdgeLength - faces with edges longer than this number will be broken up
+) 
+
+return (
+  <mesh ref={meshRef}>
+    <octahedronBufferGeometry args={[2, 5]} />
+  </mesh>
+)
+```
+
+## Loaders
 
 #### ⚡️ `useGLTFLoader()`
 
