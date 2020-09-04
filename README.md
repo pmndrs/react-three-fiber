@@ -467,7 +467,7 @@ return (
 )
 ```
 
-##### ⚡️ `useSimplification()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usetessellation)
+##### ⚡️ `useSimplification()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usesimplification)
 
 This hook mutates a mesh geometry using [three's Simplification modifier](https://threejs.org/examples/webgl_modifier_subdivision.html). 
 
@@ -489,14 +489,14 @@ return (
 This hook mutates a mesh geometry using [three's Tessellation modifier](hhttps://threejs.org/examples/?q=tess#webgl_modifier_tessellation). It will break-up faces withe edge longer than the maxEdgeLength parameter.
 
 ```jsx
-const meshRef = useSimplification(
+const meshRef = useTessellation(
   2, // passes - number of times the geometry will be subdivided
   8, // maxEdgeLength - faces with edges longer than this number will be broken up
 ) 
 
 return (
   <mesh ref={meshRef}>
-    <octahedronBufferGeometry args={[2, 5]} />
+    <octahedronBufferGeometry args={[2, 2]} />
   </mesh>
 )
 ```
