@@ -9807,10 +9807,10 @@ react-textarea-autosize@^8.1.1:
     use-composed-ref "^1.0.0"
     use-latest "^1.0.0"
 
-react-three-fiber@^4.2.16:
-  version "4.2.17"
-  resolved "https://registry.yarnpkg.com/react-three-fiber/-/react-three-fiber-4.2.17.tgz#2f9e9f03d9a2bfe6e21521130965c19a39e44edf"
-  integrity sha512-7hst8PH0sJ/FbAmImXQahLxCNEtFa4+9kORuoygjwB4vLqE0z+m6w5gBWNk+ri0R4/85/o17worgcRgGcNXuSQ==
+react-three-fiber@^4.2.21:
+  version "4.2.21"
+  resolved "https://registry.yarnpkg.com/react-three-fiber/-/react-three-fiber-4.2.21.tgz#bb335fee090a44f2ba48762a8c42308c31f4238f"
+  integrity sha512-lbopEkL36cbAaG/y+iEGT1EFbVaVZBrOe2XGt2+HxsCL8AeWWiQQERo1HYiiqFc4p6DuoNq1hhOSxr1TKQjXuQ==
   dependencies:
     "@babel/runtime" "^7.9.2"
     "@juggle/resize-observer" "^3.1.3"
@@ -11237,10 +11237,10 @@ text-table@0.2.0, text-table@^0.2.0:
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
   integrity sha1-f17oI66AUgfACvLfSoTsP8+lcLQ=
 
-three@^0.119.1:
-  version "0.119.1"
-  resolved "https://registry.yarnpkg.com/three/-/three-0.119.1.tgz#9d979a082c4cd9622af8e3498a8dfa026a619332"
-  integrity sha512-GHyh/RiUfQ5VTiWIVRRTANYoXc1PFB1y+jDVRTb649nif1uX1F06PT1TKU3k2+F/MN4UJ3PWvQB53fY2OqKqKw==
+three@^0.120.1:
+  version "0.120.1"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.120.1.tgz#dbd8894f8ab87c109f1602933e7c740c98137377"
+  integrity sha512-ktaCRFUR7JUZcKec+cBRz+oBex5pOVaJhrtxvFF2T7on53o9UkEux+/Nh1g/4zeb4t/pbxIFcADbn/ACu3LC1g==
 
 throat@^5.0.0:
   version "5.0.0"

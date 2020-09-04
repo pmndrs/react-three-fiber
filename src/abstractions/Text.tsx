@@ -1,19 +1,6 @@
-import React, { Children, createElement, forwardRef, useMemo, useRef, useLayoutEffect, useState } from 'react'
+import React, { Children, createElement, forwardRef, useMemo, useLayoutEffect, useState } from 'react'
 import { Text as TextMeshImpl } from 'troika-three-text'
-import { extend, ReactThreeFiber, useThree } from 'react-three-fiber'
-import mergeRefs from 'react-merge-refs'
-
-extend({ TextMeshImpl })
-
-type TextMesh = ReactThreeFiber.Object3DNode<TextMeshImpl, typeof TextMeshImpl>
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      textMeshImpl: TextMesh
-    }
-  }
-}
+import { ReactThreeFiber, useThree } from 'react-three-fiber'
 
 type Props = JSX.IntrinsicElements['mesh'] & {
   children: React.ReactNode
@@ -34,7 +21,7 @@ type Props = JSX.IntrinsicElements['mesh'] & {
 
 export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', children, ...props }: Props, ref) => {
   const { invalidate } = useThree()
-  const textRef = useRef<TextMeshImpl>()
+  const [troikaMesh] = useState(() => new TextMeshImpl())
   const [baseMtl, setBaseMtl] = useState()
   const [nodes, text] = useMemo(() => {
     let n: React.ReactNode[] = []
@@ -49,19 +36,25 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
         // Once the base material has been assigned, grab the resulting upgraded material,
         // and apply the original material props to that.
         if (baseMtl) {
-          n.push(<primitive object={textRef.current.material} {...(child as React.ReactElement).props} attach={null} />)
+          n.push(
+            <primitive
+              dispose={null}
+              object={troikaMesh.material}
+              {...(child as React.ReactElement).props}
+              attach={null}
+            />
+          )
         }
       } else {
         n.push(child)
       }
     })
     return [n, t]
-  }, [children, baseMtl])
-  useLayoutEffect(() => void textRef.current.sync(invalidate))
-
+  }, [children, baseMtl, troikaMesh.material])
+  useLayoutEffect(() => void troikaMesh.sync(invalidate))
   return (
-    <textMeshImpl ref={mergeRefs([textRef, ref])} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
+    <primitive dispose={null} object={troikaMesh} ref={ref} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
       {nodes}
-    </textMeshImpl>
+    </primitive>
   )
 })

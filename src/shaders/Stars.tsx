@@ -1,5 +1,5 @@
 import React, { forwardRef, useMemo, useRef } from 'react'
-import { useFrame, extend, ReactThreeFiber } from 'react-three-fiber'
+import { useFrame, ReactThreeFiber } from 'react-three-fiber'
 import { Points, Vector3, Spherical, Color, AdditiveBlending, ShaderMaterial } from 'three'
 
 type Props = {
@@ -39,8 +39,6 @@ class StarfieldMaterial extends ShaderMaterial {
   }
 }
 
-extend({ StarfieldMaterial })
-
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -72,6 +70,9 @@ export const Stars = forwardRef(
       return [new Float32Array(positions), new Float32Array(colors), new Float32Array(sizes)]
     }, [count, depth, factor, radius, saturation])
     useFrame((state) => material.current && (material.current.uniforms.time.value = state.clock.getElapsedTime()))
+
+    const starfieldMaterial = useMemo(() => new StarfieldMaterial(), [])
+
     return (
       <points ref={ref as React.MutableRefObject<Points>}>
         <bufferGeometry attach="geometry">
@@ -79,8 +80,9 @@ export const Stars = forwardRef(
           <bufferAttribute attachObject={['attributes', 'color']} args={[color, 3]} />
           <bufferAttribute attachObject={['attributes', 'size']} args={[size, 1]} />
         </bufferGeometry>
-        <starfieldMaterial
+        <primitive
           ref={material}
+          object={starfieldMaterial}
           attach="material"
           blending={AdditiveBlending}
           uniforms-fade-value={fade}

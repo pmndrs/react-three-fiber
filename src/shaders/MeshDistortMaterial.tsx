@@ -1,8 +1,6 @@
-import React, { useRef } from 'react'
+import React, { useMemo } from 'react'
 import { MeshPhysicalMaterial, MeshPhysicalMaterialParameters, Shader } from 'three'
-import { extend, useFrame } from 'react-three-fiber'
-// eslint-disable-next-line
-import mergeRefs from 'react-merge-refs'
+import { useFrame } from 'react-three-fiber'
 // eslint-disable-next-line
 // @ts-ignore
 import distort from './glsl/distort.vert'
@@ -35,7 +33,7 @@ class DistortMaterialImpl extends MeshPhysicalMaterial {
   _distort: Uniform<number>
   _radius: Uniform<number>
 
-  constructor(parameters: MeshPhysicalMaterialParameters) {
+  constructor(parameters: MeshPhysicalMaterialParameters = {}) {
     super(parameters)
     this.setValues(parameters)
     this._time = { value: 0 }
@@ -90,11 +88,9 @@ class DistortMaterialImpl extends MeshPhysicalMaterial {
   }
 }
 
-extend({ DistortMaterialImpl })
-
 export const MeshDistortMaterial = React.forwardRef(({ speed = 1, ...props }: Props, ref) => {
-  const material = useRef<DistortMaterialType>()
-  useFrame((state) => material.current && (material.current.time = state.clock.getElapsedTime() * speed))
+  const material = useMemo(() => new DistortMaterialImpl(), [])
+  useFrame((state) => material && (material.time = state.clock.getElapsedTime() * speed))
 
-  return <distortMaterialImpl ref={mergeRefs([ref, material])} attach="material" {...props} />
+  return <primitive dispose={null} object={material} ref={ref} attach="material" {...props} />
 })
