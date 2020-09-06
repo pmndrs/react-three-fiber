@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import React from 'react'
-import Reconciler from 'react-reconciler'
+// @ts-ignore
+import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
 
@@ -311,6 +312,7 @@ function createInstance(
     props = { dispose: null, ...props }
     instance = props.object
     instance.__instance = true
+    instance.__dispose = instance.dispose
   } else if (type === 'new') {
     instance = new props.object(args)
   } else {
@@ -435,6 +437,7 @@ function removeChild(parentInstance: any, child: any) {
         removeRecursive(child.children, child, true)
         // Dispose item
         if (child.dispose) child.dispose()
+        else if (child.__dispose) child.__dispose()
         // Remove references
         delete child.__container
         delete child.__objects

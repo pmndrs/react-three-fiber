@@ -1,7 +1,7 @@
 {
   "name": "react-three-fiber",
   "private": true,
-  "version": "5.0.0-alpha.1",
+  "version": "5.0.0-alpha.2",
   "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
     "react",
