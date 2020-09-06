@@ -599,10 +599,12 @@ You can override styles, too.
 
 ```jsx
 <Loader 
-  containerStyles={...container} // Flex laout
-  innerStyles={...inner} // inner container
-  barStyles={...bar} // the loading bar
-  dataStyles={...data} // text
+  containerStyles={...container} // Flex layout styles
+  innerStyles={...inner} // Inner container styles
+  barStyles={...bar} // Loading-bar styles
+  dataStyles={...data} // Text styles
+  dataInterpolation={(p) => `Loading ${p.toFixed(2)}%`} // Text
+  initialState={(active) => active} // Initial black out state
 >
 ```
 
