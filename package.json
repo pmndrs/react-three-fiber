@@ -1,5 +1,6 @@
 {
   "name": "drei",
+  "private": true,
   "version": "1.4.1",
   "description": "useful add-ons for react-three-fiber",
   "keywords": [
@@ -17,9 +18,9 @@
     "url": "https://github.com/react-spring/drei/issues"
   },
   "homepage": "https://github.com/react-spring/drei",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "index.cjs.js",
+  "module": "index.js",
+  "types": "index.d.ts",
   "sideEffects": false,
   "husky": {
     "hooks": {
@@ -33,7 +34,7 @@
   },
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c",
+    "build": "rollup -c && npm run copy",
     "prepare": "npm run build",
     "eslint": "eslint --fix {src,.storybook}/**/*.{js,ts,jsx,tsx}",
     "eslint:ci": "eslint {src,.storybook}/**/*.{js,ts,jsx,tsx}",
@@ -41,7 +42,8 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc --emitDeclarationOnly",
     "storybook": "start-storybook  -s ./.storybook/public -p 6006",
-    "build-storybook": "build-storybook -s ./.storybook/public"
+    "build-storybook": "build-storybook -s ./.storybook/public",
+    "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "dependencies": {
     "@babel/runtime": "^7.11.2",
@@ -82,6 +84,7 @@
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.1.0",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
+    "copyfiles": "^2.3.0",
     "eslint": "^7.7.0",
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-import": "^2.22.0",
@@ -92,6 +95,7 @@
     "glslify-loader": "^2.0.0",
     "husky": "^4.2.5",
     "jest": "^26.4.1",
+    "json": "^10.0.0",
     "lint-staged": "^10.2.11",
     "prettier": "^2.0.5",
     "react": "^16.13.1",
@@ -103,6 +107,7 @@
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-glslify": "^1.2.0",
     "rollup-plugin-json": "^4.0.0",
+    "rollup-plugin-multi-input": "^1.1.1",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "three": "^0.120.1",
