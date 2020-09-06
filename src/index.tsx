@@ -41,3 +41,5 @@ export * from './shaders/softShadows'
 export * from './shaders/Stars'
 
 export * from './shapes'
+
+export * from './prototyping/Loader'

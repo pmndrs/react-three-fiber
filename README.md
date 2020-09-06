@@ -81,6 +81,9 @@ npm run storybook
   - `useCubeTextureLoader()`
   - `useProgress()` [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/cranky-newton-k7f9x)
 
+- Prototyping
+  - `<Loader/>`
+
 - Modifiers
   - `useSubdivision()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usesubdivision)
   - `useTessellation()` [![](https://img.shields.io/badge/-storybook-%23ff69b4)](https://drei.react-spring.io/?path=/story/modifiers-usetessellation)
@@ -565,9 +568,7 @@ function Loader() {
 }
 
 <Suspense fallback={<Loader />}>
-  <GLTFModel />
-  <CubeMapEnv />
-  <TexturedPlane />
+  <AsyncModels />
 </Suspense>
 ```
 
@@ -578,6 +579,32 @@ const errors = useProgress(state => state.errors)
 ```
 
 👉 Note that your loading component does not have to be a suspense fallback. You can use it anywhere, even in your dom tree, for instance for overlays.
+
+## ⚡️ Prototyping
+
+#### ⚡️ `<Loader/>`
+
+A quick and easy loading overlay component that you can drop on top of your canvas. It will show an animated loadingbar and a percentage.
+
+```jsx
+<Canvas>
+  <Suspense fallback={null}>
+    <AsyncModels />
+  </Suspense>
+</Canvas>
+<Loader />
+```
+
+You can override styles, too.
+
+```jsx
+<Loader 
+  containerStyles={...container} // Flex laout
+  innerStyles={...inner} // inner container
+  barStyles={...bar} // the loading bar
+  dataStyles={...data} // text
+>
+```
 
 ---
 <a href="https://www.netlify.com">
