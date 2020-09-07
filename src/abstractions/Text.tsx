@@ -17,9 +17,10 @@ type Props = JSX.IntrinsicElements['mesh'] & {
   depthOffset?: number
   overflowWrap?: 'normal' | 'break-word'
   whiteSpace?: 'normal' | 'overflowWrap' | 'overflowWrap'
+  onSync?: (troika: TextMeshImpl) => void
 }
 
-export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', children, ...props }: Props, ref) => {
+export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', children, onSync, ...props }: Props, ref) => {
   const { invalidate } = useThree()
   const [troikaMesh] = useState(() => new TextMeshImpl())
   const [baseMtl, setBaseMtl] = useState()
@@ -51,7 +52,13 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
     })
     return [n, t]
   }, [children, baseMtl, troikaMesh.material])
-  useLayoutEffect(() => void troikaMesh.sync(invalidate))
+  useLayoutEffect(
+    () =>
+      void troikaMesh.sync(() => {
+        invalidate()
+        if (onSync) onSync(troikaMesh)
+      })
+  )
   return (
     <primitive dispose={null} object={troikaMesh} ref={ref} text={text} anchorX={anchorX} anchorY={anchorY} {...props}>
       {nodes}
