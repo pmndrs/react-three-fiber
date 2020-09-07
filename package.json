@@ -51,6 +51,7 @@
     "glsl-noise": "^0.0.0",
     "lodash.omit": "^4.5.0",
     "lodash.pick": "^4.4.0",
+    "r3f-troika": "^0.31.1",
     "react-merge-refs": "^1.0.0",
     "stats.js": "^0.17.0",
     "troika-three-text": "^0.31.0",

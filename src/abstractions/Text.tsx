@@ -1,5 +1,5 @@
 import React, { Children, createElement, forwardRef, useMemo, useLayoutEffect, useState } from 'react'
-import { Text as TextMeshImpl } from 'troika-three-text'
+import { Text as TextMeshImpl } from 'r3f-troika'
 import { ReactThreeFiber, useThree } from 'react-three-fiber'
 
 type Props = JSX.IntrinsicElements['mesh'] & {
