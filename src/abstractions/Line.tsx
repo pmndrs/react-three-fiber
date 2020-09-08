@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useMemo, useEffect, useState } from 'react'
+import React, { useMemo, useEffect, useLayoutEffect, useState } from 'react'
 import { ReactThreeFiber } from 'react-three-fiber'
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry'
 import { LineMaterial, LineMaterialParameters } from 'three/examples/jsm/lines/LineMaterial'
@@ -17,7 +17,7 @@ type Props = {
   >
 
 export const Line = React.forwardRef<Line2, Props>(function Line(
-  { points, color = 'black', vertexColors, lineWidth, ...rest },
+  { points, color = 'black', vertexColors, lineWidth, dashed, ...rest },
   ref
 ) {
   const [line2] = useState(() => new Line2())
@@ -29,6 +29,15 @@ export const Line = React.forwardRef<Line2, Props>(function Line(
     if (vertexColors) lineGeometry.setColors(vertexColors.flat())
     line2.computeLineDistances()
   }, [points, vertexColors, line2, lineGeometry])
+  useLayoutEffect(() => {
+    if (dashed) {
+      lineMaterial.defines.USE_DASH = ''
+    } else {
+      // Setting lineMaterial.defines.USE_DASH to undefined is apparently not sufficient.
+      delete lineMaterial.defines.USE_DASH
+    }
+    lineMaterial.needsUpdate = true
+  }, [dashed, lineMaterial])
   return (
     <primitive dispose={null} object={line2} ref={ref} {...rest}>
       <primitive dispose={null} object={lineGeometry} attach="geometry" />
@@ -40,6 +49,7 @@ export const Line = React.forwardRef<Line2, Props>(function Line(
         vertexColors={Boolean(vertexColors)}
         resolution={resolution}
         linewidth={lineWidth}
+        dashed={dashed}
         {...rest}
       />
     </primitive>

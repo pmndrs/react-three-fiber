@@ -2,7 +2,7 @@ import React from 'react'
 import { GeometryUtils } from 'three/examples/jsm/utils/GeometryUtils'
 import { Vector3 } from 'three'
 
-import { withKnobs, number, color } from '@storybook/addon-knobs'
+import { withKnobs, number, color, boolean } from '@storybook/addon-knobs'
 
 import { Setup } from '../Setup'
 
@@ -20,7 +20,7 @@ const colors = new Array(points.length).fill().map(() => [Math.random(), Math.ra
 export function BasicLine() {
   return (
     <>
-      <Line points={points} color={color('color', 'red')} lineWidth={number('lineWidth', 3)} />
+      <Line points={points} color={color('color', 'red')} lineWidth={number('lineWidth', 3)} dashed={boolean('dashed', false)} />
       <OrbitControls zoomSpeed={0.5} />
     </>
   )
@@ -39,7 +39,7 @@ BasicLine.decorators = [
 export function VertexColorsLine() {
   return (
     <>
-      <Line points={points} color={color('color', 'white')} vertexColors={colors} lineWidth={number('lineWidth', 3)} />
+      <Line points={points} color={color('color', 'white')} vertexColors={colors} lineWidth={number('lineWidth', 3)} dashed={boolean('dashed', false)} />
       <OrbitControls zoomSpeed={0.5} />
     </>
   )
