@@ -44,8 +44,7 @@ npm run storybook
 
 <table>
   <tr>
-    <td>
-      <br />
+    <td valign="top">
       <ul>
         <li><a href="#cameras">Cameras</a></li>
         <ul>
@@ -80,7 +79,7 @@ npm run storybook
         </ul>
       </ul>
     </td>
-    <td>
+    <td valign="top">
       <ul>
         <li><a href="#misc">Misc</a></li>
         <ul>
@@ -115,7 +114,7 @@ npm run storybook
         </ul>
       </ul>
     </td>
-    <td>
+    <td valign="top">
       <ul>
         <li><a href="#shapes">Shapes</a></li>
         <ul>
