@@ -43,3 +43,5 @@ export * from './shaders/Stars'
 export * from './shapes'
 
 export * from './prototyping/Loader'
+export * from './prototyping/useMatcapTexture'
+export * from './prototyping/useNormalTexture'
