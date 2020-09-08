@@ -42,70 +42,104 @@ npm run storybook
 
 # Index
 
-- [Cameras](#cameras)
-  - [PerspectiveCamera](#perspectivecamera)
-  - [OrthographicCamera](#orthographiccamera)
-- [Controls](#controls)
-  - [OrbitControls](#orbitcontrols)
-  - [FlyControls](#flycontrols)
-  - [MapControls](#mapcontrols)
-  - [DeviceOrientationControls](#deviceorientationcontrols)
-  - [TrackballControls](#trackballcontrols)
-  - [TransformControls](#transformcontrols)
-- [Shapes](#shapes)
-  - [Plane](#plane)
-  - [Box](#box)
-  - [Sphere](#sphere)
-  - [Circle](#circle)
-  - [Cone](#cone)
-  - [Cylinder](#cylinder)
-  - [Tube](#tube)
-  - [Torus](#torus)
-  - [TorusKnot](#torusknot)
-  - [Ring](#ring)
-  - [Tetrahedron](#tetrahedron)
-  - [Polyhedron](#polyhedron)
-  - [Icosahedron](#icosahedron)
-  - [Octahedron](#octahedron)
-  - [Dodecahedron](#dodecahedron)
-  - [Extrude](#extrude)
-  - [Lathe](#lathe)
-  - [Parametric](#parametric)
-  - [RoundedBox](#roundedbox)
-- [Abstractions](#abstractions)
-  - [Text](#text)
-  - [Line](#line)
-  - [Detailed](#detailed)
-  - [PositionalAudio](#positionalaudio)
-  - [Billboard](#billboard)
-- [Shaders](#shaders)
-  - [MeshWobbleMaterial](#meshwobblematerial)
-  - [MeshDistortMaterial](#meshdistortmaterial)
-  - [Sky](#sky)
-  - [Stars](#stars)
-  - [softShadows](#softshadows)
-  - [shaderMaterial](#shadermaterial)
-- [Misc](#misc)
-  - [Html](#html)
-  - [Shadow](#shadow)
-  - [Stats](#stats)
-  - [meshBounds](#meshbounds)
-  - [useCamera](#usecamera)
-  - [useHelper](#usehelper)
-  - [useAspect](#useaspect)
-  - [Reflector](#reflector)
-- [Loaders](#loaders)
-  - [draco](#draco)
-  - [useGLTFLoader](#usegltfloader)
-  - [useTextureLoader](#usetextureloader)
-  - [useCubeTextureLoader](#usecubetextureloader)
-  - [useProgress](#useprogress)
-- [Modifiers](#modifiers)
-  - [useSubdivision](#usesubdivision)
-  - [useTessellation](#usetessellation)
-  - [useSimplification](#usesimplification)
-- [Prototyping](#prototyping)
-  - [Loader](#loader)
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li><a href="#cameras">Cameras</a></li>
+        <ul>
+          <li><a href="#perspectivecamera">PerspectiveCamera</a></li>
+          <li><a href="#orthographiccamera">OrthographicCamera</a></li>
+        </ul>
+        <li><a href="#controls">Controls</a></li>
+        <ul>
+          <li><a href="#orbitcontrols">OrbitControls</a></li>
+          <li><a href="#flycontrols">FlyControls</a></li>
+          <li><a href="#mapcontrols">MapControls</a></li>
+          <li><a href="#deviceorientationcontrols">DeviceOrientationControls</a></li>
+          <li><a href="#trackballcontrols">TrackballControls</a></li>
+          <li><a href="#transformcontrols">TransformControls</a></li>
+        </ul>
+        <li><a href="#abstractions">Abstractions</a></li>
+        <ul>
+          <li><a href="#text">Text</a></li>
+          <li><a href="#line">Line</a></li>
+          <li><a href="#detailed">Detailed</a></li>
+          <li><a href="#positionalaudio">PositionalAudio</a></li>
+          <li><a href="#billboard">Billboard</a></li>
+        </ul>
+        <li><a href="#shaders">Shaders</a></li>
+        <ul>
+          <li><a href="#meshwobblematerial">MeshWobbleMaterial</a></li>
+          <li><a href="#meshdistortmaterial">MeshDistortMaterial</a></li>
+          <li><a href="#sky">Sky</a></li>
+          <li><a href="#stars">Stars</a></li>
+          <li><a href="#softshadows">softShadows</a></li>
+          <li><a href="#shadermaterial">shaderMaterial</a></li>
+        </ul>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="#misc">Misc</a></li>
+        <ul>
+          <li><a href="#html">Html</a></li>
+          <li><a href="#shadow">Shadow</a></li>
+          <li><a href="#stats">Stats</a></li>
+          <li><a href="#meshbounds">meshBounds</a></li>
+          <li><a href="#usecamera">useCamera</a></li>
+          <li><a href="#usehelper">useHelper</a></li>
+          <li><a href="#useaspect">useAspect</a></li>
+          <li><a href="#reflector">Reflector</a></li>
+        </ul>
+        <li><a href="#loaders">Loaders</a></li>
+        <ul>
+          <li><a href="#draco">draco</a></li>
+          <li><a href="#usegltfloader">useGLTFLoader</a></li>
+          <li><a href="#usetextureloader">useTextureLoader</a></li>
+          <li><a href="#usecubetextureloader">useCubeTextureLoader</a></li>
+          <li><a href="#useprogress">useProgress</a></li>
+        </ul>
+        <li><a href="#modifiers">Modifiers</a></li>
+        <ul>
+          <li><a href="#usesubdivision">useSubdivision</a></li>
+          <li><a href="#usetessellation">useTessellation</a></li>
+          <li><a href="#usesimplification">useSimplification</a></li>
+        </ul>
+        <li><a href="#prototyping">Prototyping</a></li>
+        <ul>
+          <li><a href="#loader">Loader</a></li>
+        </ul>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="#shapes">Shapes</a></li>
+        <ul>
+          <li><a href="#plane">Plane</a></li>
+          <li><a href="#box">Box</a></li>
+          <li><a href="#sphere">Sphere</a></li>
+          <li><a href="#circle">Circle</a></li>
+          <li><a href="#cone">Cone</a></li>
+          <li><a href="#cylinder">Cylinder</a></li>
+          <li><a href="#tube">Tube</a></li>
+          <li><a href="#torus">Torus</a></li>
+          <li><a href="#torusknot">TorusKnot</a></li>
+          <li><a href="#ring">Ring</a></li>
+          <li><a href="#tetrahedron">Tetrahedron</a></li>
+          <li><a href="#polyhedron">Polyhedron</a></li>
+          <li><a href="#icosahedron">Icosahedron</a></li>
+          <li><a href="#octahedron">Octahedron</a></li>
+          <li><a href="#dodecahedron">Dodecahedron</a></li>
+          <li><a href="#extrude">Extrude</a></li>
+          <li><a href="#lathe">Lathe</a></li>
+          <li><a href="#parametric">Parametric</a></li>
+          <li><a href="#roundedbox">RoundedBox</a></li>
+        </ul>
+      </ul>
+    </td>
+  </tr>
+</table>
 
 # Exports
 
