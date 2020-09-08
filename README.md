@@ -3,6 +3,7 @@
 [![Downloads](https://img.shields.io/npm/dt/drei.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/drei)
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/ZZjjNvJ)
 
+
 <p align="center">
     <img width="500" src="https://imgur.com/arDsXO6.jpg" alt="logo" />
 </p>
@@ -235,7 +236,7 @@ Renders a THREE.Line2.
 />
 ```
 
-#### Detailed[![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
+#### Detailed [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-detailed-dep1v)
 
 A wrapper around [THREE.LOD](https://threejs.org/docs/index.html#api/en/objects/LOD) (Level of detail).
 
