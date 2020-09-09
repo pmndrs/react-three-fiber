@@ -13,6 +13,7 @@ export * from './controls/MapControls'
 export * from './controls/OrbitControls'
 export * from './controls/TrackballControls'
 export * from './controls/TransformControls'
+export * from './controls/PointerLockControls'
 
 export * from './loaders/draco'
 export * from './loaders/useCubeTextureLoader'

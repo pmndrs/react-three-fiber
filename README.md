@@ -59,6 +59,7 @@ npm run storybook
           <li><a href="#deviceorientationcontrols">DeviceOrientationControls</a></li>
           <li><a href="#trackballcontrols">TrackballControls</a></li>
           <li><a href="#transformcontrols">TransformControls</a></li>
+          <li><a href="#pointerlockcontrols">PointerLockControls</a></li>
         </ul>
         <li><a href="#abstractions">Abstractions</a></li>
         <ul>
@@ -174,9 +175,13 @@ If available controls have damping enabled by default, they manage their own upd
 
 #### TrackballControls
 
+#### FlyControls
+
 #### DeviceOrientationControls
 
 #### TransformControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/r3f-drei-transformcontrols-hc8gm)
+
+#### PointerLockControls [![](https://img.shields.io/badge/-codesandbox-blue)](https://codesandbox.io/s/blissful-leaf-vkgi6)
 
 ## Shapes
 
