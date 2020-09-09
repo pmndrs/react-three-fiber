@@ -133,6 +133,7 @@ Some reading material:
 - ✌️ [react-spring](https://github.com/react-spring/react-spring), a spring-physics-based animation library
 - 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures
 - 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI/debug tools
+- 📦 [react-three-flex](https://github.com/react-spring/react-three-flex), flexbox for react-three-fiber
 
 # News, updates, community
 
