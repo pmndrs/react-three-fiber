@@ -27,13 +27,13 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
   const [nodes, text] = useMemo(() => {
     let n: React.ReactNode[] = []
     let t = ''
-    Children.forEach(children, (child) => {
+    Children.forEach(children, (child, index) => {
       if (typeof child === 'string') {
         t += child
       } else if (child && typeof child === 'object' && (child as React.ReactElement).props.attach === 'material') {
         // Instantiate the base material and grab a reference to it, but don't assign any
         // props, and assign it as the `material`, which Troika will replace behind the scenes.
-        n.push(createElement((child as React.ReactElement).type, { ref: setBaseMtl, attach: 'material' }))
+        n.push(createElement((child as React.ReactElement).type, { ref: setBaseMtl, attach: 'material', key: index }))
         // Once the base material has been assigned, grab the resulting upgraded material,
         // and apply the original material props to that.
         if (baseMtl) {
@@ -42,6 +42,7 @@ export const Text = forwardRef(({ anchorX = 'center', anchorY = 'middle', childr
               dispose={null}
               object={troikaMesh.material}
               {...(child as React.ReactElement).props}
+              key={`baseMtl:${index}`}
               attach={null}
             />
           )
