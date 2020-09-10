@@ -1,6 +1,5 @@
 {
   "name": "drei",
-  "private": true,
   "version": "1.5.3",
   "description": "useful add-ons for react-three-fiber",
   "keywords": [
