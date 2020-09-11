@@ -7,7 +7,7 @@ export function useGLTFLoader(path: string, useDraco: boolean | string): GLTF {
   const gltf = useLoader<GLTF>(
     GLTFLoader,
     path,
-    useDraco ? draco(typeof useDraco === 'string' ? useDraco : '/draco-gltf/') : undefined
+    useDraco ? draco(typeof useDraco === 'string' ? useDraco : undefined) : undefined
   )
 
   return gltf

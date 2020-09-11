@@ -28,3 +28,27 @@ export const UseGLTFLoaderSceneSt = () => <UseGLTFLoaderScene />
 UseGLTFLoaderSceneSt.story = {
   name: 'Default',
 }
+
+function SuzanneWithLocal() {
+  const { nodes, materials } = useGLTFLoader('suzanne.glb', "/draco-gltf/")
+
+  return (
+    <group dispose={null}>
+      <mesh material={materials['Material.001']} geometry={nodes.Suzanne.geometry} />
+    </group>
+  )
+}
+
+function DracoLocalScene() {
+  return (
+    <Suspense fallback={null}>
+      <SuzanneWithLocal />
+    </Suspense>
+  )
+}
+
+export const DracoLocalSceneSt = () => <DracoLocalScene />
+DracoLocalSceneSt.story = {
+  name: 'Local Binaries',
+}
+
