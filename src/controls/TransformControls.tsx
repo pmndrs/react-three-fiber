@@ -4,7 +4,6 @@ import { ReactThreeFiber, useThree, Overwrite } from 'react-three-fiber'
 import { TransformControls as TransformControlsImpl } from 'three/examples/jsm/controls/TransformControls'
 import pick from 'lodash.pick'
 import omit from 'lodash.omit'
-import mergeRefs from 'react-merge-refs'
 
 export type TransformControls = Overwrite<
   ReactThreeFiber.Object3DNode<TransformControlsImpl, typeof TransformControlsImpl>,
@@ -66,7 +65,7 @@ export const TransformControls = forwardRef(
 
     return (
       <>
-        <primitive dispose={null} object={controls} ref={mergeRefs([controls, ref])} {...transformProps} />
+        <primitive dispose={null} object={controls} ref={ref} {...transformProps} />
         <group ref={group} {...objectProps}>
           {children}
         </group>

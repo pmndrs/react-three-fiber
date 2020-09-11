@@ -1,7 +1,6 @@
 import React, { forwardRef, useMemo, useEffect } from 'react'
 import { ReactThreeFiber, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { TrackballControls as TrackballControlsImpl } from 'three/examples/jsm/controls/TrackballControls'
-import mergeRefs from 'react-merge-refs'
 
 export type TrackballControls = Overwrite<
   ReactThreeFiber.Object3DNode<TrackballControlsImpl, typeof TrackballControlsImpl>,
@@ -26,5 +25,5 @@ export const TrackballControls = forwardRef((props: TrackballControls, ref) => {
     return () => controls?.removeEventListener?.('change', invalidate)
   }, [controls, invalidate])
 
-  return <primitive dispose={null} object={controls} ref={mergeRefs([controls, ref])} {...props} />
+  return <primitive dispose={null} object={controls} ref={ref} {...props} />
 })
