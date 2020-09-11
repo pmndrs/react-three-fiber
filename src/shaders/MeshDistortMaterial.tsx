@@ -3,7 +3,7 @@ import { MeshPhysicalMaterial, MeshPhysicalMaterialParameters, Shader } from 'th
 import { useFrame } from 'react-three-fiber'
 // eslint-disable-next-line
 // @ts-ignore
-import distort from './glsl/distort.vert'
+import distort from './glsl/distort.vert.glsl'
 
 type DistortMaterialType = JSX.IntrinsicElements['meshPhysicalMaterial'] & {
   time?: number
