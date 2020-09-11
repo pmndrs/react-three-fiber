@@ -20,7 +20,7 @@ export function shaderMaterial(
   },
   vertexShader: string,
   fragmentShader: string,
-  onInit: (_this: THREE.ShaderMaterial) => null
+  onInit?: (material?: THREE.ShaderMaterial) => null
 ) {
   return class extends THREE.ShaderMaterial {
     constructor() {
