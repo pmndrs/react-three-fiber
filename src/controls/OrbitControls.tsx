@@ -1,7 +1,6 @@
 import React, { forwardRef, useEffect, useMemo } from 'react'
 import { ReactThreeFiber, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { OrbitControls as OrbitControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
-import mergeRefs from 'react-merge-refs'
 
 export type OrbitControls = Overwrite<
   ReactThreeFiber.Object3DNode<OrbitControlsImpl, typeof OrbitControlsImpl>,
@@ -29,5 +28,5 @@ export const OrbitControls = forwardRef((props: OrbitControls = { enableDamping:
     return () => controls?.removeEventListener?.('change', invalidate)
   }, [controls, invalidate])
 
-  return <primitive dispose={null} object={controls} ref={mergeRefs([controls, ref])} enableDamping {...props} />
+  return <primitive dispose={null} object={controls} ref={ref} enableDamping {...props} />
 })

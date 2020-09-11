@@ -1,7 +1,6 @@
 import React, { forwardRef, useMemo, useEffect } from 'react'
 import { ReactThreeFiber, useThree, useFrame, Overwrite } from 'react-three-fiber'
 import { MapControls as MapControlsImpl } from 'three/examples/jsm/controls/OrbitControls'
-import mergeRefs from 'react-merge-refs'
 
 export type MapControls = Overwrite<
   ReactThreeFiber.Object3DNode<MapControlsImpl, typeof MapControlsImpl>,
@@ -26,5 +25,5 @@ export const MapControls = forwardRef((props: MapControls = { enableDamping: tru
     return () => controls?.removeEventListener?.('change', invalidate)
   }, [controls, invalidate])
 
-  return <primitive dispose={null} object={controls} ref={mergeRefs([controls, ref])} enableDamping {...props} />
+  return <primitive dispose={null} object={controls} ref={ref} enableDamping {...props} />
 })
