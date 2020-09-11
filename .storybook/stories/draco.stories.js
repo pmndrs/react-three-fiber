@@ -12,7 +12,7 @@ export default {
 }
 
 function Suzanne() {
-  const { nodes, materials } = useLoader(GLTFLoader, 'suzanne.glb', draco('draco-gltf/'))
+  const { nodes, materials } = useLoader(GLTFLoader, 'suzanne.glb', draco())
 
   return (
     <group dispose={null}>
@@ -33,3 +33,27 @@ export const DracoSceneSt = () => <DracoScene />
 DracoSceneSt.story = {
   name: 'Default',
 }
+
+function SuzanneWithLocal() {
+  const { nodes, materials } = useLoader(GLTFLoader, 'suzanne.glb', draco("/draco-gltf/"))
+
+  return (
+    <group dispose={null}>
+      <mesh material={materials['Material.001']} geometry={nodes.Suzanne.geometry} />
+    </group>
+  )
+}
+
+function DracoLocalScene() {
+  return (
+    <Suspense fallback={null}>
+      <SuzanneWithLocal />
+    </Suspense>
+  )
+}
+
+export const DracoLocalSceneSt = () => <DracoLocalScene />
+DracoLocalSceneSt.story = {
+  name: 'Local Binaries',
+}
+
