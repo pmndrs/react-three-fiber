@@ -3,8 +3,9 @@
 <a href="https://travis-ci.org/react-spring/react-three-fiber"><img src="https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master" alt="Build Status"></a>
 <a href="https://badge.fury.io/js/react-three-fiber"><img src="https://badge.fury.io/js/react-three-fiber.svg" alt="npm version"></a>
 <img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
+[![Discord Shield](https://discordapp.com/api/guilds/740090768164651008/widget.png?style=shield)](https://discord.gg/ZZjjNvJ)
 
-react-three-fiber is a React <a href="https://github.com/facebook/react/tree/master/packages/react-reconciler">reconciler</a> for Threejs on the web and react-native.
+react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
 ```bash
 npm install three react-three-fiber
@@ -33,21 +34,21 @@ npm install three react-three-fiber
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components makes dealing with Threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
+Building dynamic scene graphs declaratively with re-usable components makes dealing with threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
 
 #### Does it have limitations?
 
-None. Everything that works in Threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just reconciles JSX to Threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific Threejs version nor does it need updates for modified, added or removed upstream features.
+None. Everything that works in threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed upstream features.
 
-#### Is it slower than raw Threejs?
+#### Is it slower than raw threejs?
 
-No. Rendering performance is up to Threejs and the GPU. Components may participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
+No. Rendering performance is up to threejs and the GPU. Components participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
 
 #### What does it look like?
 
 <table>
   <tr>
-    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4">live demo</a>).</td>
+    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).</td>
     <td>
       <a href="https://codesandbox.io/s/rrppl0y8l4">
         <img src="https://i.imgur.com/sS4ArrZ.gif" /></td>
@@ -100,9 +101,10 @@ ReactDOM.render(
 
 # Fundamentals
 
-1. Before you start, make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene).
-2. When you know what a scene is, a camera, mesh, geometry and material, more or less, fork the [demo sandbox on the frontpage](https://github.com/react-spring/react-three-fiber#what-does-it-look-like), try out some of the things you learn here.
-3. Don't break your head, three-fiber is Threejs, it does not introduce new rules or assumptions. If you see a snippet somewhere and you don't know how to make it declarative yet, use it 1:1 as it is.
+1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
+2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
+3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), *all* threejs exports are native to three-fiber.
+4. Try changing some values, scroll though our [Api](api.md) to see what the various settings and hooks do.
 
 Some reading material:
 
@@ -124,15 +126,18 @@ Some reading material:
 - 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
 - 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
 - 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR controllers and events
+- 📬 [react-postprocessing](https://github.com/react-spring/react-postprocessing), post-processing effects
 - 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
 - 🐻 [zustand](https://github.com/react-spring/zustand), state management
 - ✌️ [react-spring](https://github.com/react-spring/react-spring), a spring-physics-based animation library
 - 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures
 - 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI/debug tools
+- 📦 [react-three-flex](https://github.com/react-spring/react-three-flex), flexbox for react-three-fiber
 
 # News, updates, community
 
 - [@0xca0a](https://twitter.com/0xca0a)'s twitter
+- [discord](https://discord.gg/ZZjjNvJ)
 - [github discussions](https://github.com/react-spring/react-three-fiber/discussions)
 
 # How to contribute
