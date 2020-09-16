@@ -11,14 +11,13 @@
     "declaration": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
     "resolveJsonModule": true,
-    "noImplicitThis": false,
-    "baseUrl": "./src",
-    "paths": {
-      "react-three-fiber": ["./"]
-    }
+    "noImplicitThis": false
   },
-  "include": ["./src", "extras"],
-  "exclude": ["./node_modules/**/*"]
+  "paths": {
+    "@react-three/renderer": ["./packages/core/src"],
+    "@react-three/renderer/*": ["./packages/core/src/*"]
+  },
+  "include": ["apps", "packages"],
+  "exclude": ["node_modules"]
 }

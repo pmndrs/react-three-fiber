@@ -6,6 +6,7 @@ types/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+$RECYCLE.BIN/
 .DS_Store
 .vscode
 .docz/

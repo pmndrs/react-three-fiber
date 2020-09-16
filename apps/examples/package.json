@@ -1,0 +1,48 @@
+{
+  "name": "@react-three/examples",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test"
+  },
+  "dependencies": {
+    "@react-three/renderer": "5.0.0-beta.12",
+    "@testing-library/jest-dom": "^5.11.0",
+    "@testing-library/react": "^10.4.4",
+    "@testing-library/user-event": "^12.0.11",
+    "cannon": "^0.6.2",
+    "drei": "^0.0.70",
+    "react": "file:../../node_modules/react",
+    "react-dom": "file:../../node_modules/react-dom",
+    "react-merge-refs": "^1.0.0",
+    "react-router-dom": "^5.2.0",
+    "react-scripts": "3.4.1",
+    "react-spring": "^8.0.27",
+    "react-three-gui": "^0.1.5",
+    "react-use-gesture": "^7.0.15",
+    "styled-components": "file:../../node_modules/styled-components",
+    "three": "file:../../node_modules/three",
+    "threejs-meshline": "^2.0.11",
+    "zustand": "^2.2.3"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.10.4",
+    "customize-cra": "^1.0.0",
+    "customize-cra-react-refresh": "^1.1.0",
+    "react-app-rewired": "^2.1.6"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
