@@ -25,7 +25,8 @@ function Image({ url, opacity, scale, ...props }) {
       {...props}
       onPointerOver={hover}
       onPointerOut={unhover}
-      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}>
+      scale={factor.interpolate((f) => [scale * f, scale * f, 1])}
+    >
       <planeBufferGeometry attach="geometry" args={[5, 5]} />
       <a.meshLambertMaterial attach="material" transparent opacity={opacity}>
         <primitive attach="map" object={texture} />
@@ -36,9 +37,8 @@ function Image({ url, opacity, scale, ...props }) {
 
 /** This renders text via canvas and projects it as a sprite */
 function Text({ children, position, opacity, color = 'white', fontSize = 410 }) {
-  const {
-    viewport: { width: viewportWidth, height: viewportHeight },
-  } = useThree()
+  const { viewport } = useThree()
+  const { width: viewportWidth, height: viewportHeight } = viewport()
   const scale = viewportWidth > viewportHeight ? viewportWidth : viewportHeight
   const canvas = useMemo(() => {
     const canvas = document.createElement('canvas')
@@ -63,11 +63,11 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
 /** This component creates a fullscreen colored plane */
 function Background({ color }) {
   const { viewport } = useThree()
-  console.log(viewport)
+  const { width, height } = viewport()
   return (
-    <mesh scale={[viewport.width, viewport.height, 1]}>
-      <planeBufferGeometry attach="geometry" args={[1, 1]} />
-      <a.meshBasicMaterial attach="material" color={color} depthTest={false} />
+    <mesh scale={[width, height, 1]}>
+      <planeBufferGeometry args={[1, 1]} />
+      <a.meshBasicMaterial color={color} depthTest={false} />
     </mesh>
   )
 }
@@ -153,7 +153,8 @@ function Scene({ top, mouse }) {
       <Text
         position={top.interpolate((top) => [0, -20 + ((top * 10) / scrollMax) * 2, 0])}
         color="black"
-        fontSize={150}>
+        fontSize={150}
+      >
         down
       </Text>
     </>

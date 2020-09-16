@@ -146,14 +146,14 @@ function accessResult(resource, fetch, input, key) {
   if (entry === undefined) {
     const thenable = fetch(input)
     thenable.then(
-      value => {
+      (value) => {
         if (newResult.status === Pending) {
           const resolvedResult = newResult
           resolvedResult.status = Resolved
           resolvedResult.value = value
         }
       },
-      error => {
+      (error) => {
         if (newResult.status === Pending) {
           const rejectedResult = newResult
           rejectedResult.status = Rejected

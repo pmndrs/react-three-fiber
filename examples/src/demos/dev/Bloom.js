@@ -23,7 +23,8 @@ function Sphere({ geometry, x, y, z, s }) {
       position={[x, y, z]}
       scale={[s, s, s]}
       geometry={geometry}
-      userData={{ active }}>
+      userData={{ active }}
+    >
       <meshStandardMaterial attach="material" color="hotpink" roughness={1} />
     </mesh>
   )
@@ -105,8 +106,12 @@ export default () => (
     onCreated={({ gl }) => {
       gl.gammaInput = true
       gl.gammaOutput = true
-      gl.toneMapping = THREE.Uncharted2ToneMapping
-    }}>
+
+      // https://github.com/mrdoob/three.js/pull/19606
+      // Uncharted2ToneMapping was removed
+      gl.toneMapping = THREE.ACESFilmicToneMapping
+    }}
+  >
     <pointLight />
     <ambientLight />
     <spotLight intensity={1.6} position={[120, 50, 150]} angle={0.5} penumbra={1} />

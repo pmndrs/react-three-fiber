@@ -14,7 +14,7 @@ function Suzanne() {
   }, [geometry])
   // Compute per-frame instance positions
   const ref = useRef()
-  useFrame(state => {
+  useFrame((state) => {
     const time = state.clock.getElapsedTime()
     ref.current.rotation.x = Math.sin(time / 4)
     ref.current.rotation.y = Math.sin(time / 2)
@@ -37,7 +37,7 @@ function Suzanne() {
   )
 }
 
-export default function() {
+export default function () {
   return (
     <Canvas camera={{ position: [0, 0, 15] }}>
       <Suspense fallback={null}>

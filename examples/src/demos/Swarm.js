@@ -15,9 +15,8 @@ extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, UnrealBloomPass, Fil
 function Swarm({ count, mouse }) {
   const mesh = useRef()
   const light = useRef()
-  const { size, viewport } = useThree()
-  const aspect = size.width / viewport.width
-
+  const { viewport } = useThree()
+  const aspect = viewport().factor
   const dummy = useMemo(() => new THREE.Object3D(), [])
   // Generate some random positions, speed factors and timings
   const particles = useMemo(() => {
@@ -34,7 +33,7 @@ function Swarm({ count, mouse }) {
     return temp
   }, [count])
   // The innards of this hook will run every frame
-  useFrame(state => {
+  useFrame((state) => {
     // Makes the light follow the mouse
     light.current.position.set(mouse.current[0] / aspect, -mouse.current[1] / aspect, 0)
     // Run through the randomized data to calculate some movement
@@ -106,7 +105,8 @@ export default function App() {
       style={{ width: '100%', height: '100%' }}
       onMouseMove={onMouseMove}
       onMouseUp={() => set(false)}
-      onMouseDown={() => set(true)}>
+      onMouseDown={() => set(true)}
+    >
       <Canvas camera={{ fov: 100, position: [0, 0, 30] }}>
         <pointLight distance={60} intensity={2} color="white" />
         <spotLight intensity={2} position={[0, 0, 70]} penumbra={1} color="red" />

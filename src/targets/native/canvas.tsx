@@ -1,3 +1,4 @@
+/* eslint-disable import/named, import/namespace */
 import * as React from 'react'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 import {
@@ -33,41 +34,38 @@ const styles: ViewStyle = { flex: 1 }
 const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
   const events = useCanvas({ ...props, gl } as UseCanvasProps)
 
-  let pointerDownCoords: null | [number, number] = null
-
-  const panResponder = React.useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponderCapture(e) {
-          events.onGotPointerCaptureLegacy(clientXY(e))
-          return true
-        },
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponderCapture: () => true,
-        onPanResponderTerminationRequest: () => true,
-        onPanResponderStart: e => {
-          pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
-          events.onPointerDown(clientXY(e))
-        },
-        onPanResponderMove: e => events.onPointerMove(clientXY(e)),
-        onPanResponderEnd: e => {
-          events.onPointerUp(clientXY(e))
-          if (pointerDownCoords) {
-            const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
-            const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
-            if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
-              events.onClick(clientXY(e))
-            }
+  const panResponder = React.useMemo(() => {
+    let pointerDownCoords: null | [number, number] = null
+    return PanResponder.create({
+      onStartShouldSetPanResponderCapture(e) {
+        events.onGotPointerCaptureLegacy(clientXY(e))
+        return true
+      },
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      onPanResponderTerminationRequest: () => true,
+      onPanResponderStart: (e) => {
+        pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
+        events.onPointerDown(clientXY(e))
+      },
+      onPanResponderMove: (e) => events.onPointerMove(clientXY(e)),
+      onPanResponderEnd: (e) => {
+        events.onPointerUp(clientXY(e))
+        if (pointerDownCoords) {
+          const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
+          const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
+          if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
+            events.onClick(clientXY(e))
           }
-          pointerDownCoords = null
-        },
-        onPanResponderRelease: e => events.onPointerLeave(clientXY(e)),
-        onPanResponderTerminate: e => events.onLostPointerCapture(clientXY(e)),
-        onPanResponderReject: e => events.onLostPointerCapture(clientXY(e)),
-      }),
-    []
-  )
+        }
+        pointerDownCoords = null
+      },
+      onPanResponderRelease: (e) => events.onPointerLeave(clientXY(e)),
+      onPanResponderTerminate: (e) => events.onLostPointerCapture(clientXY(e)),
+      onPanResponderReject: (e) => events.onLostPointerCapture(clientXY(e)),
+    })
+  }, [events])
 
   return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} collapsable={false} />
 })

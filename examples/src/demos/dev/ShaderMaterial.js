@@ -7,45 +7,61 @@ import { Canvas, useThree } from 'react-three-fiber'
 import { useSpring, a } from 'react-spring/three'
 import styled from 'styled-components'
 
-import img1 from '../../resources/images/crop-1.jpg'
-import img2 from '../../resources/images/crop-2.jpg'
-import img3 from '../../resources/images/crop-3.jpg'
-import img4 from '../../resources/images/crop-4.jpg'
-import img5 from '../../resources/images/crop-5.jpg'
-import img6 from '../../resources/images/crop-6.jpg'
-import img7 from '../../resources/images/crop-7.jpg'
-import img8 from '../../resources/images/crop-8.jpg'
-// import img9 from '../../resources/images/crop-9.jpg'
-import img10 from '../../resources/images/crop-10.jpg'
-import img11 from '../../resources/images/crop-11.jpg'
-// import img12 from '../../resources/images/crop-12.jpg'
-import img13 from '../../resources/images/crop-13.jpg'
-import img14 from '../../resources/images/crop-14.jpg'
-import img15 from '../../resources/images/crop-1.jpg'
-import img16 from '../../resources/images/crop-2.jpg'
-import img17 from '../../resources/images/crop-3.jpg'
-import img18 from '../../resources/images/crop-4.jpg'
-import img19 from '../../resources/images/crop-5.jpg'
-import img20 from '../../resources/images/crop-6.jpg'
-import img21 from '../../resources/images/crop-7.jpg'
-import img22 from '../../resources/images/crop-8.jpg'
-import img23 from '../../resources/images/crop-9.jpg'
-import img24 from '../../resources/images/crop-10.jpg'
-import img25 from '../../resources/images/crop-11.jpg'
-import img26 from '../../resources/images/crop-12.jpg'
-import disp1 from '../../resources/images/crop-13.jpg'
-import disp2 from '../../resources/images/crop-14.jpg'
-import disp3 from '../../resources/images/crop-1.jpg'
-import disp4 from '../../resources/images/crop-2.jpg'
-// import disp5 from '../../resources/images/crop-3.jpg'
-import disp6 from '../../resources/images/crop-4.jpg'
-import disp7 from '../../resources/images/crop-5.jpg'
-import disp8 from '../../resources/images/crop-6.jpg'
-// import disp9 from '../../resources/images/crop-7.jpg'
-import disp10 from '../../resources/images/crop-8.jpg'
-import disp11 from '../../resources/images/crop-9.jpg'
-import disp13 from '../../resources/images/crop-10.jpg'
-import disp15 from '../../resources/images/crop-11.jpg'
+import crop1 from '../../resources/images/crop-1.jpg'
+import crop2 from '../../resources/images/crop-2.jpg'
+import crop3 from '../../resources/images/crop-3.jpg'
+import crop4 from '../../resources/images/crop-4.jpg'
+import crop5 from '../../resources/images/crop-5.jpg'
+import crop6 from '../../resources/images/crop-6.jpg'
+import crop7 from '../../resources/images/crop-7.jpg'
+import crop8 from '../../resources/images/crop-8.jpg'
+import crop9 from '../../resources/images/crop-9.jpg'
+import crop10 from '../../resources/images/crop-10.jpg'
+import crop11 from '../../resources/images/crop-11.jpg'
+import crop12 from '../../resources/images/crop-12.jpg'
+import crop13 from '../../resources/images/crop-13.jpg'
+import crop14 from '../../resources/images/crop-14.jpg'
+
+const img1 = crop1
+const img2 = crop2
+const img3 = crop3
+const img4 = crop4
+const img5 = crop5
+const img6 = crop6
+const img7 = crop7
+const img8 = crop8
+// const img9 = crop9
+const img10 = crop10
+const img11 = crop11
+// const img12 = crop12
+const img13 = crop13
+const img14 = crop14
+const img15 = crop1
+const img16 = crop2
+const img17 = crop3
+const img18 = crop4
+const img19 = crop5
+const img20 = crop6
+const img21 = crop7
+const img22 = crop8
+const img23 = crop9
+const img24 = crop10
+const img25 = crop11
+const img26 = crop12
+
+const disp1 = crop13
+const disp2 = crop14
+const disp3 = crop1
+const disp4 = crop2
+// const disp5 = crop3
+const disp6 = crop4
+const disp7 = crop5
+const disp8 = crop6
+// const disp9 = crop7
+const disp10 = crop8
+const disp11 = crop9
+const disp13 = crop10
+const disp15 = crop11
 
 const data = [
   [img22, img21, disp8, -0.65],
@@ -65,6 +81,7 @@ const data = [
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { progress } = useSpring({ progress: hovered ? 1 : 0 })
   const { gl, invalidate, viewport } = useThree()
+  const { width, height } = viewport()
 
   const args = useMemo(() => {
     const loader = new THREE.TextureLoader()
@@ -82,8 +99,8 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
       uniforms: {
         effectFactor: { type: 'f', value: intensity },
         dispFactor: { type: 'f', value: 0 },
-        texture: { type: 't', value: texture1 },
-        texture2: { type: 't', value: texture2 },
+        tex: { type: 't', value: texture1 },
+        tex2: { type: 't', value: texture2 },
         disp: { type: 't', value: dispTexture },
       },
       vertexShader,
@@ -92,7 +109,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   }, [url1, url2, disp, gl.capabilities, intensity, invalidate])
 
   return (
-    <mesh scale={[viewport.width, viewport.height, 1]}>
+    <mesh scale={[width, height, 1]}>
       <planeBufferGeometry attach="geometry" args={[1, 1]} />
       <a.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>

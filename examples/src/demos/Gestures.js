@@ -4,19 +4,20 @@ import { useDrag } from 'react-use-gesture'
 import { useSpring, a } from 'react-spring/three'
 
 function Obj() {
-  const { size, viewport } = useThree()
-  const aspect = size.width / viewport.width
+  const { viewport } = useThree()
   const [spring, set] = useSpring(() => ({
     position: [0, 0, 0],
     rotation: [0, 0, 0],
     config: { mass: 3, friction: 40, tension: 800 },
   }))
   const bind = useDrag(
-    ({ offset: [x, y], vxvy: [vx, vy], down, ...props }) =>
+    ({ offset: [x, y], vxvy: [vx, vy], down, ...props }) => {
+      const aspect = viewport().factor
       set({
         position: [x / aspect, -y / aspect, 0],
         rotation: [y / aspect, x / aspect, 0],
-      }),
+      })
+    },
     { eventOptions: { pointer: true } }
   )
 

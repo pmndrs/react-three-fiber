@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/ban-ts-ignore */
-
 import * as THREE from 'three'
 import { MouseEvent, PointerEvent, WheelEvent } from './canvas'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
+/**
+ * Allows using a TS v4 labeled tuple even with older typescript versions
+ */
+export type NamedArrayTuple<T extends (...args: any) => any> = Parameters<T>
 
 /**
  * If **T** contains a constructor, @see ConstructorParameters must be used, otherwise **T**.
@@ -38,7 +40,7 @@ export declare namespace ReactThreeFiber {
     /** Appends this class to an array on the parent under the given name and removes it on unmount */
     attachArray?: string
     /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-    attachObject?: [string, string]
+    attachObject?: NamedArrayTuple<(target: string, name: string) => void>
     /** Constructor arguments */
     args?: Args<P>
     children?: React.ReactNode
@@ -291,7 +293,10 @@ declare global {
       matrix4: ReactThreeFiber.Node<THREE.Matrix4, typeof THREE.Matrix4>
       quaternion: ReactThreeFiber.Node<THREE.Quaternion, typeof THREE.Quaternion>
       bufferAttribute: ReactThreeFiber.Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
-      instancedBufferAttribute: ReactThreeFiber.Node<THREE.InstancedBufferAttribute, typeof THREE.InstancedBufferAttribute>
+      instancedBufferAttribute: ReactThreeFiber.Node<
+        THREE.InstancedBufferAttribute,
+        typeof THREE.InstancedBufferAttribute
+      >
       face3: ReactThreeFiber.Node<THREE.Face3, typeof THREE.Face3>
       color: ReactThreeFiber.Node<THREE.Color, typeof THREE.Color>
       fog: ReactThreeFiber.Node<THREE.Fog, typeof THREE.Fog>

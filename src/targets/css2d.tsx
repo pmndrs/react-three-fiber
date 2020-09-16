@@ -9,7 +9,8 @@ export const Canvas = React.memo(({ children, ...props }: ContainerProps) => (
   <ResizeContainer
     {...props}
     renderer={() => new CSS2DRenderer()}
-    effects={(gl, el) => (el.appendChild(gl.domElement), () => el.removeChild(gl.domElement))}>
+    effects={(gl, el) => (el.appendChild(gl.domElement), () => el.removeChild(gl.domElement))}
+  >
     {children}
   </ResizeContainer>
 ))

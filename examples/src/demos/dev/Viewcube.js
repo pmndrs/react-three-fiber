@@ -46,7 +46,8 @@ function Viewcube() {
       ref={ref}
       raycast={useCamera(virtualCam)}
       position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
-      onPointerMove={(e) => console.log('ah')}>
+      onPointerMove={(e) => console.log('ah')}
+    >
       <meshNormalMaterial attach="material" />
       <boxBufferGeometry attach="geometry" args={[60, 60, 60]} />
     </mesh>,

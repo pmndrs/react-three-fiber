@@ -72,7 +72,7 @@ function Content() {
     setDefaultCamera(cam)
     return cam
   })
-  useMemo(() => (camera.aspect = size.width / size.height), [camera.aspect, size.width, size.height])
+  useMemo(() => (camera.aspect = size.width / size.height), [camera, size.width, size.height])
   useFrame(() => camera.updateMatrixWorld())
   return (
     <group>

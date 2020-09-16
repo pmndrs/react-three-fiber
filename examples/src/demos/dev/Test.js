@@ -44,6 +44,10 @@ function Cube() {
 }
 
 export default function App() {
+  const [count, setCount] = useState(0)
+
+  const onButtonClick = useCallback(() => setCount(count + 1), [count])
+
   return (
     <>
       <Canvas

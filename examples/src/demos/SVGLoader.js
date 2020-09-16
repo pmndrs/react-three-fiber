@@ -79,7 +79,8 @@ export default function App() {
     <Canvas
       invalidateFrameloop
       camera={{ fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0, 0)}>
+      onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
+    >
       <Suspense fallback={null}>
         <Scene urls={[night, city, morning, tubes, woods, beach]} />
       </Suspense>

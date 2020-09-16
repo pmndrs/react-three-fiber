@@ -32,12 +32,12 @@ function HeadsUpDisplay() {
 
 function Main() {
   const { size, setDefaultCamera } = useThree()
-  const [ref, camera] = useResource()
+  const ref = useResource()
 
   // #15929 (https://github.com/mrdoob/three.js/issues/15929)
   // The camera needs to be updated every frame
   // We give this frame a priority so that automatic rendering will be switched off right away
-  useFrame(() => camera.updateMatrixWorld())
+  useFrame(() => ref.current.updateMatrixWorld())
   useLayoutEffect(() => void setDefaultCamera(ref.current), [ref, setDefaultCamera])
 
   return (

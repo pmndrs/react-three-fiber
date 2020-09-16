@@ -27,8 +27,8 @@ ReactDOM.render(
   <Canvas>
     <pointLight position={[10, 10, 10]} />
     <mesh>
-      <sphereBufferGeometry attach="geometry" />
-      <meshStandardMaterial attach="material" color="hotpink" />
+      <sphereBufferGeometry />
+      <meshStandardMaterial color="hotpink" />
     </mesh>
   </Canvas>,
   document.getElementById('root')
@@ -44,9 +44,9 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   camera                        // Props that go into the default camera
   raycaster                     // Props that go into the default raycaster
   shadowMap                     // Props that go into gl.shadowMap, can also be set true for PCFsoft
-  colorManagement = false       // Auto sRGBEncoding encoding for all colors and textures + ACESFilmic
+  colorManagement = true        // Auto sRGBEncoding encoding for all colors and textures + ACESFilmic
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
-  gl2 = false                   // Enables webgl2
+  webgl1 = false                // Forces THREE to WebGL1, instead of WebGL2 (default)
   concurrent = false            // Enables React concurrent mode
   resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
@@ -67,7 +67,7 @@ Canvas will create a _translucent WebGL-renderer_ with the following properties:
 - antialias=true
 - alpha=true
 - powerPreference="high-performance"
-- setClearAlpha(0)`
+- setClearAlpha(0)
 
 A default _perspective camera_: `fov: 75, near: 0.1, far: 1000, z: 5, lookAt: [0,0,0]`
 
@@ -102,8 +102,8 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 ```jsx
 <mesh visible userData={{ hello: 'world' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
-  <sphereGeometry attach="geometry" args={[1, 16, 16]} />
-  <meshStandardMaterial attach="material" color="hotpink" transparent />
+  <sphereGeometry args={[1, 16, 16]} />
+  <meshStandardMaterial color="hotpink" transparent />
 </mesh>
 ```
 
@@ -111,9 +111,11 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
 
-#### Dealing with non-Object3D's
+#### Attaching and dealing with non-Object3D's
 
-You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change, later on, the object gets re-constructed from scratch! Using the `attach` property objects bind to their parent and are taken off once they unmount.
+**New in v5**, all elements ending with "Material" receive `attach="material"`, and all elements ending with "Geometry" receive `attach="geometry"` automatically. Of course you can still overwrite it, but it isn't necessary to type out any longer.
+
+Using the `attach` property objects bind to their parent and are taken off once they unmount. You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
 
 You can nest primitive objects, too:
 
@@ -157,7 +159,7 @@ return <primitive object={mesh} position={[0, 0, 0]} />
 
 #### Using 3rd-party objects declaratively
 
-The `extend` function extends three-fibers catalogue of JSX elements.
+The `extend` function extends three-fiber's catalogue of JSX elements. Components added this way can then be referenced in the scene-graph using camel casing similar to other primitives.
 
 ```jsx
 import { extend } from 'react-three-fiber'
@@ -289,15 +291,28 @@ const {
   camera,                       // Default camera
   raycaster,                    // Default raycaster
   size,                         // Bounds of the view (which stretches 100% and auto-adjusts)
-  viewport,                     // Bounds of the viewport in 3d units + factor (size/viewport)
   aspect,                       // Aspect ratio (size.width / size.height)
   mouse,                        // Current, centered, normalized 2D mouse coordinates
   raycaster,                    // Internal raycaster instance
   clock,                        // THREE.Clock (useful for useFrame deltas)
-  invalidate,                   // Invalidates a single frame (for <Canvas invalidateFrameloop />)
-  intersect,                    // Calls onMouseMove handlers for objects underneath the cursor
-  setDefaultCamera,             // Sets the default camera
+  invalidate,
+  intersect,
+  setDefaultCamera,
+  viewport,
+  forceResize,
 } = useThree()
+
+// Calculates precise viewport bounds
+const { width, height, factor, distance } = viewport(camera?: THREE.Camera, target?: THREE.Vector3)
+// Flags the canvas as "dirty" and forces a single frame
+// Use this to inform your canvas of changes when it is set to "invalidateFrameloop"
+invalidate()
+// Exchanges the default camera
+setDefaultCamera(camera)
+// Trigger an intersect/raycast as well as event handlers that may respond
+intersect(optionalEvent?: PointerEvent)
+// Force size/viewport recalculation
+forceResize()
 ```
 
 #### useFrame
@@ -335,13 +350,13 @@ Take advantage of React's `useRef` with the added consideration of rendering whe
 ```jsx
 import { useResource } from 'react-three-fiber'
 
-const [ref, material] = useResource()
+const material = useResource()
 return (
-  <meshBasicMaterial ref={ref} />
-  {material && (
-    <mesh material={material} />
-    <mesh material={material} />
-    <mesh material={material} />
+  <meshBasicMaterial ref={material} />
+  {material.current && (
+    <mesh material={material.current} />
+    <mesh material={material.current} />
+    <mesh material={material.current} />
   )}
 )
 ```
@@ -370,7 +385,7 @@ return <bufferGeometry ref={ref} />
 #### useLoader (experimental!)
 
 ```jsx
-useLoader(loader, url: string | string[], extensions?)
+useLoader(loader, url: string | string[], extensions?, xhr?)
 ```
 
 This hook loads assets and suspends for easier fallback- and error-handling.
@@ -382,7 +397,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 function Asset({ url }) {
   const gltf = useLoader(GLTFLoader, url)
-  return <primitive object={gltf.scene} dispose={null} />
+  return <primitive object={gltf.scene} />
 }
 
 <Suspense fallback={<Cube />}>
@@ -421,6 +436,7 @@ import {
   render,                       // Internal: Renders three jsx into a scene
   unmountComponentAtNode,       // Internal: Unmounts root scene
   applyProps,                   // Internal: Sets element properties
+  forceResize,                  // Internal: Force size/viewport recalculation of all canvases
 } from 'react-three-fiber'
 ```
 
