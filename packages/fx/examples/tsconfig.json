@@ -1,9 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "module": "esnext",
-    "noEmit": true
-  }
-}
