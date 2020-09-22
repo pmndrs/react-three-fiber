@@ -1,0 +1,47 @@
+{
+  "name": "examples",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@react-spring/web": "9.0.0-rc.3",
+    "drei": "1.5.2",
+    "lerp": "^1.0.3",
+    "postprocessing": "6.17.2",
+    "react": "^0.0.0-experimental-94c0244ba",
+    "react-dom": "^0.0.0-experimental-94c0244ba",
+    "react-postprocessing": "1.2.0",
+    "react-scripts": "3.4.3",
+    "react-three-fiber": "5.0.0-beta.12",
+    "react-three-flex": "0.5.2",
+    "three": "0.120.1",
+    "troika-three-text": "https://github.com/jmatsushita/troika-three-text",
+    "zustand": "3.1.0"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "customize-cra": "^1.0.0",
+    "customize-cra-react-refresh": "^1.1.0",
+    "react-app-rewired": "^2.1.6",
+    "webpack-bundle-analyzer": "^3.8.0"
+  }
+}
