@@ -1,0 +1,54 @@
+{
+  "name": "examples-cra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject",
+    "serve": "serve -s ./build"
+  },
+  "dependencies": {
+    "@react-spring/core": "^9.0.0-rc.3",
+    "@react-spring/three": "^9.0.0-rc.3",
+    "classnames": "2.2.6",
+    "drei": "^0.0.71",
+    "immer": "^7.0.8",
+    "postprocessing": "^6.16.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-postprocessing": "^1.1.4",
+    "react-router": "5.2.0",
+    "react-router-dom": "^5.1.5",
+    "react-scripts": "3.4.1",
+    "react-three-fiber": "^5.0.0-beta.11",
+    "react-three-gui": "^0.1.5",
+    "react-use-gesture": "^7.0.15",
+    "styled-components": "^5.1.1",
+    "three": "^0.119.1"
+  },
+  "devDependencies": {
+    "@types/react-router": "^5.1.8",
+    "@types/react-router-dom": "^5.1.5",
+    "@types/styled-components": "^5.1.2",
+    "customize-cra": "^1.0.0",
+    "customize-cra-react-refresh": "^1.1.0",
+    "glslify-loader": "^2.0.0",
+    "raw-loader": "^4.0.1",
+    "react-app-rewired": "^2.1.6",
+    "serve": "^11.3.2"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
