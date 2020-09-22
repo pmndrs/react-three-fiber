@@ -1,0 +1,117 @@
+{
+  "name": "react-three-flex",
+  "version": "0.5.2",
+  "description": "`<Flex />` component for the 3D World.",
+  "keywords": [
+    "react",
+    "three",
+    "r3f",
+    "react-three-fiber",
+    "3d",
+    "flex",
+    "flexbox",
+    "yoga",
+    "yoga-layout"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-spring/react-three-flex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/react-spring/react-three-flex/issues"
+  },
+  "homepage": "https://github.com/react-spring/react-three-flex#readme",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./": "./"
+  },
+  "files": [
+    "dist"
+  ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ]
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "postbuild": "tsc --emitDeclarationOnly",
+    "prepublishOnly": "npm run build",
+    "eslint": "eslint --fix src/**/*.{js,ts,jsx,tsx}",
+    "eslint-examples": "eslint --fix examples/src/**/*.{js,ts,jsx,tsx}",
+    "eslint:ci": "eslint {src,examples/src}/**/*.{js,ts,jsx,tsx}",
+    "test": "echo no tests yet"
+  },
+  "dependencies": {
+    "yoga-layout-prebuilt": "^1.9.6"
+  },
+  "devDependencies": {
+    "@babel/core": "7.11.0",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-transform-modules-commonjs": "7.10.4",
+    "@babel/plugin-transform-parameters": "7.10.5",
+    "@babel/plugin-transform-runtime": "7.11.0",
+    "@babel/plugin-transform-template-literals": "7.10.5",
+    "@babel/preset-env": "7.11.0",
+    "@babel/preset-react": "7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@rollup/plugin-babel": "^5.2.0",
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@storybook/addon-actions": "^6.0.14",
+    "@storybook/addon-knobs": "^6.0.14",
+    "@storybook/addon-storysource": "^6.0.14",
+    "@storybook/addons": "^6.0.14",
+    "@storybook/preset-typescript": "^3.0.0",
+    "@storybook/react": "^6.0.14",
+    "@storybook/theming": "^6.0.14",
+    "@types/jest": "^26.0.8",
+    "@types/node": "^14.6.0",
+    "@types/react": "^16.9.46",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-test-renderer": "^16.9.3",
+    "@typescript-eslint/eslint-plugin": "^3.7.1",
+    "@typescript-eslint/parser": "^3.7.1",
+    "eslint": "^7.6.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-jest": "^23.17.1",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.20.5",
+    "eslint-plugin-react-hooks": "^4.0.8",
+    "husky": "^4.2.5",
+    "jest": "^26.1.0",
+    "lint-staged": "^10.2.11",
+    "prettier": "^2.0.5",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-three-fiber": "^4.2.20",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.26.10",
+    "rollup-plugin-size-snapshot": "^0.12.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "three": "^0.119.1",
+    "ts-jest": "^26.1.3",
+    "typescript": "^3.9.7"
+  },
+  "peerDependencies": {
+    "react": "^16.13.1",
+    "react-three-fiber": "^4.2.20",
+    "three": "^0.119.1"
+  }
+}
