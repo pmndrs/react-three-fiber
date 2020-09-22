@@ -1,0 +1,76 @@
+{
+  "name": "examples-cra",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.3.0",
+    "@testing-library/react": "^10.0.2",
+    "@testing-library/user-event": "^10.0.1",
+    "cannon": "^0.6.2",
+    "drei": "^0.0.64",
+    "pseudo-worker": "^1.3.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-merge-refs": "^1.0.0",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "3.4.1",
+    "react-spring": "^8.0.27",
+    "react-three-fiber": "^4.2.17",
+    "react-three-gui": "^0.1.5",
+    "react-use-gesture": "^7.0.9",
+    "styled-components": "^5.0.1",
+    "three": "^0.119.1",
+    "threejs-meshline": "^2.0.10",
+    "use-cannon": "https://github.com/react-spring/use-cannon.git",
+    "zustand": "^2.2.3"
+  },
+  "scripts": {
+    "start": "HTTPS=true react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-app-rewired eject"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 120
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^7.9.0",
+    "customize-cra": "^0.9.1",
+    "customize-cra-react-refresh": "^1.0.1",
+    "husky": "^4.2.3",
+    "lint-staged": "^10.1.2",
+    "prettier": "^2.0.2",
+    "react-app-rewired": "^2.1.5"
+  }
+}
