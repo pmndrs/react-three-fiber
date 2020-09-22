@@ -9,8 +9,8 @@
 |                                                                  |                                        |
 | :--------------------------------------------------------------- | :------------------------------------- |
 | @react-three/renderer                                            | Base package for react-three           |
-| @react-three/cli                                                 | CLI tools                              |
-| @react-three/helpers                                             | A collection of useful helpers         |
+| @react-three/gltfjsx                                             | gltfjsx converter                      |
+| @react-three/drei                                                | A collection of useful helpers         |
 | @react-three/cannon                                              | Physics based hooks                    |
 | @react-three/postprocessing                                      | Postprocessing effects                 |
 | @react-three/flex                                                | Flexbox layout system                  |
