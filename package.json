@@ -25,8 +25,8 @@
   },
   "workspaces": [
     "apps/*",
-    "packages/*",
-    "packages/*/dist"
+    "packages/*/dist",
+    "packages/*"
   ],
   "husky": {
     "hooks": {
@@ -46,6 +46,7 @@
     "lint:ci": "eslint **/*.{js,jsx,ts,tsx}"
   },
   "dependencies": {
+    "cannon-es": "^0.15.1",
     "react": "^17.0.0-rc.0",
     "react-dom": "^17.0.0-rc.0",
     "styled-components": "^5.1.1",
@@ -56,7 +57,6 @@
     "@typescript-eslint/parser": "^3.7.0",
     "cross-env": "^7.0.2",
     "eslint-config-prettier": "^6.11.0",
-    "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-jest": "^23.17.1",
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-react-hooks": "^4.0.8",

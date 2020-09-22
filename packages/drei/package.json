@@ -1,5 +1,5 @@
 {
-  "name": "drei",
+  "name": "@react-three/drei",
   "version": "1.5.6",
   "private": true,
   "description": "useful add-ons for react-three-fiber",
@@ -22,22 +22,10 @@
   "module": "index.js",
   "types": "index.d.ts",
   "sideEffects": false,
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
-    ]
-  },
   "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && npm run copy",
     "prepare": "npm run build",
-    "eslint": "eslint --fix {src,.storybook}/**/*.{js,ts,jsx,tsx}",
-    "eslint:ci": "eslint {src,.storybook}/**/*.{js,ts,jsx,tsx}",
     "test": "echo no tests yet",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc --emitDeclarationOnly",
@@ -95,11 +83,8 @@
     "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.1.0",
     "glslify-loader": "^2.0.0",
-    "husky": "^4.2.5",
     "jest": "^26.4.1",
     "json": "^10.0.0",
-    "lint-staged": "^10.2.11",
-    "prettier": "^2.0.5",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-three-fiber": "^4.2.21",
@@ -113,7 +98,7 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "three": "^0.120.1",
-    "typescript": "^3.9.7"
+    "typescript": "file:../../node_modules/typescript"
   },
   "peerDependencies": {
     "react": ">=16.13",

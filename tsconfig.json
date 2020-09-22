@@ -14,10 +14,6 @@
     "resolveJsonModule": true,
     "noImplicitThis": false
   },
-  "paths": {
-    "@react-three/renderer": ["./packages/core/src"],
-    "@react-three/renderer/*": ["./packages/core/src/*"]
-  },
   "include": ["apps", "packages"],
   "exclude": ["node_modules"]
 }

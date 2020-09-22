@@ -1,27 +1,9 @@
 {
-  "name": "gltfjsx",
+  "name": "@react-three/gltfjsx",
   "version": "2.0.5",
   "description": "gltf to jsx",
   "bin": {
     "gltfjsx": "./index.js"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "npx lint-staged"
-    }
-  },
-  "prettier": {
-    "semi": false,
-    "trailingComma": "es5",
-    "singleQuote": true,
-    "jsxBracketSameLine": true,
-    "tabWidth": 2,
-    "printWidth": 120
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "prettier --write"
-    ]
   },
   "repository": {
     "type": "git",
@@ -46,13 +28,8 @@
     "is-var-name": "^2.0.0",
     "jsdom": "^16.4.0",
     "jsdom-global": "3.0.2",
-    "prettier": "2.0.5",
     "three": "0.118.3",
     "yargs": "15.4.0"
-  },
-  "devDependencies": {
-    "husky": "4.2.5",
-    "lint-staged": "10.2.11"
   },
   "collective": {
     "type": "opencollective",
