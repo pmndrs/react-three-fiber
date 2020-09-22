@@ -1,0 +1,38 @@
+{
+  "name": "@react-three/gltfjsx",
+  "version": "2.0.5",
+  "description": "gltf to jsx",
+  "bin": {
+    "gltfjsx": "./index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-spring/gltfjsx.git"
+  },
+  "keywords": [
+    "gltf",
+    "jsx",
+    "react",
+    "fiber",
+    "three",
+    "threejs"
+  ],
+  "author": "Paul Henschel",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/react-spring/gltfjsx/issues"
+  },
+  "homepage": "https://github.com/react-spring/gltfjsx#readme",
+  "dependencies": {
+    "draco3dgltf": "1.3.6",
+    "is-var-name": "^2.0.0",
+    "jsdom": "^16.4.0",
+    "jsdom-global": "3.0.2",
+    "three": "0.118.3",
+    "yargs": "15.4.0"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
+  }
+}

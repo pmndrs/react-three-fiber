@@ -1,0 +1,11 @@
+{
+  "version": "independent",
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "command": {
+    "bootstrap": {
+      "--hoist": "**",
+      "--include-filtered-dependencies": true
+    }
+  }
+}

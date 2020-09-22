@@ -1,0 +1,91 @@
+{
+  "name": "@react-three/flex",
+  "version": "0.5.2",
+  "description": "`<Flex />` component for the 3D World.",
+  "keywords": [
+    "react",
+    "three",
+    "r3f",
+    "react-three-fiber",
+    "3d",
+    "flex",
+    "flexbox",
+    "yoga",
+    "yoga-layout"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/react-spring/react-three-flex.git"
+  },
+  "bugs": {
+    "url": "https://github.com/react-spring/react-three-flex/issues"
+  },
+  "homepage": "https://github.com/react-spring/react-three-flex#readme",
+  "license": "MIT",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./": "./"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "postbuild": "tsc --emitDeclarationOnly",
+    "prepublishOnly": "npm run build",
+    "test": "echo no tests yet"
+  },
+  "dependencies": {
+    "yoga-layout-prebuilt": "^1.9.6"
+  },
+  "devDependencies": {
+    "@babel/core": "7.11.0",
+    "@babel/plugin-proposal-class-properties": "^7.10.4",
+    "@babel/plugin-transform-modules-commonjs": "7.10.4",
+    "@babel/plugin-transform-parameters": "7.10.5",
+    "@babel/plugin-transform-runtime": "7.11.0",
+    "@babel/plugin-transform-template-literals": "7.10.5",
+    "@babel/preset-env": "7.11.0",
+    "@babel/preset-react": "7.10.4",
+    "@babel/preset-typescript": "^7.10.4",
+    "@rollup/plugin-babel": "^5.2.0",
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
+    "@storybook/addon-actions": "^6.0.14",
+    "@storybook/addon-knobs": "^6.0.14",
+    "@storybook/addon-storysource": "^6.0.14",
+    "@storybook/addons": "^6.0.14",
+    "@storybook/preset-typescript": "^3.0.0",
+    "@storybook/react": "^6.0.14",
+    "@storybook/theming": "^6.0.14",
+    "@types/jest": "^26.0.8",
+    "@types/node": "^14.6.0",
+    "@types/react": "^16.9.46",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-test-renderer": "^16.9.3",
+    "jest": "^26.1.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-three-fiber": "^4.2.20",
+    "rimraf": "^3.0.2",
+    "rollup": "^2.26.10",
+    "rollup-plugin-size-snapshot": "^0.12.0",
+    "rollup-plugin-terser": "^7.0.2",
+    "three": "^0.119.1",
+    "ts-jest": "^26.1.3",
+    "typescript": "file:../../node_modules/typescript"
+  },
+  "peerDependencies": {
+    "react": "^16.13.1",
+    "react-three-fiber": "^4.2.20",
+    "three": "^0.119.1"
+  }
+}

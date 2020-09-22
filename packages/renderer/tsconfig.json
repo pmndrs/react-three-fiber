@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": "./src",
+    "paths": {
+      "react-three-fiber": ["./"]
+    }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}
