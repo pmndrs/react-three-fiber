@@ -34,8 +34,8 @@ function Content() {
   useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [set])
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
-      <boxBufferGeometry attach="geometry" args={d.args} />
-      <a.meshStandardMaterial attach="material" color={springs[index].color} roughness={0.75} metalness={0.5} />
+      <boxBufferGeometry args={d.args} />
+      <a.meshStandardMaterial color={springs[index].color} roughness={0.75} metalness={0.5} />
     </a.mesh>
   ))
 }
@@ -60,11 +60,16 @@ function Lights() {
 
 export default function App() {
   return (
-    <Canvas shadowMap style={{ background: '#A2CCB6' }} camera={{ position: [0, 0, 100], fov: 100 }}>
+    <Canvas
+      colorManagement={false}
+      shadowMap
+      style={{ background: '#A2CCB6' }}
+      camera={{ position: [0, 0, 100], fov: 100 }}
+    >
       <Lights />
       <mesh receiveShadow>
-        <planeBufferGeometry attach="geometry" args={[1000, 1000]} />
-        <meshStandardMaterial attach="material" color="#A2ACB6" roughness={1} />
+        <planeBufferGeometry args={[1000, 1000]} />
+        <meshStandardMaterial color="#A2ACB6" roughness={1} />
       </mesh>
       <Content />
     </Canvas>

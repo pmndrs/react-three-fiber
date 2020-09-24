@@ -1,13 +1,13 @@
 import * as CANNON from 'cannon'
 import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useContext } from 'react'
-import { Canvas, useFrame, addEffect, useThree } from 'react-three-fiber'
+import { Canvas, useFrame } from 'react-three-fiber'
 
 // Cannon-world context provider
 const context = React.createContext()
 export function Provider({ children }) {
   // Set up physics
-  const [world] = useState(() => new CANNON.World())
+  const [world] = useState(new CANNON.World())
   useEffect(() => {
     world.broadphase = new CANNON.NaiveBroadphase()
     world.solver.iterations = 10
@@ -20,20 +20,26 @@ export function Provider({ children }) {
 }
 
 // Custom hook to maintain a world physics body
-export function useCannon({ ...props }, fn, deps = []) {
+export function useCannon({ ...props }, fn) {
   const ref = useRef()
   // Get cannon world object
   const world = useContext(context)
+
   // Instanciate a physics body
-  const [body] = useState(() => new CANNON.Body(props))
+  const [body] = useState(new CANNON.Body(props))
+  const [instanced, setInstanced] = useState(false)
   useEffect(() => {
     // Call function so the user can add shapes
-    fn(body)
+    if (!instanced) {
+      fn(body)
+      setInstanced(true)
+    }
     // Add body to world on mount
     world.addBody(body)
     // Remove body on unmount
     return () => world.removeBody(body)
-  }, deps)
+  }, [instanced, fn, world, body])
+
   useFrame(() => {
     if (ref.current) {
       // Transport cannon physics into the referenced threejs object
@@ -46,7 +52,7 @@ export function useCannon({ ...props }, fn, deps = []) {
 
 function Plane({ position }) {
   // Register plane as a physics body with zero mass
-  const ref = useCannon({ mass: 0 }, body => {
+  const ref = useCannon({ mass: 0 }, (body) => {
     body.addShape(new CANNON.Plane())
     body.position.set(...position)
   })
@@ -61,7 +67,7 @@ function Plane({ position }) {
 function Box({ position }) {
   const [hovered, set] = useState(false)
   // Register box as a physics body with mass
-  const ref = useCannon({ mass: 100000 }, body => {
+  const ref = useCannon({ mass: 100000 }, (body) => {
     body.addShape(new CANNON.Box(new CANNON.Vec3(1, 1, 1)))
     body.position.set(...position)
   })
@@ -81,7 +87,11 @@ export default function App() {
   return (
     <Canvas
       camera={{ position: [0, 0, 15] }}
-      onCreated={({ gl }) => ((gl.shadowMap.enabled = true), (gl.shadowMap.type = THREE.PCFSoftShadowMap))}>
+      onCreated={({ gl }) => {
+        gl.shadowMap.enabled = true
+        gl.shadowMap.type = THREE.PCFSoftShadowMap
+      }}
+    >
       <ambientLight intensity={0.5} />
       <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
       <Provider>

@@ -21,6 +21,7 @@ export interface ResizeContainerProps extends CanvasProps, ContainerProps {
 
 interface ResizeContainerState {
   size: RectReadOnly
+  forceResize: () => void
   setEvents: React.Dispatch<React.SetStateAction<DomEventHandlers>>
   container: HTMLDivElement
 }
@@ -32,12 +33,16 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
   const [gl] = useState(renderer)
   if (!gl) console.warn('No renderer created!')
 
-  // Mount and unmount managemenbt
-  useEffect(() => effects && effects(gl, container), [])
+  // Mount and unmount management
+  useEffect(() => {
+    if (effects) effects(gl, container)
+  }, [container, effects, gl])
 
   // Init canvas, fetch events, hand them back to the wrapping div
   const events = useCanvas({ ...props, children, gl: (gl as unknown) as WebGLRenderer })
-  useEffect(() => void setEvents(events), [events])
+  useEffect(() => {
+    setEvents(events)
+  }, [events, setEvents])
   return null
 }
 
@@ -47,10 +52,9 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
     effects,
     children,
     vr,
-    gl2,
+    webgl1,
     concurrent,
     shadowMap,
-    sRGB,
     colorManagement,
     orthographic,
     invalidateFrameloop,
@@ -71,7 +75,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   const containerRef = useRef<HTMLDivElement>()
   // onGotPointerCaptureLegacy is a fake event used by non-web targets to simulate poinzter capture
   const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<DomEventHandlers>({} as DomEventHandlers)
-  const [bind, size] = useMeasure(
+  const [bind, size, forceResize] = useMeasure(
     resize || {
       scroll: true,
       debounce: { scroll: 50, resize: 0 },
@@ -82,7 +86,10 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   // Flag view ready once it's been measured out
   const readyFlag = useRef(false)
   const ready = useMemo(() => (readyFlag.current = readyFlag.current || (!!size.width && !!size.height)), [size])
-  const state = useMemo(() => ({ size, setEvents, container: containerRef.current as HTMLDivElement }), [size])
+  const state = useMemo(() => ({ size, forceResize, setEvents, container: containerRef.current as HTMLDivElement }), [
+    forceResize,
+    size,
+  ])
 
   // Allow Gatsby, Next and other server side apps to run. Will output styles to reduce flickering.
   if (typeof window === 'undefined')

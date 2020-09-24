@@ -64,7 +64,8 @@ export default function App() {
     <Canvas
       style={{ background: '#ffc9e7' }}
       camera={{ position: [0, 0, 10], fov: 25 }}
-      onMouseMove={e => (mouse.current = [e.clientX - window.innerWidth / 2, e.clientY - window.innerHeight / 2])}>
+      onMouseMove={(e) => (mouse.current = [e.clientX - window.innerWidth / 2, e.clientY - window.innerHeight / 2])}
+    >
       <Lines count={200} colors={['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']} />
       <Rig mouse={mouse} />
     </Canvas>

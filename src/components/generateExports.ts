@@ -36,14 +36,14 @@ function getInterfacePropertyNames(interfaceName: string) {
 
   const visit = <T extends unknown>(node: ts.Node, f: (n: ts.Node) => T[]): T[] => {
     const results = f(node)
-    node.forEachChild(child => {
+    node.forEachChild((child) => {
       results.push(...visit(child, f))
     })
 
     return results.filter(Boolean)
   }
 
-  return visit(sourceFile, node => {
+  return visit(sourceFile, (node) => {
     if (node.kind === ts.SyntaxKind.InterfaceDeclaration) {
       const declaration = node as ts.InterfaceDeclaration
 
@@ -51,7 +51,7 @@ function getInterfacePropertyNames(interfaceName: string) {
         return typeChecker
           .getTypeAtLocation(declaration)
           .getProperties()
-          .map(symbol => symbol.escapedName)
+          .map((symbol) => symbol.escapedName)
       }
     }
     return []
@@ -63,7 +63,7 @@ const pascalToCamelCase = (s: string) => `${s[0].toLowerCase()}${s.slice(1)}`
 function generateNamedExports(names: string[], exportTypeName: string) {
   return names
     .map(
-      exportName =>
+      (exportName) =>
         `export const ${exportName} = ` +
         `('${pascalToCamelCase(exportName)}' as any) as ${exportTypeName}['${exportName}']`
     )

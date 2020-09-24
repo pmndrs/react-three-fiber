@@ -15,7 +15,7 @@ const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refrac
 const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
 const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./dev/Viewcube')), dev: true }
 const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
-const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
+//const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
 //const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
 //const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
 //const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
@@ -72,7 +72,7 @@ export {
   //SVGRenderer,
   //CSS2DRenderer,
   //CSS3DRenderer,
-  Dom,
+  //Dom,
   Concurrent,
   Viewcube,
   Test,

@@ -27,13 +27,13 @@ function RenderToPortal({ targets }) {
 }
 
 function Group() {
-  const [ref1, group1] = useResource()
-  const [ref2, group2] = useResource()
+  const ref1 = useResource()
+  const ref2 = useResource()
   return (
     <group>
       <group ref={ref1} position={[0, 0, 0]} />
       <group ref={ref2} position={[2, 0, 0]} />
-      {group1 && group2 && <RenderToPortal targets={[group1, group2]} />}
+      {ref1.current && ref2.current && <RenderToPortal targets={[ref1.current, ref2.current]} />}
     </group>
   )
 }

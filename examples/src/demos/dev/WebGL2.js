@@ -49,13 +49,14 @@ export default function App() {
         top: '50%',
         lineHeight: '0.8em',
         transform: 'translate3d(-50%,-50%,0)',
-      }}>
+      }}
+    >
       sorry,
       <br />
       no webgl2
     </h1>
   ) : (
-    <Canvas gl2 style={{ background: 'lightblue' }}>
+    <Canvas style={{ background: 'lightblue' }}>
       <color attach="background" args={['lightblue']} />
       <Dodecahedron />
       <Effects />

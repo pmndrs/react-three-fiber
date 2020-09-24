@@ -1,8 +1,8 @@
 import React from 'react'
-import { render } from './reconciler'
+import { render } from './renderer'
 import { Group } from 'three'
 
-describe('reconciler', () => {
+describe('renderer', () => {
   test('should produce idempotent sibling nodes movement', () => {
     const rootGroup = new Group()
 

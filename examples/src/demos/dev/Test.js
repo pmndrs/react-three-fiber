@@ -44,6 +44,10 @@ function Cube() {
 }
 
 export default function App() {
+  const [count, setCount] = useState(0)
+
+  const onButtonClick = useCallback(() => setCount(count + 1), [count])
+
   return (
     <>
       <Canvas
@@ -54,7 +58,8 @@ export default function App() {
           gl.setClearColor('white')
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.outputEncoding = THREE.sRGBEncoding
-        }}>
+        }}
+      >
         <ambientLight intensity={1.1} />
         <pointLight position={[100, 100, 100]} intensity={2.2} />
         <pointLight position={[-100, -100, -100]} intensity={5} color="red" />
