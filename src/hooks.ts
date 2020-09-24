@@ -1,8 +1,7 @@
 import * as THREE from 'three'
 import { useRef, useContext as useContextImpl, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
-//@ts-ignore
-import usePromise from 'react-promise-suspense'
+import { useAsset } from 'use-asset'
 
 function useContext<T>(context: React.Context<T>) {
   let result = useContextImpl(context)
@@ -85,7 +84,7 @@ export function useLoader<T>(
     return temp
   }, [Proto, extensions])
   // Use suspense to load async assets
-  const results = usePromise(
+  const results = useAsset(
     (Proto: THREE.Loader, url: string | string[]) => {
       const urlArray = Array.isArray(url) ? url : [url]
       return Promise.all(
