@@ -354,8 +354,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /**  Calculates click deltas */
   const calculateDistance = useCallback((event: DomEvent) => {
-    const dx = event.clientX - state.current.initialClick[0]
-    const dy = event.clientY - state.current.initialClick[1]
+    const dx = event.nativeEvent.offsetX - state.current.initialClick[0]
+    const dy = event.nativeEvent.offsetY - state.current.initialClick[1]
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
@@ -523,7 +523,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       })
       // If a click yields no results, pass it back to the user as a miss
       if (name === 'pointerDown') {
-        state.current.initialClick = [event.clientX, event.clientY]
+        state.current.initialClick = [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
         state.current.initialHits = hits.map((hit: any) => hit.eventObject)
       }
 
