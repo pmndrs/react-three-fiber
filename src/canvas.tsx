@@ -301,10 +301,11 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   /** Events ------------------------------------------------------------------------------------------------ */
 
   /** Sets up defaultRaycaster */
-  const prepareRay = useCallback(({ clientX, clientY }) => {
-    if (clientX !== void 0) {
-      const { left, right, top, bottom } = state.current.size
-      mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
+  const prepareRay = useCallback(({ nativeEvent }) => {
+    if (nativeEvent !== void 0) {
+      const { offsetX, offsetY } = nativeEvent
+      const { width, height } = state.current.size
+      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
   }, [])
