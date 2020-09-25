@@ -14,8 +14,8 @@
     "@testing-library/user-event": "^12.1.6",
     "cannon": "^0.6.2",
     "drei": "^1.5.7",
-    "react": "^17.0.0-rc.0",
-    "react-dom": "^17.0.0-rc.0",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
     "react-merge-refs": "^1.1.0",
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
@@ -24,6 +24,7 @@
     "react-use-gesture": "^7.0.16",
     "styled-components": "^5.2.0",
     "threejs-meshline": "^2.0.12",
+    "use-cannon": "^0.5.3",
     "zustand": "^3.1.3"
   },
   "devDependencies": {

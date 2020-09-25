@@ -59,8 +59,6 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.M
   return ref
 }
 
-type Extensions = (loader: THREE.Loader) => void
-
 export interface Loader<T> extends THREE.Loader {
   load(
     url: string,
@@ -69,52 +67,60 @@ export interface Loader<T> extends THREE.Loader {
     onError?: (event: ErrorEvent) => void
   ): unknown
 }
+
+type Extensions = (loader: THREE.Loader) => void
 type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
+
+function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
+  return function (Proto: new () => LoaderResult<T>, url: string[] | string) {
+    // Construct new loader and run extensions
+    const loader = new Proto()
+    if (extensions) extensions(loader)
+    // Go through the urls and load them
+    const urlArray = Array.isArray(url) ? url : [url]
+    return Promise.all(
+      urlArray.map(
+        (url: any) =>
+          new Promise((res, reject) =>
+            loader.load(
+              url,
+              (data: any) => {
+                if (data.scene) {
+                  data.nodes = {}
+                  data.materials = {}
+                  data.scene.traverse((obj: any) => {
+                    if (obj.name) data.nodes[obj.name] = obj
+                    if (obj.material && !data.materials[obj.material.name])
+                      data.materials[obj.material.name] = obj.material
+                  })
+                }
+                res(data)
+              },
+              onProgress,
+              (error) => reject(error.message)
+            )
+          )
+      )
+    )
+  }
+}
+
 export function useLoader<T>(
   Proto: new () => LoaderResult<T>,
   url: T extends any[] ? string[] : string,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): T {
-  const loader = useMemo(() => {
-    // Construct new loader
-    const temp = new Proto()
-    // Run loader extensions
-    if (extensions) extensions(temp)
-    return temp
-  }, [Proto, extensions])
   // Use suspense to load async assets
-  const results = useAsset(
-    (Proto: THREE.Loader, url: string | string[]) => {
-      const urlArray = Array.isArray(url) ? url : [url]
-      return Promise.all(
-        urlArray.map(
-          (url) =>
-            new Promise((res, reject) =>
-              loader.load(
-                url,
-                (data: any) => {
-                  if (data.scene) {
-                    data.nodes = {}
-                    data.materials = {}
-                    data.scene.traverse((obj: any) => {
-                      if (obj.name) data.nodes[obj.name] = obj
-                      if (obj.material && !data.materials[obj.material.name])
-                        data.materials[obj.material.name] = obj.material
-                    })
-                  }
-                  res(data)
-                },
-                onProgress,
-                (error) => reject(error.message)
-              )
-            )
-        )
-      )
-    },
-    [Proto, url]
-  )
-
+  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, url])
   // Return the object/s
   return Array.isArray(url) ? results : results[0]
+}
+
+useLoader.preload = function <T>(
+  Proto: new () => LoaderResult<T>,
+  url: T extends any[] ? string[] : string,
+  extensions?: Extensions
+) {
+  return useAsset.preload(loadingFn<T>(extensions), Proto, url)
 }

@@ -1,19 +1,15 @@
 import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { draco } from "drei"
 import planet from '../resources/gltf/planet.gltf'
+
+useLoader.preload(GLTFLoader, planet, draco())
 
 function Planet(props) {
   const group = useRef()
-
-  const { nodes, materials } = useLoader(GLTFLoader, planet, (loader) => {
-    const dracoLoader = new DRACOLoader()
-    dracoLoader.decoderPath = '/draco-gltf/'
-    loader.setDRACOLoader(dracoLoader)
-  })
-
+  const { nodes, materials } = useLoader(GLTFLoader, planet, draco())
   return (
     <group ref={group} {...props} dispose={null}>
       <group rotation={[-Math.PI / 2, 0, 0]}>

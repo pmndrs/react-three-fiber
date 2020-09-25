@@ -26,7 +26,7 @@
       "no-console": "off",
       "no-empty-pattern": "warn",
       "no-duplicate-imports": "error",
-      "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
+      "import/no-unresolved": "off",
       "import/export": "error",
       // https://github.com/typescript-eslint/typescript-eslint/blob/master/docs/getting-started/linting/FAQ.md#eslint-plugin-import
       // We recommend you do not use the following import/* rules, as TypeScript provides the same checks as part of standard type checking:
