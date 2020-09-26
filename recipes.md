@@ -188,11 +188,22 @@ By default it renders like a game loop 60fps. Switch on `invalidateFrameloop` to
 <Canvas invalidateFrameloop ... />
 ```
 
-Sometimes you want to render single frames manually, for instance when you're dealing with async stuff or camera controls:
+Sometimes you want to render single frames manually, for instance when you're dealing with async stuff:
 
 ```jsx
 const { invalidate } = useThree()
 const texture = useMemo(() => loader.load(url, invalidate), [url])
+```
+
+For camera controls here's [an example sandbox](https://codesandbox.io/s/r3f-invalidate-frameloop-fps-e0g9z) which uses:
+```jsx
+const Controls = () => {
+  const { camera, gl, invalidate } = useThree()
+  const ref = useRef()
+  useFrame(() => ref.current.update())
+  useEffect(() => void ref.current.addEventListener('change', invalidate), [])
+  return <orbitControls ref={ref} args={[camera, gl.domElement]} />
+}
 ```
 
 ## Enabling VR
