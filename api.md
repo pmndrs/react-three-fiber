@@ -384,7 +384,7 @@ const ref = useUpdate(
 return <bufferGeometry ref={ref} />
 ```
 
-#### useLoader (experimental!)
+#### useLoader
 
 ```jsx
 useLoader(loader, url: string | string[], extensions?, xhr?)
