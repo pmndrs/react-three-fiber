@@ -150,7 +150,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 #### Putting already existing objects into the scene-graph
 
-You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiples times, this is not allowed in Threejs!
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in Threejs!
 
 ```jsx
 const mesh = useMemo(() => new THREE.Mesh(), [])
@@ -302,7 +302,9 @@ const {
   forceResize,
 } = useThree()
 
-// Calculates precise viewport bounds
+// Reactive viewport bounds, will updated on resize
+const { width, height, factor, distance } = viewport
+// Viewport can also calculate precise bounds on demand!
 const { width, height, factor, distance } = viewport(camera?: THREE.Camera, target?: THREE.Vector3)
 // Flags the canvas as "dirty" and forces a single frame
 // Use this to inform your canvas of changes when it is set to "invalidateFrameloop"
