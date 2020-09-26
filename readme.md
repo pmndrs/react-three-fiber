@@ -123,16 +123,16 @@ Some reading material:
 
 # Ecosystem
 
-- 🌭 [drei](https://github.com/react-spring/drei), useful helpers for react-three-fiber
-- 💣 [use-cannon](https://github.com/react-spring/use-cannon), physics based hooks
-- 🤳 [react-xr](https://github.com/react-spring/react-xr), VR/AR controllers and events
-- 📬 [react-postprocessing](https://github.com/react-spring/react-postprocessing), post-processing effects
-- 🎮 [gltfjsx](https://github.com/react-spring/gltfjsx), turns GLTFs into JSX components
-- 🐻 [zustand](https://github.com/react-spring/zustand), state management
-- ✌️ [react-spring](https://github.com/react-spring/react-spring), a spring-physics-based animation library
-- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture), mouse/touch gestures
-- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui), GUI/debug tools
-- 📦 [react-three-flex](https://github.com/react-spring/react-three-flex), flexbox for react-three-fiber
+- 🎮 [@react-three/gltfjsx](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
+- 🌭 [@react-three/drei](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
+- 📬 [@react-three/postprocessing](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
+- 📦 [@react-three/flex](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
+- 🤳 [@react-three/xr](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
+- 💣 [@react-three/cannon](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
+- 🐻 [zustand](https://github.com/react-spring/zustand) &ndash; state management
+- ✌️ [react-spring](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
+- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
 
 # News, updates, community
 
