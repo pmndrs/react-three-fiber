@@ -10,7 +10,7 @@
   - [useFrame](#useFrame)
   - [useResource](#useResource)
   - [useUpdate](#useUpdate)
-  - [useLoader (experimental!)](#useloader-experimental)
+  - [useLoader](#useloader)
 - [Additional exports](#additional-exports)
 - [Gotchas](#gotchas)
 
@@ -347,7 +347,7 @@ useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
 useResource((optionalRef = undefined))
 ```
 
-Take advantage of React's `useRef` with the added consideration of rendering when a component is available (e.g. in the next frame). Useful when you want to share and re-use resources across components.
+Take advantage of React's `useRef` with the added consideration of rendering when a component is available (e.g. in the next frame). Useful when you want to share and re-use declarative resources.
 
 ```jsx
 import { useResource } from 'react-three-fiber'
@@ -355,11 +355,9 @@ import { useResource } from 'react-three-fiber'
 const material = useResource()
 return (
   <meshBasicMaterial ref={material} />
-  {material.current && (
-    <mesh material={material.current} />
-    <mesh material={material.current} />
-    <mesh material={material.current} />
-  )}
+  <mesh material={material.current} />
+  <mesh material={material.current} />
+  <mesh material={material.current} />
 )
 ```
 
