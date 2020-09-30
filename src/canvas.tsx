@@ -104,7 +104,7 @@ export interface CanvasProps {
       ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   >
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction }
-  pixelRatio?: number
+  pixelRatio?: number | [number, number]
   onCreated?: (props: CanvasContext) => Promise<any> | void
   onPointerMissed?: () => void
 }
@@ -573,7 +573,13 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   }, [size, defaultCam])
 
   // Update pixel ratio
-  useLayoutEffect(() => void (pixelRatio && gl.setPixelRatio(pixelRatio)), [gl, pixelRatio])
+  useLayoutEffect(() => {
+    if (pixelRatio) {
+      if (Array.isArray(pixelRatio))
+        gl.setPixelRatio(Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1]))
+      else gl.setPixelRatio(pixelRatio)
+    }
+  }, [gl, pixelRatio])
   // Update shadow map
   useLayoutEffect(() => {
     if (shadowMap) {
