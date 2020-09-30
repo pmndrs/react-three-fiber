@@ -127,7 +127,7 @@
     "rollup-plugin-size-snapshot": "^0.12.0",
     "three": "^0.118.0",
     "ts-jest": "^26.4.0",
-    "typescript": "^4.0.3",
+    "typescript": "^3.9.7",
     "wait-on": "^5.2.0"
   }
 }
