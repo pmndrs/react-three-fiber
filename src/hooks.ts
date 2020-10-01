@@ -36,18 +36,12 @@ export function useUpdate<T>(
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
-  const prevDependentsRef = useRef(dependents)
-
-  useEffect(() => {
-    prevDependentsRef.current = dependents
-  })
-
   useLayoutEffect(() => {
-    if (ref.current && prevDependentsRef.current !== dependents) {
+    if (ref.current) {
       callback(ref.current)
       invalidate()
     }
-  }, [callback, dependents, invalidate, ref])
+  }, dependents) // eslint-disable-line react-hooks/exhaustive-deps
   return ref
 }
 
