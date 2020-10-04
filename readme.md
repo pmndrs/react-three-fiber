@@ -3,7 +3,12 @@
 [![Build Status](https://img.shields.io/travis/react-spring/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://travis-ci.org/react-spring/react-three-fiber)
 [![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://www.npmjs.com/package/react-three-fiber)
 [![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://www.npmjs.com/package/react-three-fiber)
-[![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=f5f5f5&colorB=f5f5f5&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
+[![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=f5f5f5&colorB=f5f5f5&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
+[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=f5f5f5&colorB=f5f5f5&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
+
+[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://opencollective.com/react-three-fiber)
+[![ETH](https://img.shields.io/badge/ETH-0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682-f5f5f5?style=flat&colorA=f5f5f5&logo=ethereum&logoColor=000000)]()
+[![BTC](https://img.shields.io/badge/BTC-36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH-f5f5f5?style=flat&colorA=f5f5f5&logo=bitcoin&logoColor=000000)]()
 
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
@@ -124,22 +129,16 @@ Some reading material:
 
 # Ecosystem
 
-- 🎮 [@react-three/gltfjsx](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
-- 🌭 [@react-three/drei](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
-- 📬 [@react-three/postprocessing](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
-- 📦 [@react-three/flex](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
-- 🤳 [@react-three/xr](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
-- 💣 [@react-three/cannon](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
-- 🐻 [zustand](https://github.com/react-spring/zustand) &ndash; state management
-- ✌️ [react-spring](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
-- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
-- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
-
-# News, updates, community
-
-- [@0xca0a](https://twitter.com/0xca0a)'s twitter
-- [discord](https://discord.gg/ZZjjNvJ)
-- [github discussions](https://github.com/react-spring/react-three-fiber/discussions)
+- [`@react-three/gltfjsx`](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
+- [`@react-three/drei`](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/postprocessing`](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
+- [`@react-three/flex`](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
+- [`@react-three/xr`](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
+- [`@react-three/cannon`](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
+- [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
+- [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
+- [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- [`react-three-gui`](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
 
 # How to contribute
 
