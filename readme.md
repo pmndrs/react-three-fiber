@@ -1,9 +1,9 @@
 <h1>react-three-fiber</h1>
 
-<a href="https://travis-ci.org/react-spring/react-three-fiber"><img src="https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master" alt="Build Status"></a>
-<a href="https://badge.fury.io/js/react-three-fiber"><img src="https://badge.fury.io/js/react-three-fiber.svg" alt="npm version"></a>
-<img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
-[![Discord Shield](https://discordapp.com/api/guilds/740090768164651008/widget.png?style=shield)](https://discord.gg/ZZjjNvJ)
+[![Build Status](https://img.shields.io/travis/react-spring/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://travis-ci.org/react-spring/react-three-fiber)
+[![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://www.npmjs.com/package/react-three-fiber)
+[![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://www.npmjs.com/package/react-three-fiber)
+[![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=f5f5f5&colorB=f5f5f5&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
 
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
@@ -79,7 +79,8 @@ function Box(props) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(e) => setActive(!active)}
       onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}>
+      onPointerOut={(e) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -103,7 +104,7 @@ ReactDOM.render(
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
-3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), *all* threejs exports are native to three-fiber.
+3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll though our [Api](api.md) to see what the various settings and hooks do.
 
 Some reading material:
