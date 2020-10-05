@@ -143,28 +143,3 @@ Some reading material:
 # How to contribute
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto `BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH`, `ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682`.
-
-#### Sponsors
-
-<a href="https://opencollective.com/react-three-fiber/sponsor/0/website" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/sponsor/0/avatar.svg"/>
-</a>
-<a href="https://opencollective.com/react-three-fiber/sponsor/1/website" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/sponsor/1/avatar.svg"/>
-</a>
-
-#### Backers
-
-Thank you to all our backers! 🙏
-
-<a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890"/>
-</a>
-
-##### Contributors
-
-This project exists thanks to all the people who contribute.
-
-<a href="https://github.com/react-spring/react-three-fiber/graphs/contributors">
-  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" />
-</a>
