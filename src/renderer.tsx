@@ -228,7 +228,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
         }
         // Special treatment for objects with support for set/copy
-        const isColorManagement = instance.__container?.__state.current.colorManagement
+        const isColorManagement = instance.__container?.__state?.current.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {

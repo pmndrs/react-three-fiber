@@ -1,6 +1,6 @@
 import React from 'react'
 import { render } from './renderer'
-import { Group } from 'three'
+import { Group, Mesh, Vector3, BufferGeometry, MeshBasicMaterial } from 'three'
 
 describe('renderer', () => {
   test('should produce idempotent sibling nodes movement', () => {
@@ -26,5 +26,27 @@ describe('renderer', () => {
     )
 
     expect(rootGroup.children.length).toBe(3)
+  })
+
+  test('simple mesh test', () => {
+    const rootGroup = new Group()
+
+    const position = new Vector3(1, 1, 1)
+
+    render(
+      <mesh position={position}>
+        <boxBufferGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial />
+      </mesh>,
+      rootGroup
+    )
+
+    expect(rootGroup.children.length).toBe(1)
+    expect(rootGroup.children[0]).toBeInstanceOf(Mesh)
+
+    const mesh = rootGroup.children[0] as Mesh
+    expect(mesh.position).toStrictEqual(position)
+    expect(mesh.geometry).toBeInstanceOf(BufferGeometry)
+    expect(mesh.material).toBeInstanceOf(MeshBasicMaterial)
   })
 })
