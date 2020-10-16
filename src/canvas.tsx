@@ -382,10 +382,9 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /**  Handles intersections by forwarding them to handlers */
   const temp = new THREE.Vector3()
-  const handleIntersects = useCallback(
+  const getIntersects = useCallback(
     (
       event: DomEvent,
-      fn: (event: DomEvent) => void,
       filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
     ): Intersection[] => {
       // Get fresh intersects
@@ -396,6 +395,18 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
         })
       }
+
+      return intersections
+    },
+    []
+  )
+
+  const handleIntersects = useCallback(
+    (
+      intersections: Intersection[],
+      event: DomEvent,
+      fn: (event: DomEvent) => void
+    ): Intersection[] => {
       // If anything has been found, forward it to the event listeners
       if (intersections.length) {
         const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
@@ -467,30 +478,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const handlePointerMove = useCallback((event: DomEvent, prepare = true) => {
     state.current.pointer.emit('pointerMove', event)
     if (prepare) prepareRay(event)
-    const hits = handleIntersects(
+    const hits = getIntersects(
       event,
-      (data: any) => {
-        const eventObject = data.eventObject
-        const handlers = (eventObject as any).__handlers
-        // Check presence of handlers
-        if (!handlers) return
-        // Call mouse move
-        if (handlers.pointerMove) handlers.pointerMove(data)
-        // Check if mouse enter or out is present
-        if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
-          const id = makeId(data)
-          const hoveredItem = hovered.get(id)
-          if (!hoveredItem) {
-            // If the object wasn't previously hovered, book it and call its handler
-            hovered.set(id, data)
-            if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
-            if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerenter' })
-          } else if (hoveredItem.stopped) {
-            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
-            data.stopPropagation()
-          }
-        }
-      },
       // This is onPointerMove, we're only interested in events that exhibit this particular event
       (objects: any) =>
         objects.filter((obj: any) =>
@@ -499,6 +488,28 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     )
     // Take care of unhover
     handlePointerCancel(event, hits, prepare)
+    handleIntersects(hits, event, (data: any) => {
+      const eventObject = data.eventObject
+      const handlers = (eventObject as any).__handlers
+      // Check presence of handlers
+      if (!handlers) return
+      // Check if mouse enter or out is present
+      if (handlers.pointerOver || handlers.pointerEnter) {
+        const id = makeId(data)
+        const hoveredItem = hovered.get(id)
+        if (!hoveredItem) {
+          // If the object wasn't previously hovered, book it and call its handler
+          hovered.set(id, data)
+          if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
+          if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerenter' })
+        } else if (hoveredItem.stopped) {
+          // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+          data.stopPropagation()
+        }
+      }
+      // Call mouse move
+      if (handlers.pointerMove) handlers.pointerMove(data)
+    })
     return hits
   }, [])
 
@@ -506,7 +517,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     (name: string) => (event: DomEvent, prepare = true) => {
       state.current.pointer.emit(name, event)
       if (prepare) prepareRay(event)
-      const hits = handleIntersects(event, (data: any) => {
+      const hits = getIntersects(event)
+      handleIntersects(hits, event, (data: any) => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
