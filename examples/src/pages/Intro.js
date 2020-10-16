@@ -4,23 +4,6 @@ import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
 import * as demos from '../demos'
 import { Page as PageImpl } from '../styles'
 
-const Page = styled(PageImpl)`
-  padding: 20px;
-
-  & > h1 {
-    position: absolute;
-    top: 70px;
-    left: 60px;
-  }
-
-  & > a {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-    font-size: 1.2em;
-  }
-`
-
 const defaultComponent = 'Refraction'
 const visibleComponents = Object.entries(demos)
   //.filter(([name, item]) => !item.dev)
@@ -45,14 +28,7 @@ export default function Intro() {
         </Switch>
       </Suspense>
       <Demos />
-      {/*<h1 style={{ color: bright ? '#2c2d31' : 'white' }}>
-        three
-        <br />
-        zero
-        <br />
-        seven.
-      </h1>*/}
-      <a href="https://github.com/drcmda/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
+      <a href="https://github.com/pmndrs/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
         Github
       </a>
     </Page>
@@ -81,6 +57,23 @@ function Demos() {
     </DemoPanel>
   )
 }
+
+const Page = styled(PageImpl)`
+  padding: 20px;
+
+  & > h1 {
+    position: absolute;
+    top: 70px;
+    left: 60px;
+  }
+
+  & > a {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    font-size: 1.2em;
+  }
+`
 
 const DemoPanel = styled.div`
   position: absolute;
