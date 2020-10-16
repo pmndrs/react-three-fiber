@@ -384,10 +384,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   /**  Handles intersections by forwarding them to handlers */
   const temp = new THREE.Vector3()
   const getIntersects = useCallback(
-    (
-      event: DomEvent,
-      filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]
-    ): Intersection[] => {
+    (event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
       // Get fresh intersects
       const intersections: Intersection[] = intersect(event, filter)
       // If the interaction is captured take that into account, the captured event has to be part of the intersects
@@ -403,11 +400,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   )
 
   const handleIntersects = useCallback(
-    (
-      intersections: Intersection[],
-      event: DomEvent,
-      fn: (event: DomEvent) => void
-    ): Intersection[] => {
+    (intersections: Intersection[], event: DomEvent, fn: (event: DomEvent) => void): Intersection[] => {
       // If anything has been found, forward it to the event listeners
       if (intersections.length) {
         const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
@@ -495,7 +488,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       // Check presence of handlers
       if (!handlers) return
       // Check if mouse enter or out is present
-      if (handlers.pointerOver || handlers.pointerEnter) {
+      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
         const id = makeId(data)
         const hoveredItem = hovered.get(id)
         if (!hoveredItem) {
