@@ -1,9 +1,14 @@
 <h1>react-three-fiber</h1>
 
-<a href="https://travis-ci.org/react-spring/react-three-fiber"><img src="https://travis-ci.org/react-spring/react-three-fiber.svg?branch=master" alt="Build Status"></a>
-<a href="https://badge.fury.io/js/react-three-fiber"><img src="https://badge.fury.io/js/react-three-fiber.svg" alt="npm version"></a>
-<img src="https://img.shields.io/npm/dt/react-three-fiber.svg" alt="npm download">
-[![Discord Shield](https://discordapp.com/api/guilds/740090768164651008/widget.png?style=shield)](https://discord.gg/ZZjjNvJ)
+[![Build Status](https://img.shields.io/travis/react-spring/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://travis-ci.org/react-spring/react-three-fiber)
+[![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://npmjs.com/package/react-three-fiber)
+[![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://npmjs.com/package/react-three-fiber)
+[![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=f5f5f5&colorB=f5f5f5&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
+[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=f5f5f5&colorB=f5f5f5&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
+
+[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://opencollective.com/react-three-fiber)
+[![ETH](https://img.shields.io/badge/ETH-0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682-f5f5f5?style=flat&colorA=f5f5f5&logo=ethereum&logoColor=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
+[![BTC](https://img.shields.io/badge/BTC-36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH-f5f5f5?style=flat&colorA=f5f5f5&logo=bitcoin&logoColor=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
@@ -79,7 +84,8 @@ function Box(props) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(e) => setActive(!active)}
       onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}>
+      onPointerOut={(e) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -103,7 +109,7 @@ ReactDOM.render(
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
-3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), *all* threejs exports are native to three-fiber.
+3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll though our [Api](api.md) to see what the various settings and hooks do.
 
 Some reading material:
@@ -123,48 +129,17 @@ Some reading material:
 
 # Ecosystem
 
-- 🎮 [@react-three/gltfjsx](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
-- 🌭 [@react-three/drei](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
-- 📬 [@react-three/postprocessing](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
-- 📦 [@react-three/flex](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
-- 🤳 [@react-three/xr](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
-- 💣 [@react-three/cannon](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
-- 🐻 [zustand](https://github.com/react-spring/zustand) &ndash; state management
-- ✌️ [react-spring](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
-- 👇 [react-use-gesture](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
-- 🧪 [react-three-gui](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
-
-# News, updates, community
-
-- [@0xca0a](https://twitter.com/0xca0a)'s twitter
-- [discord](https://discord.gg/ZZjjNvJ)
-- [github discussions](https://github.com/react-spring/react-three-fiber/discussions)
+- [`@react-three/gltfjsx`](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
+- [`@react-three/drei`](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/postprocessing`](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
+- [`@react-three/flex`](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
+- [`@react-three/xr`](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
+- [`@react-three/cannon`](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
+- [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
+- [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
+- [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- [`react-three-gui`](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
 
 # How to contribute
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto `BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH`, `ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682`.
-
-#### Sponsors
-
-<a href="https://opencollective.com/react-three-fiber/sponsor/0/website" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/sponsor/0/avatar.svg"/>
-</a>
-<a href="https://opencollective.com/react-three-fiber/sponsor/1/website" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/sponsor/1/avatar.svg"/>
-</a>
-
-#### Backers
-
-Thank you to all our backers! 🙏
-
-<a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890"/>
-</a>
-
-##### Contributors
-
-This project exists thanks to all the people who contribute.
-
-<a href="https://github.com/react-spring/react-three-fiber/graphs/contributors">
-  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" />
-</a>

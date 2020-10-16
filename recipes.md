@@ -30,7 +30,7 @@ function Box(props) {
     config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 }
   })
 
-  // interpolate values from commong spring
+  // interpolate values from common spring
   const scale = spring.to([0, 1], [1, 5])
   const rotation = spring.to([0, 1], [0, Math.PI])
   const color = spring.to([0, 1], ['#6246ea', '#e45858'])
