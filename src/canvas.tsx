@@ -655,7 +655,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         dispose((state.current as any).gl)
       }
       unmountComponentAtNode(state.current.scene, () => {
-        dispose(state.current.scene)
         dispose(state.current.raycaster)
         dispose(state.current.camera)
         dispose(state.current)
