@@ -38,9 +38,9 @@ export default {
       for(int i=0; i < MAX_SAMPLES; i++) {
         if(i == samples) break;
         texCoord -= deltaTextCoord;
-        vec4 sample = texture2D(tDiffuse, texCoord);
-        sample *= illuminationDecay * weight;
-        color += sample;
+        vec4 tsample = texture2D(tDiffuse, texCoord);
+        tsample *= illuminationDecay * weight;
+        color += tsample;
         illuminationDecay *= decay;
       }
       gl_FragColor = color * exposure;

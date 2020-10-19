@@ -300,6 +300,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /** Events ------------------------------------------------------------------------------------------------ */
 
+  const hovered = useMemo(() => new Map<string, DomEvent>(), [])
+
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(({ nativeEvent }) => {
     if (nativeEvent !== void 0) {
@@ -359,8 +361,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
-  const hovered = useMemo(() => new Map<string, DomEvent>(), [])
-
   const handlePointerCancel: any = useCallback((event: DomEvent, hits?: Intersection[], prepare = true) => {
     state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
@@ -393,7 +393,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
         })
       }
-
       return intersections
     },
     []
@@ -451,7 +450,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           }
 
           fn(raycastEvent)
-          // Event bubbling may me interrupted by stopPropagation, but that should only include
+          // Event bubbling may be interrupted by stopPropagation, but that should only include
           // events that aren't capturing, since these are in the middle of a gesture and should not
           // be disturbed until they resolve.
           if (localState.stopped === true) {
