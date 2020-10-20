@@ -77,7 +77,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<DomEventHandlers>({} as DomEventHandlers)
   const [bind, size, forceResize] = useMeasure(
     resize || {
-      scroll: false,
+      scroll: true,
       debounce: { scroll: 50, resize: 0 },
       polyfill: typeof window === 'undefined' || !(window as any).ResizeObserver ? ResizeObserver : undefined,
     }
