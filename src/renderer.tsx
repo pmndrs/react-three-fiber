@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import React from 'react'
+import Reconciler from 'react-reconciler'
 // @ts-ignore
-//import Reconciler from 'react-reconciler'
-import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
+//import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
 
@@ -76,7 +76,8 @@ export function renderGl(
   state.current.frames = Math.max(0, state.current.frames - 1)
   repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
   // Render content
-  if (!state.current.manual) state.current.gl.render(state.current.scene, state.current.camera)
+  if (!state.current.manual && state.current.gl.render)
+    state.current.gl.render(state.current.scene, state.current.camera)
 
   // Run global after-effects
   if (runGlobalEffects) {
