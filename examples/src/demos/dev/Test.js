@@ -1,5 +1,7 @@
 import React from 'react'
-import { Canvas } from 'react-three-fiber'
+import { Canvas, Renderer } from 'react-three-fiber'
+
+console.log(Renderer)
 
 function Box({ color, position }) {
   return (
@@ -7,7 +9,7 @@ function Box({ color, position }) {
       name={color}
       position={position}
       onPointerOver={(e) => e.stopPropagation() || console.log(`Box${color} pointerOver`)}
-      onPointerOut={(e) => console.log(`Box${color} pointerOut`)}
+      onPointerOut={(e) => e.stopPropagation() || console.log(`Box${color} pointerOut`)}
     >
       <boxBufferGeometry args={[10, 10, 10]} />
       <meshPhysicalMaterial color={color} transparent transmission={0.1} />

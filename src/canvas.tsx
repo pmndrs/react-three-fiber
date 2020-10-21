@@ -375,11 +375,11 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       if (hits && (!hits.length || !hits.find((i) => i.eventObject === data.eventObject))) {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
+        hovered.delete(makeId(data))
         if (handlers) {
           if (handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
           if (handlers.pointerLeave) handlers.pointerLeave({ ...data, type: 'pointerleave' })
         }
-        hovered.delete(makeId(data))
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
