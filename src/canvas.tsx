@@ -311,6 +311,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /** Intersects interaction objects using the event input */
@@ -352,6 +353,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       }
       return hits
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -380,6 +382,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         hovered.delete(makeId(data))
       }
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /**  Creates filtered intersects and returns an array of positive hits */
@@ -395,6 +398,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       }
       return intersections
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -459,6 +463,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       }
       return intersections
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -499,6 +504,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       if (handlers.pointerMove) handlers.pointerMove(data)
     })
     return hits
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handlePointer = useCallback(
@@ -530,7 +536,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         if (calculateDistance(event) <= 2) onPointerMissed()
       }
     },
-    [onPointerMissed]
+    [onPointerMissed, calculateDistance, getIntersects, handleIntersects, prepareRay]
   )
 
   useMemo(() => {
@@ -549,7 +555,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect(e)),
       onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
     }
-  }, [onPointerMissed])
+  }, [handlePointer, intersect, handlePointerCancel, handlePointerMove])
 
   /** Events ------------------------------------------------------------------------------------------------- */
 
