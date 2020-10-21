@@ -5,6 +5,7 @@ import Reconciler from 'react-reconciler'
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
+import { name, version } from '../package.json'
 
 export type GlobalRenderCallback = (timeStamp: number) => boolean
 
@@ -612,8 +613,8 @@ Renderer.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   //@ts-ignore
   findHostInstanceByFiber: () => null,
-  version: React.version,
-  rendererPackageName: 'react-three-fiber',
+  version: version,
+  rendererPackageName: name,
 })
 
 export { Renderer }
