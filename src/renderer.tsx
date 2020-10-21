@@ -317,7 +317,7 @@ function createInstance(
     instance.__instance = true
     instance.__dispose = instance.dispose
   } else if (type === 'new') {
-    instance = new props.object(...args)
+    instance = is.arr(args) ? new props.object(...args) : new props.object(args)
   } else {
     const target = (catalogue as any)[name] || (THREE as any)[name]
 
