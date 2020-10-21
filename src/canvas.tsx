@@ -301,6 +301,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   /** Events ------------------------------------------------------------------------------------------------ */
 
   const hovered = useMemo(() => new Map<string, DomEvent>(), [])
+  const temp = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback(({ nativeEvent }) => {
@@ -381,8 +382,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     })
   }, [])
 
-  /**  Handles intersections by forwarding them to handlers */
-  const temp = new THREE.Vector3()
+  /**  Creates filtered intersects and returns an array of positive hits */
   const getIntersects = useCallback(
     (event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
       // Get fresh intersects
@@ -398,6 +398,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     []
   )
 
+  /**  Handles intersections by forwarding them to handlers */
   const handleIntersects = useCallback(
     (intersections: Intersection[], event: DomEvent, fn: (event: DomEvent) => void): Intersection[] => {
       // If anything has been found, forward it to the event listeners
@@ -405,10 +406,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
         const delta = event.type === 'click' ? calculateDistance(event) : 0
         const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
-        const localState = {
-          stopped: false,
-          captured: false,
-        }
+        const localState = { stopped: false, captured: false }
 
         for (const hit of intersections) {
           const setPointerCapture = (id: any) => {
@@ -442,6 +440,10 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
               const cap = state.current.captured
               if (!cap || cap.find((h) => h.eventObject.id === hit.eventObject.id)) {
                 raycastEvent.stopped = localState.stopped = true
+                // Propagation is stopped, remove all other hover records
+                // An event handler is only allowed to flush other handlers if it is hovered itself
+                if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object))
+                  handlePointerCancel(raycastEvent, [hit])
               }
             },
             target: { ...event.target, setPointerCapture, releasePointerCapture },
@@ -450,17 +452,9 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           }
 
           fn(raycastEvent)
-          // Event bubbling may be interrupted by stopPropagation, but that should only include
-          // events that aren't capturing, since these are in the middle of a gesture and should not
-          // be disturbed until they resolve.
-          if (localState.stopped === true) {
-            // Propagation is stopped, remove all other hover records
-            // An event handler is only allowed to flush other handlers if it is hovered itself
-            if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object)) {
-              handlePointerCancel(raycastEvent, [hit])
-            }
-            break
-          }
+
+          // Event bubbling may be interrupted by stopPropagation
+          if (localState.stopped === true) break
         }
       }
       return intersections
@@ -479,8 +473,9 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
           ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__handlers['pointer' + name])
         )
     )
+
     // Take care of unhover
-    handlePointerCancel(event, hits, prepare)
+    handlePointerCancel(event, hits)
     handleIntersects(hits, event, (data: any) => {
       const eventObject = data.eventObject
       const handlers = (eventObject as any).__handlers
