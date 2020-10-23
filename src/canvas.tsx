@@ -304,11 +304,10 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const temp = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */
-  const prepareRay = useCallback(({ nativeEvent }) => {
-    if (nativeEvent !== void 0) {
-      const { offsetX, offsetY } = nativeEvent
-      const { width, height } = state.current.size
-      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
+  const prepareRay = useCallback(({ clientX, clientY }) => {
+    if (clientX !== void 0) {
+      const { left, right, top, bottom } = state.current.size
+      mouse.set(((clientX - left) / (right - left)) * 2 - 1, -((clientY - top) / (bottom - top)) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -359,8 +358,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /**  Calculates click deltas */
   const calculateDistance = useCallback((event: DomEvent) => {
-    const dx = event.nativeEvent.offsetX - state.current.initialClick[0]
-    const dy = event.nativeEvent.offsetY - state.current.initialClick[1]
+    const dx = event.clientX - state.current.initialClick[0]
+    const dy = event.clientY - state.current.initialClick[1]
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }, [])
 
@@ -528,7 +527,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       })
       // If a click yields no results, pass it back to the user as a miss
       if (name === 'pointerDown') {
-        state.current.initialClick = [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
+        state.current.initialClick = [event.clientX, event.clientY]
         state.current.initialHits = hits.map((hit: any) => hit.eventObject)
       }
 
