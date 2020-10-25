@@ -111,9 +111,11 @@ The problem is that all of these properties will always be re-created. Instead, 
 
 All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
 
-#### Attaching and dealing with non-Object3D's
+#### Dealing with non-Object3D's and attaching
 
-Using the `attach` property objects bind to their parent and are taken off once they unmount. You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+
+Using the `attach` property objects bind to their parent and are taken off once they unmount. 
 
 You can nest primitive objects, too:
 
