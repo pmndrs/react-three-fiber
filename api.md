@@ -113,8 +113,6 @@ All properties whose underlying object has a `.set()` method can directly receiv
 
 #### Attaching and dealing with non-Object3D's
 
-**New in v5**, all elements ending with "Material" receive `attach="material"`, and all elements ending with "Geometry" receive `attach="geometry"` automatically. Of course you can still overwrite it, but it isn't necessary to type out any longer.
-
 Using the `attach` property objects bind to their parent and are taken off once they unmount. You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
 
 You can nest primitive objects, too:
@@ -138,6 +136,14 @@ You can also attach to named parent properties using `attachObject={[target, nam
 ```jsx
 <bufferGeometry attach="geometry">
   <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
+```
+
+**New in v5**, all elements ending with "Material" receive `attach="material"`, and all elements ending with "Geometry" receive `attach="geometry"` automatically. Of course you can still overwrite it, but it isn't necessary to type out any longer.
+
+```jsx
+<mesh>
+  <meshBasicMaterial />
+  <boxBufferGeometry />
 ```
 
 #### Piercing into nested properties
