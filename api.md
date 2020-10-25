@@ -113,7 +113,7 @@ All properties whose underlying object has a `.set()` method can directly receiv
 
 #### Dealing with objects that are normally not part of the scene, and attaching
 
-You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
 
 Using the `attach` property objects bind to their parent and are taken off once they unmount. 
 
