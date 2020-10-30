@@ -216,8 +216,8 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerDown={(e) => console.log('down')}
   onPointerOver={(e) => console.log('over')}
   onPointerOut={(e) => console.log('out')}
-  onPointerEnter={(e) => console.log('enter')}
-  onPointerLeave={(e) => console.log('leave')}
+  onPointerEnter={(e) => console.log('enter')} // see note 1
+  onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
   onUpdate={(self) => console.log('props have been updated')}
 />
@@ -228,8 +228,8 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
 ```jsx
 ({
   ...DomEvent                   // All the original event data
-  ...ThreeEvent                 // All of Three's intersection data
-  intersections: Intersect[]    // All intersections
+  ...Intersection                 // All of Three's intersection data - see note 2
+  intersections: Intersection[]    // The first intersection of each intersected object
   object: Object3D              // The object that was actually hit
   eventObject: Object3D         // The object that registered the event
   unprojectedPoint: Vector3     // Camera-unprojected point
@@ -240,21 +240,51 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
 }) => ...
 ```
 
-#### Propagation and capturing
+<details>
+<summary>How the event-system works, bubbling and capture</summary>
+  
+Note 1: the pointerenter and pointerleave events work exactly the same as pointerover and pointerout. The pointerenter and pointerleave semantics are not implemented.
+
+Note 2: Some events (such as pointerout) happen when there is no intersection between `eventObject` and the ray. When this happens, the event will contain intersection data from a previous event with this object.
+
+#### Event propagation (bubbling)
+
+Propagation works a bit differently to the DOM because objects can occlude each other in 3D. The `intersections` array in the event includes all objects intersecting the ray, not just the nearest. Only the first intersection with each object is included.
+The event is first delivered to the object nearest the camera, and then bubbles up through its ancestors like in the DOM. After that, it is delivered to the next nearest object, and then its ancestors, and so on. This means objects are transparent to pointer events by default, even if the object handles the event.
+
+`event.stopPropagation()` doesn't just stop this event from bubbling up, it also stops it from being delivered to farther objects (objects behind this one). All other objects, nearer or farther, no longer count as being hit while the pointer is over this object. If they were previously delivered pointerover events, they will immediately be delivered pointerout events. If you want an object to block pointer events from objects behind it, it needs to have an event handler as follows:
 
 ```jsx
-  onPointerDown={e => {
-    // Only the mesh closest to the camera will be processed
-    e.stopPropagation()
-    // You may optionally capture the target
-    e.target.setPointerCapture(e.pointerId)
-  }}
-  onPointerUp={e => {
-    e.stopPropagation()
-    // Optionally release capture
-    e.target.releasePointerCapture(e.pointerId)
-  }}
+onPointerOver={e => {
+  e.stopPropagation()
+  // ...
+}}
 ```
+
+even if you don't want this object to respond to the pointer event. If you do want to handle the event as well as using `stopPropagation()`, remember that the pointerout events will happen **during** the `stopPropagation()` call. You probably want your other event handling to happen after this.
+
+#### Pointer capture
+
+Because events go to all intersected objects, capturing the pointer also works differently. In the DOM, the capturing object **replaces** the hit test, but in React-Three-Fiber, the capturing object is **added** to the hit test result: if the capturing object was not hit, then all of the hit objects (and their ancestors) get the event first, followed by the capturing object and its ancestors. The capturing object can also use `event.stopPropagation()` so that objects that really were hit get pointerout events.
+
+Note that you can access the `setPointerCapture` and `releasePointerCapture` methods **only** via `event.target`: they don't get added to the `Object3D` instances in the scene graph.
+
+`setPointerCapture` and `releasePointerCapture` take a `pointerId` parameter like in the DOM, but for now they don't have support for multiple active pointers. PRs are welcome!
+
+```jsx
+onPointerDown={e => {
+  // Only the mesh closest to the camera will be processed
+  e.stopPropagation()
+  // You may optionally capture the target
+  e.target.setPointerCapture(e.pointerId)
+}}
+onPointerUp={e => {
+  e.stopPropagation()
+  // Optionally release capture
+  e.target.releasePointerCapture(e.pointerId)
+}}
+```
+</details>
 
 # Hooks
 
