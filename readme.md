@@ -1,14 +1,11 @@
 <h1>react-three-fiber</h1>
 
-[![Build Status](https://img.shields.io/travis/react-spring/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://travis-ci.org/react-spring/react-three-fiber)
 [![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-fiber)
 [![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-fiber)
 [![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
-[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
-
-[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/react-three-fiber)
-[![ETH](https://img.shields.io/badge/ETH-0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
-[![BTC](https://img.shields.io/badge/BTC-36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
+[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/react-three-fiber)
+[![ETH](https://img.shields.io/badge/ETH?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
+[![BTC](https://img.shields.io/badge/BTC?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
