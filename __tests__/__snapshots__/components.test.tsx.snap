@@ -40,10 +40,7 @@ exports[`components mesh example matches snapshot 1`] = `
         1,
       ]
     }
-    attach="geometry"
   />
-  <meshNormalMaterial
-    attach="material"
-  />
+  <meshNormalMaterial />
 </mesh>
 `;

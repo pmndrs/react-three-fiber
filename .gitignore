@@ -15,3 +15,4 @@ coverage/
 .idea
 yarn-error.log
 .size-snapshot.json
+__tests__/__image_snapshots__/__diff_output__

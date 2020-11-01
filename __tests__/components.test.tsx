@@ -1,7 +1,7 @@
 import React from 'react'
 import TestRenderer from 'react-test-renderer'
 
-import { Mesh, BoxBufferGeometry, MeshNormalMaterial, Line, New, Primitive } from '.'
+import { Mesh, BoxBufferGeometry, MeshNormalMaterial, Line, New, Primitive } from '../src/components'
 
 describe('components', () => {
   test('mesh example matches snapshot', () => {
@@ -13,8 +13,8 @@ describe('components', () => {
           onPointerOver={() => console.log('hover')}
           onPointerOut={() => console.log('unhover')}
         >
-          <BoxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-          <MeshNormalMaterial attach="material" />
+          <BoxBufferGeometry args={[1, 1, 1]} />
+          <MeshNormalMaterial />
         </Mesh>
       )
     ).toMatchSnapshot()
@@ -36,7 +36,6 @@ describe('components', () => {
     class SpecialThing {
       constructor(public foo: number, _: string) {}
     }
-
     expect(TestRenderer.create(<New object={SpecialThing} args={[5, 'bar']} foo={2} />)).toMatchSnapshot()
   })
 })

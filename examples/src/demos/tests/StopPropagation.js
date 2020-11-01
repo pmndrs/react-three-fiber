@@ -1,22 +1,25 @@
-import React from 'react'
-import { Canvas, Renderer } from 'react-three-fiber'
+import React, { useState } from 'react'
+import { Canvas } from 'react-three-fiber'
 
 function Box({ stop = false, color, position }) {
+  const [hovered, set] = useState(false)
   return (
     <mesh
       name={color}
       position={position}
       onPointerOver={(e) => {
         if (stop) e.stopPropagation()
+        set(true)
         console.log(`Box${color} pointerOver`)
       }}
       onPointerOut={(e) => {
         if (stop) e.stopPropagation()
+        set(false)
         console.log(`Box${color} pointerOut`)
       }}
     >
       <boxBufferGeometry args={[10, 10, 10]} />
-      <meshPhysicalMaterial color={color} transparent transmission={0.1} />
+      <meshPhysicalMaterial color={hovered ? 'hotpink' : color} transparent transmission={0.1} />
     </mesh>
   )
 }

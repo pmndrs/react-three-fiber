@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from './renderer'
+import { render } from '../src/targets/web'
 import { Group, Mesh, Vector3, BufferGeometry, MeshBasicMaterial } from 'three'
 
 describe('renderer', () => {

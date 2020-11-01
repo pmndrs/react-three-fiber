@@ -12,7 +12,6 @@ const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoad
 const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')), bright: false }
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
-const Test = { descr: '', tags: [], Component: lazy(() => import('./dev/Test')), dev: true }
 const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./dev/Viewcube')), dev: true }
 const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
 //const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
@@ -41,6 +40,9 @@ const Scroll = { descr: '', tags: [], Component: lazy(() => import('./dev/Scroll
 const Lines = { descr: '', tags: [], Component: lazy(() => import('./dev/Lines')), dev: true }
 const WebGL2 = { descr: '', tags: [], Component: lazy(() => import('./dev/WebGL2')), dev: true }
 const Bloom = { descr: '', tags: [], Component: lazy(() => import('./dev/Bloom')), bright: false, dev: true }
+
+const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./tests/ClickAndHover')), dev: true }
+const StopPropagation = { descr: '', tags: [], Component: lazy(() => import('./tests/StopPropagation')), dev: true }
 
 export {
   Refraction,
@@ -75,5 +77,6 @@ export {
   //Dom,
   Concurrent,
   Viewcube,
-  Test,
+  ClickAndHover,
+  StopPropagation,
 }
