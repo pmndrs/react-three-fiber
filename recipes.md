@@ -135,7 +135,6 @@ function Extrusion({ start = [0, 0], paths, ...props }) {
     paths.forEach((path) => shape.bezierCurveTo(...path))
     return shape
   }, [start, paths])
-
   return (
     <mesh>
       <extrudeGeometry args={[shape, props]} />
@@ -161,12 +160,10 @@ function Extrusion({ start = [0, 0], paths, ...props }) {
 ```jsx
 function CrossFade({ url1, url2, disp }) {
   const [texture1, texture2, dispTexture] = useLoader(THREE.TextureLoader, [url1, url2, disp])
-
   return (
     <mesh>
       <planeBufferGeometry  args={[1, 1]} />
       <shaderMaterial
-
         args={[CrossFadeShader]}
         uniforms-texture-value={texture1}
         uniforms-texture2-value={texture2}
