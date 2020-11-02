@@ -1,6 +1,7 @@
 # Recipes
 
 ## Table of Contents
+
 - [Animating with react-spring](#animating-with-react-spring)
 - [Dealing with effects (hijacking main render-loop)](#dealing-with-effects-hijacking-main-render-loop)
 - [Using your own camera rig](#using-your-own-camera-rig)
@@ -27,7 +28,7 @@ function Box(props) {
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
     spring: active,
-    config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 }
+    config: { mass: 5, tension: 400, friction: 50, precision: 0.0001 },
   })
 
   // interpolate values from common spring
@@ -38,12 +39,13 @@ function Box(props) {
   return (
     // using a from react-spring will animate our component
     <a.mesh rotation-y={rotation} scale-x={scale} scale-z={scale} onClick={() => setActive(Number(!active))}>
-      <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-      <a.meshStandardMaterial roughness={0.5} attach="material" color={color} />
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <a.meshStandardMaterial roughness={0.5} color={color} />
     </a.mesh>
   )
 }
 ```
+
 [CodeSandbox](https://8ckyf.csb.app/)
 
 ## Dealing with effects (hijacking main render-loop)
@@ -126,26 +128,32 @@ function App() {
 Stick imperative stuff into useMemo and write out everything else declaratively. This is how you can quickly form reactive, re-usable components that can be bound to a store, graphql, etc.
 
 ```jsx
-function Extrusion({ start = [0,0], paths, ...props }) {
+function Extrusion({ start = [0, 0], paths, ...props }) {
   const shape = useMemo(() => {
     const shape = new THREE.Shape()
     shape.moveTo(...start)
-    paths.forEach(path => shape.bezierCurveTo(...path))
+    paths.forEach((path) => shape.bezierCurveTo(...path))
     return shape
   }, [start, paths])
 
   return (
     <mesh>
-      <extrudeGeometry attach="geometry" args={[shape, props]} />
-      <meshPhongMaterial attach="material" />
+      <extrudeGeometry args={[shape, props]} />
+      <meshPhongMaterial />
     </mesh>
   )
 }
 
 <Extrusion
   start={[25, 25]}
-  paths={[[25, 25, 20, 0, 0, 0], [30, 0, 30, 35,30,35], [30, 55, 10, 77, 25, 95]]}
-  bevelEnabled amount={8} />
+  paths={[
+    [25, 25, 20, 0, 0, 0],
+    [30, 0, 30, 35, 30, 35],
+    [30, 55, 10, 77, 25, 95],
+  ]}
+  bevelEnabled
+  amount={8}
+/>
 ```
 
 ## ShaderMaterials
@@ -156,9 +164,9 @@ function CrossFade({ url1, url2, disp }) {
 
   return (
     <mesh>
-      <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <planeBufferGeometry  args={[1, 1]} />
       <shaderMaterial
-        attach="material"
+
         args={[CrossFadeShader]}
         uniforms-texture-value={texture1}
         uniforms-texture2-value={texture2}
@@ -196,6 +204,7 @@ const texture = useMemo(() => loader.load(url, invalidate), [url])
 ```
 
 For camera controls here's [an example sandbox](https://codesandbox.io/s/r3f-invalidate-frameloop-fps-e0g9z) which uses:
+
 ```jsx
 const Controls = () => {
   const { camera, gl, invalidate } = useThree()
@@ -220,7 +229,6 @@ import { Canvas } from 'react-three-fiber'
 ## Reducing bundle-size
 
 Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need. Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
-
 
 ## Usage with React Native
 
