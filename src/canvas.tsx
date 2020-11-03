@@ -276,7 +276,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     // Assign viewport props to the function
     Object.assign(state.current.viewport, getCurrentViewport())
 
-    // #92 (https://github.com/drcmda/react-three-fiber/issues/92)
+    // https://github.com/drcmda/react-three-fiber/issues/92
     // Sometimes automatic default camera adjustment isn't wanted behaviour
     if (updateDefaultCamera) {
       if (isOrthographicCamera(defaultCam)) {
@@ -289,7 +289,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       }
       defaultCam.updateProjectionMatrix()
 
-      // #178: https://github.com/react-spring/react-three-fiber/issues/178
+      // https://github.com/react-spring/react-three-fiber/issues/178
       // Update matrix world since the renderer is a frame late
       defaultCam.updateMatrixWorld()
     }
@@ -306,6 +306,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /** Sets up defaultRaycaster */
   const prepareRay = useCallback((event: DomEvent) => {
+    // https://github.com/pmndrs/react-three-fiber/pull/782
+    // Events trigger outside of canvas when moved
     const offsets = raycaster?.computeOffsets?.(event) || event.nativeEvent
     if (offsets) {
       const { offsetX, offsetY } = offsets
@@ -338,7 +340,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         return true
       })
 
-      // #16031: (https://github.com/mrdoob/three.js/issues/16031)
+      // https://github.com/mrdoob/three.js/issues/16031
       // Allow custom userland intersect sort order
       if (raycaster && raycaster.filter && sharedState.current) {
         intersects = raycaster.filter(intersects, sharedState.current)
