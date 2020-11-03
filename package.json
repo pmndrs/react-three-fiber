@@ -45,7 +45,7 @@
   "scripts": {
     "postinstall": "yarn --cwd ./examples",
     "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c && yarn copy",
+    "build": "rollup -c && yarn copy && rimraf dist/__tests__",
     "prepare": "npm run build",
     "eslint": "eslint --fix {src,examples/src}/**/*.{js,ts,jsx,tsx}",
     "dev": "yarn --cwd ./examples start",
