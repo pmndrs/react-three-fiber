@@ -43,6 +43,7 @@
     ]
   },
   "scripts": {
+    "postinstall": "yarn --cwd ./examples",
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && yarn copy",
     "prepare": "npm run build",
