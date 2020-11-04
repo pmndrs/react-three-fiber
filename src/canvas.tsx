@@ -648,7 +648,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   useEffect(
     () => () => {
       if (state.current.gl) {
-        state.current.gl.renderLists.dispose()
+        if (state.current.gl.renderLists) state.current.gl.renderLists.dispose()
         if (state.current.gl.forceContextLoss) state.current.gl.forceContextLoss()
         dispose((state.current as any).gl)
       }
