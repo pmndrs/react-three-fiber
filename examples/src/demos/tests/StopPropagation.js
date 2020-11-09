@@ -18,19 +18,20 @@ function Box({ stop = false, color, position }) {
         console.log(`Box${color} pointerOut`)
       }}
     >
-      <boxBufferGeometry args={[10, 10, 10]} />
-      <meshPhysicalMaterial color={hovered ? 'hotpink' : color} transparent transmission={0.1} />
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <meshPhysicalMaterial color={hovered ? 'hotpink' : color} />
     </mesh>
   )
 }
 
 export default function App() {
   return (
-    <Canvas camera={{ fov: 75, position: [-5, 0, 25] }}>
+    <Canvas orthographic camera={{ zoom: 150, fov: 75, position: [0, 0, 25] }}>
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
-      <Box stop color="green" position={[7, 0, -2]} />
-      <Box color="red" position={[-5, 0, 0]} />
+      <Box color="blue" position={[0.5, 0, -2]} />
+      <Box stop color="green" position={[0, 0, -1]} />
+      <Box color="red" position={[-0.5, 0, 0]} />
     </Canvas>
   )
 }

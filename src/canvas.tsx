@@ -450,8 +450,11 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
                 raycastEvent.stopped = localState.stopped = true
                 // Propagation is stopped, remove all other hover records
                 // An event handler is only allowed to flush other handlers if it is hovered itself
-                if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object))
-                  handlePointerCancel(raycastEvent, [hit])
+                if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object)) {
+                  // Objects cannot flush out higher up objects that have already caught the event
+                  const higher = intersections.slice(0, intersections.indexOf(hit))
+                  handlePointerCancel(raycastEvent, [...higher, hit])
+                }
               }
             },
             target: { ...event.target, setPointerCapture, releasePointerCapture },
@@ -643,7 +646,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         console.warn('the gl instance does not support VR!')
       }
     }
-  }, [ready, invalidateFrameloop])
+  }, [gl, ready, invalidateFrameloop])
 
   // Dispose renderer on unmount
   useEffect(
