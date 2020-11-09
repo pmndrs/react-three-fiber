@@ -611,7 +611,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
       const result = onCreated && onCreated(state.current)
-      return void (result && result.then ? result.then(activate) : activate())
+      if (result && result.then) result.then(activate)
+      else activate()
     }, [])
 
     return props.children

@@ -22,8 +22,18 @@ function Block({ change, ...props }) {
     while (performance.now() < e) {}
   }
 
+  const mounted = useRef(false)
   useEffect(() => {
-    if (change) setTimeout(() => run(low, () => set(Math.round(Math.random() * 0xffffff))), Math.random() * 1000)
+    mounted.current = true
+    return () => (mounted.current = false)
+  })
+
+  useEffect(() => {
+    if (change)
+      setTimeout(
+        () => run(low, () => mounted.current && set(Math.round(Math.random() * 0xffffff))),
+        Math.random() * 1000
+      )
   }, [change])
 
   return (
