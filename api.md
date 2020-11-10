@@ -11,6 +11,7 @@
   - [useResource](#useResource)
   - [useUpdate](#useUpdate)
   - [useLoader](#useloader)
+  - [useGraph](#useGraph)
 - [Additional exports](#additional-exports)
 - [Gotchas](#gotchas)
 
@@ -459,6 +460,21 @@ It can also make multiple requests in parallel:
 
 ```jsx
 const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
+```
+
+#### useGraph
+
+```jsx
+const { nodes, materials } = useGraph(object)
+```
+
+Convenience hook which creates a memoized, named object/material collection. useLoader will automatically do this if the loader contains a `scene` prop. Some loaders do not have that, so you can build a graph yourself. You might want to this to be more finegrained about your output as it lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it.
+
+```jsx
+function Asset({ url }) {
+  const scene = useLoader(ObjLoader, url)
+  const { nodes, materials } = useGraph(scene)
+  return <mesh geometry={nodes.robot.geometry} material={materials.metal} />
 ```
 
 # Additional exports
