@@ -22,7 +22,7 @@ export declare namespace ReactThreeFiber {
   type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
   type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
-  export type EventHandlers = {
+  type EventHandlers = {
     onClick?: (event: MouseEvent) => void
     onContextMenu?: (event: MouseEvent) => void
     onDoubleClick?: (event: MouseEvent) => void
@@ -34,7 +34,7 @@ export declare namespace ReactThreeFiber {
     onWheel?: (event: WheelEvent) => void
   }
 
-  export interface NodeProps<T, P> {
+  interface NodeProps<T, P> {
     /** Attaches this class onto the parent under the given name and nulls it on unmount */
     attach?: string
     /** Appends this class to an array on the parent under the given name and removes it on unmount */
@@ -49,9 +49,9 @@ export declare namespace ReactThreeFiber {
     onUpdate?: (self: T) => void
   }
 
-  export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
+  type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
 
-  export type Object3DNode<T, P> = Overwrite<
+  type Object3DNode<T, P> = Overwrite<
     Node<T, P>,
     {
       position?: Vector3
@@ -66,10 +66,10 @@ export declare namespace ReactThreeFiber {
   > &
     EventHandlers
 
-  export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
-  export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
-  export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
-  export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
+  type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
+  type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
+  type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
+  type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
 }
 
 declare global {
