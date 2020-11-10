@@ -74,9 +74,7 @@ function Box(props) {
 
   // Rotate mesh every frame, this is outside of React without overhead
   useFrame(() => {
-    if (mesh.current) {
-      mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-    }
+    mesh.current.rotation.x = mesh.current.rotation.y += 0.01
   })
 
   return (
@@ -86,8 +84,7 @@ function Box(props) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}
-    >
+      onPointerOut={(event) => setHover(false)}>
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -124,9 +121,7 @@ function Box(props: MeshProps) {
 
   // Rotate mesh every frame, this is outside of React without overhead
   useFrame(() => {
-    if (mesh.current) {
-      mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-    }
+    if (mesh.current) mesh.current.rotation.x = mesh.current.rotation.y += 0.01
   })
 
   return (
@@ -135,9 +130,8 @@ function Box(props: MeshProps) {
       ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(_event) => setActive(!active)}
-      onPointerOver={(_event) => setHover(true)}
-      onPointerOut={(_event) => setHover(false)}
-    >
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
