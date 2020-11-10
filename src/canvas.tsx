@@ -2,7 +2,8 @@ import * as THREE from 'three'
 import React, { useMemo, useRef, useEffect, useState, useCallback, createContext, useLayoutEffect } from 'react'
 import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './renderer'
 import { TinyEmitter } from 'tiny-emitter'
-import { NamedArrayTuple, ReactThreeFiber } from './three-types'
+import { NamedArrayTuple } from './three-types'
+import { ReactThreeFiber } from '.'
 import { RectReadOnly } from 'react-use-measure'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
