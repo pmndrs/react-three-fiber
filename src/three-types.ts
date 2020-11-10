@@ -13,293 +13,401 @@ export type NamedArrayTuple<T extends (...args: any) => any> = Parameters<T>
  */
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
 
-export declare namespace ReactThreeFiber {
-  type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
-  type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
-  type Vector2 = THREE.Vector2 | Parameters<THREE.Vector2['set']>
-  type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
-  type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
-  type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
-  type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
+export type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
+export type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
+export type Vector2 = THREE.Vector2 | Parameters<THREE.Vector2['set']>
+export type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
+export type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
+export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
+export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
-  export type EventHandlers = {
-    onClick?: (event: MouseEvent) => void
-    onContextMenu?: (event: MouseEvent) => void
-    onDoubleClick?: (event: MouseEvent) => void
-    onPointerUp?: (event: PointerEvent) => void
-    onPointerDown?: (event: PointerEvent) => void
-    onPointerOver?: (event: PointerEvent) => void
-    onPointerOut?: (event: PointerEvent) => void
-    onPointerMove?: (event: PointerEvent) => void
-    onWheel?: (event: WheelEvent) => void
-  }
-
-  export interface NodeProps<T, P> {
-    /** Attaches this class onto the parent under the given name and nulls it on unmount */
-    attach?: string
-    /** Appends this class to an array on the parent under the given name and removes it on unmount */
-    attachArray?: string
-    /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-    attachObject?: NamedArrayTuple<(target: string, name: string) => void>
-    /** Constructor arguments */
-    args?: Args<P>
-    children?: React.ReactNode
-    ref?: React.Ref<React.ReactNode>
-    key?: React.Key
-    onUpdate?: (self: T) => void
-  }
-
-  export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
-
-  export type Object3DNode<T, P> = Overwrite<
-    Node<T, P>,
-    {
-      position?: Vector3
-      up?: Vector3
-      scale?: Vector3
-      rotation?: Euler
-      matrix?: Matrix4
-      quaternion?: Quaternion
-      layers?: Layers
-      dispose?: (() => void) | null
-    }
-  > &
-    EventHandlers
-
-  export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
-  export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
-  export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
-  export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
+export type EventHandlers = {
+  onClick?: (event: MouseEvent) => void
+  onContextMenu?: (event: MouseEvent) => void
+  onDoubleClick?: (event: MouseEvent) => void
+  onPointerUp?: (event: PointerEvent) => void
+  onPointerDown?: (event: PointerEvent) => void
+  onPointerOver?: (event: PointerEvent) => void
+  onPointerOut?: (event: PointerEvent) => void
+  onPointerMove?: (event: PointerEvent) => void
+  onWheel?: (event: WheelEvent) => void
 }
+
+export interface NodeProps<T, P> {
+  /** Attaches this class onto the parent under the given name and nulls it on unmount */
+  attach?: string
+  /** Appends this class to an array on the parent under the given name and removes it on unmount */
+  attachArray?: string
+  /** Adds this class to an object on the parent under the given name and deletes it on unmount */
+  attachObject?: NamedArrayTuple<(target: string, name: string) => void>
+  /** Constructor arguments */
+  args?: Args<P>
+  children?: React.ReactNode
+  ref?: React.Ref<React.ReactNode>
+  key?: React.Key
+  onUpdate?: (self: T) => void
+}
+
+export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
+
+export type Object3DNode<T, P> = Overwrite<
+  Node<T, P>,
+  {
+    position?: Vector3
+    up?: Vector3
+    scale?: Vector3
+    rotation?: Euler
+    matrix?: Matrix4
+    quaternion?: Quaternion
+    layers?: Layers
+    dispose?: (() => void) | null
+  }
+> &
+  EventHandlers
+
+export type GeometryNode<T extends THREE.Geometry, P> = Overwrite<Node<T, P>, { vertices?: Vector3[] }>
+export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
+export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
+export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
+
+// export type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
+export type AudioListenerProps = Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
+export type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
+
+export type MeshProps = Object3DNode<THREE.Mesh, typeof THREE.Mesh>
+export type InstancedMeshProps = Object3DNode<THREE.InstancedMesh, typeof THREE.InstancedMesh>
+export type SceneProps = Object3DNode<THREE.Scene, typeof THREE.Scene>
+export type SpriteProps = Object3DNode<THREE.Sprite, typeof THREE.Sprite>
+export type LODProps = Object3DNode<THREE.LOD, typeof THREE.LOD>
+export type SkinnedMeshProps = Object3DNode<THREE.SkinnedMesh, typeof THREE.SkinnedMesh>
+
+export type SkeletonProps = Object3DNode<THREE.Skeleton, typeof THREE.Skeleton>
+export type BoneProps = Object3DNode<THREE.Bone, typeof THREE.Bone>
+export type LineSegmentsProps = Object3DNode<THREE.LineSegments, typeof THREE.LineSegments>
+export type LineLoopProps = Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
+// export type LineProps = Object3DNode<THREE.Line, typeof THREE.Line>
+export type PointsProps = Object3DNode<THREE.Points, typeof THREE.Points>
+export type GroupProps = Object3DNode<THREE.Group, typeof THREE.Group>
+export type ImmediateRenderObjectProps = Object3DNode<THREE.ImmediateRenderObject, typeof THREE.ImmediateRenderObject>
+
+export type CameraProps = Object3DNode<THREE.Camera, typeof THREE.Camera>
+export type PerspectiveCameraProps = Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera>
+export type OrthographicCameraProps = Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+export type CubeCameraProps = Object3DNode<THREE.CubeCamera, typeof THREE.CubeCamera>
+export type ArrayCameraProps = Object3DNode<THREE.ArrayCamera, typeof THREE.ArrayCamera>
+
+export type GeometryProps = GeometryNode<THREE.Geometry, typeof THREE.Geometry>
+export type InstancedBufferGeometryProps = BufferGeometryNode<
+  THREE.InstancedBufferGeometry,
+  typeof THREE.InstancedBufferGeometry
+>
+export type BufferGeometryProps = BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
+export type BoxBufferGeometryProps = BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
+export type CircleBufferGeometryProps = BufferGeometryNode<
+  THREE.CircleBufferGeometry,
+  typeof THREE.CircleBufferGeometry
+>
+export type ConeBufferGeometryProps = BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
+export type CylinderBufferGeometryProps = BufferGeometryNode<
+  THREE.CylinderBufferGeometry,
+  typeof THREE.CylinderBufferGeometry
+>
+export type DodecahedronBufferGeometryProps = BufferGeometryNode<
+  THREE.DodecahedronBufferGeometry,
+  typeof THREE.DodecahedronBufferGeometry
+>
+export type ExtrudeBufferGeometryProps = BufferGeometryNode<
+  THREE.ExtrudeBufferGeometry,
+  typeof THREE.ExtrudeBufferGeometry
+>
+export type IcosahedronBufferGeometryProps = BufferGeometryNode<
+  THREE.IcosahedronBufferGeometry,
+  typeof THREE.IcosahedronBufferGeometry
+>
+export type LatheBufferGeometryProps = BufferGeometryNode<THREE.LatheBufferGeometry, typeof THREE.LatheBufferGeometry>
+export type OctahedronBufferGeometryProps = BufferGeometryNode<
+  THREE.OctahedronBufferGeometry,
+  typeof THREE.OctahedronBufferGeometry
+>
+export type ParametricBufferGeometryProps = BufferGeometryNode<
+  THREE.ParametricBufferGeometry,
+  typeof THREE.ParametricBufferGeometry
+>
+export type PlaneBufferGeometryProps = BufferGeometryNode<THREE.PlaneBufferGeometry, typeof THREE.PlaneBufferGeometry>
+export type PolyhedronBufferGeometryProps = BufferGeometryNode<
+  THREE.PolyhedronBufferGeometry,
+  typeof THREE.PolyhedronBufferGeometry
+>
+export type RingBufferGeometryProps = BufferGeometryNode<THREE.RingBufferGeometry, typeof THREE.RingBufferGeometry>
+export type ShapeBufferGeometryProps = BufferGeometryNode<THREE.ShapeBufferGeometry, typeof THREE.ShapeBufferGeometry>
+export type SphereBufferGeometryProps = BufferGeometryNode<
+  THREE.SphereBufferGeometry,
+  typeof THREE.SphereBufferGeometry
+>
+export type TetrahedronBufferGeometryProps = BufferGeometryNode<
+  THREE.TetrahedronBufferGeometry,
+  typeof THREE.TetrahedronBufferGeometry
+>
+export type TextBufferGeometryProps = BufferGeometryNode<THREE.TextBufferGeometry, typeof THREE.TextBufferGeometry>
+export type TorusBufferGeometryProps = BufferGeometryNode<THREE.TorusBufferGeometry, typeof THREE.TorusBufferGeometry>
+export type TorusKnotBufferGeometryProps = BufferGeometryNode<
+  THREE.TorusKnotBufferGeometry,
+  typeof THREE.TorusKnotBufferGeometry
+>
+export type TubeBufferGeometryProps = BufferGeometryNode<THREE.TubeBufferGeometry, typeof THREE.TubeBufferGeometry>
+export type WireframeGeometryProps = BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
+export type ParametricGeometryProps = GeometryNode<THREE.ParametricGeometry, typeof THREE.ParametricGeometry>
+export type TetrahedronGeometryProps = GeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
+export type OctahedronGeometryProps = GeometryNode<THREE.OctahedronGeometry, typeof THREE.OctahedronGeometry>
+export type IcosahedronGeometryProps = GeometryNode<THREE.IcosahedronGeometry, typeof THREE.IcosahedronGeometry>
+export type DodecahedronGeometryProps = GeometryNode<THREE.DodecahedronGeometry, typeof THREE.DodecahedronGeometry>
+export type PolyhedronGeometryProps = GeometryNode<THREE.PolyhedronGeometry, typeof THREE.PolyhedronGeometry>
+export type TubeGeometryProps = GeometryNode<THREE.TubeGeometry, typeof THREE.TubeGeometry>
+export type TorusKnotGeometryProps = GeometryNode<THREE.TorusKnotGeometry, typeof THREE.TorusKnotGeometry>
+export type TorusGeometryProps = GeometryNode<THREE.TorusGeometry, typeof THREE.TorusGeometry>
+export type TextGeometryProps = GeometryNode<THREE.TextGeometry, typeof THREE.TextGeometry>
+export type SphereGeometryProps = GeometryNode<THREE.SphereGeometry, typeof THREE.SphereGeometry>
+export type RingGeometryProps = GeometryNode<THREE.RingGeometry, typeof THREE.RingGeometry>
+export type PlaneGeometryProps = GeometryNode<THREE.PlaneGeometry, typeof THREE.PlaneGeometry>
+export type LatheGeometryProps = GeometryNode<THREE.LatheGeometry, typeof THREE.LatheGeometry>
+export type ShapeGeometryProps = GeometryNode<THREE.ShapeGeometry, typeof THREE.ShapeGeometry>
+export type ExtrudeGeometryProps = GeometryNode<THREE.ExtrudeGeometry, typeof THREE.ExtrudeGeometry>
+export type EdgesGeometryProps = BufferGeometryNode<THREE.EdgesGeometry, typeof THREE.EdgesGeometry>
+export type ConeGeometryProps = GeometryNode<THREE.ConeGeometry, typeof THREE.ConeGeometry>
+export type CylinderGeometryProps = GeometryNode<THREE.CylinderGeometry, typeof THREE.CylinderGeometry>
+export type CircleGeometryProps = GeometryNode<THREE.CircleGeometry, typeof THREE.CircleGeometry>
+export type BoxGeometryProps = GeometryNode<THREE.BoxGeometry, typeof THREE.BoxGeometry>
+
+export type MaterialProps = MaterialNode<THREE.Material, [THREE.MaterialParameters]>
+export type ShadowMaterialProps = MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>
+export type SpriteMaterialProps = MaterialNode<THREE.SpriteMaterial, [THREE.SpriteMaterialParameters]>
+export type RawShaderMaterialProps = MaterialNode<THREE.RawShaderMaterial, [THREE.ShaderMaterialParameters]>
+export type ShaderMaterialProps = MaterialNode<THREE.ShaderMaterial, [THREE.ShaderMaterialParameters]>
+export type PointsMaterialProps = MaterialNode<THREE.PointsMaterial, [THREE.PointsMaterialParameters]>
+export type MeshPhysicalMaterialProps = MaterialNode<THREE.MeshPhysicalMaterial, [THREE.MeshPhysicalMaterialParameters]>
+export type MeshStandardMaterialProps = MaterialNode<THREE.MeshStandardMaterial, [THREE.MeshStandardMaterialParameters]>
+export type MeshPhongMaterialProps = MaterialNode<THREE.MeshPhongMaterial, [THREE.MeshPhongMaterialParameters]>
+export type MeshToonMaterialProps = MaterialNode<THREE.MeshToonMaterial, [THREE.MeshToonMaterialParameters]>
+export type MeshNormalMaterialProps = MaterialNode<THREE.MeshNormalMaterial, [THREE.MeshNormalMaterialParameters]>
+export type MeshLambertMaterialProps = MaterialNode<THREE.MeshLambertMaterial, [THREE.MeshLambertMaterialParameters]>
+export type MeshDepthMaterialProps = MaterialNode<THREE.MeshDepthMaterial, [THREE.MeshDepthMaterialParameters]>
+export type MeshDistanceMaterialProps = MaterialNode<THREE.MeshDistanceMaterial, [THREE.MeshDistanceMaterialParameters]>
+export type MeshBasicMaterialProps = MaterialNode<THREE.MeshBasicMaterial, [THREE.MeshBasicMaterialParameters]>
+export type MeshMatcapMaterialProps = MaterialNode<THREE.MeshMatcapMaterial, [THREE.MeshMatcapMaterialParameters]>
+export type LineDashedMaterialProps = MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
+export type LineBasicMaterialProps = MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
+
+export type PrimitiveProps = { object: any } & { [properties: string]: any }
+
+export type LightProps = LightNode<THREE.Light, typeof THREE.Light>
+export type SpotLightShadowProps = Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
+export type SpotLightProps = LightNode<THREE.SpotLight, typeof THREE.SpotLight>
+export type PointLightProps = LightNode<THREE.PointLight, typeof THREE.PointLight>
+export type RectAreaLightProps = LightNode<THREE.RectAreaLight, typeof THREE.RectAreaLight>
+export type HemisphereLightProps = LightNode<THREE.HemisphereLight, typeof THREE.HemisphereLight>
+export type DirectionalLightShadowProps = Node<THREE.DirectionalLightShadow, typeof THREE.DirectionalLightShadow>
+export type DirectionalLightProps = LightNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
+export type AmbientLightProps = LightNode<THREE.AmbientLight, typeof THREE.AmbientLight>
+export type LightShadowProps = Node<THREE.LightShadow, typeof THREE.LightShadow>
+export type AmbientLightProbeProps = LightNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
+export type HemisphereLightProbeProps = LightNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
+export type LightProbeProps = LightNode<THREE.LightProbe, typeof THREE.LightProbe>
+
+export type SpotLightHelperProps = Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
+export type SkeletonHelperProps = Object3DNode<THREE.SkeletonHelper, typeof THREE.SkeletonHelper>
+export type PointLightHelperProps = Object3DNode<THREE.PointLightHelper, typeof THREE.PointLightHelper>
+export type HemisphereLightHelperProps = Object3DNode<THREE.HemisphereLightHelper, typeof THREE.HemisphereLightHelper>
+export type GridHelperProps = Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
+export type PolarGridHelperProps = Object3DNode<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
+export type DirectionalLightHelperProps = Object3DNode<
+  THREE.DirectionalLightHelper,
+  typeof THREE.DirectionalLightHelper
+>
+export type CameraHelperProps = Object3DNode<THREE.CameraHelper, typeof THREE.CameraHelper>
+export type BoxHelperProps = Object3DNode<THREE.BoxHelper, typeof THREE.BoxHelper>
+export type Box3HelperProps = Object3DNode<THREE.Box3Helper, typeof THREE.Box3Helper>
+export type PlaneHelperProps = Object3DNode<THREE.PlaneHelper, typeof THREE.PlaneHelper>
+export type ArrowHelperProps = Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
+export type AxesHelperProps = Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>
+
+export type TextureProps = Node<THREE.Texture, typeof THREE.Texture>
+export type VideoTextureProps = Node<THREE.VideoTexture, typeof THREE.VideoTexture>
+export type DataTextureProps = Node<THREE.DataTexture, typeof THREE.DataTexture>
+export type DataTexture3DProps = Node<THREE.DataTexture3D, typeof THREE.DataTexture3D>
+export type CompressedTextureProps = Node<THREE.CompressedTexture, typeof THREE.CompressedTexture>
+export type CubeTextureProps = Node<THREE.CubeTexture, typeof THREE.CubeTexture>
+export type CanvasTextureProps = Node<THREE.CanvasTexture, typeof THREE.CanvasTexture>
+export type DepthTextureProps = Node<THREE.DepthTexture, typeof THREE.DepthTexture>
+
+export type RaycasterProps = Node<THREE.Raycaster, typeof THREE.Raycaster>
+export type Vector2Props = Node<THREE.Vector2, typeof THREE.Vector2>
+export type Vector3Props = Node<THREE.Vector3, typeof THREE.Vector3>
+export type Vector4Props = Node<THREE.Vector4, typeof THREE.Vector4>
+export type EulerProps = Node<THREE.Euler, typeof THREE.Euler>
+export type Matrix3Props = Node<THREE.Matrix3, typeof THREE.Matrix3>
+export type Matrix4Props = Node<THREE.Matrix4, typeof THREE.Matrix4>
+export type QuaternionProps = Node<THREE.Quaternion, typeof THREE.Quaternion>
+export type BufferAttributeProps = Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
+export type InstancedBufferAttributeProps = Node<THREE.InstancedBufferAttribute, typeof THREE.InstancedBufferAttribute>
+export type Face3Props = Node<THREE.Face3, typeof THREE.Face3>
+export type ColorProps = Node<THREE.Color, typeof THREE.Color>
+export type FogProps = Node<THREE.Fog, typeof THREE.Fog>
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
-      // audio: ReactThreeFiber.Object3DNode<THREE.Audio, typeof THREE.Audio>
-      audioListener: ReactThreeFiber.Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
-      positionalAudio: ReactThreeFiber.Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
+      // audio: AudioProps
+      audioListener: AudioListenerProps
+      positionalAudio: PositionalAudioProps
 
-      mesh: ReactThreeFiber.Object3DNode<THREE.Mesh, typeof THREE.Mesh>
-      instancedMesh: ReactThreeFiber.Object3DNode<THREE.InstancedMesh, typeof THREE.InstancedMesh>
-      scene: ReactThreeFiber.Object3DNode<THREE.Scene, typeof THREE.Scene>
-      sprite: ReactThreeFiber.Object3DNode<THREE.Sprite, typeof THREE.Sprite>
-      lOD: ReactThreeFiber.Object3DNode<THREE.LOD, typeof THREE.LOD>
-      skinnedMesh: ReactThreeFiber.Object3DNode<THREE.SkinnedMesh, typeof THREE.SkinnedMesh>
-      // @ts-ignore
-      skeleton: ReactThreeFiber.Object3DNode<THREE.Skeleton, typeof THREE.Skeleton>
-      bone: ReactThreeFiber.Object3DNode<THREE.Bone, typeof THREE.Bone>
-      lineSegments: ReactThreeFiber.Object3DNode<THREE.LineSegments, typeof THREE.LineSegments>
-      lineLoop: ReactThreeFiber.Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
+      mesh: MeshProps
+      instancedMesh: InstancedMeshProps
+      scene: SceneProps
+      sprite: SpriteProps
+      lOD: LODProps
+      skinnedMesh: SkinnedMeshProps
+      skeleton: SkeletonProps
+      bone: BoneProps
+      lineSegments: LineSegmentsProps
+      lineLoop: LineLoopProps
       // see `audio`
-      // line: ReactThreeFiber.Object3DNode<THREE.Line, typeof THREE.Line>
-      points: ReactThreeFiber.Object3DNode<THREE.Points, typeof THREE.Points>
-      group: ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>
-      immediateRenderObject: ReactThreeFiber.Object3DNode<
-        THREE.ImmediateRenderObject,
-        typeof THREE.ImmediateRenderObject
-      >
+      // line: LineProps
+      points: PointsProps
+      group: GroupProps
+      immediateRenderObject: ImmediateRenderObjectProps
 
       // cameras
-      camera: ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera>
-      perspectiveCamera: ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera>
-      orthographicCamera: ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-      cubeCamera: ReactThreeFiber.Object3DNode<THREE.CubeCamera, typeof THREE.CubeCamera>
-      arrayCamera: ReactThreeFiber.Object3DNode<THREE.ArrayCamera, typeof THREE.ArrayCamera>
+      camera: CameraProps
+      perspectiveCamera: PerspectiveCameraProps
+      orthographicCamera: OrthographicCameraProps
+      cubeCamera: CubeCameraProps
+      arrayCamera: ArrayCameraProps
 
       // geometry
-      geometry: ReactThreeFiber.GeometryNode<THREE.Geometry, typeof THREE.Geometry>
-      instancedBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.InstancedBufferGeometry,
-        typeof THREE.InstancedBufferGeometry
-      >
-      bufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
-      boxBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
-      circleBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.CircleBufferGeometry,
-        typeof THREE.CircleBufferGeometry
-      >
-      coneBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
-      cylinderBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.CylinderBufferGeometry,
-        typeof THREE.CylinderBufferGeometry
-      >
-      dodecahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.DodecahedronBufferGeometry,
-        typeof THREE.DodecahedronBufferGeometry
-      >
-      extrudeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.ExtrudeBufferGeometry,
-        typeof THREE.ExtrudeBufferGeometry
-      >
-      icosahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.IcosahedronBufferGeometry,
-        typeof THREE.IcosahedronBufferGeometry
-      >
-      latheBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.LatheBufferGeometry,
-        typeof THREE.LatheBufferGeometry
-      >
-      octahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.OctahedronBufferGeometry,
-        typeof THREE.OctahedronBufferGeometry
-      >
-      parametricBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.ParametricBufferGeometry,
-        typeof THREE.ParametricBufferGeometry
-      >
-      planeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.PlaneBufferGeometry,
-        typeof THREE.PlaneBufferGeometry
-      >
-      polyhedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.PolyhedronBufferGeometry,
-        typeof THREE.PolyhedronBufferGeometry
-      >
-      ringBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.RingBufferGeometry, typeof THREE.RingBufferGeometry>
-      shapeBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.ShapeBufferGeometry,
-        typeof THREE.ShapeBufferGeometry
-      >
-      sphereBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.SphereBufferGeometry,
-        typeof THREE.SphereBufferGeometry
-      >
-      tetrahedronBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.TetrahedronBufferGeometry,
-        typeof THREE.TetrahedronBufferGeometry
-      >
-      textBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.TextBufferGeometry, typeof THREE.TextBufferGeometry>
-      torusBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.TorusBufferGeometry,
-        typeof THREE.TorusBufferGeometry
-      >
-      torusKnotBufferGeometry: ReactThreeFiber.BufferGeometryNode<
-        THREE.TorusKnotBufferGeometry,
-        typeof THREE.TorusKnotBufferGeometry
-      >
-      tubeBufferGeometry: ReactThreeFiber.BufferGeometryNode<THREE.TubeBufferGeometry, typeof THREE.TubeBufferGeometry>
-      wireframeGeometry: ReactThreeFiber.BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
-      parametricGeometry: ReactThreeFiber.GeometryNode<THREE.ParametricGeometry, typeof THREE.ParametricGeometry>
-      tetrahedronGeometry: ReactThreeFiber.GeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
-      octahedronGeometry: ReactThreeFiber.GeometryNode<THREE.OctahedronGeometry, typeof THREE.OctahedronGeometry>
-      icosahedronGeometry: ReactThreeFiber.GeometryNode<THREE.IcosahedronGeometry, typeof THREE.IcosahedronGeometry>
-      dodecahedronGeometry: ReactThreeFiber.GeometryNode<THREE.DodecahedronGeometry, typeof THREE.DodecahedronGeometry>
-      polyhedronGeometry: ReactThreeFiber.GeometryNode<THREE.PolyhedronGeometry, typeof THREE.PolyhedronGeometry>
-      tubeGeometry: ReactThreeFiber.GeometryNode<THREE.TubeGeometry, typeof THREE.TubeGeometry>
-      torusKnotGeometry: ReactThreeFiber.GeometryNode<THREE.TorusKnotGeometry, typeof THREE.TorusKnotGeometry>
-      torusGeometry: ReactThreeFiber.GeometryNode<THREE.TorusGeometry, typeof THREE.TorusGeometry>
-      textGeometry: ReactThreeFiber.GeometryNode<THREE.TextGeometry, typeof THREE.TextGeometry>
-      sphereGeometry: ReactThreeFiber.GeometryNode<THREE.SphereGeometry, typeof THREE.SphereGeometry>
-      ringGeometry: ReactThreeFiber.GeometryNode<THREE.RingGeometry, typeof THREE.RingGeometry>
-      planeGeometry: ReactThreeFiber.GeometryNode<THREE.PlaneGeometry, typeof THREE.PlaneGeometry>
-      latheGeometry: ReactThreeFiber.GeometryNode<THREE.LatheGeometry, typeof THREE.LatheGeometry>
-      shapeGeometry: ReactThreeFiber.GeometryNode<THREE.ShapeGeometry, typeof THREE.ShapeGeometry>
-      extrudeGeometry: ReactThreeFiber.GeometryNode<THREE.ExtrudeGeometry, typeof THREE.ExtrudeGeometry>
-      edgesGeometry: ReactThreeFiber.BufferGeometryNode<THREE.EdgesGeometry, typeof THREE.EdgesGeometry>
-      coneGeometry: ReactThreeFiber.GeometryNode<THREE.ConeGeometry, typeof THREE.ConeGeometry>
-      cylinderGeometry: ReactThreeFiber.GeometryNode<THREE.CylinderGeometry, typeof THREE.CylinderGeometry>
-      circleGeometry: ReactThreeFiber.GeometryNode<THREE.CircleGeometry, typeof THREE.CircleGeometry>
-      boxGeometry: ReactThreeFiber.GeometryNode<THREE.BoxGeometry, typeof THREE.BoxGeometry>
+      geometry: GeometryProps
+      instancedBufferGeometry: InstancedBufferGeometryProps
+      bufferGeometry: BufferGeometryProps
+      boxBufferGeometry: BoxBufferGeometryProps
+      circleBufferGeometry: CircleBufferGeometryProps
+      coneBufferGeometry: ConeBufferGeometryProps
+      cylinderBufferGeometry: CylinderBufferGeometryProps
+      dodecahedronBufferGeometry: DodecahedronBufferGeometryProps
+      extrudeBufferGeometry: ExtrudeBufferGeometryProps
+      icosahedronBufferGeometry: IcosahedronBufferGeometryProps
+      latheBufferGeometry: LatheBufferGeometryProps
+      octahedronBufferGeometry: OctahedronBufferGeometryProps
+      parametricBufferGeometry: ParametricBufferGeometryProps
+      planeBufferGeometry: PlaneBufferGeometryProps
+      polyhedronBufferGeometry: PolyhedronBufferGeometryProps
+      ringBufferGeometry: RingBufferGeometryProps
+      shapeBufferGeometry: ShapeBufferGeometryProps
+      sphereBufferGeometry: SphereBufferGeometryProps
+      tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
+      textBufferGeometry: TextBufferGeometryProps
+      torusBufferGeometry: TorusBufferGeometryProps
+      torusKnotBufferGeometry: TorusKnotBufferGeometryProps
+      tubeBufferGeometry: TubeBufferGeometryProps
+      wireframeGeometry: WireframeGeometryProps
+      parametricGeometry: ParametricGeometryProps
+      tetrahedronGeometry: TetrahedronGeometryProps
+      octahedronGeometry: OctahedronGeometryProps
+      icosahedronGeometry: IcosahedronGeometryProps
+      dodecahedronGeometry: DodecahedronGeometryProps
+      polyhedronGeometry: PolyhedronGeometryProps
+      tubeGeometry: TubeGeometryProps
+      torusKnotGeometry: TorusKnotGeometryProps
+      torusGeometry: TorusGeometryProps
+      textGeometry: TextGeometryProps
+      sphereGeometry: SphereGeometryProps
+      ringGeometry: RingGeometryProps
+      planeGeometry: PlaneGeometryProps
+      latheGeometry: LatheGeometryProps
+      shapeGeometry: ShapeGeometryProps
+      extrudeGeometry: ExtrudeGeometryProps
+      edgesGeometry: EdgesGeometryProps
+      coneGeometry: ConeGeometryProps
+      cylinderGeometry: CylinderGeometryProps
+      circleGeometry: CircleGeometryProps
+      boxGeometry: BoxGeometryProps
 
       // materials
-      material: ReactThreeFiber.MaterialNode<THREE.Material, [THREE.MaterialParameters]>
-      shadowMaterial: ReactThreeFiber.MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>
-      spriteMaterial: ReactThreeFiber.MaterialNode<THREE.SpriteMaterial, [THREE.SpriteMaterialParameters]>
-      rawShaderMaterial: ReactThreeFiber.MaterialNode<THREE.RawShaderMaterial, [THREE.ShaderMaterialParameters]>
-      shaderMaterial: ReactThreeFiber.MaterialNode<THREE.ShaderMaterial, [THREE.ShaderMaterialParameters]>
-      pointsMaterial: ReactThreeFiber.MaterialNode<THREE.PointsMaterial, [THREE.PointsMaterialParameters]>
-      meshPhysicalMaterial: ReactThreeFiber.MaterialNode<
-        THREE.MeshPhysicalMaterial,
-        [THREE.MeshPhysicalMaterialParameters]
-      >
-      meshStandardMaterial: ReactThreeFiber.MaterialNode<
-        THREE.MeshStandardMaterial,
-        [THREE.MeshStandardMaterialParameters]
-      >
-      meshPhongMaterial: ReactThreeFiber.MaterialNode<THREE.MeshPhongMaterial, [THREE.MeshPhongMaterialParameters]>
-      meshToonMaterial: ReactThreeFiber.MaterialNode<THREE.MeshToonMaterial, [THREE.MeshToonMaterialParameters]>
-      meshNormalMaterial: ReactThreeFiber.MaterialNode<THREE.MeshNormalMaterial, [THREE.MeshNormalMaterialParameters]>
-      meshLambertMaterial: ReactThreeFiber.MaterialNode<
-        THREE.MeshLambertMaterial,
-        [THREE.MeshLambertMaterialParameters]
-      >
-      meshDepthMaterial: ReactThreeFiber.MaterialNode<THREE.MeshDepthMaterial, [THREE.MeshDepthMaterialParameters]>
-      meshDistanceMaterial: ReactThreeFiber.MaterialNode<
-        THREE.MeshDistanceMaterial,
-        [THREE.MeshDistanceMaterialParameters]
-      >
-      meshBasicMaterial: ReactThreeFiber.MaterialNode<THREE.MeshBasicMaterial, [THREE.MeshBasicMaterialParameters]>
-      meshMatcapMaterial: ReactThreeFiber.MaterialNode<THREE.MeshMatcapMaterial, [THREE.MeshMatcapMaterialParameters]>
-      lineDashedMaterial: ReactThreeFiber.MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
-      lineBasicMaterial: ReactThreeFiber.MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
+      material: MaterialProps
+      shadowMaterial: ShadowMaterialProps
+      spriteMaterial: SpriteMaterialProps
+      rawShaderMaterial: RawShaderMaterialProps
+      shaderMaterial: ShaderMaterialProps
+      pointsMaterial: PointsMaterialProps
+      meshPhysicalMaterial: MeshPhysicalMaterialProps
+      meshStandardMaterial: MeshStandardMaterialProps
+      meshPhongMaterial: MeshPhongMaterialProps
+      meshToonMaterial: MeshToonMaterialProps
+      meshNormalMaterial: MeshNormalMaterialProps
+      meshLambertMaterial: MeshLambertMaterialProps
+      meshDepthMaterial: MeshDepthMaterialProps
+      meshDistanceMaterial: MeshDistanceMaterialProps
+      meshBasicMaterial: MeshBasicMaterialProps
+      meshMatcapMaterial: MeshMatcapMaterialProps
+      lineDashedMaterial: LineDashedMaterialProps
+      lineBasicMaterial: LineBasicMaterialProps
 
       // primitive
-      primitive: { object: any } & { [properties: string]: any }
+      primitive: PrimitiveProps
 
       // lights and other
-      light: ReactThreeFiber.LightNode<THREE.Light, typeof THREE.Light>
-      spotLightShadow: ReactThreeFiber.Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
-      spotLight: ReactThreeFiber.LightNode<THREE.SpotLight, typeof THREE.SpotLight>
-      pointLight: ReactThreeFiber.LightNode<THREE.PointLight, typeof THREE.PointLight>
-      rectAreaLight: ReactThreeFiber.LightNode<THREE.RectAreaLight, typeof THREE.RectAreaLight>
-      hemisphereLight: ReactThreeFiber.LightNode<THREE.HemisphereLight, typeof THREE.HemisphereLight>
-      directionalLightShadow: ReactThreeFiber.Node<THREE.DirectionalLightShadow, typeof THREE.DirectionalLightShadow>
-      directionalLight: ReactThreeFiber.LightNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
-      ambientLight: ReactThreeFiber.LightNode<THREE.AmbientLight, typeof THREE.AmbientLight>
-      lightShadow: ReactThreeFiber.Node<THREE.LightShadow, typeof THREE.LightShadow>
-      ambientLightProbe: ReactThreeFiber.LightNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
-      hemisphereLightProbe: ReactThreeFiber.LightNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
-      lightProbe: ReactThreeFiber.LightNode<THREE.LightProbe, typeof THREE.LightProbe>
+      light: LightProps
+      spotLightShadow: SpotLightShadowProps
+      spotLight: SpotLightProps
+      pointLight: PointLightProps
+      rectAreaLight: RectAreaLightProps
+      hemisphereLight: HemisphereLightProps
+      directionalLightShadow: DirectionalLightShadowProps
+      directionalLight: DirectionalLightProps
+      ambientLight: AmbientLightProps
+      lightShadow: LightShadowProps
+      ambientLightProbe: AmbientLightProbeProps
+      hemisphereLightProbe: HemisphereLightProbeProps
+      lightProbe: LightProbeProps
 
       // helpers
-      spotLightHelper: ReactThreeFiber.Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
-      skeletonHelper: ReactThreeFiber.Object3DNode<THREE.SkeletonHelper, typeof THREE.SkeletonHelper>
-      pointLightHelper: ReactThreeFiber.Object3DNode<THREE.PointLightHelper, typeof THREE.PointLightHelper>
-      hemisphereLightHelper: ReactThreeFiber.Object3DNode<
-        THREE.HemisphereLightHelper,
-        typeof THREE.HemisphereLightHelper
-      >
-      gridHelper: ReactThreeFiber.Object3DNode<THREE.GridHelper, typeof THREE.GridHelper>
-      polarGridHelper: ReactThreeFiber.Object3DNode<THREE.PolarGridHelper, typeof THREE.PolarGridHelper>
-      directionalLightHelper: ReactThreeFiber.Object3DNode<
-        THREE.DirectionalLightHelper,
-        typeof THREE.DirectionalLightHelper
-      >
-      cameraHelper: ReactThreeFiber.Object3DNode<THREE.CameraHelper, typeof THREE.CameraHelper>
-      boxHelper: ReactThreeFiber.Object3DNode<THREE.BoxHelper, typeof THREE.BoxHelper>
-      box3Helper: ReactThreeFiber.Object3DNode<THREE.Box3Helper, typeof THREE.Box3Helper>
-      planeHelper: ReactThreeFiber.Object3DNode<THREE.PlaneHelper, typeof THREE.PlaneHelper>
-      arrowHelper: ReactThreeFiber.Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
-      axesHelper: ReactThreeFiber.Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>
+      spotLightHelper: SpotLightHelperProps
+      skeletonHelper: SkeletonHelperProps
+      pointLightHelper: PointLightHelperProps
+      hemisphereLightHelper: HemisphereLightHelperProps
+      gridHelper: GridHelperProps
+      polarGridHelper: PolarGridHelperProps
+      directionalLightHelper: DirectionalLightHelperProps
+      cameraHelper: CameraHelperProps
+      boxHelper: BoxHelperProps
+      box3Helper: Box3HelperProps
+      planeHelper: PlaneHelperProps
+      arrowHelper: ArrowHelperProps
+      axesHelper: AxesHelperProps
 
       // textures
-      texture: ReactThreeFiber.Node<THREE.Texture, typeof THREE.Texture>
-      videoTexture: ReactThreeFiber.Node<THREE.VideoTexture, typeof THREE.VideoTexture>
-      dataTexture: ReactThreeFiber.Node<THREE.DataTexture, typeof THREE.DataTexture>
-      dataTexture3D: ReactThreeFiber.Node<THREE.DataTexture3D, typeof THREE.DataTexture3D>
-      compressedTexture: ReactThreeFiber.Node<THREE.CompressedTexture, typeof THREE.CompressedTexture>
-      cubeTexture: ReactThreeFiber.Node<THREE.CubeTexture, typeof THREE.CubeTexture>
-      canvasTexture: ReactThreeFiber.Node<THREE.CanvasTexture, typeof THREE.CanvasTexture>
-      depthTexture: ReactThreeFiber.Node<THREE.DepthTexture, typeof THREE.DepthTexture>
+      texture: TextureProps
+      videoTexture: VideoTextureProps
+      dataTexture: DataTextureProps
+      dataTexture3D: DataTexture3DProps
+      compressedTexture: CompressedTextureProps
+      cubeTexture: CubeTextureProps
+      canvasTexture: CanvasTextureProps
+      depthTexture: DepthTextureProps
 
       // misc
-      raycaster: ReactThreeFiber.Node<THREE.Raycaster, typeof THREE.Raycaster>
-      vector2: ReactThreeFiber.Node<THREE.Vector2, typeof THREE.Vector2>
-      vector3: ReactThreeFiber.Node<THREE.Vector3, typeof THREE.Vector3>
-      vector4: ReactThreeFiber.Node<THREE.Vector4, typeof THREE.Vector4>
-      euler: ReactThreeFiber.Node<THREE.Euler, typeof THREE.Euler>
-      matrix3: ReactThreeFiber.Node<THREE.Matrix3, typeof THREE.Matrix3>
-      matrix4: ReactThreeFiber.Node<THREE.Matrix4, typeof THREE.Matrix4>
-      quaternion: ReactThreeFiber.Node<THREE.Quaternion, typeof THREE.Quaternion>
-      bufferAttribute: ReactThreeFiber.Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
-      instancedBufferAttribute: ReactThreeFiber.Node<
-        THREE.InstancedBufferAttribute,
-        typeof THREE.InstancedBufferAttribute
-      >
-      face3: ReactThreeFiber.Node<THREE.Face3, typeof THREE.Face3>
-      color: ReactThreeFiber.Node<THREE.Color, typeof THREE.Color>
-      fog: ReactThreeFiber.Node<THREE.Fog, typeof THREE.Fog>
+      raycaster: RaycasterProps
+      vector2: Vector2Props
+      vector3: Vector3Props
+      vector4: Vector4Props
+      euler: EulerProps
+      matrix3: Matrix3Props
+      matrix4: Matrix4Props
+      quaternion: QuaternionProps
+      bufferAttribute: BufferAttributeProps
+      instancedBufferAttribute: InstancedBufferAttributeProps
+      face3: Face3Props
+      color: ColorProps
+      fog: FogProps
     }
   }
 }
