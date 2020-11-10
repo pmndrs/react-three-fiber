@@ -424,7 +424,7 @@ return <bufferGeometry ref={ref} />
 #### useLoader
 
 ```jsx
-useLoader(loader, url: string | string[], extensions?, xhr?)
+useLoader(loader: THREE.Loader, url: string | string[], extensions?, xhr?)
 ```
 
 This hook loads assets and suspends for easier fallback- and error-handling.
@@ -462,17 +462,28 @@ It can also make multiple requests in parallel:
 const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
 ```
 
+<details>
+<summary>Special treatment of GLTFLoaders and all loaders that return a `scene` props.</summary>
+
+If a data.scene prop is found the hook will automatically create a named object/material collection: nodes and materials. You might want use more for finegrained control of the loader-data. It lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it. The [gltfjsx](https://github.com/pmndrs/gltfjsx) specifically relies on this data.
+
+```jsx
+const { nodes, material } = useLoader(GLTFLoader, url)
+```
+
+</details>
+
 #### useGraph
 
 ```jsx
-const { nodes, materials } = useGraph(object)
+const { nodes, materials } = useGraph(object: THREE.Object3D)
 ```
 
-Convenience hook which creates a memoized, named object/material collection. useLoader will automatically do this if the loader contains a `scene` prop. Some loaders do not have that, so you can build a graph yourself. You might want to this to be more finegrained about your output as it lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it.
+Convenience hook which creates a memoized, named object/material collection from any Object3D.
 
 ```jsx
 function Asset({ url }) {
-  const scene = useLoader(ObjLoader, url)
+  const scene = useLoader(OBJLoader, url)
   const { nodes, materials } = useGraph(scene)
   return <mesh geometry={nodes.robot.geometry} material={materials.metal} />
 ```
