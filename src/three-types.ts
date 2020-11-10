@@ -13,6 +13,161 @@ export type NamedArrayTuple<T extends (...args: any) => any> = Parameters<T>
  */
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
 
+export type Euler = ReactThreeFiber.Euler
+export type Matrix4 = ReactThreeFiber.Matrix4
+export type Vector2 = ReactThreeFiber.Vector2
+export type Vector3 = ReactThreeFiber.Vector3
+export type Color = ReactThreeFiber.Color
+export type Layers = ReactThreeFiber.Layers
+export type Quaternion = ReactThreeFiber.Quaternion
+
+export type EventHandlers = ReactThreeFiber.EventHandlers
+
+export type NodeProps<T, P> = ReactThreeFiber.NodeProps<T, P>
+
+export type Node<T, P> = ReactThreeFiber.Node<T, P>
+
+export type Object3DNode<T, P> = ReactThreeFiber.Object3DNode<T, P>
+
+export type GeometryNode<T extends THREE.Geometry, P> = ReactThreeFiber.GeometryNode<T, P>
+export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = ReactThreeFiber.BufferGeometryNode<T, P>
+export type MaterialNode<T extends THREE.Material, P> = ReactThreeFiber.MaterialNode<T, P>
+export type LightNode<T extends THREE.Light, P> = ReactThreeFiber.LightNode<T, P>
+
+// export type AudioProps = ReactThreeFiber.AudioProps
+export type AudioListenerProps = ReactThreeFiber.AudioListenerProps
+export type PositionalAudioProps = ReactThreeFiber.PositionalAudioProps
+export type MeshProps = ReactThreeFiber.MeshProps
+export type InstancedMeshProps = ReactThreeFiber.InstancedMeshProps
+export type SceneProps = ReactThreeFiber.SceneProps
+export type SpriteProps = ReactThreeFiber.SpriteProps
+export type LODProps = ReactThreeFiber.LODProps
+export type SkinnedMeshProps = ReactThreeFiber.SkinnedMeshProps
+export type SkeletonProps = ReactThreeFiber.SkeletonProps
+export type BoneProps = ReactThreeFiber.BoneProps
+export type LineSegmentsProps = ReactThreeFiber.LineSegmentsProps
+export type LineLoopProps = ReactThreeFiber.LineLoopProps
+// export type LineProps = ReactThreeFiber.LineProps
+export type PointsProps = ReactThreeFiber.PointsProps
+export type GroupProps = ReactThreeFiber.GroupProps
+export type ImmediateRenderObjectProps = ReactThreeFiber.ImmediateRenderObjectProps
+export type CameraProps = ReactThreeFiber.CameraProps
+export type PerspectiveCameraProps = ReactThreeFiber.PerspectiveCameraProps
+export type OrthographicCameraProps = ReactThreeFiber.OrthographicCameraProps
+export type CubeCameraProps = ReactThreeFiber.CubeCameraProps
+export type ArrayCameraProps = ReactThreeFiber.ArrayCameraProps
+export type GeometryProps = ReactThreeFiber.GeometryProps
+export type InstancedBufferGeometryProps = ReactThreeFiber.InstancedBufferGeometryProps
+export type BufferGeometryProps = ReactThreeFiber.BufferGeometryProps
+export type BoxBufferGeometryProps = ReactThreeFiber.BoxBufferGeometryProps
+export type CircleBufferGeometryProps = ReactThreeFiber.CircleBufferGeometryProps
+export type ConeBufferGeometryProps = ReactThreeFiber.ConeBufferGeometryProps
+export type CylinderBufferGeometryProps = ReactThreeFiber.CylinderBufferGeometryProps
+export type DodecahedronBufferGeometryProps = ReactThreeFiber.DodecahedronBufferGeometryProps
+export type ExtrudeBufferGeometryProps = ReactThreeFiber.ExtrudeBufferGeometryProps
+export type IcosahedronBufferGeometryProps = ReactThreeFiber.IcosahedronBufferGeometryProps
+export type LatheBufferGeometryProps = ReactThreeFiber.LatheBufferGeometryProps
+export type OctahedronBufferGeometryProps = ReactThreeFiber.OctahedronBufferGeometryProps
+export type ParametricBufferGeometryProps = ReactThreeFiber.ParametricBufferGeometryProps
+export type PlaneBufferGeometryProps = ReactThreeFiber.PlaneBufferGeometryProps
+export type PolyhedronBufferGeometryProps = ReactThreeFiber.PolyhedronBufferGeometryProps
+export type RingBufferGeometryProps = ReactThreeFiber.RingBufferGeometryProps
+export type ShapeBufferGeometryProps = ReactThreeFiber.ShapeBufferGeometryProps
+export type SphereBufferGeometryProps = ReactThreeFiber.SphereBufferGeometryProps
+export type TetrahedronBufferGeometryProps = ReactThreeFiber.TetrahedronBufferGeometryProps
+export type TextBufferGeometryProps = ReactThreeFiber.TextBufferGeometryProps
+export type TorusBufferGeometryProps = ReactThreeFiber.TorusBufferGeometryProps
+export type TorusKnotBufferGeometryProps = ReactThreeFiber.TorusKnotBufferGeometryProps
+export type TubeBufferGeometryProps = ReactThreeFiber.TubeBufferGeometryProps
+export type WireframeGeometryProps = ReactThreeFiber.WireframeGeometryProps
+export type ParametricGeometryProps = ReactThreeFiber.ParametricGeometryProps
+export type TetrahedronGeometryProps = ReactThreeFiber.TetrahedronGeometryProps
+export type OctahedronGeometryProps = ReactThreeFiber.OctahedronGeometryProps
+export type IcosahedronGeometryProps = ReactThreeFiber.IcosahedronGeometryProps
+export type DodecahedronGeometryProps = ReactThreeFiber.DodecahedronGeometryProps
+export type PolyhedronGeometryProps = ReactThreeFiber.PolyhedronGeometryProps
+export type TubeGeometryProps = ReactThreeFiber.TubeGeometryProps
+export type TorusKnotGeometryProps = ReactThreeFiber.TorusKnotGeometryProps
+export type TorusGeometryProps = ReactThreeFiber.TorusGeometryProps
+export type TextGeometryProps = ReactThreeFiber.TextGeometryProps
+export type SphereGeometryProps = ReactThreeFiber.SphereGeometryProps
+export type RingGeometryProps = ReactThreeFiber.RingGeometryProps
+export type PlaneGeometryProps = ReactThreeFiber.PlaneGeometryProps
+export type LatheGeometryProps = ReactThreeFiber.LatheGeometryProps
+export type ShapeGeometryProps = ReactThreeFiber.ShapeGeometryProps
+export type ExtrudeGeometryProps = ReactThreeFiber.ExtrudeGeometryProps
+export type EdgesGeometryProps = ReactThreeFiber.EdgesGeometryProps
+export type ConeGeometryProps = ReactThreeFiber.ConeGeometryProps
+export type CylinderGeometryProps = ReactThreeFiber.CylinderGeometryProps
+export type CircleGeometryProps = ReactThreeFiber.CircleGeometryProps
+export type BoxGeometryProps = ReactThreeFiber.BoxGeometryProps
+export type MaterialProps = ReactThreeFiber.MaterialProps
+export type ShadowMaterialProps = ReactThreeFiber.ShadowMaterialProps
+export type SpriteMaterialProps = ReactThreeFiber.SpriteMaterialProps
+export type RawShaderMaterialProps = ReactThreeFiber.RawShaderMaterialProps
+export type ShaderMaterialProps = ReactThreeFiber.ShaderMaterialProps
+export type PointsMaterialProps = ReactThreeFiber.PointsMaterialProps
+export type MeshPhysicalMaterialProps = ReactThreeFiber.MeshPhysicalMaterialProps
+export type MeshStandardMaterialProps = ReactThreeFiber.MeshStandardMaterialProps
+export type MeshPhongMaterialProps = ReactThreeFiber.MeshPhongMaterialProps
+export type MeshToonMaterialProps = ReactThreeFiber.MeshToonMaterialProps
+export type MeshNormalMaterialProps = ReactThreeFiber.MeshNormalMaterialProps
+export type MeshLambertMaterialProps = ReactThreeFiber.MeshLambertMaterialProps
+export type MeshDepthMaterialProps = ReactThreeFiber.MeshDepthMaterialProps
+export type MeshDistanceMaterialProps = ReactThreeFiber.MeshDistanceMaterialProps
+export type MeshBasicMaterialProps = ReactThreeFiber.MeshBasicMaterialProps
+export type MeshMatcapMaterialProps = ReactThreeFiber.MeshMatcapMaterialProps
+export type LineDashedMaterialProps = ReactThreeFiber.LineDashedMaterialProps
+export type LineBasicMaterialProps = ReactThreeFiber.LineBasicMaterialProps
+export type PrimitiveProps = ReactThreeFiber.PrimitiveProps
+export type LightProps = ReactThreeFiber.LightProps
+export type SpotLightShadowProps = ReactThreeFiber.SpotLightShadowProps
+export type SpotLightProps = ReactThreeFiber.SpotLightProps
+export type PointLightProps = ReactThreeFiber.PointLightProps
+export type RectAreaLightProps = ReactThreeFiber.RectAreaLightProps
+export type HemisphereLightProps = ReactThreeFiber.HemisphereLightProps
+export type DirectionalLightShadowProps = ReactThreeFiber.DirectionalLightShadowProps
+export type DirectionalLightProps = ReactThreeFiber.DirectionalLightProps
+export type AmbientLightProps = ReactThreeFiber.AmbientLightProps
+export type LightShadowProps = ReactThreeFiber.LightShadowProps
+export type AmbientLightProbeProps = ReactThreeFiber.AmbientLightProbeProps
+export type HemisphereLightProbeProps = ReactThreeFiber.HemisphereLightProbeProps
+export type LightProbeProps = ReactThreeFiber.LightProbeProps
+export type SpotLightHelperProps = ReactThreeFiber.SpotLightHelperProps
+export type SkeletonHelperProps = ReactThreeFiber.SkeletonHelperProps
+export type PointLightHelperProps = ReactThreeFiber.PointLightHelperProps
+export type HemisphereLightHelperProps = ReactThreeFiber.HemisphereLightHelperProps
+export type GridHelperProps = ReactThreeFiber.GridHelperProps
+export type PolarGridHelperProps = ReactThreeFiber.PolarGridHelperProps
+export type DirectionalLightHelperProps = ReactThreeFiber.DirectionalLightHelperProps
+export type CameraHelperProps = ReactThreeFiber.CameraHelperProps
+export type BoxHelperProps = ReactThreeFiber.BoxHelperProps
+export type Box3HelperProps = ReactThreeFiber.Box3HelperProps
+export type PlaneHelperProps = ReactThreeFiber.PlaneHelperProps
+export type ArrowHelperProps = ReactThreeFiber.ArrowHelperProps
+export type AxesHelperProps = ReactThreeFiber.AxesHelperProps
+export type TextureProps = ReactThreeFiber.TextureProps
+export type VideoTextureProps = ReactThreeFiber.VideoTextureProps
+export type DataTextureProps = ReactThreeFiber.DataTextureProps
+export type DataTexture3DProps = ReactThreeFiber.DataTexture3DProps
+export type CompressedTextureProps = ReactThreeFiber.CompressedTextureProps
+export type CubeTextureProps = ReactThreeFiber.CubeTextureProps
+export type CanvasTextureProps = ReactThreeFiber.CanvasTextureProps
+export type DepthTextureProps = ReactThreeFiber.DepthTextureProps
+export type RaycasterProps = ReactThreeFiber.RaycasterProps
+export type Vector2Props = ReactThreeFiber.Vector2Props
+export type Vector3Props = ReactThreeFiber.Vector3Props
+export type Vector4Props = ReactThreeFiber.Vector4Props
+export type EulerProps = ReactThreeFiber.EulerProps
+export type Matrix3Props = ReactThreeFiber.Matrix3Props
+export type Matrix4Props = ReactThreeFiber.Matrix4Props
+export type QuaternionProps = ReactThreeFiber.QuaternionProps
+export type BufferAttributeProps = ReactThreeFiber.BufferAttributeProps
+export type InstancedBufferAttributeProps = ReactThreeFiber.InstancedBufferAttributeProps
+export type Face3Props = ReactThreeFiber.Face3Props
+export type ColorProps = ReactThreeFiber.ColorProps
+export type FogProps = ReactThreeFiber.FogProps
+
 export declare namespace ReactThreeFiber {
   type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
   type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
@@ -71,7 +226,6 @@ export declare namespace ReactThreeFiber {
   type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
   type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
 
-  // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
   // type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
   type AudioListenerProps = Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
   type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
@@ -87,20 +241,17 @@ export declare namespace ReactThreeFiber {
   type BoneProps = Object3DNode<THREE.Bone, typeof THREE.Bone>
   type LineSegmentsProps = Object3DNode<THREE.LineSegments, typeof THREE.LineSegments>
   type LineLoopProps = Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
-  // see `audio`
   // type LineProps = Object3DNode<THREE.Line, typeof THREE.Line>
   type PointsProps = Object3DNode<THREE.Points, typeof THREE.Points>
   type GroupProps = Object3DNode<THREE.Group, typeof THREE.Group>
   type ImmediateRenderObjectProps = Object3DNode<THREE.ImmediateRenderObject, typeof THREE.ImmediateRenderObject>
 
-  // cameras
   type CameraProps = Object3DNode<THREE.Camera, typeof THREE.Camera>
   type PerspectiveCameraProps = Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera>
   type OrthographicCameraProps = Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   type CubeCameraProps = Object3DNode<THREE.CubeCamera, typeof THREE.CubeCamera>
   type ArrayCameraProps = Object3DNode<THREE.ArrayCamera, typeof THREE.ArrayCamera>
 
-  // geometry
   type GeometryProps = GeometryNode<THREE.Geometry, typeof THREE.Geometry>
   type InstancedBufferGeometryProps = BufferGeometryNode<
     THREE.InstancedBufferGeometry,
@@ -174,7 +325,6 @@ export declare namespace ReactThreeFiber {
   type CircleGeometryProps = GeometryNode<THREE.CircleGeometry, typeof THREE.CircleGeometry>
   type BoxGeometryProps = GeometryNode<THREE.BoxGeometry, typeof THREE.BoxGeometry>
 
-  // materials
   type MaterialProps = MaterialNode<THREE.Material, [THREE.MaterialParameters]>
   type ShadowMaterialProps = MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>
   type SpriteMaterialProps = MaterialNode<THREE.SpriteMaterial, [THREE.SpriteMaterialParameters]>
@@ -194,10 +344,8 @@ export declare namespace ReactThreeFiber {
   type LineDashedMaterialProps = MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
   type LineBasicMaterialProps = MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
 
-  // primitive
   type PrimitiveProps = { object: any } & { [properties: string]: any }
 
-  // lights and other
   type LightProps = LightNode<THREE.Light, typeof THREE.Light>
   type SpotLightShadowProps = Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
   type SpotLightProps = LightNode<THREE.SpotLight, typeof THREE.SpotLight>
@@ -212,7 +360,6 @@ export declare namespace ReactThreeFiber {
   type HemisphereLightProbeProps = LightNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
   type LightProbeProps = LightNode<THREE.LightProbe, typeof THREE.LightProbe>
 
-  // helpers
   type SpotLightHelperProps = Object3DNode<THREE.SpotLightHelper, typeof THREE.SpotLightHelper>
   type SkeletonHelperProps = Object3DNode<THREE.SkeletonHelper, typeof THREE.SkeletonHelper>
   type PointLightHelperProps = Object3DNode<THREE.PointLightHelper, typeof THREE.PointLightHelper>
@@ -227,7 +374,6 @@ export declare namespace ReactThreeFiber {
   type ArrowHelperProps = Object3DNode<THREE.ArrowHelper, typeof THREE.ArrowHelper>
   type AxesHelperProps = Object3DNode<THREE.AxesHelper, typeof THREE.AxesHelper>
 
-  // textures
   type TextureProps = Node<THREE.Texture, typeof THREE.Texture>
   type VideoTextureProps = Node<THREE.VideoTexture, typeof THREE.VideoTexture>
   type DataTextureProps = Node<THREE.DataTexture, typeof THREE.DataTexture>
@@ -237,7 +383,6 @@ export declare namespace ReactThreeFiber {
   type CanvasTextureProps = Node<THREE.CanvasTexture, typeof THREE.CanvasTexture>
   type DepthTextureProps = Node<THREE.DepthTexture, typeof THREE.DepthTexture>
 
-  // misc
   type RaycasterProps = Node<THREE.Raycaster, typeof THREE.Raycaster>
   type Vector2Props = Node<THREE.Vector2, typeof THREE.Vector2>
   type Vector3Props = Node<THREE.Vector3, typeof THREE.Vector3>
