@@ -19,6 +19,6 @@
       "react-three-fiber": ["./"]
     }
   },
-  "include": ["./src", "__tests__/"],
+  "include": ["./src", "tests"],
   "exclude": ["./node_modules/**/*"]
 }
