@@ -379,7 +379,7 @@ const Controls = () => {
 }
 ```
 
-Once you supply a non-zero render priority, this will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed:
+Using a non-zero render priority will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed:
 
 ```jsx
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
