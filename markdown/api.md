@@ -364,19 +364,22 @@ useFrame((callback: (state, delta) => void), (renderPriority: number = 0))
 
 Allows you to execute code on every frame rendered, like running effects, updating controls, and so on. You receive the state (same as useThree) and a clock delta. In addition to the callback function itself, you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
 
-Updating controls:
+Example:
 
 ```jsx
 import { useFrame } from 'react-three-fiber'
 
-const controls = useRef()
-useFrame((state) => controls.current.update())
-return <orbitControls ref={controls} />
+const Controls = () => {
+  const controls = useRef()
+  
+  /* Invoke the OrbitControls' update function on every frame */
+  useFrame(() => controls.current.update())
+  
+  return <orbitControls ref={controls} />
+}
 ```
 
-Once you supply a non-zero render priority, this will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed.
-
-For example:
+Once you supply a non-zero render priority, this will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed:
 
 ```jsx
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
