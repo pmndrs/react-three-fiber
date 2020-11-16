@@ -362,7 +362,7 @@ forceResize()
 useFrame((callback: (state, delta) => void), (renderPriority: number = 0))
 ```
 
-This hook calls you back every frame, which is good for running effects, updating controls, etc. You receive the state (same as useThree) and a clock delta. If you supply a render priority greater than zero it will switch off automatic rendering entirely, you can then control rendering yourself. If you have multiple frames with a render priority then they are ordered highest priority last, similar to the web's z-index. Frames are managed, three-fiber will remove them automatically when the component that holds them is unmounted.
+Allows you to execute code on every frame rendered, like running effects, updating controls, and so on. You receive the state (same as useThree) and a clock delta. In addition to the callback function itself, you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
 
 Updating controls:
 
@@ -374,7 +374,9 @@ useFrame((state) => controls.current.update())
 return <orbitControls ref={controls} />
 ```
 
-Taking over the render-loop:
+Once you supply a non-zero render priority, this will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed.
+
+For example:
 
 ```jsx
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
