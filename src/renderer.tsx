@@ -151,7 +151,7 @@ export function forceResize() {
 let catalogue: ObjectHash = {}
 export const extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
+export function applyProps(instance: any, newProps: any, oldProps: any = {}, firstCommit = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
 
@@ -184,7 +184,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
 
   const leftOvers = [] as string[]
   keys = Object.keys(oldProps)
-  if (accumulative) {
+  if (!firstCommit) {
     for (i = 0; i < keys.length; i++) {
       if (newProps[keys[i]] === void 0) {
         leftOvers.push(keys[i])
@@ -249,7 +249,6 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           // https://github.com/react-spring/react-three-fiber/issues/274
           else if (value !== undefined) {
             target.set(value)
-
             // Auto-convert sRGB colors, for now ...
             // https://github.com/react-spring/react-three-fiber/issues/344
             if (isColorManagement && target instanceof THREE.Color) {
@@ -259,20 +258,18 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           // Else, just overwrite the value
         } else {
           root[key] = value
-
           // Auto-convert sRGB textures, for now ...
           // https://github.com/react-spring/react-three-fiber/issues/344
           if (isColorManagement && root[key] instanceof THREE.Texture) {
             root[key].encoding = THREE.sRGBEncoding
           }
         }
-
         invalidateInstance(instance)
       }
     })
 
     // Preemptively delete the instance from the containers interaction
-    if (accumulative && container && instance.raycast && instance.__handlers) {
+    if (!firstCommit && container && instance.raycast && instance.__handlers) {
       instance.__handlers = undefined
       const index = container.__interaction.indexOf(instance)
       if (index > -1) container.__interaction.splice(index, 1)
@@ -280,8 +277,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
 
     // Prep interaction handlers
     if (handlers.length) {
-      // Add interactive object to central container
-      if (container && instance.raycast) container.__interaction.push(instance)
+      if (!firstCommit) container.__interaction.push(instance)
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce((acc, key) => {
         acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
@@ -320,7 +316,7 @@ function createInstance(
     const target = (catalogue as any)[name] || (THREE as any)[name]
 
     if (!target) {
-      throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/react-spring/react-three-fiber/blob/master/api.md#putting-already-existing-objects-into-the-scene-graph`
+      throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
     }
 
     instance = is.arr(args) ? new target(...args) : new target(args)
@@ -355,8 +351,8 @@ function createInstance(
 
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
-  // why it passes "false" here
-  applyProps(instance, props, {})
+  // why it passes "true" here
+  applyProps(instance, props, {}, true)
   return instance
 }
 
@@ -506,7 +502,7 @@ const Renderer = Reconciler({
         switchInstance(instance, type, newProps, fiber)
       } else {
         // Otherwise just overwrite props
-        applyProps(instance, restNew, restOld, true)
+        applyProps(instance, restNew, restOld)
       }
     }
   },
@@ -537,8 +533,18 @@ const Renderer = Reconciler({
     return emptyObject
   },
   createTextInstance() {},
-  finalizeInitialChildren() {
-    return false
+  finalizeInitialChildren(instance: any) {
+    // https://github.com/facebook/react/issues/20271
+    // Returning true will trigger commitMount
+    return instance.__handlers
+  },
+  commitMount(instance: any, type, props) {
+    // https://github.com/facebook/react/issues/20271
+    // This will make sure events are only added once to the central container
+    const container = instance.__container
+    if (container && instance.raycast && instance.__handlers) {
+      container.__interaction.push(instance)
+    }
   },
   prepareUpdate() {
     return emptyObject

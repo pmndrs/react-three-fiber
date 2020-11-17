@@ -43,6 +43,7 @@ const Bloom = { descr: '', tags: [], Component: lazy(() => import('./dev/Bloom')
 
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./tests/ClickAndHover')), dev: true }
 const StopPropagation = { descr: '', tags: [], Component: lazy(() => import('./tests/StopPropagation')), dev: true }
+const Debugging = { descr: '', tags: [], Component: lazy(() => import('./tests/Debugging')), dev: true }
 
 export {
   Refraction,
@@ -79,4 +80,5 @@ export {
   Viewcube,
   ClickAndHover,
   StopPropagation,
+  Debugging,
 }

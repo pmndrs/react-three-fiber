@@ -9,7 +9,7 @@ useLoader.preload(GLTFLoader, planet, draco())
 
 function Planet(props) {
   const group = useRef()
-  const { nodes, materials } = useLoader(GLTFLoader, planet, draco())
+  const { nodes, materials } = useLoader(GLTFLoader, test, draco())
   return (
     <group ref={group} {...props} dispose={null}>
       <group rotation={[-Math.PI / 2, 0, 0]}>

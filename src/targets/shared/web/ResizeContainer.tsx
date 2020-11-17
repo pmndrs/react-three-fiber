@@ -1,7 +1,6 @@
 import { WebGLRenderer, Renderer as ThreeRenderer } from 'three'
 import React, { useRef, useState, useMemo, useEffect } from 'react'
 import useMeasure, { RectReadOnly } from 'react-use-measure'
-import { ResizeObserver } from '@juggle/resize-observer'
 import mergeRefs from 'react-merge-refs'
 import { useCanvas, CanvasProps, DomEventHandlers } from '../../../canvas'
 
@@ -75,13 +74,7 @@ const ResizeContainer = React.memo(function ResizeContainer(props: ResizeContain
   const containerRef = useRef<HTMLDivElement>()
   // onGotPointerCaptureLegacy is a fake event used by non-web targets to simulate poinzter capture
   const [{ onGotPointerCaptureLegacy, ...events }, setEvents] = useState<DomEventHandlers>({} as DomEventHandlers)
-  const [bind, size, forceResize] = useMeasure(
-    resize || {
-      scroll: true,
-      debounce: { scroll: 50, resize: 0 },
-      polyfill: typeof window === 'undefined' || !(window as any).ResizeObserver ? ResizeObserver : undefined,
-    }
-  )
+  const [bind, size, forceResize] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
 
   // Flag view ready once it's been measured out
   const readyFlag = useRef(false)

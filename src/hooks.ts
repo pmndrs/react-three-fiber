@@ -87,18 +87,18 @@ export function useGraph(object: THREE.Object3D) {
 }
 
 function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
-  return function (Proto: new () => LoaderResult<T>, url: string[] | string) {
+  return function (Proto: new () => LoaderResult<T>, input: string[] | string) {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
     // Go through the urls and load them
-    const urlArray = Array.isArray(url) ? url : [url]
+    const urlArray = Array.isArray(input) ? input : [input]
     return Promise.all(
       urlArray.map(
-        (url: any) =>
+        (input) =>
           new Promise((res, reject) =>
             loader.load(
-              url,
+              input,
               (data: any) => {
                 if (data.scene) Object.assign(data, buildGraph(data.scene))
                 res(data)
@@ -114,14 +114,14 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
 
 export function useLoader<T>(
   Proto: new () => LoaderResult<T>,
-  url: T extends any[] ? string[] : string,
+  input: T extends any[] ? string[] : string,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): T {
   // Use suspense to load async assets
-  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, url])
+  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
-  return Array.isArray(url) ? results : results[0]
+  return Array.isArray(input) ? results : results[0]
 }
 
 useLoader.preload = function <T>(

@@ -12,6 +12,7 @@
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.8",
+    "arraybuffer-loader": "^1.0.8",
     "cannon": "^0.6.2",
     "drei": "^1.5.7",
     "react": "17.0.0",
