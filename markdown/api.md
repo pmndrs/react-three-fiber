@@ -362,9 +362,7 @@ forceResize()
 useFrame((callback: (state, delta) => void), (renderPriority: number = 0))
 ```
 
-Allows you to execute code on every frame rendered, like running effects, updating controls, and so on. You receive the state (same as useThree) and a clock delta. In addition to the callback function itself, you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
-
-Example:
+Allows you to execute code on every frame rendered, like running effects, updating controls, and so on. You receive the state (same as `useThree`) and a clock delta. Your callback function will be invoked just before a frame is rendered.
 
 ```jsx
 import { useFrame } from 'react-three-fiber'
@@ -379,7 +377,9 @@ const Controls = () => {
 }
 ```
 
-Using a non-zero render priority will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly. This gives you immediate control over the order in which callbacks and rendering are executed:
+If you need more control over the order in which `useFrame` callbacks are executed (and frames are rendered), you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
+
+Using a non-zero render priority will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly:
 
 ```jsx
 useFrame(({ gl, scene, camera }) => gl.render(scene, camera), 1)
