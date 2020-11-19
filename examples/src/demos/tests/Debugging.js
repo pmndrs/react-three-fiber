@@ -1,46 +1,30 @@
-import React, { useEffect, useRef } from 'react'
-import { Canvas, useFrame, useThree } from 'react-three-fiber'
-import { OrbitControls } from 'drei'
+import React, { useMemo, useState } from 'react'
+import { Canvas } from 'react-three-fiber'
+import { BoxBufferGeometry, Mesh, MeshBasicMaterial } from 'three'
 
-function Thing() {
-  const ref = useRef()
+function TestComponent() {
+  const [enabled, setEnabled] = useState(true)
 
-  useFrame((_, dt) => {
-    console.log('This log line should only appear once per second!')
-    ref.current.rotation.x = ref.current.rotation.y += dt
-  })
+  const mesh = useMemo(() => {
+    const geom = new BoxBufferGeometry()
+    const mat = new MeshBasicMaterial({ color: 'rgb(200, 120, 120)' })
+    return new Mesh(geom, mat)
+  }, [])
 
-  return (
-    <mesh ref={ref}>
-      <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-      <meshNormalMaterial attach="material" />
-    </mesh>
-  )
-}
-
-function AwkwardTicker() {
-  const { invalidate } = useThree()
-
-  useEffect(() => {
-    console.log('Registering interval')
-
-    const id = setInterval(() => {
-      //console.log('Invalidating frame')
-      invalidate()
-    }, 1000)
-
-    return () => clearInterval(id)
-  }, [invalidate])
-
-  return null
+  if (enabled) {
+    return (
+      <primitive object={mesh} onPointerOver={(ev) => console.log('over')} onClick={(ev) => setEnabled(!enabled)} />
+    )
+  } else {
+    return null
+  }
 }
 
 export default function App() {
   return (
-    <Canvas invalidateFrameloop>
-      <AwkwardTicker />
-      <Thing />
-      <OrbitControls />
+    <Canvas>
+      <ambientLight />
+      <TestComponent />
     </Canvas>
   )
 }

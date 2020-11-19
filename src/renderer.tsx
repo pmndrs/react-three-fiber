@@ -423,15 +423,17 @@ function removeChild(parentInstance: any, child: any) {
         parentInstance[child.attach] = null
       }
     }
+
+    // Remove interactivity
+    if (child.__container) {
+      child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+    }
+
     invalidateInstance(child)
 
     // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
     if (child.dispose !== null) {
       run(idlePriority, () => {
-        // Remove interactivity
-        if (child.__container) {
-          child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
-        }
         // Remove nested child objects
         removeRecursive(child.__objects, child)
         removeRecursive(child.children, child, true)
