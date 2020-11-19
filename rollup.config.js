@@ -20,7 +20,7 @@ const getBabelOptions = ({ useESModules }, targets) => ({
   exclude: '**/node_modules/**',
   runtimeHelpers: true,
   presets: [
-    ['@babel/preset-env', { loose: true, modules: false, targets }],
+    ['@babel/preset-env', { bugfixes: true, loose: true, modules: false, targets }],
     '@babel/preset-react',
     '@babel/preset-typescript',
   ],

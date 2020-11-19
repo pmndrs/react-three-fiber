@@ -639,7 +639,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     if (ready) {
       // Start render-loop, either via RAF or setAnimationLoop for VR
       if (!state.current.vr) {
-        invalidate(state)
+        if (state.current.frames === 0) invalidate(state)
       } else if (((gl as any).xr || gl.vr) && gl.setAnimationLoop) {
         ;((gl as any).xr || gl.vr).enabled = true
         gl.setAnimationLoop((t: number) => renderGl(state, t, 0, true))

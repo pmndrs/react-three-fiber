@@ -131,12 +131,15 @@ function renderLoop(timestamp: number) {
   running = false
 }
 
-export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 2) {
+export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 1) {
   if (state === true) {
-    roots.forEach((root) => (root.containerInfo.__state.current.frames = frames))
+    roots.forEach((root) => {
+      const state = root.containerInfo.__state
+      state.current.frames = state.current.ready ? state.current.frames + frames : frames
+    })
   } else if (state && state.current) {
     if (state.current.vr) return
-    state.current.frames = frames
+    state.current.frames = state.current.ready ? state.current.frames + frames : frames
   }
   if (!running) {
     running = true

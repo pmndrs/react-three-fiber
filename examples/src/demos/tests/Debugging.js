@@ -1,44 +1,46 @@
-import React, { Suspense, useEffect } from 'react'
-import { Canvas } from 'react-three-fiber'
-import { useAsset } from 'use-asset'
+import React, { useEffect, useRef } from 'react'
+import { Canvas, useFrame, useThree } from 'react-three-fiber'
+import { OrbitControls } from 'drei'
 
-function Environment() {
-  useAsset(() => new Promise((res) => setTimeout(res, 200)), [])
-  return null
+function Thing() {
+  const ref = useRef()
+
+  useFrame((_, dt) => {
+    console.log('This log line should only appear once per second!')
+    ref.current.rotation.x = ref.current.rotation.y += dt
+  })
+
+  return (
+    <mesh ref={ref}>
+      <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
+      <meshNormalMaterial attach="material" />
+    </mesh>
+  )
 }
 
-function Discoball() {
-  return (
-    <group>
-      <mesh onPointerUp={() => console.log('up')} castShadow>
-        <sphereBufferGeometry args={[1.4, 10, 7]} />
-        <meshPhysicalMaterial
-          color="black"
-          metallness={1}
-          roughness={0.5}
-          clearcoat={1}
-          clearcoatRoughness={0.2}
-          flatShading
-        />
-      </mesh>
-    </group>
-  )
+function AwkwardTicker() {
+  const { invalidate } = useThree()
+
+  useEffect(() => {
+    console.log('Registering interval')
+
+    const id = setInterval(() => {
+      //console.log('Invalidating frame')
+      invalidate()
+    }, 1000)
+
+    return () => clearInterval(id)
+  }, [invalidate])
+
+  return null
 }
 
 export default function App() {
   return (
-    <Canvas
-      orthographic
-      pixelRatio={[1, 1.5]}
-      concurrent
-      shadowMap
-      camera={{ zoom: 90 }}
-      onCreated={(s) => (window.s = s)}
-    >
-      <Suspense fallback={null}>
-        <Environment />
-        <Discoball />
-      </Suspense>
+    <Canvas invalidateFrameloop>
+      <AwkwardTicker />
+      <Thing />
+      <OrbitControls />
     </Canvas>
   )
 }
