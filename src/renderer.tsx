@@ -154,7 +154,7 @@ export function forceResize() {
 let catalogue: ObjectHash = {}
 export const extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance: any, newProps: any, oldProps: any = {}, firstCommit = false) {
+export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
 
@@ -187,7 +187,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, fir
 
   const leftOvers = [] as string[]
   keys = Object.keys(oldProps)
-  if (!firstCommit) {
+  if (accumulative) {
     for (i = 0; i < keys.length; i++) {
       if (newProps[keys[i]] === void 0) {
         leftOvers.push(keys[i])
@@ -272,7 +272,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, fir
     })
 
     // Preemptively delete the instance from the containers interaction
-    if (!firstCommit && container && instance.raycast && instance.__handlers) {
+    if (accumulative && container && instance.raycast && instance.__handlers) {
       instance.__handlers = undefined
       const index = container.__interaction.indexOf(instance)
       if (index > -1) container.__interaction.splice(index, 1)
@@ -280,7 +280,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, fir
 
     // Prep interaction handlers
     if (handlers.length) {
-      if (!firstCommit) container.__interaction.push(instance)
+      if (accumulative && container && instance.raycast) container.__interaction.push(instance)
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce((acc, key) => {
         acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
@@ -355,7 +355,7 @@ function createInstance(
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
   // why it passes "true" here
-  applyProps(instance, props, {}, true)
+  applyProps(instance, props, {})
   return instance
 }
 
@@ -425,10 +425,8 @@ function removeChild(parentInstance: any, child: any) {
     }
 
     // Remove interactivity
-    if (child.__container) {
+    if (child.__container)
       child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
-    }
-
     invalidateInstance(child)
 
     // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
@@ -507,7 +505,7 @@ const Renderer = Reconciler({
         switchInstance(instance, type, newProps, fiber)
       } else {
         // Otherwise just overwrite props
-        applyProps(instance, restNew, restOld)
+        applyProps(instance, restNew, restOld, true)
       }
     }
   },
@@ -547,9 +545,7 @@ const Renderer = Reconciler({
     // https://github.com/facebook/react/issues/20271
     // This will make sure events are only added once to the central container
     const container = instance.__container
-    if (container && instance.raycast && instance.__handlers) {
-      container.__interaction.push(instance)
-    }
+    if (container && instance.raycast && instance.__handlers) container.__interaction.push(instance)
   },
   prepareUpdate() {
     return emptyObject

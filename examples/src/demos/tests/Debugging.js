@@ -1,30 +1,48 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
+import { a, useSpring } from '@react-spring/three'
 import { Canvas } from 'react-three-fiber'
-import { BoxBufferGeometry, Mesh, MeshBasicMaterial } from 'three'
 
-function TestComponent() {
-  const [enabled, setEnabled] = useState(true)
+function Box(props) {
+  const [hovered, setHover] = useState(false)
+  const [clicked, setClicked] = useState(false)
+  const boxProps = useSpring({ scale: clicked ? [1.9, 1.9, 1.9] : [1.5, 1.5, 1.5] })
+  return (
+    <a.mesh
+      scale={clicked ? [1.9, 1.9, 1.9] : [1.5, 1.5, 1.5]}
+      onClick={(e) => setClicked(!clicked)}
+      onPointerOver={(e) => setHover(true)}
+      onPointerOut={(e) => setHover(false)}
+      {...boxProps}
+    >
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </a.mesh>
+  )
+}
 
-  const mesh = useMemo(() => {
-    const geom = new BoxBufferGeometry()
-    const mat = new MeshBasicMaterial({ color: 'rgb(200, 120, 120)' })
-    return new Mesh(geom, mat)
-  }, [])
-
-  if (enabled) {
-    return (
-      <primitive object={mesh} onPointerOver={(ev) => console.log('over')} onClick={(ev) => setEnabled(!enabled)} />
-    )
-  } else {
-    return null
-  }
+function Box2(props) {
+  const [hovered, setHover] = useState(false)
+  const [clicked, setClicked] = useState(false)
+  return (
+    <mesh
+      {...props}
+      scale={clicked ? [1.9, 1.9, 1.9] : [1.5, 1.5, 1.5]}
+      onClick={(e) => setClicked(!clicked)}
+      onPointerOver={(e) => setHover(true)}
+      onPointerOut={(e) => setHover(false)}
+    >
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
 }
 
 export default function App() {
   return (
     <Canvas>
       <ambientLight />
-      <TestComponent />
+      <Box />
+      <Box2 position={[1, 1, 1]} />
     </Canvas>
   )
 }
