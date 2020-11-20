@@ -1,7 +1,7 @@
 export * from './renderer'
-export * from './three-types'
+export * from './components/types'
 export * from './hooks'
 
-import * as ReactThreeFiber from './three-types'
+import * as ReactThreeFiber from './components/types'
 
 export { ReactThreeFiber }
