@@ -52,7 +52,7 @@
     "test": "jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true",
-    "typegen:components": "npx ts-node src/components/generateExports.ts",
+    "typegen:components": "npx ts-node --project scripts/gen-components/tsconfig.json scripts/gen-components",
     "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
     "pack-dist": "cd dist && yarn pack && mv *.tgz .."
   },

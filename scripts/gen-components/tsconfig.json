@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "pretty": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noEmit": true,
+    "moduleResolution": "Node"
+  },
+  "include": ["."]
+}
