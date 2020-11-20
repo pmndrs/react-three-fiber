@@ -114,6 +114,6 @@ export const createComponents = (classInfos: readonly ClassInfo[]) =>
       const suffix = RESERVED_TAGS.includes(camelName) ? RESERVED_TAG_SUFFIX : ''
       const deprecatedComment = createDeprecatedComment(classInfo)
 
-      return `${deprecatedComment}export const ${classInfo.name} = '${camelName}${suffix}';`
+      return `${deprecatedComment}export const ${classInfo.name} = '${camelName}' as '${camelName}${suffix}';`
     })
     .join('\n')
