@@ -27,7 +27,7 @@ export const OUT_DIR = path.resolve(__dirname, '../../src/components')
 export const TYPE_OUT_FILE = path.resolve(OUT_DIR, 'types.ts')
 export const COMPONENT_OUT_FILE = path.resolve(OUT_DIR, 'index.ts')
 export const BASE_TYPES_FILE = path.resolve(__dirname, 'source/types.ts')
-export const BASE_COMPONENTS_FILE = path.resolve(__dirname, 'source/components.ts')
+export const BASE_COMPONENTS_FILE = path.resolve(__dirname, 'source/index.ts')
 
 export const RESERVED_TAGS = ['audio', 'line', 'path']
 export const RESERVED_TAG_SUFFIX = '_'

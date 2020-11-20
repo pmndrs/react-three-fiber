@@ -34,6 +34,8 @@ const init = () => {
   declare global {
     namespace JSX {
       interface IntrinsicElements {
+        primitive: PrimitiveProps<any>;
+        new: NewProps<any>;
         ${intrinsicElementKeys}
       }
     }
