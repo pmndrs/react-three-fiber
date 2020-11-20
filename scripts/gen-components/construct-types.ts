@@ -1,5 +1,5 @@
 import * as ts from 'typescript'
-import { CLASS_NODE_MAP, DEFAULT_NODE, RESERVED_TAGS } from './constants'
+import { CLASS_NODE_MAP, DEFAULT_NODE, RESERVED_TAGS, RESERVED_TAG_SUFFIX } from './constants'
 import { ExtendsMap, ClassInfo } from './types'
 import { toCamelCase } from './utils'
 
@@ -101,7 +101,7 @@ export const createIntrinsicElementKeys = (classInfos: readonly ClassInfo[]) =>
   classInfos
     .map((classInfo) => {
       const camelName = toCamelCase(classInfo.name)
-      const suffix = RESERVED_TAGS.includes(camelName) ? '_' : ''
+      const suffix = RESERVED_TAGS.includes(camelName) ? RESERVED_TAG_SUFFIX : ''
 
       return `${camelName}${suffix}: ${classInfo.name}Props;`
     })
@@ -111,7 +111,7 @@ export const createComponents = (classInfos: readonly ClassInfo[]) =>
   classInfos
     .map((classInfo) => {
       const camelName = toCamelCase(classInfo.name)
-      const suffix = RESERVED_TAGS.includes(camelName) ? '_' : ''
+      const suffix = RESERVED_TAGS.includes(camelName) ? RESERVED_TAG_SUFFIX : ''
       const deprecatedComment = createDeprecatedComment(classInfo)
 
       return `${deprecatedComment}export const ${classInfo.name} = '${camelName}${suffix}';`
