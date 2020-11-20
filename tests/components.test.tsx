@@ -20,7 +20,7 @@ describe('components', () => {
     ).toMatchSnapshot()
   })
 
-  test('components.Line can be used instead of line instrinsic element', () => {
+  test('components.Line can be used instead of line intrinsic element', () => {
     const actual = TestRenderer.create(<Line />).toJSON()
     const expected = TestRenderer.create(<line />).toJSON()
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
