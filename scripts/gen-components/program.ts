@@ -3,9 +3,9 @@ import * as ts from 'typescript'
 import { COMPILER_OPTIONS, TYPE_OUT_FILE, COMPONENT_OUT_FILE } from './constants'
 import { resolveModule } from './resolve'
 
-export const createProgramForModule = (module: string) => {
+export const createProgramForModule = (moduleName: string) => {
   const compilerHost = ts.createCompilerHost(COMPILER_OPTIONS)
-  const resolvedFileName = resolveModule(compilerHost, module, __filename)
+  const resolvedFileName = resolveModule(compilerHost, moduleName, __filename)
   const program = ts.createProgram({
     rootNames: [resolvedFileName],
     options: COMPILER_OPTIONS,
@@ -15,7 +15,13 @@ export const createProgramForModule = (module: string) => {
   const sourceFile = program.getSourceFile(resolvedFileName)
 
   if (!sourceFile) {
-    throw new Error(`Could not get source file for module "${module}"`)
+    throw new Error(`Could not get source file for module "${moduleName}"`)
+  }
+
+  const symbol = typeChecker.getSymbolAtLocation(sourceFile)
+
+  if (!symbol) {
+    throw new Error(`Failed to get symbol for module "${moduleName}"`)
   }
 
   return {
@@ -23,6 +29,7 @@ export const createProgramForModule = (module: string) => {
     compilerHost,
     program,
     typeChecker,
+    symbol,
   }
 }
 

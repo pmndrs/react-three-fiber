@@ -14,14 +14,9 @@ import { createProgramForModule, typeCheckResults } from './program'
 import { createClassTypes, createComponents, createIntrinsicElementKeys } from './construct-types'
 
 const init = () => {
-  const { sourceFile, typeChecker } = createProgramForModule('three')
-  const threeSymbol = typeChecker.getSymbolAtLocation(sourceFile)
+  const { typeChecker, symbol } = createProgramForModule('three')
 
-  if (!threeSymbol) {
-    throw new Error(`Failed to get symbol for module "${module}"`)
-  }
-
-  const threeExports = typeChecker.getExportsOfModule(threeSymbol)
+  const threeExports = typeChecker.getExportsOfModule(symbol)
   const threeExportNames = threeExports.map((threeExport) => threeExport.name)
   const classesInfo = extractClassesInfo(threeExports)
   const extendsMap = createExtendsMap(classesInfo)
