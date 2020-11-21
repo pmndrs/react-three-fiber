@@ -1,6 +1,6 @@
 import * as ts from 'typescript'
 import { CLASS_NODE_MAP, DEFAULT_NODE, RESERVED_TAGS } from './constants'
-import { ExtendsMap, ClassInfo } from './types'
+import { ExtendsMap, ClassInfo, TypeParam } from './types'
 import { toCamelCase } from './utils'
 
 const prefixTypeName = (threeExportNames: readonly string[], typeName: string): string =>
@@ -39,6 +39,33 @@ const createTypeParams = (
   })}>`
 }
 
+const createTypeParamsWithExtendsAndDefault = (
+  threeExportNames: readonly string[],
+  params: undefined | readonly TypeParam[]
+): string => {
+  if (!params?.length) {
+    return ''
+  }
+
+  return `<${params.map((param) => {
+    if (typeof param === 'undefined') {
+      throw new Error('Encountered undefined type param')
+    }
+
+    const defaultType = param.default ?? param.constraint
+
+    if (!defaultType) {
+      throw new Error(`Could not get default type for type param "${param.name}"`)
+    }
+
+    const constraint = param.constraint ? ` extends ${prefixTypes(threeExportNames, param.constraint)}` : ''
+    const paramName = prefixTypeName(threeExportNames, param.name)
+    const defaultTypeText = ` = ${prefixTypes(threeExportNames, defaultType)}`
+
+    return `${paramName}${constraint}${defaultTypeText}`
+  })}>`
+}
+
 const getBaseExtendedType = (extendsMap: ExtendsMap, extended: undefined | null | string): string | null => {
   if (!extended) {
     return null
@@ -54,7 +81,7 @@ const getBaseExtendedType = (extendsMap: ExtendsMap, extended: undefined | null 
 const createExtendedType = (threeExportNames: readonly string[], extendsMap: ExtendsMap, classInfo: ClassInfo) => {
   const refArgs = createTypeParams(
     threeExportNames,
-    classInfo.params?.map((param) => param.default ?? param.constraint)
+    classInfo.params?.map((param) => param.name)
   )
   const ref = `${prefixTypeName(threeExportNames, classInfo.name)}${refArgs}`
 
@@ -92,8 +119,9 @@ export const createClassTypes = (
     .map((classInfo) => {
       const extendedType = createExtendedType(threeExportNames, extendsMap, classInfo)
       const deprecatedComment = createDeprecatedComment(classInfo)
+      const typeParams = createTypeParamsWithExtendsAndDefault(threeExportNames, classInfo.params)
 
-      return `${deprecatedComment}export type ${classInfo.name}Props = ${extendedType};`
+      return `${deprecatedComment}export type ${classInfo.name}Props${typeParams} = ${extendedType};`
     })
     .join('\n')
 

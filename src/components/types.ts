@@ -111,36 +111,36 @@ export type FogProps = Node<THREE.Fog, typeof THREE.Fog>
 export type SceneProps = Object3DNode<THREE.Scene, typeof THREE.Scene>
 export type SpriteProps = Object3DNode<THREE.Sprite, typeof THREE.Sprite>
 export type LODProps = Object3DNode<THREE.LOD, typeof THREE.LOD>
-export type InstancedMeshProps = Object3DNode<
-  THREE.InstancedMesh<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.InstancedMesh
->
-export type SkinnedMeshProps = Object3DNode<
-  THREE.SkinnedMesh<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.SkinnedMesh
->
+export type InstancedMeshProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.InstancedMesh<TGeometry, TMaterial>, typeof THREE.InstancedMesh>
+export type SkinnedMeshProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.SkinnedMesh<TGeometry, TMaterial>, typeof THREE.SkinnedMesh>
 export type SkeletonProps = Node<THREE.Skeleton, typeof THREE.Skeleton>
 export type BoneProps = Object3DNode<THREE.Bone, typeof THREE.Bone>
-export type MeshProps = Object3DNode<
-  THREE.Mesh<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.Mesh
->
-export type LineSegmentsProps = Object3DNode<
-  THREE.LineSegments<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.LineSegments
->
-export type LineLoopProps = Object3DNode<
-  THREE.LineLoop<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.LineLoop
->
-export type LineProps = Object3DNode<
-  THREE.Line<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.Line
->
-export type PointsProps = Object3DNode<
-  THREE.Points<THREE.Geometry | THREE.BufferGeometry, THREE.Material | THREE.Material[]>,
-  typeof THREE.Points
->
+export type MeshProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.Mesh<TGeometry, TMaterial>, typeof THREE.Mesh>
+export type LineSegmentsProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.LineSegments<TGeometry, TMaterial>, typeof THREE.LineSegments>
+export type LineLoopProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.LineLoop<TGeometry, TMaterial>, typeof THREE.LineLoop>
+export type LineProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.Line<TGeometry, TMaterial>, typeof THREE.Line>
+export type PointsProps<
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+> = Object3DNode<THREE.Points<TGeometry, TMaterial>, typeof THREE.Points>
 export type GroupProps = Object3DNode<THREE.Group, typeof THREE.Group>
 export type VideoTextureProps = Node<THREE.VideoTexture, typeof THREE.VideoTexture>
 export type DataTextureProps = Node<THREE.DataTexture, typeof THREE.DataTexture>
@@ -259,7 +259,7 @@ export type CameraProps = Object3DNode<THREE.Camera, typeof THREE.Camera>
 export type AudioListenerProps = Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
 export type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
 export type AudioAnalyserProps = Node<THREE.AudioAnalyser, typeof THREE.AudioAnalyser>
-export type AudioProps = Object3DNode<THREE.Audio<GainNode>, typeof THREE.Audio>
+export type AudioProps<NodeType extends AudioNode = GainNode> = Object3DNode<THREE.Audio<NodeType>, typeof THREE.Audio>
 export type VectorKeyframeTrackProps = Node<THREE.VectorKeyframeTrack, typeof THREE.VectorKeyframeTrack>
 export type StringKeyframeTrackProps = Node<THREE.StringKeyframeTrack, typeof THREE.StringKeyframeTrack>
 export type QuaternionKeyframeTrackProps = Node<THREE.QuaternionKeyframeTrack, typeof THREE.QuaternionKeyframeTrack>
@@ -410,8 +410,8 @@ export type ShapeProps = Node<THREE.Shape, typeof THREE.Shape>
 export type PathProps = Node<THREE.Path, typeof THREE.Path>
 export type ShapePathProps = Node<THREE.ShapePath, typeof THREE.ShapePath>
 export type FontProps = Node<THREE.Font, typeof THREE.Font>
-export type CurvePathProps = Node<THREE.CurvePath<THREE.Vector>, typeof THREE.CurvePath>
-export type CurveProps = Node<THREE.Curve<THREE.Vector>, typeof THREE.Curve>
+export type CurvePathProps<T extends THREE.Vector = THREE.Vector> = Node<THREE.CurvePath<T>, typeof THREE.CurvePath>
+export type CurveProps<T extends THREE.Vector = THREE.Vector> = Node<THREE.Curve<T>, typeof THREE.Curve>
 export type PMREMGeneratorProps = Node<THREE.PMREMGenerator, typeof THREE.PMREMGenerator>
 export type WebGLBufferRendererProps = Node<THREE.WebGLBufferRenderer, typeof THREE.WebGLBufferRenderer>
 export type WebGLCapabilitiesProps = Node<THREE.WebGLCapabilities, typeof THREE.WebGLCapabilities>
