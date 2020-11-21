@@ -115,6 +115,6 @@ export const createComponents = (classInfos: readonly ClassInfo[]) =>
       const camelName = toCamelCase(classInfo.name)
       const deprecatedComment = createDeprecatedComment(classInfo)
 
-      return `${deprecatedComment}export const ${classInfo.name} = '${camelName}' as '${camelName}';`
+      return `${deprecatedComment}export const ${classInfo.name} = ('${camelName}' as any) as (props: ReactThreeFiber.${classInfo.name}Props) => JSX.Element;`
     })
     .join('\n')
