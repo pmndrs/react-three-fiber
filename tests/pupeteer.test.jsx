@@ -6,7 +6,7 @@ const width = 1920
 const widthHalf = width / 2
 const height = 1080
 const heightHalf = height / 2
-const xy = (x, y) => [width / 2 + x, height / 2 + y]
+const xy = (x, y) => [widthHalf + x, heightHalf + y]
 
 describe('point and click', () => {
   beforeAll(async () => {

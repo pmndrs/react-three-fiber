@@ -372,7 +372,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const handlePointerCancel: any = React.useCallback((event: DomEvent, hits?: Intersection[], prepare = true) => {
     state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
-    // commenting this out as I believe it is unneccessary and causes a recursive dependency
+    // commenting this out as I believe it is unnecessary and causes a recursive dependency
     // if (!hits) hits = handleIntersects(event, () => null)
     Array.from(hovered.values()).forEach((data) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
@@ -487,7 +487,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         )
     )
 
-    // Take care of unhover
+    // Take care of un-hover
     handlePointerCancel(event, hits)
     handleIntersects(hits, event, (data: any) => {
       const eventObject = data.eventObject
