@@ -1,3 +1,4 @@
+import * as fs from 'fs'
 import * as path from 'path'
 import * as ts from 'typescript'
 import * as prettier from 'prettier'
@@ -14,13 +15,20 @@ export const COMPILER_OPTIONS: ts.CompilerOptions = {
   noImplicitReturns: true,
 }
 
+const prettierrcContent = fs.readFileSync(path.resolve(__dirname, '../../.prettierrc'), UTF8)
+
+let prettierJson: Record<string, any> | undefined
+
+try {
+  prettierJson = JSON.parse(prettierrcContent)
+} catch (error) {
+  console.error(error)
+  throw new Error('Failed to parse .prettierrc to JSON')
+}
+
 export const PRETTIER_CONFIG: prettier.Options = {
   parser: 'typescript',
-  semi: false,
-  trailingComma: 'es5',
-  singleQuote: true,
-  tabWidth: 2,
-  printWidth: 120,
+  ...prettierJson,
 }
 
 export const OUT_DIR = path.resolve(__dirname, '../../src/components')
