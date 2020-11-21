@@ -3,7 +3,6 @@ import * as prettier from 'prettier'
 
 import {
   TYPE_OUT_FILE,
-  OUT_DIR,
   UTF8,
   BASE_TYPES_FILE,
   BASE_COMPONENTS_FILE,
@@ -39,10 +38,6 @@ const init = () => {
     }
   }
   `
-
-  if (!fs.existsSync(OUT_DIR)) {
-    fs.mkdirSync(OUT_DIR)
-  }
 
   const typeOutput = `
   // These values were automatically generated. Do not manually edit this file.
