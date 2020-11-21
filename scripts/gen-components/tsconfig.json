@@ -5,6 +5,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noEmit": true,
+    "skipLibCheck": true,
     "moduleResolution": "Node"
   },
   "include": ["."]
