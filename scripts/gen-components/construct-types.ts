@@ -39,10 +39,6 @@ const createTypeParamsWithExtendsAndDefault = (
   }
 
   return `<${params.map((param) => {
-    if (typeof param === 'undefined') {
-      throw new Error('Encountered undefined type param')
-    }
-
     const defaultType = param.default ?? param.constraint
 
     if (!defaultType) {
