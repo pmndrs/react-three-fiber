@@ -91,7 +91,7 @@ export type LightNode<T extends THREE.Light, P> = Overwrite<
   }
 >
 
-export type PrimitiveProps<T> = { object: T } & Partial<T>
+export type PrimitiveProps<T extends Record<string, any>> = { object: T } & Partial<T>
 export type NewProps<T extends new (...args: any[]) => unknown> = Partial<InstanceType<T>> & {
   object: T
   args: ConstructorParameters<T>
@@ -453,8 +453,6 @@ export type MultiMaterialProps = MaterialNode<THREE.MultiMaterial, typeof THREE.
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      primitive: PrimitiveProps<any>
-      new: NewProps<any>
       webGLMultisampleRenderTarget: WebGLMultisampleRenderTargetProps
       webGLCubeRenderTarget: WebGLCubeRenderTargetProps
       webGLRenderTarget: WebGLRenderTargetProps
@@ -472,7 +470,8 @@ declare global {
       mesh: MeshProps
       lineSegments: LineSegmentsProps
       lineLoop: LineLoopProps
-      line_: LineProps
+      // This clashes with React's intrinsic elements, but you can use the Line component from react-three-fiber/components
+      // line: LineProps;
       points: PointsProps
       group: GroupProps
       videoTexture: VideoTextureProps
@@ -583,7 +582,8 @@ declare global {
       audioListener: AudioListenerProps
       positionalAudio: PositionalAudioProps
       audioAnalyser: AudioAnalyserProps
-      audio_: AudioProps
+      // This clashes with React's intrinsic elements, but you can use the Audio component from react-three-fiber/components
+      // audio: AudioProps;
       vectorKeyframeTrack: VectorKeyframeTrackProps
       stringKeyframeTrack: StringKeyframeTrackProps
       quaternionKeyframeTrack: QuaternionKeyframeTrackProps
@@ -680,7 +680,8 @@ declare global {
       quadraticBezierCurve3: QuadraticBezierCurve3Props
       splineCurve: SplineCurveProps
       shape: ShapeProps
-      path_: PathProps
+      // This clashes with React's intrinsic elements, but you can use the Path component from react-three-fiber/components
+      // path: PathProps;
       shapePath: ShapePathProps
       font: FontProps
       curvePath: CurvePathProps

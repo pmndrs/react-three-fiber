@@ -89,7 +89,7 @@ export type LightNode<T extends THREE.Light, P> = Overwrite<
   }
 >
 
-export type PrimitiveProps<T> = { object: T } & Partial<T>
+export type PrimitiveProps<T extends Record<string, any>> = { object: T } & Partial<T>
 export type NewProps<T extends new (...args: any[]) => unknown> = Partial<InstanceType<T>> & {
   object: T
   args: ConstructorParameters<T>

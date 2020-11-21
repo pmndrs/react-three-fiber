@@ -1,5 +1,5 @@
 import * as ts from 'typescript'
-import { CLASS_NODE_MAP, DEFAULT_NODE, RESERVED_TAGS, RESERVED_TAG_SUFFIX } from './constants'
+import { CLASS_NODE_MAP, DEFAULT_NODE, RESERVED_TAGS } from './constants'
 import { ExtendsMap, ClassInfo } from './types'
 import { toCamelCase } from './utils'
 
@@ -93,7 +93,7 @@ export const createClassTypes = (
       const extendedType = createExtendedType(threeExportNames, extendsMap, classInfo)
       const deprecatedComment = createDeprecatedComment(classInfo)
 
-      return `${deprecatedComment}export type ${classInfo.name}Props = ${extendedType}`
+      return `${deprecatedComment}export type ${classInfo.name}Props = ${extendedType};`
     })
     .join('\n')
 
@@ -101,9 +101,11 @@ export const createIntrinsicElementKeys = (classInfos: readonly ClassInfo[]) =>
   classInfos
     .map((classInfo) => {
       const camelName = toCamelCase(classInfo.name)
-      const suffix = RESERVED_TAGS.includes(camelName) ? RESERVED_TAG_SUFFIX : ''
+      const commentOut = RESERVED_TAGS.includes(camelName)
+        ? `// This clashes with React's intrinsic elements, but you can use the ${classInfo.name} component from react-three-fiber/components\n// `
+        : ''
 
-      return `${camelName}${suffix}: ${classInfo.name}Props;`
+      return `${commentOut}${camelName}: ${classInfo.name}Props;`
     })
     .join('\n')
 
@@ -111,9 +113,8 @@ export const createComponents = (classInfos: readonly ClassInfo[]) =>
   classInfos
     .map((classInfo) => {
       const camelName = toCamelCase(classInfo.name)
-      const suffix = RESERVED_TAGS.includes(camelName) ? RESERVED_TAG_SUFFIX : ''
       const deprecatedComment = createDeprecatedComment(classInfo)
 
-      return `${deprecatedComment}export const ${classInfo.name} = '${camelName}' as '${camelName}${suffix}';`
+      return `${deprecatedComment}export const ${classInfo.name} = '${camelName}' as '${camelName}';`
     })
     .join('\n')

@@ -1,11 +1,14 @@
 // These values were automatically generated. Do not manually edit this file.
 // See scripts/gen-components/
 
-export * from './types'
-import { PrimitiveProps, NewProps } from './types'
+import * as ReactThreeFiber from './types'
 
-export const Primitive = ('primitive' as any) as <T extends unknown>(props: PrimitiveProps<T>) => JSX.Element
-export const New = ('new' as any) as <T extends new (...args: any[]) => unknown>(props: NewProps<T>) => JSX.Element
+export const Primitive = ('primitive' as any) as <T extends Record<string, any>>(
+  props: ReactThreeFiber.PrimitiveProps<T>
+) => JSX.Element
+export const New = ('new' as any) as <T extends new (...args: any[]) => unknown>(
+  props: ReactThreeFiber.NewProps<T>
+) => JSX.Element
 
 // Automatically generated
 export const WebGLMultisampleRenderTarget = 'webGLMultisampleRenderTarget' as 'webGLMultisampleRenderTarget'
@@ -25,7 +28,7 @@ export const Bone = 'bone' as 'bone'
 export const Mesh = 'mesh' as 'mesh'
 export const LineSegments = 'lineSegments' as 'lineSegments'
 export const LineLoop = 'lineLoop' as 'lineLoop'
-export const Line = 'line' as 'line_'
+export const Line = 'line' as 'line'
 export const Points = 'points' as 'points'
 export const Group = 'group' as 'group'
 export const VideoTexture = 'videoTexture' as 'videoTexture'
@@ -136,7 +139,7 @@ export const Camera = 'camera' as 'camera'
 export const AudioListener = 'audioListener' as 'audioListener'
 export const PositionalAudio = 'positionalAudio' as 'positionalAudio'
 export const AudioAnalyser = 'audioAnalyser' as 'audioAnalyser'
-export const Audio = 'audio' as 'audio_'
+export const Audio = 'audio' as 'audio'
 export const VectorKeyframeTrack = 'vectorKeyframeTrack' as 'vectorKeyframeTrack'
 export const StringKeyframeTrack = 'stringKeyframeTrack' as 'stringKeyframeTrack'
 export const QuaternionKeyframeTrack = 'quaternionKeyframeTrack' as 'quaternionKeyframeTrack'
@@ -269,7 +272,7 @@ export const QuadraticBezierCurve = 'quadraticBezierCurve' as 'quadraticBezierCu
 export const QuadraticBezierCurve3 = 'quadraticBezierCurve3' as 'quadraticBezierCurve3'
 export const SplineCurve = 'splineCurve' as 'splineCurve'
 export const Shape = 'shape' as 'shape'
-export const Path = 'path' as 'path_'
+export const Path = 'path' as 'path'
 export const ShapePath = 'shapePath' as 'shapePath'
 export const Font = 'font' as 'font'
 export const CurvePath = 'curvePath' as 'curvePath'

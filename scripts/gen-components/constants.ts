@@ -30,7 +30,6 @@ export const BASE_TYPES_FILE = path.resolve(__dirname, 'source/types.ts')
 export const BASE_COMPONENTS_FILE = path.resolve(__dirname, 'source/index.ts')
 
 export const RESERVED_TAGS = ['audio', 'line', 'path']
-export const RESERVED_TAG_SUFFIX = '_'
 export const CLASS_NODE_MAP: Record<string, string> = {
   Object3D: 'Object3DNode',
   Geometry: 'GeometryNode',
