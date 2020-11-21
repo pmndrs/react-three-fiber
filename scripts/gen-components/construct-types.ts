@@ -22,21 +22,12 @@ const prefixTypes = (threeExportNames: readonly string[], node: ts.TypeNode): st
   throw new Error(`We do not currently handle "${ts.SyntaxKind[node.kind]}" nodes`)
 }
 
-const createTypeParams = (
-  threeExportNames: readonly string[],
-  params: undefined | readonly (undefined | string | ts.TypeNode)[]
-): string => {
+const createTypeParams = (threeExportNames: readonly string[], params: undefined | readonly TypeParam[]): string => {
   if (!params?.length) {
     return ''
   }
 
-  return `<${params.map((param) => {
-    if (typeof param === 'undefined') {
-      throw new Error('Encountered undefined type param')
-    }
-
-    return typeof param === 'string' ? prefixTypeName(threeExportNames, param) : prefixTypes(threeExportNames, param)
-  })}>`
+  return `<${params.map((param) => prefixTypeName(threeExportNames, param.name))}>`
 }
 
 const createTypeParamsWithExtendsAndDefault = (
@@ -79,10 +70,7 @@ const getBaseExtendedType = (extendsMap: ExtendsMap, extended: undefined | null 
 }
 
 const createExtendedType = (threeExportNames: readonly string[], extendsMap: ExtendsMap, classInfo: ClassInfo) => {
-  const refArgs = createTypeParams(
-    threeExportNames,
-    classInfo.params?.map((param) => param.name)
-  )
+  const refArgs = createTypeParams(threeExportNames, classInfo.params)
   const ref = `${prefixTypeName(threeExportNames, classInfo.name)}${refArgs}`
 
   if (classInfo.name in CLASS_NODE_MAP) {
@@ -137,12 +125,14 @@ export const createIntrinsicElementKeys = (classInfos: readonly ClassInfo[]) =>
     })
     .join('\n')
 
-export const createComponents = (classInfos: readonly ClassInfo[]) =>
+export const createComponents = (threeExportNames: readonly string[], classInfos: readonly ClassInfo[]) =>
   classInfos
     .map((classInfo) => {
       const camelName = toCamelCase(classInfo.name)
       const deprecatedComment = createDeprecatedComment(classInfo)
+      const typeParams = createTypeParamsWithExtendsAndDefault(threeExportNames, classInfo.params)
+      const typeArgs = createTypeParams(threeExportNames, classInfo.params)
 
-      return `${deprecatedComment}export const ${classInfo.name} = ('${camelName}' as any) as (props: ReactThreeFiber.${classInfo.name}Props) => JSX.Element;`
+      return `${deprecatedComment}export const ${classInfo.name} = ('${camelName}' as any) as ${typeParams}(props: ReactThreeFiber.${classInfo.name}Props${typeArgs}) => JSX.Element;`
     })
     .join('\n')

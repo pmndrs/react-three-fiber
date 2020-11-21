@@ -28,7 +28,7 @@ const init = () => {
   const extendsMap = createExtendsMap(classesInfo)
   const classOutput = createClassTypes(threeExportNames, extendsMap, classesInfo)
   const intrinsicElementKeys = createIntrinsicElementKeys(classesInfo)
-  const components = createComponents(classesInfo)
+  const components = createComponents(threeExportNames, classesInfo)
 
   const intrinsicElements = `
   declare global {

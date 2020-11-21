@@ -27,15 +27,50 @@ export const Fog = ('fog' as any) as (props: ReactThreeFiber.FogProps) => JSX.El
 export const Scene = ('scene' as any) as (props: ReactThreeFiber.SceneProps) => JSX.Element
 export const Sprite = ('sprite' as any) as (props: ReactThreeFiber.SpriteProps) => JSX.Element
 export const LOD = ('lOD' as any) as (props: ReactThreeFiber.LODProps) => JSX.Element
-export const InstancedMesh = ('instancedMesh' as any) as (props: ReactThreeFiber.InstancedMeshProps) => JSX.Element
-export const SkinnedMesh = ('skinnedMesh' as any) as (props: ReactThreeFiber.SkinnedMeshProps) => JSX.Element
+export const InstancedMesh = ('instancedMesh' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.InstancedMeshProps<TGeometry, TMaterial>
+) => JSX.Element
+export const SkinnedMesh = ('skinnedMesh' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.SkinnedMeshProps<TGeometry, TMaterial>
+) => JSX.Element
 export const Skeleton = ('skeleton' as any) as (props: ReactThreeFiber.SkeletonProps) => JSX.Element
 export const Bone = ('bone' as any) as (props: ReactThreeFiber.BoneProps) => JSX.Element
-export const Mesh = ('mesh' as any) as (props: ReactThreeFiber.MeshProps) => JSX.Element
-export const LineSegments = ('lineSegments' as any) as (props: ReactThreeFiber.LineSegmentsProps) => JSX.Element
-export const LineLoop = ('lineLoop' as any) as (props: ReactThreeFiber.LineLoopProps) => JSX.Element
-export const Line = ('line' as any) as (props: ReactThreeFiber.LineProps) => JSX.Element
-export const Points = ('points' as any) as (props: ReactThreeFiber.PointsProps) => JSX.Element
+export const Mesh = ('mesh' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.MeshProps<TGeometry, TMaterial>
+) => JSX.Element
+export const LineSegments = ('lineSegments' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.LineSegmentsProps<TGeometry, TMaterial>
+) => JSX.Element
+export const LineLoop = ('lineLoop' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.LineLoopProps<TGeometry, TMaterial>
+) => JSX.Element
+export const Line = ('line' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.LineProps<TGeometry, TMaterial>
+) => JSX.Element
+export const Points = ('points' as any) as <
+  TGeometry extends THREE.Geometry | THREE.BufferGeometry = THREE.Geometry | THREE.BufferGeometry,
+  TMaterial extends THREE.Material | THREE.Material[] = THREE.Material | THREE.Material[]
+>(
+  props: ReactThreeFiber.PointsProps<TGeometry, TMaterial>
+) => JSX.Element
 export const Group = ('group' as any) as (props: ReactThreeFiber.GroupProps) => JSX.Element
 export const VideoTexture = ('videoTexture' as any) as (props: ReactThreeFiber.VideoTextureProps) => JSX.Element
 export const DataTexture = ('dataTexture' as any) as (props: ReactThreeFiber.DataTextureProps) => JSX.Element
@@ -267,7 +302,9 @@ export const PositionalAudio = ('positionalAudio' as any) as (
   props: ReactThreeFiber.PositionalAudioProps
 ) => JSX.Element
 export const AudioAnalyser = ('audioAnalyser' as any) as (props: ReactThreeFiber.AudioAnalyserProps) => JSX.Element
-export const Audio = ('audio' as any) as (props: ReactThreeFiber.AudioProps) => JSX.Element
+export const Audio = ('audio' as any) as <NodeType extends AudioNode = GainNode>(
+  props: ReactThreeFiber.AudioProps<NodeType>
+) => JSX.Element
 export const VectorKeyframeTrack = ('vectorKeyframeTrack' as any) as (
   props: ReactThreeFiber.VectorKeyframeTrackProps
 ) => JSX.Element
@@ -495,8 +532,12 @@ export const Shape = ('shape' as any) as (props: ReactThreeFiber.ShapeProps) => 
 export const Path = ('path' as any) as (props: ReactThreeFiber.PathProps) => JSX.Element
 export const ShapePath = ('shapePath' as any) as (props: ReactThreeFiber.ShapePathProps) => JSX.Element
 export const Font = ('font' as any) as (props: ReactThreeFiber.FontProps) => JSX.Element
-export const CurvePath = ('curvePath' as any) as (props: ReactThreeFiber.CurvePathProps) => JSX.Element
-export const Curve = ('curve' as any) as (props: ReactThreeFiber.CurveProps) => JSX.Element
+export const CurvePath = ('curvePath' as any) as <T extends THREE.Vector = THREE.Vector>(
+  props: ReactThreeFiber.CurvePathProps<T>
+) => JSX.Element
+export const Curve = ('curve' as any) as <T extends THREE.Vector = THREE.Vector>(
+  props: ReactThreeFiber.CurveProps<T>
+) => JSX.Element
 export const PMREMGenerator = ('pMREMGenerator' as any) as (props: ReactThreeFiber.PMREMGeneratorProps) => JSX.Element
 export const WebGLBufferRenderer = ('webGLBufferRenderer' as any) as (
   props: ReactThreeFiber.WebGLBufferRendererProps
