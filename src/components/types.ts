@@ -22,7 +22,7 @@ export type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
 export type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
 export type Vector2 = THREE.Vector2 | Parameters<THREE.Vector2['set']>
 export type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']>
-export type Color = THREE.Color | Parameters<THREE.Color['set']>
+export type Color = THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
 export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
