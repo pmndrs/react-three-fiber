@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import * as React from 'react'
 import { Canvas, useFrame } from 'react-three-fiber'
 
 const CanvasStyle = {
@@ -6,8 +6,10 @@ const CanvasStyle = {
   height: '50%',
 }
 
+const args = [1, 1, 1]
+
 const Obj = () => {
-  const meshRef = useRef()
+  const meshRef = React.useRef()
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.03
@@ -15,7 +17,7 @@ const Obj = () => {
   })
   return (
     <mesh ref={meshRef}>
-      <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
+      <boxBufferGeometry attach="geometry" args={args} />
       <meshNormalMaterial attach="material" />
     </mesh>
   )
@@ -32,26 +34,29 @@ const StaticScene = () => (
   <div style={CanvasStyle}>
     <Canvas>
       <mesh>
-        <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
+        <boxBufferGeometry attach="geometry" args={args} />
         <meshNormalMaterial attach="material" />
       </mesh>
     </Canvas>
   </div>
 )
-/** Main component */
-function App() {
-  const [secondScene, setSecondScene] = useState(false)
 
-  useEffect(() => {
-    setTimeout(() => setSecondScene(true), 2000)
+const style = { width: '100%', height: '100%' }
+/** Main component */
+function MultiRenderer() {
+  const [secondScene, setSecondScene] = React.useState(false)
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => setSecondScene(true), 2000)
+    return () => { window.clearTimeout(timeout) }
   }, [])
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={style}>
       <SpinningScene />
       {secondScene && <StaticScene />}
     </div>
   )
 }
 
-export default App
+export default React.memo(MultiRenderer)

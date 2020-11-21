@@ -1,15 +1,33 @@
-import React, { useState } from 'react'
+import * as React from 'react'
 import { Canvas } from 'react-three-fiber'
 
+const clickedScale = [1.5, 1.5, 1.5]
+const defaultScale = [1, 1, 1]
+
 function Box(props) {
-  const [hovered, setHovered] = useState(false)
-  const [clicked, setClicked] = useState(false)
+  const [hovered, setHovered] = React.useState(false)
+  const [clicked, setClicked] = React.useState(false)
+
+  const onPointerOver = React.useCallback(function callback(e) {
+    setHovered(true)
+  }, [])
+
+  const onPointerOut = React.useCallback(function callback(e) {
+    setHovered(false)
+  }, [])
+
+  const onClick = React.useCallback(function callback(e) {
+    setClicked(function toggle(bool) {
+      return !bool
+    })
+  }, [])
+
   return (
     <mesh
-      onPointerOver={(e) => setHovered(true)}
-      onPointerOut={(e) => setHovered(false)}
-      onClick={() => setClicked(!clicked)}
-      scale={clicked ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      onPointerOver={onPointerOver}
+      onPointerOut={onPointerOut}
+      onClick={onClick}
+      scale={clicked ? clickedScale : defaultScale}
       {...props}
     >
       <boxBufferGeometry />
