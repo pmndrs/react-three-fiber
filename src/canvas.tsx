@@ -269,7 +269,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     state.current.noEvents = noEvents
     // Make viewport backwards compatible
     state.current.viewport = getCurrentViewport as ViewportData
-  }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl]) // missing getCurrentViewport. Is it intentional?
+  }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl, getCurrentViewport])
 
   // Adjusts default camera
   React.useMemo(() => {
@@ -298,7 +298,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     gl.setSize(size.width, size.height)
 
     if (ready) invalidate(state)
-  }, [defaultCam, gl, size, updateDefaultCamera])
+  }, [defaultCam, gl, size, updateDefaultCamera, getCurrentViewport, ready])
 
   /** Events ------------------------------------------------------------------------------------------------ */
 
@@ -584,7 +584,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       ...props
     } = state.current
     sharedState.current = props
-  }, [size, defaultCam]) // is defaultCam intentional?
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size, defaultCam]) // defaultCam is intentional
 
   // Update pixel ratio
   React.useLayoutEffect(() => {
@@ -605,22 +606,25 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.outputEncoding = THREE.sRGBEncoding
     }
-  }, [shadowMap, colorManagement]) // React Hook React.useLayoutEffect has a missing dependency: 'gl'
+  }, [shadowMap, colorManagement, gl])
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
-  const Canvas = React.useCallback(function Canvas(props: { children: React.ReactElement }): JSX.Element {
-    const activate = () => setReady(true)
+  const Canvas = React.useCallback(
+    function Canvas(props: { children: React.ReactElement }): JSX.Element {
+      const activate = () => setReady(true)
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    React.useEffect(() => {
-      const result = onCreated && onCreated(state.current)
-      if (result && result.then) result.then(activate)
-      else activate()
-    }, [])
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      React.useEffect(() => {
+        const result = onCreated && onCreated(state.current)
+        if (result && result.then) result.then(activate)
+        else activate()
+      }, [])
 
-    return props.children
-  }, [])
+      return props.children
+    },
+    [onCreated] // Added onCreated to hook dependencies
+  )
 
   // Render v-dom into scene
   React.useLayoutEffect(() => {
@@ -633,7 +637,9 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       defaultScene,
       state
     )
-  }, [ready, children, sharedState.current]) // React Hook React.useLayoutEffect has missing dependencies: 'Canvas' and 'defaultScene'. Either include them or remove the dependency array. Mutable values like 'sharedState.current' aren't valid dependencies because mutating them doesn't re-render the component.
+    // React Hook React.useLayoutEffect has an unnecessary dependency: 'sharedState.current'. Either exclude it or remove the dependency array. Mutable values like 'sharedState.current' aren't valid dependencies because mutating them doesn't re-render the component.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, children, sharedState.current, Canvas, defaultScene])
 
   React.useLayoutEffect(() => {
     if (ready) {
