@@ -130,13 +130,13 @@ export type DomEventHandlers = {
   onLostPointerCapture(e: any): void
 }
 
-function makeId(event: DomEvent) {
+function makeId(event: DomEvent): string {
   return (event.eventObject || event.object).uuid + '/' + event.index
 }
 
 export const stateContext = React.createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
-export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
+export function useCanvas(props: UseCanvasProps): DomEventHandlers {
   const {
     children,
     gl,
