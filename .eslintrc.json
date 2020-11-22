@@ -23,8 +23,8 @@
     "ecmaVersion": 2018,
     "sourceType": "module",
     "rules": {
-      "curly": ["warn", "multi-line", "consistent"],
       "no-console": "off",
+      "curly": ["warn", "multi-line", "consistent"],
       "no-empty-pattern": "warn",
       "no-duplicate-imports": "error",
       "import/no-unresolved": "off",
@@ -73,6 +73,12 @@
       "files": ["src"],
       "parserOptions": {
         "project": "./tsconfig.json"
+      }
+    },
+    {
+      "files": ["examples"],
+      "rules": {
+        "no-console": ["warn"]
       }
     }
   ]
