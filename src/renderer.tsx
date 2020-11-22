@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import * as Reconciler from 'react-reconciler'
+// @ts-ignore
+import Reconciler from 'react-reconciler'
 // @ts-ignore
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
@@ -480,21 +481,18 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
 //    TimeoutHandle,
 //    NoTimeout
 //  >
-const Renderer = Reconciler<any, any, THREE.Object3D, any, any, any, any, any, any, any, any, any>({
+const Renderer = Reconciler({
   now,
   createInstance,
   removeChild,
   appendChild,
   insertBefore,
-  // @ts-ignore
   warnsIfNotActing: true,
   supportsMutation: true,
   isPrimaryRenderer: false,
   scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
   cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
-  // @ts-ignore
   setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
-  // @ts-ignore
   clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
   noTimeout: -1,
   appendInitialChild: appendChild,
@@ -556,7 +554,7 @@ const Renderer = Reconciler<any, any, THREE.Object3D, any, any, any, any, any, a
     // Returning true will trigger commitMount
     return instance.__handlers
   },
-  commitMount(instance: any, type, props) {
+  commitMount(instance: any /*, type, props*/) {
     // https://github.com/facebook/react/issues/20271
     // This will make sure events are only added once to the central container
     const container = instance.__container
