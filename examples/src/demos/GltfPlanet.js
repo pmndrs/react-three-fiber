@@ -19,9 +19,6 @@ const attachObjectAttributesPosition = ['attributes', 'position']
 function PlanetComponent(props) {
   const group = React.useRef()
   const { nodes, materials } = useLoader(GLTFLoader, planet, draco())
-
-  console.log(nodes['planet.001_1'].geometry)
-
   return (
     <group ref={group} {...props} dispose={null}>
       <group rotation={rotation1}>

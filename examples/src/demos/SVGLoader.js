@@ -33,7 +33,9 @@ function SceneComponent({ urls }) {
   const [page, setPage] = React.useState(0)
   React.useEffect(() => {
     const interval = window.setInterval(() => setPage((i) => (i + 1) % urls.length), 3000)
-    return () => { window.clearInterval(interval) }
+    return () => {
+      window.clearInterval(interval)
+    }
   }, [urls.length])
 
   const { color } = useSpring({
@@ -61,8 +63,8 @@ function SceneComponent({ urls }) {
       <ambientLight intensity={0.5} />
       <spotLight intensity={0.5} position={spotLightPosition} />
       <mesh scale={scale1} rotation={rotation1}>
-        <planeBufferGeometry attach="geometry" args={args1} />
-        <a.meshPhongMaterial attach="material" color={color} depthTest={false} />
+        <planeBufferGeometry args={args1} />
+        <a.meshPhongMaterial color={color} depthTest={false} />
       </mesh>
       <a.group position={position} rotation={rotation2}>
         {transitions.map(function mapper({
@@ -70,18 +72,17 @@ function SceneComponent({ urls }) {
           key,
           props: { opacity, position, rotation },
         }) {
-          // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+          // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
           const args = [shape] // to complex to optimize
           return (
             <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + index])}>
               <a.meshPhongMaterial
-                attach="material"
                 color={color}
                 opacity={opacity.interpolate((o) => o * fillOpacity)}
                 depthWrite={false}
                 transparent
               />
-              <shapeBufferGeometry attach="geometry" args={args} />
+              <shapeBufferGeometry args={args} />
             </a.mesh>
           )
         })}
@@ -91,7 +92,6 @@ function SceneComponent({ urls }) {
 }
 
 const Scene = React.memo(SceneComponent)
-
 const camera = { fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }
 const urls = [night, city, morning, tubes, woods, beach]
 
@@ -101,7 +101,7 @@ function SVGLoader() {
   }, [])
 
   return (
-    <Canvas invalidateFrameloop camera={camera} onCreated={onCreated}>
+    <Canvas colorManagement={false} invalidateFrameloop camera={camera} onCreated={onCreated}>
       <React.Suspense fallback={null}>
         <Scene urls={urls} />
       </React.Suspense>

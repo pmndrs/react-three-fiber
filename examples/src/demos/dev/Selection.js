@@ -102,12 +102,6 @@ function Selection() {
             <sphereBufferGeometry attach="geometry" args={args4} />
             <meshBasicMaterial attach="material" color="black" transparent opacity={0.2} />
           </mesh>
-          <new object={THREE.Object3D}>
-            <mesh renderOrder={6} onPointerOver={onPointerOverMeshRed} onPointerOut={onPointerOutMeshRed}>
-              <sphereBufferGeometry attach="geometry" args={args5} />
-              <meshBasicMaterial attach="material" color="red" transparent opacity={1} />
-            </mesh>
-          </new>
         </group>
       </group>
       <group position={position2}>

@@ -12,7 +12,7 @@ describe('point and click', () => {
   beforeAll(async () => {
     await browser.newPage()
     await page.setViewport({ width, height })
-    await page.goto('http://localhost:3000/#/demo/ClickAndHover')
+    await page.goto('http://localhost:3000/#/demo/ClickAndHover?dev=true')
     await page.waitForSelector('canvas')
     await page.waitForTimeout(500)
   })
@@ -31,7 +31,7 @@ describe('point and click', () => {
   beforeAll(async () => {
     await browser.newPage()
     await page.setViewport({ width, height })
-    await page.goto('http://localhost:3000/#/demo/StopPropagation')
+    await page.goto('http://localhost:3000/#/demo/StopPropagation?dev=true')
     await page.waitForSelector('canvas')
     await page.waitForTimeout(500)
   })

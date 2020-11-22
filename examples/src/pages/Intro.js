@@ -1,6 +1,6 @@
 import * as React from 'react'
 import styled from 'styled-components'
-import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
+import { Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
 import * as demos from '../demos'
 import { Page as PageImpl } from '../styles'
 
@@ -37,13 +37,14 @@ export default function Intro() {
 }
 
 function Demos() {
+  const location = useLocation()
   const match = useRouteMatch('/demo/:name')
+  const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
   const { bright } = visibleComponents[match ? match.params.name : defaultComponent]
-
   return (
     <DemoPanel>
       {Object.entries(visibleComponents).map(function mapper([name, item]) {
-        // // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
+        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
         const style = {
           // to complex to optimize
           background:
@@ -53,7 +54,7 @@ function Demos() {
               ? '#2c2d31'
               : 'white',
         }
-        return (
+        return dev ? null : (
           <Link key={name} to={`/demo/${name}`}>
             <Spot style={style} />
           </Link>

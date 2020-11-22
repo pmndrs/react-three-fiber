@@ -436,7 +436,7 @@ function removeChild(parentInstance: any, child: any): void {
         removeRecursive(child.__objects, child)
         removeRecursive(child.children, child, true)
         // Dispose item
-        if (child.dispose) child.dispose()
+        if (child.dispose && child.type !== 'Scene') child.dispose()
         else if (child.__dispose) child.__dispose()
         // Remove references
         delete child.__container

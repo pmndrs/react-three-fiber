@@ -94,14 +94,14 @@ function Bird() {
 
   const x = (15 + Math.random() * 30) * (Math.round(Math.random()) ? -1 : 1)
 
-  // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+  // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
   const position = [
     x,
     -10 + Math.random() * 20,
     -5 + Math.random() * 10,
   ]
 
-  // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+  // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
   const rotation2 = [0, x > 0 ? Math.PI : 0, 0]
 
   return (

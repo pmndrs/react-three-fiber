@@ -675,7 +675,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
 }
 
 function dispose(obj: any) {
-  if (obj.dispose) obj.dispose()
+  if (obj.dispose && obj.type !== 'Scene') obj.dispose()
   for (const p in obj) {
     if (typeof p === 'object' && (p as any).dispose) (p as any).dispose()
     delete obj[p]

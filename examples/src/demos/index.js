@@ -7,17 +7,12 @@ const MeshLine = { descr: '', tags: [], Component: lazy(() => import('./MeshLine
 const Montage = { descr: '', tags: [], Component: lazy(() => import('./Montage')), bright: true }
 const Physics = { descr: '', tags: [], Component: lazy(() => import('./Physics')), bright: false }
 const Swarm = { descr: '', tags: [], Component: lazy(() => import('./Swarm')), bright: false }
-const Textures = { descr: '', tags: [], Component: lazy(() => import('./Textures')), bright: false }
 const SVGLoader = { descr: '', tags: [], Component: lazy(() => import('./SVGLoader')), bright: false }
 const VolumetricLight = { descr: '', tags: [], Component: lazy(() => import('./VolumetricLight')), bright: false }
 const Refraction = { descr: '', tags: [], Component: lazy(() => import('./Refraction')), bright: false }
 
 const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./dev/Viewcube')), dev: true }
 const Concurrent = { descr: '', tags: [], Component: lazy(() => import('./dev/Concurrent')), dev: true }
-//const Dom = { descr: '', tags: [], Component: lazy(() => import('./dev/Dom')), dev: true }
-//const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true }
-//const CSS2DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS2DRenderer')), dev: true }
-//const CSS3DRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/CSS3DRenderer')), dev: true }
 const Selection = { descr: '', tags: [], Component: lazy(() => import('./dev/Selection')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./dev/Pointcloud')), dev: true, bright: true }
 const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./dev/Reparenting')), dev: true, bright: true }
@@ -32,14 +27,11 @@ const InstancedMesh = {
   bright: true,
 }
 const GltfAnimation = { descr: '', tags: [], Component: lazy(() => import('./dev/GltfAnimation')), dev: true }
-//const VR = { descr: '', tags: [], Component: lazy(() => import('./dev/VR')), dev: true }
 const ShaderMaterial = { descr: '', tags: [], Component: lazy(() => import('./dev/ShaderMaterial')), dev: true }
-const Suspense = { descr: '', tags: [], Component: lazy(() => import('./dev/Suspense')), dev: true, bright: true }
 const SelectiveBloom = { descr: '', tags: [], Component: lazy(() => import('./dev/SelectiveBloom')), dev: true }
 const Scroll = { descr: '', tags: [], Component: lazy(() => import('./dev/Scroll')), dev: true }
 const Lines = { descr: '', tags: [], Component: lazy(() => import('./dev/Lines')), dev: true }
 const WebGL2 = { descr: '', tags: [], Component: lazy(() => import('./dev/WebGL2')), dev: true }
-const Bloom = { descr: '', tags: [], Component: lazy(() => import('./dev/Bloom')), bright: false, dev: true }
 
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./tests/ClickAndHover')), dev: true }
 const StopPropagation = { descr: '', tags: [], Component: lazy(() => import('./tests/StopPropagation')), dev: true }
@@ -54,9 +46,7 @@ export {
   VolumetricLight,
   GltfPlanet,
   Physics,
-  Textures,
   Gestures,
-  Bloom,
   GltfAnimation,
   SVGLoader,
   Hud,
@@ -69,13 +59,8 @@ export {
   Scroll,
   SelectiveBloom,
   ShaderMaterial,
-  Suspense,
   WebGL2,
   Selection,
-  //SVGRenderer,
-  //CSS2DRenderer,
-  //CSS3DRenderer,
-  //Dom,
   Concurrent,
   Viewcube,
   ClickAndHover,
