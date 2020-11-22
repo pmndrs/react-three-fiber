@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useEffect } from 'react'
+import * as React from 'react'
 import { Canvas } from 'react-three-fiber'
 import { useSprings, a } from 'react-spring/three'
 
@@ -31,7 +31,7 @@ function Content() {
     ...random(i),
     config: { mass: 20, tension: 150, friction: 50 },
   }))
-  useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [set])
+  React.useEffect(() => void setInterval(() => set((i) => ({ ...random(i), delay: i * 40 })), 3000), [set])
   return data.map((d, index) => (
     <a.mesh key={index} {...springs[index]} castShadow receiveShadow>
       <boxBufferGeometry args={d.args} />
@@ -39,6 +39,8 @@ function Content() {
     </a.mesh>
   ))
 }
+
+const position1 = [150, 150, 250]
 
 function Lights() {
   return (
@@ -49,7 +51,7 @@ function Lights() {
         castShadow
         intensity={0.2}
         angle={Math.PI / 7}
-        position={[150, 150, 250]}
+        position={position1}
         penumbra={1}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -58,20 +60,21 @@ function Lights() {
   )
 }
 
-export default function App() {
+const style = { background: '#A2CCB6' }
+const camera = { position: [0, 0, 100], fov: 100 }
+const planeBufferGeometryArgs = [1000, 1000]
+
+function Montage() {
   return (
-    <Canvas
-      colorManagement={false}
-      shadowMap
-      style={{ background: '#A2CCB6' }}
-      camera={{ position: [0, 0, 100], fov: 100 }}
-    >
+    <Canvas colorManagement={false} shadowMap style={style} camera={camera}>
       <Lights />
       <mesh receiveShadow>
-        <planeBufferGeometry args={[1000, 1000]} />
+        <planeBufferGeometry args={planeBufferGeometryArgs} />
         <meshStandardMaterial color="#A2ACB6" roughness={1} />
       </mesh>
       <Content />
     </Canvas>
   )
 }
+
+export default React.memo(Montage)

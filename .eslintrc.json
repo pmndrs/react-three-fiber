@@ -5,15 +5,16 @@
     "node": true
   },
   "extends": [
-    "prettier",
-    "prettier/react",
-    "prettier/@typescript-eslint",
     "plugin:prettier/recommended",
     "plugin:react-hooks/recommended",
     "plugin:import/errors",
-    "plugin:import/warnings"
+    "plugin:import/warnings",
+    "plugin:react-perf/recommended",
+    "prettier",
+    "prettier/react",
+    "prettier/@typescript-eslint"
   ],
-  "plugins": ["@typescript-eslint", "react", "prettier", "react-hooks", "import", "jest"],
+  "plugins": ["@typescript-eslint", "react", "react-perf", "react-hooks", "import", "jest", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -22,8 +23,8 @@
     "ecmaVersion": 2018,
     "sourceType": "module",
     "rules": {
-      "curly": ["warn", "multi-line", "consistent"],
       "no-console": "off",
+      "curly": ["warn", "multi-line", "consistent"],
       "no-empty-pattern": "warn",
       "no-duplicate-imports": "error",
       "import/no-unresolved": "off",
@@ -39,7 +40,13 @@
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
+      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }],
+      "react-perf/jsx-no-new-object-as-prop": [
+        "error",
+        {
+          "nativeAllowList": ["style"]
+        }
+      ]
     }
   },
   "settings": {
@@ -66,6 +73,12 @@
       "files": ["src"],
       "parserOptions": {
         "project": "./tsconfig.json"
+      }
+    },
+    {
+      "files": ["examples"],
+      "rules": {
+        "no-console": ["warn"]
       }
     }
   ]

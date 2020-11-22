@@ -1,0 +1,20 @@
+{
+    "extends": ["react-app", "plugin:react-perf/recommended"],
+    "plugins": ["react-perf"],
+    "rules": {
+        "react-perf/jsx-no-new-object-as-prop": [
+            "error",
+            {
+            "nativeAllowList": ["style"]
+            }
+        ]
+    },
+    "overrides": [
+        {
+            "files": ["**/*.ts?(x)"],
+            "rules": {
+
+            }
+        }
+    ]
+}

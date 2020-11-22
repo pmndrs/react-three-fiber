@@ -1,13 +1,16 @@
-import React, { useMemo, useRef, useCallback } from 'react'
+import * as React from 'react'
 import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 extend({ OrbitControls })
 
+const attachObjectAttributesPosition = ['attributes', 'position']
+const attachObjectAttributesColor = ['attributes', 'color']
+
 function Particles({ pointCount }) {
-  const [positions, colors] = useMemo(() => {
-    let positions = [],
-      colors = []
+  const [positions, colors] = React.useMemo(() => {
+    const positions = []
+    const colors = []
     for (let i = 0; i < pointCount; i++) {
       positions.push(5 - Math.random() * 10)
       positions.push(5 - Math.random() * 10)
@@ -19,8 +22,8 @@ function Particles({ pointCount }) {
     return [new Float32Array(positions), new Float32Array(colors)]
   }, [pointCount])
 
-  const attrib = useRef()
-  const hover = useCallback((e) => {
+  const attrib = React.useRef()
+  const onPointerOver = React.useCallback((e) => {
     e.stopPropagation()
     attrib.current.array[e.index * 3] = 1
     attrib.current.array[e.index * 3 + 1] = 1
@@ -28,7 +31,7 @@ function Particles({ pointCount }) {
     attrib.current.needsUpdate = true
   }, [])
 
-  const unhover = useCallback((e) => {
+  const onPointerOut = React.useCallback((e) => {
     attrib.current.array[e.index * 3] = 1
     attrib.current.array[e.index * 3 + 1] = 0.5
     attrib.current.array[e.index * 3 + 2] = 0.5
@@ -36,17 +39,17 @@ function Particles({ pointCount }) {
   }, [])
 
   return (
-    <points onPointerOver={hover} onPointerOut={unhover}>
+    <points onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
       <bufferGeometry attach="geometry">
         <bufferAttribute
-          attachObject={['attributes', 'position']}
+          attachObject={attachObjectAttributesPosition}
           count={positions.length / 3}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           ref={attrib}
-          attachObject={['attributes', 'color']}
+          attachObject={attachObjectAttributesColor}
           count={colors.length / 3}
           array={colors}
           itemSize={3}
@@ -58,19 +61,24 @@ function Particles({ pointCount }) {
 }
 
 function Controls() {
-  const controls = useRef()
+  const ref = React.useRef()
   const { camera, gl } = useThree()
-  useFrame(() => controls.current.update())
-  return (
-    <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
-  )
+  useFrame(() => ref.current.update())
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
+
+  return <orbitControls ref={ref} args={args} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
 }
 
-export default function App() {
+const camera = { zoom: 60 }
+const raycaster = { params: { Points: { threshold: 0.2 } } }
+
+function PointCloud() {
   return (
-    <Canvas orthographic camera={{ zoom: 60 }} raycaster={{ params: { Points: { threshold: 0.2 } } }}>
+    <Canvas orthographic camera={camera} raycaster={raycaster}>
       <Particles pointCount={100} />
       <Controls />
     </Canvas>
   )
 }
+
+export default React.memo(PointCloud)

@@ -3,7 +3,7 @@
     "target": "es6",
     "module": "commonjs",
     "moduleResolution": "node",
-    "esModuleInterop": true,
+    "esModuleInterop": false,
     "jsx": "react",
     "pretty": true,
     "strict": true,

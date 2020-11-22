@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import * as React from 'react'
 import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
@@ -12,14 +12,18 @@ import { WaterPass } from './../resources/postprocessing/WaterPass'
 // Makes these prototypes available as "native" jsx-string elements
 extend({ EffectComposer, ShaderPass, RenderPass, WaterPass, UnrealBloomPass, FilmPass, GlitchPass })
 
-function Swarm({ count, mouse }) {
-  const mesh = useRef()
-  const light = useRef()
+const scale1 = [1, 1, 6]
+const args1 = [4, 0]
+const args2 = [1, 0]
+
+function SwarmComponent({ count, mouse }) {
+  const mesh = React.useRef()
+  const light = React.useRef()
   const { viewport } = useThree()
   const aspect = viewport().factor
-  const dummy = useMemo(() => new THREE.Object3D(), [])
+  const dummy = React.useMemo(() => new THREE.Object3D(), [])
   // Generate some random positions, speed factors and timings
-  const particles = useMemo(() => {
+  const particles = React.useMemo(() => {
     const temp = []
     for (let i = 0; i < count; i++) {
       const t = Math.random() * 100
@@ -60,63 +64,79 @@ function Swarm({ count, mouse }) {
     })
     mesh.current.instanceMatrix.needsUpdate = true
   })
+  const instancedMeshArgs = React.useMemo(() => [null, null, count], [count])
+
   return (
     <>
       <pointLight ref={light} distance={40} intensity={8} color="lightblue">
-        <mesh scale={[1, 1, 6]}>
-          <dodecahedronBufferGeometry attach="geometry" args={[4, 0]} />
+        <mesh scale={scale1}>
+          <dodecahedronBufferGeometry attach="geometry" args={args1} />
           <meshBasicMaterial attach="material" color="lightblue" transparent />
         </mesh>
       </pointLight>
-      <instancedMesh ref={mesh} args={[null, null, count]}>
-        <dodecahedronBufferGeometry attach="geometry" args={[1, 0]} />
+      <instancedMesh ref={mesh} args={instancedMeshArgs}>
+        <dodecahedronBufferGeometry attach="geometry" args={args2} />
         <meshStandardMaterial attach="material" color="#020000" roughness={0.5} metalness={0.5} />
       </instancedMesh>
     </>
   )
 }
 
+const filmPassArgs = [0.25, 0.4, 1500, false]
+
 function Effect({ down }) {
-  const composer = useRef()
+  const composer = React.useRef()
   const { scene, gl, size, camera } = useThree()
-  const aspect = useMemo(() => new THREE.Vector2(size.width, size.height), [size])
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  const aspect = React.useMemo(() => new THREE.Vector2(size.width, size.height), [size])
+  React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(() => composer.current.render(), 1)
+  const effectComposerArgs = React.useMemo(() => [gl], [gl])
+
+  const unrealBloomPassArgs = React.useMemo(() => [aspect, 2, 1, 0], [aspect])
+
   return (
-    <effectComposer ref={composer} args={[gl]}>
+    <effectComposer ref={composer} args={effectComposerArgs}>
       <renderPass attachArray="passes" scene={scene} camera={camera} />
       <waterPass attachArray="passes" factor={2} />
-      <unrealBloomPass attachArray="passes" args={[aspect, 2, 1, 0]} />
-      <filmPass attachArray="passes" args={[0.25, 0.4, 1500, false]} />
+      <unrealBloomPass attachArray="passes" args={unrealBloomPassArgs} />
+      <filmPass attachArray="passes" args={filmPassArgs} />
       <glitchPass attachArray="passes" factor={down ? 1 : 0} />
     </effectComposer>
   )
 }
 
-export default function App() {
-  const [down, set] = useState(false)
-  const mouse = useRef([300, -200])
-  const onMouseMove = useCallback(
+const style = { width: '100%', height: '100%' }
+const camera = { fov: 100, position: [0, 0, 30] }
+const spotLightPosition = [0, 0, 70]
+const planeBufferGeometryArgs = [10000, 10000]
+
+function Swarm() {
+  const [down, set] = React.useState(false)
+  const mouse = React.useRef([300, -200])
+  const onMouseMove = React.useCallback(
     ({ clientX: x, clientY: y }) => (mouse.current = [x - window.innerWidth / 2, y - window.innerHeight / 2]),
     []
   )
+  const onMouseUp = React.useCallback(function callback() {
+    set(false)
+  }, [])
+  const onMouseDown = React.useCallback(function callback() {
+    set(true)
+  }, [])
   return (
-    <div
-      style={{ width: '100%', height: '100%' }}
-      onMouseMove={onMouseMove}
-      onMouseUp={() => set(false)}
-      onMouseDown={() => set(true)}
-    >
-      <Canvas camera={{ fov: 100, position: [0, 0, 30] }}>
+    <div style={style} onMouseMove={onMouseMove} onMouseUp={onMouseUp} onMouseDown={onMouseDown}>
+      <Canvas camera={camera}>
         <pointLight distance={60} intensity={2} color="white" />
-        <spotLight intensity={2} position={[0, 0, 70]} penumbra={1} color="red" />
+        <spotLight intensity={2} position={spotLightPosition} penumbra={1} color="red" />
         <mesh>
-          <planeBufferGeometry attach="geometry" args={[10000, 10000]} />
+          <planeBufferGeometry attach="geometry" args={planeBufferGeometryArgs} />
           <meshStandardMaterial attach="material" color="#00ffff" depthTest={false} />
         </mesh>
-        <Swarm mouse={mouse} count={20000} />
+        <SwarmComponent mouse={mouse} count={20000} />
         <Effect down={down} />
       </Canvas>
     </div>
   )
 }
+
+export default React.memo(Swarm)

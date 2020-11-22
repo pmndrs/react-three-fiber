@@ -1,5 +1,5 @@
 import { TextureLoader, WebGLRenderTarget, Object3D, LinearFilter } from 'three'
-import React, { Suspense, useMemo, useRef } from 'react'
+import * as React from 'react'
 import { Canvas, useLoader, useThree, useFrame } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import BackfaceMaterial from '../resources/shaders/Backface'
@@ -10,13 +10,22 @@ import textureUrl from '../resources/images/backdrop.jpg'
 function Background() {
   const { viewport, aspect } = useThree()
   const texture = useLoader(TextureLoader, textureUrl)
-  useMemo(() => (texture.minFilter = LinearFilter), [texture])
+  
+  React.useMemo(() => (texture.minFilter = LinearFilter), [texture]) // Isn't useEffect fore correct in this place instead of useMemo?
   // Calculates a plane filling the screen similar to background-size: cover
   const { width, height } = viewport()
-  const adaptedHeight = 3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
-  const adaptedWidth = 5000 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800)
+
+  const scale = React.useMemo(
+    () => [
+      5000 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800),
+      3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800),
+      1,
+    ],
+    [width, height, aspect]
+  )
+
   return (
-    <mesh layers={1} scale={[adaptedWidth, adaptedHeight, 1]}>
+    <mesh layers={1} scale={scale}>
       <planeBufferGeometry attach="geometry" />
       <meshBasicMaterial attach="material" map={texture} depthTest={false} />
     </mesh>
@@ -25,10 +34,10 @@ function Background() {
 
 function Diamonds() {
   const { size, viewport, gl, scene, camera, clock } = useThree()
-  const model = useRef()
+  const model = React.useRef()
   const { nodes } = useLoader(GLTFLoader, diamondUrl)
   // Create Fbo's and materials
-  const [envFbo, backfaceFbo, backfaceMaterial, refractionMaterial] = useMemo(() => {
+  const [envFbo, backfaceFbo, backfaceMaterial, refractionMaterial] = React.useMemo(() => {
     const envFbo = new WebGLRenderTarget(size.width, size.height)
     const backfaceFbo = new WebGLRenderTarget(size.width, size.height)
     const backfaceMaterial = new BackfaceMaterial()
@@ -41,8 +50,8 @@ function Diamonds() {
   }, [size])
 
   // Create random position data
-  const dummy = useMemo(() => new Object3D(), [])
-  const diamonds = useMemo(() => {
+  const dummy = React.useMemo(() => new Object3D(), [])
+  const diamonds = React.useMemo(() => {
     const { width } = viewport()
     return new Array(80).fill().map((_, i) => ({
       position: [
@@ -102,20 +111,26 @@ function Diamonds() {
     gl.render(scene, camera)
   }, 1)
 
+  const args = React.useMemo(() => [nodes.Cylinder.geometry, null, diamonds.length], [nodes.Cylinder.geometry, diamonds.length])
+
   return (
-    <instancedMesh ref={model} args={[nodes.Cylinder.geometry, null, diamonds.length]} dispose={false}>
+    <instancedMesh ref={model} args={args} dispose={false}>
       <meshBasicMaterial attach="material" />
     </instancedMesh>
   )
 }
 
-export default function App() {
+const camera = { fov: 50, position: [0, 0, 30] }
+
+function Refraction() {
   return (
-    <Canvas colorManagement={false} camera={{ fov: 50, position: [0, 0, 30] }}>
-      <Suspense fallback={null}>
+    <Canvas colorManagement={false} camera={camera}>
+      <React.Suspense fallback={null}>
         <Background />
         <Diamonds />
-      </Suspense>
+      </React.Suspense>
     </Canvas>
   )
 }
+
+export default React.memo(Refraction)

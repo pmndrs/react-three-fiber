@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useEffect, useRef, useMemo } from 'react'
+import * as React from 'react'
 import { Canvas, useThree, useFrame, extend } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
@@ -10,11 +10,17 @@ import VolumetricLightShader from '../resources/shaders/VolumetricLightShader'
 
 extend({ EffectComposer, RenderPass, ShaderPass })
 
+const shaderPassArgs1 = [VolumetricLightShader]
+const shaderPassArgs2 = [AdditiveBlendingShader]
+const shaderPassArgs3 = [FXAAShader]
+
 const DEFAULT_LAYER = 0
 const OCCLUSION_LAYER = 1
+const position1 = [0, 0, 2]
+const args1 = [0.8, 0.28, 150, 32]
 
-function Torusknot({ layer = DEFAULT_LAYER }) {
-  const ref = useRef()
+function TorusKnot({ layer = DEFAULT_LAYER }) {
+  const ref = React.useRef()
   const Material = `mesh${layer === DEFAULT_LAYER ? 'Physical' : 'Basic'}Material`
   useFrame(({ clock }) => {
     ref.current.position.x = Math.cos(clock.getElapsedTime()) * 1.5
@@ -23,8 +29,8 @@ function Torusknot({ layer = DEFAULT_LAYER }) {
     ref.current.rotation.z += 0.01
   })
   return (
-    <mesh ref={ref} position={[0, 0, 2]} layers={layer} receiveShadow castShadow>
-      <torusKnotBufferGeometry attach="geometry" args={[0.8, 0.28, 150, 32]} />
+    <mesh ref={ref} position={position1} layers={layer} receiveShadow castShadow>
+      <torusKnotBufferGeometry attach="geometry" args={args1} />
       <Material
         attach="material"
         color={layer === DEFAULT_LAYER ? 'hotpink' : 'black'}
@@ -36,12 +42,14 @@ function Torusknot({ layer = DEFAULT_LAYER }) {
   )
 }
 
-function VolumetricLight() {
-  const ref = useRef()
+const args2 = [1, 20, 1]
+
+function VolumetricLightComponent() {
+  const ref = React.useRef()
   useFrame(() => (ref.current.rotation.z += 0.005))
   return (
     <mesh ref={ref} layers={OCCLUSION_LAYER}>
-      <boxBufferGeometry attach="geometry" args={[1, 20, 1]} />
+      <boxBufferGeometry attach="geometry" args={args2} />
       <meshBasicMaterial attach="material" color="white" />
     </mesh>
   )
@@ -49,11 +57,11 @@ function VolumetricLight() {
 
 function Effects() {
   const { gl, scene, camera, size } = useThree()
-  const occlusionRenderTarget = useMemo(() => new THREE.WebGLRenderTarget(), [])
-  const occlusionComposer = useRef()
-  const composer = useRef()
+  const occlusionRenderTarget = React.useMemo(() => new THREE.WebGLRenderTarget(), [])
+  const occlusionComposer = React.useRef()
+  const composer = React.useRef()
 
-  useEffect(() => {
+  React.useEffect(() => {
     occlusionComposer.current.setSize(size.width, size.height)
     composer.current.setSize(size.width, size.height)
   }, [size])
@@ -65,24 +73,25 @@ function Effects() {
     composer.current.render()
   }, 1)
 
+  const effectComposerArgs = React.useMemo(() => [gl, occlusionRenderTarget], [gl, occlusionRenderTarget])
+  const renderPassArgs = React.useMemo(() => [scene, camera], [scene, camera])
+  const effectComposerArgs2 = React.useMemo(() => [gl], [gl])
+  const materialUniformResolutionValue = React.useMemo(() => [1 / size.width, 1 / size.height], [size.width, size.height])
+
   return (
     <>
-      <VolumetricLight />
-      <effectComposer ref={occlusionComposer} args={[gl, occlusionRenderTarget]} renderToScreen={false}>
-        <renderPass attachArray="passes" args={[scene, camera]} />
-        <shaderPass attachArray="passes" args={[VolumetricLightShader]} needsSwap={false} />
+      <VolumetricLightComponent />
+      <effectComposer ref={occlusionComposer} args={effectComposerArgs} renderToScreen={false}>
+        <renderPass attachArray="passes" args={renderPassArgs} />
+        <shaderPass attachArray="passes" args={shaderPassArgs1} needsSwap={false} />
       </effectComposer>
-      <effectComposer ref={composer} args={[gl]}>
-        <renderPass attachArray="passes" args={[scene, camera]} />
+      <effectComposer ref={composer} args={effectComposerArgs2}>
+        <renderPass attachArray="passes" args={renderPassArgs} />
+        <shaderPass attachArray="passes" args={shaderPassArgs2} uniforms-tAdd-value={occlusionRenderTarget.texture} />
         <shaderPass
           attachArray="passes"
-          args={[AdditiveBlendingShader]}
-          uniforms-tAdd-value={occlusionRenderTarget.texture}
-        />
-        <shaderPass
-          attachArray="passes"
-          args={[FXAAShader]}
-          material-uniforms-resolution-value={[1 / size.width, 1 / size.height]}
+          args={shaderPassArgs3}
+          material-uniforms-resolution-value={materialUniformResolutionValue}
           renderToScreen
         />
       </effectComposer>
@@ -90,22 +99,28 @@ function Effects() {
   )
 }
 
-export default function App() {
+const style = { background: '#171720' }
+const camera = { fov: 50, position: [0, 0, 7] }
+const spotLightPosition = [10, 10, 10]
+
+function VolumetricLight() {
   return (
-    <Canvas style={{ background: '#171720' }} shadowMap camera={{ fov: 50, position: [0, 0, 7] }}>
+    <Canvas style={style} shadowMap camera={camera}>
       <ambientLight />
       <pointLight intensity={4} />
       <spotLight
         castShadow
         intensity={1}
         angle={Math.PI / 10}
-        position={[10, 10, 10]}
+        position={spotLightPosition}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <Torusknot />
-      <Torusknot layer={OCCLUSION_LAYER} />
+      <TorusKnot />
+      <TorusKnot layer={OCCLUSION_LAYER} />
       <Effects />
     </Canvas>
   )
 }
+
+export default React.memo(VolumetricLight)

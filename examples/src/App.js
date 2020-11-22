@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { HashRouter as Router } from 'react-router-dom'
 import Intro from './pages/Intro'
 import { Global } from './styles'

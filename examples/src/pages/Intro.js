@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react'
+import * as React from 'react'
 import styled from 'styled-components'
 import { Link, Route, Switch, useRouteMatch } from 'react-router-dom'
 import * as demos from '../demos'
@@ -10,70 +10,58 @@ const visibleComponents = Object.entries(demos)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 export default function Intro() {
-  let match = useRouteMatch('/demo/:name')
-  let { bright } = visibleComponents[match ? match.params.name : defaultComponent]
+  const match = useRouteMatch('/demo/:name')
+
+  const { bright } = visibleComponents[match ? match.params.name : defaultComponent]
+  const render = React.useCallback(function callback({ match }) {
+    const Component = visibleComponents[match.params.name].Component
+    return <Component />
+  }, [])
+
+  const style = React.useMemo(() => ({ color: bright ? '#2c2d31' : 'white' }), [bright])
+
   return (
-    <Page>
-      <Suspense fallback={null}>
+    <PageImpl>
+      <React.Suspense fallback={null}>
         <Switch>
           <Route exact path="/" component={visibleComponents.Refraction.Component} />
-          <Route
-            exact
-            path="/demo/:name"
-            render={({ match }) => {
-              const Component = visibleComponents[match.params.name].Component
-              return <Component />
-            }}
-          />
+          <Route exact path="/demo/:name" render={render} />
         </Switch>
-      </Suspense>
+      </React.Suspense>
       <Demos />
-      <a href="https://github.com/pmndrs/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
+      <a href="https://github.com/pmndrs/react-three-fiber" style={style}>
         Github
       </a>
-    </Page>
+    </PageImpl>
   )
 }
 
 function Demos() {
-  let match = useRouteMatch('/demo/:name')
-  let { bright } = visibleComponents[match ? match.params.name : defaultComponent]
+  const match = useRouteMatch('/demo/:name')
+  const { bright } = visibleComponents[match ? match.params.name : defaultComponent]
+
   return (
     <DemoPanel>
-      {Object.entries(visibleComponents).map(([name, item]) => (
-        <Link key={name} to={`/demo/${name}`}>
-          <Spot
-            style={{
-              background:
-                (!match && name === defaultComponent) || (match && match.params.name === name)
-                  ? 'salmon'
-                  : bright
-                  ? '#2c2d31'
-                  : 'white',
-            }}
-          />
-        </Link>
-      ))}
+      {Object.entries(visibleComponents).map(function mapper([name, item]) {
+        // // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
+        const style = {
+          // to complex to optimize
+          background:
+            (!match && name === defaultComponent) || (match && match.params.name === name)
+              ? 'salmon'
+              : bright
+              ? '#2c2d31'
+              : 'white',
+        }
+        return (
+          <Link key={name} to={`/demo/${name}`}>
+            <Spot style={style} />
+          </Link>
+        )
+      })}
     </DemoPanel>
   )
 }
-
-const Page = styled(PageImpl)`
-  padding: 20px;
-
-  & > h1 {
-    position: absolute;
-    top: 70px;
-    left: 60px;
-  }
-
-  & > a {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-    font-size: 1.2em;
-  }
-`
 
 const DemoPanel = styled.div`
   position: absolute;

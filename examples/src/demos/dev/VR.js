@@ -1,11 +1,10 @@
-/* eslint-disable import/no-unresolved */
 import * as THREE from 'three'
 import * as WEBVR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
-import React, { useRef, useMemo } from 'react'
-import { Canvas, useFrame, useThree } from 'react-three-fiber'
+import * as React from 'react'
+import { Canvas, useFrame } from 'react-three-fiber'
 
 function Stars() {
-  let group = useRef()
+  let group = React.useRef()
   let theta = 0
   useFrame(() => {
     // Some things maybe shouldn't be declarative, we're in the render-loop here with full access to the instance
@@ -15,7 +14,7 @@ function Stars() {
     group.current.scale.set(s, s, s)
   })
 
-  const [geo, mat, coords] = useMemo(() => {
+  const [geo, mat, coords] = React.useMemo(() => {
     const geo = new THREE.SphereBufferGeometry(1, 10, 10)
     const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color('lightpink') })
     const coords = new Array(1000)
@@ -26,27 +25,31 @@ function Stars() {
 
   return (
     <group ref={group}>
-      {coords.map(([p1, p2, p3], i) => (
-        <mesh key={i} geometry={geo} material={mat} position={[p1, p2, p3]} />
+      {coords.map((position, i) => (
+        <mesh key={i} geometry={geo} material={mat} position={position} />
       ))}
     </group>
   )
 }
 
-export default function App() {
+const camera = { position: [0, 0, 15] }
+
+const spotLightPosition = [30, 30, 50]
+
+function VR() {
+  const onCreated = React.useCallback(function callback({ gl }) {
+    document.body.appendChild(WEBVR.createButton(gl))
+  }, [])
+
   return (
     <div className="main">
-      <Canvas
-        vr
-        camera={{ position: [0, 0, 15] }}
-        onCreated={({ gl }) => {
-          document.body.appendChild(WEBVR.createButton(gl))
-        }}
-      >
+      <Canvas vr camera={camera} onCreated={onCreated}>
         <ambientLight intensity={0.5} />
-        <spotLight intensity={0.6} position={[30, 30, 50]} angle={0.2} penumbra={1} castShadow />
+        <spotLight intensity={0.6} position={spotLightPosition} angle={0.2} penumbra={1} castShadow />
         <Stars />
       </Canvas>
     </div>
   )
 }
+
+export default React.memo(VR)

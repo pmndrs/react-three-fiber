@@ -1,14 +1,19 @@
+import * as React from 'react'
 import { Scene, Matrix4 } from 'three'
-import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, createPortal, useThree } from 'react-three-fiber'
 import { OrbitControls, OrthographicCamera, useCamera } from 'drei'
 
-function Viewcube() {
+const orthographicCameraPosition = [0, 0, 100]
+const pointLightPosition = [10, 10, 10]
+const boxBufferGeometryArgs = [60, 60, 60]
+const torusBufferGeometryArgs = [1, 0.5, 32, 100]
+
+function Cube() {
   const { gl, scene, camera, size } = useThree()
-  const [virtualScene] = useState(() => new Scene())
-  const virtualCam = useRef()
-  const ref = useRef()
-  const [hover, set] = useState(null)
+  const [virtualScene] = React.useState(() => new Scene())
+  const virtualCam = React.useRef()
+  const ref = React.useRef()
+  const [hover, set] = React.useState(null)
   const matrix = new Matrix4()
   useFrame(() => {
     matrix.getInverse(camera.matrix)
@@ -20,37 +25,46 @@ function Viewcube() {
     gl.render(virtualScene, virtualCam.current)
   }, 1)
 
+  const raycast = useCamera(virtualCam)
+
+  const position = React.useMemo(() => [size.width / 2 - 80, size.height / 2 - 80, 0], [size.width, size.height])
+
+  const onPointerOver = React.useCallback(function callback(e) {
+    e.stopPropagation()
+    set(null)
+  }, [])
+
+  const onPointerOut = React.useCallback(function callback(e) {
+    set(Math.floor(e.faceIndex / 2))
+  }, [])
+
   return createPortal(
     <>
-      <OrthographicCamera ref={virtualCam} makeDefault={false} position={[0, 0, 100]} />
-      <mesh
-        ref={ref}
-        raycast={useCamera(virtualCam)}
-        position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
-        onPointerOut={(e) => set(null)}
-        onPointerMove={(e) => set(Math.floor(e.faceIndex / 2))}
-      >
+      <OrthographicCamera ref={virtualCam} makeDefault={false} position={orthographicCameraPosition} />
+      <mesh ref={ref} raycast={raycast} position={position} onPointerOut={onPointerOver} onPointerMove={onPointerOut}>
         {[...Array(6)].map((_, index) => (
           <meshLambertMaterial attachArray="material" key={index} color={hover === index ? 'hotpink' : 'white'} />
         ))}
-        <boxBufferGeometry args={[60, 60, 60]} />
+        <boxBufferGeometry args={boxBufferGeometryArgs} />
       </mesh>
       <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={0.5} />
+      <pointLight position={pointLightPosition} intensity={0.5} />
     </>,
     virtualScene
   )
 }
 
-export default function App() {
+function ViewCube() {
   return (
     <Canvas invalidateFrameloop>
       <mesh>
-        <torusBufferGeometry args={[1, 0.5, 32, 100]} />
+        <torusBufferGeometry args={torusBufferGeometryArgs} />
         <meshNormalMaterial />
       </mesh>
       <OrbitControls screenSpacePanning />
-      <Viewcube />
+      <Cube />
     </Canvas>
   )
 }
+
+export default React.memo(ViewCube)

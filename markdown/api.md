@@ -1,6 +1,7 @@
 # API
 
 ## Table of Contents
+
 - [Canvas](#canvas)
 - [Objects and properties](#objects-and-properties)
 - [Automatic disposal](#automatic-disposal)
@@ -116,7 +117,7 @@ All properties whose underlying object has a `.set()` method can directly receiv
 
 You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
 
-Using the `attach` property objects bind to their parent and are taken off once they unmount. 
+Using the `attach` property objects bind to their parent and are taken off once they unmount.
 
 You can nest primitive objects, too:
 
@@ -162,7 +163,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in Threejs!
 
 ```jsx
-const mesh = useMemo(() => new THREE.Mesh(), [])
+const mesh = React.useMemo(() => new THREE.Mesh(), [])
 return <primitive object={mesh} position={[0, 0, 0]} />
 ```
 
@@ -285,6 +286,7 @@ onPointerUp={e => {
   e.target.releasePointerCapture(e.pointerId)
 }}
 ```
+
 </details>
 
 # Hooks
@@ -377,7 +379,7 @@ const Controls = () => {
 }
 ```
 
-If you need more control over the order in which `useFrame` callbacks are executed (and frames are rendered), you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
+If you need more control over the order in which `useFrame` callbacks are executed (and frames are rendered), you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.)
 
 Using a non-zero render priority will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly:
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useMemo, useEffect, useRef } from 'react'
+import * as React from 'react'
 import { Canvas, useThree, useFrame } from 'react-three-fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
@@ -8,8 +8,8 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader'
 
 function Sphere({ geometry, x, y, z, s }) {
-  const [active, set] = useState(false)
-  const ref = useRef()
+  const [active, set] = React.useState(false)
+  const ref = React.useRef()
   useFrame(({ clock }, delta) => {
     ref.current.position.x = x + (Math.sin(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
     ref.current.position.y = y + (Math.cos(((clock.getElapsedTime() / 2) * s) / 2) * Math.PI * s) / 5
@@ -31,15 +31,15 @@ function Sphere({ geometry, x, y, z, s }) {
 }
 
 function Spheres() {
-  const [geometry] = useState(() => new THREE.IcosahedronBufferGeometry(1, 0), [])
-  const data = useMemo(() => {
-    return new Array(50).fill().map((_, i) => ({
+  const [geometry] = React.useState(() => new THREE.IcosahedronBufferGeometry(1, 0), [])
+  const data = React.useMemo(() => new Array(50).fill().map((_, i) => ({
       x: Math.random() * 140 - 70,
       y: Math.random() * 140 - 70,
       z: Math.random() * 140 - 70,
       s: Math.random() + 8,
     }))
-  }, [])
+  , [])
+
   return data.map((props, i) => <Sphere key={i} {...props} geometry={geometry} />)
 }
 
@@ -52,7 +52,7 @@ const restoreMaterial = (obj) =>
 function Effect() {
   const { gl, scene, camera, size } = useThree()
 
-  const [bloom, final] = useMemo(() => {
+  const [bloom, final] = React.useMemo(() => {
     const renderScene = new RenderPass(scene, camera)
 
     const comp = new EffectComposer(gl)
@@ -83,7 +83,7 @@ function Effect() {
     return [comp, finalComposer]
   }, [gl, scene, camera, size.width, size.height])
 
-  useEffect(() => {
+  React.useEffect(() => {
     bloom.setSize(size.width, size.height)
     final.setSize(size.width, size.height)
   }, [bloom, final, size])

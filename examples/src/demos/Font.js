@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { Suspense, useEffect, useRef, useState, useMemo } from 'react'
+import * as React from 'react'
 import { Canvas, useLoader, useFrame, useUpdate } from 'react-three-fiber'
 
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
@@ -12,7 +12,7 @@ const birds = [flamingo, parrot, stork]
 
 function Text({ children, vAlign = 'center', hAlign = 'center', size = 1, color = '#000000', ...props }) {
   const font = useLoader(THREE.FontLoader, bold)
-  const config = useMemo(
+  const config = React.useMemo(
     () => ({
       font,
       size: 40,
@@ -36,18 +36,28 @@ function Text({ children, vAlign = 'center', hAlign = 'center', size = 1, color 
     },
     [children]
   )
+  const scale = React.useMemo(() => [0.1 * size, 0.1 * size, 0.1], [size])
+
+  const args = React.useMemo(() => [children, config], [children, config])
+
   return (
-    <group {...props} scale={[0.1 * size, 0.1 * size, 0.1]}>
+    <group {...props} scale={scale}>
       <mesh ref={mesh}>
-        <textGeometry attach="geometry" args={[children, config]} />
+        <textGeometry attach="geometry" args={args} />
         <meshNormalMaterial attach="material" />
       </mesh>
     </group>
   )
 }
 
+const position1 = [0, 4.2, 0]
+const position2 = [0, 0, 0]
+const position3 = [0, -4.2, 0]
+const position4 = [12, 0, 0]
+const position5 = [16.5, -4.2, 0]
+
 function Jumbo() {
-  const ref = useRef()
+  const ref = React.useRef()
   useFrame(
     ({ clock }) =>
       (ref.current.rotation.x = ref.current.rotation.y = ref.current.rotation.z =
@@ -56,36 +66,54 @@ function Jumbo() {
 
   return (
     <group ref={ref}>
-      <Text hAlign="left" position={[0, 4.2, 0]} children="REACT" />
-      <Text hAlign="left" position={[0, 0, 0]} children="THREE" />
-      <Text hAlign="left" position={[0, -4.2, 0]} children="FIBER" />
-      <Text hAlign="left" position={[12, 0, 0]} children="3" size={3} />
-      <Text hAlign="left" position={[16.5, -4.2, 0]} children="X" />
+      <Text hAlign="left" position={position1} children="REACT" />
+      <Text hAlign="left" position={position2} children="THREE" />
+      <Text hAlign="left" position={position3} children="FIBER" />
+      <Text hAlign="left" position={position4} children="3" size={3} />
+      <Text hAlign="left" position={position5} children="X" />
     </group>
   )
 }
 
+const rotation1 = [1.5707964611537577, 0, 0]
+
 // This component was auto-generated from GLTF by: https://github.com/react-spring/gltfjsx
-function Bird({ speed, factor, url, ...props }) {
+function Bird() {
+  const index = Math.round(Math.random() * (birds.length - 1))
+  const url = birds[index]
+  let speed = index === 2 ? 0.5 : index === 0 ? 2 : 5
+  let factor = index === 2 ? 0.5 + Math.random() : index === 0 ? 0.25 + Math.random() : 1 + Math.random() - 0.5
   const { nodes, materials, animations } = useLoader(GLTFLoader, url)
-  const group = useRef()
-  const [mixer] = useState(() => new THREE.AnimationMixer())
-  useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [animations, mixer])
+  const group = React.useRef()
+  const [mixer] = React.useState(() => new THREE.AnimationMixer())
+  React.useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [animations, mixer])
   useFrame((state, delta) => {
     group.current.rotation.y += Math.sin((delta * factor) / 2) * Math.cos((delta * factor) / 2) * 1.5
     mixer.update(delta * speed)
   })
 
+  const x = (15 + Math.random() * 30) * (Math.round(Math.random()) ? -1 : 1)
+
+  // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+  const position = [
+    x,
+    -10 + Math.random() * 20,
+    -5 + Math.random() * 10,
+  ]
+
+  // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+  const rotation2 = [0, x > 0 ? Math.PI : 0, 0]
+
   return (
     <group ref={group}>
-      <scene name="Scene" {...props}>
+      <scene name="Scene" position={position} rotation={rotation2}>
         <mesh
           name="Object_0"
           material={materials.Material_0_COLOR_0}
           geometry={nodes.Object_0.geometry}
           morphTargetDictionary={nodes.Object_0.morphTargetDictionary}
           morphTargetInfluences={nodes.Object_0.morphTargetInfluences}
-          rotation={[1.5707964611537577, 0, 0]}
+          rotation={rotation1}
         />
       </scene>
     </group>
@@ -94,38 +122,25 @@ function Bird({ speed, factor, url, ...props }) {
 
 function Birds() {
   return new Array(100).fill().map((_, i) => {
-    const x = (15 + Math.random() * 30) * (Math.round(Math.random()) ? -1 : 1)
-    const y = -10 + Math.random() * 20
-    const z = -5 + Math.random() * 10
-    const index = Math.round(Math.random() * (birds.length - 1))
-    const bird = birds[index]
-    let speed = index === 2 ? 0.5 : index === 0 ? 2 : 5
-    let factor = index === 2 ? 0.5 + Math.random() : index === 0 ? 0.25 + Math.random() : 1 + Math.random() - 0.5
-    return (
-      <Bird
-        key={i}
-        position={[x, y, z]}
-        rotation={[0, x > 0 ? Math.PI : 0, 0]}
-        speed={speed}
-        factor={factor}
-        url={bird}
-      />
-    )
+    return <Bird key={i} />
   })
 }
 
-export default function App() {
+const camera = { position: [0, 0, 35] }
+const style = { background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }
+const pointLightPosition = [40, 40, 40]
+
+function Font() {
   return (
-    <Canvas
-      camera={{ position: [0, 0, 35] }}
-      style={{ background: 'radial-gradient(at 50% 60%, #873740 0%, #272730 40%, #171720 80%, #070710 100%)' }}
-    >
+    <Canvas camera={camera} style={style}>
       <ambientLight intensity={2} />
-      <pointLight position={[40, 40, 40]} />
-      <Suspense fallback={null}>
+      <pointLight position={pointLightPosition} />
+      <React.Suspense fallback={null}>
         <Jumbo />
         <Birds />
-      </Suspense>
+      </React.Suspense>
     </Canvas>
   )
 }
+
+export default React.memo(Font)

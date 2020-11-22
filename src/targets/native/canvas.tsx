@@ -31,7 +31,7 @@ interface NativeCanvasProps extends CanvasProps {
 
 const styles: ViewStyle = { flex: 1 }
 
-const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) => {
+function IsReadyComponent({ gl, ...props }: NativeCanvasProps & { gl: any; size: any }) {
   const events = useCanvas({ ...props, gl } as UseCanvasProps)
 
   const panResponder = React.useMemo(() => {
@@ -68,14 +68,16 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
   }, [events])
 
   return <View {...panResponder.panHandlers} style={StyleSheet.absoluteFill} collapsable={false} />
-})
+}
 
-export const Canvas = React.memo((props: NativeCanvasProps) => {
+const IsReady = React.memo(IsReadyComponent)
+
+function CanvasComponent(props: NativeCanvasProps) {
   const [size, setSize] = useState<RectReadOnly | null>(null)
   const [renderer, setRenderer] = useState<Renderer>()
 
   // Handle size changes
-  const onLayout = (e: LayoutChangeEvent) => {
+  const onLayout = React.useCallback(function callback(e: LayoutChangeEvent) {
     const { x, y, width, height } = e.nativeEvent.layout
     setSize({
       x,
@@ -87,10 +89,10 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
       top: y,
       bottom: y + height,
     })
-  }
+  }, [])
 
   // Fired when EXGL context is initialized
-  const onContextCreate = async (gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
+  async function onContextCreate(gl: ExpoWebGLRenderingContext & WebGLRenderingContext) {
     if (props.onContextCreated) {
       // Allow customization of the GL Context
       // Useful for AR, VR and others
@@ -113,6 +115,7 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
 
     // Bind previous render method to Renderer
     const rendererRender = renderer.render.bind(renderer)
+
     renderer.render = (scene, camera) => {
       rendererRender(scene, camera)
       // End frame through the RN Bridge
@@ -122,17 +125,22 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
     setRenderer(renderer)
   }
 
-  const setNativeRef = (ref: any) => {
-    if (props.nativeRef_EXPERIMENTAL && !props.nativeRef_EXPERIMENTAL.current) {
-      props.nativeRef_EXPERIMENTAL.current = ref
-    }
-  }
+  const setNativeRef = React.useCallback(
+    function callback(ref: any) {
+      if (props.nativeRef_EXPERIMENTAL && !props.nativeRef_EXPERIMENTAL.current) {
+        props.nativeRef_EXPERIMENTAL.current = ref
+      }
+    },
+    [props.nativeRef_EXPERIMENTAL]
+  )
+
+  const style = React.useMemo(() => ({ ...styles, ...props.style }), [props.style])
 
   // 1. Ensure Size
   // 2. Ensure EXGLContext
   // 3. Call `useCanvas`
   return (
-    <View onLayout={onLayout} style={{ ...styles, ...props.style }}>
+    <View onLayout={onLayout} style={style}>
       {size && (
         <GLView
           nativeRef_EXPERIMENTAL={setNativeRef}
@@ -143,4 +151,6 @@ export const Canvas = React.memo((props: NativeCanvasProps) => {
       {size && renderer && <IsReady {...props} size={size!} gl={renderer} />}
     </View>
   )
-})
+}
+
+export const Canvas = React.memo(CanvasComponent)

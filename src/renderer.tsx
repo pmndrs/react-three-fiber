@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import React from 'react'
-import Reconciler from 'react-reconciler'
+import * as React from 'react'
+import * as Reconciler from 'react-reconciler'
 // @ts-ignore
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
@@ -131,7 +131,7 @@ function renderLoop(timestamp: number) {
   running = false
 }
 
-export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 1) {
+export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 1): void {
   if (state === true) {
     roots.forEach((root) => {
       const state = root.containerInfo.__state
@@ -147,7 +147,7 @@ export function invalidate(state: React.MutableRefObject<CanvasContext> | boolea
   }
 }
 
-export function forceResize() {
+export function forceResize(): void {
   roots.forEach((root) => root.containerInfo.__state.current.forceResize())
 }
 
@@ -359,7 +359,7 @@ function createInstance(
   return instance
 }
 
-function appendChild(parentInstance: any, child: any) {
+function appendChild(parentInstance: any, child: any): void {
   if (child) {
     if (child.isObject3D) {
       parentInstance.add(child)
@@ -382,7 +382,7 @@ function appendChild(parentInstance: any, child: any) {
   }
 }
 
-function insertBefore(parentInstance: any, child: any, beforeChild: any) {
+function insertBefore(parentInstance: any, child: any, beforeChild: any): void {
   if (child) {
     if (child.isObject3D) {
       child.parent = parentInstance
@@ -399,7 +399,7 @@ function insertBefore(parentInstance: any, child: any, beforeChild: any) {
   }
 }
 
-function removeRecursive(array: any, parent: any, clone = false) {
+function removeRecursive(array: any, parent: any, clone = false): void {
   if (array) {
     // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
     const target = clone ? [...array] : array
@@ -407,7 +407,7 @@ function removeRecursive(array: any, parent: any, clone = false) {
   }
 }
 
-function removeChild(parentInstance: any, child: any) {
+function removeChild(parentInstance: any, child: any): void {
   if (child) {
     if (child.isObject3D) {
       parentInstance.remove(child)
@@ -446,7 +446,7 @@ function removeChild(parentInstance: any, child: any) {
   }
 }
 
-function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber) {
+function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber): void {
   const parent = instance.parent
   const newInstance = createInstance(type, newProps, instance.__container, null, fiber)
   removeChild(parent, instance)
@@ -465,7 +465,22 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   })
 }
 
-const Renderer = Reconciler({
+// TODO: Here we need to provide types to generic
+//   Reconciler<
+//    Type,
+//    Props,
+//    Container,
+//    Instance,
+//    TextInstance,
+//    HydratableInstance,
+//    PublicInstance,
+//    HostContext,
+//    UpdatePayload,
+//    ChildSet,
+//    TimeoutHandle,
+//    NoTimeout
+//  >
+const Renderer = Reconciler<any, any, THREE.Object3D, any, any, any, any, any, any, any, any, any>({
   now,
   createInstance,
   removeChild,

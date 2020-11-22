@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { Suspense, useRef, useMemo } from 'react'
+import * as React from 'react'
 import { Canvas, useFrame, useLoader } from 'react-three-fiber'
 import suzanne from '../../resources/gltf/suzanne.blob'
 
@@ -8,12 +8,13 @@ function Suzanne() {
   // Load async model
   const geometry = useLoader(THREE.BufferGeometryLoader, suzanne)
   // When we're here it's loaded, now compute vertex normals
-  useMemo(() => {
+  // Isn't useEffect is better in this case?
+  React.useMemo(() => {
     geometry.computeVertexNormals()
     geometry.scale(0.5, 0.5, 0.5)
   }, [geometry])
   // Compute per-frame instance positions
-  const ref = useRef()
+  const ref = React.useRef()
   useFrame((state) => {
     const time = state.clock.getElapsedTime()
     ref.current.rotation.x = Math.sin(time / 4)
@@ -30,19 +31,24 @@ function Suzanne() {
         }
     ref.current.instanceMatrix.needsUpdate = true
   })
+  const args = React.useMemo(() => [geometry, null, 1000], [geometry])
   return (
-    <instancedMesh ref={ref} args={[geometry, null, 1000]}>
+    <instancedMesh ref={ref} args={args}>
       <meshNormalMaterial attach="material" />
     </instancedMesh>
   )
 }
 
-export default function () {
+const camera = { position: [0, 0, 15] }
+
+function InstancedMesh() {
   return (
-    <Canvas camera={{ position: [0, 0, 15] }}>
-      <Suspense fallback={null}>
+    <Canvas camera={camera}>
+      <React.Suspense fallback={null}>
         <Suzanne />
-      </Suspense>
+      </React.Suspense>
     </Canvas>
   )
 }
+
+export default React.memo(InstancedMesh)

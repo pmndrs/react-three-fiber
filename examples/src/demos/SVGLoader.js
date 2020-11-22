@@ -1,7 +1,7 @@
-import React, { Suspense, useState, useEffect, useMemo } from 'react'
+import * as React from 'react'
 import { Canvas, useLoader } from 'react-three-fiber'
 import { useTransition, useSpring, a } from 'react-spring/three'
-import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
+import { SVGLoader as THREESVGLoader } from 'three/examples/jsm/loaders/SVGLoader'
 import night from '../resources/images/svg/night.svg'
 import city from '../resources/images/svg/city.svg'
 import morning from '../resources/images/svg/morning.svg'
@@ -10,10 +10,15 @@ import woods from '../resources/images/svg/woods.svg'
 import beach from '../resources/images/svg/beach.svg'
 
 const colors = ['#21242d', '#ea5158', '#0d4663', '#ffbcb7', '#2d4a3e', '#8bd8d2']
+const spotLightPosition = [300, 300, 4000]
+const scale1 = [10000, 10000, 1]
+const rotation1 = [0, -0.2, 0]
+const args1 = [1, 1]
+const rotation2 = [0, 0, Math.PI]
 
-const Scene = React.memo(({ urls }) => {
-  const svgs = useLoader(SVGLoader, urls)
-  const shapes = useMemo(
+function SceneComponent({ urls }) {
+  const svgs = useLoader(THREESVGLoader, urls)
+  const shapes = React.useMemo(
     () =>
       svgs.map(({ paths }) =>
         paths.flatMap((path, index) =>
@@ -25,8 +30,11 @@ const Scene = React.memo(({ urls }) => {
     [svgs]
   )
 
-  const [page, setPage] = useState(0)
-  useEffect(() => void setInterval(() => setPage((i) => (i + 1) % urls.length), 3000), [urls.length])
+  const [page, setPage] = React.useState(0)
+  React.useEffect(() => {
+    const interval = window.setInterval(() => setPage((i) => (i + 1) % urls.length), 3000)
+    return () => { window.clearInterval(interval) }
+  }, [urls.length])
 
   const { color } = useSpring({
     from: { color: colors[0] },
@@ -46,17 +54,25 @@ const Scene = React.memo(({ urls }) => {
     unique: true,
     reset: true,
   })
+  const position = React.useMemo(() => [1220, 700, page], [page])
+
   return (
     <>
       <ambientLight intensity={0.5} />
-      <spotLight intensity={0.5} position={[300, 300, 4000]} />
-      <mesh scale={[10000, 10000, 1]} rotation={[0, -0.2, 0]}>
-        <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <spotLight intensity={0.5} position={spotLightPosition} />
+      <mesh scale={scale1} rotation={rotation1}>
+        <planeBufferGeometry attach="geometry" args={args1} />
         <a.meshPhongMaterial attach="material" color={color} depthTest={false} />
       </mesh>
-      <a.group position={[1220, 700, page]} rotation={[0, 0, Math.PI]}>
-        {transitions.map(
-          ({ item: { shape, color, fillOpacity, index }, key, props: { opacity, position, rotation } }) => (
+      <a.group position={position} rotation={rotation2}>
+        {transitions.map(function mapper({
+          item: { shape, color, fillOpacity, index },
+          key,
+          props: { opacity, position, rotation },
+        }) {
+          // // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
+          const args = [shape] // to complex to optimize
+          return (
             <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + index])}>
               <a.meshPhongMaterial
                 attach="material"
@@ -65,25 +81,32 @@ const Scene = React.memo(({ urls }) => {
                 depthWrite={false}
                 transparent
               />
-              <shapeBufferGeometry attach="geometry" args={[shape]} />
+              <shapeBufferGeometry attach="geometry" args={args} />
             </a.mesh>
           )
-        )}
+        })}
       </a.group>
     </>
   )
-})
+}
 
-export default function App() {
+const Scene = React.memo(SceneComponent)
+
+const camera = { fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }
+const urls = [night, city, morning, tubes, woods, beach]
+
+function SVGLoader() {
+  const onCreated = React.useCallback(function callback({ camera }) {
+    camera.lookAt(0, 0, 0)
+  }, [])
+
   return (
-    <Canvas
-      invalidateFrameloop
-      camera={{ fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }}
-      onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
-    >
-      <Suspense fallback={null}>
-        <Scene urls={[night, city, morning, tubes, woods, beach]} />
-      </Suspense>
+    <Canvas invalidateFrameloop camera={camera} onCreated={onCreated}>
+      <React.Suspense fallback={null}>
+        <Scene urls={urls} />
+      </React.Suspense>
     </Canvas>
   )
 }
+
+export default React.memo(SVGLoader)
