@@ -120,7 +120,7 @@ function Controls({ children }) {
   }, [invalidate])
 
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [camera, gl.domElement]
     },
     [camera, gl.domElement]

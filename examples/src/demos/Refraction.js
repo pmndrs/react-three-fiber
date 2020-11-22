@@ -15,7 +15,7 @@ function Background() {
   const { width, height } = viewport()
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [
         5000 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800),
         3800 * (aspect > 5000 / 3800 ? width / 5000 : height / 3800),
@@ -113,7 +113,7 @@ function Diamonds() {
   }, 1)
 
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [nodes.Cylinder.geometry, null, diamonds.length]
     },
     [nodes.Cylinder.geometry, diamonds.length]

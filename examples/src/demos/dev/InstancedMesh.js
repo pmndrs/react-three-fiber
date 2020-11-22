@@ -31,7 +31,7 @@ function Suzanne() {
     ref.current.instanceMatrix.needsUpdate = true
   })
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [geometry, null, 1000]
     },
     [geometry]

@@ -17,7 +17,7 @@ function Block({ i, change, ...props }) {
   const { viewport } = useThree()
 
   const { width, height, size } = React.useMemo(
-    function memo() {
+    () => {
       const { width, height } = viewport().factor
       const size = width / 100 / ROW
 
@@ -31,13 +31,13 @@ function Block({ i, change, ...props }) {
   )
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [size, size, size]
     },
     [size]
   )
   const position = React.useMemo(
-    function memo() {
+    () => {
       const left = -width / 100 / 2 + size / 2
       const top = height / 100 / 2 - size / 2
       const x = (i % ROW) * size

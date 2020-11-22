@@ -18,21 +18,21 @@ function Sphere({ geometry, x, y, z, s }) {
   }, [])
 
   const position = React.useMemo(
-    function memo() {
+    () => {
       return [x, y, z]
     },
     [x, y, z]
   )
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [s, s, s]
     },
     [s]
   )
 
   const userData = React.useMemo(
-    function memo() {
+    () => {
       return { active }
     },
     [active]

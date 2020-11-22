@@ -28,7 +28,7 @@ function Cube() {
   const raycast = useCamera(virtualCam)
 
   const position = React.useMemo(
-    function memo() {
+    () => {
       return [size.width / 2 - 80, size.height / 2 - 80, 0]
     },
     [size.width, size.height]

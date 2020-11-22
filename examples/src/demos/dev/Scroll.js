@@ -57,7 +57,7 @@ function Text({ children, position, opacity, color = 'white', fontSize = 410 }) 
   }, [])
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       const scale = width > height ? width : height
 
       return [scale, scale, 1]
@@ -81,7 +81,7 @@ function Background({ color }) {
   const { width, height } = viewport()
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [width, height, 1]
     },
     [width, height]
@@ -128,20 +128,20 @@ function Stars({ position }) {
 }
 
 /** This component creates a glitch effect */
-const Effects = React.memo(({ factor }) => {
+function EffectsComponent({ factor }) {
   const { gl, scene, camera, size } = useThree()
   const composer = React.useRef()
   React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
   useFrame(() => composer.current.render(), 1)
   const effectComposerArgs = React.useMemo(
-    function memo() {
+    () => {
       return [gl]
     },
     [gl]
   )
   const renderPassArgs = React.useMemo(
-    function memo() {
+    () => {
       return [scene, camera]
     },
     [scene, camera]
@@ -153,7 +153,8 @@ const Effects = React.memo(({ factor }) => {
       <a.glitchPass attachArray="passes" renderToScreen factor={factor} />
     </effectComposer>
   )
-})
+}
+const Effects = React.memo(EffectsComponent)
 
 /** This component creates a bunch of parallaxed images */
 function Images({ top, mouse, scrollMax }) {

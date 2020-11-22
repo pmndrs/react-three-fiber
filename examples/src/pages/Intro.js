@@ -19,7 +19,7 @@ export default function Intro() {
   }, [])
 
   const style = React.useMemo(
-    function memo() {
+    () => {
       return { color: bright ? '#2c2d31' : 'white' }
     },
     [bright]

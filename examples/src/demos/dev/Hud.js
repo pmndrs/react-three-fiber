@@ -25,20 +25,20 @@ function Main() {
   useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
 
   const effectComposerArgs = React.useMemo(
-    function memo() {
+    () => {
       return [gl]
     },
     [gl]
   )
 
   const materialUniformResolutionValue = React.useMemo(
-    function memo() {
+    () => {
       return [1 / size.width, 1 / size.height]
     },
     [size.height, size.width]
   )
 
-  const portal = React.useMemo(function memo() {
+  const portal = React.useMemo(() => {
     return (
       <>
         <renderPass attachArray="passes" scene={scene} camera={camera} />
@@ -96,7 +96,7 @@ const Controls = () => {
   const ref = React.useRef()
   useFrame(() => ref.current.update())
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [camera, gl.domElement]
     },
     [camera, gl.domElement]

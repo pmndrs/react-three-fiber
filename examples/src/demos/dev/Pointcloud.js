@@ -65,7 +65,7 @@ function Controls() {
   const { camera, gl } = useThree()
   useFrame(() => ref.current.update())
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [camera, gl.domElement]
     },
     [camera, gl.domElement]

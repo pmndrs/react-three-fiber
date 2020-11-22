@@ -32,13 +32,13 @@ function Effects() {
   React.useEffect(() => void composer.current.setSize(width, height), [width, height])
   useFrame(() => composer.current.render(), 1)
   const effectComposerArgs = React.useMemo(
-    function memo() {
+    () => {
       return [gl, renderTarget]
     },
     [gl, renderTarget]
   )
   const renderPassArgs = React.useMemo(
-    function memo() {
+    () => {
       return [scene, camera]
     },
     [scene, camera]

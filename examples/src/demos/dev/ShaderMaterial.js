@@ -86,7 +86,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { width, height } = viewport()
 
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [width, height, 1]
     },
     [width, height]

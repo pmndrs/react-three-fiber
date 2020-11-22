@@ -65,7 +65,7 @@ function SwarmComponent({ count, mouse }) {
     mesh.current.instanceMatrix.needsUpdate = true
   })
   const instancedMeshArgs = React.useMemo(
-    function memo() {
+    () => {
       return [null, null, count]
     },
     [count]
@@ -96,14 +96,14 @@ function Effect({ down }) {
   React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(() => composer.current.render(), 1)
   const effectComposerArgs = React.useMemo(
-    function memo() {
+    () => {
       return [gl]
     },
     [gl]
   )
 
   const unrealBloomPassArgs = React.useMemo(
-    function memo() {
+    () => {
       return [aspect, 2, 1, 0]
     },
     [aspect]

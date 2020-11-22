@@ -16,7 +16,7 @@ const rotation1 = [0, -0.2, 0]
 const args1 = [1, 1]
 const rotation2 = [0, 0, Math.PI]
 
-const Scene = React.memo(({ urls }) => {
+function SceneComponent({ urls }) {
   const svgs = useLoader(THREESVGLoader, urls)
   const shapes = React.useMemo(
     () =>
@@ -55,7 +55,7 @@ const Scene = React.memo(({ urls }) => {
     reset: true,
   })
   const position = React.useMemo(
-    function memo() {
+    () => {
       return [1220, 700, page]
     },
     [page]
@@ -93,7 +93,9 @@ const Scene = React.memo(({ urls }) => {
       </a.group>
     </>
   )
-})
+}
+
+const Scene = React.memo(SceneComponent)
 
 const camera = { fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }
 const urls = [night, city, morning, tubes, woods, beach]

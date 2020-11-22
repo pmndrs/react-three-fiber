@@ -37,14 +37,14 @@ function Text({ children, vAlign = 'center', hAlign = 'center', size = 1, color 
     [children]
   )
   const scale = React.useMemo(
-    function memo() {
+    () => {
       return [0.1 * size, 0.1 * size, 0.1]
     },
     [size]
   )
 
   const args = React.useMemo(
-    function memo() {
+    () => {
       return [children, config]
     },
     [children, config]
