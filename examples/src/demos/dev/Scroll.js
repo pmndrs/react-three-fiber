@@ -80,12 +80,7 @@ function Background({ color }) {
   const { viewport } = useThree()
   const { width, height } = viewport()
 
-  const scale = React.useMemo(
-    () => {
-      return [width, height, 1]
-    },
-    [width, height]
-  )
+  const scale = React.useMemo(() => [width, height, 1], [width, height])
 
   return (
     <mesh scale={scale}>
@@ -134,18 +129,9 @@ function EffectsComponent({ factor }) {
   React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   // This takes over as the main render-loop (when 2nd arg is set to true)
   useFrame(() => composer.current.render(), 1)
-  const effectComposerArgs = React.useMemo(
-    () => {
-      return [gl]
-    },
-    [gl]
-  )
-  const renderPassArgs = React.useMemo(
-    () => {
-      return [scene, camera]
-    },
-    [scene, camera]
-  )
+
+  const effectComposerArgs = React.useMemo(() => [gl], [gl])
+  const renderPassArgs = React.useMemo(() => [scene, camera], [scene, camera])
 
   return (
     <effectComposer ref={composer} args={effectComposerArgs}>

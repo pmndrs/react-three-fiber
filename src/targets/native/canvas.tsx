@@ -134,9 +134,7 @@ function CanvasComponent(props: NativeCanvasProps) {
     [props.nativeRef_EXPERIMENTAL]
   )
 
-  const style = React.useMemo(() => {
-    return { ...styles, ...props.style }
-  }, [props.style])
+  const style = React.useMemo(() => ({ ...styles, ...props.style }), [props.style])
 
   // 1. Ensure Size
   // 2. Ensure EXGLContext

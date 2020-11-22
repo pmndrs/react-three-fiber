@@ -22,7 +22,7 @@ interface ResizeContainerState {
   size: RectReadOnly
   forceResize: () => void
   setEvents: React.Dispatch<React.SetStateAction<DomEventHandlers>>
-  container: HTMLDivElement
+  container: HTMLDivElement | null
 }
 
 interface ContentProps extends ResizeContainerProps, ResizeContainerState {}
@@ -34,7 +34,9 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
 
   // Mount and unmount management
   React.useEffect(() => {
-    if (effects) effects(gl, container)
+    if (effects && container !== null) {
+      effects(gl, container)
+    }
   }, [container, effects, gl])
 
   // Init canvas, fetch events, hand them back to the wrapping div
@@ -85,17 +87,11 @@ function ResizeContainerComponent(props: ResizeContainerProps) {
   // Flag view ready once it's been measured out
   const readyFlag = React.useRef(false)
   const ready = React.useMemo(() => (readyFlag.current = readyFlag.current || (!!size.width && !!size.height)), [size])
-  const state = React.useMemo(
-    () => ({ size, forceResize, setEvents, container: containerRef.current as HTMLDivElement }),
-    [forceResize, size]
-  )
-
-  const memoStyle = React.useMemo(
-    function memo() {
-      return { ...defaultStyles, ...style }
-    },
-    [style]
-  )
+  const state = React.useMemo(() => ({ size, forceResize, setEvents, container: containerRef.current }), [
+    forceResize,
+    size,
+  ])
+  const memoStyle = React.useMemo(() => ({ ...defaultStyles, ...style }), [style])
 
   // Allow Gatsby, Next and other server side apps to run. Will output styles to reduce flickering.
   if (typeof window === 'undefined') {

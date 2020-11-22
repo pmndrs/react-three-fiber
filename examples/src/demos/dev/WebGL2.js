@@ -31,18 +31,10 @@ function Effects() {
   }, [width, height])
   React.useEffect(() => void composer.current.setSize(width, height), [width, height])
   useFrame(() => composer.current.render(), 1)
-  const effectComposerArgs = React.useMemo(
-    () => {
-      return [gl, renderTarget]
-    },
-    [gl, renderTarget]
-  )
-  const renderPassArgs = React.useMemo(
-    () => {
-      return [scene, camera]
-    },
-    [scene, camera]
-  )
+
+  const effectComposerArgs = React.useMemo(() => [gl, renderTarget], [gl, renderTarget])
+  const renderPassArgs = React.useMemo(() => [scene, camera], [scene, camera])
+
   return (
     <effectComposer ref={composer} args={effectComposerArgs}>
       <renderPass attachArray="passes" args={renderPassArgs} />

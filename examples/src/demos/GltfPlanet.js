@@ -7,6 +7,8 @@ import planet from '../resources/gltf/planet.gltf'
 
 useLoader.preload(GLTFLoader, planet, draco())
 
+extend({ OrbitControls })
+
 const rotation1 = [-Math.PI / 2, 0, 0]
 const position1 = [0, 0.02, -6.33]
 const rotation2 = [0.24, -0.55, 0.56]
@@ -14,9 +16,11 @@ const scale1 = [7, 7, 7]
 
 const attachObjectAttributesPosition = ['attributes', 'position']
 
-function Planet(props) {
+function PlanetComponent(props) {
   const group = React.useRef()
   const { nodes, materials } = useLoader(GLTFLoader, draco())
+
+  console.log(nodes['planet.001_1'].geometry)
 
   return (
     <group ref={group} {...props} dispose={null}>
@@ -30,7 +34,9 @@ function Planet(props) {
   )
 }
 
-function Stars({ count = 5000 }) {
+const Planet = React.memo(PlanetComponent)
+
+function StarsComponent({ count = 5000 }) {
   const positions = React.useMemo(() => {
     let positions = []
     for (let i = 0; i < count; i++) {
@@ -56,20 +62,18 @@ function Stars({ count = 5000 }) {
   )
 }
 
-extend({ OrbitControls })
-const Controls = (props) => {
+const Stars = React.memo(StarsComponent)
+
+function ControlsComponent(props) {
   const { gl, camera } = useThree()
   const ref = React.useRef()
   useFrame(() => ref.current.update())
-  const args = React.useMemo(
-    () => {
-      return [camera, gl.domElement]
-    },
-    [camera, gl.domElement]
-  )
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
 
   return <orbitControls ref={ref} args={args} {...props} />
 }
+
+const Controls = React.memo(ControlsComponent)
 
 const style1 = { background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }
 const camera = { position: [0, 0, 15] }

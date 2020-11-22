@@ -54,12 +54,7 @@ function SceneComponent({ urls }) {
     unique: true,
     reset: true,
   })
-  const position = React.useMemo(
-    () => {
-      return [1220, 700, page]
-    },
-    [page]
-  )
+  const position = React.useMemo(() => [1220, 700, page], [page])
 
   return (
     <>

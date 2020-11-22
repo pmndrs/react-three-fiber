@@ -23,7 +23,7 @@ import { Canvas } from 'react-three-fiber'
 import { a, useSpring } from '@react-spring/three'
 
 function Box(props) {
-  const [active, setActive] = useState(0)
+  const [active, setActive] = React.useState(0)
 
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
@@ -61,8 +61,8 @@ extend({ EffectComposer, RenderPass, GlitchPass })
 
 function Effects() {
   const { gl, scene, camera, size } = useThree()
-  const composer = useRef()
-  useEffect(() => void composer.current.setSize(size.width, size.height), [size])
+  const composer = React.useRef()
+  React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(() => composer.current.render(), 1)
   return (
     <effectComposer ref={composer} args={[gl]}>
@@ -74,10 +74,10 @@ function Effects() {
 
 ```jsx
 function Camera(props) {
-  const ref = useRef()
+  const ref = React.useRef()
   const { setDefaultCamera } = useThree()
   // Make the camera known to the system
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  React.useEffect(() => void setDefaultCamera(ref.current), [])
   // Update it every frame
   useFrame(() => ref.current.updateMatrixWorld())
   return <perspectiveCamera ref={ref} {...props} />
@@ -93,23 +93,23 @@ function Camera(props) {
 
 ```jsx
 function Main() {
-  const scene = useRef()
+  const scene = React.useRef()
   const { camera } = useThree()
   useFrame(({ gl }) => void ((gl.autoClear = true), gl.render(scene.current, camera)), 100)
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
 function HeadsUpDisplay() {
-  const scene = useRef()
+  const scene = React.useRef()
   const { camera } = useThree()
   useFrame(({ gl }) => void ((gl.autoClear = false), gl.clearDepth(), gl.render(scene.current, camera)), 10)
   return <scene ref={scene}>{/* ... */}</scene>
 }
 
 function App() {
-  const camera = useRef()
+  const camera = React.useRef()
   const { size, setDefaultCamera } = useThree()
-  useEffect(() => void setDefaultCamera(camera.current), [])
+  React.useEffect(() => void setDefaultCamera(camera.current), [])
   useFrame(() => camera.current.updateMatrixWorld())
   return (
     <>
@@ -129,7 +129,7 @@ Stick imperative stuff into useMemo and write out everything else declaratively.
 
 ```jsx
 function Extrusion({ start = [0, 0], paths, ...props }) {
-  const shape = useMemo(() => {
+  const shape = React.useMemo(() => {
     const shape = new THREE.Shape()
     shape.moveTo(...start)
     paths.forEach((path) => shape.bezierCurveTo(...path))
@@ -197,7 +197,7 @@ Sometimes you want to render single frames manually, for instance when you're de
 
 ```jsx
 const { invalidate } = useThree()
-const texture = useMemo(() => loader.load(url, invalidate), [url])
+const texture = React.useMemo(() => loader.load(url, invalidate), [url])
 ```
 
 For camera controls here's [an example sandbox](https://codesandbox.io/s/r3f-invalidate-frameloop-fps-e0g9z) which uses:
@@ -205,9 +205,9 @@ For camera controls here's [an example sandbox](https://codesandbox.io/s/r3f-inv
 ```jsx
 const Controls = () => {
   const { camera, gl, invalidate } = useThree()
-  const ref = useRef()
+  const ref = React.useRef()
   useFrame(() => ref.current.update())
-  useEffect(() => void ref.current.addEventListener('change', invalidate), [])
+  React.useEffect(() => void ref.current.addEventListener('change', invalidate), [])
   return <orbitControls ref={ref} args={[camera, gl.domElement]} />
 }
 ```
@@ -225,7 +225,7 @@ import { Canvas } from 'react-three-fiber'
 
 ## Reducing bundle-size
 
-Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need. Gist: https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d
+Threejs is quite heavy and tree-shaking doesn't yet yield the results you would hope for atm. But you can always create your own export-file and alias "three" towards it. This way you can reduce it to 80-50kb, or perhaps less, depending on what you need. Gist: <https://gist.github.com/drcmda/974f84240a329fa8a9ce04bbdaffc04d>
 
 ## Usage with React Native
 

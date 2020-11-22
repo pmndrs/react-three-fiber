@@ -119,12 +119,7 @@ function Controls({ children }) {
     return () => current.removeEventListener('change', handler)
   }, [invalidate])
 
-  const args = React.useMemo(
-    () => {
-      return [camera, gl.domElement]
-    },
-    [camera, gl.domElement]
-  )
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
 
   return (
     <>

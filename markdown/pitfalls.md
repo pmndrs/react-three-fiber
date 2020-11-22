@@ -19,8 +19,8 @@ This is the best overview I could find: <https://discoverthreejs.com/tips-and-tr
 The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
-const geom = useMemo(() => new BoxBufferGeometry(), [])
-const mat = useMemo(() => new MeshBasicMaterial(), [])
+const geom = React.useMemo(() => new BoxBufferGeometry(), [])
+const mat = React.seMemo(() => new MeshBasicMaterial(), [])
 return items.map(i => <mesh geometry={geom} material={mat} ...
 ```
 
@@ -31,7 +31,7 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 ### ❌ Never, ever, setState animations! <a id="never-ever-set-state"></a>
 
 ```jsx
-const [x, setX] = useState(0)
+const [x, setX] = React.useState(0)
 useFrame(() => setX(x => x + 0.01))
 // Or, just as bad ...
 // useEffect(() => void setInterval(() => setX(x => x + 0.01), 30), [])
@@ -43,7 +43,7 @@ You are forcing a full component (+ its children) through React and its diffing 
 #### ✅ Instead, use refs and mutate! This is totally fine and that's how you would do it in plain Threejs as well
 
 ```jsx
-const ref = useRef()
+const ref = React.useRef()
 useFrame(() => ref.current.position.x += 0.01)
 return <mesh ref={ref} />
 ```
@@ -58,7 +58,7 @@ Instead use animation libs that animate outside of React! Avoid libs like react-
 import lerp from 'lerp'
 
 function Signal({ active }) {
-  const ref = useRef()
+  const ref = React.useRef()
   useFrame(() => ref.current.position.x = lerp(ref.current.position.x, active ? 100 : 0, 0.1))
   return <mesh ref={ref} />
 ```
@@ -95,8 +95,8 @@ return <mesh ref={ref} />
 #### ✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes) the component
 
 ```jsx
-const ref = useRef()
-useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x), [])
+const ref = React.useRef()
+React.useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x), [])
 return <mesh ref={ref} />
 ```
 

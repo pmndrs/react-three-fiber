@@ -24,19 +24,9 @@ function Main() {
 
   useFrame(({ gl }) => void ((gl.autoClear = true), composer.current.render()), 1)
 
-  const effectComposerArgs = React.useMemo(
-    () => {
-      return [gl]
-    },
-    [gl]
-  )
+  const effectComposerArgs = React.useMemo( () => [gl], [gl])
 
-  const materialUniformResolutionValue = React.useMemo(
-    () => {
-      return [1 / size.width, 1 / size.height]
-    },
-    [size.height, size.width]
-  )
+  const materialUniformResolutionValue = React.useMemo(() => [1 / size.width, 1 / size.height], [size.height, size.width])
 
   const portal = React.useMemo(() => {
     return (
@@ -95,12 +85,7 @@ const Controls = () => {
   const { camera, gl } = useThree()
   const ref = React.useRef()
   useFrame(() => ref.current.update())
-  const args = React.useMemo(
-    () => {
-      return [camera, gl.domElement]
-    },
-    [camera, gl.domElement]
-  )
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
   return <orbitControls ref={ref} target={target} enableDamping args={args} />
 }
 
@@ -114,6 +99,7 @@ function Content() {
     return cam
   })
 
+  // Isn't useEffect is better in this case?
   React.useMemo(() => (camera.aspect = size.width / size.height), [camera, size.width, size.height])
 
   useFrame(() => camera.updateMatrixWorld())

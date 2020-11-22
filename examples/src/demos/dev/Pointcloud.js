@@ -9,8 +9,8 @@ const attachObjectAttributesColor = ['attributes', 'color']
 
 function Particles({ pointCount }) {
   const [positions, colors] = React.useMemo(() => {
-    let positions = [],
-      colors = []
+    const positions = []
+    const colors = []
     for (let i = 0; i < pointCount; i++) {
       positions.push(5 - Math.random() * 10)
       positions.push(5 - Math.random() * 10)
@@ -64,12 +64,7 @@ function Controls() {
   const ref = React.useRef()
   const { camera, gl } = useThree()
   useFrame(() => ref.current.update())
-  const args = React.useMemo(
-    () => {
-      return [camera, gl.domElement]
-    },
-    [camera, gl.domElement]
-  )
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
 
   return <orbitControls ref={ref} args={args} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
 }

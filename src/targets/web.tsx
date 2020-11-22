@@ -11,9 +11,7 @@ const canvasStyle = { display: 'block' }
 
 function CanvasComponent({ children, ...props }: ContainerProps) {
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
-  const Renderer = React.useMemo(() => {
-    return props.webgl1 ? WebGL1Renderer : WebGLRenderer
-  }, [props.webgl1])
+  const Renderer = React.useMemo(() => (props.webgl1 ? WebGL1Renderer : WebGLRenderer), [props.webgl1])
 
   const renderer = React.useCallback(
     function callback() {
@@ -32,9 +30,7 @@ function CanvasComponent({ children, ...props }: ContainerProps) {
     [Renderer, props.gl]
   )
 
-  const preRender = React.useMemo(() => {
-    return <canvas ref={canvasRef} style={canvasStyle} />
-  }, [])
+  const preRender = React.useMemo(() => <canvas ref={canvasRef} style={canvasStyle} />, [])
 
   return (
     <ResizeContainer {...props} renderer={renderer} preRender={preRender}>

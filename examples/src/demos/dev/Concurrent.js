@@ -2,7 +2,7 @@ import * as React from 'react'
 import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
 import { Canvas, useFrame, useThree } from 'react-three-fiber'
 import { Controls, useControl } from 'react-three-gui'
-import { HTML } from 'drei'
+import { Html } from 'drei'
 import { unstable_LowPriority as low, unstable_runWithPriority as run } from 'scheduler'
 
 const SLOWDOWN = 1
@@ -30,12 +30,7 @@ function Block({ i, change, ...props }) {
     [viewport]
   )
 
-  const scale = React.useMemo(
-    () => {
-      return [size, size, size]
-    },
-    [size]
-  )
+  const scale = React.useMemo(() => [size, size, size], [size])
   const position = React.useMemo(
     () => {
       const left = -width / 100 / 2 + size / 2
@@ -106,7 +101,7 @@ function Fps() {
     }
     last = now
   })
-  return <HTML className="fps" center ref={ref} />
+  return <Html className="fps" center ref={ref} />
 }
 
 const boxScale = [2, 2, 2]

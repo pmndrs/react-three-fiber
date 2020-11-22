@@ -8,6 +8,7 @@ function Suzanne() {
   // Load async model
   const geometry = useLoader(THREE.BufferGeometryLoader, suzanne)
   // When we're here it's loaded, now compute vertex normals
+  // Isn't useEffect is better in this case?
   React.useMemo(() => {
     geometry.computeVertexNormals()
     geometry.scale(0.5, 0.5, 0.5)
@@ -30,12 +31,7 @@ function Suzanne() {
         }
     ref.current.instanceMatrix.needsUpdate = true
   })
-  const args = React.useMemo(
-    () => {
-      return [geometry, null, 1000]
-    },
-    [geometry]
-  )
+  const args = React.useMemo(() => [geometry, null, 1000], [geometry])
   return (
     <instancedMesh ref={ref} args={args}>
       <meshNormalMaterial attach="material" />

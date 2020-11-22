@@ -17,26 +17,9 @@ function Sphere({ geometry, x, y, z, s }) {
     set(false)
   }, [])
 
-  const position = React.useMemo(
-    () => {
-      return [x, y, z]
-    },
-    [x, y, z]
-  )
-
-  const scale = React.useMemo(
-    () => {
-      return [s, s, s]
-    },
-    [s]
-  )
-
-  const userData = React.useMemo(
-    () => {
-      return { active }
-    },
-    [active]
-  )
+  const position = React.useMemo(() => [x, y, z], [x, y, z])
+  const scale = React.useMemo(() => [s, s, s], [s])
+  const userData = React.useMemo(() => ({ active }), [active])
 
   return (
     <mesh
@@ -54,14 +37,14 @@ function Sphere({ geometry, x, y, z, s }) {
 
 function RandomSpheres() {
   const [geometry] = React.useState(() => new THREE.IcosahedronBufferGeometry(1, 4), [])
-  const data = React.useMemo(() => {
-    return new Array(25).fill().map((_, i) => ({
+  const data = React.useMemo(() => new Array(25).fill().map((_, i) => ({
       x: Math.random() * 100 - 50,
       y: Math.random() * 100 - 50,
       z: Math.random() * 100 - 50,
       s: Math.random() + 10,
     }))
-  }, [])
+  , [])
+
   return data.map((props, i) => <Sphere key={i} {...props} geometry={geometry} />)
 }
 

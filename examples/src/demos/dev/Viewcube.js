@@ -27,12 +27,7 @@ function Cube() {
 
   const raycast = useCamera(virtualCam)
 
-  const position = React.useMemo(
-    () => {
-      return [size.width / 2 - 80, size.height / 2 - 80, 0]
-    },
-    [size.width, size.height]
-  )
+  const position = React.useMemo(() => [size.width / 2 - 80, size.height / 2 - 80, 0], [size.width, size.height])
 
   const onPointerOver = React.useCallback(function callback(e) {
     e.stopPropagation()

@@ -163,7 +163,7 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in Threejs!
 
 ```jsx
-const mesh = useMemo(() => new THREE.Mesh(), [])
+const mesh = React.useMemo(() => new THREE.Mesh(), [])
 return <primitive object={mesh} position={[0, 0, 0]} />
 ```
 

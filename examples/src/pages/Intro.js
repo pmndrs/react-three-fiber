@@ -18,12 +18,7 @@ export default function Intro() {
     return <Component />
   }, [])
 
-  const style = React.useMemo(
-    () => {
-      return { color: bright ? '#2c2d31' : 'white' }
-    },
-    [bright]
-  )
+  const style = React.useMemo(() => ({ color: bright ? '#2c2d31' : 'white' }), [bright])
 
   return (
     <PageImpl>

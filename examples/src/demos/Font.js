@@ -36,19 +36,9 @@ function Text({ children, vAlign = 'center', hAlign = 'center', size = 1, color 
     },
     [children]
   )
-  const scale = React.useMemo(
-    () => {
-      return [0.1 * size, 0.1 * size, 0.1]
-    },
-    [size]
-  )
+  const scale = React.useMemo(() => [0.1 * size, 0.1 * size, 0.1], [size])
 
-  const args = React.useMemo(
-    () => {
-      return [children, config]
-    },
-    [children, config]
-  )
+  const args = React.useMemo(() => [children, config], [children, config])
 
   return (
     <group {...props} scale={scale}>

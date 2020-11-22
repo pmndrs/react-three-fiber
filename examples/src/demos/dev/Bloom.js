@@ -32,14 +32,14 @@ function Sphere({ geometry, x, y, z, s }) {
 
 function Spheres() {
   const [geometry] = React.useState(() => new THREE.IcosahedronBufferGeometry(1, 0), [])
-  const data = React.useMemo(() => {
-    return new Array(50).fill().map((_, i) => ({
+  const data = React.useMemo(() => new Array(50).fill().map((_, i) => ({
       x: Math.random() * 140 - 70,
       y: Math.random() * 140 - 70,
       z: Math.random() * 140 - 70,
       s: Math.random() + 8,
     }))
-  }, [])
+  , [])
+
   return data.map((props, i) => <Sphere key={i} {...props} geometry={geometry} />)
 }
 

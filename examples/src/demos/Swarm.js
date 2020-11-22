@@ -64,12 +64,7 @@ function SwarmComponent({ count, mouse }) {
     })
     mesh.current.instanceMatrix.needsUpdate = true
   })
-  const instancedMeshArgs = React.useMemo(
-    () => {
-      return [null, null, count]
-    },
-    [count]
-  )
+  const instancedMeshArgs = React.useMemo(() => [null, null, count], [count])
 
   return (
     <>
@@ -95,19 +90,9 @@ function Effect({ down }) {
   const aspect = React.useMemo(() => new THREE.Vector2(size.width, size.height), [size])
   React.useEffect(() => void composer.current.setSize(size.width, size.height), [size])
   useFrame(() => composer.current.render(), 1)
-  const effectComposerArgs = React.useMemo(
-    () => {
-      return [gl]
-    },
-    [gl]
-  )
+  const effectComposerArgs = React.useMemo(() => [gl], [gl])
 
-  const unrealBloomPassArgs = React.useMemo(
-    () => {
-      return [aspect, 2, 1, 0]
-    },
-    [aspect]
-  )
+  const unrealBloomPassArgs = React.useMemo(() => [aspect, 2, 1, 0], [aspect])
 
   return (
     <effectComposer ref={composer} args={effectComposerArgs}>

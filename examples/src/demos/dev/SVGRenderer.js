@@ -8,12 +8,8 @@ function Controls() {
   const controls = React.useRef()
   const { camera, gl } = useThree()
   useFrame(() => controls.current.update())
-  const args = React.useMemo(
-    () => {
-      return [camera, gl.domElement]
-    },
-    [camera, gl.domElement]
-  )
+  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
+
   return <orbitControls ref={controls} args={args} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
 }
 

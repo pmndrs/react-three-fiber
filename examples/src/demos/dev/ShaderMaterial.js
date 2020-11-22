@@ -85,12 +85,7 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { gl, invalidate, viewport } = useThree()
   const { width, height } = viewport()
 
-  const scale = React.useMemo(
-    () => {
-      return [width, height, 1]
-    },
-    [width, height]
-  )
+  const scale = React.useMemo(() => [width, height, 1], [width, height])
 
   const args = React.useMemo(() => {
     const loader = new THREE.TextureLoader()
