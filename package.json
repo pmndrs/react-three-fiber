@@ -54,7 +54,7 @@
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && yarn copy && rimraf dist/__tests__",
     "prepare": "npm run build",
-    "eslint": "eslint --fix src/**/*.{ts,tsx} examples/src/**/*.js",
+    "eslint": "eslint --fix src/**/*.{ts,tsx}",
     "dev": "yarn --cwd ./examples start",
     "test": "jest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",

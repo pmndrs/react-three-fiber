@@ -72,7 +72,6 @@ function SceneComponent({ urls }) {
           key,
           props: { opacity, position, rotation },
         }) {
-          // eslint-disable-next-line react-perf/jsx-no-new-array-as-prop
           const args = [shape] // to complex to optimize
           return (
             <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + index])}>

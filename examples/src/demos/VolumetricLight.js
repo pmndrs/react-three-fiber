@@ -76,7 +76,10 @@ function Effects() {
   const effectComposerArgs = React.useMemo(() => [gl, occlusionRenderTarget], [gl, occlusionRenderTarget])
   const renderPassArgs = React.useMemo(() => [scene, camera], [scene, camera])
   const effectComposerArgs2 = React.useMemo(() => [gl], [gl])
-  const materialUniformResolutionValue = React.useMemo(() => [1 / size.width, 1 / size.height], [size.width, size.height])
+  const materialUniformResolutionValue = React.useMemo(() => [1 / size.width, 1 / size.height], [
+    size.width,
+    size.height,
+  ])
 
   return (
     <>

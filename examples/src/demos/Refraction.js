@@ -10,7 +10,7 @@ import textureUrl from '../resources/images/backdrop.jpg'
 function Background() {
   const { viewport, aspect } = useThree()
   const texture = useLoader(TextureLoader, textureUrl)
-  
+
   React.useMemo(() => (texture.minFilter = LinearFilter), [texture]) // Isn't useEffect fore correct in this place instead of useMemo?
   // Calculates a plane filling the screen similar to background-size: cover
   const { width, height } = viewport()
@@ -111,7 +111,10 @@ function Diamonds() {
     gl.render(scene, camera)
   }, 1)
 
-  const args = React.useMemo(() => [nodes.Cylinder.geometry, null, diamonds.length], [nodes.Cylinder.geometry, diamonds.length])
+  const args = React.useMemo(() => [nodes.Cylinder.geometry, null, diamonds.length], [
+    nodes.Cylinder.geometry,
+    diamonds.length,
+  ])
 
   return (
     <instancedMesh ref={model} args={args} dispose={false}>

@@ -44,7 +44,6 @@ function Demos() {
   return (
     <DemoPanel>
       {Object.entries(visibleComponents).map(function mapper([name, item]) {
-        // eslint-disable-next-line react-perf/jsx-no-new-object-as-prop
         const style = {
           // to complex to optimize
           background:

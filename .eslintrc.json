@@ -9,12 +9,11 @@
     "plugin:react-hooks/recommended",
     "plugin:import/errors",
     "plugin:import/warnings",
-    "plugin:react-perf/recommended",
     "prettier",
     "prettier/react",
     "prettier/@typescript-eslint"
   ],
-  "plugins": ["@typescript-eslint", "react", "react-perf", "react-hooks", "import", "jest", "prettier"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -40,13 +39,7 @@
       "@typescript-eslint/no-empty-function": "off",
       "@typescript-eslint/no-empty-interface": "off",
       "@typescript-eslint/no-explicit-any": "off",
-      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }],
-      "react-perf/jsx-no-new-object-as-prop": [
-        "error",
-        {
-          "nativeAllowList": ["style"]
-        }
-      ]
+      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
     }
   },
   "settings": {
