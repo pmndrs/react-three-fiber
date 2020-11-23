@@ -84,7 +84,8 @@ function Box(props) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}>
+      onPointerOut={(event) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -131,7 +132,8 @@ function Box(props: MeshProps) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(_event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}>
+      onPointerOut={(event) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -191,3 +193,49 @@ Some reading material:
 # How to contribute
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto `BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH`, `ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682`.
+
+When contributing you should use [yarn](https://yarnpkg.com/) for all commands.
+
+## Install dependencies
+
+```shell
+yarn
+```
+
+## Tests
+
+Run typechecking, linting, and unit tests:
+
+```shell
+yarn test
+```
+
+Independently run typechecking:
+
+```shell
+yarn typecheck
+```
+
+Independently run linting:
+
+```shell
+yarn eslint
+```
+
+Independently run unit tests
+
+```shell
+yarn tests
+```
+
+## Generate component constants & types from three.js
+
+There is a script in `scripts/gen-components` to generate component constants and types from three.js types.
+
+This can be run with:
+
+```shell
+yarn typegen:components
+```
+
+If you wish to update the base types for these files you should edit those found in `scripts/gen-components/source`, and then re-run the above command.
