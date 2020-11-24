@@ -13,6 +13,7 @@
     "noImplicitThis": false,
     "noEmitOnError": true,
     "noEmit": true,
+    "isolatedModules": true,
     "baseUrl": "./src",
     "paths": {
       "react-three-fiber": ["./"]
