@@ -66,6 +66,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.12.5",
+    "@rollup/plugin-sucrase": "^3.1.0",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "0.26.1",
     "react-use-measure": "^2.0.3",

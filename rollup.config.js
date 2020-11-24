@@ -6,6 +6,7 @@ import json from 'rollup-plugin-json'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 import compiler from '@ampproject/rollup-plugin-closure-compiler'
 import commonjs from '@rollup/plugin-commonjs'
+import sucrase from '@rollup/plugin-sucrase'
 
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
 const external = (id) => {
@@ -65,6 +66,10 @@ function createConfig(entry, out, closure = true) {
       output: { file: `dist/${out}.js`, format: 'esm' },
       external,
       plugins: [
+        sucrase({
+          include: ['src/**'],
+          transforms: ['typescript', 'jsx', 'imports'],
+        }),
         json(),
         commonjs(),
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
@@ -84,6 +89,10 @@ function createConfig(entry, out, closure = true) {
       output: { file: `dist/${out}.cjs.js`, format: 'cjs' },
       external,
       plugins: [
+        sucrase({
+          include: ['src/**'],
+          transforms: ['typescript', 'jsx', 'imports'],
+        }),
         json(),
         commonjs(),
         babel(getBabelOptions({ useESModules: false })),
