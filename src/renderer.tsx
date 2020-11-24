@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import * as Reconciler from 'react-reconciler'
+import * as ReactReconciler from 'react-reconciler'
+const Reconciler: typeof ReactReconciler = require('react-reconciler')
 // @ts-ignore
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
@@ -13,7 +14,7 @@ export interface ObjectHash {
   [name: string]: object
 }
 
-const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
+const roots = new Map<THREE.Object3D, ReactReconciler.FiberRoot>()
 
 const emptyObject = {}
 const is = {
@@ -305,7 +306,7 @@ function createInstance(
   { args = [], ...props },
   container: THREE.Object3D,
   hostContext: any,
-  internalInstanceHandle: Reconciler.Fiber
+  internalInstanceHandle: ReactReconciler.Fiber
 ) {
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
@@ -334,7 +335,7 @@ function createInstance(
   // TODO: https://github.com/facebook/react/issues/17147
   // If it's still not there it means the portal was created on a virtual node outside of react
   if (!roots.has(container)) {
-    const fn = (node: Reconciler.Fiber): THREE.Object3D => {
+    const fn = (node: ReactReconciler.Fiber): THREE.Object3D => {
       if (!node.return) return node.stateNode && node.stateNode.containerInfo
       else return fn(node.return)
     }
@@ -446,7 +447,7 @@ function removeChild(parentInstance: any, child: any): void {
   }
 }
 
-function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber): void {
+function switchInstance(instance: any, type: string, newProps: any, fiber: ReactReconciler.Fiber): void {
   const parent = instance.parent
   const newInstance = createInstance(type, newProps, instance.__container, null, fiber)
   removeChild(parent, instance)
@@ -459,7 +460,7 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
       fiber.stateNode = newInstance
       if (fiber.ref) {
         if (is.fun(fiber.ref)) fiber.ref(newInstance)
-        else (fiber.ref as Reconciler.RefObject).current = newInstance
+        else (fiber.ref as ReactReconciler.RefObject).current = newInstance
       }
     }
   })
@@ -501,7 +502,14 @@ const Renderer = Reconciler<any, any, THREE.Object3D, any, any, any, any, any, a
   appendChildToContainer: appendChild,
   removeChildFromContainer: removeChild,
   insertInContainerBefore: insertBefore,
-  commitUpdate(instance: any, updatePayload: any, type: string, oldProps: any, newProps: any, fiber: Reconciler.Fiber) {
+  commitUpdate(
+    instance: any,
+    updatePayload: any,
+    type: string,
+    oldProps: any,
+    newProps: any,
+    fiber: ReactReconciler.Fiber
+  ) {
     if (instance.__instance && newProps.object && newProps.object !== instance) {
       // <instance object={...} /> where the object reference has changed
       switchInstance(instance, type, newProps, fiber)
