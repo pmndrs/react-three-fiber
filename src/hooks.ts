@@ -5,9 +5,13 @@ import { useAsset } from 'use-asset'
 
 function useContext<T>(context: React.Context<T>) {
   let result = useContextImpl(context)
-  if (!result) {
-    console.warn('hooks can only be used within the canvas! https://github.com/react-spring/react-three-fiber#hooks')
+
+  if (!('subscribe' in result)) {
+    throw new Error(
+      `⚡️ react-three-fiber hooks can only be used within the Canvas component! https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#hooks`
+    )
   }
+
   return result
 }
 
