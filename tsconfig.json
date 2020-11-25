@@ -17,7 +17,8 @@
     "baseUrl": "./src",
     "paths": {
       "react-three-fiber": ["./"]
-    }
+    },
+    "typeRoots": ["node_modules/@types", "src/@types"]
   },
   "include": ["./src", "tests"],
   "exclude": ["./node_modules/**/*"]

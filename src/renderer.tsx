@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import * as Reconciler from 'react-reconciler'
+import Reconciler from 'react-reconciler'
 // @ts-ignore
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
