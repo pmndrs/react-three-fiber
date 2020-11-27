@@ -480,7 +480,7 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
 //    TimeoutHandle,
 //    NoTimeout
 //  >
-const Renderer = Reconciler<any, any, THREE.Object3D, any, any, any, any, any, any, any, any, any>({
+const Renderer = Reconciler({
   now,
   createInstance,
   removeChild,
