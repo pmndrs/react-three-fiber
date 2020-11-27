@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-// @ts-ignore
 import Reconciler from 'react-reconciler'
 // @ts-ignore
 //import Reconciler from 'react-reconciler/cjs/react-reconciler.production.min'
