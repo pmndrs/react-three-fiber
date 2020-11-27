@@ -51,15 +51,15 @@
   },
   "scripts": {
     "postinstall": "yarn --cwd ./examples",
-    "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c && yarn copy && rimraf dist/__tests__",
+    "build": "rimraf dist && npm run typegen && rollup -c && yarn copy && rimraf dist/__tests__ && npm run replace-reconciler-imports",
     "prepare": "npm run build",
     "eslint": "eslint --fix src/**/*.{ts,tsx}",
     "dev": "yarn --cwd ./examples start",
     "tests": "jest",
     "test": "npm run typecheck && npm run eslint && npm run tests && npm run build",
     "typecheck": "tsc --noEmit",
-    "typegen": "tsc --declaration --emitDeclarationOnly --declarationDir dist && npx replace 'import Reconciler' 'import * as Reconciler' dist -r --include='*.d.ts' && mv dist/src/* dist && rm -rf dist/src || true",
+    "replace-reconciler-imports": "npx replace 'import Reconciler' 'import * as Reconciler' dist -r --include='*.d.ts'",
+    "typegen": "tsc --declaration --emitDeclarationOnly --declarationDir dist && mv dist/src/* dist && rm -rf dist/src || true",
     "typegen:components": "npx ts-node src/components/generateExports.ts",
     "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
     "pack-dist": "cd dist && yarn pack && mv *.tgz .."
