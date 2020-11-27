@@ -47,14 +47,17 @@ export const typeCheckResults = () => {
   ]
 
   diagnostics.forEach((diagnostic) => {
+    const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
+
     if (diagnostic.file) {
-      const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start!)
-
-      const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
-
-      console.log(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`)
+      if (typeof diagnostic.start === 'number') {
+        const { line, character } = diagnostic.file.getLineAndCharacterOfPosition(diagnostic.start)
+        console.log(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`)
+      } else {
+        console.log(`${diagnostic.file.fileName}: ${message}`)
+      }
     } else {
-      console.log(ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n'))
+      console.log(message)
     }
   })
 
