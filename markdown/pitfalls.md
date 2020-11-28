@@ -20,7 +20,7 @@ The most important is gotcha in Threejs is that creating objects can be expensiv
 
 ```jsx
 const geom = React.useMemo(() => new BoxBufferGeometry(), [])
-const mat = React.seMemo(() => new MeshBasicMaterial(), [])
+const mat = React.useMemo(() => new MeshBasicMaterial(), [])
 return items.map(i => <mesh geometry={geom} material={mat} ...
 ```
 
