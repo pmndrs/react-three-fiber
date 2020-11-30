@@ -613,17 +613,16 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
   const Canvas = React.useCallback(
     function Canvas(props: { children: React.ReactElement }): JSX.Element {
       const activate = () => setReady(true)
-
-      // eslint-disable-next-line react-hooks/rules-of-hooks
       React.useEffect(() => {
         const result = onCreated && onCreated(state.current)
         if (result && result.then) result.then(activate)
         else activate()
       }, [])
-
       return props.children
     },
-    [onCreated] // Added onCreated to hook dependencies
+    // The Canvas component has to be static, it should not be re-created ever
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   )
 
   // Render v-dom into scene
@@ -637,9 +636,8 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
       defaultScene,
       state
     )
-    // React Hook React.useLayoutEffect has an unnecessary dependency: 'sharedState.current'. Either exclude it or remove the dependency array. Mutable values like 'sharedState.current' aren't valid dependencies because mutating them doesn't re-render the component.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, children, sharedState.current, Canvas, defaultScene])
+  }, [ready, children, sharedState.current])
 
   React.useLayoutEffect(() => {
     if (ready) {
