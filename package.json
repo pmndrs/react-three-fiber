@@ -11,13 +11,6 @@
     "threejs"
   ],
   "author": "Paul Henschel",
-  "contributors": [
-    {
-      "name": "Alexey Lyakhov",
-      "email": "justfly1984@gmail.com",
-      "url": "https://github.com/JustFly1984"
-    }
-  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/drcmda/react-three-fiber/issues"
