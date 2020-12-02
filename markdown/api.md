@@ -87,7 +87,7 @@ You do not have to use any of these objects, look under "Recipes" down below if 
 
 You can use [Threejs's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
-You could lay out an object like this:
+❌ You could lay out an object like this:
 
 ```jsx
 <mesh
@@ -100,7 +100,7 @@ You could lay out an object like this:
 />
 ```
 
-The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
+✅ The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
 
 ```jsx
 <mesh visible userData={{ hello: 'world' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
@@ -291,7 +291,9 @@ onPointerUp={e => {
 
 # Hooks
 
-Hooks can only be used **inside** the Canvas element because they rely on context! You cannot expect something like this to work:
+Hooks can only be used **inside** the Canvas element because they rely on context!
+
+❌ You cannot expect something like this to work:
 
 ```jsx
 function App() {
@@ -301,7 +303,7 @@ function App() {
       <mesh>
 ```
 
-Do this instead:
+✅ Do this instead:
 
 ```jsx
 function SomeComponent() {
