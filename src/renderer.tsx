@@ -477,7 +477,9 @@ const Renderer = Reconciler({
   isPrimaryRenderer: false,
   scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
   cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
+  // @ts-ignore
   setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
+  // @ts-ignore
   clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
   noTimeout: -1,
   appendInitialChild: appendChild,

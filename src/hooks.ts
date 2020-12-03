@@ -125,7 +125,7 @@ export function useLoader<T>(
   // Use suspense to load async assets
   const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
-  return Array.isArray(input) ? results : results[0]
+  return (Array.isArray(input) ? results : results[0]) as T
 }
 
 useLoader.preload = function <T>(
