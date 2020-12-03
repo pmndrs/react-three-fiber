@@ -220,7 +220,7 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerEnter={(e) => console.log('enter')} // see note 1
   onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
-  onPointerMissed={(e) => console.log('missed')}
+  onPointerMissed={() => console.log('missed')}
   onUpdate={(self) => console.log('props have been updated')}
 />
 ```
