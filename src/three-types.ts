@@ -30,6 +30,7 @@ export type EventHandlers = {
   onPointerOver?: (event: PointerEvent) => void
   onPointerOut?: (event: PointerEvent) => void
   onPointerMove?: (event: PointerEvent) => void
+  onPointerMissed?: (event: PointerEvent) => void
   onWheel?: (event: WheelEvent) => void
 }
 

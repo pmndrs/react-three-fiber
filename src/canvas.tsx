@@ -540,10 +540,24 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
         state.current.initialHits = hits.map((hit: any) => hit.eventObject)
       }
 
-      if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length && onPointerMissed) {
-        if (calculateDistance(event) <= 2) onPointerMissed()
+      if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
+        if (calculateDistance(event) <= 2) {
+          ;(defaultScene as any).__interaction.forEach((object: THREE.Object3D) =>
+            Object.keys((object as any).__handlers).forEach((key) => {
+              if (key === 'pointerMissed')
+                (object as any).__handlers.pointerMissed({
+                  ...event,
+                  object,
+                  ray: defaultRaycaster.ray,
+                  camera: state.current.camera,
+                })
+            })
+          )
+          if (onPointerMissed) onPointerMissed()
+        }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onPointerMissed, calculateDistance, getIntersects, handleIntersects, prepareRay]
   )
 

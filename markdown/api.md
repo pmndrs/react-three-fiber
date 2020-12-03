@@ -206,7 +206,7 @@ Threejs objects that implement their own `raycast` method (meshes, lines, etc) c
 
 Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
-Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit any meshes.
+Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit *any* meshes.
 
 ```jsx
 <mesh
@@ -221,6 +221,7 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerEnter={(e) => console.log('enter')} // see note 1
   onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
+  onPointerMissed={(e) => console.log('missed')}
   onUpdate={(self) => console.log('props have been updated')}
 />
 ```
