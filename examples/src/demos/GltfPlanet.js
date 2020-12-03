@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -7,22 +7,13 @@ import planet from '../resources/gltf/planet.gltf'
 
 useLoader.preload(GLTFLoader, planet, draco())
 
-extend({ OrbitControls })
-
-const rotation1 = [-Math.PI / 2, 0, 0]
-const position1 = [0, 0.02, -6.33]
-const rotation2 = [0.24, -0.55, 0.56]
-const scale1 = [7, 7, 7]
-
-const attachObjectAttributesPosition = ['attributes', 'position']
-
-function PlanetComponent(props) {
-  const group = React.useRef()
+function Planet(props) {
+  const group = useRef()
   const { nodes, materials } = useLoader(GLTFLoader, planet, draco())
   return (
     <group ref={group} {...props} dispose={null}>
-      <group rotation={rotation1}>
-        <group position={position1} rotation={rotation2} scale={scale1}>
+      <group rotation={[-Math.PI / 2, 0, 0]}>
+        <group position={[0, 0.02, -6.33]} rotation={[0.24, -0.55, 0.56]} scale={[7, 7, 7]}>
           <mesh material={materials.scene} geometry={nodes['planet.001_1'].geometry} />
           <mesh material={materials.scene} geometry={nodes['planet.001_2'].geometry} />
         </group>
@@ -31,10 +22,8 @@ function PlanetComponent(props) {
   )
 }
 
-const Planet = React.memo(PlanetComponent)
-
-function StarsComponent({ count = 5000 }) {
-  const positions = React.useMemo(() => {
+function Stars({ count = 5000 }) {
+  const positions = useMemo(() => {
     let positions = []
     for (let i = 0; i < count; i++) {
       positions.push((50 + Math.random() * 1000) * (Math.round(Math.random()) ? -1 : 1))
@@ -48,7 +37,7 @@ function StarsComponent({ count = 5000 }) {
     <points>
       <bufferGeometry attach="geometry">
         <bufferAttribute
-          attachObject={attachObjectAttributesPosition}
+          attachObject={['attributes', 'position']}
           count={positions.length / 3}
           array={positions}
           itemSize={3}
@@ -59,42 +48,36 @@ function StarsComponent({ count = 5000 }) {
   )
 }
 
-const Stars = React.memo(StarsComponent)
-
-function ControlsComponent(props) {
+extend({ OrbitControls })
+const Controls = (props) => {
   const { gl, camera } = useThree()
-  const ref = React.useRef()
+  const ref = useRef()
   useFrame(() => ref.current.update())
-  const args = React.useMemo(() => [camera, gl.domElement], [camera, gl.domElement])
-
-  return <orbitControls ref={ref} args={args} {...props} />
+  return <orbitControls ref={ref} args={[camera, gl.domElement]} {...props} />
 }
 
-const Controls = React.memo(ControlsComponent)
-
-const style1 = { background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }
-const camera = { position: [0, 0, 15] }
-const pointLightPosition = [-10, -25, -10]
-const spotLightPosition = [15, 25, 5]
-const fogArgs = ['#090b1f', 0, 25]
-
-function GTLFPlanet() {
+export default function App() {
   return (
-    <Canvas colorManagement={false} style={style1} camera={camera} shadowMap>
+    <Canvas
+      colorManagement={false}
+      style={{ background: 'radial-gradient(at 50% 70%, #200f20 40%, #090b1f 80%, #050523 100%)' }}
+      camera={{ position: [0, 0, 15] }}
+      shadowMap
+    >
       <ambientLight intensity={0.4} />
-      <pointLight intensity={20} position={pointLightPosition} color="#200f20" />
+      <pointLight intensity={20} position={[-10, -25, -10]} color="#200f20" />
       <spotLight
         castShadow
         intensity={4}
         angle={Math.PI / 8}
-        position={spotLightPosition}
+        position={[15, 25, 5]}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <fog attach="fog" args={fogArgs} />
-      <React.Suspense fallback={null}>
+      <fog attach="fog" args={['#090b1f', 0, 25]} />
+      <Suspense fallback={null}>
         <Planet />
-      </React.Suspense>
+      </Suspense>
       <Stars />
       <Controls
         autoRotate
@@ -109,5 +92,3 @@ function GTLFPlanet() {
     </Canvas>
   )
 }
-
-export default React.memo(GTLFPlanet)

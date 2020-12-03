@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import * as React from 'react'
+import { FC } from 'react'
 import { OmitByValue } from 'utility-types'
 
 import { ReactThreeFiber } from '../'
@@ -24,14 +24,14 @@ type InterestingThreeExports = OmitByValue<Three, MissingInThreeRuntimeExports |
 type __ThreeFiberComponents = {
   [P in keyof InterestingThreeExports]: Three[P] extends new (...args: any) => any
     ? InstanceType<Three[P]> extends InstanceType<Three['Object3D']>
-      ? React.FC<ReactThreeFiber.Object3DNode<InstanceType<Three[P]>, Three[P]>>
+      ? FC<ReactThreeFiber.Object3DNode<InstanceType<Three[P]>, Three[P]>>
       : InstanceType<Three[P]> extends InstanceType<Three['Geometry']>
-      ? React.FC<ReactThreeFiber.GeometryNode<InstanceType<Three[P]>, Three[P]>>
+      ? FC<ReactThreeFiber.GeometryNode<InstanceType<Three[P]>, Three[P]>>
       : InstanceType<Three[P]> extends InstanceType<Three['BufferGeometry']>
-      ? React.FC<ReactThreeFiber.BufferGeometryNode<InstanceType<Three[P]>, Three[P]>>
+      ? FC<ReactThreeFiber.BufferGeometryNode<InstanceType<Three[P]>, Three[P]>>
       : InstanceType<Three[P]> extends InstanceType<Three['Material']>
-      ? React.FC<ReactThreeFiber.MaterialNode<InstanceType<Three[P]>, Required<ConstructorParameters<Three[P]>>>>
-      : React.FC<ReactThreeFiber.Node<InstanceType<Three[P]>, Three[P]>>
+      ? FC<ReactThreeFiber.MaterialNode<InstanceType<Three[P]>, Required<ConstructorParameters<Three[P]>>>>
+      : FC<ReactThreeFiber.Node<InstanceType<Three[P]>, Three[P]>>
     : never
 }
 

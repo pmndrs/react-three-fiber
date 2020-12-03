@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import * as React from 'react'
+import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
@@ -7,11 +7,11 @@ import stork from '../../resources/gltf/stork.glb'
 extend({ OrbitControls })
 
 function Model({ factor = 1, speed = 1, ...props }) {
-  const group = React.useRef()
+  const group = useRef()
   const { nodes, materials, animations } = useLoader(GLTFLoader, stork)
 
-  const [mixer] = React.useState(() => new THREE.AnimationMixer())
-  React.useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [animations, mixer])
+  const [mixer] = useState(() => new THREE.AnimationMixer())
+  useEffect(() => void mixer.clipAction(animations[0], group.current).play(), [animations, mixer])
   useFrame((state, delta) => {
     mixer.update(delta * speed)
   })
@@ -31,40 +31,30 @@ function Model({ factor = 1, speed = 1, ...props }) {
 }
 
 export function Controls() {
-  const ref = React.useRef()
+  const ref = useRef()
   const { camera, gl } = useThree()
   useFrame(() => ref.current.update())
   return <orbitControls ref={ref} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
 }
 
-const style = { background: '#dfdfdf' }
-const camera = { position: [0, 0, 10] }
-const pointLightPosition = [0, 0, -50]
-const angle = Math.PI / 10
-const spotLightPosition = [150, 150, 150]
-const position1 = [5, 0, 0]
-const position2 = [-5, 0, 0]
-
-function GLTFAnimation() {
+export default function App() {
   return (
-    <Canvas style={style} camera={camera}>
-      <pointLight intensity={5} position={pointLightPosition} />
+    <Canvas style={{ background: '#dfdfdf' }} camera={{ position: [0, 0, 10] }}>
+      <pointLight intensity={5} position={[0, 0, -50]} />
       <spotLight
         intensity={2}
-        angle={angle}
-        position={spotLightPosition}
+        angle={Math.PI / 10}
+        position={[150, 150, 150]}
         penumbra={1}
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
       />
-      <React.Suspense fallback={null}>
+      <Suspense fallback={null}>
         <Model />
-        <Model position={position1} />
-        <Model position={position2} />
-      </React.Suspense>
+        <Model position={[5, 0, 0]} />
+        <Model position={[-5, 0, 0]} />
+      </Suspense>
       <Controls />
     </Canvas>
   )
 }
-
-export default React.memo(GLTFAnimation)

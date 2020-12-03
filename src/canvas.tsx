@@ -130,13 +130,13 @@ export type DomEventHandlers = {
   onLostPointerCapture(e: any): void
 }
 
-function makeId(event: DomEvent): string {
+function makeId(event: DomEvent) {
   return (event.eventObject || event.object).uuid + '/' + event.index
 }
 
 export const stateContext = React.createContext<SharedCanvasContext>({} as SharedCanvasContext)
 
-export function useCanvas(props: UseCanvasProps): DomEventHandlers {
+export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const {
     children,
     gl,
@@ -269,7 +269,8 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
     state.current.noEvents = noEvents
     // Make viewport backwards compatible
     state.current.viewport = getCurrentViewport as ViewportData
-  }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl, getCurrentViewport])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invalidateFrameloop, vr, concurrent, noEvents, ready, size, defaultCam, gl])
 
   // Adjusts default camera
   React.useMemo(() => {
@@ -298,7 +299,8 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
     gl.setSize(size.width, size.height)
 
     if (ready) invalidate(state)
-  }, [defaultCam, gl, size, updateDefaultCamera, getCurrentViewport, ready])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultCam, gl, size, updateDefaultCamera, ready])
 
   /** Events ------------------------------------------------------------------------------------------------ */
 
@@ -372,7 +374,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
   const handlePointerCancel: any = React.useCallback((event: DomEvent, hits?: Intersection[], prepare = true) => {
     state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
-    // commenting this out as I believe it is unnecessary and causes a recursive dependency
+    // commenting this out as I believe it is unneccessary and causes a recursive dependency
     // if (!hits) hits = handleIntersects(event, () => null)
     Array.from(hovered.values()).forEach((data) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
@@ -487,9 +489,9 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
         )
     )
 
-    // Take care of un-hover
+    // Take care of unhover
     handlePointerCancel(event, hits)
-    handleIntersects(hits, event, (data: any) => {
+    handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
       const handlers = (eventObject as any).__handlers
       // Check presence of handlers
@@ -520,7 +522,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
       state.current.pointer.emit(name, event)
       if (prepare) prepareRay(event)
       const hits = getIntersects(event)
-      handleIntersects(hits, event, (data: any) => {
+      handleIntersects(hits, event, (data: DomEvent) => {
         const eventObject = data.eventObject
         const handlers = (eventObject as any).__handlers
         if (handlers && handlers[name]) {
@@ -531,6 +533,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
             state.current.initialHits.includes(eventObject)
           ) {
             handlers[name](data)
+            pointerMissed((defaultScene as any).__interaction as THREE.Object3D[], (object) => object !== eventObject)
           }
         }
       })
@@ -542,17 +545,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
 
       if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
         if (calculateDistance(event) <= 2) {
-          ;(defaultScene as any).__interaction.forEach((object: THREE.Object3D) =>
-            Object.keys((object as any).__handlers).forEach((key) => {
-              if (key === 'pointerMissed')
-                (object as any).__handlers.pointerMissed({
-                  ...event,
-                  object,
-                  ray: defaultRaycaster.ray,
-                  camera: state.current.camera,
-                })
-            })
-          )
+          pointerMissed((defaultScene as any).__interaction as THREE.Object3D[])
           if (onPointerMissed) onPointerMissed()
         }
       }
@@ -599,7 +592,7 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
     } = state.current
     sharedState.current = props
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, defaultCam]) // defaultCam is intentional
+  }, [size, defaultCam])
 
   // Update pixel ratio
   React.useLayoutEffect(() => {
@@ -620,7 +613,8 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
       gl.toneMapping = THREE.ACESFilmicToneMapping
       gl.outputEncoding = THREE.sRGBEncoding
     }
-  }, [shadowMap, colorManagement, gl])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shadowMap, colorManagement])
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
@@ -684,6 +678,10 @@ export function useCanvas(props: UseCanvasProps): DomEventHandlers {
     []
   )
   return state.current.events
+}
+
+function pointerMissed(objects: THREE.Object3D[], filter = (object: THREE.Object3D) => true) {
+  objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__handlers.pointerMissed?.())
 }
 
 function dispose(obj: any) {

@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { Suspense } from 'react'
 import styled from 'styled-components'
 import { Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
 import * as demos from '../demos'
@@ -10,29 +10,28 @@ const visibleComponents = Object.entries(demos)
   .reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 export default function Intro() {
-  const match = useRouteMatch('/demo/:name')
-
-  const { bright } = visibleComponents[match ? match.params.name : defaultComponent]
-  const render = React.useCallback(function callback({ match }) {
-    const Component = visibleComponents[match.params.name].Component
-    return <Component />
-  }, [])
-
-  const style = React.useMemo(() => ({ color: bright ? '#2c2d31' : 'white' }), [bright])
-
+  let match = useRouteMatch('/demo/:name')
+  let { bright } = visibleComponents[match ? match.params.name : defaultComponent]
   return (
-    <PageImpl>
-      <React.Suspense fallback={null}>
+    <Page>
+      <Suspense fallback={null}>
         <Switch>
           <Route exact path="/" component={visibleComponents.Refraction.Component} />
-          <Route exact path="/demo/:name" render={render} />
+          <Route
+            exact
+            path="/demo/:name"
+            render={({ match }) => {
+              const Component = visibleComponents[match.params.name].Component
+              return <Component />
+            }}
+          />
         </Switch>
-      </React.Suspense>
+      </Suspense>
       <Demos />
-      <a href="https://github.com/pmndrs/react-three-fiber" style={style}>
+      <a href="https://github.com/pmndrs/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
         Github
       </a>
-    </PageImpl>
+    </Page>
   )
 }
 
@@ -62,6 +61,23 @@ function Demos() {
     </DemoPanel>
   )
 }
+
+const Page = styled(PageImpl)`
+  padding: 20px;
+
+  & > h1 {
+    position: absolute;
+    top: 70px;
+    left: 60px;
+  }
+
+  & > a {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+    font-size: 1.2em;
+  }
+`
 
 const DemoPanel = styled.div`
   position: absolute;

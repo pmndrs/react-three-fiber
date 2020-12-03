@@ -22,8 +22,8 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "3.4.3",
     "react-spring": "^8.0.27",
-    "react-three-gui": "0.4.2",
-    "react-use-gesture": "8.0.1",
+    "react-three-gui": "^0.4.1",
+    "react-use-gesture": "^7.0.16",
     "styled-components": "^5.2.0",
     "threejs-meshline": "^2.0.12",
     "use-cannon": "^0.5.3",
@@ -33,7 +33,6 @@
     "@babel/preset-typescript": "^7.12.1",
     "customize-cra": "^1.0.0",
     "customize-cra-react-refresh": "^1.1.0",
-    "eslint-plugin-react-perf": "^3.3.0",
     "react-app-rewired": "^2.1.6"
   },
   "browserslist": {

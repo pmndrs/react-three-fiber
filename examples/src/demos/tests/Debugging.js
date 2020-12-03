@@ -1,81 +1,29 @@
-import * as React from 'react'
-import { a, useSpring } from '@react-spring/three'
+import React, { useState } from 'react'
 import { Canvas } from 'react-three-fiber'
 
-const clickedScale = [1.9, 1.9, 1.9]
-const defaultScale = [1.5, 1.5, 1.5]
-const args = [1, 1, 1]
-
 function Box(props) {
-  const [hovered, setHover] = React.useState(false)
-  const [clicked, setClicked] = React.useState(false)
-  const boxProps = useSpring({ scale: clicked ? [1.9, 1.9, 1.9] : [1.5, 1.5, 1.5] })
-  const onPointerOver = React.useCallback(function callback(e) {
-    setHover(true)
-  }, [])
-
-  const onPointerOut = React.useCallback(function callback(e) {
-    setHover(false)
-  }, [])
-
-  const onClick = React.useCallback(function callback(e) {
-    setClicked(function toggle(bool) {
-      return !bool
-    })
-  }, [])
-
-  return (
-    <a.mesh
-      scale={clicked ? clickedScale : defaultScale}
-      onClick={onClick}
-      onPointerOver={onPointerOver}
-      onPointerOut={onPointerOut}
-      {...boxProps}
-    >
-      <boxBufferGeometry args={args} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-    </a.mesh>
-  )
-}
-
-function Box2(props) {
-  const [hovered, setHover] = React.useState(false)
-  const [clicked, setClicked] = React.useState(false)
-  const onPointerOver = React.useCallback(function callback(e) {
-    setHover(true)
-  }, [])
-
-  const onPointerOut = React.useCallback(function callback(e) {
-    setHover(false)
-  }, [])
-  const onClick = React.useCallback(function callback(e) {
-    setClicked(function toggle(bool) {
-      return !bool
-    })
-  }, [])
-
+  const [hovered, setHovered] = useState(false)
+  const [active, setActive] = useState(false)
   return (
     <mesh
+      onPointerMissed={(e) => setActive(false)}
+      onPointerOver={(e) => setHovered(true)}
+      onPointerOut={(e) => setHovered(false)}
+      onClick={() => setActive(!active)}
+      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       {...props}
-      scale={clicked ? clickedScale : defaultScale}
-      onClick={onClick}
-      onPointerOver={onPointerOver}
-      onPointerOut={onPointerOut}
     >
-      <boxBufferGeometry args={args} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+      <boxBufferGeometry />
+      <meshBasicMaterial color={hovered ? 'hotpink' : 'green'} />
     </mesh>
   )
 }
 
-function Debugging() {
+export default function App() {
   return (
     <Canvas>
-      <ambientLight />
-      <Box />
-      <Box2 position={args} />
+      <Box position={[-1, 0, 0]} />
+      <Box position={[1, 0, 0]} />
     </Canvas>
   )
 }
-
-export default React.memo(Debugging)

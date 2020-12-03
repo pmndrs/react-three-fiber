@@ -5,6 +5,9 @@
     "node": true
   },
   "extends": [
+    "prettier",
+    "prettier/react",
+    "prettier/@typescript-eslint",
     "plugin:prettier/recommended",
     "plugin:react-hooks/recommended",
     "plugin:import/errors",
@@ -22,8 +25,8 @@
     "ecmaVersion": 2018,
     "sourceType": "module",
     "rules": {
-      "no-console": "off",
       "curly": ["warn", "multi-line", "consistent"],
+      "no-console": "off",
       "no-empty-pattern": "warn",
       "no-duplicate-imports": "error",
       "import/no-unresolved": "off",
@@ -66,12 +69,6 @@
       "files": ["src"],
       "parserOptions": {
         "project": "./tsconfig.json"
-      }
-    },
-    {
-      "files": ["examples"],
-      "rules": {
-        "no-console": ["warn"]
       }
     }
   ]

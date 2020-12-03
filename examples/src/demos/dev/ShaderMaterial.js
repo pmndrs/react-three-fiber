@@ -1,6 +1,6 @@
 // WebGL code from https://tympanus.net/Development/DistortionHoverEffect/
 
-import * as React from 'react'
+import React, { useState, useCallback, useMemo } from 'react'
 import * as THREE from 'three'
 import { vertexShader, fragmentShader } from '../../resources/shaders/XFadeShader'
 import { Canvas, useThree } from 'react-three-fiber'
@@ -78,16 +78,12 @@ const data = [
   [img17, img16, disp3, -0.8],
 ]
 
-const planeBufferGeometryArgs = [1, 1]
-
 function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
   const { progress } = useSpring({ progress: hovered ? 1 : 0 })
   const { gl, invalidate, viewport } = useThree()
   const { width, height } = viewport()
 
-  const scale = React.useMemo(() => [width, height, 1], [width, height])
-
-  const args = React.useMemo(() => {
+  const args = useMemo(() => {
     const loader = new THREE.TextureLoader()
     const texture1 = loader.load(url1, invalidate)
     const texture2 = loader.load(url2, invalidate)
@@ -99,35 +95,33 @@ function ImageWebgl({ url1, url2, disp, intensity, hovered }) {
 
     texture1.anisotropy = gl.capabilities.getMaxAnisotropy()
     texture2.anisotropy = gl.capabilities.getMaxAnisotropy()
-    return [
-      {
-        uniforms: {
-          effectFactor: { type: 'f', value: intensity },
-          dispFactor: { type: 'f', value: 0 },
-          tex: { type: 't', value: texture1 },
-          tex2: { type: 't', value: texture2 },
-          disp: { type: 't', value: dispTexture },
-        },
-        vertexShader,
-        fragmentShader,
+    return {
+      uniforms: {
+        effectFactor: { type: 'f', value: intensity },
+        dispFactor: { type: 'f', value: 0 },
+        tex: { type: 't', value: texture1 },
+        tex2: { type: 't', value: texture2 },
+        disp: { type: 't', value: dispTexture },
       },
-    ]
+      vertexShader,
+      fragmentShader,
+    }
   }, [url1, url2, disp, gl.capabilities, intensity, invalidate])
 
   return (
-    <mesh scale={scale}>
-      <planeBufferGeometry attach="geometry" args={planeBufferGeometryArgs} />
-      <a.shaderMaterial attach="material" args={args} uniforms-dispFactor-value={progress} />
+    <mesh scale={[width, height, 1]}>
+      <planeBufferGeometry attach="geometry" args={[1, 1]} />
+      <a.shaderMaterial attach="material" args={[args]} uniforms-dispFactor-value={progress} />
     </mesh>
   )
 }
 
 function Image(props) {
-  const [hovered, setHover] = React.useState(false)
-  const onPointerOver = React.useCallback(() => setHover(true), [])
-  const onPointerOut = React.useCallback(() => setHover(false), [])
+  const [hovered, setHover] = useState(false)
+  const hover = useCallback(() => setHover(true), [])
+  const unhover = useCallback(() => setHover(false), [])
   return (
-    <Item onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
+    <Item onPointerOver={hover} onPointerOut={unhover}>
       <Canvas invalidateFrameloop>
         <ImageWebgl {...props} hovered={hovered} />
       </Canvas>
@@ -135,7 +129,7 @@ function Image(props) {
   )
 }
 
-function ShaderMaterial() {
+export default function App() {
   return (
     <Container>
       <Grid>
@@ -146,8 +140,6 @@ function ShaderMaterial() {
     </Container>
   )
 }
-
-export default React.memo(ShaderMaterial)
 
 const Container = styled.div`
   position: absolute;

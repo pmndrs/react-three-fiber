@@ -1,8 +1,8 @@
-import * as React from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
 import { Canvas, useFrame, useThree } from 'react-three-fiber'
 import { Controls, useControl } from 'react-three-gui'
-import { Html } from 'drei'
+import { HTML } from 'drei'
 import { unstable_LowPriority as low, unstable_runWithPriority as run } from 'scheduler'
 
 const SLOWDOWN = 1
@@ -10,40 +10,11 @@ const ROW = 20
 const BLOCK_AMOUNT = 600
 const SPIKE_AMOUNT = 1000
 const geom = new BoxBufferGeometry(1, 1, 1)
-const material = new MeshNormalMaterial()
+const matr = new MeshNormalMaterial()
 const rpi = () => Math.random() * Math.PI
 
-function Block({ i, change, ...props }) {
-  const { viewport } = useThree()
-
-  const { width, height, size } = React.useMemo(
-    () => {
-      const { width, height } = viewport().factor
-      const size = width / 100 / ROW
-
-      return {
-        width,
-        height,
-        size,
-      }
-    },
-    [viewport]
-  )
-
-  const scale = React.useMemo(() => [size, size, size], [size])
-  const position = React.useMemo(
-    () => {
-      const left = -width / 100 / 2 + size / 2
-      const top = height / 100 / 2 - size / 2
-      const x = (i % ROW) * size
-      const y = Math.floor(i / ROW) * -size
-
-      return [left + x, top + y, 0]
-    },
-    [width, height, size, i]
-  )
-
-  const [color, set] = React.useState(0)
+function Block({ change, ...props }) {
+  const [color, set] = useState(0)
 
   // Artificial slowdown ...
   if (color > 0) {
@@ -51,13 +22,13 @@ function Block({ i, change, ...props }) {
     while (performance.now() < e) {}
   }
 
-  const mounted = React.useRef(false)
-  React.useEffect(() => {
+  const mounted = useRef(false)
+  useEffect(() => {
     mounted.current = true
     return () => (mounted.current = false)
   })
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (change)
       setTimeout(
         () => run(low, () => mounted.current && set(Math.round(Math.random() * 0xffffff))),
@@ -66,27 +37,33 @@ function Block({ i, change, ...props }) {
   }, [change])
 
   return (
-    <mesh scale={scale} position={position} geometry={geom} {...props}>
+    <mesh {...props} geometry={geom}>
       <meshBasicMaterial attach="material" color={color} />
     </mesh>
   )
 }
 
-function Blocks(props) {
-  const [changeBlocks, set] = React.useState(false)
-
-  React.useEffect(() => {
+function Blocks() {
+  const [changeBlocks, set] = useState(false)
+  useEffect(() => {
     const handler = setInterval(() => set((state) => !state), 2000)
     return () => clearInterval(handler)
   })
 
+  const { viewport } = useThree()
+  const { width, height } = viewport().factor
+  const size = width / 100 / ROW
   return new Array(BLOCK_AMOUNT).fill().map((_, i) => {
-    return <Block key={i} i={i} change={changeBlocks} {...props} />
+    const left = -width / 100 / 2 + size / 2
+    const top = height / 100 / 2 - size / 2
+    const x = (i % ROW) * size
+    const y = Math.floor(i / ROW) * -size
+    return <Block key={i} change={changeBlocks} scale={[size, size, size]} position={[left + x, top + y, 0]} />
   })
 }
 
 function Fps() {
-  let ref = React.useRef()
+  let ref = useRef()
   let last = Date.now()
   let qty = 0
   let currentAvg = 0
@@ -101,17 +78,15 @@ function Fps() {
     }
     last = now
   })
-  return <Html className="fps" center ref={ref} />
+  return <HTML className="fps" center ref={ref} />
 }
-
-const boxScale = [2, 2, 2]
 
 function Box() {
   let t = 0
-  const mesh = React.useRef()
-  const [coords] = React.useState(() => [rpi(), rpi(), rpi()])
+  const mesh = useRef()
+  const [coords] = useState(() => [rpi(), rpi(), rpi()])
   useFrame(() => mesh.current && mesh.current.rotation.set(coords[0] + (t += 0.01), coords[1] + t, coords[2] + t))
-  return <mesh ref={mesh} geometry={geom} material={material} scale={boxScale} />
+  return <mesh ref={mesh} geometry={geom} material={matr} scale={[2, 2, 2]} />
 }
 
 function AnimatedSpikes() {
@@ -124,15 +99,12 @@ function Dolly() {
   return null
 }
 
-const camera = { zoom: 100 }
-const cameraStyle = { background: '#272737' }
-
-function Concurrent() {
+export default function App() {
   const root = useControl('React', { type: 'select', group: 'Performance', items: ['Concurrent', 'Legacy'] })
   const concurrent = root === 'Concurrent'
   return (
     <>
-      <Canvas concurrent={concurrent} key={root} orthographic camera={camera} style={cameraStyle}>
+      <Canvas concurrent={concurrent} key={root} orthographic camera={{ zoom: 100 }} style={{ background: '#272737' }}>
         <Fps />
         <Blocks />
         <AnimatedSpikes />
@@ -142,5 +114,3 @@ function Concurrent() {
     </>
   )
 }
-
-export default React.memo(Concurrent)

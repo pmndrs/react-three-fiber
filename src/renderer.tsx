@@ -132,7 +132,7 @@ function renderLoop(timestamp: number) {
   running = false
 }
 
-export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 1): void {
+export function invalidate(state: React.MutableRefObject<CanvasContext> | boolean = true, frames = 1) {
   if (state === true) {
     roots.forEach((root) => {
       const state = root.containerInfo.__state
@@ -148,7 +148,7 @@ export function invalidate(state: React.MutableRefObject<CanvasContext> | boolea
   }
 }
 
-export function forceResize(): void {
+export function forceResize() {
   roots.forEach((root) => root.containerInfo.__state.current.forceResize())
 }
 
@@ -360,7 +360,7 @@ function createInstance(
   return instance
 }
 
-function appendChild(parentInstance: any, child: any): void {
+function appendChild(parentInstance: any, child: any) {
   if (child) {
     if (child.isObject3D) {
       parentInstance.add(child)
@@ -383,7 +383,7 @@ function appendChild(parentInstance: any, child: any): void {
   }
 }
 
-function insertBefore(parentInstance: any, child: any, beforeChild: any): void {
+function insertBefore(parentInstance: any, child: any, beforeChild: any) {
   if (child) {
     if (child.isObject3D) {
       child.parent = parentInstance
@@ -400,7 +400,7 @@ function insertBefore(parentInstance: any, child: any, beforeChild: any): void {
   }
 }
 
-function removeRecursive(array: any, parent: any, clone = false): void {
+function removeRecursive(array: any, parent: any, clone = false) {
   if (array) {
     // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
     const target = clone ? [...array] : array
@@ -408,7 +408,7 @@ function removeRecursive(array: any, parent: any, clone = false): void {
   }
 }
 
-function removeChild(parentInstance: any, child: any): void {
+function removeChild(parentInstance: any, child: any) {
   if (child) {
     if (child.isObject3D) {
       parentInstance.remove(child)
@@ -447,7 +447,7 @@ function removeChild(parentInstance: any, child: any): void {
   }
 }
 
-function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber): void {
+function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber) {
   const parent = instance.parent
   const newInstance = createInstance(type, newProps, instance.__container, null, fiber)
   removeChild(parent, instance)
@@ -466,21 +466,6 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
   })
 }
 
-// TODO: Here we need to provide types to generic
-//   Reconciler<
-//    Type,
-//    Props,
-//    Container,
-//    Instance,
-//    TextInstance,
-//    HydratableInstance,
-//    PublicInstance,
-//    HostContext,
-//    UpdatePayload,
-//    ChildSet,
-//    TimeoutHandle,
-//    NoTimeout
-//  >
 const Renderer = Reconciler({
   now,
   createInstance,

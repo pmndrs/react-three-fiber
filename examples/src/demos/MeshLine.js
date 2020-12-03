@@ -1,18 +1,17 @@
-import * as React from 'react'
+import React, { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import * as meshline from 'threejs-meshline'
 import { extend, Canvas, useFrame, useThree } from 'react-three-fiber'
 
 extend(meshline)
 
-function FatLine({ curve, width, color, speed }) {
-  const material = React.useRef()
+function Fatline({ curve, width, color, speed }) {
+  const material = useRef()
   useFrame(() => (material.current.uniforms.dashOffset.value -= speed))
   return (
     <mesh>
       <meshLine attach="geometry" vertices={curve} />
       <meshLineMaterial
-        attach="material"
         ref={material}
         transparent
         depthTest={false}
@@ -26,7 +25,7 @@ function FatLine({ curve, width, color, speed }) {
 }
 
 function Lines({ count, colors }) {
-  const lines = React.useMemo(
+  const lines = useMemo(
     () =>
       new Array(count).fill().map(() => {
         const pos = new THREE.Vector3(10 - Math.random() * 20, 10 - Math.random() * 20, 10 - Math.random() * 20)
@@ -45,7 +44,7 @@ function Lines({ count, colors }) {
       }),
     [colors, count]
   )
-  return lines.map((props, index) => <FatLine key={index} {...props} />)
+  return lines.map((props, index) => <Fatline key={index} {...props} />)
 }
 
 function Rig({ mouse }) {
@@ -58,24 +57,16 @@ function Rig({ mouse }) {
   return null
 }
 
-const style = { background: '#ffc9e7' }
-const camera = { position: [0, 0, 10], fov: 25 }
-const colors = ['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']
-const defaultMouse = [0, 0]
-
-function MeshLine() {
-  const mouse = React.useRef(defaultMouse)
-
-  const onMouseMove = React.useCallback(function callback(e) {
-    mouse.current = [e.clientX - window.innerWidth / 2, e.clientY - window.innerHeight / 2]
-  }, [])
-
+export default function App() {
+  const mouse = useRef([0, 0])
   return (
-    <Canvas style={style} camera={camera} onMouseMove={onMouseMove}>
-      <Lines count={200} colors={colors} />
+    <Canvas
+      style={{ background: '#ffc9e7' }}
+      camera={{ position: [0, 0, 10], fov: 25 }}
+      onMouseMove={(e) => (mouse.current = [e.clientX - window.innerWidth / 2, e.clientY - window.innerHeight / 2])}
+    >
+      <Lines count={100} colors={['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']} />
       <Rig mouse={mouse} />
     </Canvas>
   )
 }
-
-export default React.memo(MeshLine)

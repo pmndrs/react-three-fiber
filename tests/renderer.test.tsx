@@ -1,8 +1,6 @@
-import * as React from 'react'
+import React from 'react'
 import { render } from '../src/targets/web'
 import { Group, Mesh, Vector3, BufferGeometry, MeshBasicMaterial } from 'three'
-
-const args: [number, number, number] = [1, 1, 1]
 
 describe('renderer', () => {
   test('should produce idempotent sibling nodes movement', () => {
@@ -37,7 +35,7 @@ describe('renderer', () => {
 
     render(
       <mesh position={position}>
-        <boxBufferGeometry args={args} />
+        <boxBufferGeometry args={[1, 1, 1]} />
         <meshBasicMaterial />
       </mesh>,
       rootGroup

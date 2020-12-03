@@ -5288,11 +5288,6 @@ eslint-plugin-react-hooks@^1.6.1:
   resolved "https://registry.yarnpkg.com/eslint-plugin-react-hooks/-/eslint-plugin-react-hooks-1.7.0.tgz#6210b6d5a37205f0b92858f895a4e827020a7d04"
   integrity sha512-iXTCFcOmlWvw4+TOE8CLWj6yX1GwzT0Y6cUfHHZqWnSk144VmVIRcVGtUAzrLES7C798lmvnt02C7rxaOX1HNA==
 
-eslint-plugin-react-perf@^3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-react-perf/-/eslint-plugin-react-perf-3.3.0.tgz#d606792b5c7b63a6d03c558d7edd8b8d33080805"
-  integrity sha512-POzjKFOuHpyGZFwLkqPK8kxLy/tYVeq30h+SEM1UwfSmkyPcbEjbbGw1gN5R1hxCHf4zJ0G0NIbY+oCe8i/DNQ==
-
 eslint-plugin-react@7.19.0:
   version "7.19.0"
   resolved "https://registry.yarnpkg.com/eslint-plugin-react/-/eslint-plugin-react-7.19.0.tgz#6d08f9673628aa69c5559d33489e855d83551666"
@@ -10264,10 +10259,10 @@ react-spring@^8.0.27:
     "@babel/runtime" "^7.3.1"
     prop-types "^15.5.8"
 
-react-three-gui@0.4.2:
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/react-three-gui/-/react-three-gui-0.4.2.tgz#61838eabdc2a7279e340b339b3c4a71c842abb50"
-  integrity sha512-td/Iu6kEUJSKJz68bSk4dhA0vT7Lq3uz/fdp/c3bvX9TDKt1mtLsQ3fP5ebUsl3EC9KoGsJpO5WQOJRkxqE3UA==
+react-three-gui@^0.4.1:
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/react-three-gui/-/react-three-gui-0.4.1.tgz#f7cf73895111364d2fd555bf6484cec8591f3b3e"
+  integrity sha512-x6RL4laOnlOInAiRpH4sYPwz1cnZLKcazEKIR9yyPslTp3qVmcAFO8VVGeY++DCHm0haXntKZPLvrf6YcGBs+A==
   dependencies:
     "@react-spring/three" "^9.0.0-rc.3"
     "@react-spring/web" "^9.0.0-rc.3"
@@ -10276,15 +10271,15 @@ react-three-gui@0.4.2:
     react-use-gesture "^7.0.15"
     styled-components "^5.1.1"
 
-react-use-gesture@8.0.1:
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-8.0.1.tgz#4360c0f7c9e26baf9fbe58f63fc9de7ef699c17f"
-  integrity sha512-CXzUNkulUdgouaAlvAsC5ZVo0fi9KGSBSk81WrE4kOIcJccpANe9zZkAYr5YZZhqpicIFxitsrGVS4wmoMun9A==
-
 react-use-gesture@^7.0.15:
   version "7.0.15"
   resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-7.0.15.tgz#93c651e916a31cfb12d079e7fa1543d5b0511e07"
   integrity sha512-vHQkaa7oUbSDTAcFk9huQXa7E8KPrZH91erPuOMoqZT513qvtbb/SzTQ33lHc71/kOoJkMbzOkc4uoA4sT7Ogg==
+
+react-use-gesture@^7.0.16:
+  version "7.0.16"
+  resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-7.0.16.tgz#501985261ef9c815a377b6ff9be6df5a85fbb54f"
+  integrity sha512-gwgX+E+WQG0T1uFVl3z8j3ZwH3QQGIgVl7VtQEC2m0IscSs668sSps4Ss3CFp3Vns8xx0j9TVK4aBXH6+YrpEg==
 
 react@17.0.0:
   version "17.0.0"

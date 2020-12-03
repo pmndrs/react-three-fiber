@@ -6,7 +6,7 @@ const width = 1920
 const widthHalf = width / 2
 const height = 1080
 const heightHalf = height / 2
-const xy = (x, y) => [widthHalf + x, heightHalf + y]
+const xy = (x, y) => [width / 2 + x, height / 2 + y]
 
 describe('point and click', () => {
   beforeAll(async () => {
@@ -20,10 +20,7 @@ describe('point and click', () => {
   it('hovers and selects it', async () => {
     await page.mouse.move(...xy(0, 0))
     await page.mouse.click(...xy(0, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
 })
 
@@ -38,51 +35,30 @@ describe('point and click', () => {
 
   it('shows three boxes: red, green, blue', async () => {
     await page.mouse.move(...xy(-widthHalf, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('hovers the red box', async () => {
     await page.mouse.move(...xy(-100, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('hovers the red and green box', async () => {
     await page.mouse.move(...xy(0, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('hovers the green box', async () => {
     await page.mouse.move(...xy(20, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('hovers the green and blue box', async () => {
     await page.mouse.move(...xy(75, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('hovers the blue box', async () => {
     await page.mouse.move(...xy(100, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
   it('pointerout', async () => {
     await page.mouse.move(...xy(widthHalf, 0))
-    expect(await page.screenshot()).toMatchImageSnapshot({
-      failureThreshold: 0.005,
-      failureThresholdType: 'percent',
-    })
+    expect(await page.screenshot()).toMatchImageSnapshot()
   })
 })
