@@ -80,7 +80,10 @@ export type CanvasContext = SharedCanvasContext & {
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: SharedCanvasContext) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (event: DomEvent) => { offsetX: number; offsetY: number }
+export type ComputeOffsetsFunction = (
+  event: DomEvent,
+  state: SharedCanvasContext
+) => { offsetX: number; offsetY: number }
 
 export type ResizeOptions = {
   debounce?: number | { scroll: number; resize: number }
@@ -302,6 +305,48 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [defaultCam, gl, size, updateDefaultCamera, ready])
 
+  // Only trigger the context provider when necessary
+  const sharedState = React.useRef<SharedCanvasContext>((null as unknown) as SharedCanvasContext)
+  React.useMemo(() => {
+    const {
+      ready,
+      manual,
+      vr,
+      noEvents,
+      invalidateFrameloop,
+      frames,
+      subscribers,
+      captured,
+      initialClick,
+      initialHits,
+      ...props
+    } = state.current
+    sharedState.current = props
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size, defaultCam])
+
+  // Update pixel ratio
+  React.useLayoutEffect(() => {
+    if (pixelRatio) {
+      if (Array.isArray(pixelRatio))
+        gl.setPixelRatio(Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1]))
+      else gl.setPixelRatio(pixelRatio)
+    }
+  }, [gl, pixelRatio])
+  // Update shadow map
+  React.useLayoutEffect(() => {
+    if (shadowMap) {
+      gl.shadowMap.enabled = true
+      if (typeof shadowMap === 'object') Object.assign(gl.shadowMap, shadowMap)
+      else gl.shadowMap.type = THREE.PCFSoftShadowMap
+    }
+    if (colorManagement) {
+      gl.toneMapping = THREE.ACESFilmicToneMapping
+      gl.outputEncoding = THREE.sRGBEncoding
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shadowMap, colorManagement])
+
   /** Events ------------------------------------------------------------------------------------------------ */
 
   const hovered = React.useMemo(() => new Map<string, DomEvent>(), [])
@@ -311,7 +356,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const prepareRay = React.useCallback((event: DomEvent) => {
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const offsets = raycaster?.computeOffsets?.(event) || event.nativeEvent
+    const offsets = raycaster?.computeOffsets?.(event, sharedState.current) || event.nativeEvent
     if (offsets) {
       const { offsetX, offsetY } = offsets
       const { width, height } = state.current.size
@@ -533,7 +578,11 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
             state.current.initialHits.includes(eventObject)
           ) {
             handlers[name](data)
-            pointerMissed((defaultScene as any).__interaction as THREE.Object3D[], (object) => object !== eventObject)
+            pointerMissed(
+              event,
+              (defaultScene as any).__interaction as THREE.Object3D[],
+              (object) => object !== eventObject
+            )
           }
         }
       })
@@ -545,7 +594,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
       if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
         if (calculateDistance(event) <= 2) {
-          pointerMissed((defaultScene as any).__interaction as THREE.Object3D[])
+          pointerMissed(event, (defaultScene as any).__interaction as THREE.Object3D[])
           if (onPointerMissed) onPointerMissed()
         }
       }
@@ -573,48 +622,6 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   }, [handlePointer, intersect, handlePointerCancel, handlePointerMove])
 
   /** Events ------------------------------------------------------------------------------------------------- */
-
-  // Only trigger the context provider when necessary
-  const sharedState = React.useRef<SharedCanvasContext>()
-  React.useMemo(() => {
-    const {
-      ready,
-      manual,
-      vr,
-      noEvents,
-      invalidateFrameloop,
-      frames,
-      subscribers,
-      captured,
-      initialClick,
-      initialHits,
-      ...props
-    } = state.current
-    sharedState.current = props
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [size, defaultCam])
-
-  // Update pixel ratio
-  React.useLayoutEffect(() => {
-    if (pixelRatio) {
-      if (Array.isArray(pixelRatio))
-        gl.setPixelRatio(Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1]))
-      else gl.setPixelRatio(pixelRatio)
-    }
-  }, [gl, pixelRatio])
-  // Update shadow map
-  React.useLayoutEffect(() => {
-    if (shadowMap) {
-      gl.shadowMap.enabled = true
-      if (typeof shadowMap === 'object') Object.assign(gl.shadowMap, shadowMap)
-      else gl.shadowMap.type = THREE.PCFSoftShadowMap
-    }
-    if (colorManagement) {
-      gl.toneMapping = THREE.ACESFilmicToneMapping
-      gl.outputEncoding = THREE.sRGBEncoding
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shadowMap, colorManagement])
 
   // This component is a bridge into the three render context, when it gets rendered
   // we know we are ready to compile shaders, call subscribers, etc
@@ -680,8 +687,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   return state.current.events
 }
 
-function pointerMissed(objects: THREE.Object3D[], filter = (object: THREE.Object3D) => true) {
-  objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__handlers.pointerMissed?.())
+function pointerMissed(event: React.MouseEvent, objects: THREE.Object3D[], filter = (object: THREE.Object3D) => true) {
+  objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__handlers.pointerMissed?.(event))
 }
 
 function dispose(obj: any) {

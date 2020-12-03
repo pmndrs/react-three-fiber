@@ -30,7 +30,7 @@ export type EventHandlers = {
   onPointerOver?: (event: PointerEvent) => void
   onPointerOut?: (event: PointerEvent) => void
   onPointerMove?: (event: PointerEvent) => void
-  onPointerMissed?: () => void
+  onPointerMissed?: (event: React.MouseEvent) => void
   onWheel?: (event: WheelEvent) => void
 }
 
