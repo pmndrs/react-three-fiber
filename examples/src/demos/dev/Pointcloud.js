@@ -1,42 +1,48 @@
+import * as THREE from 'three'
 import React, { useMemo, useRef, useCallback } from 'react'
-import { Canvas, extend, useFrame, useThree } from 'react-three-fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { Canvas, extend } from 'react-three-fiber'
+import { OrbitControls } from 'drei'
 
-extend({ OrbitControls })
+class DotMaterial extends THREE.ShaderMaterial {
+  constructor() {
+    super({
+      transparent: true,
+      uniforms: { size: { value: 10 }, scale: { value: 1 } },
+      vertexShader: THREE.ShaderLib.points.vertexShader,
+      fragmentShader: `
+      varying vec3 vColor;
+      void main() {
+        gl_FragColor = vec4(vColor, step(length(gl_PointCoord.xy - vec2(0.5)), 0.5));
+      }`,
+    })
+  }
+}
 
+extend({ DotMaterial })
+
+const white = new THREE.Color('white')
+const hotpink = new THREE.Color('hotpink')
 function Particles({ pointCount }) {
   const [positions, colors] = useMemo(() => {
-    let positions = [],
-      colors = []
-    for (let i = 0; i < pointCount; i++) {
-      positions.push(5 - Math.random() * 10)
-      positions.push(5 - Math.random() * 10)
-      positions.push(5 - Math.random() * 10)
-      colors.push(1)
-      colors.push(0.5)
-      colors.push(0.5)
-    }
+    const positions = [...new Array(pointCount * 3)].map(() => 5 - Math.random() * 10)
+    const colors = [...new Array(pointCount)].flatMap(() => hotpink.toArray())
     return [new Float32Array(positions), new Float32Array(colors)]
   }, [pointCount])
 
-  const attrib = useRef()
+  const points = useRef()
   const hover = useCallback((e) => {
     e.stopPropagation()
-    attrib.current.array[e.index * 3] = 1
-    attrib.current.array[e.index * 3 + 1] = 1
-    attrib.current.array[e.index * 3 + 2] = 1
-    attrib.current.needsUpdate = true
+    white.toArray(points.current.geometry.attributes.color.array, e.index * 3)
+    points.current.geometry.attributes.color.needsUpdate = true
   }, [])
 
   const unhover = useCallback((e) => {
-    attrib.current.array[e.index * 3] = 1
-    attrib.current.array[e.index * 3 + 1] = 0.5
-    attrib.current.array[e.index * 3 + 2] = 0.5
-    attrib.current.needsUpdate = true
+    hotpink.toArray(points.current.geometry.attributes.color.array, e.index * 3)
+    points.current.geometry.attributes.color.needsUpdate = true
   }, [])
 
   return (
-    <points onPointerOver={hover} onPointerOut={unhover}>
+    <points ref={points} onPointerOver={hover} onPointerOut={unhover}>
       <bufferGeometry attach="geometry">
         <bufferAttribute
           attachObject={['attributes', 'position']}
@@ -44,33 +50,23 @@ function Particles({ pointCount }) {
           array={positions}
           itemSize={3}
         />
-        <bufferAttribute
-          ref={attrib}
-          attachObject={['attributes', 'color']}
-          count={colors.length / 3}
-          array={colors}
-          itemSize={3}
-        />
+        <bufferAttribute attachObject={['attributes', 'color']} count={colors.length / 3} array={colors} itemSize={3} />
       </bufferGeometry>
-      <pointsMaterial attach="material" vertexColors size={10} sizeAttenuation={false} />
+      <dotMaterial vertexColors />
     </points>
-  )
-}
-
-function Controls() {
-  const controls = useRef()
-  const { camera, gl } = useThree()
-  useFrame(() => controls.current.update())
-  return (
-    <orbitControls ref={controls} args={[camera, gl.domElement]} enableDamping dampingFactor={0.1} rotateSpeed={0.5} />
   )
 }
 
 export default function App() {
   return (
-    <Canvas orthographic camera={{ zoom: 60 }} raycaster={{ params: { Points: { threshold: 0.2 } } }}>
-      <Particles pointCount={100} />
-      <Controls />
+    <Canvas
+      style={{ background: 'peachpuff' }}
+      orthographic
+      camera={{ zoom: 60, position: [0, 0, 100] }}
+      raycaster={{ params: { Points: { threshold: 0.2 } } }}
+    >
+      <Particles pointCount={1000} />
+      <OrbitControls />
     </Canvas>
   )
 }
