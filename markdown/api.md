@@ -1,5 +1,7 @@
 # API
 
+You need to be versed in both React and Threejs before rushing in this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-intro.html). As for Threejs, make sure you at least glance over the [fundamentals](#fundamentals) section on the main-page, know at least the very basics: composition, scenes, cameras, controls, lights, meshes, materials.
+
 ## Table of Contents
 - [Canvas](#canvas)
 - [Objects, properties and constructor arguments](#objects-properties-and-constructor-arguments)
