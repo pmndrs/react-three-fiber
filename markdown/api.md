@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [Canvas](#canvas)
-- [Objects and properties](#objects-and-properties)
+- [Objects, properties and constructor arguments](#objects-and-properties)
 - [Automatic disposal](#automatic-disposal)
 - [Events](#events)
 - [Hooks](#hooks)
@@ -82,7 +82,7 @@ A _wrapping container_ with a [resize observer](https://github.com/react-spring/
 
 You do not have to use any of these objects, look under "Recipes" down below if you want to bring your own.
 
-# Objects and properties
+# Objects, properties and constructor arguments
 
 You can use [Threejs's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
 
