@@ -1,6 +1,6 @@
 # API
 
-You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-intro.html). As for Threejs, make sure you at least glance over the [fundamentals](https://github.com/pmndrs/react-three-fiber#fundamentals) section on the main-page, know at least the very basics: composition, scenes, cameras, controls, lights, meshes, materials.
+You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-intro.html). As for Threejs, make sure you at least glance over the [fundamentals](https://github.com/pmndrs/react-three-fiber#fundamentals) section on the main-page, know at least the very basics: composition, scenes, cameras, controls, lights, meshes, materials. Vector-math, shaders and all that complicated stuff can come later.
 
 ## Table of Contents
 - [Canvas](#canvas)
