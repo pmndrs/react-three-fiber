@@ -2,7 +2,7 @@
 
 ## Table of Contents
 - [Canvas](#canvas)
-- [Objects, properties and constructor arguments](#objects-and-properties)
+- [Objects, properties and constructor arguments](#objects-properties-and-constructor-arguments)
 - [Automatic disposal](#automatic-disposal)
 - [Events](#events)
 - [Hooks](#hooks)
