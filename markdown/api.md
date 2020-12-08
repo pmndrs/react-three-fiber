@@ -113,7 +113,7 @@ You can use [Threejs's entire object catalogue and all properties](https://three
 Constructor arguments, which is different from props, are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
 
 ```jsx
-<axesHelper args={[10]} />
+<boxBufferGeometry args={[2, 2, 2]} />
 ```
 
 #### Shortcuts (set)
