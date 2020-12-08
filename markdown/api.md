@@ -110,10 +110,10 @@ You can use [Threejs's entire object catalogue and all properties](https://three
 
 #### Constructor arguments
 
-Constructor arguments, which is different from props, are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+In threejs objects are classes that are instanciated. These classes can receive one-time constructor arguments (`new THREE.SphereBufferGeometry(1, 32)`), and properties (`someObject.visible = true`). In three-fiber constructor arguments are always passed as an array via `args`. If args change later on, the object must naturally get re-constructed from scratch!
 
 ```jsx
-<boxBufferGeometry args={[2, 2, 2]} />
+<sphereBufferGeometry args={[1, 32]} />
 ```
 
 #### Shortcuts (set)
