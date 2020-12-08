@@ -108,13 +108,21 @@ You can use [Threejs's entire object catalogue and all properties](https://three
 </mesh>
 ```
 
+#### Constructor arguments
+
+Constructor arguments, which is different from props, are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+
+```jsx
+<axesHelper args={[10]} />
+```
+
 #### Shortcuts (set)
 
 All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [THREE.Color.set](https://threejs.org/docs/index.html#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [THREE.Vector3](https://threejs.org/docs/index.html#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
 
 #### Dealing with objects that are normally not part of the scene, and attaching
 
-You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties they normally would, constructor arguments are passed as an array via `args`. If args change later on, the object gets re-constructed from scratch!
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties and constructor arguments they normally would.
 
 Using the `attach` property objects bind to their parent and are taken off once they unmount. 
 
