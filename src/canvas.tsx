@@ -419,6 +419,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const handlePointerCancel: any = React.useCallback((event: DomEvent, hits?: Intersection[], prepare = true) => {
     state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
+
     Array.from(hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
@@ -500,7 +501,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
                 // Propagation is stopped, remove all other hover records
                 // An event handler is only allowed to flush other handlers if it is hovered itself
-                if (hovered.size && Array.from(hovered.values()).find((i) => i.object === hit.object)) {
+                if (hovered.size && Array.from(hovered.values()).find((i) => i.eventObject === hit.eventObject)) {
                   // Objects cannot flush out higher up objects that have already caught the event
                   const higher = intersections.slice(0, intersections.indexOf(hit))
                   handlePointerCancel(raycastEvent, [...higher, hit])
