@@ -419,16 +419,19 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const handlePointerCancel: any = React.useCallback((event: DomEvent, hits?: Intersection[], prepare = true) => {
     state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
-    Array.from(hovered.values()).forEach((data) => {
+    Array.from(hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
-      if (hits && (!hits.length || !hits.find((i) => i.eventObject === data.eventObject && i.index === data.index))) {
-        const eventObject = data.eventObject
+      if (
+        hits &&
+        (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index))
+      ) {
+        const eventObject = hoveredObj.eventObject
         const handlers = (eventObject as any).__handlers
-        hovered.delete(makeId(data))
+        hovered.delete(makeId(hoveredObj))
         if (handlers) {
-          if (handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
-          if (handlers.pointerLeave) handlers.pointerLeave({ ...data, type: 'pointerleave' })
+          if (handlers.pointerOut) handlers.pointerOut({ ...hoveredObj, type: 'pointerout' })
+          if (handlers.pointerLeave) handlers.pointerLeave({ ...hoveredObj, type: 'pointerleave' })
         }
       }
     })

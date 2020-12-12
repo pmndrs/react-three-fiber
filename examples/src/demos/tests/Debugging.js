@@ -2,19 +2,10 @@ import React, { useState } from 'react'
 import { Canvas } from 'react-three-fiber'
 
 function Box(props) {
-  const [hovered, setHovered] = useState(false)
-  const [active, setActive] = useState(false)
   return (
-    <mesh
-      onPointerMissed={(e) => setActive(false)}
-      onPointerOver={(e) => setHovered(true)}
-      onPointerOut={(e) => setHovered(false)}
-      onClick={() => setActive(!active)}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-      {...props}
-    >
+    <mesh name={props.name} {...props}>
       <boxBufferGeometry />
-      <meshBasicMaterial color={hovered ? 'hotpink' : 'green'} />
+      <meshBasicMaterial color="hotpink" />
     </mesh>
   )
 }
@@ -22,8 +13,19 @@ function Box(props) {
 export default function App() {
   return (
     <Canvas>
-      <Box position={[-1, 0, 0]} />
-      <Box position={[1, 0, 0]} />
+      <group
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          console.log('in', e.object.name)
+        }}
+        onPointerOut={(e) => {
+          console.log('  out', e.object.name)
+        }}
+      >
+        <Box name="A" position={[-1, 0, 0]} />
+        <Box name="B" position={[0, 0, 0]} />
+        <Box name="C" position={[1, 0, 0]} />
+      </group>
     </Canvas>
   )
 }
