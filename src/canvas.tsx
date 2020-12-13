@@ -431,8 +431,10 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         const handlers = (eventObject as any).__handlers
         hovered.delete(makeId(hoveredObj))
         if (handlers) {
-          if (handlers.pointerOut) handlers.pointerOut({ ...hoveredObj, type: 'pointerout' })
-          if (handlers.pointerLeave) handlers.pointerLeave({ ...hoveredObj, type: 'pointerleave' })
+          // Clear out intersects, they are outdated by now
+          const data = { ...hoveredObj, intersections: hits || [] }
+          if (handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
+          if (handlers.pointerLeave) handlers.pointerLeave({ ...data, type: 'pointerleave' })
         }
       }
     })
