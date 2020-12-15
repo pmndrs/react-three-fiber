@@ -18,13 +18,8 @@ This is the best overview I could find: https://discoverthreejs.com/tips-and-tri
 The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
-<<<<<<< HEAD
-const geom = React.useMemo(() => new BoxBufferGeometry(), [])
-const mat = React.useMemo(() => new MeshBasicMaterial(), [])
-=======
 const geom = useMemo(() => new BoxBufferGeometry(), [])
 const mat = useMemo(() => new MeshBasicMaterial(), [])
->>>>>>> parent of 0624074... updated dependencies, fixed typescript imports error esmoduleinterop,… (#823)
 return items.map(i => <mesh geometry={geom} material={mat} ...
 ```
 
