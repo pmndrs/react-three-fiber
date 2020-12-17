@@ -368,7 +368,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
 
   /** Intersects interaction objects using the event input */
   const intersect = React.useCallback(
-    (event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
+    (filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
       // Skip event handling when noEvents is set
       if (state.current.noEvents) return []
 
@@ -445,7 +445,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const getIntersects = React.useCallback(
     (event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
       // Get fresh intersects
-      const intersections: Intersection[] = intersect(event, filter)
+      const intersections: Intersection[] = intersect(filter)
       // If the interaction is captured take that into account, the captured event has to be part of the intersects
       if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
         state.current.captured.forEach((captured) => {
