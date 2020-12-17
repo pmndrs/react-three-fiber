@@ -13,6 +13,7 @@
 - [Enabling VR](#enabling-vr)
 - [Reducing bundle-size](#reducing-bundle-size)
 - [Usage with React Native](#usage-with-react-native)
+- [Safari support](#safari-support)
 
 ## Animating with react-spring
 
@@ -255,3 +256,16 @@ yarn add expo-gl expo-three three@latest react-three-fiber@beta
 
 yarn start
 ```
+
+## Safari support
+
+Safari does not support `ResizeObserver` out of the box, which causes errors in the `react-use-measure` dependency if you don't polyfill it. [@juggle/resize-observer](https://github.com/juggle/resize-observer) is the recommended `ResizeObserver` polyfill. It can be configured through the [`resize`](api.md#canvas) property on the `<Canvas>`:
+
+```jsx
+import { ResizeObserver } from "@juggle/resize-observer"
+...
+<Canvas resize={{ polyfill: ResizeObserver }}>
+...
+```
+
+[Codesandbox example](https://codesandbox.io/s/pnb9t)
