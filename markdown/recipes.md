@@ -259,13 +259,10 @@ yarn start
 
 ## Safari support
 
-Safari does not support `ResizeObserver` out of the box, which causes errors in the `react-use-measure` dependency if you don't polyfill it. [@juggle/resize-observer](https://github.com/juggle/resize-observer) is the recommended `ResizeObserver` polyfill. It can be configured through the [`resize`](api.md#canvas) property on the `<Canvas>`:
+Safari 12 does not support `ResizeObserver` out of the box, which causes errors in the `react-use-measure` dependency if you don't polyfill it. [@juggle/resize-observer](https://github.com/juggle/resize-observer) is the recommended `ResizeObserver` polyfill. It can be configured through the [`resize`](api.md#canvas) property on the `<Canvas>`:
 
 ```jsx
 import { ResizeObserver } from "@juggle/resize-observer"
-...
-<Canvas resize={{ polyfill: ResizeObserver }}>
-...
-```
 
-[Codesandbox example](https://codesandbox.io/s/pnb9t)
+<Canvas resize={{ polyfill: ResizeObserver }} />
+```
