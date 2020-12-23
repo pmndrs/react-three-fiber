@@ -84,7 +84,8 @@ function Box(props) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}>
+      onPointerOut={(event) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -109,7 +110,7 @@ ReactDOM.render(
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
 import { Canvas, MeshProps, useFrame } from 'react-three-fiber'
-import { Mesh } from 'three'
+import type { Mesh } from 'three'
 
 function Box(props: MeshProps) {
   // This reference will give us direct access to the mesh
@@ -131,7 +132,8 @@ function Box(props: MeshProps) {
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       onClick={(_event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}>
+      onPointerOut={(event) => setHover(false)}
+    >
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
