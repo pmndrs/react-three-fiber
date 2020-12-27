@@ -109,9 +109,9 @@ ReactDOM.render(
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
 import { Canvas, MeshProps, useFrame } from 'react-three-fiber'
-import { Mesh } from 'three'
+import type { Mesh } from 'three'
 
-function Box(props: MeshProps) {
+const Box: React.FC<MeshProps> = (props) => {
   // This reference will give us direct access to the mesh
   const mesh = useRef<Mesh>()
 
@@ -129,7 +129,7 @@ function Box(props: MeshProps) {
       {...props}
       ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-      onClick={(_event) => setActive(!active)}
+      onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
       <boxBufferGeometry args={[1, 1, 1]} />
