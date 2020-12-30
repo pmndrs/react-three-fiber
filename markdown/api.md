@@ -149,7 +149,15 @@ Sometimes attaching isn't enough. For example, the following example attaches ef
   <glitchPass attachArray="passes" renderToScreen />
 ```
 
-You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position.
+Also `attachArray` prop could be array of strings to add object to parent internal fields:
+
+```jsx
+<shaderMaterial attach='material'>
+  <texture image={someImage} attachArray={['uniforms', 'textures', 'value']} />
+</shaderMaterial>
+```
+
+You can also attach to parent by path using `attachObject={[field1, field2, ...]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to parent.attributes.position.
 
 ```jsx
 <bufferGeometry attach="geometry">

@@ -38,9 +38,9 @@ export interface NodeProps<T, P> {
   /** Attaches this class onto the parent under the given name and nulls it on unmount */
   attach?: string
   /** Appends this class to an array on the parent under the given name and removes it on unmount */
-  attachArray?: string
+  attachArray?: string | Array<string>
   /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-  attachObject?: NamedArrayTuple<(target: string, name: string) => void>
+  attachObject?: string | Array<string>
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode

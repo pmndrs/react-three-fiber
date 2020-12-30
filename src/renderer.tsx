@@ -360,6 +360,18 @@ function createInstance(
   return instance
 }
 
+function resolvePath(instance: any, path: string | Array<string>): { parent: any; path: string } {
+  if (typeof path === 'string') {
+    return { parent: instance, path }
+  }
+  let parent = instance
+  for (let i = 0; i < path.length - 1; i++) {
+    if (parent[path[i]] === undefined) parent[path[i]] = {}
+    parent = parent[path[i]]
+  }
+  return { parent, path: path[path.length - 1] }
+}
+
 function appendChild(parentInstance: any, child: any) {
   if (child) {
     if (child.isObject3D) {
@@ -369,11 +381,12 @@ function appendChild(parentInstance: any, child: any) {
       child.parent = parentInstance
       // The attach attribute implies that the object attaches itself on the parent
       if (child.attachArray) {
-        if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
-        parentInstance[child.attachArray].push(child)
+        const { parent, path } = resolvePath(parentInstance, child.attachArray)
+        if (!is.arr(parent[path])) parent[path] = []
+        parent[path].push(child)
       } else if (child.attachObject) {
-        if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
-        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+        const { parent, path } = resolvePath(parentInstance, child.attachObject)
+        parent[path] = child
       } else if (child.attach) {
         parentInstance[child.attach] = child
       }
@@ -417,9 +430,11 @@ function removeChild(parentInstance: any, child: any) {
       if (parentInstance.__objects) parentInstance.__objects = parentInstance.__objects.filter((x: any) => x !== child)
       // Remove attachment
       if (child.attachArray) {
-        parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: any) => x !== child)
+        const { parent, path } = resolvePath(parentInstance, child.attachArray)
+        parent[path] = parent[path].filter((x: any) => x !== child)
       } else if (child.attachObject) {
-        delete parentInstance[child.attachObject[0]][child.attachObject[1]]
+        const { parent, path } = resolvePath(parentInstance, child.attachObject)
+        delete parent[path]
       } else if (child.attach) {
         parentInstance[child.attach] = null
       }
