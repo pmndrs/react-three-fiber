@@ -5,9 +5,13 @@ import { useAsset } from 'use-asset'
 
 function useContext<T>(context: React.Context<T>) {
   let result = useContextImpl(context)
-  if (!result) {
-    console.warn('hooks can only be used within the canvas! https://github.com/react-spring/react-three-fiber#hooks')
+
+  if (!('subscribe' in result)) {
+    throw new Error(
+      `⚡️ react-three-fiber hooks can only be used within the Canvas component! https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#hooks`
+    )
   }
+
   return result
 }
 
@@ -65,29 +69,42 @@ export interface Loader<T> extends THREE.Loader {
 type Extensions = (loader: THREE.Loader) => void
 type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 
+type ObjectMap = {
+  nodes: { [name: string]: THREE.Object3D }
+  materials: { [name: string]: THREE.Material }
+}
+
+function buildGraph(object: THREE.Object3D) {
+  const data: ObjectMap = { nodes: {}, materials: {} }
+  if (object) {
+    object.traverse((obj: any) => {
+      if (obj.name) data.nodes[obj.name] = obj as THREE.Object3D
+      if (obj.material && !data.materials[obj.material.name])
+        data.materials[obj.material.name] = obj.material as THREE.Material
+    })
+  }
+  return data
+}
+
+export function useGraph(object: THREE.Object3D) {
+  return useMemo(() => buildGraph(object), [object])
+}
+
 function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
-  return function (Proto: new () => LoaderResult<T>, url: string[] | string) {
+  return function (Proto: new () => LoaderResult<T>, input: string[] | string) {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
     // Go through the urls and load them
-    const urlArray = Array.isArray(url) ? url : [url]
+    const urlArray = Array.isArray(input) ? input : [input]
     return Promise.all(
       urlArray.map(
-        (url: any) =>
+        (input) =>
           new Promise((res, reject) =>
             loader.load(
-              url,
+              input,
               (data: any) => {
-                if (data.scene) {
-                  data.nodes = {}
-                  data.materials = {}
-                  data.scene.traverse((obj: any) => {
-                    if (obj.name) data.nodes[obj.name] = obj
-                    if (obj.material && !data.materials[obj.material.name])
-                      data.materials[obj.material.name] = obj.material
-                  })
-                }
+                if (data.scene) Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
               onProgress,
@@ -101,14 +118,14 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
 
 export function useLoader<T>(
   Proto: new () => LoaderResult<T>,
-  url: T extends any[] ? string[] : string,
+  input: T extends any[] ? string[] : string,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): T {
   // Use suspense to load async assets
-  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, url])
+  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
-  return Array.isArray(url) ? results : results[0]
+  return (Array.isArray(input) ? results : results[0]) as T
 }
 
 useLoader.preload = function <T>(

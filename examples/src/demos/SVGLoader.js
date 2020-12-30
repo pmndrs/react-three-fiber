@@ -59,7 +59,6 @@ const Scene = React.memo(({ urls }) => {
           ({ item: { shape, color, fillOpacity, index }, key, props: { opacity, position, rotation } }) => (
             <a.mesh key={key} rotation={rotation} position={position.interpolate((x, y, z) => [x, y, z + index])}>
               <a.meshPhongMaterial
-                attach="material"
                 color={color}
                 opacity={opacity.interpolate((o) => o * fillOpacity)}
                 depthWrite={false}
@@ -77,6 +76,7 @@ const Scene = React.memo(({ urls }) => {
 export default function App() {
   return (
     <Canvas
+      colorManagement={false}
       invalidateFrameloop
       camera={{ fov: 90, position: [0, 0, 550], near: 0.1, far: 20000 }}
       onCreated={({ camera }) => camera.lookAt(0, 0, 0)}

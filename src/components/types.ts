@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { FC } from 'react'
 import { OmitByValue } from 'utility-types'
 
-import { ReactThreeFiber } from '../three-types'
+import { ReactThreeFiber } from '../'
 
 type Three = typeof import('three')
 

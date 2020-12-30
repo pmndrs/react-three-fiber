@@ -12,7 +12,6 @@ function Fatline({ curve, width, color, speed }) {
     <mesh>
       <meshLine attach="geometry" vertices={curve} />
       <meshLineMaterial
-        attach="material"
         ref={material}
         transparent
         depthTest={false}
@@ -66,7 +65,7 @@ export default function App() {
       camera={{ position: [0, 0, 10], fov: 25 }}
       onMouseMove={(e) => (mouse.current = [e.clientX - window.innerWidth / 2, e.clientY - window.innerHeight / 2])}
     >
-      <Lines count={200} colors={['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']} />
+      <Lines count={100} colors={['#A2CCB6', '#FCEEB5', '#EE786E', '#e0feff', 'lightpink', 'lightblue']} />
       <Rig mouse={mouse} />
     </Canvas>
   )

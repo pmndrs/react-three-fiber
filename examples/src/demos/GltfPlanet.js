@@ -2,7 +2,7 @@ import React, { Suspense, useRef, useMemo } from 'react'
 import { Canvas, useLoader, useFrame, useThree, extend } from 'react-three-fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { draco } from "drei"
+import { draco } from 'drei'
 import planet from '../resources/gltf/planet.gltf'
 
 useLoader.preload(GLTFLoader, planet, draco())
@@ -14,8 +14,8 @@ function Planet(props) {
     <group ref={group} {...props} dispose={null}>
       <group rotation={[-Math.PI / 2, 0, 0]}>
         <group position={[0, 0.02, -6.33]} rotation={[0.24, -0.55, 0.56]} scale={[7, 7, 7]}>
-          <mesh material={materials.scene} geometry={nodes.planet001.geometry} />
-          <mesh material={materials.scene} geometry={nodes.planet001.geometry} />
+          <mesh material={materials.scene} geometry={nodes['planet.001_1'].geometry} />
+          <mesh material={materials.scene} geometry={nodes['planet.001_2'].geometry} />
         </group>
       </group>
     </group>

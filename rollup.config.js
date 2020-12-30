@@ -9,7 +9,7 @@ import commonjs from '@rollup/plugin-commonjs'
 
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
 const external = (id) => {
-  if (id.startsWith('react-reconciler')) return false
+  //if (id.startsWith('react-reconciler')) return false
   return !id.startsWith('.') && !id.startsWith(root)
 }
 const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json']
@@ -20,7 +20,7 @@ const getBabelOptions = ({ useESModules }, targets) => ({
   exclude: '**/node_modules/**',
   runtimeHelpers: true,
   presets: [
-    ['@babel/preset-env', { loose: true, modules: false, targets }],
+    ['@babel/preset-env', { bugfixes: true, loose: true, modules: false, targets }],
     '@babel/preset-react',
     '@babel/preset-typescript',
   ],
@@ -70,12 +70,12 @@ function createConfig(entry, out, closure = true) {
         babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
         resolve({ extensions }),
         targetTypings(entry, out),
-        closure &&
+        /*closure &&
           compiler({
             compilation_level: 'SIMPLE',
             jscomp_off: 'checkVars',
           }),
-        closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),
+        closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),*/
         sizeSnapshot(),
       ],
     },

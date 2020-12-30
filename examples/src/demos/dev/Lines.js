@@ -125,7 +125,7 @@ export default function App() {
       invalidateFrameloop
       orthographic
       style={{ background: '#272727', touchAction: 'none' }}
-      raycaster={{ linePrecision: 5 }}
+      raycaster={{ params: { Line: { threshold: 5 } } }}
       camera={{ position: [0, 0, 500] }}
     >
       <Controls>

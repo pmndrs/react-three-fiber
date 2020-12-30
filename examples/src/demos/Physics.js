@@ -1,5 +1,6 @@
 import React from 'react'
 import { Canvas } from 'react-three-fiber'
+// eslint-disable-next-line import/no-unresolved
 import { Physics, usePlane, useBox } from 'use-cannon'
 
 function Plane(props) {

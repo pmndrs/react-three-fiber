@@ -1,14 +1,12 @@
 <h1>react-three-fiber</h1>
 
-[![Build Status](https://img.shields.io/travis/react-spring/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://travis-ci.org/react-spring/react-three-fiber)
-[![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://npmjs.com/package/react-three-fiber)
-[![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://npmjs.com/package/react-three-fiber)
-[![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=f5f5f5&colorB=f5f5f5&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
-[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=f5f5f5&colorB=f5f5f5&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
-
-[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=f5f5f5&colorB=f5f5f5)](https://opencollective.com/react-three-fiber)
-[![ETH](https://img.shields.io/badge/ETH-0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682-f5f5f5?style=flat&colorA=f5f5f5&logo=ethereum&logoColor=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
-[![BTC](https://img.shields.io/badge/BTC-36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH-f5f5f5?style=flat&colorA=f5f5f5&logo=bitcoin&logoColor=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
+[![Version](https://img.shields.io/npm/v/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-fiber)
+[![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-fiber)
+[![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
+[![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
+[![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/react-three-fiber)
+[![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
+[![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
@@ -75,17 +73,18 @@ function Box(props) {
   const [active, setActive] = useState(false)
 
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
+  useFrame(() => {
+    mesh.current.rotation.x = mesh.current.rotation.y += 0.01
+  })
 
   return (
     <mesh
       {...props}
       ref={mesh}
       scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
-      onClick={(e) => setActive(!active)}
-      onPointerOver={(e) => setHover(true)}
-      onPointerOut={(e) => setHover(false)}
-    >
+      onClick={(event) => setActive(!active)}
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
       <boxBufferGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -103,14 +102,71 @@ ReactDOM.render(
 )
 ```
 
+<details>
+  <summary>Show TypeScript example</summary>
+
+```tsx
+import ReactDOM from 'react-dom'
+import React, { useRef, useState } from 'react'
+import { Canvas, MeshProps, useFrame } from 'react-three-fiber'
+import type { Mesh } from 'three'
+
+const Box: React.FC<MeshProps> = (props) => {
+  // This reference will give us direct access to the mesh
+  const mesh = useRef<Mesh>()
+
+  // Set up state for the hovered and active state
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
+
+  // Rotate mesh every frame, this is outside of React without overhead
+  useFrame(() => {
+    if (mesh.current) mesh.current.rotation.x = mesh.current.rotation.y += 0.01
+  })
+
+  return (
+    <mesh
+      {...props}
+      ref={mesh}
+      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      onClick={(event) => setActive(!active)}
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
+
+ReactDOM.render(
+  <Canvas>
+    <ambientLight />
+    <pointLight position={[10, 10, 10]} />
+    <Box position={[-1.2, 0, 0]} />
+    <Box position={[1.2, 0, 0]} />
+  </Canvas>,
+  document.getElementById('root')
+)
+```
+
+</details>
+
 ---
 
+# API
+
+- [api.md](/markdown/api.md)
+- [pitfalls.md](/markdown/pitfalls.md)
+- [recipes.md](/markdown/recipes.md)
+
 # Fundamentals
+
+You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
-4. Try changing some values, scroll though our [Api](api.md) to see what the various settings and hooks do.
+4. Try changing some values, scroll though our [Api](/markdown/api.md) to see what the various settings and hooks do.
 
 Some reading material:
 
@@ -120,12 +176,6 @@ Some reading material:
 - [Discover Threejs](https://discoverthreejs.com)
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
 - [react-three-fiber alligator.io tutorial](https://alligator.io/react/react-with-threejs) by [@dghez\_](https://twitter.com/dghez_)
-
-# API
-
-- [api.md](api.md)
-- [pitfalls.md](pitfalls.md)
-- [recipes.md](recipes.md)
 
 # Ecosystem
 
