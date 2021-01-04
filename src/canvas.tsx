@@ -247,7 +247,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const getCurrentViewport = React.useCallback(
     (camera: Camera = state.current.camera, target: THREE.Vector3 = new THREE.Vector3(0, 0, 0)) => {
       const { width, height } = state.current.size
-      const distance = camera.position.distanceTo(target)
+      const position = new THREE.Vector3()
+      const distance = camera.getWorldPosition(position).distanceTo(target)
       if (isOrthographicCamera(camera)) {
         return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance }
       } else {
