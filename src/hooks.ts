@@ -116,16 +116,16 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
   }
 }
 
-export function useLoader<T>(
+export function useLoader<T, U>(
   Proto: new () => LoaderResult<T>,
-  input: T extends any[] ? string[] : string,
+  input: U extends any[] ? string[] : string,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
-): T {
+): U extends any[] ? T[] : T {
   // Use suspense to load async assets
   const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
-  return (Array.isArray(input) ? results : results[0]) as T
+  return results as U extends any[] ? T[] : T
 }
 
 useLoader.preload = function <T>(
