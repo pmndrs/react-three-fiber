@@ -112,6 +112,8 @@ function renderLoop(timestamp: number) {
       (!state.current.invalidateFrameloop || state.current.frames > 0)
     ) {
       repeat = renderGl(state, timestamp, repeat)
+    } else {
+      repeat = 0
     }
   })
 
