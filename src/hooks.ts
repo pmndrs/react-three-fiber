@@ -116,7 +116,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
   }
 }
 
-export function useLoader<T, U>(
+export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
