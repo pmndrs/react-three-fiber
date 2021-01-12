@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useRef, useContext as useContextImpl, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
 import { useAsset } from 'use-asset'
@@ -104,7 +105,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
             loader.load(
               input,
               (data: any) => {
-                if (data.scene) Object.assign(data, buildGraph(data.scene))
+                Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
               onProgress,
@@ -116,21 +117,29 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
   }
 }
 
-export function useLoader<T>(
+export type LoadedAsset<T> = T & ObjectMap
+
+export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
-  input: T extends any[] ? string[] : string,
+  input: U,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
-): T {
+): U extends any[] ? (T extends GLTF ? LoadedAsset<T>[] : T[]) : T extends GLTF ? LoadedAsset<T> : T {
   // Use suspense to load async assets
   const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
-  return (Array.isArray(input) ? results : results[0]) as T
+  return (Array.isArray(input) ? results : results[0]) as U extends any[]
+    ? T extends GLTF
+      ? LoadedAsset<T>[]
+      : T[]
+    : T extends GLTF
+    ? LoadedAsset<T>
+    : T
 }
 
-useLoader.preload = function <T>(
+useLoader.preload = function <T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
-  url: T extends any[] ? string[] : string,
+  url: U,
   extensions?: Extensions
 ) {
   return useAsset.preload(loadingFn<T>(extensions), Proto, url)
