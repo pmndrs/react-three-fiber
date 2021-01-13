@@ -605,7 +605,12 @@ export function unmountComponentAtNode(container: THREE.Object3D, callback?: (c:
   }
 }
 
-export function createPortal(children: React.ReactNode, containerInfo: any, implementation?: any, key: any = null) {
+export function createPortal(
+  children: React.ReactNode,
+  containerInfo: any,
+  implementation?: any,
+  key: any = null
+): React.ReactNode {
   if (!containerInfo.__objects) containerInfo.__objects = []
   return {
     $$typeof: REACT_PORTAL_TYPE,
