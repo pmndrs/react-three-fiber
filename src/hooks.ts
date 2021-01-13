@@ -128,9 +128,9 @@ export function useLoader<T, U extends string | string[]>(
   return (Array.isArray(input) ? results : results[0]) as U extends any[] ? T[] : T
 }
 
-useLoader.preload = function <T>(
+useLoader.preload = function <T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
-  url: T extends any[] ? string[] : string,
+  url: U,
   extensions?: Extensions
 ) {
   return useAsset.preload(loadingFn<T>(extensions), Proto, url)
