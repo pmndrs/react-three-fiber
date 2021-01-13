@@ -70,7 +70,7 @@ export interface Loader<T> extends THREE.Loader {
 type Extensions = (loader: THREE.Loader) => void
 type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 
-type ObjectMap = {
+export type ObjectMap = {
   nodes: { [name: string]: THREE.Object3D }
   materials: { [name: string]: THREE.Material }
 }
@@ -105,7 +105,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
             loader.load(
               input,
               (data: any) => {
-                Object.assign(data, buildGraph(data.scene))
+                if (data.scene) Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
               onProgress,
@@ -117,24 +117,22 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
   }
 }
 
-export type LoadedAsset<T> = T & ObjectMap
+type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
+
+type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
 export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void
-): U extends any[] ? (T extends GLTF ? LoadedAsset<T>[] : T[]) : T extends GLTF ? LoadedAsset<T> : T {
+): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
-    ? T extends GLTF
-      ? LoadedAsset<T>[]
-      : T[]
-    : T extends GLTF
-    ? LoadedAsset<T>
-    : T
+    ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
+    : BranchingReturn<T, GLTF, GLTF & ObjectMap>
 }
 
 useLoader.preload = function <T, U extends string | string[]>(
