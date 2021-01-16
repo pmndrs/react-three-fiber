@@ -128,7 +128,7 @@ export function useLoader<T, U extends string | string[]>(
   onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
-  const results = useAsset(loadingFn<T>(extensions, onProgress), [Proto, input])
+  const results = useAsset(loadingFn<T>(extensions, onProgress), Proto, input)
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
     ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
