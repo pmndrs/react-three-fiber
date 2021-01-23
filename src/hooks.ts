@@ -92,14 +92,13 @@ export function useGraph(object: THREE.Object3D) {
 }
 
 function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
-  return function (Proto: new () => LoaderResult<T>, input: string[] | string) {
+  return function (Proto: new () => LoaderResult<T>, ...input: string[]) {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
     // Go through the urls and load them
-    const urlArray = Array.isArray(input) ? input : [input]
     return Promise.all(
-      urlArray.map(
+      input.map(
         (input) =>
           new Promise((res, reject) =>
             loader.load(
@@ -128,7 +127,8 @@ export function useLoader<T, U extends string | string[]>(
   onProgress?: (event: ProgressEvent<EventTarget>) => void
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
-  const results = useAsset(loadingFn<T>(extensions, onProgress), Proto, input)
+  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  const results = useAsset(loadingFn<T>(extensions, onProgress), Proto, ...keys)
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
     ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
@@ -137,8 +137,9 @@ export function useLoader<T, U extends string | string[]>(
 
 useLoader.preload = function <T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
-  url: U,
+  input: U,
   extensions?: Extensions
 ) {
-  return useAsset.preload(loadingFn<T>(extensions), Proto, url)
+  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)
 }
