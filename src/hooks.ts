@@ -108,7 +108,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
                 res(data)
               },
               onProgress,
-              (error) => reject(error.message)
+              (error) => reject(error.message ?? `failure loading ${input}`)
             )
           )
       )
