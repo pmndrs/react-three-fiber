@@ -354,7 +354,12 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
     // Events trigger outside of canvas when moved
     const offsets = raycaster?.computeOffsets?.(event, sharedState.current) || event.nativeEvent
     if (offsets) {
-      const { offsetX, offsetY } = offsets
+      let { offsetX, offsetY } = offsets
+      if (event.target.nodeName !== 'CANVAS') {
+        const glContainerRect = gl.domElement.getBoundingClientRect()
+        offsetX = event.clientX - glContainerRect.x
+        offsetY = event.clientY - glContainerRect.y
+      }
       const { width, height } = state.current.size
       mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
       defaultRaycaster.setFromCamera(mouse, state.current.camera)
