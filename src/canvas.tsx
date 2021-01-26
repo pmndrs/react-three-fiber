@@ -629,6 +629,8 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   const Canvas = React.useCallback(
     function Canvas(props: { children: React.ReactElement }): JSX.Element {
       const activate = () => setReady(true)
+      // Pre-compile all materials before rendering out the first time
+      React.useLayoutEffect(() => void gl.compile(defaultScene, defaultCam), [])
       React.useEffect(() => {
         const result = onCreated && onCreated(state.current)
         if (result && result.then) result.then(activate)
