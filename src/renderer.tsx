@@ -212,7 +212,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   }
 
   // Add left-overs as undefined props so they can be removed
-  keys = Object.keys(leftOvers)
+  keys = leftOvers
   for (i = 0; i < keys.length; i++) {
     if (keys[i] !== 'children') {
       filteredProps[keys[i]] = undefined
@@ -235,9 +235,19 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
             key = name
           }
         }
+        let defaultKey = "__r3f_default" + key;
         // Special treatment for objects with support for set/copy
         const isColorManagement = instance.__container?.__state?.current.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
+          // Keep a copy of the default instance value in case we
+          // need to return to it in the future
+          if (root[defaultKey] === undefined && target.clone) {
+            root[defaultKey] = target.clone()
+          }
+          // If the value is undefined, instead use the default value we stored earlier
+          if (value === undefined) {
+            value = root[defaultKey];
+          }
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {
             target.set(...value)
@@ -253,7 +263,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
           // If nothing else fits, just set the single value, ignore undefined
           // https://github.com/react-spring/react-three-fiber/issues/274
-          else if (value !== undefined) {
+          else {
             target.set(value)
             // Auto-convert sRGB colors, for now ...
             // https://github.com/react-spring/react-three-fiber/issues/344
@@ -261,8 +271,19 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
               target.convertSRGBToLinear()
             }
           }
-          // Else, just overwrite the value
+
         } else {
+          // Keep a copy of the default instance value in case we
+          // need to return to it in the future
+          if (root[defaultKey] === undefined) {
+            if (Array.isArray(target)) root[defaultKey] = target.slice()
+            else root[defaultKey] = target
+          }
+          // If the value is undefined, instead use the default value we stored earlier
+          if (value === undefined) {
+            value = root[defaultKey]
+            if (Array.isArray(value)) value = value.slice()
+          }
           root[key] = value
           // Auto-convert sRGB textures, for now ...
           // https://github.com/react-spring/react-three-fiber/issues/344
