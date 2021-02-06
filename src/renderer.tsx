@@ -7,12 +7,38 @@ import Reconciler from 'react-reconciler'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
 import { name, version } from '../package.json'
+import { Quaternion } from 'components'
 
 export type GlobalRenderCallback = (timeStamp: number) => boolean
 
 export interface ObjectHash {
   [name: string]: object
 }
+
+// https://github.com/mrdoob/three.js/issues/21209
+// HMR/fast-refresh relies on the ability to cancel out props, but threejs
+// has no means to do this. Hence we curate a small collection of value-classes
+// with their respective constructor/set arguments
+const R3FKEY = '__r3f__'
+const defaults = [
+  [THREE.Box2, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
+  [THREE.Box3, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
+  [THREE.Color, ['white']],
+  [THREE.Cylindrical, [1, 0, 0]],
+  [THREE.Euler, [0, 0, 0, 'XYZ']],
+  [THREE.Vector2, [0, 0]],
+  [THREE.Vector3, [0, 0, 0]],
+  [THREE.Vector4, [0, 0, 0, 1]],
+  [THREE.Matrix3, [1, 0, 0, 0, 1, 0, 0, 0, 1]],
+  [THREE.Matrix4, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]],
+  [THREE.Quaternion, [0, 0, 0, 1]],
+  [THREE.Sphere, [new THREE.Vector3(), -1]],
+  [THREE.Ray, [new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]],
+  [THREE.Spherical, [1, 0, 0]],
+  [THREE.Triangle, [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]],
+]
+const defaultMap = new Map()
+defaults.forEach(([type, args]) => defaultMap.set(type, args))
 
 const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
 
@@ -188,11 +214,12 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     }
   }
 
+  // Catch props that existed, but now exist no more ...
   const leftOvers = [] as string[]
   keys = Object.keys(oldProps)
   if (accumulative) {
     for (i = 0; i < keys.length; i++) {
-      if (newProps[keys[i]] === void 0) {
+      if (!newProps.hasOwnProperty(keys[i])) {
         leftOvers.push(keys[i])
       }
     }
@@ -211,15 +238,16 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     }
   }
 
-  // Add left-overs as undefined props so they can be removed
-  keys = Object.keys(leftOvers)
-  for (i = 0; i < keys.length; i++) {
-    if (keys[i] !== 'children') {
-      filteredProps[keys[i]] = undefined
+  // Collect all new props
+  const filteredPropsEntries = Object.entries(filteredProps)
+  // Prepend left-overs so they can be reset or removed
+  for (i = 0; i < leftOvers.length; i++) {
+    if (leftOvers[i] !== 'children') {
+      // Left-overs must come first!
+      filteredPropsEntries.unshift([leftOvers[i], R3FKEY + 'remove'])
     }
   }
 
-  const filteredPropsEntries = Object.entries(filteredProps)
   if (filteredPropsEntries.length > 0) {
     filteredPropsEntries.forEach(([key, value]) => {
       if (!handlers.includes(key)) {
@@ -237,6 +265,14 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         }
         // Special treatment for objects with support for set/copy
         const isColorManagement = instance.__container?.__state?.current.colorManagement
+
+        if (value === R3FKEY + 'remove') {
+          // For removed props, try to set default values, if possible
+          if (defaultMap.has(target.constructor)) value = defaultMap.get(target.constructor)
+          else root[R3FKEY + key]
+        }
+
+        // Set value
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {
@@ -263,6 +299,10 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
           // Else, just overwrite the value
         } else {
+          if (root[R3FKEY + key] === void 0) {
+            root[R3FKEY + key] = root[key]
+          }
+
           root[key] = value
           // Auto-convert sRGB textures, for now ...
           // https://github.com/react-spring/react-three-fiber/issues/344
@@ -270,6 +310,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
             root[key].encoding = THREE.sRGBEncoding
           }
         }
+
         invalidateInstance(instance)
       }
     })
