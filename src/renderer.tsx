@@ -534,7 +534,7 @@ const Renderer = Reconciler({
         is.obj(value)
           ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
           : value !== argsOld[index]
-      )
+      ) || argsNew.length !== argsOld.length
       if (hasNewArgs) {
         // Next we create a new instance and append it again
         switchInstance(instance, type, newProps, fiber)
