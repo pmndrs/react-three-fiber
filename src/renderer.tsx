@@ -157,7 +157,7 @@ export function forceResize() {
 let catalogue: ObjectHash = {}
 export const extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
+export function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false, hasArgs = false) {
   // Filter equals, events and reserved props
   const container = instance.__container
 
@@ -212,7 +212,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
   }
 
   // Add left-overs as undefined props so they can be removed
-  keys = Object.keys(leftOvers)
+  keys = leftOvers
   for (i = 0; i < keys.length; i++) {
     if (keys[i] !== 'children') {
       filteredProps[keys[i]] = undefined
@@ -235,9 +235,26 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
             key = name
           }
         }
+        let defaultKey = "__r3f_default" + key
         // Special treatment for objects with support for set/copy
         const isColorManagement = instance.__container?.__state?.current.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
+          // Keep a copy of the default instance value in case we need to return to
+          // it in the future
+          // As an optimization, we can keep the copy on the object's prototype so
+          // it's shared by all instances of that object. If the object has
+          // constructor parameter (e.g. `args`), then store it on the object itself
+          // since the constructor parameters may influence the default values
+          let defaultObject = hasArgs ? root : Object.getPrototypeOf(root)
+          if (!Object.prototype.hasOwnProperty.call(defaultObject, defaultKey) && target.clone) {
+            defaultObject[defaultKey] = target.clone()
+          }
+          // If the value is undefined, instead use the default value we stored earlier
+          if (value === undefined) {
+            // This will grab the default value from the object, or its prototype
+            // if none is present
+            value = root[defaultKey]
+          }
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {
             target.set(...value)
@@ -263,6 +280,22 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
           // Else, just overwrite the value
         } else {
+          // Keep a copy of the default instance value in case we need to return to
+          // it in the future
+          // As an optimization, we can keep the copy on the object's prototype so
+          // it's shared by all instances of that object. If the object has
+          // constructor parameter (e.g. `args`), then store it on the object itself
+          // since the constructor parameters may influence the default values
+          let defaultObject = hasArgs ? root : Object.getPrototypeOf(root)
+          if (!Object.prototype.hasOwnProperty.call(defaultObject, defaultKey)) {
+            if (Array.isArray(target)) defaultObject[defaultKey] = target.slice()
+            else defaultObject[defaultKey] = target
+          }
+          // If the value is undefined, instead use the default value we stored earlier
+          if (value === undefined) {
+            value = root[defaultKey]
+            if (Array.isArray(value)) value = value.slice()
+          }
           root[key] = value
           // Auto-convert sRGB textures, for now ...
           // https://github.com/react-spring/react-three-fiber/issues/344
@@ -358,7 +391,7 @@ function createInstance(
   // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
   // view yet. If the callback relies on references for instance, they won't be ready yet, this is
   // why it passes "true" here
-  applyProps(instance, props, {})
+  applyProps(instance, props, {}, args.length > 0)
   return instance
 }
 
@@ -507,7 +540,7 @@ const Renderer = Reconciler({
         switchInstance(instance, type, newProps, fiber)
       } else {
         // Otherwise just overwrite props
-        applyProps(instance, restNew, restOld, true)
+        applyProps(instance, restNew, restOld, true, newProps.args !== undefined)
       }
     }
   },
