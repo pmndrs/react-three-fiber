@@ -410,6 +410,14 @@ function appendChild(parentInstance: any, child: any) {
         if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
       } else if (child.attach) {
+        // Keep a copy of the default value attached to this instance
+        // This is so we can restore it should the child be subsequently deleted
+        // We don't need to clone here, since direct assignment is used to set
+        // the child on the parentInstance (and not a 'set' or similar function)
+        let defaultKey = "___r3f_attach_default_" + child.attach;
+        if (parentInstance[defaultKey] === undefined) {
+          parentInstance[defaultKey] = parentInstance[child.attach];
+        }
         parentInstance[child.attach] = child
       }
     }
@@ -456,7 +464,8 @@ function removeChild(parentInstance: any, child: any) {
       } else if (child.attachObject) {
         delete parentInstance[child.attachObject[0]][child.attachObject[1]]
       } else if (child.attach) {
-        parentInstance[child.attach] = null
+        // Restore the previously saved default value for this parameter
+        parentInstance[child.attach] = parentInstance["___r3f_attach_default_" + child.attach]
       }
     }
 
