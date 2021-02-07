@@ -7,7 +7,6 @@ import Reconciler from 'react-reconciler'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { CanvasContext } from './canvas'
 import { name, version } from '../package.json'
-import { Quaternion } from 'components'
 
 export type GlobalRenderCallback = (timeStamp: number) => boolean
 
@@ -20,7 +19,8 @@ export interface ObjectHash {
 // has no means to do this. Hence we curate a small collection of value-classes
 // with their respective constructor/set arguments
 const R3FKEY = '__r3f__'
-const defaults = [
+const defaultMap = new Map()
+;[
   [THREE.Box2, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
   [THREE.Box3, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
   [THREE.Color, ['white']],
@@ -36,9 +36,7 @@ const defaults = [
   [THREE.Ray, [new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]],
   [THREE.Spherical, [1, 0, 0]],
   [THREE.Triangle, [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]],
-]
-const defaultMap = new Map()
-defaults.forEach(([type, args]) => defaultMap.set(type, args))
+].forEach(([type, args]) => defaultMap.set(type, args))
 
 const roots = new Map<THREE.Object3D, Reconciler.FiberRoot>()
 
@@ -269,7 +267,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
         if (value === R3FKEY + 'remove') {
           // For removed props, try to set default values, if possible
           if (defaultMap.has(target.constructor)) value = defaultMap.get(target.constructor)
-          else root[R3FKEY + key]
+          else value = root[R3FKEY + key]
         }
 
         // Set value
@@ -299,7 +297,8 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
           // Else, just overwrite the value
         } else {
-          if (root[R3FKEY + key] === void 0) {
+          // Store a reference of the first-set atomic which will serve as a default
+          if (!root.hasOwnProperty(R3FKEY + key)) {
             root[R3FKEY + key] = root[key]
           }
 
