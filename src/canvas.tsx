@@ -617,7 +617,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       // onGotPointerCapture is not needed any longer because the behaviour is hacked into
       // the event itself (see handleIntersects). But in order for non-web targets to simulate
       // it we keep the legacy event, which simply flags all current intersects as captured
-      onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect(e)),
+      onGotPointerCaptureLegacy: (e: any) => (state.current.captured = intersect()),
       onLostPointerCapture: (e: any) => ((state.current.captured = undefined), handlePointerCancel(e)),
     }
   }, [handlePointer, intersect, handlePointerCancel, handlePointerMove])
