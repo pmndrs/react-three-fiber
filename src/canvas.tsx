@@ -6,7 +6,7 @@ import { NamedArrayTuple } from './three-types'
 import { ReactThreeFiber } from '.'
 import { RectReadOnly, Options as ResizeOptions } from 'react-use-measure'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export type Camera = THREE.Camera
 
 export function isOrthographicCamera(def: THREE.Camera): def is THREE.OrthographicCamera {
   return (def as THREE.OrthographicCamera).isOrthographicCamera
