@@ -1,131 +1,22 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { render, invalidate, applyProps, unmountComponentAtNode, renderGl } from './renderer'
 import { TinyEmitter } from 'tiny-emitter'
-import { NamedArrayTuple } from './three-types'
-import { ReactThreeFiber } from '.'
-import { RectReadOnly, Options as ResizeOptions } from 'react-use-measure'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+import {
+  SharedCanvasContext,
+  UseCanvasProps,
+  DomEventHandlers,
+  CanvasContext,
+  ViewportData,
+  RenderCallback,
+} from './types/index'
+import { Camera, DomEvent, Intersection } from './types/internal'
+
+import { invalidate, applyProps, renderGl } from './core/renderer'
+import { render, unmountComponentAtNode } from './core/index'
 
 export function isOrthographicCamera(def: THREE.Camera): def is THREE.OrthographicCamera {
   return (def as THREE.OrthographicCamera).isOrthographicCamera
-}
-
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
-}
-
-type ThreeEvent<T> = T &
-  Intersection & {
-    intersections: Intersection[]
-    stopped: boolean
-    unprojectedPoint: THREE.Vector3
-    ray: THREE.Ray
-    camera: Camera
-    stopPropagation: () => void
-    sourceEvent: T
-    delta: number
-  }
-
-export type PointerEvent = ThreeEvent<React.PointerEvent>
-export type MouseEvent = ThreeEvent<React.MouseEvent>
-export type WheelEvent = ThreeEvent<React.WheelEvent>
-
-type DomEvent = PointerEvent | MouseEvent | WheelEvent
-
-export type RenderCallback = (state: CanvasContext, delta: number) => void
-
-export type Viewport = { width: number; height: number; factor: number; distance: number }
-export type ViewportData = Viewport & ((camera: Camera, target: THREE.Vector3) => Viewport)
-
-export type SharedCanvasContext = {
-  gl: THREE.WebGLRenderer
-  aspect: number
-  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
-  setDefaultCamera: (camera: Camera) => void
-  invalidate: () => void
-  intersect: (event?: DomEvent) => void
-  camera: Camera
-  raycaster: THREE.Raycaster
-  mouse: THREE.Vector2
-  clock: THREE.Clock
-  scene: THREE.Scene
-  size: RectReadOnly
-  viewport: ViewportData
-  events: DomEventHandlers
-  forceResize: () => void
-}
-
-export type Subscription = {
-  ref: React.MutableRefObject<RenderCallback>
-  priority: number
-}
-
-export type CanvasContext = SharedCanvasContext & {
-  captured: Intersection[] | undefined
-  noEvents: boolean
-  ready: boolean
-  active: boolean
-  manual: number
-  colorManagement: boolean
-  vr: boolean
-  concurrent: boolean
-  invalidateFrameloop: boolean
-  frames: number
-  subscribers: Subscription[]
-  initialClick: NamedArrayTuple<(x: number, y: number) => void>
-  initialHits: THREE.Object3D[]
-  pointer: TinyEmitter
-}
-
-export type FilterFunction = (items: THREE.Intersection[], state: SharedCanvasContext) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (
-  event: DomEvent,
-  state: SharedCanvasContext
-) => { offsetX: number; offsetY: number }
-
-export interface CanvasProps {
-  children: React.ReactNode
-  vr?: boolean
-  webgl1?: boolean
-  concurrent?: boolean
-  shadowMap?: boolean | Partial<THREE.WebGLShadowMap>
-  colorManagement?: boolean
-  orthographic?: boolean
-  resize?: ResizeOptions
-  invalidateFrameloop?: boolean
-  updateDefaultCamera?: boolean
-  noEvents?: boolean
-  gl?: Partial<THREE.WebGLRendererParameters>
-  camera?: Partial<
-    ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-      ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-      ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-  >
-  raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
-  pixelRatio?: number | [number, number]
-  onCreated?: (props: CanvasContext) => Promise<any> | void
-  onPointerMissed?: () => void
-}
-
-export interface UseCanvasProps extends CanvasProps {
-  gl: THREE.WebGLRenderer
-  size: RectReadOnly
-  forceResize: () => void
-}
-
-export type DomEventHandlers = {
-  onClick(e: any): void
-  onContextMenu(e: any): void
-  onDoubleClick(e: any): void
-  onWheel(e: any): void
-  onPointerDown(e: any): void
-  onPointerUp(e: any): void
-  onPointerLeave(e: any): void
-  onPointerMove(e: any): void
-  onGotPointerCaptureLegacy(e: any): void
-  onLostPointerCapture(e: any): void
 }
 
 function makeId(event: DomEvent) {
@@ -176,10 +67,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
   })
 
   const [defaultCam, setDefaultCamera] = React.useState(() => {
-    const cam = orthographic
-      ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-      : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    cam.position.z = 5
+    const cam = (cam.position.z = 5)
     if (camera) applyProps(cam, camera, {})
     // Always look at [0, 0, 0]
     cam.lookAt(0, 0, 0)

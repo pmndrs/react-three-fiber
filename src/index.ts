@@ -1,4 +1,4 @@
-export * from './renderer'
+export * from './core/renderer'
 export * from './three-types'
 export * from './hooks'
 
