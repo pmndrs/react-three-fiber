@@ -35,6 +35,7 @@ export function render(
   if (root) {
     const fiber = root.getState().root
     Renderer.updateContainer(element, fiber, null, () => undefined)
+    console.log('R3F RENDER', fiber)
     return Renderer.getPublicRootInstance(fiber)
   }
 }

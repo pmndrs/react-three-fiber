@@ -7,7 +7,7 @@ import Reconciler from 'react-reconciler'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 
 import { CanvasContext, CanvasProps, RootsValue } from '../types/index'
-import { GlobalRenderCallback, ObjectHash } from '../types/internal'
+import { GlobalRenderCallback, ObjectHash, ThreeScene } from '../types/internal'
 
 import { is } from './helpers/is'
 
@@ -36,12 +36,7 @@ export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback
 export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalAfterEffects)
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
-export function renderGl(
-  state: React.MutableRefObject<CanvasContext>,
-  timestamp: number,
-  repeat = 0,
-  runGlobalEffects = false
-) {
+export function renderGl(state: CanvasContext, timestamp: number, repeat = 0, runGlobalEffects = false) {
   let i
   // Run global effects
   if (runGlobalEffects) {
@@ -52,18 +47,20 @@ export function renderGl(
   }
 
   // Run local effects
-  const delta = state.current.clock.getDelta()
+  const delta = state.clock.getDelta()
 
-  for (i = 0; i < state.current.subscribers.length; i++) {
-    state.current.subscribers[i].ref.current(state.current, delta)
+  for (i = 0; i < state.subscribers.length; i++) {
+    state.subscribers[i].ref.current(state, delta)
   }
 
   // Decrease frame count
-  state.current.frames = Math.max(0, state.current.frames - 1)
-  repeat += !state.current.invalidateFrameloop ? 1 : state.current.frames
+  state.frames = Math.max(0, state.frames - 1)
+  repeat += !state.invalidateFrameloop ? 1 : state.frames
   // Render content
-  if (!state.current.manual && state.current.gl.render)
-    state.current.gl.render(state.current.scene, state.current.camera)
+  if (!state.manual && state.gl.render) {
+    // console.log('calling gl.render', state.gl)
+    state.gl.render(state.scene, state.camera)
+  }
 
   // Run global after-effects
   if (runGlobalEffects) {
@@ -88,15 +85,10 @@ function renderLoop(timestamp: number) {
   }
 
   roots.forEach((rootState) => {
-    const root = rootState.getState().root
-    const state = root.containerInfo.__state
+    const { active, ready, invalidateFrameloop, frames, scene } = rootState.getState()
     // If the frameloop is invalidated, do not run another frame
-    if (
-      state.current.active &&
-      state.current.ready &&
-      (!state.current.invalidateFrameloop || state.current.frames > 0)
-    ) {
-      repeat = renderGl(state, timestamp, repeat)
+    if (active && ready && (!invalidateFrameloop || frames > 0)) {
+      repeat = renderGl(rootState.getState(), timestamp, repeat)
     } else {
       repeat = 0
     }
@@ -120,22 +112,23 @@ function renderLoop(timestamp: number) {
 }
 
 export function invalidate(state: CanvasContext | boolean = true, frames = 1) {
+  console.log('calling invalidate', frames)
   if (!is.obj(state)) {
     roots.forEach((rootState) => {
-      const root = rootState.getState().root
+      const { frames, ready } = rootState.getState()
       // im not sure what's going on here, it's a redefine?
-      const state = root.containerInfo.__state
-      state.frames = state.ready ? state.frames + frames : frames
+      rootState.getState().frames = ready ? frames + frames : frames
     })
   } else if (is.obj(state)) {
-    const s = state as CanvasContext
-    if (s.vr) {
+    if ((state as CanvasContext).vr) {
       return
     }
-    s.frames = s.ready ? s.frames + frames : frames
+    // note to self, state is missing ready. why tho
+    state.frames = state.ready ? state.frames + frames : frames
   }
   if (!running) {
     running = true
+    console.log('calling raf for renderloop')
     requestAnimationFrame(renderLoop)
   }
 }
@@ -143,7 +136,7 @@ export function invalidate(state: CanvasContext | boolean = true, frames = 1) {
 export function forceResize() {
   roots.forEach((rootState) => {
     const root = rootState.getState().root
-    root.containerInfo.__state.current.forceResize()
+    // root.containerInfo.__state.forceResize()
   })
 }
 
@@ -229,7 +222,7 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
           }
         }
         // Special treatment for objects with support for set/copy
-        const isColorManagement = instance.__container?.__state?.current.colorManagement
+        const isColorManagement = instance.__container?.__state?.colorManagement
         if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
           // If value is an array it has got to be the set function
           if (Array.isArray(value)) {
@@ -270,13 +263,13 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
     // Preemptively delete the instance from the containers interaction
     if (accumulative && container && instance.raycast && instance.__handlers) {
       instance.__handlers = undefined
-      const index = container.__interaction.indexOf(instance)
-      if (index > -1) container.__interaction.splice(index, 1)
+      // const index = container.__interaction.indexOf(instance)
+      // if (index > -1) container.__interaction.splice(index, 1)
     }
 
     // Prep interaction handlers
     if (handlers.length) {
-      if (accumulative && container && instance.raycast) container.__interaction.push(instance)
+      // if (accumulative && container && instance.raycast) container.__interaction.push(instance)
       // Add handlers to the instances handler-map
       instance.__handlers = handlers.reduce((acc, key) => {
         acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
@@ -289,10 +282,14 @@ export function applyProps(instance: any, newProps: any, oldProps: any = {}, acc
 }
 
 function invalidateInstance(instance: any) {
-  if (instance.__container && instance.__container.__state) invalidate(instance.__container.__state)
+  console.log('invalidate instance - ', instance)
+  if (instance.__container) {
+    invalidate(instance.__container)
+  }
 }
 
 function updateInstance(instance: any) {
+  console.log('calling updateInstance')
   if (instance.onUpdate) instance.onUpdate(instance)
 }
 
@@ -303,6 +300,7 @@ function createInstance(
   hostContext: any,
   internalInstanceHandle: Reconciler.Fiber
 ) {
+  console.log('calling createInstance', props.object)
   let name = `${type[0].toUpperCase()}${type.slice(1)}`
   let instance
   if (type === 'primitive') {
@@ -355,40 +353,40 @@ function createInstance(
   return instance
 }
 
-function appendChild(parentInstance: any, child: any) {
-  const root = roots.get(parentInstance)
-  if (root) {
-    const scene = root.getState().scene
-    if (child) {
-      if (child.isObject3D) {
-        scene.add(child)
-      } else {
+function appendChild(parentInstance: THREE.Object3D, child: any) {
+  if (child) {
+    console.log('calling appendChild', parentInstance, child)
+    if (child.isObject3D) {
+      console.log('adding to scene')
+      parentInstance.add(child)
+    } else {
+      console.log('pushing to the scene __objects')
+      //@ts-ignore
+      parentInstance.__objects.push(child)
+      child.parent = parentInstance
+      // The attach attribute implies that the object attaches itself on the parent
+      if (child.attachArray) {
         //@ts-ignore
-        scene.__objects.push(child)
-        child.parent = scene
-        // The attach attribute implies that the object attaches itself on the parent
-        if (child.attachArray) {
-          //@ts-ignore
-          if (!is.arr(scene[child.attachArray])) scene[child.attachArray] = []
-          //@ts-ignore
-          scene[child.attachArray].push(child)
-        } else if (child.attachObject) {
-          //@ts-ignore
-          if (!is.obj(scene[child.attachObject[0]])) scene[child.attachObject[0]] = {}
-          //@ts-ignore
-          scene[child.attachObject[0]][child.attachObject[1]] = child
-        } else if (child.attach) {
-          //@ts-ignore
-          scene[child.attach] = child
-        }
+        if (!is.arr(scene[child.attachArray])) parentInstance[child.attachArray] = []
+        //@ts-ignore
+        parentInstance[child.attachArray].push(child)
+      } else if (child.attachObject) {
+        //@ts-ignore
+        if (!is.obj(scene[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
+        //@ts-ignore
+        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      } else if (child.attach) {
+        //@ts-ignore
+        parentInstance[child.attach] = child
       }
-      updateInstance(child)
-      invalidateInstance(child)
     }
+    updateInstance(child)
+    invalidateInstance(child)
   }
 }
 
 function insertBefore(parentInstance: any, child: any, beforeChild: any) {
+  console.log('calling insert before')
   const root = roots.get(parentInstance)
   if (child && root) {
     const scene = root.getState().scene
@@ -415,15 +413,14 @@ function removeRecursive(array: any, parent: any, clone = false) {
   }
 }
 
-function removeChild(parentInstance: any, child: any) {
-  const root = roots.get(parentInstance)
-  if (child && root) {
-    const scene = root.getState().scene
+function removeChild(parentScene: ThreeScene, child: any) {
+  if (child && parentScene) {
     if (child.isObject3D) {
-      scene.remove(child)
+      console.log('calling scene.remove')
+      parentScene.remove(child)
     } else {
       child.parent = null
-      if (scene.__objects) scene.__objects = scene.__objects.filter((x: any) => x !== child)
+      if (parentScene.__objects) parentScene.__objects = parentScene.__objects.filter((x: any) => x !== child)
       // Remove attachment
       if (child.attachArray) {
         // @ts-ignore
@@ -438,8 +435,10 @@ function removeChild(parentInstance: any, child: any) {
     }
 
     // Remove interactivity
-    if (child.__container)
-      child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+    if (child.__container) {
+      // temp remove interaction
+      // child.__container.__interaction = child.__container.__interaction.filter((x: any) => x !== child)
+    }
     invalidateInstance(child)
 
     // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
@@ -460,6 +459,7 @@ function removeChild(parentInstance: any, child: any) {
 }
 
 function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber) {
+  console.log('calling switchInstance', instance)
   const parent = instance.parent
   const newInstance = createInstance(type, newProps, instance.__container, null, fiber)
   removeChild(parent, instance)
@@ -481,7 +481,7 @@ function switchInstance(instance: any, type: string, newProps: any, fiber: Recon
 const Renderer = Reconciler({
   now,
   createInstance,
-  removeChild,
+  removeChild: removeChild,
   appendChild,
   insertBefore,
   warnsIfNotActing: true,
@@ -495,7 +495,18 @@ const Renderer = Reconciler({
   clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
   noTimeout: -1,
   appendInitialChild: appendChild,
-  appendChildToContainer: appendChild,
+  appendChildToContainer: (container: HTMLCanvasElement, child: THREE.Object3D) => {
+    /**
+     * we don't actually want to "append" or child to a container
+     * the container is a canvas element, actually what we want
+     * is to append it to the scene.
+     */
+    const rootVal = roots.get(container)
+    if (rootVal) {
+      const scene = rootVal.getState().scene
+      appendChild(scene, child)
+    }
+  },
   removeChildFromContainer: removeChild,
   insertInContainerBefore: insertBefore,
   commitUpdate(instance: any, updatePayload: any, type: string, oldProps: any, newProps: any, fiber: Reconciler.Fiber) {
@@ -557,7 +568,7 @@ const Renderer = Reconciler({
     // https://github.com/facebook/react/issues/20271
     // This will make sure events are only added once to the central container
     const container = instance.__container
-    if (container && instance.raycast && instance.__handlers) container.__interaction.push(instance)
+    // if (container && instance.raycast && instance.__handlers) container.__interaction.push(instance)
   },
   prepareUpdate() {
     return emptyObject

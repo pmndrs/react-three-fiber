@@ -12,6 +12,7 @@ export const createContextState = (
   props: Omit<CanvasProps, 'children'>,
   { invalidate, applyProps }: RendererFunctions
 ): CanvasContext => {
+  console.log('creating context')
   const {
     gl = {},
     renderer = WebGLRenderer,
@@ -47,7 +48,7 @@ export const createContextState = (
   // camera can be modified
   let defaultCam: THREE.Camera = orthographic
     ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-    : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    : new THREE.PerspectiveCamera(75, 1, 0.1, 1000)
   defaultCam.position.z = 5
   if (camera) {
     applyProps(defaultCam, camera, {})
@@ -87,7 +88,7 @@ export const createContextState = (
     camera: defaultCam,
     scene: defaultScene,
     raycaster: defaultRaycaster,
-    ready: false,
+    ready: true,
     active: true,
     manual: 0,
     invalidateFrameloop: false,
