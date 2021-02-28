@@ -83,15 +83,25 @@ function EndPoint({ position, onDrag, onEnd }) {
 function Line({ defaultStart, defaultEnd }) {
   const [start, setStart] = useState(defaultStart)
   const [end, setEnd] = useState(defaultEnd)
-  const vertices = useMemo(() => [start, end].map((v) => new THREE.Vector3(...v)), [start, end])
-  const update = useCallback((self) => {
-    self.verticesNeedUpdate = true
-    self.computeBoundingSphere()
-  }, [])
+  const positions = useMemo(() => new Float32Array([...start, ...end]), [start, end])
+  const lineRef = useRef()
+  useEffect(() => {
+    const { current } = lineRef
+    current.geometry.attributes.position.needsUpdate = true
+    current.geometry.computeBoundingSphere()
+  }, [lineRef, start, end])
+
   return (
     <>
-      <line>
-        <geometry attach="geometry" vertices={vertices} onUpdate={update} />
+      <line ref={lineRef}>
+        <bufferGeometry attach="geometry">
+          <bufferAttribute
+            attachObject={['attributes', 'position']}
+            count={positions.length / 3}
+            array={positions}
+            itemSize={3}
+          />
+        </bufferGeometry>
         <lineBasicMaterial attach="material" color="white" />
       </line>
       <EndPoint position={start} onDrag={(v) => setStart(v.toArray())} />
