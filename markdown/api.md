@@ -82,6 +82,8 @@ A default _scene_ (into which all the JSX is rendered) and a _raycaster_.
 
 A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }`. It does not polyfill it (see [Safari support](recipes.md#safari-support))
 
+The colorspace will be set to sRGB (given that `colorManagement` is not false) and all colors and textures systemwide will be [auto-converted](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs).
+
 You do not have to use any of these objects, look under "Recipes" down below if you want to bring your own.
 
 # Objects, properties and constructor arguments
