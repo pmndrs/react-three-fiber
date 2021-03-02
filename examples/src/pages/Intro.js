@@ -16,15 +16,16 @@ export default function Intro() {
     <Page>
       <Suspense fallback={null}>
         <Switch>
-          <Route exact path="/" component={visibleComponents.Refraction.Component} />
-          <Route
+          <Route exact path="/" component={visibleComponents.Debugging.Component} />
+          {/* <Route
             exact
             path="/demo/:name"
             render={({ match }) => {
+              console.log(match.params.name)
               const Component = visibleComponents[match.params.name].Component
               return <Component />
             }}
-          />
+          /> */}
         </Switch>
       </Suspense>
       <Demos />

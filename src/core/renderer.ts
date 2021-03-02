@@ -120,11 +120,12 @@ export function invalidate(state: CanvasContext | boolean = true, frames = 1) {
       rootState.getState().frames = ready ? frames + frames : frames
     })
   } else if (is.obj(state)) {
-    if ((state as CanvasContext).vr) {
+    const { vr, ready, frames } = state as CanvasContext
+    if (vr) {
       return
     }
     // note to self, state is missing ready. why tho
-    state.frames = state.ready ? state.frames + frames : frames
+    ;(state as CanvasContext).frames = ready ? frames + frames : frames
   }
   if (!running) {
     running = true

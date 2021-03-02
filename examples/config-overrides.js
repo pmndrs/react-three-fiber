@@ -9,7 +9,7 @@ module.exports = (config, env) => {
     removeModuleScopePlugin(),
     babelInclude([path.resolve('src'), path.resolve('../src')]),
     addWebpackAlias({
-      'react-three-fiber': path.resolve('../src/targets/web'),
+      'react-three-fiber': path.resolve('../src'),
       react: path.resolve('node_modules/react'),
       'react-dom': path.resolve('node_modules/react-dom'),
       scheduler: path.resolve('node_modules/scheduler'),

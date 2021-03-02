@@ -28,8 +28,6 @@ describe('renderer', () => {
       ) as JSX.Element
     }
 
-    const testRen = TestRenderer.create(<Comp />)
-
     // Should  move 'b' node before 'a' one with insertBefore
     const scene = render(
       <>
