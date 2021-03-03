@@ -146,7 +146,7 @@ useFrame(() => {
 
 Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
 
-#### ❌ This re-fetches, re-parses a model for every component
+#### ❌ This re-fetches, re-parses for every component instance
 
 ```jsx
 function Component() {
