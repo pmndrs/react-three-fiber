@@ -152,12 +152,14 @@ Threejs loaders give you the ability to load async assets (models, textures, etc
 function Component() {
   const [texture, set] = useState()
   useEffect(() => void new TextureLoader().load(url, set), [])
-  return texture ? (
-    <mesh>
-      <sphereGeometry />
-      <meshBasicMaterial map={texture} />
-    </mesh>
-  ) : null
+  return texture
+    ? (
+        <mesh>
+          <sphereGeometry />
+          <meshBasicMaterial map={texture} />
+        </mesh>
+      ) 
+    : null
 }
 ```
 
