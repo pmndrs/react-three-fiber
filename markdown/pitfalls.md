@@ -30,6 +30,7 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 ## React performance pitfalls ☠️ <a id="react-pitfalls"></a>
 
 ### Never, ever, setState animations! <a id="never-ever-set-state"></a>
+---
 
 Avoid forcing a full component (+ its children) through React and its diffing mechanism 60 times per second.
 
@@ -52,6 +53,7 @@ return <mesh ref={ref} />
 ```
 
 ### Never let React anywhere near animated updates! <a id="never-let-react-animate"></a>
+---
 
 Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
@@ -75,6 +77,7 @@ function Signal({ active }) {
 ```
 
 ### Never bind often occuring reactive state to a component! <a id="never-bind-reactive-component"></a>
+---
 
 Using state-managers and selected state is fine, but not for updates that happen rapidly!
 
@@ -104,6 +107,7 @@ return <mesh ref={ref} />
 ```
 
 ### Do not mount/unmount things indiscriminately! <a id="do-not-mount-unmount-indiscriminately"></a>
+---
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
@@ -116,6 +120,7 @@ Switch React to `@experimental` and flag the canvas as concurrent. Now React wil
 ```
 
 ### Do not re-create objects in loops
+---
 
 Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
 
@@ -137,6 +142,7 @@ useFrame(() => {
 ```
 
 ### Instead of plain loaders, use useLoader
+---
 
 Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
 
