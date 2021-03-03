@@ -38,7 +38,7 @@ Avoid forcing a full component (+ its children) through React and its diffing me
 const [x, setX] = useState(0)
 useFrame(() => setX(x => x + 0.01))
 // Or, just as bad ...
-// useEffect(() => void setInterval(() => setX(x => x + 0.01), 30), [])
+// useEffect(() => void setInterval(() => setX(x => x + 0.01), 1), [])
 return <mesh position-x={x} />
 ```
 
