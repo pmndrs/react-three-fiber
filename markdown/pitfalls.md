@@ -52,7 +52,7 @@ return <mesh ref={ref} />
 
 ### Never let React anywhere near animated updates! <a id="never-let-react-animate"></a>
 
-Instead use animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
+Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
 #### ✅ Using [lerp](https://github.com/mattdesl/lerp) + useFrame:
 
