@@ -8,6 +8,7 @@
     - [Never let React anywhere near animated updates](#never-let-react-animate)
     - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
     - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
+    - [Do not re-create objects in loops](#do-not-re-create-objects-in-loops)
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
@@ -109,4 +110,25 @@ Switch React to `@experimental` and flag the canvas as concurrent. Now React wil
 
 ```jsx
 <Canvas concurrent />
+```
+
+### ❌ Do not re-create objects in loops
+
+Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
+
+#### ❌ This creates a new vector 60 times a second:
+
+```jsx
+useFrame(() => {
+  ref.current.position.lerp(new THREE.Vector3(x, y, z), 0.1)
+})
+```
+
+#### ✅ This will re-use a vector and even remember its value on re-render:
+
+```jsx
+const [vec] = useState(() => new THREE.Vector3())
+useFrame(() => {
+  ref.current.position.lerp(vec.set(x, y, z), 0.1)
+})
 ```
