@@ -9,7 +9,7 @@
     - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
     - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
     - [Do not re-create objects in loops](#do-not-re-create-objects-in-loops)
-    - [Instead of three-loaders, use useLoader](#instead-of–three-loaders-use-useLoader)
+    - [Instead of plain loaders, use useLoader](#instead-of–plain-loaders-use-useLoader)
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
@@ -136,7 +136,7 @@ useFrame(() => {
 })
 ```
 
-### Instead of three-loaders, use useLoader
+### Instead of plain loaders, use useLoader
 
 Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
 
@@ -152,7 +152,6 @@ function Component() {
       <meshBasicMaterial map={texture} />
     </mesh>
   ) : null
-}
 }
 ```
 
