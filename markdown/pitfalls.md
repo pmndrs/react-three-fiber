@@ -57,11 +57,9 @@ Instead use lerp, or animation libs that animate outside of React! Avoid libs li
 #### ✅ Using [lerp](https://github.com/mattdesl/lerp) + useFrame:
 
 ```jsx
-import lerp from 'lerp'
-
 function Signal({ active }) {
   const ref = useRef()
-  useFrame(() => ref.current.position.x = lerp(ref.current.position.x, active ? 100 : 0, 0.1))
+  useFrame(() => ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, active ? 100 : 0, 0.1))
   return <mesh ref={ref} />
 ```
 
