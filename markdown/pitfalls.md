@@ -28,7 +28,11 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 ## React performance pitfalls ☠️ <a id="react-pitfalls"></a>
 
-### ❌ Never, ever, setState animations! <a id="never-ever-set-state"></a>
+### Never, ever, setState animations! <a id="never-ever-set-state"></a>
+
+Avoid forcing a full component (+ its children) through React and its diffing mechanism 60 times per second.
+
+#### ❌ This is problematic
 
 ```jsx
 const [x, setX] = useState(0)
@@ -38,8 +42,6 @@ useFrame(() => setX(x => x + 0.01))
 return <mesh position-x={x} />
 ```
 
-You are forcing a full component (+ its children) through React and its diffing mechanism 60 times per second.
-
 #### ✅ Instead, use refs and mutate! This is totally fine and that's how you would do it in plain Threejs as well.
 
 ```jsx
@@ -48,7 +50,7 @@ useFrame(() => ref.current.position.x += 0.01)
 return <mesh ref={ref} />
 ```
 
-### ❌ Never let React anywhere near animated updates! <a id="never-let-react-animate"></a>
+### Never let React anywhere near animated updates! <a id="never-let-react-animate"></a>
 
 Instead use animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
@@ -73,9 +75,11 @@ function Signal({ active }) {
   return <a.mesh position-x={x} />
 ```
 
-### ❌ Never bind often occuring reactive state to a component! <a id="never-bind-reactive-component"></a>
+### Never bind often occuring reactive state to a component! <a id="never-bind-reactive-component"></a>
 
 Using state-managers and selected state is fine, but not for updates that happen rapidly!
+
+#### ❌ This is problematic
 
 ```jsx
 import { useSelector } from 'react-redux'
@@ -100,7 +104,7 @@ useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x)
 return <mesh ref={ref} />
 ```
 
-### ❌ Do not mount/unmount things indiscriminately! <a id="do-not-mount-unmount-indiscriminately"></a>
+### Do not mount/unmount things indiscriminately! <a id="do-not-mount-unmount-indiscriminately"></a>
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
@@ -112,7 +116,7 @@ Switch React to `@experimental` and flag the canvas as concurrent. Now React wil
 <Canvas concurrent />
 ```
 
-### ❌ Do not re-create objects in loops
+### Do not re-create objects in loops
 
 Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
 
