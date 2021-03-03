@@ -16,7 +16,7 @@
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
-The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
 const geom = useMemo(() => new BoxBufferGeometry(), [])
