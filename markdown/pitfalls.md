@@ -9,6 +9,7 @@
     - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
     - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
     - [Do not re-create objects in loops](#do-not-re-create-objects-in-loops)
+    - [Instead of three-loaders, use useLoader](#instead-of–three-loaders-use-useLoader)
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
@@ -42,7 +43,7 @@ useFrame(() => setX(x => x + 0.01))
 return <mesh position-x={x} />
 ```
 
-#### ✅ Instead, use refs and mutate! This is totally fine and that's how you would do it in plain Threejs as well.
+#### ✅ Instead, use refs and mutate! This is totally fine and that's how you would do it in plain Threejs as well
 
 ```jsx
 const ref = useRef()
@@ -54,7 +55,7 @@ return <mesh ref={ref} />
 
 Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
 
-#### ✅ Using [lerp](https://github.com/mattdesl/lerp) + useFrame:
+#### ✅ Using [lerp](https://github.com/mattdesl/lerp) + useFrame
 
 ```jsx
 function Signal({ active }) {
@@ -63,7 +64,7 @@ function Signal({ active }) {
   return <mesh ref={ref} />
 ```
 
-#### ✅ Or [react-spring](https://github.com/react-spring/react-spring), which animates outside of React:
+#### ✅ Or [react-spring](https://github.com/react-spring/react-spring), which animates outside of React
 
 ```jsx
 import { a, useSpring } from 'react-spring/three'
@@ -87,14 +88,14 @@ const x = useSelector(state => state.x)
 return <mesh position-x={x} />
 ```
 
-#### ✅ Fetch state directly, for instance using [zustand](https://github.com/react-spring/zustand):
+#### ✅ Fetch state directly, for instance using [zustand](https://github.com/react-spring/zustand)
 
 ```jsx
 useFrame(() => ref.current.position.x = api.getState().x)
 return <mesh ref={ref} />
 ```
 
-#### ✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes) the component:
+#### ✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes) the component
 
 ```jsx
 const ref = useRef()
@@ -106,7 +107,7 @@ return <mesh ref={ref} />
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
-#### ✅ Use concurrent mode:
+#### ✅ Use concurrent mode
 
 Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
 
@@ -118,7 +119,7 @@ Switch React to `@experimental` and flag the canvas as concurrent. Now React wil
 
 Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
 
-#### ❌ This creates a new vector 60 times a second:
+#### ❌ This creates a new vector 60 times a second
 
 ```jsx
 useFrame(() => {
@@ -126,7 +127,7 @@ useFrame(() => {
 })
 ```
 
-#### ✅ This will re-use a vector and even remember its value on re-render:
+#### ✅ This will re-use a vector and even remember its value on re-render
 
 ```jsx
 const [vec] = useState(() => new THREE.Vector3())
@@ -134,3 +135,41 @@ useFrame(() => {
   ref.current.position.lerp(vec.set(x, y, z), 0.1)
 })
 ```
+
+### Instead of three-loaders, use useLoader
+
+Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
+
+#### ❌ This re-fetches, re-parses a model for every component
+
+```jsx
+function Component() {
+  const [texture, set] = useState()
+  useEffect(() => void new TextureLoader().load(url, set), [])
+  return texture ? (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  ) : null
+}
+}
+```
+
+Instead use useLoader, which caches assets and makes them available througout the scene.
+
+#### ✅ This will cache and re-use objects
+
+```jsx
+function Component() {
+  const texture = useLoader(TextureLoader, url)
+  return (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  )
+}
+```
+
+Regarding GLTF's try to use [gltfx](https://github.com/pmndrs/gltfjsx) as much as you can, this will create immutable jsx graphs which allow you to even re-use full models.
