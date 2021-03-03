@@ -179,4 +179,4 @@ function Component() {
 }
 ```
 
-Regarding GLTF's try to use [gltfx](https://github.com/pmndrs/gltfjsx) as much as you can, this will create immutable jsx graphs which allow you to even re-use full models.
+Regarding GLTF's try to use [gltfjsx](https://github.com/pmndrs/gltfjsx) as much as you can, this will create immutable jsx graphs which allow you to even re-use full models.
