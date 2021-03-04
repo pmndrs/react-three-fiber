@@ -8,6 +8,8 @@ export default function App() {
   const intRef = React.useRef()
   const [showCube, setShowCube] = React.useState(false)
 
+  const [color, setColor] = React.useState('pink')
+
   React.useEffect(() => {
     const { current: mat } = matRef
 
@@ -26,12 +28,21 @@ export default function App() {
     return () => {
       clearInterval(intRef.current)
     }
-  })
+  }, [showCube, setShowCube])
+
+  const handlePointerDown = () => {
+    console.log('clicked')
+    if (color === 'pink') {
+      setColor('yellow')
+    } else {
+      setColor('pink')
+    }
+  }
 
   return (
     <>
       <group>
-        <mesh>
+        <mesh onPointerDown={handlePointerDown}>
           <sphereGeometry args={[1, 32, 32]} />
           <meshBasicMaterial ref={matRef} color={col} />
         </mesh>
@@ -47,7 +58,7 @@ export default function App() {
           </mesh>
         )}
       </group>
-      <color attach="background" args={['pink']} />
+      <color attach="background" args={[color]} />
     </>
   )
 }
