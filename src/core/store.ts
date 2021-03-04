@@ -53,7 +53,8 @@ export type RootState = {
   intersect: (event?: any) => void
   setSize: (width: number, height: number) => void
   setCamera: (camera: Camera) => void
-  setPixelRatio: (pixelRatio: number | [min: number, max: number]) => void
+  // [min, max]
+  setPixelRatio: (pixelRatio: number | [number, number]) => void
 
   internal: {
     manual: number
@@ -63,7 +64,8 @@ export type RootState = {
     interaction: any[]
     subscribers: Subscription[]
     captured: Intersection[] | undefined
-    initialClick: [x: number, y: number]
+    // [x, y]
+    initialClick: [number, number]
     initialHits: THREE.Object3D[]
 
     set: SetState<RootState>
@@ -84,7 +86,8 @@ export type StoreProps = {
   noninteractive?: boolean
   updateCamera?: boolean
   frameloop?: boolean
-  pixelRatio?: number | [min: number, max: number]
+  // [min, max]
+  pixelRatio?: number | [number, number]
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?: Partial<
     ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
@@ -144,7 +147,8 @@ const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<Ro
     objects: [],
   }
 
-  function setPixelRatio(pixelRatio: number | [min: number, max: number]) {
+  // [min, max]
+  function setPixelRatio(pixelRatio: number | [number, number]) {
     return Array.isArray(pixelRatio)
       ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
       : pixelRatio
@@ -207,7 +211,7 @@ const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<Ro
       setCamera: (camera: Camera) => {
         set({ camera })
       },
-      setPixelRatio: (pixelRatio: number | [min: number, max: number]) => {
+      setPixelRatio: (pixelRatio: number | [number, number]) => {
         set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } }))
       },
 
