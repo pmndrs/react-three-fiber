@@ -36,12 +36,18 @@ type InstanceProps = {
   attach?: string
 }
 
+interface Catalogue {
+  [name: string]: {
+    new (...args: any): Instance
+  }
+}
+
 let emptyObject = {}
-let catalogue: { [name: string]: object } = {}
+let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer(
-  roots: Map<any, UseStore<RootState>>,
+function createRenderer<TCanvas>(
+  roots: Map<TCanvas, UseStore<RootState>>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
@@ -74,7 +80,7 @@ function createRenderer(
       }
     }
 
-    const leftOvers = [] as string[]
+    const leftOvers: string[] = []
     keys = Object.keys(oldProps)
     if (accumulative) {
       for (i = 0; i < keys.length; i++) {
@@ -152,6 +158,7 @@ function createRenderer(
             if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
               currentInstance[key].encoding = THREE.sRGBEncoding
           }
+
           invalidateInstance(instance)
         }
       })
@@ -168,9 +175,10 @@ function createRenderer(
         if (accumulative && root && instance.raycast) rootState.internal.interaction.push(instance)
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => {
-          acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key] as keyof InstanceProps
+          // @ts-ignore
+          acc[(key.charAt(2).toLowerCase() + key.substr(3)) as keyof EventHandlers] = newProps[key]
           return acc
-        }, {} as { [key: string]: any })
+        }, {} as EventHandlers)
       }
       // Call the update lifecycle when it is being updated, but only when it is part of the scene
       if (instance.parent) updateInstance(instance)
@@ -216,7 +224,7 @@ function createRenderer(
         dispose: instance.dispose,
       }
     } else {
-      const target = (catalogue as any)[name] || (THREE as any)[name]
+      const target = catalogue[name] || (THREE as any)[name]
       if (!target)
         throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
       // Instanciate new object, link it to the root
@@ -256,6 +264,7 @@ function createRenderer(
           parentInstance[child.attach] = child
         }
       }
+
       updateInstance(child)
       invalidateInstance(child)
     }
