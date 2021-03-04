@@ -13,7 +13,7 @@ type LocalState = {
   dispose?: () => void
 }
 
-export type Instance = Omit<THREE.Object3D, "parent" | "children" | "attach" | "remove"> & object & { 
+export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | 'remove'> & {
   __r3f: LocalState
   parent: Instance | null
   children: Instance[]
@@ -36,8 +36,8 @@ function createRenderer(
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState() ?? {}
-    const sameProps = [] as string[]
-    const handlers = [] as string[]
+    const sameProps: string[] = []
+    const handlers: string[] = []
 
     let i
     let keys = Object.keys(newProps)
@@ -413,7 +413,6 @@ function createRenderer(
         invalidateInstance(instance)
       }
     },
-    // @ts-ignore
     unhideInstance(instance: Instance, props: any) {
       if ((instance.isObject3D && props.visible == null) || props.visible) {
         instance.visible = true
