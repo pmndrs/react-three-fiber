@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import React, { useEffect, useState } from 'react'
-import { Canvas } from 'react-three-fiber'
+import React, { useEffect, useState, useRef } from 'react'
+import { render } from 'react-three-fiber'
 
 export default function App() {
   const [a] = useState(
@@ -13,11 +13,16 @@ export default function App() {
   )
 
   const [index, set] = useState(0)
-  useEffect(() => void setInterval(() => set((i) => (i + 1) % 2), 1000), [])
+  const interval = useRef()
+  useEffect(() => {
+    interval.current = setInterval(() => set((i) => (i + 1) % 2), 1000)
 
-  return (
-    <Canvas>
-      <primitive object={index === 0 ? a : b} />
-    </Canvas>
-  )
+    return () => {
+      clearInterval(interval.current)
+    }
+  }, [])
+
+  render(<primitive object={index === 0 ? a : b} />, document.getElementById('canvas'))
+
+  return null
 }
