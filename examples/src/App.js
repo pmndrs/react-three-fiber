@@ -36,7 +36,7 @@ export default function App() {
           <meshBasicMaterial ref={matRef} color={col} />
         </mesh>
         {showCube ? (
-          <mesh>
+          <mesh position={[2, 0, 0]}>
             <boxBufferGeometry args={[1, 1]} />
             <meshNormalMaterial />
           </mesh>
@@ -47,7 +47,7 @@ export default function App() {
           </mesh>
         )}
       </group>
-      <color attach="background" args="pink" />
+      <color attach="background" args={['pink']} />
     </>
   )
 }
