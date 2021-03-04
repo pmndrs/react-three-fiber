@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import Reconciler from 'react-reconciler'
+import Reconciler, { Fiber } from 'react-reconciler'
 import { UseStore } from 'zustand'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { is } from './is'
@@ -335,11 +335,11 @@ function createRenderer(
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
     // https://github.com/facebook/react/pull/15021
-    ;[fiber, fiber.alternate].forEach((fiber: any) => {
+    ;[fiber, fiber.alternate].forEach((fiber) => {
       if (fiber !== null) {
         fiber.stateNode = newInstance
         if (fiber.ref) {
-          if (is.fun(fiber.ref)) fiber.ref(newInstance)
+          if (typeof fiber.ref === 'function') fiber.ref(newInstance)
           else (fiber.ref as Reconciler.RefObject).current = newInstance
         }
       }
@@ -378,7 +378,7 @@ function createRenderer(
       insertBefore(parentInstance.getState().scene, child, beforeChild)
     },
     commitUpdate(
-      instance: any,
+      instance: Instance,
       updatePayload: any,
       type: string,
       oldProps: any,
