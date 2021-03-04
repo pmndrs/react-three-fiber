@@ -40,7 +40,7 @@ function Content({ children, setEvents, container, renderer, effects, ...props }
   // Init canvas, fetch events, hand them back to the wrapping div
   const events = useCanvas({ ...props, children, gl: (gl as unknown) as WebGLRenderer })
   useEffect(() => {
-    setEvents(events)
+    events
   }, [events, setEvents])
   return null
 }

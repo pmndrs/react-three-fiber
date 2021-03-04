@@ -1,8 +1,12 @@
 import * as THREE from 'three'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useRef, useContext as useContextImpl, useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import { SharedCanvasContext, RenderCallback, stateContext } from './canvas'
 import { useAsset } from 'use-asset'
+
+import { stateContext } from './canvas'
+
+import { LoaderResult, Extensions, BranchingReturn } from './types/internal'
+import { ObjectMap, RenderCallback, SharedCanvasContext } from './types/index'
 
 function useContext<T>(context: React.Context<T>) {
   let result = useContextImpl(context)
@@ -37,7 +41,7 @@ export function useUpdate<T>(
   callback: (props: T) => void,
   dependents: any[],
   optionalRef?: React.MutableRefObject<T>
-): React.MutableRefObject<T> | React.MutableRefObject<undefined> {
+): React.MutableRefObject<T | undefined> {
   const { invalidate } = useContext(stateContext)
   const localRef = useRef()
   const ref = optionalRef ? optionalRef : localRef
@@ -56,23 +60,6 @@ export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.M
   const ref = optionalRef ? optionalRef : localRef
   useLayoutEffect(() => void forceUpdate((i) => !i), [])
   return ref
-}
-
-export interface Loader<T> extends THREE.Loader {
-  load(
-    url: string,
-    onLoad?: (result: T) => void,
-    onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void
-  ): unknown
-}
-
-type Extensions = (loader: THREE.Loader) => void
-type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
-
-export type ObjectMap = {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
 }
 
 function buildGraph(object: THREE.Object3D) {
@@ -115,10 +102,6 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
     )
   }
 }
-
-type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
-
-type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
 export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
