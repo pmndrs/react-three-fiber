@@ -429,6 +429,7 @@ function createRenderer<TCanvas>(
         invalidateInstance(instance)
       }
     },
+    // @ts-ignore
     unhideInstance(instance: Instance, props: InstanceProps) {
       if ((instance.isObject3D && props.visible == null) || props.visible) {
         instance.visible = true

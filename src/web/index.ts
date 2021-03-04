@@ -26,19 +26,19 @@ const createRendererInstance = (
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
 
 function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps) {
-  let root = roots.get(canvas)
+  let rootState = roots.get(canvas)?.getState()
+  let root = rootState?.root
 
-  if (root) {
-    const state = root.getState()
-    const lastProps = state.internal.lastProps
+  if (root && rootState) {
+    const lastProps = rootState.internal.lastProps
 
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
     if (props.pixelRatio !== undefined && !is.equ(lastProps.pixelRatio, props.pixelRatio))
-      state.setPixelRatio(props.pixelRatio)
+      rootState.setPixelRatio(props.pixelRatio)
     // Check size
-    if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    if (size !== undefined && !is.equ(lastProps.size, size)) rootState.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
@@ -52,11 +52,14 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (!root) {
     // If no root has been found, make one
-    const rootState = createStore(root, { gl: createRendererInstance(gl, canvas), size, ...props })
-    root = reconciler.createContainer(rootState, Boolean(concurrent), false)
-    roots.set(canvas, rootState)
+    const store = createStore({ gl: createRendererInstance(gl, canvas), size, ...props })
+    root = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
+    // Link root
+    store.getState().internal.set({ root })
+    // Map it
+    roots.set(canvas, store)
     // Kick off render loop
-    invalidate(rootState.getState())
+    invalidate(store.getState())
   }
 
   reconciler.updateContainer(element, root, null, () => undefined)
@@ -64,7 +67,7 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 }
 
 function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
-  const root = roots.get(canvas)
+  const root = roots.get(canvas)?.getState().root
   if (root) {
     reconciler.updateContainer(null, root, null, () => {
       roots.delete(canvas)

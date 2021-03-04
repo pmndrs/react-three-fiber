@@ -96,7 +96,7 @@ export type StoreProps = {
   >
 }
 
-const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<RootState> => {
+const createStore = (props: StoreProps): UseStore<RootState> => {
   const {
     gl,
     size,
@@ -176,7 +176,7 @@ const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<Ro
     }
 
     return {
-      root,
+      root: null,
 
       gl,
       scene,
