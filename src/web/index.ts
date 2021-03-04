@@ -7,7 +7,6 @@ import { createRenderer } from '../core/renderer'
 import { createLoop } from '../core/loop'
 import { is } from '../core/is'
 import { Canvas } from './Canvas'
-import ReactReconciler from 'react-reconciler'
 
 type RenderProps = Omit<StoreProps, 'gl'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -27,10 +26,10 @@ const createRendererInstance = (
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
 
 function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps) {
-  let rootStore = roots.get(canvas)
+  let root = roots.get(canvas)
 
-  if (rootStore) {
-    const state = rootStore.getState()
+  if (root) {
+    const state = root.getState()
     const lastProps = state.internal.lastProps
 
     // When a root was found, see if any fundamental props must be changed or exchanged
@@ -47,39 +46,30 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     const linearChanged = props.linear !== lastProps.linear
     if (linearChanged) {
       unmountComponentAtNode(canvas)
-      rootStore = undefined
+      root = undefined
     }
   }
 
-  if (!rootStore) {
+  if (!root) {
     // If no root has been found, make one
-    // first make the state
-    let root: ReactReconciler.FiberRoot | undefined = undefined
-    const rootState = createStore({ gl: createRendererInstance(gl, canvas), size, ...props }, root)
+    const rootState = createStore(root, { gl: createRendererInstance(gl, canvas), size, ...props })
     root = reconciler.createContainer(rootState, Boolean(concurrent), false)
     roots.set(canvas, rootState)
     // Kick off render loop
     invalidate(rootState.getState())
-
-    reconciler.updateContainer(element, root, null, () => undefined)
-    return reconciler.getPublicRootInstance(root)
-  } else {
-    const root = rootStore.getState().root as ReactReconciler.FiberRoot
-    reconciler.updateContainer(element, root, null, () => undefined)
-    return reconciler.getPublicRootInstance(root)
   }
+
+  reconciler.updateContainer(element, root, null, () => undefined)
+  return reconciler.getPublicRootInstance(root)
 }
 
 function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
   const root = roots.get(canvas)
   if (root) {
-    const storeRoot = root.getState().root
-    if (storeRoot) {
-      reconciler.updateContainer(null, storeRoot, null, () => {
-        roots.delete(canvas)
-        if (callback) callback(canvas)
-      })
-    }
+    reconciler.updateContainer(null, root, null, () => {
+      roots.delete(canvas)
+      if (callback) callback(canvas)
+    })
   }
 }
 

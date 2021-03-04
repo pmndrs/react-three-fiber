@@ -29,7 +29,7 @@ export const isOrthographicCamera = (def: THREE.Camera): def is THREE.Orthograph
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type RootState = {
-  root?: Reconciler.FiberRoot
+  root: Reconciler.FiberRoot
 
   gl: THREE.WebGLRenderer
   scene: THREE.Scene & Instance
@@ -96,7 +96,7 @@ export type StoreProps = {
   >
 }
 
-const createStore = (props: StoreProps, root?: Reconciler.FiberRoot): UseStore<RootState> => {
+const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<RootState> => {
   const {
     gl,
     size,
@@ -157,7 +157,6 @@ const createStore = (props: StoreProps, root?: Reconciler.FiberRoot): UseStore<R
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
-
     function getCurrentViewport(
       camera: Camera = get().camera,
       target: THREE.Vector3 = defaultTarget,
