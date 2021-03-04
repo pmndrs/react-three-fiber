@@ -13,7 +13,15 @@ type LocalState = {
   dispose?: () => void
 }
 
-export type Instance = object & { __r3f: LocalState }
+export type Instance = Omit<THREE.Object3D, "parent" | "children" | "attach" | "remove"> & object & { 
+  __r3f: LocalState
+  parent: Instance | null
+  children: Instance[]
+  attach: string
+  remove: (...object: Instance[]) => Instance
+  add: (...object: Instance[]) => Instance
+  [key: string]: any
+}
 
 let emptyObject = {}
 let catalogue: { [name: string]: object } = {}
@@ -23,7 +31,7 @@ function createRenderer(
   roots: Map<any, UseStore<RootState>>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
-  function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
+  function applyProps(instance: Instance, newProps: any, oldProps: any = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
@@ -157,10 +165,10 @@ function createRenderer(
   }
 
   function invalidateInstance(instance: Instance) {
-    invalidate(instance?.__r3f?.root?.getState())
+    invalidate(instance.__r3f?.root?.getState())
   }
 
-  function updateInstance(instance: any) {
+  function updateInstance(instance: Instance) {
     if (instance.onUpdate) instance.onUpdate(instance)
   }
 
@@ -198,7 +206,7 @@ function createRenderer(
         root,
         objects: [],
         instance: true,
-        dispose: (instance as any).dispose as () => void,
+        dispose: instance.dispose,
       }
     } else {
       const target = (catalogue as any)[name] || (THREE as any)[name]
@@ -223,7 +231,7 @@ function createRenderer(
     return instance
   }
 
-  function appendChild(parentInstance: any, child: any) {
+  function appendChild(parentInstance: Instance, child: Instance) {
     if (child) {
       if (child.isObject3D) {
         parentInstance.add(child)
@@ -246,7 +254,7 @@ function createRenderer(
     }
   }
 
-  function insertBefore(parentInstance: any, child: any, beforeChild: any) {
+  function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
     if (child) {
       if (child.isObject3D) {
         child.parent = parentInstance
@@ -263,15 +271,15 @@ function createRenderer(
     }
   }
 
-  function removeRecursive(array: any, parent: any, clone = false) {
+  function removeRecursive(array: Instance[], parent: Instance, clone = false) {
     if (array) {
       // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
       const target = clone ? [...array] : array
-      target.forEach((child: any) => removeChild(parent, child))
+      target.forEach((child: Instance) => removeChild(parent, child))
     }
   }
 
-  function removeChild(parentInstance: any, child: any) {
+  function removeChild(parentInstance: Instance, child: Instance) {
     if (child) {
       if (child.isObject3D) {
         parentInstance.remove(child)
@@ -307,18 +315,20 @@ function createRenderer(
           if (child.dispose && child.type !== 'Scene') child.dispose()
           else if (child.__r3f.dispose) child.__r3f.dispose()
           // Remove references
-          delete child.__r3f.root
-          delete child.__r3f.objects
+          delete (child as any).__r3f.root
+          delete (child as any).__r3f.objects
           delete child.__r3f.handlers
           delete child.__r3f.dispose
-          delete child.__r3f
+          delete (child as any).__r3f
         })
       }
     }
   }
 
-  function switchInstance(instance: any, type: string, newProps: any, fiber: Reconciler.Fiber) {
+  function switchInstance(instance: Instance, type: string, newProps: any, fiber: Reconciler.Fiber) {
     const parent = instance.parent
+    if (!parent) return
+
     const newInstance = createInstance(type, newProps, instance.__r3f.root, null, fiber)
     removeChild(parent, instance)
     appendChild(parent, newInstance)
@@ -397,14 +407,14 @@ function createRenderer(
         }
       }
     },
-    hideInstance(instance: any) {
+    hideInstance(instance: Instance) {
       if (instance.isObject3D) {
         instance.visible = false
         invalidateInstance(instance)
       }
     },
     // @ts-ignore
-    unhideInstance(instance: any, props: any) {
+    unhideInstance(instance: Instance, props: any) {
       if ((instance.isObject3D && props.visible == null) || props.visible) {
         instance.visible = true
         invalidateInstance(instance)
@@ -425,17 +435,16 @@ function createRenderer(
       return emptyObject
     },
     createTextInstance() {},
-    finalizeInitialChildren(instance: any) {
+    finalizeInitialChildren(instance: Instance) {
       // https://github.com/facebook/react/issues/20271
       // Returning true will trigger commitMount
-      return instance.__handlers
+      return !!instance.__r3f.handlers
     },
-    commitMount(instance: any /*, type, props*/) {
+    commitMount(instance: Instance /*, type, props*/) {
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
-      const localState = instance.__r3f
-      if (localState.root && instance.raycast && localState.handlers)
-        localState.root.getState().interaction.push(instance)
+      if (instance.raycast && instance.__r3f.handlers)
+        instance.__r3f.root.getState().internal.interaction.push(instance)
     },
     prepareUpdate() {
       return emptyObject
