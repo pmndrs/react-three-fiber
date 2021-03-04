@@ -19,8 +19,8 @@ let emptyObject = {}
 let catalogue: { [name: string]: object } = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<Container>(
-  roots: Map<Container, UseStore<RootState>>,
+function createRenderer(
+  roots: Map<any, UseStore<RootState>>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
   function applyProps(instance: any, newProps: any, oldProps: any = {}, accumulative = false) {
@@ -434,7 +434,8 @@ function createRenderer<Container>(
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       const localState = instance.__r3f
-      if (localState.root && instance.raycast && localState.handlers) localState.root.getState().interaction.push(instance)
+      if (localState.root && instance.raycast && localState.handlers)
+        localState.root.getState().interaction.push(instance)
     },
     prepareUpdate() {
       return emptyObject

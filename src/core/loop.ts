@@ -43,7 +43,7 @@ export function render(state: RootState, timestamp: number, repeat = 0, runGloba
   return repeat
 }
 
-function createLoop<Container>(roots: Map<Container, UseStore<RootState>>) {
+function createLoop(roots: Map<any, UseStore<RootState>>) {
   let running = false
 
   function loop(timestamp: number) {

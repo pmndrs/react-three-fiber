@@ -14,8 +14,8 @@ type RenderProps = Omit<StoreProps, 'gl'> & {
 }
 
 const roots = new Map<HTMLCanvasElement, UseStore<RootState>>()
-const { loop, invalidate } = createLoop<HTMLCanvasElement>(roots)
-const { reconciler, applyProps } = createRenderer<HTMLCanvasElement>(roots, invalidate)
+const { invalidate } = createLoop(roots)
+const { reconciler, applyProps } = createRenderer(roots, invalidate)
 
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
