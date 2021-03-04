@@ -15,9 +15,9 @@ import { useState } from 'react'
 import { useCanvas, CanvasProps, UseCanvasProps } from '../../canvas'
 import { RectReadOnly } from 'react-use-measure'
 
-function clientXY(e: GestureResponderEvent) {
-  ;(e as any).clientX = e.nativeEvent.pageX
-  ;(e as any).clientY = e.nativeEvent.pageY
+function offsetXY(e: GestureResponderEvent) {
+  ;(e as any).nativeEvent.offsetX = e.nativeEvent.pageX
+  ;(e as any).nativeEvent.offsetY = e.nativeEvent.pageY
   return e
 }
 
@@ -38,7 +38,7 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
     let pointerDownCoords: null | [number, number] = null
     return PanResponder.create({
       onStartShouldSetPanResponderCapture(e) {
-        events.onGotPointerCaptureLegacy(clientXY(e))
+        events.onGotPointerCaptureLegacy(offsetXY(e))
         return true
       },
       onStartShouldSetPanResponder: () => true,
@@ -47,23 +47,23 @@ const IsReady = React.memo(({ gl, ...props }: NativeCanvasProps & { gl: any; siz
       onPanResponderTerminationRequest: () => true,
       onPanResponderStart: (e) => {
         pointerDownCoords = [e.nativeEvent.locationX, e.nativeEvent.locationY]
-        events.onPointerDown(clientXY(e))
+        events.onPointerDown(offsetXY(e))
       },
-      onPanResponderMove: (e) => events.onPointerMove(clientXY(e)),
+      onPanResponderMove: (e) => events.onPointerMove(offsetXY(e)),
       onPanResponderEnd: (e) => {
-        events.onPointerUp(clientXY(e))
+        events.onPointerUp(offsetXY(e))
         if (pointerDownCoords) {
           const xDelta = pointerDownCoords[0] - e.nativeEvent.locationX
           const yDelta = pointerDownCoords[1] - e.nativeEvent.locationY
           if (Math.sqrt(Math.pow(xDelta, 2) + Math.pow(yDelta, 2)) < CLICK_DELTA) {
-            events.onClick(clientXY(e))
+            events.onClick(offsetXY(e))
           }
         }
         pointerDownCoords = null
       },
-      onPanResponderRelease: (e) => events.onPointerLeave(clientXY(e)),
-      onPanResponderTerminate: (e) => events.onLostPointerCapture(clientXY(e)),
-      onPanResponderReject: (e) => events.onLostPointerCapture(clientXY(e)),
+      onPanResponderRelease: (e) => events.onPointerLeave(offsetXY(e)),
+      onPanResponderTerminate: (e) => events.onLostPointerCapture(offsetXY(e)),
+      onPanResponderReject: (e) => events.onLostPointerCapture(offsetXY(e)),
     })
   }, [events])
 
