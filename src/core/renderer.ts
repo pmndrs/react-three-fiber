@@ -1,7 +1,10 @@
 import * as THREE from 'three'
-import Reconciler, { Fiber } from 'react-reconciler'
+import Reconciler from 'react-reconciler'
 import { UseStore } from 'zustand'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
+
+import { EventHandlers } from '../three-types'
+
 import { is } from './is'
 import { RootState } from './store'
 
@@ -9,7 +12,7 @@ type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
   instance?: boolean
-  handlers?: { [key: string]: any }
+  handlers?: EventHandlers
   dispose?: () => void
 }
 
