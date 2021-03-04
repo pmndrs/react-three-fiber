@@ -23,6 +23,14 @@ export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | '
   [key: string]: any
 }
 
+type InstanceProps = object & {
+  args: any[]
+  object?: object
+  visible?: boolean
+  dispose?: null
+  attach?: string
+}
+
 let emptyObject = {}
 let catalogue: { [name: string]: object } = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
@@ -172,13 +180,7 @@ function createRenderer(
     if (instance.onUpdate) instance.onUpdate(instance)
   }
 
-  function createInstance(
-    type: string,
-    { args = [], ...props },
-    root: UseStore<RootState>,
-    hostContext: any,
-    internalInstanceHandle: Reconciler.Fiber
-  ) {
+  function createInstance(type: string, { args = [], ...props }: InstanceProps, root: UseStore<RootState>) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
 
@@ -325,11 +327,11 @@ function createRenderer(
     }
   }
 
-  function switchInstance(instance: Instance, type: string, newProps: any, fiber: Reconciler.Fiber) {
+  function switchInstance(instance: Instance, type: string, newProps: InstanceProps, fiber: Reconciler.Fiber) {
     const parent = instance.parent
     if (!parent) return
 
-    const newInstance = createInstance(type, newProps, instance.__r3f.root, null, fiber)
+    const newInstance = createInstance(type, newProps, instance.__r3f.root)
     removeChild(parent, instance)
     appendChild(parent, newInstance)
     // This evil hack switches the react-internal fiber node
@@ -381,8 +383,8 @@ function createRenderer(
       instance: Instance,
       updatePayload: any,
       type: string,
-      oldProps: any,
-      newProps: any,
+      oldProps: InstanceProps,
+      newProps: InstanceProps,
       fiber: Reconciler.Fiber
     ) {
       if (instance.__instance && newProps.object && newProps.object !== instance) {
@@ -413,7 +415,7 @@ function createRenderer(
         invalidateInstance(instance)
       }
     },
-    unhideInstance(instance: Instance, props: any) {
+    unhideInstance(instance: Instance, props: InstanceProps) {
       if ((instance.isObject3D && props.visible == null) || props.visible) {
         instance.visible = true
         invalidateInstance(instance)

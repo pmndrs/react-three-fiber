@@ -255,7 +255,6 @@ const createStore = (root: Reconciler.FiberRoot, props: StoreProps): UseStore<Ro
     () => {
       const { camera, size, viewport, updateCamera } = rootState.getState()
 
-      console.log(size)
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Sometimes automatic default camera adjustment isn't wanted behaviour
       if (updateCamera) {
