@@ -1,13 +1,10 @@
 import React from 'react'
-import { HashRouter as Router } from 'react-router-dom'
-import Intro from './pages/Intro'
-import { Global } from './styles'
 
 export default function App() {
   return (
-    <Router>
-      <Global />
-      <Intro />
-    </Router>
+    <mesh>
+      <sphereGeometry args={[1, 32, 32]} />
+      <meshBasicMaterial color="red" />
+    </mesh>
   )
 }

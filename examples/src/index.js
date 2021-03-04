@@ -1,6 +1,9 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import './styles.css'
+import { render } from '../../src/web'
 import App from './App'
 
-//ReactDOM.createRoot(document.getElementById('root')).render(<App />)
-ReactDOM.render(<App />, document.getElementById('root'))
+render(<App />, document.getElementById('canvas'), {
+  gl: { alpha: false },
+  size: { width: 400, height: 400 },
+})
