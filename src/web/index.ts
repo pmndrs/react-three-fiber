@@ -52,8 +52,8 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (!root) {
     // If no root has been found, make one
-    root = reconciler.createContainer(rootState, Boolean(concurrent), false)
     const rootState = createStore(root, { gl: createRendererInstance(gl, canvas), size, ...props })
+    root = reconciler.createContainer(rootState, Boolean(concurrent), false)
     roots.set(canvas, rootState)
     // Kick off render loop
     invalidate(rootState.getState())
