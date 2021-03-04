@@ -23,8 +23,10 @@ export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | '
   [key: string]: any
 }
 
-type InstanceProps = object & {
-  args: any[]
+type InstanceProps = {
+  [key: string]: unknown
+} & {
+  args?: any[]
   object?: object
   visible?: boolean
   dispose?: null
@@ -39,7 +41,7 @@ function createRenderer(
   roots: Map<any, UseStore<RootState>>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
-  function applyProps(instance: Instance, newProps: any, oldProps: any = {}, accumulative = false) {
+  function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
@@ -73,7 +75,7 @@ function createRenderer(
     keys = Object.keys(oldProps)
     if (accumulative) {
       for (i = 0; i < keys.length; i++) {
-        if (newProps[keys[i]] === void 0) {
+        if (newProps[keys[i] as keyof InstanceProps] === void 0) {
           leftOvers.push(keys[i])
         }
       }
@@ -163,7 +165,7 @@ function createRenderer(
         if (accumulative && root && instance.raycast) rootState.internal.interaction.push(instance)
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => {
-          acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key]
+          acc[key.charAt(2).toLowerCase() + key.substr(3)] = newProps[key] as keyof InstanceProps
           return acc
         }, {} as { [key: string]: any })
       }
