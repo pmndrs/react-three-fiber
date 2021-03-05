@@ -32,7 +32,7 @@ export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | '
   [key: string]: any
 }
 
-type InstanceProps = {
+export type InstanceProps = {
   [key: string]: unknown
 } & {
   args?: any[]

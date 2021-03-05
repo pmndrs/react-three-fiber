@@ -1,13 +1,9 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import * as ReactThreeFiber from '../three-types'
 import create, { SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
-import * as ReactThreeFiber from '../three-types'
-import { Instance } from './renderer'
-
-// Mock-ups
-function applyProps(...args: any) {}
-function invalidate(...args: any) {}
+import { Instance, InstanceProps } from './renderer'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -95,7 +91,11 @@ export type StoreProps = {
 
 const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
 
-const createStore = (props: StoreProps): UseStore<RootState> => {
+const createStore = (
+  applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
+  invalidate: (state?: boolean | RootState, frames?: number) => void,
+  props: StoreProps
+): UseStore<RootState> => {
   const {
     gl,
     size,
@@ -126,17 +126,14 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
 
   // Create custom raycaster
   const raycaster = new THREE.Raycaster()
-  if (raycastOptions) {
-    const { filter, computeOffsets, ...raycasterProps } = raycastOptions
-    applyProps(raycaster, raycasterProps, {})
-  }
+  if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
 
   // Create default camera
   const camera = orthographic
     ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
     : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
   camera.position.z = 5
-  if (cameraOptions) applyProps(camera, cameraOptions, {})
+  if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
   // Always look at [0, 0, 0]
   camera.lookAt(0, 0, 0)
 
@@ -198,7 +195,7 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
         getCurrentViewport,
       },
 
-      invalidate: () => {},
+      invalidate: (frames?: number) => invalidate(get(), frames),
       intersect: (event?: any) => {},
       setSize: (width: number, height: number) => {
         const size = { width, height }
@@ -277,7 +274,7 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
   )
 
   // Invalidate on any change
-  rootState.subscribe(invalidate)
+  rootState.subscribe((state) => invalidate(state))
 
   const state = rootState.getState()
 

@@ -1,13 +1,12 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { name as rendererPackageName, version } from '../../package.json'
+import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
-import { is } from '../core/is'
+//import { createEvents } from './events'
 import { Canvas } from './Canvas'
-
-export * from '../core/hooks'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -55,13 +54,15 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (!fiber) {
     // If no root has been found, make one
+    store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
 
-    store = createStore({ gl: createRendererInstance(gl, canvas), size, ...props })
+    //createEvents(store)
+
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
     // Kick off render loop
-    invalidate(store.getState())
+    store.getState().invalidate()
   }
 
   if (store && fiber) {
@@ -96,4 +97,5 @@ reconciler.injectIntoDevTools({
   version,
 })
 
-export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, Canvas }
+export * from '../core/hooks'
+export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, invalidate, Canvas }
