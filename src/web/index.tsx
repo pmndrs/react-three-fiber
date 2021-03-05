@@ -1,13 +1,15 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { name as rendererPackageName, version } from '../../package.json'
-import { createStore, StoreProps, isRenderer } from '../core/store'
+import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
 import { is } from '../core/is'
 import { Canvas } from './Canvas'
 
-type RenderProps = Omit<StoreProps, 'gl'> & {
+export * from '../core/hooks'
+
+type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   concurrent?: boolean
 }
@@ -26,19 +28,20 @@ const createRendererInstance = (
 
 function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps) {
   let root = roots.get(canvas)
-  let store = root?.store.getState()
   let fiber = root?.fiber
+  let store = root?.store
+  let state = store?.getState()
 
-  if (fiber && store) {
-    const lastProps = store.internal.lastProps
+  if (fiber && state) {
+    const lastProps = state.internal.lastProps
 
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
     if (props.pixelRatio !== undefined && !is.equ(lastProps.pixelRatio, props.pixelRatio))
-      store.setPixelRatio(props.pixelRatio)
+      state.setPixelRatio(props.pixelRatio)
     // Check size
-    if (size !== undefined && !is.equ(lastProps.size, size)) store.setSize(size.width, size.height)
+    if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
@@ -52,7 +55,8 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (!fiber) {
     // If no root has been found, make one
-    const store = createStore({ gl: createRendererInstance(gl, canvas), size, ...props })
+
+    store = createStore({ gl: createRendererInstance(gl, canvas), size, ...props })
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
@@ -60,8 +64,12 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     invalidate(store.getState())
   }
 
-  reconciler.updateContainer(element, fiber, null, () => undefined)
-  return reconciler.getPublicRootInstance(fiber)
+  if (store && fiber) {
+    reconciler.updateContainer(<context.Provider value={store} children={element} />, fiber, null, () => undefined)
+    return reconciler.getPublicRootInstance(fiber)
+  } else {
+    throw 'R3F: Error creating fiber-root!'
+  }
 }
 
 function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
@@ -88,4 +96,4 @@ reconciler.injectIntoDevTools({
   version,
 })
 
-export { render, unmountComponentAtNode, createPortal, reconciler, applyProps, Canvas }
+export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, Canvas }

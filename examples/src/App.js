@@ -1,6 +1,8 @@
 import React from 'react'
 import * as THREE from 'three'
 
+import { useThree } from '../../src/web'
+
 const col = new THREE.Color(0xff0000)
 
 export default function App() {
@@ -38,6 +40,9 @@ export default function App() {
       setColor('pink')
     }
   }
+
+  const a = useThree((state) => state.clock)
+  console.log(a)
 
   return (
     <>

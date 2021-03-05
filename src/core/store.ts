@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import * as React from 'react'
 import create, { SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import * as ReactThreeFiber from '../three-types'
@@ -92,6 +93,8 @@ export type StoreProps = {
       ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   >
 }
+
+const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
 
 const createStore = (props: StoreProps): UseStore<RootState> => {
   const {
@@ -290,4 +293,4 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
   return rootState
 }
 
-export { createStore }
+export { createStore, context }
