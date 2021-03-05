@@ -18,6 +18,7 @@ export type Subscription = {
   priority: number
 }
 
+export type PixelRatio = number | [min: number, max: number]
 export type Size = { width: number; height: number }
 export type Viewport = Size & { pixelRatio: number; factor: number; distance: number; aspect: number }
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -51,8 +52,7 @@ export type RootState = {
   intersect: (event?: any) => void
   setSize: (width: number, height: number) => void
   setCamera: (camera: Camera) => void
-  // [min, max]
-  setPixelRatio: (pixelRatio: number | [number, number]) => void
+  setPixelRatio: (pixelRatio: PixelRatio) => void
 
   internal: {
     manual: number
@@ -63,7 +63,7 @@ export type RootState = {
     subscribers: Subscription[]
     captured: Intersection[] | undefined
     // [x, y]
-    initialClick: [number, number]
+    initialClick: [x: number, y: number]
     initialHits: THREE.Object3D[]
 
     set: SetState<RootState>
@@ -84,8 +84,7 @@ export type StoreProps = {
   noninteractive?: boolean
   updateCamera?: boolean
   frameloop?: boolean
-  // [min, max]
-  pixelRatio?: number | [number, number]
+  pixelRatio?: PixelRatio
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?: Partial<
     ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
@@ -147,8 +146,7 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
     objects: [],
   }
 
-  // [min, max]
-  function setPixelRatio(pixelRatio: number | [number, number]) {
+  function setPixelRatio(pixelRatio: PixelRatio) {
     return Array.isArray(pixelRatio)
       ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
       : pixelRatio
@@ -209,7 +207,7 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
       setCamera: (camera: Camera) => {
         set({ camera })
       },
-      setPixelRatio: (pixelRatio: number | [number, number]) => {
+      setPixelRatio: (pixelRatio: PixelRatio) => {
         set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } }))
       },
 
