@@ -1,7 +1,7 @@
-import React from 'react'
+import * as React from 'react'
 import * as THREE from 'three'
 
-import { useThree } from '../../src/web'
+import { useThree, useFrame } from '../../src/web'
 
 const col = new THREE.Color(0xff0000)
 
@@ -44,9 +44,14 @@ export default function App() {
   const a = useThree((state) => state.clock)
   console.log(a)
 
+  const ref = React.useRef()
+  useFrame(({ clock }) => {
+    ref.current.position.x = Math.sin(clock.elapsedTime)
+  })
+
   return (
     <>
-      <group>
+      <group ref={ref}>
         <mesh onPointerDown={handlePointerDown}>
           <sphereGeometry args={[1, 32, 32]} />
           <meshBasicMaterial ref={matRef} color={col} />
