@@ -1,4 +1,5 @@
 import { UseStore } from 'zustand'
+import { Root } from './renderer'
 import { RootState } from './store'
 
 type GlobalRenderCallback = (timeStamp: number) => boolean
@@ -43,7 +44,7 @@ export function render(state: RootState, timestamp: number, repeat = 0, runGloba
   return repeat
 }
 
-function createLoop(roots: Map<any, UseStore<RootState>>) {
+function createLoop(roots: Map<any, Root>) {
   let running = false
 
   function loop(timestamp: number) {
@@ -58,7 +59,7 @@ function createLoop(roots: Map<any, UseStore<RootState>>) {
     }
 
     roots.forEach((root) => {
-      const state = root.getState()
+      const state = root.store.getState()
       // If the frameloop is invalidated, do not run another frame
       repeat = state.frameloop || state.internal.frames > 0 ? render(state, timestamp, repeat) : 0
     })
@@ -76,7 +77,7 @@ function createLoop(roots: Map<any, UseStore<RootState>>) {
 
   function invalidate(state: RootState | boolean = true, frames = 1) {
     if (state === true) {
-      roots.forEach((root) => (root.getState().internal.frames += frames))
+      roots.forEach((root) => (root.store.getState().internal.frames += frames))
     } else if (state) {
       if (state.vr) return
       state.internal.frames += frames

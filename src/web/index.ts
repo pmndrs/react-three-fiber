@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { UseStore } from 'zustand'
 import { name as rendererPackageName, version } from '../../package.json'
-import { createStore, RootState, StoreProps, isRenderer } from '../core/store'
-import { createRenderer } from '../core/renderer'
+import { createStore, StoreProps, isRenderer } from '../core/store'
+import { createRenderer, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
 import { is } from '../core/is'
 import { Canvas } from './Canvas'
@@ -13,7 +12,7 @@ type RenderProps = Omit<StoreProps, 'gl'> & {
   concurrent?: boolean
 }
 
-const roots = new Map<HTMLCanvasElement, UseStore<RootState>>()
+const roots = new Map<HTMLCanvasElement, Root>()
 const { invalidate } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, invalidate)
 
@@ -26,19 +25,20 @@ const createRendererInstance = (
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
 
 function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps) {
-  let rootState = roots.get(canvas)?.getState()
-  let root = rootState?.root
+  let root = roots.get(canvas)
+  let store = root?.store.getState()
+  let fiber = root?.fiber
 
-  if (root && rootState) {
-    const lastProps = rootState.internal.lastProps
+  if (fiber && store) {
+    const lastProps = store.internal.lastProps
 
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
     if (props.pixelRatio !== undefined && !is.equ(lastProps.pixelRatio, props.pixelRatio))
-      rootState.setPixelRatio(props.pixelRatio)
+      store.setPixelRatio(props.pixelRatio)
     // Check size
-    if (size !== undefined && !is.equ(lastProps.size, size)) rootState.setSize(size.width, size.height)
+    if (size !== undefined && !is.equ(lastProps.size, size)) store.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
@@ -46,30 +46,29 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     const linearChanged = props.linear !== lastProps.linear
     if (linearChanged) {
       unmountComponentAtNode(canvas)
-      root = undefined
+      fiber = undefined
     }
   }
 
-  if (!root) {
+  if (!fiber) {
     // If no root has been found, make one
     const store = createStore({ gl: createRendererInstance(gl, canvas), size, ...props })
-    root = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
-    // Link root
-    store.getState().internal.set({ root })
+    fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
-    roots.set(canvas, store)
+    roots.set(canvas, { fiber, store })
     // Kick off render loop
     invalidate(store.getState())
   }
 
-  reconciler.updateContainer(element, root, null, () => undefined)
-  return reconciler.getPublicRootInstance(root)
+  reconciler.updateContainer(element, fiber, null, () => undefined)
+  return reconciler.getPublicRootInstance(fiber)
 }
 
 function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
-  const root = roots.get(canvas)?.getState().root
-  if (root) {
-    reconciler.updateContainer(null, root, null, () => {
+  const root = roots.get(canvas)
+  const fiber = root?.fiber
+  if (fiber) {
+    reconciler.updateContainer(null, fiber, null, () => {
       roots.delete(canvas)
       if (callback) callback(canvas)
     })

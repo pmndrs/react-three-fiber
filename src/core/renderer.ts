@@ -8,6 +8,8 @@ import { EventHandlers } from '../three-types'
 import { is } from './is'
 import { RootState } from './store'
 
+export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
+
 type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
@@ -46,10 +48,7 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<TCanvas>(
-  roots: Map<TCanvas, UseStore<RootState>>,
-  invalidate: (state?: boolean | RootState, frames?: number) => void
-) {
+function createRenderer(roots: Map<any, Root>, invalidate: (state?: boolean | RootState, frames?: number) => void) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState

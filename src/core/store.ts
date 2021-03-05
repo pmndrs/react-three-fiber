@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import Reconciler from 'react-reconciler'
 import create, { SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import * as ReactThreeFiber from '../three-types'
@@ -29,8 +28,6 @@ export const isOrthographicCamera = (def: THREE.Camera): def is THREE.Orthograph
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type RootState = {
-  root: Reconciler.FiberRoot
-
   gl: THREE.WebGLRenderer
   scene: THREE.Scene & Instance
   camera: Camera
@@ -176,8 +173,6 @@ const createStore = (props: StoreProps): UseStore<RootState> => {
     }
 
     return {
-      root: null,
-
       gl,
       scene,
       camera,
