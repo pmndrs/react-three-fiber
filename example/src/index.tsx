@@ -1,6 +1,6 @@
 import React from 'react'
-import './styles.css'
 import { render } from 'react-three-fiber'
+import './styles.css'
 import App from './App'
 
 window.addEventListener('resize', () =>
