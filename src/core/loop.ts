@@ -1,4 +1,3 @@
-import { UseStore } from 'zustand'
 import { Root } from './renderer'
 import { RootState } from './store'
 
@@ -44,7 +43,7 @@ export function render(state: RootState, timestamp: number, repeat = 0, runGloba
   return repeat
 }
 
-function createLoop(roots: Map<any, Root>) {
+function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
 
   function loop(timestamp: number) {

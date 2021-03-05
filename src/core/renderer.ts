@@ -52,7 +52,10 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer(roots: Map<any, Root>, invalidate: (state?: boolean | RootState, frames?: number) => void) {
+function createRenderer<TCanvas>(
+  roots: Map<TCanvas, Root>,
+  invalidate: (state?: boolean | RootState, frames?: number) => void
+) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState

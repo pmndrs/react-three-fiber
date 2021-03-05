@@ -26,7 +26,7 @@ export function useUpdate<T>(
   callback: (props: T) => void,
   dependents: any[],
   optionalRef?: React.MutableRefObject<T>
-): React.MutableRefObject<T> | React.MutableRefObject<undefined> {
+): React.MutableRefObject<T | undefined> {
   const { invalidate } = React.useContext(context).getState()
   const localRef = React.useRef()
   const ref = optionalRef ? optionalRef : localRef
