@@ -42,7 +42,7 @@ export default function App() {
   }
 
   const a = useThree((state) => state.clock)
-  console.log(a)
+  //console.log(a)
 
   const ref = React.useRef()
   useFrame(({ clock }) => {
