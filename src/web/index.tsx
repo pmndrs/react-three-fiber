@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { name as rendererPackageName, version } from '../../package.json'
 import { is } from '../core/is'
+import manifest from '../../package.json'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
@@ -115,8 +115,8 @@ function createPortal(children: React.ReactNode, container: any, impl?: any, key
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName,
-  version,
+  rendererPackageName: manifest.name,
+  version: manifest.version,
 })
 
 export * from '../core/hooks'
