@@ -6,7 +6,7 @@ import { version } from '../../package.json'
 import { is } from '../core/is'
 import { createRenderer, Root } from '../core/renderer'
 
-import { createMockStore, MockStoreProps, MockUseStoreState, context } from './createMockStore'
+import { createMockStore, MockStoreProps, MockUseStoreState, context, MockScene } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 
 type RenderProps = Omit<MockStoreProps, 'gl' | 'context'> & {
@@ -17,6 +17,13 @@ type RenderProps = Omit<MockStoreProps, 'gl' | 'context'> & {
 type MockRoot = Omit<Root, 'store'> & {
   store: MockUseStoreState
 }
+
+interface ReactThreeTestRendererSceneItem {
+  type: string
+  children: ReactThreeTestRendererSceneItem[] | null
+}
+
+export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneItem[]
 
 export interface ReactThreeTestRendereOptions extends CreateCanvasParameters {}
 
@@ -96,13 +103,30 @@ const unmount = <TRootNode,>(id: TRootNode) => {
   }
 }
 
-const toTree = (scene: THREE.Scene) => {
+const toTree = (scene: MockScene) => {
   // to do, create like a react tree exposing props passed to component?
 }
 
-const toGraph = (scene: THREE.Scene) => {
-  // to do, create scene graph
-}
+const graphObjectFactory = (
+  type: ReactThreeTestRendererSceneItem['type'],
+  children: ReactThreeTestRendererSceneItem['children']
+) => ({
+  type,
+  children,
+})
+
+const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneItem[] =>
+  object.children.map((child) => {
+    let children: ReactThreeTestRendererSceneItem[] | null = toGraph(child)
+
+    if (children && children.length === 0 && child instanceof THREE.Mesh) {
+      children.push(graphObjectFactory(child.geometry.type, null), graphObjectFactory(child.material.type, null))
+    } else if (children && children.length === 0) {
+      children = null
+    }
+
+    return graphObjectFactory(child.type, children)
+  })
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
@@ -129,14 +153,14 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendereOptions
       if (!scene) {
         return
       } else {
-        return toTree(scene)
+        return toTree(scene as MockScene)
       }
     },
     toGraph: () => {
       if (!scene) {
         return
       } else {
-        return toGraph(scene)
+        return toGraph(scene as MockScene)
       }
     },
   }
