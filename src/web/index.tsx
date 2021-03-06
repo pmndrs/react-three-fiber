@@ -57,11 +57,11 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
 
     const events = createEvents(store)
-    canvas.addEventListener('pointermove', e => events.onPointerMove(e as unknown as DomEvent), { passive: true })
-    canvas.addEventListener('pointerdown', e => events.onPointerDown (e as unknown as DomEvent), { passive: true })
-    canvas.addEventListener('pointerup', e => events.onPointerUp(e as unknown as DomEvent), { passive: true })
-    canvas.addEventListener('pointerleave', e => events.onPointerLeave(e as unknown as DomEvent), { passive: true })
-    canvas.addEventListener('click', e => events.onClick(e as unknown as DomEvent), { passive: true })
+    canvas.addEventListener('pointermove', (e) => events.onPointerMove((e as unknown) as DomEvent), { passive: true })
+    canvas.addEventListener('pointerdown', (e) => events.onPointerDown((e as unknown) as DomEvent), { passive: true })
+    canvas.addEventListener('pointerup', (e) => events.onPointerUp((e as unknown) as DomEvent), { passive: true })
+    canvas.addEventListener('pointerleave', (e) => events.onPointerLeave((e as unknown) as DomEvent), { passive: true })
+    canvas.addEventListener('click', (e) => events.onClick((e as unknown) as DomEvent), { passive: true })
 
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it

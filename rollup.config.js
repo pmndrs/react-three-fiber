@@ -6,6 +6,7 @@ import json from 'rollup-plugin-json'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 import compiler from '@ampproject/rollup-plugin-closure-compiler'
 import commonjs from '@rollup/plugin-commonjs'
+import { terser } from 'rollup-plugin-terser'
 
 const root = process.platform === 'win32' ? path.resolve('/') : '/'
 const external = (id) => {
@@ -76,7 +77,8 @@ function createConfig(entry, out, closure = true) {
             jscomp_off: 'checkVars',
           }),
         closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),*/
-        sizeSnapshot(),
+        //sizeSnapshot(),
+        terser(),
       ],
     },
     {
@@ -87,19 +89,13 @@ function createConfig(entry, out, closure = true) {
         json(),
         commonjs(),
         babel(getBabelOptions({ useESModules: false })),
-        sizeSnapshot(),
+        //sizeSnapshot(),
         resolve({ extensions }),
         targetTypings(entry, out),
+        terser(),
       ],
     },
   ]
 }
 
-export default [
-  ...createConfig('targets/web', 'web'),
-  ...createConfig('targets/svg', 'svg'),
-  ...createConfig('targets/css2d', 'css2d'),
-  ...createConfig('targets/css3d', 'css3d'),
-  ...createConfig('targets/native/index', 'native', false),
-  ...createConfig('components', 'components', false),
-]
+export default [...createConfig('web', 'index')]

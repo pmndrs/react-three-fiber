@@ -1,7 +1,6 @@
 {
   "name": "react-three-fiber",
-  "private": true,
-  "version": "5.3.19",
+  "version": "6.0.0-alpha.0",
   "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
     "react",
@@ -24,10 +23,10 @@
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
   },
-  "main": "web.cjs.js",
-  "module": "web.js",
-  "react-native": "native.js",
-  "types": "targets/web.d.ts",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.js",
+  "react-native": "dist/native.js",
+  "types": "dist/web/index.d.ts",
   "files": [
     "**"
   ],
@@ -45,15 +44,13 @@
   "scripts": {
     "postinstall": "cd ./example && yarn",
     "prebuild": "rimraf dist && npm run typegen",
-    "build": "rollup -c && yarn copy && rimraf dist/__tests__",
+    "build": "rollup -c && rimraf dist/__tests__",
     "prepare": "husky install",
     "eslint": "eslint --fix src/**/*.{ts,tsx}",
     "dev": "yarn --cwd ./examples start",
     "test": "echo null",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
-    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true",
-    "copy": "copyfiles package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\"",
-    "pack-dist": "cd dist && yarn pack && mv *.tgz .."
+    "typegen": "tsc && mv dist/src/* dist && rm -rf dist/src || true"
   },
   "dependencies": {
     "@babel/runtime": "^7.13.9",
@@ -131,6 +128,7 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
+    "rollup-plugin-terser": "^7.0.2",
     "three": "^0.122.0",
     "ts-jest": "^26.5.3",
     "typescript": "^4.2.2",
