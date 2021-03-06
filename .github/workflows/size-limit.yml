@@ -1,8 +1,5 @@
 name: "size"
-on:
-  pull_request:
-    branches:
-      - master
+on: [push, pull_request]
 jobs:
   size:
     runs-on: ubuntu-latest
