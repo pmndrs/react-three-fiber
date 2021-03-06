@@ -9,7 +9,11 @@ export function useThree(selector: StateSelector<RootState, void>, equalityFn?: 
   return React.useContext(context)(selector, equalityFn)
 }
 
+const a = 123
+
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
+  console.log(a)
+  
   const { subscribe } = React.useContext(context).getState().internal
   // Update ref
   const ref = React.useRef<RenderCallback>(callback)
