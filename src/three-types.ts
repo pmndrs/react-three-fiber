@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { MouseEvent, PointerEvent, WheelEvent } from './canvas'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O

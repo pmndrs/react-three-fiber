@@ -3,7 +3,7 @@ import * as React from 'react'
 import { name as rendererPackageName, version } from '../../package.json'
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
-import { createRenderer, Root } from '../core/renderer'
+import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
 import { createEvents, DomEvent } from './events'
 import { Canvas } from './Canvas'
@@ -123,7 +123,5 @@ reconciler.injectIntoDevTools({
   version,
 })
 
-const act = reconciler.act
-
 export * from '../core/hooks'
-export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, invalidate, Canvas, act }
+export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, invalidate, extend, Canvas }
