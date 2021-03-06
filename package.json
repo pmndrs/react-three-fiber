@@ -1,6 +1,6 @@
 {
   "name": "react-three-fiber",
-  "version": "6.0.0-alpha.0",
+  "version": "6.0.0-alpha.3",
   "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
     "react",
@@ -27,9 +27,6 @@
   "module": "dist/index.js",
   "react-native": "dist/native.js",
   "types": "dist/web/index.d.ts",
-  "files": [
-    "**"
-  ],
   "sideEffects": false,
   "husky": {
     "hooks": {
@@ -41,8 +38,7 @@
       "eslint --fix"
     ]
   },
-  "scripts": {
-    "postinstall": "cd ./example && yarn",
+  "scripts": {    
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && rimraf dist/__tests__",
     "prepare": "husky install",

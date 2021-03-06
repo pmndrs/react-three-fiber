@@ -68,7 +68,7 @@ function createConfig(entry, out, closure = true) {
       plugins: [
         json(),
         commonjs(),
-        babel(getBabelOptions({ useESModules: true }, '>1%, not dead, not ie 11, not op_mini all')),
+        babel(getBabelOptions({ useESModules: true }, '> 0.25%, not dead, not ie 11, not op_mini all')),
         resolve({ extensions }),
         targetTypings(entry, out),
         /*closure &&
@@ -78,7 +78,7 @@ function createConfig(entry, out, closure = true) {
           }),
         closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),*/
         //sizeSnapshot(),
-        terser(),
+        //terser(),
       ],
     },
     {
@@ -92,7 +92,7 @@ function createConfig(entry, out, closure = true) {
         //sizeSnapshot(),
         resolve({ extensions }),
         targetTypings(entry, out),
-        terser(),
+        //terser(),
       ],
     },
   ]

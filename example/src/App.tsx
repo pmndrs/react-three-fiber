@@ -18,7 +18,8 @@ export default function App() {
   }, [showCube, setShowCube])
 
   const handlePointerDown = () => setColor(color === 'pink' ? 'yellow' : 'pink')
-  const a = useThree((state) => state.clock)
+  const size = useThree((state) => state.size)
+  console.log(size)
   const group = React.useRef<THREE.Group>()
   useFrame(({ clock }) => {
     if (group.current) group.current.position.x = Math.sin(clock.elapsedTime)
