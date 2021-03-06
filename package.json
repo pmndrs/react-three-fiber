@@ -43,7 +43,7 @@
     ]
   },
   "scripts": {
-    "postinstall": "yarn --cwd ./examples",
+    "postinstall": "cd ./example && yarn",
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && yarn copy && rimraf dist/__tests__",
     "prepare": "husky install",
