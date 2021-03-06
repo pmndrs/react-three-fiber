@@ -1,4 +1,3 @@
-import * as React from 'react'
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
@@ -229,11 +228,7 @@ function createEvents(store: UseStore<RootState>) {
     return hits
   }
 
-  function pointerMissed(
-    event: MouseEvent,
-    objects: THREE.Object3D[],
-    filter = (object: THREE.Object3D) => true
-  ) {
+  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[], filter = (object: THREE.Object3D) => true) {
     objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__r3f.handlers.pointerMissed?.(event))
   }
 

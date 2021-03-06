@@ -25,6 +25,22 @@ export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
+export type InternalState = {
+  manual: number
+  frames: number
+  lastProps: StoreProps
+
+  interaction: any[]
+  subscribers: Subscription[]
+  captured: Intersection[] | undefined
+  // [x, y]
+  initialClick: [x: number, y: number]
+  initialHits: THREE.Object3D[]
+
+  set: SetState<RootState>
+  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
+}
+
 export type RootState = {
   gl: THREE.WebGLRenderer
   scene: THREE.Scene & Instance
@@ -52,21 +68,7 @@ export type RootState = {
   onCreated?: (props: RootState) => Promise<any> | void
   onPointerMissed?: () => void
 
-  internal: {
-    manual: number
-    frames: number
-    lastProps: StoreProps
-
-    interaction: any[]
-    subscribers: Subscription[]
-    captured: Intersection[] | undefined
-    // [x, y]
-    initialClick: [x: number, y: number]
-    initialHits: THREE.Object3D[]
-
-    set: SetState<RootState>
-    subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
-  }
+  internal: InternalState
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]

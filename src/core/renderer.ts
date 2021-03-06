@@ -10,7 +10,7 @@ import { RootState } from './store'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
-type LocalState = {
+export type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
   instance?: boolean
@@ -52,8 +52,8 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<TCanvas>(
-  roots: Map<TCanvas, Root>,
+function createRenderer<TCanvas, TRoot = Root>(
+  roots: Map<TCanvas, TRoot>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
