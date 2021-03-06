@@ -3,7 +3,6 @@ import { promises as fs } from 'fs'
 import babel from 'rollup-plugin-babel'
 import resolve from 'rollup-plugin-node-resolve'
 import json from 'rollup-plugin-json'
-import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 import compiler from '@ampproject/rollup-plugin-closure-compiler'
 import commonjs from '@rollup/plugin-commonjs'
 import { terser } from 'rollup-plugin-terser'
@@ -77,7 +76,6 @@ function createConfig(entry, out, closure = true) {
             jscomp_off: 'checkVars',
           }),
         closure && addImport(`dist/${out}.js`, `import * as THREE from "three";`),*/
-        //sizeSnapshot(),
         //terser(),
       ],
     },
@@ -89,7 +87,6 @@ function createConfig(entry, out, closure = true) {
         json(),
         commonjs(),
         babel(getBabelOptions({ useESModules: false })),
-        //sizeSnapshot(),
         resolve({ extensions }),
         targetTypings(entry, out),
         //terser(),
