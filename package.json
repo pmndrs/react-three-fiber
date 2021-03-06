@@ -48,7 +48,8 @@
   },
   "size-limit": [
     {
-      "path": "dist/index.js",
+      "path": "dist/react-three-fiber.cjs.prod.js",
+      "import": "{ render }",
       "limit": "4500 ms"
     }
   ],
