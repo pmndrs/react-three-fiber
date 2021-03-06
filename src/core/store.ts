@@ -49,6 +49,8 @@ export type RootState = {
   setSize: (width: number, height: number) => void
   setCamera: (camera: Camera) => void
   setPixelRatio: (pixelRatio: PixelRatio) => void
+  onCreated?: (props: RootState) => Promise<any> | void
+  onPointerMissed?: () => void
 
   internal: {
     manual: number
@@ -87,6 +89,8 @@ export type StoreProps = {
       ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
       ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   >
+  onCreated?: (props: RootState) => Promise<any> | void
+  onPointerMissed?: () => void
 }
 
 const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
@@ -109,6 +113,8 @@ const createStore = (
     pixelRatio = 1,
     raycaster: raycastOptions,
     camera: cameraOptions,
+    onCreated,
+    onPointerMissed,
   } = props
 
   // Set shadowmap
@@ -183,6 +189,8 @@ const createStore = (
       linear,
       frameloop,
       updateCamera,
+      onCreated,
+      onPointerMissed,
 
       size: { width: 0, height: 0 },
       viewport: {

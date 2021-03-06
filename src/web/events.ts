@@ -4,12 +4,11 @@ import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-type ThreeEvent<T> = T &
+export type ThreeEvent<T> = T &
   Intersection & {
     intersections: Intersection[]
     stopped: boolean
@@ -24,43 +23,45 @@ type ThreeEvent<T> = T &
 export type PointerEvent = ThreeEvent<React.PointerEvent>
 export type MouseEvent = ThreeEvent<React.MouseEvent>
 export type WheelEvent = ThreeEvent<React.WheelEvent>
+export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
-type DomEvent = PointerEvent | MouseEvent | WheelEvent
+const makeId = (event: DomEvent) => (event.eventObject || event.object).uuid + '/' + event.index
 
 function createEvents(store: UseStore<RootState>) {
-  const { raycaster, mouse, internal } = store.getState()
-
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */
   function prepareRay(event: DomEvent) {
+    const state = store.getState()
+    const { raycaster, mouse, camera, size, internal } = state
+
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const offsets = raycaster?.computeOffsets?.(event, sharedState.current) || event.nativeEvent
+    const offsets = internal.lastProps.raycaster?.computeOffsets?.(event, state) || event.nativeEvent
     if (offsets) {
       const { offsetX, offsetY } = offsets
-      const { width, height } = state.current.size
+      const { width, height } = size
       mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-      defaultRaycaster.setFromCamera(mouse, state.current.camera)
+      raycaster.setFromCamera(mouse, camera)
     }
   }
 
   /** Intersects interaction objects using the event input */
   function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+    const state = store.getState()
+    const { raycaster, noninteractive, internal } = state
     // Skip event handling when noEvents is set
-    if (state.current.noEvents) return []
+    if (noninteractive) return []
 
     const seen = new Set<string>()
     const hits: Intersection[] = []
 
     // Allow callers to eliminate event objects
-    const eventsObjects = filter
-      ? filter((state.current.scene as any).__interaction)
-      : (state.current.scene as any).__interaction
+    const eventsObjects = filter ? filter(internal.interaction) : internal.interaction
 
     // Intersect known handler objects and filter against duplicates
-    let intersects = defaultRaycaster.intersectObjects(eventsObjects, true).filter((item) => {
+    let intersects = raycaster.intersectObjects(eventsObjects, true).filter((item) => {
       const id = makeId(item as DomEvent)
       if (seen.has(id)) return false
       seen.add(id)
@@ -69,9 +70,7 @@ function createEvents(store: UseStore<RootState>) {
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order
-    if (raycaster && raycaster.filter && sharedState.current) {
-      intersects = raycaster.filter(intersects, sharedState.current)
-    }
+    if (internal.lastProps?.raycaster?.filter) intersects = internal.lastProps.raycaster.filter(intersects, state)
 
     for (const intersect of intersects) {
       let eventObject: THREE.Object3D | null = intersect.object
@@ -87,13 +86,13 @@ function createEvents(store: UseStore<RootState>) {
 
   /**  Calculates click deltas */
   function calculateDistance(event: DomEvent) {
-    const dx = event.nativeEvent.offsetX - state.current.initialClick[0]
-    const dy = event.nativeEvent.offsetY - state.current.initialClick[1]
+    const { internal } = store.getState()
+    const dx = event.nativeEvent.offsetX - internal.initialClick[0]
+    const dy = event.nativeEvent.offsetY - internal.initialClick[1]
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }
 
   function handlePointerCancel(event: DomEvent, hits?: Intersection[], prepare = true) {
-    state.current.pointer.emit('pointerCancel', event)
     if (prepare) prepareRay(event)
 
     Array.from(hovered.values()).forEach((hoveredObj) => {
@@ -118,11 +117,12 @@ function createEvents(store: UseStore<RootState>) {
 
   /**  Creates filtered intersects and returns an array of positive hits */
   function getIntersects(event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+    const { internal } = store.getState()
     // Get fresh intersects
     const intersections: Intersection[] = intersect(filter)
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
-      state.current.captured.forEach((captured) => {
+    if (internal.captured && event.type !== 'click' && event.type !== 'wheel') {
+      internal.captured.forEach((captured) => {
         if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
       })
     }
@@ -131,9 +131,10 @@ function createEvents(store: UseStore<RootState>) {
 
   /**  Handles intersections by forwarding them to handlers */
   function handleIntersects(intersections: Intersection[], event: DomEvent, fn: (event: DomEvent) => void) {
+    const { raycaster, mouse, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
-      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(state.current.camera)
+      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
       const delta = event.type === 'click' ? calculateDistance(event) : 0
       const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
       const localState = { stopped: false, captured: false }
@@ -144,13 +145,12 @@ function createEvents(store: UseStore<RootState>) {
           if (!localState.captured) {
             localState.captured = true
             // The captured hit array is reset to collect hits
-            state.current.captured = []
+            internal.captured = []
           }
           // Push hits to the array
-          if (state.current.captured) {
-            state.current.captured.push(hit)
-          }
-          // Call the original event now
+          if (internal.captured)
+            internal.captured.push(hit)
+            // Call the original event now
           ;(event.target as any).setPointerCapture(id)
         }
 
@@ -161,13 +161,13 @@ function createEvents(store: UseStore<RootState>) {
           stopped: localState.stopped,
           delta,
           unprojectedPoint,
-          ray: defaultRaycaster.ray,
-          camera: state.current.camera,
+          ray: raycaster.ray,
+          camera: camera,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => {
             // https://github.com/react-spring/react-three-fiber/issues/596
             // Events are not allowed to stop propagation if the pointer has been captured
-            const cap = state.current.captured
+            const cap = internal.captured
             if (!cap || cap.find((h) => h.eventObject.id === hit.eventObject.id)) {
               raycastEvent.stopped = localState.stopped = true
 
@@ -195,7 +195,6 @@ function createEvents(store: UseStore<RootState>) {
   }
 
   function handlePointerMove(event: DomEvent, prepare = true) {
-    state.current.pointer.emit('pointerMove', event)
     if (prepare) prepareRay(event)
     const hits = getIntersects(
       event,
@@ -233,8 +232,17 @@ function createEvents(store: UseStore<RootState>) {
     return hits
   }
 
+  function pointerMissed(
+    event: React.MouseEvent,
+    objects: THREE.Object3D[],
+    filter = (object: THREE.Object3D) => true
+  ) {
+    objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__handlers.pointerMissed?.(event))
+  }
+
   const handlePointer = (name: string) => (event: DomEvent, prepare = true) => {
-    state.current.pointer.emit(name, event)
+    const { onPointerMissed, internal } = store.getState()
+
     if (prepare) prepareRay(event)
     const hits = getIntersects(event)
     handleIntersects(hits, event, (data: DomEvent) => {
@@ -245,26 +253,22 @@ function createEvents(store: UseStore<RootState>) {
         // which must use the initial target
         if (
           (name !== 'click' && name !== 'contextMenu' && name !== 'doubleClick') ||
-          state.current.initialHits.includes(eventObject)
+          internal.initialHits.includes(eventObject)
         ) {
           handlers[name](data)
-          pointerMissed(
-            event,
-            (defaultScene as any).__interaction as THREE.Object3D[],
-            (object) => object !== eventObject
-          )
+          pointerMissed(event, internal.interaction as THREE.Object3D[], (object) => object !== eventObject)
         }
       }
     })
     // If a click yields no results, pass it back to the user as a miss
     if (name === 'pointerDown') {
-      state.current.initialClick = [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
-      state.current.initialHits = hits.map((hit: any) => hit.eventObject)
+      internal.initialClick = [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
+      internal.initialHits = hits.map((hit: any) => hit.eventObject)
     }
 
     if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
       if (calculateDistance(event) <= 2) {
-        pointerMissed(event, (defaultScene as any).__interaction as THREE.Object3D[])
+        pointerMissed(event, internal.interaction as THREE.Object3D[])
         if (onPointerMissed) onPointerMissed()
       }
     }
