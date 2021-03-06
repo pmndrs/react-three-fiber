@@ -48,6 +48,30 @@ interface Catalogue {
   }
 }
 
+// https://github.com/mrdoob/three.js/issues/21209
+// HMR/fast-refresh relies on the ability to cancel out props, but threejs
+// has no means to do this. Hence we curate a small collection of value-classes
+// with their respective constructor/set arguments
+const DEFAULT = '__default'
+const defaultMap = new Map()
+;[
+  [THREE.Box2, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
+  [THREE.Box3, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
+  [THREE.Color, ['white']],
+  [THREE.Cylindrical, [1, 0, 0]],
+  [THREE.Euler, [0, 0, 0, 'XYZ']],
+  [THREE.Vector2, [0, 0]],
+  [THREE.Vector3, [0, 0, 0]],
+  [THREE.Vector4, [0, 0, 0, 1]],
+  [THREE.Matrix3, [1, 0, 0, 0, 1, 0, 0, 0, 1]],
+  [THREE.Matrix4, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]],
+  [THREE.Quaternion, [0, 0, 0, 1]],
+  [THREE.Sphere, [new THREE.Vector3(), -1]],
+  [THREE.Ray, [new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]],
+  [THREE.Spherical, [1, 0, 0]],
+  [THREE.Triangle, [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]],
+].forEach(([type, args]) => defaultMap.set(type, args))
+
 let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
@@ -86,38 +110,29 @@ function createRenderer<TCanvas>(
       }
     }
 
-    const leftOvers: string[] = []
+    // Catch props that existed, but now exist no more ...
+    const leftOvers = [] as string[]
     keys = Object.keys(oldProps)
     if (accumulative) {
-      for (i = 0; i < keys.length; i++) {
-        if (newProps[keys[i] as keyof InstanceProps] === void 0) {
-          leftOvers.push(keys[i])
-        }
-      }
+      for (i = 0; i < keys.length; i++) if (!newProps.hasOwnProperty(keys[i])) leftOvers.push(keys[i])
     }
 
     const toFilter = [...sameProps, 'children', 'key', 'ref']
     // Instances use "object" as a reserved identifier
-    if (localState.instance) toFilter.push('object')
+    if (instance.__r3f.instance) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
     keys = Object.keys(filteredProps)
-    for (i = 0; i < keys.length; i++) {
-      if (toFilter.indexOf(keys[i]) > -1) {
-        delete filteredProps[keys[i]]
-      }
-    }
+    for (i = 0; i < keys.length; i++) if (toFilter.indexOf(keys[i]) > -1) delete filteredProps[keys[i]]
 
-    // Add left-overs as undefined props so they can be removed
-    keys = Object.keys(leftOvers)
-    for (i = 0; i < keys.length; i++) {
-      if (keys[i] !== 'children') {
-        filteredProps[keys[i]] = undefined
-      }
-    }
-
+    // Collect all new props
     const filteredPropsEntries = Object.entries(filteredProps)
+    // Prepend left-overs so they can be reset or removed
+    // Left-overs must come first!
+    for (i = 0; i < leftOvers.length; i++)
+      if (leftOvers[i] !== 'children') filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
+
     if (filteredPropsEntries.length > 0) {
       filteredPropsEntries.forEach(([key, value]) => {
         if (!handlers.includes(key)) {
@@ -133,6 +148,13 @@ function createRenderer<TCanvas>(
               key = name
             }
           }
+
+          if (value === DEFAULT + 'remove') {
+            // For removed props, try to set default values, if possible
+            if (defaultMap.has(targetProp.constructor)) value = defaultMap.get(targetProp.constructor)
+            else value = currentInstance[DEFAULT + key]
+          }
+
           // Special treatment for objects with support for set/copy
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
             // If value is an array it has got to be the set function
@@ -158,6 +180,11 @@ function createRenderer<TCanvas>(
             }
             // Else, just overwrite the value
           } else {
+            // Store a reference of the first-set atomic which will serve as a default
+            if (!currentInstance.hasOwnProperty(DEFAULT + key)) {
+              currentInstance[DEFAULT + key] = currentInstance[key]
+            }
+
             currentInstance[key] = value
             // Auto-convert sRGB textures, for now ...
             // https://github.com/react-spring/react-three-fiber/issues/344
