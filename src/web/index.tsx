@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { is } from '../core/is'
-import manifest from '../../package.json'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
@@ -115,8 +114,9 @@ function createPortal(children: React.ReactNode, container: any, impl?: any, key
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName: manifest.name,
-  version: manifest.version,
+  rendererPackageName: "react-three-fiber",
+  // @ts-ignore
+  version: R3F_VERSION,
 })
 
 export * from '../core/hooks'
