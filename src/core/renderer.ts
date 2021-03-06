@@ -156,9 +156,7 @@ function createRenderer<TCanvas>(
           // Special treatment for objects with support for set/copy
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
             // If value is an array it has got to be the set function
-            if (Array.isArray(value)) {
-              targetProp.set(...value)
-            }
+            if (Array.isArray(value)) targetProp.set(...value)
             // Test again target.copy(class) next ...
             else if (
               targetProp.copy &&
@@ -171,10 +169,14 @@ function createRenderer<TCanvas>(
             // If nothing else fits, just set the single value, ignore undefined
             // https://github.com/react-spring/react-three-fiber/issues/274
             else if (value !== undefined) {
-              targetProp.set(value)
+              const isColor = targetProp instanceof THREE.Color
+              // Allow setting array scalars
+              if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
+              // Otherwise just set ...
+              else targetProp.set(value)
               // Auto-convert sRGB colors, for now ...
               // https://github.com/react-spring/react-three-fiber/issues/344
-              if (!rootState.linear && targetProp instanceof THREE.Color) targetProp.convertSRGBToLinear()
+              if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
             }
             // Else, just overwrite the value
           } else {

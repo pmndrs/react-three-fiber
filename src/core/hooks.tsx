@@ -22,31 +22,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   return null
 }
 
-export function useUpdate<T>(
-  callback: (props: T) => void,
-  dependents: any[],
-  optionalRef?: React.MutableRefObject<T>
-): React.MutableRefObject<T | undefined> {
-  const { invalidate } = React.useContext(context).getState()
-  const localRef = React.useRef()
-  const ref = optionalRef ? optionalRef : localRef
-  React.useLayoutEffect(() => {
-    if (ref.current) {
-      callback(ref.current)
-      invalidate()
-    }
-  }, dependents) // eslint-disable-line react-hooks/exhaustive-deps
-  return ref
-}
-
-export function useResource<T>(optionalRef?: React.MutableRefObject<T>): React.MutableRefObject<T> {
-  const [_, forceUpdate] = React.useState(false)
-  const localRef = React.useRef<T>((undefined as unknown) as T)
-  const ref = optionalRef ? optionalRef : localRef
-  React.useLayoutEffect(() => void forceUpdate((i) => !i), [])
-  return ref
-}
-
 export interface Loader<T> extends THREE.Loader {
   load(
     url: string,

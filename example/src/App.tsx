@@ -26,12 +26,12 @@ export default function App() {
           <meshBasicMaterial color={showCube ? 0x0000ff : 0xff0000} />
         </mesh>
         {showCube ? (
-          <mesh position={[2, 0, 0]}>
+          <mesh position={[2, 0, 0]} scale={1}>
             <boxGeometry args={[1, 1]} />
             <meshNormalMaterial  transparent opacity={0.5}/>
           </mesh>
         ) : (
-          <mesh>
+          <mesh scale={2}>
             <icosahedronGeometry args={[1]} />
             <meshBasicMaterial color="orange" transparent opacity={0.5} />
           </mesh>
