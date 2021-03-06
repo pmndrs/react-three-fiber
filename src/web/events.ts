@@ -20,10 +20,7 @@ export type ThreeEvent<T> = T &
     delta: number
   }
 
-export type PointerEvent = ThreeEvent<React.PointerEvent>
-export type MouseEvent = ThreeEvent<React.MouseEvent>
-export type WheelEvent = ThreeEvent<React.WheelEvent>
-export type DomEvent = PointerEvent | MouseEvent | WheelEvent
+export type DomEvent = ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent> | ThreeEvent<WheelEvent>
 
 const makeId = (event: DomEvent) => (event.eventObject || event.object).uuid + '/' + event.index
 
@@ -38,7 +35,7 @@ function createEvents(store: UseStore<RootState>) {
 
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const offsets = internal.lastProps.raycaster?.computeOffsets?.(event, state) || event.nativeEvent
+    const offsets = internal.lastProps.raycaster?.computeOffsets?.(event, state) || event
     if (offsets) {
       const { offsetX, offsetY } = offsets
       const { width, height } = size
@@ -76,7 +73,7 @@ function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = (eventObject as any).__handlers
+        const handlers = (eventObject as any).__r3f.handlers
         if (handlers) hits.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
@@ -87,8 +84,8 @@ function createEvents(store: UseStore<RootState>) {
   /**  Calculates click deltas */
   function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
-    const dx = event.nativeEvent.offsetX - internal.initialClick[0]
-    const dy = event.nativeEvent.offsetY - internal.initialClick[1]
+    const dx = event.offsetX - internal.initialClick[0]
+    const dy = event.offsetY - internal.initialClick[1]
     return Math.round(Math.sqrt(dx * dx + dy * dy))
   }
 
@@ -103,7 +100,7 @@ function createEvents(store: UseStore<RootState>) {
         (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index))
       ) {
         const eventObject = hoveredObj.eventObject
-        const handlers = (eventObject as any).__handlers
+        const handlers = (eventObject as any).__r3f.handlers
         hovered.delete(makeId(hoveredObj))
         if (handlers) {
           // Clear out intersects, they are outdated by now
@@ -176,7 +173,7 @@ function createEvents(store: UseStore<RootState>) {
               if (hovered.size && Array.from(hovered.values()).find((i) => i.eventObject === hit.eventObject)) {
                 // Objects cannot flush out higher up objects that have already caught the event
                 const higher = intersections.slice(0, intersections.indexOf(hit))
-                handlePointerCancel(raycastEvent, [...higher, hit])
+                handlePointerCancel(raycastEvent as DomEvent, [...higher, hit])
               }
             }
           },
@@ -185,7 +182,7 @@ function createEvents(store: UseStore<RootState>) {
           sourceEvent: event,
         }
 
-        fn(raycastEvent)
+        fn(raycastEvent as DomEvent)
 
         // Event bubbling may be interrupted by stopPropagation
         if (localState.stopped === true) break
@@ -201,7 +198,7 @@ function createEvents(store: UseStore<RootState>) {
       // This is onPointerMove, we're only interested in events that exhibit this particular event
       (objects: any) =>
         objects.filter((obj: any) =>
-          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__handlers['pointer' + name])
+          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__r3f.handlers['pointer' + name])
         )
     )
 
@@ -209,7 +206,7 @@ function createEvents(store: UseStore<RootState>) {
     handlePointerCancel(event, hits)
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
-      const handlers = (eventObject as any).__handlers
+      const handlers = (eventObject as any).__r3f.handlers
       // Check presence of handlers
       if (!handlers) return
       // Check if mouse enter or out is present
@@ -233,11 +230,11 @@ function createEvents(store: UseStore<RootState>) {
   }
 
   function pointerMissed(
-    event: React.MouseEvent,
+    event: MouseEvent,
     objects: THREE.Object3D[],
     filter = (object: THREE.Object3D) => true
   ) {
-    objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__handlers.pointerMissed?.(event))
+    objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__r3f.handlers.pointerMissed?.(event))
   }
 
   const handlePointer = (name: string) => (event: DomEvent, prepare = true) => {
@@ -247,7 +244,7 @@ function createEvents(store: UseStore<RootState>) {
     const hits = getIntersects(event)
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
-      const handlers = (eventObject as any).__handlers
+      const handlers = (eventObject as any).__r3f.handlers
       if (handlers && handlers[name]) {
         // Forward all events back to their respective handlers with the exception of click events,
         // which must use the initial target
@@ -262,7 +259,7 @@ function createEvents(store: UseStore<RootState>) {
     })
     // If a click yields no results, pass it back to the user as a miss
     if (name === 'pointerDown') {
-      internal.initialClick = [event.nativeEvent.offsetX, event.nativeEvent.offsetY]
+      internal.initialClick = [event.offsetX, event.offsetY]
       internal.initialHits = hits.map((hit: any) => hit.eventObject)
     }
 
@@ -272,6 +269,17 @@ function createEvents(store: UseStore<RootState>) {
         if (onPointerMissed) onPointerMissed()
       }
     }
+  }
+  return {
+    onClick: handlePointer('click'),
+    onContextMenu: handlePointer('contextMenu'),
+    onDoubleClick: handlePointer('doubleClick'),
+    onWheel: handlePointer('wheel'),
+    onPointerDown: handlePointer('pointerDown'),
+    onPointerUp: handlePointer('pointerUp'),
+    onPointerLeave: (e: any) => handlePointerCancel(e, []),
+    onPointerMove: handlePointerMove,
+    onLostPointerCapture: (e: any) => ((store.getState().internal.captured = undefined), handlePointerCancel(e)),
   }
 }
 

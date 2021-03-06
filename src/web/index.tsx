@@ -5,7 +5,7 @@ import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
-//import { createEvents } from './events'
+import { createEvents, DomEvent } from './events'
 import { Canvas } from './Canvas'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
@@ -56,7 +56,12 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     // If no root has been found, make one
     store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
 
-    //createEvents(store)
+    const events = createEvents(store)
+    canvas.addEventListener('pointermove', e => events.onPointerMove(e as unknown as DomEvent), { passive: true })
+    canvas.addEventListener('pointerdown', e => events.onPointerDown (e as unknown as DomEvent), { passive: true })
+    canvas.addEventListener('pointerup', e => events.onPointerUp(e as unknown as DomEvent), { passive: true })
+    canvas.addEventListener('pointerleave', e => events.onPointerLeave(e as unknown as DomEvent), { passive: true })
+    canvas.addEventListener('click', e => events.onClick(e as unknown as DomEvent), { passive: true })
 
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
@@ -78,9 +83,26 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
   const fiber = root?.fiber
   if (fiber) {
     reconciler.updateContainer(null, fiber, null, () => {
+      const state = root?.store.getState()
+      if (state) {
+        if (state.gl.renderLists) state.gl.renderLists.dispose()
+        if (state.gl.forceContextLoss) state.gl.forceContextLoss()
+        dispose(state.gl)
+        dispose(state.raycaster)
+        dispose(state.camera)
+        dispose(state)
+      }
       roots.delete(canvas)
       if (callback) callback(canvas)
     })
+  }
+}
+
+function dispose(obj: any) {
+  if (obj.dispose && obj.type !== 'Scene') obj.dispose()
+  for (const p in obj) {
+    if (typeof p === 'object' && (p as any).dispose) (p as any).dispose()
+    delete obj[p]
   }
 }
 
