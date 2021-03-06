@@ -38,7 +38,7 @@
       "eslint --fix"
     ]
   },
-  "scripts": {    
+  "scripts": {
     "prebuild": "rimraf dist && npm run typegen",
     "build": "rollup -c && rimraf dist/__tests__",
     "prepare": "husky install",
@@ -50,11 +50,13 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.13.9",
+    "@size-limit/preset-big-lib": "^4.10.0",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "0.26.1",
     "react-use-measure": "^2.0.3",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.20.1",
+    "size-limit": "^4.10.0",
     "tiny-emitter": "^2.1.0",
     "use-asset": "^1.0.2",
     "utility-types": "^3.10.0",
@@ -129,5 +131,10 @@
     "ts-jest": "^26.5.3",
     "typescript": "^4.2.2",
     "wait-on": "^5.2.1"
-  }
+  },
+  "size-limit": [
+    {
+      "path": "dist/index.js"
+    }
+  ]
 }
