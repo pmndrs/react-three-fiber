@@ -1,21 +1,54 @@
-import * as React from 'react'
 import * as THREE from 'three'
-import { useThree, useFrame } from 'react-three-fiber'
+import React, { memo, useEffect, useState, useRef } from 'react'
+import { useThree, useFrame, extend } from 'react-three-fiber'
+// @ts-ignore
+import { OrbitControls } from 'three-stdlib'
+import debounce from 'lodash-es/debounce'
+
+extend({ OrbitControls })
+
+const Orbit = memo(() => {
+  const camera = useThree((state) => state.camera)
+  const gl = useThree((state) => state.gl)
+  const regress = useThree((state) => state.performance.regress)
+  const ref = useRef<OrbitControls>()
+  useEffect(() => {
+    ref.current?.connect(gl.domElement)
+    ref.current?.addEventListener('change', regress)
+    return () => {
+      ref.current?.dispose()
+      ref.current?.removeEventListener('change', regress)
+    }
+  }, [])
+  // @ts-ignore
+  return <orbitControls ref={ref} args={[camera]} />
+})
+
+function AdaptivePixelRatio() {
+  const current = useThree(state => state.performance.current)
+  const setPixelRatio = useThree(state => state.setPixelRatio)
+  console.log(current)
+  useEffect(() => {
+    setPixelRatio(current * 2)
+    document.body.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
+  }, [current])
+  return null
+}
 
 export default function App() {
-  const [showCube, setShowCube] = React.useState(false)
-  const [color, setColor] = React.useState('pink')
+  const [showCube, setShowCube] = useState(false)
+  const [color, setColor] = useState('pink')
 
-  React.useEffect(() => {
-    const interval = setInterval(() => setShowCube(showCube => !showCube), 1000)
+  useEffect(() => {
+    const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
     return () => clearInterval(interval)
   }, [])
 
   const size = useThree((state) => state.size)
-  console.log(size)
-  const group = React.useRef<THREE.Group>()
+  const group = useRef<THREE.Group>()
+
   useFrame(({ clock }) => {
-    if (group.current) group.current.position.x = Math.sin(clock.elapsedTime)
+    group.current?.position.set(Math.sin(clock.elapsedTime), 0, 0)
   })
 
   return (
@@ -28,7 +61,7 @@ export default function App() {
         {showCube ? (
           <mesh position={[2, 0, 0]} scale={1}>
             <boxGeometry args={[1, 1]} />
-            <meshNormalMaterial  transparent opacity={0.5}/>
+            <meshNormalMaterial transparent opacity={0.5} />
           </mesh>
         ) : (
           <mesh scale={2}>
@@ -38,6 +71,8 @@ export default function App() {
         )}
       </group>
       <color attach="background" args={[color] as any} />
+      <Orbit />
+      <AdaptivePixelRatio />
     </>
   )
 }

@@ -20,6 +20,13 @@ export type Viewport = Size & { pixelRatio: number; factor: number; distance: nu
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type RenderCallback = (state: RootState, delta: number) => void
 
+export type Performance = {
+  current: number
+  min: number
+  debounce: number
+  regress: () => void
+}
+
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
   def && !!(def as THREE.WebGLRenderer).render
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
@@ -38,6 +45,7 @@ export type RootState = {
   linear: boolean
   frameloop: boolean
   updateCamera: boolean
+  performance: Performance
 
   size: Size
   viewport: Viewport & {
@@ -82,6 +90,7 @@ export type StoreProps = {
   noninteractive?: boolean
   updateCamera?: boolean
   frameloop?: boolean
+  performance?: Partial<Omit<Performance, 'regress'>>
   pixelRatio?: PixelRatio
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?: Partial<
@@ -111,6 +120,7 @@ const createStore = (
     frameloop = true,
     updateCamera = true,
     pixelRatio = 1,
+    performance,
     raycaster: raycastOptions,
     camera: cameraOptions,
     onCreated,
@@ -176,6 +186,10 @@ const createStore = (
       }
     }
 
+    let performanceTimeout: number | undefined = undefined
+    const setPerformanceCurrent = (current: number) =>
+      set((state) => ({ performance: { ...state.performance, current } }))
+
     return {
       gl,
       scene,
@@ -191,6 +205,18 @@ const createStore = (
       updateCamera,
       onCreated,
       onPointerMissed,
+
+      performance: {
+        current: 1,
+        min: 0.5,
+        debounce: 200,
+        ...performance,
+        regress: () => {
+          clearTimeout(performanceTimeout)
+          setPerformanceCurrent(get().performance.min)
+          performanceTimeout = setTimeout(() => setPerformanceCurrent(1), get().performance.debounce)
+        },
+      },
 
       size: { width: 0, height: 0 },
       viewport: {

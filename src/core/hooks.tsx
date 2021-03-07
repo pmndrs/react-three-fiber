@@ -5,7 +5,7 @@ import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
 import { context, RootState, RenderCallback } from './store'
 
-export function useThree(selector: StateSelector<RootState, void>, equalityFn?: EqualityChecker<void>) {
+export function useThree<T>(selector: StateSelector<RootState, T>, equalityFn?: EqualityChecker<T>) {
   return React.useContext(context)(selector, equalityFn)
 }
 

@@ -91,7 +91,7 @@
     "@types/lodash-es": "^4.17.4",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
-    "@types/react-native": "^0.63.50",
+    "@types/react-native": "^0.63.51",
     "@types/react-reconciler": "^0.26.0",
     "@types/react-test-renderer": "^17.0.1",
     "@types/scheduler": "^0.16.1",
@@ -106,7 +106,7 @@
     "eslint-config-prettier": "^8.1.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-jest": "^24.1.5",
+    "eslint-plugin-jest": "^24.1.7",
     "eslint-plugin-prettier": "^3.3.1",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.2.0",
@@ -132,9 +132,9 @@
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-terser": "^7.0.2",
-    "three": "^0.122.0",
+    "three": "^0.126.1",
     "ts-jest": "^26.5.3",
-    "typescript": "^4.2.2",
+    "typescript": "^4.2.3",
     "wait-on": "^5.2.1"
   }
 }
