@@ -111,6 +111,6 @@
     "size-limit": "^4.10.0",
     "three": "^0.126.1",
     "ts-jest": "^26.5.3",
-    "typescript": "^4.2.3",
+    "typescript": "^4.2.3"
   }
 }
