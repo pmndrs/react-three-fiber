@@ -124,6 +124,7 @@
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-native": "^0.63.4",
+    "regenerator-runtime": "^0.13.7",
     "rimraf": "^3.0.2",
     "rollup": "^2.40.0",
     "rollup-plugin-babel": "^4.4.0",
@@ -132,6 +133,7 @@
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-terser": "^7.0.2",
     "three": "^0.122.0",
+    "three-stdlib": "^0.1.0",
     "ts-jest": "^26.5.3",
     "typescript": "^4.2.2",
     "wait-on": "^5.2.1"

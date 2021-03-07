@@ -6,4 +6,5 @@ module.exports = {
   verbose: false,
   testTimeout: 30000,
   testPathIgnorePatterns: ['/node_modules/'],
+  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
 }
