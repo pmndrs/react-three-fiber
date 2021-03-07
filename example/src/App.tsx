@@ -3,7 +3,6 @@ import React, { memo, useEffect, useState, useRef } from 'react'
 import { useThree, useFrame, extend } from 'react-three-fiber'
 // @ts-ignore
 import { OrbitControls } from 'three-stdlib'
-import debounce from 'lodash-es/debounce'
 
 extend({ OrbitControls })
 
