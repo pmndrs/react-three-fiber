@@ -117,7 +117,7 @@ function createRenderer<TCanvas>(
 
     const toFilter = [...sameProps, 'children', 'key', 'ref']
     // Instances use "object" as a reserved identifier
-    if (instance.__r3f.instance) toFilter.push('object')
+    if (instance.__r3f?.instance) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps

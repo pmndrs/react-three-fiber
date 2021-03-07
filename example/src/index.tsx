@@ -8,6 +8,7 @@ window.addEventListener('resize', () =>
     performance: { min: 0.05 },
     gl: { alpha: false },
     pixelRatio: [1, 2],
+    camera: { position: [0, 0, 10] },
     size: { width: window.innerWidth, height: window.innerHeight },
   })
 )
