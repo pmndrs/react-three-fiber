@@ -3,6 +3,7 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
+
 import { context, RootState, RenderCallback } from './store'
 
 export function useThree(selector: StateSelector<RootState, void>, equalityFn?: EqualityChecker<void>) {
