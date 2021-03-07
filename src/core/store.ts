@@ -109,7 +109,7 @@ const context = React.createContext<UseStore<RootState>>((null as unknown) as Us
 const createStore = (
   applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
   invalidate: (state?: boolean | RootState, frames?: number) => void,
-  props: StoreProps
+  props: StoreProps,
 ): UseStore<RootState> => {
   const {
     gl,
@@ -173,7 +173,7 @@ const createStore = (
     function getCurrentViewport(
       camera: Camera = get().camera,
       target: THREE.Vector3 = defaultTarget,
-      size: Size = get().size
+      size: Size = get().size,
     ) {
       const { width, height } = size
       const aspect = width / height
@@ -221,7 +221,7 @@ const createStore = (
           // Go back to upper bound performance after a while unless something regresses meanwhile
           performanceTimeout = setTimeout(
             () => setPerformanceCurrent(get().performance.max),
-            get().performance.debounce
+            get().performance.debounce,
           )
         },
         setMax: (max: number) => set((state) => ({ performance: { ...state.performance, max: Math.min(1, max) } })),
@@ -313,7 +313,7 @@ const createStore = (
       // Update state model
     },
     (state) => [state.viewport.pixelRatio, state.size],
-    shallow
+    shallow,
   )
 
   // Invalidate on any change

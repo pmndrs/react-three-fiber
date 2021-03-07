@@ -27,7 +27,7 @@ export interface Loader<T> extends THREE.Loader {
     url: string,
     onLoad?: (result: T) => void,
     onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void
+    onError?: (event: ErrorEvent) => void,
   ): unknown
 }
 
@@ -72,10 +72,10 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
                 res(data)
               },
               onProgress,
-              (error) => reject(error.message ?? `failure loading ${input}`)
-            )
-          )
-      )
+              (error) => reject(error.message ?? `failure loading ${input}`),
+            ),
+          ),
+      ),
     )
   }
 }
@@ -88,7 +88,7 @@ export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
-  onProgress?: (event: ProgressEvent<EventTarget>) => void
+  onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
@@ -102,7 +102,7 @@ export function useLoader<T, U extends string | string[]>(
 useLoader.preload = function <T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
-  extensions?: Extensions
+  extensions?: Extensions,
 ) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)

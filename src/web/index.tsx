@@ -18,7 +18,7 @@ const { reconciler, applyProps } = createRenderer(roots, invalidate)
 
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ) =>
   isRenderer(gl as THREE.WebGLRenderer)
     ? (gl as THREE.WebGLRenderer)
@@ -114,7 +114,7 @@ function createPortal(children: React.ReactNode, container: any, impl?: any, key
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName: "react-three-fiber",
+  rendererPackageName: 'react-three-fiber',
   // @ts-ignore
   version: R3F_VERSION,
 })

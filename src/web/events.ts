@@ -197,8 +197,8 @@ function createEvents(store: UseStore<RootState>) {
       // This is onPointerMove, we're only interested in events that exhibit this particular event
       (objects: any) =>
         objects.filter((obj: any) =>
-          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__r3f.handlers['pointer' + name])
-        )
+          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__r3f.handlers['pointer' + name]),
+        ),
     )
 
     // Take care of unhover

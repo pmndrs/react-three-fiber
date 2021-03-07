@@ -76,7 +76,7 @@ let extend = (objects: object): void => void (catalogue = { ...catalogue, ...obj
 
 function createRenderer<TCanvas>(
   roots: Map<TCanvas, Root>,
-  invalidate: (state?: boolean | RootState, frames?: number) => void
+  invalidate: (state?: boolean | RootState, frames?: number) => void,
 ) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
@@ -432,7 +432,7 @@ function createRenderer<TCanvas>(
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
-      fiber: Reconciler.Fiber
+      fiber: Reconciler.Fiber,
     ) {
       if (instance.__instance && newProps.object && newProps.object !== instance) {
         // <instance object={...} /> where the object reference has changed
@@ -445,7 +445,7 @@ function createRenderer<TCanvas>(
         const hasNewArgs = argsNew.some((value: any, index: number) =>
           is.obj(value)
             ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
-            : value !== argsOld[index]
+            : value !== argsOld[index],
         )
         if (hasNewArgs) {
           // Next we create a new instance and append it again
@@ -470,9 +470,7 @@ function createRenderer<TCanvas>(
       }
     },
     hideTextInstance() {
-      throw new Error(
-        'Text is not allowed in the react-three-fibre tree. You may have extraneous whitespace between components.'
-      )
+      throw new Error('Text is not allowed in the react-three-fiber tree.')
     },
     getPublicInstance(instance: any) {
       return instance
