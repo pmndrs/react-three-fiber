@@ -76,7 +76,7 @@ function render(
 
   if (store && fiber) {
     reconciler.updateContainer(<context.Provider value={store} children={element} />, fiber, null, () => undefined)
-    return store!.getState().scene
+    return store!.getState().scene as THREE.Scene
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
@@ -123,5 +123,18 @@ reconciler.injectIntoDevTools({
   version,
 })
 
+const testutil_act = reconciler.act
+
 export * from '../core/hooks'
-export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, invalidate, extend, Canvas }
+export {
+  context,
+  render,
+  unmountComponentAtNode,
+  createPortal,
+  reconciler,
+  applyProps,
+  invalidate,
+  extend,
+  Canvas,
+  testutil_act,
+}

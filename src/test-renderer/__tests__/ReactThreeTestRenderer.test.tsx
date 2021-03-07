@@ -24,6 +24,7 @@ describe('ReactThreeTestRenderer', () => {
 
     expect(renderer.scene.type).toEqual('Scene')
     expect(renderer.scene.children).toEqual([])
+    expect(renderer.toGraph()).toEqual([])
   })
 
   it('can render a composite component & correctly build simple graph', () => {
@@ -65,46 +66,46 @@ describe('ReactThreeTestRenderer', () => {
     ])
   })
 
-  // it('renders some basics with an update', () => {
-  //   let renders = 0
+  it('renders some basics with an update', () => {
+    let renders = 0
 
-  //   class Component extends React.Component {
-  //     state = { x: 3 }
+    class Component extends React.PureComponent {
+      state = {
+        pos: 3,
+      }
 
-  //     render() {
-  //       renders++
-  //       return (
-  //         <div className="purple">
-  //           {this.state.x}
-  //           <Child />
-  //           <Null />
-  //         </div>
-  //       )
-  //     }
+      componentDidMount() {
+        this.setState({
+          pos: 7,
+        })
+      }
 
-  //     componentDidMount() {
-  //       this.setState({ x: 7 })
-  //     }
-  //   }
+      render() {
+        renders++
+        return (
+          <group position-x={this.state.pos}>
+            <Child />
+            <Null />
+          </group>
+        )
+      }
+    }
 
-  //   const Child = () => {
-  //     renders++
-  //     return <moo />
-  //   }
+    const Child = () => {
+      renders++
+      return <color attach="background" args={[0, 0, 0]} />
+    }
 
-  //   const Null = () => {
-  //     renders++
-  //     return null
-  //   }
+    const Null = () => {
+      renders++
+      return null
+    }
 
-  //   const renderer = ReactTestRenderer.create(<Component />)
-  //   expect(renderer.toJSON()).toEqual({
-  //     type: 'div',
-  //     props: { className: 'purple' },
-  //     children: ['7', { type: 'moo', props: {}, children: null }],
-  //   })
-  //   expect(renders).toBe(6)
-  // })
+    const renderer = ReactThreeTestRenderer.create(<Component />)
+
+    expect(renderer.scene.children[0].position.x).toEqual(7)
+    expect(renders).toBe(6)
+  })
 
   // it('exposes the instance', () => {
   //   class Mouse extends React.Component {
