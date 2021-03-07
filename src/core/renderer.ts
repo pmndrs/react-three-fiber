@@ -199,13 +199,14 @@ function createRenderer<TCanvas>(
       // Preemptively delete the instance from the containers interaction
       if (accumulative && root && instance.raycast && localState.handlers) {
         localState.handlers = undefined
-        const index = rootState.internal.interaction.indexOf(instance)
+        const index = rootState.internal.interaction.indexOf((instance as unknown) as THREE.Object3D)
         if (index > -1) rootState.internal.interaction.splice(index, 1)
       }
 
       // Prep interaction handlers
       if (handlers.length) {
-        if (accumulative && root && instance.raycast) rootState.internal.interaction.push(instance)
+        if (accumulative && root && instance.raycast)
+          rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => {
           // @ts-ignore
@@ -491,7 +492,7 @@ function createRenderer<TCanvas>(
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       if (instance.raycast && instance.__r3f.handlers)
-        instance.__r3f.root.getState().internal.interaction.push(instance)
+        instance.__r3f.root.getState().internal.interaction.push((instance as unknown) as THREE.Object3D)
     },
     prepareUpdate() {
       return emptyObject

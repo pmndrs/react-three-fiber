@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
-import create, { SetState, UseStore } from 'zustand'
+import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { Instance, InstanceProps } from './renderer'
 
@@ -26,7 +26,6 @@ export type Performance = {
   max: number
   debounce: number
   regress: () => void
-  setMax: (value: number) => void
 }
 
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
@@ -67,11 +66,10 @@ export type RootState = {
   }
 
   invalidate: () => void
-  intersect: (event?: any) => void
   setSize: (width: number, height: number) => void
   setCamera: (camera: Camera) => void
   setPixelRatio: (pixelRatio: PixelRatio) => void
-  onCreated?: (props: RootState) => Promise<any> | void
+  onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 
   internal: {
@@ -80,13 +78,14 @@ export type RootState = {
     lastProps: StoreProps
     events: Events
 
-    interaction: any[]
+    interaction: THREE.Object3D[]
     subscribers: Subscription[]
     captured: Intersection[] | undefined
     initialClick: [x: number, y: number]
     initialHits: THREE.Object3D[]
 
     set: SetState<RootState>
+    get: GetState<RootState>
     subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
   }
 }
@@ -104,7 +103,7 @@ export type StoreProps = {
   noninteractive?: boolean
   updateCamera?: boolean
   frameloop?: boolean
-  performance?: Partial<Omit<Performance, 'regress' | 'setMax'>>
+  performance?: Partial<Omit<Performance, 'regress'>>
   pixelRatio?: PixelRatio
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?: Partial<
@@ -112,7 +111,7 @@ export type StoreProps = {
       ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
       ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
   >
-  onCreated?: (props: RootState) => Promise<any> | void
+  onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 }
 
@@ -131,8 +130,10 @@ const createStore = (
     shadows = false,
     linear = false,
     orthographic = false,
+
     frameloop = true,
     updateCamera = true,
+
     pixelRatio = 1,
     performance,
     raycaster: raycastOptions,
@@ -163,6 +164,7 @@ const createStore = (
     ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
     : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
   camera.position.z = 5
+  if (orthographic) camera.zoom = 100
   if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
   // Always look at [0, 0, 0]
   camera.lookAt(0, 0, 0)
@@ -236,7 +238,6 @@ const createStore = (
             get().performance.debounce,
           )
         },
-        setMax: (max: number) => set((state) => ({ performance: { ...state.performance, max: Math.min(1, max) } })),
       },
 
       size: { width: 0, height: 0 },
@@ -251,7 +252,6 @@ const createStore = (
       },
 
       invalidate: (frames?: number) => invalidate(get(), frames),
-      intersect: (event?: any) => {},
       setSize: (width: number, height: number) => {
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
@@ -273,6 +273,7 @@ const createStore = (
         initialHits: [],
 
         set,
+        get,
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands
@@ -280,8 +281,8 @@ const createStore = (
           // As long as this flag is positive (there could be multiple render subscription)
           // ..there can be no internal rendering at all
           if (priority) internal.manual++
-
-          internal.subscribers.push({ ref, priority: priority })
+          // Register subscriber
+          internal.subscribers.push({ ref, priority })
           // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
           internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
           return () => {
@@ -300,7 +301,6 @@ const createStore = (
   rootState.subscribe(
     () => {
       const { camera, size, viewport, updateCamera } = rootState.getState()
-
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Sometimes automatic default camera adjustment isn't wanted behaviour
       if (updateCamera) {
@@ -320,7 +320,6 @@ const createStore = (
       // Update renderer
       gl.setPixelRatio(viewport.pixelRatio)
       gl.setSize(size.width, size.height)
-      // Update state model
     },
     (state) => [state.viewport.pixelRatio, state.size],
     shallow,

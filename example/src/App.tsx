@@ -49,24 +49,27 @@ export default function App() {
   return (
     <>
       <color attach="background" args={[color] as any} />
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={2} />
+      <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
       <group ref={group}>
         <mesh
-          scale={hovered ? 1.5 : 1}
+          scale={hovered ? 1.25 : 1}
           onPointerOver={() => setHovered(true)}
           onPointerOut={() => setHovered(false)}
-          onClick={() => setColor(color === 'pink' ? 'yellow' : 'pink')}>
+          onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
           <sphereGeometry args={[0.5, 32, 32]} />
-          <meshBasicMaterial color={showCube ? 0x0000ff : 0xff0000} />
+          <meshStandardMaterial color={showCube ? "white" : "red"} />
         </mesh>
         {showCube ? (
-          <mesh position={[2, 0, 0]}>
+          <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />
-            <meshNormalMaterial transparent opacity={0.5} />
+            <meshStandardMaterial color="hotpink" />
           </mesh>
         ) : (
           <mesh>
             <icosahedronGeometry args={[1]} />
-            <meshBasicMaterial color="orange" transparent opacity={0.5} />
+            <meshStandardMaterial color="orange" transparent opacity={0.5} />
           </mesh>
         )}
       </group>
