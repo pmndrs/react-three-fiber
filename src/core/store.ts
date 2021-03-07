@@ -34,6 +34,18 @@ export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
+export type Events = {
+  click: EventListenerOrEventListenerObject
+  contextmenu: EventListenerOrEventListenerObject
+  dblclick: EventListenerOrEventListenerObject
+  wheel: EventListenerOrEventListenerObject
+  pointerdown: EventListenerOrEventListenerObject
+  pointerup: EventListenerOrEventListenerObject
+  pointerleave: EventListenerOrEventListenerObject
+  pointermove: EventListenerOrEventListenerObject
+  lostpointercapture: EventListenerOrEventListenerObject
+}
+
 export type RootState = {
   gl: THREE.WebGLRenderer
   scene: THREE.Scene & Instance
@@ -66,11 +78,11 @@ export type RootState = {
     manual: number
     frames: number
     lastProps: StoreProps
+    events: Events
 
     interaction: any[]
     subscribers: Subscription[]
     captured: Intersection[] | undefined
-    // [x, y]
     initialClick: [x: number, y: number]
     initialHits: THREE.Object3D[]
 
@@ -244,17 +256,15 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setCamera: (camera: Camera) => {
-        set({ camera })
-      },
-      setPixelRatio: (pixelRatio: PixelRatio) => {
-        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } }))
-      },
+      setCamera: (camera: Camera) => set({ camera }),
+      setPixelRatio: (pixelRatio: PixelRatio) =>
+        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } })),
 
       internal: {
         manual: 0,
         frames: 0,
         lastProps: props,
+        events: (undefined as unknown) as Events,
 
         interaction: [],
         subscribers: [],
@@ -316,16 +326,14 @@ const createStore = (
     shallow,
   )
 
-  // Invalidate on any change
-  rootState.subscribe((state) => invalidate(state))
-
   const state = rootState.getState()
-
   // Update pixelratio
   if (pixelRatio) state.setPixelRatio(pixelRatio)
-
   // Update size
   if (size) state.setSize(size.width, size.height)
+
+  // Invalidate on any change
+  rootState.subscribe((state) => invalidate(state))
 
   // Return root state
   return rootState

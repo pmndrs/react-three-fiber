@@ -24,9 +24,8 @@ const Orbit = memo(() => {
 })
 
 function AdaptivePixelRatio() {
-  const current = useThree(state => state.performance.current)
-  const setPixelRatio = useThree(state => state.setPixelRatio)
-  console.log(current)
+  const current = useThree((state) => state.performance.current)
+  const setPixelRatio = useThree((state) => state.setPixelRatio)
   useEffect(() => {
     setPixelRatio(current * 2)
     document.body.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
@@ -35,7 +34,9 @@ function AdaptivePixelRatio() {
 }
 
 export default function App() {
+  const group = useRef<THREE.Group>()
   const [showCube, setShowCube] = useState(false)
+  const [hovered, setHovered] = useState(false)
   const [color, setColor] = useState('pink')
 
   useEffect(() => {
@@ -43,33 +44,32 @@ export default function App() {
     return () => clearInterval(interval)
   }, [])
 
-  const size = useThree((state) => state.size)
-  const group = useRef<THREE.Group>()
-
-  useFrame(({ clock }) => {
-    group.current?.position.set(Math.sin(clock.elapsedTime), 0, 0)
-  })
+  useFrame(({ clock }) => group.current?.position.set(Math.sin(clock.elapsedTime), 0, 0))
 
   return (
     <>
+      <color attach="background" args={[color] as any} />
       <group ref={group}>
-        <mesh onClick={() => setColor(color === 'pink' ? 'yellow' : 'pink')}>
+        <mesh
+          scale={hovered ? 1.5 : 1}
+          onPointerOver={() => setHovered(true)}
+          onPointerOut={() => setHovered(false)}
+          onClick={() => setColor(color === 'pink' ? 'yellow' : 'pink')}>
           <sphereGeometry args={[0.5, 32, 32]} />
           <meshBasicMaterial color={showCube ? 0x0000ff : 0xff0000} />
         </mesh>
         {showCube ? (
-          <mesh position={[2, 0, 0]} scale={1}>
+          <mesh position={[2, 0, 0]}>
             <boxGeometry args={[1, 1]} />
             <meshNormalMaterial transparent opacity={0.5} />
           </mesh>
         ) : (
-          <mesh scale={2}>
+          <mesh>
             <icosahedronGeometry args={[1]} />
             <meshBasicMaterial color="orange" transparent opacity={0.5} />
           </mesh>
         )}
       </group>
-      <color attach="background" args={[color] as any} />
       <Orbit />
       <AdaptivePixelRatio />
     </>

@@ -4,7 +4,7 @@ import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
-import { createEvents, DomEvent } from './events'
+import { createEvents } from './events'
 import { Canvas } from './Canvas'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
@@ -53,20 +53,21 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (!fiber) {
     // If no root has been found, make one
+
+    // Create store
     store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
-
+    const state = store.getState()
+    // Create and register events
     const events = createEvents(store)
-    canvas.addEventListener('pointermove', (e) => events.onPointerMove((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerdown', (e) => events.onPointerDown((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerup', (e) => events.onPointerUp((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerleave', (e) => events.onPointerLeave((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('click', (e) => events.onClick((e as unknown) as DomEvent), { passive: true })
+    Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
+    state.internal.set((state) => ({ internal: { ...state.internal, events } }))
 
+    // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
     // Kick off render loop
-    store.getState().invalidate()
+    state.invalidate()
   }
 
   if (store && fiber) {
@@ -84,6 +85,7 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
+        Object.entries(state.internal.events).forEach(([name, event]) => canvas.removeEventListener(name, event))
         if (state.gl.renderLists) state.gl.renderLists.dispose()
         if (state.gl.forceContextLoss) state.gl.forceContextLoss()
         dispose(state.gl)
@@ -116,7 +118,7 @@ reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: 'react-three-fiber',
   // @ts-ignore
-  version: R3F_VERSION,
+  version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
 export * from '../core/hooks'

@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
-import { RootState } from '../core/store'
+import { Events, RootState } from '../core/store'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export interface Intersection extends THREE.Intersection {
@@ -23,7 +23,7 @@ export type DomEvent = ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent> | Three
 
 const makeId = (event: DomEvent) => (event.eventObject || event.object).uuid + '/' + event.index
 
-function createEvents(store: UseStore<RootState>) {
+function createEvents(store: UseStore<RootState>): Events {
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
@@ -266,15 +266,17 @@ function createEvents(store: UseStore<RootState>) {
     }
   }
   return {
-    onClick: handlePointer('click'),
-    onContextMenu: handlePointer('contextMenu'),
-    onDoubleClick: handlePointer('doubleClick'),
-    onWheel: handlePointer('wheel'),
-    onPointerDown: handlePointer('pointerDown'),
-    onPointerUp: handlePointer('pointerUp'),
-    onPointerLeave: (e: any) => handlePointerCancel(e, []),
-    onPointerMove: handlePointerMove,
-    onLostPointerCapture: (e: any) => ((store.getState().internal.captured = undefined), handlePointerCancel(e)),
+    click: handlePointer('click') as EventListenerOrEventListenerObject,
+    contextmenu: handlePointer('contextMenu') as EventListenerOrEventListenerObject,
+    dblclick: handlePointer('doubleClick') as EventListenerOrEventListenerObject,
+    wheel: handlePointer('wheel') as EventListenerOrEventListenerObject,
+    pointerdown: handlePointer('pointerDown') as EventListenerOrEventListenerObject,
+    pointerup: handlePointer('pointerUp') as EventListenerOrEventListenerObject,
+    pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListenerOrEventListenerObject,
+    pointermove: (handlePointerMove as unknown) as EventListenerOrEventListenerObject,
+    lostpointercapture: ((e: any) => (
+      (store.getState().internal.captured = undefined), handlePointerCancel(e)
+    )) as EventListenerOrEventListenerObject,
   }
 }
 

@@ -10,7 +10,7 @@ window.addEventListener('resize', () =>
     pixelRatio: [1, 2],
     camera: { position: [0, 0, 10] },
     size: { width: window.innerWidth, height: window.innerHeight },
-  })
+  }),
 )
 
 window.dispatchEvent(new Event('resize'))
