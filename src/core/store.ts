@@ -23,8 +23,10 @@ export type RenderCallback = (state: RootState, delta: number) => void
 export type Performance = {
   current: number
   min: number
+  max: number
   debounce: number
   regress: () => void
+  setMax: (value: number) => void
 }
 
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
@@ -90,7 +92,7 @@ export type StoreProps = {
   noninteractive?: boolean
   updateCamera?: boolean
   frameloop?: boolean
-  performance?: Partial<Omit<Performance, 'regress'>>
+  performance?: Partial<Omit<Performance, 'regress' | 'setMax'>>
   pixelRatio?: PixelRatio
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?: Partial<
@@ -209,13 +211,20 @@ const createStore = (
       performance: {
         current: 1,
         min: 0.5,
+        max: 1,
         debounce: 200,
         ...performance,
         regress: () => {
           clearTimeout(performanceTimeout)
+          // Set lower bound performance
           setPerformanceCurrent(get().performance.min)
-          performanceTimeout = setTimeout(() => setPerformanceCurrent(1), get().performance.debounce)
+          // Go back to upper bound performance after a while unless something regresses meanwhile
+          performanceTimeout = setTimeout(
+            () => setPerformanceCurrent(get().performance.max),
+            get().performance.debounce
+          )
         },
+        setMax: (max: number) => set((state) => ({ performance: { ...state.performance, max: Math.min(1, max) } })),
       },
 
       size: { width: 0, height: 0 },
