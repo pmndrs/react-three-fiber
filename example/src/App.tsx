@@ -44,6 +44,7 @@ function AdaptivePixelRatio() {
   return null
 }
 
+/*
 function AdaptiveEvents() {
   const get = useThree((state) => state.get)
   const set = useThree((state) => state.set)
@@ -54,7 +55,7 @@ function AdaptiveEvents() {
   }, [])
   useEffect(() => set({ events: current === 1 }), [current])
   return null
-}
+}*/
 
 export default function App() {
   const group = useRef<THREE.Group>()
@@ -88,7 +89,7 @@ export default function App() {
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />
-            <meshStandardMaterial color="hotpink" />
+            <meshNormalMaterial color="hotpink" transparent opacity={0.5} />
           </mesh>
         ) : (
           <mesh>
@@ -98,8 +99,7 @@ export default function App() {
         )}
       </group>
       <Orbit />
-      <AdaptivePixelRatio />
-      <AdaptiveEvents />
+      <AdaptivePixelRatio />     
     </>
   )
 }

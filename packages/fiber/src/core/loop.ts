@@ -73,5 +73,5 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  return { loop, invalidate }
+  return { loop, invalidate, render }
 }
