@@ -155,9 +155,10 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     const filteredPropsEntries = Object.entries(filteredProps)
     // Prepend left-overs so they can be reset or removed
     // Left-overs must come first!
-    for (let leftOverPropKey in leftOvers) {
-      if (leftOverPropKey !== 'children') {
-        filteredPropsEntries.unshift([leftOverPropKey, DEFAULT + 'remove'])
+    objectKeys = Object.keys(leftOvers)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (objectKeys[i] !== 'children') {
+        filteredPropsEntries.unshift([objectKeys[i], DEFAULT + 'remove'])
       }
     }
 
