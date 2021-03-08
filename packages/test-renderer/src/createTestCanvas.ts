@@ -1,3 +1,5 @@
+import { createWebGLContext } from './createWebGLContext'
+
 export type CreateCanvasParameters = {
   beforeReturn?: (canvas: HTMLCanvasElement) => void
   width?: number
