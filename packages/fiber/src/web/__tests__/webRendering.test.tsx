@@ -15,8 +15,6 @@ describe('web renderer', () => {
       canvas.getContext = (type: string) => {
         const gl = new WebGLRenderingContext(canvas)
 
-        console.log(gl.getParameter(gl.VERSION))
-
         if (type === 'webgl' || type === 'webgl2') {
           return new WebGLRenderingContext(canvas)
         }

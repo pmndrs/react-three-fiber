@@ -112,7 +112,7 @@ describe('ReactThreeTestRenderer', () => {
   //   const renderer = ReactThreeTestRenderer.create(
   //     <meshBasicMaterial name="basicMat">
   //       <color attach="color" args={[0, 0, 0]} />
-  //     </meshBasicMaterial>
+  //     </meshBasicMaterial>,
   //   )
   //   expect(renderer.toGraph()).toEqual({
   //     type: 'MeshBasicMaterial',
@@ -123,7 +123,7 @@ describe('ReactThreeTestRenderer', () => {
   //   renderer.update(
   //     <meshStandardMaterial name="standardMat">
   //       <color attach="color" args={[255, 255, 255]} />
-  //     </meshStandardMaterial>
+  //     </meshStandardMaterial>,
   //   )
   //   expect(renderer.toGraph()).toEqual({
   //     type: 'MeshStandardMaterial',
