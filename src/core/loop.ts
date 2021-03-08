@@ -43,7 +43,7 @@ export function render(state: RootState, timestamp: number, repeat = 0, runGloba
   return repeat
 }
 
-function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
+export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
 
   function loop(timestamp: number) {
@@ -89,5 +89,3 @@ function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   return { loop, invalidate }
 }
-
-export { createLoop }

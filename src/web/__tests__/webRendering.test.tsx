@@ -20,10 +20,6 @@ describe('web renderer', () => {
     },
   })
 
-  // beforeEach(() => {
-  //   jest.useFakeTimers()
-  // })
-
   it('renders a simple component', () => {
     const Mesh = () => {
       return (
@@ -118,4 +114,24 @@ describe('web renderer', () => {
     expect(scene.children[0].position.x).toEqual(7)
     expect(renders).toBe(6)
   })
+
+  // it('can handle useThree hook', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('can handle useFrame hook', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('can handle useLoader hook', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('can handle useResource hook', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('can handle useUpdate hook', () => {
+  //   expect(true).toBe(false)
+  // })
 })
