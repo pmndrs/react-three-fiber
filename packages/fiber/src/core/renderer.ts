@@ -163,8 +163,6 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       }
     }
 
-    console.log(filteredPropsEntries)
-
     if (filteredPropsEntries.length > 0) {
       filteredPropsEntries.forEach(([key, value]) => {
         if (!handlers.includes(key)) {
@@ -182,7 +180,6 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
           }
 
           if (value === DEFAULT + 'remove') {
-            console.log(targetProp)
             // For removed props, try to set default values, if possible
             if (defaultMap.has(targetProp.constructor)) value = defaultMap.get(targetProp.constructor)
             else value = currentInstance[DEFAULT + key]
