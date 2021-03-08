@@ -74,10 +74,7 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<TCanvas>(
-  roots: Map<TCanvas, Root>,
-  invalidate: (state?: boolean | RootState, frames?: number) => void,
-) {
+function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, invalidate: (state?: RootState) => void) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
@@ -220,7 +217,8 @@ function createRenderer<TCanvas>(
   }
 
   function invalidateInstance(instance: Instance) {
-    invalidate(instance.__r3f?.root?.getState())
+    const state = instance.__r3f?.root?.getState()
+    if (state && state.internal.frames === 0) state.invalidate()
   }
 
   function updateInstance(instance: Instance) {

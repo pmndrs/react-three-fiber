@@ -67,23 +67,19 @@ export type RootState = {
 
   size: Size
   viewport: Viewport & {
-    getCurrentViewport: (
-      camera: Camera,
-      target: THREE.Vector3,
-      size: Size,
-    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
+    getCurrentViewport: (camera: Camera, target: THREE.Vector3, size: Size) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
 
   set: SetState<RootState>
   get: GetState<RootState>
   invalidate: () => void
   setSize: (width: number, height: number) => void
-  setCamera: (camera: Camera) => void
   setDpr: (dpr: Dpr) => void
   onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 
   internal: {
+    active: boolean
     priority: number
     frames: number
     lastProps: StoreProps
@@ -130,7 +126,7 @@ const context = React.createContext<UseStore<RootState>>((null as unknown) as Us
 
 const createStore = (
   applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
-  invalidate: (state?: boolean | RootState, frames?: number) => void,
+  invalidate: (state?: RootState) => void,
   props: StoreProps,
 ): UseStore<RootState> => {
   const {
@@ -190,9 +186,7 @@ const createStore = (
   }
 
   function setDpr(dpr: Dpr) {
-    return Array.isArray(dpr)
-      ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1])
-      : dpr
+    return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
   }
   const initialDpr = setDpr(dpr)
 
@@ -268,16 +262,15 @@ const createStore = (
 
       set,
       get,
-      invalidate: (frames?: number) => invalidate(get(), frames),
+      invalidate: () => invalidate(get()),
       setSize: (width: number, height: number) => {
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setCamera: (camera: Camera) => set({ camera }),
-      setDpr: (dpr: Dpr) =>
-        set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
 
       internal: {
+        active: false,
         priority: 0,
         frames: 0,
         lastProps: props,

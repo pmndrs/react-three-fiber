@@ -67,7 +67,7 @@ export default function App() {
     return () => clearInterval(interval)
   }, [])
 
-  useFrame(({ clock }) => group.current?.position.set(Math.sin(clock.elapsedTime), 0, 0))
+  useFrame(({ clock }) => group.current?.rotation.set(Math.sin(clock.elapsedTime), 0, 0))
 
   return (
     <>
@@ -75,15 +75,16 @@ export default function App() {
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={2} />
       <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
+
+      <mesh
+        scale={hovered ? 1.25 : 1}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color={showCube ? 'white' : 'red'} />
+      </mesh>
       <group ref={group}>
-        <mesh
-          scale={hovered ? 1.25 : 1}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-          onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
-          <sphereGeometry args={[0.5, 32, 32]} />
-          <meshStandardMaterial color={showCube ? 'white' : 'red'} />
-        </mesh>
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />

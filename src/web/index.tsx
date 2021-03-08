@@ -25,7 +25,11 @@ const createRendererInstance = (
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
 
-function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps): UseStore<RootState> {
+function render(
+  element: React.ReactNode,
+  canvas: HTMLCanvasElement,
+  { gl, size, concurrent, ...props }: RenderProps,
+): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
@@ -37,8 +41,7 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr))
-      state.setDpr(props.dpr)
+    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
     // Check size
     if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 
@@ -58,25 +61,27 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     // Create store
     store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
-    // Create and register events
-    const events = createEvents(store)
-    Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
-    state.set((state) => ({ internal: { ...state.internal, events } }))
-
     // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
-    // Kick off render loop
-    state.invalidate()
+    // Create and register events
+    const events = createEvents(store)
+    Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
+    state.set((state) => ({ internal: { ...state.internal, events } }))
   }
 
   if (store && fiber) {
-    reconciler.updateContainer(<context.Provider value={store} children={element} />, fiber, null, () => undefined)
+    reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
     return store
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
+}
+
+function Provider({ store, element }: { store: UseStore<RootState>; element: React.ReactNode }) {
+  React.useEffect(() => store.getState().set((state) => ({ internal: { ...state.internal, active: true } })), [])
+  return <context.Provider value={store}>{element}</context.Provider>
 }
 
 function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
