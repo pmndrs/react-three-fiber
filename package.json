@@ -32,19 +32,6 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "validate": "preconstruct validate"
   },
-  "size-limit": [
-    {
-      "name": "React Three Fiber",
-      "path": "packages/react-three-fiber/dist/react-three-fiber.cjs.prod.js",
-      "import": "{ render }",
-      "limit": "4500 ms"
-    },
-    {
-      "name": "React Three Test Renderer",
-      "path": "packages/react-three-test-renderer/dist/react-three-test-renderer.cjs.prod.js",
-      "limit": "4500ms"
-    }
-  ],
   "peerDependencies": {
     "react": ">=17.0",
     "react-dom": ">=17.0",
@@ -87,9 +74,8 @@
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-native": "^0.63.4",
-    "regenerator-runtime": "^0.13.7",
     "react-test-renderer": "^17.0.1",
-    "size-limit": "^4.10.0",
+    "regenerator-runtime": "^0.13.7",
     "three": "^0.126.1",
     "three-stdlib": "^0.1.0",
     "ts-jest": "^26.5.3",
