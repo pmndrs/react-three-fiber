@@ -10,7 +10,7 @@ import { createLoop } from '../core/loop'
 import { createEvents } from './events'
 import { Canvas } from './Canvas'
 
-type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
+export type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   concurrent?: boolean
 }

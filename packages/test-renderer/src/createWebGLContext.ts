@@ -61,13 +61,11 @@ const functions = [
   'getError',
   'getExtension',
   'getFramebufferAttachmentParameter',
-  //   'getParameter',
   'getProgramParameter',
   'getProgramInfoLog',
   'getRenderbufferParameter',
   'getShaderParameter',
   'getShaderInfoLog',
-  'getShaderPrecisionFormat',
   'getShaderSource',
   'getSupportedExtensions',
   'getTexParameter',
@@ -92,6 +90,8 @@ const functions = [
   'renderbufferStorage',
   'sampleCoverage',
   'scissor',
+  'setPixelRatio',
+  'setSize',
   'shaderSource',
   'stencilFunc',
   'stencilFuncSeparate',
@@ -465,7 +465,7 @@ const extensions: { [key: string]: any } = {
   WEBGL_compressed_texture_etc1: null,
 }
 
-export class WebGLRenderingContext {
+class WebGLRenderingContext {
   [key: string]: any
 
   constructor(canvas: HTMLCanvasElement) {
@@ -504,3 +504,5 @@ export class WebGLRenderingContext {
     return extensions[ext]
   }
 }
+
+export const createWebGLContext = (canvas: HTMLCanvasElement) => new WebGLRenderingContext(canvas)

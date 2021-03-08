@@ -3,53 +3,24 @@ import * as React from 'react'
 
 import { is } from 'react-three-fiber/src/core/is'
 import { createRenderer, Root } from 'react-three-fiber/src/core/renderer'
+import { RenderProps } from 'react-three-fiber/src/web'
 
-import {
-  createMockStore,
-  MockStoreProps,
-  MockUseStoreState,
-  context,
-  MockScene,
-  MockSceneChild,
-} from './createMockStore'
+import { toTree, ReactThreeTestRendererTree } from './helpers/tree'
+import { toGraph, ReactThreeTestRendererSceneGraph } from './helpers/graph'
+
+import { createStore, MockUseStoreState, context, MockScene } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
+import { createWebGLContext } from './createWebGLContext'
 
-type RenderProps = Omit<MockStoreProps, 'gl' | 'context'> & {
-  gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
-  concurrent?: boolean
-}
+export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
-type MockRoot = Omit<Root, 'store'> & {
-  store: MockUseStoreState
-}
-
-interface ReactThreeTestRendererSceneGraphItem {
-  type: string
-  name: string
-  children: ReactThreeTestRendererSceneGraphItem[] | null
-}
-
-interface ReactThreeTestRendererTreeNode {
-  type: string
-  props: {
-    [key: string]: any
-  }
-  children: ReactThreeTestRendererTreeNode[]
-}
-
-export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneGraphItem[]
-
-export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode
-
-export interface ReactThreeTestRendereOptions extends CreateCanvasParameters {}
-
-const mockRoots = new Map<any, MockRoot>()
+const mockRoots = new Map<any, Root>()
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
   element: React.ReactNode,
   id: TRootNode,
-  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
+  { size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
@@ -78,7 +49,13 @@ const render = <TRootNode,>(
 
   if (!fiber) {
     // If no root has been found, make one
-    store = createMockStore(applyProps, { gl: {}, size, ...props })
+    // @ts-ignore
+    store = createStore(applyProps, () => null, {
+      // @ts-ignore
+      gl: new THREE.WebGLRenderer({ context: createWebGLContext(id as HTMLCanvasElement), precision: 'highp' }),
+      size,
+      ...props,
+    })
 
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
@@ -123,52 +100,6 @@ const unmount = <TRootNode,>(id: TRootNode) => {
   }
 }
 
-const lowerCaseFirstLetter = (str: string) => `${str.charAt(0).toLowerCase()}${str.slice(1)}`
-
-const treeObjectFactory = (
-  type: ReactThreeTestRendererTreeNode['type'],
-  props: ReactThreeTestRendererTreeNode['props'],
-  children: ReactThreeTestRendererTreeNode['children'],
-): ReactThreeTestRendererTreeNode => ({
-  type,
-  props,
-  children,
-})
-
-const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =>
-  obj.map((child) => {
-    return treeObjectFactory(
-      lowerCaseFirstLetter(child.type || child.constructor.name),
-      { ...child.__r3f.memoizedProps },
-      toTreeBranch([...(child.children || []), ...child.__r3f.objects]),
-    )
-  })
-
-const toTree = (scene: MockScene): ReactThreeTestRendererTree => ({
-  type: 'scene',
-  props: {},
-  children: scene.children.map((obj) =>
-    treeObjectFactory(
-      lowerCaseFirstLetter(obj.type),
-      { ...obj.__r3f.memoizedProps },
-      toTreeBranch([...obj.children, ...obj.__r3f.objects]),
-    ),
-  ),
-})
-
-const graphObjectFactory = (
-  type: ReactThreeTestRendererSceneGraphItem['type'],
-  name: ReactThreeTestRendererSceneGraphItem['name'],
-  children: ReactThreeTestRendererSceneGraphItem['children'],
-): ReactThreeTestRendererSceneGraphItem => ({
-  type,
-  name,
-  children,
-})
-
-const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneGraphItem[] =>
-  object.children.map((child) => graphObjectFactory(child.type, child.name || '', toGraph(child)))
-
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: 'react-three-test-renderer',
@@ -176,9 +107,20 @@ reconciler.injectIntoDevTools({
   version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
-const create = (element: React.ReactNode, options?: ReactThreeTestRendereOptions) => {
-  const canvas = createCanvas(options)
-  const scene = render(element, canvas)
+export type ThreeTestRenderer = {
+  scene: MockScene
+  unmount: <TRootNode>(id: TRootNode) => void
+  update: (el: React.ReactNode) => void
+  toTree: () => ReactThreeTestRendererTree | undefined
+  toGraph: () => ReactThreeTestRendererSceneGraph | undefined
+}
+
+const create = (element: React.ReactNode, options?: ReactThreeTestRendererOptions): ThreeTestRenderer => {
+  const canvas = createCanvas({
+    width: options?.width,
+    height: options?.height,
+  })
+  const scene = render(element, canvas, options) as MockScene
 
   return {
     scene,
@@ -187,9 +129,8 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendereOptions
       const fiber = mockRoots.get(canvas)?.fiber
       if (fiber) {
         reconciler.updateContainer(newElement, fiber, null, () => null)
-      } else {
-        return
       }
+      return
     },
     toTree: () => {
       if (!scene) {
