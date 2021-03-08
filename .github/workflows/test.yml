@@ -14,10 +14,8 @@ jobs:
         with:
           node-version: '14'
 
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn
+      - name: Install deps
+        run: yarn install
 
       - name: Check types
         run: yarn typecheck
