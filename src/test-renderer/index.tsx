@@ -51,7 +51,7 @@ const { reconciler, applyProps } = createRenderer(mockRoots, () => null)
 const render = <TRootNode,>(
   element: React.ReactNode,
   id: TRootNode,
-  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } }
+  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
@@ -126,7 +126,7 @@ const lowerCaseFirstLetter = (str: string) => `${str.charAt(0).toLowerCase()}${s
 const treeObjectFactory = (
   type: ReactThreeTestRendererTreeNode['type'],
   props: ReactThreeTestRendererTreeNode['props'],
-  children: ReactThreeTestRendererTreeNode['children']
+  children: ReactThreeTestRendererTreeNode['children'],
 ): ReactThreeTestRendererTreeNode => ({
   type,
   props,
@@ -138,7 +138,7 @@ const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =
     return treeObjectFactory(
       lowerCaseFirstLetter(child.type || child.constructor.name),
       { ...child.__r3f.memoizedProps },
-      toTreeBranch([...(child.children || []), ...child.__r3f.objects])
+      toTreeBranch([...(child.children || []), ...child.__r3f.objects]),
     )
   })
 
@@ -149,15 +149,15 @@ const toTree = (scene: MockScene): ReactThreeTestRendererTree => ({
     treeObjectFactory(
       lowerCaseFirstLetter(obj.type),
       { ...obj.__r3f.memoizedProps },
-      toTreeBranch([...obj.children, ...obj.__r3f.objects])
-    )
+      toTreeBranch([...obj.children, ...obj.__r3f.objects]),
+    ),
   ),
 })
 
 const graphObjectFactory = (
   type: ReactThreeTestRendererSceneGraphItem['type'],
   name: ReactThreeTestRendererSceneGraphItem['name'],
-  children: ReactThreeTestRendererSceneGraphItem['children']
+  children: ReactThreeTestRendererSceneGraphItem['children'],
 ): ReactThreeTestRendererSceneGraphItem => ({
   type,
   name,

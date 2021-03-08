@@ -540,23 +540,23 @@ describe('ReactThreeTestRenderer', () => {
   //   expect(root).toEqual(refInst)
   // })
 
-  it('can handle useThree hook', () => {
-    expect(true).toBe(false)
-  })
+  // it('can handle useThree hook', () => {
+  //   expect(true).toBe(false)
+  // })
 
-  it('can handle useFrame hook', () => {
-    expect(true).toBe(false)
-  })
+  // it('can handle useFrame hook', () => {
+  //   expect(true).toBe(false)
+  // })
 
-  it('can handle useLoader hook', () => {
-    expect(true).toBe(false)
-  })
+  // it('can handle useLoader hook', () => {
+  //   expect(true).toBe(false)
+  // })
 
-  it('can handle useResource hook', () => {
-    expect(true).toBe(false)
-  })
+  // it('can handle useResource hook', () => {
+  //   expect(true).toBe(false)
+  // })
 
-  it('can handle useUpdate hook', () => {
-    expect(true).toBe(false)
-  })
+  // it('can handle useUpdate hook', () => {
+  //   expect(true).toBe(false)
+  // })
 })

@@ -4,7 +4,7 @@ import gl from 'gl'
 
 import { createCanvas } from '../../test-renderer/createTestCanvas'
 
-import { render, testutil_act as act } from '../index'
+import { render } from '../index'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 

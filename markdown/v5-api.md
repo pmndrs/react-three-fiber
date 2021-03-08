@@ -3,6 +3,7 @@
 You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the [fundamentals](https://github.com/pmndrs/react-three-fiber#fundamentals) section on the main-page, know at least the very basics.
 
 ## Table of Contents
+
 - [Canvas](#canvas)
 - [Objects, properties and constructor arguments](#objects-properties-and-constructor-arguments)
 - [Automatic disposal](#automatic-disposal)
@@ -34,7 +35,7 @@ ReactDOM.render(
       <meshStandardMaterial color="hotpink" />
     </mesh>
   </Canvas>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )
 ```
 
@@ -133,7 +134,7 @@ All properties whose underlying object has a `.set()` method can directly receiv
 
 You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties and constructor arguments they normally would.
 
-Using the `attach` property objects bind to their parent and are taken off once they unmount. 
+Using the `attach` property objects bind to their parent and are taken off once they unmount.
 
 You can nest primitive objects, too:
 
@@ -222,7 +223,7 @@ Threejs objects that implement their own `raycast` method (meshes, lines, etc) c
 
 Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
-Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit *any* meshes.
+Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes.
 
 ```jsx
 <mesh
@@ -303,6 +304,7 @@ onPointerUp={e => {
   e.target.releasePointerCapture(e.pointerId)
 }}
 ```
+
 </details>
 
 # Hooks
@@ -389,15 +391,15 @@ import { useFrame } from 'react-three-fiber'
 
 const Controls = () => {
   const controls = useRef()
-  
+
   /* Invoke the OrbitControls' update function on every frame */
   useFrame(() => controls.current.update())
-  
+
   return <orbitControls ref={controls} />
 }
 ```
 
-If you need more control over the order in which `useFrame` callbacks are executed (and frames are rendered), you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.) 
+If you need more control over the order in which `useFrame` callbacks are executed (and frames are rendered), you may pass a numerical `renderPriority` value; callbacks will be executed in order of ascending priority values (lowest first, highest last.)
 
 Using a non-zero render priority will cause react-three-fiber to disable its automatic rendering, and it will be your responsibility to render explicitly:
 
@@ -441,7 +443,7 @@ const ref = useUpdate(
     geometry.addAttribute('position', getVertices(x, y, z))
     geometry.attributes.position.needsUpdate = true
   },
-  [x, y, z] // execute only if these properties change
+  [x, y, z], // execute only if these properties change
 )
 return <bufferGeometry ref={ref} />
 ```
@@ -464,7 +466,7 @@ function Asset({ url }) {
   return <primitive object={gltf.scene} />
 }
 
-<Suspense fallback={<Cube />}>
+;<Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
 ```
@@ -501,7 +503,7 @@ const { nodes, material } = useLoader(GLTFLoader, url)
 #### useGraph
 
 ```jsx
-const { nodes, materials } = useGraph(object: THREE.Object3D)
+const { nodes, materials } = useGraph((object: THREE.Object3D))
 ```
 
 Convenience hook which creates a memoized, named object/material collection from any Object3D.
@@ -517,16 +519,16 @@ function Asset({ url }) {
 
 ```jsx
 import {
-  addEffect,                    // Adds a global render callback which is called each frame
-  addAfterEffect,               // Adds a global after-render callback which is called each frame
-  addTail,                      // Adds a global callback which is called when rendering stops
-  invalidate,                   // Forces view global invalidation
-  extend,                       // Extends the native-object catalogue
-  createPortal,                 // Creates a portal (it's a React feature for re-parenting)
-  render,                       // Internal: Renders three jsx into a scene
-  unmountComponentAtNode,       // Internal: Unmounts root scene
-  applyProps,                   // Internal: Sets element properties
-  forceResize,                  // Internal: Force size/viewport recalculation of all canvases
+  addEffect, // Adds a global render callback which is called each frame
+  addAfterEffect, // Adds a global after-render callback which is called each frame
+  addTail, // Adds a global callback which is called when rendering stops
+  invalidate, // Forces view global invalidation
+  extend, // Extends the native-object catalogue
+  createPortal, // Creates a portal (it's a React feature for re-parenting)
+  render, // Internal: Renders three jsx into a scene
+  unmountComponentAtNode, // Internal: Unmounts root scene
+  applyProps, // Internal: Sets element properties
+  forceResize, // Internal: Force size/viewport recalculation of all canvases
 } from 'react-three-fiber'
 ```
 
