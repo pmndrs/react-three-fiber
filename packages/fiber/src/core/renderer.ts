@@ -66,6 +66,8 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
 
     const newMemoizedProps: { [key: string]: any } = {}
 
+    let i = 0
+
     Object.entries(newProps).forEach(([key, entry]) => {
       // we don't want children, ref or key in the memoized props
       if (filterProps.indexOf(key) === -1) {
@@ -79,23 +81,24 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
 
     instance.__r3f.memoizedProps = newMemoizedProps
 
-    for (let newPropsKey in newProps) {
-      if (is.equ(newProps[newPropsKey], oldProps[newPropsKey])) {
-        sameProps.push(newPropsKey)
+    let objectKeys = Object.keys(newProps)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (is.equ(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
+        sameProps.push(objectKeys[i])
       }
 
       // Event-handlers ...
       //   are functions, that
       //   start with "on", and
       //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[newPropsKey]) && newPropsKey.startsWith('on')) {
+      if (is.fun(newProps[objectKeys[i]]) && objectKeys[i].startsWith('on')) {
         if (
-          newPropsKey.includes('Pointer') ||
-          newPropsKey.includes('Click') ||
-          newPropsKey.includes('ContextMenu') ||
-          newPropsKey.includes('Wheel')
+          objectKeys[i].includes('Pointer') ||
+          objectKeys[i].includes('Click') ||
+          objectKeys[i].includes('ContextMenu') ||
+          objectKeys[i].includes('Wheel')
         ) {
-          handlers.push(newPropsKey)
+          handlers.push(objectKeys[i])
         }
       }
     }
@@ -103,9 +106,10 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     // Catch props that existed, but now exist no more ...
     const leftOvers = [] as string[]
     if (accumulative) {
-      for (let oldPropKey in oldProps) {
-        if (!newProps.hasOwnProperty(oldPropKey)) {
-          leftOvers.push(oldPropKey)
+      objectKeys = Object.keys(oldProps)
+      for (i = 0; i < objectKeys.length; i++) {
+        if (!newProps.hasOwnProperty(objectKeys[i])) {
+          leftOvers.push(objectKeys[i])
         }
       }
     }
@@ -116,9 +120,10 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
-    for (let filteredPropsKey in filteredProps) {
-      if (toFilter.indexOf(filteredPropsKey) > -1) {
-        delete filteredProps[filteredPropsKey]
+    objectKeys = Object.keys(filteredProps)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (toFilter.indexOf(objectKeys[i]) > -1) {
+        delete filteredProps[objectKeys[i]]
       }
     }
 
