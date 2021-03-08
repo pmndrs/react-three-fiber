@@ -14,11 +14,7 @@
     "outDir": "dist",
     "resolveJsonModule": true,
     "noImplicitThis": false,
-    "baseUrl": "./src",
-    "paths": {
-      "react-three-fiber": ["./"]
-    }
+    "baseUrl": "./",
   },
-  "include": ["./src", "tests"],
-  "exclude": ["./node_modules/**/*"]
+  "include": ["packages/*/src/**/*"]
 }

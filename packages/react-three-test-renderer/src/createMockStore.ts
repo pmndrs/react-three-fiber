@@ -1,154 +1,71 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
-import { Instance, InstanceProps } from './renderer'
 
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
+import { Instance, InstanceProps, LocalState } from 'react-three-fiber/src/core/renderer'
+import {
+  isOrthographicCamera,
+  RootState,
+  PixelRatio,
+  Camera,
+  Size,
+  RenderCallback,
+  StoreProps,
+  InternalState,
+  Events,
+} from 'react-three-fiber/src/core/store'
+
+type MockRootState = Omit<RootState, 'gl' | 'scene' | 'onCreated' | 'internal' | 'set' | 'get'> & {
+  gl: {}
+  scene: MockScene
+  internal: Omit<InternalState, 'set' | 'lastProps'> & {
+    set: SetState<MockRootState>
+    lastProps: MockStoreProps
+  }
+  set: SetState<MockRootState>
+  get: GetState<MockRootState>
+  onCreated?: (props: MockRootState) => Promise<any> | void
 }
 
-export type Subscription = {
-  ref: React.MutableRefObject<RenderCallback>
-  priority: number
+export type MockStoreProps = Omit<StoreProps, 'onCreated' | 'gl'> & {
+  onCreated?: (props: MockRootState) => Promise<any> | void
+  gl: {}
 }
 
-export type PixelRatio = number | [min: number, max: number]
-export type Size = { width: number; height: number }
-export type Viewport = Size & {
-  initialPixelRatio: number
-  pixelRatio: number
-  factor: number
-  distance: number
-  aspect: number
-}
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type RenderCallback = (state: RootState, delta: number) => void
+export type MockUseStoreState = UseStore<MockRootState>
 
-export type Performance = {
-  current: number
-  min: number
-  max: number
-  debounce: number
-  regress: () => void
+type MockInstance = Omit<Instance, '__r3f'> & {
+  __r3f: Omit<LocalState, 'root' | 'objects'> & {
+    root: MockUseStoreState
+    objects: MockSceneChild[]
+  }
 }
 
-export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
-  def && !!(def as THREE.WebGLRenderer).render
-export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
-  def && (def as THREE.OrthographicCamera).isOrthographicCamera
-
-export type InternalState = {
-  manual: number
-  frames: number
-  lastProps: StoreProps
-  events: Events
-
-  interaction: THREE.Object3D[]
-  subscribers: Subscription[]
-  captured: Intersection[] | undefined
-  initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
-
-  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
-}
-
-export type Events = {
-  click: EventListenerOrEventListenerObject
-  contextmenu: EventListenerOrEventListenerObject
-  dblclick: EventListenerOrEventListenerObject
-  wheel: EventListenerOrEventListenerObject
-  pointerdown: EventListenerOrEventListenerObject
-  pointerup: EventListenerOrEventListenerObject
-  pointerleave: EventListenerOrEventListenerObject
-  pointermove: EventListenerOrEventListenerObject
-  lostpointercapture: EventListenerOrEventListenerObject
-}
-
-export type RootState = {
-  gl: THREE.WebGLRenderer
-  scene: THREE.Scene & Instance
-  camera: Camera
-  raycaster: THREE.Raycaster
-  mouse: THREE.Vector2
-  clock: THREE.Clock
-
-  vr: boolean
-  noninteractive: boolean
-  linear: boolean
-  frameloop: boolean
-  updateCamera: boolean
-  performance: Performance
-
-  size: Size
-  viewport: Viewport & {
-    getCurrentViewport: (
-      camera: Camera,
-      target: THREE.Vector3,
-      size: Size,
-    ) => Omit<Viewport, 'pixelRatio' | 'initialPixelRatio'>
+export type MockSceneChild = Omit<THREE.Object3D, 'children'> &
+  MockInstance & {
+    children: MockSceneChild[]
   }
 
-  set: SetState<RootState>
-  get: GetState<RootState>
-  invalidate: () => void
-  setSize: (width: number, height: number) => void
-  setCamera: (camera: Camera) => void
-  setPixelRatio: (pixelRatio: PixelRatio) => void
-  onCreated?: (props: RootState) => void
-  onPointerMissed?: () => void
+export type MockScene = Omit<THREE.Scene, 'children'> &
+  MockInstance & {
+    children: MockSceneChild[]
+  }
 
-  internal: InternalState
-}
+const context = React.createContext<MockUseStoreState>({} as MockUseStoreState)
 
-export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX: number; offsetY: number }
-
-export type StoreProps = {
-  gl: THREE.WebGLRenderer
-  size: Size
-  vr?: boolean
-  shadows?: boolean | Partial<THREE.WebGLShadowMap>
-  linear?: boolean
-  orthographic?: boolean
-  noninteractive?: boolean
-  updateCamera?: boolean
-  frameloop?: boolean
-  performance?: Partial<Omit<Performance, 'regress'>>
-  pixelRatio?: PixelRatio
-  clock?: THREE.Clock
-  raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
-  camera?:
-    | Camera
-    | Partial<
-        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-      >
-  onCreated?: (props: RootState) => void
-  onPointerMissed?: () => void
-}
-
-const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
-
-const createStore = (
+const createMockStore = (
   applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
-  invalidate: (state?: boolean | RootState, frames?: number) => void,
-  props: StoreProps,
-): UseStore<RootState> => {
+  props: MockStoreProps,
+): MockUseStoreState => {
   const {
-    gl,
     size,
     vr = false,
     noninteractive = false,
-    shadows = false,
     linear = false,
     orthographic = false,
-
     frameloop = true,
     updateCamera = true,
-
     pixelRatio = 1,
     performance,
     clock = new THREE.Clock(),
@@ -158,22 +75,11 @@ const createStore = (
     onPointerMissed,
   } = props
 
-  // Set shadowmap
-  if (shadows) {
-    gl.shadowMap.enabled = true
-    if (typeof shadows === 'object') Object.assign(gl.shadowMap, shadows)
-    else gl.shadowMap.type = THREE.PCFSoftShadowMap
-  }
-
-  // Set color management
-  if (!linear) {
-    gl.toneMapping = THREE.ACESFilmicToneMapping
-    gl.outputEncoding = THREE.sRGBEncoding
-  }
-
   // Create custom raycaster
   const raycaster = new THREE.Raycaster()
-  if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
+  if (raycastOptions) {
+    applyProps(raycaster as any, raycastOptions, {})
+  }
 
   // Create default camera
   const isCamera = cameraOptions instanceof THREE.Camera
@@ -190,10 +96,10 @@ const createStore = (
     camera.lookAt(0, 0, 0)
   }
 
-  const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
+  const scene = new THREE.Scene() as MockScene
   scene.__r3f = {
     memoizedProps: {},
-    root: {} as UseStore<RootState>,
+    root: {} as MockUseStoreState,
     objects: [],
   }
 
@@ -204,7 +110,7 @@ const createStore = (
       : pixelRatio
   }
 
-  const rootState = create<RootState>((set, get) => {
+  const rootState = create<MockRootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
     function getCurrentViewport(
@@ -230,7 +136,7 @@ const createStore = (
       set((state) => ({ performance: { ...state.performance, current } }))
 
     return {
-      gl,
+      gl: {},
       scene,
       camera,
       raycaster,
@@ -277,20 +183,24 @@ const createStore = (
 
       set,
       get,
-      invalidate: (frames?: number) => invalidate(get(), frames),
+      invalidate: (frames?: number) => {},
+      intersect: (event?: any) => {},
       setSize: (width: number, height: number) => {
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setCamera: (camera: Camera) => set({ camera }),
-      setPixelRatio: (pixelRatio: PixelRatio) =>
-        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } })),
+      setCamera: (camera: Camera) => {
+        set({ camera })
+      },
+      setPixelRatio: (pixelRatio: PixelRatio) => {
+        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } }))
+      },
 
       internal: {
         manual: 0,
         frames: 0,
         lastProps: props,
-        events: (undefined as unknown) as Events,
+        events: {} as Events,
 
         interaction: [],
         subscribers: [],
@@ -298,6 +208,7 @@ const createStore = (
         initialClick: [0, 0],
         initialHits: [],
 
+        set,
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands
@@ -305,8 +216,8 @@ const createStore = (
           // As long as this flag is positive (there could be multiple render subscription)
           // ..there can be no internal rendering at all
           if (priority) internal.manual++
-          // Register subscriber
-          internal.subscribers.push({ ref, priority })
+
+          internal.subscribers.push({ ref, priority: priority })
           // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
           internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
           return () => {
@@ -324,7 +235,8 @@ const createStore = (
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(
     () => {
-      const { camera, size, viewport, updateCamera } = rootState.getState()
+      const { camera, size, updateCamera } = rootState.getState()
+
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Sometimes automatic default camera adjustment isn't wanted behaviour
       if (updateCamera) {
@@ -337,13 +249,8 @@ const createStore = (
           camera.aspect = size.width / size.height
         }
         camera.updateProjectionMatrix()
-        // https://github.com/pmndrs/react-three-fiber/issues/178
-        // Update matrix world since the renderer is a frame late
         camera.updateMatrixWorld()
       }
-      // Update renderer
-      gl.setPixelRatio(viewport.pixelRatio)
-      gl.setSize(size.width, size.height)
     },
     (state) => [state.viewport.pixelRatio, state.size],
     shallow,
@@ -351,13 +258,12 @@ const createStore = (
 
   const state = rootState.getState()
   // Update size
-  if (size) state.setSize(size.width, size.height)
-
-  // Invalidate on any change
-  rootState.subscribe((state) => invalidate(state))
+  if (size) {
+    state.setSize(size.width, size.height)
+  }
 
   // Return root state
   return rootState
 }
 
-export { createStore, context }
+export { createMockStore, context }

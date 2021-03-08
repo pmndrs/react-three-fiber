@@ -1,10 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 
-import { version } from '../../package.json'
-
-import { is } from '../core/is'
-import { createRenderer, Root } from '../core/renderer'
+import { is } from 'react-three-fiber/src/core/is'
+import { createRenderer, Root } from 'react-three-fiber/src/core/renderer'
 
 import {
   createMockStore,
@@ -31,8 +29,6 @@ interface ReactThreeTestRendererSceneGraphItem {
   children: ReactThreeTestRendererSceneGraphItem[] | null
 }
 
-export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneGraphItem[]
-
 interface ReactThreeTestRendererTreeNode {
   type: string
   props: {
@@ -40,6 +36,8 @@ interface ReactThreeTestRendererTreeNode {
   }
   children: ReactThreeTestRendererTreeNode[]
 }
+
+export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneGraphItem[]
 
 export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode
 
@@ -170,7 +168,8 @@ const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneGraphItem[]
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: 'react-three-test-renderer',
-  version,
+  // @ts-expect-error it's a babel macro
+  version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
 const create = (element: React.ReactNode, options?: ReactThreeTestRendereOptions) => {
