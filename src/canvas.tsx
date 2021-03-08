@@ -443,7 +443,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       // Get fresh intersects
       const intersections: Intersection[] = intersect(filter)
       // If the interaction is captured take that into account, the captured event has to be part of the intersects
-      if (state.current.captured && event.type !== 'click' && event.type !== 'wheel') {
+      if (state.current.captured && event.type && event.type !== 'click' && event.type !== 'wheel') {
         state.current.captured.forEach((captured) => {
           if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
         })
