@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import create, { SetState, UseStore } from 'zustand'
+import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 
 import { Instance, InstanceProps, LocalState } from '../core/renderer'
@@ -13,15 +13,18 @@ import {
   RenderCallback,
   StoreProps,
   InternalState,
+  Events,
 } from '../core/store'
 
-type MockRootState = Omit<RootState, 'gl' | 'scene' | 'onCreated' | 'internal'> & {
+type MockRootState = Omit<RootState, 'gl' | 'scene' | 'onCreated' | 'internal' | 'set' | 'get'> & {
   gl: {}
   scene: MockScene
   internal: Omit<InternalState, 'set' | 'lastProps'> & {
     set: SetState<MockRootState>
     lastProps: MockStoreProps
   }
+  set: SetState<MockRootState>
+  get: GetState<MockRootState>
   onCreated?: (props: MockRootState) => Promise<any> | void
 }
 
@@ -53,7 +56,7 @@ const context = React.createContext<MockUseStoreState>({} as MockUseStoreState)
 
 const createMockStore = (
   applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
-  props: MockStoreProps
+  props: MockStoreProps,
 ): MockUseStoreState => {
   const {
     size,
@@ -64,6 +67,8 @@ const createMockStore = (
     frameloop = true,
     updateCamera = true,
     pixelRatio = 1,
+    performance,
+    clock = new THREE.Clock(),
     raycaster: raycastOptions,
     camera: cameraOptions,
     onCreated,
@@ -77,16 +82,19 @@ const createMockStore = (
   }
 
   // Create default camera
-  const camera = orthographic
+  const isCamera = cameraOptions instanceof THREE.Camera
+  const camera = isCamera
+    ? (cameraOptions as Camera)
+    : orthographic
     ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
     : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-  camera.position.z = 5
-
-  if (cameraOptions) {
-    applyProps(camera as any, cameraOptions as any, {})
+  if (!isCamera) {
+    camera.position.z = 5
+    if (orthographic) camera.zoom = 100
+    if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
+    // Always look at center by default
+    camera.lookAt(0, 0, 0)
   }
-  // Always look at [0, 0, 0]
-  camera.lookAt(0, 0, 0)
 
   const scene = new THREE.Scene() as MockScene
   scene.__r3f = {
@@ -95,6 +103,7 @@ const createMockStore = (
     objects: [],
   }
 
+  const initialPixelRatio = setPixelRatio(pixelRatio)
   function setPixelRatio(pixelRatio: PixelRatio) {
     return Array.isArray(pixelRatio)
       ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
@@ -107,7 +116,7 @@ const createMockStore = (
     function getCurrentViewport(
       camera: Camera = get().camera,
       target: THREE.Vector3 = defaultTarget,
-      size: Size = get().size
+      size: Size = get().size,
     ) {
       const { width, height } = size
       const aspect = width / height
@@ -122,13 +131,17 @@ const createMockStore = (
       }
     }
 
+    let performanceTimeout: number | undefined = undefined
+    const setPerformanceCurrent = (current: number) =>
+      set((state) => ({ performance: { ...state.performance, current } }))
+
     return {
       gl: {},
       scene,
       camera,
       raycaster,
+      clock,
       mouse: new THREE.Vector2(),
-      clock: new THREE.Clock(),
 
       vr,
       noninteractive,
@@ -138,9 +151,28 @@ const createMockStore = (
       onCreated,
       onPointerMissed,
 
+      performance: {
+        current: 1,
+        min: 0.5,
+        max: 1,
+        debounce: 200,
+        ...performance,
+        regress: () => {
+          clearTimeout(performanceTimeout)
+          // Set lower bound performance
+          setPerformanceCurrent(get().performance.min)
+          // Go back to upper bound performance after a while unless something regresses meanwhile
+          performanceTimeout = setTimeout(
+            () => setPerformanceCurrent(get().performance.max),
+            get().performance.debounce,
+          )
+        },
+      },
+
       size: { width: 0, height: 0 },
       viewport: {
-        pixelRatio: 1,
+        initialPixelRatio,
+        pixelRatio: initialPixelRatio,
         width: 0,
         height: 0,
         aspect: 0,
@@ -149,6 +181,8 @@ const createMockStore = (
         getCurrentViewport,
       },
 
+      set,
+      get,
       invalidate: (frames?: number) => {},
       intersect: (event?: any) => {},
       setSize: (width: number, height: number) => {
@@ -166,6 +200,7 @@ const createMockStore = (
         manual: 0,
         frames: 0,
         lastProps: props,
+        events: {} as Events,
 
         interaction: [],
         subscribers: [],
@@ -200,7 +235,7 @@ const createMockStore = (
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(
     () => {
-      const { camera, size, viewport, updateCamera } = rootState.getState()
+      const { camera, size, updateCamera } = rootState.getState()
 
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Sometimes automatic default camera adjustment isn't wanted behaviour
@@ -218,16 +253,10 @@ const createMockStore = (
       }
     },
     (state) => [state.viewport.pixelRatio, state.size],
-    shallow
+    shallow,
   )
 
   const state = rootState.getState()
-
-  // Update pixelratio
-  if (pixelRatio) {
-    state.setPixelRatio(pixelRatio)
-  }
-
   // Update size
   if (size) {
     state.setSize(size.width, size.height)

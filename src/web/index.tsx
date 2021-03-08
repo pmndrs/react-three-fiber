@@ -28,7 +28,7 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, ...props }: RenderProps,
+  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
 ): THREE.Scene {
   let root = roots.get(canvas)
   let fiber = root?.fiber
