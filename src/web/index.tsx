@@ -1,11 +1,12 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
 import { createEvents } from './events'
 import { Canvas } from './Canvas'
+import { UseStore } from 'zustand'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -24,7 +25,7 @@ const createRendererInstance = (
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
 
-function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps) {
+function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size, concurrent, ...props }: RenderProps): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
@@ -60,7 +61,7 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     // Create and register events
     const events = createEvents(store)
     Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
-    state.internal.set((state) => ({ internal: { ...state.internal, events } }))
+    state.set((state) => ({ internal: { ...state.internal, events } }))
 
     // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
@@ -72,7 +73,7 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
 
   if (store && fiber) {
     reconciler.updateContainer(<context.Provider value={store} children={element} />, fiber, null, () => undefined)
-    return reconciler.getPublicRootInstance(fiber)
+    return store
   } else {
     throw 'R3F: Error creating fiber-root!'
   }

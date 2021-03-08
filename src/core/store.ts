@@ -16,7 +16,13 @@ export type Subscription = {
 
 export type PixelRatio = number | [min: number, max: number]
 export type Size = { width: number; height: number }
-export type Viewport = Size & { pixelRatio: number; factor: number; distance: number; aspect: number }
+export type Viewport = Size & {
+  initialPixelRatio: number
+  pixelRatio: number
+  factor: number
+  distance: number
+  aspect: number
+}
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type RenderCallback = (state: RootState, delta: number) => void
 
@@ -62,9 +68,15 @@ export type RootState = {
 
   size: Size
   viewport: Viewport & {
-    getCurrentViewport: (camera: Camera, target: THREE.Vector3, size: Size) => Omit<Viewport, 'pixelRatio'>
+    getCurrentViewport: (
+      camera: Camera,
+      target: THREE.Vector3,
+      size: Size,
+    ) => Omit<Viewport, 'pixelRatio' | 'initialPixelRatio'>
   }
 
+  set: SetState<RootState>
+  get: GetState<RootState>
   invalidate: () => void
   setSize: (width: number, height: number) => void
   setCamera: (camera: Camera) => void
@@ -84,8 +96,6 @@ export type RootState = {
     initialClick: [x: number, y: number]
     initialHits: THREE.Object3D[]
 
-    set: SetState<RootState>
-    get: GetState<RootState>
     subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
   }
 }
@@ -105,12 +115,15 @@ export type StoreProps = {
   frameloop?: boolean
   performance?: Partial<Omit<Performance, 'regress'>>
   pixelRatio?: PixelRatio
+  clock?: THREE.Clock,
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
-  camera?: Partial<
-    ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-      ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-      ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-  >
+  camera?:
+    | Camera
+    | Partial<
+        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
+          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
+          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+      >
   onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 }
@@ -136,6 +149,7 @@ const createStore = (
 
     pixelRatio = 1,
     performance,
+    clock = new THREE.Clock(),
     raycaster: raycastOptions,
     camera: cameraOptions,
     onCreated,
@@ -160,14 +174,19 @@ const createStore = (
   if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
 
   // Create default camera
-  const camera = orthographic
+  const isCamera = cameraOptions instanceof THREE.Camera
+  const camera = isCamera
+    ? (cameraOptions as Camera)
+    : orthographic
     ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
     : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-  camera.position.z = 5
-  if (orthographic) camera.zoom = 100
-  if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
-  // Always look at [0, 0, 0]
-  camera.lookAt(0, 0, 0)
+  if (!isCamera) {
+    camera.position.z = 5
+    if (orthographic) camera.zoom = 100
+    if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
+    // Always look at center by default
+    camera.lookAt(0, 0, 0)
+  }
 
   const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
   scene.__r3f = {
@@ -175,6 +194,7 @@ const createStore = (
     objects: [],
   }
 
+  const initialPixelRatio = setPixelRatio(pixelRatio)
   function setPixelRatio(pixelRatio: PixelRatio) {
     return Array.isArray(pixelRatio)
       ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
@@ -211,8 +231,8 @@ const createStore = (
       scene,
       camera,
       raycaster,
+      clock,
       mouse: new THREE.Vector2(),
-      clock: new THREE.Clock(),
 
       vr,
       noninteractive,
@@ -242,7 +262,8 @@ const createStore = (
 
       size: { width: 0, height: 0 },
       viewport: {
-        pixelRatio: 1,
+        initialPixelRatio,
+        pixelRatio: initialPixelRatio,
         width: 0,
         height: 0,
         aspect: 0,
@@ -251,6 +272,8 @@ const createStore = (
         getCurrentViewport,
       },
 
+      set,
+      get,
       invalidate: (frames?: number) => invalidate(get(), frames),
       setSize: (width: number, height: number) => {
         const size = { width, height }
@@ -272,8 +295,6 @@ const createStore = (
         initialClick: [0, 0],
         initialHits: [],
 
-        set,
-        get,
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands
@@ -326,8 +347,6 @@ const createStore = (
   )
 
   const state = rootState.getState()
-  // Update pixelratio
-  if (pixelRatio) state.setPixelRatio(pixelRatio)
   // Update size
   if (size) state.setSize(size.width, size.height)
 

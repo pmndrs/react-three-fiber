@@ -7,8 +7,8 @@ import { OrbitControls } from 'three-stdlib'
 extend({ OrbitControls })
 
 const Orbit = memo(() => {
-  const camera = useThree((state) => state.camera)
   const gl = useThree((state) => state.gl)
+  const camera = useThree((state) => state.camera)
   const regress = useThree((state) => state.performance.regress)
   const ref = useRef<OrbitControls>()
   useEffect(() => {
@@ -24,12 +24,35 @@ const Orbit = memo(() => {
 })
 
 function AdaptivePixelRatio() {
+  const gl = useThree((state) => state.gl)
   const current = useThree((state) => state.performance.current)
+  const initialPixelRatio = useThree((state) => state.viewport.initialPixelRatio)
   const setPixelRatio = useThree((state) => state.setPixelRatio)
+  // Restore initial pixelratio on unmount
+  useEffect(
+    () => () => {
+      setPixelRatio(initialPixelRatio)
+      gl.domElement.style.imageRendering = 'auto'
+    },
+    [],
+  )
+  // Set adaptive pixelratio
   useEffect(() => {
-    setPixelRatio(current * 2)
-    document.body.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
+    setPixelRatio(current * initialPixelRatio)
+    gl.domElement.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
   }, [current])
+  return null
+}
+
+function AdaptiveEvents() {
+  const get = useThree((state) => state.get)
+  const set = useThree((state) => state.set)
+  const current = useThree((state) => state.performance.current)
+  useEffect(() => {
+    const noninteractive = get().noninteractive
+    return () => set({ noninteractive })
+  }, [])
+  useEffect(() => set({ noninteractive: current < 1 }), [current])
   return null
 }
 
@@ -59,7 +82,7 @@ export default function App() {
           onPointerOut={() => setHovered(false)}
           onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
           <sphereGeometry args={[0.5, 32, 32]} />
-          <meshStandardMaterial color={showCube ? "white" : "red"} />
+          <meshStandardMaterial color={showCube ? 'white' : 'red'} />
         </mesh>
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
@@ -75,6 +98,7 @@ export default function App() {
       </group>
       <Orbit />
       <AdaptivePixelRatio />
+      <AdaptiveEvents />
     </>
   )
 }

@@ -473,7 +473,8 @@ function createRenderer<TCanvas>(
     hideTextInstance() {
       throw new Error('Text is not allowed in the react-three-fiber tree.')
     },
-    getPublicInstance(instance: any) {
+    getPublicInstance(instance: Instance) {
+      // TODO: might fix switchInstance (?)
       return instance
     },
     getRootHostContext() {
