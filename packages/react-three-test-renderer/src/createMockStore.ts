@@ -7,7 +7,7 @@ import { Instance, InstanceProps, LocalState } from 'react-three-fiber/src/core/
 import {
   isOrthographicCamera,
   RootState,
-  PixelRatio,
+  Dpr,
   Camera,
   Size,
   RenderCallback,
@@ -61,12 +61,11 @@ const createMockStore = (
   const {
     size,
     vr = false,
-    noninteractive = false,
     linear = false,
     orthographic = false,
     frameloop = true,
-    updateCamera = true,
-    pixelRatio = 1,
+    events = true,
+    dpr = 1,
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
@@ -103,12 +102,10 @@ const createMockStore = (
     objects: [],
   }
 
-  const initialPixelRatio = setPixelRatio(pixelRatio)
-  function setPixelRatio(pixelRatio: PixelRatio) {
-    return Array.isArray(pixelRatio)
-      ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
-      : pixelRatio
+  function setDpr(dpr: Dpr) {
+    return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
   }
+  const initialDpr = setDpr(dpr)
 
   const rootState = create<MockRootState>((set, get) => {
     const position = new THREE.Vector3()
@@ -144,10 +141,9 @@ const createMockStore = (
       mouse: new THREE.Vector2(),
 
       vr,
-      noninteractive,
+      events,
       linear,
       frameloop,
-      updateCamera,
       onCreated,
       onPointerMissed,
 
@@ -171,8 +167,8 @@ const createMockStore = (
 
       size: { width: 0, height: 0 },
       viewport: {
-        initialPixelRatio,
-        pixelRatio: initialPixelRatio,
+        initialDpr,
+        dpr: initialDpr,
         width: 0,
         height: 0,
         aspect: 0,
@@ -192,12 +188,11 @@ const createMockStore = (
       setCamera: (camera: Camera) => {
         set({ camera })
       },
-      setPixelRatio: (pixelRatio: PixelRatio) => {
-        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } }))
-      },
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
 
       internal: {
-        manual: 0,
+        active: false,
+        priority: 0,
         frames: 0,
         lastProps: props,
         events: {} as Events,
@@ -215,15 +210,15 @@ const createMockStore = (
           // For that reason we switch off automatic rendering and increase the manual flag
           // As long as this flag is positive (there could be multiple render subscription)
           // ..there can be no internal rendering at all
-          if (priority) internal.manual++
-
-          internal.subscribers.push({ ref, priority: priority })
+          if (priority) internal.priority++
+          // Register subscriber
+          internal.subscribers.push({ ref, priority })
           // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
           internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
           return () => {
             if (internal?.subscribers) {
               // Decrease manual flag if this subscription had a priority
-              if (priority) internal.manual--
+              if (priority) internal.priority--
               internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
             }
           }
@@ -235,11 +230,10 @@ const createMockStore = (
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(
     () => {
-      const { camera, size, updateCamera } = rootState.getState()
-
+      const { camera, size, viewport, internal } = rootState.getState()
       // https://github.com/pmndrs/react-three-fiber/issues/92
-      // Sometimes automatic default camera adjustment isn't wanted behaviour
-      if (updateCamera) {
+      // Do not mess with the camera if it belongs to the user
+      if (!(internal.lastProps.camera instanceof THREE.Camera)) {
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
@@ -249,10 +243,12 @@ const createMockStore = (
           camera.aspect = size.width / size.height
         }
         camera.updateProjectionMatrix()
+        // https://github.com/pmndrs/react-three-fiber/issues/178
+        // Update matrix world since the renderer is a frame late
         camera.updateMatrixWorld()
       }
     },
-    (state) => [state.viewport.pixelRatio, state.size],
+    (state) => [state.viewport.dpr, state.size],
     shallow,
   )
 

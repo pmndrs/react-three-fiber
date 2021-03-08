@@ -62,8 +62,7 @@ const render = <TRootNode,>(
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.pixelRatio !== undefined && !is.equ(lastProps.pixelRatio, props.pixelRatio))
-      state.setPixelRatio(props.pixelRatio)
+    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
     // Check size
     if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 
@@ -87,11 +86,16 @@ const render = <TRootNode,>(
   }
 
   if (store && fiber) {
-    reconciler.updateContainer(<context.Provider value={store} children={element} />, fiber, null, () => undefined)
+    reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
     return store!.getState().scene as THREE.Scene
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
+}
+
+function Provider({ store, element }: { store: MockUseStoreState; element: React.ReactNode }) {
+  React.useEffect(() => store.getState().set((state) => ({ internal: { ...state.internal, active: true } })), [])
+  return <context.Provider value={store}>{element}</context.Provider>
 }
 
 const unmount = <TRootNode,>(id: TRootNode) => {
