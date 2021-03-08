@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { name as rendererPackageName, version } from '../../package.json'
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
-import { createEvents, DomEvent } from './events'
+import { createEvents } from './events'
 import { Canvas } from './Canvas'
+import { UseStore } from 'zustand'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -19,7 +19,7 @@ const { reconciler, applyProps } = createRenderer(roots, invalidate)
 
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
-  canvas: HTMLCanvasElement
+  canvas: HTMLCanvasElement,
 ) =>
   isRenderer(gl as THREE.WebGLRenderer)
     ? (gl as THREE.WebGLRenderer)
@@ -28,8 +28,8 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } }
-) {
+  { gl, size, concurrent, ...props }: RenderProps,
+): THREE.Scene {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
@@ -58,20 +58,21 @@ function render(
 
   if (!fiber) {
     // If no root has been found, make one
+
+    // Create store
     store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
-
+    const state = store.getState()
+    // Create and register events
     const events = createEvents(store)
-    canvas.addEventListener('pointermove', (e) => events.onPointerMove((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerdown', (e) => events.onPointerDown((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerup', (e) => events.onPointerUp((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('pointerleave', (e) => events.onPointerLeave((e as unknown) as DomEvent), { passive: true })
-    canvas.addEventListener('click', (e) => events.onClick((e as unknown) as DomEvent), { passive: true })
+    Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
+    state.set((state) => ({ internal: { ...state.internal, events } }))
 
+    // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
     // Kick off render loop
-    store.getState().invalidate()
+    state.invalidate()
   }
 
   if (store && fiber) {
@@ -89,6 +90,7 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
+        Object.entries(state.internal.events).forEach(([name, event]) => canvas.removeEventListener(name, event))
         if (state.gl.renderLists) state.gl.renderLists.dispose()
         if (state.gl.forceContextLoss) state.gl.forceContextLoss()
         dispose(state.gl)
@@ -119,8 +121,9 @@ function createPortal(children: React.ReactNode, container: any, impl?: any, key
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName,
-  version,
+  rendererPackageName: 'react-three-fiber',
+  // @ts-ignore
+  version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
 const testutil_act = reconciler.act

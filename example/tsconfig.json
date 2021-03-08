@@ -16,8 +16,8 @@
     "noEmit": true,
     "jsx": "react",
     "paths": {
-      "react-three-fiber": ["../src/web/index.tsx"],
-    },
+      "react-three-fiber": ["../src/web/index.tsx"]
+    }
   },
   "include": ["./src"]
 }

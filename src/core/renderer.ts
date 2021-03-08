@@ -81,7 +81,7 @@ const filterProps = ['children', 'key', 'ref']
 
 function createRenderer<TCanvas, TRoot = Root>(
   roots: Map<TCanvas, TRoot>,
-  invalidate: (state?: boolean | RootState, frames?: number) => void
+  invalidate: (state?: boolean | RootState, frames?: number) => void,
 ) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
@@ -139,7 +139,7 @@ function createRenderer<TCanvas, TRoot = Root>(
 
     const toFilter = [...sameProps, ...filterProps]
     // Instances use "object" as a reserved identifier
-    if (instance.__r3f.instance) toFilter.push('object')
+    if (instance.__r3f?.instance) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
@@ -184,9 +184,7 @@ function createRenderer<TCanvas, TRoot = Root>(
           // Special treatment for objects with support for set/copy
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
             // If value is an array it has got to be the set function
-            if (Array.isArray(value)) {
-              targetProp.set(...value)
-            }
+            if (Array.isArray(value)) targetProp.set(...value)
             // Test again target.copy(class) next ...
             else if (
               targetProp.copy &&
@@ -199,10 +197,14 @@ function createRenderer<TCanvas, TRoot = Root>(
             // If nothing else fits, just set the single value, ignore undefined
             // https://github.com/react-spring/react-three-fiber/issues/274
             else if (value !== undefined) {
-              targetProp.set(value)
+              const isColor = targetProp instanceof THREE.Color
+              // Allow setting array scalars
+              if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
+              // Otherwise just set ...
+              else targetProp.set(value)
               // Auto-convert sRGB colors, for now ...
               // https://github.com/react-spring/react-three-fiber/issues/344
-              if (!rootState.linear && targetProp instanceof THREE.Color) targetProp.convertSRGBToLinear()
+              if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
             }
             // Else, just overwrite the value
           } else {
@@ -225,13 +227,14 @@ function createRenderer<TCanvas, TRoot = Root>(
       // Preemptively delete the instance from the containers interaction
       if (accumulative && root && instance.raycast && localState.handlers) {
         localState.handlers = undefined
-        const index = rootState.internal.interaction.indexOf(instance)
+        const index = rootState.internal.interaction.indexOf((instance as unknown) as THREE.Object3D)
         if (index > -1) rootState.internal.interaction.splice(index, 1)
       }
 
       // Prep interaction handlers
       if (handlers.length) {
-        if (accumulative && root && instance.raycast) rootState.internal.interaction.push(instance)
+        if (accumulative && root && instance.raycast)
+          rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => {
           // @ts-ignore
@@ -468,7 +471,7 @@ function createRenderer<TCanvas, TRoot = Root>(
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
-      fiber: Reconciler.Fiber
+      fiber: Reconciler.Fiber,
     ) {
       if (instance.__instance && newProps.object && newProps.object !== instance) {
         // <instance object={...} /> where the object reference has changed
@@ -481,7 +484,7 @@ function createRenderer<TCanvas, TRoot = Root>(
         const hasNewArgs = argsNew.some((value: any, index: number) =>
           is.obj(value)
             ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
-            : value !== argsOld[index]
+            : value !== argsOld[index],
         )
         if (hasNewArgs) {
           // Next we create a new instance and append it again
@@ -506,11 +509,10 @@ function createRenderer<TCanvas, TRoot = Root>(
       }
     },
     hideTextInstance() {
-      throw new Error(
-        'Text is not allowed in the react-three-fibre tree. You may have extraneous whitespace between components.'
-      )
+      throw new Error('Text is not allowed in the react-three-fiber tree.')
     },
-    getPublicInstance(instance: any) {
+    getPublicInstance(instance: Instance) {
+      // TODO: might fix switchInstance (?)
       return instance
     },
     getRootHostContext() {
@@ -529,7 +531,7 @@ function createRenderer<TCanvas, TRoot = Root>(
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       if (instance.raycast && instance.__r3f.handlers)
-        instance.__r3f.root.getState().internal.interaction.push(instance)
+        instance.__r3f.root.getState().internal.interaction.push((instance as unknown) as THREE.Object3D)
     },
     prepareUpdate() {
       return emptyObject
