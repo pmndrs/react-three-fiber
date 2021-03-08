@@ -36,7 +36,7 @@ export function render(state: RootState, timestamp: number, repeat = 0, runGloba
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   repeat += state.frameloop ? 1 : state.internal.frames
   // Render content
-  if (!state.internal.manual && state.gl.render) state.gl.render(state.scene, state.camera)
+  if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Run global after-effects
   if (runGlobalEffects) for (i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
 

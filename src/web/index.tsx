@@ -37,8 +37,8 @@ function render(element: React.ReactNode, canvas: HTMLCanvasElement, { gl, size,
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.pixelRatio !== undefined && !is.equ(lastProps.pixelRatio, props.pixelRatio))
-      state.setPixelRatio(props.pixelRatio)
+    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr))
+      state.setDpr(props.dpr)
     // Check size
     if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 

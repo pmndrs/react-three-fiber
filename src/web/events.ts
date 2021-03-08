@@ -46,9 +46,9 @@ function createEvents(store: UseStore<RootState>): Events {
   /** Intersects interaction objects using the event input */
   function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
     const state = store.getState()
-    const { raycaster, noninteractive, internal } = state
+    const { raycaster, events, internal } = state
     // Skip event handling when noEvents is set
-    if (noninteractive) return []
+    if (!events) return []
 
     const seen = new Set<string>()
     const hits: Intersection[] = []

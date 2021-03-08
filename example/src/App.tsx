@@ -26,19 +26,19 @@ const Orbit = memo(() => {
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
   const current = useThree((state) => state.performance.current)
-  const initialPixelRatio = useThree((state) => state.viewport.initialPixelRatio)
-  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  const initialDpr = useThree((state) => state.viewport.initialDpr)
+  const setDpr = useThree((state) => state.setDpr)
   // Restore initial pixelratio on unmount
   useEffect(
     () => () => {
-      setPixelRatio(initialPixelRatio)
+      setDpr(initialDpr)
       gl.domElement.style.imageRendering = 'auto'
     },
     [],
   )
   // Set adaptive pixelratio
   useEffect(() => {
-    setPixelRatio(current * initialPixelRatio)
+    setDpr(current * initialDpr)
     gl.domElement.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
   }, [current])
   return null
@@ -49,10 +49,10 @@ function AdaptiveEvents() {
   const set = useThree((state) => state.set)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
-    const noninteractive = get().noninteractive
-    return () => set({ noninteractive })
+    const events = get().events
+    return () => set({ events })
   }, [])
-  useEffect(() => set({ noninteractive: current < 1 }), [current])
+  useEffect(() => set({ events: current === 1 }), [current])
   return null
 }
 

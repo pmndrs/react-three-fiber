@@ -6,7 +6,8 @@ import App from './App'
 window.addEventListener('resize', () =>
   render(<App />, document.getElementById('canvas') as HTMLCanvasElement, {
     gl: { alpha: false },
-    pixelRatio: [1, 2],
+    dpr: [1, 2],
+    performance: { min: 0.1 },
     camera: { position: [0, 0, 5] },
     size: { width: window.innerWidth, height: window.innerHeight },
   }),
