@@ -30,7 +30,7 @@
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
-      "index.ts"
+      "index.tsx"
     ]
   },
   "scripts": {
