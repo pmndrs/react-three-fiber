@@ -14,11 +14,11 @@ export type Subscription = {
   priority: number
 }
 
-export type PixelRatio = number | [min: number, max: number]
+export type Dpr = number | [min: number, max: number]
 export type Size = { width: number; height: number }
 export type Viewport = Size & {
-  initialPixelRatio: number
-  pixelRatio: number
+  initialDpr: number
+  dpr: number
   factor: number
   distance: number
   aspect: number
@@ -40,7 +40,8 @@ export const isOrthographicCamera = (def: THREE.Camera): def is THREE.Orthograph
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type InternalState = {
-  manual: number
+  active: boolean
+  priority: number
   frames: number
   lastProps: StoreProps
   events: Events
@@ -75,27 +76,21 @@ export type RootState = {
   clock: THREE.Clock
 
   vr: boolean
-  noninteractive: boolean
+  events: boolean
   linear: boolean
   frameloop: boolean
-  updateCamera: boolean
   performance: Performance
 
   size: Size
   viewport: Viewport & {
-    getCurrentViewport: (
-      camera: Camera,
-      target: THREE.Vector3,
-      size: Size,
-    ) => Omit<Viewport, 'pixelRatio' | 'initialPixelRatio'>
+    getCurrentViewport: (camera: Camera, target: THREE.Vector3, size: Size) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
 
   set: SetState<RootState>
   get: GetState<RootState>
   invalidate: () => void
   setSize: (width: number, height: number) => void
-  setCamera: (camera: Camera) => void
-  setPixelRatio: (pixelRatio: PixelRatio) => void
+  setDpr: (dpr: Dpr) => void
   onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 
@@ -112,11 +107,10 @@ export type StoreProps = {
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   orthographic?: boolean
-  noninteractive?: boolean
-  updateCamera?: boolean
+  events?: boolean
   frameloop?: boolean
   performance?: Partial<Omit<Performance, 'regress'>>
-  pixelRatio?: PixelRatio
+  dpr?: Dpr
   clock?: THREE.Clock
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   camera?:
@@ -134,22 +128,19 @@ const context = React.createContext<UseStore<RootState>>((null as unknown) as Us
 
 const createStore = (
   applyProps: (instance: Instance, newProps: InstanceProps, oldProps?: InstanceProps, accumulative?: boolean) => void,
-  invalidate: (state?: boolean | RootState, frames?: number) => void,
+  invalidate: (state?: RootState) => void,
   props: StoreProps,
 ): UseStore<RootState> => {
   const {
     gl,
     size,
     vr = false,
-    noninteractive = false,
     shadows = false,
     linear = false,
     orthographic = false,
-
     frameloop = true,
-    updateCamera = true,
-
-    pixelRatio = 1,
+    events = true,
+    dpr = 1,
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
@@ -197,12 +188,10 @@ const createStore = (
     objects: [],
   }
 
-  const initialPixelRatio = setPixelRatio(pixelRatio)
-  function setPixelRatio(pixelRatio: PixelRatio) {
-    return Array.isArray(pixelRatio)
-      ? Math.max(Math.min(pixelRatio[0], window.devicePixelRatio), pixelRatio[1])
-      : pixelRatio
+  function setDpr(dpr: Dpr) {
+    return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
   }
+  const initialDpr = setDpr(dpr)
 
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
@@ -238,10 +227,9 @@ const createStore = (
       mouse: new THREE.Vector2(),
 
       vr,
-      noninteractive,
+      events,
       linear,
       frameloop,
-      updateCamera,
       onCreated,
       onPointerMissed,
 
@@ -265,8 +253,8 @@ const createStore = (
 
       size: { width: 0, height: 0 },
       viewport: {
-        initialPixelRatio,
-        pixelRatio: initialPixelRatio,
+        initialDpr,
+        dpr: initialDpr,
         width: 0,
         height: 0,
         aspect: 0,
@@ -277,17 +265,16 @@ const createStore = (
 
       set,
       get,
-      invalidate: (frames?: number) => invalidate(get(), frames),
+      invalidate: () => invalidate(get()),
       setSize: (width: number, height: number) => {
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setCamera: (camera: Camera) => set({ camera }),
-      setPixelRatio: (pixelRatio: PixelRatio) =>
-        set((state) => ({ viewport: { ...state.viewport, pixelRatio: setPixelRatio(pixelRatio) } })),
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
 
       internal: {
-        manual: 0,
+        active: false,
+        priority: 0,
         frames: 0,
         lastProps: props,
         events: (undefined as unknown) as Events,
@@ -304,7 +291,7 @@ const createStore = (
           // For that reason we switch off automatic rendering and increase the manual flag
           // As long as this flag is positive (there could be multiple render subscription)
           // ..there can be no internal rendering at all
-          if (priority) internal.manual++
+          if (priority) internal.priority++
           // Register subscriber
           internal.subscribers.push({ ref, priority })
           // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
@@ -312,7 +299,7 @@ const createStore = (
           return () => {
             if (internal?.subscribers) {
               // Decrease manual flag if this subscription had a priority
-              if (priority) internal.manual--
+              if (priority) internal.priority--
               internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
             }
           }
@@ -324,10 +311,10 @@ const createStore = (
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(
     () => {
-      const { camera, size, viewport, updateCamera } = rootState.getState()
+      const { camera, size, viewport, internal } = rootState.getState()
       // https://github.com/pmndrs/react-three-fiber/issues/92
-      // Sometimes automatic default camera adjustment isn't wanted behaviour
-      if (updateCamera) {
+      // Do not mess with the camera if it belongs to the user
+      if (!(internal.lastProps.camera instanceof THREE.Camera)) {
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
@@ -342,10 +329,10 @@ const createStore = (
         camera.updateMatrixWorld()
       }
       // Update renderer
-      gl.setPixelRatio(viewport.pixelRatio)
+      gl.setPixelRatio(viewport.dpr)
       gl.setSize(size.width, size.height)
     },
-    (state) => [state.viewport.pixelRatio, state.size],
+    (state) => [state.viewport.dpr, state.size],
     shallow,
   )
 

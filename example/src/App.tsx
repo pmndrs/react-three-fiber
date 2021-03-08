@@ -26,19 +26,19 @@ const Orbit = memo(() => {
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
   const current = useThree((state) => state.performance.current)
-  const initialPixelRatio = useThree((state) => state.viewport.initialPixelRatio)
-  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  const initialDpr = useThree((state) => state.viewport.initialDpr)
+  const setDpr = useThree((state) => state.setDpr)
   // Restore initial pixelratio on unmount
   useEffect(
     () => () => {
-      setPixelRatio(initialPixelRatio)
+      setDpr(initialDpr)
       gl.domElement.style.imageRendering = 'auto'
     },
     [],
   )
   // Set adaptive pixelratio
   useEffect(() => {
-    setPixelRatio(current * initialPixelRatio)
+    setDpr(current * initialDpr)
     gl.domElement.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
   }, [current])
   return null
@@ -49,10 +49,10 @@ function AdaptiveEvents() {
   const set = useThree((state) => state.set)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
-    const noninteractive = get().noninteractive
-    return () => set({ noninteractive })
+    const events = get().events
+    return () => set({ events })
   }, [])
-  useEffect(() => set({ noninteractive: current < 1 }), [current])
+  useEffect(() => set({ events: current === 1 }), [current])
   return null
 }
 
@@ -67,7 +67,7 @@ export default function App() {
     return () => clearInterval(interval)
   }, [])
 
-  useFrame(({ clock }) => group.current?.position.set(Math.sin(clock.elapsedTime), 0, 0))
+  useFrame(({ clock }) => group.current?.rotation.set(Math.sin(clock.elapsedTime), 0, 0))
 
   return (
     <>
@@ -75,15 +75,16 @@ export default function App() {
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={2} />
       <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
+
+      <mesh
+        scale={hovered ? 1.25 : 1}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color={showCube ? 'white' : 'red'} />
+      </mesh>
       <group ref={group}>
-        <mesh
-          scale={hovered ? 1.25 : 1}
-          onPointerOver={() => setHovered(true)}
-          onPointerOut={() => setHovered(false)}
-          onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
-          <sphereGeometry args={[0.5, 32, 32]} />
-          <meshStandardMaterial color={showCube ? 'white' : 'red'} />
-        </mesh>
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />

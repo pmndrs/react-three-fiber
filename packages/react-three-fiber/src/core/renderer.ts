@@ -248,7 +248,8 @@ function createRenderer<TCanvas, TRoot = Root>(
   }
 
   function invalidateInstance(instance: Instance) {
-    invalidate(instance.__r3f?.root?.getState())
+    const state = instance.__r3f?.root?.getState()
+    if (state && state.internal.frames === 0) state.invalidate()
   }
 
   function updateInstance(instance: Instance) {
