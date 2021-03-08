@@ -128,7 +128,7 @@ const createMockStore = (
       }
     }
 
-    let performanceTimeout: number | undefined = undefined
+    let performanceTimeout: NodeJS.Timeout | undefined = undefined
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
@@ -154,7 +154,9 @@ const createMockStore = (
         debounce: 200,
         ...performance,
         regress: () => {
-          clearTimeout(performanceTimeout)
+          if (performanceTimeout) {
+            clearTimeout(performanceTimeout)
+          }
           // Set lower bound performance
           setPerformanceCurrent(get().performance.min)
           // Go back to upper bound performance after a while unless something regresses meanwhile
