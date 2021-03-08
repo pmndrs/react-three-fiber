@@ -14,7 +14,7 @@ type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
-const { invalidate } = createLoop(roots)
+const { invalidate, render: renderLoop } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, invalidate)
 
 const createRendererInstance = (
@@ -69,6 +69,11 @@ function render(
     const events = createEvents(store)
     Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
     state.set((state) => ({ internal: { ...state.internal, events } }))
+    // VR
+    if (props.vr && (gl as any).xr && (gl as any).setAnimationLoop) {
+      ;(gl as any).xr.enabled = true
+      ;(gl as any).setAnimationLoop((t: number) => renderLoop(state, t, true))
+    }
   }
 
   if (store && fiber) {
