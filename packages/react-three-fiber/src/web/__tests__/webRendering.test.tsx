@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
 import gl from 'gl'
 
-import { createCanvas } from '../../test-renderer/createTestCanvas'
+import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 
 import { render } from '../index'
 
