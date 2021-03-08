@@ -82,7 +82,7 @@ const filterProps = ['children', 'key', 'ref']
 function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
-    const localState = (instance.__r3f ?? {}) as LocalState
+    const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState() ?? {}
     const sameProps: string[] = []
@@ -99,11 +99,13 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       }
     })
 
-    if (localState.memoizedProps.args) {
+    if (localState.memoizedProps && localState.memoizedProps.args) {
       newMemoizedProps.args = localState.memoizedProps.args
     }
 
-    instance.__r3f.memoizedProps = newMemoizedProps
+    if (instance.__r3f) {
+      instance.__r3f.memoizedProps = newMemoizedProps
+    }
 
     let objectKeys = Object.keys(newProps)
     for (i = 0; i < objectKeys.length; i++) {
@@ -155,12 +157,13 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     const filteredPropsEntries = Object.entries(filteredProps)
     // Prepend left-overs so they can be reset or removed
     // Left-overs must come first!
-    objectKeys = Object.keys(leftOvers)
-    for (i = 0; i < objectKeys.length; i++) {
-      if (objectKeys[i] !== 'children') {
-        filteredPropsEntries.unshift([objectKeys[i], DEFAULT + 'remove'])
+    for (i = 0; i < leftOvers.length; i++) {
+      if (leftOvers[i] !== 'children') {
+        filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
       }
     }
+
+    console.log(filteredPropsEntries)
 
     if (filteredPropsEntries.length > 0) {
       filteredPropsEntries.forEach(([key, value]) => {
@@ -179,6 +182,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
           }
 
           if (value === DEFAULT + 'remove') {
+            console.log(targetProp)
             // For removed props, try to set default values, if possible
             if (defaultMap.has(targetProp.constructor)) value = defaultMap.get(targetProp.constructor)
             else value = currentInstance[DEFAULT + key]
