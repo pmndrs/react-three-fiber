@@ -1,0 +1,32 @@
+{
+  "name": "react-three-test-renderer",
+  "version": "1.0.0",
+  "description": "Test Renderer for react-three-fiber",
+  "author": "Josh Ellis",
+  "license": "MIT",
+  "private": false,
+  "main": "dist/react-three-test-renderer.cjs.js",
+  "module": "dist/react-three-test-renderer.esm.js",
+  "types": "dist/react-three-test-renderer.cjs.d.ts",
+  "bugs": {
+    "url": "https://github.com/drcmda/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/drcmda/react-three-fiber#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drcmda/react-three-fiber.git"
+  },
+  "preconstruct": {
+    "entrypoints": [
+      "index.tsx"
+    ]
+  },
+  "dependencies": {
+    "zustand": "^3.3.3"
+  },
+  "peerDependencies": {
+    "react": ">=17.0",
+    "react-three-fiber": ">=6.0",
+    "three": ">=0.126"
+  }
+}

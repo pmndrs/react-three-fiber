@@ -144,7 +144,7 @@ function Extrusion({ start = [0, 0], paths, ...props }) {
   )
 }
 
-<Extrusion
+;<Extrusion
   start={[25, 25]}
   paths={[
     [25, 25, 20, 0, 0, 0],
@@ -221,7 +221,7 @@ Supplying the `vr` flag enables Three's VR mode and switches the render-loop to 
 import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
 import { Canvas } from 'react-three-fiber'
 
-<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
+;<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
 ```
 
 ## Reducing bundle-size
@@ -262,7 +262,7 @@ yarn start
 Safari 12 does not support `ResizeObserver` out of the box, which causes errors in the `react-use-measure` dependency if you don't polyfill it. [@juggle/resize-observer](https://github.com/juggle/resize-observer) is the recommended `ResizeObserver` polyfill. It can be configured through the [`resize`](api.md#canvas) property on the `<Canvas>`:
 
 ```jsx
-import { ResizeObserver } from "@juggle/resize-observer"
+import { ResizeObserver } from '@juggle/resize-observer'
 
-<Canvas resize={{ polyfill: ResizeObserver }} />
+;<Canvas resize={{ polyfill: ResizeObserver }} />
 ```

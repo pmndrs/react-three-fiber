@@ -1,12 +1,14 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import { UseStore } from 'zustand'
+
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
+
 import { createEvents } from './events'
 import { Canvas } from './Canvas'
-import { UseStore } from 'zustand'
 
 type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -15,7 +17,7 @@ type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
 
 const roots = new Map<HTMLCanvasElement, Root>()
 const { invalidate, render: renderLoop } = createLoop(roots)
-const { reconciler, applyProps } = createRenderer(roots, invalidate)
+const { reconciler, applyProps } = createRenderer(roots)
 
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
@@ -28,8 +30,8 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, ...props }: RenderProps,
-): UseStore<RootState> {
+  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
+): THREE.Scene {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
@@ -78,7 +80,7 @@ function render(
 
   if (store && fiber) {
     reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
-    return store
+    return store!.getState().scene as THREE.Scene
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
@@ -132,5 +134,18 @@ reconciler.injectIntoDevTools({
   version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
+const testutil_act = reconciler.act
+
 export * from '../core/hooks'
-export { context, render, unmountComponentAtNode, createPortal, reconciler, applyProps, invalidate, extend, Canvas }
+export {
+  context,
+  render,
+  unmountComponentAtNode,
+  createPortal,
+  reconciler,
+  applyProps,
+  invalidate,
+  extend,
+  Canvas,
+  testutil_act,
+}

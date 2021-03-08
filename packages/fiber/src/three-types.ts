@@ -159,7 +159,10 @@ export type ParametricGeometryProps = BufferGeometryNode<THREE.ParametricGeometr
 export type TetrahedronGeometryProps = BufferGeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
 export type OctahedronGeometryProps = BufferGeometryNode<THREE.OctahedronGeometry, typeof THREE.OctahedronGeometry>
 export type IcosahedronGeometryProps = BufferGeometryNode<THREE.IcosahedronGeometry, typeof THREE.IcosahedronGeometry>
-export type DodecahedronGeometryProps = BufferGeometryNode<THREE.DodecahedronGeometry, typeof THREE.DodecahedronGeometry>
+export type DodecahedronGeometryProps = BufferGeometryNode<
+  THREE.DodecahedronGeometry,
+  typeof THREE.DodecahedronGeometry
+>
 export type PolyhedronGeometryProps = BufferGeometryNode<THREE.PolyhedronGeometry, typeof THREE.PolyhedronGeometry>
 export type TubeGeometryProps = BufferGeometryNode<THREE.TubeGeometry, typeof THREE.TubeGeometry>
 export type TorusKnotGeometryProps = BufferGeometryNode<THREE.TorusKnotGeometry, typeof THREE.TorusKnotGeometry>

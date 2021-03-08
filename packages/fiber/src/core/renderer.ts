@@ -8,12 +8,15 @@ import { RootState } from './store'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
-type LocalState = {
+export type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
   instance?: boolean
   handlers?: EventHandlers
   dispose?: () => void
+  memoizedProps: {
+    [key: string]: any
+  }
 }
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
@@ -74,59 +77,90 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, invalidate: (state?: RootState) => void) {
+const filterProps = ['children', 'key', 'ref']
+
+function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
-    const localState = (instance?.__r3f ?? {}) as LocalState
+    const localState = (instance.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState() ?? {}
     const sameProps: string[] = []
     const handlers: string[] = []
 
-    let i
-    let keys = Object.keys(newProps)
+    const newMemoizedProps: { [key: string]: any } = {}
 
-    for (i = 0; i < keys.length; i++) {
-      if (is.equ(newProps[keys[i]], oldProps[keys[i]])) sameProps.push(keys[i])
+    let i = 0
+
+    Object.entries(newProps).forEach(([key, entry]) => {
+      // we don't want children, ref or key in the memoized props
+      if (filterProps.indexOf(key) === -1) {
+        newMemoizedProps[key] = entry
+      }
+    })
+
+    if (localState.memoizedProps.args) {
+      newMemoizedProps.args = localState.memoizedProps.args
+    }
+
+    instance.__r3f.memoizedProps = newMemoizedProps
+
+    let objectKeys = Object.keys(newProps)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (is.equ(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
+        sameProps.push(objectKeys[i])
+      }
 
       // Event-handlers ...
       //   are functions, that
       //   start with "on", and
       //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[keys[i]]) && keys[i].startsWith('on')) {
+      if (is.fun(newProps[objectKeys[i]]) && objectKeys[i].startsWith('on')) {
         if (
-          keys[i].includes('Pointer') ||
-          keys[i].includes('Click') ||
-          keys[i].includes('ContextMenu') ||
-          keys[i].includes('Wheel')
+          objectKeys[i].includes('Pointer') ||
+          objectKeys[i].includes('Click') ||
+          objectKeys[i].includes('ContextMenu') ||
+          objectKeys[i].includes('Wheel')
         ) {
-          handlers.push(keys[i])
+          handlers.push(objectKeys[i])
         }
       }
     }
 
     // Catch props that existed, but now exist no more ...
     const leftOvers = [] as string[]
-    keys = Object.keys(oldProps)
     if (accumulative) {
-      for (i = 0; i < keys.length; i++) if (!newProps.hasOwnProperty(keys[i])) leftOvers.push(keys[i])
+      objectKeys = Object.keys(oldProps)
+      for (i = 0; i < objectKeys.length; i++) {
+        if (!newProps.hasOwnProperty(objectKeys[i])) {
+          leftOvers.push(objectKeys[i])
+        }
+      }
     }
 
-    const toFilter = [...sameProps, 'children', 'key', 'ref']
+    const toFilter = [...sameProps, ...filterProps]
     // Instances use "object" as a reserved identifier
     if (instance.__r3f?.instance) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
-    keys = Object.keys(filteredProps)
-    for (i = 0; i < keys.length; i++) if (toFilter.indexOf(keys[i]) > -1) delete filteredProps[keys[i]]
+    objectKeys = Object.keys(filteredProps)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (toFilter.indexOf(objectKeys[i]) > -1) {
+        delete filteredProps[objectKeys[i]]
+      }
+    }
 
     // Collect all new props
     const filteredPropsEntries = Object.entries(filteredProps)
     // Prepend left-overs so they can be reset or removed
     // Left-overs must come first!
-    for (i = 0; i < leftOvers.length; i++)
-      if (leftOvers[i] !== 'children') filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
+    objectKeys = Object.keys(leftOvers)
+    for (i = 0; i < objectKeys.length; i++) {
+      if (objectKeys[i] !== 'children') {
+        filteredPropsEntries.unshift([objectKeys[i], DEFAULT + 'remove'])
+      }
+    }
 
     if (filteredPropsEntries.length > 0) {
       filteredPropsEntries.forEach(([key, value]) => {
@@ -254,14 +288,24 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, invalidate: (state?:
         objects: [],
         instance: true,
         dispose: instance.dispose,
+        memoizedProps: {},
       }
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
         throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+
+      const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
-      instance = is.arr(args) ? new target(...args) : new target(args)
-      instance.__r3f = { root, objects: [] }
+      instance = isArgsArr ? new target(...args) : new target(args)
+      instance.__r3f = {
+        root,
+        objects: [],
+        // append memoized props with args so it's not forgotten
+        memoizedProps: {
+          args: isArgsArr && args.length === 0 ? null : args,
+        },
+      }
     }
 
     // Auto-attach geometries and materials

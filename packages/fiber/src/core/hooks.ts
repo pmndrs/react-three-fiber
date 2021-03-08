@@ -3,6 +3,7 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
+
 import { context, RootState, RenderCallback } from './store'
 
 export function useThree<T>(selector: StateSelector<RootState, T>, equalityFn?: EqualityChecker<T>) {
@@ -43,9 +44,12 @@ function buildGraph(object: THREE.Object3D) {
   const data: ObjectMap = { nodes: {}, materials: {} }
   if (object) {
     object.traverse((obj: any) => {
-      if (obj.name) data.nodes[obj.name] = obj as THREE.Object3D
-      if (obj.material && !data.materials[obj.material.name])
-        data.materials[obj.material.name] = obj.material as THREE.Material
+      if (obj.name) {
+        data.nodes[obj.name] = obj
+      }
+      if (obj.material && !data.materials[obj.material.name]) {
+        data.materials[obj.material.name] = obj.material
+      }
     })
   }
   return data

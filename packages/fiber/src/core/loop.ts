@@ -33,7 +33,7 @@ export function render(state: RootState, timestamp: number, runGlobalEffects = f
   return state.frameloop ? 1 : state.internal.frames
 }
 
-function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
+export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
 
   function loop(timestamp: number) {
@@ -75,5 +75,3 @@ function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   return { loop, invalidate, render }
 }
-
-export { createLoop }

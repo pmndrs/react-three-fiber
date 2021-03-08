@@ -1,5 +1,5 @@
 export const is = {
-  obj: (a: any) => a === Object(a) && !is.arr(a),
+  obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',
   fun: (a: any) => typeof a === 'function',
   str: (a: any) => typeof a === 'string',
   num: (a: any) => typeof a === 'number',
