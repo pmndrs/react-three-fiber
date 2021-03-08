@@ -70,7 +70,7 @@ describe('web renderer', () => {
     // @ts-expect-error we do append background to group, but it's not wrong because it won't do anything.
     expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
-    expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxBufferGeometry')
+    expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
   })
 
