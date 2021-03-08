@@ -124,8 +124,6 @@ export type StoreProps = {
   onPointerMissed?: () => void
 }
 
-export type CommonStoreProps = Omit<StoreProps, 'gl' | 'onCreated'> & { gl: any }
-export type CommonRootState = Omit<RootState, 'gl' | 'onCreated' | 'set' | 'get' | 'invalidate'>
 export type ApplyProps = (
   instance: Instance,
   newProps: InstanceProps,
@@ -135,21 +133,17 @@ export type ApplyProps = (
 
 const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
 
-/**
- * this is shared with test-renderer,
- * this makes the coupling stronger
- * and we can be sure that the scene env
- * is the same
- */
-
-export const createCommonStore = <TProps extends CommonStoreProps, TState extends CommonRootState>(
-  props: TProps,
+const createStore = (
   applyProps: ApplyProps,
-  get: GetState<TState>,
-  set: SetState<TState>,
-): CommonRootState => {
+  invalidate: (state?: RootState) => void,
+  props: StoreProps,
+): UseStore<RootState> => {
   const {
+    gl,
+    size,
+    shadows = false,
     linear = false,
+    onCreated,
     vr = false,
     orthographic = false,
     frameloop = true,
@@ -161,152 +155,6 @@ export const createCommonStore = <TProps extends CommonStoreProps, TState extend
     camera: cameraOptions,
     onPointerMissed,
   } = props
-
-  // Create custom raycaster
-  const raycaster = new THREE.Raycaster()
-  if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
-
-  // Create default camera
-  const isCamera = cameraOptions instanceof THREE.Camera
-  const camera = isCamera
-    ? (cameraOptions as Camera)
-    : orthographic
-    ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-    : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-  if (!isCamera) {
-    camera.position.z = 5
-    if (orthographic) camera.zoom = 100
-    if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
-    // Always look at center by default
-    camera.lookAt(0, 0, 0)
-  }
-
-  const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
-  scene.__r3f = {
-    memoizedProps: {},
-    root: {} as UseStore<RootState>,
-    objects: [],
-  }
-
-  function setDpr(dpr: Dpr) {
-    return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-  }
-  const initialDpr = setDpr(dpr)
-
-  const position = new THREE.Vector3()
-  const defaultTarget = new THREE.Vector3()
-  function getCurrentViewport(
-    camera: Camera = get().camera,
-    target: THREE.Vector3 = defaultTarget,
-    size: Size = get().size,
-  ) {
-    const { width, height } = size
-    const aspect = width / height
-    const distance = camera.getWorldPosition(position).distanceTo(target)
-    if (isOrthographicCamera(camera)) {
-      return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance, aspect }
-    } else {
-      const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
-      const h = 2 * Math.tan(fov / 2) * distance // visible height
-      const w = h * (width / height)
-      return { width: w, height: h, factor: width / w, distance, aspect }
-    }
-  }
-
-  let performanceTimeout: NodeJS.Timeout | undefined = undefined
-  const setPerformanceCurrent = (current: number) =>
-    set((state) => ({ performance: { ...state.performance, current } }))
-
-  return {
-    linear,
-    scene,
-    camera,
-    raycaster,
-    clock,
-    mouse: new THREE.Vector2(),
-
-    vr,
-    events,
-    frameloop,
-    onPointerMissed,
-
-    performance: {
-      current: 1,
-      min: 0.5,
-      max: 1,
-      debounce: 200,
-      ...performance,
-      regress: () => {
-        if (performanceTimeout) {
-          clearTimeout(performanceTimeout)
-        }
-        // Set lower bound performance
-        setPerformanceCurrent(get().performance.min)
-        // Go back to upper bound performance after a while unless something regresses meanwhile
-        performanceTimeout = setTimeout(() => setPerformanceCurrent(get().performance.max), get().performance.debounce)
-      },
-    },
-
-    size: { width: 0, height: 0 },
-    viewport: {
-      initialDpr,
-      dpr: initialDpr,
-      width: 0,
-      height: 0,
-      aspect: 0,
-      distance: 0,
-      factor: 0,
-      getCurrentViewport,
-    },
-
-    setSize: (width: number, height: number) => {
-      const size = { width, height }
-      set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
-    },
-    setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
-
-    internal: {
-      active: false,
-      priority: 0,
-      frames: 0,
-      lastProps: props,
-      events: (undefined as unknown) as Events,
-
-      interaction: [],
-      subscribers: [],
-      captured: undefined,
-      initialClick: [0, 0],
-      initialHits: [],
-
-      subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
-        const internal = get().internal
-        // If this subscription was given a priority, it takes rendering into its own hands
-        // For that reason we switch off automatic rendering and increase the manual flag
-        // As long as this flag is positive (there could be multiple render subscription)
-        // ..there can be no internal rendering at all
-        if (priority) internal.priority++
-        // Register subscriber
-        internal.subscribers.push({ ref, priority })
-        // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
-        internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
-        return () => {
-          if (internal?.subscribers) {
-            // Decrease manual flag if this subscription had a priority
-            if (priority) internal.priority--
-            internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
-          }
-        }
-      },
-    },
-  }
-}
-
-const createStore = (
-  applyProps: ApplyProps,
-  invalidate: (state?: RootState) => void,
-  props: StoreProps,
-): UseStore<RootState> => {
-  const { gl, size, shadows = false, linear = false, onCreated } = props
 
   // Set shadowmap
   if (shadows) {
@@ -322,13 +170,152 @@ const createStore = (
   }
 
   const rootState = create<RootState>((set, get) => {
+    // Create custom raycaster
+    const raycaster = new THREE.Raycaster()
+    if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
+
+    // Create default camera
+    const isCamera = cameraOptions instanceof THREE.Camera
+    const camera = isCamera
+      ? (cameraOptions as Camera)
+      : orthographic
+      ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+      : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+    if (!isCamera) {
+      camera.position.z = 5
+      if (orthographic) camera.zoom = 100
+      if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
+      // Always look at center by default
+      camera.lookAt(0, 0, 0)
+    }
+
+    const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
+    scene.__r3f = {
+      memoizedProps: {},
+      root: {} as UseStore<RootState>,
+      objects: [],
+    }
+
+    function setDpr(dpr: Dpr) {
+      return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+    }
+    const initialDpr = setDpr(dpr)
+
+    const position = new THREE.Vector3()
+    const defaultTarget = new THREE.Vector3()
+    function getCurrentViewport(
+      camera: Camera = get().camera,
+      target: THREE.Vector3 = defaultTarget,
+      size: Size = get().size,
+    ) {
+      const { width, height } = size
+      const aspect = width / height
+      const distance = camera.getWorldPosition(position).distanceTo(target)
+      if (isOrthographicCamera(camera)) {
+        return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance, aspect }
+      } else {
+        const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
+        const h = 2 * Math.tan(fov / 2) * distance // visible height
+        const w = h * (width / height)
+        return { width: w, height: h, factor: width / w, distance, aspect }
+      }
+    }
+
+    let performanceTimeout: NodeJS.Timeout | undefined = undefined
+    const setPerformanceCurrent = (current: number) =>
+      set((state) => ({ performance: { ...state.performance, current } }))
+
     return {
       gl,
+
       onCreated,
       set,
       get,
       invalidate: () => invalidate(get()),
-      ...createCommonStore(props, applyProps, get, set),
+
+      linear,
+      scene,
+      camera,
+      raycaster,
+      clock,
+      mouse: new THREE.Vector2(),
+
+      vr,
+      events,
+      frameloop,
+      onPointerMissed,
+
+      performance: {
+        current: 1,
+        min: 0.5,
+        max: 1,
+        debounce: 200,
+        ...performance,
+        regress: () => {
+          if (performanceTimeout) {
+            clearTimeout(performanceTimeout)
+          }
+          // Set lower bound performance
+          setPerformanceCurrent(get().performance.min)
+          // Go back to upper bound performance after a while unless something regresses meanwhile
+          performanceTimeout = setTimeout(
+            () => setPerformanceCurrent(get().performance.max),
+            get().performance.debounce,
+          )
+        },
+      },
+
+      size: { width: 0, height: 0 },
+      viewport: {
+        initialDpr,
+        dpr: initialDpr,
+        width: 0,
+        height: 0,
+        aspect: 0,
+        distance: 0,
+        factor: 0,
+        getCurrentViewport,
+      },
+
+      setSize: (width: number, height: number) => {
+        const size = { width, height }
+        set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
+      },
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+
+      internal: {
+        active: false,
+        priority: 0,
+        frames: 0,
+        lastProps: props,
+        events: (undefined as unknown) as Events,
+
+        interaction: [],
+        subscribers: [],
+        captured: undefined,
+        initialClick: [0, 0],
+        initialHits: [],
+
+        subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
+          const internal = get().internal
+          // If this subscription was given a priority, it takes rendering into its own hands
+          // For that reason we switch off automatic rendering and increase the manual flag
+          // As long as this flag is positive (there could be multiple render subscription)
+          // ..there can be no internal rendering at all
+          if (priority) internal.priority++
+          // Register subscriber
+          internal.subscribers.push({ ref, priority })
+          // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
+          internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
+          return () => {
+            if (internal?.subscribers) {
+              // Decrease manual flag if this subscription had a priority
+              if (priority) internal.priority--
+              internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
+            }
+          }
+        },
+      },
     }
   })
 
