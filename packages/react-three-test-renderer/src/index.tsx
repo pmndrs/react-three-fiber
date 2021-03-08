@@ -44,7 +44,7 @@ export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode
 export interface ReactThreeTestRendereOptions extends CreateCanvasParameters {}
 
 const mockRoots = new Map<any, MockRoot>()
-const { reconciler, applyProps } = createRenderer(mockRoots, () => null)
+const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
   element: React.ReactNode,
