@@ -147,6 +147,7 @@ const createStore = (
 
   const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
   scene.__r3f = {
+    memoizedProps: {},
     root: {} as UseStore<RootState>,
     objects: [],
   }

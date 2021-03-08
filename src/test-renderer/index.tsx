@@ -6,7 +6,14 @@ import { version } from '../../package.json'
 import { is } from '../core/is'
 import { createRenderer, Root } from '../core/renderer'
 
-import { createMockStore, MockStoreProps, MockUseStoreState, context, MockScene } from './createMockStore'
+import {
+  createMockStore,
+  MockStoreProps,
+  MockUseStoreState,
+  context,
+  MockScene,
+  MockSceneChild,
+} from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 
 type RenderProps = Omit<MockStoreProps, 'gl' | 'context'> & {
@@ -18,12 +25,23 @@ type MockRoot = Omit<Root, 'store'> & {
   store: MockUseStoreState
 }
 
-interface ReactThreeTestRendererSceneItem {
+interface ReactThreeTestRendererSceneGraphItem {
   type: string
-  children: ReactThreeTestRendererSceneItem[] | null
+  name: string
+  children: ReactThreeTestRendererSceneGraphItem[] | null
 }
 
-export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneItem[]
+export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneGraphItem[]
+
+interface ReactThreeTestRendererTreeNode {
+  type: string
+  props: {
+    [key: string]: any
+  }
+  children: ReactThreeTestRendererTreeNode[]
+}
+
+export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode
 
 export interface ReactThreeTestRendereOptions extends CreateCanvasParameters {}
 
@@ -103,30 +121,51 @@ const unmount = <TRootNode,>(id: TRootNode) => {
   }
 }
 
-const toTree = (scene: MockScene) => {
-  // to do, create like a react tree exposing props passed to component?
-}
+const lowerCaseFirstLetter = (str: string) => `${str.charAt(0).toLowerCase()}${str.slice(1)}`
 
-const graphObjectFactory = (
-  type: ReactThreeTestRendererSceneItem['type'],
-  children: ReactThreeTestRendererSceneItem['children']
-) => ({
+const treeObjectFactory = (
+  type: ReactThreeTestRendererTreeNode['type'],
+  props: ReactThreeTestRendererTreeNode['props'],
+  children: ReactThreeTestRendererTreeNode['children']
+): ReactThreeTestRendererTreeNode => ({
   type,
+  props,
   children,
 })
 
-const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneItem[] =>
-  object.children.map((child) => {
-    let children: ReactThreeTestRendererSceneItem[] | null = toGraph(child)
-
-    if (children && children.length === 0 && child instanceof THREE.Mesh) {
-      children.push(graphObjectFactory(child.geometry.type, null), graphObjectFactory(child.material.type, null))
-    } else if (children && children.length === 0) {
-      children = null
-    }
-
-    return graphObjectFactory(child.type, children)
+const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =>
+  obj.map((child) => {
+    return treeObjectFactory(
+      lowerCaseFirstLetter(child.type || child.constructor.name),
+      { ...child.__r3f.memoizedProps },
+      toTreeBranch([...(child.children || []), ...child.__r3f.objects])
+    )
   })
+
+const toTree = (scene: MockScene): ReactThreeTestRendererTree => ({
+  type: 'scene',
+  props: {},
+  children: scene.children.map((obj) =>
+    treeObjectFactory(
+      lowerCaseFirstLetter(obj.type),
+      { ...obj.__r3f.memoizedProps },
+      toTreeBranch([...obj.children, ...obj.__r3f.objects])
+    )
+  ),
+})
+
+const graphObjectFactory = (
+  type: ReactThreeTestRendererSceneGraphItem['type'],
+  name: ReactThreeTestRendererSceneGraphItem['name'],
+  children: ReactThreeTestRendererSceneGraphItem['children']
+): ReactThreeTestRendererSceneGraphItem => ({
+  type,
+  name,
+  children,
+})
+
+const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneGraphItem[] =>
+  object.children.map((child) => graphObjectFactory(child.type, child.name || '', toGraph(child)))
 
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,

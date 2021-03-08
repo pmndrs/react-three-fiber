@@ -14,6 +14,9 @@ export type LocalState = {
   instance?: boolean
   handlers?: EventHandlers
   dispose?: () => void
+  memoizedProps: {
+    [key: string]: any
+  }
 }
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
@@ -74,62 +77,87 @@ let emptyObject = {}
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
+const filterProps = ['children', 'key', 'ref']
+
 function createRenderer<TCanvas, TRoot = Root>(
   roots: Map<TCanvas, TRoot>,
   invalidate: (state?: boolean | RootState, frames?: number) => void
 ) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
-    const localState = (instance?.__r3f ?? {}) as LocalState
+    const localState = (instance.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState() ?? {}
     const sameProps: string[] = []
     const handlers: string[] = []
 
-    let i
-    let keys = Object.keys(newProps)
+    const newMemoizedProps: { [key: string]: any } = {}
 
-    for (i = 0; i < keys.length; i++) {
-      if (is.equ(newProps[keys[i]], oldProps[keys[i]])) sameProps.push(keys[i])
+    Object.entries(newProps).forEach(([key, entry]) => {
+      // we don't want children, ref or key in the memoized props
+      if (filterProps.indexOf(key) === -1) {
+        newMemoizedProps[key] = entry
+      }
+    })
+
+    if (localState.memoizedProps.args) {
+      newMemoizedProps.args = localState.memoizedProps.args
+    }
+
+    instance.__r3f.memoizedProps = newMemoizedProps
+
+    for (let newPropsKey in newProps) {
+      if (is.equ(newProps[newPropsKey], oldProps[newPropsKey])) {
+        sameProps.push(newPropsKey)
+      }
 
       // Event-handlers ...
       //   are functions, that
       //   start with "on", and
       //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[keys[i]]) && keys[i].startsWith('on')) {
+      if (is.fun(newProps[newPropsKey]) && newPropsKey.startsWith('on')) {
         if (
-          keys[i].includes('Pointer') ||
-          keys[i].includes('Click') ||
-          keys[i].includes('ContextMenu') ||
-          keys[i].includes('Wheel')
+          newPropsKey.includes('Pointer') ||
+          newPropsKey.includes('Click') ||
+          newPropsKey.includes('ContextMenu') ||
+          newPropsKey.includes('Wheel')
         ) {
-          handlers.push(keys[i])
+          handlers.push(newPropsKey)
         }
       }
     }
 
     // Catch props that existed, but now exist no more ...
     const leftOvers = [] as string[]
-    keys = Object.keys(oldProps)
     if (accumulative) {
-      for (i = 0; i < keys.length; i++) if (!newProps.hasOwnProperty(keys[i])) leftOvers.push(keys[i])
+      for (let oldPropKey in oldProps) {
+        if (!newProps.hasOwnProperty(oldPropKey)) {
+          leftOvers.push(oldPropKey)
+        }
+      }
     }
 
-    const toFilter = [...sameProps, 'children', 'key', 'ref']
+    const toFilter = [...sameProps, ...filterProps]
     // Instances use "object" as a reserved identifier
     if (instance.__r3f.instance) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
-    keys = Object.keys(filteredProps)
-    for (i = 0; i < keys.length; i++) if (toFilter.indexOf(keys[i]) > -1) delete filteredProps[keys[i]]
+    for (let filteredPropsKey in filteredProps) {
+      if (toFilter.indexOf(filteredPropsKey) > -1) {
+        delete filteredProps[filteredPropsKey]
+      }
+    }
 
     // Collect all new props
     const filteredPropsEntries = Object.entries(filteredProps)
     // Prepend left-overs so they can be reset or removed
     // Left-overs must come first!
-    for (i = 0; i < leftOvers.length; i++)
-      if (leftOvers[i] !== 'children') filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
+    for (let leftOverPropKey in leftOvers) {
+      if (leftOverPropKey !== 'children') {
+        filteredPropsEntries.unshift([leftOverPropKey, DEFAULT + 'remove'])
+      }
+    }
 
     if (filteredPropsEntries.length > 0) {
       filteredPropsEntries.forEach(([key, value]) => {
@@ -253,14 +281,24 @@ function createRenderer<TCanvas, TRoot = Root>(
         objects: [],
         instance: true,
         dispose: instance.dispose,
+        memoizedProps: {},
       }
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
         throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+
+      const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
-      instance = is.arr(args) ? new target(...args) : new target(args)
-      instance.__r3f = { root, objects: [] }
+      instance = isArgsArr ? new target(...args) : new target(args)
+      instance.__r3f = {
+        root,
+        objects: [],
+        // append memoized props with args so it's not forgotten
+        memoizedProps: {
+          args: isArgsArr && args.length === 0 ? null : args,
+        },
+      }
     }
 
     // Auto-attach geometries and materials

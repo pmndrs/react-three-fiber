@@ -33,12 +33,21 @@ export type MockStoreProps = Omit<StoreProps, 'onCreated' | 'gl'> & {
 export type MockUseStoreState = UseStore<MockRootState>
 
 type MockInstance = Omit<Instance, '__r3f'> & {
-  __r3f: Omit<LocalState, 'root'> & {
+  __r3f: Omit<LocalState, 'root' | 'objects'> & {
     root: MockUseStoreState
+    objects: MockSceneChild[]
   }
 }
 
-export type MockScene = THREE.Scene & MockInstance
+export type MockSceneChild = Omit<THREE.Object3D, 'children'> &
+  MockInstance & {
+    children: MockSceneChild[]
+  }
+
+export type MockScene = Omit<THREE.Scene, 'children'> &
+  MockInstance & {
+    children: MockSceneChild[]
+  }
 
 const context = React.createContext<MockUseStoreState>({} as MockUseStoreState)
 
@@ -81,6 +90,7 @@ const createMockStore = (
 
   const scene = new THREE.Scene() as MockScene
   scene.__r3f = {
+    memoizedProps: {},
     root: {} as MockUseStoreState,
     objects: [],
   }
