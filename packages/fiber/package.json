@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.13.9",
-    "@size-limit/preset-big-lib": "^4.10.0",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "0.26.1",
     "react-use-measure": "^2.0.3",

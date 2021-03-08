@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
-import gl from 'gl'
-
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
+
+import { WebGLRenderingContext } from '../../__mocks__/webgl'
 
 import { render } from '../index'
 
@@ -11,10 +11,14 @@ type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 describe('web renderer', () => {
   const canvas = createCanvas({
     beforeReturn: (canvas) => {
-      // @ts-expect-error we only need canvas to return webgl context not 2D
+      //@ts-ignore
       canvas.getContext = (type: string) => {
+        const gl = new WebGLRenderingContext(canvas)
+
+        console.log(gl.getParameter(gl.VERSION))
+
         if (type === 'webgl' || type === 'webgl2') {
-          return gl(1, 1)
+          return new WebGLRenderingContext(canvas)
         }
       }
     },
