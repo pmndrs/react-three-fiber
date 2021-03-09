@@ -1,12 +1,13 @@
 import * as THREE from 'three'
 import * as React from 'react'
 
-import { is } from 'react-three-fiber/src/core/is'
-import { createRenderer, Root } from 'react-three-fiber/src/core/renderer'
-import { RenderProps } from 'react-three-fiber/src/web'
+import { createRenderer } from 'react-three-fiber'
+import type { Root } from 'react-three-fiber/src/core/renderer'
+import type { RenderProps } from 'react-three-fiber/src/web'
 
 import { toTree, ReactThreeTestRendererTree } from './helpers/tree'
 import { toGraph, ReactThreeTestRendererSceneGraph } from './helpers/graph'
+import { is } from './helpers/is'
 
 import { createStore, MockUseStoreState, context, MockScene } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
