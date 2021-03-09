@@ -5,3 +5,4 @@ example/
 .husky/
 markdown/
 src/
+tests/

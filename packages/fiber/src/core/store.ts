@@ -252,15 +252,15 @@ const createStore = (
         debounce: 200,
         ...performance,
         regress: () => {
-          if (performanceTimeout) {
-            clearTimeout(performanceTimeout)
-          }
+          const state = get()
+          // Clear timeout
+          if (performanceTimeout) clearTimeout(performanceTimeout)
           // Set lower bound performance
-          setPerformanceCurrent(get().performance.min)
+          if (state.performance.current !== state.performance.min) setPerformanceCurrent(state.performance.min)
           // Go back to upper bound performance after a while unless something regresses meanwhile
           performanceTimeout = setTimeout(
             () => setPerformanceCurrent(get().performance.max),
-            get().performance.debounce,
+            state.performance.debounce,
           )
         },
       },

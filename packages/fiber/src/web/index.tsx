@@ -5,7 +5,7 @@ import { UseStore } from 'zustand'
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
-import { createLoop } from '../core/loop'
+import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents } from './events'
 import { Canvas } from './Canvas'
 
@@ -145,6 +145,9 @@ export {
   applyProps,
   invalidate,
   extend,
+  addEffect,
+  addAfterEffect,
+  addTail,
   Canvas,
   testutil_act,
 }
