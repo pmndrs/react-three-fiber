@@ -213,6 +213,7 @@ describe('ReactThreeTestRenderer', () => {
         </mesh>
       </group>,
     )
+
     expect(renderer.toTree()).toEqual({
       type: 'scene',
       props: {},

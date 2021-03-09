@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
+import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial, MeshStandardMaterial } from 'three'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
-// eslint-disable-next-line import/named
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
 import { render } from '../../src/web/index'
@@ -113,6 +112,36 @@ describe('web renderer', () => {
 
     expect(scene.children[0].position.x).toEqual(7)
     expect(renders).toBe(6)
+  })
+
+  it('updates types & names', async () => {
+    let scene = render(
+      <mesh>
+        <meshBasicMaterial name="basicMat">
+          <color attach="color" args={[0, 0, 0]} />
+        </meshBasicMaterial>
+      </mesh>,
+      canvas,
+    )
+
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.type).toEqual(
+      'MeshBasicMaterial',
+    )
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.name).toEqual('basicMat')
+
+    scene = render(
+      <mesh>
+        <meshStandardMaterial name="standardMat">
+          <color attach="color" args={[255, 255, 255]} />
+        </meshStandardMaterial>
+      </mesh>,
+      canvas,
+    )
+
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).type).toEqual(
+      'MeshStandardMaterial',
+    )
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).name).toEqual('standardMat')
   })
 
   // it('can handle useThree hook', () => {
