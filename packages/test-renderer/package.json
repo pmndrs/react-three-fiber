@@ -4,7 +4,6 @@
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
-  "private": false,
   "main": "dist/react-three-test-renderer.cjs.js",
   "module": "dist/react-three-test-renderer.esm.js",
   "types": "dist/react-three-test-renderer.cjs.d.ts",
