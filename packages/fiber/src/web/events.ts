@@ -117,7 +117,7 @@ function createEvents(store: UseStore<RootState>): Events {
     // Get fresh intersects
     const intersections: Intersection[] = intersect(filter)
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (internal.captured && event.type !== 'click' && event.type !== 'wheel') {
+    if (internal.captured && event?.type !== 'click' && event?.type !== 'wheel') {
       internal.captured.forEach((captured) => {
         if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
       })
