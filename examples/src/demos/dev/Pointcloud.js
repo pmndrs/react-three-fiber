@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useMemo, useRef, useCallback } from 'react'
 import { Canvas, extend } from 'react-three-fiber'
-import { OrbitControls } from 'drei'
+import { OrbitControls } from '@react-three/drei'
 
 class DotMaterial extends THREE.ShaderMaterial {
   constructor() {

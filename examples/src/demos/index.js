@@ -36,6 +36,7 @@ const WebGL2 = { descr: '', tags: [], Component: lazy(() => import('./dev/WebGL2
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./tests/ClickAndHover')), dev: true }
 const StopPropagation = { descr: '', tags: [], Component: lazy(() => import('./tests/StopPropagation')), dev: true }
 const Debugging = { descr: '', tags: [], Component: lazy(() => import('./tests/Debugging')), dev: true }
+const OnPointerMissed = { descr: '', tags: [], Component: lazy(() => import('./tests/OnPointerMissed')), dev: true }
 
 export {
   Refraction,
@@ -66,4 +67,5 @@ export {
   ClickAndHover,
   StopPropagation,
   Debugging,
+  OnPointerMissed,
 }

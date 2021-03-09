@@ -1,7 +1,7 @@
 import React from 'react'
 import { Canvas } from 'react-three-fiber'
 // eslint-disable-next-line import/no-unresolved
-import { Physics, usePlane, useBox } from 'use-cannon'
+import { Physics, usePlane, useBox } from '@react-three/cannon'
 
 function Plane(props) {
   const [ref] = usePlane(() => ({ rotation: [-Math.PI / 2, 0, 0], ...props }))

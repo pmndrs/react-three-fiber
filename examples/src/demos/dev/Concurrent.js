@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from 'react'
 import { BoxBufferGeometry, MeshNormalMaterial } from 'three'
 import { Canvas, useFrame, useThree } from 'react-three-fiber'
 import { Controls, useControl } from 'react-three-gui'
-import { HTML } from 'drei'
+import { Html } from '@react-three/drei'
 import { unstable_LowPriority as low, unstable_runWithPriority as run } from 'scheduler'
 
 const SLOWDOWN = 1
@@ -78,7 +78,7 @@ function Fps() {
     }
     last = now
   })
-  return <HTML className="fps" center ref={ref} />
+  return <Html className="fps" center ref={ref} />
 }
 
 function Box() {

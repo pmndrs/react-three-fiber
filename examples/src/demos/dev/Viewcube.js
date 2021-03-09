@@ -1,7 +1,7 @@
 import { Scene, Matrix4 } from 'three'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, createPortal, useThree } from 'react-three-fiber'
-import { OrbitControls, OrthographicCamera, useCamera } from 'drei'
+import { OrbitControls, OrthographicCamera, useCamera } from '@react-three/drei'
 
 function Viewcube() {
   const { gl, scene, camera, size } = useThree()

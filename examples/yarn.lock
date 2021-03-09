@@ -2300,6 +2300,29 @@
     "@react-spring/core" "9.0.0-rc.3"
     "@react-spring/shared" "9.0.0-rc.3"
 
+"@react-three/cannon@^0.6.0":
+  version "0.6.0"
+  resolved "https://registry.yarnpkg.com/@react-three/cannon/-/cannon-0.6.0.tgz#08de66c11ada0ff05add9db4f7496ea907b201ea"
+  integrity sha512-Gx7QZkxqZ7n6TZUrquhtQo6d2y0zPgWYIOhvFMGTCV7OSJGn0eR7ZAnuUsiqMpr0K5YYnuOGGIT/++3ldJvLaw==
+
+"@react-three/drei@^3.10.2":
+  version "3.10.2"
+  resolved "https://registry.yarnpkg.com/@react-three/drei/-/drei-3.10.2.tgz#1e62f199c231d6313147270d300b6e35e4728eee"
+  integrity sha512-sIpZrtz9cvENWqeiX5I7YwQ2SekOsqBXqF1fu3eqL5ReUgPGzMxBYtVcqBYgwRbT8ntlu9Su72sc2G8EWmkoNA==
+  dependencies:
+    "@babel/runtime" "^7.11.2"
+    "@react-spring/web" "^9.0.0-rc.3"
+    blob-polyfill "^4.0.20200601"
+    detect-gpu "^3.0.0"
+    glsl-noise "^0.0.0"
+    lodash.omit "^4.5.0"
+    lodash.pick "^4.4.0"
+    react-merge-refs "^1.0.0"
+    stats.js "^0.17.0"
+    troika-three-text "^0.38.1"
+    utility-types "^3.10.0"
+    zustand "^3.0.3"
+
 "@svgr/babel-plugin-add-jsx-attribute@^4.2.0":
   version "4.2.0"
   resolved "https://registry.yarnpkg.com/@svgr/babel-plugin-add-jsx-attribute/-/babel-plugin-add-jsx-attribute-4.2.0.tgz#dadcb6218503532d6884b210e7f3c502caaa44b1"
@@ -3459,6 +3482,11 @@ binary-extensions@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-2.0.0.tgz#23c0df14f6a88077f5f986c0d167ec03c3d5537c"
   integrity sha512-Phlt0plgpIIBOGTT/ehfFnbNlfsDEiqmzE2KRXoX1bLIlir4X/MR+zSyBEkL05ffWgnRSf/DXv+WrUAVr93/ow==
+
+blob-polyfill@^4.0.20200601:
+  version "4.0.20200601"
+  resolved "https://registry.yarnpkg.com/blob-polyfill/-/blob-polyfill-4.0.20200601.tgz#16430e9e50d63e122c6aac18b31f5f0bc8c0bf92"
+  integrity sha512-1jB6WOIp6IDxNyng5+9A8g/f0uiphib2ELCN+XAnlssinsW8s1k4VYG9b1TxIUd3pdm9RJSLQuBh6iohYmD4hA==
 
 bluebird@^3.5.5:
   version "3.7.2"
@@ -4774,12 +4802,12 @@ destroy@~1.0.4:
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
   integrity sha1-l4hXRCxEdJ5CBmE+N5RiBYJqvYA=
 
-detect-gpu@^1.3.0:
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/detect-gpu/-/detect-gpu-1.4.1.tgz#a30bb1a7ce6a6044d84b4850810f1b248a669372"
-  integrity sha512-joUURxxAwgAvJxj4Y9px6tfcHJlCdBBi/Lg3OmqhfgwihdxzLMTHds+q0LBcu5O1oC/ACQ+OqqDkbUSmd2ilBQ==
+detect-gpu@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/detect-gpu/-/detect-gpu-3.0.0.tgz#d1ced721581c27fec29e24aee8c3eadf45450b5a"
+  integrity sha512-D/uxvKWDqhy7XoHHdC7By1Bzxuv0t8OwccsiW1DbRPsqOr0rTAjxdO//bSck6QS54jc9QHbaQoRczAy5KbCOCQ==
   dependencies:
-    detect-ua "^1.0.1"
+    webgl-constants "^1.1.1"
 
 detect-libc@^1.0.2:
   version "1.0.3"
@@ -4803,11 +4831,6 @@ detect-port-alt@1.1.6:
   dependencies:
     address "^1.0.1"
     debug "^2.6.0"
-
-detect-ua@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/detect-ua/-/detect-ua-1.0.1.tgz#001086a755dbfae509de51e71df580b2090cd704"
-  integrity sha512-FzBaVpuMBcuJkSS/r3bHmnhiAe0SMipQ3SJez/Gmq/ALzoxen1LgfukL556o8rgMUDyLfOXj9MvNnwkqJ35Fwg==
 
 diff-sequences@^24.9.0:
   version "24.9.0"
@@ -4967,24 +4990,6 @@ dotenv@8.2.0:
   version "8.2.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.2.0.tgz#97e619259ada750eea3e4ea3e26bceea5424b16a"
   integrity sha512-8sJ78ElpbDJBHNeBzUbUVLsqKdccaa/BXF1uPTw3GrvQTBgrQrtObr2mUrE38vzYd8cEv+m/JBfDLioYcfXoaw==
-
-drei@^1.5.7:
-  version "1.5.7"
-  resolved "https://registry.yarnpkg.com/drei/-/drei-1.5.7.tgz#ec6bf88f01d297eec6e09fb75f326b0cc78b9fa7"
-  integrity sha512-x7PQfvoSI1OqOwghZuZBhrNtaxMHh0bpVBLFYu39qwDghnBYgNIpNhoRtqK5FzRbcS1Rjdq0KWP0leSGKG/rsA==
-  dependencies:
-    "@babel/runtime" "^7.11.2"
-    "@react-spring/web" "^9.0.0-rc.3"
-    detect-gpu "^1.3.0"
-    glsl-noise "^0.0.0"
-    lodash.omit "^4.5.0"
-    lodash.pick "^4.4.0"
-    r3f-troika "^0.31.1"
-    react-merge-refs "^1.0.0"
-    stats.js "^0.17.0"
-    troika-three-text "^0.31.0"
-    utility-types "^3.10.0"
-    zustand "^3.0.3"
 
 duplexer@^0.1.1:
   version "0.1.1"
@@ -9997,14 +10002,6 @@ querystringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
 
-r3f-troika@^0.31.1:
-  version "0.31.1"
-  resolved "https://registry.yarnpkg.com/r3f-troika/-/r3f-troika-0.31.1.tgz#456228c63b524a20489a1f4be90015e9b345d3d3"
-  integrity sha512-d0AI2ZCpU5u9axqJ3I+KI786ltQNOJKimeuq+96Sir/sg0Nl2m5JNA9fBg+YEZ6fOR7+kcbyaycQcTbfTpYDDQ==
-  dependencies:
-    troika-three-utils "^0.31.0"
-    troika-worker-utils "^0.31.0"
-
 raf@^3.4.1:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/raf/-/raf-3.4.1.tgz#0742e99a4a6552f445d73e3ee0328af0ff1ede39"
@@ -11897,23 +11894,23 @@ tr46@^1.0.1:
   dependencies:
     punycode "^2.1.0"
 
-troika-three-text@^0.31.0:
-  version "0.31.0"
-  resolved "https://registry.yarnpkg.com/troika-three-text/-/troika-three-text-0.31.0.tgz#0c4dbd55c2d6d4516d60fc5247031464b056cf3f"
-  integrity sha512-JpRO+AC9mLZ49IymBwwwFLcasN0xjjQmSkGO9tlzlpeHpexsK4JB80qs6d6vhtt+vmfdJi27/m+WYhaR6+OzaQ==
+troika-three-text@^0.38.1:
+  version "0.38.1"
+  resolved "https://registry.yarnpkg.com/troika-three-text/-/troika-three-text-0.38.1.tgz#c0661d78485831b75008e518b4ba3f8ac2faa0c5"
+  integrity sha512-nf4zLsdFc+u1P7UDaVvODclmtmYLXnRs9w43ZC0iiPTZT+iequ7+Vmbd0s3DOYhgEzIeACDXBdX9bSW/PRjXhA==
   dependencies:
-    troika-three-utils "^0.31.0"
-    troika-worker-utils "^0.31.0"
+    troika-three-utils "^0.38.1"
+    troika-worker-utils "^0.38.1"
 
-troika-three-utils@^0.31.0:
-  version "0.31.0"
-  resolved "https://registry.yarnpkg.com/troika-three-utils/-/troika-three-utils-0.31.0.tgz#825d79313d04112fdfc63389ff5531ab8d7ba1a7"
-  integrity sha512-IUy61i+Kv0EjievWhOmIkqjDa1acIO2J98oO2tZ+PpEfA+Q0syRknH4SN+iiYpa/MNJH1gQz0WfZF4Vk1/pumQ==
+troika-three-utils@^0.38.1:
+  version "0.38.1"
+  resolved "https://registry.yarnpkg.com/troika-three-utils/-/troika-three-utils-0.38.1.tgz#99c91cca4fbf215adf5782382962ca9c969b052f"
+  integrity sha512-uJM1K219B/q3q7SNnWzthSWHzE80JGNPqP4yBKPGqZ0RaXLhzTBtFuKvSQlVYYrqb/RK21iCOf13vtGyPhwM2A==
 
-troika-worker-utils@^0.31.0:
-  version "0.31.0"
-  resolved "https://registry.yarnpkg.com/troika-worker-utils/-/troika-worker-utils-0.31.0.tgz#3d6783265f74cda1860e9d8369de433d29c70b92"
-  integrity sha512-WxHhfFmy6dWBMACUnzInBlqlR601Dy3c9hiRp4aAN+ACzSldwsv1SHOqix4X2+6HTz/pBtHtfJVDbwJiO+lbCw==
+troika-worker-utils@^0.38.1:
+  version "0.38.1"
+  resolved "https://registry.yarnpkg.com/troika-worker-utils/-/troika-worker-utils-0.38.1.tgz#e4e928691390a315cd22877a38ffabf1a118a0a0"
+  integrity sha512-Ish/wxrTG2fzody/E7cAjluTHbM7bn5hGmqOCUr33Ig5wleTj5B6miVOlxc6tUskf1ZXhC9Z35d0zyHzWJrwww==
 
 ts-pnp@1.1.6:
   version "1.1.6"
@@ -12134,11 +12131,6 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-cannon@^0.5.3:
-  version "0.5.3"
-  resolved "https://registry.yarnpkg.com/use-cannon/-/use-cannon-0.5.3.tgz#8641736e94df886ee683517185ad55c38b363f07"
-  integrity sha512-zVn1rRQJ3rw5grOkkNaxRcjS3AWsklrwHsOkmFiUq7Ac+jOE3CEJtASDK2ErScPe85c3BZDRO+/y9UU7VfaD1g==
-
 use-memo-one@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/use-memo-one/-/use-memo-one-1.1.1.tgz#39e6f08fe27e422a7d7b234b5f9056af313bd22c"
@@ -12281,6 +12273,11 @@ wbuf@^1.1.0, wbuf@^1.7.3:
   integrity sha512-O84QOnr0icsbFGLS0O3bI5FswxzRr8/gHwWkDlQFskhSPryQXvrTMxjxGP4+iWYoauLoBvfDpkrOauZ+0iZpDA==
   dependencies:
     minimalistic-assert "^1.0.0"
+
+webgl-constants@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/webgl-constants/-/webgl-constants-1.1.1.tgz#f9633ee87fea56647a60b9ce735cbdfb891c6855"
+  integrity sha512-LkBXKjU5r9vAW7Gcu3T5u+5cvSvh5WwINdr0C+9jpzVB41cjQAP5ePArDtk/WHYdVj0GefCgM73BA7FlIiNtdg==
 
 webidl-conversions@^4.0.2:
   version "4.0.2"
