@@ -63,7 +63,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function invalidate(state?: RootState): void {
     if (!state) return roots.forEach((root) => root.store.getState().invalidate())
-    if (state.vr || !state.internal.active) return
+    if (state.vr || !state.internal.active) return
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + 1)
     // If the render-loop isn't active, start it

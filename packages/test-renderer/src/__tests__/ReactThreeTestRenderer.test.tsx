@@ -7,7 +7,7 @@ describe('ReactThreeTestRenderer', () => {
     const Mesh = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -43,7 +43,7 @@ describe('ReactThreeTestRenderer', () => {
     const Child = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -107,216 +107,293 @@ describe('ReactThreeTestRenderer', () => {
     expect(renders).toBe(6)
   })
 
-  // it('updates types & names', () => {
-  //   const renderer = ReactThreeTestRenderer.create(
-  //     <meshBasicMaterial name="basicMat">
-  //       <color attach="color" args={[0, 0, 0]} />
-  //     </meshBasicMaterial>,
-  //   )
-  //   expect(renderer.toGraph()).toEqual({
-  //     type: 'MeshBasicMaterial',
-  //     name: 'basicMat',
-  //     children: [],
-  //   })
+  it('updates types & names', async () => {
+    const renderer = ReactThreeTestRenderer.create(
+      <mesh>
+        <meshBasicMaterial name="basicMat">
+          <color attach="color" args={[0, 0, 0]} />
+        </meshBasicMaterial>
+      </mesh>,
+    )
 
-  //   renderer.update(
-  //     <meshStandardMaterial name="standardMat">
-  //       <color attach="color" args={[255, 255, 255]} />
-  //     </meshStandardMaterial>,
-  //   )
-  //   expect(renderer.toGraph()).toEqual({
-  //     type: 'MeshStandardMaterial',
-  //     name: 'standardMat',
-  //     children: [],
-  //   })
-  // })
+    expect(renderer.scene.children[0].material.type).toEqual('MeshBasicMaterial')
+    expect(renderer.scene.children[0].material.name).toEqual('basicMat')
 
-  // it('exposes the instance', () => {
-  //   class Mesh extends React.PureComponent {
-  //     state = { standardMat: false }
+    renderer.update(
+      <mesh>
+        <meshStandardMaterial name="standardMat">
+          <color attach="color" args={[255, 255, 255]} />
+        </meshStandardMaterial>
+      </mesh>,
+    )
 
-  //     handleStandard() {
-  //       this.setState({ standardMat: true })
-  //     }
+    expect(renderer.scene.children[0].material.type).toEqual('MeshStandardMaterial')
+    expect(renderer.scene.children[0].material.name).toEqual('standardMat')
+  })
 
-  //     render() {
-  //       return (
-  //         <mesh>
-  //           <boxBufferGeometry args={[2, 2]} />
-  //           {this.state.standardMat ? <meshStandardMaterial /> : <meshBasicMaterial />}
-  //         </mesh>
-  //       )
-  //     }
-  //   }
-  //   const renderer = ReactThreeTestRenderer.create(<Mesh />)
+  it('exposes the instance', () => {
+    class Mesh extends React.PureComponent {
+      state = { standardMat: false }
 
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'mesh',
-  //     props: {},
-  //     children: [
-  //       { type: 'boxBufferGeometry', props: { args: [2, 2] }, children: [] },
-  //       {
-  //         type: 'meshBasicMaterial',
-  //         props: {},
-  //         children: [],
-  //       },
-  //     ],
-  //   })
+      handleStandard() {
+        this.setState({ standardMat: true })
+      }
 
-  //   const mouse = renderer.getInstance()
-  //   mouse.handleMoose()
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'mesh',
-  //     props: {},
-  //     children: [
-  //       { type: 'boxBufferGeometry', props: { args: [2, 2] }, children: [] },
-  //       {
-  //         type: 'meshStandard',
-  //         props: {},
-  //         children: [],
-  //       },
-  //     ],
-  //   })
-  // })
+      render() {
+        return (
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            {this.state.standardMat ? <meshStandardMaterial /> : <meshBasicMaterial />}
+          </mesh>
+        )
+      }
+    }
 
-  // it('updates children', () => {
-  //   const renderer = ReactThreeTestRenderer.create(
-  //     <group>
-  //       <mesh key="a" position-z={12}>
-  //         <boxBufferGeometry args={[2, 2]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //       <mesh key="b" position-y={12}>
-  //         <boxBufferGeometry args={[4, 4]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //       <mesh key="c" position-x={12}>
-  //         <boxBufferGeometry args={[6, 6]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //     </group>
-  //   )
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'group',
-  //     props: {},
-  //     children: [
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['position-z']: 12,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['position-y']: 12,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['position-x']: 12,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   })
+    const renderer = ReactThreeTestRenderer.create(<Mesh />)
 
-  //   renderer.update(
-  //     <group>
-  //       <mesh key="d" rotate-x={1}>
-  //         <boxBufferGeometry args={[2, 2]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //       <mesh key="b" position-y={12}>
-  //         <boxBufferGeometry args={[4, 4]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //       <mesh key="c" position-x={12}>
-  //         <boxBufferGeometry args={[6, 6]} />
-  //         <meshBasicMaterial />
-  //       </mesh>
-  //     </group>
-  //   )
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'mesh',
+          props: {},
+          children: [
+            { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+            {
+              type: 'meshBasicMaterial',
+              props: {
+                attach: 'material',
+              },
+              children: [],
+            },
+          ],
+        },
+      ],
+    })
 
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'group',
-  //     props: {},
-  //     children: [
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['rotate-x']: 1,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['position-y']: 12,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         type: 'mesh',
-  //         props: {
-  //           ['position-x']: 12,
-  //         },
-  //         children: [
-  //           {
-  //             type: 'boxBufferGeometry',
-  //             props: {
-  //               args: [2, 2],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   })
-  // })
+    const instance = renderer.getInstance() as Mesh
+
+    instance.handleStandard()
+
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'mesh',
+          props: {},
+          children: [
+            { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+            {
+              type: 'meshStandardMaterial',
+              props: { attach: 'material' },
+              children: [],
+            },
+          ],
+        },
+      ],
+    })
+  })
+
+  it('updates children', () => {
+    const renderer = ReactThreeTestRenderer.create(
+      <group>
+        <mesh key="a" position-z={12}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+        <mesh key="b" position-y={12}>
+          <boxGeometry args={[4, 4]} />
+          <meshBasicMaterial />
+        </mesh>
+        <mesh key="c" position-x={12}>
+          <boxGeometry args={[6, 6]} />
+          <meshBasicMaterial />
+        </mesh>
+      </group>,
+    )
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'group',
+          props: {},
+          children: [
+            {
+              type: 'mesh',
+              props: {
+                ['position-z']: 12,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [2, 2],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'mesh',
+              props: {
+                ['position-y']: 12,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [4, 4],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'mesh',
+              props: {
+                ['position-x']: 12,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [6, 6],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
+    renderer.update(
+      <group>
+        <mesh key="d" rotation-x={1}>
+          <boxGeometry args={[6, 6]} />
+          <meshBasicMaterial />
+        </mesh>
+        <mesh key="b" position-y={12}>
+          <boxGeometry args={[4, 4]} />
+          <meshBasicMaterial />
+        </mesh>
+        <mesh key="c" position-x={12}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      </group>,
+    )
+
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'group',
+          props: {},
+          children: [
+            {
+              type: 'mesh',
+              props: {
+                ['rotation-x']: 1,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [6, 6],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'mesh',
+              props: {
+                ['position-y']: 12,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [4, 4],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'mesh',
+              props: {
+                ['position-x']: 12,
+              },
+              children: [
+                {
+                  type: 'boxGeometry',
+                  props: {
+                    args: [2, 2],
+                    attach: 'geometry',
+                  },
+                  children: [],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                  },
+                  children: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
 
   // it('does the full lifecycle', () => {
   //   const log: string[] = []

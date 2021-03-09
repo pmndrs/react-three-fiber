@@ -111,6 +111,7 @@ reconciler.injectIntoDevTools({
 export type ThreeTestRenderer = {
   scene: MockScene
   unmount: <TRootNode>(id: TRootNode) => void
+  getInstance: () => null | unknown
   update: (el: React.ReactNode) => void
   toTree: () => ReactThreeTestRendererTree | undefined
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
@@ -126,7 +127,30 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendererOption
   return {
     scene,
     unmount,
-    update(newElement: React.ReactNode) {
+    getInstance: () => {
+      // this is our root
+      const fiber = mockRoots.get(canvas)?.fiber
+      const root = {
+        /**
+         * we wrap our child in a Provider component
+         * and context.Provider, so do a little
+         * artificial dive to get round this and
+         * pass context.Provider as if it was the
+         * actual react root
+         */
+        current: fiber.current.child.child,
+      }
+      if (root) {
+        /**
+         * so this actually returns the instance
+         * the user has passed through as a Fiber
+         */
+        return reconciler.getPublicRootInstance(root)
+      } else {
+        return null
+      }
+    },
+    update: (newElement: React.ReactNode) => {
       const fiber = mockRoots.get(canvas)?.fiber
       if (fiber) {
         reconciler.updateContainer(newElement, fiber, null, () => null)
