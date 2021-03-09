@@ -6,7 +6,6 @@ import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop } from '../core/loop'
-
 import { createEvents } from './events'
 import { Canvas } from './Canvas'
 

@@ -1,8 +1,10 @@
-import React from 'react'
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
 import { render, Canvas } from 'react-three-fiber'
 import './styles.css'
 import App from './App'
 
+/*
 const root = document.getElementById('root') as HTMLDivElement
 const canvas = document.querySelector('canvas') as HTMLCanvasElement
 
@@ -18,3 +20,11 @@ window.addEventListener('resize', () =>
 )
 
 window.dispatchEvent(new Event('resize'))
+*/
+
+ReactDOM.render(
+  <Canvas dpr={[1, 2]}>
+    <App />
+  </Canvas>,
+  document.getElementById('root'),
+)
