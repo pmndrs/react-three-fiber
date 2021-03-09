@@ -106,7 +106,7 @@ export interface CanvasProps {
   raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
   pixelRatio?: number | [number, number]
   onCreated?: (props: CanvasContext) => Promise<any> | void
-  onPointerMissed?: () => void
+  onPointerMissed?: (name?: 'click' | 'contextMenu' | 'doubleClick') => void
 }
 
 export interface UseCanvasProps extends CanvasProps {
@@ -253,6 +253,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
         return { width: w, height: h, factor: width / w, distance }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   )
 
@@ -596,7 +597,7 @@ export const useCanvas = (props: UseCanvasProps): DomEventHandlers => {
       if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
         if (calculateDistance(event) <= 2) {
           pointerMissed(event, (defaultScene as any).__interaction as THREE.Object3D[])
-          if (onPointerMissed) onPointerMissed()
+          if (onPointerMissed) onPointerMissed(name)
         }
       }
     },
