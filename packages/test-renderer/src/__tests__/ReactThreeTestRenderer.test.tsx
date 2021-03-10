@@ -1,7 +1,7 @@
 import * as React from 'react'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
-import { Material, Mesh, Camera, Scene, Raycaster } from 'three'
+import { Mesh, Camera, Scene, Raycaster } from 'three'
 import { useFrame, useLoader, useThree } from 'react-three-fiber'
 
 import { asyncUtils } from '../../../../test/asyncUtils'
@@ -708,8 +708,8 @@ describe('ReactThreeTestRenderer', () => {
 
     expect(renderer.scene.children[0].rotation.x).toEqual(0)
 
-    const delta = 2
+    ReactThreeTestRenderer.advanceFrames(2, 1)
 
-    expect(renderer.scene.children[0].rotation.x).toEqual(delta)
+    waitFor(() => expect(renderer.scene.children[0].rotation.x).toEqual(2))
   })
 })

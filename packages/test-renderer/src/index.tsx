@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 
-import { createRenderer } from 'react-three-fiber'
+import { createRenderer, createLoop } from 'react-three-fiber'
 import type { Root } from 'react-three-fiber/src/core/renderer'
 import type { RenderProps } from 'react-three-fiber/src/web'
 
@@ -16,17 +16,21 @@ import { createWebGLContext } from './createWebGLContext'
 export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
 const mockRoots = new Map<any, Root>()
+const { advance } = createLoop(mockRoots)
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
   element: React.ReactNode,
   id: TRootNode,
-  { size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
+  { size, concurrent, ...props }: RenderProps = {},
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
   let store = root?.store
   let state = store?.getState()
+
+  // If size hasn't been given, pull it from the canvas
+  if (!size) size = { width: 0, height: 0 }
 
   if (fiber && state) {
     const lastProps = state.internal.lastProps
@@ -51,10 +55,11 @@ const render = <TRootNode,>(
   if (!fiber) {
     // If no root has been found, make one
     // @ts-ignore
-    store = createStore(applyProps, () => null, {
+    store = createStore(applyProps, () => null, advance, {
       // @ts-ignore
       gl: new THREE.WebGLRenderer({ context: createWebGLContext(id as HTMLCanvasElement), precision: 'highp' }),
       size,
+      frameloop: 'never',
       ...props,
     })
 
@@ -177,9 +182,22 @@ const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendere
   }
 }
 
+const advanceFrames = (frames: number, delta: number | number[] = 1) => {
+  const isDeltaArray = is.arr(delta)
+
+  for (let i = 0; i < frames; i++) {
+    if (isDeltaArray) {
+      advance((delta as number[])[i] || (delta as number[])[-1])
+    } else {
+      advance(delta as number)
+    }
+  }
+}
+
 const ReactThreeTestRenderer = {
   create,
   act: reconciler.act,
+  advanceFrames,
 }
 
 export default ReactThreeTestRenderer
