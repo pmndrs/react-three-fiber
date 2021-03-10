@@ -206,27 +206,28 @@ describe('web renderer', () => {
     const frameCalls = []
 
     const Component = () => {
-      const meshRef = React.useRef<Mesh>()
-
       useFrame((_, delta) => {
-        if (meshRef.current) {
-          console.log('calling delta', delta)
-          frameCalls.push(delta)
-          meshRef.current.rotation.x += delta
-        }
+        frameCalls.push(delta)
       })
 
       return (
-        <mesh ref={meshRef}>
+        <mesh>
           <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
     }
 
-    let store: UseStore<RootState>
-    await act(async () => store = render(<Component />, canvas, { frameloop: 'never' }))
+    let store: UseStore<RootState> | null = null
+
+    await act(async () => {
+      store = render(<Component />, canvas, { frameloop: 'never' })
+    })
+
     store?.getState().render(Date.now())
+
+    await waitFor(() => expect(frameCalls.length).toBeGreaterThan(0))
+
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
@@ -239,21 +240,25 @@ describe('web renderer', () => {
     }))
 
     const Component = () => {
-      // @ts-ignore i only need to provide an onLoad function
       const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
 
       return <primitive object={model} />
     }
 
-    const scene = render(
-      <React.Suspense fallback={null}>
-        <Component />
-      </React.Suspense>,
-      canvas,
-    ).getState().scene
+    let scene: Scene
+
+    await act(async () => {
+      scene = render(
+        <React.Suspense fallback={null}>
+          <Component />
+        </React.Suspense>,
+        canvas,
+      ).getState().scene
+    })
 
     await waitFor(() => expect(scene.children[0]).toBeDefined())
 
+    // @ts-ignore
     expect(scene.children[0]).toBe(MockMesh)
   })
 
