@@ -1,5 +1,15 @@
 import * as React from 'react'
-import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial, MeshStandardMaterial } from 'three'
+import {
+  Group,
+  Camera,
+  Scene,
+  Raycaster,
+  Mesh,
+  BoxBufferGeometry,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  Ray,
+} from 'three'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
@@ -156,9 +166,41 @@ describe('web renderer', () => {
     )
   })
 
-  // it('can handle useThree hook', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('can handle useThree hook', async () => {
+    let result = {} as {
+      camera: Camera
+      scene: Scene
+      raycaster: Raycaster
+      size: { width: number; height: number }
+    }
+
+    const Component = () => {
+      /**
+       * this causes an act problem, it'd be
+       * good to figure out the best way to
+       * resolve this at some point
+       */
+      const res = useThree((state) => ({
+        camera: state.camera,
+        scene: state.scene,
+        size: state.size,
+        raycaster: state.raycaster,
+      }))
+
+      result = res
+
+      return <group />
+    }
+
+    await act(async () => {
+      render(<Component />, canvas)
+    })
+
+    expect(result.camera instanceof Camera).toBeTruthy()
+    expect(result.scene instanceof Scene).toBeTruthy()
+    expect(result.raycaster instanceof Raycaster).toBeTruthy()
+    expect(result.size).toEqual({ height: 0, width: 0 })
+  })
 
   // it('can handle useFrame hook', () => {
   //   expect(true).toBe(false)
