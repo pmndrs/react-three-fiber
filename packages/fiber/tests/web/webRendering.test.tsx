@@ -1,11 +1,21 @@
 import * as React from 'react'
 import { Group, Mesh, BoxBufferGeometry, MeshBasicMaterial, MeshStandardMaterial } from 'three'
+// @ts-ignore
+import * as Stdlib from 'three-stdlib'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
-import { render } from '../../src/web/index'
+import { asyncUtils } from '../../../../test/asyncUtils'
+
+import { render, useLoader, testutil_act as act, useThree } from '../../src/web/index'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
+
+const resolvers = []
+
+const { waitFor } = asyncUtils(act, (resolver: () => void) => {
+  resolvers.push(resolver)
+})
 
 describe('web renderer', () => {
   const canvas = createCanvas({
@@ -138,10 +148,12 @@ describe('web renderer', () => {
       canvas,
     )
 
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
       'MeshStandardMaterial',
     )
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).name).toEqual('standardMat')
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.name).toEqual(
+      'standardMat',
+    )
   })
 
   // it('can handle useThree hook', () => {
@@ -152,9 +164,32 @@ describe('web renderer', () => {
   //   expect(true).toBe(false)
   // })
 
-  // it('can handle useLoader hook', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('can handle useLoader hook', async () => {
+    const MockMesh = new Mesh()
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
+      load: jest.fn().mockImplementation((url, onLoad) => {
+        onLoad(MockMesh)
+      }),
+    }))
+
+    const Component = () => {
+      // @ts-ignore i only need to provide an onLoad function
+      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+
+      return <primitive object={model} />
+    }
+
+    const scene = render(
+      <React.Suspense fallback={null}>
+        <Component />
+      </React.Suspense>,
+      canvas,
+    )
+
+    await waitFor(() => expect(scene.children[0]).toBeDefined())
+
+    expect(scene.children[0]).toBe(MockMesh)
+  })
 
   // it('can handle useResource hook', () => {
   //   expect(true).toBe(false)

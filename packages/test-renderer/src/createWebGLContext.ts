@@ -62,10 +62,8 @@ const functions = [
   'getExtension',
   'getFramebufferAttachmentParameter',
   'getProgramParameter',
-  'getProgramInfoLog',
   'getRenderbufferParameter',
   'getShaderParameter',
-  'getShaderInfoLog',
   'getShaderSource',
   'getSupportedExtensions',
   'getTexParameter',
@@ -503,6 +501,10 @@ class WebGLRenderingContext {
   getExtension = (ext: string) => {
     return extensions[ext]
   }
+
+  getProgramInfoLog = () => ''
+
+  getShaderInfoLog = () => ''
 }
 
 export const createWebGLContext = (canvas: HTMLCanvasElement) => new WebGLRenderingContext(canvas)
