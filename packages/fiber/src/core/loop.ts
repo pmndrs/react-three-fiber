@@ -23,7 +23,6 @@ export function render(state: RootState, timestamp: number, runGlobalEffects = f
   // Run local effects
   const delta = state.clock.getDelta()
   // Call subscribers (useFrame)
-  console.log(state.internal.subscribers.length)
   for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
