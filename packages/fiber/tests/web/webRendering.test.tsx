@@ -218,10 +218,7 @@ describe('web renderer', () => {
       )
     }
 
-    await act(async () => {
-      render(<Component />, canvas, { frameloop: 'never' })
-    })
-
+    await act(async () => render(<Component />, canvas, { frameloop: 'never' }))
     advance(Date.now())
     expect(frameCalls.length).toBeGreaterThan(0)
   })
