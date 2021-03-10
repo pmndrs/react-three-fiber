@@ -204,22 +204,26 @@ describe('web renderer', () => {
 
   it('can handle useFrame hook', async () => {
     const frameCalls = []
-
+    
     const Component = () => {
+      const ref = React.useRef<THREE.Mesh>(null!)
       useFrame((_, delta) => {
         frameCalls.push(delta)
+        ref.current.position.x = 1
       })
 
       return (
-        <mesh>
+        <mesh ref={ref}>
           <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
     }
 
-    await act(async () => render(<Component />, canvas, { frameloop: 'never' }))
+    let scene: Scene = null as unknown as Scene
+    await act(async () => scene = render(<Component />, canvas, { frameloop: 'never' }).getState().scene)
     advance(Date.now())
+    expect(scene.children[0].position.x).toEqual(1)
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
