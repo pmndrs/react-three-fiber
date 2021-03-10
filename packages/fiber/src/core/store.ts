@@ -26,7 +26,7 @@ export type Viewport = Size & {
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type Raycaster = THREE.Raycaster & {
-  active: boolean
+  enabled: boolean
   filter?: FilterFunction
   computeOffsets?: ComputeOffsetsFunction
 }
@@ -90,7 +90,7 @@ export type RootState = {
 
   vr: boolean
   linear: boolean
-  frameloop: boolean
+  frameloop: 'always' | 'demand' | 'never'
   performance: Performance
 
   size: Size
@@ -101,6 +101,7 @@ export type RootState = {
   set: SetState<RootState>
   get: GetState<RootState>
   invalidate: () => void
+  render: (timestamp: number, runGlobalEffects?: boolean) => number
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
   onCreated?: (props: RootState) => void
@@ -119,7 +120,7 @@ export type StoreProps = {
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   orthographic?: boolean
-  frameloop?: boolean
+  frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
   clock?: THREE.Clock
@@ -147,6 +148,7 @@ const context = React.createContext<UseStore<RootState>>((null as unknown) as Us
 const createStore = (
   applyProps: ApplyProps,
   invalidate: (state?: RootState) => void,
+  render: (state: RootState, timestamp: number, runGlobalEffects?: boolean) => number,
   props: StoreProps,
 ): UseStore<RootState> => {
   const {
@@ -157,7 +159,7 @@ const createStore = (
     onCreated,
     vr = false,
     orthographic = false,
-    frameloop = true,
+    frameloop = 'always',
     dpr = 1,
     performance,
     clock = new THREE.Clock(),
@@ -182,7 +184,7 @@ const createStore = (
   const rootState = create<RootState>((set, get) => {
     // Create custom raycaster
     const raycaster = new THREE.Raycaster() as Raycaster
-    applyProps(raycaster as any, { active: true, ...raycastOptions }, {})
+    applyProps(raycaster as any, { enabled: true, ...raycastOptions }, {})
 
     // Create default camera
     const isCamera = cameraOptions instanceof THREE.Camera
@@ -242,6 +244,7 @@ const createStore = (
       set,
       get,
       invalidate: () => invalidate(get()),
+      render: (timestamp: number, runGlobalEffects?: boolean) => render(get(), timestamp, runGlobalEffects),
 
       linear,
       scene,

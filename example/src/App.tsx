@@ -9,14 +9,16 @@ extend({ OrbitControls })
 const Orbit = memo(() => {
   const gl = useThree((state) => state.gl)
   const camera = useThree((state) => state.camera)
+  const invalidate = useThree((state) => state.invalidate)
   const regress = useThree((state) => state.performance.regress)
   const ref = useRef<OrbitControls>()
   useEffect(() => {
+    const onChange = () => (regress(), invalidate())
     ref.current?.connect(gl.domElement)
-    ref.current?.addEventListener('change', regress)
+    ref.current?.addEventListener('change', onChange)
     return () => {
       ref.current?.dispose()
-      ref.current?.removeEventListener('change', regress)
+      ref.current?.removeEventListener('change', onChange)
     }
   }, [])
   // @ts-ignore
@@ -49,10 +51,10 @@ function AdaptiveEvents() {
   const set = useThree((state) => state.set)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
-    const events = get().events
-    return () => set({ events })
+    const enabled = get().raycaster.enabled
+    return () => void (get().raycaster.enabled = enabled)
   }, [])
-  useEffect(() => set({ events: current === 1 }), [current])
+  useEffect(() => void (get().raycaster.enabled = current === 1), [current])
   return null
 }
 
@@ -63,8 +65,8 @@ export default function App() {
   const [color, setColor] = useState('pink')
 
   useEffect(() => {
-    const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
-    return () => clearInterval(interval)
+    //const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
+    //return () => clearInterval(interval)
   }, [])
 
   useFrame(({ clock }) => group.current?.rotation.set(Math.sin(clock.elapsedTime), 0, 0))

@@ -18,6 +18,8 @@ import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLCon
 import { asyncUtils } from '../../../../test/asyncUtils'
 
 import { render, useLoader, testutil_act as act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
+import { RootState } from '../../src/core/store'
+import { UseStore } from 'zustand'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
@@ -207,8 +209,8 @@ describe('web renderer', () => {
       const meshRef = React.useRef<Mesh>()
 
       useFrame((_, delta) => {
-        console.log('calling delta', delta, meshRef)
         if (meshRef.current) {
+          console.log('calling delta', delta)
           frameCalls.push(delta)
           meshRef.current.rotation.x += delta
         }
@@ -222,10 +224,9 @@ describe('web renderer', () => {
       )
     }
 
-    await act(async () => {
-      render(<Component />, canvas)
-    })
-
+    let store: UseStore<RootState>
+    await act(async () => store = render(<Component />, canvas, { frameloop: 'never' }))
+    store?.getState().render(Date.now())
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 

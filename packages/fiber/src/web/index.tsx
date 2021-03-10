@@ -3,15 +3,16 @@ import * as React from 'react'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context, RootState, Events } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState, Events, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
 
-export type RenderProps = Omit<StoreProps, 'gl' | 'events'> & {
+export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   events?: (store: UseStore<RootState>) => Events
+  size?: Size
   concurrent?: boolean
 }
 
@@ -30,12 +31,15 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, events, ...props }: RenderProps = { size: { width: 0, height: 0 } },
+  { gl, size, concurrent, events, ...props }: RenderProps = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
   let state = store?.getState()
+
+  // If size hasn't been given, pull it from the canvas
+  if (!size) size = { width: canvas.clientWidth, height: canvas.clientHeight }
 
   if (fiber && state) {
     const lastProps = state.internal.lastProps
@@ -61,7 +65,7 @@ function render(
     // If no root has been found, make one
 
     // Create store
-    store = createStore(applyProps, invalidate, { gl: createRendererInstance(gl, canvas), size, ...props })
+    store = createStore(applyProps, invalidate, renderLoop, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
     // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)

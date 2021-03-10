@@ -48,7 +48,7 @@ function createEvents(store: UseStore<RootState>): Events {
     const state = store.getState()
     const { raycaster, internal } = state
     // Skip event handling when noEvents is set
-    if (!raycaster.active) return []
+    if (!raycaster.enabled) return []
 
     const seen = new Set<string>()
     const hits: Intersection[] = []
