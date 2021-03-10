@@ -710,10 +710,6 @@ describe('ReactThreeTestRenderer', () => {
 
     const delta = 2
 
-    await act(async () => {
-      // do something
-    })
-
     expect(renderer.scene.children[0].rotation.x).toEqual(delta)
   })
 })

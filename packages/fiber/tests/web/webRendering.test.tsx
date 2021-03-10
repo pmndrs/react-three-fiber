@@ -17,7 +17,7 @@ import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLCon
 
 import { asyncUtils } from '../../../../test/asyncUtils'
 
-import { render, useLoader, testutil_act as act, useThree } from '../../src/web/index'
+import { render, useLoader, testutil_act as act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
@@ -142,7 +142,7 @@ describe('web renderer', () => {
         </meshBasicMaterial>
       </mesh>,
       canvas,
-    )
+    ).getState().scene
 
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
@@ -156,7 +156,7 @@ describe('web renderer', () => {
         </meshStandardMaterial>
       </mesh>,
       canvas,
-    )
+    ).getState().scene
 
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
       'MeshStandardMaterial',
@@ -200,9 +200,34 @@ describe('web renderer', () => {
     expect(result.size).toEqual({ height: 0, width: 0 })
   })
 
-  // it('can handle useFrame hook', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('can handle useFrame hook', async () => {
+    const frameCalls = []
+
+    const Component = () => {
+      const meshRef = React.useRef<Mesh>()
+
+      useFrame((_, delta) => {
+        console.log('calling delta', delta, meshRef)
+        if (meshRef.current) {
+          frameCalls.push(delta)
+          meshRef.current.rotation.x += delta
+        }
+      })
+
+      return (
+        <mesh ref={meshRef}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    await act(async () => {
+      render(<Component />, canvas)
+    })
+
+    expect(frameCalls.length).toBeGreaterThan(0)
+  })
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new Mesh()
@@ -224,10 +249,75 @@ describe('web renderer', () => {
         <Component />
       </React.Suspense>,
       canvas,
-    )
+    ).getState().scene
 
     await waitFor(() => expect(scene.children[0]).toBeDefined())
 
     expect(scene.children[0]).toBe(MockMesh)
   })
+
+  it('can handle useGraph hook', () => {
+    const group = new Group()
+    const mat1 = new MeshBasicMaterial()
+    mat1.name = 'Mat 1'
+    const mesh1 = new Mesh(new BoxBufferGeometry(2, 2), mat1)
+    mesh1.name = 'Mesh 1'
+    const mat2 = new MeshBasicMaterial()
+    mat2.name = 'Mat 2'
+    const mesh2 = new Mesh(new BoxBufferGeometry(2, 2), mat2)
+    mesh2.name = 'Mesh 2'
+    const subGroup = new Group()
+    const mat3 = new MeshBasicMaterial()
+    mat3.name = 'Mat 3'
+    const mesh3 = new Mesh(new BoxBufferGeometry(2, 2), mat3)
+    mesh3.name = 'Mesh 3'
+    const mat4 = new MeshBasicMaterial()
+    mat4.name = 'Mat 4'
+    const mesh4 = new Mesh(new BoxBufferGeometry(2, 2), mat4)
+    mesh4.name = 'Mesh 4'
+
+    subGroup.add(mesh3, mesh4)
+    group.add(mesh1, mesh2, subGroup)
+
+    let result = {} as ObjectMap
+
+    const Component = () => {
+      const data = useGraph(group)
+      result = data
+      return <mesh />
+    }
+
+    render(<Component />, canvas)
+
+    expect(result).toEqual({
+      nodes: {
+        [mesh1.name]: mesh1,
+        [mesh2.name]: mesh2,
+        [mesh3.name]: mesh3,
+        [mesh4.name]: mesh4,
+      },
+      materials: {
+        [mat1.name]: mat1,
+        [mat2.name]: mat2,
+        [mat3.name]: mat3,
+        [mat4.name]: mat4,
+      },
+    })
+  })
+
+  // it('will apply raycaster props', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('will apply shadowMap props', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('will apply camera props', () => {
+  //   expect(true).toBe(false)
+  // })
+
+  // it('will make an Orthographic Camera', () => {
+  //   expect(true).toBe(false)
+  // })
 })
