@@ -3,14 +3,15 @@ import * as React from 'react'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context, RootState } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState, Events } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
-import { createEvents } from './events'
+import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
 
-export type RenderProps = Omit<StoreProps, 'gl' | 'context'> & {
+export type RenderProps = Omit<StoreProps, 'gl' | 'events'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
+  events?: (store: UseStore<RootState>) => Events
   concurrent?: boolean
 }
 
@@ -29,8 +30,8 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, ...props }: RenderProps = { size: { width: 0, height: 0 } },
-): THREE.Scene {
+  { gl, size, concurrent, events, ...props }: RenderProps = { size: { width: 0, height: 0 } },
+): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
@@ -67,9 +68,24 @@ function render(
     // Map it
     roots.set(canvas, { fiber, store })
     // Create and register events
-    const events = createEvents(store)
-    Object.entries(events).forEach(([name, event]) => canvas.addEventListener(name, event, { passive: true }))
-    state.set((state) => ({ internal: { ...state.internal, events } }))
+
+    if (events) {
+      const handlers = events(store)
+      const manager = {
+        handlers,
+        connect(target: HTMLCanvasElement) {
+          Object.entries(handlers).forEach(([name, event]) => target.addEventListener(name, event, { passive: true }))
+        },
+        disconnect(target: HTMLCanvasElement) {
+          Object.entries(handlers).forEach(([name, event]) => target.removeEventListener(name, event))
+        },
+      }
+      // Store events internally
+      state.set((state) => ({ internal: { ...state.internal, events: manager } }))
+      // Connect them
+      manager.connect(canvas)
+    }
+
     // VR
     if (props.vr && (gl as any).xr && (gl as any).setAnimationLoop) {
       ;(gl as any).xr.enabled = true
@@ -79,7 +95,7 @@ function render(
 
   if (store && fiber) {
     reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
-    return store!.getState().scene as THREE.Scene
+    return store
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
@@ -97,9 +113,9 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
-        Object.entries(state.internal.events).forEach(([name, event]) => canvas.removeEventListener(name, event))
-        if (state.gl.renderLists) state.gl.renderLists.dispose()
-        if (state.gl.forceContextLoss) state.gl.forceContextLoss()
+        state.internal.events?.disconnect(canvas)
+        state.gl?.renderLists?.dispose()
+        state.gl?.forceContextLoss()
         dispose(state.gl)
         dispose(state.raycaster)
         dispose(state.camera)
@@ -141,6 +157,7 @@ export {
   render,
   unmountComponentAtNode,
   createPortal,
+  events,
   reconciler,
   applyProps,
   invalidate,

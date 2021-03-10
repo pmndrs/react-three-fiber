@@ -459,16 +459,16 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
     noTimeout: -1,
     appendChildToContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      const scene = parentInstance.getState().scene
+      const scene = parentInstance.getState().scene as any
       // Link current root to the default scene
       scene.__r3f.root = parentInstance
       appendChild(scene, child)
     },
     removeChildFromContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      removeChild(parentInstance.getState().scene, child)
+      removeChild(parentInstance.getState().scene as any, child)
     },
     insertInContainerBefore: (parentInstance: UseStore<RootState>, child: Instance, beforeChild: Instance) => {
-      insertBefore(parentInstance.getState().scene, child, beforeChild)
+      insertBefore(parentInstance.getState().scene as any, child, beforeChild)
     },
     commitUpdate(
       instance: Instance,

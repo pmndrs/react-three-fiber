@@ -30,11 +30,11 @@ function createEvents(store: UseStore<RootState>): Events {
   /** Sets up defaultRaycaster */
   function prepareRay(event: DomEvent) {
     const state = store.getState()
-    const { raycaster, mouse, camera, size, internal } = state
+    const { raycaster, mouse, camera, size } = state
 
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const offsets = internal.lastProps.raycaster?.computeOffsets?.(event, state) || event
+    const offsets = raycaster.computeOffsets?.(event, state) || event
     if (offsets) {
       const { offsetX, offsetY } = offsets
       const { width, height } = size
@@ -46,9 +46,9 @@ function createEvents(store: UseStore<RootState>): Events {
   /** Intersects interaction objects using the event input */
   function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
     const state = store.getState()
-    const { raycaster, events, internal } = state
+    const { raycaster, internal } = state
     // Skip event handling when noEvents is set
-    if (!events) return []
+    if (!raycaster.active) return []
 
     const seen = new Set<string>()
     const hits: Intersection[] = []
@@ -66,7 +66,7 @@ function createEvents(store: UseStore<RootState>): Events {
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order
-    if (internal.lastProps?.raycaster?.filter) intersects = internal.lastProps.raycaster.filter(intersects, state)
+    if (raycaster.filter) intersects = raycaster.filter(intersects, state)
 
     for (const intersect of intersects) {
       let eventObject: THREE.Object3D | null = intersect.object

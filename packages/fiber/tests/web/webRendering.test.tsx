@@ -29,7 +29,7 @@ describe('web renderer', () => {
         </mesh>
       )
     }
-    const scene = render(<Mesh />, canvas)
+    const scene = render(<Mesh />, canvas).getState().scene
     expect(scene.children[0].type).toEqual('Mesh')
   })
 
@@ -37,7 +37,7 @@ describe('web renderer', () => {
     const Empty = () => {
       return null
     }
-    const scene = render(<Empty />, canvas)
+    const scene = render(<Empty />, canvas).getState().scene
 
     expect(scene.type).toEqual('Scene')
     expect(scene.children).toEqual([])
@@ -64,7 +64,7 @@ describe('web renderer', () => {
       )
     }
 
-    const scene = render(<Parent />, canvas)
+    const scene = render(<Parent />, canvas).getState().scene
 
     expect(scene.children[0].type).toEqual('Group')
     // @ts-expect-error we do append background to group, but it's not wrong because it won't do anything.
@@ -109,7 +109,7 @@ describe('web renderer', () => {
       return null
     }
 
-    const scene = render(<Component />, canvas)
+    const scene = render(<Component />, canvas).getState().scene
 
     expect(scene.children[0].position.x).toEqual(7)
     expect(renders).toBe(6)
