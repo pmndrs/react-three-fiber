@@ -17,7 +17,16 @@ import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLCon
 
 import { asyncUtils } from '../../../../test/asyncUtils'
 
-import { render, advance, useLoader, testutil_act as act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
+import {
+  render,
+  advance,
+  useLoader,
+  testutil_act as act,
+  useThree,
+  useGraph,
+  useFrame,
+  ObjectMap,
+} from '../../src/web/index'
 import { RootState } from '../../src/core/store'
 import { UseStore } from 'zustand'
 
@@ -223,6 +232,7 @@ describe('web renderer', () => {
     })
 
     advance(Date.now())
+
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
