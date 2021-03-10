@@ -9,7 +9,7 @@ import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
 
-export type RenderProps = Omit<StoreProps, 'gl' | 'events'> & {
+export type RenderProps = Omit<StoreProps, 'gl' | 'events'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   events?: (store: UseStore<RootState>) => Events
   concurrent?: boolean

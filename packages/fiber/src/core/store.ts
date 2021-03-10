@@ -314,7 +314,12 @@ const createStore = (
           // Register subscriber
           internal.subscribers.push({ ref, priority })
           // Sort layers from lowest to highest, meaning, highest priority renders last (on top of the other frames)
-          internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
+          set((state) => ({
+            internal: {
+              ...state.internal,
+              subscribers: internal.subscribers.sort((a, b) => a.priority - b.priority),
+            },
+          }))
           return () => {
             if (internal?.subscribers) {
               // Decrease manual flag if this subscription had a priority
