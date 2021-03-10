@@ -17,7 +17,7 @@ export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
-const { invalidate, render: renderLoop, advance } = createLoop(roots)
+const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
 const createRendererInstance = (
@@ -65,7 +65,7 @@ function render(
     // If no root has been found, make one
 
     // Create store
-    store = createStore(applyProps, invalidate, renderLoop, { gl: createRendererInstance(gl, canvas), size, ...props })
+    store = createStore(applyProps, invalidate, advance, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
     // Create renderer
     fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
@@ -93,7 +93,7 @@ function render(
     // VR
     if (props.vr && (gl as any).xr && (gl as any).setAnimationLoop) {
       ;(gl as any).xr.enabled = true
-      ;(gl as any).setAnimationLoop((t: number) => renderLoop(state, t, true))
+      ;(gl as any).setAnimationLoop((t: number) => advance(t, true, state))
     }
   }
 

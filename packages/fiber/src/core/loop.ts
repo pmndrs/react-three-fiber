@@ -16,7 +16,7 @@ export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback
 export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalAfterEffects)
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
-export function render(state: RootState, timestamp: number, runGlobalEffects = false) {
+function render(state: RootState, timestamp: number, runGlobalEffects = false) {
   let i
   // Run global effects
   if (runGlobalEffects) for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
@@ -35,10 +35,6 @@ export function render(state: RootState, timestamp: number, runGlobalEffects = f
 
 export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
-
-  function advance(timestamp: number, runGlobalEffects = false) {
-    roots.forEach((root) => root.store.getState().advance(timestamp, runGlobalEffects))
-  }
 
   function loop(timestamp: number) {
     running = true
@@ -66,7 +62,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   function invalidate(state?: RootState): void {
-    if (!state) return roots.forEach((root) => root.store.getState().invalidate())
+    if (!state) return roots.forEach((root) => invalidate(root.store.getState()))
     if (state.vr || !state.internal.active || state.frameloop === 'never') return
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + 1)
@@ -77,5 +73,10 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  return { loop, invalidate, render, advance }
+  function advance(timestamp: number, runGlobalEffects = false, state?: RootState): void {
+    if (!state) return roots.forEach((root) => advance(timestamp, runGlobalEffects, root.store.getState()))
+    render(state, timestamp, runGlobalEffects)
+  }
+
+  return { loop, invalidate, advance }
 }
