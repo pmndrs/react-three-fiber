@@ -110,23 +110,50 @@ reconciler.injectIntoDevTools({
 
 export type ThreeTestRenderer = {
   scene: MockScene
-  unmount: <TRootNode>(id: TRootNode) => void
+  unmount: () => void
+  getInstance: () => null | unknown
   update: (el: React.ReactNode) => void
   toTree: () => ReactThreeTestRendererTree | undefined
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
 }
 
-const create = (element: React.ReactNode, options?: ReactThreeTestRendererOptions): ThreeTestRenderer => {
+const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendererOptions> = {}): ThreeTestRenderer => {
   const canvas = createCanvas({
     width: options?.width,
     height: options?.height,
   })
-  const scene = render(element, canvas, options) as MockScene
+
+  const scene = render(element, canvas, options as RenderProps) as MockScene
 
   return {
     scene,
-    unmount,
-    update(newElement: React.ReactNode) {
+    unmount: () => {
+      unmount(canvas)
+    },
+    getInstance: () => {
+      // this is our root
+      const fiber = mockRoots.get(canvas)?.fiber
+      const root = {
+        /**
+         * we wrap our child in a Provider component
+         * and context.Provider, so do a little
+         * artificial dive to get round this and
+         * pass context.Provider as if it was the
+         * actual react root
+         */
+        current: fiber.current.child.child,
+      }
+      if (root) {
+        /**
+         * so this actually returns the instance
+         * the user has passed through as a Fiber
+         */
+        return reconciler.getPublicRootInstance(root)
+      } else {
+        return null
+      }
+    },
+    update: (newElement: React.ReactNode) => {
       const fiber = mockRoots.get(canvas)?.fiber
       if (fiber) {
         reconciler.updateContainer(newElement, fiber, null, () => null)
@@ -137,14 +164,14 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendererOption
       if (!scene) {
         return
       } else {
-        return toTree(scene as MockScene)
+        return toTree(scene)
       }
     },
     toGraph: () => {
       if (!scene) {
         return
       } else {
-        return toGraph(scene as MockScene)
+        return toGraph(scene)
       }
     },
   }

@@ -106,6 +106,9 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     if (localState.memoizedProps && localState.memoizedProps.args) {
       newMemoizedProps.args = localState.memoizedProps.args
     }
+    if (localState.memoizedProps && localState.memoizedProps.attach) {
+      newMemoizedProps.attach = localState.memoizedProps.attach
+    }
 
     if (instance.__r3f) {
       instance.__r3f.memoizedProps = newMemoizedProps

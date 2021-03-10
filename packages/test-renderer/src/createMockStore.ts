@@ -6,7 +6,7 @@ import type { RootState } from 'react-three-fiber/src/core/store'
 
 export type MockUseStoreState = UseStore<RootState>
 
-type MockInstance = Omit<Instance, '__r3f'> & {
+export type MockInstance = Omit<Instance, '__r3f'> & {
   __r3f: Omit<LocalState, 'root' | 'objects'> & {
     root: MockUseStoreState
     objects: MockSceneChild[]

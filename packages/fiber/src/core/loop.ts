@@ -23,6 +23,7 @@ export function render(state: RootState, timestamp: number, runGlobalEffects = f
   // Run local effects
   const delta = state.clock.getDelta()
   // Call subscribers (useFrame)
+  console.log(state.internal.subscribers)
   for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
@@ -63,7 +64,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function invalidate(state?: RootState): void {
     if (!state) return roots.forEach((root) => root.store.getState().invalidate())
-    if (state.vr || !state.internal.active) return
+    if (state.vr || !state.internal.active) return
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + 1)
     // If the render-loop isn't active, start it
