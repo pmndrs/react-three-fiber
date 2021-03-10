@@ -1,6 +1,18 @@
 import * as React from 'react'
+// @ts-ignore
+import * as Stdlib from 'three-stdlib'
+import { Mesh, Camera, Scene, Raycaster } from 'three'
+import { useLoader, useThree } from 'react-three-fiber'
+
+import { asyncUtils } from '../../../../test/asyncUtils'
 
 import ReactThreeTestRenderer from '../index'
+
+const resolvers = []
+
+const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void) => {
+  resolvers.push(resolver)
+})
 
 describe('ReactThreeTestRenderer', () => {
   it('renders a simple component', () => {
@@ -617,23 +629,62 @@ describe('ReactThreeTestRenderer', () => {
   //   expect(root).toEqual(refInst)
   // })
 
-  // it('can handle useThree hook', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('can handle useThree hook', async () => {
+    let result = {} as {
+      camera: Camera
+      scene: Scene
+      raycaster: Raycaster
+      size: { width: number; height: number }
+    }
+
+    const Component = () => {
+      const res = useThree((state) => ({
+        camera: state.camera,
+        scene: state.scene,
+        size: state.size,
+        raycaster: state.raycaster,
+      }))
+
+      result = res
+
+      return <group />
+    }
+
+    ReactThreeTestRenderer.create(<Component />)
+
+    expect(result.camera instanceof Camera).toBeTruthy()
+    expect(result.scene instanceof Scene).toBeTruthy()
+    expect(result.raycaster instanceof Raycaster).toBeTruthy()
+    expect(result.size).toEqual({ height: 0, width: 0 })
+  })
 
   // it('can handle useFrame hook', () => {
   //   expect(true).toBe(false)
   // })
 
-  // it('can handle useLoader hook', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('can handle useLoader hook', async () => {
+    const MockMesh = new Mesh()
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
+      load: jest.fn().mockImplementation((url, onLoad) => {
+        onLoad(MockMesh)
+      }),
+    }))
 
-  // it('can handle useResource hook', () => {
-  //   expect(true).toBe(false)
-  // })
+    const Component = () => {
+      // @ts-ignore i only need to provide an onLoad function
+      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
 
-  // it('can handle useUpdate hook', () => {
-  //   expect(true).toBe(false)
-  // })
+      return <primitive object={model} />
+    }
+
+    const renderer = ReactThreeTestRenderer.create(
+      <React.Suspense fallback={null}>
+        <Component />
+      </React.Suspense>,
+    )
+
+    await waitFor(() => expect(renderer.scene.children[0]).toBeDefined())
+
+    expect(renderer.scene.children[0]).toBe(MockMesh)
+  })
 })

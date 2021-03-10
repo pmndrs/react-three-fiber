@@ -192,9 +192,7 @@ describe('web renderer', () => {
       return <group />
     }
 
-    await act(async () => {
-      render(<Component />, canvas)
-    })
+    render(<Component />, canvas)
 
     expect(result.camera instanceof Camera).toBeTruthy()
     expect(result.scene instanceof Scene).toBeTruthy()
@@ -232,12 +230,4 @@ describe('web renderer', () => {
 
     expect(scene.children[0]).toBe(MockMesh)
   })
-
-  // it('can handle useResource hook', () => {
-  //   expect(true).toBe(false)
-  // })
-
-  // it('can handle useUpdate hook', () => {
-  //   expect(true).toBe(false)
-  // })
 })
