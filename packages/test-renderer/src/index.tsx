@@ -16,7 +16,7 @@ import { createWebGLContext } from './createWebGLContext'
 export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
 const mockRoots = new Map<any, Root>()
-const { render: renderLoop, advance } = createLoop(mockRoots)
+const { advance } = createLoop(mockRoots)
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
@@ -55,7 +55,7 @@ const render = <TRootNode,>(
   if (!fiber) {
     // If no root has been found, make one
     // @ts-ignore
-    store = createStore(applyProps, () => null, renderLoop, {
+    store = createStore(applyProps, () => null, advance, {
       // @ts-ignore
       gl: new THREE.WebGLRenderer({ context: createWebGLContext(id as HTMLCanvasElement), precision: 'highp' }),
       size,
