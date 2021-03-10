@@ -19,6 +19,10 @@ export type LocalState = {
   }
 }
 
+export type ClassConstructor = {
+  new (): void
+}
+
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
@@ -196,8 +200,8 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
             else if (
               targetProp.copy &&
               value &&
-              (value as any).constructor &&
-              targetProp.constructor.name === (value as any).constructor.name
+              (value as ClassConstructor).constructor &&
+              targetProp.constructor.name === (value as ClassConstructor).constructor.name
             ) {
               targetProp.copy(value)
             }
@@ -355,7 +359,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       if (child.isObject3D) {
         child.parent = parentInstance
         child.dispatchEvent({ type: 'added' })
-        const restSiblings = parentInstance.children.filter((sibling: any) => sibling !== child)
+        const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         // TODO: the order is out of whack if data objects are present, has to be recalculated
         const index = restSiblings.indexOf(beforeChild)
         parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
@@ -371,7 +375,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     if (array) {
       // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
       const target = clone ? [...array] : array
-      target.forEach((child: Instance) => removeChild(parent, child))
+      target.forEach((child) => removeChild(parent, child))
     }
   }
 
@@ -382,10 +386,10 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       } else {
         child.parent = null
         if (parentInstance.__r3f.objects)
-          parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x: any) => x !== child)
+          parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
         // Remove attachment
         if (child.attachArray) {
-          parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: any) => x !== child)
+          parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: Instance) => x !== child)
         } else if (child.attachObject) {
           delete parentInstance[child.attachObject[0]][child.attachObject[1]]
         } else if (child.attach) {
@@ -396,7 +400,9 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       // Remove interactivity
       if (child.__r3f.root) {
         const rootState = child.__r3f.root.getState()
-        rootState.internal.interaction = rootState.internal.interaction.filter((x: any) => x !== child)
+        rootState.internal.interaction = rootState.internal.interaction.filter(
+          (x) => ((x as unknown) as Instance) !== child,
+        )
       }
 
       invalidateInstance(parentInstance)
@@ -411,11 +417,11 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
           if (child.dispose && child.type !== 'Scene') child.dispose()
           else if (child.__r3f.dispose) child.__r3f.dispose()
           // Remove references
-          delete (child as any).__r3f.root
-          delete (child as any).__r3f.objects
+          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
+          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
           delete child.__r3f.handlers
           delete child.__r3f.dispose
-          delete (child as any).__r3f
+          delete (child as Partial<Instance>).__r3f
         })
       }
     }
@@ -462,16 +468,16 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
     noTimeout: -1,
     appendChildToContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      const scene = parentInstance.getState().scene
+      const scene = (parentInstance.getState().scene as unknown) as Instance
       // Link current root to the default scene
       scene.__r3f.root = parentInstance
       appendChild(scene, child)
     },
     removeChildFromContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      removeChild(parentInstance.getState().scene, child)
+      removeChild((parentInstance.getState().scene as unknown) as Instance, child)
     },
     insertInContainerBefore: (parentInstance: UseStore<RootState>, child: Instance, beforeChild: Instance) => {
-      insertBefore(parentInstance.getState().scene, child, beforeChild)
+      insertBefore((parentInstance.getState().scene as unknown) as Instance, child, beforeChild)
     },
     commitUpdate(
       instance: Instance,

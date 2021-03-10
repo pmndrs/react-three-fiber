@@ -1,6 +1,7 @@
 import * as React from 'react'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { render, unmountComponentAtNode, RenderProps } from './index'
+import { createEvents as events } from "./events"
 
 export interface Props extends Omit<RenderProps, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
@@ -12,7 +13,7 @@ export function Canvas({ children, resize, style, className, ...props }: Props) 
   const canvas = React.useRef<HTMLCanvasElement>(null!)
   React.useLayoutEffect(() => {
     if (size.width > 0 && size.height > 0) {
-      render(children, canvas.current, { ...props, size })
+      render(children, canvas.current, { ...props, size, events })
     }
   }, [size, children])
   React.useEffect(() => () => unmountComponentAtNode(canvas.current), [])

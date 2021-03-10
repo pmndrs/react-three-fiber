@@ -23,7 +23,14 @@ export type Viewport = Size & {
   distance: number
   aspect: number
 }
+
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export type Raycaster = THREE.Raycaster & {
+  active: boolean
+  filter?: FilterFunction
+  computeOffsets?: ComputeOffsetsFunction
+}
+
 export type RenderCallback = (state: RootState, delta: number) => void
 
 export type Performance = {
@@ -32,27 +39,6 @@ export type Performance = {
   max: number
   debounce: number
   regress: () => void
-}
-
-export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
-  def && !!(def as THREE.WebGLRenderer).render
-export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
-  def && (def as THREE.OrthographicCamera).isOrthographicCamera
-
-export type InternalState = {
-  active: boolean
-  priority: number
-  frames: number
-  lastProps: StoreProps
-  events: Events
-
-  interaction: THREE.Object3D[]
-  subscribers: Subscription[]
-  captured: Intersection[] | undefined
-  initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
-
-  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
 }
 
 export type Events = {
@@ -67,16 +53,42 @@ export type Events = {
   lostpointercapture: EventListenerOrEventListenerObject
 }
 
+export interface EventManager {
+  handlers: Events
+  connect: (target: any) => void
+  disconnect: (target: any) => void
+}
+
+export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
+  def && !!(def as THREE.WebGLRenderer).render
+export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
+  def && (def as THREE.OrthographicCamera).isOrthographicCamera
+
+export type InternalState = {
+  active: boolean
+  priority: number
+  frames: number
+  lastProps: StoreProps
+  events?: EventManager
+
+  interaction: THREE.Object3D[]
+  subscribers: Subscription[]
+  captured: Intersection[] | undefined
+  initialClick: [x: number, y: number]
+  initialHits: THREE.Object3D[]
+
+  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
+}
+
 export type RootState = {
   gl: THREE.WebGLRenderer
-  scene: THREE.Scene & Instance
+  scene: THREE.Scene
   camera: Camera
-  raycaster: THREE.Raycaster
+  raycaster: Raycaster
   mouse: THREE.Vector2
   clock: THREE.Clock
 
   vr: boolean
-  events: boolean
   linear: boolean
   frameloop: boolean
   performance: Performance
@@ -107,12 +119,11 @@ export type StoreProps = {
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   orthographic?: boolean
-  events?: boolean
   frameloop?: boolean
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
   clock?: THREE.Clock
-  raycaster?: Partial<THREE.Raycaster> & { filter?: FilterFunction; computeOffsets?: ComputeOffsetsFunction }
+  raycaster?: Partial<Raycaster>
   camera?:
     | Camera
     | Partial<
@@ -147,7 +158,6 @@ const createStore = (
     vr = false,
     orthographic = false,
     frameloop = true,
-    events = true,
     dpr = 1,
     performance,
     clock = new THREE.Clock(),
@@ -171,8 +181,8 @@ const createStore = (
 
   const rootState = create<RootState>((set, get) => {
     // Create custom raycaster
-    const raycaster = new THREE.Raycaster()
-    if (raycastOptions) applyProps(raycaster as any, raycastOptions, {})
+    const raycaster = new THREE.Raycaster() as Raycaster
+    applyProps(raycaster as any, { active: true, ...raycastOptions }, {})
 
     // Create default camera
     const isCamera = cameraOptions instanceof THREE.Camera
@@ -241,7 +251,6 @@ const createStore = (
       mouse: new THREE.Vector2(),
 
       vr,
-      events,
       frameloop,
       onPointerMissed,
 
@@ -288,7 +297,6 @@ const createStore = (
         priority: 0,
         frames: 0,
         lastProps: props,
-        events: (undefined as unknown) as Events,
 
         interaction: [],
         subscribers: [],
