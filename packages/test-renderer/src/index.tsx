@@ -110,7 +110,7 @@ reconciler.injectIntoDevTools({
 
 export type ThreeTestRenderer = {
   scene: MockScene
-  unmount: <TRootNode>(id: TRootNode) => void
+  unmount: () => void
   getInstance: () => null | unknown
   update: (el: React.ReactNode) => void
   toTree: () => ReactThreeTestRendererTree | undefined
@@ -126,7 +126,9 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendererOption
 
   return {
     scene,
-    unmount,
+    unmount: () => {
+      unmount(canvas)
+    },
     getInstance: () => {
       // this is our root
       const fiber = mockRoots.get(canvas)?.fiber

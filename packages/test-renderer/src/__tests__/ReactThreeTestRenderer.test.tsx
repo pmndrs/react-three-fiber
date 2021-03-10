@@ -408,27 +408,27 @@ describe('ReactThreeTestRenderer', () => {
     })
   })
 
-  // it('does the full lifecycle', () => {
-  //   const log: string[] = []
-  //   class Log extends React.Component<{ name: string }> {
-  //     render() {
-  //       log.push('render ' + this.props.name)
-  //       return <div />
-  //     }
-  //     componentDidMount() {
-  //       log.push('mount ' + this.props.name)
-  //     }
-  //     componentWillUnmount() {
-  //       log.push('unmount ' + this.props.name)
-  //     }
-  //   }
+  it('does the full lifecycle', () => {
+    const log: string[] = []
+    class Log extends React.Component<{ name: string }> {
+      render() {
+        log.push('render ' + this.props.name)
+        return <group />
+      }
+      componentDidMount() {
+        log.push('mount ' + this.props.name)
+      }
+      componentWillUnmount() {
+        log.push('unmount ' + this.props.name)
+      }
+    }
 
-  //   const renderer = ReactThreeTestRenderer.create(<Log key="foo" name="Foo" />)
-  //   renderer.update(<Log key="bar" name="Bar" />)
-  //   renderer.unmount()
+    const renderer = ReactThreeTestRenderer.create(<Log key="foo" name="Foo" />)
+    renderer.update(<Log key="bar" name="Bar" />)
+    renderer.unmount()
 
-  //   expect(log).toEqual(['render Foo', 'mount Foo', 'render Bar', 'unmount Foo', 'mount Bar', 'unmount Bar'])
-  // })
+    expect(log).toEqual(['render Foo', 'mount Foo', 'render Bar', 'unmount Foo', 'mount Bar', 'unmount Bar'])
+  })
 
   // it('gives a ref to native components', () => {
   //   const log: React.ReactNode[] = []
@@ -464,162 +464,209 @@ describe('ReactThreeTestRenderer', () => {
   //   expect(log).toEqual(['MeshBasicMaterial', 'MeshStandardMaterial'])
   // })
 
-  // it('toTree() handles nested Fragments', () => {
-  //   const Component = () => (
-  //     <>
-  //       <>
-  //         <group />
-  //       </>
-  //     </>
-  //   )
-  //   const renderer = ReactThreeTestRenderer.create(<Component />)
+  it('toTree() handles nested Fragments', () => {
+    const Component = () => (
+      <>
+        <>
+          <group />
+        </>
+      </>
+    )
+    const renderer = ReactThreeTestRenderer.create(<Component />)
 
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'scene',
-  //     props: {},
-  //     children: [
-  //       {
-  //         type: 'group',
-  //         props: {},
-  //         children: [],
-  //       },
-  //     ],
-  //   })
-  // })
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'group',
+          props: {},
+          children: [],
+        },
+      ],
+    })
+  })
 
-  // it('correctly builds a tree', () => {
-  //   const Component = () => {
-  //     return (
-  //       <group position={[1, 2, 3]}>
-  //         <Child col={[0, 0, 255]} />
-  //         <Mesh />
-  //         <Null />
-  //       </group>
-  //     )
-  //   }
+  it('correctly builds a tree', () => {
+    const Component = () => {
+      return (
+        <group position={[1, 2, 3]}>
+          <Child col={[0, 0, 255]} />
+          <Mesh />
+          <Null />
+        </group>
+      )
+    }
 
-  //   const vertices = new Float32Array([
-  //     -1.0,
-  //     -1.0,
-  //     1.0,
-  //     1.0,
-  //     -1.0,
-  //     1.0,
-  //     1.0,
-  //     1.0,
-  //     1.0,
-  //     1.0,
-  //     1.0,
-  //     1.0,
-  //     -1.0,
-  //     1.0,
-  //     1.0,
-  //     -1.0,
-  //     -1.0,
-  //     1.0,
-  //   ])
+    const vertices = new Float32Array([
+      -1.0,
+      -1.0,
+      1.0,
+      1.0,
+      -1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      -1.0,
+      1.0,
+      1.0,
+      -1.0,
+      -1.0,
+      1.0,
+    ])
 
-  //   const Mesh = () => {
-  //     return (
-  //       <mesh>
-  //         <bufferGeometry attach="geometry">
-  //           <bufferAttribute
-  //             attachObject={['attributes', 'position']}
-  //             array={vertices}
-  //             count={vertices.length / 3}
-  //             itemSize={3}
-  //           />
-  //         </bufferGeometry>
-  //         <meshBasicMaterial attach="material" color="hotpink" />
-  //       </mesh>
-  //     )
-  //   }
+    const Mesh = () => {
+      return (
+        <mesh>
+          <bufferGeometry attach="geometry">
+            <bufferAttribute
+              attachObject={['attributes', 'position']}
+              array={vertices}
+              count={vertices.length / 3}
+              itemSize={3}
+            />
+          </bufferGeometry>
+          <meshBasicMaterial attach="material" color="hotpink" />
+        </mesh>
+      )
+    }
 
-  //   const Child = ({ col }: { col: [number, number, number] }) => {
-  //     return <color attach="background" args={col} />
-  //   }
+    const Child = ({ col }: { col: [number, number, number] }) => {
+      return <color attach="background" args={col} />
+    }
 
-  //   const Null = () => {
-  //     return null
-  //   }
+    const Null = () => {
+      return null
+    }
 
-  //   const renderer = ReactThreeTestRenderer.create(<Component />)
+    const renderer = ReactThreeTestRenderer.create(<Component />)
 
-  //   expect(renderer.toTree()).toEqual({
-  //     type: 'scene',
-  //     props: {},
-  //     children: [
-  //       {
-  //         type: 'group',
-  //         props: {
-  //           position: [1, 2, 3],
-  //         },
-  //         children: [
-  //           {
-  //             type: 'mesh',
-  //             props: {},
-  //             children: [
-  //               {
-  //                 type: 'bufferGeometry',
-  //                 props: { attach: 'geometry' },
-  //                 children: [
-  //                   {
-  //                     type: 'bufferAttribute',
-  //                     props: {
-  //                       attachObject: ['attributes', 'position'],
-  //                       array: vertices,
-  //                       count: vertices.length / 3,
-  //                       itemSize: 3,
-  //                     },
-  //                     children: [],
-  //                   },
-  //                 ],
-  //               },
-  //               {
-  //                 type: 'meshBasicMaterial',
-  //                 props: {
-  //                   attach: 'material',
-  //                   color: 'hotpink',
-  //                 },
-  //                 children: [],
-  //               },
-  //             ],
-  //           },
-  //           {
-  //             type: 'color',
-  //             props: {
-  //               attach: 'background',
-  //               args: [0, 0, 255],
-  //             },
-  //             children: [],
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   })
-  // })
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'group',
+          props: {
+            position: [1, 2, 3],
+          },
+          children: [
+            {
+              type: 'mesh',
+              props: {},
+              children: [
+                {
+                  type: 'bufferGeometry',
+                  props: { attach: 'geometry' },
+                  children: [
+                    {
+                      type: 'bufferAttribute',
+                      props: {
+                        attachObject: ['attributes', 'position'],
+                        array: vertices,
+                        count: vertices.length / 3,
+                        itemSize: 3,
+                      },
+                      children: [],
+                    },
+                  ],
+                },
+                {
+                  type: 'meshBasicMaterial',
+                  props: {
+                    attach: 'material',
+                    color: 'hotpink',
+                  },
+                  children: [],
+                },
+              ],
+            },
+            {
+              type: 'color',
+              props: {
+                attach: 'background',
+                args: [0, 0, 255],
+              },
+              children: [],
+            },
+          ],
+        },
+      ],
+    })
+  })
 
-  // it('toTree() handles complicated tree of fragments', () => {
-  //   const renderer = ReactThreeTestRenderer.create(
-  //     <>
-  //       <>
-  //         <group>
-  //           <color attach="background" args={[0, 0, 0]} />
-  //         </group>
-  //         <>
-  //           <group>
-  //             <color attach="background" args={[0, 0, 255]} />
-  //           </group>
-  //         </>
-  //       </>
-  //       <group>
-  //         <color attach="background" args={[255, 0, 0]} />
-  //       </group>
-  //     </>
-  //   )
+  it('toTree() handles complicated tree of fragments', () => {
+    const renderer = ReactThreeTestRenderer.create(
+      <>
+        <>
+          <group>
+            <color attach="background" args={[0, 0, 0]} />
+          </group>
+          <>
+            <group>
+              <color attach="background" args={[0, 0, 255]} />
+            </group>
+          </>
+        </>
+        <group>
+          <color attach="background" args={[255, 0, 0]} />
+        </group>
+      </>,
+    )
 
-  //   expect(renderer.toTree()).toEqual(false)
-  // })
+    expect(renderer.toTree()).toEqual({
+      type: 'scene',
+      props: {},
+      children: [
+        {
+          type: 'group',
+          props: {},
+          children: [
+            {
+              type: 'color',
+              props: {
+                args: [0, 0, 0],
+                attach: 'background',
+              },
+              children: [],
+            },
+          ],
+        },
+        {
+          type: 'group',
+          props: {},
+          children: [
+            {
+              type: 'color',
+              props: {
+                args: [0, 0, 255],
+                attach: 'background',
+              },
+              children: [],
+            },
+          ],
+        },
+        {
+          type: 'group',
+          props: {},
+          children: [
+            {
+              type: 'color',
+              props: {
+                args: [255, 0, 0],
+                attach: 'background',
+              },
+              children: [],
+            },
+          ],
+        },
+      ],
+    })
+  })
 
   // it('root instance and createNodeMock ref return the same value', () => {
   //   const createNodeMock = (ref) => ({ node: ref })
