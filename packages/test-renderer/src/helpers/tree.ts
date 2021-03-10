@@ -10,7 +10,7 @@ interface ReactThreeTestRendererTreeNode {
   children: ReactThreeTestRendererTreeNode[]
 }
 
-export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode
+export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode[]
 
 const treeObjectFactory = (
   type: ReactThreeTestRendererTreeNode['type'],
@@ -31,14 +31,11 @@ const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =
     )
   })
 
-export const toTree = (scene: MockScene): ReactThreeTestRendererTree => ({
-  type: 'scene',
-  props: {},
-  children: scene.children.map((obj) =>
+export const toTree = (root: MockScene): ReactThreeTestRendererTree =>
+  root.children.map((obj) =>
     treeObjectFactory(
       lowerCaseFirstLetter(obj.type),
       { ...obj.__r3f.memoizedProps },
       toTreeBranch([...obj.children, ...obj.__r3f.objects]),
     ),
-  ),
-})
+  )

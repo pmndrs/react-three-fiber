@@ -117,12 +117,13 @@ export type ThreeTestRenderer = {
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
 }
 
-const create = (element: React.ReactNode, options?: ReactThreeTestRendererOptions): ThreeTestRenderer => {
+const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendererOptions> = {}): ThreeTestRenderer => {
   const canvas = createCanvas({
     width: options?.width,
     height: options?.height,
   })
-  const scene = render(element, canvas, options) as MockScene
+
+  const scene = render(element, canvas, options as RenderProps) as MockScene
 
   return {
     scene,
@@ -163,14 +164,14 @@ const create = (element: React.ReactNode, options?: ReactThreeTestRendererOption
       if (!scene) {
         return
       } else {
-        return toTree(scene as MockScene)
+        return toTree(scene)
       }
     },
     toGraph: () => {
       if (!scene) {
         return
       } else {
-        return toGraph(scene as MockScene)
+        return toGraph(scene)
       }
     },
   }
