@@ -17,7 +17,7 @@ export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
-const { invalidate, render: renderLoop } = createLoop(roots)
+const { invalidate, render: renderLoop, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
 const createRendererInstance = (
@@ -165,6 +165,7 @@ export {
   reconciler,
   applyProps,
   invalidate,
+  advance,
   extend,
   addEffect,
   addAfterEffect,

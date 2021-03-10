@@ -101,7 +101,7 @@ export type RootState = {
   set: SetState<RootState>
   get: GetState<RootState>
   invalidate: () => void
-  render: (timestamp: number, runGlobalEffects?: boolean) => number
+  advance: (timestamp: number, runGlobalEffects?: boolean) => number
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
   onCreated?: (props: RootState) => void
@@ -148,7 +148,7 @@ const context = React.createContext<UseStore<RootState>>((null as unknown) as Us
 const createStore = (
   applyProps: ApplyProps,
   invalidate: (state?: RootState) => void,
-  render: (state: RootState, timestamp: number, runGlobalEffects?: boolean) => number,
+  renderFrame: (state: RootState, timestamp: number, runGlobalEffects?: boolean) => number,
   props: StoreProps,
 ): UseStore<RootState> => {
   const {
@@ -244,7 +244,7 @@ const createStore = (
       set,
       get,
       invalidate: () => invalidate(get()),
-      render: (timestamp: number, runGlobalEffects?: boolean) => render(get(), timestamp, runGlobalEffects),
+      advance: (timestamp: number, runGlobalEffects?: boolean) => renderFrame(get(), timestamp, runGlobalEffects),
 
       linear,
       scene,

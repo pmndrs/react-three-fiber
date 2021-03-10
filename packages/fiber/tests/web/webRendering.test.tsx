@@ -17,7 +17,7 @@ import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLCon
 
 import { asyncUtils } from '../../../../test/asyncUtils'
 
-import { render, useLoader, testutil_act as act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
+import { render, advance, useLoader, testutil_act as act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
 import { RootState } from '../../src/core/store'
 import { UseStore } from 'zustand'
 
@@ -224,9 +224,8 @@ describe('web renderer', () => {
       )
     }
 
-    let store: UseStore<RootState>
-    await act(async () => store = render(<Component />, canvas, { frameloop: 'never' }))
-    store?.getState().render(Date.now())
+    await act(async () => render(<Component />, canvas, { frameloop: 'never' }))
+    advance(Date.now())
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
