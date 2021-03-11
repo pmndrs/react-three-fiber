@@ -8,12 +8,15 @@ import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
+import { RootTag } from 'react-reconciler'
+
+const modes = ['legacy', 'blocking', 'concurrent']
 
 export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   events?: (store: UseStore<RootState>) => Events
   size?: Size
-  concurrent?: boolean
+  mode?: 'legacy' | 'blocking' | 'concurrent'
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
@@ -31,15 +34,12 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size, concurrent, events, ...props }: RenderProps = {},
+  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, ...props }: RenderProps = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
   let state = store?.getState()
-
-  // If size hasn't been given, pull it from the canvas
-  if (!size) size = { width: canvas.clientWidth, height: canvas.clientHeight }
 
   if (fiber && state) {
     const lastProps = state.internal.lastProps
@@ -68,7 +68,7 @@ function render(
     store = createStore(applyProps, invalidate, advance, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
     // Create renderer
-    fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
+    fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
     // Create and register events
