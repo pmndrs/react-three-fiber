@@ -1,10 +1,20 @@
-const tsPreset = require('ts-jest/jest-preset')
-
 module.exports = {
-  ...tsPreset,
+  preset: 'ts-jest',
+  testEnvironment: 'jsdom',
+  testPathIgnorePatterns: ['/node_modules/'],
+  coveragePathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/packages/*/dist'],
+  coverageThreshold: {
+    global: {
+      statements: 80,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+    },
+  },
+  coverageDirectory: './coverage/',
+  collectCoverage: true,
   moduleFileExtensions: ['js', 'ts', 'tsx'],
   verbose: false,
   testTimeout: 30000,
-  testPathIgnorePatterns: ['/node_modules/'],
   setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
 }
