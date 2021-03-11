@@ -5,7 +5,22 @@ import * as React from 'react'
 import ReactThreeTestRenderer from '../index'
 
 describe('ReactThreeTestRenderer Events', () => {
-  it('should handle PointerDown event', async () => {
-    expect(true).toBe(true)
+  it('should fire an event', async () => {
+    const handlePointerDown = jest.fn()
+
+    const Component = () => {
+      return (
+        <mesh position-x={1} onPointerDown={handlePointerDown}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    const { scene } = await ReactThreeTestRenderer.create(<Component />)
+
+    await ReactThreeTestRenderer.fireEvent(scene.children[0], 'onPointerDown')
+
+    expect(handlePointerDown).toBeCalled()
   })
 })

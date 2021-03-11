@@ -13,6 +13,7 @@ import { is } from './helpers/is'
 import { createStore, MockUseStoreState, context, MockScene } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
+import { createEventFirer } from './fireEvent'
 
 export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
@@ -216,7 +217,8 @@ const create = async (
   }
 }
 
-export default {
-  create,
-  act: reconciler.act,
-}
+const act = reconciler.act
+
+const fireEvent = createEventFirer(act)
+
+export default { create, act, fireEvent }
