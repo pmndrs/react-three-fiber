@@ -1,9 +1,11 @@
+jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+
 import * as React from 'react'
-import { create } from 'react-test-renderer'
+import { ReactTestRenderer, create, act } from 'react-test-renderer'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
-import { Canvas } from '../../src/web'
+import { Canvas, testutil_act as r3fAct } from '../../src/web'
 
 describe('web Canvas', () => {
   const canvas = createCanvas({
@@ -21,29 +23,43 @@ describe('web Canvas', () => {
     return canvas
   }
 
-  it('should correctly mount', () => {
-    const tree = create(
-      <Canvas>
-        <group />
-      </Canvas>,
-      {
-        createNodeMock,
-      },
-    ).toJSON()
+  it('should correctly mount', async () => {
+    let renderer: ReactTestRenderer | null = null
+
+    await r3fAct(async () => {
+      await act(async () => {
+        renderer = create(
+          <Canvas>
+            <group />
+          </Canvas>,
+          {
+            createNodeMock,
+          },
+        )
+      })
+    })
+
+    const tree = renderer!.toJSON()
 
     expect(tree).toMatchSnapshot()
   })
 
-  it('should correctly unmount', () => {
-    const render = create(
-      <Canvas>
-        <group />
-      </Canvas>,
-      {
-        createNodeMock,
-      },
-    )
+  it('should correctly unmount', async () => {
+    let renderer: ReactTestRenderer | null = null
 
-    expect(() => render.unmount()).not.toThrow()
+    await r3fAct(async () => {
+      await act(async () => {
+        renderer = create(
+          <Canvas>
+            <group />
+          </Canvas>,
+          {
+            createNodeMock,
+          },
+        )
+      })
+    })
+
+    expect(() => renderer!.unmount()).not.toThrow()
   })
 })
