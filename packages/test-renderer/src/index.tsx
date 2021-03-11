@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import { RootTag } from 'react-reconciler'
 
 import { createRenderer, createLoop } from 'react-three-fiber'
 import type { Root } from 'react-three-fiber/src/core/renderer'
@@ -16,21 +17,19 @@ import { createWebGLContext } from './createWebGLContext'
 export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
 const mockRoots = new Map<any, Root>()
+const modes = ['legacy', 'blocking', 'concurrent']
 const { advance } = createLoop(mockRoots)
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
   element: React.ReactNode,
   id: TRootNode,
-  { size, concurrent, ...props }: RenderProps = {},
+  { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps = {},
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
   let store = root?.store
   let state = store?.getState()
-
-  // If size hasn't been given, pull it from the canvas
-  if (!size) size = { width: 0, height: 0 }
 
   if (fiber && state) {
     const lastProps = state.internal.lastProps
@@ -63,7 +62,7 @@ const render = <TRootNode,>(
       ...props,
     })
 
-    fiber = reconciler.createContainer(store, concurrent ? 2 : 0, false, null)
+    fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it
     mockRoots.set(id, { fiber, store })
   }

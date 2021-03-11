@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
@@ -8,9 +9,6 @@ import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
-import { RootTag } from 'react-reconciler'
-
-const modes = ['legacy', 'blocking', 'concurrent']
 
 export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
@@ -20,6 +18,7 @@ export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
+const modes = ['legacy', 'blocking', 'concurrent']
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
