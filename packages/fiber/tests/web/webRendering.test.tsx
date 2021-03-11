@@ -1,3 +1,5 @@
+jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+
 import * as React from 'react'
 import {
   Group,
@@ -8,7 +10,6 @@ import {
   BoxBufferGeometry,
   MeshBasicMaterial,
   MeshStandardMaterial,
-  Ray,
 } from 'three'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
@@ -49,7 +50,7 @@ describe('web renderer', () => {
     },
   })
 
-  it('renders a simple component', () => {
+  it('renders a simple component', async () => {
     const Mesh = () => {
       return (
         <mesh>
@@ -58,21 +59,30 @@ describe('web renderer', () => {
         </mesh>
       )
     }
-    const scene = render(<Mesh />, canvas).getState().scene
+    let scene: Scene = null!
+
+    await act(async () => {
+      scene = render(<Mesh />, canvas).getState().scene
+    })
+
     expect(scene.children[0].type).toEqual('Mesh')
   })
 
-  it('renders an empty scene', () => {
+  it('renders an empty scene', async () => {
     const Empty = () => {
       return null
     }
-    const scene = render(<Empty />, canvas).getState().scene
+    let scene: Scene = null!
+
+    await act(async () => {
+      scene = render(<Empty />, canvas).getState().scene
+    })
 
     expect(scene.type).toEqual('Scene')
     expect(scene.children).toEqual([])
   })
 
-  it('can render a composite component', () => {
+  it('can render a composite component', async () => {
     class Parent extends React.Component {
       render() {
         return (
@@ -93,7 +103,11 @@ describe('web renderer', () => {
       )
     }
 
-    const scene = render(<Parent />, canvas).getState().scene
+    let scene: Scene = null!
+
+    await act(async () => {
+      scene = render(<Parent />, canvas).getState().scene
+    })
 
     expect(scene.children[0].type).toEqual('Group')
     // @ts-expect-error we do append background to group, but it's not wrong because it won't do anything.
@@ -103,7 +117,7 @@ describe('web renderer', () => {
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
   })
 
-  it('renders some basics with an update', () => {
+  it('renders some basics with an update', async () => {
     let renders = 0
 
     class Component extends React.PureComponent {
@@ -138,35 +152,45 @@ describe('web renderer', () => {
       return null
     }
 
-    const scene = render(<Component />, canvas).getState().scene
+    let scene: Scene = null!
+
+    await act(async () => {
+      scene = render(<Component />, canvas).getState().scene
+    })
 
     expect(scene.children[0].position.x).toEqual(7)
-    expect(renders).toBe(6)
+    expect(renders).toBe(12)
   })
 
   it('updates types & names', async () => {
-    let scene = render(
-      <mesh>
-        <meshBasicMaterial name="basicMat">
-          <color attach="color" args={[0, 0, 0]} />
-        </meshBasicMaterial>
-      </mesh>,
-      canvas,
-    ).getState().scene
+    let scene: Scene = null!
+
+    await act(async () => {
+      scene = render(
+        <mesh>
+          <meshBasicMaterial name="basicMat">
+            <color attach="color" args={[0, 0, 0]} />
+          </meshBasicMaterial>
+        </mesh>,
+        canvas,
+      ).getState().scene
+    })
 
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
     )
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.name).toEqual('basicMat')
 
-    scene = render(
-      <mesh>
-        <meshStandardMaterial name="standardMat">
-          <color attach="color" args={[255, 255, 255]} />
-        </meshStandardMaterial>
-      </mesh>,
-      canvas,
-    ).getState().scene
+    await act(async () => {
+      scene = render(
+        <mesh>
+          <meshStandardMaterial name="standardMat">
+            <color attach="color" args={[255, 255, 255]} />
+          </meshStandardMaterial>
+        </mesh>,
+        canvas,
+      ).getState().scene
+    })
 
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
       'MeshStandardMaterial',
@@ -202,7 +226,9 @@ describe('web renderer', () => {
       return <group />
     }
 
-    render(<Component />, canvas)
+    await act(async () => {
+      render(<Component />, canvas)
+    })
 
     expect(result.camera instanceof Camera).toBeTruthy()
     expect(result.scene instanceof Scene).toBeTruthy()
@@ -228,7 +254,7 @@ describe('web renderer', () => {
       )
     }
 
-    let scene: Scene = (null as unknown) as Scene
+    let scene: Scene = null!
     await act(async () => (scene = render(<Component />, canvas, { frameloop: 'never' }).getState().scene))
     advance(Date.now())
     expect(scene.children[0].position.x).toEqual(1)
@@ -249,7 +275,7 @@ describe('web renderer', () => {
       return <primitive object={model} />
     }
 
-    let scene: Scene
+    let scene: Scene = null!
 
     await act(async () => {
       scene = render(
@@ -262,11 +288,10 @@ describe('web renderer', () => {
 
     await waitFor(() => expect(scene.children[0]).toBeDefined())
 
-    // @ts-ignore
     expect(scene.children[0]).toBe(MockMesh)
   })
 
-  it('can handle useGraph hook', () => {
+  it('can handle useGraph hook', async () => {
     const group = new Group()
     const mat1 = new MeshBasicMaterial()
     mat1.name = 'Mat 1'
@@ -297,7 +322,9 @@ describe('web renderer', () => {
       return <mesh />
     }
 
-    render(<Component />, canvas)
+    await act(async () => {
+      render(<Component />, canvas)
+    })
 
     expect(result).toEqual({
       nodes: {
@@ -315,7 +342,7 @@ describe('web renderer', () => {
     })
   })
 
-  it('does the full lifecycle', () => {
+  it('does the full lifecycle', async () => {
     const log: string[] = []
     class Log extends React.Component<{ name: string }> {
       render() {
@@ -330,10 +357,15 @@ describe('web renderer', () => {
       }
     }
 
-    render(<Log key="foo" name="Foo" />, canvas)
-    unmountComponentAtNode(canvas)
+    await act(async () => {
+      render(<Log key="foo" name="Foo" />, canvas)
+    })
 
-    expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
+    await act(async () => {
+      unmountComponentAtNode(canvas)
+    })
+
+    expect(log).toEqual(['render Foo', 'render Foo', 'mount Foo', 'unmount Foo'])
   })
 
   // it('will apply raycaster props', () => {
