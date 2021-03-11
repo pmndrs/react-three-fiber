@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { RootTag } from 'react-reconciler'
 
-import { createRenderer, createLoop } from 'react-three-fiber'
+import { _createRenderer as createRenderer, _createLoop as createLoop } from 'react-three-fiber'
 import type { Root } from 'react-three-fiber/src/core/renderer'
 import type { RenderProps } from 'react-three-fiber/src/web'
 
@@ -216,9 +216,7 @@ const create = async (
   }
 }
 
-const ReactThreeTestRenderer = {
+export default {
   create,
   act: reconciler.act,
 }
-
-export default ReactThreeTestRenderer

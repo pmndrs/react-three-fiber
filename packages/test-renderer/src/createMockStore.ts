@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
-import { context, createStore } from 'react-three-fiber'
+import { context, _createStore as createStore } from 'react-three-fiber'
 import type { Instance, LocalState } from 'react-three-fiber/src/core/renderer'
 import type { RootState } from 'react-three-fiber/src/core/store'
 
