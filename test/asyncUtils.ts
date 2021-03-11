@@ -18,7 +18,7 @@ const callAfter = async (callback: () => void, ms: number): Promise<void> => {
 }
 
 const DEFAULT_INTERVAL = 50
-const DEFAULT_TIMEOUT = 1000
+const DEFAULT_TIMEOUT = 5000
 
 // types
 

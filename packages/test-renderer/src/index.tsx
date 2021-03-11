@@ -114,25 +114,34 @@ reconciler.injectIntoDevTools({
 
 export type ThreeTestRenderer = {
   scene: MockScene
-  unmount: () => void
+  unmount: () => Promise<void>
   getInstance: () => null | unknown
-  update: (el: React.ReactNode) => void
+  update: (el: React.ReactNode) => Promise<void>
   toTree: () => ReactThreeTestRendererTree | undefined
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
 }
 
-const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendererOptions> = {}): ThreeTestRenderer => {
+const create = async (
+  element: React.ReactNode,
+  options: Partial<ReactThreeTestRendererOptions> = {},
+): Promise<ThreeTestRenderer> => {
   const canvas = createCanvas({
     width: options?.width,
     height: options?.height,
   })
 
-  const scene = render(element, canvas, options as RenderProps) as MockScene
+  let scene: MockScene | null = null
+
+  await reconciler.act(async () => {
+    scene = render(element, canvas, options as RenderProps) as MockScene
+  })
 
   return {
-    scene,
-    unmount: () => {
-      unmount(canvas)
+    scene: (scene as unknown) as MockScene,
+    unmount: async () => {
+      await reconciler.act(async () => {
+        unmount(canvas)
+      })
     },
     getInstance: () => {
       // this is our root
@@ -157,14 +166,17 @@ const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendere
         return null
       }
     },
-    update: (newElement: React.ReactNode) => {
+    update: async (newElement: React.ReactNode) => {
       const fiber = mockRoots.get(canvas)?.fiber
       if (fiber) {
-        reconciler.updateContainer(newElement, fiber, null, () => null)
+        await reconciler.act(async () => {
+          reconciler.updateContainer(newElement, fiber, null, () => null)
+        })
       }
       return
     },
     toTree: () => {
+      // console.log(scene)
       if (!scene) {
         return
       } else {
@@ -181,14 +193,18 @@ const create = (element: React.ReactNode, options: Partial<ReactThreeTestRendere
   }
 }
 
-const advanceFrames = (frames: number, delta: number | number[] = 1) => {
+const advanceFrames = async (frames: number, delta: number | number[] = 1) => {
   const isDeltaArray = is.arr(delta)
 
   for (let i = 0; i < frames; i++) {
     if (isDeltaArray) {
-      advance((delta as number[])[i] || (delta as number[])[-1])
+      await reconciler.act(async () => {
+        advance((delta as number[])[i] || (delta as number[])[-1])
+      })
     } else {
-      advance(delta as number)
+      await reconciler.act(async () => {
+        advance(delta as number)
+      })
     }
   }
 }
