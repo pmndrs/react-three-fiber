@@ -18,7 +18,7 @@ export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
 
 const mockRoots = new Map<any, Root>()
 const modes = ['legacy', 'blocking', 'concurrent']
-const { advance } = createLoop(mockRoots)
+const { advance, invalidate } = createLoop(mockRoots)
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
 const render = <TRootNode,>(
@@ -54,7 +54,7 @@ const render = <TRootNode,>(
   if (!fiber) {
     // If no root has been found, make one
     // @ts-ignore
-    store = createStore(applyProps, () => null, advance, {
+    store = createStore(applyProps, invalidate, advance, {
       // @ts-ignore
       gl: new THREE.WebGLRenderer({ context: createWebGLContext(id as HTMLCanvasElement), precision: 'highp' }),
       size,
@@ -119,6 +119,7 @@ export type ThreeTestRenderer = {
   update: (el: React.ReactNode) => Promise<void>
   toTree: () => ReactThreeTestRendererTree | undefined
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
+  advanceFrames: (frames: number, delta: number | number[]) => void
 }
 
 const create = async (
@@ -130,22 +131,24 @@ const create = async (
     height: options?.height,
   })
 
+  const _fiber = canvas
+
   let scene: MockScene | null = null
 
   await reconciler.act(async () => {
-    scene = render(element, canvas, options as RenderProps) as MockScene
+    scene = render(element, _fiber, options as RenderProps) as MockScene
   })
 
   return {
     scene: (scene as unknown) as MockScene,
     unmount: async () => {
       await reconciler.act(async () => {
-        unmount(canvas)
+        unmount(_fiber)
       })
     },
     getInstance: () => {
       // this is our root
-      const fiber = mockRoots.get(canvas)?.fiber
+      const fiber = mockRoots.get(_fiber)?.fiber
       const root = {
         /**
          * we wrap our child in a Provider component
@@ -167,7 +170,7 @@ const create = async (
       }
     },
     update: async (newElement: React.ReactNode) => {
-      const fiber = mockRoots.get(canvas)?.fiber
+      const fiber = mockRoots.get(_fiber)?.fiber
       if (fiber) {
         await reconciler.act(async () => {
           reconciler.updateContainer(newElement, fiber, null, () => null)
@@ -190,29 +193,32 @@ const create = async (
         return toGraph(scene)
       }
     },
-  }
-}
+    advanceFrames: (frames: number, delta: number | number[] = 1) => {
+      const root = mockRoots.get(_fiber)
 
-const advanceFrames = async (frames: number, delta: number | number[] = 1) => {
-  const isDeltaArray = is.arr(delta)
+      if (!root) {
+        return
+      }
 
-  for (let i = 0; i < frames; i++) {
-    if (isDeltaArray) {
-      await reconciler.act(async () => {
-        advance((delta as number[])[i] || (delta as number[])[-1])
+      const state = root.store.getState()
+      const storeSubscribers = state.internal.subscribers
+
+      storeSubscribers.forEach((subscriber) => {
+        for (let i = 0; i < frames; i++) {
+          if (is.arr(delta)) {
+            subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])
+          } else {
+            subscriber.ref.current(state, delta as number)
+          }
+        }
       })
-    } else {
-      await reconciler.act(async () => {
-        advance(delta as number)
-      })
-    }
+    },
   }
 }
 
 const ReactThreeTestRenderer = {
   create,
   act: reconciler.act,
-  advanceFrames,
 }
 
 export default ReactThreeTestRenderer
