@@ -262,7 +262,7 @@ const createStore = (
         min: 0.5,
         max: 1,
         debounce: 200,
-        ...performance,        
+        ...performance,
         regress: () => {
           const state = get()
           // Clear timeout

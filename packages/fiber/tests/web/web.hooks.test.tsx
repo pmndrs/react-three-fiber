@@ -7,7 +7,7 @@ import * as Stdlib from 'three-stdlib'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
-import { asyncUtils } from '../../../../test/asyncUtils'
+import { asyncUtils } from '../../../../test-utils/asyncUtils'
 
 import {
   render,
@@ -27,15 +27,19 @@ const { waitFor } = asyncUtils(act, (resolver: () => void) => {
 })
 
 describe('web hooks', () => {
-  const canvas = createCanvas({
-    beforeReturn: (canvas) => {
-      //@ts-ignore
-      canvas.getContext = (type: string) => {
-        if (type === 'webgl' || type === 'webgl2') {
-          return createWebGLContext(canvas)
+  let canvas: HTMLCanvasElement = null!
+
+  beforeEach(() => {
+    canvas = createCanvas({
+      beforeReturn: (canvas) => {
+        //@ts-ignore
+        canvas.getContext = (type: string) => {
+          if (type === 'webgl' || type === 'webgl2') {
+            return createWebGLContext(canvas)
+          }
         }
-      }
-    },
+      },
+    })
   })
 
   it('can handle useThree hook', async () => {

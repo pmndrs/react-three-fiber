@@ -1,40 +1,152 @@
-describe('web events ', () => {
-  it('has to have a test', () => {
-    expect(true).toBe(true)
+jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+
+import * as React from 'react'
+import { render, fireEvent } from '@testing-library/react'
+import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
+
+import { Canvas, events, testutil_act as act } from '../../src/web/index'
+
+// @ts-ignore
+HTMLCanvasElement.prototype.getContext = function () {
+  return createWebGLContext(this)
+}
+
+describe('events ', () => {
+  it('can handle onPointerDown', async () => {
+    const handlePointerDown = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas events={events}>
+          <mesh onPointerDown={handlePointerDown}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = new PointerEvent('pointerdown')
+    //@ts-ignore
+    evt.offsetX = 577
+    //@ts-ignore
+    evt.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
+
+    expect(handlePointerDown).toHaveBeenCalled()
   })
-  //   it('can handle onClick', () => {
-  //     expect(true).toBe(false)
-  //   })
 
-  //   it('can handle onContextMenu', () => {
-  //     expect(true).toBe(false)
-  //   })
+  it('can handle onPointerMissed', async () => {
+    const handleClick = jest.fn()
+    const handleMissed = jest.fn()
 
-  //   it('can handle onDoubleClick', () => {
-  //     expect(true).toBe(false)
-  //   })
+    await act(async () => {
+      render(
+        <Canvas events={events}>
+          <mesh onPointerMissed={handleMissed} onClick={handleClick}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
 
-  //   it('can handle onWheel', () => {
-  //     expect(true).toBe(false)
-  //   })
+    const evt = new MouseEvent('click')
+    //@ts-ignore
+    evt.offsetX = 0
+    //@ts-ignore
+    evt.offsetY = 0
 
-  //   it('can handle onPointerDown', () => {
-  //     expect(true).toBe(false)
-  //   })
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
 
-  //   it('can handle onPointerUp', () => {
-  //     expect(true).toBe(false)
-  //   })
+    expect(handleClick).not.toHaveBeenCalled()
+    expect(handleMissed).toHaveBeenCalled()
+  })
 
-  //   it('can handle onPointerLeave', () => {
-  //     expect(true).toBe(false)
-  //   })
+  it('can handle onPointerMove', async () => {
+    const handlePointerMove = jest.fn()
+    const handlePointerOver = jest.fn()
+    const handlePointerEnter = jest.fn()
+    const handlePointerOut = jest.fn()
 
-  //   it('can handle onPointerMove', () => {
-  //     expect(true).toBe(false)
-  //   })
+    await act(async () => {
+      render(
+        <Canvas events={events}>
+          <mesh
+            onPointerOut={handlePointerOut}
+            onPointerEnter={handlePointerEnter}
+            onPointerMove={handlePointerMove}
+            onPointerOver={handlePointerOver}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
 
-  //   it('can handle onLostPointerCapture', () => {
-  //     expect(true).toBe(false)
-  //   })
+    const evt1 = new PointerEvent('pointermove')
+    //@ts-ignore
+    evt1.offsetX = 577
+    //@ts-ignore
+    evt1.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt1)
+
+    expect(handlePointerMove).toHaveBeenCalled()
+    expect(handlePointerOver).toHaveBeenCalled()
+    expect(handlePointerEnter).toHaveBeenCalled()
+
+    const evt2 = new PointerEvent('pointermove')
+    //@ts-ignore
+    evt2.offsetX = 0
+    //@ts-ignore
+    evt2.offsetY = 0
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt2)
+
+    expect(handlePointerOut).toHaveBeenCalled()
+  })
+
+  it('should handle stopPropogation', async () => {
+    const handlePointerEnter = jest.fn().mockImplementation((e) => {
+      expect(() => e.stopPropagation()).not.toThrow()
+    })
+    const handlePointerLeave = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas events={events}>
+          <mesh onPointerLeave={handlePointerLeave} onPointerEnter={handlePointerEnter}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+          <mesh position-z={3}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt1 = new PointerEvent('pointermove')
+    //@ts-ignore
+    evt1.offsetX = 577
+    //@ts-ignore
+    evt1.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt1)
+
+    expect(handlePointerEnter).toHaveBeenCalled()
+
+    const evt2 = new PointerEvent('pointermove')
+    //@ts-ignore
+    evt2.offsetX = 0
+    //@ts-ignore
+    evt2.offsetY = 0
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt2)
+
+    expect(handlePointerLeave).toHaveBeenCalled()
+  })
 })

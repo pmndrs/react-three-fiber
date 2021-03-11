@@ -2,10 +2,11 @@ import ReactReconciler from 'react-reconciler'
 
 import { toEventHandlerName } from './helpers/strings'
 
-import type { MockSceneChild } from './createMockStore'
+import type { MockSceneChild, MockUseStoreState } from './createMockStore'
 
 export const createEventFirer = (
   act: ReactReconciler.Reconciler<unknown, unknown, unknown, unknown, unknown>['act'],
+  store: MockUseStoreState | undefined,
 ) => {
   const findEventHandler = (element: MockSceneChild, eventName: string): (() => void) | null => {
     const eventHandlerName = toEventHandlerName(eventName)
