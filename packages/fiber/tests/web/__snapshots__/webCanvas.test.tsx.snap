@@ -1,0 +1,22 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`web Canvas should correctly mount 1`] = `
+<div
+  style={
+    Object {
+      "height": "100%",
+      "overflow": "hidden",
+      "position": "relative",
+      "width": "100%",
+    }
+  }
+>
+  <canvas
+    style={
+      Object {
+        "display": "block",
+      }
+    }
+  />
+</div>
+`;

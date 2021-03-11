@@ -437,7 +437,9 @@ const extensions: { [key: string]: any } = {
   // ratified
   OES_texture_float: {},
   OES_texture_half_float: {},
-  WEBGL_lose_context: {},
+  WEBGL_lose_context: {
+    loseContext: () => {},
+  },
   OES_standard_derivatives: {},
   OES_vertex_array_object: {
     createVertexArrayOES: () => {},

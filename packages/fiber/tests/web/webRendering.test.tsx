@@ -26,9 +26,8 @@ import {
   useGraph,
   useFrame,
   ObjectMap,
+  unmountComponentAtNode,
 } from '../../src/web/index'
-import { RootState } from '../../src/core/store'
-import { UseStore } from 'zustand'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
@@ -314,6 +313,27 @@ describe('web renderer', () => {
         [mat4.name]: mat4,
       },
     })
+  })
+
+  it('does the full lifecycle', () => {
+    const log: string[] = []
+    class Log extends React.Component<{ name: string }> {
+      render() {
+        log.push('render ' + this.props.name)
+        return <group />
+      }
+      componentDidMount() {
+        log.push('mount ' + this.props.name)
+      }
+      componentWillUnmount() {
+        log.push('unmount ' + this.props.name)
+      }
+    }
+
+    render(<Log key="foo" name="Foo" />, canvas)
+    unmountComponentAtNode(canvas)
+
+    expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
   })
 
   // it('will apply raycaster props', () => {
