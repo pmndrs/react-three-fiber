@@ -17,7 +17,7 @@ import {
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
-import { render, testutil_act as act, unmountComponentAtNode, extend } from '../../src/web/index'
+import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 
@@ -49,7 +49,6 @@ describe('web core', () => {
       )
     }
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(<Mesh />, canvas).getState().scene
     })
@@ -58,11 +57,8 @@ describe('web core', () => {
   })
 
   it('renders an empty scene', async () => {
-    const Empty = () => {
-      return null
-    }
+    const Empty = () => null
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(<Empty />, canvas).getState().scene
     })
@@ -93,7 +89,6 @@ describe('web core', () => {
     }
 
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(<Parent />, canvas).getState().scene
     })
@@ -110,14 +105,10 @@ describe('web core', () => {
     let renders = 0
 
     class Component extends React.PureComponent {
-      state = {
-        pos: 3,
-      }
+      state = { pos: 3 }
 
       componentDidMount() {
-        this.setState({
-          pos: 7,
-        })
+        this.setState({ pos: 7 })
       }
 
       render() {
@@ -142,7 +133,6 @@ describe('web core', () => {
     }
 
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(<Component />, canvas).getState().scene
     })
@@ -153,7 +143,6 @@ describe('web core', () => {
 
   it('updates types & names', async () => {
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(
         <mesh>

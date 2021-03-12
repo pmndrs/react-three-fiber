@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
-import { Events, RootState } from '../core/store'
+import { EventManager, RootState } from '../core/store'
 
 import type { DomEvent, Intersection } from '../helpers/events'
 import { createCalculateDistance, makeId, createPrepareRay, createIntersect } from '../helpers/events'
 
-function createEvents(store: UseStore<RootState>): Events {
+function createEvents(store: UseStore<RootState>): EventManager {
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
@@ -197,18 +197,39 @@ function createEvents(store: UseStore<RootState>): Events {
       }
     }
   }
+
   return {
-    click: handlePointer('click') as EventListenerOrEventListenerObject,
-    contextmenu: handlePointer('contextMenu') as EventListenerOrEventListenerObject,
-    dblclick: handlePointer('doubleClick') as EventListenerOrEventListenerObject,
-    wheel: handlePointer('wheel') as EventListenerOrEventListenerObject,
-    pointerdown: handlePointer('pointerDown') as EventListenerOrEventListenerObject,
-    pointerup: handlePointer('pointerUp') as EventListenerOrEventListenerObject,
-    pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListenerOrEventListenerObject,
-    pointermove: (handlePointerMove as unknown) as EventListenerOrEventListenerObject,
-    lostpointercapture: ((e: any) => (
-      (store.getState().internal.captured = undefined), handlePointerCancel(e)
-    )) as EventListenerOrEventListenerObject,
+    connected: false,
+    handlers: {
+      click: handlePointer('click') as EventListenerOrEventListenerObject,
+      contextmenu: handlePointer('contextMenu') as EventListenerOrEventListenerObject,
+      dblclick: handlePointer('doubleClick') as EventListenerOrEventListenerObject,
+      wheel: handlePointer('wheel') as EventListenerOrEventListenerObject,
+      pointerdown: handlePointer('pointerDown') as EventListenerOrEventListenerObject,
+      pointerup: handlePointer('pointerUp') as EventListenerOrEventListenerObject,
+      pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListenerOrEventListenerObject,
+      pointermove: (handlePointerMove as unknown) as EventListenerOrEventListenerObject,
+      lostpointercapture: ((e: any) => (
+        (store.getState().internal.captured = undefined), handlePointerCancel(e)
+      )) as EventListenerOrEventListenerObject,
+    },
+    connect: (target: HTMLElement) => {
+      const { set, events } = store.getState()
+      events.disconnect?.()
+      set((state) => ({ events: { ...state.events, connected: target } }))
+      Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
+        target.addEventListener(name, event, { passive: true }),
+      )
+    },
+    disconnect: () => {
+      const { set, events } = store.getState()
+      if (events?.connected) {
+        Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
+          events?.connected.removeEventListener(name, event),
+        )
+        set((state) => ({ events: { ...state.events, connected: false } }))
+      }
+    },
   }
 }
 

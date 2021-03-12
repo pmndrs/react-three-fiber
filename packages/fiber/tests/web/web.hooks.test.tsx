@@ -13,7 +13,7 @@ import {
   render,
   advance,
   useLoader,
-  testutil_act as act,
+  act,
   useThree,
   useGraph,
   useFrame,
@@ -114,12 +114,10 @@ describe('web hooks', () => {
     const Component = () => {
       // @ts-ignore
       const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-
       return <primitive object={model} />
     }
 
     let scene: Scene = null!
-
     await act(async () => {
       scene = render(
         <React.Suspense fallback={null}>

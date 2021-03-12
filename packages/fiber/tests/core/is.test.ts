@@ -1,12 +1,8 @@
 import { is } from '../../src/core/is'
 
 describe('is', () => {
-  const myFunc = () => {
-    return null
-  }
-  const myObj = {
-    myProp: 'test-prop',
-  }
+  const myFunc = () => null
+  const myObj = { myProp: 'test-prop' }
   const myStr = 'test-string'
   const myNum = 1
   const myUnd = undefined
