@@ -2,91 +2,23 @@ import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { Events, RootState } from '../core/store'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
-}
-
-export type ThreeEvent<T> = T &
-  Intersection & {
-    intersections: Intersection[]
-    stopped: boolean
-    unprojectedPoint: THREE.Vector3
-    ray: THREE.Ray
-    camera: Camera
-    stopPropagation: () => void
-    sourceEvent: T
-    delta: number
-  }
-
-export type DomEvent = ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent> | ThreeEvent<WheelEvent>
-
-const makeId = (event: DomEvent) => (event.eventObject || event.object).uuid + '/' + event.index
+import type { DomEvent, Intersection } from '../helpers/events'
+import { createCalculateDistance, makeId, createPrepareRay, createIntersect } from '../helpers/events'
 
 function createEvents(store: UseStore<RootState>): Events {
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
-  /** Sets up defaultRaycaster */
-  function prepareRay(event: DomEvent) {
-    const state = store.getState()
-    const { raycaster, mouse, camera, size } = state
-
-    // https://github.com/pmndrs/react-three-fiber/pull/782
-    // Events trigger outside of canvas when moved
-    const offsets = raycaster.computeOffsets?.(event, state) || event
-    if (offsets) {
-      const { offsetX, offsetY } = offsets
-      const { width, height } = size
-      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-      raycaster.setFromCamera(mouse, camera)
-    }
-  }
-
-  /** Intersects interaction objects using the event input */
-  function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
-    const state = store.getState()
-    const { raycaster, internal } = state
-    // Skip event handling when noEvents is set
-    if (!raycaster.enabled) return []
-
-    const seen = new Set<string>()
-    const hits: Intersection[] = []
-
-    // Allow callers to eliminate event objects
-    const eventsObjects = filter ? filter(internal.interaction) : internal.interaction
-
-    // Intersect known handler objects and filter against duplicates
-    let intersects = raycaster.intersectObjects(eventsObjects, true).filter((item) => {
-      const id = makeId(item as DomEvent)
-      if (seen.has(id)) return false
-      seen.add(id)
-      return true
-    })
-
-    // https://github.com/mrdoob/three.js/issues/16031
-    // Allow custom userland intersect sort order
-    if (raycaster.filter) intersects = raycaster.filter(intersects, state)
-
-    for (const intersect of intersects) {
-      let eventObject: THREE.Object3D | null = intersect.object
-      // Bubble event up
-      while (eventObject) {
-        const handlers = (eventObject as any).__r3f.handlers
-        if (handlers) hits.push({ ...intersect, eventObject })
-        eventObject = eventObject.parent
-      }
-    }
-    return hits
-  }
-
+  /**
+   * Sets up helper functions that are
+   * shared between target event handling
+   */
   /**  Calculates click deltas */
-  function calculateDistance(event: DomEvent) {
-    const { internal } = store.getState()
-    const dx = event.offsetX - internal.initialClick[0]
-    const dy = event.offsetY - internal.initialClick[1]
-    return Math.round(Math.sqrt(dx * dx + dy * dy))
-  }
+  const calculateDistance = createCalculateDistance(store)
+  /** Sets up defaultRaycaster */
+  const prepareRay = createPrepareRay(store)
+  /** Intersects interaction objects using the event input */
+  const intersect = createIntersect(store)
 
   function handlePointerCancel(event: DomEvent, hits?: Intersection[], prepare = true) {
     if (prepare) prepareRay(event)
