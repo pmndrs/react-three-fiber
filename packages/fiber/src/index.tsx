@@ -5,5 +5,17 @@ export { createLoop as _createLoop } from './core/loop'
 
 // for type declarations
 export * as ReactThreeFiber from './three-types'
+export type {
+  Intersection,
+  Subscription,
+  Dpr,
+  Size,
+  Viewport,
+  Camera,
+  RenderCallback,
+  Performance,
+  Events,
+  EventManager,
+} from './core/store'
 
 export * from './web'
