@@ -13,9 +13,22 @@ import { is } from './helpers/is'
 import { createStore, MockUseStoreState, context, MockScene, MockSceneChild } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
-import { createEventFirer } from './fireEvent'
+import { createEventFirer, MockSynethicEvent, MockEventData } from './fireEvent'
 
-export type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
+type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
+
+type ReactThreeTestRendererAct = (cb: () => Promise<any>) => Promise<any>
+
+type ThreeTestRenderer = {
+  scene: MockScene
+  unmount: () => Promise<void>
+  getInstance: () => null | unknown
+  update: (el: React.ReactNode) => Promise<void>
+  toTree: () => ReactThreeTestRendererTree | undefined
+  toGraph: () => ReactThreeTestRendererSceneGraph | undefined
+  fireEvent: (element: MockSceneChild, handler: string, data?: MockEventData) => Promise<any>
+  advanceFrames: (frames: number, delta: number | number[]) => void
+}
 
 const mockRoots = new Map<any, Root>()
 const modes = ['legacy', 'blocking', 'concurrent']
@@ -91,17 +104,6 @@ reconciler.injectIntoDevTools({
   // @ts-expect-error it's a babel macro
   version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
-
-export type ThreeTestRenderer = {
-  scene: MockScene
-  unmount: () => Promise<void>
-  getInstance: () => null | unknown
-  update: (el: React.ReactNode) => Promise<void>
-  toTree: () => ReactThreeTestRendererTree | undefined
-  toGraph: () => ReactThreeTestRendererSceneGraph | undefined
-  advanceFrames: (frames: number, delta: number | number[]) => void
-  fireEvent: (element: MockSceneChild, eventName: string) => Promise<any>
-}
 
 const create = async (
   element: React.ReactNode,
@@ -185,6 +187,7 @@ const create = async (
   }
 }
 
-const act = reconciler.act
+const act = reconciler.act as ReactThreeTestRendererAct
 
 export default { create, act }
+export type { MockSynethicEvent, ReactThreeTestRendererAct, ReactThreeTestRendererOptions, ThreeTestRenderer }

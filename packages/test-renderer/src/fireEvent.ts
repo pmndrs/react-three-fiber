@@ -1,14 +1,34 @@
 import ReactReconciler from 'react-reconciler'
+import type { Camera } from 'react-three-fiber'
 
 import { toEventHandlerName } from './helpers/strings'
 
 import type { MockSceneChild, MockUseStoreState } from './createMockStore'
 
+/**
+ * this is an empty object of any,
+ * the data is passed to a new event
+ * and subsequently passed to the
+ * event handler you're calling
+ */
+export type MockEventData = {
+  [key: string]: any
+}
+
+export type MockSynethicEvent = {
+  camera: Camera
+  stopPropagation: () => void
+  target: MockSceneChild
+  currentTarget: MockSceneChild
+  sourceEvent: MockEventData
+  [key: string]: any
+}
+
 export const createEventFirer = (
   act: ReactReconciler.Reconciler<unknown, unknown, unknown, unknown, unknown>['act'],
-  store: MockUseStoreState | undefined,
+  store: MockUseStoreState,
 ) => {
-  const findEventHandler = (element: MockSceneChild, eventName: string): (() => void) | null => {
+  const findEventHandler = (element: MockSceneChild, eventName: string): ((event: MockSynethicEvent) => any) | null => {
     const eventHandlerName = toEventHandlerName(eventName)
 
     const props = element.__r3f.memoizedProps
@@ -24,7 +44,19 @@ export const createEventFirer = (
     return null
   }
 
-  const invokeEvent = async (element: MockSceneChild, eventName: string): Promise<any> => {
+  const createSyntheticEvent = (element: MockSceneChild, data: MockEventData): MockSynethicEvent => {
+    const raycastEvent = {
+      camera: store.getState().camera,
+      stopPropagation: () => {},
+      target: { ...element },
+      currentTarget: { ...element },
+      sourceEvent: data,
+      ...data,
+    }
+    return raycastEvent
+  }
+
+  const invokeEvent = async (element: MockSceneChild, eventName: string, data: MockEventData): Promise<any> => {
     const handler = findEventHandler(element, eventName)
 
     if (!handler) {
@@ -34,14 +66,14 @@ export const createEventFirer = (
     let returnValue: any
 
     await act(async () => {
-      returnValue = handler()
+      returnValue = handler(createSyntheticEvent(element, data))
     })
 
     return returnValue
   }
 
-  const fireEvent = async (element: MockSceneChild, eventName: string): Promise<any> =>
-    await invokeEvent(element, eventName)
+  const fireEvent = async (element: MockSceneChild, eventName: string, data: MockEventData = {}): Promise<any> =>
+    await invokeEvent(element, eventName, data)
 
   return fireEvent
 }

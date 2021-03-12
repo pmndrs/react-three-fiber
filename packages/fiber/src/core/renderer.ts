@@ -421,6 +421,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
           delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
           delete child.__r3f.handlers
           delete child.__r3f.dispose
+          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
           delete (child as Partial<Instance>).__r3f
         })
       }
