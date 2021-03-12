@@ -17,9 +17,9 @@ describe('ReactThreeTestRenderer Events', () => {
       )
     }
 
-    const { scene } = await ReactThreeTestRenderer.create(<Component />)
+    const { scene, fireEvent } = await ReactThreeTestRenderer.create(<Component />)
 
-    await ReactThreeTestRenderer.fireEvent(scene.children[0], 'onPointerDown')
+    await fireEvent(scene.children[0], 'onPointerDown')
 
     expect(handlePointerDown).toBeCalled()
   })

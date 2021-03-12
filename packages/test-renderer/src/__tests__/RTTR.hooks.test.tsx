@@ -7,7 +7,7 @@ import { Mesh, Camera, Scene, Raycaster } from 'three'
 
 import { useFrame, useLoader, useThree } from 'react-three-fiber'
 
-import { asyncUtils } from '../../../../test/asyncUtils'
+import { asyncUtils } from '../../../../test-utils/asyncUtils'
 
 import ReactThreeTestRenderer from '../index'
 

@@ -1,24 +1,42 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import { Group, Scene, Mesh, BoxBufferGeometry, MeshBasicMaterial, MeshStandardMaterial } from 'three'
+import {
+  Color,
+  Group,
+  Camera,
+  Scene,
+  Mesh,
+  BoxBufferGeometry,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  PCFSoftShadowMap,
+  ACESFilmicToneMapping,
+  sRGBEncoding,
+} from 'three'
 import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
 import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
 
-import { render, act, unmountComponentAtNode } from '../../src/web/index'
+import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
+import { UseStore } from 'zustand'
+import { RootState } from '../../src/core/store'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
 describe('web core', () => {
-  const canvas = createCanvas({
-    beforeReturn: (canvas) => {
-      //@ts-ignore
-      canvas.getContext = (type: string) => {
-        if (type === 'webgl' || type === 'webgl2') {
-          return createWebGLContext(canvas)
+  let canvas: HTMLCanvasElement = null!
+
+  beforeEach(() => {
+    canvas = createCanvas({
+      beforeReturn: (canvas) => {
+        //@ts-ignore
+        canvas.getContext = (type: string) => {
+          if (type === 'webgl' || type === 'webgl2') {
+            return createWebGLContext(canvas)
+          }
         }
-      }
-    },
+      },
+    })
   })
 
   it('renders a simple component', async () => {
@@ -186,19 +204,91 @@ describe('web core', () => {
     expect(log).toEqual(['render Foo', 'render Foo', 'mount Foo', 'unmount Foo'])
   })
 
-  // it('will apply raycaster props', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('will make an Orthographic Camera & set the position', async () => {
+    let camera: Camera = null!
 
-  // it('will apply shadowMap props', () => {
-  //   expect(true).toBe(false)
-  // })
+    await act(async () => {
+      camera = render(<group />, canvas, { orthographic: true, camera: { position: [0, 0, 5] } }).getState().camera
+    })
 
-  // it('will apply camera props', () => {
-  //   expect(true).toBe(false)
-  // })
+    expect(camera.type).toEqual('OrthographicCamera')
+    expect(camera.position.z).toEqual(5)
+  })
 
-  // it('will make an Orthographic Camera', () => {
-  //   expect(true).toBe(false)
-  // })
+  it('should handle an performance changing functions', async () => {
+    let state: UseStore<RootState> = null!
+    await act(async () => {
+      state = render(<group />, canvas, {
+        dpr: [1, 10],
+        performance: { min: 0.2 },
+      })
+    })
+
+    expect(state.getState().viewport.initialDpr).toEqual(10)
+    expect(state.getState().performance.min).toEqual(0.2)
+    expect(state.getState().performance.current).toEqual(1)
+
+    await act(async () => {
+      state.getState().setDpr(0.1)
+    })
+
+    expect(state.getState().viewport.dpr).toEqual(0.1)
+
+    jest.useFakeTimers()
+
+    await act(async () => {
+      state.getState().performance.regress()
+      jest.advanceTimersByTime(100)
+    })
+
+    expect(state.getState().performance.current).toEqual(0.2)
+
+    await act(async () => {
+      jest.advanceTimersByTime(200)
+    })
+
+    expect(state.getState().performance.current).toEqual(1)
+
+    jest.useRealTimers()
+  })
+
+  it('should set PCFSoftShadowMap as the default shadow map', async () => {
+    let state: UseStore<RootState> = null!
+    await act(async () => {
+      state = render(<group />, canvas, {
+        shadows: true,
+      })
+    })
+
+    expect(state.getState().gl.shadowMap.type).toBe(PCFSoftShadowMap)
+  })
+
+  it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
+    let state: UseStore<RootState> = null!
+    await act(async () => {
+      state = render(<group />, canvas, {
+        linear: false,
+      })
+    })
+
+    expect(state.getState().gl.toneMapping).toBe(ACESFilmicToneMapping)
+    expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
+  })
+
+  it('will render components that are extended', async () => {
+    class MyColor extends Color {
+      constructor(col: number) {
+        super(col)
+      }
+    }
+
+    await expect(async () => {
+      await act(async () => {
+        extend({ MyColor })
+
+        // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
+        render(<myColor args={[0x0000ff]} />, canvas)
+      })
+    }).not.toThrow()
+  })
 })

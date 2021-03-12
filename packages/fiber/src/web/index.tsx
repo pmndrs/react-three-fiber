@@ -26,7 +26,7 @@ const { reconciler, applyProps } = createRenderer(roots)
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
   canvas: HTMLCanvasElement,
-) =>
+): THREE.WebGLRenderer =>
   isRenderer(gl as THREE.WebGLRenderer)
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
@@ -63,7 +63,6 @@ function render(
 
   if (!fiber) {
     // If no root has been found, make one
-
     // Create store
     store = createStore(applyProps, invalidate, advance, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
@@ -81,9 +80,9 @@ function render(
     }
 
     // VR
-    if (props.vr && (gl as any).xr && (gl as any).setAnimationLoop) {
-      ;(gl as any).xr.enabled = true
-      ;(gl as any).setAnimationLoop((t: number) => advance(t, true, state))
+    if (props.vr && (gl as THREE.WebGLRenderer).xr && (gl as THREE.WebGLRenderer).setAnimationLoop) {
+      ;(gl as THREE.WebGLRenderer).xr.enabled = true
+      ;(gl as THREE.WebGLRenderer).setAnimationLoop((t: number) => advance(t, true, state))
     }
   }
 

@@ -10,7 +10,7 @@ import { toTree, ReactThreeTestRendererTree } from './helpers/tree'
 import { toGraph, ReactThreeTestRendererSceneGraph } from './helpers/graph'
 import { is } from './helpers/is'
 
-import { createStore, MockUseStoreState, context, MockScene } from './createMockStore'
+import { createStore, MockUseStoreState, context, MockScene, MockSceneChild } from './createMockStore'
 import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
@@ -30,27 +30,6 @@ const render = <TRootNode,>(
   let root = mockRoots.get(id)
   let fiber = root?.fiber
   let store = root?.store
-  let state = store?.getState()
-
-  if (fiber && state) {
-    const lastProps = state.internal.lastProps
-
-    // When a root was found, see if any fundamental props must be changed or exchanged
-
-    // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
-    // Check size
-    if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
-
-    // For some props we want to reset the entire root
-
-    // Changes to the color-space
-    const linearChanged = props.linear !== lastProps.linear
-    if (linearChanged) {
-      unmount(id)
-      fiber = undefined
-    }
-  }
 
   if (!fiber) {
     // If no root has been found, make one
@@ -88,7 +67,6 @@ const unmount = <TRootNode,>(id: TRootNode) => {
   const dispose = (obj: any) => {
     if (obj.dispose && obj.type !== 'Scene') obj.dispose()
     for (const p in obj) {
-      if (typeof p === 'object' && (p as any).dispose) (p as any).dispose()
       delete obj[p]
     }
   }
@@ -97,6 +75,7 @@ const unmount = <TRootNode,>(id: TRootNode) => {
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
+        dispose(state.gl)
         dispose(state.raycaster)
         dispose(state.camera)
         dispose(state)
@@ -121,11 +100,12 @@ export type ThreeTestRenderer = {
   toTree: () => ReactThreeTestRendererTree | undefined
   toGraph: () => ReactThreeTestRendererSceneGraph | undefined
   advanceFrames: (frames: number, delta: number | number[]) => void
+  fireEvent: (element: MockSceneChild, eventName: string) => Promise<any>
 }
 
 const create = async (
   element: React.ReactNode,
-  options: Partial<ReactThreeTestRendererOptions> = {},
+  options?: Partial<ReactThreeTestRendererOptions>,
 ): Promise<ThreeTestRenderer> => {
   const canvas = createCanvas({
     width: options?.width,
@@ -134,14 +114,16 @@ const create = async (
 
   const _fiber = canvas
 
-  let scene: MockScene | null = null
+  let scene: MockScene = null!
 
   await reconciler.act(async () => {
     scene = render(element, _fiber, options as RenderProps) as MockScene
   })
 
+  const _store = mockRoots.get(_fiber)!.store
+
   return {
-    scene: (scene as unknown) as MockScene,
+    scene: scene,
     unmount: async () => {
       await reconciler.act(async () => {
         unmount(_fiber)
@@ -160,7 +142,7 @@ const create = async (
          */
         current: fiber.current.child.child,
       }
-      if (root) {
+      if (fiber.current.child.child) {
         /**
          * so this actually returns the instance
          * the user has passed through as a Fiber
@@ -180,28 +162,14 @@ const create = async (
       return
     },
     toTree: () => {
-      // console.log(scene)
-      if (!scene) {
-        return
-      } else {
-        return toTree(scene)
-      }
+      return toTree(scene)
     },
     toGraph: () => {
-      if (!scene) {
-        return
-      } else {
-        return toGraph(scene)
-      }
+      return toGraph(scene)
     },
+    fireEvent: createEventFirer(reconciler.act, _store),
     advanceFrames: (frames: number, delta: number | number[] = 1) => {
-      const root = mockRoots.get(_fiber)
-
-      if (!root) {
-        return
-      }
-
-      const state = root.store.getState()
+      const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
 
       storeSubscribers.forEach((subscriber) => {
@@ -219,6 +187,4 @@ const create = async (
 
 const act = reconciler.act
 
-const fireEvent = createEventFirer(act)
-
-export default { create, act, fireEvent }
+export default { create, act }

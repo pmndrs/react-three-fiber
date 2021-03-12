@@ -432,7 +432,12 @@ describe('ReactThreeTestRenderer Core', () => {
     class Log extends React.Component<{ name: string }> {
       render() {
         log.push('render ' + this.props.name)
-        return <group />
+        return (
+          <mesh>
+            <boxBufferGeometry args={[2, 2]} />
+            <meshStandardMaterial />
+          </mesh>
+        )
       }
       componentDidMount() {
         log.push('mount ' + this.props.name)
