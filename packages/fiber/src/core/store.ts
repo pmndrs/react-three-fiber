@@ -54,9 +54,10 @@ export type Events = {
 }
 
 export interface EventManager {
+  connected: boolean | any
   handlers: Events
   connect: (target: any) => void
-  disconnect: (target: any) => void
+  disconnect: () => void
 }
 
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
@@ -104,7 +105,6 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
-  onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 
   internal: InternalState
@@ -132,7 +132,6 @@ export type StoreProps = {
           ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
           ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
       >
-  onCreated?: (props: RootState) => void
   onPointerMissed?: () => void
 }
 
@@ -156,7 +155,6 @@ const createStore = (
     size,
     shadows = false,
     linear = false,
-    onCreated,
     vr = false,
     orthographic = false,
     frameloop = 'always',
@@ -240,7 +238,6 @@ const createStore = (
     return {
       gl,
 
-      onCreated,
       set,
       get,
       invalidate: () => invalidate(get()),

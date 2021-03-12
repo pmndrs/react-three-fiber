@@ -4,7 +4,7 @@ import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context, RootState, Events, Size } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState, Events, Size, EventManager } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
@@ -12,9 +12,10 @@ import { Canvas } from './Canvas'
 
 export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
-  events?: (store: UseStore<RootState>) => Events
+  events?: (store: UseStore<RootState>) => EventManager
   size?: Size
   mode?: 'legacy' | 'blocking' | 'concurrent'
+  onCreated?: (state: RootState) => void
 }
 
 const roots = new Map<HTMLCanvasElement, Root>()
@@ -33,7 +34,7 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, ...props }: RenderProps = {},
+  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
@@ -66,27 +67,17 @@ function render(
     // Create store
     store = createStore(applyProps, invalidate, advance, { gl: createRendererInstance(gl, canvas), size, ...props })
     const state = store.getState()
+    const get = state.get
     // Create renderer
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
     // Create and register events
 
+    // Store events internally
     if (events) {
-      const handlers = events(store)
-      const manager = {
-        handlers,
-        connect(target: HTMLCanvasElement) {
-          Object.entries(handlers).forEach(([name, event]) => target.addEventListener(name, event, { passive: true }))
-        },
-        disconnect(target: HTMLCanvasElement) {
-          Object.entries(handlers).forEach(([name, event]) => target.removeEventListener(name, event))
-        },
-      }
-      // Store events internally
+      const manager = events(store)
       state.set((state) => ({ internal: { ...state.internal, events: manager } }))
-      // Connect them
-      manager.connect(canvas)
     }
 
     // VR
@@ -97,15 +88,38 @@ function render(
   }
 
   if (store && fiber) {
-    reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
+    reconciler.updateContainer(
+      <Provider store={store} element={element} onCreated={onCreated} target={canvas} />,
+      fiber,
+      null,
+      () => undefined,
+    )
     return store
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
 }
 
-function Provider({ store, element }: { store: UseStore<RootState>; element: React.ReactNode }) {
-  React.useEffect(() => store.getState().set((state) => ({ internal: { ...state.internal, active: true } })), [])
+function Provider({
+  store,
+  element,
+  onCreated,
+  target,
+}: {
+  onCreated?: (state: RootState) => void
+  store: UseStore<RootState>
+  element: React.ReactNode
+  target: HTMLCanvasElement
+}) {
+  React.useEffect(() => {
+    const state = store.getState()
+    // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
+    if (onCreated) onCreated(state)
+    // Flag the canvas active, rendering will now begin
+    state.set((state) => ({ internal: { ...state.internal, active: true } }))
+    // Connect events
+    state.internal.events?.connect(target)
+  }, [])
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
@@ -116,7 +130,7 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
-        state.internal.events?.disconnect(canvas)
+        state.internal.events?.disconnect()
         state.gl?.renderLists?.dispose()
         state.gl?.forceContextLoss()
         dispose(state.gl)
@@ -138,6 +152,7 @@ function dispose(obj: any) {
   }
 }
 
+const act = reconciler.act
 const hasSymbol = is.fun(Symbol) && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 function createPortal(children: React.ReactNode, container: any, impl?: any, key: any = null): React.ReactNode {
@@ -151,8 +166,6 @@ reconciler.injectIntoDevTools({
   // @ts-ignore
   version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
-
-const testutil_act = reconciler.act
 
 export * from '../core/hooks'
 export {
@@ -170,5 +183,5 @@ export {
   addAfterEffect,
   addTail,
   Canvas,
-  testutil_act,
+  act,
 }
