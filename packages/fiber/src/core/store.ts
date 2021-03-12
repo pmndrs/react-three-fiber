@@ -55,9 +55,9 @@ export type Events = {
 
 export interface EventManager {
   connected: boolean | any
-  handlers: Events
-  connect: (target: any) => void
-  disconnect: () => void
+  handlers?: Events
+  connect?: (target: any) => void
+  disconnect?: () => void
 }
 
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
@@ -70,7 +70,6 @@ export type InternalState = {
   priority: number
   frames: number
   lastProps: StoreProps
-  events?: EventManager
 
   interaction: THREE.Object3D[]
   subscribers: Subscription[]
@@ -107,6 +106,7 @@ export type RootState = {
   setDpr: (dpr: Dpr) => void
   onPointerMissed?: () => void
 
+  events: EventManager
   internal: InternalState
 }
 
@@ -292,6 +292,7 @@ const createStore = (
       },
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
 
+      events: { connected: false },
       internal: {
         active: false,
         priority: 0,

@@ -214,20 +214,20 @@ function createEvents(store: UseStore<RootState>): EventManager {
       )) as EventListenerOrEventListenerObject,
     },
     connect: (target: HTMLElement) => {
-      const { set, internal } = store.getState()
-      if (internal.events?.connected) internal.events.disconnect()
-      set((state) => ({ internal: { ...state.internal, connected: target } }))
-      Object.entries(internal.events?.handlers ?? []).forEach(([name, event]) =>
+      const { set, events } = store.getState()
+      events.disconnect?.()
+      set((state) => ({ events: { ...state.events, connected: target } }))
+      Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
         target.addEventListener(name, event, { passive: true }),
       )
     },
     disconnect: () => {
-      const { set, internal } = store.getState()
-      if (internal.events?.connected) {
-        Object.entries(internal.events?.handlers ?? []).forEach(([name, event]) =>
-          internal.events?.connected.removeEventListener(name, event),
+      const { set, events } = store.getState()
+      if (events?.connected) {
+        Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
+          events?.connected.removeEventListener(name, event),
         )
-        set((state) => ({ internal: { ...state.internal, connected: false } }))
+        set((state) => ({ events: { ...state.events, connected: false } }))
       }
     },
   }

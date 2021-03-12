@@ -74,10 +74,7 @@ function render(
     // Create and register events
 
     // Store events internally
-    if (events) {
-      const manager = events(store)
-      state.set((state) => ({ internal: { ...state.internal, events: manager } }))
-    }
+    if (events) state.set({ events: events(store) })
 
     // VR
     if (props.vr && (gl as THREE.WebGLRenderer).xr && (gl as THREE.WebGLRenderer).setAnimationLoop) {
@@ -112,12 +109,12 @@ function Provider({
 }) {
   React.useEffect(() => {
     const state = store.getState()
-    // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
-    if (onCreated) onCreated(state)
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
     // Connect events
-    state.internal.events?.connect(target)
+    state.events.connect?.(target)
+    // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
+    if (onCreated) onCreated(state)
   }, [])
   return <context.Provider value={store}>{element}</context.Provider>
 }
@@ -129,7 +126,7 @@ function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: H
     reconciler.updateContainer(null, fiber, null, () => {
       const state = root?.store.getState()
       if (state) {
-        state.internal.events?.disconnect()
+        state.events.disconnect?.()
         state.gl?.renderLists?.dispose()
         state.gl?.forceContextLoss()
         dispose(state.gl)
