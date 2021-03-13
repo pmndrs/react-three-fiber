@@ -17,17 +17,16 @@ export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(cal
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 function render(state: RootState, timestamp: number, runGlobalEffects = false) {
-  let i
   // Run global effects
-  if (runGlobalEffects) for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
+  if (runGlobalEffects) for (let i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
   // Run local effects
   const delta = state.clock.getDelta()
   // Call subscribers (useFrame)
-  for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
+  for (let i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Run global after-effects
-  if (runGlobalEffects) for (i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
+  if (runGlobalEffects) for (let i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
   // Decrease frame count
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   return state.frameloop === 'always' ? 1 : state.internal.frames
@@ -39,10 +38,9 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   function loop(timestamp: number) {
     running = true
 
-    let i
     let repeat = 0
     // Run global effects
-    for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
+    for (let i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
     // Render all roots
     roots.forEach((root) => {
       const state = root.store.getState()
@@ -51,11 +49,11 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     })
 
     // Run global after-effects
-    for (i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
+    for (let i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
     // Keep on looping if anything invalidates the frameloop
     if (repeat > 0) return requestAnimationFrame(loop)
     // Tail call effects, they are called when rendering stops
-    else for (i = 0; i < globalTailEffects.length; i++) globalTailEffects[i](timestamp)
+    else for (let i = 0; i < globalTailEffects.length; i++) globalTailEffects[i](timestamp)
 
     // Flag end of operation
     running = false

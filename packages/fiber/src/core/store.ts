@@ -231,7 +231,7 @@ const createStore = (
       }
     }
 
-    let performanceTimeout: NodeJS.Timeout | undefined = undefined
+    let performanceTimeout: ReturnType<typeof setTimeout> | undefined = undefined
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
