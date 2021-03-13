@@ -17,7 +17,7 @@ export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(cal
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 function render(state: RootState, timestamp: number, runGlobalEffects = false) {
-  let i
+  let i: number
   // Run global effects
   if (runGlobalEffects) for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
   // Run local effects
@@ -39,7 +39,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   function loop(timestamp: number) {
     running = true
 
-    let i
+    let i: number
     let repeat = 0
     // Run global effects
     for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
