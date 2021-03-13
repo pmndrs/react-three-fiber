@@ -42,15 +42,15 @@ export type Performance = {
 }
 
 export type Events = {
-  click: EventListenerOrEventListenerObject
-  contextmenu: EventListenerOrEventListenerObject
-  dblclick: EventListenerOrEventListenerObject
-  wheel: EventListenerOrEventListenerObject
-  pointerdown: EventListenerOrEventListenerObject
-  pointerup: EventListenerOrEventListenerObject
-  pointerleave: EventListenerOrEventListenerObject
-  pointermove: EventListenerOrEventListenerObject
-  lostpointercapture: EventListenerOrEventListenerObject
+  click: EventListener
+  contextmenu: EventListener
+  dblclick: EventListener
+  wheel: EventListener
+  pointerdown: EventListener
+  pointerup: EventListener
+  pointerleave: EventListener
+  pointermove: EventListener
+  lostpointercapture: EventListener
 }
 
 export interface EventManager {

@@ -201,17 +201,17 @@ function createEvents(store: UseStore<RootState>): EventManager {
   return {
     connected: false,
     handlers: {
-      click: handlePointer('click') as EventListenerOrEventListenerObject,
-      contextmenu: handlePointer('contextMenu') as EventListenerOrEventListenerObject,
-      dblclick: handlePointer('doubleClick') as EventListenerOrEventListenerObject,
-      wheel: handlePointer('wheel') as EventListenerOrEventListenerObject,
-      pointerdown: handlePointer('pointerDown') as EventListenerOrEventListenerObject,
-      pointerup: handlePointer('pointerUp') as EventListenerOrEventListenerObject,
-      pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListenerOrEventListenerObject,
-      pointermove: (handlePointerMove as unknown) as EventListenerOrEventListenerObject,
+      click: handlePointer('click') as EventListener,
+      contextmenu: handlePointer('contextMenu') as EventListener,
+      dblclick: handlePointer('doubleClick') as EventListener,
+      wheel: handlePointer('wheel') as EventListener,
+      pointerdown: handlePointer('pointerDown') as EventListener,
+      pointerup: handlePointer('pointerUp') as EventListener,
+      pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
+      pointermove: (handlePointerMove as unknown) as EventListener,
       lostpointercapture: ((e: any) => (
         (store.getState().internal.captured = undefined), handlePointerCancel(e)
-      )) as EventListenerOrEventListenerObject,
+      )) as EventListener,
     },
     connect: (target: HTMLElement) => {
       const { set, events } = store.getState()

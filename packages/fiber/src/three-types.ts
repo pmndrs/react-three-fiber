@@ -2,10 +2,6 @@ import * as THREE from 'three'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
-/**
- * Allows using a TS v4 labeled tuple even with older typescript versions
- */
-export type NamedArrayTuple<T extends (...args: any) => any> = Parameters<T>
 
 /**
  * If **T** contains a constructor, @see ConstructorParameters must be used, otherwise **T**.
@@ -42,7 +38,7 @@ export interface NodeProps<T, P> {
   /** Appends this class to an array on the parent under the given name and removes it on unmount */
   attachArray?: string
   /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-  attachObject?: NamedArrayTuple<(target: string, name: string) => void>
+  attachObject?: [target: string, name: string]
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode

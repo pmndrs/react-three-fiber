@@ -20,7 +20,7 @@ export type ThreeEvent<T> = T &
     delta: number
   }
 
-export type DomEvent = ThreeEvent<PointerEvent> | ThreeEvent<MouseEvent> | ThreeEvent<WheelEvent>
+export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
 
 export const makeId = (event: DomEvent): string => (event.eventObject || event.object).uuid + '/' + event.index
 
