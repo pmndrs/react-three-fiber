@@ -15,7 +15,7 @@ export type MockEventData = {
   [key: string]: any
 }
 
-export type MockSynethicEvent = {
+export type MockSyntheticEvent = {
   camera: Camera
   stopPropagation: () => void
   target: MockSceneChild
@@ -28,7 +28,10 @@ export const createEventFirer = (
   act: ReactReconciler.Reconciler<unknown, unknown, unknown, unknown, unknown>['act'],
   store: MockUseStoreState,
 ) => {
-  const findEventHandler = (element: MockSceneChild, eventName: string): ((event: MockSynethicEvent) => any) | null => {
+  const findEventHandler = (
+    element: MockSceneChild,
+    eventName: string,
+  ): ((event: MockSyntheticEvent) => any) | null => {
     const eventHandlerName = toEventHandlerName(eventName)
 
     const props = element.__r3f.memoizedProps
@@ -44,7 +47,7 @@ export const createEventFirer = (
     return null
   }
 
-  const createSyntheticEvent = (element: MockSceneChild, data: MockEventData): MockSynethicEvent => {
+  const createSyntheticEvent = (element: MockSceneChild, data: MockEventData): MockSyntheticEvent => {
     const raycastEvent = {
       camera: store.getState().camera,
       stopPropagation: () => {},
