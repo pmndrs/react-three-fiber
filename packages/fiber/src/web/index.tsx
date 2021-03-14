@@ -11,7 +11,7 @@ import { createDOMEvents as events } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 
-export type RenderProps<TCanvas> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
@@ -19,23 +19,29 @@ export type RenderProps<TCanvas> = Omit<StoreProps, 'gl' | 'events' | 'size'> & 
   onCreated?: (state: RootState) => void
 }
 
-const roots = new Map<HTMLCanvasElement, Root>()
+const roots = new Map<Element, Root>()
 const modes = ['legacy', 'blocking', 'concurrent']
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
-const createRendererInstance = (
+const createRendererInstance = <TElement extends Element>(
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
-  canvas: HTMLCanvasElement,
+  canvas: TElement,
 ): THREE.WebGLRenderer =>
   isRenderer(gl as THREE.WebGLRenderer)
     ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({ powerPreference: 'high-performance', canvas, antialias: true, alpha: true, ...gl })
+    : new THREE.WebGLRenderer({
+        powerPreference: 'high-performance',
+        canvas: (canvas as unknown) as HTMLCanvasElement,
+        antialias: true,
+        alpha: true,
+        ...gl,
+      })
 
-function render(
+function render<TCanvas extends Element>(
   element: React.ReactNode,
-  canvas: HTMLCanvasElement,
-  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps<HTMLElement> = {},
+  canvas: TCanvas,
+  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber
@@ -97,7 +103,7 @@ function render(
   }
 }
 
-function Provider({
+function Provider<TElement extends Element>({
   store,
   element,
   onCreated,
@@ -106,7 +112,7 @@ function Provider({
   onCreated?: (state: RootState) => void
   store: UseStore<RootState>
   element: React.ReactNode
-  target: HTMLCanvasElement
+  target: TElement
 }) {
   React.useEffect(() => {
     const state = store.getState()
@@ -120,7 +126,7 @@ function Provider({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode(canvas: HTMLCanvasElement, callback?: (canvas: HTMLCanvasElement) => void) {
+function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {

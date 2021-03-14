@@ -5,7 +5,7 @@ import type { DomEvent, EventManager, Intersection, ThreeEvent } from '../core/e
 import { createEvents, EventHandlers } from '../core/events'
 import { Instance } from '../core/renderer'
 
-export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElement> {
+export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
   const temp = new THREE.Vector3()
   const { hovered, makeId, prepareRay, intersect, patchIntersects } = createEvents(store)
 
@@ -215,7 +215,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
         (store.getState().internal.captured = undefined), handlePointerCancel(e)
       )) as EventListener,
     },
-    connect: (target: HTMLElement) => {
+    connect: <TElement extends HTMLElement>(target: TElement) => {
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))

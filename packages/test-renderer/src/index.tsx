@@ -30,15 +30,15 @@ type ThreeTestRenderer = {
   advanceFrames: (frames: number, delta: number | number[]) => void
 }
 
-const mockRoots = new Map<any, Root>()
+const mockRoots = new Map<HTMLCanvasElement, Root>()
 const modes = ['legacy', 'blocking', 'concurrent']
 const { advance, invalidate } = createLoop(mockRoots)
 const { reconciler, applyProps } = createRenderer(mockRoots)
 
-const render = <TRootNode,>(
+const render = (
   element: React.ReactNode,
-  id: TRootNode,
-  { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps<TRootNode> = {},
+  id: HTMLCanvasElement,
+  { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps<HTMLCanvasElement> = {},
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
@@ -49,7 +49,7 @@ const render = <TRootNode,>(
     // @ts-ignore
     store = createStore(applyProps, invalidate, advance, {
       // @ts-ignore
-      gl: new THREE.WebGLRenderer({ context: createWebGLContext(id as HTMLCanvasElement), precision: 'highp' }),
+      gl: new THREE.WebGLRenderer({ context: createWebGLContext(HTMLCanvasElement), precision: 'highp' }),
       size,
       frameloop: 'never',
       ...props,
@@ -73,7 +73,7 @@ function Provider({ store, element }: { store: MockUseStoreState; element: React
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-const unmount = <TRootNode,>(id: TRootNode) => {
+const unmount = (id: HTMLCanvasElement) => {
   const root = mockRoots.get(id)
   const fiber = root?.fiber
 
