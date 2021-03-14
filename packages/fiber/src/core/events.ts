@@ -86,7 +86,7 @@ export function createEvents(store: UseStore<RootState>) {
     if (!raycaster.enabled) return []
 
     const seen = new Set<string>()
-    const hits: Intersection[] = []
+    const intersections: Intersection[] = []
 
     // Allow callers to eliminate event objects
     const eventsObjects = filter ? filter(internal.interaction) : internal.interaction
@@ -108,20 +108,18 @@ export function createEvents(store: UseStore<RootState>) {
       // Bubble event up
       while (eventObject) {
         const handlers = (eventObject as unknown as Instance).__r3f.handlers
-        if (handlers) hits.push({ ...intersect, eventObject })
+        if (handlers) intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
     }
-    return hits
+    return intersections
   }
 
   /**  Creates filtered intersects and returns an array of positive hits */
-  function getIntersects(event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+  function patchIntersects(intersections: Intersection[], event: DomEvent) {
     const { internal } = store.getState()
-    // Get fresh intersects
-    const intersections: Intersection[] = intersect(filter)
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (internal.captured && event?.type !== 'click' && event?.type !== 'wheel') {
+    if (internal.captured && event.type !== 'click' && event.type !== 'wheel') {
       internal.captured.forEach((captured) => {
         if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
       })
@@ -129,5 +127,5 @@ export function createEvents(store: UseStore<RootState>) {
     return intersections
   }
 
-  return { hovered, makeId, prepareRay, intersect, getIntersects }
+  return { hovered, makeId, prepareRay, intersect, patchIntersects }
 }
