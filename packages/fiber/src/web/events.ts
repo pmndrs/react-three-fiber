@@ -201,7 +201,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
   }
 
   return {
-    connected: null,
+    connected: false,
     handlers: {
       onClick: handlePointer('onClick') as EventListener,
       onContextMenu: handlePointer('onContextMenu') as EventListener,

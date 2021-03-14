@@ -35,14 +35,7 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  {
-    gl,
-    size = { width: 0, height: 0 },
-    mode = 'blocking',
-    events,
-    onCreated,
-    ...props
-  }: RenderProps<HTMLElement> = {},
+  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps<HTMLElement> = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber

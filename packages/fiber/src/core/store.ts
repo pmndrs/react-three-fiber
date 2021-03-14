@@ -88,7 +88,7 @@ export type RootState = {
   setDpr: (dpr: Dpr) => void
   onPointerMissed?: () => void
 
-  events: EventManager<unknown>
+  events: EventManager<any>
   internal: InternalState
 }
 

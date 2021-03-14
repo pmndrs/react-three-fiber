@@ -50,13 +50,13 @@ export type EventHandlers = {
 }
 
 export interface EventManager<TTarget> {
-  connected: TTarget | null
+  connected: TTarget | boolean
   handlers?: Events
   connect?: (target: TTarget) => void
   disconnect?: () => void
 }
 
-export function createEvents(store: UseStore<RootState>) {  
+export function createEvents(store: UseStore<RootState>) {
   const hovered = new Map<string, DomEvent>()
 
   function makeId(event: Intersection) {
@@ -107,7 +107,7 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = (eventObject as unknown as Instance).__r3f.handlers
+        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
         if (handlers) intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
