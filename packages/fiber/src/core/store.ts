@@ -124,7 +124,7 @@ export type ApplyProps = (
   accumulative?: boolean,
 ) => void
 
-const context = React.createContext<UseStore<RootState>>((null as unknown) as UseStore<RootState>)
+const context = React.createContext<UseStore<RootState>>(null!)
 
 const createStore = (
   applyProps: ApplyProps,

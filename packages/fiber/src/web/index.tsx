@@ -42,7 +42,7 @@ function render(
     events,
     onCreated,
     ...props
-  }: RenderProps<HTMLCanvasElement> = {},
+  }: RenderProps<HTMLElement> = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber

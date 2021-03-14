@@ -52,7 +52,7 @@ export type EventHandlers = {
 export interface EventManager<TTarget> {
   connected: TTarget | null
   handlers?: Events
-  connect?: (target: any) => void
+  connect?: (target: TTarget) => void
   disconnect?: () => void
 }
 
