@@ -5,7 +5,7 @@ import { EventManager, RootState } from '../core/store'
 import type { DomEvent, Intersection } from '../helpers/events'
 import { createCalculateDistance, makeId, createPrepareRay, createIntersect } from '../helpers/events'
 
-function createEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
+function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElement> {
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
