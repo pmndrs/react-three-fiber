@@ -2,11 +2,11 @@ jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
 
-import ReactThreeTestRenderer, { MockSynethicEvent } from '../index'
+import ReactThreeTestRenderer, { MockSyntheticEvent } from '../index'
 
 describe('ReactThreeTestRenderer Events', () => {
   it('should fire an event', async () => {
-    const handlePointerDown = jest.fn().mockImplementationOnce((event: MockSynethicEvent) => {
+    const handlePointerDown = jest.fn().mockImplementationOnce((event: MockSyntheticEvent) => {
       expect(() => event.stopPropagation()).not.toThrow()
       expect(event.offsetX).toEqual(640)
       expect(event.offsetY).toEqual(400)
