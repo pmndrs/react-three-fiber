@@ -1,10 +1,9 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
-import type { DomEvent, EventManager, Intersection } from '../core/events'
-import { createEvents } from '../core/events'
+import type { DomEvent, EventManager, Intersection, ThreeEvent } from '../core/events'
+import { createEvents, EventHandlers } from '../core/events'
 import { Instance } from '../core/renderer'
-import { EventHandlers } from '../three-types'
 
 export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElement> {
   const temp = new THREE.Vector3()
@@ -98,8 +97,8 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
         if (handlers) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
-          handlers.onPointerOut?.(data)
-          handlers.onPointerLeave?.(data)
+          handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
+          handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
         }
       }
     })
@@ -132,15 +131,15 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
         if (!hoveredItem) {
           // If the object wasn't previously hovered, book it and call its handler
           hovered.set(id, data)
-          handlers.onPointerOver?.(data)
-          handlers.onPointerEnter?.(data)
+          handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
+          handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
         } else if (hoveredItem.stopped) {
           // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
           data.stopPropagation()
         }
       }
       // Call mouse move
-      handlers.onPointerMove?.(data)
+      handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
     })
     return hits
   }
@@ -153,7 +152,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
     objects
       .filter(filter)
       .forEach((object: THREE.Object3D) =>
-        ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as DomEvent),
+        ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
       )
   }
 
@@ -165,7 +164,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
       const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
-      const handler = handlers?.[name as keyof EventHandlers]
+      const handler = handlers?.[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
       if (handler) {
         // Forward all events back to their respective handlers with the exception of click events,
         // which must use the initial target
@@ -173,7 +172,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
           (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
           internal.initialHits.includes(eventObject)
         ) {
-          handler(data)
+          handler(data as ThreeEvent<PointerEvent>)
           pointerMissed(event, internal.interaction as THREE.Object3D[], (object) => object !== eventObject)
         }
       }
@@ -192,18 +191,30 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
     }
   }
 
+  const mapNames = {
+    onClick: 'click',
+    onContextMenu: 'contextmenu',
+    onDoubleClick: 'dblclick',
+    onWheel: 'wheel',
+    onPointerDown: 'pointerdown',
+    onPointerUp: 'pointerup',
+    onPointerLeave: 'pointerleave',
+    onPointerMove: 'pointermove',
+    onLostPointerCapture: 'lostpointercapture',
+  }
+
   return {
     connected: null,
     handlers: {
-      click: handlePointer('onClick') as EventListener,
-      contextmenu: handlePointer('onContextMenu') as EventListener,
-      dblclick: handlePointer('onDoubleClick') as EventListener,
-      wheel: handlePointer('onWheel') as EventListener,
-      pointerdown: handlePointer('onPointerDown') as EventListener,
-      pointerup: handlePointer('onPointerUp') as EventListener,
-      pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
-      pointermove: (handlePointerMove as unknown) as EventListener,
-      lostpointercapture: ((e: any) => (
+      onClick: handlePointer('onClick') as EventListener,
+      onContextMenu: handlePointer('onContextMenu') as EventListener,
+      onDoubleClick: handlePointer('onDoubleClick') as EventListener,
+      onWheel: handlePointer('onWheel') as EventListener,
+      onPointerDown: handlePointer('onPointerDown') as EventListener,
+      onPointerUp: handlePointer('onPointerUp') as EventListener,
+      onPointerLeave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
+      onPointerMove: (handlePointerMove as unknown) as EventListener,
+      onLostPointerCapture: ((e: any) => (
         (store.getState().internal.captured = undefined), handlePointerCancel(e)
       )) as EventListener,
     },
@@ -212,7 +223,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))
       Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
-        target.addEventListener(name, event, { passive: true }),
+        target.addEventListener(mapNames[name as keyof typeof mapNames], event, { passive: true }),
       )
     },
     disconnect: () => {
@@ -220,7 +231,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCa
       if (events.connected) {
         Object.entries(events.handlers ?? []).forEach(([name, event]) => {
           if (events && events.connected instanceof HTMLElement) {
-            events.connected.removeEventListener(name, event)
+            events.connected.removeEventListener(mapNames[name as keyof typeof mapNames], event)
           }
         })
         set((state) => ({ events: { ...state.events, connected: null } }))

@@ -3,9 +3,6 @@ import { UseStore } from 'zustand'
 import { Instance } from './renderer'
 import { RootState } from './store'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
-export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
@@ -21,16 +18,35 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
   delta: number
 }
 
+export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
+export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
+
 export type Events = {
-  click: EventListener
-  contextmenu: EventListener
-  dblclick: EventListener
-  wheel: EventListener
-  pointerdown: EventListener
-  pointerup: EventListener
-  pointerleave: EventListener
-  pointermove: EventListener
-  lostpointercapture: EventListener
+  onClick: EventListener
+  onContextMenu: EventListener
+  onDoubleClick: EventListener
+  onWheel: EventListener
+  onPointerDown: EventListener
+  onPointerUp: EventListener
+  onPointerLeave: EventListener
+  onPointerMove: EventListener
+  onLostPointerCapture: EventListener
+}
+
+export type EventHandlers = {
+  onClick?: (event: ThreeEvent<MouseEvent>) => void
+  onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
+  onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
+  onPointerUp?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerOver?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerOut?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMove?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onWheel?: (event: ThreeEvent<WheelEvent>) => void
 }
 
 export interface EventManager<TTarget> {

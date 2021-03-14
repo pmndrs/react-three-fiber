@@ -42,8 +42,6 @@ export type Performance = {
   regress: () => void
 }
 
-
-
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
   def && !!(def as THREE.WebGLRenderer).render
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
