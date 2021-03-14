@@ -17,7 +17,7 @@ describe('events ', () => {
 
     await act(async () => {
       render(
-        <Canvas events={events}>
+        <Canvas>
           <mesh onPointerDown={handlePointerDown}>
             <boxGeometry args={[2, 2]} />
             <meshBasicMaterial />
@@ -43,7 +43,7 @@ describe('events ', () => {
 
     await act(async () => {
       render(
-        <Canvas events={events}>
+        <Canvas>
           <mesh onPointerMissed={handleMissed} onClick={handleClick}>
             <boxGeometry args={[2, 2]} />
             <meshBasicMaterial />
@@ -72,7 +72,7 @@ describe('events ', () => {
 
     await act(async () => {
       render(
-        <Canvas events={events}>
+        <Canvas>
           <mesh
             onPointerOut={handlePointerOut}
             onPointerEnter={handlePointerEnter}
@@ -116,7 +116,7 @@ describe('events ', () => {
 
     await act(async () => {
       render(
-        <Canvas events={events}>
+        <Canvas>
           <mesh onPointerLeave={handlePointerLeave} onPointerEnter={handlePointerEnter}>
             <boxGeometry args={[2, 2]} />
             <meshBasicMaterial />
