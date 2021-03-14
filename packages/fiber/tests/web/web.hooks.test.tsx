@@ -9,16 +9,7 @@ import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLCon
 
 import { asyncUtils } from '../../../../test-utils/asyncUtils'
 
-import {
-  render,
-  advance,
-  useLoader,
-  act,
-  useThree,
-  useGraph,
-  useFrame,
-  ObjectMap,
-} from '../../src/web/index'
+import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
 
 const resolvers = []
 
@@ -115,6 +106,61 @@ describe('web hooks', () => {
       // @ts-ignore
       const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
       return <primitive object={model} />
+    }
+
+    let scene: Scene = null!
+    await act(async () => {
+      scene = render(
+        <React.Suspense fallback={null}>
+          <Component />
+        </React.Suspense>,
+        canvas,
+      ).getState().scene
+    })
+
+    await waitFor(() => expect(scene.children[0]).toBeDefined())
+
+    expect(scene.children[0]).toBe(MockMesh)
+  })
+
+  it('can handle useLoader hook with an array of strings', async () => {
+    const MockMesh = new Mesh()
+
+    const MockGroup = new Group()
+    const mat1 = new MeshBasicMaterial()
+    mat1.name = 'Mat 1'
+    const mesh1 = new Mesh(new BoxBufferGeometry(2, 2), mat1)
+    mesh1.name = 'Mesh 1'
+    const mat2 = new MeshBasicMaterial()
+    mat2.name = 'Mat 2'
+    const mesh2 = new Mesh(new BoxBufferGeometry(2, 2), mat2)
+    mesh2.name = 'Mesh 2'
+    MockGroup.add(mesh1, mesh2)
+
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
+      load: jest
+        .fn()
+        .mockImplementationOnce((url, onLoad) => {
+          onLoad(MockMesh)
+        })
+        .mockImplementationOnce((url, onLoad) => {
+          onLoad({ scene: MockGroup })
+        }),
+      setPath: () => {},
+    }))
+
+    const Component = () => {
+      // @ts-ignore
+      const [mockMesh, mockScene] = useLoader(Stdlib.GLTFLoader, ['/suzanne.glb', '/myModels.glb'], (loader) => {
+        loader.setPath('/public/models')
+      })
+
+      return (
+        <>
+          <primitive object={mockMesh} />
+          <primitive object={mockScene} />
+        </>
+      )
     }
 
     let scene: Scene = null!

@@ -53,8 +53,8 @@ export type Events = {
   lostpointercapture: EventListener
 }
 
-export interface EventManager {
-  connected: boolean | any
+export interface EventManager<TTarget> {
+  connected: boolean | TTarget
   handlers?: Events
   connect?: (target: any) => void
   disconnect?: () => void
@@ -106,7 +106,7 @@ export type RootState = {
   setDpr: (dpr: Dpr) => void
   onPointerMissed?: () => void
 
-  events: EventManager
+  events: EventManager<unknown>
   internal: InternalState
 }
 

@@ -15,7 +15,7 @@ import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer, MockSynethicEvent, MockEventData } from './fireEvent'
 
-type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps
+type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps<HTMLCanvasElement>
 
 type ReactThreeTestRendererAct = (cb: () => Promise<any>) => Promise<any>
 
@@ -38,7 +38,7 @@ const { reconciler, applyProps } = createRenderer(mockRoots)
 const render = <TRootNode,>(
   element: React.ReactNode,
   id: TRootNode,
-  { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps = {},
+  { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps<TRootNode> = {},
 ): THREE.Scene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
@@ -119,7 +119,7 @@ const create = async (
   let scene: MockScene = null!
 
   await reconciler.act(async () => {
-    scene = render(element, _fiber, options as RenderProps) as MockScene
+    scene = render(element, _fiber, options as RenderProps<typeof canvas>) as MockScene
   })
 
   const _store = mockRoots.get(_fiber)!.store

@@ -10,9 +10,9 @@ import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createEvents as events } from './events'
 import { Canvas } from './Canvas'
 
-export type RenderProps = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TCanvas> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
-  events?: (store: UseStore<RootState>) => EventManager
+  events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   mode?: 'legacy' | 'blocking' | 'concurrent'
   onCreated?: (state: RootState) => void
@@ -34,7 +34,14 @@ const createRendererInstance = (
 function render(
   element: React.ReactNode,
   canvas: HTMLCanvasElement,
-  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps = {},
+  {
+    gl,
+    size = { width: 0, height: 0 },
+    mode = 'blocking',
+    events,
+    onCreated,
+    ...props
+  }: RenderProps<HTMLCanvasElement> = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber

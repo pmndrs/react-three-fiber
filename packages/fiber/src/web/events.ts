@@ -5,7 +5,7 @@ import { EventManager, RootState } from '../core/store'
 import type { DomEvent, Intersection } from '../helpers/events'
 import { createCalculateDistance, makeId, createPrepareRay, createIntersect } from '../helpers/events'
 
-function createEvents(store: UseStore<RootState>): EventManager {
+function createEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
   const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
@@ -223,10 +223,12 @@ function createEvents(store: UseStore<RootState>): EventManager {
     },
     disconnect: () => {
       const { set, events } = store.getState()
-      if (events?.connected) {
-        Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
-          events?.connected.removeEventListener(name, event),
-        )
+      if (events.connected) {
+        Object.entries(events.handlers ?? []).forEach(([name, event]) => {
+          if (events && events.connected instanceof HTMLElement) {
+            events.connected.removeEventListener(name, event)
+          }
+        })
         set((state) => ({ events: { ...state.events, connected: false } }))
       }
     },

@@ -8,21 +8,22 @@ export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export type ThreeEvent<T> = T &
-  Intersection & {
-    intersections: Intersection[]
-    stopped: boolean
-    unprojectedPoint: THREE.Vector3
-    ray: THREE.Ray
-    camera: Camera
-    stopPropagation: () => void
-    sourceEvent: T
-    delta: number
-  }
+interface IntesectionEvent<TSourceEvent> extends Intersection {
+  intersections: Intersection[]
+  stopped: boolean
+  unprojectedPoint: THREE.Vector3
+  ray: THREE.Ray
+  camera: Camera
+  stopPropagation: () => void
+  sourceEvent: TSourceEvent
+  delta: number
+}
 
-export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
+export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
 
-export const makeId = (event: DomEvent): string => (event.eventObject || event.object).uuid + '/' + event.index
+export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
+
+export const makeId = (event: Intersection): string => (event.eventObject || event.object).uuid + '/' + event.index
 
 export const createCalculateDistance = (store: UseStore<RootState>): typeof calculateDistance => {
   const calculateDistance = (event: DomEvent) => {
@@ -70,7 +71,7 @@ export const createIntersect = (store: UseStore<RootState>): typeof intersect =>
 
     // Intersect known handler objects and filter against duplicates
     let intersects = raycaster.intersectObjects(eventsObjects, true).filter((item) => {
-      const id = makeId(item as DomEvent)
+      const id = makeId(item as Intersection)
       if (seen.has(id)) return false
       seen.add(id)
       return true
