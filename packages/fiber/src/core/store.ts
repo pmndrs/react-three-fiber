@@ -4,6 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { Instance, InstanceProps } from './renderer'
+import { EventManager } from './events'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -41,24 +42,7 @@ export type Performance = {
   regress: () => void
 }
 
-export type Events = {
-  click: EventListener
-  contextmenu: EventListener
-  dblclick: EventListener
-  wheel: EventListener
-  pointerdown: EventListener
-  pointerup: EventListener
-  pointerleave: EventListener
-  pointermove: EventListener
-  lostpointercapture: EventListener
-}
 
-export interface EventManager<TTarget> {
-  connected: boolean | TTarget
-  handlers?: Events
-  connect?: (target: any) => void
-  disconnect?: () => void
-}
 
 export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
   def && !!(def as THREE.WebGLRenderer).render

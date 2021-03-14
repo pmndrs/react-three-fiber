@@ -5,6 +5,7 @@ import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_ru
 import { EventHandlers } from '../three-types'
 import { is } from './is'
 import { RootState } from './store'
+import { Events } from './events'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
@@ -247,11 +248,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
         if (accumulative && root && instance.raycast)
           rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
         // Add handlers to the instances handler-map
-        localState.handlers = handlers.reduce((acc, key) => {
-          // @ts-ignore
-          acc[(key.charAt(2).toLowerCase() + key.substr(3)) as keyof EventHandlers] = newProps[key]
-          return acc
-        }, {} as EventHandlers)
+        localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: newProps[key] }), {} as EventHandlers)
       }
       // Call the update lifecycle when it is being updated, but only when it is part of the scene
       if (instance.parent) updateInstance(instance)

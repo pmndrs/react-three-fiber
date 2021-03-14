@@ -1,7 +1,7 @@
 import * as React from 'react'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { render, unmountComponentAtNode, RenderProps } from './index'
-import { createEvents as events } from './events'
+import { createDOMEvents as events } from './events'
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode

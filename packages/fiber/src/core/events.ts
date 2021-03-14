@@ -1,14 +1,16 @@
+import * as THREE from 'three'
 import { UseStore } from 'zustand'
-
-import { RootState } from '../core/store'
+import { Instance } from './renderer'
+import { RootState } from './store'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-
+export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
+export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-interface IntesectionEvent<TSourceEvent> extends Intersection {
+export interface IntesectionEvent<TSourceEvent> extends Intersection {
   intersections: Intersection[]
   stopped: boolean
   unprojectedPoint: THREE.Vector3
@@ -19,26 +21,34 @@ interface IntesectionEvent<TSourceEvent> extends Intersection {
   delta: number
 }
 
-export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
-
-export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
-
-export const makeId = (event: Intersection): string => (event.eventObject || event.object).uuid + '/' + event.index
-
-export const createCalculateDistance = (store: UseStore<RootState>): typeof calculateDistance => {
-  const calculateDistance = (event: DomEvent) => {
-    const { internal } = store.getState()
-    const dx = event.offsetX - internal.initialClick[0]
-    const dy = event.offsetY - internal.initialClick[1]
-    return Math.round(Math.sqrt(dx * dx + dy * dy))
-  }
-
-  return calculateDistance
+export type Events = {
+  click: EventListener
+  contextmenu: EventListener
+  dblclick: EventListener
+  wheel: EventListener
+  pointerdown: EventListener
+  pointerup: EventListener
+  pointerleave: EventListener
+  pointermove: EventListener
+  lostpointercapture: EventListener
 }
 
-/** Sets up defaultRaycaster */
-export const createPrepareRay = (store: UseStore<RootState>): typeof prepareRay => {
-  const prepareRay = (event: DomEvent) => {
+export interface EventManager<TTarget> {
+  connected: TTarget | null
+  handlers?: Events
+  connect?: (target: any) => void
+  disconnect?: () => void
+}
+
+export function createEvents(store: UseStore<RootState>) {  
+  const hovered = new Map<string, DomEvent>()
+
+  function makeId(event: Intersection) {
+    return (event.eventObject || event.object).uuid + '/' + event.index
+  }
+
+  /** Sets up defaultRaycaster */
+  function prepareRay(event: DomEvent) {
     const state = store.getState()
     const { raycaster, mouse, camera, size } = state
 
@@ -53,11 +63,7 @@ export const createPrepareRay = (store: UseStore<RootState>): typeof prepareRay 
     }
   }
 
-  return prepareRay
-}
-
-export const createIntersect = (store: UseStore<RootState>): typeof intersect => {
-  const intersect = (filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]): Intersection[] => {
+  function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
     const state = store.getState()
     const { raycaster, internal } = state
     // Skip event handling when noEvents is set
@@ -85,7 +91,7 @@ export const createIntersect = (store: UseStore<RootState>): typeof intersect =>
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = (eventObject as any).__r3f.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f.handlers
         if (handlers) hits.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
@@ -93,5 +99,19 @@ export const createIntersect = (store: UseStore<RootState>): typeof intersect =>
     return hits
   }
 
-  return intersect
+  /**  Creates filtered intersects and returns an array of positive hits */
+  function getIntersects(event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+    const { internal } = store.getState()
+    // Get fresh intersects
+    const intersections: Intersection[] = intersect(filter)
+    // If the interaction is captured take that into account, the captured event has to be part of the intersects
+    if (internal.captured && event?.type !== 'click' && event?.type !== 'wheel') {
+      internal.captured.forEach((captured) => {
+        if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
+      })
+    }
+    return intersections
+  }
+
+  return { hovered, makeId, prepareRay, intersect, getIntersects }
 }

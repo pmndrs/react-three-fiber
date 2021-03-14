@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { DomEvent } from './core/events'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
@@ -18,18 +19,18 @@ export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
 export type EventHandlers = {
-  onClick?: (event: MouseEvent) => void
-  onContextMenu?: (event: MouseEvent) => void
-  onDoubleClick?: (event: MouseEvent) => void
-  onPointerUp?: (event: PointerEvent) => void
-  onPointerDown?: (event: PointerEvent) => void
-  onPointerOver?: (event: PointerEvent) => void
-  onPointerOut?: (event: PointerEvent) => void
-  onPointerEnter?: (event: PointerEvent) => void
-  onPointerLeave?: (event: PointerEvent) => void
-  onPointerMove?: (event: PointerEvent) => void
-  onPointerMissed?: (event: React.MouseEvent) => void
-  onWheel?: (event: WheelEvent) => void
+  onClick?: (event: DomEvent) => void
+  onContextMenu?: (event: DomEvent) => void
+  onDoubleClick?: (event: DomEvent) => void
+  onPointerUp?: (event: DomEvent) => void
+  onPointerDown?: (event: DomEvent) => void
+  onPointerOver?: (event: DomEvent) => void
+  onPointerOut?: (event: DomEvent) => void
+  onPointerEnter?: (event: DomEvent) => void
+  onPointerLeave?: (event: DomEvent) => void
+  onPointerMove?: (event: DomEvent) => void
+  onPointerMissed?: (event: DomEvent) => void
+  onWheel?: (event: DomEvent) => void
 }
 
 export interface NodeProps<T, P> {

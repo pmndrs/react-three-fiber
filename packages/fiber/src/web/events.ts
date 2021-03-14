@@ -1,64 +1,24 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
-import { EventManager, RootState } from '../core/store'
+import { RootState } from '../core/store'
+import type { DomEvent, EventManager, Intersection } from '../core/events'
+import { createEvents } from '../core/events'
+import { Instance } from '../core/renderer'
+import { EventHandlers } from '../three-types'
 
-import type { DomEvent, Intersection } from '../helpers/events'
-import { createCalculateDistance, makeId, createPrepareRay, createIntersect } from '../helpers/events'
-
-function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElement> {
-  const hovered = new Map<string, DomEvent>()
+export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElement> {
   const temp = new THREE.Vector3()
+  const { hovered, makeId, prepareRay, getIntersects } = createEvents(store)
 
-  /**
-   * Sets up helper functions that are
-   * shared between target event handling
-   */
-  /**  Calculates click deltas */
-  const calculateDistance = createCalculateDistance(store)
-  /** Sets up defaultRaycaster */
-  const prepareRay = createPrepareRay(store)
-  /** Intersects interaction objects using the event input */
-  const intersect = createIntersect(store)
-
-  function handlePointerCancel(event: DomEvent, hits?: Intersection[], prepare = true) {
-    if (prepare) prepareRay(event)
-
-    Array.from(hovered.values()).forEach((hoveredObj) => {
-      // When no objects were hit or the the hovered object wasn't found underneath the cursor
-      // we call onPointerOut and delete the object from the hovered-elements map
-      if (
-        hits &&
-        (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index))
-      ) {
-        const eventObject = hoveredObj.eventObject
-        const handlers = (eventObject as any).__r3f.handlers
-        hovered.delete(makeId(hoveredObj))
-        if (handlers) {
-          // Clear out intersects, they are outdated by now
-          const data = { ...hoveredObj, intersections: hits || [] }
-          if (handlers.pointerOut) handlers.pointerOut({ ...data, type: 'pointerout' })
-          if (handlers.pointerLeave) handlers.pointerLeave({ ...data, type: 'pointerleave' })
-        }
-      }
-    })
-  }
-
-  /**  Creates filtered intersects and returns an array of positive hits */
-  function getIntersects(event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+  function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
-    // Get fresh intersects
-    const intersections: Intersection[] = intersect(filter)
-    // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (internal.captured && event?.type !== 'click' && event?.type !== 'wheel') {
-      internal.captured.forEach((captured) => {
-        if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
-      })
-    }
-    return intersections
+    const dx = event.offsetX - internal.initialClick[0]
+    const dy = event.offsetY - internal.initialClick[1]
+    return Math.round(Math.sqrt(dx * dx + dy * dy))
   }
 
   /**  Handles intersections by forwarding them to handlers */
-  function handleIntersects(intersections: Intersection[], event: DomEvent, fn: (event: DomEvent) => void) {
+  function handleIntersects(intersections: Intersection[], event: DomEvent, callback: (event: DomEvent) => void) {
     const { raycaster, mouse, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
@@ -113,13 +73,36 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
           sourceEvent: event,
         }
 
-        fn(raycastEvent as DomEvent)
+        callback(raycastEvent as DomEvent)
 
         // Event bubbling may be interrupted by stopPropagation
         if (localState.stopped === true) break
       }
     }
     return intersections
+  }
+
+  function handlePointerCancel(event: DomEvent, hits?: Intersection[], prepare = true) {
+    if (prepare) prepareRay(event)
+
+    Array.from(hovered.values()).forEach((hoveredObj) => {
+      // When no objects were hit or the the hovered object wasn't found underneath the cursor
+      // we call onPointerOut and delete the object from the hovered-elements map
+      if (
+        hits &&
+        (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index))
+      ) {
+        const eventObject = hoveredObj.eventObject
+        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
+        hovered.delete(makeId(hoveredObj))
+        if (handlers) {
+          // Clear out intersects, they are outdated by now
+          const data = { ...hoveredObj, intersections: hits || [] }
+          handlers.onPointerOut?.(data)
+          handlers.onPointerLeave?.(data)
+        }
+      }
+    })
   }
 
   function handlePointerMove(event: DomEvent, prepare = true) {
@@ -129,7 +112,9 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
       // This is onPointerMove, we're only interested in events that exhibit this particular event
       (objects: any) =>
         objects.filter((obj: any) =>
-          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some((name) => (obj as any).__r3f.handlers['pointer' + name]),
+          ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
+            (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
+          ),
         ),
     )
 
@@ -137,31 +122,39 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
     handlePointerCancel(event, hits)
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
-      const handlers = (eventObject as any).__r3f.handlers
+      const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
       // Check presence of handlers
       if (!handlers) return
       // Check if mouse enter or out is present
-      if (handlers.pointerOver || handlers.pointerEnter || handlers.pointerOut || handlers.pointerLeave) {
+      if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
         const id = makeId(data)
         const hoveredItem = hovered.get(id)
         if (!hoveredItem) {
           // If the object wasn't previously hovered, book it and call its handler
           hovered.set(id, data)
-          if (handlers.pointerOver) handlers.pointerOver({ ...data, type: 'pointerover' })
-          if (handlers.pointerEnter) handlers.pointerEnter({ ...data, type: 'pointerenter' })
+          handlers.onPointerOver?.(data)
+          handlers.onPointerEnter?.(data)
         } else if (hoveredItem.stopped) {
           // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
           data.stopPropagation()
         }
       }
       // Call mouse move
-      if (handlers.pointerMove) handlers.pointerMove(data)
+      handlers.onPointerMove?.(data)
     })
     return hits
   }
 
-  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[], filter = (object: THREE.Object3D) => true) {
-    objects.filter(filter).forEach((object: THREE.Object3D) => (object as any).__r3f.handlers.pointerMissed?.(event))
+  function pointerMissed(
+    event: MouseEvent,
+    objects: THREE.Object3D[],
+    filter: (object?: THREE.Object3D) => boolean = () => true,
+  ) {
+    objects
+      .filter(filter)
+      .forEach((object: THREE.Object3D) =>
+        ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as DomEvent),
+      )
   }
 
   const handlePointer = (name: string) => (event: DomEvent, prepare = true) => {
@@ -171,26 +164,27 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
     const hits = getIntersects(event)
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
-      const handlers = (eventObject as any).__r3f.handlers
-      if (handlers && handlers[name]) {
+      const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
+      const handler = handlers?.[name as keyof EventHandlers]
+      if (handler) {
         // Forward all events back to their respective handlers with the exception of click events,
         // which must use the initial target
         if (
-          (name !== 'click' && name !== 'contextMenu' && name !== 'doubleClick') ||
+          (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
           internal.initialHits.includes(eventObject)
         ) {
-          handlers[name](data)
+          handler(data)
           pointerMissed(event, internal.interaction as THREE.Object3D[], (object) => object !== eventObject)
         }
       }
     })
     // If a click yields no results, pass it back to the user as a miss
-    if (name === 'pointerDown') {
+    if (name === 'onPointerDown') {
       internal.initialClick = [event.offsetX, event.offsetY]
       internal.initialHits = hits.map((hit: any) => hit.eventObject)
     }
 
-    if ((name === 'click' || name === 'contextMenu' || name === 'doubleClick') && !hits.length) {
+    if ((name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick') && !hits.length) {
       if (calculateDistance(event) <= 2) {
         pointerMissed(event, internal.interaction as THREE.Object3D[])
         if (onPointerMissed) onPointerMissed()
@@ -199,14 +193,14 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
   }
 
   return {
-    connected: false,
+    connected: null,
     handlers: {
-      click: handlePointer('click') as EventListener,
-      contextmenu: handlePointer('contextMenu') as EventListener,
-      dblclick: handlePointer('doubleClick') as EventListener,
-      wheel: handlePointer('wheel') as EventListener,
-      pointerdown: handlePointer('pointerDown') as EventListener,
-      pointerup: handlePointer('pointerUp') as EventListener,
+      click: handlePointer('onClick') as EventListener,
+      contextmenu: handlePointer('onContextMenu') as EventListener,
+      dblclick: handlePointer('onDoubleClick') as EventListener,
+      wheel: handlePointer('onWheel') as EventListener,
+      pointerdown: handlePointer('onPointerDown') as EventListener,
+      pointerup: handlePointer('onPointerUp') as EventListener,
       pointerleave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
       pointermove: (handlePointerMove as unknown) as EventListener,
       lostpointercapture: ((e: any) => (
@@ -229,10 +223,8 @@ function createEvents(store: UseStore<RootState>): EventManager<HTMLCanvasElemen
             events.connected.removeEventListener(name, event)
           }
         })
-        set((state) => ({ events: { ...state.events, connected: false } }))
+        set((state) => ({ events: { ...state.events, connected: null } }))
       }
     },
   }
 }
-
-export { createEvents }

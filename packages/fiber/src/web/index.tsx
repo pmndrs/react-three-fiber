@@ -4,11 +4,12 @@ import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context, RootState, Events, Size, EventManager } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
-import { createEvents as events } from './events'
+import { createDOMEvents as events } from './events'
 import { Canvas } from './Canvas'
+import { EventManager } from '../core/events'
 
 export type RenderProps<TCanvas> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
