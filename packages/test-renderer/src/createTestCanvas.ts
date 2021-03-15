@@ -1,8 +1,4 @@
-export type CreateCanvasParameters = {
-  beforeReturn?: (canvas: HTMLCanvasElement) => void
-  width?: number
-  height?: number
-}
+import type { CreateCanvasParameters } from './types/internal'
 
 export const createCanvas = ({ beforeReturn, width = 1280, height = 800 }: CreateCanvasParameters = {}) => {
   const canvas = document.createElement('canvas')

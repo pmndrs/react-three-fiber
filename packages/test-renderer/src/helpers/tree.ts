@@ -1,28 +1,18 @@
-import { MockScene, MockSceneChild } from '../createMockStore'
-
+import type { TreeNode, Tree } from '../types/public'
+import type { MockSceneChild, MockScene } from '../types/internal'
 import { lowerCaseFirstLetter } from './strings'
 
-interface ReactThreeTestRendererTreeNode {
-  type: string
-  props: {
-    [key: string]: any
-  }
-  children: ReactThreeTestRendererTreeNode[]
-}
-
-export type ReactThreeTestRendererTree = ReactThreeTestRendererTreeNode[]
-
 const treeObjectFactory = (
-  type: ReactThreeTestRendererTreeNode['type'],
-  props: ReactThreeTestRendererTreeNode['props'],
-  children: ReactThreeTestRendererTreeNode['children'],
-): ReactThreeTestRendererTreeNode => ({
+  type: TreeNode['type'],
+  props: TreeNode['props'],
+  children: TreeNode['children'],
+): TreeNode => ({
   type,
   props,
   children,
 })
 
-const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =>
+const toTreeBranch = (obj: MockSceneChild[]): TreeNode[] =>
   obj.map((child) => {
     return treeObjectFactory(
       lowerCaseFirstLetter(child.type || child.constructor.name),
@@ -31,11 +21,11 @@ const toTreeBranch = (obj: MockSceneChild[]): ReactThreeTestRendererTreeNode[] =
     )
   })
 
-export const toTree = (root: MockScene): ReactThreeTestRendererTree =>
+export const toTree = (root: MockScene): Tree =>
   root.children.map((obj) =>
     treeObjectFactory(
       lowerCaseFirstLetter(obj.type),
       { ...obj.__r3f.memoizedProps },
-      toTreeBranch([...obj.children, ...obj.__r3f.objects]),
+      toTreeBranch([...(obj.children as MockSceneChild[]), ...(obj.__r3f.objects as MockSceneChild[])]),
     ),
   )

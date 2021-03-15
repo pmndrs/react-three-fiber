@@ -3,32 +3,21 @@ import * as React from 'react'
 import { RootTag } from 'react-reconciler'
 
 import { _createRenderer as createRenderer, _createLoop as createLoop } from 'react-three-fiber'
+import type { RenderProps } from 'react-three-fiber'
 import type { Root } from 'react-three-fiber/src/core/renderer'
-import type { RenderProps } from 'react-three-fiber/src/web'
 
-import { toTree, ReactThreeTestRendererTree } from './helpers/tree'
-import { toGraph, ReactThreeTestRendererSceneGraph } from './helpers/graph'
+import { toTree } from './helpers/tree'
+import { toGraph } from './helpers/graph'
 import { is } from './helpers/is'
 
-import { createStore, MockUseStoreState, context, MockScene, MockSceneChild } from './createMockStore'
-import { createCanvas, CreateCanvasParameters } from './createTestCanvas'
+import { createStore, context } from './createMockStore'
+import { createCanvas } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
-import { createEventFirer, MockSyntheticEvent, MockEventData } from './fireEvent'
+import { createEventFirer } from './fireEvent'
 
-type ReactThreeTestRendererOptions = CreateCanvasParameters & RenderProps<HTMLCanvasElement>
-
-type ReactThreeTestRendererAct = (cb: () => Promise<any>) => Promise<any>
-
-type ThreeTestRenderer = {
-  scene: MockScene
-  unmount: () => Promise<void>
-  getInstance: () => null | unknown
-  update: (el: React.ReactNode) => Promise<void>
-  toTree: () => ReactThreeTestRendererTree | undefined
-  toGraph: () => ReactThreeTestRendererSceneGraph | undefined
-  fireEvent: (element: MockSceneChild, handler: string, data?: MockEventData) => Promise<any>
-  advanceFrames: (frames: number, delta: number | number[]) => void
-}
+import type { MockUseStoreState, MockScene } from './types/internal'
+import type { CreateOptions, Renderer, Act } from './types/public'
+import { wrapFiber } from './createTestInstance'
 
 const mockRoots = new Map<HTMLCanvasElement, Root>()
 const modes = ['legacy', 'blocking', 'concurrent']
@@ -39,7 +28,7 @@ const render = (
   element: React.ReactNode,
   id: HTMLCanvasElement,
   { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps<HTMLCanvasElement> = {},
-): THREE.Scene => {
+): MockScene => {
   let root = mockRoots.get(id)
   let fiber = root?.fiber
   let store = root?.store
@@ -62,7 +51,7 @@ const render = (
 
   if (store && fiber) {
     reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
-    return store!.getState().scene as THREE.Scene
+    return (store!.getState().scene as unknown) as MockScene
   } else {
     throw 'R3F: Error creating fiber-root!'
   }
@@ -105,10 +94,7 @@ reconciler.injectIntoDevTools({
   version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
 })
 
-const create = async (
-  element: React.ReactNode,
-  options?: Partial<ReactThreeTestRendererOptions>,
-): Promise<ThreeTestRenderer> => {
+const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas({
     width: options?.width,
     height: options?.height,
@@ -125,7 +111,7 @@ const create = async (
   const _store = mockRoots.get(_fiber)!.store
 
   return {
-    scene: scene,
+    scene: wrapFiber(scene),
     unmount: async () => {
       await reconciler.act(async () => {
         unmount(_fiber)
@@ -187,7 +173,7 @@ const create = async (
   }
 }
 
-const act = reconciler.act as ReactThreeTestRendererAct
+const act = reconciler.act as Act
 
+export * as ReactThreeTest from './types'
 export default { create, act }
-export type { MockSyntheticEvent, ReactThreeTestRendererAct, ReactThreeTestRendererOptions, ThreeTestRenderer }

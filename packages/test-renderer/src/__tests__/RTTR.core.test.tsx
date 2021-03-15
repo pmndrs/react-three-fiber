@@ -1,9 +1,11 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import { Mesh } from 'three'
+import { BoxBufferGeometry, Material, Mesh } from 'three'
 
 import ReactThreeTestRenderer from '../index'
+
+type ExampleComp = Mesh<BoxBufferGeometry, Material>
 
 describe('ReactThreeTestRenderer Core', () => {
   it('renders a simple component in default blocking mode', async () => {
@@ -148,7 +150,7 @@ describe('ReactThreeTestRenderer Core', () => {
 
     const renderer = await ReactThreeTestRenderer.create(<Component />)
 
-    expect(renderer.scene.children[0].position.x).toEqual(7)
+    expect(renderer.scene.children[0].instance.position.x).toEqual(7)
     expect(renders).toBe(12)
   })
 
@@ -161,8 +163,10 @@ describe('ReactThreeTestRenderer Core', () => {
       </mesh>,
     )
 
-    expect(renderer.scene.children[0].material.type).toEqual('MeshBasicMaterial')
-    expect(renderer.scene.children[0].material.name).toEqual('basicMat')
+    let childInstance = renderer.scene.children[0].instance as ExampleComp
+
+    expect(childInstance.material.type).toEqual('MeshBasicMaterial')
+    expect(childInstance.material.name).toEqual('basicMat')
 
     await renderer.update(
       <mesh>
@@ -172,8 +176,10 @@ describe('ReactThreeTestRenderer Core', () => {
       </mesh>,
     )
 
-    expect(renderer.scene.children[0].material.type).toEqual('MeshStandardMaterial')
-    expect(renderer.scene.children[0].material.name).toEqual('standardMat')
+    childInstance = renderer.scene.children[0].instance as ExampleComp
+
+    expect(childInstance.material.type).toEqual('MeshStandardMaterial')
+    expect(childInstance.material.name).toEqual('standardMat')
   })
 
   it('exposes the instance', async () => {
@@ -253,83 +259,7 @@ describe('ReactThreeTestRenderer Core', () => {
       </group>,
     )
 
-    expect(renderer.toTree()).toEqual([
-      {
-        type: 'group',
-        props: {},
-        children: [
-          {
-            type: 'mesh',
-            props: {
-              ['position-z']: 12,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [2, 2],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-          {
-            type: 'mesh',
-            props: {
-              ['position-y']: 12,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [4, 4],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-          {
-            type: 'mesh',
-            props: {
-              ['position-x']: 12,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [6, 6],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+    expect(renderer.toTree()).toMatchSnapshot()
 
     await renderer.update(
       <group>
@@ -348,83 +278,7 @@ describe('ReactThreeTestRenderer Core', () => {
       </group>,
     )
 
-    expect(renderer.toTree()).toEqual([
-      {
-        type: 'group',
-        props: {},
-        children: [
-          {
-            type: 'mesh',
-            props: {
-              ['rotation-x']: 1,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [6, 6],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-          {
-            type: 'mesh',
-            props: {
-              ['position-y']: 12,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [4, 4],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-          {
-            type: 'mesh',
-            props: {
-              ['position-x']: 12,
-            },
-            children: [
-              {
-                type: 'boxGeometry',
-                props: {
-                  args: [2, 2],
-                  attach: 'geometry',
-                },
-                children: [],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                },
-                children: [],
-              },
-            ],
-          },
-        ],
-      },
-    ])
+    expect(renderer.toTree()).toMatchSnapshot()
   })
 
   it('does the full lifecycle', async () => {
@@ -548,54 +402,7 @@ describe('ReactThreeTestRenderer Core', () => {
 
     const renderer = await ReactThreeTestRenderer.create(<Component />)
 
-    expect(renderer.toTree()).toEqual([
-      {
-        type: 'group',
-        props: {
-          position: [1, 2, 3],
-        },
-        children: [
-          {
-            type: 'mesh',
-            props: {},
-            children: [
-              {
-                type: 'bufferGeometry',
-                props: { attach: 'geometry' },
-                children: [
-                  {
-                    type: 'bufferAttribute',
-                    props: {
-                      attachObject: ['attributes', 'position'],
-                      array: vertices,
-                      count: vertices.length / 3,
-                      itemSize: 3,
-                    },
-                    children: [],
-                  },
-                ],
-              },
-              {
-                type: 'meshBasicMaterial',
-                props: {
-                  attach: 'material',
-                  color: 'hotpink',
-                },
-                children: [],
-              },
-            ],
-          },
-          {
-            type: 'color',
-            props: {
-              attach: 'background',
-              args: [0, 0, 255],
-            },
-            children: [],
-          },
-        ],
-      },
-    ])
+    expect(renderer.toTree()).toMatchSnapshot()
   })
 
   it('toTree() handles complicated tree of fragments', async () => {
@@ -617,50 +424,7 @@ describe('ReactThreeTestRenderer Core', () => {
       </>,
     )
 
-    expect(renderer.toTree()).toEqual([
-      {
-        type: 'group',
-        props: {},
-        children: [
-          {
-            type: 'color',
-            props: {
-              args: [0, 0, 0],
-              attach: 'background',
-            },
-            children: [],
-          },
-        ],
-      },
-      {
-        type: 'group',
-        props: {},
-        children: [
-          {
-            type: 'color',
-            props: {
-              args: [0, 0, 255],
-              attach: 'background',
-            },
-            children: [],
-          },
-        ],
-      },
-      {
-        type: 'group',
-        props: {},
-        children: [
-          {
-            type: 'color',
-            props: {
-              args: [255, 0, 0],
-              attach: 'background',
-            },
-            children: [],
-          },
-        ],
-      },
-    ])
+    expect(renderer.toTree()).toMatchSnapshot()
   })
 
   it('root instance and refs return the same value', async () => {

@@ -26,7 +26,7 @@ export type ClassConstructor = {
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
-export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | 'remove' | 'raycast'> & {
+export type BaseInstance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
   __r3f: LocalState
   parent: Instance | null
   children: Instance[]
@@ -34,8 +34,8 @@ export type Instance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | '
   remove: (...object: Instance[]) => Instance
   add: (...object: Instance[]) => Instance
   raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
-  [key: string]: any
 }
+export type Instance = BaseInstance & { [key: string]: any }
 
 export type InstanceProps = {
   [key: string]: unknown

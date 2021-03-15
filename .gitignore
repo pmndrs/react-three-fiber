@@ -4,7 +4,7 @@ dist/
 build/
 types/
 # commit types in src
-!src/types/
+!packages/*/src/types/
 Thumbs.db
 ehthumbs.db
 Desktop.ini

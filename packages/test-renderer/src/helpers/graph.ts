@@ -1,20 +1,15 @@
-interface ReactThreeTestRendererSceneGraphItem {
-  type: string
-  name: string
-  children: ReactThreeTestRendererSceneGraphItem[] | null
-}
-
-export type ReactThreeTestRendererSceneGraph = ReactThreeTestRendererSceneGraphItem[]
+import type { MockScene, MockSceneChild } from '../types/internal'
+import type { SceneGraphItem } from '../types/public'
 
 const graphObjectFactory = (
-  type: ReactThreeTestRendererSceneGraphItem['type'],
-  name: ReactThreeTestRendererSceneGraphItem['name'],
-  children: ReactThreeTestRendererSceneGraphItem['children'],
-): ReactThreeTestRendererSceneGraphItem => ({
+  type: SceneGraphItem['type'],
+  name: SceneGraphItem['name'],
+  children: SceneGraphItem['children'],
+): SceneGraphItem => ({
   type,
   name,
   children,
 })
 
-export const toGraph = (object: THREE.Object3D): ReactThreeTestRendererSceneGraphItem[] =>
+export const toGraph = (object: MockScene | MockSceneChild): SceneGraphItem[] =>
   object.children.map((child) => graphObjectFactory(child.type, child.name || '', toGraph(child)))

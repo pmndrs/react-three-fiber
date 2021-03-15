@@ -70,7 +70,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     await waitFor(() => expect(renderer.scene.children[0]).toBeDefined())
 
-    expect(renderer.scene.children[0]).toBe(MockMesh)
+    expect(renderer.scene.children[0].instance).toBe(MockMesh)
   })
 
   it('can handle useFrame hook using test renderers advanceFrames function', async () => {
@@ -90,12 +90,12 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     const renderer = await ReactThreeTestRenderer.create(<Component />)
 
-    expect(renderer.scene.children[0].rotation.x).toEqual(0)
+    expect(renderer.scene.children[0].instance.rotation.x).toEqual(0)
 
     await ReactThreeTestRenderer.act(async () => {
       renderer.advanceFrames(2, 1)
     })
 
-    await waitFor(() => expect(renderer.scene.children[0].rotation.x).toEqual(2))
+    await waitFor(() => expect(renderer.scene.children[0].instance.rotation.x).toEqual(2))
   })
 })
