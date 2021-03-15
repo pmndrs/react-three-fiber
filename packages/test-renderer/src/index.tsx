@@ -35,7 +35,6 @@ const render = (
 
   if (!fiber) {
     // If no root has been found, make one
-    // @ts-ignore
     store = createStore(applyProps, invalidate, advance, {
       // @ts-ignore
       gl: new THREE.WebGLRenderer({ context: createWebGLContext(HTMLCanvasElement), precision: 'highp' }),

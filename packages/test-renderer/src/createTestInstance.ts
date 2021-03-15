@@ -57,11 +57,26 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
     }
   }
 
+  public find = (decider: (node: ReactThreeTestInstance) => boolean): ReactThreeTestInstance =>
+    expectOne(findAll(this, decider), `matching custom checker: ${decider.toString()}`)
+
+  public findAll = (decider: (node: ReactThreeTestInstance) => boolean): ReactThreeTestInstance[] =>
+    findAll(this, decider)
+
+  public findByType = (type: string): ReactThreeTestInstance =>
+    expectOne(
+      findAll(this, (node) => Boolean(node.type && node.type === type)),
+      `with node type: "${type || 'Unknown'}"`,
+    )
+
+  public findAllByType = (type: string): ReactThreeTestInstance[] =>
+    findAll(this, (node) => Boolean(node.type && node.type === type))
+
   public findByProps = (props: Obj): ReactThreeTestInstance =>
     expectOne(this.findAllByProps(props), `with props: ${JSON.stringify(props)}`)
 
   public findAllByProps = (props: Obj): ReactThreeTestInstance[] =>
-    findAll(this, (node: ReactThreeTestInstance) => node.props && matchProps(node.props, props))
+    findAll(this, (node: ReactThreeTestInstance) => Boolean(node.props && matchProps(node.props, props)))
 }
 
 const fiberToWrapper = new WeakMap<MockInstance | MockScene>()
