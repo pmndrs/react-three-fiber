@@ -5,7 +5,7 @@ import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
-import { createRenderer, extend, Root } from '../core/renderer'
+import { createRenderer, extend, Instance, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createDOMEvents as events } from './events'
 import { Canvas } from './Canvas'
@@ -136,10 +136,10 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
         state.events.disconnect?.()
         state.gl?.renderLists?.dispose()
         state.gl?.forceContextLoss()
-        dispose(state.gl)
-        dispose(state.raycaster)
-        dispose(state.camera)
-        dispose(state)
+        dispose((state.gl as unknown) as Instance)
+        dispose((state.raycaster as unknown) as Instance)
+        dispose((state.camera as unknown) as Instance)
+        dispose((state as unknown) as Instance)
       }
       roots.delete(canvas)
       if (callback) callback(canvas)
@@ -147,10 +147,10 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-function dispose(obj: any) {
+function dispose(obj: Instance) {
   if (obj.dispose && obj.type !== 'Scene') obj.dispose()
   for (const p in obj) {
-    if (typeof p === 'object' && (p as any).dispose) (p as any).dispose()
+    if (typeof p === 'object' && (p as Instance).dispose) (p as Instance).dispose()
     delete obj[p]
   }
 }
