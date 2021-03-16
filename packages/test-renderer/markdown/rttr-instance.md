@@ -22,7 +22,7 @@
 
 ## `ReactThreeTestInstance` ⚛️
 
-This is an internal class that wraps the elements returned from [`ReactThreeTestRenderer.create`](/markdown/rttr.md#create). It has several properties & methods to enhance the testing experience. Similar to the core API, it closely mirrors the API of [`react-test-renderer`](https://reactjs.org/docs/test-renderer.html).
+This is an internal class that wraps the elements returned from [`ReactThreeTestRenderer.create`](/packages/test-renderer/markdown/rttr.md#create). It has several properties & methods to enhance the testing experience. Similar to the core API, it closely mirrors the API of [`react-test-renderer`](https://reactjs.org/docs/test-renderer.html).
 
 ### `instance` <a id="instance-prop-instance"></a>
 
@@ -70,7 +70,7 @@ Returns the children test instances of this test instance according to the prope
 testInstance.allChildren
 ```
 
-Returns all the children testInstances of this test instance, this will be as thorough as [`testRenderer.toTree()`](/markdown/rttr.md#create-totree) capturing all react components in the tree.
+Returns all the children testInstances of this test instance, this will be as thorough as [`testRenderer.toTree()`](/packages/test-renderer/markdown/rttr.md#create-totree) capturing all react components in the tree.
 
 ### `find()` <a id="instance-meth-find"></a>
 

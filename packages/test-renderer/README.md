@@ -57,5 +57,5 @@ console.log(renderer.toGraph())
 
 ## API
 
-- [React Three Test Renderer API](/markdown/rttr.md)
-- [React Three Test Instance API](/markdown/rttr-instance.md)
+- [React Three Test Renderer API](/packages/test-renderer/markdown/rttr.md)
+- [React Three Test Instance API](/packages/test-renderer/markdown/rttr-instance.md)
