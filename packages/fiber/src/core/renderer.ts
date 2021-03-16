@@ -181,7 +181,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
             // If the target is atomic, it forces us to switch the root
             if (!(targetProp && targetProp.set)) {
               const [name, ...reverseEntries] = entries.reverse()
-              currentInstance = reverseEntries.reverse().reduce((acc: any, key) => acc[key], instance)
+              currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
               key = name
             }
           }
@@ -492,7 +492,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
         const { args: argsNew = [], ...restNew } = newProps
         const { args: argsOld = [], ...restOld } = oldProps
         // If it has new props or arguments, then it needs to be re-instanciated
-        const hasNewArgs = argsNew.some((value: any, index: number) =>
+        const hasNewArgs = argsNew.some((value, index: number) =>
           is.obj(value)
             ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
             : value !== argsOld[index],
@@ -512,7 +512,6 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
         invalidateInstance(instance)
       }
     },
-    // @ts-ignore
     unhideInstance(instance: Instance, props: InstanceProps) {
       if ((instance.isObject3D && props.visible == null) || props.visible) {
         instance.visible = true

@@ -23,11 +23,11 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
     if (intersections.length) {
       const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
       const delta = event.type === 'click' ? calculateDistance(event) : 0
-      const releasePointerCapture = (id: any) => (event.target as any).releasePointerCapture(id)
+      const releasePointerCapture = (id: number) => (event.target as Element).releasePointerCapture(id)
       const localState = { stopped: false, captured: false }
 
       for (const hit of intersections) {
-        const setPointerCapture = (id: any) => {
+        const setPointerCapture = (id: number) => {
           // If the hit is going to be captured flag that we're in captured state
           if (!localState.captured) {
             localState.captured = true
@@ -38,7 +38,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           if (internal.captured)
             internal.captured.push(hit)
             // Call the original event now
-          ;(event.target as any).setPointerCapture(id)
+          ;(event.target as Element).setPointerCapture(id)
         }
 
         const raycastEvent = {
@@ -177,7 +177,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
     // If a click yields no results, pass it back to the user as a miss
     if (name === 'onPointerDown') {
       internal.initialClick = [event.offsetX, event.offsetY]
-      internal.initialHits = hits.map((hit: any) => hit.eventObject)
+      internal.initialHits = hits.map((hit) => hit.eventObject)
     }
 
     if ((name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick') && !hits.length) {
