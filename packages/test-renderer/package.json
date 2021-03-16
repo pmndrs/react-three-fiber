@@ -9,12 +9,12 @@
   "module": "dist/react-three-test-renderer.esm.js",
   "types": "dist/react-three-test-renderer.cjs.d.ts",
   "bugs": {
-    "url": "https://github.com/drcmda/react-three-fiber/issues"
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
   },
-  "homepage": "https://github.com/drcmda/react-three-fiber#readme",
+  "homepage": "https://github.com/pmndrs/react-three-fiber/packages/react-three-test-renderer",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/drcmda/react-three-fiber.git"
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
   },
   "preconstruct": {
     "entrypoints": [
