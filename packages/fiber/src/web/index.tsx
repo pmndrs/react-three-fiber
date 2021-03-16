@@ -136,10 +136,10 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
         state.events.disconnect?.()
         state.gl?.renderLists?.dispose()
         state.gl?.forceContextLoss()
-        dispose((state.gl as unknown) as Instance)
-        dispose((state.raycaster as unknown) as Instance)
-        dispose((state.camera as unknown) as Instance)
-        dispose((state as unknown) as Instance)
+        dispose(state.gl)
+        dispose(state.raycaster)
+        dispose(state.camera)
+        dispose(state)
       }
       roots.delete(canvas)
       if (callback) callback(canvas)
@@ -147,7 +147,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-function dispose(obj: Instance) {
+function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
   if (obj.dispose && obj.type !== 'Scene') obj.dispose()
   for (const p in obj) {
     if (typeof p === 'object' && (p as Instance).dispose) (p as Instance).dispose()
