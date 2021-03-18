@@ -491,12 +491,21 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
         // This is a data object, let's extract critical information about it
         const { args: argsNew = [], ...restNew } = newProps
         const { args: argsOld = [], ...restOld } = oldProps
-        // If it has new props or arguments, then it needs to be re-instanciated
-        const hasNewArgs = argsNew.some((value, index: number) =>
-          is.obj(value)
-            ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
-            : value !== argsOld[index],
-        )
+        let hasNewArgs: boolean
+        if (Object.prototype.toString.call(argsNew) !== Object.prototype.toString.call(argsOld)) {
+          // args' type has changed
+          hasNewArgs = true
+        } else if (!(argsNew instanceof Object) && !(argsOld instanceof Object)) {
+          // args are not reference type
+          hasNewArgs = argsNew !== argsOld
+        } else {
+          // If it has new props or arguments, then it needs to be re-instanciated
+          hasNewArgs = argsNew.some((value, index: number) =>
+            is.obj(value)
+              ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
+              : value !== argsOld[index],
+          )
+        }
         if (hasNewArgs) {
           // Next we create a new instance and append it again
           switchInstance(instance, type, newProps, fiber)
