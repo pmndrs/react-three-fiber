@@ -3,7 +3,6 @@ import React, { memo, useEffect, useState, useRef } from 'react'
 import { useThree, useFrame, extend } from 'react-three-fiber'
 // @ts-ignore
 import { OrbitControls } from 'three-stdlib'
-import { ColorArray } from 'react-three-fiber/src/three-types'
 extend({ OrbitControls })
 
 const Orbit = memo(() => {
@@ -62,7 +61,7 @@ export default function App() {
   const group = useRef<THREE.Group>()
   const [showCube, setShowCube] = useState(false)
   const [hovered, setHovered] = useState(false)
-  const [color, setColor] = useState<ColorArray>(['pink'])
+  const [color, setColor] = useState(['pink'])
 
   useEffect(() => {
     //const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
@@ -79,7 +78,7 @@ export default function App() {
       <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
 
       <mesh
-        scale={1}
+        scale={hovered ? 1.25 : 1}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         onClick={() => setColor(color[0] === 'pink' ? ['peachpuff'] : ['pink'])}>
