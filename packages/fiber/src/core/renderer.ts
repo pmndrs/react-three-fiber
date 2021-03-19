@@ -175,6 +175,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
         if (!handlers.includes(key)) {
           let currentInstance = instance
           let targetProp = currentInstance[key]
+
           if (key.includes('-')) {
             const entries = key.split('-')
             targetProp = entries.reduce((acc, key) => acc[key], instance)
@@ -186,10 +187,25 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
             }
           }
 
+          // For removed props, try to set default values, if possible
           if (value === DEFAULT + 'remove') {
-            // For removed props, try to set default values, if possible
-            if (defaultMap.has(targetProp.constructor)) value = defaultMap.get(targetProp.constructor)
-            else value = currentInstance[DEFAULT + key]
+            if (targetProp.constructor) {
+              // use the prop constructor to find the default it should be
+              value = new targetProp.constructor(newMemoizedProps.args)
+            } else if (currentInstance.constructor) {
+              // create a blank slate of the instance and copy the particular parameter.
+              // @ts-ignore
+              const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
+              value = defaultClassCall[targetProp]
+
+              // destory the instance
+              if (defaultClassCall.dispose) {
+                defaultClassCall.dispose()
+              }
+            } else {
+              // instance does not have constructor, just set it to 0
+              value = 0
+            }
           }
 
           // Special treatment for objects with support for set/copy
@@ -219,11 +235,6 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
             }
             // Else, just overwrite the value
           } else {
-            // Store a reference of the first-set atomic which will serve as a default
-            if (!currentInstance.hasOwnProperty(DEFAULT + key)) {
-              currentInstance[DEFAULT + key] = currentInstance[key]
-            }
-
             currentInstance[key] = value
             // Auto-convert sRGB textures, for now ...
             // https://github.com/react-spring/react-three-fiber/issues/344

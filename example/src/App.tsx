@@ -65,8 +65,8 @@ export default function App() {
   const [color, setColor] = useState('pink')
 
   useEffect(() => {
-    //const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
-    //return () => clearInterval(interval)
+    const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
+    return () => clearInterval(interval)
   }, [])
 
   useFrame(({ clock }) => group.current?.rotation.set(Math.sin(clock.elapsedTime), 0, 0))
@@ -98,6 +98,12 @@ export default function App() {
             <meshStandardMaterial color="orange" transparent opacity={0.5} />
           </mesh>
         )}
+        <mesh position={[-2, -2, 0]}>
+          <sphereGeometry args={[0.2, 32, 32]} />
+          <meshPhongMaterial>
+            {showCube ? <color attach="color" args={[0, 0, 1]} /> : <color attach="color" args={[1, 0, 0]} />}
+          </meshPhongMaterial>
+        </mesh>
       </group>
       <Orbit />
       <AdaptivePixelRatio />
