@@ -158,9 +158,24 @@ function dispose<TObj extends { dispose?: () => void; type?: string; [key: strin
 const act = reconciler.act
 const hasSymbol = is.fun(Symbol) && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
-function createPortal(children: React.ReactNode, container: any, impl?: any, key: any = null): React.ReactNode {
-  if (!container.__objects) container.__objects = []
-  return { $$typeof: REACT_PORTAL_TYPE, key: key == null ? null : '' + key, children, container, impl }
+function createPortal(
+  children: React.ReactNode,
+  containerInfo: THREE.Object3D,
+  implementation?: any,
+  key: any = null,
+): React.ReactNode {
+  ;((containerInfo as unknown) as Instance).__r3f = {
+    memoizedProps: {},
+    root: {} as UseStore<RootState>,
+    objects: [],
+  }
+  return {
+    $$typeof: REACT_PORTAL_TYPE,
+    key: key == null ? null : '' + key,
+    children,
+    containerInfo,
+    implementation,
+  }
 }
 
 reconciler.injectIntoDevTools({

@@ -53,29 +53,18 @@ interface Catalogue {
   }
 }
 
+// Type guard tell a store from a portal
+const isStore = (def: any): def is UseStore<RootState> => def && !!(def as UseStore<RootState>).getState
+const getContainer = (container: UseStore<RootState> | Instance, child: Instance) => ({
+  root: isStore(container) ? container : child.__r3f.root,
+  container: isStore(container) ? ((container.getState().scene as unknown) as Instance) : container,
+})
+
 // https://github.com/mrdoob/three.js/issues/21209
 // HMR/fast-refresh relies on the ability to cancel out props, but threejs
 // has no means to do this. Hence we curate a small collection of value-classes
 // with their respective constructor/set arguments
 const DEFAULT = '__default'
-const defaultMap = new Map()
-;[
-  [THREE.Box2, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
-  [THREE.Box3, [new THREE.Vector2(+Infinity, +Infinity), new THREE.Vector2(-Infinity, -Infinity)]],
-  [THREE.Color, ['white']],
-  [THREE.Cylindrical, [1, 0, 0]],
-  [THREE.Euler, [0, 0, 0, 'XYZ']],
-  [THREE.Vector2, [0, 0]],
-  [THREE.Vector3, [0, 0, 0]],
-  [THREE.Vector4, [0, 0, 0, 1]],
-  [THREE.Matrix3, [1, 0, 0, 0, 1, 0, 0, 0, 1]],
-  [THREE.Matrix4, [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]],
-  [THREE.Quaternion, [0, 0, 0, 1]],
-  [THREE.Sphere, [new THREE.Vector3(), -1]],
-  [THREE.Ray, [new THREE.Vector3(), new THREE.Vector3(0, 0, -1)]],
-  [THREE.Spherical, [1, 0, 0]],
-  [THREE.Triangle, [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()]],
-].forEach(([type, args]) => defaultMap.set(type, args))
 
 let emptyObject = {}
 let catalogue: Catalogue = {}
@@ -83,12 +72,12 @@ let extend = (objects: object): void => void (catalogue = { ...catalogue, ...obj
 
 const filterProps = ['children', 'key', 'ref']
 
-function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
+function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
-    const rootState = root?.getState() ?? {}
+    const rootState = root?.getState?.() ?? {}
     const sameProps: string[] = []
     const handlers: string[] = []
 
@@ -266,33 +255,36 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
   }
 
   function invalidateInstance(instance: Instance) {
-    const state = instance.__r3f?.root?.getState()
+    const state = instance.__r3f?.root?.getState?.()
     if (state && state.internal.frames === 0) state.invalidate()
   }
 
   function updateInstance(instance: Instance) {
-    if (instance.onUpdate) instance.onUpdate(instance)
+    instance.onUpdate?.(instance)
   }
 
-  function createInstance(type: string, { args = [], ...props }: InstanceProps, root: UseStore<RootState>) {
+  function createInstance(
+    type: string,
+    { args = [], ...props }: InstanceProps,
+    root: UseStore<RootState> | Instance,
+    hostContext?: any,
+    internalInstanceHandle?: Reconciler.Fiber,
+  ) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
 
-    // Bind to the root container in case portals are being used
-    // This is perhaps better for event management as we can keep them on a single instance
-    /*while ((container as any).__r3f.root) {
-      container = (container as any).__r3f.root
-    }
-
-    // TODO: https://github.com/facebook/react/issues/17147
-    // If it's still not there it means the portal was created on a virtual node outside of react
-    if (!roots.has(container)) {
-      const fn = (node: Reconciler.Fiber): Container => {
+    // https://github.com/facebook/react/issues/17147
+    // Portals do not give us a root, they are themselves treated as a root by the reconciler
+    // In order to figure out the actual root we have to climb through fiber internals
+    if (!isStore(root) && internalInstanceHandle) {
+      const fn = (node: Reconciler.Fiber): UseStore<RootState> => {
         if (!node.return) return node.stateNode && node.stateNode.containerInfo
         else return fn(node.return)
       }
-      container = fn(internalInstanceHandle)
-    }*/
+      root = fn(internalInstanceHandle)
+    }
+
+    if (!root || !isStore(root)) throw `did not find valid root for ${name}`
 
     if (type === 'primitive') {
       // Switch off dispose for primitive objects
@@ -308,7 +300,7 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
-        throw `"${name}" is not part of the THREE namespace! Did you forget to extend it? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+        throw `"${name}" is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 
       const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
@@ -475,17 +467,23 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     // @ts-ignore
     clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
     noTimeout: -1,
-    appendChildToContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      const scene = (parentInstance.getState().scene as unknown) as Instance
+    appendChildToContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
+      const { container, root } = getContainer(parentInstance, child)
       // Link current root to the default scene
-      scene.__r3f.root = parentInstance
-      appendChild(scene, child)
+      container.__r3f.root = root
+      appendChild(container, child)
     },
-    removeChildFromContainer: (parentInstance: UseStore<RootState>, child: Instance) => {
-      removeChild((parentInstance.getState().scene as unknown) as Instance, child)
+    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
+      const { container } = getContainer(parentInstance, child)
+      removeChild(container, child)
     },
-    insertInContainerBefore: (parentInstance: UseStore<RootState>, child: Instance, beforeChild: Instance) => {
-      insertBefore((parentInstance.getState().scene as unknown) as Instance, child, beforeChild)
+    insertInContainerBefore: (
+      parentInstance: UseStore<RootState> | Instance,
+      child: Instance,
+      beforeChild: Instance,
+    ) => {
+      const { container } = getContainer(parentInstance, child)
+      insertBefore(container, child, beforeChild)
     },
     commitUpdate(
       instance: Instance,
@@ -536,10 +534,10 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
       // TODO: might fix switchInstance (?)
       return instance
     },
-    getRootHostContext() {
+    getRootHostContext(rootContainer: UseStore<RootState> | Instance) {
       return emptyObject
     },
-    getChildHostContext() {
+    getChildHostContext(parentHostContext: any) {
       return emptyObject
     },
     createTextInstance() {},
@@ -563,10 +561,12 @@ function createRenderer<TCanvas, TRoot = Root>(roots: Map<TCanvas, TRoot>) {
     prepareForCommit() {
       return null
     },
-    preparePortalMount() {
-      return null
+    preparePortalMount(...args: any) {
+      // noop
     },
-    resetAfterCommit() {},
+    resetAfterCommit() {
+      // noop
+    },
     shouldSetTextContent() {
       return false
     },
