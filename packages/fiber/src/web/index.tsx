@@ -5,7 +5,7 @@ import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
-import { createRenderer, extend, Instance, Root } from '../core/renderer'
+import { createRenderer, extend, Instance, prepare, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createDOMEvents as events } from './events'
 import { Canvas } from './Canvas'
@@ -160,20 +160,15 @@ const hasSymbol = is.fun(Symbol) && Symbol.for
 const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
 function createPortal(
   children: React.ReactNode,
-  containerInfo: THREE.Object3D,
+  container: THREE.Object3D,
   implementation?: any,
   key: any = null,
 ): React.ReactNode {
-  ;((containerInfo as unknown) as Instance).__r3f = {
-    memoizedProps: {},
-    root: {} as UseStore<RootState>,
-    objects: [],
-  }
   return {
     $$typeof: REACT_PORTAL_TYPE,
     key: key == null ? null : '' + key,
     children,
-    containerInfo,
+    containerInfo: prepare(container),
     implementation,
   }
 }

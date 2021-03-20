@@ -3,7 +3,7 @@ import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
-import { Instance, InstanceProps } from './renderer'
+import { prepare, Instance, InstanceProps } from './renderer'
 import { EventManager } from './events'
 
 export interface Intersection extends THREE.Intersection {
@@ -181,13 +181,6 @@ const createStore = (
       camera.lookAt(0, 0, 0)
     }
 
-    const scene = (new THREE.Scene() as unknown) as THREE.Scene & Instance
-    scene.__r3f = {
-      memoizedProps: {},
-      root: {} as UseStore<RootState>,
-      objects: [],
-    }
-
     function setDpr(dpr: Dpr) {
       return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
     }
@@ -226,7 +219,7 @@ const createStore = (
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
       linear,
-      scene,
+      scene: prepare<THREE.Scene>(new THREE.Scene()),
       camera,
       raycaster,
       clock,

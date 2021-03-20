@@ -41,8 +41,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           ;(event.target as Element).setPointerCapture(id)
         }
 
-        const raycastEvent = {
-          ...event,
+        let raycastEvent: any = {
           ...hit,
           intersections,
           stopped: localState.stopped,
@@ -52,7 +51,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           camera: camera,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => {
-            // https://github.com/react-spring/react-three-fiber/issues/596
+            // https://github.com/pmndrs/react-three-fiber/issues/596
             // Events are not allowed to stop propagation if the pointer has been captured
             const cap = internal.captured
             if (!cap || cap.find((h) => h.eventObject.id === hit.eventObject.id)) {
@@ -72,8 +71,10 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           sourceEvent: event,
         }
 
+        // Add native event props
+        for (let prop of Object.keys(Object.getPrototypeOf(event))) raycastEvent[prop] = event[prop as keyof DomEvent]
+        // Call subscribers
         callback(raycastEvent as DomEvent)
-
         // Event bubbling may be interrupted by stopPropagation
         if (localState.stopped === true) break
       }
