@@ -177,9 +177,6 @@ const createStore = (
       camera.position.z = 5
       if (orthographic) camera.zoom = 100
       if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
-
-
-      console.log(camera)
       // Always look at center by default
       camera.lookAt(0, 0, 0)
     }
