@@ -72,7 +72,11 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
         }
 
         // Add native event props
-        for (let prop of Object.keys(Object.getPrototypeOf(event))) raycastEvent[prop] = event[prop as keyof DomEvent]
+        for (let prop in Object.getPrototypeOf(event)) {
+          if (prop === 'target') continue
+          raycastEvent[prop] = event[prop as keyof DomEvent]
+        }
+
         // Call subscribers
         callback(raycastEvent as DomEvent)
         // Event bubbling may be interrupted by stopPropagation

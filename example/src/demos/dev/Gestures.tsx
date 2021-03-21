@@ -1,29 +1,20 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { useDrag } from 'react-use-gesture'
-import { useSpring, a } from '@react-spring/three'
 
 function Obj() {
   const { viewport } = useThree()
-  const [spring, set] = useSpring(() => ({
-    position: [0, 0, 0],
-    rotation: [0, 0, 0],
-    config: { mass: 3, friction: 40, tension: 800 },
-  }))
+  const [position, set] = useState<[number, number, number]>([0, 0, 0])
   const bind = useDrag(({ offset: [x, y], vxvy: [vx, vy], down, ...props }) => {
-    console.log(x, y)
     const aspect = viewport.getCurrentViewport().factor
-    set({
-      position: [x / aspect, -y / aspect, 0],
-      rotation: [y / aspect, x / aspect, 0],
-    })
+    set([x / aspect, -y / aspect, 0])
   })
 
   return (
-    <a.mesh {...(spring as any)} {...bind()} castShadow>
+    <mesh position={position} {...bind()} castShadow>
       <dodecahedronGeometry args={[1.4, 0]} />
       <meshNormalMaterial />
-    </a.mesh>
+    </mesh>
   )
 }
 
