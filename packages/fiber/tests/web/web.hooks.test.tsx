@@ -4,8 +4,8 @@ import * as React from 'react'
 import { Group, Camera, Scene, Raycaster, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
-import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
-import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
+import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
+import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { asyncUtils } from '../../../../test-utils/asyncUtils'
 
