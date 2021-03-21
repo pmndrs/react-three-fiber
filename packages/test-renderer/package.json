@@ -26,7 +26,7 @@
   },
   "peerDependencies": {
     "react": ">=17.0",
-    "react-three-fiber": ">=6.0",
+    "@react-three/fiber": ">=6.0",
     "three": ">=0.126"
   }
 }
