@@ -19,8 +19,6 @@ function Obj() {
     })
   })
 
-  console.log(bind())
-
   return (
     <a.mesh {...(spring as any)} {...bind()} castShadow>
       <dodecahedronGeometry args={[1.4, 0]} />

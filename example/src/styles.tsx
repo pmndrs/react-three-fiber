@@ -30,6 +30,8 @@ const Page = styled.div`
 `
 
 const Global = createGlobalStyle`
+  @import url('@pmndrs/branding/styles.css');
+
   * {
     box-sizing: border-box;
   }
@@ -58,7 +60,7 @@ const Global = createGlobalStyle`
     position: fixed;
     overflow: hidden;
     overscroll-behavior-y: none;
-    font-family: -apple-system, BlinkMacSystemFont, avenir next, avenir, helvetica neue, helvetica, ubuntu, roboto, noto, segoe ui, arial, sans-serif;
+    font-family: 'Inter var', sans-serif;
     color: black;
     background: white;
   }

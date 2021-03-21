@@ -70,7 +70,7 @@ export default function App() {
     <Canvas
       style={{ background: 'peachpuff' }}
       orthographic
-      camera={{ zoom: 60, position: [0, 0, 100] }}
+      camera={{ zoom: 40, position: [0, 0, 100] }}
       raycaster={{ params: { Points: { threshold: 0.2 } } }}>
       <Particles pointCount={1000} />
     </Canvas>

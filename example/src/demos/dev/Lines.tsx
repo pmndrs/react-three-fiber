@@ -1,29 +1,33 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { extend, Canvas, useThree } from '@react-three/fiber'
+import { extend, Canvas, useThree, ReactThreeFiber } from '@react-three/fiber'
 // @ts-ignore
 import { OrbitControls } from 'three-stdlib'
 extend({ OrbitControls })
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      orbitControls: ReactThreeFiber.Node<OrbitControls, typeof OrbitControls>
+    }
+  }
+}
 
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)
   const hover = useCallback(
     (e) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
+      if (stopPropagation) e.stopPropagation()
       setHover(true)
     },
-    [stopPropagation]
+    [stopPropagation],
   )
   const unhover = useCallback(
     (e) => {
-      if (stopPropagation) {
-        e.stopPropagation()
-      }
+      if (stopPropagation) e.stopPropagation()
       setHover(false)
     },
-    [stopPropagation]
+    [stopPropagation],
   )
   const [bind] = useState(() => ({ onPointerOver: hover, onPointerOut: unhover }))
   return [bind, hovered]
@@ -40,7 +44,7 @@ function useDrag(onDrag: any, onEnd: any) {
       e.stopPropagation()
       e.target.setPointerCapture(e.pointerId)
     },
-    [toggle]
+    [toggle],
   )
 
   const up = useCallback(
@@ -51,7 +55,7 @@ function useDrag(onDrag: any, onEnd: any) {
       e.target.releasePointerCapture(e.pointerId)
       if (onEnd) onEnd()
     },
-    [onEnd, toggle]
+    [onEnd, toggle],
   )
 
   const activeRef = useRef<any>()
@@ -63,7 +67,7 @@ function useDrag(onDrag: any, onEnd: any) {
         onDrag(event.unprojectedPoint)
       }
     },
-    [onDrag]
+    [onDrag],
   )
 
   const [bind] = useState(() => ({ onPointerDown: down, onPointerUp: up, onPointerMove: move }))
@@ -75,8 +79,8 @@ function EndPoint({ position, onDrag, onEnd }: any) {
   let bindDrag = useDrag(onDrag, onEnd)
   return (
     <mesh position={position} {...bindDrag} {...bindHover}>
-      <sphereBufferGeometry attach="geometry" args={[7.5, 16, 16]} />
-      <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'white'} />
+      <sphereGeometry args={[7.5, 16, 16]} />
+      <meshBasicMaterial color={hovered ? 'hotpink' : 'white'} />
     </mesh>
   )
 }
@@ -95,7 +99,7 @@ function Line({ defaultStart, defaultEnd }: any) {
   return (
     <>
       <line ref={lineRef as any}>
-        <bufferGeometry attach="geometry">
+        <bufferGeometry>
           <bufferAttribute
             attachObject={['attributes', 'position']}
             count={positions.length / 3}
@@ -103,7 +107,7 @@ function Line({ defaultStart, defaultEnd }: any) {
             itemSize={3}
           />
         </bufferGeometry>
-        <lineBasicMaterial attach="material" color="white" />
+        <lineBasicMaterial color="white" />
       </line>
       <EndPoint position={start} onDrag={(v: any) => setStart(v.toArray())} />
       <EndPoint position={end} onDrag={(v: any) => setEnd(v.toArray())} />
@@ -122,11 +126,9 @@ function Controls({ children }: any) {
     return () => current.removeEventListener('change', handler)
   }, [invalidate])
 
-  const C = "orbitControls" as any
-
   return (
     <>
-      <C ref={ref} args={[camera, gl.domElement]} enableDamping enabled={api[0]} />
+      <orbitControls ref={ref} args={[camera, gl.domElement]} enableDamping enabled={api[0]} />
       <camContext.Provider value={api as any}>{children}</camContext.Provider>
     </>
   )
@@ -139,8 +141,7 @@ export default function App() {
       orthographic
       style={{ background: '#272727', touchAction: 'none' }}
       raycaster={{ params: { Line: { threshold: 5 } } }}
-      camera={{ position: [0, 0, 500], zoom: 1 }}
-    >
+      camera={{ position: [0, 0, 500], zoom: 1 }}>
       <Controls>
         <Line defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
         <Line defaultStart={[0, 100, 0]} defaultEnd={[100, -100, 0]} />

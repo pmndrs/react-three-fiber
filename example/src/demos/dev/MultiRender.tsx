@@ -15,8 +15,8 @@ const Obj = () => {
   })
   return (
     <mesh ref={meshRef}>
-      <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-      <meshNormalMaterial attach="material" />
+      <boxBufferGeometry args={[1, 1, 1]} />
+      <meshNormalMaterial />
     </mesh>
   )
 }
@@ -32,8 +32,8 @@ const StaticScene = () => (
   <div style={CanvasStyle}>
     <Canvas>
       <mesh>
-        <boxBufferGeometry attach="geometry" args={[1, 1, 1]} />
-        <meshNormalMaterial attach="material" />
+        <boxGeometry args={[1, 1, 1]} />
+        <meshNormalMaterial />
       </mesh>
     </Canvas>
   </div>
@@ -43,7 +43,7 @@ function App() {
   const [secondScene, setSecondScene] = useState(false)
 
   useEffect(() => {
-    setTimeout(() => setSecondScene(true), 2000)
+    setTimeout(() => setSecondScene(true), 500)
   }, [])
 
   return (

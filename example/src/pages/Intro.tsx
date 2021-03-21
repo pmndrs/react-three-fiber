@@ -27,56 +27,55 @@ export default function Intro() {
           />
         </Switch>
       </Suspense>
-      <Demos />
-      <a href="https://github.com/pmndrs/react-three-fiber" style={{ color: bright ? '#2c2d31' : 'white' }}>
-        Github
-      </a>
+      <Dots />
     </Page>
   )
 }
 
-function Demos() {
+function Dots() {
   const location = useLocation()
   const match: any = useRouteMatch('/demo/:name')
   const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
   const { bright } = visibleComponents[match?.params.name ?? defaultComponent]
   console.log(visibleComponents)
   return (
-    <DemoPanel>
-      {Object.entries(visibleComponents).map(function mapper([name, item]) {
-        const style = {
-          // to complex to optimize
-          background:
-            (!match && name === defaultComponent) || (match && match.params.name === name)
-              ? 'salmon'
-              : bright
-              ? '#2c2d31'
-              : 'white',
-        }
-        return dev ? null : (
-          <Link key={name} to={`/demo/${name}`}>
-            <Spot style={style} />
-          </Link>
-        )
-      })}
-    </DemoPanel>
+    <>
+      <DemoPanel>
+        {Object.entries(visibleComponents).map(function mapper([name, item]) {
+          const style = {
+            // to complex to optimize
+            background:
+              (!match && name === defaultComponent) || (match && match.params.name === name)
+                ? 'salmon'
+                : bright
+                ? '#2c2d31'
+                : 'white',
+          }
+          return dev ? null : (
+            <Link key={name} to={`/demo/${name}`}>
+              <Spot style={style} />
+            </Link>
+          )
+        })}
+      </DemoPanel>
+      <span style={{ color: bright ? '#2c2d31' : 'white' }}>
+        {match?.params.name ?? defaultComponent}
+      </span>
+    </>
   )
 }
 
 const Page = styled(PageImpl)`
-  padding: 20px;
-
   & > h1 {
     position: absolute;
     top: 70px;
     left: 60px;
   }
 
-  & > a {
+  & > span {
     position: absolute;
     bottom: 60px;
     right: 60px;
-    font-size: 1.2em;
   }
 `
 
