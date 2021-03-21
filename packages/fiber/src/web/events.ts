@@ -41,8 +41,15 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           ;(event.target as Element).setPointerCapture(id)
         }
 
+        // Add native event props
+        let event: any = {}
+        for (let prop in Object.getPrototypeOf(event)) {
+          event[prop] = event[prop as keyof DomEvent]
+        }
+
         let raycastEvent: any = {
           ...hit,
+          ...event,
           intersections,
           stopped: localState.stopped,
           delta,
@@ -69,12 +76,6 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           target: { ...event.target, setPointerCapture, releasePointerCapture },
           currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
           sourceEvent: event,
-        }
-
-        // Add native event props
-        for (let prop in Object.getPrototypeOf(event)) {
-          if (prop === 'target') continue
-          raycastEvent[prop] = event[prop as keyof DomEvent]
         }
 
         // Call subscribers

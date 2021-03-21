@@ -7,6 +7,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
+    "@react-spring/core": "^9.0.0-rc.3",
     "@react-spring/three": "^9.0.0-rc.3",
     "lodash-es": "^4.17.21",
     "react": "^17.0.1",

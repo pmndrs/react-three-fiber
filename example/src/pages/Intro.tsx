@@ -37,7 +37,6 @@ function Dots() {
   const match: any = useRouteMatch('/demo/:name')
   const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
   const { bright } = visibleComponents[match?.params.name ?? defaultComponent]
-  console.log(visibleComponents)
   return (
     <>
       <DemoPanel>

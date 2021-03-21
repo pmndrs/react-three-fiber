@@ -12,6 +12,7 @@ const StopPropagation = { descr: '', tags: [], Component: lazy(() => import('./d
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./dev/ClickAndHover')), dev: true, bright: true  }
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./dev/SVGRenderer')), dev: true, bright: true  }
 const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./dev/ResetProps')), dev: true, bright: true  }
+const Animation = { descr: '', tags: [], Component: lazy(() => import('./dev/Animation')), dev: true, bright: true  }
 
 export {
   Reparenting,
@@ -25,4 +26,5 @@ export {
   Pointcloud,
   SVGRenderer,
   ResetProps,
+  Animation,
 }

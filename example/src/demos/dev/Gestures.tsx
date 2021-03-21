@@ -11,7 +11,7 @@ function Obj() {
   })
 
   return (
-    <mesh position={position} {...bind()} castShadow>
+    <mesh position={position} {...bind() as any} castShadow>
       <dodecahedronGeometry args={[1.4, 0]} />
       <meshNormalMaterial />
     </mesh>
