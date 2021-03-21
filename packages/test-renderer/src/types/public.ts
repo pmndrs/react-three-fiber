@@ -1,4 +1,4 @@
-import type { Camera, RenderProps } from 'react-three-fiber'
+import type { Camera, RenderProps } from '@react-three/fiber'
 
 import { ReactThreeTestInstance } from '../createTestInstance'
 

@@ -1,6 +1,6 @@
 {
-  "name": "react-three-fiber",
-  "version": "6.0.0-alpha.9",
+  "name": "@react-three/fiber",
+  "version": "6.0.0-alpha.11",
   "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
     "react",
@@ -11,6 +11,9 @@
   ],
   "author": "Paul Henschel",
   "license": "MIT",
+  "maintainers": [
+    "Josh Ellis (https://github.com/joshuaellis)"
+  ],
   "bugs": {
     "url": "https://github.com/drcmda/react-three-fiber/issues"
   },

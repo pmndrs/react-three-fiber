@@ -14,10 +14,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react",
-    "paths": {
-      "react-three-fiber": ["../packages/fiber/src/web/index.tsx"]
-    }
+    "jsx": "react"
   },
   "include": ["./src"]
 }

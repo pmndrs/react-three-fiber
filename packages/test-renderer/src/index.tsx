@@ -2,9 +2,9 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { RootTag } from 'react-reconciler'
 
-import { _createRenderer as createRenderer, _createLoop as createLoop } from 'react-three-fiber'
-import type { RenderProps } from 'react-three-fiber'
-import type { Root } from 'react-three-fiber/src/core/renderer'
+import { _createRenderer as createRenderer, _createLoop as createLoop } from '@react-three/fiber'
+import type { RenderProps } from '@react-three/fiber'
+import type { Root } from '@react-three/fiber/src/core/renderer'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'

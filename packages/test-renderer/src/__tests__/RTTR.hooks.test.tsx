@@ -5,7 +5,7 @@ import * as React from 'react'
 import * as Stdlib from 'three-stdlib'
 import { Mesh, Camera, Scene, Raycaster } from 'three'
 
-import { useFrame, useLoader, useThree } from 'react-three-fiber'
+import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
 import { asyncUtils } from '../../../../test-utils/asyncUtils'
 

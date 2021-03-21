@@ -14,8 +14,8 @@ import {
   ACESFilmicToneMapping,
   sRGBEncoding,
 } from 'three'
-import { createCanvas } from 'react-three-test-renderer/src/createTestCanvas'
-import { createWebGLContext } from 'react-three-test-renderer/src/createWebGLContext'
+import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
+import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
 import { UseStore } from 'zustand'

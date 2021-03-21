@@ -6,7 +6,10 @@ import { useAsset } from 'use-asset'
 
 import { context, RootState, RenderCallback } from './store'
 
-export function useThree<T>(selector: StateSelector<RootState, T>, equalityFn?: EqualityChecker<T>) {
+export function useThree<T = RootState>(
+  selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
+  equalityFn?: EqualityChecker<T>,
+) {
   return React.useContext(context)(selector, equalityFn)
 }
 

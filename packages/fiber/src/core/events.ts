@@ -31,6 +31,7 @@ export type Events = {
   onPointerUp: EventListener
   onPointerLeave: EventListener
   onPointerMove: EventListener
+  onPointerCancel: EventListener
   onLostPointerCapture: EventListener
 }
 
@@ -46,6 +47,7 @@ export type EventHandlers = {
   onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void
   onPointerMove?: (event: ThreeEvent<PointerEvent>) => void
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
 }
 

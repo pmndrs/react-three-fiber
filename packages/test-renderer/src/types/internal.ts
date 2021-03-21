@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 
-import type { BaseInstance, LocalState } from 'react-three-fiber/src/core/renderer'
-import type { RootState } from 'react-three-fiber/src/core/store'
+import type { BaseInstance, LocalState } from '@react-three/fiber/src/core/renderer'
+import type { RootState } from '@react-three/fiber/src/core/store'
 
 export type MockUseStoreState = UseStore<RootState>
 
