@@ -198,6 +198,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
     onPointerUp: 'pointerup',
     onPointerLeave: 'pointerleave',
     onPointerMove: 'pointermove',
+    onPointerCancel: 'pointercancel',
     onLostPointerCapture: 'lostpointercapture',
   }
 
@@ -211,6 +212,7 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
       onPointerDown: handlePointer('onPointerDown') as EventListener,
       onPointerUp: handlePointer('onPointerUp') as EventListener,
       onPointerLeave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
+      onPointerCancel: ((e: any) => handlePointerCancel(e, [])) as EventListener,
       onPointerMove: (handlePointerMove as unknown) as EventListener,
       onLostPointerCapture: ((e: any) => (
         (store.getState().internal.captured = undefined), handlePointerCancel(e)

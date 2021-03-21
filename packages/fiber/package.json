@@ -1,5 +1,5 @@
 {
-  "name": "react-three-fiber",
+  "name": "@react-three/fiber",
   "version": "6.0.0-alpha.11",
   "description": "A React renderer for Three.js (web and react-native)",
   "keywords": [
