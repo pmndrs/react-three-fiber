@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import React, { useState } from 'react'
 import { Canvas, invalidate, addEffect, applyProps } from '@react-three/fiber'
 
+// react-spring needs to be updated!
 import { FrameLoop, Globals, useSpring } from '@react-spring/core'
 import { createHost } from '@react-spring/animated'
 import { createStringInterpolator } from '@react-spring/shared/stringInterpolation'

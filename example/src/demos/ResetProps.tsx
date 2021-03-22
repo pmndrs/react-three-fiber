@@ -114,7 +114,7 @@ function Scene() {
 
 export default function App() {
   return (
-    <Canvas gl={{ alpha: false }} dpr={[1, 2]} frameloop="always" performance={{ min: 0.5 }}>
+    <Canvas gl={{ alpha: false }} dpr={[1, 2]} frameloop="always" performance={{ min: 0.1 }}>
       <Scene />
     </Canvas>
   )
