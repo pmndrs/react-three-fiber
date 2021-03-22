@@ -11,7 +11,7 @@
 react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
 
 ```bash
-npm install three react-three-fiber
+npm install three @react-three/fiber
 ```
 
 <p align="center">
@@ -62,7 +62,7 @@ No. Rendering performance is up to threejs and the GPU. Components participate i
 ```jsx
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
   // This reference will give us direct access to the mesh
@@ -108,7 +108,7 @@ ReactDOM.render(
 ```tsx
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
-import { Canvas, MeshProps, useFrame } from 'react-three-fiber'
+import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
 import type { Mesh } from 'three'
 
 const Box: React.FC<MeshProps> = (props) => {

@@ -41,8 +41,15 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           ;(event.target as Element).setPointerCapture(id)
         }
 
+        // Add native event props
+        let extractEventProps: any = {}
+        for (let prop in Object.getPrototypeOf(event)) {
+          extractEventProps[prop] = event[prop as keyof DomEvent]
+        }
+
         let raycastEvent: any = {
           ...hit,
+          ...extractEventProps,
           intersections,
           stopped: localState.stopped,
           delta,
@@ -71,8 +78,6 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
           sourceEvent: event,
         }
 
-        // Add native event props
-        for (let prop of Object.keys(Object.getPrototypeOf(event))) raycastEvent[prop] = event[prop as keyof DomEvent]
         // Call subscribers
         callback(raycastEvent as DomEvent)
         // Event bubbling may be interrupted by stopPropagation

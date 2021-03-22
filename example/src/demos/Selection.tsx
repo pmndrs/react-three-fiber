@@ -5,14 +5,9 @@ function Sphere() {
   const [hovered, set] = useState(false)
   console.log('sphere', hovered)
   return (
-    <mesh
-      onPointerOver={(e) => {
-        e.stopPropagation()
-        set(true)
-      }}
-      onPointerOut={(e) => set(false)}>
-      <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
-      <meshBasicMaterial attach="material" color={hovered ? 'hotpink' : 'indianred'} />
+    <mesh onPointerOver={(e) => (e.stopPropagation(), set(true))} onPointerOut={(e) => set(false)}>
+      <sphereBufferGeometry args={[0.5, 64, 64]} />
+      <meshBasicMaterial color={hovered ? 'hotpink' : 'indianred'} />
     </mesh>
   )
 }
@@ -21,14 +16,9 @@ function Circle() {
   const [hovered, set] = useState(false)
   console.log('circle', hovered)
   return (
-    <mesh
-      onPointerOver={(e) => {
-        e.stopPropagation()
-        set(true)
-      }}
-      onPointerOut={(e) => set(false)}>
-      <circleBufferGeometry attach="geometry" args={[1, 64]} />
-      <meshBasicMaterial attach="material" color={hovered ? 'lightgreen' : 'grey'} />
+    <mesh onPointerOver={(e) => (e.stopPropagation(), set(true))} onPointerOut={(e) => set(false)}>
+      <circleGeometry args={[1, 64]} />
+      <meshBasicMaterial color={hovered ? 'lightgreen' : 'grey'} />
     </mesh>
   )
 }
@@ -47,15 +37,15 @@ export default function App() {
             renderOrder={8}
             onPointerOver={(e) => console.log('      white mesh over')}
             onPointerOut={(e) => console.log('      white mesh out')}>
-            <sphereBufferGeometry attach="geometry" args={[1, 32, 32]} />
-            <meshBasicMaterial attach="material" color="white" transparent opacity={0.2} />
+            <sphereGeometry args={[1, 32, 32]} />
+            <meshBasicMaterial color="white" transparent opacity={0.2} />
           </mesh>
           <mesh
             renderOrder={7}
             onPointerOver={(e) => console.log('        black mesh over')}
             onPointerOut={(e) => console.log('        black mesh out')}>
-            <sphereBufferGeometry attach="geometry" args={[0.7, 32, 32]} />
-            <meshBasicMaterial attach="material" color="black" transparent opacity={0.2} />
+            <sphereGeometry args={[0.7, 32, 32]} />
+            <meshBasicMaterial color="black" transparent opacity={0.2} />
           </mesh>
         </group>
       </group>

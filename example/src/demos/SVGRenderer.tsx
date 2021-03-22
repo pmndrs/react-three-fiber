@@ -5,6 +5,29 @@ import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import mergeRefs from 'react-merge-refs'
 import { SVGRenderer } from 'three/examples/jsm/renderers/SVGRenderer'
 
+function TorusKnot() {
+  let ref = useRef<THREE.Mesh>(null!)
+  let t = 0
+  useFrame(() => {
+    ref.current.rotation.set(t, t, t)
+    t += 0.001
+  })
+  return (
+    <mesh ref={ref}>
+      <torusKnotGeometry attach="geometry" args={[10, 3, 100, 16]} />
+      <meshBasicMaterial attach="material" color="hotpink" />
+    </mesh>
+  )
+}
+
+export default function () {
+  return (
+    <Canvas style={{ background: '#272730' }} camera={{ position: [0, 0, 50] }}>
+      <TorusKnot />
+    </Canvas>
+  )
+}
+
 interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'gl'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   resize?: ResizeOptions
@@ -32,28 +55,5 @@ function Canvas({ children, resize, style, className, ...props }: Props) {
       className={className}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
     />
-  )
-}
-
-function TorusKnot() {
-  let ref = useRef<THREE.Mesh>(null!)
-  let t = 0
-  useFrame(() => {
-    ref.current.rotation.set(t, t, t)
-    t += 0.001
-  })
-  return (
-    <mesh ref={ref}>
-      <torusKnotGeometry attach="geometry" args={[10, 3, 100, 16]} />
-      <meshBasicMaterial attach="material" color="hotpink" />
-    </mesh>
-  )
-}
-
-export default function () {
-  return (
-    <Canvas style={{ background: '#272730' }} camera={{ position: [0, 0, 50] }}>
-      <TorusKnot />
-    </Canvas>
   )
 }
