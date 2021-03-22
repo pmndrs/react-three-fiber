@@ -8,8 +8,8 @@ function Content() {
   return (
     <scene ref={scene}>
       <mesh>
-        <sphereBufferGeometry attach="geometry" args={[1, 64, 64]} />
-        <meshBasicMaterial attach="material" color="white" />
+        <sphereGeometry args={[1, 64, 64]} />
+        <meshBasicMaterial color="white" />
       </mesh>
     </scene>
   )
@@ -22,8 +22,8 @@ function HeadsUpDisplay() {
   return (
     <scene ref={scene}>
       <mesh>
-        <sphereBufferGeometry attach="geometry" args={[0.5, 64, 64]} />
-        <meshBasicMaterial attach="material" color="black" />
+        <sphereGeometry args={[0.5, 64, 64]} />
+        <meshBasicMaterial color="black" />
       </mesh>
     </scene>
   )

@@ -42,14 +42,14 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
         }
 
         // Add native event props
-        let event: any = {}
+        let extractEventProps: any = {}
         for (let prop in Object.getPrototypeOf(event)) {
-          event[prop] = event[prop as keyof DomEvent]
+          extractEventProps[prop] = event[prop as keyof DomEvent]
         }
 
         let raycastEvent: any = {
           ...hit,
-          ...event,
+          ...extractEventProps,
           intersections,
           stopped: localState.stopped,
           delta,
