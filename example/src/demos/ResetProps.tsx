@@ -73,7 +73,7 @@ function Scene() {
 
   return (
     <>
-      <color attach="background" args={[color] as any} />
+      <color attach="background" args={[color]} />
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={2} />
       <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
