@@ -80,7 +80,7 @@ function EndPoint({ position, onDrag, onEnd }: any) {
   return (
     <mesh position={position} {...bindDrag} {...bindHover}>
       <sphereGeometry args={[7.5, 16, 16]} />
-      <meshBasicMaterial color={hovered ? 'hotpink' : (([0.8, 0.2, 0.9] as unknown) as typeof THREE.Color)} />
+      <meshBasicMaterial color={hovered ? 'hotpink' : [0.1, 0.2, 0.9]} />
     </mesh>
   )
 }
