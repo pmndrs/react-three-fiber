@@ -13,7 +13,7 @@ function Box(props: any) {
       {...props}
     >
       <boxBufferGeometry />
-      <meshBasicMaterial color={hovered ? 'hotpink' : 'green'} />
+      <meshBasicMaterial color={hovered ? 'hotpink' : 'aquamarine'} />
     </mesh>
   )
 }

@@ -4,10 +4,11 @@ import reactRefresh from '@vitejs/plugin-react-refresh'
 
 export default defineConfig({
   resolve: {
-    alias: [
-      { find: 'react', replacement: path.resolve('./node_modules/react') },
-      { find: '@react-three/fiber', replacement: path.resolve('../packages/fiber/src/web/index.tsx') },
-    ],
+    alias: {
+      react: path.resolve('./node_modules/react'),
+      'react-dom': path.resolve('./node_modules/react-dom'),
+      '@react-three/fiber': path.resolve('../packages/fiber/dist/react-three-fiber.esm.js'),
+    },
   },
   plugins: [reactRefresh()],
 })

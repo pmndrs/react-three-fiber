@@ -10,7 +10,9 @@ export function useThree<T = RootState>(
   selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
   equalityFn?: EqualityChecker<T>,
 ) {
-  return React.useContext(context)(selector, equalityFn)
+  const useStore = React.useContext(context)
+  if (!useStore) throw `R3F hooks can only be used within the Canvas component!`
+  return useStore(selector, equalityFn)
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {

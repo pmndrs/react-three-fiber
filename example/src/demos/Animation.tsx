@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import React, { useState } from 'react'
-import { Canvas, invalidate, addEffect, applyProps } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
+import { OrbitControls } from "@react-three/drei"
 
-export default function Box(props: any) {
+export default function Box() {
   const [active, setActive] = useState(0)
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
@@ -20,6 +21,7 @@ export default function Box(props: any) {
         <boxBufferGeometry />
         <a.meshBasicMaterial color={color} />
       </a.mesh>
+      <OrbitControls />
     </Canvas>
   )
 }
