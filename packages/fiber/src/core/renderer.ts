@@ -217,8 +217,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
           // Special treatment for objects with support for set/copy
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
-            // If value is an array it has got to be the set function
-            if (Array.isArray(value)) targetProp.set(...value)
+            // If value is an array
+            if (Array.isArray(value)) {
+              if (targetProp.fromArray) {
+                targetProp.fromArray(value)
+              } else {
+                targetProp.set(...value)
+              }
+            }
             // Test again target.copy(class) next ...
             else if (
               targetProp.copy &&
