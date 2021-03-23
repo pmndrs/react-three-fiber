@@ -10299,10 +10299,10 @@ url@^0.11.0:
     punycode "1.3.2"
     querystring "0.2.0"
 
-use-asset@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/use-asset/-/use-asset-1.0.2.tgz#d98a506ba480d113639de60631f89907794ead84"
-  integrity sha512-ewqcm1+SmRIpIhanbP2Kdt03u7IQfxGixi3dq2AP90GK5J0fFXBeSp4hO43tx3HG5AXvh6U4hQ00x4JXr5Dhiw==
+use-asset@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/use-asset/-/use-asset-1.0.3.tgz#b5d7a79621a7ad1742fe28e1248e89eef5b924c9"
+  integrity sha512-7td+zHFtP1eWtUurnEj2MrnvA/kDAegmjnHv8X7J48LF2Xt739qfwd0c8wIj3LqxPD0gU63HxtpNBzBocrRqYg==
   dependencies:
     fast-deep-equal "^3.1.3"
 
