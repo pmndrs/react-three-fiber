@@ -1,25 +1,7 @@
 import * as THREE from 'three'
 import React, { useState } from 'react'
 import { Canvas, invalidate, addEffect, applyProps } from '@react-three/fiber'
-
-// react-spring needs to be updated!
-import { FrameLoop, Globals, useSpring } from '@react-spring/core'
-import { createHost } from '@react-spring/animated'
-import { createStringInterpolator } from '@react-spring/shared/stringInterpolation'
-import colorNames from '@react-spring/shared/colors'
-
-const primitives = ['primitive'].concat(
-  Object.keys(THREE)
-    .filter((key) => /^[A-Z]/.test(key))
-    .map((key) => key[0].toLowerCase() + key.slice(1)),
-)
-
-// Let r3f drive the frameloop.
-const frameLoop = new FrameLoop(() => invalidate())
-addEffect(() => (frameLoop.advance(), true))
-Globals.assign({ createStringInterpolator, colorNames, frameLoop })
-const host = createHost(primitives, { applyAnimatedValues: applyProps })
-const a = host.animated
+import { a, useSpring } from '@react-spring/three'
 
 export default function Box(props: any) {
   const [active, setActive] = useState(0)
