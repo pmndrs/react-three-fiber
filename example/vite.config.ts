@@ -7,7 +7,7 @@ export default defineConfig({
     alias: {
       react: path.resolve('./node_modules/react'),
       'react-dom': path.resolve('./node_modules/react-dom'),
-      '@react-three/fiber': path.resolve('../packages/fiber/src/index.tsx'),
+      '@react-three/fiber': path.resolve('../packages/fiber/dist/react-three-fiber.esm.js'),
     },
   },
   plugins: [reactRefresh()],
