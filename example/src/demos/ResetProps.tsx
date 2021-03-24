@@ -18,12 +18,12 @@ const Orbit = memo(() => {
     orbit?.connect(gl.domElement)
     orbit?.addEventListener('change', onChange)
     return () => {
-      //orbit?.dispose()
+      orbit?.dispose()
       orbit?.removeEventListener('change', onChange)
     }
   }, [])
   // @ts-ignore
-  return <orbitControls ref={ref} args={[camera]} dispose={() => console.log("out")} />
+  return <orbitControls ref={ref} args={[camera]} />
 })
 
 function AdaptivePixelRatio() {
@@ -32,14 +32,13 @@ function AdaptivePixelRatio() {
   const initialDpr = useThree((state) => state.viewport.initialDpr)
   const setDpr = useThree((state) => state.setDpr)
   // Restore initial pixelratio on unmount
-  useEffect(
-    () => () => {
-      console.log("so why am i here")
+  useEffect(() => {
+    const domElement = gl.domElement
+    return () => {
       setDpr(initialDpr)
-      gl.domElement.style.imageRendering = 'auto'
-    },
-    [],
-  )
+      domElement.style.imageRendering = 'auto'
+    }
+  }, [])
   // Set adaptive pixelratio
   useEffect(() => {
     setDpr(current * initialDpr)
