@@ -130,19 +130,22 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {
+    const state = root?.store.getState()
+    if (state) state.internal.active = false
     reconciler.updateContainer(null, fiber, null, () => {
-      const state = root?.store.getState()
       if (state) {
-        state.events.disconnect?.()
-        state.gl?.renderLists?.dispose()
-        state.gl?.forceContextLoss()
-        dispose(state.gl)
-        dispose(state.raycaster)
-        dispose(state.camera)
-        dispose(state)
+        setTimeout(() => {
+          state.events.disconnect?.()
+          state.gl?.renderLists?.dispose()
+          state.gl?.forceContextLoss()
+          dispose(state.gl)
+          dispose(state.raycaster)
+          dispose(state.camera)
+          dispose(state)
+          roots.delete(canvas)
+          if (callback) callback(canvas)
+        }, 500)
       }
-      roots.delete(canvas)
-      if (callback) callback(canvas)
     })
   }
 }

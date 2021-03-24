@@ -13,7 +13,6 @@ export type LocalState = {
   objects: Instance[]
   instance?: boolean
   handlers?: EventHandlers
-  dispose?: () => void
   memoizedProps: {
     [key: string]: any
   }
@@ -311,11 +310,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     if (!root || !isStore(root)) throw `No valid root for ${name}!`
 
     if (type === 'primitive') {
-      // Switch off dispose for primitive objects
-      props = { dispose: null, ...props }
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { root, instance: true, dispose: object.dispose })
+      instance = prepare<Instance>(object, { root, instance: true })
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
@@ -424,19 +421,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       invalidateInstance(parentInstance)
 
       // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
-      if (child.dispose !== null) {
+      // Never dispose of primitives because their state may be kept outside of React!
+      if (child.dispose && !child.__r3f.instance) {
         run(idlePriority, () => {
           // Remove nested child objects
           removeRecursive(child.__r3f.objects, child)
           removeRecursive(child.children, child, true)
           // Dispose item
           if (child.dispose && child.type !== 'Scene') child.dispose()
-          else if (child.__r3f.dispose) child.__r3f.dispose()
           // Remove references
           delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
           delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
           delete child.__r3f.handlers
-          delete child.__r3f.dispose
           delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
           delete (child as Partial<Instance>).__r3f
         })

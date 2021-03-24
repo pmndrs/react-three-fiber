@@ -43,10 +43,11 @@ function Canvas({ children, resize, style, className, ...props }: Props) {
   }, [gl, size, children])
 
   React.useEffect(() => {
-    ref.current.appendChild(gl.domElement)
+    const container = ref.current
+    container.appendChild(gl.domElement)
     return () => {
-      ref.current.removeChild(gl.domElement)
-      unmountComponentAtNode(ref.current)
+      container.removeChild(gl.domElement)
+      unmountComponentAtNode(container)
     }
   }, [])
   return (

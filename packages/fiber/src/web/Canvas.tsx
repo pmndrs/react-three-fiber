@@ -16,7 +16,10 @@ export function Canvas({ children, resize, style, className, ...props }: Props) 
       render(children, canvas.current, { ...props, size, events })
     }
   }, [size, children])
-  React.useEffect(() => () => unmountComponentAtNode(canvas.current), [])
+  React.useEffect(() => {
+    const container = canvas.current
+    return () => unmountComponentAtNode(container)
+  }, [])
   return (
     <div
       ref={ref}
