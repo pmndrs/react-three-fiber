@@ -31,11 +31,6 @@
   "types": "dist/react-three-fiber.cjs.d.ts",
   "react-native": "dist/native.js",
   "sideEffects": false,
-  "preconstruct": {
-    "entrypoints": [
-      "index.tsx"
-    ]
-  },
   "scripts": {
     "prebuild": "cp ../../readme.md readme.md"
   },

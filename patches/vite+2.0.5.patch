@@ -1,0 +1,12 @@
+diff --git a/node_modules/vite/dist/node/chunks/dep-e0f09032.js b/node_modules/vite/dist/node/chunks/dep-e0f09032.js
+index e080517..d34afa3 100644
+--- a/node_modules/vite/dist/node/chunks/dep-e0f09032.js
++++ b/node_modules/vite/dist/node/chunks/dep-e0f09032.js
+@@ -34241,6 +34241,7 @@ function tryNodeResolve(id, importer, options, server) {
+             !server || // build
+             server._isRunningOptimizer || // optimizing
+             !server._optimizeDepsMetadata) {
++						resolved = fs__default.realpathSync(resolved)
+             return { id: resolved };
+         }
+         // if we reach here, it's a valid dep import that hasn't been optimzied.
