@@ -55,7 +55,7 @@
       },
       "alias": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
-        "map": [["react-three-fiber", "./src/targets/web.tsx"]]
+        "map": [["@react-three/fiber", "./packages/fiber/src/web"]]
       }
     }
   },
