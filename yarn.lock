@@ -1342,21 +1342,6 @@
     utility-types "^3.10.0"
     zustand "^3.0.3"
 
-"@react-three/fiber@*":
-  version "5.3.15"
-  resolved "https://registry.yarnpkg.com/@react-three/fiber/-/fiber-5.3.15.tgz#35ac3d566dfc9b32638d3cbe7b0e9802ac4c6459"
-  integrity sha512-tFT4ktoWwILvp/EixAFyJQk+/y6Kq3oz6lpS5oh6bJ3tanASckssa+gvPwQoq9DdL6Tm+urbF4F+t8pt58EXMg==
-  dependencies:
-    "@babel/runtime" "^7.12.1"
-    react-merge-refs "^1.1.0"
-    react-reconciler "0.26.1"
-    react-use-measure "^2.0.3"
-    resize-observer-polyfill "^1.5.1"
-    scheduler "0.20.1"
-    tiny-emitter "^2.1.0"
-    use-asset "^1.0.0"
-    utility-types "^3.10.0"
-
 "@rollup/plugin-alias@^3.1.1":
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-alias/-/plugin-alias-3.1.2.tgz#c585b05be4a7782d269c69d13def56f44e417772"
@@ -5579,7 +5564,7 @@ react-use-gesture@^9.1.3:
   resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-9.1.3.tgz#92bd143e4f58e69bd424514a5bfccba2a1d62ec0"
   integrity sha512-CdqA2SmS/fj3kkS2W8ZU8wjTbVBAIwDWaRprX7OKaj7HlGwBasGEFggmk5qNklknqk9zK/h8D355bEJFTpqEMg==
 
-react-use-measure@^2.0.3, react-use-measure@^2.0.4:
+react-use-measure@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.0.4.tgz#cb675b36eaeaf3681b94d5f5e08b2a1e081fedc9"
   integrity sha512-7K2HIGaPMl3Q9ZQiEVjen3tRXl4UDda8LiTPy/QxP8dP2rl5gPBhf7mMH6MVjjRNv3loU7sNzey/ycPNnHVTxQ==
@@ -6443,11 +6428,6 @@ through@^2.3.8:
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
   integrity sha1-DdTJ/6q8NXlgsbckEV1+Doai4fU=
 
-tiny-emitter@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.1.0.tgz#1d1a56edfc51c43e863cbb5382a72330e3555423"
-  integrity sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==
-
 tiny-inflate@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/tiny-inflate/-/tiny-inflate-1.0.3.tgz#122715494913a1805166aaf7c93467933eea26c4"
@@ -6738,7 +6718,7 @@ urix@^0.1.0:
   resolved "https://registry.yarnpkg.com/urix/-/urix-0.1.0.tgz#da937f7a62e21fec1fd18d49b35c2935067a6c72"
   integrity sha1-2pN/emLiH+wf0Y1Js1wpNQZ6bHI=
 
-use-asset@^1.0.0, use-asset@^1.0.2:
+use-asset@^1.0.2:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/use-asset/-/use-asset-1.0.3.tgz#b5d7a79621a7ad1742fe28e1248e89eef5b924c9"
   integrity sha512-7td+zHFtP1eWtUurnEj2MrnvA/kDAegmjnHv8X7J48LF2Xt739qfwd0c8wIj3LqxPD0gU63HxtpNBzBocrRqYg==
