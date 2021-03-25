@@ -196,4 +196,5 @@ export {
   addTail,
   Canvas,
   act,
+  roots as _roots,
 }
