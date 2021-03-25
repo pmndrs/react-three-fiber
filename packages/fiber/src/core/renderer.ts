@@ -126,15 +126,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       //   are functions, that
       //   start with "on", and
       //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[objectKeys[i]]) && objectKeys[i].startsWith('on')) {
-        if (
-          objectKeys[i].includes('Pointer') ||
-          objectKeys[i].includes('Click') ||
-          objectKeys[i].includes('ContextMenu') ||
-          objectKeys[i].includes('Wheel')
-        ) {
-          handlers.push(objectKeys[i])
-        }
+      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|ContextMenu|Wheel)/.test(objectKeys[i])) {
+        handlers.push(objectKeys[i])
       }
     }
 
@@ -541,7 +534,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       }
     },
     hideTextInstance() {
-      throw new Error('Text is not allowed in the react-three-fiber tree.')
+      throw new Error('Text is not allowed in the R3F tree.')
     },
     getPublicInstance(instance: Instance) {
       // TODO: might fix switchInstance (?)

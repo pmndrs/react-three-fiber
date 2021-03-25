@@ -78,8 +78,6 @@ function render<TCanvas extends Element>(
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it
     roots.set(canvas, { fiber, store })
-    // Create and register events
-
     // Store events internally
     if (events) state.set({ events: events(store) })
 
@@ -99,7 +97,7 @@ function render<TCanvas extends Element>(
     )
     return store
   } else {
-    throw 'R3F: Error creating fiber-root!'
+    throw 'Error creating root!'
   }
 }
 
@@ -138,9 +136,6 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
           state.events.disconnect?.()
           state.gl?.renderLists?.dispose?.()
           state.gl?.forceContextLoss?.()
-          dispose(state.gl)
-          dispose(state.raycaster)
-          dispose(state.camera)
           dispose(state)
           roots.delete(canvas)
           if (callback) callback(canvas)
@@ -153,7 +148,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
 function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
   if (obj.dispose && obj.type !== 'Scene') obj.dispose()
   for (const p in obj) {
-    if (typeof p === 'object' && (p as Instance).dispose) (p as Instance).dispose()
+    ;(p as any).dispose?.()
     delete obj[p]
   }
 }
@@ -192,6 +187,7 @@ export {
   events,
   reconciler,
   applyProps,
+  dispose,
   invalidate,
   advance,
   extend,
