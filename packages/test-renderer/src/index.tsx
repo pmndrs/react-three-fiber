@@ -1,4 +1,3 @@
-import * as THREE from 'three'
 import * as React from 'react'
 
 import {
@@ -21,68 +20,6 @@ import { createEventFirer } from './fireEvent'
 import type { MockScene } from './types/internal'
 import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
-
-// const render = (
-//   element: React.ReactNode,
-//   id: HTMLCanvasElement,
-//   { size = { width: 0, height: 0 }, mode = 'blocking', ...props }: RenderProps<HTMLCanvasElement> = {},
-// ): MockScene => {
-//   let root = mockRoots.get(id)
-//   let fiber = root?.fiber
-//   let store = root?.store
-
-//   if (!fiber) {
-//     // If no root has been found, make one
-//     store = createStore(applyProps, invalidate, advance, {
-//       // @ts-ignore
-//       gl: new THREE.WebGLRenderer({ context: createWebGLContext(HTMLCanvasElement), precision: 'highp' }),
-//       size,
-//       frameloop: 'never',
-//       ...props,
-//     })
-
-//     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
-//     // Map it
-//     mockRoots.set(id, { fiber, store })
-//   }
-
-//   if (store && fiber) {
-//     reconciler.updateContainer(<Provider store={store} element={element} />, fiber, null, () => undefined)
-//     return (store!.getState().scene as unknown) as MockScene
-//   } else {
-//     throw 'R3F: Error creating fiber-root!'
-//   }
-// }
-
-// function Provider({ store, element }: { store: MockUseStoreState; element: React.ReactNode }) {
-//   React.useEffect(() => store.getState().set((state) => ({ internal: { ...state.internal, active: true } })), [])
-//   return <context.Provider value={store}>{element}</context.Provider>
-// }
-
-// const unmount = (id: HTMLCanvasElement) => {
-//   const root = mockRoots.get(id)
-//   const fiber = root?.fiber
-
-//   const dispose = (obj: any) => {
-//     if (obj.dispose && obj.type !== 'Scene') obj.dispose()
-//     for (const p in obj) {
-//       delete obj[p]
-//     }
-//   }
-
-//   if (fiber) {
-//     reconciler.updateContainer(null, fiber, null, () => {
-//       const state = root?.store.getState()
-//       if (state) {
-//         dispose(state.gl)
-//         dispose(state.raycaster)
-//         dispose(state.camera)
-//         dispose(state)
-//       }
-//       mockRoots.delete(id)
-//     })
-//   }
-// }
 
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas({
@@ -173,7 +110,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   }
 }
 
-const act = _act as Act
+const act = (_act as unknown) as Act
 
 export * as ReactThreeTest from './types'
 export default { create, act }
