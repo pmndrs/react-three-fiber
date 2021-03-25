@@ -506,7 +506,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      if (instance.__instance && newProps.object && newProps.object !== instance) {
+      if (instance.__r3f.instance && newProps.object && newProps.object !== instance) {
         // <instance object={...} /> where the object reference has changed
         switchInstance(instance, type, newProps, fiber)
       } else {

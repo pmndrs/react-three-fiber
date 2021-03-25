@@ -9,6 +9,7 @@ function createSubs(callback: GlobalRenderCallback, subs: GlobalRenderCallback[]
   return () => void subs.splice(index, 1)
 }
 
+let i
 let globalEffects: GlobalRenderCallback[] = []
 let globalAfterEffects: GlobalRenderCallback[] = []
 let globalTailEffects: GlobalRenderCallback[] = []
@@ -16,18 +17,17 @@ export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback
 export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalAfterEffects)
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
-function render(state: RootState, timestamp: number, runGlobalEffects = false) {
-  let i: number
-  // Run global effects
-  if (runGlobalEffects) for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
+function run(effects: GlobalRenderCallback[], timestamp: number) {
+  for (i = 0; i < effects.length; i++) effects[i](timestamp)
+}
+
+function render(timestamp: number, state: RootState) {
   // Run local effects
   const delta = state.clock.getDelta()
   // Call subscribers (useFrame)
   for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
-  // Run global after-effects
-  if (runGlobalEffects) for (i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
   // Decrease frame count
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   return state.frameloop === 'always' ? 1 : state.internal.frames
@@ -35,28 +35,27 @@ function render(state: RootState, timestamp: number, runGlobalEffects = false) {
 
 export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
-
+  let repeat: number
   function loop(timestamp: number) {
     running = true
+    repeat = 0
 
-    let i: number
-    let repeat = 0
-    // Run global effects
-    for (i = 0; i < globalEffects.length; i++) globalEffects[i](timestamp)
+    // Run effects
+    run(globalEffects, timestamp)
     // Render all roots
     roots.forEach((root) => {
       const state = root.store.getState()
       // If the frameloop is invalidated, do not run another frame
       if (state.internal.active && (state.frameloop === 'always' || state.internal.frames > 0))
-        repeat += render(state, timestamp)
+        repeat += render(timestamp, state)
     })
+    // Run after-effects
+    run(globalAfterEffects, timestamp)
 
-    // Run global after-effects
-    for (i = 0; i < globalAfterEffects.length; i++) globalAfterEffects[i](timestamp)
     // Keep on looping if anything invalidates the frameloop
     if (repeat > 0) return requestAnimationFrame(loop)
     // Tail call effects, they are called when rendering stops
-    else for (i = 0; i < globalTailEffects.length; i++) globalTailEffects[i](timestamp)
+    else run(globalTailEffects, timestamp)
 
     // Flag end of operation
     running = false
@@ -74,9 +73,11 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  function advance(timestamp: number, runGlobalEffects = false, state?: RootState): void {
-    if (!state) return roots.forEach((root) => advance(timestamp, runGlobalEffects, root.store.getState()))
-    render(state, timestamp, runGlobalEffects)
+  function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState): void {
+    if (runGlobalEffects) run(globalEffects, timestamp)
+    if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
+    else render(timestamp, state)
+    if (runGlobalEffects) run(globalAfterEffects, timestamp)
   }
 
   return { loop, invalidate, advance }

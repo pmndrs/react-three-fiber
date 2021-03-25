@@ -86,7 +86,7 @@ function render<TCanvas extends Element>(
     // VR
     if (props.vr && (gl as THREE.WebGLRenderer).xr && (gl as THREE.WebGLRenderer).setAnimationLoop) {
       ;(gl as THREE.WebGLRenderer).xr.enabled = true
-      ;(gl as THREE.WebGLRenderer).setAnimationLoop((t: number) => advance(t, true, state))
+      ;(gl as THREE.WebGLRenderer).setAnimationLoop((timestamp: number) => advance(timestamp, true, state))
     }
   }
 
