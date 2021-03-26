@@ -64,7 +64,7 @@
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.20.1",
     "tiny-emitter": "^2.1.0",
-    "use-asset": "^1.0.3",
+    "use-asset": "^1.0.4",
     "utility-types": "^3.10.0"
   },
   "peerDependencies": {
