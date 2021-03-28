@@ -13,16 +13,12 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
   function prepareRay(event: DomEvent) {
     const state = store.getState()
     const { raycaster, mouse, camera, size } = state
-
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const offsets = raycaster.computeOffsets?.(event, state) || event
-    if (offsets) {
-      const { offsetX, offsetY } = offsets
-      const { width, height } = size
-      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height)  * 2 + 1)
-      raycaster.setFromCamera(mouse, camera)
-    }
+    const { offsetX, offsetY } = raycaster.computeOffsets?.(event, state) ?? event
+    const { width, height } = size
+    mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
+    raycaster.setFromCamera(mouse, camera)
   }
 
   /** Calculates delta */
@@ -136,67 +132,70 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
     })
   }
 
-  function handlePointerMove(event: DomEvent) {
+  const handlePointer = (name: string) => (event: DomEvent) => {
+    const { onPointerMissed, internal } = store.getState()
+
     prepareRay(event)
+    
     // Get fresh intersects
-    const hits = patchIntersects(intersect(filterPointerEvents), event)
+    const isPointerMove = name === 'onPointerMove'
+    const filter = isPointerMove ? filterPointerEvents : undefined
+    const hits = patchIntersects(intersect(filter), event)
+
     // Take care of unhover
-    handlePointerCancel(event, hits)
+    if (isPointerMove) handlePointerCancel(event, hits)
+
     handleIntersects(hits, event, (data: DomEvent) => {
       const eventObject = data.eventObject
       const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
       // Check presence of handlers
       if (!handlers) return
-      // Check if mouse enter or out is present
-      if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
-        const id = makeId(data)
-        const hoveredItem = hovered.get(id)
-        if (!hoveredItem) {
-          // If the object wasn't previously hovered, book it and call its handler
-          hovered.set(id, data)
-          handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
-          handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
-        } else if (hoveredItem.stopped) {
-          // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
-          data.stopPropagation()
+
+      if (isPointerMove) {
+        // Move event ...
+        if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
+          // When enter or out is present take care of hover-state
+          const id = makeId(data)
+          const hoveredItem = hovered.get(id)
+          if (!hoveredItem) {
+            // If the object wasn't previously hovered, book it and call its handler
+            hovered.set(id, data)
+            handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
+            handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
+          } else if (hoveredItem.stopped) {
+            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+            data.stopPropagation()
+          }
         }
-      }
-      // Call mouse move
-      handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
-    })
-  }
-
-  const handlePointer = (name: string) => (event: DomEvent) => {
-    const { onPointerMissed, internal } = store.getState()
-
-    prepareRay(event)
-    // Get fresh intersects
-    const hits = patchIntersects(intersect(), event)
-    handleIntersects(hits, event, (data: DomEvent) => {
-      const eventObject = data.eventObject
-      const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
-      const handler = handlers?.[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
-      if (handler) {
-        // Forward all events back to their respective handlers with the exception of click events,
-        // which must use the initial target
-        if (
-          (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
-          internal.initialHits.includes(eventObject)
-        ) {
-          handler(data as ThreeEvent<PointerEvent>)
-          pointerMissed(
-            event,
-            internal.interaction.filter((object) => object !== eventObject),
-          )
+        // Call mouse move
+        handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
+      } else {
+        // All other events ...
+        const handler = handlers?.[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
+        if (handler) {
+          // Forward all events back to their respective handlers with the exception of click events,
+          // which must use the initial target
+          if (
+            (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
+            internal.initialHits.includes(eventObject)
+          ) {
+            handler(data as ThreeEvent<PointerEvent>)
+            pointerMissed(
+              event,
+              internal.interaction.filter((object) => object !== eventObject),
+            )
+          }
         }
       }
     })
-    // If a click yields no results, pass it back to the user as a miss
+
+    // Save initial coordinates on pointer-down
     if (name === 'onPointerDown') {
       internal.initialClick = [event.offsetX, event.offsetY]
       internal.initialHits = hits.map((hit) => hit.eventObject)
     }
 
+    // If a click yields no results, pass it back to the user as a miss
     if ((name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick') && !hits.length) {
       if (calculateDistance(event) <= 2) {
         pointerMissed(event, internal.interaction)
@@ -235,7 +234,7 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
       onPointerUp: handlePointer('onPointerUp') as EventListener,
       onPointerLeave: ((e: any) => handlePointerCancel(e, [])) as EventListener,
       onPointerCancel: ((e: any) => handlePointerCancel(e, [])) as EventListener,
-      onPointerMove: (handlePointerMove as unknown) as EventListener,
+      onPointerMove: handlePointer('onPointerMove') as EventListener,
       onLostPointerCapture: ((e: any) => (
         (store.getState().internal.captured = undefined), handlePointerCancel(e)
       )) as EventListener,
