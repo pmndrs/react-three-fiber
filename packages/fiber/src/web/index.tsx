@@ -5,24 +5,24 @@ import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
-import { createRenderer, extend, Instance, prepare, Root } from '../core/renderer'
+import { createRenderer, extend, prepare, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
-import { createDOMEvents as events } from './events'
+import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
+
+const roots = new Map<Element, Root>()
+const modes = ['legacy', 'blocking', 'concurrent'] as const
+const { invalidate, advance } = createLoop(roots)
+const { reconciler, applyProps } = createRenderer(roots)
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
-  mode?: 'legacy' | 'blocking' | 'concurrent'
+  mode?: typeof modes[number]
   onCreated?: (state: RootState) => void
 }
-
-const roots = new Map<Element, Root>()
-const modes = ['legacy', 'blocking', 'concurrent']
-const { invalidate, advance } = createLoop(roots)
-const { reconciler, applyProps } = createRenderer(roots)
 
 const createRendererInstance = <TElement extends Element>(
   gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
@@ -41,7 +41,7 @@ const createRendererInstance = <TElement extends Element>(
 function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size = { width: 0, height: 0 }, mode = 'blocking', events, onCreated, ...props }: RenderProps<TCanvas> = {},
+  { gl, size = { width: 0, height: 0 }, mode = modes[1], events, onCreated, ...props }: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
   let root = roots.get(canvas)
   let fiber = root?.fiber

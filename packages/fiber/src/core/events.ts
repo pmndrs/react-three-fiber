@@ -65,22 +65,6 @@ export function createEvents(store: UseStore<RootState>) {
     return (event.eventObject || event.object).uuid + '/' + event.index
   }
 
-  /** Sets up defaultRaycaster */
-  function prepareRay(event: DomEvent) {
-    const state = store.getState()
-    const { raycaster, mouse, camera, size } = state
-
-    // https://github.com/pmndrs/react-three-fiber/pull/782
-    // Events trigger outside of canvas when moved
-    const offsets = raycaster.computeOffsets?.(event, state) || event
-    if (offsets) {
-      const { offsetX, offsetY } = offsets
-      const { width, height } = size
-      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-      raycaster.setFromCamera(mouse, camera)
-    }
-  }
-
   function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
     const state = store.getState()
     const { raycaster, internal } = state
@@ -129,5 +113,5 @@ export function createEvents(store: UseStore<RootState>) {
     return intersections
   }
 
-  return { hovered, makeId, prepareRay, intersect, patchIntersects }
+  return { hovered, makeId, intersect, patchIntersects }
 }

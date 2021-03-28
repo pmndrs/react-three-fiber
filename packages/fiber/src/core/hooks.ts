@@ -6,6 +6,25 @@ import { useAsset } from 'use-asset'
 
 import { context, RootState, RenderCallback } from './store'
 
+export interface Loader<T> extends THREE.Loader {
+  load(
+    url: string,
+    onLoad?: (result: T) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (event: ErrorEvent) => void,
+  ): unknown
+}
+
+type Extensions = (loader: THREE.Loader) => void
+type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
+type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
+type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
+
+export type ObjectMap = {
+  nodes: { [name: string]: THREE.Object3D }
+  materials: { [name: string]: THREE.Material }
+}
+
 export function useThree<T = RootState>(
   selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
   equalityFn?: EqualityChecker<T>,
@@ -26,23 +45,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
     return () => unsubscribe()
   }, [renderPriority, subscribe])
   return null
-}
-
-export interface Loader<T> extends THREE.Loader {
-  load(
-    url: string,
-    onLoad?: (result: T) => void,
-    onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void,
-  ): unknown
-}
-
-type Extensions = (loader: THREE.Loader) => void
-type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
-
-export type ObjectMap = {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
 }
 
 function buildGraph(object: THREE.Object3D) {
@@ -88,10 +90,6 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
     )
   }
 }
-
-type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
-
-type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
 export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,

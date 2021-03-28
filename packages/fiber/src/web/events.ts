@@ -5,15 +5,41 @@ import type { DomEvent, EventManager, Intersection, ThreeEvent } from '../core/e
 import { createEvents, EventHandlers } from '../core/events'
 import { Instance } from '../core/renderer'
 
-export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
+export function createPointerEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
   const temp = new THREE.Vector3()
-  const { hovered, makeId, prepareRay, intersect, patchIntersects } = createEvents(store)
+  const { hovered, makeId, intersect, patchIntersects } = createEvents(store)
 
+  /** Sets up defaultRaycaster */
+  function prepareRay(event: DomEvent) {
+    const state = store.getState()
+    const { raycaster, mouse, camera, size } = state
+
+    // https://github.com/pmndrs/react-three-fiber/pull/782
+    // Events trigger outside of canvas when moved
+    const offsets = raycaster.computeOffsets?.(event, state) || event
+    if (offsets) {
+      const { offsetX, offsetY } = offsets
+      const { width, height } = size
+      mouse.set((offsetX / width) * 2 - 1, -(offsetY / height)  * 2 + 1)
+      raycaster.setFromCamera(mouse, camera)
+    }
+  }
+
+  /** Calculates delta */
   function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
     const dx = event.offsetX - internal.initialClick[0]
     const dy = event.offsetY - internal.initialClick[1]
     return Math.round(Math.sqrt(dx * dx + dy * dy))
+  }
+
+  /** Returns true if an instance has a valid pointer-event registered, this excludes scroll, clicks etc */
+  function filterPointerEvents(objects: THREE.Object3D[]) {
+    return objects.filter((obj) =>
+      ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
+        (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
+      ),
+    )
   }
 
   /**  Handles intersections by forwarding them to handlers */
@@ -87,8 +113,8 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
     return intersections
   }
 
-  function handlePointerCancel(event: DomEvent, hits?: Intersection[], prepare = true) {
-    if (prepare) prepareRay(event)
+  function handlePointerCancel(event: DomEvent, hits?: Intersection[]) {
+    prepareRay(event)
 
     Array.from(hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
@@ -110,18 +136,10 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
     })
   }
 
-  function pointerEventsOnly(objects: THREE.Object3D[]) {
-    return objects.filter((obj) =>
-      ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
-      ),
-    )
-  }
-
-  function handlePointerMove(event: DomEvent, prepare = true) {
-    if (prepare) prepareRay(event)
+  function handlePointerMove(event: DomEvent) {
+    prepareRay(event)
     // Get fresh intersects
-    const hits = patchIntersects(intersect(pointerEventsOnly), event)
+    const hits = patchIntersects(intersect(filterPointerEvents), event)
     // Take care of unhover
     handlePointerCancel(event, hits)
     handleIntersects(hits, event, (data: DomEvent) => {
@@ -146,19 +164,12 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
       // Call mouse move
       handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
     })
-    return hits
   }
 
-  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
-    objects.forEach((object: THREE.Object3D) =>
-      ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
-    )
-  }
-
-  const handlePointer = (name: string) => (event: DomEvent, prepare = true) => {
+  const handlePointer = (name: string) => (event: DomEvent) => {
     const { onPointerMissed, internal } = store.getState()
 
-    if (prepare) prepareRay(event)
+    prepareRay(event)
     // Get fresh intersects
     const hits = patchIntersects(intersect(), event)
     handleIntersects(hits, event, (data: DomEvent) => {
@@ -192,6 +203,12 @@ export function createDOMEvents(store: UseStore<RootState>): EventManager<HTMLEl
         if (onPointerMissed) onPointerMissed()
       }
     }
+  }
+
+  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
+    objects.forEach((object: THREE.Object3D) =>
+      ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+    )
   }
 
   const mapNames = {
