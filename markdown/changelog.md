@@ -1,5 +1,12 @@
 # 6.0.0
 
+### Monorepo
+
+```diff
+--- npm install react-three-fiber
++++ npm install @react-three/fiber
+```
+
 ### Features
 
 - [x] Use r3f without react-dom (saves ~30kb)
