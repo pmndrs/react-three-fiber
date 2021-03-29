@@ -1,5 +1,4 @@
 #!/bin/sh
-# . "$(dirname "$0")/_/husky.sh"
+. "$(dirname "$0")/_/husky.sh"
 
-# I've removed this for now while I work on the tests – Josh
-# npm test
+npm test
