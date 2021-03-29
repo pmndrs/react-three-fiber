@@ -7,7 +7,7 @@ import { Mesh, Camera, Scene, Raycaster } from 'three'
 
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
-import { asyncUtils } from '../../../../test-utils/asyncUtils'
+import { asyncUtils } from '../../../shared/asyncUtils'
 
 import ReactThreeTestRenderer from '../index'
 
@@ -49,6 +49,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new Mesh()
+    // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((url, onLoad) => {
         onLoad(MockMesh)

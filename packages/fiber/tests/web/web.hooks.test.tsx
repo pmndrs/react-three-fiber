@@ -7,7 +7,7 @@ import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { asyncUtils } from '../../../../test-utils/asyncUtils'
+import { asyncUtils } from '../../../shared/asyncUtils'
 
 import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
 
@@ -96,6 +96,7 @@ describe('web hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new Mesh()
+    // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((url, onLoad) => {
         onLoad(MockMesh)
@@ -137,6 +138,7 @@ describe('web hooks', () => {
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
+    // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest
         .fn()
@@ -146,6 +148,7 @@ describe('web hooks', () => {
         .mockImplementationOnce((url, onLoad) => {
           onLoad({ scene: MockGroup })
         }),
+      // @ts-ignore
       setPath: () => {},
     }))
 

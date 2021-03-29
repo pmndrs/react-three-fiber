@@ -81,11 +81,11 @@ function Box(props) {
     <mesh
       {...props}
       ref={mesh}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <boxBufferGeometry args={[1, 1, 1]} />
+      <sphereGeometry args={[1, 32, 32]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
@@ -128,11 +128,11 @@ const Box: React.FC<MeshProps> = (props) => {
     <mesh
       {...props}
       ref={mesh}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <boxBufferGeometry args={[1, 1, 1]} />
+      <sphereGeometry args={[1, 32, 32]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
@@ -158,6 +158,7 @@ ReactDOM.render(
 - [api.md](/markdown/api.md)
 - [pitfalls.md](/markdown/pitfalls.md)
 - [recipes.md](/markdown/recipes.md)
+- [testing.md](/packages/test-renderer)
 
 # Fundamentals
 
@@ -188,7 +189,6 @@ Some reading material:
 - [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
 - [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
 - [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
-- [`react-three-gui`](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
 
 # How to contribute
 

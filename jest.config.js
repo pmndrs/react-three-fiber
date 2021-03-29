@@ -22,5 +22,5 @@ module.exports = {
   moduleFileExtensions: ['js', 'ts', 'tsx'],
   verbose: false,
   testTimeout: 30000,
-  setupFilesAfterEnv: ['<rootDir>/setupTests.ts'],
+  setupFilesAfterEnv: ['<rootDir>/packages/shared/setupTests.ts'],
 }
