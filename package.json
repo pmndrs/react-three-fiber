@@ -62,6 +62,7 @@
     "jest-cli": "^26.6.3",
     "lint-staged": "^10.5.4",
     "prettier": "^2.2.1",
+    "pretty-quick": "^3.1.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "regenerator-runtime": "^0.13.7",
