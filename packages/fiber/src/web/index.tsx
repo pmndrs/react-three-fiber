@@ -41,8 +41,16 @@ const createRendererInstance = <TElement extends Element>(
 function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size = { width: 0, height: 0 }, mode = modes[1], events, onCreated, ...props }: RenderProps<TCanvas> = {},
+  { gl, size, mode = modes[1], events, onCreated, ...props }: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
+  // Allow size to take on container bounds initially
+  if (!size) {
+    size = {
+      width: canvas.parentElement?.clientWidth ?? 0,
+      height: canvas.parentElement?.clientHeight ?? 0,
+    }
+  }
+
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store

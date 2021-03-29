@@ -45,7 +45,7 @@ There is no additional overhead. Components participate in the renderloop outsid
 #### Imports first
 
 ```jsx
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, render, useFrame } from '@react-three/fiber'
 ```
 
 #### Define components
@@ -77,6 +77,8 @@ function Box(props) {
 
 #### Compose your scene
 
+Either use `Canvas`, which you can think of as a portal to threejs inside your regular dom graph. Everything within it is a [native threejs element](https://threejs.org/docs).
+
 ```jsx
 ReactDOM.render(
   <Canvas>
@@ -86,6 +88,18 @@ ReactDOM.render(
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
   document.getElementById('root'),
+)
+```
+
+Or use react-three-fibers own `render` function, which is a little more low-level, but could save you the extra cost of carrying react-dom. It renders into a dom `canvas` element.
+
+```jsx
+render(
+  <>
+    <ambientLight />
+    ...
+  </>,
+  document.querySelector('canvas'),
 )
 ```
 
