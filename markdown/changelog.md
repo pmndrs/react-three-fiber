@@ -97,4 +97,4 @@ return (
 - `colorManagement={false}` -> `linear`
 - `noEvents={true}` -> `state.raycaster,.enabled = false`
 - `shadowMap` -> `shadows`
-- `invalidateFrameloop -> `frameloop='demand'`
+- `invalidateFrameloop` -> `frameloop='demand'`
