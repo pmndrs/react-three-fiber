@@ -16,19 +16,19 @@ npm install three @react-three/fiber
 
 ### Why?
 
-Build dynamic scene graphs declaratively with re-usable, self-contained components that react to state changes, are interactive out of the box and can tap into React's ecosystem.
+Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can tap into React's ecosystem.
 
 #### Does it have limitations?
 
-None. Everything that works in threejs will work here.
+None. Everything that works in threejs will work here without exception.
 
-#### Can it keep up with frequent updates?
+#### Can it keep up with frequent updates to threejs?
 
-It doesn't have to. It merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`. It doesn't know or target a specific threejs version nor does it need updates for modified, added or removed features.
+Yes, because it merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. There is no hard dependency on a particular threejs version, it does not wrap or duplicate a single threejs class.
 
 #### Is it slower than plain threejs?
 
-There is no additional overhead. Components participate in the renderloop outside of React, which takes care of managing the scene otherwise.
+There is no additional overhead. Components participate in the renderloop outside of React.
 
 ### What does it look like?
 
@@ -45,10 +45,12 @@ There is no additional overhead. Components participate in the renderloop outsid
 #### Imports first
 
 ```jsx
-import { Canvas, render, useFrame } from '@react-three/fiber'
+import React, { useRef, useState } from 'react'
+import ReactDOM from 'react-dom'
+import { Canvas, useFrame } from '@react-three/fiber'
 ```
 
-#### Define components
+#### Define a component
 
 ```jsx
 function Box(props) {
@@ -75,9 +77,9 @@ function Box(props) {
 }
 ```
 
-#### Compose your scene
+#### Compose the scene
 
-Either use `Canvas`, which you can think of as a portal to threejs inside your regular dom graph. Everything within it is a [native threejs element](https://threejs.org/docs).
+Either use `Canvas`, which you can think of as a portal to threejs inside your regular dom graph. Everything within it is a [native threejs element](https://threejs.org/docs). If you want to mix Webgl and Html (react-dom) this is what you should use.
 
 ```jsx
 ReactDOM.render(
@@ -91,16 +93,12 @@ ReactDOM.render(
 )
 ```
 
-Or use react-three-fibers own `render` function, which is a little more low-level, but could save you the extra cost of carrying react-dom. It renders into a dom `canvas` element.
+Or use react-three-fibers own `render` function, which is a little more low-level but could save you the extra cost of carrying react-dom. It renders into a dom `canvas` element. Use this for Webgl-only apps.
 
 ```jsx
-render(
-  <>
-    <ambientLight />
-    ...
-  </>,
-  document.querySelector('canvas'),
-)
+import { render } from '@react-three/fiber'
+
+render(<Scene />, document.querySelector('canvas'))
 ```
 
 <details>
