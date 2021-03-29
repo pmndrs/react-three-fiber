@@ -25,7 +25,7 @@ export type Renderer = {
   toTree: () => Tree | undefined
   toGraph: () => SceneGraph | undefined
   fireEvent: (element: ReactThreeTestInstance, handler: string, data?: MockEventData) => Promise<any>
-  advanceFrames: (frames: number, delta: number | number[]) => void
+  advanceFrames: (frames: number, delta: number | number[]) => Promise<void>
 }
 
 export interface SceneGraphItem {

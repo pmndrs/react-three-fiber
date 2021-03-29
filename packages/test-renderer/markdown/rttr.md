@@ -125,30 +125,27 @@ Similar to the [`act()` in `react-test-renderer`](https://reactjs.org/docs/test-
 ```tsx
 import ReactThreeTestRenderer from 'react-three-test-renderer'
 
-class Mesh extends React.PureComponent {
-  state = { standardMat: false }
+const Mesh = () => {
+  const meshRef = React.useRef()
+  useFrame((_, delta) => {
+    meshRef.current.rotation.x += delta
+  })
 
-  handleStandard() {
-    this.setState({ standardMat: true })
-  }
-
-  render() {
-    return (
-      <mesh>
-        <boxGeometry args={[2, 2]} />
-        {this.state.standardMat ? <meshStandardMaterial /> : <meshBasicMaterial />}
-      </mesh>
-    )
-  }
+  return (
+    <mesh ref={meshRef}>
+      <boxGeometry args={[2, 2]} />
+      <meshBasicMaterial />
+    </mesh>
+  )
 }
 
 const renderer = await ReactThreeTestRenderer.create(<Mesh />)
 
-expect(renderer.toTree()).toMatchSnapshot()
+expect(renderer.scene.children[0].instance.rotation.x).toEqual(0)
 
 await ReactThreeTestRenderer.act(async () => {
-  renderer.getInstance().handleStandard()
+  await renderer.advanceFrames(2, 1)
 })
 
-expect(renderer.toTree()).toMatchSnapshot()
+expect(renderer.scene.children[0].instance.rotation.x).toEqual(2)
 ```

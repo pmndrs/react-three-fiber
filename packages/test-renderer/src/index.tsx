@@ -93,19 +93,25 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       return toGraph(scene)
     },
     fireEvent: createEventFirer(reconciler.act, _store),
-    advanceFrames: (frames: number, delta: number | number[] = 1) => {
+    advanceFrames: async (frames: number, delta: number | number[] = 1) => {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
+
+      const promises: Promise<void>[] = []
 
       storeSubscribers.forEach((subscriber) => {
         for (let i = 0; i < frames; i++) {
           if (is.arr(delta)) {
-            subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])
+            promises.push(
+              new Promise(() => subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])),
+            )
           } else {
-            subscriber.ref.current(state, delta as number)
+            promises.push(new Promise(() => subscriber.ref.current(state, delta as number)))
           }
         }
       })
+
+      Promise.all(promises)
     },
   }
 }
