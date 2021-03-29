@@ -379,7 +379,7 @@ function App() {
 useThree(selector) => state
 ```
 
-This hook gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser, for instance, and you get fresh measurements, same applies to any of the defaults you can change.
+This hook gives you access to all the basic objects that are kept internally, like the default renderer, scene, camera. It also gives you the current size of the canvas in screen and viewport coordinates. The hook is reactive, if you resize the browser for instance, you get fresh measurements, same applies to any of the defaults that may change.
 
 ```jsx
 import { useThree } from '@react-three/fiber'
@@ -431,7 +431,7 @@ const {
 } = useThree()
 ```
 
-As of version 6 you can select properties, this allows you to avoid needless re-render for components that are interested only in particulars.
+You can also select properties, this allows you to avoid needless re-render for components that are interested only in particulars.
 
 ```jsx
 // Will only trigger re-render when the default camera is exchanged
