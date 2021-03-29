@@ -14,9 +14,9 @@ react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#
 npm install three @react-three/fiber
 ```
 
-#### Why?
+### Why?
 
-Build dynamic scene graphs declaratively with re-usable components that react to state changes, are interactive out of the box and can tap into React's ecosystem.
+Build dynamic scene graphs declaratively with re-usable, self-contained components that react to state changes, are interactive out of the box and can tap into React's ecosystem.
 
 #### Does it have limitations?
 
@@ -24,13 +24,13 @@ None. Everything that works in threejs will work here.
 
 #### Can it keep up with frequent updates?
 
-It doesn't have to. It merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed features.
+It doesn't have to. It merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`. It doesn't know or target a specific threejs version nor does it need updates for modified, added or removed features.
 
 #### Is it slower than plain threejs?
 
-It does not have any additional overhead. Components participate in the renderloop outside of React, which takes care of managing the scene, something it can do quite effectively.
+There is no additional overhead. Components participate in the renderloop outside of React, which takes care of managing the scene otherwise.
 
-#### What does it look like?
+### What does it look like?
 
 <table>
   <tr>
@@ -42,9 +42,15 @@ It does not have any additional overhead. Components participate in the renderlo
   </tr>
 </table>
 
+#### Imports first
+
 ```jsx
 import { Canvas, useFrame } from '@react-three/fiber'
+```
 
+#### Define components
+
+```jsx
 function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
@@ -67,7 +73,11 @@ function Box(props) {
     </mesh>
   )
 }
+```
 
+#### Compose your scene
+
+```jsx
 ReactDOM.render(
   <Canvas>
     <ambientLight />
