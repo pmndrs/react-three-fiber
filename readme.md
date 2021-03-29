@@ -8,7 +8,7 @@
 [![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
-react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
+react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
 ```bash
 npm install three @react-three/fiber
@@ -16,15 +16,19 @@ npm install three @react-three/fiber
 
 #### Why?
 
-Building dynamic scene graphs declaratively with re-usable components makes dealing with threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
+Build dynamic scene graphs declaratively with re-usable components that react to state changes, are interactive out of the box and can tap into React's ecosystem.
 
 #### Does it have limitations?
 
-None. Everything that works in threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed upstream features.
+None. Everything that works in threejs will work here.
 
-#### Is it slower than raw threejs?
+#### Can it keep up with frequent updates?
 
-No. Rendering performance is up to threejs and the GPU. Components participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
+It doesn't have to. It merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed features.
+
+#### Is it slower than plain threejs?
+
+It does not have any additional overhead. Components participate in the renderloop outside of React, which takes care of managing the scene, something it can do quite effectively.
 
 #### What does it look like?
 
@@ -39,8 +43,6 @@ No. Rendering performance is up to threejs and the GPU. Components participate i
 </table>
 
 ```jsx
-import ReactDOM from 'react-dom'
-import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
@@ -81,14 +83,11 @@ ReactDOM.render(
   <summary>Show TypeScript example</summary>
 
 ```tsx
-import ReactDOM from 'react-dom'
-import React, { useRef, useState } from 'react'
 import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
-import type { Mesh } from 'three'
 
 const Box: React.FC<MeshProps> = (props) => {
   // This reference will give us direct access to the mesh
-  const mesh = useRef<Mesh>(null!)
+  const mesh = useRef<THREE.Mesh>(null!)
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
