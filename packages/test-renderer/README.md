@@ -1,6 +1,6 @@
 # React Three Test Renderer ⚛️🔼🧪
 
-[![Version](https://img.shields.io/npm/v/react-three-test-renderer?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-test-renderer)
+[![Version](https://img.shields.io/npm/v/@react-three/test-renderer?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/test-renderer)
 [![Downloads](https://img.shields.io/npm/dt/react-three-test-renderer.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/react-three-test-renderer)
 [![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
 [![Twitter](https://img.shields.io/twitter/follow/_josh_ellis_?label=%40_josh_ellis_&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/_josh_ellis_)
