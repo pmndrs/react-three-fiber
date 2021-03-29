@@ -145,11 +145,10 @@ ReactDOM.render(
 
 ---
 
-# API
+# Documentation
 
 - [api.md](/markdown/api.md)
 - [pitfalls.md](/markdown/pitfalls.md)
-- [recipes.md](/markdown/recipes.md)
 - [testing.md](/packages/test-renderer)
 
 # Fundamentals

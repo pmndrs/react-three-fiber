@@ -162,19 +162,26 @@ Properties that have a `setScalar` method (for instance Vector3) can be set like
 
 #### Dealing with objects that are normally not part of the scene, and attaching
 
-You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They are not part of the threejs scene! They take the same properties and constructor arguments they normally would.
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well, so that they become managed and reactive. They take the same properties and constructor arguments they normally would.
 
 Using the `attach` property objects bind to their parent and are taken off once they unmount.
+
+The following attaches a material to the `material` property of a mesh:
+
+```jsx
+<mesh>
+  <meshBasicMaterial attach="material">
+```
 
 You can nest primitive objects, too:
 
 ```jsx
 <mesh>
   <meshBasicMaterial attach="material">
-    <texture attach="map" image={img} onUpdate={self => img && (self.needsUpdate = true)} />
+    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
 ```
 
-Sometimes attaching isn't enough. For example, the following example attaches effects to an array called "passes" of the parent `effectComposer`. Note the use of `attachArray` which adds the object to the target array and takes it out on unmount:
+Sometimes attaching isn't enough. For example, the following example attaches effects to an array called "passes" of the parent `effectComposer`. `attachArray` adds the object to the target array and takes it out on unmount:
 
 ```jsx
 <effectComposer>
@@ -207,11 +214,13 @@ If you want to reach into nested attributes (for instance: `mesh.rotation.x`), j
 
 #### Putting already existing objects into the scene-graph
 
-You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in Threejs! Primitives will not dispose of the object they carries on unmount!
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in Threejs! Primitives will not dispose of the object they carry on unmount, you are responsible for disposing of it!
 
 ```jsx
-const mesh = useMemo(() => new THREE.Mesh(), [])
-return <primitive object={mesh} position={[0, 0, 0]} />
+const mesh = new THREE.Mesh(geometry, material)
+
+function Component() {
+  return <primitive object={mesh} position={[10, 0, 0]} />
 ```
 
 #### Using 3rd-party objects declaratively
@@ -220,8 +229,7 @@ The `extend` function extends three-fiber's catalogue of JSX elements. Component
 
 ```jsx
 import { extend } from '@react-three/fiber'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
+import { OrbitControls, TransformControls } from 'three-stdlib'
 extend({ OrbitControls, TransformControls })
 
 // ...
@@ -249,7 +257,7 @@ function Mesh() {
 
 # Events
 
-Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc). You need to [polyfill](https://github.com/jquery/PEP) them yourself, if that's a concern.
+Threejs objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the Threejs event data (object, point, distance, etc). You may want to [polyfill](https://github.com/jquery/PEP) them, if that's a concern.
 
 Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
@@ -419,7 +427,7 @@ const {
     handlers, // Pointer-event handlers (pointermove, up, down, etc), Events
     connect, // Re-connect to a new target, (target: TTarget) => void
     disconnect, // Dis-connect handlers, () => void
-  }
+  },
 } = useThree()
 ```
 
@@ -427,9 +435,9 @@ As of version 6 you can select properties, this allows you to avoid needless re-
 
 ```jsx
 // Will only trigger re-render when the default camera is exchanged
-const camera = useThree(state => state.camera)
+const camera = useThree((state) => state.camera)
 // Will only re-render on resize changes
-const viewport = useThree(state => state.viewport)
+const viewport = useThree((state) => state.viewport)
 ```
 
 #### useFrame
