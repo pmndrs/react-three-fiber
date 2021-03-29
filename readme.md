@@ -14,27 +14,6 @@ react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview
 npm install three @react-three/fiber
 ```
 
-<p align="center">
-  <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="274" src="https://i.imgur.com/VydCh6W.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="274" src="https://i.imgur.com/e6NhRz6.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-montage-jz9l97qn89"><img width="274" src="https://i.imgur.com/nxRStP8.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-sparks-sbf2i"><img width="274" src="https://i.imgur.com/Fk44Tu6.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-instanced-colors-8fo01"><img width="274" src="https://i.imgur.com/daJIDVE.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-moksha-f1ixt"><img width="274" src="https://i.imgur.com/ltznOJ1.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-bones-3i7iu"><img width="274" src="https://i.imgur.com/OZdSyQy.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-floating-diamonds-prb9t"><img width="274" src="https://i.imgur.com/WWDbcWG.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-volumetric-light-w633u"><img width="274" src="https://i.imgur.com/7E3XKSG.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-particles-ii-pjcc1"><img width="274" src="https://i.imgur.com/QG14IAC.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-gltf-fonts-c671i"><img width="274" src="https://i.imgur.com/SHPhIls.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-cannon-physics-nr84m"><img width="274" src="https://i.imgur.com/M9rupWP.gif" /></a>
-  <a href="https://codesandbox.io/embed/wonderful-chandrasekhar-8l9rrj36j0"><img width="274" src="https://i.imgur.com/HSTGdcO.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-train-l900i"><img width="274" src="https://i.imgur.com/B3AzZVH.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-particles-i-q4d2v"><img width="274" src="https://i.imgur.com/XscsWgu.gif" /></a>
-</p>
-<p align="middle">
-  <i>These demos are real, you can click them! They contain the full code, too.</i>
-</p>
-
 #### Why?
 
 Building dynamic scene graphs declaratively with re-usable components makes dealing with threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
@@ -67,15 +46,11 @@ import { Canvas, useFrame } from '@react-three/fiber'
 function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
-
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => {
-    mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-  })
+  useFrame(() => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
@@ -85,7 +60,7 @@ function Box(props) {
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <sphereGeometry args={[1, 32, 32]} />
+      <boxGeometry args={[1, 2, 3]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
@@ -113,16 +88,12 @@ import type { Mesh } from 'three'
 
 const Box: React.FC<MeshProps> = (props) => {
   // This reference will give us direct access to the mesh
-  const mesh = useRef<Mesh>()
-
+  const mesh = useRef<Mesh>(null!)
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => {
-    if (mesh.current) mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-  })
+  useFrame(() => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
@@ -132,7 +103,7 @@ const Box: React.FC<MeshProps> = (props) => {
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <sphereGeometry args={[1, 32, 32]} />
+      <boxGeometry args={[1, 2, 3]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
