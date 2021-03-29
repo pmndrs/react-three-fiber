@@ -16,8 +16,7 @@ Attaching dom content to 3d surfaces is hard, in threejs there are a couple of h
 
 ```jsx
 import { Dom } from 'react-three-fiber'
-
-<group position={[100, 10, 0]}>
+;<group position={[100, 10, 0]}>
   <Dom>
     <h1>hello</h1>
   </Dom>
@@ -29,9 +28,9 @@ import { Dom } from 'react-three-fiber'
 
 Here's an example: https://codesandbox.io/s/react-three-fiber-suspense-zu2wo
 
-## Concurrent mode (*experimental*)
+## Concurrent mode (_experimental_)
 
-React-three-fiber can opt into reacts new concurrent/async mode. React will render asynchroneously from then on. It will try to keep a steady 60fps loop at all cost, it will schedule, defer or virtualize operations that threaten to blow the budget. 
+React-three-fiber can opt into reacts new concurrent/async mode. React will render asynchroneously from then on. It will try to keep a steady 60fps loop at all cost, it will schedule, defer or virtualize operations that threaten to blow the budget.
 
 Imagine you are creating assets at runtime, each has a slight setup cost (for instance TextGeometry having to calculate shapes). In blocking mode React or plain threejs, too many of these will eventually create jank. In concurrent mode React will commit as much as it can, and deal with the rest in a manner that leaves the main thread uninterrupted.
 
@@ -53,7 +52,7 @@ With Reacts suspense you can manage async assets, which makes it very easy to cr
 import { Suspense } from 'react'
 
 function AsyncResource() {
-  const gltf = useLoader(GLTFLoader, "/model.glb")
+  const gltf = useLoader(GLTFLoader, '/model.glb')
   return <primitive object={gltf.scene} />
 }
 
@@ -66,7 +65,7 @@ function Startup() {
   return null
 }
 
-<Canvas concurrent>
+;<Canvas concurrent>
   <Suspense fallback={<Dom>loading...</Dom>}>
     <AsyncResource />
     <Startup />
@@ -152,16 +151,16 @@ The codebase has been refactored to make creating specific target renderers easi
 </p>
 
 ```jsx
-import { Canvas, extend, useFrame, useThree } from "react-three-fiber/svg"
+import { Canvas, extend, useFrame, useThree } from 'react-three-fiber/svg'
 
 ReactDOM.render(
-  <Canvas style={{ background: "#272730" }} camera={{ position: [0, 0, 50] }}>
+  <Canvas style={{ background: '#272730' }} camera={{ position: [0, 0, 50] }}>
     <mesh>
       <torusKnotGeometry attach="geometry" args={[10, 3, 100, 16]} />
       <meshBasicMaterial attach="material" color="hotpink" />
     </mesh>
   </Canvas>,
-  document.getElementById("root")
+  document.getElementById('root'),
 )
 ```
 

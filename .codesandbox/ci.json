@@ -1,4 +1,3 @@
 {
-  "packages": ["dist"],
-  "sandboxes": ["4nc1u", "4eznz"]
+  "sandboxes": ["/example"]
 }

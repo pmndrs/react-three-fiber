@@ -1,15 +1,16 @@
 # Performance pitfalls
 
 ## Table of Contents
+
 - [WebGL performance pitfalls](#webgl-pitfalls)
-    - [Tips and Tricks](#tips-and-tricks)
+  - [Tips and Tricks](#tips-and-tricks)
 - [React performance pitfalls](#react-pitfalls)
-    - [Never, ever, setState animations](#never-ever-set-state)
-    - [Never let React anywhere near animated updates](#never-let-react-animate)
-    - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
-    - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
-    - [Do not re-create objects in loops](#do-not-re-create-objects-in-loops)
-    - [Instead of plain loaders, use useLoader](#instead-of–plain-loaders-use-useLoader)
+  - [Never, ever, setState animations](#never-ever-set-state)
+  - [Never let React anywhere near animated updates](#never-let-react-animate)
+  - [Never bind often occuring reactive state to a component](#never-bind-reactive-component)
+  - [Do not mount/unmount things indiscriminately](#do-not-mount-unmount-indiscriminately)
+  - [Do not re-create objects in loops](#do-not-re-create-objects-in-loops)
+  - [Instead of plain loaders, use useLoader](#instead-of–plain-loaders-use-useLoader)
 
 ## WebGL performance pitfalls ☠️ <a id="webgl-pitfalls"></a>
 
@@ -30,6 +31,7 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 ## React performance pitfalls ☠️ <a id="react-pitfalls"></a>
 
 ### Never, ever, setState animations! <a id="never-ever-set-state"></a>
+
 ---
 
 Avoid forcing a full component (+ its children) through React and its diffing mechanism 60 times per second.
@@ -38,7 +40,7 @@ Avoid forcing a full component (+ its children) through React and its diffing me
 
 ```jsx
 const [x, setX] = useState(0)
-useFrame(() => setX(x => x + 0.01))
+useFrame(() => setX((x) => x + 0.01))
 // Or, just as bad ...
 // useEffect(() => void setInterval(() => setX(x => x + 0.01), 1), [])
 return <mesh position-x={x} />
@@ -48,11 +50,12 @@ return <mesh position-x={x} />
 
 ```jsx
 const ref = useRef()
-useFrame(() => ref.current.position.x += 0.01)
+useFrame(() => (ref.current.position.x += 0.01))
 return <mesh ref={ref} />
 ```
 
 ### Never let React anywhere near animated updates! <a id="never-let-react-animate"></a>
+
 ---
 
 Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
@@ -77,6 +80,7 @@ function Signal({ active }) {
 ```
 
 ### Never bind often occuring reactive state to a component! <a id="never-bind-reactive-component"></a>
+
 ---
 
 Using state-managers and selected state is fine, but not for updates that happen rapidly!
@@ -87,14 +91,14 @@ Using state-managers and selected state is fine, but not for updates that happen
 import { useSelector } from 'react-redux'
 
 // Assuming that x gets animated inside the store 60fps
-const x = useSelector(state => state.x)
+const x = useSelector((state) => state.x)
 return <mesh position-x={x} />
 ```
 
 #### ✅ Fetch state directly, for instance using [zustand](https://github.com/react-spring/zustand)
 
 ```jsx
-useFrame(() => ref.current.position.x = api.getState().x)
+useFrame(() => (ref.current.position.x = api.getState().x))
 return <mesh ref={ref} />
 ```
 
@@ -102,11 +106,19 @@ return <mesh ref={ref} />
 
 ```jsx
 const ref = useRef()
-useEffect(() => api.subscribe(x => ref.current.position.x = x, state => state.x), [])
+useEffect(
+  () =>
+    api.subscribe(
+      (x) => (ref.current.position.x = x),
+      (state) => state.x,
+    ),
+  [],
+)
 return <mesh ref={ref} />
 ```
 
 ### Do not mount/unmount things indiscriminately! <a id="do-not-mount-unmount-indiscriminately"></a>
+
 ---
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
@@ -120,6 +132,7 @@ Switch React to `@experimental` and flag the canvas as concurrent. Now React wil
 ```
 
 ### Do not re-create objects in loops
+
 ---
 
 Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
@@ -142,6 +155,7 @@ useFrame(() => {
 ```
 
 ### Instead of plain loaders, use useLoader
+
 ---
 
 Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
@@ -152,14 +166,12 @@ Threejs loaders give you the ability to load async assets (models, textures, etc
 function Component() {
   const [texture, set] = useState()
   useEffect(() => void new TextureLoader().load(url, set), [])
-  return texture
-    ? (
-        <mesh>
-          <sphereGeometry />
-          <meshBasicMaterial map={texture} />
-        </mesh>
-      ) 
-    : null
+  return texture ? (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  ) : null
 }
 ```
 

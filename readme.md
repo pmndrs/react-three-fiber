@@ -8,46 +8,29 @@
 [![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
-react-three-fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for threejs on the web and react-native.
+react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
 ```bash
-npm install three react-three-fiber
+npm install three @react-three/fiber
 ```
 
-<p align="center">
-  <a href="https://codesandbox.io/embed/r3f-game-i2160"><img width="274" src="https://i.imgur.com/VydCh6W.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-gamma-correction-kmb9i"><img width="274" src="https://i.imgur.com/e6NhRz6.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-montage-jz9l97qn89"><img width="274" src="https://i.imgur.com/nxRStP8.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-sparks-sbf2i"><img width="274" src="https://i.imgur.com/Fk44Tu6.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-instanced-colors-8fo01"><img width="274" src="https://i.imgur.com/daJIDVE.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-moksha-f1ixt"><img width="274" src="https://i.imgur.com/ltznOJ1.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-bones-3i7iu"><img width="274" src="https://i.imgur.com/OZdSyQy.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-floating-diamonds-prb9t"><img width="274" src="https://i.imgur.com/WWDbcWG.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-volumetric-light-w633u"><img width="274" src="https://i.imgur.com/7E3XKSG.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-particles-ii-pjcc1"><img width="274" src="https://i.imgur.com/QG14IAC.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-gltf-fonts-c671i"><img width="274" src="https://i.imgur.com/SHPhIls.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-cannon-physics-nr84m"><img width="274" src="https://i.imgur.com/M9rupWP.gif" /></a>
-  <a href="https://codesandbox.io/embed/wonderful-chandrasekhar-8l9rrj36j0"><img width="274" src="https://i.imgur.com/HSTGdcO.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-train-l900i"><img width="274" src="https://i.imgur.com/B3AzZVH.gif" /></a>
-  <a href="https://codesandbox.io/embed/r3f-particles-i-q4d2v"><img width="274" src="https://i.imgur.com/XscsWgu.gif" /></a>
-</p>
-<p align="middle">
-  <i>These demos are real, you can click them! They contain the full code, too.</i>
-</p>
+### Why?
 
-#### Why?
-
-Building dynamic scene graphs declaratively with re-usable components makes dealing with threejs easier and brings order and sanity to your codebase. These components react to state changes, are interactive out of the box and can tap into React's infinite ecosystem.
+Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can tap into React's ecosystem.
 
 #### Does it have limitations?
 
-None. Everything that works in threejs will work here. In contrast to "bindings" where a library ships/maintains dozens of wrapper components, it just renders JSX to threejs dynamically: `<mesh />` simply is another expression for `new THREE.Mesh()`. It does not know or target a specific threejs version nor does it need updates for modified, added or removed upstream features.
+None. Everything that works in threejs will work here without exception.
 
-#### Is it slower than raw threejs?
+#### Can it keep up with frequent updates to threejs?
 
-No. Rendering performance is up to threejs and the GPU. Components participate in the renderloop outside of React, without any additional overhead. React is otherwise very efficient in building and managing component-trees, it could potentially outperform manual/imperative apps at scale.
+Yes, because it merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. There is no hard dependency on a particular threejs version, it does not wrap or duplicate a single threejs class.
 
-#### What does it look like?
+#### Is it slower than plain threejs?
+
+There is no additional overhead. Components participate in the renderloop outside of React.
+
+### What does it look like?
 
 <table>
   <tr>
@@ -59,38 +42,46 @@ No. Rendering performance is up to threejs and the GPU. Components participate i
   </tr>
 </table>
 
-```jsx
-import ReactDOM from 'react-dom'
-import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from 'react-three-fiber'
+#### Imports first
 
+```jsx
+import React, { useRef, useState } from 'react'
+import ReactDOM from 'react-dom'
+import { Canvas, useFrame } from '@react-three/fiber'
+```
+
+#### Define a component
+
+```jsx
 function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
-
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => {
-    mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-  })
+  useFrame(() => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
       {...props}
       ref={mesh}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <boxBufferGeometry args={[1, 1, 1]} />
+      <boxGeometry args={[1, 2, 3]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
 }
+```
 
+#### Compose the scene
+
+Either use `Canvas`, which you can think of as a portal to threejs inside your regular dom graph. Everything within it is a [native threejs element](https://threejs.org/docs). If you want to mix Webgl and Html (react-dom) this is what you should use.
+
+```jsx
 ReactDOM.render(
   <Canvas>
     <ambientLight />
@@ -98,41 +89,42 @@ ReactDOM.render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )
+```
+
+Or use react-three-fibers own `render` function, which is a little more low-level but could save you the extra cost of carrying react-dom. It renders into a dom `canvas` element. Use this for Webgl-only apps.
+
+```jsx
+import { render } from '@react-three/fiber'
+
+render(<Scene />, document.querySelector('canvas'))
 ```
 
 <details>
   <summary>Show TypeScript example</summary>
 
 ```tsx
-import ReactDOM from 'react-dom'
-import React, { useRef, useState } from 'react'
-import { Canvas, MeshProps, useFrame } from 'react-three-fiber'
-import type { Mesh } from 'three'
+import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
 
 const Box: React.FC<MeshProps> = (props) => {
   // This reference will give us direct access to the mesh
-  const mesh = useRef<Mesh>()
-
+  const mesh = useRef<THREE.Mesh>(null!)
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => {
-    if (mesh.current) mesh.current.rotation.x = mesh.current.rotation.y += 0.01
-  })
+  useFrame(() => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
       {...props}
       ref={mesh}
-      scale={active ? [1.5, 1.5, 1.5] : [1, 1, 1]}
+      scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <boxBufferGeometry args={[1, 1, 1]} />
+      <boxGeometry args={[1, 2, 3]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
@@ -145,7 +137,7 @@ ReactDOM.render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )
 ```
 
@@ -153,11 +145,11 @@ ReactDOM.render(
 
 ---
 
-# API
+# Documentation
 
 - [api.md](/markdown/api.md)
 - [pitfalls.md](/markdown/pitfalls.md)
-- [recipes.md](/markdown/recipes.md)
+- [testing.md](/packages/test-renderer)
 
 # Fundamentals
 
@@ -188,8 +180,23 @@ Some reading material:
 - [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
 - [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
 - [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
-- [`react-three-gui`](https://github.com/ueno-llc/react-three-gui) &ndash; GUI/debug tools
 
 # How to contribute
 
 If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto `BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH`, `ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682`.
+
+#### Backers
+
+Thank you to all our backers! 🙏
+
+<a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
+  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890"/>
+</a>
+
+#### Contributors
+
+This project exists thanks to all the people who contribute.
+
+<a href="https://github.com/pmndrs/react-three-fiber/graphs/contributors">
+  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" />
+</a>
