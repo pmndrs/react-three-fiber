@@ -2,6 +2,8 @@
 
 ### Monorepo
 
+We've been moving our three-based eco system under the `@react-spring` namespace for a while now. This finally addds the core, `/fiber`. This is better for dicovery and semantic versioning.
+
 ```diff
 --- npm install react-three-fiber
 +++ npm install @react-three/fiber
