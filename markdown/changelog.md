@@ -22,6 +22,25 @@ import { render } from 'react-three-fiber'
 render(<mesh />, document.getElementById('canvas'), { shadows: true, ... })
 ```
 
+- [x] Exchangeable renderer
+
+```jsx
+render(<mesh />, document.getElementById('canvas'), { gl: new SVGRenderer(), ... })
+```
+
+https://codesandbox.io/s/r3f-basic-demo-forked-zcuqh?file=/src/index.js
+
+
+- [x] Optional/exchangeable event system
+
+This could open up opportunities for event-system variants: pointer-events, pointer-lock, VR handheld, native, etc.
+
+```jsx
+import { events } from '@react-three/fiber'
+
+render(<mesh />, document.getElementById('canvas'), { events, ... })
+```
+
 - [x] Moving to zustand for reactive internal state
 
 Makes the entire state model observable, can prevent unnecessary re-render and improve performance.
