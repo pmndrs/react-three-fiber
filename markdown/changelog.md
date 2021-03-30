@@ -33,7 +33,7 @@ https://codesandbox.io/s/r3f-basic-demo-forked-zcuqh?file=/src/index.js
 
 - [x] Optional/exchangeable event system
 
-This could open up opportunities for event-system variants: pointer-events, pointer-lock, VR handheld, native, etc.
+This could open up opportunities for event-system variants: pointer-events, pointer-lock, VR handheld, native, etc. By default the render function does not have events and the bundle won't carry that burden. It's as easy as importing and registering them, though. Canvas has everything inbuilt.
 
 ```jsx
 import { events } from '@react-three/fiber'
