@@ -117,3 +117,7 @@ return (
 - `noEvents={true}` -> `state.raycaster.enabled = false`
 - `shadowMap` -> `shadows`
 - `invalidateFrameloop` -> `frameloop='demand'`
+
+### Still missing
+
+React-native: https://github.com/pmndrs/react-three-fiber/issues/1027
