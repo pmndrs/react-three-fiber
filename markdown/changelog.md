@@ -117,6 +117,7 @@ return (
 - `noEvents={true}` -> `state.raycaster.enabled = false`
 - `shadowMap` -> `shadows`
 - `invalidateFrameloop` -> `frameloop='demand'`
+- `setDefaultCamera`-> `const set = useThree(state => state.set); set({ camera: customCamera })`
 
 ### Still missing
 
