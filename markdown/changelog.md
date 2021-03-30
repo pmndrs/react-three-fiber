@@ -102,6 +102,6 @@ return (
 
 - `pixelRatio` -> `dpr`
 - `colorManagement={false}` -> `linear`
-- `noEvents={true}` -> `state.raycaster,.enabled = false`
+- `noEvents={true}` -> `state.raycaster.enabled = false`
 - `shadowMap` -> `shadows`
 - `invalidateFrameloop` -> `frameloop='demand'`
