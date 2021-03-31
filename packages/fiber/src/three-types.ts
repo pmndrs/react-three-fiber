@@ -238,6 +238,7 @@ export type BufferAttributeProps = Node<THREE.BufferAttribute, typeof THREE.Buff
 export type InstancedBufferAttributeProps = Node<THREE.InstancedBufferAttribute, typeof THREE.InstancedBufferAttribute>
 export type ColorProps = Node<THREE.Color, ColorArray>
 export type FogProps = Node<THREE.Fog, typeof THREE.Fog>
+export type FogExp2Props = Node<THREE.FogExp2, typeof THREE.FogExp2>
 
 declare global {
   namespace JSX {
@@ -392,6 +393,7 @@ declare global {
       instancedBufferAttribute: InstancedBufferAttributeProps
       color: ColorProps
       fog: FogProps
+      fogExp2: FogExp2Props
     }
   }
 }
