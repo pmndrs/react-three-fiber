@@ -85,7 +85,7 @@ function render<TCanvas extends Element>(
     // Enable VR if requested
     if (props.vr) {
       glRenderer.xr.enabled = true
-      glRenderer.setAnimationLoop((timestamp) => advance(timestamp, true, state))
+      glRenderer.setAnimationLoop((timestamp) => advance(timestamp, true))
     }
 
     // Create store
