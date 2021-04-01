@@ -123,7 +123,7 @@ Instead, use:
 const [material, set] = useState()
 return (
   <>
-    <meshBasicMaterial ref={material} />
+    <meshBasicMaterial ref={set} />
     {material && <Foo material={material}>}
   </>
 )
