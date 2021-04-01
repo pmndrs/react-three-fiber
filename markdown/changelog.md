@@ -1,3 +1,10 @@
+# 6.0.2
+
+### Fixes
+
+- setting `vr=true` broke renderer (#1159)
+- SSR warning for using `useLayoutEffect` over `useEffect`
+
 # 6.0.0
 
 ### Monorepo
@@ -30,7 +37,6 @@ render(<mesh />, document.getElementById('canvas'), { gl: new SVGRenderer(), ...
 
 https://codesandbox.io/s/r3f-basic-demo-forked-zcuqh?file=/src/index.js
 
-
 - [x] Optional/exchangeable event system
 
 This could open up opportunities for event-system variants: pointer-events, pointer-lock, VR handheld, native, etc. By default the render function does not have events and the bundle won't carry that burden. It's as easy as importing and registering them, though. Canvas has everything inbuilt.
@@ -49,17 +55,17 @@ Makes the entire state model observable, can prevent unnecessary re-render and i
 // Fetches everything, renders on every change to the state model, no breaking change ...
 const state = useThree()
 // Fetches specific parts, renders only when these change
-const camera = useThree(state => state.camera)
+const camera = useThree((state) => state.camera)
 ```
 
 - [x] Adaptive pixelratio to allow scaling down resolution on movement for expensive scenes etc
 
 ```jsx
 // Since zustand drives state, pixelratio is now reactive
-const pixelRatio = useThree(state => state.pixelRatio)
+const pixelRatio = useThree((state) => state.pixelRatio)
 ```
 
-- [x] Opt in adaptive performance  
+- [x] Opt in adaptive performance
 
 This is an opt in feature that makes it possible to create components that could be dropped into the scene to reduce visuals if the system is in regression, similar to what Sketchfab does (lower textures, fbo's etc on camera movement and so on). What counts as "regression" is up to the user to decide. In the drei library we will offer more and more pre-configured components that tap into this.
 
@@ -86,7 +92,7 @@ Not only good for making looping gifs, also a wonderful tool to have for testing
 ```jsx
 import { advance } from 'react-three-fiber'
 
-// Render a single frame, we can inject custom timestamps 
+// Render a single frame, we can inject custom timestamps
 advance(Date.now())
 ```
 
