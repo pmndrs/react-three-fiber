@@ -187,7 +187,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           // with their respective constructor/set arguments
           // For removed props, try to set default values, if possible
           if (value === DEFAULT + 'remove') {
-            if (targetProp.constructor) {
+            if (targetProp && targetProp.constructor) {
               // use the prop constructor to find the default it should be
               value = new targetProp.constructor(newMemoizedProps.args)
             } else if (currentInstance.constructor) {
