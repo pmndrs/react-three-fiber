@@ -78,8 +78,18 @@ function render<TCanvas extends Element>(
 
   if (!fiber) {
     // If no root has been found, make one
+
+    // Create gl
+    const glRenderer = createRendererInstance(gl, canvas)
+
+    // Enable VR if requested
+    if (props.vr) {
+      glRenderer.xr.enabled = true
+      glRenderer.setAnimationLoop((timestamp) => advance(timestamp, true))
+    }
+
     // Create store
-    store = createStore(applyProps, invalidate, advance, { gl: createRendererInstance(gl, canvas), size, ...props })
+    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
     const state = store.getState()
     const get = state.get
     // Create renderer
@@ -88,12 +98,6 @@ function render<TCanvas extends Element>(
     roots.set(canvas, { fiber, store })
     // Store events internally
     if (events) state.set({ events: events(store) })
-
-    // VR
-    if (props.vr && (gl as THREE.WebGLRenderer).xr && (gl as THREE.WebGLRenderer).setAnimationLoop) {
-      ;(gl as THREE.WebGLRenderer).xr.enabled = true
-      ;(gl as THREE.WebGLRenderer).setAnimationLoop((timestamp: number) => advance(timestamp, true, state))
-    }
   }
 
   if (store && fiber) {
