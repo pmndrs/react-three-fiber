@@ -2,7 +2,9 @@ import * as THREE from 'three'
 import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 
-const test = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'red' }))
+const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'red' }))
+const group = new THREE.Group()
+group.add(mesh)
 
 function Box(props: any) {
   const [hovered, setHovered] = useState(false)
@@ -21,7 +23,7 @@ function Box(props: any) {
 }
 
 function Box2(props: any) {
-  return <primitive object={test} {...props} onClick={() => console.log('hi')} />
+  return <primitive object={group} {...props} onClick={() => console.log('hi')} />
 }
 
 export default function App() {

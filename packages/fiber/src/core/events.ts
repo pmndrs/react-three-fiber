@@ -123,7 +123,7 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
+        const handlers = ((eventObject as unknown) as Instance).__r3f?.handlers
         if (handlers) intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
