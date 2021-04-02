@@ -93,7 +93,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     const rootState = root?.getState?.() ?? {}
     const sameProps: string[] = []
     const handlers: string[] = []
-
     const newMemoizedProps: { [key: string]: any } = {}
 
     let i = 0
@@ -260,8 +259,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
       // Prep interaction handlers
       if (handlers.length) {
-        if (accumulative && root && instance.raycast)
+        if (accumulative && root && instance.raycast) {
           rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
+        }
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: newProps[key] }), {} as EventHandlers)
       }
@@ -416,20 +416,22 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
       // Never dispose of primitives because their state may be kept outside of React!
       if (child.dispose && !child.__r3f.instance) {
+        const objects = child.__r3f.objects
         run(idlePriority, () => {
           // Remove nested child objects
-          removeRecursive(child.__r3f.objects, child)
+          removeRecursive(objects, child)
           removeRecursive(child.children, child, true)
           // Dispose item
           if (child.dispose && child.type !== 'Scene') child.dispose()
-          // Remove references
-          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
-          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-          delete child.__r3f.handlers
-          delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-          delete (child as Partial<Instance>).__r3f
         })
       }
+
+      // Remove references
+      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
+      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
+      delete child.__r3f.handlers
+      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
+      delete (child as Partial<Instance>).__r3f
     }
   }
 

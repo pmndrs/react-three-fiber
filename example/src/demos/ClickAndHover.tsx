@@ -1,5 +1,8 @@
+import * as THREE from 'three'
 import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
+
+const test = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'red' }))
 
 function Box(props: any) {
   const [hovered, setHovered] = useState(false)
@@ -17,10 +20,15 @@ function Box(props: any) {
   )
 }
 
+function Box2(props: any) {
+  return <primitive object={test} {...props} onClick={() => console.log('hi')} />
+}
+
 export default function App() {
   return (
     <Canvas>
-      <Box />
+      <Box position={[-0.5, 0, 0]} />
+      <Box2 position={[0.5, 0, 0]} />
     </Canvas>
   )
 }
