@@ -54,7 +54,7 @@ function Box(props) {
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => (mesh.current.rotation.x += 0.01))
+  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
@@ -94,7 +94,7 @@ const Box: React.FC<MeshProps> = (props) => {
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   // Rotate mesh every frame, this is outside of React without overhead
-  useFrame(() => (mesh.current.rotation.x += 0.01))
+  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
 
   return (
     <mesh
