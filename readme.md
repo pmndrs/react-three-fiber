@@ -42,17 +42,11 @@ There is no additional overhead. Components participate in the renderloop outsid
   </tr>
 </table>
 
-#### Imports first
-
 ```jsx
 import React, { useRef, useState } from 'react'
 import ReactDOM from 'react-dom'
 import { Canvas, useFrame } from '@react-three/fiber'
-```
 
-#### Define a component
-
-```jsx
 function Box(props) {
   // This reference will give us direct access to the mesh
   const mesh = useRef()
@@ -75,13 +69,7 @@ function Box(props) {
     </mesh>
   )
 }
-```
 
-#### Compose the scene
-
-Either use `Canvas`, which you can think of as a portal to threejs inside your regular dom graph. Everything within it is a [native threejs element](https://threejs.org/docs). If you want to mix Webgl and Html (react-dom) this is what you should use.
-
-```jsx
 ReactDOM.render(
   <Canvas>
     <ambientLight />
@@ -91,14 +79,6 @@ ReactDOM.render(
   </Canvas>,
   document.getElementById('root'),
 )
-```
-
-Or use react-three-fibers own `render` function, which is a little more low-level but could save you the extra cost of carrying react-dom. It renders into a dom `canvas` element. Use this for Webgl-only apps.
-
-```jsx
-import { render } from '@react-three/fiber'
-
-render(<Scene />, document.querySelector('canvas'))
 ```
 
 <details>
