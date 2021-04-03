@@ -89,6 +89,7 @@ npm install @types/three
 ```
 
 ```tsx
+import * as THREE from 'three'
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
 import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
