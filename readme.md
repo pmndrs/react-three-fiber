@@ -111,7 +111,7 @@ const Box: React.FC<MeshProps> = (props) => {
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
-      <boxGeometry args={[1, 2, 3]} />
+      <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
   )
