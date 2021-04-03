@@ -55,7 +55,7 @@ function Box(props) {
   const [active, setActive] = useState(false)
   // Rotate mesh every frame, this is outside of React without overhead
   useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
-
+  // Return view, these are regular threejs elements expressed in JSX
   return (
     <mesh
       {...props}
