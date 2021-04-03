@@ -487,7 +487,7 @@ function Asset({ url }) {
   return <primitive object={gltf.scene} />
 }
 
-;<Suspense fallback={<Cube />}>
+<Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
 ```
