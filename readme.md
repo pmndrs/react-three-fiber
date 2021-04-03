@@ -83,8 +83,14 @@ ReactDOM.render(
 
 <details>
   <summary>Show TypeScript example</summary>
+  
+```bash
+npm install @types/three
+```
 
 ```tsx
+import ReactDOM from 'react-dom'
+import React, { useRef, useState } from 'react'
 import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
 
 const Box: React.FC<MeshProps> = (props) => {
