@@ -92,9 +92,9 @@ npm install @types/three
 import * as THREE from 'three'
 import ReactDOM from 'react-dom'
 import React, { useRef, useState } from 'react'
-import { Canvas, MeshProps, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 
-const Box: React.FC<MeshProps> = (props) => {
+const Box: React.FC<JSX.IntrinsicElements['mesh']> = (props) => {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
