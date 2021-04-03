@@ -43,8 +43,8 @@ There is no additional overhead. Components participate in the renderloop outsid
 </table>
 
 ```jsx
-import React, { useRef, useState } from 'react'
 import ReactDOM from 'react-dom'
+import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
