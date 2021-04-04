@@ -1,16 +1,21 @@
 import * as THREE from 'three'
-import React, { useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import React, { useState, useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
 
 const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'red' }))
 const group = new THREE.Group()
 group.add(mesh)
 
 function Box(props: any) {
+  const ref = useRef<THREE.Mesh>(null!)
   const [hovered, setHovered] = useState(false)
   const [clicked, setClicked] = useState(false)
+  useFrame((state) => {
+    ref.current.position.y = Math.sin(state.clock.elapsedTime) / 3
+  })
   return (
     <mesh
+      ref={ref}
       onPointerOver={(e) => setHovered(true)}
       onPointerOut={(e) => setHovered(false)}
       onClick={() => setClicked(!clicked)}
@@ -29,7 +34,9 @@ function Box2(props: any) {
 export default function App() {
   return (
     <Canvas>
-      <Box position={[-0.5, 0, 0]} />
+      <group>
+        <Box position={[-0.5, 0, 0]} />
+      </group>
       <Box2 position={[0.5, 0, 0]} />
     </Canvas>
   )
