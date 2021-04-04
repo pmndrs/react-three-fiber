@@ -4,7 +4,7 @@ import { render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
-import { EventManager } from 'packages/fiber/dist/react-three-fiber.cjs'
+import { EventManager } from '../core/events'
 
 export interface Props
   extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
