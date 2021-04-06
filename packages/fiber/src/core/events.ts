@@ -220,13 +220,13 @@ export function createEvents(store: UseStore<RootState>) {
       // we call onPointerOut and delete the object from the hovered-elements map
       if (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index)) {
         const eventObject = hoveredObj.eventObject
+        hovered.delete(makeId(hoveredObj))
 
         if (!((eventObject as unknown) as Instance).__r3f) {
           return
         }
 
         const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
-        hovered.delete(makeId(hoveredObj))
         if (handlers) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
