@@ -4,7 +4,7 @@ import { UseStore } from 'zustand'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { is } from './is'
 import { RootState } from './store'
-import { EventHandlers } from './events'
+import { EventHandlers, removeInteractivity } from './events'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
@@ -377,25 +377,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  function removeRecursive(array: Instance[], parent: Instance, clone = false) {
-    if (array) {
-      // Three uses splice op's internally we may have to shallow-clone the array in order to safely remove items
-      const target = clone ? [...array] : array
-      target.forEach((child) => removeChild(parent, child))
-    }
+  function removeRecursive(array: Instance[], parent: Instance, dispose: boolean = false) {
+    if (array) [...array].forEach((child) => removeChild(parent, child, dispose))
   }
 
-  function removeInteractivity(node: Instance) {
-    if (node.__r3f && node.__r3f.root) {
-      const rootState = node.__r3f.root.getState();
-      rootState.internal.interaction = rootState.internal.interaction.filter(x => x !== node);
-    }
-  }
-
-  function removeChild(parentInstance: Instance, child: Instance) {
+  function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
       if (child.isObject3D) {
         parentInstance.remove(child)
+        // Remove interactivity
+        if (child.__r3f?.root) {
+          removeInteractivity(child.__r3f.root, (child as unknown) as THREE.Object3D)
+        }
       } else {
         child.parent = null
         if (parentInstance.__r3f.objects)
@@ -410,26 +403,24 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         }
       }
 
-      // Remove interactivity
-      if (child.traverse) {
-        child.traverse(removeInteractivity)
-      } else {
-        removeInteractivity(child)
-      }
-
-      invalidateInstance(parentInstance)
-
       // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
       // Never dispose of primitives because their state may be kept outside of React!
-      if (child.dispose && !child.__r3f.instance) {
-        const objects = child.__r3f.objects
-        run(idlePriority, () => {
-          // Remove nested child objects
-          removeRecursive(objects, child)
-          removeRecursive(child.children, child, true)
-          // Dispose item
-          if (child.dispose && child.type !== 'Scene') child.dispose()
-        })
+      // In order for an object to be able to dispose it has to have
+      //   - a dispose method,
+      //   - it cannot be an <instance object={...} />
+      //   - it cannot be a THREE.Scene, because three has broken it's own api
+      //
+      // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
+      // when the reconciler calls it, but then carry our own check recursively
+      const shouldDispose = dispose === undefined ? child.dispose !== null && !child.__r3f.instance : dispose
+
+      // Remove nested child objects
+      removeRecursive(child.__r3f.objects, child, shouldDispose)
+      removeRecursive(child.children, child, shouldDispose)
+
+      // Dispose item whenever the reconciler feels like it
+      if (shouldDispose && child.dispose && child.type !== 'Scene') {
+        run(idlePriority, () => child.dispose())
       }
 
       // Remove references
@@ -438,6 +429,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       delete child.__r3f.handlers
       delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
       delete (child as Partial<Instance>).__r3f
+
+      invalidateInstance(parentInstance)
     }
   }
 

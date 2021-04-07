@@ -58,8 +58,23 @@ export interface EventManager<TTarget> {
   disconnect?: () => void
 }
 
+function makeId(event: Intersection) {
+  return (event.eventObject || event.object).uuid + '/' + event.index
+}
+
+export function removeInteractivity(store: UseStore<RootState>, object: THREE.Object3D) {
+  const { internal } = store.getState()
+  // Removes every trace of an object from the data store
+  internal.interaction = internal.interaction.filter((o) => o !== object)
+  internal.initialHits = internal.initialHits.filter((o) => o !== object)
+  internal.hovered.forEach((value, key) => {
+    if (value.eventObject === object || value.object === object) {
+      internal.hovered.delete(key)
+    }
+  })
+}
+
 export function createEvents(store: UseStore<RootState>) {
-  const hovered = new Map<string, DomEvent>()
   const temp = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */
@@ -89,10 +104,6 @@ export function createEvents(store: UseStore<RootState>) {
         (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
       ),
     )
-  }
-
-  function makeId(event: Intersection) {
-    return (event.eventObject || event.object).uuid + '/' + event.index
   }
 
   function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
@@ -193,7 +204,10 @@ export function createEvents(store: UseStore<RootState>) {
 
               // Propagation is stopped, remove all other hover records
               // An event handler is only allowed to flush other handlers if it is hovered itself
-              if (hovered.size && Array.from(hovered.values()).find((i) => i.eventObject === hit.eventObject)) {
+              if (
+                internal.hovered.size &&
+                Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
+              ) {
                 // Objects cannot flush out higher up objects that have already caught the event
                 const higher = intersections.slice(0, intersections.indexOf(hit))
                 cancelPointer([...higher, hit])
@@ -215,13 +229,14 @@ export function createEvents(store: UseStore<RootState>) {
   }
 
   function cancelPointer(hits: Intersection[]) {
-    Array.from(hovered.values()).forEach((hoveredObj) => {
+    const { internal } = store.getState()
+    Array.from(internal.hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index)) {
         const eventObject = hoveredObj.eventObject
         const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
-        hovered.delete(makeId(hoveredObj))
+        internal.hovered.delete(makeId(hoveredObj))
         if (handlers) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
@@ -267,10 +282,10 @@ export function createEvents(store: UseStore<RootState>) {
           if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
             // When enter or out is present take care of hover-state
             const id = makeId(data)
-            const hoveredItem = hovered.get(id)
+            const hoveredItem = internal.hovered.get(id)
             if (!hoveredItem) {
               // If the object wasn't previously hovered, book it and call its handler
-              hovered.set(id, data)
+              internal.hovered.set(id, data)
               handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
               handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
             } else if (hoveredItem.stopped) {

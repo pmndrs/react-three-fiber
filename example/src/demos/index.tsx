@@ -19,6 +19,7 @@ const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./Cli
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRenderer')), dev: true, bright: true }
 const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true, bright: true }
 const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
+const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 
 export {
   Reparenting,
@@ -33,4 +34,5 @@ export {
   SVGRenderer,
   ResetProps,
   Animation,
+  AutoDispose,
 }

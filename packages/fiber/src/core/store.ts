@@ -4,7 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
-import { EventManager } from './events'
+import { DomEvent, EventManager } from './events'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -54,6 +54,7 @@ export type InternalState = {
   lastProps: StoreProps
 
   interaction: THREE.Object3D[]
+  hovered: Map<string, DomEvent>
   subscribers: Subscription[]
   captured: Intersection[] | undefined
   initialClick: [x: number, y: number]
@@ -275,6 +276,7 @@ const createStore = (
         lastProps: props,
 
         interaction: [],
+        hovered: new Map<string, DomEvent>(),
         subscribers: [],
         captured: undefined,
         initialClick: [0, 0],
