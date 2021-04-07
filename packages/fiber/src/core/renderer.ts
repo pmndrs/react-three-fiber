@@ -385,6 +385,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
+  function removeInteractivity(node: Instance) {
+    if (node.__r3f && node.__r3f.root) {
+      const rootState = node.__r3f.root.getState();
+      rootState.internal.interaction = rootState.internal.interaction.filter(x => x !== node);
+    }
+  }
+
   function removeChild(parentInstance: Instance, child: Instance) {
     if (child) {
       if (child.isObject3D) {
@@ -404,11 +411,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       }
 
       // Remove interactivity
-      if (child.__r3f.root) {
-        const rootState = child.__r3f.root.getState()
-        rootState.internal.interaction = rootState.internal.interaction.filter(
-          (x) => ((x as unknown) as Instance) !== child,
-        )
+      if (child.traverse) {
+        child.traverse(removeInteractivity)
+      } else {
+        removeInteractivity(child)
       }
 
       invalidateInstance(parentInstance)
