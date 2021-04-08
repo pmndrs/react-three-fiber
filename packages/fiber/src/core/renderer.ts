@@ -124,8 +124,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       // Event-handlers ...
       //   are functions, that
       //   start with "on", and
-      //   contain the name "Pointer", "Click", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|ContextMenu|Wheel)/.test(objectKeys[i])) {
+      //   contain the name "Pointer", "Click", "DoubleClick", "ContextMenu", or "Wheel"
+      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(objectKeys[i])) {
         handlers.push(objectKeys[i])
       }
     }
