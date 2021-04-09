@@ -188,10 +188,10 @@ function Component() {
 
 ## Rendering only when needed
 
-By default it renders like a game loop 60fps. Switch on `invalidateFrameloop` to activate loop invalidation. Now it will render on demand when it detects prop changes.
+By default it renders like a game loop 60fps. Set `frameloop="demand"` to activate loop invalidation. Now it will render on demand when it detects prop changes.
 
 ```jsx
-<Canvas invalidateFrameloop ... />
+<Canvas frameloop="demand" ... />
 ```
 
 Sometimes you want to render single frames manually, for instance when you're dealing with async stuff:
