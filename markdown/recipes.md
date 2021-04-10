@@ -188,17 +188,26 @@ function Component() {
 
 ## Rendering only when needed
 
-By default it renders like a game loop 60fps. Switch on `invalidateFrameloop` to activate loop invalidation. Now it will render on demand when it detects prop changes.
+By default it renders like a game loop 60fps. Set `frameloop="demand"` to activate loop invalidation. Now it will render on demand when it detects prop changes.
 
 ```jsx
-<Canvas invalidateFrameloop ... />
+<Canvas frameloop="demand" ... />
 ```
 
 Sometimes you want to render single frames manually, for instance when you're dealing with async stuff:
 
 ```jsx
-const { invalidate } = useThree()
+const invalidate = useThree(state => state.invalidate)
+// request a frame for *this* root
 const texture = useMemo(() => loader.load(url, invalidate), [url])
+```
+
+For cases where you want to want to invalidate all roots:
+
+```jsx
+import { invalidate } from '@react-three/fiber'
+// request a frame for all roots
+invalidate()
 ```
 
 For camera controls here's [an example sandbox](https://codesandbox.io/s/r3f-invalidate-frameloop-fps-e0g9z) which uses:
