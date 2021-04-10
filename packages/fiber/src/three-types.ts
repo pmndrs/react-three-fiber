@@ -16,7 +16,7 @@ export type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']> | Paramet
 export type Vector4 = THREE.Vector4 | Parameters<THREE.Vector4['set']> | Parameters<THREE.Vector4['setScalar']>[0]
 export type Color = ConstructorParameters<typeof THREE.Color> | THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
 export type ColorArray = typeof THREE.Color | Parameters<THREE.Color['set']>
-export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>
+export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>[0]
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
 export interface NodeProps<T, P> {
