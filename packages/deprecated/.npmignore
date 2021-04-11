@@ -1,0 +1,8 @@
+examples/
+example/
+.codesandbox/
+.github/
+.husky/
+markdown/
+src/
+tests/
