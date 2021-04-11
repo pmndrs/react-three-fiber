@@ -25,9 +25,6 @@
   <a href="https://codesandbox.io/embed/r3f-train-l900i"><img width="274" src="https://i.imgur.com/B3AzZVH.gif" /></a>
   <a href="https://codesandbox.io/embed/r3f-particles-i-q4d2v"><img width="274" src="https://i.imgur.com/XscsWgu.gif" /></a>
 </p>
-<p align="middle">
-  <i>These demos are real, you can click them! They contain the full code, too.</i>
-</p>
 
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
