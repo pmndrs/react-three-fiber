@@ -412,23 +412,29 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       //
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
       // when the reconciler calls it, but then carry our own check recursively
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !child.__r3f.instance : dispose
+      const isInstance = child.__r3f?.instance
+      const shouldDispose = dispose === undefined ? child.dispose !== null && !isInstance : dispose
 
-      // Remove nested child objects
-      removeRecursive(child.__r3f.objects, child, shouldDispose)
-      removeRecursive(child.children, child, shouldDispose)
+      // Remove nested child objects. Primitives should not have objects and children that are
+      // attached to them declaratively ...
+      if (!isInstance) {
+        removeRecursive(child.__r3f?.objects, child, shouldDispose)
+        removeRecursive(child.children, child, shouldDispose)
+      }
+
+      // Remove references
+      if (child.__r3f) {
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
+        delete child.__r3f.handlers
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
+        delete (child as Partial<Instance>).__r3f
+      }
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
         run(idlePriority, () => child.dispose())
       }
-
-      // Remove references
-      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
-      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-      delete child.__r3f.handlers
-      delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-      delete (child as Partial<Instance>).__r3f
 
       invalidateInstance(parentInstance)
     }
