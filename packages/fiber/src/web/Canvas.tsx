@@ -19,7 +19,7 @@ export interface Props
 // useLayoutEffect in the browser.
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
 
-export function Canvas({ children, resize, style, className, events, ...props }: Props) {
+export function Canvas({ children, resize, id, style, className, events, ...props }: Props) {
   const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvas = React.useRef<HTMLCanvasElement>(null!)
   useIsomorphicLayoutEffect(() => {
@@ -34,6 +34,7 @@ export function Canvas({ children, resize, style, className, events, ...props }:
   return (
     <div
       ref={ref}
+      id={id}
       className={className}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
       <canvas ref={canvas} style={{ display: 'block' }} />

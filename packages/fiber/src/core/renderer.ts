@@ -206,7 +206,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
             }
           }
 
-          // Special treatment for objects with support for set/copy
+          // Special treatment for objects with support for set/copy, and layers
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
             // If value is an array
             if (Array.isArray(value)) {
@@ -231,6 +231,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
               const isColor = targetProp instanceof THREE.Color
               // Allow setting array scalars
               if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
+              // Layers have no copy function, we must therefore copy the mask property
+              if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
               // Otherwise just set ...
               else targetProp.set(value)
               // Auto-convert sRGB colors, for now ...

@@ -20,6 +20,7 @@ const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRe
 const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true, bright: true }
 const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
+const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
 
 export {
   Reparenting,
@@ -35,4 +36,5 @@ export {
   ResetProps,
   Animation,
   AutoDispose,
+  Layers,
 }
