@@ -232,7 +232,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
               // Allow setting array scalars
               if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
               // Layers have no copy function, we must therefore copy the mask property
-              if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
+              else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
               // Otherwise just set ...
               else targetProp.set(value)
               // Auto-convert sRGB colors, for now ...
