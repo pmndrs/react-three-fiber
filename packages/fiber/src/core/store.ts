@@ -176,7 +176,6 @@ const createStore = (
       : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     if (!isCamera) {
       camera.position.z = 5
-      if (orthographic) camera.zoom = 100
       if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
       // Always look at center by default
       camera.lookAt(0, 0, 0)
