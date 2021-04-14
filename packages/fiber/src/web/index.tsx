@@ -186,8 +186,7 @@ function createPortal(
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
-  // @ts-ignore
-  version: typeof R3F_VERSION !== 'undefined' ? R3F_VERSION : '0.0.0',
+  version: '17.0.2',
 })
 
 export * from '../core/hooks'
