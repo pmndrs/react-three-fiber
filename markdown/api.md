@@ -569,3 +569,28 @@ function App() {
       <context.Provider value={value}>
         {/* children can now read state from context */}
 ```
+
+There's also a ready-made solution in drei: [useContextBridge](https://github.com/pmndrs/drei#usecontextbridge) which allows you to forward contexts provided above the <Canvas /> to be consumed within it.
+
+```jsx
+function SceneWrapper() {
+  // bridge any number of contexts
+  const ContextBridge = useContextBridge(ThemeContext, GreetingContext)
+  return (
+    <Canvas>
+      <ContextBridge>
+        <Scene />
+      </ContextBridge>
+    </Canvas>
+  )
+}
+
+function Scene() {
+  // we can now consume a context within the Canvas
+  const theme = React.useContext(ThemeContext)
+  const greeting = React.useContext(GreetingContext)
+  return (
+    //...
+  )
+}
+```
