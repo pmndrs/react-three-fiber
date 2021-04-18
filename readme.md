@@ -150,9 +150,9 @@ Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 
 # Documentation
 
-- [api.md](/markdown/api.md)
-- [pitfalls.md](/markdown/pitfalls.md)
-- [testing.md](/packages/test-renderer)
+Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber) for documentation, tutorials and examples.
+
+<a href="https://docs.pmnd.rs/react-three-fiber"><img src="/markdown/docs.jpg"></a>
 
 # Fundamentals
 
