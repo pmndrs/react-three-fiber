@@ -182,7 +182,7 @@ const createStore = (
     }
 
     function setDpr(dpr: Dpr) {
-      return Array.isArray(dpr) ? Math.max(Math.min(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+      return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
     }
     const initialDpr = setDpr(dpr)
 
