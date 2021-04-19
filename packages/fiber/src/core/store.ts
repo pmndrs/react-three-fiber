@@ -165,7 +165,8 @@ const createStore = (
   const rootState = create<RootState>((set, get) => {
     // Create custom raycaster
     const raycaster = new THREE.Raycaster() as Raycaster
-    applyProps(raycaster as any, { enabled: true, ...raycastOptions }, {})
+    const { params, ...options } = raycastOptions || {}
+    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } }, {})
 
     // Create default camera
     const isCamera = cameraOptions instanceof THREE.Camera

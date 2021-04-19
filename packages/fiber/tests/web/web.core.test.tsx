@@ -23,6 +23,13 @@ import { RootState } from '../../src/core/store'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
+beforeAll(() => {
+  Object.defineProperty(window, 'devicePixelRatio', {
+    configurable: true,
+    value: 2,
+  })
+})
+
 describe('web core', () => {
   let canvas: HTMLCanvasElement = null!
 
@@ -219,12 +226,12 @@ describe('web core', () => {
     let state: UseStore<RootState> = null!
     await act(async () => {
       state = render(<group />, canvas, {
-        dpr: [1, 10],
+        dpr: [1, 2],
         performance: { min: 0.2 },
       })
     })
 
-    expect(state.getState().viewport.initialDpr).toEqual(10)
+    expect(state.getState().viewport.initialDpr).toEqual(2)
     expect(state.getState().performance.min).toEqual(0.2)
     expect(state.getState().performance.current).toEqual(1)
 
