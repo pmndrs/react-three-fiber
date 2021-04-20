@@ -73,6 +73,7 @@ export type RootState = {
 
   vr: boolean
   linear: boolean
+  flat: boolean
   frameloop: 'always' | 'demand' | 'never'
   performance: Performance
 
@@ -102,6 +103,7 @@ export type StoreProps = {
   vr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
+  flat?: boolean
   orthographic?: boolean
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
@@ -138,6 +140,7 @@ const createStore = (
     size,
     shadows = false,
     linear = false,
+    flat = false,
     vr = false,
     orthographic = false,
     frameloop = 'always',
@@ -158,7 +161,7 @@ const createStore = (
 
   // Set color management
   if (!linear) {
-    gl.toneMapping = THREE.ACESFilmicToneMapping
+    if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
     gl.outputEncoding = THREE.sRGBEncoding
   }
 
@@ -220,6 +223,7 @@ const createStore = (
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
       linear,
+      flat,
       scene: prepare<THREE.Scene>(new THREE.Scene()),
       camera,
       raycaster,

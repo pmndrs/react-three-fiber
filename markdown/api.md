@@ -48,6 +48,7 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   raycaster                     // Props that go into the default raycaster
   shadows                       // Props that go into gl.shadowMap, can also be set true for PCFsoft
   linear = false                // True by default for automatic sRGB encoding and gamma correction
+  flat = false                  // If true uses THREE.NoToneMapping, otherwise THREE.ACESFilmicToneMapping
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   mode = "blocking"             // React mode: legacy | blocking | concurrent
   resize = undefined            // Resize config, see react-use-measure's options
@@ -80,7 +81,7 @@ A default _scene_ (into which all the JSX is rendered) and a _raycaster_
 
 A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }` (consider polyfills for [Safari support](recipes.md#safari-support))
 
-The colorspace will be set to sRGB (if `linear` is not false), all colors and textures will be [auto-converted](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs).
+The colorspace will be set to sRGB (unless `linear` is true), all colors and textures will be [auto-converted](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs). Unless `flat` is true it will set up THREE.ACESFilmicToneMapping for slightly more contrast.
 
 # Render function
 
@@ -487,7 +488,7 @@ function Asset({ url }) {
   return <primitive object={gltf.scene} />
 }
 
-<Suspense fallback={<Cube />}>
+;<Suspense fallback={<Cube />}>
   <Asset url="/spaceship.gltf" />
 </Suspense>
 ```
