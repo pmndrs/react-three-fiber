@@ -165,6 +165,7 @@ Some reading material:
 - [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
 - [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
 - [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 
 # How to contribute
 
