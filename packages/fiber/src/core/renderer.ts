@@ -430,7 +430,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete child.__r3f.handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-        delete (child as Partial<Instance>).__r3f
+        if (!isInstance) delete (child as Partial<Instance>).__r3f
       }
 
       // Dispose item whenever the reconciler feels like it

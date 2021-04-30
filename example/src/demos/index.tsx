@@ -21,6 +21,7 @@ const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetP
 const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
+const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
 
 export {
   Reparenting,
@@ -37,4 +38,5 @@ export {
   Animation,
   AutoDispose,
   Layers,
+  Test,
 }

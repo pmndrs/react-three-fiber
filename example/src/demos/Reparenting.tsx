@@ -30,7 +30,7 @@ export default function Group() {
   const [ref1, set1] = useState()
   const [ref2, set2] = useState()
   return (
-    <Canvas>
+    <Canvas onCreated={() => console.log('onCreated')}>
       <group>
         <group ref={set1} position={[0, 0, 0]} />
         <group ref={set2} position={[2, 0, 0]} />
