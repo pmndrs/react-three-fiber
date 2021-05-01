@@ -356,7 +356,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           parentInstance[child.attach] = child
         }
       }
-
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -368,13 +367,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         child.parent = parentInstance
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
-        // TODO: the order is out of whack if data objects are present, has to be recalculated
         const index = restSiblings.indexOf(beforeChild)
         parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
-        updateInstance(child)
       } else {
-        appendChild(parentInstance, child)
-      } // TODO: order!!!
+        if (child.attachArray) {
+          parentInstance.__r3f.objects.push(child)
+          child.parent = parentInstance
+          const array = parentInstance[child.attachArray]
+          if (!is.arr(array)) parentInstance[child.attachArray] = []
+          array.splice(array.indexOf(beforeChild), 0, child)
+        } else return appendChild(parentInstance, child)
+      }
+      updateInstance(child)
       invalidateInstance(child)
     }
   }
