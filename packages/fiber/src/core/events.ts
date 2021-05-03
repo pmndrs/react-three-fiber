@@ -214,8 +214,9 @@ export function createEvents(store: UseStore<RootState>) {
               }
             }
           },
-          target: { ...event.target, setPointerCapture, releasePointerCapture },
-          currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
+          // there should be a distinction between target and currentTarget
+          target: { setPointerCapture, releasePointerCapture },
+          currentTarget: { setPointerCapture, releasePointerCapture },
           sourceEvent: event,
         }
 
