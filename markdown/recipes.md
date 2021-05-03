@@ -76,9 +76,9 @@ function Effects() {
 ```jsx
 function Camera(props) {
   const ref = useRef()
-  const { setDefaultCamera } = useThree()
+  const set = useThree(state => state.set)
   // Make the camera known to the system
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useEffect(() => void set({ camera: ref.current }), [])
   // Update it every frame
   useFrame(() => ref.current.updateMatrixWorld())
   return <perspectiveCamera ref={ref} {...props} />
