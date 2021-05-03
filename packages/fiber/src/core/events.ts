@@ -16,6 +16,8 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
   stopPropagation: () => void
   sourceEvent: TSourceEvent
   delta: number
+  spaceX: number
+  spaceY: number
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -186,6 +188,8 @@ export function createEvents(store: UseStore<RootState>) {
         let raycastEvent: any = {
           ...hit,
           ...extractEventProps,
+          spaceX: mouse.x,
+          spaceY: mouse.y,
           intersections,
           stopped: localState.stopped,
           delta,
