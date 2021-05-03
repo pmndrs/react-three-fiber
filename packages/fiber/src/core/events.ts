@@ -146,8 +146,13 @@ export function createEvents(store: UseStore<RootState>) {
   function patchIntersects(intersections: Intersection[], event: DomEvent) {
     const { internal } = store.getState()
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if ('pointerId' in event && internal.capturedMap.has(event.pointerId))
+    if (
+      'pointerId' in event &&
+      internal.capturedMap.has(event.pointerId) &&
+      !intersections.find((hit) => hit.eventObject === internal.capturedMap.get(event.pointerId)?.eventObject)
+    ) {
       intersections.push(internal.capturedMap.get(event.pointerId)!)
+    }
     return intersections
   }
 
