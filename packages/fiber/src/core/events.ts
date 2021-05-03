@@ -163,6 +163,8 @@ export function createEvents(store: UseStore<RootState>) {
       const localState = { stopped: false }
 
       for (const hit of intersections) {
+        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.eventObject === hit.eventObject
+
         const setPointerCapture = (id: number) => {
           // Maybe we should set a warning if the eventId was already captured
           internal.capturedMap.set(id, hit)
@@ -205,8 +207,8 @@ export function createEvents(store: UseStore<RootState>) {
             }
           },
           // there should be a distinction between target and currentTarget
-          target: { setPointerCapture, releasePointerCapture },
-          currentTarget: { setPointerCapture, releasePointerCapture },
+          target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+          currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
           sourceEvent: event,
         }
 
