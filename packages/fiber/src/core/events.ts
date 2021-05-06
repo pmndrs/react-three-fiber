@@ -173,7 +173,8 @@ export function createEvents(store: UseStore<RootState>) {
         const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.eventObject === hit.eventObject
 
         const setPointerCapture = (id: number) => {
-          // Maybe we should set a warning if the eventId was already captured
+          // A target can steal the pointer capture from another one, so there
+          // is no need to check whether the pointerId was already set.
           internal.capturedMap.set(id, hit)
           // Call the original event now
           ;(event.target as Element).setPointerCapture(id)
@@ -257,7 +258,9 @@ export function createEvents(store: UseStore<RootState>) {
         return () => cancelPointer([])
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
-          if ('pointerId' in event) store.getState().internal.capturedMap.delete(event.pointerId)
+          if ('pointerId' in event) {
+            store.getState().internal.capturedMap.delete(event.pointerId)
+          }
           cancelPointer([])
         }
     }
