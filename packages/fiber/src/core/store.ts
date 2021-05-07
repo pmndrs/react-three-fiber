@@ -165,6 +165,12 @@ const createStore = (
     gl.outputEncoding = THREE.sRGBEncoding
   }
 
+  // clock.elapsedTime is updated using advance(timestamp)
+  if (frameloop === 'never') {
+    clock.stop()
+    clock.elapsedTime = 0
+  }
+
   const rootState = create<RootState>((set, get) => {
     // Create custom raycaster
     const raycaster = new THREE.Raycaster() as Raycaster

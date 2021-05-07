@@ -23,7 +23,13 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
 
 function render(timestamp: number, state: RootState) {
   // Run local effects
-  const delta = state.clock.getDelta()
+  let delta = state.clock.getDelta()
+  // In frameloop='never' mode, clock times are updated using the provided timestamp
+  if (state.frameloop === 'never' && typeof timestamp === 'number') {
+    delta = timestamp - state.clock.elapsedTime
+    state.clock.oldTime = state.clock.elapsedTime
+    state.clock.elapsedTime = timestamp
+  }
   // Call subscribers (useFrame)
   for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
   // Render content
