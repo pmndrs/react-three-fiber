@@ -4,7 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
-import { DomEvent, EventManager } from './events'
+import { DomEvent, EventManager, ThreeEvent } from './events'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -88,7 +88,7 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
-  onPointerMissed?: () => void
+  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 
   events: EventManager<any>
   internal: InternalState
@@ -117,7 +117,7 @@ export type StoreProps = {
           ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
           ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
       >
-  onPointerMissed?: () => void
+  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 }
 
 export type ApplyProps = (

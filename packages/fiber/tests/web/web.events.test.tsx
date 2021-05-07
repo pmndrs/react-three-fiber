@@ -61,7 +61,31 @@ describe('events ', () => {
     fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
 
     expect(handleClick).not.toHaveBeenCalled()
-    expect(handleMissed).toHaveBeenCalled()
+    expect(handleMissed).toHaveBeenCalledWith(evt)
+  })
+
+  it('can handle onPointerMissed on Canvas', async () => {
+    const handleMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onPointerMissed={handleMissed}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = new MouseEvent('click')
+    //@ts-ignore
+    evt.offsetX = 0
+    //@ts-ignore
+    evt.offsetY = 0
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
+    expect(handleMissed).toHaveBeenCalledWith(evt)
   })
 
   it('can handle onPointerMove', async () => {

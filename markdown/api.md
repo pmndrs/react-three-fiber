@@ -277,7 +277,7 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerEnter={(e) => console.log('enter')} // see note 1
   onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
-  onPointerMissed={() => console.log('missed')}
+  onPointerMissed={(e) => console.log('missed')}
   onUpdate={(self) => console.log('props have been updated')}
 />
 ```
@@ -422,7 +422,7 @@ const {
   advance, // Advance one tick, given that frameloop === 'never', (timestamp: number, runGlobalEffects?: boolean) => void
   setSize, // Resize the canvs, (width: number, height: number) => void
   setDpr, // Reset the pixel-ratio, (dpr: Dpr) => void
-  onPointerMissed, // () => void
+  onPointerMissed, // (event: ThreeEvent<PointerEvent>) => void
   events: {
     connected, // Event-target (for instance a dom node), TTarget | boolean
     handlers, // Pointer-event handlers (pointermove, up, down, etc), Events
