@@ -16,6 +16,8 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
   stopPropagation: () => void
   sourceEvent: TSourceEvent
   delta: number
+  spaceX: number
+  spaceY: number
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -146,10 +148,12 @@ export function createEvents(store: UseStore<RootState>) {
   function patchIntersects(intersections: Intersection[], event: DomEvent) {
     const { internal } = store.getState()
     // If the interaction is captured take that into account, the captured event has to be part of the intersects
-    if (internal.captured && event.type !== 'click' && event.type !== 'wheel') {
-      internal.captured.forEach((captured) => {
-        if (!intersections.find((hit) => hit.eventObject === captured.eventObject)) intersections.push(captured)
-      })
+    if (
+      'pointerId' in event &&
+      internal.capturedMap.has(event.pointerId) &&
+      !intersections.find((hit) => hit.eventObject === internal.capturedMap.get(event.pointerId)?.eventObject)
+    ) {
+      intersections.push(internal.capturedMap.get(event.pointerId)!)
     }
     return intersections
   }
@@ -162,20 +166,17 @@ export function createEvents(store: UseStore<RootState>) {
       const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
       const delta = event.type === 'click' ? calculateDistance(event) : 0
       const releasePointerCapture = (id: number) => (event.target as Element).releasePointerCapture(id)
-      const localState = { stopped: false, captured: false }
+
+      const localState = { stopped: false }
 
       for (const hit of intersections) {
+        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.eventObject === hit.eventObject
+
         const setPointerCapture = (id: number) => {
-          // If the hit is going to be captured flag that we're in captured state
-          if (!localState.captured) {
-            localState.captured = true
-            // The captured hit array is reset to collect hits
-            internal.captured = []
-          }
-          // Push hits to the array
-          if (internal.captured)
-            internal.captured.push(hit)
-            // Call the original event now
+          // A target can steal the pointer capture from another one, so there
+          // is no need to check whether the pointerId was already set.
+          internal.capturedMap.set(id, hit)
+          // Call the original event now
           ;(event.target as Element).setPointerCapture(id)
         }
 
@@ -188,6 +189,8 @@ export function createEvents(store: UseStore<RootState>) {
         let raycastEvent: any = {
           ...hit,
           ...extractEventProps,
+          spaceX: mouse.x,
+          spaceY: mouse.y,
           intersections,
           stopped: localState.stopped,
           delta,
@@ -198,8 +201,7 @@ export function createEvents(store: UseStore<RootState>) {
           stopPropagation: () => {
             // https://github.com/pmndrs/react-three-fiber/issues/596
             // Events are not allowed to stop propagation if the pointer has been captured
-            const cap = internal.captured
-            if (!cap || cap.find((h) => h.eventObject.id === hit.eventObject.id)) {
+            if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
               raycastEvent.stopped = localState.stopped = true
 
               // Propagation is stopped, remove all other hover records
@@ -214,8 +216,9 @@ export function createEvents(store: UseStore<RootState>) {
               }
             }
           },
-          target: { ...event.target, setPointerCapture, releasePointerCapture },
-          currentTarget: { ...event.currentTarget, setPointerCapture, releasePointerCapture },
+          // there should be a distinction between target and currentTarget
+          target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+          currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
           sourceEvent: event,
         }
 
@@ -254,7 +257,12 @@ export function createEvents(store: UseStore<RootState>) {
       case 'onPointerCancel':
         return () => cancelPointer([])
       case 'onLostPointerCapture':
-        return () => ((store.getState().internal.captured = undefined), cancelPointer([]))
+        return (event: DomEvent) => {
+          if ('pointerId' in event) {
+            store.getState().internal.capturedMap.delete(event.pointerId)
+          }
+          cancelPointer([])
+        }
     }
 
     // Any other pointer goes here ...

@@ -56,7 +56,7 @@ export type InternalState = {
   interaction: THREE.Object3D[]
   hovered: Map<string, DomEvent>
   subscribers: Subscription[]
-  captured: Intersection[] | undefined
+  capturedMap: Map<number, Intersection>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
@@ -282,9 +282,9 @@ const createStore = (
         interaction: [],
         hovered: new Map<string, DomEvent>(),
         subscribers: [],
-        captured: undefined,
         initialClick: [0, 0],
         initialHits: [],
+        capturedMap: new Map(),
 
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           set(({ internal }) => ({

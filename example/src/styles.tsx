@@ -64,6 +64,10 @@ const Global = createGlobalStyle`
     color: black;
     background: white;
   }
+
+  canvas {
+    touch-action: none;
+  }
 `
 
 export { Global, Page }
