@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "6.0.19",
+  "version": "6.0.20",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -49,7 +49,7 @@
     "scheduler": "^0.20.2",
     "use-asset": "^1.0.4",
     "utility-types": "^3.10.0",
-    "zustand": "^3.3.3"
+    "zustand": "^3.5.1"
   },
   "peerDependencies": {
     "react": ">=17.0",
