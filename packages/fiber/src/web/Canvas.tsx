@@ -12,6 +12,7 @@ export interface Props
   children: React.ReactNode
   resize?: ResizeOptions
   events?: (store: UseStore<RootState>) => EventManager<any>
+  fallbackContent?: React.ReactNode
 }
 
 // React currently throws a warning when using useLayoutEffect on the server.
@@ -19,7 +20,7 @@ export interface Props
 // useLayoutEffect in the browser.
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
 
-export function Canvas({ children, tabIndex, resize, id, style, className, events, ...props }: Props) {
+export function Canvas({ children, tabIndex, resize, id, style, className, events, fallbackContent, ...props }: Props) {
   const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvas = React.useRef<HTMLCanvasElement>(null!)
   useIsomorphicLayoutEffect(() => {
@@ -38,7 +39,9 @@ export function Canvas({ children, tabIndex, resize, id, style, className, event
       className={className}
       tabIndex={tabIndex}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas ref={canvas} style={{ display: 'block' }} />
+      <canvas ref={canvas} style={{ display: 'block' }}>
+        {fallbackContent}
+      </canvas>
     </div>
   )
 }

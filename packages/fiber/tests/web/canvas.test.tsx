@@ -25,6 +25,19 @@ describe('web Canvas', () => {
     expect(renderer.container).toMatchSnapshot()
   })
 
+  it('should correctly mount with fallback content', async () => {
+    let renderer: RenderResult = null!
+    await act(async () => {
+      renderer = render(
+        <Canvas fallbackContent={<div>Canvas is unsupported in this browser</div>}>
+          <group />
+        </Canvas>,
+      )
+    })
+
+    expect(renderer.container).toMatchSnapshot()
+  })
+
   it('should correctly unmount', async () => {
     let renderer: RenderResult = null!
     await act(async () => {
