@@ -333,7 +333,7 @@ export function createEvents(store: UseStore<RootState>) {
       if ((name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick') && !hits.length) {
         if (calculateDistance(event) <= 2) {
           pointerMissed(event, internal.interaction)
-          if (onPointerMissed) onPointerMissed()
+          if (onPointerMissed) onPointerMissed(event as ThreeEvent<PointerEvent>)
         }
       }
     }
