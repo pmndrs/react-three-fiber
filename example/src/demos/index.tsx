@@ -22,6 +22,13 @@ const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animati
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
+const SuspenseAndErrors = {
+  descr: '',
+  tags: [],
+  Component: lazy(() => import('./SuspenseAndErrors')),
+  dev: true,
+  bright: true,
+}
 
 export {
   Reparenting,
@@ -39,4 +46,5 @@ export {
   AutoDispose,
   Layers,
   Test,
+  SuspenseAndErrors,
 }

@@ -40,7 +40,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
   // Subscribe/unsub
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const unsubscribe = subscribe(ref, renderPriority)
     return () => unsubscribe()
   }, [renderPriority, subscribe])
@@ -83,7 +83,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
                 res(data)
               },
               onProgress,
-              (error) => reject(error.message ?? `failure loading ${input}`),
+              (error) => reject(error.message ?? `Could not load ${input}`),
             ),
           ),
       ),
