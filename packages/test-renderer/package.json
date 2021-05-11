@@ -21,9 +21,6 @@
       "index.tsx"
     ]
   },
-  "dependencies": {
-    "zustand": "^3.3.3"
-  },
   "peerDependencies": {
     "react": ">=17.0",
     "@react-three/fiber": ">=6.0",
