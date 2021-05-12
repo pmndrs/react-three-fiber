@@ -22,6 +22,7 @@
     ]
   },
   "scripts": {
+    "changeset:add": "changeset add",
     "postinstall": "preconstruct dev",
     "build": "preconstruct build",
     "dev": "preconstruct dev",
@@ -30,13 +31,16 @@
     "test": "jest --coverage",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
-    "validate": "preconstruct validate"
+    "validate": "preconstruct validate",
+    "release": "yarn build && yarn changeset publish",
+    "vers": "yarn changeset version"
   },
   "devDependencies": {
     "@babel/core": "7.14.0",
     "@babel/preset-env": "7.14.1",
     "@babel/preset-react": "7.13.13",
     "@babel/preset-typescript": "^7.13.0",
+    "@changesets/cli": "^2.16.0",
     "@preconstruct/cli": "^2.1.0",
     "@testing-library/react": "^11.2.6",
     "@types/jest": "^26.0.23",
