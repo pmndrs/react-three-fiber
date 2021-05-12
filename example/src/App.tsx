@@ -1,18 +1,37 @@
 import React, { Suspense } from 'react'
 import styled from 'styled-components'
 import { HashRouter, Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
+import { useErrorBoundary } from 'use-error-boundary'
 import { Global, Page as PageImpl } from './styles'
 import * as demos from './demos'
 
 const defaultComponent = 'Reparenting'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
+const label = {
+  position: 'absolute',
+  padding: '10px 20px',
+  bottom: 'unset',
+  right: 'unset',
+  top: 60,
+  left: 60,
+  maxWidth: 380,
+}
+
+function HtmlLoader() {
+  return <span style={{ ...label, border: '2px solid #10af90', color: '#10af90' }}>waiting...</span>
+}
+
+function ErrorBoundary({ children, fallback, name }: any) {
+  const { ErrorBoundary, didCatch, error } = useErrorBoundary()
+  return didCatch ? fallback(error) : <ErrorBoundary key={name}>{children}</ErrorBoundary>
+}
 
 function Intro() {
   let match: any = useRouteMatch('/demo/:name')
   let { bright } = visibleComponents[match?.params.name ?? defaultComponent]
   return (
     <Page>
-      <Suspense fallback={null}>
+      <Suspense fallback={<HtmlLoader />}>
         <Switch>
           <Route exact path="/" component={visibleComponents[defaultComponent].Component} />
           <Route
@@ -20,11 +39,20 @@ function Intro() {
             path="/demo/:name"
             render={({ match }) => {
               const Component = visibleComponents[match.params.name].Component
-              return <Component />
+              return (
+                <ErrorBoundary
+                  key={match.params.name}
+                  fallback={(e: any) => (
+                    <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>
+                  )}>
+                  <Component />
+                </ErrorBoundary>
+              )
             }}
           />
         </Switch>
       </Suspense>
+
       <Dots />
     </Page>
   )

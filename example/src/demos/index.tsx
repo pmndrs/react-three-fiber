@@ -18,7 +18,7 @@ const StopPropagation = {
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./ClickAndHover')), dev: true, bright: true }
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRenderer')), dev: true, bright: true }
 const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true, bright: true }
-const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
+//const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
@@ -42,7 +42,7 @@ export {
   Pointcloud,
   SVGRenderer,
   ResetProps,
-  Animation,
+  //Animation,
   AutoDispose,
   Layers,
   Test,

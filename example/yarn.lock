@@ -1062,6 +1062,11 @@ use-asset@^1.0.4:
   dependencies:
     fast-deep-equal "^3.1.3"
 
+use-error-boundary@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/use-error-boundary/-/use-error-boundary-2.0.4.tgz#cc62be83b9625ea886acdd6ca0cb0af896b2ab28"
+  integrity sha512-bBDGoJSrdWCAQdjGKQHT7+j5iTQwqT2v6j1LROfvu1N9PoE9X0kJFzWp5dbr+lnoDMQSeeDj8MgUO0jtbDeNcg==
+
 utility-types@^3.10.0:
   version "3.10.0"
   resolved "https://registry.yarnpkg.com/utility-types/-/utility-types-3.10.0.tgz#ea4148f9a741015f05ed74fd615e1d20e6bed82b"

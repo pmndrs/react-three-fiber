@@ -74,7 +74,7 @@ let extend = (objects: object): void => void (catalogue = { ...catalogue, ...obj
 // Each object in the scene carries a small LocalState descriptor
 function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = (object as unknown) as Instance
-  if (!instance.__r3f) {
+  if (state?.instance || !instance.__r3f) {
     instance.__r3f = {
       root: (null as unknown) as UseStore<RootState>,
       memoizedProps: {},
