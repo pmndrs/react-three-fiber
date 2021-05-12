@@ -1138,6 +1138,13 @@
     "@manypkg/get-packages" "^1.0.1"
     semver "^5.4.1"
 
+"@changesets/changelog-git@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@changesets/changelog-git/-/changelog-git-0.1.7.tgz#d8dfcc80ea9d36fe72c6cd49885aa8f89ba64741"
+  integrity sha512-fQbJpmCNp2od6w0aRFYoo+kUXnArLXimE84cS37cUGtkf0OWmNub45bDB1dx8v3UXoqPwBdQTuUVRBR6M64rDw==
+  dependencies:
+    "@changesets/types" "^4.0.0"
+
 "@changesets/cli@^2.16.0":
   version "2.16.0"
   resolved "https://registry.yarnpkg.com/@changesets/cli/-/cli-2.16.0.tgz#9f794005d0503efba5e348b929821a1732fd0f0d"

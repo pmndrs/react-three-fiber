@@ -40,6 +40,7 @@
     "@babel/preset-env": "7.14.1",
     "@babel/preset-react": "7.13.13",
     "@babel/preset-typescript": "^7.13.0",
+    "@changesets/changelog-git": "^0.1.7",
     "@changesets/cli": "^2.16.0",
     "@preconstruct/cli": "^2.1.0",
     "@testing-library/react": "^11.2.6",

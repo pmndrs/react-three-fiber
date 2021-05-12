@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@1.6.0/schema.json",
-  "changelog": false,
+  "changelog": "@changesets/changelog-git",
   "commit": false,
   "linked": [],
   "access": "public",
