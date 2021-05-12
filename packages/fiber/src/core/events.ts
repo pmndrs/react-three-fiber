@@ -201,7 +201,7 @@ export function createEvents(store: UseStore<RootState>) {
           stopPropagation: () => {
             // https://github.com/pmndrs/react-three-fiber/issues/596
             // Events are not allowed to stop propagation if the pointer has been captured
-            if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+            if (!('pointerId' in event && internal.capturedMap.has(event.pointerId))) {
               raycastEvent.stopped = localState.stopped = true
 
               // Propagation is stopped, remove all other hover records
