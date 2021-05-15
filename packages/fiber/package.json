@@ -60,5 +60,11 @@
     "react-dom": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@types/react-native": "^0.64.5",
+    "expo-gl": "^10.2.0",
+    "expo-three": "^5.7.0",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz"
   }
 }
