@@ -97,9 +97,16 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
       top: y,
       bottom: y + height,
     }) // Behavior copied from original code in v5
+    const cv = canvas.current
+    if (cv) {
+      cv.width = width
+      cv.height = height
+      ;(cv as any).clientHeight = height
+    }
   }, [])
 
   useIsomorphicLayoutEffect(() => {
+    // When we mount, we create a new "canvas" shim object.
     canvas.current = {
       width: 0,
       height: 0,
@@ -111,6 +118,9 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
       removeEventListener: (() => {}) as any,
       clientHeight: 0,
     } as HTMLCanvasElement
+
+    // On unmount, the unmountComponentAtNode thing will perform its work removing the canvas.
+    // Let's just not delete this thing manually. It'll just be replaced by a new object when it's newly mounted.
   }, [])
 
   // Fired when EXGL context is initialized
@@ -182,7 +192,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
   return (
     <View
       onLayout={layoutcb}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
+      style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
       {size.width > 0 && (
         <GLView
           ref={glView}
@@ -192,7 +202,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
         />
       )}
       {
-        glContext && <View /> // TODO: MAKE THIS VIEW HANDLE THE POINTER EVENTS LIKE IN PREVIOUS VERSION
+        glContext && <View style={{ ...StyleSheet.absoluteFillObject }} /> // TODO: MAKE THIS VIEW HANDLE THE POINTER EVENTS LIKE IN PREVIOUS VERSION
       }
     </View>
   )
