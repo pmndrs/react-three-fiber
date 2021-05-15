@@ -1,4 +1,6 @@
-import * as THREE from 'three'
+/* eslint-disable import/named */
+/* eslint-disable import/namespace */
+import { THREE, Renderer as NativeRenderer } from 'expo-three'
 import * as React from 'react'
 import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
@@ -10,44 +12,54 @@ import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
+import { PixelRatio, View } from 'react-native'
 
-const roots = new Map<Element, Root>()
+/*
+ This here is a singleton instance that keeps track of the fiber 
+ root and the zustand stores in association with each "canvas".
+
+ The web code uses "Element" as keys.
+ For react native we don't have that so I'll try refs as keys
+ */
+const roots = new Map<React.RefObject<any>, Root>()
 const modes = ['legacy', 'blocking', 'concurrent'] as const
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
-export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
+export type RenderProps<TCanvas extends HTMLElement> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+  gl: WebGLRenderingContext
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   mode?: typeof modes[number]
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
+const createRendererInstance = <TElement extends React.RefObject<any>>(
+  gl: WebGLRenderingContext,
   canvas: TElement,
-): THREE.WebGLRenderer =>
-  isRenderer(gl as THREE.WebGLRenderer)
-    ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({
-        powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
-        antialias: true,
-        alpha: true,
-        ...gl,
-      })
+): THREE.WebGLRenderer => {
+  const pixelRatio = PixelRatio.get()
+  const renderer = new NativeRenderer({
+    powerPreference: 'high-performance',
+    canvas: canvas as unknown as HTMLCanvasElement,
+    antialias: true,
+    alpha: true,
+    pixelRatio,
+    gl: gl,
+  })
+  return renderer
+}
 
-function render<TCanvas extends Element>(
+function render<TCanvas extends React.RefObject<any>>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size, mode = modes[1], events, onCreated, ...props }: RenderProps<TCanvas> = {},
+  { gl, size, mode = modes[1], events, onCreated, ...props }: RenderProps<HTMLElement>,
 ): UseStore<RootState> {
   // Allow size to take on container bounds initially
   if (!size) {
     size = {
-      width: canvas.parentElement?.clientWidth ?? 0,
-      height: canvas.parentElement?.clientHeight ?? 0,
+      width: 0,
+      height: 0,
     }
   }
 
@@ -89,7 +101,11 @@ function render<TCanvas extends Element>(
     }
 
     // Create store
+    // Understanding : createStore in v6 does quite a lot of things
+    // It creates a THREE.Scene inside it and maintains descriptors and whatnot all inside of it.
+    // So we add nodes as children to it, all children have small descriptors attached and such.
     store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
+
     const state = store.getState()
     const get = state.get
     // Create renderer
@@ -113,7 +129,7 @@ function render<TCanvas extends Element>(
   }
 }
 
-function Provider<TElement extends Element>({
+function Provider<TElement extends React.RefObject<any>>({
   store,
   element,
   onCreated,
@@ -136,7 +152,10 @@ function Provider<TElement extends Element>({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
+function unmountComponentAtNode<TElement extends React.RefObject<any>>(
+  canvas: TElement,
+  callback?: (canvas: TElement) => void,
+) {
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {
