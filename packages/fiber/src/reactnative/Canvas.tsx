@@ -8,7 +8,6 @@ import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
-import { Renderer } from 'expo-three'
 
 /*
 Understanding of the old Renderer for react native
@@ -156,6 +155,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (glContext && canvas.current) {
+      console.log('rendering')
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>

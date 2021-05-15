@@ -13,7 +13,7 @@ import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 import { PixelRatio, View } from 'react-native'
-import { GLView } from 'expo-gl'
+import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 
 /*
  This here is a singleton instance that keeps track of the fiber 
@@ -28,14 +28,17 @@ const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
 export type RenderProps<TCanvas extends HTMLCanvasElement> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl: WebGLRenderingContext
+  gl: WebGLRenderingContext & ExpoWebGLRenderingContext
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   mode?: typeof modes[number]
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement): THREE.WebGLRenderer => {
+const createRendererInstance = (
+  gl: ExpoWebGLRenderingContext & WebGLRenderingContext,
+  canvas: HTMLCanvasElement,
+): THREE.WebGLRenderer => {
   const pixelRatio = PixelRatio.get()
   const renderer = new NativeRenderer({
     powerPreference: 'high-performance',
@@ -45,6 +48,14 @@ const createRendererInstance = (gl: WebGLRenderingContext, canvas: HTMLCanvasEle
     pixelRatio,
     gl: gl,
   })
+
+  const rendererRender = renderer.render.bind(renderer)
+  renderer.render = (scene, camera) => {
+    rendererRender(scene, camera)
+    // End frame through the RN Bridge
+    gl.endFrameEXP()
+  }
+
   return renderer
 }
 
@@ -108,6 +119,7 @@ function render<TCanvas extends HTMLCanvasElement>(
     const get = state.get
     // Create renderer
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
+    console.log('added to roots', canvas)
     // Map it
     roots.set(canvas, { fiber, store })
     // Store events internally
@@ -166,6 +178,7 @@ function unmountComponentAtNode<TElement extends HTMLCanvasElement>(
           state.gl?.renderLists?.dispose?.()
           state.gl?.forceContextLoss?.()
           dispose(state)
+          console.log('removed from roots', canvas)
           roots.delete(canvas)
           if (callback) callback(canvas)
         }, 500)
