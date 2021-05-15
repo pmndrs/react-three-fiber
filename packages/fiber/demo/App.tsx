@@ -1,7 +1,7 @@
 /* eslint-disable import/namespace */
 /* eslint-disable import/named */
 import React, { useMemo, useState } from 'react'
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
+import { PixelRatio, StyleProp, StyleSheet, View, ViewStyle } from 'react-native'
 import { Canvas, useFrame } from '../src/native'
 
 const Box = (props: JSX.IntrinsicElements['mesh']) => {
@@ -17,8 +17,8 @@ const Box = (props: JSX.IntrinsicElements['mesh']) => {
     }
     box.rotation.x += 0.01 + Math.random() * 0.02
     box.rotation.y += 0.01 + Math.random() * 0.02
-    box.position.x = 5 * Math.sin(clock.elapsedTime)
-    box.position.y = 5 * Math.sin(clock.elapsedTime * 1.2)
+    // box.position.x = 5 * Math.sin(clock.elapsedTime)
+    // box.position.y = 5 * Math.sin(clock.elapsedTime * 1.2)
   })
 
   const [isTouched, setIsTouched] = useState(false)

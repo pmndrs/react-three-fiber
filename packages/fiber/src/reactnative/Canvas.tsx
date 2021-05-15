@@ -66,7 +66,19 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props) {
+// Side note : If we don't provide dpr to be defaulted to PixelRatio.get(), we'll just be rendering into a single small quadrant in the left lower quadrant ._.
+export function Canvas({
+  children,
+  fallback,
+  tabIndex,
+  resize,
+  id,
+  style,
+  className,
+  events,
+  dpr = PixelRatio.get(),
+  ...props
+}: Props) {
   const [size, setSize] = React.useState({ x: 0, y: 0, width: 0, height: 0, left: 0, right: 0, top: 0, bottom: 0 })
   // const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   // const canvas = React.useRef<HTMLCanvasElement>(null!)
@@ -180,7 +192,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         canvas.current,
-        { ...props, size, events: events || createPointerEvents, gl: glContext },
+        { ...props, dpr, size, events: events || createPointerEvents, gl: glContext },
       )
     }
   }, [size, children, glContext])
