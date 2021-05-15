@@ -98,6 +98,8 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
       bottom: y + height,
     }) // Behavior copied from original code in v5
     const cv = canvas.current
+
+    // Update width and height of canvas on layout
     if (cv) {
       cv.width = width
       cv.height = height
