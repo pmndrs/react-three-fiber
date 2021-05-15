@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "react-three-fiber-demo",
+    "slug": "react-three-fiber-demo",
+    "privacy": "public",
+    "sdkVersion": "41.0.0",
+    "entryPoint": "demo/AppEntry",
+    "platforms": ["ios", "android"],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true
+    }
+  }
+}
