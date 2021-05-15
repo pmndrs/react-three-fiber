@@ -138,7 +138,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
         { ...props, size, events: events || createPointerEvents, gl: glContext },
       )
     }
-  }, [size, children])
+  }, [size, children, glContext])
 
   useIsomorphicLayoutEffect(() => {
     // const container = glView.current
