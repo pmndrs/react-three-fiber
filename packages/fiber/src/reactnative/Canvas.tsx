@@ -72,6 +72,17 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
   // const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   // const canvas = React.useRef<HTMLCanvasElement>(null!)
 
+  const canvas = React.useRef<HTMLCanvasElement>({
+    width: 0,
+    height: 0,
+    style: {
+      // width: 0,
+      // height: 0
+    } as any,
+    addEventListener: (() => {}) as any,
+    removeEventListener: (() => {}) as any,
+    clientHeight: 0,
+  } as HTMLCanvasElement)
   const glView = React.useRef<GLView>(null)
 
   const [block, setBlock] = React.useState<SetBlock>(false)
@@ -106,7 +117,22 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
       await props.onContextCreated(gl)
     }
 
+    const cv = canvas.current
+    cv.width = gl.drawingBufferWidth
+    cv.height = gl.drawingBufferHeight
+    ;(cv as any).clientHeight = gl.drawingBufferHeight
     setGLContext(gl)
+    // ({
+    //   width: gl.drawingBufferWidth,
+    //   height: gl.drawingBufferHeight,
+    //   style: {
+    //     width: gl.drawingBufferWidth,
+    //     height: gl.drawingBufferHeight
+    //   } as any,
+    //   addEventListener: (() => {}) as any,
+    //   removeEventListener: (() => {}) as any,
+    //   clientHeight: gl.drawingBufferHeight,
+    // } as HTMLCanvasElement);
     // const pixelRatio = PixelRatio.get()
 
     // const renderer = new Renderer({
@@ -129,12 +155,12 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
 
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
-    if (glContext) {
+    if (glContext && canvas.current) {
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
-        glView,
+        canvas.current,
         { ...props, size, events: events || createPointerEvents, gl: glContext },
       )
     }
@@ -142,7 +168,7 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
 
   useIsomorphicLayoutEffect(() => {
     // const container = glView.current
-    return () => unmountComponentAtNode(glView)
+    return () => unmountComponentAtNode(canvas.current)
   }, [])
 
   return (

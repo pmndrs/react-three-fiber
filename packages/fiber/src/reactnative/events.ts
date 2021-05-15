@@ -25,18 +25,18 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))
-      Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
-        target.addEventListener(names[name as keyof typeof names], event, { passive: true }),
-      )
+      // Object.entries(events?.handlers ?? []).forEach(([name, event]) =>
+      //   target.addEventListener(names[name as keyof typeof names], event, { passive: true }),
+      // )
     },
     disconnect: () => {
       const { set, events } = store.getState()
       if (events.connected) {
-        Object.entries(events.handlers ?? []).forEach(([name, event]) => {
-          if (events && events.connected instanceof HTMLElement) {
-            events.connected.removeEventListener(names[name as keyof typeof names], event)
-          }
-        })
+        // Object.entries(events.handlers ?? []).forEach(([name, event]) => {
+        //   if (events && events.connected instanceof HTMLElement) {
+        //     events.connected.removeEventListener(names[name as keyof typeof names], event)
+        //   }
+        // })
         set((state) => ({ events: { ...state.events, connected: false } }))
       }
     },

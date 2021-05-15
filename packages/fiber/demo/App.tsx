@@ -31,6 +31,7 @@ const Box = (props: JSX.IntrinsicElements['mesh']) => {
         setIsTouched(false)
       }}>
       <boxBufferGeometry args={[1, 1, 1]} />
+      <meshPhysicalMaterial color={isTouched ? 'pink' : 'blue'} />
     </mesh>
   )
 }

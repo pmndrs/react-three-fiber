@@ -13,6 +13,7 @@ import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 import { PixelRatio, View } from 'react-native'
+import { GLView } from 'expo-gl'
 
 /*
  This here is a singleton instance that keeps track of the fiber 
@@ -21,12 +22,12 @@ import { PixelRatio, View } from 'react-native'
  The web code uses "Element" as keys.
  For react native we don't have that so I'll try refs as keys
  */
-const roots = new Map<React.RefObject<any>, Root>()
+const roots = new Map<HTMLCanvasElement, Root>()
 const modes = ['legacy', 'blocking', 'concurrent'] as const
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
-export type RenderProps<TCanvas extends HTMLElement> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TCanvas extends HTMLCanvasElement> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl: WebGLRenderingContext
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
@@ -34,14 +35,11 @@ export type RenderProps<TCanvas extends HTMLElement> = Omit<StoreProps, 'gl' | '
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = <TElement extends React.RefObject<any>>(
-  gl: WebGLRenderingContext,
-  canvas: TElement,
-): THREE.WebGLRenderer => {
+const createRendererInstance = (gl: WebGLRenderingContext, canvas: HTMLCanvasElement): THREE.WebGLRenderer => {
   const pixelRatio = PixelRatio.get()
   const renderer = new NativeRenderer({
     powerPreference: 'high-performance',
-    canvas: canvas as unknown as HTMLCanvasElement,
+    canvas,
     antialias: true,
     alpha: true,
     pixelRatio,
@@ -50,10 +48,10 @@ const createRendererInstance = <TElement extends React.RefObject<any>>(
   return renderer
 }
 
-function render<TCanvas extends React.RefObject<any>>(
+function render<TCanvas extends HTMLCanvasElement>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size, mode = modes[1], events, onCreated, ...props }: RenderProps<HTMLElement>,
+  { gl, size, mode = modes[1], events, onCreated, ...props }: RenderProps<HTMLCanvasElement>,
 ): UseStore<RootState> {
   // Allow size to take on container bounds initially
   if (!size) {
@@ -129,7 +127,7 @@ function render<TCanvas extends React.RefObject<any>>(
   }
 }
 
-function Provider<TElement extends React.RefObject<any>>({
+function Provider<TElement extends HTMLCanvasElement>({
   store,
   element,
   onCreated,
@@ -152,7 +150,7 @@ function Provider<TElement extends React.RefObject<any>>({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends React.RefObject<any>>(
+function unmountComponentAtNode<TElement extends HTMLCanvasElement>(
   canvas: TElement,
   callback?: (canvas: TElement) => void,
 ) {
