@@ -71,23 +71,14 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
   // const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   // const canvas = React.useRef<HTMLCanvasElement>(null!)
 
-  const canvas = React.useRef<HTMLCanvasElement>({
-    width: 0,
-    height: 0,
-    style: {
-      // width: 0,
-      // height: 0
-    } as any,
-    addEventListener: (() => {}) as any,
-    removeEventListener: (() => {}) as any,
-    clientHeight: 0,
-  } as HTMLCanvasElement)
+  const canvas = React.useRef<HTMLCanvasElement | null>(null)
   const glView = React.useRef<GLView>(null)
 
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
-  const [glContext, setGLContext] = React.useState<WebGLRenderingContext | undefined>(undefined)
+  const [glContext, setGLContext] =
+    React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | undefined>(undefined)
 
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
@@ -108,6 +99,20 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
     }) // Behavior copied from original code in v5
   }, [])
 
+  useIsomorphicLayoutEffect(() => {
+    canvas.current = {
+      width: 0,
+      height: 0,
+      style: {
+        // width: 0,
+        // height: 0
+      } as any,
+      addEventListener: (() => {}) as any,
+      removeEventListener: (() => {}) as any,
+      clientHeight: 0,
+    } as HTMLCanvasElement
+  }, [])
+
   // Fired when EXGL context is initialized
   const onContextCreate = async (gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
     if (props.onContextCreated) {
@@ -117,9 +122,11 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
     }
 
     const cv = canvas.current
-    cv.width = gl.drawingBufferWidth
-    cv.height = gl.drawingBufferHeight
-    ;(cv as any).clientHeight = gl.drawingBufferHeight
+    if (cv) {
+      cv.width = gl.drawingBufferWidth
+      cv.height = gl.drawingBufferHeight
+      ;(cv as any).clientHeight = gl.drawingBufferHeight
+    }
     setGLContext(gl)
     // ({
     //   width: gl.drawingBufferWidth,
@@ -167,15 +174,16 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
   }, [size, children, glContext])
 
   useIsomorphicLayoutEffect(() => {
-    // const container = glView.current
-    return () => unmountComponentAtNode(canvas.current)
+    return () => {
+      if (canvas.current) unmountComponentAtNode(canvas.current)
+    }
   }, [])
 
   return (
     <View
       onLayout={layoutcb}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      {size && (
+      {size.width > 0 && (
         <GLView
           ref={glView}
           // nativeRef_EXPERIMENTAL={setNativeRef}

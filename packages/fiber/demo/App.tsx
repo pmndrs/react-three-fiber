@@ -9,13 +9,16 @@ const Box = (props: JSX.IntrinsicElements['mesh']) => {
     return Math.random().toFixed(4)
   }, [])
 
-  useFrame(({ scene }: { scene: THREE.Scene }) => {
+  useFrame(({ scene, clock }) => {
     const box = scene.getObjectByName(myName)
+
     if (!box) {
       return
     }
     box.rotation.x += 0.01 + Math.random() * 0.02
     box.rotation.y += 0.01 + Math.random() * 0.02
+    box.position.x = 5 * Math.sin(clock.elapsedTime)
+    box.position.y = 5 * Math.sin(clock.elapsedTime * 1.2)
   })
 
   const [isTouched, setIsTouched] = useState(false)
