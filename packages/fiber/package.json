@@ -39,7 +39,7 @@
   },
   "scripts": {
     "prebuild": "cp ../../readme.md readme.md",
-    "expo": "npx expo-cli start --config \"./demo/app.json\" -c"
+    "expo": "export EXPO_NO_TYPESCRIPT_SETUP=1 && npx expo-cli start --config \"./demo/app.json\" -c"
   },
   "dependencies": {
     "@babel/runtime": "^7.13.10",
