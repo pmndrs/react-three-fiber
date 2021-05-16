@@ -147,8 +147,8 @@ export function createEvents(store: UseStore<RootState>) {
   /**  Creates filtered intersects and returns an array of positive hits */
   function patchIntersects(intersections: Intersection[], event: DomEvent) {
     const { internal } = store.getState()
-    // If the interaction is captured take that into account, all capturing
-    // targets should be part of the intersect.
+    // If the interaction is captured, make all capturing targets  part of the
+    // intersect.
     if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
       intersections.push(...internal.capturedMap.get(event.pointerId)!.values())
     }
