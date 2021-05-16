@@ -50,7 +50,7 @@ function Switcher() {
 
 export default function App() {
   return (
-    <Canvas orthographic>
+    <Canvas orthographic camera={{ zoom: 100 }}>
       <ambientLight />
       <Switcher />
     </Canvas>

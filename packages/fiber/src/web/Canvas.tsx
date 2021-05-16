@@ -10,27 +10,66 @@ export interface Props
   extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
     React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
+  fallback?: React.ReactNode
   resize?: ResizeOptions
   events?: (store: UseStore<RootState>) => EventManager<any>
 }
+
+type SetBlock = false | Promise<null> | null
+type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
 // React currently throws a warning when using useLayoutEffect on the server.
 // To get around it, we can conditionally useEffect on the server (no-op) and
 // useLayoutEffect in the browser.
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
 
-export function Canvas({ children, tabIndex, resize, id, style, className, events, ...props }: Props) {
+function Block({ set }: Omit<UnblockProps, 'children'>) {
+  useIsomorphicLayoutEffect(() => {
+    set(new Promise(() => null))
+    return () => set(false)
+  }, [])
+  return null
+}
+
+class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
+  state = { error: false }
+  static getDerivedStateFromError = () => ({ error: true })
+  componentDidCatch(error: any) {
+    this.props.set(error)
+  }
+  render() {
+    return this.state.error ? null : this.props.children
+  }
+}
+
+export function Canvas({ children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props) {
   const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvas = React.useRef<HTMLCanvasElement>(null!)
+  const [block, setBlock] = React.useState<SetBlock>(false)
+  const [error, setError] = React.useState<any>(false)
+  // Suspend this component if block is a promise (2nd run)
+  if (block) throw block
+  // Throw exception outwards if anything within canvas throws
+  if (error) throw error
+
+  // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (size.width > 0 && size.height > 0) {
-      render(children, canvas.current, { ...props, size, events: events || createPointerEvents })
+      render(
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>,
+        canvas.current,
+        { ...props, size, events: events || createPointerEvents },
+      )
     }
   }, [size, children])
-  React.useEffect(() => {
+
+  useIsomorphicLayoutEffect(() => {
     const container = canvas.current
     return () => unmountComponentAtNode(container)
   }, [])
+
   return (
     <div
       ref={ref}
@@ -38,7 +77,9 @@ export function Canvas({ children, tabIndex, resize, id, style, className, event
       className={className}
       tabIndex={tabIndex}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas ref={canvas} style={{ display: 'block' }} />
+      <canvas ref={canvas} style={{ display: 'block' }}>
+        {fallback}
+      </canvas>
     </div>
   )
 }

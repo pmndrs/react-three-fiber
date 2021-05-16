@@ -76,9 +76,9 @@ function Effects() {
 ```jsx
 function Camera(props) {
   const ref = useRef()
-  const { setDefaultCamera } = useThree()
+  const set = useThree(state => state.set)
   // Make the camera known to the system
-  useEffect(() => void setDefaultCamera(ref.current), [])
+  useEffect(() => void set({ camera: ref.current }), [])
   // Update it every frame
   useFrame(() => ref.current.updateMatrixWorld())
   return <perspectiveCamera ref={ref} {...props} />
@@ -197,7 +197,7 @@ By default it renders like a game loop 60fps. Set `frameloop="demand"` to activa
 Sometimes you want to render single frames manually, for instance when you're dealing with async stuff:
 
 ```jsx
-const invalidate = useThree(state => state.invalidate)
+const invalidate = useThree((state) => state.invalidate)
 // request a frame for *this* root
 const texture = useMemo(() => loader.load(url, invalidate), [url])
 ```

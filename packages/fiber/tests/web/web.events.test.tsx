@@ -61,7 +61,31 @@ describe('events ', () => {
     fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
 
     expect(handleClick).not.toHaveBeenCalled()
-    expect(handleMissed).toHaveBeenCalled()
+    expect(handleMissed).toHaveBeenCalledWith(evt)
+  })
+
+  it('can handle onPointerMissed on Canvas', async () => {
+    const handleMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onPointerMissed={handleMissed}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = new MouseEvent('click')
+    //@ts-ignore
+    evt.offsetX = 0
+    //@ts-ignore
+    evt.offsetY = 0
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
+    expect(handleMissed).toHaveBeenCalledWith(evt)
   })
 
   it('can handle onPointerMove', async () => {
@@ -148,5 +172,52 @@ describe('events ', () => {
     fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt2)
 
     expect(handlePointerLeave).toHaveBeenCalled()
+  })
+
+  it('should handle stopPropagation on click events', async () => {
+    const handleClickFront = jest.fn((e) => e.stopPropagation())
+    const handleClickRear = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onClick={handleClickFront}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+          <mesh onClick={handleClickRear} position-z={-3}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const down = new PointerEvent('pointerdown')
+    //@ts-ignore
+    down.offsetX = 577
+    //@ts-ignore
+    down.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, down)
+
+    const up = new PointerEvent('pointerup')
+    //@ts-ignore
+    up.offsetX = 577
+    //@ts-ignore
+    up.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, up)
+
+    const event = new MouseEvent('click')
+    //@ts-ignore
+    event.offsetX = 577
+    //@ts-ignore
+    event.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, event)
+
+    expect(handleClickFront).toHaveBeenCalled()
+    expect(handleClickRear).not.toHaveBeenCalled()
   })
 })
