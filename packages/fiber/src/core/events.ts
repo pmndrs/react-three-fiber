@@ -183,7 +183,11 @@ export function createEvents(store: UseStore<RootState>) {
         // Add native event props
         let extractEventProps: any = {}
         for (let prop in Object.getPrototypeOf(event)) {
-          extractEventProps[prop] = event[prop as keyof DomEvent]
+          let property = event[prop as keyof DomEvent]
+          if (typeof property === 'function') {
+            property = property.bind(event)
+          }
+          extractEventProps[prop] = property
         }
 
         let raycastEvent: any = {
