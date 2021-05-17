@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 6.1.3
+
+### Patch Changes
+
+- 6faa090: Add shape to types, exclude event functions from event data
+- Updated dependencies [6faa090]
+  - @react-three/fiber@6.1.4
+
 ## 6.1.2
 
 ### Patch Changes
