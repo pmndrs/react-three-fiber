@@ -14,7 +14,8 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
   ray: THREE.Ray
   camera: Camera
   stopPropagation: () => void
-  sourceEvent: TSourceEvent
+  sourceEvent: TSourceEvent // deprecated
+  nativeEvent: TSourceEvent
   delta: number
   spaceX: number
   spaceY: number
@@ -103,7 +104,7 @@ export function createEvents(store: UseStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
+        (name) => (obj as unknown as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -136,7 +137,7 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = ((eventObject as unknown) as Instance).__r3f?.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f?.handlers
         if (handlers) intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
@@ -167,7 +168,7 @@ export function createEvents(store: UseStore<RootState>) {
       const localState = { stopped: false }
 
       for (const hit of intersections) {
-        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject)
+        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
 
         const setPointerCapture = (id: number) => {
           if (internal.capturedMap.has(id)) {
@@ -188,10 +189,9 @@ export function createEvents(store: UseStore<RootState>) {
         let extractEventProps: any = {}
         for (let prop in Object.getPrototypeOf(event)) {
           let property = event[prop as keyof DomEvent]
-          if (typeof property === 'function') {
-            property = property.bind(event)
-          }
-          extractEventProps[prop] = property
+          // Only copy over atomics, leave functions alone as these should be
+          // called as event.nativeEvent.fn()
+          if (typeof property !== 'function') extractEventProps[prop] = property
         }
 
         let raycastEvent: any = {
@@ -234,7 +234,8 @@ export function createEvents(store: UseStore<RootState>) {
           // there should be a distinction between target and currentTarget
           target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
           currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          sourceEvent: event,
+          sourceEvent: event, // deprecated
+          nativeEvent: event,
         }
 
         // Call subscribers
@@ -253,7 +254,7 @@ export function createEvents(store: UseStore<RootState>) {
       // we call onPointerOut and delete the object from the hovered-elements map
       if (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index)) {
         const eventObject = hoveredObj.eventObject
-        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f.handlers
         internal.hovered.delete(makeId(hoveredObj))
         if (handlers) {
           // Clear out intersects, they are outdated by now
@@ -299,7 +300,7 @@ export function createEvents(store: UseStore<RootState>) {
 
       handleIntersects(hits, event, (data: DomEvent) => {
         const eventObject = data.eventObject
-        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f.handlers
         // Check presence of handlers
         if (!handlers) return
 
@@ -359,7 +360,7 @@ export function createEvents(store: UseStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+      (object as unknown as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
     )
   }
 
