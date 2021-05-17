@@ -451,8 +451,22 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     if (!parent) return
 
     const newInstance = createInstance(type, newProps, instance.__r3f.root)
+
+    // https://github.com/pmndrs/react-three-fiber/issues/1348
+    // When args change the instance has to be re-constructed, which then
+    // forces r3f to re-parent the children and non-scene objects
+
+    if (instance.children) {
+      instance.children.forEach((child) => appendChild(newInstance, child))
+      instance.children = []
+    }
+
+    instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
+    instance.__r3f.objects = []
+
     removeChild(parent, instance)
     appendChild(parent, newInstance)
+
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
     // https://github.com/facebook/react/pull/15021

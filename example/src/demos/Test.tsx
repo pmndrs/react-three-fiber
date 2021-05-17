@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 
 const redMaterial = new THREE.MeshBasicMaterial({ color: 'red' })
@@ -50,11 +50,27 @@ function TestMultiMaterial() {
   )
 }
 
+function TestMix(props: any) {
+  const [size, set] = useState(0.1)
+  useEffect(() => {
+    const timeout = setInterval(() => set((s) => s + 0.025), 1000)
+    return () => clearTimeout(timeout)
+  }, [])
+  let g = useMemo(() => new THREE.BoxGeometry(size, size, size), [size])
+
+  return (
+    <mesh args={[g]} {...props}>
+      <meshBasicMaterial color="hotpink" />
+    </mesh>
+  )
+}
+
 export default function Test() {
   return (
     <Canvas camera={{ position: [2, 2, 2] }}>
       <TestMultiMaterial />
       <TestReuse />
+      <TestMix position={[0, 1, 0]} />
     </Canvas>
   )
 }
