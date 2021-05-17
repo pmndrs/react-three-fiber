@@ -443,6 +443,18 @@
     "@types/react" "*"
     csstype "^3.0.2"
 
+"@use-gesture/core@^10.0.0-beta.1":
+  version "10.0.0-beta.6"
+  resolved "https://registry.yarnpkg.com/@use-gesture/core/-/core-10.0.0-beta.6.tgz#fdf461caa46269e26cab05a3708497b94c28fef8"
+  integrity sha512-fX0Q6Dhh5bDsFnfIJykJo/ThMCdX4UxCvKlDU8JYLPocxV/IAnLdoyEpJW61iPq3gr1mJ34jjfaUUZtS2BOGTA==
+
+"@use-gesture/react@latest":
+  version "10.0.0-beta.6"
+  resolved "https://registry.yarnpkg.com/@use-gesture/react/-/react-10.0.0-beta.6.tgz#1977f4f47a7ca562cf232677f6ab9a1597904d75"
+  integrity sha512-oTy1JLQOf5ZQUj3qlRm31pHlz4oZAblplTi8g/IBJ+peGpfqIveTlg6IbupII1YZil7nY/MePXYcHdj8t0rB4g==
+  dependencies:
+    "@use-gesture/core" "^10.0.0-beta.1"
+
 "@vitejs/plugin-react-refresh@^1.3.3":
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/@vitejs/plugin-react-refresh/-/plugin-react-refresh-1.3.3.tgz#d5afb3e0463f368a8afadfdd7305fe5c5fe78a6a"
@@ -886,11 +898,6 @@ react-router@5.2.0:
     react-is "^16.6.0"
     tiny-invariant "^1.0.2"
     tiny-warning "^1.0.0"
-
-react-use-gesture@^9.1.3:
-  version "9.1.3"
-  resolved "https://registry.yarnpkg.com/react-use-gesture/-/react-use-gesture-9.1.3.tgz#92bd143e4f58e69bd424514a5bfccba2a1d62ec0"
-  integrity sha512-CdqA2SmS/fj3kkS2W8ZU8wjTbVBAIwDWaRprX7OKaj7HlGwBasGEFggmk5qNklknqk9zK/h8D355bEJFTpqEMg==
 
 react@^17.0.2:
   version "17.0.2"
