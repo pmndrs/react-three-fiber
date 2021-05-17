@@ -37,6 +37,9 @@ export interface Props
   events?: (store: UseStore<RootState>) => EventManager<any>
   style?: ViewStyle
   onContextCreated?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
+
+  /** The ref to the underlying Expo GLView for access to camera texture creation, etc */
+  glViewRef?: React.RefObject<GLView>
 }
 
 type SetBlock = false | Promise<null> | null
@@ -77,6 +80,7 @@ export function Canvas({
   className,
   events,
   dpr = PixelRatio.get(),
+  glViewRef,
   ...props
 }: Props) {
   const [size, setSize] = React.useState({ x: 0, y: 0, width: 0, height: 0, left: 0, right: 0, top: 0, bottom: 0 })
@@ -84,7 +88,6 @@ export function Canvas({
   // const canvas = React.useRef<HTMLCanvasElement>(null!)
 
   const canvas = React.useRef<HTMLCanvasElement | null>(null)
-  const glView = React.useRef<GLView>(null)
 
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
@@ -209,7 +212,7 @@ export function Canvas({
       style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
       {size.width > 0 && (
         <GLView
-          ref={glView}
+          ref={glViewRef}
           // nativeRef_EXPERIMENTAL={setNativeRef}
           onContextCreate={onContextCreate}
           style={StyleSheet.absoluteFill}
