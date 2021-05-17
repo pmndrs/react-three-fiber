@@ -197,7 +197,7 @@ By default it renders like a game loop 60fps. Set `frameloop="demand"` to activa
 Sometimes you want to render single frames manually, for instance when you're dealing with async stuff:
 
 ```jsx
-const invalidate = useThree(state => state.invalidate)
+const invalidate = useThree((state) => state.invalidate)
 // request a frame for *this* root
 const texture = useMemo(() => loader.load(url, invalidate), [url])
 ```
