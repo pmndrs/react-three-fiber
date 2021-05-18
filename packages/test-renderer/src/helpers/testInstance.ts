@@ -1,5 +1,5 @@
 import { ReactThreeTestInstance } from '../createTestInstance'
-import type { MockInstance, Obj } from '../types/internal'
+import type { Obj } from '../types/internal'
 
 export const expectOne = <TItem>(items: TItem[], msg: string) => {
   if (items.length === 1) {
