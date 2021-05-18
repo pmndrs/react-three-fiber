@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 6.1.5
+
+### Patch Changes
+
+- fix(rttr): if children is undefined return an array to map with
+- Updated dependencies [undefined]
+  - @react-three/fiber@6.1.5
+
 ## 6.1.3
 
 ### Patch Changes

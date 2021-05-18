@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 6.1.5
+
+### Patch Changes
+
+- fix(rttr): if children is undefined return an array to map with
+
 ## 6.1.4
 
 ### Patch Changes
