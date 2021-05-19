@@ -3,6 +3,7 @@ import { UseStore } from 'zustand'
 
 import type { BaseInstance, LocalState } from '@react-three/fiber/src/core/renderer'
 import type { RootState } from '@react-three/fiber/src/core/store'
+export type { EventHandlers } from '@react-three/fiber/src/core/events'
 
 export type MockUseStoreState = UseStore<RootState>
 
