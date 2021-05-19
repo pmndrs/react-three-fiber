@@ -1,5 +1,4 @@
-// import type { EventHandlers } from "../types/internal";
-import { EventHandlers } from 'packages/fiber/src/core/events'
+import type { EventHandlers } from '../types/internal'
 import { invert } from './object'
 
 const EVENT_HANDLER_TO_NAME: Record<keyof EventHandlers, string> = {
