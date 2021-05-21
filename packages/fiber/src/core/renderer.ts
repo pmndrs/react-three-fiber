@@ -339,22 +339,28 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   function appendChild(parentInstance: Instance, child: Instance) {
+    let addedAsChild = false
     if (child) {
-      if (child.isObject3D) {
+      // The attach attribute implies that the object attaches itself on the parent
+      if (child.attachArray) {
+        if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
+        parentInstance[child.attachArray].push(child)
+      } else if (child.attachObject) {
+        if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
+        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
+      } else if (child.attach && !is.fun(child.attach)) {
+        parentInstance[child.attach] = child
+      } else if (child.isObject3D) {
+        // add in the usual parent-child way
         parentInstance.add(child)
-      } else {
+        addedAsChild = true
+      }
+
+      if (!addedAsChild) {
+        // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
+        // that is, anything that's a child in React but not a child in the scenegraph.
         parentInstance.__r3f.objects.push(child)
         child.parent = parentInstance
-        // The attach attribute implies that the object attaches itself on the parent
-        if (child.attachArray) {
-          if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
-          parentInstance[child.attachArray].push(child)
-        } else if (child.attachObject) {
-          if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
-          parentInstance[child.attachObject[0]][child.attachObject[1]] = child
-        } else if (child.attach) {
-          parentInstance[child.attach] = child
-        }
       }
       updateInstance(child)
       invalidateInstance(child)
@@ -362,21 +368,28 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
+    let added = false
     if (child) {
-      if (child.isObject3D) {
+      if (child.attachArray) {
+        const array = parentInstance[child.attachArray]
+        if (!is.arr(array)) parentInstance[child.attachArray] = []
+        array.splice(array.indexOf(beforeChild), 0, child)
+      } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
+        // attach and attachObject don't have an order anyway, so just append
+        added = true
+        return appendChild(parentInstance, child)
+      } else if (child.isObject3D) {
         child.parent = parentInstance
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
         parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
-      } else {
-        if (child.attachArray) {
-          parentInstance.__r3f.objects.push(child)
-          child.parent = parentInstance
-          const array = parentInstance[child.attachArray]
-          if (!is.arr(array)) parentInstance[child.attachArray] = []
-          array.splice(array.indexOf(beforeChild), 0, child)
-        } else return appendChild(parentInstance, child)
+        added = true
+      }
+
+      if (!added) {
+        parentInstance.__r3f.objects.push(child)
+        child.parent = parentInstance
       }
       updateInstance(child)
       invalidateInstance(child)
@@ -389,23 +402,29 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
-      if (child.isObject3D) {
+      if (parentInstance.__r3f.objects) {
+        const oldLength = parentInstance.__r3f.objects.length
+        parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
+        const newLength = parentInstance.__r3f.objects.length
+        // was it in the list?
+        if (newLength < oldLength) {
+          // we had also set this, so we must clear it now
+          child.parent = null
+        }
+      }
+
+      // Remove attachment
+      if (child.attachArray) {
+        parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: Instance) => x !== child)
+      } else if (child.attachObject) {
+        delete parentInstance[child.attachObject[0]][child.attachObject[1]]
+      } else if (child.attach && !is.fun(child.attach)) {
+        parentInstance[child.attach] = null
+      } else if (child.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
           removeInteractivity(child.__r3f.root, (child as unknown) as THREE.Object3D)
-        }
-      } else {
-        child.parent = null
-        if (parentInstance.__r3f.objects)
-          parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-        // Remove attachment
-        if (child.attachArray) {
-          parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: Instance) => x !== child)
-        } else if (child.attachObject) {
-          delete parentInstance[child.attachObject[0]][child.attachObject[1]]
-        } else if (child.attach) {
-          parentInstance[child.attach] = null
         }
       }
 
