@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 6.2.0
+
+### Minor Changes
+
+- Allow object3d instances to be attached
+
 ## 6.1.5
 
 ### Patch Changes
