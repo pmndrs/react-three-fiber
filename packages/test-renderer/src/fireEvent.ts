@@ -27,6 +27,10 @@ export const createEventFirer = (
       return props[eventName]
     }
 
+    console.warn(
+      `Handler for ${eventName} was not found. You must pass event names in camelCase or name of the handler https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/rttr.md#create-fireevent`,
+    )
+
     return null
   }
 

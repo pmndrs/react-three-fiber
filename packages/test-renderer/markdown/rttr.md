@@ -73,6 +73,8 @@ renderer.fireEvent(testInstance, eventName, mockEventData)
 
 Native method to fire events on the specific part of the rendererd tree through passing an element within the tree and an event name. The third argument is appended to the [`MockSyntheticEvent`](#create-fireevent-mocksyntheticevent) passed to the event handler.
 
+Event names follow camelCase convention (e.g. `pointerUp`), or you can pass event handler name instead (e.g. `onPointerUp`).
+
 #### `MockSyntheticEvent` <a id="create-fireevent-mocksyntheticevent"></a>
 
 ```ts
