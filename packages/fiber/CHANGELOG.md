@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 6.2.1
+
+### Patch Changes
+
+- Fix stopPropagation logic
+
 ## 6.2.0
 
 ### Minor Changes
