@@ -104,7 +104,7 @@ export function createEvents(store: UseStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => (obj as unknown as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
+        (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -137,7 +137,7 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = (eventObject as unknown as Instance).__r3f?.handlers
+        const handlers = ((eventObject as unknown) as Instance).__r3f?.handlers
         if (handlers) intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
@@ -209,14 +209,14 @@ export function createEvents(store: UseStore<RootState>) {
           stopPropagation: () => {
             // https://github.com/pmndrs/react-three-fiber/issues/596
             // Events are not allowed to stop propagation if the pointer has been captured
+            const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
 
             // We only authorize stopPropagation...
             if (
-              // ...if the event doesn't have a pointerId (hence it can't
-              // have been captured)...
-              !('pointerId' in event) ||
-              // ... or if the hit object is capturing the event
-              internal.capturedMap.get(event.pointerId)?.has(hit.eventObject)
+              // ...if this pointer hasn't been captured
+              !capturesForPointer ||
+              // ... or if the hit object is capturing the pointer
+              capturesForPointer.has(hit.eventObject)
             ) {
               raycastEvent.stopped = localState.stopped = true
               // Propagation is stopped, remove all other hover records
@@ -254,7 +254,7 @@ export function createEvents(store: UseStore<RootState>) {
       // we call onPointerOut and delete the object from the hovered-elements map
       if (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index)) {
         const eventObject = hoveredObj.eventObject
-        const handlers = (eventObject as unknown as Instance).__r3f.handlers
+        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
         internal.hovered.delete(makeId(hoveredObj))
         if (handlers) {
           // Clear out intersects, they are outdated by now
@@ -300,7 +300,7 @@ export function createEvents(store: UseStore<RootState>) {
 
       handleIntersects(hits, event, (data: DomEvent) => {
         const eventObject = data.eventObject
-        const handlers = (eventObject as unknown as Instance).__r3f.handlers
+        const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
         // Check presence of handlers
         if (!handlers) return
 
@@ -360,7 +360,7 @@ export function createEvents(store: UseStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      (object as unknown as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+      ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
     )
   }
 
