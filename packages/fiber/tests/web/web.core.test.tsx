@@ -13,6 +13,8 @@ import {
   PCFSoftShadowMap,
   ACESFilmicToneMapping,
   sRGBEncoding,
+  CameraHelper,
+  Object3D,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
@@ -20,8 +22,24 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
+import { ReactThreeFiber } from '../../src'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
+
+/* This class is used for one of the tests */
+class HasObject3dMember extends Object3D {
+  public attachment?: Object3D = undefined
+}
+
+extend({ HasObject3dMember })
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
+    }
+  }
+}
 
 beforeAll(() => {
   Object.defineProperty(window, 'devicePixelRatio', {
@@ -183,6 +201,24 @@ describe('web core', () => {
     expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.name).toEqual(
       'standardMat',
     )
+  })
+
+  it('attaches Object3D children that use attach', async () => {
+    let scene: Scene = null!
+    await act(async () => {
+      scene = render(
+        <hasObject3dMember>
+          <mesh attach="attachment" />
+        </hasObject3dMember>,
+        canvas,
+      ).getState().scene
+    })
+
+    const attachedMesh = (scene.children[0] as HasObject3dMember).attachment
+    expect(attachedMesh).toBeDefined()
+    expect(attachedMesh?.type).toBe('Mesh')
+    // attaching is *instead of* being a regular child
+    expect(scene.children[0].children.length).toBe(0)
   })
 
   it('does the full lifecycle', async () => {
