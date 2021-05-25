@@ -1,24 +1,5 @@
 # @react-three/test-renderer
 
-## 7.0.1
-
-### Patch Changes
-
-- Fix stopPropagation logic
-- Updated dependencies [undefined]
-  - @react-three/fiber@6.2.1
-
-## 7.0.0
-
-### Minor Changes
-
-- Allow object3d instances to be attached
-
-### Patch Changes
-
-- Updated dependencies [undefined]
-  - @react-three/fiber@6.2.0
-
 ## 6.1.5
 
 ### Patch Changes
