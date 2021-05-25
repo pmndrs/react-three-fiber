@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 6.2.2
+
+### Patch Changes
+
+- 4f44a2c: use more helpful name with event handling in rttr
+
 ## 6.2.1
 
 ### Patch Changes

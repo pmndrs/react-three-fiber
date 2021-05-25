@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 6.2.2
+
+### Patch Changes
+
+- 4f44a2c: use more helpful name with event handling in rttr
+- Updated dependencies [4f44a2c]
+  - @react-three/fiber@6.2.2
+
 ## 6.1.5
 
 ### Patch Changes
