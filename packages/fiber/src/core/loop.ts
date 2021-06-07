@@ -1,7 +1,7 @@
 import { Root } from './renderer'
 import { RootState } from './store'
 
-type GlobalRenderCallback = (timeStamp: number) => boolean
+type GlobalRenderCallback = (timeStamp: number) => void
 
 function createSubs(callback: GlobalRenderCallback, subs: GlobalRenderCallback[]): () => void {
   const index = subs.length
