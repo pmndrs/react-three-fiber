@@ -331,11 +331,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       props = { attach: 'material', ...props }
     }
 
-    if (name.startsWith('Mesh')) {
-      console.log('...')
-      props = { args: [null, null], ...props }
-    }
-
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
     // why it passes "true" here
