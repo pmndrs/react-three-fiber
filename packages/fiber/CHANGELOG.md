@@ -6,6 +6,28 @@
 
 - 96ae1ad: fix javascript interpreting renderpriority as positive
 
+```jsx
+function Render() {
+  // Takes over the render-loop, the user has the responsibility to render
+  useFrame(({ gl, scene, camera }) => {
+    gl.render(scene, camera)
+  }, 1)
+  
+function RenderOnTop() {
+  // This will render on top of the previous call
+  useFrame(({ gl, ... }) => {
+    gl.render(...)
+  }, 2)
+
+function A() {
+  // Will *not* take over the render-loop, negative indices can still be useful for sorting
+  useFrame(() => ..., -1)
+
+function B() {
+  // B's useFrame will execute first, then comes A's
+  useFrame(() => ..., -2)
+```
+
 ## 6.2.3
 
 ### Patch Changes
