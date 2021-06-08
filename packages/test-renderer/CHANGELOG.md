@@ -1,5 +1,16 @@
 # @react-three/test-renderer
 
+## 7.0.0
+
+### Major Changes
+
+- 96ae1ad: fix javascript interpreting renderpriority as positive
+
+### Patch Changes
+
+- Updated dependencies [96ae1ad]
+  - @react-three/fiber@7.0.0
+
 ## 6.2.3
 
 ### Patch Changes

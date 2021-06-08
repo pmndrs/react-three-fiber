@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.0
+
+### Major Changes
+
+- 96ae1ad: fix javascript interpreting renderpriority as positive
+
 ## 6.2.3
 
 ### Patch Changes
