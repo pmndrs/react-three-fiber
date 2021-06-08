@@ -24,7 +24,7 @@ function A() {
   useFrame(() => ..., -1)
 
 function B() {
-  // B's useFrame will execute first, then comes A's
+  // B's useFrame will execute *after* A's
   useFrame(() => ..., -2)
 ```
 
