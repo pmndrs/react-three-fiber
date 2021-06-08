@@ -4,7 +4,15 @@
 
 ### Major Changes
 
-- 96ae1ad: fix javascript interpreting renderpriority as positive
+- 96ae1ad: fix javascript interpreting negative renderpriority as positive
+
+This is a major breaking change that will fix an edge-case. It will only affect you if you used negative useFrame indicies, for instance 
+
+```jsx
+useFrame(..., -1)
+```
+
+Surprisingly this disabled auto-rendering although the documentation says positive numbers only. As of v7 this will not take over the render loop.  
 
 ```jsx
 function Render() {
