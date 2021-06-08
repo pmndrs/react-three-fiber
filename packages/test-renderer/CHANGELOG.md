@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 6.2.3
+
+### Patch Changes
+
+- 26bc7eb: typescript changes
+- Updated dependencies [26bc7eb]
+  - @react-three/fiber@6.2.3
+
 ## 6.2.2
 
 ### Patch Changes

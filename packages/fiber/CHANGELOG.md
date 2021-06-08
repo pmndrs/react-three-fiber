@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 6.2.3
+
+### Patch Changes
+
+- 26bc7eb: typescript changes
+
 ## 6.2.2
 
 ### Patch Changes

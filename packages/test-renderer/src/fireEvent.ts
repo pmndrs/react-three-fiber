@@ -5,7 +5,7 @@ import { toEventHandlerName } from './helpers/strings'
 import { ReactThreeTestInstance } from './createTestInstance'
 
 import type { MockSyntheticEvent } from './types/public'
-import type { MockSceneChild, MockUseStoreState, MockEventData } from './types/internal'
+import type { MockUseStoreState, MockEventData } from './types/internal'
 
 export const createEventFirer = (
   act: ReactReconciler.Reconciler<unknown, unknown, unknown, unknown, unknown>['act'],

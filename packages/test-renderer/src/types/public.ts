@@ -4,6 +4,8 @@ import { ReactThreeTestInstance } from '../createTestInstance'
 
 import type { MockEventData, CreateCanvasParameters } from './internal'
 
+export { ReactThreeTestInstance }
+
 export type MockSyntheticEvent = {
   camera: Camera
   stopPropagation: () => void
