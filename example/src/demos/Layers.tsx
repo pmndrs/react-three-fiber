@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState } from 'react'
+import React from 'react'
 import { Canvas } from '@react-three/fiber'
 
 const invisibleLayer = new THREE.Layers()
