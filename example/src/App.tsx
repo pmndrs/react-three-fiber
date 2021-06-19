@@ -27,8 +27,6 @@ function ErrorBoundary({ children, fallback, name }: any) {
 }
 
 function Intro() {
-  let match: any = useRouteMatch('/demo/:name')
-  let { bright } = visibleComponents[match?.params.name ?? defaultComponent]
   return (
     <Page>
       <Suspense fallback={<HtmlLoader />}>
