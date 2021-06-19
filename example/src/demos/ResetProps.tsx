@@ -49,7 +49,6 @@ function AdaptivePixelRatio() {
 
 function AdaptiveEvents() {
   const get = useThree((state) => state.get)
-  const set = useThree((state) => state.set)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
     const enabled = get().raycaster.enabled

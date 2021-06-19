@@ -376,7 +376,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         array.splice(array.indexOf(beforeChild), 0, child)
       } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
         // attach and attachObject don't have an order anyway, so just append
-        added = true
         return appendChild(parentInstance, child)
       } else if (child.isObject3D) {
         child.parent = parentInstance

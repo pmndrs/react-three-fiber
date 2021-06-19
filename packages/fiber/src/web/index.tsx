@@ -64,7 +64,7 @@ function render<TCanvas extends Element>(
     // Check pixelratio
     if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
     // Check size
-    if (size !== undefined && !is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
@@ -91,7 +91,6 @@ function render<TCanvas extends Element>(
     // Create store
     store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
     const state = store.getState()
-    const get = state.get
     // Create renderer
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it
