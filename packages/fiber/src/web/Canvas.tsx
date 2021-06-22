@@ -42,9 +42,12 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props) {
-  const [ref, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
-  const canvas = React.useRef<HTMLCanvasElement>(null!)
+export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
+  { children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props,
+  ref,
+) {
+  const [containerRef, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
   // Suspend this component if block is a promise (2nd run)
@@ -59,27 +62,36 @@ export function Canvas({ children, fallback, tabIndex, resize, id, style, classN
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
-        canvas.current,
+        canvasRef.current,
         { ...props, size, events: events || createPointerEvents },
       )
     }
   }, [size, children])
 
   useIsomorphicLayoutEffect(() => {
-    const container = canvas.current
+    const container = canvasRef.current!
     return () => unmountComponentAtNode(container)
   }, [])
 
   return (
     <div
-      ref={ref}
+      ref={containerRef}
       id={id}
       className={className}
       tabIndex={tabIndex}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas ref={canvas} style={{ display: 'block' }}>
+      <canvas
+        ref={(node) => {
+          ;(canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = node
+          if (typeof ref === 'function') {
+            ref(node)
+          } else if (ref) {
+            ref.current = node
+          }
+        }}
+        style={{ display: 'block' }}>
         {fallback}
       </canvas>
     </div>
   )
-}
+})
