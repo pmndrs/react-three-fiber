@@ -96,9 +96,10 @@ export function useLoader<T, U extends string | string[]>(
   input: U,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
+  keyFn?: (input: U) => string[],
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  const keys = typeof keyFn === 'function' ? keyFn(input) : ((Array.isArray(input) ? input : [input]) as string[])
   const results = useAsset(loadingFn<T>(extensions, onProgress), Proto, ...keys)
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]

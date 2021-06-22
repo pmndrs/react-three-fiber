@@ -181,6 +181,70 @@ describe('web hooks', () => {
     expect(scene.children[0]).toBe(MockMesh)
   })
 
+  it('can handle useLoader hook with a custom cache keying function', async () => {
+    const MockMesh = new Mesh()
+
+    const MockGroup = new Group()
+    const mat1 = new MeshBasicMaterial()
+    mat1.name = 'Mat 1'
+    const mesh1 = new Mesh(new BoxBufferGeometry(2, 2), mat1)
+    mesh1.name = 'Mesh 1'
+    const mat2 = new MeshBasicMaterial()
+    mat2.name = 'Mat 2'
+    const mesh2 = new Mesh(new BoxBufferGeometry(2, 2), mat2)
+    mesh2.name = 'Mesh 2'
+    MockGroup.add(mesh1, mesh2)
+    const path = '/public/models'
+
+    // @ts-ignore
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
+      load: jest
+        .fn()
+        .mockImplementationOnce((url, onLoad) => {
+          onLoad(MockMesh)
+        })
+        .mockImplementationOnce((url, onLoad) => {
+          onLoad({ scene: MockGroup })
+        }),
+      // @ts-ignore
+      setPath: () => {},
+    }))
+
+    const Component = () => {
+      // @ts-ignore
+      const [mockMesh, mockScene] = useLoader(
+        Stdlib.GLTFLoader,
+        ['/suzanne.glb', '/myModels.glb'],
+        (loader) => {
+          loader.setPath(path)
+        },
+        undefined,
+        (inputs) => inputs.map((x) => path + x),
+      )
+
+      return (
+        <>
+          <primitive object={mockMesh} />
+          <primitive object={mockScene} />
+        </>
+      )
+    }
+
+    let scene: Scene = null!
+    await act(async () => {
+      scene = render(
+        <React.Suspense fallback={null}>
+          <Component />
+        </React.Suspense>,
+        canvas,
+      ).getState().scene
+    })
+
+    await waitFor(() => expect(scene.children[0]).toBeDefined())
+
+    expect(scene.children[0]).toBe(MockMesh)
+  })
+
   it('can handle useGraph hook', async () => {
     const group = new Group()
     const mat1 = new MeshBasicMaterial()
