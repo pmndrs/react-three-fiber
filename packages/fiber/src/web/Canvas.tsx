@@ -1,4 +1,5 @@
 import * as React from 'react'
+import mergeRefs from 'react-merge-refs'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
@@ -44,7 +45,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 
 export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
   { children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props,
-  ref,
+  forwardedRef,
 ) {
   const [containerRef, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
@@ -80,16 +81,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
       className={className}
       tabIndex={tabIndex}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      <canvas
-        ref={(node) => {
-          ;(canvasRef as React.MutableRefObject<HTMLCanvasElement | null>).current = node
-          if (typeof ref === 'function') {
-            ref(node)
-          } else if (ref) {
-            ref.current = node
-          }
-        }}
-        style={{ display: 'block' }}>
+      <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
         {fallback}
       </canvas>
     </div>
