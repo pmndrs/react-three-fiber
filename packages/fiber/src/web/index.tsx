@@ -65,6 +65,8 @@ function render<TCanvas extends Element>(
     if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
     // Check size
     if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    // Check vr
+    if (lastProps.vr !== props.vr) state.setVR(props.vr)
 
     // For some props we want to reset the entire root
 
@@ -82,15 +84,13 @@ function render<TCanvas extends Element>(
     // Create gl
     const glRenderer = createRendererInstance(gl, canvas)
 
-    // Enable VR if requested
-    if (props.vr) {
-      glRenderer.xr.enabled = true
-      glRenderer.setAnimationLoop((timestamp) => advance(timestamp, true))
-    }
-
     // Create store
     store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
     const state = store.getState()
+
+    // Enable VR if requested
+    state.setVR(props.vr)
+
     // Create renderer
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
     // Map it

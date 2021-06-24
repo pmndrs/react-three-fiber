@@ -88,6 +88,7 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
+  setVR: (vr?: boolean) => void
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 
   events: EventManager<any>
@@ -277,6 +278,18 @@ const createStore = (
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setVR: (vr = false) =>
+        set(({ internal }) => {
+          gl.xr.enabled = vr
+          gl.setAnimationLoop(vr ? (timestamp) => advance(timestamp, true) : null)
+          return {
+            vr,
+            internal: {
+              ...internal,
+              lastProps: { ...internal.lastProps, vr },
+            },
+          }
+        }),
 
       events: { connected: false },
       internal: {

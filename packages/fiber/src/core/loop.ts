@@ -52,7 +52,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     roots.forEach((root) => {
       const state = root.store.getState()
       // If the frameloop is invalidated, do not run another frame
-      if (state.internal.active && (state.frameloop === 'always' || state.internal.frames > 0))
+      if (state.internal.active && (state.frameloop === 'always' || state.internal.frames > 0) && !state.vr)
         repeat += render(timestamp, state)
     })
     // Run after-effects
