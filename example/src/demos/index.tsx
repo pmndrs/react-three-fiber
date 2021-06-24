@@ -15,7 +15,13 @@ const StopPropagation = {
   dev: true,
   bright: true,
 }
-const ContextMenuOverride = { descr: '', tags: [], Component: lazy(() => import('./ContextMenuOverride')), dev: true }
+const ContextMenuOverride = {
+  descr: '',
+  tags: [],
+  Component: lazy(() => import('./ContextMenuOverride')),
+  dev: true,
+  bright: true,
+}
 const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./ClickAndHover')), dev: true, bright: true }
 const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRenderer')), dev: true, bright: true }
 const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true, bright: true }
