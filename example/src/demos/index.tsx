@@ -23,6 +23,7 @@ const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetP
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
+const ToggleXR = { descr: '', tags: [], Component: lazy(() => import('./ToggleXR')), dev: true, bright: true }
 const SuspenseAndErrors = {
   descr: '',
   tags: [],
@@ -49,4 +50,5 @@ export {
   Test,
   SuspenseAndErrors,
   ContextMenuOverride,
+  ToggleXR,
 }
