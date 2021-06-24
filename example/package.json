@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
+    "dev-https": "vite --host",
     "build": "tsc && vite build",
     "serve": "vite preview"
   },
@@ -10,12 +11,12 @@
     "@react-spring/core": "^9.1.2",
     "@react-spring/three": "^9.1.2",
     "@react-three/drei": "^4.3.3",
+    "@use-gesture/react": "latest",
     "lodash-es": "^4.17.21",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-merge-refs": "^1.1.0",
     "react-router-dom": "^5.2.0",
-    "@use-gesture/react": "latest",
     "styled-components": "^5.3.0",
     "three-stdlib": "^2.0.3",
     "use-error-boundary": "^2.0.4",
@@ -27,6 +28,7 @@
     "@types/styled-components": "^5.1.9",
     "@vitejs/plugin-react-refresh": "^1.3.3",
     "typescript": "^4.2.4",
-    "vite": "^2.3.2"
+    "vite": "^2.3.2",
+    "vite-plugin-mkcert": "^1.1.0"
   }
 }
