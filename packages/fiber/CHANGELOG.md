@@ -1,18 +1,24 @@
 # @react-three/fiber
 
+## 7.0.2
+
+### Patch Changes
+
+- a97aca3: Add controls state field
+
 ## 7.0.0
 
 ### Major Changes
 
 - 96ae1ad: fix javascript interpreting negative renderpriority as positive
 
-This is a major breaking change that will fix an edge-case. It will only affect you if you used negative useFrame indicies, for instance 
+This is a major breaking change that will fix an edge-case. It will only affect you if you used negative useFrame indicies, for instance
 
 ```jsx
 useFrame(..., -1)
 ```
 
-Surprisingly this disabled auto-rendering although the documentation says positive numbers only. As of v7 this will not take over the render loop.  
+Surprisingly this disabled auto-rendering although the documentation says positive numbers only. As of v7 this will not take over the render loop.
 
 ```jsx
 function Render() {
@@ -20,7 +26,7 @@ function Render() {
   useFrame(({ gl, scene, camera }) => {
     gl.render(scene, camera)
   }, 1)
-  
+
 function RenderOnTop() {
   // This will render on top of the previous call
   useFrame(({ gl, ... }) => {

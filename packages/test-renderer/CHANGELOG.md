@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.1
+
+### Patch Changes
+
+- a97aca3: Add controls state field
+- Updated dependencies [a97aca3]
+  - @react-three/fiber@7.0.2
+
 ## 7.0.0
 
 ### Major Changes
