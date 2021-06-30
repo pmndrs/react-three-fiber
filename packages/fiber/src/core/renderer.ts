@@ -492,7 +492,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (fiber !== null) {
         fiber.stateNode = newInstance
         if (fiber.ref) {
-          if (typeof fiber.ref === 'function') fiber.ref(newInstance)
+          if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance)
           else (fiber.ref as Reconciler.RefObject).current = newInstance
         }
       }

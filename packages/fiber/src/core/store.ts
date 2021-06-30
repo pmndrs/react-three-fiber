@@ -67,6 +67,7 @@ export type RootState = {
   gl: THREE.WebGLRenderer
   scene: THREE.Scene
   camera: Camera
+  controls: THREE.EventDispatcher | null
   raycaster: Raycaster
   mouse: THREE.Vector2
   clock: THREE.Clock
@@ -232,6 +233,7 @@ const createStore = (
       flat,
       scene: prepare<THREE.Scene>(new THREE.Scene()),
       camera,
+      controls: null,
       raycaster,
       clock,
       mouse: new THREE.Vector2(),
