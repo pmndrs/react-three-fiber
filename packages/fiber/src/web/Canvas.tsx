@@ -44,11 +44,11 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, tabIndex, resize, id, style, className, events, ...props }: Props,
+  { children, fallback, tabIndex, resize, id, style, className, events, ...props },
   forwardedRef,
 ) {
   const [containerRef, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
-  const canvasRef = React.useRef<HTMLCanvasElement>(null)
+  const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
   // Suspend this component if block is a promise (2nd run)
@@ -70,7 +70,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   }, [size, children])
 
   useIsomorphicLayoutEffect(() => {
-    const container = canvasRef.current!
+    const container = canvasRef.current
     return () => unmountComponentAtNode(container)
   }, [])
 
