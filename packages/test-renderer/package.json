@@ -1,6 +1,6 @@
 {
   "name": "@react-three/test-renderer",
-  "version": "7.0.1",
+  "version": "7.0.3",
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
