@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.1
+
+### Patch Changes
+
+- 4c703d6: fix rttr didn't work with r130
+- Updated dependencies [4c703d6]
+  - @react-three/fiber@7.0.2
+
 ## 7.0.0
 
 ### Major Changes
