@@ -353,7 +353,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       } else if (child.attach && !is.fun(child.attach)) {
         parentInstance[child.attach] = child
       } else if (is.str(child.attachFunc) && is.fun(parentInstance[child.attachFunc])) {
-        parentInstance[child.attachFunc as string](child)
+        parentInstance[child.attachFunc](child)
       } else if (is.fun(child.attachFunc)) {
         child.attachFunc(child, parentInstance)
       } else if (child.isObject3D) {
