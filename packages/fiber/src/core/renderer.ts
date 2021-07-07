@@ -327,10 +327,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     }
 
     // Auto-attach geometries and materials
-    if (name.endsWith('Geometry')) {
-      props = { attach: 'geometry', ...props }
-    } else if (name.endsWith('Material')) {
-      props = { attach: 'material', ...props }
+    if (!('attachFunc' in props)) {
+      if (name.endsWith('Geometry')) {
+        props = { attach: 'geometry', ...props }
+      } else if (name.endsWith('Material')) {
+        props = { attach: 'material', ...props }
+      }
     }
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
