@@ -19,7 +19,7 @@ export type ColorArray = typeof THREE.Color | Parameters<THREE.Color['set']>
 export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>[0]
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
-export type AttachCallback = (child: Object, parentInstance: Object) => void
+export type AttachCallback = (child: any, parentInstance: any) => void
 
 export interface NodeProps<T, P> {
   /** Attaches this class onto the parent under the given name and nulls it on unmount */
