@@ -197,6 +197,14 @@ You can also attach to named parent properties using `attachObject={[target, nam
   <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
 ```
 
+Another option is to specify custom attach and detach functions. Either by specifying the name of the method from the parent or by specifying a function. Whereby the specification of a detach method is optional.
+
+```jsx
+<scene>
+  <mesh attachFunc="attach" detachFunc="remove" />
+  <mesh attachFunc={(mesh, scene) => scene.add(mesh)} detachFunc={(mesh, scene) => mesh.removeFromParent()} />
+```
+
 As of version 5 all elements ending with "Material" receive `attach="material"`, and all elements ending with "Geometry" receive `attach="geometry"` automatically. Of course you can still overwrite it, but it isn't necessary to type out any longer.
 
 ```jsx
@@ -301,7 +309,7 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
 
 <details>
 <summary>How the event-system works, bubbling and capture</summary>
-  
+
 Note 1: the pointerenter and pointerleave events work exactly the same as pointerover and pointerout. The pointerenter and pointerleave semantics are not implemented.
 
 Note 2: Some events (such as pointerout) happen when there is no intersection between `eventObject` and the ray. When this happens, the event will contain intersection data from a previous event with this object.

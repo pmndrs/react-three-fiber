@@ -30,6 +30,8 @@ export type BaseInstance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach'
   parent: Instance | null
   children: Instance[]
   attach?: string
+  attachFunc?: string | Function
+  detachFunc?: string | Function
   remove: (...object: Instance[]) => Instance
   add: (...object: Instance[]) => Instance
   raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
@@ -350,6 +352,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
       } else if (child.attach && !is.fun(child.attach)) {
         parentInstance[child.attach] = child
+      } else if (is.str(child.attachFunc) && is.fun(parentInstance[child.attachFunc])) {
+        parentInstance[child.attachFunc as string](child)
+      } else if (is.fun(child.attachFunc)) {
+        child.attachFunc(child, parentInstance)
       } else if (child.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
@@ -419,6 +425,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         delete parentInstance[child.attachObject[0]][child.attachObject[1]]
       } else if (child.attach && !is.fun(child.attach)) {
         parentInstance[child.attach] = null
+      } else if (child.attachFunc && is.str(child.detachFunc) && is.fun(parentInstance[child.detachFunc])) {
+        parentInstance[child.detachFunc](child)
+      } else if (child.attachFunc && is.fun(child.detachFunc)) {
+        child.detachFunc(child, parentInstance)
       } else if (child.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
