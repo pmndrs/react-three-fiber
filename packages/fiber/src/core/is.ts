@@ -1,8 +1,8 @@
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',
-  fun: (a: any) => typeof a === 'function',
-  str: (a: any) => typeof a === 'string',
-  num: (a: any) => typeof a === 'number',
+  fun: (a: any): a is Function => typeof a === 'function',
+  str: (a: any): a is string => typeof a === 'string',
+  num: (a: any): a is number => typeof a === 'number',
   und: (a: any) => a === void 0,
   arr: (a: any) => Array.isArray(a),
   equ(a: any, b: any) {

@@ -13,7 +13,6 @@ import {
   PCFSoftShadowMap,
   ACESFilmicToneMapping,
   sRGBEncoding,
-  CameraHelper,
   Object3D,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
@@ -31,12 +30,27 @@ class HasObject3dMember extends Object3D {
   public attachment?: Object3D = undefined
 }
 
-extend({ HasObject3dMember })
+/* This class is used for one of the tests */
+class HasObject3dMethods extends Object3D {
+  attachedObj3d?: Object3D
+  detachedObj3d?: Object3D
+
+  customAttach(obj3d: Object3D) {
+    this.attachedObj3d = obj3d
+  }
+
+  detach(obj3d: Object3D) {
+    this.detachedObj3d = obj3d
+  }
+}
+
+extend({ HasObject3dMember, HasObject3dMethods })
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
+      hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
     }
   }
 }
@@ -219,6 +233,71 @@ describe('web core', () => {
     expect(attachedMesh?.type).toBe('Mesh')
     // attaching is *instead of* being a regular child
     expect(scene.children[0].children.length).toBe(0)
+  })
+
+  describe('attaches Object3D children that use attachFns', () => {
+    it('attachFns as strings', async () => {
+      let scene: Scene = null!
+      await act(async () => {
+        scene = render(
+          <hasObject3dMethods>
+            <mesh attachFns={['customAttach', 'detach']} />
+          </hasObject3dMethods>,
+          canvas,
+        ).getState().scene
+      })
+
+      const attachedMesh = (scene.children[0] as HasObject3dMethods).attachedObj3d
+      expect(attachedMesh).toBeDefined()
+      expect(attachedMesh?.type).toBe('Mesh')
+      // attaching is *instead of* being a regular child
+      expect(scene.children[0].children.length).toBe(0)
+
+      // and now detach ..
+      expect((scene.children[0] as HasObject3dMethods).detachedObj3d).toBeUndefined()
+
+      await act(async () => {
+        render(<hasObject3dMethods />, canvas)
+      })
+
+      const detachedMesh = (scene.children[0] as HasObject3dMethods).detachedObj3d
+      expect(detachedMesh).toBe(attachedMesh)
+    })
+
+    it('attachFns as functions', async () => {
+      let scene: Scene = null!
+      let attachedMesh: Mesh = null!
+      let detachedMesh: Mesh = null!
+
+      await act(async () => {
+        scene = render(
+          <hasObject3dMethods>
+            <mesh
+              attachFns={[
+                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                  attachedMesh = mesh
+                },
+                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                  detachedMesh = mesh
+                },
+              ]}
+            />
+          </hasObject3dMethods>,
+          canvas,
+        ).getState().scene
+      })
+
+      expect(attachedMesh).toBeDefined()
+      expect(attachedMesh?.type).toBe('Mesh')
+      // attaching is *instead of* being a regular child
+      expect(scene.children[0].children.length).toBe(0)
+
+      await act(async () => {
+        render(<hasObject3dMethods />, canvas)
+      })
+
+      expect(detachedMesh).toBe(attachedMesh)
+    })
   })
 
   it('does the full lifecycle', async () => {
