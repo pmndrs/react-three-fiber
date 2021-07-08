@@ -22,7 +22,7 @@ export type ClassConstructor = {
   new (): void
 }
 
-export type AttachFnsType = [string | Function, string | Function]
+export type AttachFnsType = [attach: string | Function, detach: string | Function]
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
