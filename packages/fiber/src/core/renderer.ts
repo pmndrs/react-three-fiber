@@ -22,7 +22,8 @@ export type ClassConstructor = {
   new (): void
 }
 
-export type AttachFnsType = [attach: string | Function, detach: string | Function]
+export type AttachFnType = (self: Instance, parent: Instance) => void
+export type AttachFnsType = [attach: string | AttachFnType, detach: string | AttachFnType]
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
