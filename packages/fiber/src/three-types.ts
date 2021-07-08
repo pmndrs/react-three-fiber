@@ -19,7 +19,7 @@ export type ColorArray = typeof THREE.Color | Parameters<THREE.Color['set']>
 export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>[0]
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 
-export type AttachCallback = (child: any, parentInstance: any) => void
+export type AttachCallback = string | ((child: any, parentInstance: any) => void)
 
 export interface NodeProps<T, P> {
   /** Attaches this class onto the parent under the given name and nulls it on unmount */
@@ -29,15 +29,10 @@ export interface NodeProps<T, P> {
   /** Adds this class to an object on the parent under the given name and deletes it on unmount */
   attachObject?: [target: string, name: string]
   /**
-   * Appends this class to the parent by calling a callback function
+   * Appends and removes this class to the parent by calling a callback function
    * or when the given name is a string by calling a method on the parent
    */
-  attachFunc?: string | AttachCallback
-  /**
-   * Remove this class from the parent by calling a callback function
-   * or when the given name is a string by calling a method on the parent
-   */
-  detachFunc?: string | AttachCallback
+  attachFns?: [AttachCallback, AttachCallback]
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode

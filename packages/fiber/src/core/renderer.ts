@@ -22,6 +22,8 @@ export type ClassConstructor = {
   new (): void
 }
 
+export type AttachFnsType = [string | Function, string | Function]
+
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
@@ -30,8 +32,7 @@ export type BaseInstance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach'
   parent: Instance | null
   children: Instance[]
   attach?: string
-  attachFunc?: string | Function
-  detachFunc?: string | Function
+  attachFns?: AttachFnsType
   remove: (...object: Instance[]) => Instance
   add: (...object: Instance[]) => Instance
   raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
@@ -327,7 +328,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     }
 
     // Auto-attach geometries and materials
-    if (!('attachFunc' in props)) {
+    if (!('attachFns' in props)) {
       if (name.endsWith('Geometry')) {
         props = { attach: 'geometry', ...props }
       } else if (name.endsWith('Material')) {
@@ -354,10 +355,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         parentInstance[child.attachObject[0]][child.attachObject[1]] = child
       } else if (child.attach && !is.fun(child.attach)) {
         parentInstance[child.attach] = child
-      } else if (is.str(child.attachFunc) && is.fun(parentInstance[child.attachFunc])) {
-        parentInstance[child.attachFunc](child)
-      } else if (is.fun(child.attachFunc)) {
-        child.attachFunc(child, parentInstance)
+      } else if (is.arr(child.attachFns)) {
+        const [attachFn] = child.attachFns as AttachFnsType
+        if (is.str(attachFn) && is.fun(parentInstance[attachFn])) {
+          parentInstance[attachFn](child)
+        } else if (is.fun(attachFn)) {
+          attachFn(child, parentInstance)
+        }
       } else if (child.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
@@ -427,10 +431,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         delete parentInstance[child.attachObject[0]][child.attachObject[1]]
       } else if (child.attach && !is.fun(child.attach)) {
         parentInstance[child.attach] = null
-      } else if (child.attachFunc && is.str(child.detachFunc) && is.fun(parentInstance[child.detachFunc])) {
-        parentInstance[child.detachFunc](child)
-      } else if (child.attachFunc && is.fun(child.detachFunc)) {
-        child.detachFunc(child, parentInstance)
+      } else if (is.arr(child.attachFns)) {
+        const [, detachFn] = child.attachFns as AttachFnsType
+        if (is.str(detachFn) && is.fun(parentInstance[detachFn])) {
+          parentInstance[detachFn](child)
+        } else if (is.fun(detachFn)) {
+          detachFn(child, parentInstance)
+        }
       } else if (child.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity

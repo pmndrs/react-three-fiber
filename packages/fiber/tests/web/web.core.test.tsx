@@ -235,13 +235,13 @@ describe('web core', () => {
     expect(scene.children[0].children.length).toBe(0)
   })
 
-  describe('attaches Object3D children that use attachFunc', () => {
-    it('attachFunc as string', async () => {
+  describe('attaches Object3D children that use attachFns', () => {
+    it('attachFns as strings', async () => {
       let scene: Scene = null!
       await act(async () => {
         scene = render(
           <hasObject3dMethods>
-            <mesh attachFunc="customAttach" detachFunc="detach" />
+            <mesh attachFns={['customAttach', 'detach']} />
           </hasObject3dMethods>,
           canvas,
         ).getState().scene
@@ -264,7 +264,7 @@ describe('web core', () => {
       expect(detachedMesh).toBe(attachedMesh)
     })
 
-    it('attachFunc as function', async () => {
+    it('attachFns as functions', async () => {
       let scene: Scene = null!
       let attachedMesh: Mesh = null!
       let detachedMesh: Mesh = null!
@@ -273,12 +273,14 @@ describe('web core', () => {
         scene = render(
           <hasObject3dMethods>
             <mesh
-              attachFunc={(mesh: Mesh, parentInstance: HasObject3dMethods) => {
-                attachedMesh = mesh
-              }}
-              detachFunc={(mesh: Mesh, parentInstance: HasObject3dMethods) => {
-                detachedMesh = mesh
-              }}
+              attachFns={[
+                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                  attachedMesh = mesh
+                },
+                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                  detachedMesh = mesh
+                },
+              ]}
             />
           </hasObject3dMethods>,
           canvas,
