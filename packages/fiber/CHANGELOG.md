@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.4
+
+### Patch Changes
+
+- 974ecfb: Allow elements to define attachFns for specific mount/unmount
+
 ## 7.0.2
 
 ### Patch Changes

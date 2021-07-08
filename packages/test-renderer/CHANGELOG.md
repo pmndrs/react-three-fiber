@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.4
+
+### Patch Changes
+
+- 974ecfb: Allow elements to define attachFns for specific mount/unmount
+- Updated dependencies [974ecfb]
+  - @react-three/fiber@7.0.4
+
 ## 7.0.1
 
 ### Patch Changes
