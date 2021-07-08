@@ -496,10 +496,16 @@ class WebGLRenderingContext {
   }
 
   private GL_VERSION = 7938
+  private SCISSOR_BOX = 3088
+  private VIEWPORT = 2978
+
   getParameter = (paramId: number) => {
     switch (paramId) {
       case this.GL_VERSION:
         return ['WebGL1']
+      case this.SCISSOR_BOX:
+      case this.VIEWPORT:
+        return [0, 0, 1, 1]
     }
   }
 

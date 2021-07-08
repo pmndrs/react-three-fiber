@@ -6,7 +6,9 @@
 
 - a97aca3: Add controls state field
 - Updated dependencies [a97aca3]
-  - @react-three/fiber@7.0.2
+- 4c703d6: fix rttr didn't work with r130
+- Updated dependencies [4c703d6]
+- @react-three/fiber@7.0.2
 
 ## 7.0.0
 

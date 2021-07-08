@@ -123,12 +123,12 @@ return <mesh ref={ref} />
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
-#### ✅ Use concurrent mode
+#### ✅ Use [React 18](https://reactjs.org/blog/2021/06/08/the-plan-for-react-18.html)
 
-Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
+Install React and ReactDOM using the [`@alpha` tag and replace `render` with `createRoot`](https://github.com/reactwg/react-18/discussions/5), then set the [canvas `mode` prop to `'concurrent'`](https://docs.pmnd.rs/react-three-fiber/API/canvas). Now React will [automatically batch updates](https://github.com/reactwg/react-18/discussions/21) and include new APIs. <sup>[1](https://github.com/reactwg/react-18/discussions/41),[2](https://github.com/reactwg/react-18/discussions/37)</sup>
 
 ```jsx
-<Canvas concurrent />
+<Canvas mode="concurrent" />
 ```
 
 ### Do not re-create objects in loops

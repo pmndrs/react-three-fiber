@@ -5,6 +5,7 @@
 ### Patch Changes
 
 - a97aca3: Add controls state field
+- 4c703d6: fix rttr didn't work with r130
 
 ## 7.0.0
 

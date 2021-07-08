@@ -25,6 +25,20 @@ describe('web Canvas', () => {
     expect(renderer.container).toMatchSnapshot()
   })
 
+  it('should forward ref', async () => {
+    const ref = React.createRef<HTMLCanvasElement>()
+
+    await act(async () => {
+      render(
+        <Canvas ref={ref}>
+          <group />
+        </Canvas>,
+      )
+    })
+
+    expect(ref.current).toBeDefined()
+  })
+
   it('should correctly unmount', async () => {
     let renderer: RenderResult = null!
     await act(async () => {
