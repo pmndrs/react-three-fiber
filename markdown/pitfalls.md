@@ -18,7 +18,7 @@
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
-The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+The most important gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
 const geom = useMemo(() => new BoxBufferGeometry(), [])
@@ -158,7 +158,7 @@ useFrame(() => {
 
 ---
 
-Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
+Threejs loaders give you the ability to load async assets (models, textures, etc), but they are problematic.
 
 #### ❌ This re-fetches, re-parses for every component instance
 
