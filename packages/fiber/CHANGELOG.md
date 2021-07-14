@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.5
+
+### Patch Changes
+
+- c97794a: Add useLoader.clear(Loader, input)
+
 ## 7.0.4
 
 ### Patch Changes
