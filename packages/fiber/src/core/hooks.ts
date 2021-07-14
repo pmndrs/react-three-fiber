@@ -26,7 +26,7 @@ export type ObjectMap = {
 }
 
 export function useThree<T = RootState>(
-  selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
+  selector: StateSelector<RootState, T> = (state) => state as unknown as T,
   equalityFn?: EqualityChecker<T>,
 ) {
   const useStore = React.useContext(context)
@@ -113,4 +113,9 @@ useLoader.preload = function <T, U extends string | string[]>(
 ) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)
+}
+
+useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
+  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  return useAsset.clear(Proto, ...keys)
 }
