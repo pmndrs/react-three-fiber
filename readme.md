@@ -20,15 +20,15 @@ Build your scene declaratively with re-usable, self-contained components that re
 
 #### Does it have limitations?
 
-None. Everything that works in threejs will work here without exception.
+None. Everything that works in Threejs will work here without exception.
 
-#### Can it keep up with frequent updates to threejs?
+#### Can it keep up with frequent updates to Threejs?
 
-Yes, because it merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. There is no hard dependency on a particular threejs version, it does not wrap or duplicate a single threejs class.
+Yes. There is no hard dependency on a particular Threejs version, it does not wrap or duplicate a single Threejs class. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically.
 
-#### Is it slower than plain threejs?
+#### Is it slower than plain Threejs?
 
-There is no additional overhead. Components participate in the renderloop outside of React.
+No. There is no additional overhead. Components participate in a unified renderloop outside of React. It outperforms Threejs in scale due to Reacts scheduling abilities.
 
 ### What does it look like?
 
