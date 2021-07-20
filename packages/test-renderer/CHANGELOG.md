@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.6
+
+### Patch Changes
+
+- fb052ad: Fix babel-env browserslist transpiling into old code"
+- Updated dependencies [fb052ad]
+  - @react-three/fiber@7.0.6
+
 ## 7.0.5
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.6
+
+### Patch Changes
+
+- fb052ad: Fix babel-env browserslist transpiling into old code"
+
 ## 7.0.5
 
 ### Patch Changes
