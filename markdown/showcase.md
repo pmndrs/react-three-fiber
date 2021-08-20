@@ -8,7 +8,7 @@
 - Devolver Digital: https://devolverdigital.com
 - SaySom: https://saysom.app
 - Washington Post: https://washingtonpost.com/transportation/interactive/2021/public-transportation-free-fare-future
-- Codesandbox: https:/codesandbox.io
+- Codesandbox: https://codesandbox.io
 
 ## Design agencies
 
