@@ -18,4 +18,4 @@
 - Sennep: https://www.sennep.com
 - A Lot of Moving Parts: https://alotofmoving.parts
 - Layerframe: https://www.layerframe.co
-- Clever°Franke: cleverfranke.com
+- Clever°Franke: https://cleverfranke.com
