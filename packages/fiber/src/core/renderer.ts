@@ -527,6 +527,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     appendInitialChild: appendChild,
     insertBefore,
     warnsIfNotActing: true,
+    // TODO: Don't know if React native fabric will work well with this option instead of supportsPersistence: true
     supportsMutation: true,
     isPrimaryRenderer: false,
     // @ts-ignore

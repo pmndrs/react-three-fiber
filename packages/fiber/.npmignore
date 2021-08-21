@@ -4,5 +4,6 @@ example/
 .github/
 .husky/
 markdown/
-src/
 tests/
+.expo/
+demo/

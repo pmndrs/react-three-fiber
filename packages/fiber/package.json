@@ -29,15 +29,17 @@
   "main": "dist/react-three-fiber.cjs.js",
   "module": "dist/react-three-fiber.esm.js",
   "types": "dist/react-three-fiber.cjs.d.ts",
-  "react-native": "dist/native.js",
+  "react-native": "native/dist/react-three-fiber-native.cjs",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
-      "index.tsx"
+      "index.tsx",
+      "native.tsx"
     ]
   },
   "scripts": {
-    "prebuild": "cp ../../readme.md readme.md"
+    "prebuild": "cp ../../readme.md readme.md",
+    "expo": "export EXPO_NO_TYPESCRIPT_SETUP=1 && npx expo-cli start --config \"./demo/app.json\" -c"
   },
   "dependencies": {
     "@babel/runtime": "^7.13.10",
@@ -54,11 +56,30 @@
   "peerDependencies": {
     "react": ">=17.0",
     "react-dom": ">=17.0",
-    "three": ">=0.126"
+    "three": ">=0.126",
+    "expo-gl": "^10.2.0",
+    "expo-three": "^5.7.0",
+    "react-native": "^0.63.0"
   },
   "peerDependenciesMeta": {
     "react-dom": {
       "optional": true
+    },
+    "expo-gl": {
+      "optional": true
+    },
+    "expo-three": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
     }
+  },
+  "devDependencies": {
+    "@types/react-native": "^0.64.5",
+    "expo": "^41.0.1",
+    "expo-gl": "^10.2.0",
+    "expo-three": "^5.7.0",
+    "react-native": "https://github.com/expo/react-native/archive/sdk-41.0.0.tar.gz"
   }
 }
