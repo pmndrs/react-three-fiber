@@ -58,24 +58,28 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     // Run after-effects
     run(globalAfterEffects, timestamp)
 
-    // Keep on looping if anything invalidates the frameloop
-    if (repeat > 0) return requestAnimationFrame(loop)
-    // Tail call effects, they are called when rendering stops
-    else run(globalTailEffects, timestamp)
+    // Don't loop if nothing invalidates the frameloop
+    if (repeat < 1) {
+      // Tail call effects, they are called when rendering stops
+      run(globalTailEffects, timestamp)
 
-    // Flag end of operation
-    running = false
+      // Flag end of operation
+      running = false
+    }
   }
 
   function invalidate(state?: RootState): void {
     if (!state) return roots.forEach((root) => invalidate(root.store.getState()))
-    if (state.vr || !state.internal.active || state.frameloop === 'never') return
+    if (!state.internal.active || state.frameloop === 'never') {
+      return state.gl.setAnimationLoop(null)
+    }
+
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + 1)
     // If the render-loop isn't active, start it
     if (!running) {
       running = true
-      requestAnimationFrame(loop)
+      state.gl.setAnimationLoop(loop)
     }
   }
 
