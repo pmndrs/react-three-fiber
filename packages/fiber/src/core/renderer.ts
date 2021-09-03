@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
+import { DefaultEventPriority } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
 import { is } from './is'
@@ -529,6 +530,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     warnsIfNotActing: true,
     supportsMutation: true,
     isPrimaryRenderer: false,
+    getCurrentEventPriority: () => DefaultEventPriority,
     // @ts-ignore
     scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
     // @ts-ignore
@@ -643,6 +645,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     },
     clearContainer() {
       return false
+    },
+    detachDeletedInstance() {
+      // noop
     },
   })
 

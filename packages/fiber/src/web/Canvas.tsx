@@ -51,6 +51,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
+
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
   // Throw exception outwards if anything within canvas throws
@@ -69,7 +70,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
     }
   }, [size, children])
 
-  useIsomorphicLayoutEffect(() => {
+  React.useEffect(() => {
     const container = canvasRef.current
     return () => unmountComponentAtNode(container)
   }, [])
