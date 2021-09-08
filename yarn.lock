@@ -6604,10 +6604,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-use-asset@^1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/use-asset/-/use-asset-1.0.4.tgz#506caafc29f602890593799e58b577b70293a6e2"
-  integrity sha512-7/hqDrWa0iMnCoET9W1T07EmD4Eg/Wmoj/X8TGBc++ECRK4m5yTsjP4O6s0yagbxfqIOuUkIxe2/sA+VR2GxZA==
+use-asset@^2.0.0-alpha-00:
+  version "2.0.0-alpha-00"
+  resolved "https://registry.yarnpkg.com/use-asset/-/use-asset-2.0.0-alpha-00.tgz#8a9be97a035fb48dacc38fd2bd21c3b0e867c0c1"
+  integrity sha512-PdXDkyDacwvgsBzL2MLqK1UXNnLBULtIAUB5Hv8HpoIdtv/5nIvLEeZiy6dfrui0GbPNL/RjEo3Ciav0gE7tvg==
   dependencies:
     fast-deep-equal "^3.1.3"
 

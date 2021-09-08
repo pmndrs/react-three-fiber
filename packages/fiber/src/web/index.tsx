@@ -37,6 +37,13 @@ const createRendererInstance = <TElement extends Element>(
         ...gl,
       })
 
+function createRoot<TCanvas extends Element>(canvas: TCanvas) {
+  return {
+    render: (element: React.ReactNode) => render(element, canvas),
+    unmount: () => unmountComponentAtNode(canvas),
+  }
+}
+
 function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
