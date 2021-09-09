@@ -75,13 +75,8 @@ describe('is', () => {
 
     expect(is.equ('hello', 'hello')).toBe(true)
     expect(is.equ(1, 1)).toBe(true)
-    const obj = {
-      type: 'Mesh',
-    }
-    expect(is.equ(obj, obj)).toBe(true)
-
-    const arr = [1, 2, 3]
-    expect(is.equ(arr, arr)).toBe(true)
+    expect(is.equ(myObj, myObj)).toBe(true)
+    expect(is.equ(myArr, myArr)).toBe(true)
     expect(is.equ([1, 2, 3], [1, 2, 3])).toBe(true)
   })
 })
