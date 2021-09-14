@@ -161,10 +161,8 @@ const createStore = (
   }
 
   // Set color management
-  if (!linear) {
-    if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
-    gl.outputEncoding = THREE.sRGBEncoding
-  }
+  if (!linear) gl.outputEncoding = THREE.sRGBEncoding
+  if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
 
   // clock.elapsedTime is updated using advance(timestamp)
   if (frameloop === 'never') {
