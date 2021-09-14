@@ -452,7 +452,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       // Never dispose of primitives because their state may be kept outside of React!
       // In order for an object to be able to dispose it has to have
       //   - a dispose method,
-      //   - it cannot be an <instance object={...} />
+      //   - it cannot be a <primitive object={...} />
       //   - it cannot be a THREE.Scene, because three has broken it's own api
       //
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
@@ -478,7 +478,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        run(idlePriority, () => child.dispose())
+        run(idlePriority, () => {
+          try {
+            child.dispose()
+          } catch (e) {
+            /* ... */
+          }
+        })
       }
 
       invalidateInstance(parentInstance)
