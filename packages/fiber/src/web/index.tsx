@@ -17,14 +17,14 @@ const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
+  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
 const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
+  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
   canvas: TElement,
 ): THREE.WebGLRenderer =>
   isRenderer(gl as THREE.WebGLRenderer)
