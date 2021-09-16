@@ -5,6 +5,7 @@ import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
 
 import { context, RootState, RenderCallback } from './store'
+import { stringLiteral } from '@babel/types'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -39,15 +40,12 @@ export function useThree<T = RootState>(
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
-  const { subscribe } = useStore().getState().internal
+  const subscribe = useStore().getState().internal.subscribe
   // Update ref
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
-  // Subscribe/unsub
-  React.useLayoutEffect(() => {
-    const unsubscribe = subscribe(ref, renderPriority)
-    return () => unsubscribe()
-  }, [renderPriority, subscribe])
+  // Subscribe on mount, unsubscribe on unmount
+  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority])
   return null
 }
 
