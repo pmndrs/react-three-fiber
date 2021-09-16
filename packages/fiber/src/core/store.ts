@@ -298,8 +298,8 @@ const createStore = (
               ...internal,
               // If this subscription was given a priority, it takes rendering into its own hands
               // For that reason we switch off automatic rendering and increase the manual flag
-              // As long as this flag is positive (there could be multiple render subscription)
-              // ..there can be no internal rendering at all
+              // As long as this flag is positive there can be no internal rendering at all
+              // because there could be multiple render subscriptions
               priority: internal.priority + (priority > 0 ? 1 : 0),
               // Register subscriber and sort layers from lowest to highest, meaning,
               // highest priority renders last (on top of the other frames)
