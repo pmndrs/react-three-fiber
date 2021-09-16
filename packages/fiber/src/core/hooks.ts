@@ -3,9 +3,7 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
-
 import { context, RootState, RenderCallback } from './store'
-import { stringLiteral } from '@babel/types'
 
 export interface Loader<T> extends THREE.Loader {
   load(
