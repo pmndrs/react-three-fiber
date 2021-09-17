@@ -1,4 +1,4 @@
-import { is } from '../is'
+import { is } from '../src/is'
 
 describe('is', () => {
   const myFunc = () => {

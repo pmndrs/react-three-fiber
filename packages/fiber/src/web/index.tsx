@@ -3,7 +3,7 @@ import * as React from 'react'
 import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
 
-import { is } from '../../../shared/is'
+import { is } from '@react-three/shared'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'

@@ -1,0 +1,19 @@
+{
+  "name": "@react-three/shared",
+  "version": "7.0.7",
+  "description": "Reusable utilities for react-three-fiber",
+  "main": "index.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
+  },
+  "author": "Anderson Leite",
+  "maintainers": [
+    "Josh Ellis (https://github.com/joshuaellis)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-fiber#readme"
+}

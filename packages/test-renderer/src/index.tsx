@@ -10,7 +10,7 @@ import {
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
-import { is } from '../../shared/is'
+import { is } from '@react-three/shared'
 
 import { createCanvas } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'

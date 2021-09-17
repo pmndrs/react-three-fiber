@@ -7,7 +7,7 @@ import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { asyncUtils } from '../../../shared/asyncUtils'
+import { asyncUtils } from '@react-three/shared'
 
 import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
 
