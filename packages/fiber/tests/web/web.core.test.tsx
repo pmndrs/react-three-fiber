@@ -235,6 +235,24 @@ describe('web core', () => {
     expect(scene.children[0].children.length).toBe(0)
   })
 
+  it('can attach a Scene', async () => {
+    let scene: Scene = null!
+    await act(async () => {
+      scene = render(
+        <hasObject3dMember>
+          <scene attach="attachment" />
+        </hasObject3dMember>,
+        canvas,
+      ).getState().scene
+    })
+
+    const attachedScene = (scene.children[0] as HasObject3dMember).attachment
+    expect(attachedScene).toBeDefined()
+    expect(attachedScene?.type).toBe('Scene')
+    // attaching is *instead of* being a regular child
+    expect(scene.children[0].children.length).toBe(0)
+  })
+
   describe('attaches Object3D children that use attachFns', () => {
     it('attachFns as strings', async () => {
       let scene: Scene = null!
