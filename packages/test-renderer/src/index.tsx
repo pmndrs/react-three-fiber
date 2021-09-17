@@ -10,7 +10,7 @@ import {
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
-import { is } from './helpers/is'
+import { is } from '../../shared/is'
 
 import { createCanvas } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'

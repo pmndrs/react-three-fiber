@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
 import { UseStore } from 'zustand'
 import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
-import { is } from './is'
+import { is } from '../../../shared/is'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
