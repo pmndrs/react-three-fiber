@@ -343,7 +343,7 @@ export function createEvents(store: UseStore<RootState>) {
               handler(data as ThreeEvent<PointerEvent>)
               pointerMissed(
                 event,
-                internal.interaction.filter((object) => object !== eventObject),
+                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
               )
             }
           }
