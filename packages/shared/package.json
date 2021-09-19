@@ -2,7 +2,9 @@
   "name": "@react-three/shared",
   "version": "7.0.7",
   "description": "Reusable utilities for react-three-fiber",
-  "main": "index.ts",
+  "main": "dist/react-three-shared.cjs.js",
+  "module": "dist/react-three-shared.esm.js",
+  "types": "dist/react-three-shared.cjs.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmndrs/react-three-fiber.git"
