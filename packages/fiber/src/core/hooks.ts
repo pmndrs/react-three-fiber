@@ -43,7 +43,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
   // Subscribe on mount, unsubscribe on unmount
-  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority])
+  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
   return null
 }
 
