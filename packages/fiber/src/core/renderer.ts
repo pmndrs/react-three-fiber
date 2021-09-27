@@ -11,7 +11,7 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 export type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
-  instance?: boolean
+  primitive?: boolean
   handlers?: EventHandlers
   memoizedProps: {
     [key: string]: any
@@ -75,10 +75,17 @@ const FILTER = ['children', 'key', 'ref']
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
+// Shallow check arrays, but check objects atomically
+function checkShallow(a: any, b: any) {
+  if (is.arr(a) && is.equ(a, b)) return true
+  if (a === b) return true
+  return false
+}
+
 // Each object in the scene carries a small LocalState descriptor
 function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = object as unknown as Instance
-  if (state?.instance || !instance.__r3f) {
+  if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
@@ -121,7 +128,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     let objectKeys = Object.keys(newProps)
     for (i = 0; i < objectKeys.length; i++) {
-      if (is.equ(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
+      if (checkShallow(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
         sameProps.push(objectKeys[i])
       }
 
@@ -147,7 +154,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     const toFilter = [...sameProps, ...FILTER]
     // Instances use "object" as a reserved identifier
-    if (instance.__r3f?.instance) toFilter.push('object')
+    if (instance.__r3f?.primitive) toFilter.push('object')
     const filteredProps = { ...newProps }
 
     // Removes sameProps and reserved props from newProps
@@ -311,7 +318,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { root, instance: true })
+      instance = prepare<Instance>(object, { root, primitive: true })
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
@@ -456,12 +463,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       //
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
       // when the reconciler calls it, but then carry our own check recursively
-      const isInstance = child.__r3f?.instance
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !isInstance : dispose
+      const isPrimitive = child.__r3f?.primitive
+      const shouldDispose = dispose === undefined ? child.dispose !== null && !isPrimitive : dispose
 
       // Remove nested child objects. Primitives should not have objects and children that are
       // attached to them declaratively ...
-      if (!isInstance) {
+      if (!isPrimitive) {
         removeRecursive(child.__r3f?.objects, child, shouldDispose)
         removeRecursive(child.children, child, shouldDispose)
       }
@@ -472,7 +479,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete child.__r3f.handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-        if (!isInstance) delete (child as Partial<Instance>).__r3f
+        if (!isPrimitive) delete (child as Partial<Instance>).__r3f
       }
 
       // Dispose item whenever the reconciler feels like it
@@ -562,27 +569,33 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       const { container } = getContainer(parentInstance, child)
       insertBefore(container, child, beforeChild)
     },
+    prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
+      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) return [true]
+      else {
+        // This is a data object, let's extract critical information about it
+        const { args: argsNew = [], children: cN, ...restNew } = newProps
+        const { args: argsOld = [], children: cO, ...restOld } = oldProps
+        // If it has new props or arguments, then it needs to be re-instanciated
+        if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [false, true]
+        // If props have changed they need to get applied ...
+        if (Object.keys(restNew).some((key: string) => !checkShallow(newProps[key], oldProps[key])))
+          return [false, false, restNew, restOld]
+        // Otherwise do not touch the instance
+        return null
+      }
+    },
     commitUpdate(
       instance: Instance,
-      updatePayload: any,
+      [isPrimitive, hasNewArgs, restNew, restOld]: [boolean, boolean, InstanceProps, InstanceProps],
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      if (instance.__r3f.instance && newProps.object && newProps.object !== instance) {
-        // <instance object={...} /> where the object reference has changed
+      if (isPrimitive) {
+        // <primitive object={...} /> where the object reference has changed
         switchInstance(instance, type, newProps, fiber)
       } else {
-        // This is a data object, let's extract critical information about it
-        const { args: argsNew = [], ...restNew } = newProps
-        const { args: argsOld = [], ...restOld } = oldProps
-        // If it has new props or arguments, then it needs to be re-instanciated
-        const hasNewArgs = argsNew.some((value, index: number) =>
-          is.obj(value)
-            ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
-            : value !== argsOld[index],
-        )
         if (hasNewArgs) {
           // Next we create a new instance and append it again
           switchInstance(instance, type, newProps, fiber)
@@ -615,7 +628,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       return EMPTY
     },
     getChildHostContext(parentHostContext: any) {
-      return EMPTY
+      return parentHostContext
     },
     createTextInstance() {},
     finalizeInitialChildren(instance: Instance) {
@@ -623,14 +636,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       // Returning true will trigger commitMount
       return !!instance.__r3f.handlers
     },
-    commitMount(instance: Instance /*, type, props*/) {
+    commitMount(instance: Instance) {
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       if (instance.raycast && instance.__r3f.handlers)
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
-    },
-    prepareUpdate() {
-      return EMPTY
     },
     shouldDeprioritizeSubtree() {
       return false
@@ -638,8 +648,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     prepareForCommit() {
       return null
     },
-    preparePortalMount(...args: any) {
-      // noop
+    preparePortalMount(containerInfo: any) {
+      prepare(containerInfo)
     },
     resetAfterCommit() {
       // noop

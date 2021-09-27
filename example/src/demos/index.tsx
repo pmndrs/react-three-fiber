@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-//const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./Viewcube')), dev: true }
+const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./Viewcube')), dev: true }
 const Selection = { descr: '', tags: [], Component: lazy(() => import('./Selection')), dev: true }
 const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true, bright: true }
 const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')), bright: false }
@@ -55,4 +55,5 @@ export {
   Test,
   SuspenseAndErrors,
   ContextMenuOverride,
+  Viewcube,
 }
