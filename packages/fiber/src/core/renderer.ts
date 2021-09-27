@@ -576,34 +576,26 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         const { args: argsNew = [], children: cN, ...restNew } = newProps
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
         // If it has new props or arguments, then it needs to be re-instanciated
-        if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [false, true]
+        if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
         // If props have changed they need to get applied ...
         if (Object.keys(restNew).some((key: string) => !checkShallow(newProps[key], oldProps[key])))
-          return [false, false, restNew, restOld]
+          return [false, restNew, restOld]
         // Otherwise do not touch the instance
         return null
       }
     },
     commitUpdate(
       instance: Instance,
-      [isPrimitive, hasNewArgs, restNew, restOld]: [boolean, boolean, InstanceProps, InstanceProps],
+      [reconstruct, restNew, restOld]: [boolean, InstanceProps, InstanceProps],
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      if (isPrimitive) {
-        // <primitive object={...} /> where the object reference has changed
-        switchInstance(instance, type, newProps, fiber)
-      } else {
-        if (hasNewArgs) {
-          // Next we create a new instance and append it again
-          switchInstance(instance, type, newProps, fiber)
-        } else {
-          // Otherwise just overwrite props
-          applyProps(instance, restNew, restOld, true)
-        }
-      }
+      // Reconstruct when args or <primitive object={...} have changed
+      if (reconstruct) switchInstance(instance, type, newProps, fiber)
+      // Otherwise just overwrite props
+      else applyProps(instance, restNew, restOld, true)
     },
     hideInstance(instance: Instance) {
       if (instance.isObject3D) {
