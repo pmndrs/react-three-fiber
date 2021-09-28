@@ -28,6 +28,7 @@ const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetP
 //const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
+const MultiMaterial = { descr: '', tags: [], Component: lazy(() => import('./MultiMaterial')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
 const SuspenseAndErrors = {
   descr: '',
@@ -52,8 +53,9 @@ export {
   //Animation,
   AutoDispose,
   Layers,
-  Test,
+  MultiMaterial,
   SuspenseAndErrors,
   ContextMenuOverride,
   Viewcube,
+  Test,
 }

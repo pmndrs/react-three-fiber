@@ -108,37 +108,23 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     let i = 0
 
-    Object.entries(newProps).forEach(([key, entry]) => {
-      // we don't want children, ref or key in the memoized props
-      if (FILTER.indexOf(key) === -1) {
-        newMemoizedProps[key] = entry
-      }
-    })
-
-    if (localState.memoizedProps && localState.memoizedProps.args) {
-      newMemoizedProps.args = localState.memoizedProps.args
-    }
-    if (localState.memoizedProps && localState.memoizedProps.attach) {
+    // We don't want children, ref or key in the memoized props
+    Object.entries(newProps).forEach(([key, entry]) => FILTER.indexOf(key) === -1 && (newMemoizedProps[key] = entry))
+    if (localState.memoizedProps && localState.memoizedProps.args) newMemoizedProps.args = localState.memoizedProps.args
+    if (localState.memoizedProps && localState.memoizedProps.attach)
       newMemoizedProps.attach = localState.memoizedProps.attach
-    }
+    if (instance.__r3f) instance.__r3f.memoizedProps = newMemoizedProps
 
-    if (instance.__r3f) {
-      instance.__r3f.memoizedProps = newMemoizedProps
-    }
-
+    // Collect same-props and handlers
     let objectKeys = Object.keys(newProps)
     for (i = 0; i < objectKeys.length; i++) {
-      if (checkShallow(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
-        sameProps.push(objectKeys[i])
-      }
-
+      if (checkShallow(newProps[objectKeys[i]], oldProps[objectKeys[i]])) sameProps.push(objectKeys[i])
       // Event-handlers ...
       //   are functions, that
       //   start with "on", and
       //   contain the name "Pointer", "Click", "DoubleClick", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(objectKeys[i])) {
+      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(objectKeys[i]))
         handlers.push(objectKeys[i])
-      }
     }
 
     // Catch props that existed, but now exist no more ...
@@ -146,9 +132,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     if (accumulative) {
       objectKeys = Object.keys(oldProps)
       for (i = 0; i < objectKeys.length; i++) {
-        if (!newProps.hasOwnProperty(objectKeys[i])) {
-          leftOvers.push(objectKeys[i])
-        }
+        if (!newProps.hasOwnProperty(objectKeys[i])) leftOvers.push(objectKeys[i])
       }
     }
 
@@ -160,19 +144,16 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     // Removes sameProps and reserved props from newProps
     objectKeys = Object.keys(filteredProps)
     for (i = 0; i < objectKeys.length; i++) {
-      if (toFilter.indexOf(objectKeys[i]) > -1) {
-        delete filteredProps[objectKeys[i]]
-      }
+      if (toFilter.indexOf(objectKeys[i]) > -1) delete filteredProps[objectKeys[i]]
     }
 
     // Collect all new props
     const filteredPropsEntries = Object.entries(filteredProps)
+
     // Prepend left-overs so they can be reset or removed
     // Left-overs must come first!
     for (i = 0; i < leftOvers.length; i++) {
-      if (leftOvers[i] !== 'children') {
-        filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
-      }
+      if (leftOvers[i] !== 'children') filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
     }
 
     if (filteredPropsEntries.length > 0) {
@@ -206,26 +187,17 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
               // @ts-ignore
               const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
               value = defaultClassCall[targetProp]
-
               // destory the instance
-              if (defaultClassCall.dispose) {
-                defaultClassCall.dispose()
-              }
-            } else {
-              // instance does not have constructor, just set it to 0
-              value = 0
-            }
+              if (defaultClassCall.dispose) defaultClassCall.dispose()
+            } else value = 0 // instance does not have constructor, just set it to 0
           }
 
           // Special treatment for objects with support for set/copy, and layers
           if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
             // If value is an array
             if (Array.isArray(value)) {
-              if (targetProp.fromArray) {
-                targetProp.fromArray(value)
-              } else {
-                targetProp.set(...value)
-              }
+              if (targetProp.fromArray) targetProp.fromArray(value)
+              else targetProp.set(...value)
             }
             // Test again target.copy(class) next ...
             else if (
@@ -233,9 +205,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
               value &&
               (value as ClassConstructor).constructor &&
               targetProp.constructor.name === (value as ClassConstructor).constructor.name
-            ) {
+            )
               targetProp.copy(value)
-            }
             // If nothing else fits, just set the single value, ignore undefined
             // https://github.com/react-spring/react-three-fiber/issues/274
             else if (value !== undefined) {
@@ -272,12 +243,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
       // Prep interaction handlers
       if (handlers.length) {
-        if (accumulative && root && instance.raycast) {
+        if (accumulative && root && instance.raycast)
           rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
-        }
+
         // Add handlers to the instances handler-map
         localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: newProps[key] }), {} as EventHandlers)
       }
+
       // Call the update lifecycle when it is being updated, but only when it is part of the scene
       if (instance.parent) updateInstance(instance)
     }
