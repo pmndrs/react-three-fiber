@@ -4,7 +4,7 @@ import * as React from 'react'
 import { render, fireEvent } from '@testing-library/react'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { Canvas, events, act } from '../../src/web/index'
+import { Canvas, act } from '../../src/web/index'
 
 // @ts-ignore
 HTMLCanvasElement.prototype.getContext = function () {
@@ -62,6 +62,90 @@ describe('events ', () => {
 
     expect(handleClick).not.toHaveBeenCalled()
     expect(handleMissed).toHaveBeenCalledWith(evt)
+  })
+
+  it('should not fire onPointerMissed when same element is clicked', async () => {
+    const handleClick = jest.fn()
+    const handleMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onPointerMissed={handleMissed} onClick={handleClick}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const down = new PointerEvent('pointerdown')
+    //@ts-ignore
+    down.offsetX = 577
+    //@ts-ignore
+    down.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, down)
+
+    const up = new PointerEvent('pointerup')
+    //@ts-ignore
+    up.offsetX = 577
+    //@ts-ignore
+    up.offsetY = 480
+
+    const evt = new MouseEvent('click')
+    //@ts-ignore
+    evt.offsetX = 577
+    //@ts-ignore
+    evt.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
+
+    expect(handleClick).toHaveBeenCalled()
+    expect(handleMissed).not.toHaveBeenCalled()
+  })
+
+  it('should not fire onPointerMissed on parent when child element is clicked', async () => {
+    const handleClick = jest.fn()
+    const handleMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <group onPointerMissed={handleMissed}>
+            <mesh onClick={handleClick}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </group>
+        </Canvas>,
+      )
+    })
+
+    const down = new PointerEvent('pointerdown')
+    //@ts-ignore
+    down.offsetX = 577
+    //@ts-ignore
+    down.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, down)
+
+    const up = new PointerEvent('pointerup')
+    //@ts-ignore
+    up.offsetX = 577
+    //@ts-ignore
+    up.offsetY = 480
+
+    const evt = new MouseEvent('click')
+    //@ts-ignore
+    evt.offsetX = 577
+    //@ts-ignore
+    evt.offsetY = 480
+
+    fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
+
+    expect(handleClick).toHaveBeenCalled()
+    expect(handleMissed).not.toHaveBeenCalled()
   })
 
   it('can handle onPointerMissed on Canvas', async () => {

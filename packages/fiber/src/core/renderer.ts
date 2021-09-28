@@ -12,8 +12,8 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 export type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
-  instance?: boolean
-  handlers?: EventHandlers
+  primitive?: boolean
+  handlers: { count: number } & Partial<EventHandlers>
   memoizedProps: {
     [key: string]: any
   }
@@ -51,6 +51,14 @@ export type InstanceProps = {
   attach?: string
 }
 
+export type DiffSet = {
+  accumulative: boolean
+  memoized: { [key: string]: any }
+  changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][]
+}
+
+export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
+
 interface Catalogue {
   [name: string]: {
     new (...args: any): Instance
@@ -71,18 +79,25 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
 
 const DEFAULT = '__default'
 const EMPTY = {}
-const FILTER = ['children', 'key', 'ref']
 
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
+// Shallow check arrays, but check objects atomically
+function checkShallow(a: any, b: any) {
+  if (is.arr(a) && is.equ(a, b)) return true
+  if (a === b) return true
+  return false
+}
+
 // Each object in the scene carries a small LocalState descriptor
 function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = object as unknown as Instance
-  if (state?.instance || !instance.__r3f) {
+  if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
+      handlers: { count: 0 },
       objects: [],
       ...state,
     }
@@ -91,190 +106,147 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
 }
 
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
-  function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
+  // This function prepares a set of changes to be applied to the instance
+  function diffProps(
+    instance: Instance,
+    { children: cN, key: kN, ref: rN, ...props }: InstanceProps,
+    { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
+    accumulative = false,
+  ): DiffSet {
+    const localState = (instance?.__r3f ?? {}) as LocalState
+    const entries = Object.entries(props)
+    const changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][] = []
+
+    // Catch removed props, prepend them so they can be reset or removed
+    if (accumulative) {
+      const previousKeys = Object.keys(previous)
+      for (let i = 0; i < previousKeys.length; i++)
+        if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
+    }
+
+    entries.forEach(([key, value]) => {
+      // Bail out on primitive object
+      if (instance.__r3f?.primitive && key === 'object') return
+      // When props match bail out
+      if (checkShallow(value, previous[key])) return
+
+      let currentInstance = instance
+      let targetProp = currentInstance[key]
+
+      // Collect handlers and bail out
+      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
+        return changes.push([key, value, true, currentInstance, targetProp])
+
+      // Revolve dashed props
+      if (key.includes('-')) {
+        const entries = key.split('-')
+        targetProp = entries.reduce((acc, key) => acc[key], instance)
+        // If the target is atomic, it forces us to switch the root
+        if (!(targetProp && targetProp.set)) {
+          const [name, ...reverseEntries] = entries.reverse()
+          currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+          key = name
+        }
+      }
+      changes.push([key, value, false, currentInstance, targetProp])
+    })
+
+    const memoized: { [key: string]: any } = { ...props }
+    if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
+    if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
+
+    return { accumulative, memoized, changes }
+  }
+
+  function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState?.() ?? {}
-    const sameProps: string[] = []
-    const handlers: string[] = []
-    const newMemoizedProps: { [key: string]: any } = {}
+    const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
+    const prevHandlers = localState.handlers?.count
 
-    let i = 0
+    // Prepare memoized props
+    if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-    Object.entries(newProps).forEach(([key, entry]) => {
-      // we don't want children, ref or key in the memoized props
-      if (FILTER.indexOf(key) === -1) {
-        newMemoizedProps[key] = entry
+    changes.forEach(([key, value, isEvent, currentInstance, targetProp]) => {
+      // https://github.com/mrdoob/three.js/issues/21209
+      // HMR/fast-refresh relies on the ability to cancel out props, but threejs
+      // has no means to do this. Hence we curate a small collection of value-classes
+      // with their respective constructor/set arguments
+      // For removed props, try to set default values, if possible
+      if (value === DEFAULT + 'remove') {
+        if (targetProp && targetProp.constructor) {
+          // use the prop constructor to find the default it should be
+          value = new targetProp.constructor(memoized.args)
+        } else if (currentInstance.constructor) {
+          // create a blank slate of the instance and copy the particular parameter.
+          // @ts-ignore
+          const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
+          value = defaultClassCall[targetProp]
+          // destory the instance
+          if (defaultClassCall.dispose) defaultClassCall.dispose()
+          // instance does not have constructor, just set it to 0
+        } else value = 0
       }
+
+      // Deal with pointer events ...
+      if (isEvent) {
+        if (value) localState.handlers[key as keyof EventHandlers] = value as any
+        else delete localState.handlers[key as keyof EventHandlers]
+        localState.handlers.count = Object.keys(localState.handlers).length
+      }
+      // Special treatment for objects with support for set/copy, and layers
+      else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
+        // If value is an array
+        if (Array.isArray(value)) {
+          if (targetProp.fromArray) targetProp.fromArray(value)
+          else targetProp.set(...value)
+        }
+        // Test again target.copy(class) next ...
+        else if (
+          targetProp.copy &&
+          value &&
+          (value as ClassConstructor).constructor &&
+          targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        )
+          targetProp.copy(value)
+        // If nothing else fits, just set the single value, ignore undefined
+        // https://github.com/react-spring/react-three-fiber/issues/274
+        else if (value !== undefined) {
+          const isColor = targetProp instanceof THREE.Color
+          // Allow setting array scalars
+          if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
+          // Layers have no copy function, we must therefore copy the mask property
+          else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
+          // Otherwise just set ...
+          else targetProp.set(value)
+          // Auto-convert sRGB colors, for now ...
+          // https://github.com/react-spring/react-three-fiber/issues/344
+          if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        }
+        // Else, just overwrite the value
+      } else {
+        currentInstance[key] = value
+        // Auto-convert sRGB textures, for now ...
+        // https://github.com/react-spring/react-three-fiber/issues/344
+        if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
+          currentInstance[key].encoding = THREE.sRGBEncoding
+      }
+
+      invalidateInstance(instance)
     })
 
-    if (localState.memoizedProps && localState.memoizedProps.args) {
-      newMemoizedProps.args = localState.memoizedProps.args
-    }
-    if (localState.memoizedProps && localState.memoizedProps.attach) {
-      newMemoizedProps.attach = localState.memoizedProps.attach
-    }
-
-    if (instance.__r3f) {
-      instance.__r3f.memoizedProps = newMemoizedProps
+    if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
+      // Pre-emptively remove the instance from the interaction manager
+      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+      if (index > -1) rootState.internal.interaction.splice(index, 1)
+      // Add the instance to the interaction manager only when it has handlers
+      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
     }
 
-    let objectKeys = Object.keys(newProps)
-    for (i = 0; i < objectKeys.length; i++) {
-      if (is.equ(newProps[objectKeys[i]], oldProps[objectKeys[i]])) {
-        sameProps.push(objectKeys[i])
-      }
-
-      // Event-handlers ...
-      //   are functions, that
-      //   start with "on", and
-      //   contain the name "Pointer", "Click", "DoubleClick", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(objectKeys[i])) {
-        handlers.push(objectKeys[i])
-      }
-    }
-
-    // Catch props that existed, but now exist no more ...
-    const leftOvers = [] as string[]
-    if (accumulative) {
-      objectKeys = Object.keys(oldProps)
-      for (i = 0; i < objectKeys.length; i++) {
-        if (!newProps.hasOwnProperty(objectKeys[i])) {
-          leftOvers.push(objectKeys[i])
-        }
-      }
-    }
-
-    const toFilter = [...sameProps, ...FILTER]
-    // Instances use "object" as a reserved identifier
-    if (instance.__r3f?.instance) toFilter.push('object')
-    const filteredProps = { ...newProps }
-
-    // Removes sameProps and reserved props from newProps
-    objectKeys = Object.keys(filteredProps)
-    for (i = 0; i < objectKeys.length; i++) {
-      if (toFilter.indexOf(objectKeys[i]) > -1) {
-        delete filteredProps[objectKeys[i]]
-      }
-    }
-
-    // Collect all new props
-    const filteredPropsEntries = Object.entries(filteredProps)
-    // Prepend left-overs so they can be reset or removed
-    // Left-overs must come first!
-    for (i = 0; i < leftOvers.length; i++) {
-      if (leftOvers[i] !== 'children') {
-        filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
-      }
-    }
-
-    if (filteredPropsEntries.length > 0) {
-      filteredPropsEntries.forEach(([key, value]) => {
-        if (!handlers.includes(key)) {
-          let currentInstance = instance
-          let targetProp = currentInstance[key]
-
-          if (key.includes('-')) {
-            const entries = key.split('-')
-            targetProp = entries.reduce((acc, key) => acc[key], instance)
-            // If the target is atomic, it forces us to switch the root
-            if (!(targetProp && targetProp.set)) {
-              const [name, ...reverseEntries] = entries.reverse()
-              currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
-              key = name
-            }
-          }
-
-          // https://github.com/mrdoob/three.js/issues/21209
-          // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-          // has no means to do this. Hence we curate a small collection of value-classes
-          // with their respective constructor/set arguments
-          // For removed props, try to set default values, if possible
-          if (value === DEFAULT + 'remove') {
-            if (targetProp && targetProp.constructor) {
-              // use the prop constructor to find the default it should be
-              value = new targetProp.constructor(newMemoizedProps.args)
-            } else if (currentInstance.constructor) {
-              // create a blank slate of the instance and copy the particular parameter.
-              // @ts-ignore
-              const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
-              value = defaultClassCall[targetProp]
-
-              // destory the instance
-              if (defaultClassCall.dispose) {
-                defaultClassCall.dispose()
-              }
-            } else {
-              // instance does not have constructor, just set it to 0
-              value = 0
-            }
-          }
-
-          // Special treatment for objects with support for set/copy, and layers
-          if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
-            // If value is an array
-            if (Array.isArray(value)) {
-              if (targetProp.fromArray) {
-                targetProp.fromArray(value)
-              } else {
-                targetProp.set(...value)
-              }
-            }
-            // Test again target.copy(class) next ...
-            else if (
-              targetProp.copy &&
-              value &&
-              (value as ClassConstructor).constructor &&
-              targetProp.constructor.name === (value as ClassConstructor).constructor.name
-            ) {
-              targetProp.copy(value)
-            }
-            // If nothing else fits, just set the single value, ignore undefined
-            // https://github.com/react-spring/react-three-fiber/issues/274
-            else if (value !== undefined) {
-              const isColor = targetProp instanceof THREE.Color
-              // Allow setting array scalars
-              if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
-              // Layers have no copy function, we must therefore copy the mask property
-              else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
-              // Otherwise just set ...
-              else targetProp.set(value)
-              // Auto-convert sRGB colors, for now ...
-              // https://github.com/react-spring/react-three-fiber/issues/344
-              if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
-            }
-            // Else, just overwrite the value
-          } else {
-            currentInstance[key] = value
-            // Auto-convert sRGB textures, for now ...
-            // https://github.com/react-spring/react-three-fiber/issues/344
-            if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
-              currentInstance[key].encoding = THREE.sRGBEncoding
-          }
-
-          invalidateInstance(instance)
-        }
-      })
-
-      // Preemptively delete the instance from the containers interaction
-      if (accumulative && root && instance.raycast && localState.handlers) {
-        localState.handlers = undefined
-        const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
-        if (index > -1) rootState.internal.interaction.splice(index, 1)
-      }
-
-      // Prep interaction handlers
-      if (handlers.length) {
-        if (accumulative && root && instance.raycast) {
-          rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
-        }
-        // Add handlers to the instances handler-map
-        localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: newProps[key] }), {} as EventHandlers)
-      }
-      // Call the update lifecycle when it is being updated, but only when it is part of the scene
-      if (instance.parent) updateInstance(instance)
-    }
+    // Call the update lifecycle when it is being updated, but only when it is part of the scene
+    if (changes.length && instance.parent) updateInstance(instance)
   }
 
   function invalidateInstance(instance: Instance) {
@@ -312,7 +284,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { root, instance: true })
+      instance = prepare<Instance>(object, { root, primitive: true })
     } else {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
@@ -341,7 +313,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
     // why it passes "true" here
-    applyProps(instance, props, {})
+    applyProps(instance, props)
     return instance
   }
 
@@ -457,12 +429,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       //
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
       // when the reconciler calls it, but then carry our own check recursively
-      const isInstance = child.__r3f?.instance
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !isInstance : dispose
+      const isPrimitive = child.__r3f?.primitive
+      const shouldDispose = dispose === undefined ? child.dispose !== null && !isPrimitive : dispose
 
       // Remove nested child objects. Primitives should not have objects and children that are
       // attached to them declaratively ...
-      if (!isInstance) {
+      if (!isPrimitive) {
         removeRecursive(child.__r3f?.objects, child, shouldDispose)
         removeRecursive(child.children, child, shouldDispose)
       }
@@ -471,9 +443,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (child.__r3f) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-        delete child.__r3f.handlers
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-        if (!isInstance) delete (child as Partial<Instance>).__r3f
+        if (!isPrimitive) delete (child as Partial<Instance>).__r3f
       }
 
       // Dispose item whenever the reconciler feels like it
@@ -552,47 +524,38 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       container.__r3f.root = root
       appendChild(container, child)
     },
-    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
-      const { container } = getContainer(parentInstance, child)
-      removeChild(container, child)
-    },
-    insertInContainerBefore: (
-      parentInstance: UseStore<RootState> | Instance,
-      child: Instance,
-      beforeChild: Instance,
-    ) => {
-      const { container } = getContainer(parentInstance, child)
-      insertBefore(container, child, beforeChild)
+    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) =>
+      removeChild(getContainer(parentInstance, child).container, child),
+    insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
+      insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
+    prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
+      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) return [true]
+      else {
+        // This is a data object, let's extract critical information about it
+        const { args: argsNew = [], children: cN, ...restNew } = newProps
+        const { args: argsOld = [], children: cO, ...restOld } = oldProps
+        // If it has new props or arguments, then it needs to be re-instanciated
+        if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
+        // Create a diff-set, flag if there are any changes
+        const diff = diffProps(instance, restNew, restOld, true)
+        if (diff.changes.length) return [false, diff]
+        // Otherwise do not touch the instance
+        return null
+      }
     },
     commitUpdate(
       instance: Instance,
-      updatePayload: any,
+      [reconstruct, diff]: [boolean, DiffSet],
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      if (instance.__r3f.instance && newProps.object && newProps.object !== instance) {
-        // <instance object={...} /> where the object reference has changed
-        switchInstance(instance, type, newProps, fiber)
-      } else {
-        // This is a data object, let's extract critical information about it
-        const { args: argsNew = [], ...restNew } = newProps
-        const { args: argsOld = [], ...restOld } = oldProps
-        // If it has new props or arguments, then it needs to be re-instanciated
-        const hasNewArgs = argsNew.some((value, index: number) =>
-          is.obj(value)
-            ? Object.entries(value).some(([key, val]) => val !== argsOld[index][key])
-            : value !== argsOld[index],
-        )
-        if (hasNewArgs) {
-          // Next we create a new instance and append it again
-          switchInstance(instance, type, newProps, fiber)
-        } else {
-          // Otherwise just overwrite props
-          applyProps(instance, restNew, restOld, true)
-        }
-      }
+      //console.log(type)
+      // Reconstruct when args or <primitive object={...} have changes
+      if (reconstruct) switchInstance(instance, type, newProps, fiber)
+      // Otherwise just overwrite props
+      else applyProps(instance, diff)
     },
     hideInstance(instance: Instance) {
       if (instance.isObject3D) {
@@ -617,22 +580,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       return EMPTY
     },
     getChildHostContext(parentHostContext: any) {
-      return EMPTY
+      return parentHostContext
     },
     createTextInstance() {},
-    finalizeInitialChildren(instance: Instance) {
-      // https://github.com/facebook/react/issues/20271
-      // Returning true will trigger commitMount
-      return !!instance.__r3f.handlers
+    finalizeInitialChildren() {
+      return false
     },
-    commitMount(instance: Instance /*, type, props*/) {
-      // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
-      if (instance.raycast && instance.__r3f.handlers)
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
-    },
-    prepareUpdate() {
-      return EMPTY
+    commitMount() {
+      // noop
     },
     shouldDeprioritizeSubtree() {
       return false
@@ -640,8 +595,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     prepareForCommit() {
       return null
     },
-    preparePortalMount(...args: any) {
-      // noop
+    preparePortalMount(containerInfo: any) {
+      prepare(containerInfo)
     },
     resetAfterCommit() {
       // noop

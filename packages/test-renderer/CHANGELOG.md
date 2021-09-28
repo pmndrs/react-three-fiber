@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.7
+
+### Patch Changes
+
+- 0375896: Simplify useframe, support instanced event cancelation, silence disposal
+- Updated dependencies [0375896]
+  - @react-three/fiber@7.0.7
+
 ## 7.0.6
 
 ### Patch Changes

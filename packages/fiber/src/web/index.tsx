@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { RootTag } from 'react-reconciler'
+// @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
-import { createRenderer, extend, prepare, Root } from '../core/renderer'
+import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
@@ -171,21 +171,8 @@ function dispose<TObj extends { dispose?: () => void; type?: string; [key: strin
 }
 
 const act = reconciler.act
-const hasSymbol = is.fun(Symbol) && Symbol.for
-const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
-function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  implementation?: any,
-  key: any = null,
-): React.ReactNode {
-  return {
-    $$typeof: REACT_PORTAL_TYPE,
-    key: key == null ? null : '' + key,
-    children,
-    containerInfo: prepare(container),
-    implementation,
-  }
+function createPortal(children: React.ReactNode, container: THREE.Object3D): React.ReactNode {
+  return reconciler.createPortal(children, container, null, null)
 }
 
 reconciler.injectIntoDevTools({

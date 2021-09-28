@@ -38,6 +38,7 @@ function useDrag(onDrag: any, onEnd: any) {
 
   const down = useCallback(
     (e) => {
+      console.log('down')
       setActive(true)
       toggle(false)
       e.stopPropagation()
@@ -48,6 +49,7 @@ function useDrag(onDrag: any, onEnd: any) {
 
   const up = useCallback(
     (e) => {
+      console.log('up')
       setActive(false)
       toggle(true)
       e.stopPropagation()
