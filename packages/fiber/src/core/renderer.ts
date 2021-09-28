@@ -394,15 +394,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
+      if (child.__r3f) {
+        child.__r3f.parent = null
+      }
+
       if (parentInstance.__r3f.objects) {
-        const oldLength = parentInstance.__r3f.objects.length
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-        const newLength = parentInstance.__r3f.objects.length
-        // was it in the list?
-        if (newLength < oldLength) {
-          // we had also set this, so we must clear it now
-          child.__r3f.parent = null
-        }
       }
 
       // Remove attachment
