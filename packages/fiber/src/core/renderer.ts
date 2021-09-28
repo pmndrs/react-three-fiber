@@ -581,17 +581,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       return parentHostContext
     },
     createTextInstance() {},
-    finalizeInitialChildren(instance: Instance) {
-      // https://github.com/facebook/react/issues/20271
-      // Returning true will trigger commitMount
-      //return !!instance.__r3f.handlers
+    finalizeInitialChildren() {
       return false
     },
-    commitMount(instance: Instance) {
-      // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
-      //if (instance.raycast && instance.__r3f.handlers)
-      //  instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+    commitMount() {
+      // noop
     },
     shouldDeprioritizeSubtree() {
       return false
