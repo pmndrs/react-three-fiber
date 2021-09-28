@@ -70,7 +70,6 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
 
 const DEFAULT = '__default'
 const EMPTY = {}
-const FILTER = ['children', 'key', 'ref']
 
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
@@ -97,162 +96,137 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
 }
 
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
-  function applyProps(instance: Instance, newProps: InstanceProps, oldProps: InstanceProps = {}, accumulative = false) {
+  function applyProps(
+    instance: Instance,
+    { children, key, ref, ...props }: InstanceProps,
+    previous: InstanceProps = {},
+    accumulative = false,
+  ) {
     // Filter equals, events and reserved props
     const localState = (instance?.__r3f ?? {}) as LocalState
     const root = localState.root
     const rootState = root?.getState?.() ?? {}
-    const sameProps: string[] = []
     const handlers: string[] = []
-    const newMemoizedProps: { [key: string]: any } = {}
+    const newMemoizedProps: { [key: string]: any } = { ...props }
 
-    let i = 0
-
-    // We don't want children, ref or key in the memoized props
-    Object.entries(newProps).forEach(([key, entry]) => FILTER.indexOf(key) === -1 && (newMemoizedProps[key] = entry))
+    // Prepare memoized props
     if (localState.memoizedProps && localState.memoizedProps.args) newMemoizedProps.args = localState.memoizedProps.args
     if (localState.memoizedProps && localState.memoizedProps.attach)
       newMemoizedProps.attach = localState.memoizedProps.attach
     if (instance.__r3f) instance.__r3f.memoizedProps = newMemoizedProps
 
-    // Collect same-props and handlers
-    let objectKeys = Object.keys(newProps)
-    for (i = 0; i < objectKeys.length; i++) {
-      if (checkShallow(newProps[objectKeys[i]], oldProps[objectKeys[i]])) sameProps.push(objectKeys[i])
-      // Event-handlers ...
-      //   are functions, that
-      //   start with "on", and
-      //   contain the name "Pointer", "Click", "DoubleClick", "ContextMenu", or "Wheel"
-      if (is.fun(newProps[objectKeys[i]]) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(objectKeys[i]))
-        handlers.push(objectKeys[i])
-    }
-
-    // Catch props that existed, but now exist no more ...
-    const leftOvers = [] as string[]
-    if (accumulative) {
-      objectKeys = Object.keys(oldProps)
-      for (i = 0; i < objectKeys.length; i++) {
-        if (!newProps.hasOwnProperty(objectKeys[i])) leftOvers.push(objectKeys[i])
-      }
-    }
-
-    const toFilter = [...sameProps, ...FILTER]
-    // Instances use "object" as a reserved identifier
-    if (instance.__r3f?.primitive) toFilter.push('object')
-    const filteredProps = { ...newProps }
-
-    // Removes sameProps and reserved props from newProps
-    objectKeys = Object.keys(filteredProps)
-    for (i = 0; i < objectKeys.length; i++) {
-      if (toFilter.indexOf(objectKeys[i]) > -1) delete filteredProps[objectKeys[i]]
-    }
-
     // Collect all new props
-    const filteredPropsEntries = Object.entries(filteredProps)
+    const entries = Object.entries(props)
 
-    // Prepend left-overs so they can be reset or removed
-    // Left-overs must come first!
-    for (i = 0; i < leftOvers.length; i++) {
-      if (leftOvers[i] !== 'children') filteredPropsEntries.unshift([leftOvers[i], DEFAULT + 'remove'])
+    // Catch removed props, prepend them so they can be reset or removed
+    if (accumulative) {
+      const previousKeys = Object.keys(previous)
+      for (let i = 0; i < previousKeys.length; i++)
+        if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
     }
 
-    if (filteredPropsEntries.length > 0) {
-      filteredPropsEntries.forEach(([key, value]) => {
-        if (!handlers.includes(key)) {
-          let currentInstance = instance
-          let targetProp = currentInstance[key]
+    let changed = false
+    entries.forEach(([key, value]) => {
+      // Bail out on primitive object
+      if (instance.__r3f?.primitive && key === 'object') return
+      // Collect handlers and bail out
+      if (is.fun(value) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return handlers.push(key)
+      // When props match bail out
+      if (checkShallow(value, previous[key])) return
 
-          if (key.includes('-')) {
-            const entries = key.split('-')
-            targetProp = entries.reduce((acc, key) => acc[key], instance)
-            // If the target is atomic, it forces us to switch the root
-            if (!(targetProp && targetProp.set)) {
-              const [name, ...reverseEntries] = entries.reverse()
-              currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
-              key = name
-            }
-          }
+      let currentInstance = instance
+      let targetProp = currentInstance[key]
 
-          // https://github.com/mrdoob/three.js/issues/21209
-          // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-          // has no means to do this. Hence we curate a small collection of value-classes
-          // with their respective constructor/set arguments
-          // For removed props, try to set default values, if possible
-          if (value === DEFAULT + 'remove') {
-            if (targetProp && targetProp.constructor) {
-              // use the prop constructor to find the default it should be
-              value = new targetProp.constructor(newMemoizedProps.args)
-            } else if (currentInstance.constructor) {
-              // create a blank slate of the instance and copy the particular parameter.
-              // @ts-ignore
-              const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
-              value = defaultClassCall[targetProp]
-              // destory the instance
-              if (defaultClassCall.dispose) defaultClassCall.dispose()
-            } else value = 0 // instance does not have constructor, just set it to 0
-          }
-
-          // Special treatment for objects with support for set/copy, and layers
-          if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
-            // If value is an array
-            if (Array.isArray(value)) {
-              if (targetProp.fromArray) targetProp.fromArray(value)
-              else targetProp.set(...value)
-            }
-            // Test again target.copy(class) next ...
-            else if (
-              targetProp.copy &&
-              value &&
-              (value as ClassConstructor).constructor &&
-              targetProp.constructor.name === (value as ClassConstructor).constructor.name
-            )
-              targetProp.copy(value)
-            // If nothing else fits, just set the single value, ignore undefined
-            // https://github.com/react-spring/react-three-fiber/issues/274
-            else if (value !== undefined) {
-              const isColor = targetProp instanceof THREE.Color
-              // Allow setting array scalars
-              if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
-              // Layers have no copy function, we must therefore copy the mask property
-              else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
-              // Otherwise just set ...
-              else targetProp.set(value)
-              // Auto-convert sRGB colors, for now ...
-              // https://github.com/react-spring/react-three-fiber/issues/344
-              if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
-            }
-            // Else, just overwrite the value
-          } else {
-            currentInstance[key] = value
-            // Auto-convert sRGB textures, for now ...
-            // https://github.com/react-spring/react-three-fiber/issues/344
-            if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
-              currentInstance[key].encoding = THREE.sRGBEncoding
-          }
-
-          invalidateInstance(instance)
+      if (key.includes('-')) {
+        const entries = key.split('-')
+        targetProp = entries.reduce((acc, key) => acc[key], instance)
+        // If the target is atomic, it forces us to switch the root
+        if (!(targetProp && targetProp.set)) {
+          const [name, ...reverseEntries] = entries.reverse()
+          currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+          key = name
         }
-      })
-
-      // Preemptively delete the instance from the containers interaction
-      if (accumulative && root && instance.raycast && localState.handlers) {
-        localState.handlers = undefined
-        const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
-        if (index > -1) rootState.internal.interaction.splice(index, 1)
       }
 
-      // Prep interaction handlers
-      if (handlers.length) {
-        if (accumulative && root && instance.raycast)
-          rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
-
-        // Add handlers to the instances handler-map
-        localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: newProps[key] }), {} as EventHandlers)
+      // https://github.com/mrdoob/three.js/issues/21209
+      // HMR/fast-refresh relies on the ability to cancel out props, but threejs
+      // has no means to do this. Hence we curate a small collection of value-classes
+      // with their respective constructor/set arguments
+      // For removed props, try to set default values, if possible
+      if (value === DEFAULT + 'remove') {
+        if (targetProp && targetProp.constructor) {
+          // use the prop constructor to find the default it should be
+          value = new targetProp.constructor(newMemoizedProps.args)
+        } else if (currentInstance.constructor) {
+          // create a blank slate of the instance and copy the particular parameter.
+          // @ts-ignore
+          const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
+          value = defaultClassCall[targetProp]
+          // destory the instance
+          if (defaultClassCall.dispose) defaultClassCall.dispose()
+          // instance does not have constructor, just set it to 0
+        } else value = 0
       }
 
-      // Call the update lifecycle when it is being updated, but only when it is part of the scene
-      if (instance.parent) updateInstance(instance)
+      // Special treatment for objects with support for set/copy, and layers
+      if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
+        // If value is an array
+        if (Array.isArray(value)) {
+          if (targetProp.fromArray) targetProp.fromArray(value)
+          else targetProp.set(...value)
+        }
+        // Test again target.copy(class) next ...
+        else if (
+          targetProp.copy &&
+          value &&
+          (value as ClassConstructor).constructor &&
+          targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        )
+          targetProp.copy(value)
+        // If nothing else fits, just set the single value, ignore undefined
+        // https://github.com/react-spring/react-three-fiber/issues/274
+        else if (value !== undefined) {
+          const isColor = targetProp instanceof THREE.Color
+          // Allow setting array scalars
+          if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
+          // Layers have no copy function, we must therefore copy the mask property
+          else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
+          // Otherwise just set ...
+          else targetProp.set(value)
+          // Auto-convert sRGB colors, for now ...
+          // https://github.com/react-spring/react-three-fiber/issues/344
+          if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        }
+        // Else, just overwrite the value
+      } else {
+        currentInstance[key] = value
+        // Auto-convert sRGB textures, for now ...
+        // https://github.com/react-spring/react-three-fiber/issues/344
+        if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
+          currentInstance[key].encoding = THREE.sRGBEncoding
+      }
+
+      invalidateInstance(instance)
+      changed = true
+    })
+
+    // Preemptively delete the instance from the containers interaction
+    if (accumulative && root && instance.raycast && localState.handlers) {
+      localState.handlers = undefined
+      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+      if (index > -1) rootState.internal.interaction.splice(index, 1)
     }
+
+    // Prep interaction handlers
+    if (handlers.length) {
+      if (accumulative && root && instance.raycast)
+        rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+      // Add handlers to the instances handler-map
+      localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: props[key] }), {} as EventHandlers)
+    }
+
+    // Call the update lifecycle when it is being updated, but only when it is part of the scene
+    if (changed && instance.parent) updateInstance(instance)
   }
 
   function invalidateInstance(instance: Instance) {
@@ -542,7 +516,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         // If it has new props or arguments, then it needs to be re-instanciated
         if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
         // If props have changed they need to get applied ...
-        if (Object.keys(restNew).some((key: string) => !checkShallow(newProps[key], oldProps[key])))
+        const newKeys = Object.keys(restNew)
+        const oldKeys = Object.keys(restOld)
+        if (
+          newKeys.length !== oldKeys.length ||
+          newKeys.some((key: string) => !checkShallow(newProps[key], oldProps[key]))
+        )
           return [false, restNew, restOld]
         // Otherwise do not touch the instance
         return null
