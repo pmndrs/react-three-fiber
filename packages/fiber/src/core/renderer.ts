@@ -12,7 +12,7 @@ export type LocalState = {
   root: UseStore<RootState>
   objects: Instance[]
   primitive?: boolean
-  handlers?: EventHandlers
+  handlers: { count: number } & Partial<EventHandlers>
   memoizedProps: {
     [key: string]: any
   }
@@ -49,6 +49,14 @@ export type InstanceProps = {
   dispose?: null
   attach?: string
 }
+
+export type DiffSet = {
+  accumulative: boolean
+  memoized: { [key: string]: any }
+  changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][]
+}
+
+export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
 
 interface Catalogue {
   [name: string]: {
@@ -88,6 +96,7 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
     instance.__r3f = {
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
+      handlers: { count: 0 },
       objects: [],
       ...state,
     }
@@ -96,27 +105,16 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
 }
 
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
-  function applyProps(
+  // This function prepares a set of changes to be applied to the instance
+  function diffProps(
     instance: Instance,
-    { children, key, ref, ...props }: InstanceProps,
-    previous: InstanceProps = {},
+    { children: cN, key: kN, ref: rN, ...props }: InstanceProps,
+    { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
     accumulative = false,
-  ) {
-    // Filter equals, events and reserved props
+  ): DiffSet {
     const localState = (instance?.__r3f ?? {}) as LocalState
-    const root = localState.root
-    const rootState = root?.getState?.() ?? {}
-    const handlers: string[] = []
-    const newMemoizedProps: { [key: string]: any } = { ...props }
-
-    // Prepare memoized props
-    if (localState.memoizedProps && localState.memoizedProps.args) newMemoizedProps.args = localState.memoizedProps.args
-    if (localState.memoizedProps && localState.memoizedProps.attach)
-      newMemoizedProps.attach = localState.memoizedProps.attach
-    if (instance.__r3f) instance.__r3f.memoizedProps = newMemoizedProps
-
-    // Collect all new props
     const entries = Object.entries(props)
+    const changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][] = []
 
     // Catch removed props, prepend them so they can be reset or removed
     if (accumulative) {
@@ -125,18 +123,20 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
     }
 
-    let changed = false
     entries.forEach(([key, value]) => {
       // Bail out on primitive object
       if (instance.__r3f?.primitive && key === 'object') return
-      // Collect handlers and bail out
-      if (is.fun(value) && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return handlers.push(key)
       // When props match bail out
       if (checkShallow(value, previous[key])) return
 
       let currentInstance = instance
       let targetProp = currentInstance[key]
 
+      // Collect handlers and bail out
+      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
+        return changes.push([key, value, true, currentInstance, targetProp])
+
+      // Revolve dashed props
       if (key.includes('-')) {
         const entries = key.split('-')
         targetProp = entries.reduce((acc, key) => acc[key], instance)
@@ -147,7 +147,28 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           key = name
         }
       }
+      changes.push([key, value, false, currentInstance, targetProp])
+    })
 
+    const memoized: { [key: string]: any } = { ...props }
+    if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
+    if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
+
+    return { accumulative, memoized, changes }
+  }
+
+  function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
+    // Filter equals, events and reserved props
+    const localState = (instance?.__r3f ?? {}) as LocalState
+    const root = localState.root
+    const rootState = root?.getState?.() ?? {}
+    const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
+    const prevHandlers = localState.handlers?.count
+
+    // Prepare memoized props
+    if (instance.__r3f) instance.__r3f.memoizedProps = memoized
+
+    changes.forEach(([key, value, isEvent, currentInstance, targetProp]) => {
       // https://github.com/mrdoob/three.js/issues/21209
       // HMR/fast-refresh relies on the ability to cancel out props, but threejs
       // has no means to do this. Hence we curate a small collection of value-classes
@@ -156,7 +177,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (value === DEFAULT + 'remove') {
         if (targetProp && targetProp.constructor) {
           // use the prop constructor to find the default it should be
-          value = new targetProp.constructor(newMemoizedProps.args)
+          value = new targetProp.constructor(memoized.args)
         } else if (currentInstance.constructor) {
           // create a blank slate of the instance and copy the particular parameter.
           // @ts-ignore
@@ -168,8 +189,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else value = 0
       }
 
+      // Deal with pointer events ...
+      if (isEvent) {
+        if (value) localState.handlers[key as keyof EventHandlers] = value as any
+        else delete localState.handlers[key as keyof EventHandlers]
+        localState.handlers.count = Object.keys(localState.handlers).length
+      }
       // Special treatment for objects with support for set/copy, and layers
-      if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
+      else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
         // If value is an array
         if (Array.isArray(value)) {
           if (targetProp.fromArray) targetProp.fromArray(value)
@@ -207,26 +234,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       }
 
       invalidateInstance(instance)
-      changed = true
     })
 
-    // Preemptively delete the instance from the containers interaction
-    if (accumulative && root && instance.raycast && localState.handlers) {
-      localState.handlers = undefined
+    if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
+      // Pre-emptively remove the instance from the interaction manager
       const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
-    }
-
-    // Prep interaction handlers
-    if (handlers.length) {
-      if (accumulative && root && instance.raycast)
-        rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
-      // Add handlers to the instances handler-map
-      localState.handlers = handlers.reduce((acc, key) => ({ ...acc, [key]: props[key] }), {} as EventHandlers)
+      // Add the instance to the interaction manager only when it has handlers
+      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
     }
 
     // Call the update lifecycle when it is being updated, but only when it is part of the scene
-    if (changed && instance.parent) updateInstance(instance)
+    if (changes.length && instance.parent) updateInstance(instance)
   }
 
   function invalidateInstance(instance: Instance) {
@@ -293,7 +312,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
     // why it passes "true" here
-    applyProps(instance, props, {})
+    applyProps(instance, props)
     return instance
   }
 
@@ -423,7 +442,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (child.__r3f) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-        delete child.__r3f.handlers
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
         if (!isPrimitive) delete (child as Partial<Instance>).__r3f
       }
@@ -515,30 +534,26 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
         // If it has new props or arguments, then it needs to be re-instanciated
         if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
-        // If props have changed they need to get applied ...
-        const newKeys = Object.keys(restNew)
-        const oldKeys = Object.keys(restOld)
-        if (
-          newKeys.length !== oldKeys.length ||
-          newKeys.some((key: string) => !checkShallow(newProps[key], oldProps[key]))
-        )
-          return [false, restNew, restOld]
+        // Create a diff-set, flag if there are any changes
+        const diff = diffProps(instance, restNew, restOld, true)
+        if (diff.changes.length) return [false, diff]
         // Otherwise do not touch the instance
         return null
       }
     },
     commitUpdate(
       instance: Instance,
-      [reconstruct, restNew, restOld]: [boolean, InstanceProps, InstanceProps],
+      [reconstruct, diff]: [boolean, DiffSet],
       type: string,
       oldProps: InstanceProps,
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      // Reconstruct when args or <primitive object={...} have changed
+      //console.log(type)
+      // Reconstruct when args or <primitive object={...} have changes
       if (reconstruct) switchInstance(instance, type, newProps, fiber)
       // Otherwise just overwrite props
-      else applyProps(instance, restNew, restOld, true)
+      else applyProps(instance, diff)
     },
     hideInstance(instance: Instance) {
       if (instance.isObject3D) {
@@ -569,13 +584,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     finalizeInitialChildren(instance: Instance) {
       // https://github.com/facebook/react/issues/20271
       // Returning true will trigger commitMount
-      return !!instance.__r3f.handlers
+      //return !!instance.__r3f.handlers
+      return false
     },
     commitMount(instance: Instance) {
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
-      if (instance.raycast && instance.__r3f.handlers)
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+      //if (instance.raycast && instance.__r3f.handlers)
+      //  instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
     },
     shouldDeprioritizeSubtree() {
       return false

@@ -121,12 +121,7 @@ export type StoreProps = {
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 }
 
-export type ApplyProps = (
-  instance: Instance,
-  newProps: InstanceProps,
-  oldProps?: InstanceProps,
-  accumulative?: boolean,
-) => void
+export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
 
 const context = React.createContext<UseStore<RootState>>(null!)
 
@@ -174,7 +169,7 @@ const createStore = (
     // Create custom raycaster
     const raycaster = new THREE.Raycaster() as Raycaster
     const { params, ...options } = raycastOptions || {}
-    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } }, {})
+    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } })
 
     // Create default camera
     const isCamera = cameraOptions instanceof THREE.Camera
@@ -185,7 +180,7 @@ const createStore = (
       : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     if (!isCamera) {
       camera.position.z = 5
-      if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
+      if (cameraOptions) applyProps(camera as any, cameraOptions as any)
       // Always look at center by default
       camera.lookAt(0, 0, 0)
     }
