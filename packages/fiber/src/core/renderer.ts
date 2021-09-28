@@ -529,18 +529,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       container.__r3f.root = root
       appendChild(container, child)
     },
-    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
-      const { container } = getContainer(parentInstance, child)
-      removeChild(container, child)
-    },
-    insertInContainerBefore: (
-      parentInstance: UseStore<RootState> | Instance,
-      child: Instance,
-      beforeChild: Instance,
-    ) => {
-      const { container } = getContainer(parentInstance, child)
-      insertBefore(container, child, beforeChild)
-    },
+    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) =>
+      removeChild(getContainer(parentInstance, child).container, child),
+    insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
+      insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
       if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) return [true]
       else {
