@@ -121,12 +121,7 @@ export type StoreProps = {
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 }
 
-export type ApplyProps = (
-  instance: Instance,
-  newProps: InstanceProps,
-  oldProps?: InstanceProps,
-  accumulative?: boolean,
-) => void
+export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
 
 const context = React.createContext<UseStore<RootState>>(null!)
 
@@ -161,10 +156,8 @@ const createStore = (
   }
 
   // Set color management
-  if (!linear) {
-    if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
-    gl.outputEncoding = THREE.sRGBEncoding
-  }
+  if (!linear) gl.outputEncoding = THREE.sRGBEncoding
+  if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
 
   // clock.elapsedTime is updated using advance(timestamp)
   if (frameloop === 'never') {
@@ -176,7 +169,7 @@ const createStore = (
     // Create custom raycaster
     const raycaster = new THREE.Raycaster() as Raycaster
     const { params, ...options } = raycastOptions || {}
-    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } }, {})
+    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } })
 
     // Create default camera
     const isCamera = cameraOptions instanceof THREE.Camera
@@ -187,7 +180,7 @@ const createStore = (
       : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
     if (!isCamera) {
       camera.position.z = 5
-      if (cameraOptions) applyProps(camera as any, cameraOptions as any, {})
+      if (cameraOptions) applyProps(camera as any, cameraOptions as any)
       // Always look at center by default
       camera.lookAt(0, 0, 0)
     }
@@ -300,8 +293,8 @@ const createStore = (
               ...internal,
               // If this subscription was given a priority, it takes rendering into its own hands
               // For that reason we switch off automatic rendering and increase the manual flag
-              // As long as this flag is positive (there could be multiple render subscription)
-              // ..there can be no internal rendering at all
+              // As long as this flag is positive there can be no internal rendering at all
+              // because there could be multiple render subscriptions
               priority: internal.priority + (priority > 0 ? 1 : 0),
               // Register subscriber and sort layers from lowest to highest, meaning,
               // highest priority renders last (on top of the other frames)

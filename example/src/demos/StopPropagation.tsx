@@ -1,24 +1,25 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Canvas } from '@react-three/fiber'
 
 function Box({ stop = false, color, position }: any) {
   const [hovered, set] = useState(false)
+  const onPointerOver = useCallback((e) => {
+    if (stop) e.stopPropagation()
+    set(true)
+  }, [])
+  const onPointerOut = useCallback((e) => {
+    if (stop) e.stopPropagation()
+    set(false)
+  }, [])
   return (
     <mesh
       name={color}
       position={position}
-      onPointerOver={(e) => {
-        if (stop) e.stopPropagation()
-        set(true)
-        console.log(`Box${color} pointerOver`)
-      }}
-      onPointerOut={(e) => {
-        if (stop) e.stopPropagation()
-        set(false)
-        console.log(`Box${color} pointerOut`)
-      }}>
+      rotation={[0, 0, 0]}
+      onPointerOver={onPointerOver}
+      onPointerOut={onPointerOut}>
       <boxBufferGeometry args={[1, 1, 1]} />
-      <meshPhysicalMaterial color={hovered ? 'hotpink' : color} />
+      <meshPhysicalMaterial roughness={0.5} color={hovered ? 'hotpink' : color} />
     </mesh>
   )
 }

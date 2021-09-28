@@ -5,7 +5,7 @@ import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
-import { createRenderer, extend, prepare, Root } from '../core/renderer'
+import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events } from './events'
 import { Canvas } from './Canvas'
@@ -17,7 +17,7 @@ const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | THREE.WebGLRendererParameters
+  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   mode?: typeof modes[number]
@@ -25,14 +25,14 @@ export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'even
 }
 
 const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | THREE.WebGLRendererParameters | undefined,
+  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
   canvas: TElement,
 ): THREE.WebGLRenderer =>
   isRenderer(gl as THREE.WebGLRenderer)
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({
         powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
+        canvas: (canvas as unknown) as HTMLCanvasElement,
         antialias: true,
         alpha: true,
         ...gl,
@@ -165,21 +165,8 @@ function dispose<TObj extends { dispose?: () => void; type?: string; [key: strin
 }
 
 const act = reconciler.act
-const hasSymbol = is.fun(Symbol) && Symbol.for
-const REACT_PORTAL_TYPE = hasSymbol ? Symbol.for('react.portal') : 0xeaca
-function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  implementation?: any,
-  key: any = null,
-): React.ReactNode {
-  return {
-    $$typeof: REACT_PORTAL_TYPE,
-    key: key == null ? null : '' + key,
-    children,
-    containerInfo: prepare(container),
-    implementation,
-  }
+function createPortal(children: React.ReactNode, container: THREE.Object3D): React.ReactNode {
+  return reconciler.createPortal(children, container, null, null)
 }
 
 reconciler.injectIntoDevTools({

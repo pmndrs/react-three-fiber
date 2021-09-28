@@ -62,7 +62,7 @@ export interface EventManager<TTarget> {
 }
 
 function makeId(event: Intersection) {
-  return (event.eventObject || event.object).uuid + '/' + event.index
+  return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
 
 export function removeInteractivity(store: UseStore<RootState>, object: THREE.Object3D) {
@@ -104,7 +104,7 @@ export function createEvents(store: UseStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => ((obj as unknown) as Instance).__r3f.handlers?.[('onPointer' + name) as keyof EventHandlers],
+        (name) => ((obj as unknown) as Instance).__r3f.handlers[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -137,8 +137,8 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        const handlers = ((eventObject as unknown) as Instance).__r3f?.handlers
-        if (handlers) intersections.push({ ...intersect, eventObject })
+        if (((eventObject as unknown) as Instance).__r3f.handlers.count)
+          intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
     }
@@ -252,11 +252,19 @@ export function createEvents(store: UseStore<RootState>) {
     Array.from(internal.hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
-      if (!hits.length || !hits.find((hit) => hit.object === hoveredObj.object && hit.index === hoveredObj.index)) {
+      if (
+        !hits.length ||
+        !hits.find(
+          (hit) =>
+            hit.object === hoveredObj.object &&
+            hit.index === hoveredObj.index &&
+            hit.instanceId === hoveredObj.instanceId,
+        )
+      ) {
         const eventObject = hoveredObj.eventObject
         const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
         internal.hovered.delete(makeId(hoveredObj))
-        if (handlers) {
+        if (handlers.count) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
@@ -302,7 +310,7 @@ export function createEvents(store: UseStore<RootState>) {
         const eventObject = data.eventObject
         const handlers = ((eventObject as unknown) as Instance).__r3f.handlers
         // Check presence of handlers
-        if (!handlers) return
+        if (!handlers.count) return
 
         if (isPointerMove) {
           // Move event ...
@@ -324,7 +332,7 @@ export function createEvents(store: UseStore<RootState>) {
           handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
         } else {
           // All other events ...
-          const handler = handlers?.[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
+          const handler = handlers[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
           if (handler) {
             // Forward all events back to their respective handlers with the exception of click events,
             // which must use the initial target
@@ -335,7 +343,7 @@ export function createEvents(store: UseStore<RootState>) {
               handler(data as ThreeEvent<PointerEvent>)
               pointerMissed(
                 event,
-                internal.interaction.filter((object) => object !== eventObject),
+                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
               )
             }
           }
@@ -360,7 +368,7 @@ export function createEvents(store: UseStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      ((object as unknown) as Instance).__r3f.handlers?.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+      ((object as unknown) as Instance).__r3f.handlers.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
     )
   }
 

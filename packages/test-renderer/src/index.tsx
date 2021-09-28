@@ -7,7 +7,6 @@ import {
   unmountComponentAtNode as unmount,
   act as _act,
 } from '@react-three/fiber'
-import type { RenderProps } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -40,8 +39,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   let scene: MockScene = null!
 
   await reconciler.act(async () => {
-    scene = render(element, _fiber, { frameloop: 'never', ...options, events: undefined }).getState()
-      .scene as unknown as MockScene
+    scene = (render(element, _fiber, { frameloop: 'never', ...options, events: undefined }).getState()
+      .scene as unknown) as MockScene
   })
 
   const _store = mockRoots.get(_fiber)!.store
@@ -115,7 +114,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   }
 }
 
-const act = _act as unknown as Act
+const act = (_act as unknown) as Act
 
 export * as ReactThreeTest from './types'
 export default { create, act }

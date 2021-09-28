@@ -3,7 +3,6 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
-
 import { context, RootState, RenderCallback } from './store'
 
 export interface Loader<T> extends THREE.Loader {
@@ -32,22 +31,19 @@ export function useStore() {
 }
 
 export function useThree<T = RootState>(
-  selector: StateSelector<RootState, T> = (state) => state as unknown as T,
+  selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
   equalityFn?: EqualityChecker<T>,
 ) {
   return useStore()(selector, equalityFn)
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
-  const { subscribe } = useStore().getState().internal
+  const subscribe = useStore().getState().internal.subscribe
   // Update ref
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
-  // Subscribe/unsub
-  React.useLayoutEffect(() => {
-    const unsubscribe = subscribe(ref, renderPriority)
-    return () => unsubscribe()
-  }, [renderPriority, subscribe])
+  // Subscribe on mount, unsubscribe on unmount
+  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
   return null
 }
 
