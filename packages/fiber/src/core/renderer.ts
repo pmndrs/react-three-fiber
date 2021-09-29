@@ -1,9 +1,9 @@
 import * as THREE from 'three'
-import Reconciler from 'react-reconciler'
-import { DefaultEventPriority } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
-import { unstable_now as now, unstable_IdlePriority as idlePriority, unstable_runWithPriority as run } from 'scheduler'
-import { is } from './is'
+import Reconciler from 'react-reconciler'
+// @ts-ignore
+import { DefaultEventPriority, IdleEventPriority } from 'react-reconciler/constants'
+import { is, prepare, diffProps, DiffSet, applyProps, updateInstance, invalidateInstance } from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
@@ -17,10 +17,6 @@ export type LocalState = {
   memoizedProps: {
     [key: string]: any
   }
-}
-
-export type ClassConstructor = {
-  new (): void
 }
 
 export type AttachFnType = (self: Instance, parent: Instance) => void
@@ -51,14 +47,6 @@ export type InstanceProps = {
   attach?: string
 }
 
-export type DiffSet = {
-  accumulative: boolean
-  memoized: { [key: string]: any }
-  changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][]
-}
-
-export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
-
 interface Catalogue {
   [name: string]: {
     new (...args: any): Instance
@@ -77,187 +65,10 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
   container: isStore(container) ? (container.getState().scene as unknown as Instance) : container,
 })
 
-const DEFAULT = '__default'
-const EMPTY = {}
-
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-// Shallow check arrays, but check objects atomically
-function checkShallow(a: any, b: any) {
-  if (is.arr(a) && is.equ(a, b)) return true
-  if (a === b) return true
-  return false
-}
-
-// Each object in the scene carries a small LocalState descriptor
-function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
-  const instance = object as unknown as Instance
-  if (state?.primitive || !instance.__r3f) {
-    instance.__r3f = {
-      root: null as unknown as UseStore<RootState>,
-      memoizedProps: {},
-      handlers: { count: 0 },
-      objects: [],
-      ...state,
-    }
-  }
-  return object
-}
-
-function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
-  // This function prepares a set of changes to be applied to the instance
-  function diffProps(
-    instance: Instance,
-    { children: cN, key: kN, ref: rN, ...props }: InstanceProps,
-    { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
-    accumulative = false,
-  ): DiffSet {
-    const localState = (instance?.__r3f ?? {}) as LocalState
-    const entries = Object.entries(props)
-    const changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][] = []
-
-    // Catch removed props, prepend them so they can be reset or removed
-    if (accumulative) {
-      const previousKeys = Object.keys(previous)
-      for (let i = 0; i < previousKeys.length; i++)
-        if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
-    }
-
-    entries.forEach(([key, value]) => {
-      // Bail out on primitive object
-      if (instance.__r3f?.primitive && key === 'object') return
-      // When props match bail out
-      if (checkShallow(value, previous[key])) return
-
-      let currentInstance = instance
-      let targetProp = currentInstance[key]
-
-      // Collect handlers and bail out
-      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
-        return changes.push([key, value, true, currentInstance, targetProp])
-
-      // Revolve dashed props
-      if (key.includes('-')) {
-        const entries = key.split('-')
-        targetProp = entries.reduce((acc, key) => acc[key], instance)
-        // If the target is atomic, it forces us to switch the root
-        if (!(targetProp && targetProp.set)) {
-          const [name, ...reverseEntries] = entries.reverse()
-          currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
-          key = name
-        }
-      }
-      changes.push([key, value, false, currentInstance, targetProp])
-    })
-
-    const memoized: { [key: string]: any } = { ...props }
-    if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
-    if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
-
-    return { accumulative, memoized, changes }
-  }
-
-  function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
-    // Filter equals, events and reserved props
-    const localState = (instance?.__r3f ?? {}) as LocalState
-    const root = localState.root
-    const rootState = root?.getState?.() ?? {}
-    const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
-    const prevHandlers = localState.handlers?.count
-
-    // Prepare memoized props
-    if (instance.__r3f) instance.__r3f.memoizedProps = memoized
-
-    changes.forEach(([key, value, isEvent, currentInstance, targetProp]) => {
-      // https://github.com/mrdoob/three.js/issues/21209
-      // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-      // has no means to do this. Hence we curate a small collection of value-classes
-      // with their respective constructor/set arguments
-      // For removed props, try to set default values, if possible
-      if (value === DEFAULT + 'remove') {
-        if (targetProp && targetProp.constructor) {
-          // use the prop constructor to find the default it should be
-          value = new targetProp.constructor(memoized.args)
-        } else if (currentInstance.constructor) {
-          // create a blank slate of the instance and copy the particular parameter.
-          // @ts-ignore
-          const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
-          value = defaultClassCall[targetProp]
-          // destory the instance
-          if (defaultClassCall.dispose) defaultClassCall.dispose()
-          // instance does not have constructor, just set it to 0
-        } else value = 0
-      }
-
-      // Deal with pointer events ...
-      if (isEvent) {
-        if (value) localState.handlers[key as keyof EventHandlers] = value as any
-        else delete localState.handlers[key as keyof EventHandlers]
-        localState.handlers.count = Object.keys(localState.handlers).length
-      }
-      // Special treatment for objects with support for set/copy, and layers
-      else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
-        // If value is an array
-        if (Array.isArray(value)) {
-          if (targetProp.fromArray) targetProp.fromArray(value)
-          else targetProp.set(...value)
-        }
-        // Test again target.copy(class) next ...
-        else if (
-          targetProp.copy &&
-          value &&
-          (value as ClassConstructor).constructor &&
-          targetProp.constructor.name === (value as ClassConstructor).constructor.name
-        )
-          targetProp.copy(value)
-        // If nothing else fits, just set the single value, ignore undefined
-        // https://github.com/react-spring/react-three-fiber/issues/274
-        else if (value !== undefined) {
-          const isColor = targetProp instanceof THREE.Color
-          // Allow setting array scalars
-          if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
-          // Layers have no copy function, we must therefore copy the mask property
-          else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
-          // Otherwise just set ...
-          else targetProp.set(value)
-          // Auto-convert sRGB colors, for now ...
-          // https://github.com/react-spring/react-three-fiber/issues/344
-          if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
-        }
-        // Else, just overwrite the value
-      } else {
-        currentInstance[key] = value
-        // Auto-convert sRGB textures, for now ...
-        // https://github.com/react-spring/react-three-fiber/issues/344
-        if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
-          currentInstance[key].encoding = THREE.sRGBEncoding
-      }
-
-      invalidateInstance(instance)
-    })
-
-    if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
-      // Pre-emptively remove the instance from the interaction manager
-      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
-      if (index > -1) rootState.internal.interaction.splice(index, 1)
-      // Add the instance to the interaction manager only when it has handlers
-      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
-    }
-
-    // Call the update lifecycle when it is being updated, but only when it is part of the scene
-    if (changes.length && instance.parent) updateInstance(instance)
-  }
-
-  function invalidateInstance(instance: Instance) {
-    const state = instance.__r3f?.root?.getState?.()
-    if (state && state.internal.frames === 0) state.invalidate()
-  }
-
-  function updateInstance(instance: Instance) {
-    instance.onUpdate?.(instance)
-  }
-
+function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
   function createInstance(
     type: string,
     { args = [], ...props }: InstanceProps,
@@ -450,7 +261,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        run(idlePriority, () => {
+        reconciler.runWithPriority(IdleEventPriority, () => {
           try {
             child.dispose()
           } catch (e) {
@@ -499,25 +310,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   const reconciler = Reconciler({
-    now,
-    createInstance,
-    removeChild,
-    appendChild,
-    appendInitialChild: appendChild,
-    insertBefore,
-    warnsIfNotActing: true,
-    supportsMutation: true,
-    isPrimaryRenderer: false,
-    getCurrentEventPriority: () => DefaultEventPriority,
-    // @ts-ignore
-    scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
-    // @ts-ignore
-    cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
-    // @ts-ignore
-    setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
-    // @ts-ignore
-    clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
-    noTimeout: -1,
     appendChildToContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
       const { container, root } = getContainer(parentInstance, child)
       // Link current root to the default scene
@@ -551,7 +343,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      //console.log(type)
       // Reconstruct when args or <primitive object={...} have changes
       if (reconstruct) switchInstance(instance, type, newProps, fiber)
       // Otherwise just overwrite props
@@ -569,47 +360,38 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         invalidateInstance(instance)
       }
     },
-    hideTextInstance() {
-      throw new Error('Text is not allowed in the R3F tree.')
-    },
-    getPublicInstance(instance: Instance) {
-      // TODO: might fix switchInstance (?)
-      return instance
-    },
-    getRootHostContext(rootContainer: UseStore<RootState> | Instance) {
-      return EMPTY
-    },
-    getChildHostContext(parentHostContext: any) {
-      return parentHostContext
-    },
-    createTextInstance() {},
-    finalizeInitialChildren() {
-      return false
-    },
-    commitMount() {
-      // noop
-    },
-    shouldDeprioritizeSubtree() {
-      return false
-    },
-    prepareForCommit() {
-      return null
-    },
-    preparePortalMount(containerInfo: any) {
-      prepare(containerInfo)
-    },
-    resetAfterCommit() {
-      // noop
-    },
-    shouldSetTextContent() {
-      return false
-    },
-    clearContainer() {
-      return false
-    },
-    detachDeletedInstance() {
-      // noop
-    },
+    createInstance,
+    removeChild,
+    appendChild,
+    appendInitialChild: appendChild,
+    insertBefore,
+    warnsIfNotActing: true,
+    supportsMutation: true,
+    isPrimaryRenderer: false,
+    getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
+    // @ts-ignore
+    now: is.fun(performance.now) ? performance.now : is.fun(Date.now) ? Date.now : undefined,
+    // @ts-ignore
+    scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
+    // @ts-ignore
+    cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
+    setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
+    clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
+    noTimeout: -1,
+    hideTextInstance:() => { throw new Error('Text is not allowed in the R3F tree.')}, // prettier-ignore
+    getPublicInstance: (instance: Instance) => instance,
+    getRootHostContext: () => null,
+    getChildHostContext: (parentHostContext: any) => parentHostContext,
+    createTextInstance: () => {},
+    finalizeInitialChildren: () => false,
+    commitMount: () => {},
+    shouldDeprioritizeSubtree: () => false,
+    prepareForCommit: () => null,
+    preparePortalMount: (containerInfo: any) => prepare(containerInfo),
+    resetAfterCommit: () => {},
+    shouldSetTextContent: () => false,
+    clearContainer: () => false,
+    detachDeletedInstance: () => {},
   })
 
   return { reconciler, applyProps }

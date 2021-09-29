@@ -4,17 +4,17 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { is } from '../core/is'
+import { is } from '../core/utils'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
-import { createPointerEvents as events } from './events'
+import { createPointerEvents as events, getEventPriority } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
-const { reconciler, applyProps } = createRenderer(roots)
+const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>

@@ -1,9 +1,9 @@
 import * as React from 'react'
 import mergeRefs from 'react-merge-refs'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
+import { UseStore } from 'zustand'
 import { render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
-import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 

@@ -1,20 +1,59 @@
 import { UseStore } from 'zustand'
+// @ts-ignore
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { RootState } from '../core/store'
-import type { EventManager, Events } from '../core/events'
+import { EventManager, Events } from '../core/events'
 import { createEvents } from '../core/events'
+
+const CLICK = 'click'
+const CONTEXTMENU = 'contextmenu'
+const DBLCLICK = 'dblclick'
+const POINTERCANCEL = 'pointercancel'
+const POINTERDOWN = 'pointerdown'
+const POINTERUP = 'pointerup'
+const POINTERMOVE = 'pointermove'
+const POINTEROUT = 'pointerout'
+const POINTEROVER = 'pointerover'
+const POINTERENTER = 'pointerenter'
+const POINTERLEAVE = 'pointerleave'
+const WHEEL = 'wheel'
+
+// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+// Gives React a clue as to how import the current interaction is
+export function getEventPriority() {
+  let name = window?.event?.type
+  switch (name) {
+    case CLICK:
+    case CONTEXTMENU:
+    case DBLCLICK:
+    case POINTERCANCEL:
+    case POINTERDOWN:
+    case POINTERUP:
+      return DiscreteEventPriority
+    case POINTERMOVE:
+    case POINTEROUT:
+    case POINTEROVER:
+    case POINTERENTER:
+    case POINTERLEAVE:
+    case WHEEL:
+      return ContinuousEventPriority
+    default:
+      return DefaultEventPriority
+  }
+}
 
 export function createPointerEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
   const names = {
-    onClick: ['click', false],
-    onContextMenu: ['contextmenu', false],
-    onDoubleClick: ['dblclick', false],
-    onWheel: ['wheel', true],
-    onPointerDown: ['pointerdown', true],
-    onPointerUp: ['pointerup', true],
-    onPointerLeave: ['pointerleave', true],
-    onPointerMove: ['pointermove', true],
-    onPointerCancel: ['pointercancel', true],
+    onClick: [CLICK, false],
+    onContextMenu: [CONTEXTMENU, false],
+    onDoubleClick: [DBLCLICK, false],
+    onWheel: [WHEEL, true],
+    onPointerDown: [POINTERDOWN, true],
+    onPointerUp: [POINTERUP, true],
+    onPointerLeave: [POINTERLEAVE, true],
+    onPointerMove: [POINTERMOVE, true],
+    onPointerCancel: [POINTERCANCEL, true],
     onLostPointerCapture: ['lostpointercapture', true],
   } as const
 
