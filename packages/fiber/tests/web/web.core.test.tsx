@@ -397,6 +397,17 @@ describe('web core', () => {
     expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
   })
 
+  it('should update internals when dpr is set', async () => {
+    let state: UseStore<RootState> = null!
+    await act(async () => {
+      state = render(<group />, canvas, {
+        dpr: [1, 2],
+      })
+    })
+
+    expect(state.getState().dpr).toBe(state.getState().internal.lastProps.dpr)
+  })
+
   it('will render components that are extended', async () => {
     class MyColor extends Color {
       constructor(col: number) {
