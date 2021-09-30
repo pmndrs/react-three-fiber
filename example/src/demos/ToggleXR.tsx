@@ -4,16 +4,15 @@ import { VRButton } from 'three-stdlib'
 
 function MovingMesh() {
   const mesh = useRef<THREE.Mesh>(null)
-  const { gl, vr } = useThree()
-  const setVR = useThree((state) => state.setVR)
+  const { gl, xr } = useThree()
+  const setXR = useThree((state) => state.setXR)
 
-  // Enable VR when user requests a session
+  // Enable XR when user requests a session
   useEffect(() => {
-    const xr = gl.xr as any
-    const handleSessionChange = () => setVR(xr.isPresenting)
-    xr.addEventListener('sessionstart', handleSessionChange)
-    xr.addEventListener('sessionend', handleSessionChange)
-  }, [gl, setVR])
+    const handleSessionChange = () => setXR(gl.xr.isPresenting)
+    gl.xr.addEventListener('sessionstart', handleSessionChange)
+    gl.xr.addEventListener('sessionend', handleSessionChange)
+  }, [gl.xr, setXR])
 
   useFrame(({ clock }) => {
     if (mesh.current) {
@@ -22,40 +21,36 @@ function MovingMesh() {
   })
 
   return (
-    <mesh ref={mesh} onClick={() => setVR(!vr)} position-z={-3}>
+    <mesh ref={mesh} onClick={() => setXR(!xr)} position-z={-3}>
       <boxBufferGeometry args={[2, 2, 2]} />
-      {vr ? <meshNormalMaterial /> : <meshBasicMaterial />}
+      {xr ? <meshNormalMaterial /> : <meshBasicMaterial />}
     </mesh>
   )
 }
 
 export default function App() {
-  const [vr, setVR] = useState(false)
+  const [xr, setXR] = useState(false)
   return (
     <>
-      <div style={{ position: 'absolute', zIndex: 2, padding: '1rem' }}>
-        <button onClick={() => setVR(!vr)}>Toggle canvas VR prop ({vr ? 'on' : 'off'})</button>
+      <Canvas
+        xr={xr}
+        frameloop="demand"
+        style={{ position: 'absolute' }}
+        onCreated={({ gl }) => void document.body.appendChild(VRButton.createButton(gl))}>
+        <MovingMesh />
+      </Canvas>
+      <div style={{ position: 'relative', padding: '1rem' }}>
+        <button onClick={() => setXR(!xr)}>Toggle canvas XR prop ({xr ? 'on' : 'off'})</button>
         <p>
           <a href="https://blog.mozvr.com/webxr-emulator-extension/">Install webXR emulator</a>
         </p>
         <pre>{`
   <Canvas
-    vr={${vr}}
+    xr={${xr}}
     frameloop="demand"
   />
         `}</pre>
       </div>
-      <Canvas
-        vr={vr}
-        frameloop="demand"
-        style={{ zIndex: 1 }}
-        onCreated={({ gl }) => {
-          const vrBtn = VRButton.createButton(gl)
-          vrBtn.style.zIndex = '99999'
-          document.body.appendChild(vrBtn)
-        }}>
-        <MovingMesh />
-      </Canvas>
     </>
   )
 }
