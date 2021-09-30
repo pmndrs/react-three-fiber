@@ -72,6 +72,7 @@ export type RootState = {
   clock: THREE.Clock
 
   vr: boolean
+  xr: boolean
   linear: boolean
   flat: boolean
   frameloop: 'always' | 'demand' | 'never'
@@ -88,7 +89,7 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
-  setVR: (vr?: boolean) => void
+  setXR: (xr?: boolean) => void
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 
   events: EventManager<any>
@@ -101,7 +102,11 @@ export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
+  /**
+   * @deprecated Use the `xr` prop instead.
+   */
   vr?: boolean
+  xr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   flat?: boolean
@@ -143,6 +148,7 @@ const createStore = (
     linear = false,
     flat = false,
     vr = false,
+    xr = false,
     orthographic = false,
     frameloop = 'always',
     dpr = 1,
@@ -238,6 +244,7 @@ const createStore = (
       mouse: new THREE.Vector2(),
 
       vr,
+      xr,
       frameloop,
       onPointerMissed,
 
@@ -278,15 +285,16 @@ const createStore = (
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
-      setVR: (vr = false) =>
+      setXR: (xr = false) =>
         set(({ internal }) => {
-          gl.xr.enabled = vr
-          gl.setAnimationLoop(vr ? (timestamp) => advance(timestamp, true) : null)
+          gl.xr.enabled = xr
+          gl.setAnimationLoop(xr ? (timestamp) => advance(timestamp, true) : null)
           return {
-            vr,
+            vr: xr,
+            xr,
             internal: {
               ...internal,
-              lastProps: { ...internal.lastProps, vr },
+              lastProps: { ...internal.lastProps, vr: xr, xr },
             },
           }
         }),

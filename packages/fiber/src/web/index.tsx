@@ -65,8 +65,8 @@ function render<TCanvas extends Element>(
     if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
     // Check size
     if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
-    // Check vr
-    if (lastProps.vr !== props.vr) state.setVR(props.vr)
+    // Check vr/xr
+    if (lastProps.vr !== props.vr || lastProps.xr !== props.xr) state.setXR(props.vr || props.xr)
 
     // For some props we want to reset the entire root
 
@@ -88,8 +88,8 @@ function render<TCanvas extends Element>(
     store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
     const state = store.getState()
 
-    // Enable VR if requested
-    state.setVR(props.vr)
+    // Enable XR if requested
+    state.setXR(props.vr || props.xr)
 
     // Create renderer
     fiber = reconciler.createContainer(store, modes.indexOf(mode) as RootTag, false, null)
