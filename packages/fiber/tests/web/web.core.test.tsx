@@ -405,6 +405,12 @@ describe('web core', () => {
       })
     })
 
+    expect(state.getState().dpr).toStrictEqual([1, 2])
+    expect(state.getState().dpr).toBe(state.getState().internal.lastProps.dpr)
+
+    state.getState().setDpr(3)
+
+    expect(state.getState().dpr).toBe(3)
     expect(state.getState().dpr).toBe(state.getState().internal.lastProps.dpr)
   })
 
