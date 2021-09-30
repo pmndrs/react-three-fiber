@@ -10,7 +10,7 @@
 - [ShaderMaterials](#shadermaterials)
 - [Re-parenting](#re-parenting)
 - [Rendering only when needed](#rendering-only-when-needed)
-- [Enabling VR](#enabling-vr)
+- [Enabling XR](#enabling-xr)
 - [Reducing bundle-size](#reducing-bundle-size)
 - [Usage with React Native](#usage-with-react-native)
 - [Safari support](#safari-support)
@@ -222,14 +222,14 @@ const Controls = () => {
 }
 ```
 
-## Enabling VR
+## Enabling XR
 
-Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
+Supplying the `xr` flag enables Three's XR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
 
 ```jsx
-import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
+import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
 import { Canvas } from 'react-three-fiber'
-;<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
+;<Canvas xr onCreated={({ gl }) => document.body.appendChild(VRButton.createButton(gl))} />
 ```
 
 ## Reducing bundle-size
