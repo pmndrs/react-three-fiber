@@ -15,6 +15,7 @@ import {
   sRGBEncoding,
   CameraHelper,
   Object3D,
+  WebGLRenderer,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
@@ -316,6 +317,26 @@ describe('web core', () => {
 
     expect(state.getState().gl.toneMapping).toBe(ACESFilmicToneMapping)
     expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
+  })
+
+  it('should enable WebXRManager if vr is true', async () => {
+    let gl: WebGLRenderer = null!
+
+    await act(async () => {
+      gl = render(<group />, canvas, { vr: true }).getState().gl
+    })
+
+    expect(gl.xr.enabled).toEqual(true)
+  })
+
+  it('should enable WebXRManager if xr is true', async () => {
+    let gl: WebGLRenderer = null!
+
+    await act(async () => {
+      gl = render(<group />, canvas, { xr: true }).getState().gl
+    })
+
+    expect(gl.xr.enabled).toEqual(true)
   })
 
   it('will render components that are extended', async () => {

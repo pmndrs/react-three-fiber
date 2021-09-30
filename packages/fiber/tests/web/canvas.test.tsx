@@ -57,4 +57,24 @@ describe('web Canvas', () => {
 
     expect(xrEnabled).toBe(true)
   })
+
+  it('should render with xr prop set', async () => {
+    let xrEnabled = false
+
+    const Component = () => {
+      const gl = useThree((state) => state.gl)
+      xrEnabled = gl.xr.enabled
+      return null
+    }
+
+    await act(async () => {
+      render(
+        <Canvas xr={true}>
+          <Component />
+        </Canvas>,
+      )
+    })
+
+    expect(xrEnabled).toBe(true)
+  })
 })
