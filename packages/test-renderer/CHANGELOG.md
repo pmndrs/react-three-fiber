@@ -1,5 +1,47 @@
 # @react-three/test-renderer
 
+## 7.0.7
+
+### Patch Changes
+
+- 0375896: Simplify useframe, support instanced event cancelation, silence disposal
+- Updated dependencies [0375896]
+  - @react-three/fiber@7.0.7
+
+## 7.0.6
+
+### Patch Changes
+
+- fb052ad: Fix babel-env browserslist transpiling into old code"
+- Updated dependencies [fb052ad]
+  - @react-three/fiber@7.0.6
+
+## 7.0.5
+
+### Patch Changes
+
+- c97794a: Add useLoader.clear(Loader, input)
+- Updated dependencies [c97794a]
+  - @react-three/fiber@7.0.5
+
+## 7.0.4
+
+### Patch Changes
+
+- 974ecfb: Allow elements to define attachFns for specific mount/unmount
+- Updated dependencies [974ecfb]
+  - @react-three/fiber@7.0.4
+
+## 7.0.1
+
+### Patch Changes
+
+- a97aca3: Add controls state field
+- Updated dependencies [a97aca3]
+- 4c703d6: fix rttr didn't work with r130
+- Updated dependencies [4c703d6]
+- @react-three/fiber@7.0.2
+
 ## 7.0.0
 
 ### Major Changes

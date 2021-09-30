@@ -18,7 +18,7 @@
 
 This is the best overview I could find: https://discoverthreejs.com/tips-and-tricks
 
-The most important is gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmnount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+The most important gotcha in Threejs is that creating objects can be expensive, think twice before you mount/unmount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
 const geom = useMemo(() => new BoxBufferGeometry(), [])
@@ -123,12 +123,12 @@ return <mesh ref={ref} />
 
 In Threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
-#### ✅ Use concurrent mode
+#### ✅ Use [React 18](https://reactjs.org/blog/2021/06/08/the-plan-for-react-18.html)
 
-Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
+Install React and ReactDOM using the [`@alpha` tag and replace `render` with `createRoot`](https://github.com/reactwg/react-18/discussions/5), then set the [canvas `mode` prop to `'concurrent'`](https://docs.pmnd.rs/react-three-fiber/API/canvas). Now React will [automatically batch updates](https://github.com/reactwg/react-18/discussions/21) and include new APIs. <sup>[1](https://github.com/reactwg/react-18/discussions/41),[2](https://github.com/reactwg/react-18/discussions/37)</sup>
 
 ```jsx
-<Canvas concurrent />
+<Canvas mode="concurrent" />
 ```
 
 ### Do not re-create objects in loops
@@ -158,7 +158,7 @@ useFrame(() => {
 
 ---
 
-Threejs loaders give you the ability to load async assets (models, textures, etc), but they are probablic.
+Threejs loaders give you the ability to load async assets (models, textures, etc), but they are problematic.
 
 #### ❌ This re-fetches, re-parses for every component instance
 

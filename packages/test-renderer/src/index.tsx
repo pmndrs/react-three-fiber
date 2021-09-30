@@ -7,7 +7,6 @@ import {
   unmountComponentAtNode as unmount,
   act as _act,
 } from '@react-three/fiber'
-import type { RenderProps } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'

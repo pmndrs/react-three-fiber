@@ -11,7 +11,7 @@ export default function App() {
       <mesh
         position={[0, 0, 0]}
         onContextMenu={(ev) => {
-          ev.preventDefault()
+          ev.nativeEvent.preventDefault()
           set((value) => !value)
         }}>
         <boxBufferGeometry args={[1, 1, 1]} />

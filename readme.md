@@ -20,15 +20,15 @@ Build your scene declaratively with re-usable, self-contained components that re
 
 #### Does it have limitations?
 
-None. Everything that works in threejs will work here without exception.
+None. Everything that works in Threejs will work here without exception.
 
-#### Can it keep up with frequent updates to threejs?
+#### Can it keep up with frequent updates to Threejs?
 
-Yes, because it merely expresses threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. There is no hard dependency on a particular threejs version, it does not wrap or duplicate a single threejs class.
+Yes. There is no hard dependency on a particular Threejs version, it does not wrap or duplicate a single Threejs class. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically.
 
-#### Is it slower than plain threejs?
+#### Is it slower than plain Threejs?
 
-There is no additional overhead. Components participate in the renderloop outside of React.
+No. There is no additional overhead. Components participate in a unified renderloop outside of React. It outperforms Threejs in scale due to Reacts scheduling abilities.
 
 ### What does it look like?
 
@@ -49,17 +49,17 @@ import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
   // This reference will give us direct access to the THREE.Mesh object
-  const mesh = useRef()
+  const ref = useRef()
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   // Subscribe this component to the render-loop, rotate the mesh every frame
-  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
+  useFrame((state, delta) => (ref.current.rotation.x += 0.01))
   // Return the view, these are regular Threejs elements expressed in JSX
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={ref}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -95,14 +95,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props: JSX.IntrinsicElements['mesh']) {
-  const mesh = useRef<THREE.Mesh>(null!)
+  const ref = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
+  useFrame((state, delta) => (ref.current.rotation.x += 0.01))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={ref}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}

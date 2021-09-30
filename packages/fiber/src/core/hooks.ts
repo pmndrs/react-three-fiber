@@ -3,7 +3,6 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
-
 import { context, RootState, RenderCallback } from './store'
 
 export interface Loader<T> extends THREE.Loader {
@@ -25,25 +24,26 @@ export type ObjectMap = {
   materials: { [name: string]: THREE.Material }
 }
 
+export function useStore() {
+  const store = React.useContext(context)
+  if (!store) throw `R3F hooks can only be used within the Canvas component!`
+  return store
+}
+
 export function useThree<T = RootState>(
-  selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
+  selector: StateSelector<RootState, T> = (state) => state as unknown as T,
   equalityFn?: EqualityChecker<T>,
 ) {
-  const useStore = React.useContext(context)
-  if (!useStore) throw `R3F hooks can only be used within the Canvas component!`
-  return useStore(selector, equalityFn)
+  return useStore()(selector, equalityFn)
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
-  const { subscribe } = React.useContext(context).getState().internal
+  const subscribe = useStore().getState().internal.subscribe
   // Update ref
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
-  // Subscribe/unsub
-  React.useLayoutEffect(() => {
-    const unsubscribe = subscribe(ref, renderPriority)
-    return () => unsubscribe()
-  }, [renderPriority, subscribe])
+  // Subscribe on mount, unsubscribe on unmount
+  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
   return null
 }
 
@@ -113,4 +113,9 @@ useLoader.preload = function <T, U extends string | string[]>(
 ) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)
+}
+
+useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
+  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  return useAsset.clear(Proto, ...keys)
 }
