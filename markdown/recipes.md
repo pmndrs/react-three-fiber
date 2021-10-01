@@ -224,7 +224,7 @@ const Controls = () => {
 
 ## Enabling XR
 
-Supplying the `xr` flag enables Three's XR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
+Supplying the `xr` flag enables Three's XR mode and switches the render-loop to gl.setAnimationLoop on session [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
 
 ```jsx
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js'
