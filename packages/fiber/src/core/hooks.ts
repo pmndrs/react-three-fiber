@@ -4,7 +4,7 @@ import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { useAsset } from 'use-asset'
 import { context, RootState, RenderCallback } from './store'
-import { stringLiteral } from '@babel/types'
+import { buildGraph, ObjectMap } from './utils'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -19,11 +19,6 @@ type Extensions = (loader: THREE.Loader) => void
 type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
 type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
-
-export type ObjectMap = {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
-}
 
 export function useStore() {
   const store = React.useContext(context)
@@ -46,21 +41,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   // Subscribe on mount, unsubscribe on unmount
   React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
   return null
-}
-
-function buildGraph(object: THREE.Object3D) {
-  const data: ObjectMap = { nodes: {}, materials: {} }
-  if (object) {
-    object.traverse((obj: any) => {
-      if (obj.name) {
-        data.nodes[obj.name] = obj
-      }
-      if (obj.material && !data.materials[obj.material.name]) {
-        data.materials[obj.material.name] = obj.material
-      }
-    })
-  }
-  return data
 }
 
 export function useGraph(object: THREE.Object3D) {

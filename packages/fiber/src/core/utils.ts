@@ -14,6 +14,11 @@ export type DiffSet = {
 export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
 export type ClassConstructor = { new (): void }
 
+export type ObjectMap = {
+  nodes: { [name: string]: THREE.Object3D }
+  materials: { [name: string]: THREE.Material }
+}
+
 // A collection of compare functions
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',
@@ -35,6 +40,27 @@ export const is = {
     for (i in b) if (a[i] !== b[i]) return false
     return is.und(i) ? a === b : true
   },
+}
+
+// Collects nodes and materials from a THREE.Object3D
+export function buildGraph(object: THREE.Object3D) {
+  const data: ObjectMap = { nodes: {}, materials: {} }
+  if (object) {
+    object.traverse((obj: any) => {
+      if (obj.name) data.nodes[obj.name] = obj
+      if (obj.material && !data.materials[obj.material.name]) data.materials[obj.material.name] = obj.material
+    })
+  }
+  return data
+}
+
+// Disposes an object and all its properties
+export function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
+  if (obj.dispose && obj.type !== 'Scene') obj.dispose()
+  for (const p in obj) {
+    ;(p as any).dispose?.()
+    delete obj[p]
+  }
 }
 
 // Each object in the scene carries a small LocalState descriptor

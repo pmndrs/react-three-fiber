@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { is } from '../core/utils'
+import { is, dispose } from '../core/utils'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
@@ -150,23 +150,19 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
         setTimeout(() => {
-          state.events.disconnect?.()
-          state.gl?.renderLists?.dispose?.()
-          state.gl?.forceContextLoss?.()
-          dispose(state)
-          roots.delete(canvas)
-          if (callback) callback(canvas)
+          try {
+            state.events.disconnect?.()
+            state.gl?.renderLists?.dispose?.()
+            state.gl?.forceContextLoss?.()
+            dispose(state)
+            roots.delete(canvas)
+            if (callback) callback(canvas)
+          } catch (e) {
+            /* ... */
+          }
         }, 500)
       }
     })
-  }
-}
-
-function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
-  if (obj.dispose && obj.type !== 'Scene') obj.dispose()
-  for (const p in obj) {
-    ;(p as any).dispose?.()
-    delete obj[p]
   }
 }
 

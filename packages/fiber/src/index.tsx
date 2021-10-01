@@ -1,4 +1,3 @@
-// for type declarations
 export * from './three-types'
 import * as ReactThreeFiber from './three-types'
 export { ReactThreeFiber }
@@ -15,5 +14,4 @@ export type {
 } from './core/store'
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { Props } from './web/Canvas'
-
 export * from './web'
