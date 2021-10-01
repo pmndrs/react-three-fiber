@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.8
+
+### Patch Changes
+
+- 6f68406: Allow getCurrentViewport to receive an array
+
 ## 7.0.7
 
 ### Patch Changes
