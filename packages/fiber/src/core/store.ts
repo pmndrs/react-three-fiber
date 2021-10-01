@@ -192,14 +192,17 @@ const createStore = (
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
+    const tempTarget = new THREE.Vector3()
     function getCurrentViewport(
       camera: Camera = get().camera,
-      target: THREE.Vector3 = defaultTarget,
+      target: THREE.Vector3 | Parameters<THREE.Vector3['set']> = defaultTarget,
       size: Size = get().size,
     ) {
       const { width, height } = size
       const aspect = width / height
-      const distance = camera.getWorldPosition(position).distanceTo(target)
+      if (target instanceof THREE.Vector3) tempTarget.copy(target)
+      else tempTarget.set(...target)
+      const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
       if (isOrthographicCamera(camera)) {
         return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance, aspect }
       } else {
