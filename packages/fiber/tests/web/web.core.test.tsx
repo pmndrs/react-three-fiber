@@ -19,7 +19,7 @@ import {
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
+import { render, act, unmountComponentAtNode, extend, useFrame } from '../../src/web/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
@@ -416,6 +416,20 @@ describe('web core', () => {
     })
 
     expect(gl.xr.enabled).toEqual(true)
+  })
+
+  it('should respect frameloop="never" if xr is true', async () => {
+    let respected = true
+
+    await act(async () => {
+      const TestGroup = () => {
+        useFrame(() => (respected = false))
+        return <group />
+      }
+      render(<TestGroup />, canvas, { xr: true, frameloop: 'never' })
+    })
+
+    expect(respected).toEqual(true)
   })
 
   it('will render components that are extended', async () => {
