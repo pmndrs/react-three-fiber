@@ -282,8 +282,32 @@ const createStore = (
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
       setXR: (xr = false) =>
         set(({ internal }) => {
-          gl.xr.enabled = xr
-          gl.setAnimationLoop(xr ? (timestamp) => advance(timestamp, true) : null)
+          gl.xr.enabled = xr || gl.xr.isPresenting
+
+          const handleXRFrame = (timestamp: number) => {
+            const state = get()
+            if (state.frameloop === 'never') return
+
+            advance(timestamp, true)
+          }
+
+          const handleSessionChange = () => {
+            // Defer to XR loop when presenting
+            gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+          }
+
+          // Manually update render mode if called during session
+          if (gl.xr.isPresenting) handleSessionChange()
+
+          // Update render mode on session change
+          if (gl.xr.enabled) {
+            gl.xr.addEventListener('sessionstart', handleSessionChange)
+            gl.xr.addEventListener('sessionend', handleSessionChange)
+          } else {
+            gl.xr.removeEventListener('sessionstart', handleSessionChange)
+            gl.xr.removeEventListener('sessionend', handleSessionChange)
+          }
+
           return {
             vr: xr,
             xr,
