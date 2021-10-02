@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.9
+
+### Patch Changes
+
+- cd266e4: Fix diffProps dashed keys
+
 ## 7.0.8
 
 ### Patch Changes
