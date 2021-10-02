@@ -29,11 +29,12 @@
   "main": "dist/react-three-fiber.cjs.js",
   "module": "dist/react-three-fiber.esm.js",
   "types": "dist/react-three-fiber.cjs.d.ts",
-  "react-native": "dist/native.js",
+  "react-native": "native/dist/react-three-fiber-native.cjs",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
-      "index.tsx"
+      "index.tsx",
+      "native.tsx"
     ]
   },
   "scripts": {
@@ -53,10 +54,22 @@
   "peerDependencies": {
     "react": ">=18.0",
     "react-dom": ">=18.0",
-    "three": ">=0.132"
+    "three": ">=0.132",
+    "expo-gl": "^10.2.0",
+    "expo-three": "^5.7.0",
+    "react-native": "^0.63.0"
   },
   "peerDependenciesMeta": {
     "react-dom": {
+      "optional": true
+    },
+    "expo-gl": {
+      "optional": true
+    },
+    "expo-three": {
+      "optional": true
+    },
+    "react-native": {
       "optional": true
     }
   }
