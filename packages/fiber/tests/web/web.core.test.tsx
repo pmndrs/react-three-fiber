@@ -93,6 +93,11 @@ describe('web core', () => {
     })
 
     expect(scene.children[0].type).toEqual('Mesh')
+    expect((scene.children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
+    expect((scene.children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
+      'MeshBasicMaterial',
+    )
   })
 
   it('renders an empty scene', async () => {
@@ -138,6 +143,9 @@ describe('web core', () => {
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
+    expect(
+      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type,
+    ).toEqual('MeshBasicMaterial')
   })
 
   it('renders some basics with an update', async () => {
@@ -274,10 +282,10 @@ describe('web core', () => {
           <hasObject3dMethods>
             <mesh
               attachFns={[
-                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                (mesh: Mesh) => {
                   attachedMesh = mesh
                 },
-                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                (mesh: Mesh) => {
                   detachedMesh = mesh
                 },
               ]}
@@ -404,7 +412,7 @@ describe('web core', () => {
       }
     }
 
-    await expect(async () => {
+    expect(async () => {
       await act(async () => {
         extend({ MyColor })
 
