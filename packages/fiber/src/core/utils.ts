@@ -8,7 +8,7 @@ export const DEFAULT = '__default'
 
 export type DiffSet = {
   memoized: { [key: string]: any }
-  changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][]
+  changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][]
 }
 
 export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
@@ -94,7 +94,7 @@ export function diffProps(
 ): DiffSet {
   const localState = (instance?.__r3f ?? {}) as LocalState
   const entries = Object.entries(props)
-  const changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][] = []
+  const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
 
   // Catch removed props, prepend them so they can be reset or removed
   if (remove) {
@@ -108,26 +108,12 @@ export function diffProps(
     if (instance.__r3f?.primitive && key === 'object') return
     // When props match bail out
     if (checkShallow(value, previous[key])) return
-
-    let currentInstance = instance
-    let targetProp = currentInstance[key]
-
     // Collect handlers and bail out
-    if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
-      return changes.push([key, value, true, currentInstance, targetProp])
-
-    // Revolve dashed props
-    if (key.includes('-')) {
-      const entries = key.split('-')
-      targetProp = entries.reduce((acc, key) => acc[key], instance)
-      // If the target is atomic, it forces us to switch the root
-      if (!(targetProp && targetProp.set)) {
-        const [name, ...reverseEntries] = entries.reverse()
-        currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
-        key = name
-      }
-    }
-    changes.push([key, value, false, currentInstance, targetProp])
+    if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return changes.push([key, value, true, []])
+    // Split dashed props
+    let entries: string[] = []
+    if (key.includes('-')) entries = key.split('-')
+    changes.push([key, value, false, entries])
   })
 
   const memoized: { [key: string]: any } = { ...props }
@@ -149,7 +135,21 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-  changes.forEach(([key, value, isEvent, currentInstance, targetProp]) => {
+  changes.forEach(([key, value, isEvent, keys]) => {
+    let currentInstance = instance
+    let targetProp = currentInstance[key]
+
+    // Revolve dashed props
+    if (keys.length) {
+      targetProp = keys.reduce((acc, key) => acc[key], instance)
+      // If the target is atomic, it forces us to switch the root
+      if (!(targetProp && targetProp.set)) {
+        const [name, ...reverseEntries] = keys.reverse()
+        currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+        key = name
+      }
+    }
+
     // https://github.com/mrdoob/three.js/issues/21209
     // HMR/fast-refresh relies on the ability to cancel out props, but threejs
     // has no means to do this. Hence we curate a small collection of value-classes
