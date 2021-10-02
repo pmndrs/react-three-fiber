@@ -68,6 +68,14 @@ function render<TCanvas extends Element>(
     ...props
   }: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
+  // Set initial size to drawing buffer dimensions
+  if (!size) {
+    size = {
+      width: gl.drawingBufferWidth ?? 0,
+      height: gl.drawingBufferHeight ?? 0,
+    }
+  }
+
   let root = roots.get(canvas)
   let fiber = root?.fiber
   let store = root?.store
