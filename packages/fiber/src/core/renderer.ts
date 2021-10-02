@@ -53,7 +53,7 @@ export type InstanceProps = {
 export type DiffSet = {
   accumulative: boolean
   memoized: { [key: string]: any }
-  changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][]
+  changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][]
 }
 
 export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
@@ -114,7 +114,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   ): DiffSet {
     const localState = (instance?.__r3f ?? {}) as LocalState
     const entries = Object.entries(props)
-    const changes: [key: string, value: unknown, isEvent: boolean, instance: Instance, prop: any][] = []
+    const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
 
     // Catch removed props, prepend them so they can be reset or removed
     if (accumulative) {
@@ -129,25 +129,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       // When props match bail out
       if (checkShallow(value, previous[key])) return
 
-      let currentInstance = instance
-      let targetProp = currentInstance[key]
-
       // Collect handlers and bail out
-      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
-        return changes.push([key, value, true, currentInstance, targetProp])
+      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return changes.push([key, value, true, []])
 
-      // Revolve dashed props
-      if (key.includes('-')) {
-        const entries = key.split('-')
-        targetProp = entries.reduce((acc, key) => acc[key], instance)
-        // If the target is atomic, it forces us to switch the root
-        if (!(targetProp && targetProp.set)) {
-          const [name, ...reverseEntries] = entries.reverse()
-          currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
-          key = name
-        }
-      }
-      changes.push([key, value, false, currentInstance, targetProp])
+      // Split dashed props
+      let entries: string[] = []
+      if (key.includes('-')) entries = key.split('-')
+
+      changes.push([key, value, false, entries])
     })
 
     const memoized: { [key: string]: any } = { ...props }
@@ -168,7 +157,21 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     // Prepare memoized props
     if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-    changes.forEach(([key, value, isEvent, currentInstance, targetProp]) => {
+    changes.forEach(([key, value, isEvent, keys]) => {
+      let currentInstance = instance
+      let targetProp = currentInstance[key]
+
+      // Revolve dashed props
+      if (keys.length) {
+        targetProp = keys.reduce((acc, key) => acc[key], instance)
+        // If the target is atomic, it forces us to switch the root
+        if (!(targetProp && targetProp.set)) {
+          const [name, ...reverseEntries] = keys.reverse()
+          currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+          key = name
+        }
+      }
+
       // https://github.com/mrdoob/three.js/issues/21209
       // HMR/fast-refresh relies on the ability to cancel out props, but threejs
       // has no means to do this. Hence we curate a small collection of value-classes
