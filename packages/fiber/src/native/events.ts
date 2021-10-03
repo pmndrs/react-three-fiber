@@ -77,15 +77,14 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
       events.disconnect?.()
 
       const manager = new Pressability(events?.handlers)
-      const bind = manager.getEventHandlers()
 
-      set((state) => ({ events: { ...state.events, bind, connected: manager } }))
+      set((state) => ({ events: { ...state.events, connected: manager } }))
     },
     disconnect: () => {
       const { set, events } = store.getState()
       if (events.connected) {
         events.connected.reset()
-        set((state) => ({ events: { ...state.events, bind: null, connected: false } }))
+        set((state) => ({ events: { ...state.events, connected: false } }))
       }
     },
   }

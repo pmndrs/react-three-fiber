@@ -79,13 +79,16 @@ function render<TView extends View>(
     fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
     // Map it
     roots.set(target, { fiber, store })
-    // Store events internally
-    if (events) state.set({ events: events(store) })
+    // Store event manager internally and connect it
+    if (events) {
+      state.set({ events: events(store) })
+      state.get().events.connect?.(target)
+    }
   }
 
   if (store && fiber) {
     reconciler.updateContainer(
-      <Provider store={store} element={element} onCreated={onCreated} target={target} />,
+      <Provider store={store} element={element} onCreated={onCreated} />,
       fiber,
       null,
       () => undefined,
@@ -100,19 +103,15 @@ function Provider<TView extends View>({
   store,
   element,
   onCreated,
-  target,
 }: {
   onCreated?: (state: RootState) => void
   store: UseStore<RootState>
   element: React.ReactNode
-  target: TView
 }) {
   React.useEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
-    // Connect events
-    state.events.connect?.(target)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
   }, [])

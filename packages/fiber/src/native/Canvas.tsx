@@ -88,20 +88,15 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (rendererImpl && containerRef.current) {
-      const store = render(
+      const state = render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         containerRef.current,
         { ...props, size, events: events || createTouchEvents, gl: rendererImpl },
-      )
-      store.subscribe(
-        () => {
-          const { events } = store.getState()
-          setBind((events as any).bind)
-        },
-        (state) => (state.events as any).bind,
-      )
+      ).getState()
+
+      setBind(state.events.connected.getEventHandlers())
     }
   }, [size, children, rendererImpl])
 
