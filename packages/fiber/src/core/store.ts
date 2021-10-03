@@ -70,6 +70,7 @@ export type RootState = {
   controls: THREE.EventDispatcher | null
   raycaster: Raycaster
   mouse: THREE.Vector2
+  dpr: Dpr
   clock: THREE.Clock
 
   vr: boolean
@@ -185,10 +186,10 @@ const createStore = (
       camera.lookAt(0, 0, 0)
     }
 
-    function setDpr(dpr: Dpr) {
+    function calculateDpr(dpr: Dpr) {
       return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
     }
-    const initialDpr = setDpr(dpr)
+    const initialDpr = calculateDpr(dpr)
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -259,6 +260,7 @@ const createStore = (
       },
 
       size: { width: 0, height: 0 },
+      dpr,
       viewport: {
         initialDpr,
         dpr: initialDpr,
@@ -274,7 +276,27 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setDpr: (dpr: Dpr) =>
+        set(({ viewport, internal }) => {
+          const newState = {
+            dpr,
+            viewport: {
+              ...viewport,
+              dpr: calculateDpr(dpr),
+            },
+          }
+
+          return {
+            ...newState,
+            internal: {
+              ...internal,
+              lastProps: {
+                ...internal.lastProps,
+                ...newState,
+              },
+            },
+          }
+        }),
 
       events: { connected: false },
       internal: {
