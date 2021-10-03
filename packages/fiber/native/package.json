@@ -1,0 +1,4 @@
+{
+  "main": "dist/react-three-fiber-native.cjs.js",
+  "module": "dist/react-three-fiber-native.esm.js"
+}
