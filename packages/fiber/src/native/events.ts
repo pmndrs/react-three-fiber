@@ -3,9 +3,9 @@ import { UseStore } from 'zustand'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
-import { View } from 'react-native'
+import { GestureResponderEvent, View } from 'react-native'
 // @ts-ignore
-import Pressability from 'react-native/Libraries/Pressability/Pressability'
+// import Pressability from 'react-native/Libraries/Pressability/Pressability'
 
 const EVENTS = {
   PRESS: 'onPress',
@@ -16,6 +16,17 @@ const EVENTS = {
   HOVERIN: 'onHoverIn',
   HOVEROUT: 'onHoverOut',
   PRESSMOVE: 'onPressMove',
+}
+
+const DOM_EVENTS = {
+  [EVENTS.PRESS]: 'onClick',
+  [EVENTS.PRESSIN]: 'onPointerDown',
+  [EVENTS.PRESSOUT]: 'onPointerUp',
+  [EVENTS.LONGPRESS]: 'onDoubleClick',
+
+  [EVENTS.HOVERIN]: 'onPointerOver',
+  [EVENTS.HOVEROUT]: 'onPointerOut',
+  [EVENTS.PRESSMOVE]: 'onPointerMove',
 }
 
 // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
@@ -40,23 +51,46 @@ export function getEventPriority() {
 export function createTouchEvents(store: UseStore<RootState>): EventManager<View> {
   const { handlePointer } = createEvents(store)
 
+  const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {
+    // Apply offset
+    ;(event as any).nativeEvent.offsetX = event.nativeEvent.pageX
+    ;(event as any).nativeEvent.offsetY = event.nativeEvent.pageY
+
+    // Emulate DOM event
+    const callback = handlePointer(DOM_EVENTS[name])
+    return callback(event.nativeEvent as any)
+  }
+
   return {
     connected: false,
     handlers: Object.values(EVENTS).reduce(
-      (acc, name) => ({ ...acc, [name]: handlePointer(name) }),
+      (acc, name) => ({
+        ...acc,
+        [name]: (event: GestureResponderEvent) => handleTouch(event, name as keyof typeof EVENTS),
+      }),
       {},
     ) as unknown as Events,
     connect: (target: View) => {
       const { set, events } = store.getState()
       events.disconnect?.()
-      const manager = new Pressability(events)
-      set((state) => ({ events: { ...state.events, connected: manager } }))
+      // const manager = new Pressability(events)
       // manager.getEventHandlers()
+      set((state) => ({ events: { ...state.events, connected: target } }))
+      Object.entries(events?.handlers ?? []).forEach(([name, event]) => {
+        const eventName = EVENTS[name as keyof typeof EVENTS]
+        target.addEventListener(eventName, event)
+      })
     },
     disconnect: () => {
       const { set, events } = store.getState()
       if (events.connected) {
-        events.connected.reset()
+        // events.connected.reset()
+        Object.entries(events.handlers ?? []).forEach(([name, event]) => {
+          if (events && events.connected instanceof HTMLElement) {
+            const [eventName] = EVENTS[name as keyof typeof EVENTS]
+            events.connected.removeEventListener(eventName, event)
+          }
+        })
         set((state) => ({ events: { ...state.events, connected: false } }))
       }
     },
