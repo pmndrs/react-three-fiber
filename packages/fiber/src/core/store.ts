@@ -214,22 +214,6 @@ const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
-    const handleXRFrame = (timestamp: number) => {
-      const state = get()
-      if (state.frameloop === 'never') return
-
-      advance(timestamp, true)
-    }
-
-    const handleSessionChange = () => {
-      gl.xr.enabled = gl.xr.isPresenting
-      gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
-    }
-
-    // Update render mode on session change
-    gl.xr.addEventListener('sessionstart', handleSessionChange)
-    gl.xr.addEventListener('sessionend', handleSessionChange)
-
     return {
       gl,
 
@@ -331,6 +315,26 @@ const createStore = (
       },
     }
   })
+
+  // Handle render switching when a WebXR session is detected
+  rootState.subscribe(
+    () => {
+      const handleXRFrame = (timestamp: number) => {
+        const state = rootState.getState()
+        if (state.frameloop === 'never') return
+
+        advance(timestamp, true)
+      }
+
+      const { gl } = rootState.getState()
+      console.log(gl.xr.isPresenting)
+
+      // Update render mode on session change
+      if (gl.xr) gl.xr.enabled = gl.xr.isPresenting
+      gl.setAnimationLoop(gl.xr?.isPresenting ? handleXRFrame : null)
+    },
+    (state) => state.gl.xr?.isPresenting,
+  )
 
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(
