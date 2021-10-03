@@ -46,60 +46,58 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export const Canvas = React.forwardRef<View, Props>(
-  ({ children, fallback, style, events, gl: glOptions, ...props }, forwardedRef) => {
-    const [context, setContext] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | null>(null)
-    const [size, setSize] = React.useState({ width: 0, height: 0 })
-    const [bind, setBind] = React.useState()
-    const [block, setBlock] = React.useState<SetBlock>(false)
-    const [error, setError] = React.useState<any>(false)
+export const Canvas = React.forwardRef<View, Props>(({ children, fallback, style, events, ...props }, forwardedRef) => {
+  const [context, setContext] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | null>(null)
+  const [size, setSize] = React.useState({ width: 0, height: 0 })
+  const [bind, setBind] = React.useState()
+  const [block, setBlock] = React.useState<SetBlock>(false)
+  const [error, setError] = React.useState<any>(false)
 
-    // Suspend this component if block is a promise (2nd run)
-    if (block) throw block
-    // Throw exception outwards if anything within canvas throws
-    if (error) throw error
+  // Suspend this component if block is a promise (2nd run)
+  if (block) throw block
+  // Throw exception outwards if anything within canvas throws
+  if (error) throw error
 
-    const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-      const { width, height } = e.nativeEvent.layout
-      setSize({ width, height })
-    }, [])
+  const onLayout = React.useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout
+    setSize({ width, height })
+  }, [])
 
-    // Execute JSX in the reconciler as a layout-effect
-    useIsomorphicLayoutEffect(() => {
-      if (context) {
-        const store = render(
-          <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-          </ErrorBoundary>,
-          context,
-          { ...props, size, events: events || createTouchEvents },
-        )
+  // Execute JSX in the reconciler as a layout-effect
+  useIsomorphicLayoutEffect(() => {
+    if (context) {
+      const store = render(
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>,
+        context,
+        { ...props, size, events: events || createTouchEvents },
+      )
 
-        const state = store.getState()
-        setBind(state.events.connected.getEventHandlers())
-      }
-    }, [size, children, context])
+      const state = store.getState()
+      setBind(state.events.connected.getEventHandlers())
+    }
+  }, [size, children, context])
 
-    useIsomorphicLayoutEffect(() => {
-      return () => {
-        if (context) unmountComponentAtNode(context)
-      }
-    }, [])
+  useIsomorphicLayoutEffect(() => {
+    return () => {
+      if (context) unmountComponentAtNode(context)
+    }
+  }, [])
 
-    return (
-      <View
-        ref={forwardedRef}
-        onLayout={onLayout}
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          overflow: 'hidden',
-          ...style,
-        }}
-        {...bind}>
-        {size.width > 0 && <GLView onContextCreate={setContext} style={StyleSheet.absoluteFill} />}
-      </View>
-    )
-  },
-)
+  return (
+    <View
+      ref={forwardedRef}
+      onLayout={onLayout}
+      style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        ...style,
+      }}
+      {...bind}>
+      {size.width > 0 && <GLView onContextCreate={setContext} style={StyleSheet.absoluteFill} />}
+    </View>
+  )
+})
