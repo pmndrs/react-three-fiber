@@ -9,6 +9,7 @@ import { EventManager } from '../core/events'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 
 export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, React.Component<View> {
+  gl?: Partial<THREE.WebGLRendererParameters>
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
@@ -45,10 +46,10 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, style, events, ...props }: Props) {
+export function Canvas({ children, fallback, style, events, gl: glOptions, ...props }: Props) {
   const containerRef = React.useRef<View | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
-  const [gl, setGl] = React.useState<THREE.WebGLRenderer | undefined>(undefined)
+  const [rendererImpl, setRendererImpl] = React.useState<THREE.WebGLRenderer | undefined>(undefined)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -68,6 +69,7 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
       powerPreference: 'high-performance',
       antialias: true,
       alpha: true,
+      ...(glOptions as any),
       pixelRatio,
       gl,
     })
@@ -79,21 +81,21 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
       gl.endFrameEXP()
     }
 
-    setGl(renderer)
+    setRendererImpl(renderer)
   }, [])
 
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
-    if (gl && containerRef.current) {
+    if (rendererImpl && containerRef.current) {
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         containerRef.current,
-        { ...props, size, gl },
+        { ...props, size, gl: rendererImpl },
       )
     }
-  }, [size, children, gl])
+  }, [size, children, rendererImpl])
 
   useIsomorphicLayoutEffect(() => {
     return () => {
