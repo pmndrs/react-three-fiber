@@ -1,14 +1,14 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { LayoutChangeEvent, StyleSheet, View, ViewStyle, PixelRatio } from 'react-native'
+import { View, ViewProps, ViewStyle, LayoutChangeEvent, PixelRatio, StyleSheet } from 'react-native'
+import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
-import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 
-export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, React.Component<View> {
+export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, ViewProps {
   gl?: Partial<THREE.WebGLRendererParameters>
   children: React.ReactNode
   fallback?: React.ReactNode
