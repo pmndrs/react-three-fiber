@@ -2,7 +2,10 @@ import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { EventHandlers } from './events'
 import { Instance, InstanceProps, LocalState } from './renderer'
-import { RootState } from './store'
+import { Dpr, RootState } from './store'
+
+export const calculateDpr = (dpr: Dpr) =>
+  Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 
 export const DEFAULT = '__default'
 

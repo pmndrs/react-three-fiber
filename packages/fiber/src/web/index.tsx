@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { is, dispose } from '../core/utils'
+import { is, dispose, calculateDpr } from '../core/utils'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
@@ -68,7 +68,7 @@ function render<TCanvas extends Element>(
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
+    if (props.dpr !== undefined && !is.equ(state.viewport.dpr, calculateDpr(props.dpr))) state.setDpr(props.dpr)
     // Check size
     if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
 
