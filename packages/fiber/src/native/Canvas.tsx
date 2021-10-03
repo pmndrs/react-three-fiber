@@ -1,5 +1,6 @@
+import { THREE, Renderer as NativeRenderer } from 'expo-three'
 import * as React from 'react'
-import { LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, StyleSheet, View, ViewStyle, PixelRatio } from 'react-native'
 import { UseStore } from 'zustand'
 import { render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
@@ -47,7 +48,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 export function Canvas({ children, fallback, style, events, ...props }: Props) {
   const containerRef = React.useRef<View | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
-  const [gl, setGl] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | undefined>(undefined)
+  const [gl, setGl] = React.useState<THREE.WebGLRenderer | undefined>(undefined)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -61,6 +62,26 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
     setSize({ width, height })
   }, [])
 
+  const onContextCreate = React.useCallback((gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
+    const pixelRatio = PixelRatio.get()
+    const renderer = new NativeRenderer({
+      powerPreference: 'high-performance',
+      antialias: true,
+      alpha: true,
+      pixelRatio,
+      gl,
+    })
+
+    const renderFrame = renderer.render.bind(renderer)
+    renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+      renderFrame(scene, camera)
+      // End frame through the RN Bridge
+      gl.endFrameEXP()
+    }
+
+    setGl(renderer)
+  }, [])
+
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (gl && containerRef.current) {
@@ -69,7 +90,7 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         containerRef.current,
-        { ...props, size, events: events || createTouchEvents, gl },
+        { ...props, size, gl },
       )
     }
   }, [size, children, gl])
@@ -91,7 +112,7 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
         overflow: 'hidden',
         ...style,
       }}>
-      {size.width > 0 && <GLView onContextCreate={setGl} style={StyleSheet.absoluteFill} />}
+      {size.width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
     </View>
   )
 }

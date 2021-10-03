@@ -1,4 +1,4 @@
-import { THREE, Renderer as NativeRenderer } from 'expo-three'
+import * as THREE from 'three'
 import * as React from 'react'
 // @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
@@ -12,37 +12,16 @@ import { createTouchEvents as events, getEventPriority } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 import { PixelRatio, View } from 'react-native'
-import { ExpoWebGLRenderingContext } from 'expo-gl'
 
 const roots = new Map<View, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
 export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: WebGLRenderingContext & ExpoWebGLRenderingContext
+  gl?: THREE.WebGLRenderer
   events?: (store: UseStore<RootState>) => EventManager<TView>
   size?: Size
   onCreated?: (state: RootState) => void
-}
-
-const createRendererInstance = (gl: ExpoWebGLRenderingContext & WebGLRenderingContext): THREE.WebGLRenderer => {
-  const pixelRatio = PixelRatio.get()
-  const renderer = new NativeRenderer({
-    powerPreference: 'high-performance',
-    antialias: true,
-    alpha: true,
-    pixelRatio,
-    gl,
-  })
-
-  const renderFrame = renderer.render.bind(renderer)
-  renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-    renderFrame(scene, camera)
-    // End frame through the RN Bridge
-    gl.endFrameEXP()
-  }
-
-  return renderer
 }
 
 function createRoot<TView extends View>(target: TView) {
@@ -57,14 +36,6 @@ function render<TView extends View>(
   target: TView,
   { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
-  // Set initial size to drawing buffer dimensions
-  if (!size) {
-    size = {
-      width: gl?.drawingBufferWidth ?? 0,
-      height: gl?.drawingBufferHeight ?? 0,
-    }
-  }
-
   let root = roots.get(target)
   let fiber = root?.fiber
   let store = root?.store
@@ -93,12 +64,12 @@ function render<TView extends View>(
   if (!fiber) {
     // If no root has been found, make one
 
-    // Create gl
-    const glRenderer = createRendererInstance(gl as any)
+    // Throw an error if a renderer isn't specified
+    if (!gl) throw 'An instance of THREE.WebGLRenderer must be specified via gl!'
 
     // Create store
     store = createStore(applyProps, invalidate, advance, {
-      gl: glRenderer,
+      gl,
       dpr,
       size,
       ...props,
