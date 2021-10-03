@@ -5,7 +5,7 @@ import { useErrorBoundary } from 'use-error-boundary'
 import { Global, Page as PageImpl } from './styles'
 import * as demos from './demos'
 
-const defaultComponent = 'Reparenting'
+const defaultComponent = 'ToggleXR'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 const label = {
   position: 'absolute',
