@@ -71,7 +71,6 @@ export type RootState = {
   controls: THREE.EventDispatcher | null
   raycaster: Raycaster
   mouse: THREE.Vector2
-  dpr: Dpr
   clock: THREE.Clock
 
   vr: boolean
@@ -258,7 +257,6 @@ const createStore = (
       },
 
       size: { width: 0, height: 0 },
-      dpr,
       viewport: {
         initialDpr,
         dpr: initialDpr,
