@@ -1,20 +1,24 @@
 import * as React from 'react'
-import { LayoutChangeEvent, PixelRatio, StyleSheet, View, ViewStyle } from 'react-native'
+import { LayoutChangeEvent, StyleSheet, View, ViewStyle } from 'react-native'
 import { UseStore } from 'zustand'
 import { render, unmountComponentAtNode, RenderProps } from './index'
-// import { createTouchEvents } from './events'
+import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 
-export interface Props extends Omit<RenderProps<GLView>, 'size' | 'events' | 'gl'>, React.HTMLAttributes<View> {
+export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, React.Component<View> {
   children: React.ReactNode
   fallback?: React.ReactNode
+  style?: ViewStyle
   events?: (store: UseStore<RootState>) => EventManager<any>
 }
 
 type SetBlock = false | Promise<null> | null
-type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
+type UnblockProps = {
+  set: React.Dispatch<React.SetStateAction<SetBlock>>
+  children: React.ReactNode
+}
 
 // React currently throws a warning when using useLayoutEffect on the server.
 // To get around it, we can conditionally useEffect on the server (no-op) and
@@ -40,9 +44,9 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, tabIndex, id, style, className, events, ...props }: Props) {
+export function Canvas({ children, fallback, style, events, ...props }: Props) {
+  const containerRef = React.useRef<View | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
-  const canvasRef = React.useRef<HTMLCanvasElement | null>(null)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -58,67 +62,39 @@ export function Canvas({ children, fallback, tabIndex, id, style, className, eve
   const onLayout = React.useCallback((e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout
     setSize({ width, height })
-
-    // Update width and height of canvas on layout
-    if (canvasRef.current) {
-      canvasRef.current.width = width
-      canvasRef.current.height = height
-      ;(canvasRef.current as any).clientHeight = height
-    }
   }, [])
-
-  useIsomorphicLayoutEffect(() => {
-    // When we mount, we create a new "canvas" shim object.
-    canvasRef.current = {
-      width: 0,
-      height: 0,
-      style: {
-        // width: 0,
-        // height: 0
-      } as any,
-      addEventListener: (() => {}) as any,
-      removeEventListener: (() => {}) as any,
-      clientHeight: 0,
-    } as HTMLCanvasElement
-
-    // On unmount, the unmountComponentAtNode thing will perform its work removing the canvas.
-    // Let's just not delete this thing manually. It'll just be replaced by a new object when it's newly mounted.
-  }, [])
-
-  // Fired when EXGL context is initialized
-  const onContextCreate = async (gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
-    if (canvasRef.current) {
-      canvasRef.current.width = gl.drawingBufferWidth
-      canvasRef.current.height = gl.drawingBufferHeight
-      ;(canvasRef.current as any).clientHeight = gl.drawingBufferHeight
-    }
-    setGLContext(gl)
-  }
 
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
-    if (glContext && canvasRef.current) {
+    if (glContext && containerRef.current) {
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
-        canvasRef.current,
-        { ...props, size, gl: glContext },
+        containerRef.current,
+        { ...props, size, events: events || createTouchEvents, gl: glContext },
       )
     }
   }, [size, children, glContext])
 
   useIsomorphicLayoutEffect(() => {
     return () => {
-      if (canvasRef.current) unmountComponentAtNode(canvasRef.current)
+      if (containerRef.current) unmountComponentAtNode(containerRef.current)
     }
   }, [])
 
   return (
     <View
+      ref={containerRef}
       onLayout={onLayout}
-      style={{ position: 'absolute', width: '100%', height: '100%', overflow: 'hidden', ...style }}>
-      {size.width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+      style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        ...style,
+      }}>
+      {size.width > 0 && <GLView onContextCreate={setGLContext} style={StyleSheet.absoluteFill} />}
     </View>
   )
 }

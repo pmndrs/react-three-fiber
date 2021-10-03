@@ -5,7 +5,7 @@ import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
 import { View } from 'react-native'
 // @ts-ignore
-import { Pressability } from 'react-native/Libraries/Pressability/Pressability'
+import Pressability from 'react-native/Libraries/Pressability/Pressability'
 
 const EVENTS = {
   PRESS: 'onPress',
@@ -51,7 +51,7 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
       events.disconnect?.()
       const manager = new Pressability(events)
       set((state) => ({ events: { ...state.events, connected: manager } }))
-      Object.assign(target.props, manager.getEventHandlers())
+      // manager.getEventHandlers()
     },
     disconnect: () => {
       const { set, events } = store.getState()
