@@ -47,12 +47,9 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 export function Canvas({ children, fallback, style, events, ...props }: Props) {
   const containerRef = React.useRef<View | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
+  const [gl, setGl] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | undefined>(undefined)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
-
-  const [glContext, setGLContext] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | undefined>(
-    undefined,
-  )
 
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
@@ -66,16 +63,16 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
 
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
-    if (glContext && containerRef.current) {
+    if (gl && containerRef.current) {
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         containerRef.current,
-        { ...props, size, events: events || createTouchEvents, gl: glContext },
+        { ...props, size, events: events || createTouchEvents, gl },
       )
     }
-  }, [size, children, glContext])
+  }, [size, children, gl])
 
   useIsomorphicLayoutEffect(() => {
     return () => {
@@ -94,7 +91,7 @@ export function Canvas({ children, fallback, style, events, ...props }: Props) {
         overflow: 'hidden',
         ...style,
       }}>
-      {size.width > 0 && <GLView onContextCreate={setGLContext} style={StyleSheet.absoluteFill} />}
+      {size.width > 0 && <GLView onContextCreate={setGl} style={StyleSheet.absoluteFill} />}
     </View>
   )
 }

@@ -18,16 +18,14 @@ const roots = new Map<View, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
-export type RenderProps<TCanvas extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: WebGLRenderingContext & ExpoWebGLRenderingContext
-  events?: (store: UseStore<RootState>) => EventManager<TCanvas>
+  events?: (store: UseStore<RootState>) => EventManager<TView>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = <TElement extends View>(
-  gl: ExpoWebGLRenderingContext & WebGLRenderingContext,
-): THREE.WebGLRenderer => {
+const createRendererInstance = (gl: ExpoWebGLRenderingContext & WebGLRenderingContext): THREE.WebGLRenderer => {
   const pixelRatio = PixelRatio.get()
   const renderer = new NativeRenderer({
     powerPreference: 'high-performance',
@@ -47,24 +45,17 @@ const createRendererInstance = <TElement extends View>(
   return renderer
 }
 
-function createRoot<TCanvas extends View>(target: View) {
+function createRoot<TView extends View>(target: TView) {
   return {
     render: (element: React.ReactNode) => render(element, target),
     unmount: () => unmountComponentAtNode(target),
   }
 }
 
-function render<TCanvas extends View>(
+function render<TView extends View>(
   element: React.ReactNode,
-  target: TCanvas,
-  {
-    dpr = PixelRatio.get(),
-    gl,
-    size = { width: 0, height: 0 },
-    events,
-    onCreated,
-    ...props
-  }: RenderProps<TCanvas> = {},
+  target: TView,
+  { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
   // Set initial size to drawing buffer dimensions
   if (!size) {
@@ -134,7 +125,7 @@ function render<TCanvas extends View>(
   }
 }
 
-function Provider<TElement extends View>({
+function Provider<TView extends View>({
   store,
   element,
   onCreated,
@@ -143,7 +134,7 @@ function Provider<TElement extends View>({
   onCreated?: (state: RootState) => void
   store: UseStore<RootState>
   element: React.ReactNode
-  target: TElement
+  target: TView
 }) {
   React.useEffect(() => {
     const state = store.getState()
@@ -157,7 +148,7 @@ function Provider<TElement extends View>({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends View>(target: TElement, callback?: (target: TElement) => void) {
+function unmountComponentAtNode<TView extends View>(target: TView, callback?: (target: TView) => void) {
   const root = roots.get(target)
   const fiber = root?.fiber
   if (fiber) {
