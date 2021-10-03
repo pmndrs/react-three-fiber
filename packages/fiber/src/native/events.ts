@@ -72,7 +72,7 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
       }),
       {},
     ) as unknown as Events,
-    connect: (target: View) => {
+    connect: () => {
       const { set, events } = store.getState()
       events.disconnect?.()
 

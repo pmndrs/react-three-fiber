@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { View, ViewProps, ViewStyle, LayoutChangeEvent, PixelRatio, StyleSheet } from 'react-native'
+import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
 import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { render, unmountComponentAtNode, RenderProps } from './index'
@@ -46,87 +46,60 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, style, events, gl: glOptions, ...props }: Props) {
-  const containerRef = React.useRef<View | null>(null)
-  const [size, setSize] = React.useState({ width: 0, height: 0 })
-  const [rendererImpl, setRendererImpl] = React.useState<THREE.WebGLRenderer | undefined>(undefined)
-  const [bind, setBind] = React.useState()
-  const [block, setBlock] = React.useState<SetBlock>(false)
-  const [error, setError] = React.useState<any>(false)
+export const Canvas = React.forwardRef<View, Props>(
+  ({ children, fallback, style, events, gl: glOptions, ...props }, forwardedRef) => {
+    const [context, setContext] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | null>(null)
+    const [size, setSize] = React.useState({ width: 0, height: 0 })
+    const [bind, setBind] = React.useState()
+    const [block, setBlock] = React.useState<SetBlock>(false)
+    const [error, setError] = React.useState<any>(false)
 
-  // Suspend this component if block is a promise (2nd run)
-  if (block) throw block
-  // Throw exception outwards if anything within canvas throws
-  if (error) throw error
+    // Suspend this component if block is a promise (2nd run)
+    if (block) throw block
+    // Throw exception outwards if anything within canvas throws
+    if (error) throw error
 
-  const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout
-    setSize({ width, height })
-  }, [])
+    const onLayout = React.useCallback((e: LayoutChangeEvent) => {
+      const { width, height } = e.nativeEvent.layout
+      setSize({ width, height })
+    }, [])
 
-  const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
-    const canvas = {
-      width: context.drawingBufferWidth,
-      height: context.drawingBufferHeight,
-      style: {},
-      addEventListener: (() => {}) as any,
-      removeEventListener: (() => {}) as any,
-      clientHeight: context.drawingBufferHeight,
-    } as HTMLCanvasElement
+    // Execute JSX in the reconciler as a layout-effect
+    useIsomorphicLayoutEffect(() => {
+      if (context) {
+        const store = render(
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>,
+          context,
+          { ...props, size, events: events || createTouchEvents },
+        )
 
-    const renderer = new THREE.WebGLRenderer({
-      powerPreference: 'high-performance',
-      antialias: true,
-      alpha: true,
-      ...(glOptions as any),
-      canvas,
-      context,
-    })
+        const state = store.getState()
+        setBind(state.events.connected.getEventHandlers())
+      }
+    }, [size, children, context])
 
-    const renderFrame = renderer.render.bind(renderer)
-    renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-      renderFrame(scene, camera)
-      // End frame through the RN Bridge
-      context.endFrameEXP()
-    }
+    useIsomorphicLayoutEffect(() => {
+      return () => {
+        if (context) unmountComponentAtNode(context)
+      }
+    }, [])
 
-    setRendererImpl(renderer)
-  }, [])
-
-  // Execute JSX in the reconciler as a layout-effect
-  useIsomorphicLayoutEffect(() => {
-    if (rendererImpl && containerRef.current) {
-      const state = render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
-        containerRef.current,
-        { ...props, size, events: events || createTouchEvents, gl: rendererImpl },
-      ).getState()
-
-      setBind(state.events.connected.getEventHandlers())
-    }
-  }, [size, children, rendererImpl])
-
-  useIsomorphicLayoutEffect(() => {
-    return () => {
-      if (containerRef.current) unmountComponentAtNode(containerRef.current)
-    }
-  }, [])
-
-  return (
-    <View
-      ref={containerRef}
-      onLayout={onLayout}
-      style={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        ...style,
-      }}
-      {...bind}>
-      {size.width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
-    </View>
-  )
-}
+    return (
+      <View
+        ref={forwardedRef}
+        onLayout={onLayout}
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          ...style,
+        }}
+        {...bind}>
+        {size.width > 0 && <GLView onContextCreate={setContext} style={StyleSheet.absoluteFill} />}
+      </View>
+    )
+  },
+)

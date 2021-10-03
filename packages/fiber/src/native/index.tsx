@@ -5,38 +5,76 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
 import { is, dispose } from '../core/utils'
-import { createStore, StoreProps, context, RootState, Size } from '../core/store'
+import { isRenderer, createStore, StoreProps, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createTouchEvents as events, getEventPriority } from './events'
 import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
-import { PixelRatio, View } from 'react-native'
+import { View, PixelRatio } from 'react-native'
+import { ExpoWebGLRenderingContext } from 'expo-gl'
 
-const roots = new Map<View, Root>()
+const roots = new Map<ExpoWebGLRenderingContext & WebGLRenderingContext, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
 export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer
+  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
   events?: (store: UseStore<RootState>) => EventManager<TView>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
-function createRoot<TView extends View>(target: TView) {
+const createRendererInstance = (
+  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
+  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
+): THREE.WebGLRenderer => {
+  // If a renderer is specified, return it
+  if (isRenderer(gl as THREE.WebGLRenderer)) return gl as THREE.WebGLRenderer
+
+  // Create canvas shim
+  const canvas = {
+    width: context.drawingBufferWidth,
+    height: context.drawingBufferHeight,
+    style: {},
+    addEventListener: (() => {}) as any,
+    removeEventListener: (() => {}) as any,
+    clientHeight: context.drawingBufferHeight,
+  } as HTMLCanvasElement
+
+  // Create renderer and pass our canvas and its context
+  const renderer = new THREE.WebGLRenderer({
+    powerPreference: 'high-performance',
+    antialias: true,
+    alpha: true,
+    ...(gl as any),
+    canvas,
+    context,
+  })
+
+  // Bind render to RN bridge
+  const renderFrame = renderer.render.bind(renderer)
+  renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+    renderFrame(scene, camera)
+    context.endFrameEXP()
+  }
+
+  return renderer
+}
+
+function createRoot(context: ExpoWebGLRenderingContext & WebGLRenderingContext) {
   return {
-    render: (element: React.ReactNode) => render(element, target),
-    unmount: () => unmountComponentAtNode(target),
+    render: (element: React.ReactNode) => render(element, context),
+    unmount: () => unmountComponentAtNode(context),
   }
 }
 
 function render<TView extends View>(
   element: React.ReactNode,
-  target: TView,
+  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
   { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
-  let root = roots.get(target)
+  let root = roots.get(context)
   let fiber = root?.fiber
   let store = root?.store
   let state = store?.getState()
@@ -56,7 +94,7 @@ function render<TView extends View>(
     // Changes to the color-space
     const linearChanged = props.linear !== lastProps.linear
     if (linearChanged) {
-      unmountComponentAtNode(target)
+      unmountComponentAtNode(context)
       fiber = undefined
     }
   }
@@ -64,12 +102,12 @@ function render<TView extends View>(
   if (!fiber) {
     // If no root has been found, make one
 
-    // Throw an error if a renderer isn't specified
-    if (!gl) throw 'An instance of THREE.WebGLRenderer must be specified via gl!'
+    // Create gl
+    const glRenderer = createRendererInstance(gl, context)
 
     // Create store
     store = createStore(applyProps, invalidate, advance, {
-      gl,
+      gl: glRenderer,
       dpr,
       size,
       ...props,
@@ -78,11 +116,11 @@ function render<TView extends View>(
     // Create renderer
     fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
     // Map it
-    roots.set(target, { fiber, store })
+    roots.set(context, { fiber, store })
     // Store event manager internally and connect it
     if (events) {
       state.set({ events: events(store) })
-      state.get().events.connect?.(target)
+      state.get().events.connect?.(context)
     }
   }
 
@@ -99,7 +137,7 @@ function render<TView extends View>(
   }
 }
 
-function Provider<TView extends View>({
+function Provider({
   store,
   element,
   onCreated,
@@ -118,8 +156,11 @@ function Provider<TView extends View>({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode<TView extends View>(target: TView, callback?: (target: TView) => void) {
-  const root = roots.get(target)
+function unmountComponentAtNode(
+  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
+  callback?: (context: ExpoWebGLRenderingContext & WebGLRenderingContext) => void,
+) {
+  const root = roots.get(context)
   const fiber = root?.fiber
   if (fiber) {
     const state = root?.store.getState()
@@ -132,8 +173,8 @@ function unmountComponentAtNode<TView extends View>(target: TView, callback?: (t
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
             dispose(state)
-            roots.delete(target)
-            if (callback) callback(target)
+            roots.delete(context)
+            if (callback) callback(context)
           } catch (e) {
             /* ... */
           }
