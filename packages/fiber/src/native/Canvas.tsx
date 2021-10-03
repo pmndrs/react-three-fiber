@@ -64,14 +64,14 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
     setSize({ width, height })
   }, [])
 
-  const onContextCreate = React.useCallback((gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
+  const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
     const canvas = {
-      width: gl.drawingBufferWidth,
-      height: gl.drawingBufferHeight,
+      width: context.drawingBufferWidth,
+      height: context.drawingBufferHeight,
       style: {},
       addEventListener: (() => {}) as any,
       removeEventListener: (() => {}) as any,
-      clientHeight: gl.drawingBufferHeight,
+      clientHeight: context.drawingBufferHeight,
     } as HTMLCanvasElement
 
     const renderer = new THREE.WebGLRenderer({
@@ -80,18 +80,14 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
       alpha: true,
       ...(glOptions as any),
       canvas,
-      context: gl,
+      context,
     })
-    renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight)
-
-    const pixelRatio = PixelRatio.get()
-    renderer.setPixelRatio(pixelRatio)
 
     const renderFrame = renderer.render.bind(renderer)
     renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
       renderFrame(scene, camera)
       // End frame through the RN Bridge
-      gl.endFrameEXP()
+      context.endFrameEXP()
     }
 
     setRendererImpl(renderer)
