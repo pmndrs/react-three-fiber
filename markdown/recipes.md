@@ -224,12 +224,14 @@ const Controls = () => {
 
 ## Enabling VR
 
-Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
+React-Three-Fiber automatically switches rendering modes when you enter a WebXR session.
+
+To request one, create a `VRButton` [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
 
 ```jsx
-import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
-import { Canvas } from 'react-three-fiber'
-;<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
+import { VRButton } from 'three/examples/jsm/webxr/VRButton'
+import { Canvas } from '@react-three/fiber'
+;<Canvas onCreated={({ gl }) => void document.body.appendChild(VRButton.createButton(gl))} />
 ```
 
 ## Reducing bundle-size

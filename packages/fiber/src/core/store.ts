@@ -72,7 +72,6 @@ export type RootState = {
   mouse: THREE.Vector2
   clock: THREE.Clock
 
-  vr: boolean
   linear: boolean
   flat: boolean
   frameloop: 'always' | 'demand' | 'never'
@@ -101,7 +100,6 @@ export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
-  vr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   flat?: boolean
@@ -137,7 +135,6 @@ const createStore = (
     shadows = false,
     linear = false,
     flat = false,
-    vr = false,
     orthographic = false,
     frameloop = 'always',
     dpr = 1,
@@ -217,6 +214,22 @@ const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
+    const handleXRFrame = (timestamp: number) => {
+      const state = get()
+      if (state.frameloop === 'never') return
+
+      advance(timestamp, true)
+    }
+
+    const handleSessionChange = () => {
+      gl.xr.enabled = gl.xr.isPresenting
+      gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+    }
+
+    // Update render mode on session change
+    gl.xr.addEventListener('sessionstart', handleSessionChange)
+    gl.xr.addEventListener('sessionend', handleSessionChange)
+
     return {
       gl,
 
@@ -234,7 +247,6 @@ const createStore = (
       clock,
       mouse: new THREE.Vector2(),
 
-      vr,
       frameloop,
       onPointerMissed,
 
