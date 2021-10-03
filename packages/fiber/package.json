@@ -56,7 +56,6 @@
     "react-dom": ">=18.0",
     "three": ">=0.132",
     "expo-gl": "^10.2.0",
-    "expo-three": "^5.7.0",
     "react-native": "^0.63.0"
   },
   "peerDependenciesMeta": {
@@ -64,9 +63,6 @@
       "optional": true
     },
     "expo-gl": {
-      "optional": true
-    },
-    "expo-three": {
       "optional": true
     },
     "react-native": {

@@ -1,4 +1,4 @@
-import { THREE, Renderer as NativeRenderer } from 'expo-three'
+import * as THREE from 'three'
 import * as React from 'react'
 import { LayoutChangeEvent, StyleSheet, View, ViewStyle, PixelRatio } from 'react-native'
 import { UseStore } from 'zustand'
@@ -65,15 +65,27 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
   }, [])
 
   const onContextCreate = React.useCallback((gl: ExpoWebGLRenderingContext & WebGLRenderingContext) => {
-    const pixelRatio = PixelRatio.get()
-    const renderer = new NativeRenderer({
+    const canvas = {
+      width: gl.drawingBufferWidth,
+      height: gl.drawingBufferHeight,
+      style: {},
+      addEventListener: (() => {}) as any,
+      removeEventListener: (() => {}) as any,
+      clientHeight: gl.drawingBufferHeight,
+    } as HTMLCanvasElement
+
+    const renderer = new THREE.WebGLRenderer({
       powerPreference: 'high-performance',
       antialias: true,
       alpha: true,
       ...(glOptions as any),
-      pixelRatio,
-      gl,
+      canvas,
+      context: gl,
     })
+    renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight)
+
+    const pixelRatio = PixelRatio.get()
+    renderer.setPixelRatio(pixelRatio)
 
     const renderFrame = renderer.render.bind(renderer)
     renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
