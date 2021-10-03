@@ -50,6 +50,7 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
   const containerRef = React.useRef<View | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
   const [rendererImpl, setRendererImpl] = React.useState<THREE.WebGLRenderer | undefined>(undefined)
+  const [bind, setBind] = React.useState()
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -87,12 +88,19 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (rendererImpl && containerRef.current) {
-      render(
+      const store = render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         containerRef.current,
-        { ...props, size, gl: rendererImpl },
+        { ...props, size, events: events || createTouchEvents, gl: rendererImpl },
+      )
+      store.subscribe(
+        () => {
+          const { events } = store.getState()
+          setBind((events as any).bind)
+        },
+        (state) => (state.events as any).bind,
       )
     }
   }, [size, children, rendererImpl])
@@ -113,7 +121,8 @@ export function Canvas({ children, fallback, style, events, gl: glOptions, ...pr
         height: '100%',
         overflow: 'hidden',
         ...style,
-      }}>
+      }}
+      {...bind}>
       {size.width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
     </View>
   )

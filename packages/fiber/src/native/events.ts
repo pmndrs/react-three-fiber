@@ -5,7 +5,7 @@ import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
 import { GestureResponderEvent, View } from 'react-native'
 // @ts-ignore
-// import Pressability from 'react-native/Libraries/Pressability/Pressability'
+import Pressability from 'react-native/Libraries/Pressability/Pressability'
 
 const EVENTS = {
   PRESS: 'onPress',
@@ -52,6 +52,8 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
   const { handlePointer } = createEvents(store)
 
   const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {
+    event.persist()
+
     // Apply offset
     ;(event as any).nativeEvent.offsetX = event.nativeEvent.pageX
     ;(event as any).nativeEvent.offsetY = event.nativeEvent.pageY
@@ -73,25 +75,17 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
     connect: (target: View) => {
       const { set, events } = store.getState()
       events.disconnect?.()
-      // const manager = new Pressability(events)
-      // manager.getEventHandlers()
-      set((state) => ({ events: { ...state.events, connected: target } }))
-      Object.entries(events?.handlers ?? []).forEach(([name, event]) => {
-        const eventName = EVENTS[name as keyof typeof EVENTS]
-        target.addEventListener(eventName, event)
-      })
+
+      const manager = new Pressability(events?.handlers)
+      const bind = manager.getEventHandlers()
+
+      set((state) => ({ events: { ...state.events, bind, connected: manager } }))
     },
     disconnect: () => {
       const { set, events } = store.getState()
       if (events.connected) {
-        // events.connected.reset()
-        Object.entries(events.handlers ?? []).forEach(([name, event]) => {
-          if (events && events.connected instanceof HTMLElement) {
-            const [eventName] = EVENTS[name as keyof typeof EVENTS]
-            events.connected.removeEventListener(eventName, event)
-          }
-        })
-        set((state) => ({ events: { ...state.events, connected: false } }))
+        events.connected.reset()
+        set((state) => ({ events: { ...state.events, bind: null, connected: false } }))
       }
     },
   }
