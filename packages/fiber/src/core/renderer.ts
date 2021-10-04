@@ -104,6 +104,8 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   return object
 }
 
+const eventHandlerRegexp = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
+
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   // This function prepares a set of changes to be applied to the instance
   function diffProps(
@@ -130,7 +132,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (checkShallow(value, previous[key])) return
 
       // Collect handlers and bail out
-      if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return changes.push([key, value, true, []])
+      if (eventHandlerRegexp.test(key)) return changes.push([key, value, true, []])
 
       // Split dashed props
       let entries: string[] = []
