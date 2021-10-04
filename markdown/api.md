@@ -50,7 +50,7 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   linear = false                // True by default for automatic sRGB encoding and gamma correction
   flat = false                  // If true uses THREE.NoToneMapping, otherwise THREE.ACESFilmicToneMapping
   vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
-  mode = "blocking"             // React mode: legacy | blocking | concurrent
+  mode = "legacy"               // React mode: legacy | concurrent
   resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
   dpr = undefined               // Pixel-ratio, use window.devicePixelRatio, or automatic: [min, max]
