@@ -60,6 +60,7 @@ export type InternalState = {
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
+  xr: { connect: () => void; disconnect: () => void }
   subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
 }
 
@@ -214,6 +215,38 @@ const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
+    // Handle frame behavior in WebXR
+    const handleXRFrame = (timestamp: number) => {
+      const state = get()
+      if (state.frameloop === 'never') return
+
+      advance(timestamp, true)
+    }
+
+    // Toggle render switching on session
+    const handleSessionChange = () => {
+      gl.xr.enabled = gl.xr.isPresenting
+      gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+
+      // If exiting session, request frame
+      if (!gl.xr.isPresenting) invalidate(get())
+    }
+
+    // WebXR session manager
+    const xr = {
+      connect() {
+        gl.xr.addEventListener('sessionstart', handleSessionChange)
+        gl.xr.addEventListener('sessionend', handleSessionChange)
+      },
+      disconnect() {
+        gl.xr.removeEventListener('sessionstart', handleSessionChange)
+        gl.xr.removeEventListener('sessionend', handleSessionChange)
+      },
+    }
+
+    // Subscribe to WebXR session events
+    if (gl.xr) xr.connect()
+
     return {
       gl,
 
@@ -286,6 +319,7 @@ const createStore = (
         initialHits: [],
         capturedMap: new Map(),
 
+        xr,
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           set(({ internal }) => ({
             internal: {
@@ -315,26 +349,6 @@ const createStore = (
       },
     }
   })
-
-  // Handle render switching when a WebXR session is detected
-  rootState.subscribe(
-    () => {
-      const handleXRFrame = (timestamp: number) => {
-        const state = rootState.getState()
-        if (state.frameloop === 'never') return
-
-        advance(timestamp, true)
-      }
-
-      const { gl } = rootState.getState()
-      console.log(gl.xr.isPresenting)
-
-      // Update render mode on session change
-      if (gl.xr) gl.xr.enabled = gl.xr.isPresenting
-      gl.setAnimationLoop(gl.xr?.isPresenting ? handleXRFrame : null)
-    },
-    (state) => state.gl.xr?.isPresenting,
-  )
 
   // Resize camera and renderer on changes to size and pixelratio
   rootState.subscribe(

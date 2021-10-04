@@ -403,12 +403,14 @@ describe('web core', () => {
     await act(async () => {
       state = render(<group />, canvas).getState()
       state.gl.xr.isPresenting = true
+      state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
 
     expect(state.gl.xr.enabled).toEqual(true)
 
     await act(async () => {
       state.gl.xr.isPresenting = false
+      state.gl.xr.dispatchEvent({ type: 'sessionend' })
     })
 
     expect(state.gl.xr.enabled).toEqual(false)

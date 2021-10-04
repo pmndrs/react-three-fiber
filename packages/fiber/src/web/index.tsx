@@ -148,6 +148,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
             state.events.disconnect?.()
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
+            if (state.gl?.xr) state.internal.xr.disconnect()
             dispose(state)
             roots.delete(canvas)
             if (callback) callback(canvas)
