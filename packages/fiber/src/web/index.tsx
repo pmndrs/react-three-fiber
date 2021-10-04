@@ -57,19 +57,17 @@ function render<TCanvas extends Element>(
   let state = store?.getState()
 
   if (fiber && state) {
-    const lastProps = state.internal.lastProps
-
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
     if (props.dpr !== undefined && !is.equ(state.viewport.dpr, calculateDpr(props.dpr))) state.setDpr(props.dpr)
     // Check size
-    if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    if (!is.equ(state.size, size)) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
     // Changes to the color-space
-    const linearChanged = props.linear !== lastProps.linear
+    const linearChanged = props.linear !== state.internal.lastProps.linear
     if (linearChanged) {
       unmountComponentAtNode(canvas)
       fiber = undefined
