@@ -55,7 +55,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
       if (
         state.internal.active &&
         (state.frameloop === 'always' || state.internal.frames > 0) &&
-        !state.gl.xr.isPresenting
+        !state.gl.xr?.isPresenting
       )
         repeat += render(timestamp, state)
     })
@@ -73,7 +73,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function invalidate(state?: RootState): void {
     if (!state) return roots.forEach((root) => invalidate(root.store.getState()))
-    if (state.gl.xr.isPresenting || !state.internal.active || state.frameloop === 'never') return
+    if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + 1)
     // If the render-loop isn't active, start it
