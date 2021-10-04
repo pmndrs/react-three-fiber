@@ -182,7 +182,7 @@ const createStore = (
       camera.position.z = 5
       if (cameraOptions) applyProps(camera as any, cameraOptions as any)
       // Always look at center by default
-      if (cameraOptions?.rotation) camera.lookAt(0, 0, 0)
+      if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
     }
 
     function setDpr(dpr: Dpr) {
