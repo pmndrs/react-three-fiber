@@ -1,6 +1,7 @@
 node_modules/
 coverage/
 dist/
+packages/*/native/
 build/
 types/
 # commit types in src
