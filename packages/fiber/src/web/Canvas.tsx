@@ -66,14 +66,6 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
         canvasRef.current,
         { ...props, size: { width, height }, events: events || createPointerEvents },
       )
-
-      render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
-        canvasRef.current,
-        { ...props, size: { width, height }, events: events || createPointerEvents },
-      )
     }
   }, [width, height, children])
 
