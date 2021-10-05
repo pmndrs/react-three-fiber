@@ -61,7 +61,7 @@ describe('events ', () => {
     fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
 
     expect(handleClick).not.toHaveBeenCalled()
-    expect(handleMissed).toHaveBeenCalledWith(evt)
+    expect(handleMissed).toHaveBeenCalledWith(expect.objectContaining({ nativeEvent: evt }))
   })
 
   it('should not fire onPointerMissed when same element is clicked', async () => {
