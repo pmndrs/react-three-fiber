@@ -16,8 +16,10 @@ const modes = ['legacy', 'blocking', 'concurrent'] as const
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots)
 
+type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
+  gl?: THREE.WebGLRenderer | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   mode?: typeof modes[number]
@@ -27,16 +29,20 @@ export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'even
 const createRendererInstance = <TElement extends Element>(
   gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
   canvas: TElement,
-): THREE.WebGLRenderer =>
-  isRenderer(gl as THREE.WebGLRenderer)
-    ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({
-        powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
-        antialias: true,
-        alpha: true,
-        ...gl,
-      })
+): THREE.WebGLRenderer => {
+  if (isRenderer(gl as THREE.WebGLRenderer)) return gl as THREE.WebGLRenderer
+
+  const renderer = new THREE.WebGLRenderer({
+    powerPreference: 'high-performance',
+    canvas: canvas as unknown as HTMLCanvasElement,
+    antialias: true,
+    alpha: true,
+    ...gl,
+  })
+  if (gl) applyProps(renderer as any, gl as any)
+
+  return renderer
+}
 
 function render<TCanvas extends Element>(
   element: React.ReactNode,

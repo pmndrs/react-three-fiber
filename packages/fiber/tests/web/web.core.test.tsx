@@ -421,4 +421,15 @@ describe('web core', () => {
       })
     }).not.toThrow()
   })
+
+  it('should set renderer props via gl prop', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: { physicallyCorrectLights: true },
+      }).getState().gl
+    })
+
+    expect(gl.physicallyCorrectLights).toBe(true)
+  })
 })
