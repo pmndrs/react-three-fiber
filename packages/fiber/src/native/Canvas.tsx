@@ -9,7 +9,7 @@ import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
 export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, ViewProps {
-  gl?: Partial<THREE.WebGLRendererParameters>
+  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
