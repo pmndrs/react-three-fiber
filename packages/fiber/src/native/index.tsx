@@ -14,7 +14,9 @@ import { EventManager } from '../core/events'
 import { View, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext } from 'expo-gl'
 
-const roots = new Map<ExpoWebGLRenderingContext & WebGLRenderingContext, Root>()
+export type Context = ExpoWebGLRenderingContext | WebGLRenderingContext
+
+const roots = new Map<Context, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
@@ -27,7 +29,7 @@ export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' |
 
 const createRendererInstance = (
   gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
-  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
+  context: Context,
 ): THREE.WebGLRenderer => {
   // If a renderer is specified, return it
   if (isRenderer(gl as THREE.WebGLRenderer)) return gl as THREE.WebGLRenderer
@@ -53,16 +55,18 @@ const createRendererInstance = (
   })
 
   // Bind render to RN bridge
-  const renderFrame = renderer.render.bind(renderer)
-  renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-    renderFrame(scene, camera)
-    context.endFrameEXP()
+  if ((context as ExpoWebGLRenderingContext).endFrameEXP) {
+    const renderFrame = renderer.render.bind(renderer)
+    renderer.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+      renderFrame(scene, camera)
+      ;(context as ExpoWebGLRenderingContext).endFrameEXP()
+    }
   }
 
   return renderer
 }
 
-function createRoot(context: ExpoWebGLRenderingContext & WebGLRenderingContext) {
+function createRoot(context: Context) {
   return {
     render: (element: React.ReactNode) => render(element, context),
     unmount: () => unmountComponentAtNode(context),
@@ -71,7 +75,7 @@ function createRoot(context: ExpoWebGLRenderingContext & WebGLRenderingContext) 
 
 function render<TView extends View>(
   element: React.ReactNode,
-  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
+  context: Context,
   { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
   let root = roots.get(context)
@@ -156,10 +160,7 @@ function Provider({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode(
-  context: ExpoWebGLRenderingContext & WebGLRenderingContext,
-  callback?: (context: ExpoWebGLRenderingContext & WebGLRenderingContext) => void,
-) {
+function unmountComponentAtNode(context: Context, callback?: (context: Context) => void) {
   const root = roots.get(context)
   const fiber = root?.fiber
   if (fiber) {

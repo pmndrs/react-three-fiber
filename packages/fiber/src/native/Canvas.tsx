@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
-import { GLView, ExpoWebGLRenderingContext } from 'expo-gl'
+import { GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
-import { render, unmountComponentAtNode, RenderProps } from './index'
+import { Context, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -47,7 +47,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = React.forwardRef<View, Props>(({ children, fallback, style, events, ...props }, forwardedRef) => {
-  const [context, setContext] = React.useState<(ExpoWebGLRenderingContext & WebGLRenderingContext) | null>(null)
+  const [context, setContext] = React.useState<Context | null>(null)
   const [size, setSize] = React.useState({ width: 0, height: 0 })
   const [bind, setBind] = React.useState()
   const [block, setBlock] = React.useState<SetBlock>(false)
