@@ -14,4 +14,4 @@ export type {
 } from './core/store'
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { Props } from './native/Canvas'
-export * from './native'
+export * from './native/index'
