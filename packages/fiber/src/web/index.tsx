@@ -27,7 +27,7 @@ export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'even
 }
 
 const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
+  gl: THREE.WebGLRenderer | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters> | undefined,
   canvas: TElement,
 ): THREE.WebGLRenderer => {
   if (isRenderer(gl as THREE.WebGLRenderer)) return gl as THREE.WebGLRenderer
