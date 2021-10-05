@@ -240,6 +240,8 @@ Threejs is quite heavy and tree-shaking doesn't yet yield the results you would 
 
 You can use `@react-three/fiber` to build universal (native and web) apps. [expo-gl](https://docs.expo.io/versions/latest/sdk/gl-view/) is used to create GL bindings, but you can use your own with [v6's `render` function](https://docs.pmnd.rs/react-three-fiber/API/render-function). Instead of a canvas, you'd pass a GL context.
 
+> 💡 **Bootstrap**: `npx create-react-native-app -t with-react-three-fiber`
+
 Be sure to use a physical iOS or Android device for testing because the simulator can have issues running graphics heavy apps.
 
 ### Setup with Expo
