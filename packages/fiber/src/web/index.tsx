@@ -32,7 +32,7 @@ const createRendererInstance = <TElement extends Element>(
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({
         powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
+        canvas: (canvas as unknown) as HTMLCanvasElement,
         antialias: true,
         alpha: true,
         ...gl,
