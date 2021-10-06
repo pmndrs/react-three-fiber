@@ -123,6 +123,10 @@ export type StoreProps = {
 
 export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
 
+export function calculateDpr(dpr: Dpr) {
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+}
+
 const context = React.createContext<UseStore<RootState>>(null!)
 
 const createStore = (
@@ -185,10 +189,7 @@ const createStore = (
       camera.lookAt(0, 0, 0)
     }
 
-    function setDpr(dpr: Dpr) {
-      return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-    }
-    const initialDpr = setDpr(dpr)
+    const initialDpr = calculateDpr(dpr)
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -274,7 +275,7 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
 
       events: { connected: false },
       internal: {

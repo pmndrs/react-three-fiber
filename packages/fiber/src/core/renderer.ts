@@ -10,7 +10,9 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
 export type LocalState = {
   root: UseStore<RootState>
+  // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
+  parent: Instance | null
   primitive?: boolean
   handlers: { count: number } & Partial<EventHandlers>
   memoizedProps: {
@@ -28,9 +30,8 @@ export type AttachFnsType = [attach: string | AttachFnType, detach: string | Att
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
-export type BaseInstance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
+export type BaseInstance = Omit<THREE.Object3D, 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
   __r3f: LocalState
-  parent: Instance | null
   children: Instance[]
   attach?: string
   attachFns?: AttachFnsType
@@ -73,7 +74,7 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
   // outside react, in which case we must take the root of the child that is about to be attached to it.
   root: isStore(container) ? container : container.__r3f?.root ?? child.__r3f.root,
   // The container is the eventual target into which objects are mounted, it has to be a THREE.Object3D
-  container: isStore(container) ? (container.getState().scene as unknown as Instance) : container,
+  container: isStore(container) ? ((container.getState().scene as unknown) as Instance) : container,
 })
 
 const DEFAULT = '__default'
@@ -91,13 +92,14 @@ function checkShallow(a: any, b: any) {
 
 // Each object in the scene carries a small LocalState descriptor
 function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
-  const instance = object as unknown as Instance
+  const instance = (object as unknown) as Instance
   if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
-      root: null as unknown as UseStore<RootState>,
+      root: (null as unknown) as UseStore<RootState>,
       memoizedProps: {},
       handlers: { count: 0 },
       objects: [],
+      parent: null,
       ...state,
     }
   }
@@ -241,14 +243,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
       // Pre-emptively remove the instance from the interaction manager
-      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+      const index = rootState.internal.interaction.indexOf((instance as unknown) as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
       // Add the instance to the interaction manager only when it has handlers
-      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+      if (localState.handlers.count) rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
     }
 
-    // Call the update lifecycle when it is being updated, but only when it is part of the scene
-    if (changes.length && instance.parent) updateInstance(instance)
+    // Call the update lifecycle when it is being updated
+    if (changes.length && instance.__r3f?.parent) updateInstance(instance)
   }
 
   function invalidateInstance(instance: Instance) {
@@ -338,7 +340,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else if (is.fun(attachFn)) {
           attachFn(child, parentInstance)
         }
-      } else if (child.isObject3D) {
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
         addedAsChild = true
@@ -348,8 +350,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
         // that is, anything that's a child in React but not a child in the scenegraph.
         parentInstance.__r3f.objects.push(child)
-        child.parent = parentInstance
       }
+      if (!child.__r3f) {
+        prepare(child, {})
+      }
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -365,8 +370,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
         // attach and attachObject don't have an order anyway, so just append
         return appendChild(parentInstance, child)
-      } else if (child.isObject3D) {
-        child.parent = parentInstance
+      } else if (child.isObject3D && parentInstance.isObject3D) {
+        child.parent = (parentInstance as unknown) as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
@@ -376,8 +381,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
       if (!added) {
         parentInstance.__r3f.objects.push(child)
-        child.parent = parentInstance
       }
+      if (!child.__r3f) {
+        prepare(child, {})
+      }
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -389,15 +397,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
+      if (child.__r3f) {
+        child.__r3f.parent = null
+      }
+
       if (parentInstance.__r3f.objects) {
-        const oldLength = parentInstance.__r3f.objects.length
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-        const newLength = parentInstance.__r3f.objects.length
-        // was it in the list?
-        if (newLength < oldLength) {
-          // we had also set this, so we must clear it now
-          child.parent = null
-        }
       }
 
       // Remove attachment
@@ -418,7 +423,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
+          removeInteractivity(child.__r3f.root, (child as unknown) as THREE.Object3D)
         }
       }
 
@@ -466,7 +471,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   function switchInstance(instance: Instance, type: string, newProps: InstanceProps, fiber: Reconciler.Fiber) {
-    const parent = instance.parent
+    const parent = instance.__r3f?.parent
     if (!parent) return
 
     const newInstance = createInstance(type, newProps, instance.__r3f.root)
@@ -493,7 +498,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (fiber !== null) {
         fiber.stateNode = newInstance
         if (fiber.ref) {
-          if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance)
+          if (typeof fiber.ref === 'function') ((fiber as unknown) as any).ref(newInstance)
           else (fiber.ref as Reconciler.RefObject).current = newInstance
         }
       }

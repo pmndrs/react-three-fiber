@@ -4,7 +4,7 @@ import { RootTag } from 'react-reconciler'
 import { UseStore } from 'zustand'
 
 import { is } from '../core/is'
-import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
+import { createStore, StoreProps, isRenderer, context, RootState, Size, calculateDpr } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events } from './events'
@@ -32,7 +32,7 @@ const createRendererInstance = <TElement extends Element>(
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({
         powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
+        canvas: (canvas as unknown) as HTMLCanvasElement,
         antialias: true,
         alpha: true,
         ...gl,
@@ -57,19 +57,17 @@ function render<TCanvas extends Element>(
   let state = store?.getState()
 
   if (fiber && state) {
-    const lastProps = state.internal.lastProps
-
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
+    if (props.dpr !== undefined && !is.equ(state.viewport.dpr, calculateDpr(props.dpr))) state.setDpr(props.dpr)
     // Check size
-    if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    if (!is.equ(state.size, size)) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
     // Changes to the color-space
-    const linearChanged = props.linear !== lastProps.linear
+    const linearChanged = props.linear !== state.internal.lastProps.linear
     if (linearChanged) {
       unmountComponentAtNode(canvas)
       fiber = undefined
