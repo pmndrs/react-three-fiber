@@ -25,18 +25,29 @@ export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'even
 }
 
 const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
+  gl:
+    | THREE.WebGLRenderer
+    | Partial<THREE.WebGLRendererParameters>
+    | ((canvas: TElement) => THREE.WebGLRenderer)
+    | undefined,
   canvas: TElement,
-): THREE.WebGLRenderer =>
-  isRenderer(gl as THREE.WebGLRenderer)
-    ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({
-        powerPreference: 'high-performance',
-        canvas: (canvas as unknown) as HTMLCanvasElement,
-        antialias: true,
-        alpha: true,
-        ...gl,
-      })
+): THREE.WebGLRenderer => {
+  if (isRenderer(gl as THREE.WebGLRenderer)) {
+    return gl as THREE.WebGLRenderer
+  }
+
+  if (typeof gl === 'function') {
+    return gl(canvas)
+  }
+
+  return new THREE.WebGLRenderer({
+    powerPreference: 'high-performance',
+    canvas: canvas as unknown as HTMLCanvasElement,
+    antialias: true,
+    alpha: true,
+    ...gl,
+  })
+}
 
 function render<TCanvas extends Element>(
   element: React.ReactNode,
