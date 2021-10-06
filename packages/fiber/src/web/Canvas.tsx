@@ -47,7 +47,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   { children, fallback, tabIndex, resize, id, style, className, events, ...props },
   forwardedRef,
 ) {
-  const [containerRef, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
@@ -58,16 +58,16 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
 
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
-    if (size.width > 0 && size.height > 0) {
+    if (width > 0 && height > 0) {
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         canvasRef.current,
-        { ...props, size, events: events || createPointerEvents },
+        { ...props, size: { width, height }, events: events || createPointerEvents },
       )
     }
-  }, [size, children])
+  }, [width, height, children])
 
   useIsomorphicLayoutEffect(() => {
     const container = canvasRef.current
