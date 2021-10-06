@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.10
+
+### Patch Changes
+
+- e019dd4: fixes
+
 ## 7.0.9
 
 ### Patch Changes
