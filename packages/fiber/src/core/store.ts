@@ -5,6 +5,7 @@ import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, ThreeEvent } from './events'
+import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -185,10 +186,7 @@ const createStore = (
       camera.lookAt(0, 0, 0)
     }
 
-    function setDpr(dpr: Dpr) {
-      return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-    }
-    const initialDpr = setDpr(dpr)
+    const initialDpr = calculateDpr(dpr)
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -274,7 +272,7 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
 
       events: { connected: false },
       internal: {

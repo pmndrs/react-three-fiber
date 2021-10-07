@@ -1,5 +1,21 @@
 # @react-three/test-renderer
 
+## 7.0.10
+
+### Patch Changes
+
+- e019dd4: fixes
+- Updated dependencies [e019dd4]
+  - @react-three/fiber@7.0.10
+
+## 7.0.8
+
+### Patch Changes
+
+- cd266e4: Fix diffProps dashed keys
+- Updated dependencies [cd266e4]
+  - @react-three/fiber@7.0.9
+
 ## 7.0.7
 
 ### Patch Changes

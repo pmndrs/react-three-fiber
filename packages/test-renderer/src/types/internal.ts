@@ -7,9 +7,10 @@ import type { RootState } from '@react-three/fiber/src/core/store'
 export type MockUseStoreState = UseStore<RootState>
 
 export interface MockInstance extends Omit<BaseInstance, '__r3f'> {
-  __r3f: Omit<LocalState, 'root' | 'objects'> & {
+  __r3f: Omit<LocalState, 'root' | 'objects' | 'parent'> & {
     root: MockUseStoreState
     objects: MockSceneChild[]
+    parent: MockInstance
   }
 }
 

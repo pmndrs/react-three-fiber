@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { EventHandlers } from './events'
 import { Instance, InstanceProps, LocalState } from './renderer'
-import { RootState } from './store'
+import { Dpr, RootState } from './store'
 
 export const DEFAULT = '__default'
 
@@ -19,6 +19,10 @@ export type ObjectMap = {
   materials: { [name: string]: THREE.Material }
 }
 
+export function calculateDpr(dpr: Dpr) {
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+}
+
 // A collection of compare functions
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',
@@ -31,7 +35,8 @@ export const is = {
     // Wrong type or one of the two undefined, doesn't match
     if (typeof a !== typeof b || !!a !== !!b) return false
     // Atomic, just compare a against b
-    if (is.str(a) || is.num(a) || is.obj(a)) return a === b
+    if (is.str(a) || is.num(a)) return a === b
+    if (is.obj(a) && a === b) return true
     // Array, shallow compare first to see if it's a match
     if (is.arr(a) && a == b) return true
     // Last resort, go through keys
