@@ -5,6 +5,7 @@ import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, ThreeEvent } from './events'
+import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -122,10 +123,6 @@ export type StoreProps = {
 }
 
 export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
-
-export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-}
 
 const context = React.createContext<UseStore<RootState>>(null!)
 

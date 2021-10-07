@@ -63,7 +63,7 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
   // outside react, in which case we must take the root of the child that is about to be attached to it.
   root: isStore(container) ? container : container.__r3f?.root ?? child.__r3f.root,
   // The container is the eventual target into which objects are mounted, it has to be a THREE.Object3D
-  container: isStore(container) ? ((container.getState().scene as unknown) as Instance) : container,
+  container: isStore(container) ? (container.getState().scene as unknown as Instance) : container,
 })
 
 let catalogue: Catalogue = {}
@@ -179,7 +179,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         // attach and attachObject don't have an order anyway, so just append
         return appendChild(parentInstance, child)
       } else if (child.isObject3D && parentInstance.isObject3D) {
-        child.parent = (parentInstance as unknown) as THREE.Object3D
+        child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
@@ -231,7 +231,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, (child as unknown) as THREE.Object3D)
+          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
         }
       }
 
@@ -306,7 +306,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (fiber !== null) {
         fiber.stateNode = newInstance
         if (fiber.ref) {
-          if (typeof fiber.ref === 'function') ((fiber as unknown) as any).ref(newInstance)
+          if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance)
           else (fiber.ref as Reconciler.RefObject).current = newInstance
         }
       }

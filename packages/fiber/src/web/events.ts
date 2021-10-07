@@ -2,8 +2,7 @@ import { UseStore } from 'zustand'
 // @ts-ignore
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { RootState } from '../core/store'
-import { EventManager, Events } from '../core/events'
-import { createEvents } from '../core/events'
+import { EventManager, Events, createEvents } from '../core/events'
 
 const CLICK = 'click'
 const CONTEXTMENU = 'contextmenu'
@@ -59,10 +58,7 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
 
   return {
     connected: false,
-    handlers: (Object.keys(names).reduce(
-      (acc, key) => ({ ...acc, [key]: handlePointer(key) }),
-      {},
-    ) as unknown) as Events,
+    handlers: Object.keys(names).reduce((acc, key) => ({ ...acc, [key]: handlePointer(key) }), {}) as unknown as Events,
     connect: (target: HTMLElement) => {
       const { set, events } = store.getState()
       events.disconnect?.()
