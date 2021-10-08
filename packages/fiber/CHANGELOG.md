@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.11
+
+### Patch Changes
+
+- 62b0a3a: fix: event order of missed pointers
+
 ## 7.0.10
 
 ### Patch Changes
