@@ -156,12 +156,16 @@ export function createEvents(store: UseStore<RootState>) {
   }
 
   /**  Handles intersections by forwarding them to handlers */
-  function handleIntersects(intersections: Intersection[], event: DomEvent, callback: (event: DomEvent) => void) {
+  function handleIntersects(
+    intersections: Intersection[],
+    event: DomEvent,
+    delta: number,
+    callback: (event: DomEvent) => void,
+  ) {
     const { raycaster, mouse, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
-      const delta = event.type === 'click' ? calculateDistance(event) : 0
       const releasePointerCapture = (id: number) => (event.target as Element).releasePointerCapture(id)
 
       const localState = { stopped: false }
@@ -299,22 +303,30 @@ export function createEvents(store: UseStore<RootState>) {
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
+      const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
       const hits = patchIntersects(intersect(filter), event)
+      const delta = isClickEvent ? calculateDistance(event) : 0
 
-      // Take care of unhover
-      if (isPointerMove) cancelPointer(hits)
+      // Save initial coordinates on pointer-down
+      if (name === 'onPointerDown') {
+        internal.initialClick = [event.offsetX, event.offsetY]
+        internal.initialHits = hits.map((hit) => hit.eventObject)
+      }
 
       // If a click yields no results, pass it back to the user as a miss
-      // This has to come first because event order affects side-effect cleanup
-      if ((name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick') && !hits.length) {
-        if (calculateDistance(event) <= 2) {
+      // Missed events have to come first in order to establish user-land side-effect clean up
+      if (isClickEvent && !hits.length) {
+        if (delta <= 2) {
           pointerMissed(event, internal.interaction)
           if (onPointerMissed) onPointerMissed(event as ThreeEvent<PointerEvent>)
         }
       }
 
-      handleIntersects(hits, event, (data: DomEvent) => {
+      // Take care of unhover
+      if (isPointerMove) cancelPointer(hits)
+
+      handleIntersects(hits, event, delta, (data: DomEvent) => {
         const eventObject = data.eventObject
         const handlers = (eventObject as unknown as Instance).__r3f.handlers
         // Check presence of handlers
@@ -348,20 +360,15 @@ export function createEvents(store: UseStore<RootState>) {
               (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
               internal.initialHits.includes(eventObject)
             ) {
-              // Missed pointers have to come first ...
+              // Missed events have to come first
               pointerMissed(
                 event,
                 internal.interaction.filter((object) => !internal.initialHits.includes(object)),
               )
-              // ... and then the hit object
+              // Now call the handler
               handler(data as ThreeEvent<PointerEvent>)
             }
           }
-        }
-        // Save initial coordinates on pointer-down
-        if (name === 'onPointerDown') {
-          internal.initialClick = [event.offsetX, event.offsetY]
-          internal.initialHits = hits.map((hit) => hit.eventObject)
         }
       })
     }
