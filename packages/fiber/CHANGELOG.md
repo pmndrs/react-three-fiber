@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.12
+
+### Patch Changes
+
+- 0df6073: fix: missed events
+
 ## 7.0.11
 
 ### Patch Changes

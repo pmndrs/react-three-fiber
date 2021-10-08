@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.12
+
+### Patch Changes
+
+- 0df6073: fix: missed events
+- Updated dependencies [0df6073]
+  - @react-three/fiber@7.0.12
+
 ## 7.0.11
 
 ### Patch Changes
