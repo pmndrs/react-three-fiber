@@ -268,7 +268,7 @@ export function createEvents(store: UseStore<RootState>) {
         const eventObject = hoveredObj.eventObject
         const handlers = (eventObject as unknown as Instance).__r3f?.handlers
         internal.hovered.delete(makeId(hoveredObj))
-        if (handlers.count) {
+        if (handlers?.count) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
@@ -331,7 +331,7 @@ export function createEvents(store: UseStore<RootState>) {
         const eventObject = data.eventObject
         const handlers = (eventObject as unknown as Instance).__r3f?.handlers
         // Check presence of handlers
-        if (!handlers.count) return
+        if (!handlers?.count) return
 
         if (isPointerMove) {
           // Move event ...
