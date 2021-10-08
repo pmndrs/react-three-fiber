@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
-import { GLView } from 'expo-gl'
+import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { Context, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
@@ -14,6 +14,8 @@ export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>
   fallback?: React.ReactNode
   style?: ViewStyle
   events?: (store: UseStore<RootState>) => EventManager<any>
+  nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
+  onContextCreate?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
 }
 
 type SetBlock = false | Promise<null> | null
@@ -46,58 +48,63 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export const Canvas = React.forwardRef<View, Props>(({ children, fallback, style, events, ...props }, forwardedRef) => {
-  const [context, setContext] = React.useState<Context | null>(null)
-  const [size, setSize] = React.useState({ width: 0, height: 0 })
-  const [bind, setBind] = React.useState()
-  const [block, setBlock] = React.useState<SetBlock>(false)
-  const [error, setError] = React.useState<any>(false)
+export const Canvas = React.forwardRef<View, Props>(
+  ({ children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, ...props }, forwardedRef) => {
+    const [context, setContext] = React.useState<Context | null>(null)
+    const [size, setSize] = React.useState({ width: 0, height: 0 })
+    const [bind, setBind] = React.useState()
+    const [block, setBlock] = React.useState<SetBlock>(false)
+    const [error, setError] = React.useState<any>(false)
 
-  // Suspend this component if block is a promise (2nd run)
-  if (block) throw block
-  // Throw exception outwards if anything within canvas throws
-  if (error) throw error
+    // Suspend this component if block is a promise (2nd run)
+    if (block) throw block
+    // Throw exception outwards if anything within canvas throws
+    if (error) throw error
 
-  const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-    const { width, height } = e.nativeEvent.layout
-    setSize({ width, height })
-  }, [])
+    const onLayout = React.useCallback((e: LayoutChangeEvent) => {
+      const { width, height } = e.nativeEvent.layout
+      setSize({ width, height })
+    }, [])
 
-  // Execute JSX in the reconciler as a layout-effect
-  useIsomorphicLayoutEffect(() => {
-    if (context) {
-      const store = render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
-        context,
-        { ...props, size, events: events || createTouchEvents },
-      )
+    // Execute JSX in the reconciler as a layout-effect
+    useIsomorphicLayoutEffect(() => {
+      if (context) {
+        const store = render(
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>,
+          context,
+          { ...props, size, events: events || createTouchEvents },
+        )
 
-      const state = store.getState()
-      setBind(state.events.connected.getEventHandlers())
-    }
-  }, [size, children, context])
+        const state = store.getState()
+        setBind(state.events.connected.getEventHandlers())
+      }
+    }, [size, children, context])
 
-  useIsomorphicLayoutEffect(() => {
-    return () => {
-      if (context) unmountComponentAtNode(context)
-    }
-  }, [])
+    useIsomorphicLayoutEffect(() => {
+      return () => {
+        if (context) unmountComponentAtNode(context)
+      }
+    }, [])
 
-  return (
-    <View
-      ref={forwardedRef}
-      onLayout={onLayout}
-      style={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        ...style,
-      }}
-      {...bind}>
-      {size.width > 0 && <GLView onContextCreate={setContext} style={StyleSheet.absoluteFill} />}
-    </View>
-  )
-})
+    return (
+      <View ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+        {size.width > 0 && (
+          <GLView
+            nativeRef_EXPERIMENTAL={(ref: any) => {
+              if (nativeRef_EXPERIMENTAL && !nativeRef_EXPERIMENTAL.current) {
+                nativeRef_EXPERIMENTAL.current = ref
+              }
+            }}
+            onContextCreate={async (gl) => {
+              await onContextCreate?.(gl)
+              setContext(gl)
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+      </View>
+    )
+  },
+)
