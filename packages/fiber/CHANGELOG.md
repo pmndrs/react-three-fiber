@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.14
+
+### Patch Changes
+
+- 05af996: fix: revert the is function
+
 ## 7.0.13
 
 ### Patch Changes
