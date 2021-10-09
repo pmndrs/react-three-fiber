@@ -76,6 +76,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       memoizedProps: {},
       handlers: { count: 0 },
       objects: [],
+      parent: null,
       ...state,
     }
   }
