@@ -104,7 +104,7 @@ export function createEvents(store: UseStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => (obj as unknown as Instance).__r3f.handlers[('onPointer' + name) as keyof EventHandlers],
+        (name) => (obj as unknown as Instance).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -137,7 +137,8 @@ export function createEvents(store: UseStore<RootState>) {
       let eventObject: THREE.Object3D | null = intersect.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as unknown as Instance).__r3f.handlers.count) intersections.push({ ...intersect, eventObject })
+        if ((eventObject as unknown as Instance).__r3f?.handlers.count)
+          intersections.push({ ...intersect, eventObject })
         eventObject = eventObject.parent
       }
     }
@@ -265,9 +266,9 @@ export function createEvents(store: UseStore<RootState>) {
         )
       ) {
         const eventObject = hoveredObj.eventObject
-        const handlers = (eventObject as unknown as Instance).__r3f.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f?.handlers
         internal.hovered.delete(makeId(hoveredObj))
-        if (handlers.count) {
+        if (handlers?.count) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
@@ -328,9 +329,9 @@ export function createEvents(store: UseStore<RootState>) {
 
       handleIntersects(hits, event, delta, (data: DomEvent) => {
         const eventObject = data.eventObject
-        const handlers = (eventObject as unknown as Instance).__r3f.handlers
+        const handlers = (eventObject as unknown as Instance).__r3f?.handlers
         // Check presence of handlers
-        if (!handlers.count) return
+        if (!handlers?.count) return
 
         if (isPointerMove) {
           // Move event ...
@@ -376,7 +377,7 @@ export function createEvents(store: UseStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      (object as unknown as Instance).__r3f.handlers.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+      (object as unknown as Instance).__r3f?.handlers.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
     )
   }
 
