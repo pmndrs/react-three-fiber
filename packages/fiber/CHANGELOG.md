@@ -1,5 +1,12 @@
 # @react-three/fiber
 
+## 7.0.13
+
+### Patch Changes
+
+- f256558: fix(core): don't overwrite camera rotation
+- 51e6fc9: fix(core): safely handle external instances
+
 ## 7.0.12
 
 ### Patch Changes
