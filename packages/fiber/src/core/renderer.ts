@@ -209,7 +209,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         child.__r3f.parent = null
       }
 
-      if (parentInstance.__r3f.objects) {
+      if (parentInstance.__r3f?.objects) {
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
       }
 
