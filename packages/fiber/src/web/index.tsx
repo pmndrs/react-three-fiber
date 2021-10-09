@@ -32,7 +32,7 @@ const createRendererInstance = <TElement extends Element>(
     ? (gl as THREE.WebGLRenderer)
     : new THREE.WebGLRenderer({
         powerPreference: 'high-performance',
-        canvas: (canvas as unknown) as HTMLCanvasElement,
+        canvas: canvas as unknown as HTMLCanvasElement,
         antialias: true,
         alpha: true,
         ...gl,
@@ -62,7 +62,7 @@ function render<TCanvas extends Element>(
     // Check pixelratio
     if (props.dpr !== undefined && !is.equ(state.viewport.dpr, calculateDpr(props.dpr))) state.setDpr(props.dpr)
     // Check size
-    if (!is.equ(state.size, size)) state.setSize(size.width, size.height)
+    if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
