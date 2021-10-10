@@ -1,5 +1,42 @@
 # @react-three/fiber
 
+## 7.0.13
+
+### Patch Changes
+
+- f256558: fix(core): don't overwrite camera rotation
+- 51e6fc9: fix(core): safely handle external instances
+
+## 7.0.12
+
+### Patch Changes
+
+- 0df6073: fix: missed events
+
+## 7.0.11
+
+### Patch Changes
+
+- 62b0a3a: fix: event order of missed pointers
+
+## 7.0.10
+
+### Patch Changes
+
+- e019dd4: fixes
+
+## 7.0.9
+
+### Patch Changes
+
+- cd266e4: Fix diffProps dashed keys
+
+## 7.0.8
+
+### Patch Changes
+
+- 6f68406: Allow getCurrentViewport to receive an array
+
 ## 7.0.7
 
 ### Patch Changes

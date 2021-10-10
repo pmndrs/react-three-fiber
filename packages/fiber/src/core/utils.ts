@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { EventHandlers } from './events'
 import { Instance, InstanceProps, LocalState } from './renderer'
-import { RootState } from './store'
+import { Dpr, RootState } from './store'
 
 export const DEFAULT = '__default'
 
@@ -17,6 +17,10 @@ export type ClassConstructor = { new (): void }
 export type ObjectMap = {
   nodes: { [name: string]: THREE.Object3D }
   materials: { [name: string]: THREE.Material }
+}
+
+export function calculateDpr(dpr: Dpr) {
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
 // A collection of compare functions
@@ -72,6 +76,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       memoizedProps: {},
       handlers: { count: 0 },
       objects: [],
+      parent: null,
       ...state,
     }
   }

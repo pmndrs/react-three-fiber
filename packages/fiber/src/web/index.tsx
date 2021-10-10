@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { is, dispose } from '../core/utils'
+import { dispose, calculateDpr } from '../core/utils'
 import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
@@ -63,19 +63,17 @@ function render<TCanvas extends Element>(
   let state = store?.getState()
 
   if (fiber && state) {
-    const lastProps = state.internal.lastProps
-
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(lastProps.dpr, props.dpr)) state.setDpr(props.dpr)
+    if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
     // Check size
-    if (!is.equ(lastProps.size, size)) state.setSize(size.width, size.height)
+    if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
     // Changes to the color-space
-    const linearChanged = props.linear !== lastProps.linear
+    const linearChanged = props.linear !== state.internal.lastProps.linear
     if (linearChanged) {
       unmountComponentAtNode(canvas)
       fiber = undefined
@@ -137,6 +135,7 @@ function Provider<TElement extends Element>({
     state.events.connect?.(target)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return <context.Provider value={store}>{element}</context.Provider>
 }

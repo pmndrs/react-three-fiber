@@ -11,7 +11,9 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
 export type LocalState = {
   root: UseStore<RootState>
+  // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
+  parent: Instance | null
   primitive?: boolean
   handlers: { count: number } & Partial<EventHandlers>
   memoizedProps: {
@@ -25,9 +27,8 @@ export type AttachFnsType = [attach: string | AttachFnType, detach: string | Att
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
-export type BaseInstance = Omit<THREE.Object3D, 'parent' | 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
+export type BaseInstance = Omit<THREE.Object3D, 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
   __r3f: LocalState
-  parent: Instance | null
   children: Instance[]
   attach?: string
   attachFns?: AttachFnsType
@@ -141,7 +142,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         } else if (is.fun(attachFn)) {
           attachFn(child, parentInstance)
         }
-      } else if (child.isObject3D) {
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
         addedAsChild = true
@@ -151,8 +152,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
         // that is, anything that's a child in React but not a child in the scenegraph.
         parentInstance.__r3f.objects.push(child)
-        child.parent = parentInstance
       }
+      if (!child.__r3f) {
+        prepare(child, {})
+      }
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -168,8 +172,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
         // attach and attachObject don't have an order anyway, so just append
         return appendChild(parentInstance, child)
-      } else if (child.isObject3D) {
-        child.parent = parentInstance
+      } else if (child.isObject3D && parentInstance.isObject3D) {
+        child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
@@ -179,8 +183,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
       if (!added) {
         parentInstance.__r3f.objects.push(child)
-        child.parent = parentInstance
       }
+      if (!child.__r3f) {
+        prepare(child, {})
+      }
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -192,15 +199,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
-      if (parentInstance.__r3f.objects) {
-        const oldLength = parentInstance.__r3f.objects.length
+      if (child.__r3f) {
+        child.__r3f.parent = null
+      }
+
+      if (parentInstance.__r3f?.objects) {
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-        const newLength = parentInstance.__r3f.objects.length
-        // was it in the list?
-        if (newLength < oldLength) {
-          // we had also set this, so we must clear it now
-          child.parent = null
-        }
       }
 
       // Remove attachment
@@ -269,7 +273,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   }
 
   function switchInstance(instance: Instance, type: string, newProps: InstanceProps, fiber: Reconciler.Fiber) {
-    const parent = instance.parent
+    const parent = instance.__r3f?.parent
     if (!parent) return
 
     const newInstance = createInstance(type, newProps, instance.__r3f.root)

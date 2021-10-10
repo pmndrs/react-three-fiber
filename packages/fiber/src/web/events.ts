@@ -2,8 +2,7 @@ import { UseStore } from 'zustand'
 // @ts-ignore
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { RootState } from '../core/store'
-import { EventManager, Events } from '../core/events'
-import { createEvents } from '../core/events'
+import { EventManager, Events, createEvents } from '../core/events'
 
 const CLICK = 'click'
 const CONTEXTMENU = 'contextmenu'
