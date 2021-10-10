@@ -473,8 +473,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
     // forces r3f to re-parent the children and non-scene objects
-
-    if (instance.children) {
+    // This can not include primitives, which should not have declarative children
+    if (type !== 'primitive' && instance.children) {
       instance.children.forEach((child) => appendChild(newInstance, child))
       instance.children = []
     }
@@ -551,7 +551,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       newProps: InstanceProps,
       fiber: Reconciler.Fiber,
     ) {
-      //console.log(type)
       // Reconstruct when args or <primitive object={...} have changes
       if (reconstruct) switchInstance(instance, type, newProps, fiber)
       // Otherwise just overwrite props
