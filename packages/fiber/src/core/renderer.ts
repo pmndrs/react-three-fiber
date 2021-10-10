@@ -101,15 +101,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 
-      const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
-      instance = prepare(isArgsArr ? new target(...args) : new target(args), {
-        root,
-        // append memoized props with args so it's not forgotten
-        memoizedProps: {
-          args: isArgsArr && args.length === 0 ? null : args,
-        },
-      })
+      // Append memoized props with args so it's not forgotten
+      instance = prepare(new target(...args), { root, memoizedProps: { args: args.length === 0 ? null : args } })
     }
 
     // Auto-attach geometries and materials
