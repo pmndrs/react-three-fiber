@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.15
+
+### Patch Changes
+
+- c5645e8: fix primitve leftovers on switch
+
 ## 7.0.14
 
 ### Patch Changes
