@@ -74,7 +74,7 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
   // outside react, in which case we must take the root of the child that is about to be attached to it.
   root: isStore(container) ? container : container.__r3f?.root ?? child.__r3f.root,
   // The container is the eventual target into which objects are mounted, it has to be a THREE.Object3D
-  container: isStore(container) ? ((container.getState().scene as unknown) as Instance) : container,
+  container: isStore(container) ? (container.getState().scene as unknown as Instance) : container,
 })
 
 const DEFAULT = '__default'
@@ -92,10 +92,10 @@ function checkShallow(a: any, b: any) {
 
 // Each object in the scene carries a small LocalState descriptor
 function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
-  const instance = (object as unknown) as Instance
+  const instance = object as unknown as Instance
   if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
-      root: (null as unknown) as UseStore<RootState>,
+      root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
       handlers: { count: 0 },
       objects: [],
@@ -243,10 +243,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
       // Pre-emptively remove the instance from the interaction manager
-      const index = rootState.internal.interaction.indexOf((instance as unknown) as THREE.Object3D)
+      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
       // Add the instance to the interaction manager only when it has handlers
-      if (localState.handlers.count) rootState.internal.interaction.push((instance as unknown) as THREE.Object3D)
+      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
     }
 
     // Call the update lifecycle when it is being updated
@@ -294,15 +294,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 
-      const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
-      instance = prepare(isArgsArr ? new target(...args) : new target(args), {
-        root,
-        // append memoized props with args so it's not forgotten
-        memoizedProps: {
-          args: isArgsArr && args.length === 0 ? null : args,
-        },
-      })
+      // Append memoized props with args so it's not forgotten
+      instance = prepare(new target(...args), { root, memoizedProps: { args: args.length === 0 ? null : args } })
     }
 
     // Auto-attach geometries and materials
@@ -371,7 +365,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         // attach and attachObject don't have an order anyway, so just append
         return appendChild(parentInstance, child)
       } else if (child.isObject3D && parentInstance.isObject3D) {
-        child.parent = (parentInstance as unknown) as THREE.Object3D
+        child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
@@ -423,7 +417,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, (child as unknown) as THREE.Object3D)
+          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
         }
       }
 
@@ -498,7 +492,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (fiber !== null) {
         fiber.stateNode = newInstance
         if (fiber.ref) {
-          if (typeof fiber.ref === 'function') ((fiber as unknown) as any).ref(newInstance)
+          if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance)
           else (fiber.ref as Reconciler.RefObject).current = newInstance
         }
       }
