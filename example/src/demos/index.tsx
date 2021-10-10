@@ -29,6 +29,7 @@ const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetP
 const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
 const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
 const MultiMaterial = { descr: '', tags: [], Component: lazy(() => import('./MultiMaterial')), dev: true, bright: true }
+const Gltf = { descr: '', tags: [], Component: lazy(() => import('./Gltf')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
 const SuspenseAndErrors = {
   descr: '',
@@ -57,5 +58,6 @@ export {
   SuspenseAndErrors,
   ContextMenuOverride,
   Viewcube,
+  Gltf,
   Test,
 }
