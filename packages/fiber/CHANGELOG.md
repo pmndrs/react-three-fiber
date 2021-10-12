@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 7.0.15
+
+### Patch Changes
+
+- c5645e8: fix primitve leftovers on switch
+
+## 7.0.14
+
+### Patch Changes
+
+- 05af996: fix: revert the is function
+
 ## 7.0.13
 
 ### Patch Changes
