@@ -4,8 +4,8 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { is, dispose, calculateDpr } from '../core/utils'
-import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
+import { dispose, calculateDpr } from '../core/utils'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events, getEventPriority } from './events'
@@ -16,26 +16,38 @@ const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
+type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+
+type GLProps =
+  | Renderer
+  | ((canvas: HTMLCanvasElement) => Renderer)
+  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+  | undefined
+
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
+  gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
-  canvas: TElement,
-): THREE.WebGLRenderer =>
-  isRenderer(gl as THREE.WebGLRenderer)
-    ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({
-        powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
-        antialias: true,
-        alpha: true,
-        ...gl,
-      })
+const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
+  const customRenderer = (
+    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
+  ) as THREE.WebGLRenderer
+  if (isRenderer(customRenderer)) return customRenderer
+
+  const renderer = new THREE.WebGLRenderer({
+    powerPreference: 'high-performance',
+    canvas: canvas as unknown as HTMLCanvasElement,
+    antialias: true,
+    alpha: true,
+    ...gl,
+  })
+  if (gl) applyProps(renderer as any, gl as any)
+
+  return renderer
+}
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas) {
   return {
@@ -66,9 +78,9 @@ function render<TCanvas extends Element>(
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && !is.equ(state.viewport.dpr, calculateDpr(props.dpr))) state.setDpr(props.dpr)
+    if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
     // Check size
-    if (!is.equ(state.size, size)) state.setSize(size.width, size.height)
+    if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
 
     // For some props we want to reset the entire root
 
@@ -135,6 +147,7 @@ function Provider<TElement extends Element>({
     state.events.connect?.(target)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return <context.Provider value={store}>{element}</context.Provider>
 }

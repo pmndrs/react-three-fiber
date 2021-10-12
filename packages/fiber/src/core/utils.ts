@@ -35,8 +35,7 @@ export const is = {
     // Wrong type or one of the two undefined, doesn't match
     if (typeof a !== typeof b || !!a !== !!b) return false
     // Atomic, just compare a against b
-    if (is.str(a) || is.num(a)) return a === b
-    if (is.obj(a) && a === b) return true
+    if (is.str(a) || is.num(a) || is.obj(a)) return a === b
     // Array, shallow compare first to see if it's a match
     if (is.arr(a) && a == b) return true
     // Last resort, go through keys
@@ -77,6 +76,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       memoizedProps: {},
       handlers: { count: 0 },
       objects: [],
+      parent: null,
       ...state,
     }
   }

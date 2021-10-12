@@ -102,15 +102,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 
-      const isArgsArr = is.arr(args)
       // Instanciate new object, link it to the root
-      instance = prepare(isArgsArr ? new target(...args) : new target(args), {
-        root,
-        // append memoized props with args so it's not forgotten
-        memoizedProps: {
-          args: isArgsArr && args.length === 0 ? null : args,
-        },
-      })
+      // Append memoized props with args so it's not forgotten
+      instance = prepare(new target(...args), { root, memoizedProps: { args: args.length === 0 ? null : args } })
     }
 
     // Auto-attach geometries and materials
@@ -209,7 +203,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         child.__r3f.parent = null
       }
 
-      if (parentInstance.__r3f.objects) {
+      if (parentInstance.__r3f?.objects) {
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
       }
 
@@ -287,8 +281,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
     // forces r3f to re-parent the children and non-scene objects
-
-    if (instance.children) {
+    // This can not include primitives, which should not have declarative children
+    if (type !== 'primitive' && instance.children) {
       instance.children.forEach((child) => appendChild(newInstance, child))
       instance.children = []
     }

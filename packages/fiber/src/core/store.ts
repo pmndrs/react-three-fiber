@@ -43,8 +43,9 @@ export type Performance = {
   regress: () => void
 }
 
-export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
-  def && !!(def as THREE.WebGLRenderer).render
+export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
+
+export const isRenderer = (def: Renderer) => !!def?.render
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
@@ -183,7 +184,7 @@ const createStore = (
       camera.position.z = 5
       if (cameraOptions) applyProps(camera as any, cameraOptions as any)
       // Always look at center by default
-      camera.lookAt(0, 0, 0)
+      if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
     }
 
     const initialDpr = calculateDpr(dpr)
