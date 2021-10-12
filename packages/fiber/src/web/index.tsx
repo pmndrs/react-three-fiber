@@ -5,7 +5,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
 import { dispose, calculateDpr } from '../core/utils'
-import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events, getEventPriority } from './events'
