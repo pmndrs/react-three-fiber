@@ -14,6 +14,7 @@ import {
   ACESFilmicToneMapping,
   sRGBEncoding,
   Object3D,
+  WebGLRenderer,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
@@ -438,5 +439,29 @@ describe('web core', () => {
         render(<myColor args={[0x0000ff]} />, canvas)
       })
     }).not.toThrow()
+  })
+
+  it('should set renderer props via gl prop', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: { physicallyCorrectLights: true },
+      }).getState().gl
+    })
+
+    expect(gl.physicallyCorrectLights).toBe(true)
+  })
+
+  it('should set a renderer via gl callback', async () => {
+    class Renderer extends WebGLRenderer {}
+
+    let gl: Renderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: (canvas) => new Renderer({ canvas }),
+      }).getState().gl
+    })
+
+    expect(gl instanceof Renderer).toBe(true)
   })
 })
