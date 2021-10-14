@@ -14,11 +14,11 @@ import { EventManager } from '../core/events'
 import { View, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext } from 'expo-gl'
 
-type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
-
 export type GLContext = ExpoWebGLRenderingContext | WebGLRenderingContext
 
-export type GLProps =
+type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+
+type GLProps =
   | Renderer
   | ((canvas: HTMLCanvasElement, context: GLContext) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>

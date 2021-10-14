@@ -1,15 +1,13 @@
-import * as THREE from 'three'
 import * as React from 'react'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
-import { GLProps, GLContext, render, unmountComponentAtNode, RenderProps } from './index'
+import { GLContext, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<View>, 'size' | 'events' | 'gl'>, ViewProps {
-  gl?: GLProps
+export interface Props extends Omit<RenderProps<View>, 'size' | 'events'>, ViewProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
