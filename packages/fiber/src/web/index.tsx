@@ -5,7 +5,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
 import { dispose, calculateDpr } from '../core/utils'
-import { createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events, getEventPriority } from './events'
@@ -16,26 +16,38 @@ const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
+type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+
+type GLProps =
+  | Renderer
+  | ((canvas: HTMLCanvasElement) => Renderer)
+  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+  | undefined
+
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
+  gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = <TElement extends Element>(
-  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
-  canvas: TElement,
-): THREE.WebGLRenderer =>
-  isRenderer(gl as THREE.WebGLRenderer)
-    ? (gl as THREE.WebGLRenderer)
-    : new THREE.WebGLRenderer({
-        powerPreference: 'high-performance',
-        canvas: canvas as unknown as HTMLCanvasElement,
-        antialias: true,
-        alpha: true,
-        ...gl,
-      })
+const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
+  const customRenderer = (
+    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
+  ) as THREE.WebGLRenderer
+  if (isRenderer(customRenderer)) return customRenderer
+
+  const renderer = new THREE.WebGLRenderer({
+    powerPreference: 'high-performance',
+    canvas: canvas as unknown as HTMLCanvasElement,
+    antialias: true,
+    alpha: true,
+    ...gl,
+  })
+  if (gl) applyProps(renderer as any, gl as any)
+
+  return renderer
+}
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas) {
   return {

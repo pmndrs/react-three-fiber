@@ -1,5 +1,21 @@
 # @react-three/test-renderer
 
+## 7.0.14
+
+### Patch Changes
+
+- c5645e8: fix primitve leftovers on switch
+- Updated dependencies [c5645e8]
+  - @react-three/fiber@7.0.15
+
+## 7.0.13
+
+### Patch Changes
+
+- 05af996: fix: revert the is function
+- Updated dependencies [05af996]
+  - @react-three/fiber@7.0.14
+
 ## 7.0.12
 
 ### Patch Changes
