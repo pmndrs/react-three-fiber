@@ -251,6 +251,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
 
     // Call the update lifecycle when it is being updated
     if (changes.length && instance.__r3f?.parent) updateInstance(instance)
+    return instance
   }
 
   function invalidateInstance(instance: Instance) {
