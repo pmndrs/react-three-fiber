@@ -5,6 +5,7 @@ import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, ThreeEvent } from './events'
+import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -42,8 +43,9 @@ export type Performance = {
   regress: () => void
 }
 
-export const isRenderer = (def: THREE.WebGLRenderer): def is THREE.WebGLRenderer =>
-  def && !!(def as THREE.WebGLRenderer).render
+export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
+
+export const isRenderer = (def: Renderer) => !!def?.render
 export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
@@ -180,13 +182,10 @@ const createStore = (
       camera.position.z = 5
       if (cameraOptions) applyProps(camera as any, cameraOptions as any)
       // Always look at center by default
-      camera.lookAt(0, 0, 0)
+      if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
     }
 
-    function setDpr(dpr: Dpr) {
-      return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-    }
-    const initialDpr = setDpr(dpr)
+    const initialDpr = calculateDpr(dpr)
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -303,7 +302,7 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: setDpr(dpr) } })),
+      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
 
       events: { connected: false },
       internal: {

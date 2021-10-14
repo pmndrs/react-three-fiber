@@ -14,6 +14,7 @@ import {
   ACESFilmicToneMapping,
   sRGBEncoding,
   Object3D,
+  WebGLRenderer,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
@@ -93,6 +94,11 @@ describe('web core', () => {
     })
 
     expect(scene.children[0].type).toEqual('Mesh')
+    expect((scene.children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
+    expect((scene.children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
+      'MeshBasicMaterial',
+    )
   })
 
   it('renders an empty scene', async () => {
@@ -138,6 +144,9 @@ describe('web core', () => {
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
+    expect(
+      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type,
+    ).toEqual('MeshBasicMaterial')
   })
 
   it('renders some basics with an update', async () => {
@@ -235,6 +244,24 @@ describe('web core', () => {
     expect(scene.children[0].children.length).toBe(0)
   })
 
+  it('can attach a Scene', async () => {
+    let scene: Scene = null!
+    await act(async () => {
+      scene = render(
+        <hasObject3dMember>
+          <scene attach="attachment" />
+        </hasObject3dMember>,
+        canvas,
+      ).getState().scene
+    })
+
+    const attachedScene = (scene.children[0] as HasObject3dMember).attachment
+    expect(attachedScene).toBeDefined()
+    expect(attachedScene?.type).toBe('Scene')
+    // attaching is *instead of* being a regular child
+    expect(scene.children[0].children.length).toBe(0)
+  })
+
   describe('attaches Object3D children that use attachFns', () => {
     it('attachFns as strings', async () => {
       let scene: Scene = null!
@@ -274,10 +301,10 @@ describe('web core', () => {
           <hasObject3dMethods>
             <mesh
               attachFns={[
-                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                (mesh: Mesh) => {
                   attachedMesh = mesh
                 },
-                (mesh: Mesh, parentInstance: HasObject3dMethods) => {
+                (mesh: Mesh) => {
                   detachedMesh = mesh
                 },
               ]}
@@ -439,7 +466,7 @@ describe('web core', () => {
       }
     }
 
-    await expect(async () => {
+    expect(async () => {
       await act(async () => {
         extend({ MyColor })
 
@@ -447,5 +474,29 @@ describe('web core', () => {
         render(<myColor args={[0x0000ff]} />, canvas)
       })
     }).not.toThrow()
+  })
+
+  it('should set renderer props via gl prop', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: { physicallyCorrectLights: true },
+      }).getState().gl
+    })
+
+    expect(gl.physicallyCorrectLights).toBe(true)
+  })
+
+  it('should set a renderer via gl callback', async () => {
+    class Renderer extends WebGLRenderer {}
+
+    let gl: Renderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: (canvas) => new Renderer({ canvas }),
+      }).getState().gl
+    })
+
+    expect(gl instanceof Renderer).toBe(true)
   })
 })
