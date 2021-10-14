@@ -39,10 +39,10 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
         (entry) =>
           new Promise(async (res, reject) => {
             // Construct URL
-            const url = loader.path + entry
+            const url = typeof entry === 'string' ? loader.path + entry : entry
 
             // There's no Image in native, so we create & pass a data texture instead
-            if (loader.constructor.name === 'TextureLoader') {
+            if (loader instanceof THREE.TextureLoader) {
               const asset = await getAsset(url).downloadAsync()
 
               const texture = new THREE.Texture()
@@ -54,7 +54,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
             }
 
             // Do similar for CubeTextures
-            if (loader.constructor.name === 'CubeTextureLoader') {
+            if (loader instanceof THREE.CubeTextureLoader) {
               const texture = new THREE.CubeTexture()
               ;(texture as any).isDataTexture = true
               texture.images = await Promise.all(
