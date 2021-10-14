@@ -220,6 +220,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     }
 
     invalidateInstance(instance)
+    return instance
   })
 
   if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
