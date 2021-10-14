@@ -5,7 +5,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
 import { dispose, calculateDpr } from '../core/utils'
-import { isRenderer, createStore, StoreProps, context, RootState, Size } from '../core/store'
+import { Renderer, isRenderer, createStore, StoreProps, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createTouchEvents as events, getEventPriority } from './events'
@@ -14,26 +14,28 @@ import { EventManager } from '../core/events'
 import { View, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext } from 'expo-gl'
 
-export type Context = ExpoWebGLRenderingContext | WebGLRenderingContext
+type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
 
-const roots = new Map<Context, Root>()
+export type GLContext = ExpoWebGLRenderingContext | WebGLRenderingContext
+
+export type GLProps =
+  | Renderer
+  | ((canvas: HTMLCanvasElement, context: GLContext) => Renderer)
+  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+  | undefined
+
+const roots = new Map<GLContext, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
 export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  gl?: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters>
+  gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TView>
   size?: Size
   onCreated?: (state: RootState) => void
 }
 
-const createRendererInstance = (
-  gl: THREE.WebGLRenderer | Partial<THREE.WebGLRendererParameters> | undefined,
-  context: Context,
-): THREE.WebGLRenderer => {
-  // If a renderer is specified, return it
-  if (isRenderer(gl as THREE.WebGLRenderer)) return gl as THREE.WebGLRenderer
-
+const createRendererInstance = (gl: GLProps, context: GLContext): THREE.WebGLRenderer => {
   // Create canvas shim
   const canvas = {
     width: context.drawingBufferWidth,
@@ -44,6 +46,10 @@ const createRendererInstance = (
     clientHeight: context.drawingBufferHeight,
   } as HTMLCanvasElement
 
+  // If a renderer is specified, return it
+  const customRenderer = (typeof gl === 'function' ? gl(canvas, context) : gl) as THREE.WebGLRenderer
+  if (isRenderer(customRenderer)) return customRenderer
+
   // Create renderer and pass our canvas and its context
   const renderer = new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
@@ -53,6 +59,7 @@ const createRendererInstance = (
     canvas,
     context,
   })
+  if (gl) applyProps(renderer as any, gl as any)
 
   // Bind render to RN bridge
   if ((context as ExpoWebGLRenderingContext).endFrameEXP) {
@@ -66,7 +73,7 @@ const createRendererInstance = (
   return renderer
 }
 
-function createRoot(context: Context) {
+function createRoot(context: GLContext) {
   return {
     render: (element: React.ReactNode) => render(element, context),
     unmount: () => unmountComponentAtNode(context),
@@ -75,7 +82,7 @@ function createRoot(context: Context) {
 
 function render<TView extends View>(
   element: React.ReactNode,
-  context: Context,
+  context: GLContext,
   { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
   let root = roots.get(context)
@@ -159,7 +166,7 @@ function Provider({
   return <context.Provider value={store}>{element}</context.Provider>
 }
 
-function unmountComponentAtNode(context: Context, callback?: (context: Context) => void) {
+function unmountComponentAtNode(context: GLContext, callback?: (context: GLContext) => void) {
   const root = roots.get(context)
   const fiber = root?.fiber
   if (fiber) {

@@ -29,7 +29,7 @@ const getAsset = (input: Asset | string | number) => {
 const toBuffer = async (localUri: string) => readAsStringAsync(localUri, { encoding: 'base64' }).then(decode)
 
 function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
-  return function (Proto: new () => LoaderResult<T> & { parse(...args: any[]): any }, ...input: string[]) {
+  return function (Proto: new () => LoaderResult<T>, ...input: string[]) {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
@@ -86,7 +86,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
             const arrayBuffer = await toBuffer(localUri as string)
 
             // Parse it
-            const parsed = loader.parse(
+            const parsed = (loader as any).parse?.(
               arrayBuffer,
               undefined,
               (data: any) => {
@@ -105,7 +105,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
 }
 
 function useLoader<T, U extends string | string[]>(
-  Proto: new () => LoaderResult<T> & { parse(...args: any[]): any },
+  Proto: new () => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
@@ -120,7 +120,7 @@ function useLoader<T, U extends string | string[]>(
 }
 
 useLoader.preload = function <T, U extends string | string[]>(
-  Proto: new () => LoaderResult<T> & { parse(...args: any[]): any },
+  Proto: new () => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
 ) {
@@ -128,10 +128,7 @@ useLoader.preload = function <T, U extends string | string[]>(
   return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)
 }
 
-useLoader.clear = function <T, U extends string | string[]>(
-  Proto: new () => LoaderResult<T> & { parse(...args: any[]): any },
-  input: U,
-) {
+useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return useAsset.clear(Proto, ...keys)
 }
