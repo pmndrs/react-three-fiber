@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.15
+
+### Patch Changes
+
+- c7a4220: patch: applyprops returns the same instance
+- Updated dependencies [c7a4220]
+  - @react-three/fiber@7.0.16
+
 ## 7.0.14
 
 ### Patch Changes

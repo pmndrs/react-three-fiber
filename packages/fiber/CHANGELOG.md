@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.16
+
+### Patch Changes
+
+- c7a4220: patch: applyprops returns the same instance
+
 ## 7.0.15
 
 ### Patch Changes
