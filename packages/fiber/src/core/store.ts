@@ -5,7 +5,6 @@ import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, ThreeEvent } from './events'
-import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -111,6 +110,7 @@ export type StoreProps = {
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
+  calculateDpr: (dpr: Dpr) => number
   clock?: THREE.Clock
   raycaster?: Partial<Raycaster>
   camera?:
@@ -143,6 +143,7 @@ const createStore = (
     orthographic = false,
     frameloop = 'always',
     dpr = 1,
+    calculateDpr,
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,

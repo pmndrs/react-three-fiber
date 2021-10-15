@@ -4,8 +4,8 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { dispose, calculateDpr } from '../core/utils'
-import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
+import { dispose } from '../core/utils'
+import { Renderer, Dpr, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events, getEventPriority } from './events'
@@ -24,7 +24,7 @@ type GLProps =
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size' | 'calculateDpr'> & {
   gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
@@ -47,6 +47,10 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
   if (gl) applyProps(renderer as any, gl as any)
 
   return renderer
+}
+
+const calculateDpr = (dpr: Dpr) => {
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas) {
@@ -105,7 +109,7 @@ function render<TCanvas extends Element>(
     }
 
     // Create store
-    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
+    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, calculateDpr, ...props })
     const state = store.getState()
     // Create renderer
     fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
