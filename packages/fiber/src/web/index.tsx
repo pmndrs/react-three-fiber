@@ -24,10 +24,11 @@ type GLProps =
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size' | 'calculateDpr'> & {
+export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size' | 'dpr'> & {
   gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
+  dpr?: Dpr
   onCreated?: (state: RootState) => void
 }
 
@@ -49,10 +50,6 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
   return renderer
 }
 
-const calculateDpr = (dpr: Dpr) => {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-}
-
 function createRoot<TCanvas extends Element>(canvas: TCanvas) {
   return {
     render: (element: React.ReactNode) => render(element, canvas),
@@ -63,7 +60,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas) {
 function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size, events, onCreated, ...props }: RenderProps<TCanvas> = {},
+  { gl, size, dpr, events, onCreated, ...props }: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
   // Allow size to take on container bounds initially
   if (!size) {
@@ -71,6 +68,11 @@ function render<TCanvas extends Element>(
       width: canvas.parentElement?.clientWidth ?? 0,
       height: canvas.parentElement?.clientHeight ?? 0,
     }
+  }
+
+  // Interpolate dpr
+  if (Array.isArray(dpr)) {
+    dpr = Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1])
   }
 
   let root = roots.get(canvas)
@@ -82,7 +84,7 @@ function render<TCanvas extends Element>(
     // When a root was found, see if any fundamental props must be changed or exchanged
 
     // Check pixelratio
-    if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
+    if (dpr !== undefined && state.viewport.dpr !== dpr) state.setDpr(dpr)
     // Check size
     if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
 
@@ -109,7 +111,7 @@ function render<TCanvas extends Element>(
     }
 
     // Create store
-    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, calculateDpr, ...props })
+    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, dpr, ...props })
     const state = store.getState()
     // Create renderer
     fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)

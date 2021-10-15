@@ -89,7 +89,7 @@ export type RootState = {
   invalidate: () => void
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
-  setDpr: (dpr: Dpr) => void
+  setDpr: (dpr: number) => void
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 
   events: EventManager<any>
@@ -109,8 +109,7 @@ export type StoreProps = {
   orthographic?: boolean
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
-  dpr?: Dpr
-  calculateDpr: (dpr: Dpr) => number
+  dpr?: number
   clock?: THREE.Clock
   raycaster?: Partial<Raycaster>
   camera?:
@@ -143,7 +142,6 @@ const createStore = (
     orthographic = false,
     frameloop = 'always',
     dpr = 1,
-    calculateDpr,
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
@@ -187,8 +185,6 @@ const createStore = (
       // Always look at center by default
       if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
     }
-
-    const initialDpr = calculateDpr(dpr)
 
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -260,8 +256,8 @@ const createStore = (
 
       size: { width: 0, height: 0 },
       viewport: {
-        initialDpr,
-        dpr: initialDpr,
+        initialDpr: dpr,
+        dpr,
         width: 0,
         height: 0,
         aspect: 0,
@@ -274,7 +270,7 @@ const createStore = (
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
+      setDpr: (dpr: number) => set((state) => ({ viewport: { ...state.viewport, dpr } })),
 
       events: { connected: false },
       internal: {
