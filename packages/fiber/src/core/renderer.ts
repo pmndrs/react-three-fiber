@@ -15,7 +15,8 @@ export type LocalState = {
   objects: Instance[]
   parent: Instance | null
   primitive?: boolean
-  handlers: { count: number } & Partial<EventHandlers>
+  eventCount: number
+  handlers: Partial<EventHandlers>
   memoizedProps: {
     [key: string]: any
   }
