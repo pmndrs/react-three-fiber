@@ -39,6 +39,27 @@ describe('web Canvas', () => {
     expect(ref.current).toBeDefined()
   })
 
+  it('should forward ref three object', async () => {
+    const r = React.createRef<THREE.Mesh>()
+    const ref = React.useRef<THREE.Object3D>()
+    const refSpecific = React.useRef<THREE.Mesh | null>(null)
+
+    // Note: Passing directly should be less strict, and assigning current should be more strict
+    await act(async () => {
+      render(
+        <>
+          <mesh ref={ref} />
+          <mesh ref={refSpecific} />
+          <mesh ref={(r) => (refSpecific.current = r)} />
+        </>,
+      )
+    })
+
+    expect(r.current).toBeTruthy()
+    expect(ref.current).toBeTruthy()
+    expect(refSpecific.current).toBeTruthy()
+  })
+
   it('should correctly unmount', async () => {
     let renderer: RenderResult = null!
     await act(async () => {
