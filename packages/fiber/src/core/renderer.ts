@@ -14,7 +14,8 @@ export type LocalState = {
   objects: Instance[]
   parent: Instance | null
   primitive?: boolean
-  handlers: { count: number } & Partial<EventHandlers>
+  eventCount: number
+  handlers: Partial<EventHandlers>
   memoizedProps: {
     [key: string]: any
   }
@@ -97,7 +98,8 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
     instance.__r3f = {
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
-      handlers: { count: 0 },
+      eventCount: 0,
+      handlers: {},
       objects: [],
       parent: null,
       ...state,
@@ -154,7 +156,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     const root = localState.root
     const rootState = root?.getState?.() ?? {}
     const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
-    const prevHandlers = localState.handlers?.count
+    const prevHandlers = localState.eventCount
 
     // Prepare memoized props
     if (instance.__r3f) instance.__r3f.memoizedProps = memoized
@@ -198,7 +200,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (isEvent) {
         if (value) localState.handlers[key as keyof EventHandlers] = value as any
         else delete localState.handlers[key as keyof EventHandlers]
-        localState.handlers.count = Object.keys(localState.handlers).length
+        localState.eventCount = Object.keys(localState.handlers).length
       }
       // Special treatment for objects with support for set/copy, and layers
       else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
@@ -241,16 +243,17 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       invalidateInstance(instance)
     })
 
-    if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
+    if (rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
       // Pre-emptively remove the instance from the interaction manager
       const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
       // Add the instance to the interaction manager only when it has handlers
-      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+      if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
     }
 
     // Call the update lifecycle when it is being updated
     if (changes.length && instance.__r3f?.parent) updateInstance(instance)
+    return instance
   }
 
   function invalidateInstance(instance: Instance) {
@@ -413,7 +416,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else if (is.fun(detachFn)) {
           detachFn(child, parentInstance)
         }
-      } else if (child.isObject3D) {
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
