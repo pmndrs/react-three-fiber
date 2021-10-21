@@ -416,7 +416,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else if (is.fun(detachFn)) {
           detachFn(child, parentInstance)
         }
-      } else if (child.isObject3D) {
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
