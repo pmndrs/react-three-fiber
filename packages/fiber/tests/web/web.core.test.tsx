@@ -431,8 +431,8 @@ describe('web core', () => {
       }
     }
 
-    expect(async () => {
-      await act(async () => {
+    expect(() => {
+      act(async () => {
         extend({ MyColor })
 
         // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
