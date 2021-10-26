@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.17
+
+### Patch Changes
+
+- 894c550: fix: event count
+
 ## 7.0.16
 
 ### Patch Changes

@@ -157,9 +157,9 @@ const createStore = (
     else gl.shadowMap.type = THREE.PCFSoftShadowMap
   }
 
-  // Set color management
-  if (!linear) gl.outputEncoding = THREE.sRGBEncoding
-  if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
+  // Set color preferences
+  if (linear) gl.outputEncoding = THREE.LinearEncoding
+  if (flat) gl.toneMapping = THREE.NoToneMapping
 
   // clock.elapsedTime is updated using advance(timestamp)
   if (frameloop === 'never') {
