@@ -44,6 +44,12 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     alpha: true,
     ...gl,
   })
+
+  // Set color management
+  renderer.outputEncoding = THREE.sRGBEncoding
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+
+  // Set gl props
   if (gl) applyProps(renderer as any, gl as any)
 
   return renderer
