@@ -61,6 +61,11 @@ export interface EventManager<TTarget> {
   disconnect?: () => void
 }
 
+export interface PointerCaptureTarget {
+  intersection: Intersection
+  target: Element
+}
+
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
@@ -73,6 +78,16 @@ export function removeInteractivity(store: UseStore<RootState>, object: THREE.Ob
   internal.hovered.forEach((value, key) => {
     if (value.eventObject === object || value.object === object) {
       internal.hovered.delete(key)
+    }
+  })
+  internal.capturedMap.forEach((captures, pointerId) => {
+    const captureData: PointerCaptureTarget | undefined = captures.get(object)
+    if (captureData) {
+      captures.delete(object)
+      if (captures.size === 0) {
+        internal.capturedMap.delete(pointerId)
+        captureData.target.releasePointerCapture(pointerId)
+      }
     }
   })
 }
@@ -150,7 +165,9 @@ export function createEvents(store: UseStore<RootState>) {
     // If the interaction is captured, make all capturing targets  part of the
     // intersect.
     if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
-      intersections.push(...internal.capturedMap.get(event.pointerId)!.values())
+      for (let captureData of internal.capturedMap.get(event.pointerId)!.values()) {
+        intersections.push(captureData.intersection)
+      }
     }
     return intersections
   }
@@ -166,7 +183,6 @@ export function createEvents(store: UseStore<RootState>) {
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
-      const releasePointerCapture = (id: number) => (event.target as Element).releasePointerCapture(id)
 
       const localState = { stopped: false }
 
@@ -174,23 +190,38 @@ export function createEvents(store: UseStore<RootState>) {
         const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
 
         const setPointerCapture = (id: number) => {
+          const captureData = { intersection: hit, target: event.target as Element }
           if (internal.capturedMap.has(id)) {
             // if the pointerId was previously captured, we add the hit to the
             // event capturedMap.
-            internal.capturedMap.get(id)!.set(hit.eventObject, hit)
+            internal.capturedMap.get(id)!.set(hit.eventObject, captureData)
           } else {
             // if the pointerId was not previously captured, we create a map
             // containing the hitObject, and the hit. hitObject is used for
             // faster access.
-            internal.capturedMap.set(id, new Map([[hit.eventObject, hit]]))
+            internal.capturedMap.set(id, new Map([[hit.eventObject, captureData]]))
           }
           // Call the original event now
           ;(event.target as Element).setPointerCapture(id)
         }
 
+        const releasePointerCapture = (id: number) => {
+          const captures = internal.capturedMap.get(id)
+          if (captures) {
+            captures.delete(hit.eventObject)
+            // Iff this was the last object capturing this pointer...
+            if (captures.size === 0) {
+              internal.capturedMap.delete(id)
+              // ... release the native pointer capture
+              ;(event.target as Element).releasePointerCapture(id)
+            }
+          }
+        }
+
         // Add native event props
         let extractEventProps: any = {}
-        for (let prop in Object.getPrototypeOf(event)) {
+        // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
+        for (let prop in event) {
           let property = event[prop as keyof DomEvent]
           // Only copy over atomics, leave functions alone as these should be
           // called as event.nativeEvent.fn()
@@ -287,9 +318,8 @@ export function createEvents(store: UseStore<RootState>) {
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           if ('pointerId' in event) {
-            // this will be a problem if one target releases the pointerId
-            // and another one is still keeping it, as the line below
-            // indifferently deletes all capturing references.
+            // If the object event interface had onLostPointerCapture, we'd call it here on every
+            // object that's getting removed.
             store.getState().internal.capturedMap.delete(event.pointerId)
           }
           cancelPointer([])
