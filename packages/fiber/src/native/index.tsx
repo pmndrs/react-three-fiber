@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { dispose, calculateDpr } from '../core/utils'
+import { dispose } from '../core/utils'
 import { Renderer, isRenderer, createStore, StoreProps, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
@@ -28,7 +28,7 @@ const roots = new Map<GLContext, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 
-export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TView extends View> = Omit<StoreProps, 'gl' | 'events' | 'size' | 'dpr'> & {
   gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TView>
   size?: Size
@@ -83,7 +83,7 @@ function createRoot(context: GLContext) {
 function render<TView extends View>(
   element: React.ReactNode,
   context: GLContext,
-  { dpr = PixelRatio.get(), gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
+  { gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
 ): UseStore<RootState> {
   let root = roots.get(context)
   let fiber = root?.fiber
@@ -93,8 +93,6 @@ function render<TView extends View>(
   if (fiber && state) {
     // When a root was found, see if any fundamental props must be changed or exchanged
 
-    // Check pixelratio
-    if (dpr !== undefined && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
     // Check size
     if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
 
@@ -117,9 +115,11 @@ function render<TView extends View>(
     // Create store
     store = createStore(applyProps, invalidate, advance, {
       gl: glRenderer,
-      dpr,
       size,
       ...props,
+      // expo-gl can only render at native dpr/resolution
+      // https://github.com/expo/expo-three/issues/39
+      dpr: PixelRatio.get(),
     })
     const state = store.getState()
     // Create renderer
