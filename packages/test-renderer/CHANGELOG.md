@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.16
+
+### Patch Changes
+
+- 894c550: fix: event count
+- Updated dependencies [894c550]
+  - @react-three/fiber@7.0.17
+
 ## 7.0.15
 
 ### Patch Changes
