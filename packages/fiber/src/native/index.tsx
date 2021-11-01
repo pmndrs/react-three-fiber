@@ -212,6 +212,7 @@ export * from './hooks'
 export {
   context,
   render,
+  createRoot,
   unmountComponentAtNode,
   createPortal,
   events,
