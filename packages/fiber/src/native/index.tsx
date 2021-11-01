@@ -79,9 +79,9 @@ const createRendererInstance = (gl: GLProps, context: GLContext): THREE.WebGLRen
   return renderer
 }
 
-function createRoot(context: GLContext) {
+function createRoot<TView extends View>(context: GLContext, config?: RenderProps<TView>) {
   return {
-    render: (element: React.ReactNode) => render(element, context),
+    render: (element: React.ReactNode) => render(element, context, config),
     unmount: () => unmountComponentAtNode(context),
   }
 }
@@ -205,7 +205,7 @@ function createPortal(children: React.ReactNode, container: THREE.Object3D): Rea
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
-  version: '17.0.2',
+  version: '18.0.0',
 })
 
 export * from './hooks'

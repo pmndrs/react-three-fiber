@@ -2,6 +2,8 @@ import * as React from 'react'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
+import pick from 'lodash-es/pick'
+import omit from 'lodash-es/omit'
 import { GLContext, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
@@ -21,6 +23,22 @@ type UnblockProps = {
   set: React.Dispatch<React.SetStateAction<SetBlock>>
   children: React.ReactNode
 }
+
+const CANVAS_PROPS = [
+  'gl',
+  'shadows',
+  'linear',
+  'flat',
+  'vr',
+  'orthographic',
+  'frameloop',
+  // 'dpr',
+  'performance',
+  'clock',
+  'raycaster',
+  'camera',
+  'onPointerMissed',
+]
 
 // React currently throws a warning when using useLayoutEffect on the server.
 // To get around it, we can conditionally useEffect on the server (no-op) and
@@ -48,8 +66,10 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 
 export const Canvas = React.forwardRef<View, Props>(
   ({ children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, ...props }, forwardedRef) => {
+    const canvasProps = pick(props, CANVAS_PROPS)
+    const viewProps = omit(props, CANVAS_PROPS)
     const [context, setContext] = React.useState<GLContext | null>(null)
-    const [size, setSize] = React.useState({ width: 0, height: 0 })
+    const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [bind, setBind] = React.useState()
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
@@ -66,19 +86,19 @@ export const Canvas = React.forwardRef<View, Props>(
 
     // Execute JSX in the reconciler as a layout-effect
     useIsomorphicLayoutEffect(() => {
-      if (context) {
+      if (width > 0 && height > 0 && context) {
         const store = render(
           <ErrorBoundary set={setError}>
             <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
           </ErrorBoundary>,
           context,
-          { ...props, size, events: events || createTouchEvents },
+          { ...canvasProps, size: { width, height }, events: events || createTouchEvents },
         )
 
         const state = store.getState()
         setBind(state.events.connected.getEventHandlers())
       }
-    }, [size, children, context])
+    }, [width, height, children, context, canvasProps])
 
     useIsomorphicLayoutEffect(() => {
       return () => {
@@ -87,8 +107,8 @@ export const Canvas = React.forwardRef<View, Props>(
     }, [])
 
     return (
-      <View ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {size.width > 0 && (
+      <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+        {width > 0 && (
           <GLView
             nativeRef_EXPERIMENTAL={(ref: any) => {
               if (nativeRef_EXPERIMENTAL && !nativeRef_EXPERIMENTAL.current) {
