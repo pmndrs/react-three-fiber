@@ -142,7 +142,7 @@ const createStore = (
     vr = false,
     orthographic = false,
     frameloop = 'always',
-    dpr = 1,
+    dpr = [1, 2],
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
