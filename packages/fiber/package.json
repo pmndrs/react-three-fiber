@@ -41,6 +41,8 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "0.0.0-experimental-031abd24b-20210907",
     "react-use-measure": "^2.0.4",

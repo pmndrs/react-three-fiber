@@ -49,9 +49,9 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
   return renderer
 }
 
-function createRoot<TCanvas extends Element>(canvas: TCanvas) {
+function createRoot<TCanvas extends Element>(canvas: TCanvas, config?: RenderProps<TCanvas>) {
   return {
-    render: (element: React.ReactNode) => render(element, canvas),
+    render: (element: React.ReactNode) => render(element, canvas, config),
     unmount: () => unmountComponentAtNode(canvas),
   }
 }
@@ -185,7 +185,7 @@ function createPortal(children: React.ReactNode, container: THREE.Object3D): Rea
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
-  version: '17.0.2',
+  version: '18.0.0',
 })
 
 export * from '../core/hooks'
