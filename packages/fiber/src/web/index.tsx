@@ -198,6 +198,7 @@ export * from '../core/hooks'
 export {
   context,
   render,
+  createRoot,
   unmountComponentAtNode,
   createPortal,
   events,
