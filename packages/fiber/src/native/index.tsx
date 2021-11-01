@@ -59,6 +59,12 @@ const createRendererInstance = (gl: GLProps, context: GLContext): THREE.WebGLRen
     canvas,
     context,
   })
+
+  // Set color management
+  renderer.outputEncoding = THREE.sRGBEncoding
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
+
+  // Set GL props
   if (gl) applyProps(renderer as any, gl as any)
 
   // Bind render to RN bridge
