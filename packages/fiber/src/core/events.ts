@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
-import type { RootState } from './store'
+import type { InternalState, RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -70,6 +70,26 @@ function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
 
+/** Release pointer captures.
+ * This is called by releasePointerCapture in the API, and when an object is removed.
+ */
+function releaseInternalPointerCapture(
+  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>,
+  obj: THREE.Object3D,
+  captures: Map<THREE.Object3D, PointerCaptureTarget>,
+  pointerId: number,
+): void {
+  const captureData: PointerCaptureTarget | undefined = captures.get(obj)
+  if (captureData) {
+    captures.delete(obj)
+    // If this was the last capturing object for this pointer
+    if (captures.size === 0) {
+      capturedMap.delete(pointerId)
+      captureData.target.releasePointerCapture(pointerId)
+    }
+  }
+}
+
 export function removeInteractivity(store: UseStore<RootState>, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store
@@ -81,14 +101,7 @@ export function removeInteractivity(store: UseStore<RootState>, object: THREE.Ob
     }
   })
   internal.capturedMap.forEach((captures, pointerId) => {
-    const captureData: PointerCaptureTarget | undefined = captures.get(object)
-    if (captureData) {
-      captures.delete(object)
-      if (captures.size === 0) {
-        internal.capturedMap.delete(pointerId)
-        captureData.target.releasePointerCapture(pointerId)
-      }
-    }
+    releaseInternalPointerCapture(internal.capturedMap, object, captures, pointerId)
   })
 }
 
@@ -208,13 +221,7 @@ export function createEvents(store: UseStore<RootState>) {
         const releasePointerCapture = (id: number) => {
           const captures = internal.capturedMap.get(id)
           if (captures) {
-            captures.delete(hit.eventObject)
-            // Iff this was the last object capturing this pointer...
-            if (captures.size === 0) {
-              internal.capturedMap.delete(id)
-              // ... release the native pointer capture
-              ;(event.target as Element).releasePointerCapture(id)
-            }
+            releaseInternalPointerCapture(internal.capturedMap, hit.eventObject, captures, id)
           }
         }
 
