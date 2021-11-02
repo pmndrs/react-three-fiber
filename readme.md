@@ -10,25 +10,23 @@
 
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
+Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
+
 ```bash
 npm install three @react-three/fiber
 ```
-
-### Why?
-
-Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can tap into React's ecosystem.
 
 #### Does it have limitations?
 
 None. Everything that works in Threejs will work here without exception.
 
-#### Can it keep up with frequent updates to Threejs?
-
-Yes. There is no hard dependency on a particular Threejs version, it does not wrap or duplicate a single Threejs class. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically.
-
 #### Is it slower than plain Threejs?
 
-No. There is no additional overhead. Components participate in a unified renderloop outside of React. It outperforms Threejs in scale due to Reacts scheduling abilities.
+No. There is no overhead. Components render outside of React. It outperforms Threejs in scale due to Reacts scheduling abilities.
+
+#### Can it keep up with frequent feature updates to Threejs?
+
+Yes. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. If a new Threejs version adds, removes or changes features, it will be available to you instantly without depending on updates to this library.
 
 ### What does it look like?
 
