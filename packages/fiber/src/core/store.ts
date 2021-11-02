@@ -4,7 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
-import { DomEvent, EventManager, ThreeEvent } from './events'
+import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
@@ -58,7 +58,7 @@ export type InternalState = {
   interaction: THREE.Object3D[]
   hovered: Map<string, DomEvent>
   subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, Intersection>>
+  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
