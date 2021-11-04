@@ -3,7 +3,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { Asset } from 'expo-asset'
 import { readAsStringAsync } from 'expo-file-system'
 import { decode } from 'base64-arraybuffer'
-import { suspend, preload, clear } from 'use-asset'
+import { suspend, preload, clear } from 'suspend-react'
 import { buildGraph, ObjectMap } from '../core/utils'
 import { Extensions, LoaderResult, BranchingReturn, useStore, useThree, useFrame, useGraph } from '../core/hooks'
 
