@@ -35,6 +35,7 @@ const CANVAS_PROPS = [
   'raycaster',
   'camera',
   'onPointerMissed',
+  'onCreated',
 ]
 
 // React currently throws a warning when using useLayoutEffect on the server.
