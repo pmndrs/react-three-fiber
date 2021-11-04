@@ -49,7 +49,6 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   shadows                       // Props that go into gl.shadowMap, can also be set true for PCFsoft
   linear = false                // True by default for automatic sRGB encoding and gamma correction
   flat = false                  // If true uses THREE.NoToneMapping, otherwise THREE.ACESFilmicToneMapping
-  vr = false                    // Switches renderer to VR mode, then uses gl.setAnimationLoop
   mode = "blocking"             // React mode: legacy | blocking | concurrent
   resize = undefined            // Resize config, see react-use-measure's options
   orthographic = false          // Creates an orthographic camera if true
@@ -405,7 +404,6 @@ const {
   raycaster, // Raycaster
   mouse, // THREE.Vector2
   clock, // THREE.Clock
-  vr, // boolean
   linear, // Colorspace, boolean
   frameloop, // 'always' | 'demand' | 'never'
   performance: {

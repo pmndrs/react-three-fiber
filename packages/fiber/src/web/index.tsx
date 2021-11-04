@@ -104,12 +104,6 @@ function render<TCanvas extends Element>(
     // Create gl
     const glRenderer = createRendererInstance(gl, canvas)
 
-    // Enable VR if requested
-    if (props.vr) {
-      glRenderer.xr.enabled = true
-      glRenderer.setAnimationLoop((timestamp) => advance(timestamp, true))
-    }
-
     // Create store
     store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
     const state = store.getState()
@@ -171,6 +165,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
             state.events.disconnect?.()
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
+            if (state.gl?.xr) state.internal.xr.disconnect()
             dispose(state)
             roots.delete(canvas)
             if (callback) callback(canvas)

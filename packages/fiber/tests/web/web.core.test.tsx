@@ -21,7 +21,7 @@ import {
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
+import { render, act, unmountComponentAtNode, useFrame, extend } from '../../src/web/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
@@ -424,6 +424,41 @@ describe('web core', () => {
 
     expect(state.getState().gl.toneMapping).toBe(ACESFilmicToneMapping)
     expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
+  })
+
+  it('should toggle render mode in xr', async () => {
+    let state: RootState = null!
+
+    await act(async () => {
+      state = render(<group />, canvas).getState()
+      state.gl.xr.isPresenting = true
+      state.gl.xr.dispatchEvent({ type: 'sessionstart' })
+    })
+
+    expect(state.gl.xr.enabled).toEqual(true)
+
+    await act(async () => {
+      state.gl.xr.isPresenting = false
+      state.gl.xr.dispatchEvent({ type: 'sessionend' })
+    })
+
+    expect(state.gl.xr.enabled).toEqual(false)
+  })
+
+  it('should respect frameloop="never" in xr', async () => {
+    let respected = true
+
+    await act(async () => {
+      const TestGroup = () => {
+        useFrame(() => (respected = false))
+        return <group />
+      }
+      const state = render(<TestGroup />, canvas, { frameloop: 'never' }).getState()
+      state.gl.xr.isPresenting = true
+      state.gl.xr.dispatchEvent({ type: 'sessionstart' })
+    })
+
+    expect(respected).toEqual(true)
   })
 
   it('will render components that are extended', async () => {

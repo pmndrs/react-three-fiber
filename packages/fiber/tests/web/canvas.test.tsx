@@ -51,24 +51,4 @@ describe('web Canvas', () => {
 
     expect(() => renderer.unmount()).not.toThrow()
   })
-
-  it('should render with vr prop set', async () => {
-    let xrEnabled = false
-
-    const Component = () => {
-      const gl = useThree((state) => state.gl)
-      xrEnabled = gl.xr.enabled
-      return null
-    }
-
-    await act(async () => {
-      render(
-        <Canvas vr={true}>
-          <Component />
-        </Canvas>,
-      )
-    })
-
-    expect(xrEnabled).toBe(true)
-  })
 })
