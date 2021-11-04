@@ -23,10 +23,11 @@ type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; child
 
 const CANVAS_PROPS = [
   'gl',
+  'events',
+  'size',
   'shadows',
   'linear',
   'flat',
-  'vr',
   'orthographic',
   'frameloop',
   'dpr',
