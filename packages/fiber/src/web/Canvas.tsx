@@ -15,6 +15,7 @@ export interface Props
   children: React.ReactNode
   fallback?: React.ReactNode
   resize?: ResizeOptions
+  renderVisible?: boolean
   events?: (store: UseStore<RootState>) => EventManager<any>
 }
 
@@ -64,7 +65,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, events, ...props },
+  { children, fallback, resize, style, events, renderVisible, frameloop, ...props },
   forwardedRef,
 ) {
   const canvasProps = pick(props, CANVAS_PROPS)
@@ -73,6 +74,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
+  const [visible, setVisible] = React.useState(false)
 
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
@@ -82,20 +84,38 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (width > 0 && height > 0) {
+      const shouldRender = !renderVisible || visible
+
       render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
         canvasRef.current,
-        { ...canvasProps, size: { width, height }, events: events || createPointerEvents },
+        {
+          ...canvasProps,
+          size: { width, height },
+          events: events || createPointerEvents,
+          frameloop: shouldRender ? frameloop : 'never',
+        },
       )
     }
-  }, [width, height, children, canvasProps])
+  }, [width, height, children, canvasProps, visible])
 
   React.useEffect(() => {
     const container = canvasRef.current
     return () => unmountComponentAtNode(container)
   }, [])
+
+  // Toggle rendering when out of view when `renderVisible` is set
+  React.useEffect(() => {
+    const container = canvasRef.current
+    if (!container || !renderVisible) return
+
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
+    observer.observe(container)
+
+    return () => observer.disconnect()
+  }, [renderVisible])
 
   return (
     <div
