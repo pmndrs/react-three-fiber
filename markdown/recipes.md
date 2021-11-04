@@ -20,7 +20,7 @@
 [react-spring](https://www.react-spring.io/) supports react-three-fiber out of the box:
 
 ```jsx
-import { Canvas } from 'react-three-fiber'
+import { Canvas } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 
 function Box(props) {
@@ -54,7 +54,7 @@ function Box(props) {
 Managing effects can get quite complex normally. Drop the component below into a scene and you have a live effect. Remove it and everything is as it was without any re-configuration.
 
 ```jsx
-import { extend, Canvas, useFrame, useThree } from 'react-three-fiber'
+import { extend, Canvas, useFrame, useThree } from '@react-three/fiber'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass'
@@ -179,7 +179,7 @@ function CrossFade({ url1, url2, disp }) {
 We support [portals](https://reactjs.org/docs/portals.html). You can use them to teleport a piece of the view into another container. Click [here](https://codesandbox.io/s/three-fibre-useFrame-test-fojbq) for a small demo.
 
 ```jsx
-import { createPortal } from 'react-three-fiber'
+import { createPortal } from '@react-three/fiber'
 
 function Component() {
   // "target" can be a three object, like a group, etc
@@ -224,12 +224,12 @@ const Controls = () => {
 
 ## Enabling VR
 
-Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/index.html#manual/en/introduction/How-to-create-VR-content).
+Supplying the `vr` flag enables Three's VR mode and switches the render-loop to gl.setAnimationLoop [as described in Three's docs](https://threejs.org/docs/#manual/en/introduction/How-to-create-VR-content).
 
 ```jsx
-import * as VR from '!exports-loader?WEBVR!three/examples/js/vr/WebVR'
-import { Canvas } from 'react-three-fiber'
-;<Canvas vr onCreated={({ gl }) => document.body.appendChild(VR.createButton(gl))} />
+import { VRButton } from 'three/examples/jsm/webxr/VRButton'
+import { Canvas } from '@react-three/fiber'
+;<Canvas vr onCreated={({ gl }) => document.body.appendChild(VRButton.createButton(gl))} />
 ```
 
 ## Reducing bundle-size
@@ -238,30 +238,26 @@ Threejs is quite heavy and tree-shaking doesn't yet yield the results you would 
 
 ## Usage with React Native
 
-You can use `react-three-fiber` to build universal (native and web) apps via Expo's WebGL package ([expo-gl](https://docs.expo.io/versions/latest/sdk/gl-view/)).
+You can use `@react-three/fiber` to build universal (native and web) apps with the same API, complete with loader support and pointer events.
 
 > 💡 **Bootstrap**: `npx create-react-native-app -t with-react-three-fiber`
 
 Be sure to use a physical iOS or Android device for testing because the simulator can have issues running graphics heavy apps.
 
-### Manual setup
+### Setup with Expo
 
 ```bash
 # Install the Expo CLI
-
 npm i -g expo-cli
 
 # Create a new project
-
 expo init myapp
 cd myapp
 
 # Install packages
-
-yarn add expo-gl expo-three three@latest react-three-fiber@beta
+yarn add three @react-three/fiber
 
 # Start the project
-
 yarn start
 ```
 
