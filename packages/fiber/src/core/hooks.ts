@@ -15,10 +15,10 @@ export interface Loader<T> extends THREE.Loader {
   ): unknown
 }
 
-type Extensions = (loader: THREE.Loader) => void
-type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
-type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
-type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
+export type Extensions = (loader: THREE.Loader) => void
+export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
+export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
+export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
 export function useStore() {
   const store = React.useContext(context)

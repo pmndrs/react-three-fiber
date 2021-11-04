@@ -4,7 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
-import { DomEvent, EventManager, ThreeEvent } from './events'
+import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
@@ -58,7 +58,7 @@ export type InternalState = {
   interaction: THREE.Object3D[]
   hovered: Map<string, DomEvent>
   subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, Intersection>>
+  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
@@ -140,7 +140,7 @@ const createStore = (
     flat = false,
     orthographic = false,
     frameloop = 'always',
-    dpr = 1,
+    dpr = [1, 2],
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
@@ -155,9 +155,9 @@ const createStore = (
     else gl.shadowMap.type = THREE.PCFSoftShadowMap
   }
 
-  // Set color management
-  if (!linear) gl.outputEncoding = THREE.sRGBEncoding
-  if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
+  // Set color preferences
+  if (linear) gl.outputEncoding = THREE.LinearEncoding
+  if (flat) gl.toneMapping = THREE.NoToneMapping
 
   // clock.elapsedTime is updated using advance(timestamp)
   if (frameloop === 'never') {

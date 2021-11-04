@@ -6,3 +6,4 @@ example/
 markdown/
 src/
 tests/
+__mocks__
