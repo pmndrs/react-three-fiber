@@ -4,7 +4,7 @@ import { Asset } from 'expo-asset'
 import { readAsStringAsync } from 'expo-file-system'
 import { decode } from 'base64-arraybuffer'
 import { suspend, preload, clear } from 'suspend-react'
-import { buildGraph, ObjectMap } from '../core/utils'
+import { buildGraph, ObjectMap, is } from '../core/utils'
 import { Extensions, LoaderResult, BranchingReturn, useStore, useThree, useFrame, useGraph } from '../core/hooks'
 
 /**
@@ -112,7 +112,7 @@ function useLoader<T, U extends string | string[]>(
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn<T>(extensions, onProgress), [Proto, ...keys])
+  const results = suspend(loadingFn<T>(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
     ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]

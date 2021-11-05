@@ -4,7 +4,7 @@ import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
-import { buildGraph, ObjectMap } from './utils'
+import { buildGraph, ObjectMap, is } from './utils'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -80,7 +80,7 @@ export function useLoader<T, U extends string | string[]>(
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn<T>(extensions, onProgress), [Proto, ...keys])
+  const results = suspend(loadingFn<T>(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
     ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
