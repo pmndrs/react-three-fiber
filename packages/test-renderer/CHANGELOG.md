@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.17
+
+### Patch Changes
+
+- 6780f58: fix unmount pointer capture
+- Updated dependencies [6780f58]
+  - @react-three/fiber@7.0.18
+
 ## 7.0.16
 
 ### Patch Changes
