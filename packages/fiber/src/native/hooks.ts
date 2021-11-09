@@ -121,12 +121,12 @@ function useLoader<T, U extends string | string[]>(
 
 useLoader.preload = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(Proto, ...keys)
+  return (preload as any)(Proto, ...keys)
 }
 
 useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return clear(Proto, ...keys)
+  return (clear as any)(Proto, ...keys)
 }
 
 export { useStore, useThree, useFrame, useGraph, useLoader }
