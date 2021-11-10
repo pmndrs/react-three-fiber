@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
-import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 
@@ -322,10 +321,14 @@ const createStore = (
     }
   })
 
+  const state = rootState.getState()
+
   // Resize camera and renderer on changes to size and pixelratio
-  rootState.subscribe(
-    () => {
-      const { camera, size, viewport, internal } = rootState.getState()
+  let oldSize = state.size
+  let oldDpr = state.viewport.dpr
+  rootState.subscribe(() => {
+    const { camera, size, viewport, internal } = rootState.getState()
+    if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
       if (!(internal.lastProps.camera instanceof THREE.Camera)) {
@@ -345,12 +348,12 @@ const createStore = (
       // Update renderer
       gl.setPixelRatio(viewport.dpr)
       gl.setSize(size.width, size.height)
-    },
-    (state) => [state.viewport.dpr, state.size],
-    shallow,
-  )
 
-  const state = rootState.getState()
+      oldSize = size
+      oldDpr = viewport.dpr
+    }
+  })
+
   // Update size
   if (size) state.setSize(size.width, size.height)
 
