@@ -91,6 +91,7 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
+  setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
 
   events: EventManager<any>
@@ -303,6 +304,8 @@ const createStore = (
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
+
+      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => set(() => ({ frameloop })),
 
       events: { connected: false },
       internal: {

@@ -101,6 +101,8 @@ function render<TView extends View>(
 
     // Check size
     if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
+    // Check frameloop
+    if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
 
     // For some props we want to reset the entire root
 
