@@ -54,6 +54,7 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   orthographic = false          // Creates an orthographic camera if true
   dpr = undefined               // Pixel-ratio, use window.devicePixelRatio, or automatic: [min, max]
   frameloop = "always"          // Render-mode: always | demand | never
+  intersect = false             // Toggles rendering when the canvas leaves/enters the viewport.
   onCreated                     // Callback when vdom is ready
   onPointerMissed />            // Response for pointer clicks that have missed a target
 ```
@@ -433,6 +434,7 @@ const {
   advance, // Advance one tick, given that frameloop === 'never', (timestamp: number, runGlobalEffects?: boolean) => void
   setSize, // Resize the canvs, (width: number, height: number) => void
   setDpr, // Reset the pixel-ratio, (dpr: Dpr) => void
+  setFrameloop, // Change frameloop, (frameloop: 'always' | 'demand' | 'never') => void
   onPointerMissed, // (event: ThreeEvent<PointerEvent>) => void
   events: {
     connected, // Event-target (for instance a dom node), TTarget | boolean
