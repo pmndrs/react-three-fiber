@@ -15,7 +15,8 @@ export interface Props
   children: React.ReactNode
   fallback?: React.ReactNode
   resize?: ResizeOptions
-  renderVisible?: boolean
+  /** Toggles rendering when the canvas leaves/enters the viewport. */
+  intersect?: boolean
   events?: (store: UseStore<RootState>) => EventManager<any>
 }
 
@@ -65,7 +66,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, events, renderVisible, frameloop, ...props },
+  { children, fallback, resize, style, events, intersect, frameloop, ...props },
   forwardedRef,
 ) {
   const canvasProps = pick(props, CANVAS_PROPS)
@@ -84,7 +85,7 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
   // Execute JSX in the reconciler as a layout-effect
   useIsomorphicLayoutEffect(() => {
     if (width > 0 && height > 0) {
-      const shouldRender = !renderVisible || visible
+      const shouldRender = !intersect || visible
 
       render(
         <ErrorBoundary set={setError}>
@@ -106,16 +107,16 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
     return () => unmountComponentAtNode(container)
   }, [])
 
-  // Toggle rendering when out of view when `renderVisible` is set
+  // Toggle rendering when out of view when `intersect` is set
   React.useEffect(() => {
     const container = canvasRef.current
-    if (!container || !renderVisible) return
+    if (!container || !intersect) return
 
     const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
     observer.observe(container)
 
     return () => observer.disconnect()
-  }, [renderVisible])
+  }, [intersect])
 
   return (
     <div

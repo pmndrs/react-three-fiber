@@ -17,7 +17,8 @@ export interface Props extends Omit<RenderProps<View>, 'size' | 'events'>, ViewP
   events?: (store: UseStore<RootState>) => EventManager<any>
   nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
   onContextCreate?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
-  renderVisible?: boolean
+  /** Toggles rendering when the canvas leaves/enters the viewport. */
+  include?: boolean
 }
 
 type SetBlock = false | Promise<null> | null
@@ -70,7 +71,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 
 export const Canvas = React.forwardRef<View, Props>(
   (
-    { children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, renderVisible, frameloop, ...props },
+    { children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, include, frameloop, ...props },
     forwardedRef,
   ) => {
     const canvasProps = pick(props, CANVAS_PROPS)
@@ -95,7 +96,7 @@ export const Canvas = React.forwardRef<View, Props>(
     // Execute JSX in the reconciler as a layout-effect
     useIsomorphicLayoutEffect(() => {
       if (width > 0 && height > 0 && context) {
-        const shouldRender = !renderVisible || visible
+        const shouldRender = !include || visible
 
         const store = render(
           <ErrorBoundary set={setError}>
@@ -129,7 +130,7 @@ export const Canvas = React.forwardRef<View, Props>(
           ref={forwardedRef}
           onLayout={onLayout}
           style={{ flex: 1, ...style }}
-          onChange={(visible) => renderVisible && setVisible(visible)}>
+          onChange={(visible) => include && setVisible(visible)}>
           {width > 0 && (
             <GLView
               nativeRef_EXPERIMENTAL={(ref: any) => {
