@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { IOScrollView, InView } from 'react-native-intersection-observer'
 import { UseStore } from 'zustand'
 import pick from 'lodash-es/pick'
 import omit from 'lodash-es/omit'
@@ -17,8 +16,6 @@ export interface Props extends Omit<RenderProps<View>, 'size' | 'events'>, ViewP
   events?: (store: UseStore<RootState>) => EventManager<any>
   nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
   onContextCreate?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
-  /** Toggles rendering when the canvas leaves/enters the viewport. */
-  include?: boolean
 }
 
 type SetBlock = false | Promise<null> | null
@@ -70,10 +67,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = React.forwardRef<View, Props>(
-  (
-    { children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, include, frameloop, ...props },
-    forwardedRef,
-  ) => {
+  ({ children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, ...props }, forwardedRef) => {
     const canvasProps = pick(props, CANVAS_PROPS)
     const viewProps = omit(props, CANVAS_PROPS)
     const [context, setContext] = React.useState<GLContext | null>(null)
@@ -81,7 +75,6 @@ export const Canvas = React.forwardRef<View, Props>(
     const [bind, setBind] = React.useState()
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
-    const [visible, setVisible] = React.useState(false)
 
     // Suspend this component if block is a promise (2nd run)
     if (block) throw block
@@ -96,25 +89,18 @@ export const Canvas = React.forwardRef<View, Props>(
     // Execute JSX in the reconciler as a layout-effect
     useIsomorphicLayoutEffect(() => {
       if (width > 0 && height > 0 && context) {
-        const shouldRender = !include || visible
-
         const store = render(
           <ErrorBoundary set={setError}>
             <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
           </ErrorBoundary>,
           context,
-          {
-            ...canvasProps,
-            size: { width, height },
-            events: events || createTouchEvents,
-            frameloop: shouldRender ? frameloop : 'never',
-          },
+          { ...canvasProps, size: { width, height }, events: events || createTouchEvents },
         )
 
         const state = store.getState()
         setBind(state.events.connected.getEventHandlers())
       }
-    }, [width, height, children, context, canvasProps, visible])
+    }, [width, height, children, context, canvasProps])
 
     useIsomorphicLayoutEffect(() => {
       return () => {
@@ -123,30 +109,22 @@ export const Canvas = React.forwardRef<View, Props>(
     }, [])
 
     return (
-      <IOScrollView>
-        <InView
-          {...viewProps}
-          {...bind}
-          ref={forwardedRef}
-          onLayout={onLayout}
-          style={{ flex: 1, ...style }}
-          onChange={(visible) => include && setVisible(visible)}>
-          {width > 0 && (
-            <GLView
-              nativeRef_EXPERIMENTAL={(ref: any) => {
-                if (nativeRef_EXPERIMENTAL && !nativeRef_EXPERIMENTAL.current) {
-                  nativeRef_EXPERIMENTAL.current = ref
-                }
-              }}
-              onContextCreate={async (gl) => {
-                await onContextCreate?.(gl)
-                setContext(gl)
-              }}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-        </InView>
-      </IOScrollView>
+      <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+        {width > 0 && (
+          <GLView
+            nativeRef_EXPERIMENTAL={(ref: any) => {
+              if (nativeRef_EXPERIMENTAL && !nativeRef_EXPERIMENTAL.current) {
+                nativeRef_EXPERIMENTAL.current = ref
+              }
+            }}
+            onContextCreate={async (gl) => {
+              await onContextCreate?.(gl)
+              setContext(gl)
+            }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+      </View>
     )
   },
 )
