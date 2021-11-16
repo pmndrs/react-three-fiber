@@ -29,6 +29,7 @@
   "main": "dist/react-three-fiber.cjs.js",
   "module": "dist/react-three-fiber.esm.js",
   "types": "dist/react-three-fiber.cjs.d.ts",
+  "react-native": "native/dist/react-three-fiber-native.cjs.js",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
