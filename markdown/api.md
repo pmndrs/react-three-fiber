@@ -54,7 +54,6 @@ The canvas stretches to 100% of the next relative/absolute parent-container. Mak
   orthographic = false          // Creates an orthographic camera if true
   dpr = undefined               // Pixel-ratio, use window.devicePixelRatio, or automatic: [min, max]
   frameloop = "always"          // Render-mode: always | demand | never
-  intersect = false             // Toggles rendering when the canvas leaves/enters the viewport.
   onCreated                     // Callback when vdom is ready
   onPointerMissed />            // Response for pointer clicks that have missed a target
 ```
