@@ -78,7 +78,7 @@ A default _shadowMap_ if Canvas.shadowMap is true: `type: PCFSoftShadowMap`
 
 A default _scene_ (into which all the JSX is rendered) and a _raycaster_
 
-A _wrapping container_ with a [resize observer](https://github.com/react-spring/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }` (consider polyfills for [Safari support](recipes.md#safari-support))
+A _wrapping container_ with a [resize observer](https://github.com/pmndrs/react-use-measure): `scroll: true, debounce: { scroll: 50, resize: 0 }` (consider polyfills for [Safari support](recipes.md#safari-support))
 
 The colorspace will be set to sRGB (unless `linear` is true), all colors and textures will be [auto-converted](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs). Unless `flat` is true it will set up THREE.ACESFilmicToneMapping for slightly more contrast.
 
@@ -571,7 +571,7 @@ import {
 
 #### Consuming context from a foreign provider
 
-At the moment React context [can not be readily used between two renderers](https://github.com/react-spring/react-three-fiber/issues/43), this is due to a problem within React. If react-dom opens up a provider, you will not be able to consume it within `<Canvas>`. If managing state (like Redux) is your problem, then [zustand](https://github.com/react-spring/zustand) is likely the best solution, otherwise you can solve it by forwarding the context object that you are trying to access:
+At the moment React context [can not be readily used between two renderers](https://github.com/pmndrs/react-three-fiber/issues/43), this is due to a problem within React. If react-dom opens up a provider, you will not be able to consume it within `<Canvas>`. If managing state (like Redux) is your problem, then [zustand](https://github.com/pmndrs/zustand) is likely the best solution, otherwise you can solve it by forwarding the context object that you are trying to access:
 
 ```jsx
 function App() {
