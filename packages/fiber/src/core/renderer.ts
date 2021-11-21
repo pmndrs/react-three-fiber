@@ -218,7 +218,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         )
           targetProp.copy(value)
         // If nothing else fits, just set the single value, ignore undefined
-        // https://github.com/react-spring/react-three-fiber/issues/274
+        // https://github.com/pmndrs/react-three-fiber/issues/274
         else if (value !== undefined) {
           const isColor = targetProp instanceof THREE.Color
           // Allow setting array scalars
@@ -228,14 +228,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           // Otherwise just set ...
           else targetProp.set(value)
           // Auto-convert sRGB colors, for now ...
-          // https://github.com/react-spring/react-three-fiber/issues/344
+          // https://github.com/pmndrs/react-three-fiber/issues/344
           if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
         }
         // Else, just overwrite the value
       } else {
         currentInstance[key] = value
         // Auto-convert sRGB textures, for now ...
-        // https://github.com/react-spring/react-three-fiber/issues/344
+        // https://github.com/pmndrs/react-three-fiber/issues/344
         if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
           currentInstance[key].encoding = THREE.sRGBEncoding
       }
