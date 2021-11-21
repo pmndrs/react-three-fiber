@@ -69,7 +69,7 @@ function Signal({ active }) {
   return <mesh ref={ref} />
 ```
 
-#### ✅ Or [react-spring](https://github.com/react-spring/react-spring), which animates outside of React
+#### ✅ Or [react-spring](https://github.com/pmndrs/react-spring), which animates outside of React
 
 ```jsx
 import { a, useSpring } from 'react-spring/three'
@@ -95,14 +95,14 @@ const x = useSelector((state) => state.x)
 return <mesh position-x={x} />
 ```
 
-#### ✅ Fetch state directly, for instance using [zustand](https://github.com/react-spring/zustand)
+#### ✅ Fetch state directly, for instance using [zustand](https://github.com/pmndrs/zustand)
 
 ```jsx
 useFrame(() => (ref.current.position.x = api.getState().x))
 return <mesh ref={ref} />
 ```
 
-#### ✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes) the component
+#### ✅ Or, subscribe to your state [in a way that doesn't re-render](https://github.com/pmndrs/zustand#transient-updates-for-often-occuring-state-changes) the component
 
 ```jsx
 const ref = useRef()

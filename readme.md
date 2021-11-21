@@ -139,7 +139,7 @@ Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
 You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
-2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/react-spring/react-three-fiber#what-does-it-look-like).
+2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll through our [Api](/markdown/api.md) to see what the various settings and hooks do.
 
@@ -154,15 +154,15 @@ Some reading material:
 
 # Ecosystem
 
-- [`@react-three/gltfjsx`](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
-- [`@react-three/drei`](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
-- [`@react-three/postprocessing`](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
-- [`@react-three/flex`](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
-- [`@react-three/xr`](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
-- [`@react-three/cannon`](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
-- [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
-- [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
-- [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
+- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
+- [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
+- [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
+- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics based hooks
+- [`zustand`](https://github.com/pmndrs/zustand) &ndash; state management
+- [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
+- [`react-use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 
 # How to contribute
