@@ -9,7 +9,6 @@ import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createPointerEvents as events, getEventPriority } from './events'
-import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 
 const roots = new Map<Element, Root>()
@@ -206,7 +205,6 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
-  Canvas,
   act,
   roots as _roots,
 }

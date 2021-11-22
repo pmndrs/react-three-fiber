@@ -99,7 +99,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       const object = props.object as Instance
       instance = prepare<Instance>(object, { root, primitive: true })
     } else {
-      const target = catalogue[name] || (THREE as any)[name]
+      const target = catalogue[name]
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 

@@ -1,10 +1,11 @@
 import * as React from 'react'
+import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
 import pick from 'lodash-es/pick'
 import omit from 'lodash-es/omit'
-import { render, unmountComponentAtNode, RenderProps } from './index'
+import { extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -63,10 +64,12 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, events, ...props },
-  forwardedRef,
-) {
+export function Canvas({ children, fallback, resize, style, events, ...props }: Props) {
+  // Create a known catalogue of Threejs-native elements
+  // This will include the entire THREE namespace by default, users can extend
+  // their own elements by using the createRoot API instead
+  extend(THREE)
+
   const canvasProps = pick(props, CANVAS_PROPS)
   const divProps = omit(props, CANVAS_PROPS)
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
@@ -102,9 +105,9 @@ export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function Canvas
       ref={containerRef}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       {...divProps}>
-      <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
+      <canvas ref={canvasRef} style={{ display: 'block' }}>
         {fallback}
       </canvas>
     </div>
   )
-})
+}
