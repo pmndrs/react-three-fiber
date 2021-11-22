@@ -9,7 +9,6 @@ import { Renderer, isRenderer, createStore, StoreProps, context, RootState, Size
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
 import { createTouchEvents as events, getEventPriority } from './events'
-import { Canvas } from './Canvas'
 import { EventManager } from '../core/events'
 import { View, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext } from 'expo-gl'
@@ -225,7 +224,6 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
-  Canvas,
   act,
   roots as _roots,
 }

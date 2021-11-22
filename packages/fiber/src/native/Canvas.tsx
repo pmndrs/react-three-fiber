@@ -1,10 +1,11 @@
 import * as React from 'react'
+import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import pick from 'lodash-es/pick'
 import omit from 'lodash-es/omit'
-import { GLContext, render, unmountComponentAtNode, RenderProps } from './index'
+import { GLContext, extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -66,8 +67,13 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export const Canvas = React.forwardRef<View, Props>(
+export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
   ({ children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, ...props }, forwardedRef) => {
+    // Create a known catalogue of Threejs-native elements
+    // This will include the entire THREE namespace by default, users can extend
+    // their own elements by using the createRoot API instead
+    extend(THREE)
+
     const canvasProps = pick(props, CANVAS_PROPS)
     const viewProps = omit(props, CANVAS_PROPS)
     const [context, setContext] = React.useState<GLContext | null>(null)

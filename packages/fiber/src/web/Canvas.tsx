@@ -64,7 +64,10 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
-export function Canvas({ children, fallback, resize, style, events, ...props }: Props) {
+export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
+  { children, fallback, resize, style, events, ...props },
+  forwardedRef,
+) {
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
@@ -105,9 +108,9 @@ export function Canvas({ children, fallback, resize, style, events, ...props }: 
       ref={containerRef}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       {...divProps}>
-      <canvas ref={canvasRef} style={{ display: 'block' }}>
+      <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
         {fallback}
       </canvas>
     </div>
   )
-}
+})
