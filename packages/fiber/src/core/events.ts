@@ -1,13 +1,13 @@
 import * as THREE from 'three'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
-import type { InternalState, RootState } from './store'
+import type { RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export interface IntesectionEvent<TSourceEvent> extends Intersection {
+export interface IntersectionEvent<TSourceEvent> extends Intersection {
   intersections: Intersection[]
   stopped: boolean
   unprojectedPoint: THREE.Vector3
@@ -22,7 +22,7 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
+export type ThreeEvent<TEvent> = TEvent & IntersectionEvent<TEvent>
 export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
 
 export type Events = {
