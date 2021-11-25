@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 7.0.19
+
+### Patch Changes
+
+- 7aa2eab: fix: remove zustand subcribe selector
+
+## 7.0.18
+
+### Patch Changes
+
+- 6780f58: fix unmount pointer capture
+
 ## 7.0.17
 
 ### Patch Changes
