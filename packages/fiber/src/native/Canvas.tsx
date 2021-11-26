@@ -34,7 +34,6 @@ const CANVAS_PROPS = [
   'flat',
   'orthographic',
   'frameloop',
-  // 'dpr',
   'performance',
   'clock',
   'raycaster',
@@ -43,13 +42,8 @@ const CANVAS_PROPS = [
   'onCreated',
 ]
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect in the browser.
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
-
 function Block({ set }: Omit<UnblockProps, 'children'>) {
-  useIsomorphicLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
   }, [])
@@ -72,13 +66,14 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
-    extend(THREE)
+    React.useMemo(() => extend(THREE), [])
+
+    const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
+    const [context, setContext] = React.useState<GLContext | null>(null)
+    const [bind, setBind] = React.useState()
 
     const canvasProps = pick(props, CANVAS_PROPS)
     const viewProps = omit(props, CANVAS_PROPS)
-    const [context, setContext] = React.useState<GLContext | null>(null)
-    const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
-    const [bind, setBind] = React.useState()
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
@@ -93,7 +88,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [])
 
     // Execute JSX in the reconciler as a layout-effect
-    useIsomorphicLayoutEffect(() => {
+    React.useLayoutEffect(() => {
       if (width > 0 && height > 0 && context) {
         const store = render(
           <ErrorBoundary set={setError}>
@@ -108,10 +103,9 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       }
     }, [width, height, children, context, canvasProps])
 
-    useIsomorphicLayoutEffect(() => {
-      return () => {
-        if (context) unmountComponentAtNode(context)
-      }
+    React.useEffect(() => {
+      const container = context
+      return () => void (container && unmountComponentAtNode(container))
     }, [])
 
     return (

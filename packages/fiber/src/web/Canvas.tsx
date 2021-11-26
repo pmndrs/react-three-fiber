@@ -40,13 +40,8 @@ const CANVAS_PROPS = [
   'onCreated',
 ]
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect in the browser.
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
-
 function Block({ set }: Omit<UnblockProps, 'children'>) {
-  useIsomorphicLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
   }, [])
@@ -71,12 +66,13 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
-  extend(THREE)
+  React.useMemo(() => extend(THREE), [])
+
+  const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const canvasRef = React.useRef<HTMLCanvasElement>(null!)
 
   const canvasProps = pick(props, CANVAS_PROPS)
   const divProps = omit(props, CANVAS_PROPS)
-  const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
-  const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -86,7 +82,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   if (error) throw error
 
   // Execute JSX in the reconciler as a layout-effect
-  useIsomorphicLayoutEffect(() => {
+  React.useLayoutEffect(() => {
     if (width > 0 && height > 0) {
       render(
         <ErrorBoundary set={setError}>
