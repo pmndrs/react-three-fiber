@@ -338,6 +338,7 @@ export function createEvents(store: UseStore<RootState>) {
       const { onPointerMissed, internal } = store.getState()
 
       prepareRay(event)
+      internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'

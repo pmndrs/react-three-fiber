@@ -5420,10 +5420,10 @@ react-three-fiber@0.0.0-deprecated:
   resolved "https://registry.yarnpkg.com/react-three-fiber/-/react-three-fiber-0.0.0-deprecated.tgz#c737242487d824cf9520307308b7e4c4071a278f"
   integrity sha512-EblIqTAsIpkYeM8bZtC4lcpTE0A2zCEGipFB52RgcQq/q+0oryrk7Sxt+sqhIjUu6xMNEVywV8dr74lz5yWO6A==
 
-react-use-measure@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.1.0.tgz#ac543303ce6c31f45d1a13af1b8e969263b2de9f"
-  integrity sha512-XAeKOYeND6m0A07ntj4GO0H6wRUMUQ/HF53pmFcbInuB2zSw36Xw+TjhR81JuBXywBkOwSGq0MMqO5fq8BvFAQ==
+react-use-measure@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.1.1.tgz#5824537f4ee01c9469c45d5f7a8446177c6cc4ba"
+  integrity sha512-nocZhN26cproIiIduswYpV5y5lQpSQS1y/4KuvUCjSKmw7ZWIS/+g3aFnX3WdBkyuGUtTLif3UTqnLLhbDoQig==
   dependencies:
     debounce "^1.2.1"
 
