@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.19
+
+### Patch Changes
+
+- 54cb0fd: update react-use-measure, allow it to use the offsetSize
+- Updated dependencies [54cb0fd]
+  - @react-three/fiber@7.0.20
+
 ## 7.0.18
 
 ### Patch Changes
