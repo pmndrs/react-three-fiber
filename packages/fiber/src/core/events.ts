@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
-import type { RootState } from './store'
+import type { InternalState, RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D

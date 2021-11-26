@@ -80,7 +80,6 @@ export type LineLoopProps = Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
 // export type LineProps = Object3DNode<THREE.Line, typeof THREE.Line>
 export type PointsProps = Object3DNode<THREE.Points, typeof THREE.Points>
 export type GroupProps = Object3DNode<THREE.Group, typeof THREE.Group>
-export type ImmediateRenderObjectProps = Object3DNode<THREE.ImmediateRenderObject, typeof THREE.ImmediateRenderObject>
 
 export type CameraProps = Object3DNode<THREE.Camera, typeof THREE.Camera>
 export type PerspectiveCameraProps = Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera>
@@ -270,7 +269,6 @@ declare global {
       // line: LineProps
       points: PointsProps
       group: GroupProps
-      immediateRenderObject: ImmediateRenderObjectProps
 
       // cameras
       camera: CameraProps
