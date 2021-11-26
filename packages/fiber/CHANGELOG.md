@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.21
+
+### Patch Changes
+
+- 65e4147: up usemeasure, add last event to internals"
+
 ## 7.0.20
 
 ### Patch Changes

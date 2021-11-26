@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.20
+
+### Patch Changes
+
+- 65e4147: up usemeasure, add last event to internals"
+- Updated dependencies [65e4147]
+  - @react-three/fiber@7.0.21
+
 ## 7.0.19
 
 ### Patch Changes
