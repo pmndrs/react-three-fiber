@@ -2731,7 +2731,7 @@ dataloader@^2.0.0:
   resolved "https://registry.yarnpkg.com/dataloader/-/dataloader-2.0.0.tgz#41eaf123db115987e21ca93c005cd7753c55fe6f"
   integrity sha512-YzhyDAwA4TaQIhM5go+vCLmU0UikghC/t9DTQYZR2M/UvZ1MdOhPezSDZcjj9uqQJOMqjLcpWtyW2iNINdlatQ==
 
-debounce@^1.2.0:
+debounce@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/debounce/-/debounce-1.2.1.tgz#38881d8f4166a5c5848020c11827b834bcb3e0a5"
   integrity sha512-XRRe6Glud4rd/ZGQfiV1ruXSfbvfJedlV9Y6zOlP+2K04vBYiJEte6stfFkCP03aMnY5tsipamumUjL14fofug==
@@ -5556,12 +5556,12 @@ react-reconciler@^0.27.0-beta-96ca8d915-20211115:
     object-assign "^4.1.1"
     scheduler "0.21.0-beta-96ca8d915-20211115"
 
-react-use-measure@^2.0.4:
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.0.4.tgz#cb675b36eaeaf3681b94d5f5e08b2a1e081fedc9"
-  integrity sha512-7K2HIGaPMl3Q9ZQiEVjen3tRXl4UDda8LiTPy/QxP8dP2rl5gPBhf7mMH6MVjjRNv3loU7sNzey/ycPNnHVTxQ==
+react-use-measure@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.1.0.tgz#ac543303ce6c31f45d1a13af1b8e969263b2de9f"
+  integrity sha512-XAeKOYeND6m0A07ntj4GO0H6wRUMUQ/HF53pmFcbInuB2zSw36Xw+TjhR81JuBXywBkOwSGq0MMqO5fq8BvFAQ==
   dependencies:
-    debounce "^1.2.0"
+    debounce "^1.2.1"
 
 react@^18.0.0-beta-96ca8d915-20211115:
   version "18.0.0-beta-96ca8d915-20211115"
