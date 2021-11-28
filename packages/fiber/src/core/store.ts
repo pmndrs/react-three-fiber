@@ -55,7 +55,7 @@ export type InternalState = {
   lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
-  hovered: Map<string, DomEvent>
+  hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
@@ -90,7 +90,7 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
-  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMissed?: (event: MouseEvent) => void
 
   events: EventManager<any>
   internal: InternalState
@@ -119,7 +119,7 @@ export type StoreProps = {
           ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
           ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
       >
-  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMissed?: (event: MouseEvent) => void
 }
 
 export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
@@ -287,7 +287,7 @@ const createStore = (
         lastEvent: React.createRef(),
 
         interaction: [],
-        hovered: new Map<string, DomEvent>(),
+        hovered: new Map<string, ThreeEvent<DomEvent>>(),
         subscribers: [],
         initialClick: [0, 0],
         initialHits: [],

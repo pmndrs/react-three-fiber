@@ -7,7 +7,7 @@ export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export interface IntesectionEvent<TSourceEvent> extends Intersection {
+export interface IntersectionEvent<TSourceEvent> extends Intersection {
   intersections: Intersection[]
   stopped: boolean
   unprojectedPoint: THREE.Vector3
@@ -25,8 +25,8 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = TEvent & IntesectionEvent<TEvent>
-export type DomEvent = ThreeEvent<PointerEvent | MouseEvent | WheelEvent>
+export type ThreeEvent<TEvent> = IntersectionEvent<TEvent>
+export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
 export type Events = {
   onClick: EventListener
@@ -52,7 +52,7 @@ export type EventHandlers = {
   onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void
   onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void
   onPointerMove?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMissed?: (event: MouseEvent) => void
   onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
 }
@@ -193,7 +193,7 @@ export function createEvents(store: UseStore<RootState>) {
     intersections: Intersection[],
     event: DomEvent,
     delta: number,
-    callback: (event: DomEvent) => void,
+    callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
     const { raycaster, mouse, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
@@ -283,7 +283,7 @@ export function createEvents(store: UseStore<RootState>) {
         }
 
         // Call subscribers
-        callback(raycastEvent as DomEvent)
+        callback(raycastEvent)
         // Event bubbling may be interrupted by stopPropagation
         if (localState.stopped === true) break
       }
@@ -361,14 +361,13 @@ export function createEvents(store: UseStore<RootState>) {
       if (isClickEvent && !hits.length) {
         if (delta <= 2) {
           pointerMissed(event, internal.interaction)
-          if (onPointerMissed) onPointerMissed(event as ThreeEvent<PointerEvent>)
+          if (onPointerMissed) onPointerMissed(event)
         }
       }
-
       // Take care of unhover
       if (isPointerMove) cancelPointer(hits)
 
-      handleIntersects(hits, event, delta, (data: DomEvent) => {
+      handleIntersects(hits, event, delta, (data: ThreeEvent<DomEvent>) => {
         const eventObject = data.eventObject
         const instance = (eventObject as unknown as Instance).__r3f
         const handlers = instance?.handlers
@@ -419,7 +418,7 @@ export function createEvents(store: UseStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      (object as unknown as Instance).__r3f?.handlers.onPointerMissed?.(event as ThreeEvent<PointerEvent>),
+      (object as unknown as Instance).__r3f?.handlers.onPointerMissed?.(event),
     )
   }
 
