@@ -52,7 +52,7 @@ export type InternalState = {
   priority: number
   frames: number
   lastProps: StoreProps
-  lastEvent: React.MutableRefObject<DomEvent>
+  lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
   hovered: Map<string, DomEvent>
@@ -284,7 +284,7 @@ const createStore = (
         priority: 0,
         frames: 0,
         lastProps: props,
-        lastEvent: React.createRef(null),
+        lastEvent: React.createRef(),
 
         interaction: [],
         hovered: new Map<string, DomEvent>(),
