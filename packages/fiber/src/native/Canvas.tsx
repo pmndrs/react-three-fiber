@@ -101,12 +101,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         const state = store.getState()
         setBind(state.events.connected.getEventHandlers())
       }
-    }, [width, height, children, context, canvasProps])
+    }, [width, height, children, context, canvasProps, events])
 
     React.useEffect(() => {
-      const container = context
-      return () => void (container && unmountComponentAtNode(container))
-    }, [])
+      return () => unmountComponentAtNode(context!)
+    }, [context])
 
     return (
       <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
