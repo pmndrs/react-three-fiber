@@ -86,6 +86,8 @@ function render<TCanvas extends Element>(
     if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
     // Check size
     if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
+    // Check frameloop
+    if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
 
     // For some props we want to reset the entire root
 

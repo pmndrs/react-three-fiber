@@ -433,6 +433,7 @@ const {
   advance, // Advance one tick, given that frameloop === 'never', (timestamp: number, runGlobalEffects?: boolean) => void
   setSize, // Resize the canvs, (width: number, height: number) => void
   setDpr, // Reset the pixel-ratio, (dpr: Dpr) => void
+  setFrameloop, // Change frameloop, (frameloop: 'always' | 'demand' | 'never') => void
   onPointerMissed, // (event: ThreeEvent<PointerEvent>) => void
   events: {
     connected, // Event-target (for instance a dom node), TTarget | boolean
