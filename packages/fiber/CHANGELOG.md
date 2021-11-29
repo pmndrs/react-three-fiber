@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 7.0.21
+
+### Patch Changes
+
+- 65e4147: up usemeasure, add last event to internals"
+
+## 7.0.20
+
+### Patch Changes
+
+- 54cb0fd: update react-use-measure, allow it to use the offsetSize
+
 ## 7.0.19
 
 ### Patch Changes

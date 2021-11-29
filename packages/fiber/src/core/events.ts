@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
-import type { InternalState, RootState } from './store'
+import type { RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -14,7 +14,10 @@ export interface IntesectionEvent<TSourceEvent> extends Intersection {
   ray: THREE.Ray
   camera: Camera
   stopPropagation: () => void
-  sourceEvent: TSourceEvent // deprecated
+  /**
+   * @deprecated in favour of nativeEvent. Please use that instead.
+   */
+  sourceEvent: TSourceEvent
   nativeEvent: TSourceEvent
   delta: number
   spaceX: number
@@ -338,6 +341,7 @@ export function createEvents(store: UseStore<RootState>) {
       const { onPointerMissed, internal } = store.getState()
 
       prepareRay(event)
+      internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
