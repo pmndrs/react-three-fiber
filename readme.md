@@ -160,6 +160,7 @@ Some reading material:
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
 - [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics based hooks
+- [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; state management
 - [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
 - [`react-use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
