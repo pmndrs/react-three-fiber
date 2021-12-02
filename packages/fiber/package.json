@@ -12,7 +12,8 @@
   "author": "Paul Henschel (https://github.com/drcmda)",
   "license": "MIT",
   "maintainers": [
-    "Josh Ellis (https://github.com/joshuaellis)"
+    "Josh Ellis (https://github.com/joshuaellis)",
+    "Cody Bennett (https://github.com/codyjasonbennett)"
   ],
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
