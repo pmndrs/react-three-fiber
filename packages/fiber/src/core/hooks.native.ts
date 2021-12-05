@@ -4,8 +4,8 @@ import { Asset } from 'expo-asset'
 import { readAsStringAsync } from 'expo-file-system'
 import { decode } from 'base64-arraybuffer'
 import { suspend, preload, clear } from 'suspend-react'
-import { buildGraph, ObjectMap, is } from '../core/utils'
-import { Extensions, LoaderResult, BranchingReturn, useStore, useThree, useFrame, useGraph } from '../core/hooks'
+import { buildGraph, ObjectMap, is } from './utils'
+import { Extensions, LoaderResult, BranchingReturn, useStore, useThree, useFrame, useGraph } from './hooks'
 
 /**
  * Generates an asset based on input type.

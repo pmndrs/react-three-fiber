@@ -209,7 +209,7 @@ reconciler.injectIntoDevTools({
   version: '18.0.0',
 })
 
-export * from './hooks'
+export * from '../core/hooks'
 export {
   context,
   render,
