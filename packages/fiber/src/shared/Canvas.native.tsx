@@ -5,7 +5,7 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import pick from 'lodash-es/pick'
 import omit from 'lodash-es/omit'
-import { GLContext, extend, render, unmountComponentAtNode, RenderProps } from './index'
+import { extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -67,19 +67,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     React.useMemo(() => extend(THREE), [])
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
-    const [canvas] = React.useState<HTMLCanvasElement>(
-      () =>
-        ({
-          width: context.drawingBufferWidth,
-          height: context.drawingBufferHeight,
-          style: {},
-          addEventListener: (() => {}) as any,
-          removeEventListener: (() => {}) as any,
-          clientHeight: context.drawingBufferHeight,
-          getContext: (() => context) as any,
-        } as HTMLCanvasElement),
-    )
-    const [context, setContext] = React.useState<GLContext | null>(null)
+    const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState()
 
     const canvasProps = pick(props, CANVAS_PROPS)
@@ -97,21 +85,34 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       setSize({ width, height })
     }, [])
 
+    const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
+      const canvasShim = {
+        width: context.drawingBufferWidth,
+        height: context.drawingBufferHeight,
+        style: {},
+        addEventListener: (() => {}) as any,
+        removeEventListener: (() => {}) as any,
+        clientHeight: context.drawingBufferHeight,
+        getContext: (() => context) as any,
+      } as HTMLCanvasElement
+
+      setCanvas(canvasShim)
+    }, [])
+
     // Execute JSX in the reconciler as a layout-effect
     React.useLayoutEffect(() => {
-      if (width > 0 && height > 0 && context) {
+      if (width > 0 && height > 0 && canvas) {
         // Overwrite onCreated to apply RN bindings
         const onCreated = (state: RootState) => {
           // Bind events after creation
           setBind(state.events.connected.getEventHandlers())
 
           // Bind render to RN bridge
-          if ((context as ExpoWebGLRenderingContext).endFrameEXP) {
-            const renderFrame = state.gl.render.bind(state.gl)
-            state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-              renderFrame(scene, camera)
-              ;(context as ExpoWebGLRenderingContext).endFrameEXP()
-            }
+          const context = state.gl.getContext() as ExpoWebGLRenderingContext
+          const renderFrame = state.gl.render.bind(state.gl)
+          state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+            renderFrame(scene, camera)
+            context.endFrameEXP()
           }
 
           return canvasProps?.onCreated?.(state)
@@ -133,15 +134,15 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
           },
         )
       }
-    }, [width, height, children, context, canvas, canvasProps, events])
+    }, [width, height, children, canvas, canvasProps, events])
 
     React.useEffect(() => {
-      return () => unmountComponentAtNode(canvas)
+      return () => unmountComponentAtNode(canvas!)
     }, [canvas])
 
     return (
       <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && <GLView onContextCreate={setContext} style={StyleSheet.absoluteFill} />}
+        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )
   },
