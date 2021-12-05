@@ -76,6 +76,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
           addEventListener: (() => {}) as any,
           removeEventListener: (() => {}) as any,
           clientHeight: context.drawingBufferHeight,
+          getContext: (() => context) as any,
         } as HTMLCanvasElement),
     )
     const [context, setContext] = React.useState<GLContext | null>(null)
@@ -126,8 +127,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
             // expo-gl can only render at native dpr/resolution
             // https://github.com/expo/expo-three/issues/39
             dpr: PixelRatio.get(),
-            // Pass our canvas shim and custom context
-            gl: { ...canvasProps?.gl, canvas, context },
             size: { width, height },
             events: events || createTouchEvents,
             onCreated,
