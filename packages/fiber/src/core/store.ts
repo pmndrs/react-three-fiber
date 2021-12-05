@@ -4,6 +4,7 @@ import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
 import { prepare, Instance, InstanceProps } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
+import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -61,6 +62,7 @@ export type InternalState = {
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
+  xr: { connect: () => void; disconnect: () => void }
   subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
 }
 
@@ -73,7 +75,6 @@ export type RootState = {
   mouse: THREE.Vector2
   clock: THREE.Clock
 
-  vr: boolean
   linear: boolean
   flat: boolean
   frameloop: 'always' | 'demand' | 'never'
@@ -103,7 +104,6 @@ export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
-  vr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   flat?: boolean
@@ -125,10 +125,6 @@ export type StoreProps = {
 
 export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
 
-export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-}
-
 const context = React.createContext<UseStore<RootState>>(null!)
 
 const createStore = (
@@ -143,10 +139,9 @@ const createStore = (
     shadows = false,
     linear = false,
     flat = false,
-    vr = false,
     orthographic = false,
     frameloop = 'always',
-    dpr = 1,
+    dpr = [1, 2],
     performance,
     clock = new THREE.Clock(),
     raycaster: raycastOptions,
@@ -220,6 +215,38 @@ const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
+    // Handle frame behavior in WebXR
+    const handleXRFrame = (timestamp: number) => {
+      const state = get()
+      if (state.frameloop === 'never') return
+
+      advance(timestamp, true)
+    }
+
+    // Toggle render switching on session
+    const handleSessionChange = () => {
+      gl.xr.enabled = gl.xr.isPresenting
+      gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+
+      // If exiting session, request frame
+      if (!gl.xr.isPresenting) invalidate(get())
+    }
+
+    // WebXR session manager
+    const xr = {
+      connect() {
+        gl.xr.addEventListener('sessionstart', handleSessionChange)
+        gl.xr.addEventListener('sessionend', handleSessionChange)
+      },
+      disconnect() {
+        gl.xr.removeEventListener('sessionstart', handleSessionChange)
+        gl.xr.removeEventListener('sessionend', handleSessionChange)
+      },
+    }
+
+    // Subscribe to WebXR session events
+    if (gl.xr) xr.connect()
+
     return {
       gl,
 
@@ -237,7 +264,6 @@ const createStore = (
       clock,
       mouse: new THREE.Vector2(),
 
-      vr,
       frameloop,
       onPointerMissed,
 
@@ -296,6 +322,7 @@ const createStore = (
         initialHits: [],
         capturedMap: new Map(),
 
+        xr,
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
           set(({ internal }) => ({
             internal: {
