@@ -48,7 +48,7 @@ export function getEventPriority() {
   }
 }
 
-export function createTouchEvents(store: UseStore<RootState>): EventManager<View> {
+export function createPointerEvents(store: UseStore<RootState>): EventManager<View> {
   const { handlePointer } = createEvents(store)
 
   const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {
@@ -77,8 +77,9 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
       events.disconnect?.()
 
       const manager = new Pressability(events?.handlers)
-
       set((state) => ({ events: { ...state.events, connected: manager } }))
+
+      return manager
     },
     disconnect: () => {
       const { set, events } = store.getState()

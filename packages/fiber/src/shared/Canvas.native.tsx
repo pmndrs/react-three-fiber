@@ -6,7 +6,7 @@ import { UseStore } from 'zustand'
 import pick from 'lodash-es/pick'
 import omit from 'lodash-es/omit'
 import { extend, render, unmountComponentAtNode, RenderProps } from './index'
-import { createTouchEvents } from './events'
+import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
@@ -105,7 +105,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         const onCreated = (state: RootState) => {
           // Bind events after creation
-          setBind(state.events.connected.getEventHandlers())
+          const manager = state.events.connect?.(canvas) as any
+          setBind(manager?.getEventHandlers())
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext
@@ -129,7 +130,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
             // https://github.com/expo/expo-three/issues/39
             dpr: PixelRatio.get(),
             size: { width, height },
-            events: events || createTouchEvents,
+            events: events || createPointerEvents,
             onCreated,
           },
         )
