@@ -108,6 +108,9 @@ Finds all test instances with the provided type. If no test instances are found,
 
 ```ts
 testInstance.findByProps(props)
+
+// Also accepts RegExp matchers
+testInstance.findByProps({ [prop]: /^match/i })
 ```
 
 Find a single test instance with the provided props. If there is not exactly one test instance with the provided props it will throw an error.
@@ -116,6 +119,9 @@ Find a single test instance with the provided props. If there is not exactly one
 
 ```ts
 testInstance.findAllByProps(props)
+
+// Also accepts RegExp matchers
+testInstance.findAllByProps({ [prop]: /^matches/i })
 ```
 
 Finds all test instances with the provided props. If no test instances are found, it will return an empty array.
