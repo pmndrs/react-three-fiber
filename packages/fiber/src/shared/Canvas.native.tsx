@@ -10,7 +10,7 @@ import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<View>, 'size' | 'events'>, ViewProps {
+export interface Props extends Omit<RenderProps<View>, 'dpr' | 'size' | 'events'>, ViewProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
@@ -68,7 +68,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
-    const [bind, setBind] = React.useState()
+    const [bind, setBind] = React.useState<any>()
 
     const canvasProps = pick(props, CANVAS_PROPS)
     const viewProps = omit(props, CANVAS_PROPS)
@@ -105,8 +105,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         const onCreated = (state: RootState) => {
           // Bind events after creation
-          const manager = state.events.connect?.(canvas) as any
-          setBind(manager?.getEventHandlers())
+          setBind(state.events.handlers)
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext

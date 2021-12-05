@@ -76,10 +76,10 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<Vi
       const { set, events } = store.getState()
       events.disconnect?.()
 
-      const manager = new Pressability(events?.handlers)
-      set((state) => ({ events: { ...state.events, connected: manager } }))
+      const connected = new Pressability(events?.handlers)
+      const handlers = connected.getEventHandlers()
 
-      return manager
+      set((state) => ({ events: { ...state.events, connected, handlers } }))
     },
     disconnect: () => {
       const { set, events } = store.getState()
