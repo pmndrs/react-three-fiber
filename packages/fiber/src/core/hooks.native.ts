@@ -5,7 +5,17 @@ import { readAsStringAsync } from 'expo-file-system'
 import { decode } from 'base64-arraybuffer'
 import { suspend, preload, clear } from 'suspend-react'
 import { buildGraph, ObjectMap, is } from './utils'
-import { Extensions, LoaderResult, BranchingReturn, useStore, useThree, useFrame, useGraph } from './hooks'
+import {
+  Extensions,
+  LoaderResult,
+  BranchingReturn,
+  useStore,
+  useThree,
+  useFrame,
+  useGraph,
+  // explicit file extension so it doesn't loop
+  // @ts-ignore
+} from './hooks.ts'
 
 /**
  * Generates an asset based on input type.
