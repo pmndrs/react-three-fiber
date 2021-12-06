@@ -1,13 +1,10 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import * as THREE from 'three'
 import { render, RenderResult } from '@testing-library/react'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { extend, Canvas, act } from '../../src'
-
-extend(THREE)
+import { Canvas, act } from '../../src'
 
 // @ts-ignore
 HTMLCanvasElement.prototype.getContext = function () {

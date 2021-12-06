@@ -1,14 +1,11 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import * as THREE from 'three'
-import { extend } from '@react-three/fiber'
-
-extend(THREE)
+import { BoxBufferGeometry, Material, Mesh } from 'three'
 
 import ReactThreeTestRenderer from '../index'
 
-type ExampleComp = THREE.Mesh<THREE.BoxBufferGeometry, THREE.Material>
+type ExampleComp = Mesh<BoxBufferGeometry, Material>
 
 describe('ReactThreeTestRenderer Core', () => {
   it('renders a simple component', async () => {
@@ -283,8 +280,8 @@ describe('ReactThreeTestRenderer Core', () => {
   })
 
   it('gives a ref to native components', async () => {
-    const log: THREE.Mesh[] = []
-    await ReactThreeTestRenderer.create(<mesh ref={(r) => log.push(r as THREE.Mesh)} />)
+    const log: Mesh[] = []
+    await ReactThreeTestRenderer.create(<mesh ref={(r) => log.push(r as Mesh)} />)
     expect(log.length).toEqual(1)
 
     expect(log[0].type).toEqual('Mesh')

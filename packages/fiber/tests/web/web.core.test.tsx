@@ -1,7 +1,23 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import * as THREE from 'three'
+import {
+  Color,
+  Group,
+  Camera,
+  Scene,
+  Mesh,
+  BoxBufferGeometry,
+  MeshBasicMaterial,
+  MeshStandardMaterial,
+  PCFSoftShadowMap,
+  ACESFilmicToneMapping,
+  sRGBEncoding,
+  Object3D,
+  WebGLRenderer,
+  LinearEncoding,
+  NoToneMapping,
+} from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
@@ -10,25 +26,23 @@ import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
 
-extend(THREE)
-
-type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
+type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
 /* This class is used for one of the tests */
-class HasObject3dMember extends THREE.Object3D {
-  public attachment?: THREE.Object3D = undefined
+class HasObject3dMember extends Object3D {
+  public attachment?: Object3D = undefined
 }
 
 /* This class is used for one of the tests */
-class HasObject3dMethods extends THREE.Object3D {
-  attachedObj3d?: THREE.Object3D
-  detachedObj3d?: THREE.Object3D
+class HasObject3dMethods extends Object3D {
+  attachedObj3d?: Object3D
+  detachedObj3d?: Object3D
 
-  customAttach(obj3d: THREE.Object3D) {
+  customAttach(obj3d: Object3D) {
     this.attachedObj3d = obj3d
   }
 
-  detach(obj3d: THREE.Object3D) {
+  detach(obj3d: Object3D) {
     this.detachedObj3d = obj3d
   }
 }
@@ -76,7 +90,7 @@ describe('web core', () => {
         </mesh>
       )
     }
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(<Mesh />, canvas).getState().scene
     })
@@ -84,14 +98,14 @@ describe('web core', () => {
     expect(scene.children[0].type).toEqual('Mesh')
     expect((scene.children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
     )
   })
 
   it('renders an empty scene', async () => {
     const Empty = () => null
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(<Empty />, canvas).getState().scene
     })
@@ -121,7 +135,7 @@ describe('web core', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(<Parent />, canvas).getState().scene
     })
@@ -133,7 +147,7 @@ describe('web core', () => {
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
     expect(
-      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type,
+      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type,
     ).toEqual('MeshBasicMaterial')
   })
 
@@ -168,7 +182,7 @@ describe('web core', () => {
       return null
     }
 
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(<Component />, canvas).getState().scene
     })
@@ -178,7 +192,7 @@ describe('web core', () => {
   })
 
   it('updates types & names', async () => {
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(
         <mesh>
@@ -190,12 +204,10 @@ describe('web core', () => {
       ).getState().scene
     })
 
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
     )
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>).material.name).toEqual(
-      'basicMat',
-    )
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.name).toEqual('basicMat')
 
     await act(async () => {
       scene = render(
@@ -208,16 +220,16 @@ describe('web core', () => {
       ).getState().scene
     })
 
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
       'MeshStandardMaterial',
     )
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.name).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.name).toEqual(
       'standardMat',
     )
   })
 
   it('attaches Object3D children that use attach', async () => {
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(
         <hasObject3dMember>
@@ -235,7 +247,7 @@ describe('web core', () => {
   })
 
   it('can attach a Scene', async () => {
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(
         <hasObject3dMember>
@@ -254,7 +266,7 @@ describe('web core', () => {
 
   describe('attaches Object3D children that use attachFns', () => {
     it('attachFns as strings', async () => {
-      let scene: THREE.Scene = null!
+      let scene: Scene = null!
       await act(async () => {
         scene = render(
           <hasObject3dMethods>
@@ -282,19 +294,19 @@ describe('web core', () => {
     })
 
     it('attachFns as functions', async () => {
-      let scene: THREE.Scene = null!
-      let attachedMesh: THREE.Mesh = null!
-      let detachedMesh: THREE.Mesh = null!
+      let scene: Scene = null!
+      let attachedMesh: Mesh = null!
+      let detachedMesh: Mesh = null!
 
       await act(async () => {
         scene = render(
           <hasObject3dMethods>
             <mesh
               attachFns={[
-                (mesh: THREE.Mesh) => {
+                (mesh: Mesh) => {
                   attachedMesh = mesh
                 },
-                (mesh: THREE.Mesh) => {
+                (mesh: Mesh) => {
                   detachedMesh = mesh
                 },
               ]}
@@ -344,7 +356,7 @@ describe('web core', () => {
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
-    let camera: THREE.Camera = null!
+    let camera: Camera = null!
 
     await act(async () => {
       camera = render(<group />, canvas, { orthographic: true, camera: { position: [0, 0, 5] } }).getState().camera
@@ -399,7 +411,7 @@ describe('web core', () => {
       })
     })
 
-    expect(state.getState().gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
+    expect(state.getState().gl.shadowMap.type).toBe(PCFSoftShadowMap)
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
@@ -410,8 +422,8 @@ describe('web core', () => {
       })
     })
 
-    expect(state.getState().gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
-    expect(state.getState().gl.outputEncoding).toBe(THREE.sRGBEncoding)
+    expect(state.getState().gl.toneMapping).toBe(ACESFilmicToneMapping)
+    expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
   })
 
   it('should toggle render mode in xr', async () => {
@@ -450,7 +462,7 @@ describe('web core', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends THREE.Color {
+    class MyColor extends Color {
       constructor(col: number) {
         super(col)
       }
@@ -478,7 +490,7 @@ describe('web core', () => {
   })
 
   it('should set a renderer via gl callback', async () => {
-    class Renderer extends THREE.WebGLRenderer {}
+    class Renderer extends WebGLRenderer {}
 
     let gl: Renderer = null!
     await act(async () => {
@@ -494,12 +506,12 @@ describe('web core', () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
       gl = render(<group />, canvas, {
-        gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping },
+        gl: { outputEncoding: LinearEncoding, toneMapping: NoToneMapping },
       }).getState().gl
     })
 
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
-    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    expect(gl.outputEncoding).toBe(LinearEncoding)
+    expect(gl.toneMapping).toBe(NoToneMapping)
 
     await act(async () => {
       gl = render(<group />, canvas, {
@@ -508,7 +520,7 @@ describe('web core', () => {
       }).getState().gl
     })
 
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
-    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    expect(gl.outputEncoding).toBe(LinearEncoding)
+    expect(gl.toneMapping).toBe(NoToneMapping)
   })
 })

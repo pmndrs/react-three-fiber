@@ -1,7 +1,7 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
-import * as THREE from 'three'
+import { Group, Camera, Scene, Raycaster, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
@@ -9,9 +9,7 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
-import { extend, render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
-
-extend(THREE)
+import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
 
 const resolvers = []
 
@@ -37,9 +35,9 @@ describe('web hooks', () => {
 
   it('can handle useThree hook', async () => {
     let result = {} as {
-      camera: THREE.Camera
-      scene: THREE.Scene
-      raycaster: THREE.Raycaster
+      camera: Camera
+      scene: Scene
+      raycaster: Raycaster
       size: { width: number; height: number }
     }
 
@@ -65,9 +63,9 @@ describe('web hooks', () => {
       render(<Component />, canvas)
     })
 
-    expect(result.camera instanceof THREE.Camera).toBeTruthy()
-    expect(result.scene instanceof THREE.Scene).toBeTruthy()
-    expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
+    expect(result.camera instanceof Camera).toBeTruthy()
+    expect(result.scene instanceof Scene).toBeTruthy()
+    expect(result.raycaster instanceof Raycaster).toBeTruthy()
     expect(result.size).toEqual({ height: 0, width: 0 })
   })
 
@@ -89,7 +87,7 @@ describe('web hooks', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => (scene = render(<Component />, canvas, { frameloop: 'never' }).getState().scene))
     advance(Date.now())
     expect(scene.children[0].position.x).toEqual(1)
@@ -97,7 +95,7 @@ describe('web hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
-    const MockMesh = new THREE.Mesh()
+    const MockMesh = new Mesh()
     // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((url, onLoad) => {
@@ -111,7 +109,7 @@ describe('web hooks', () => {
       return <primitive object={model} />
     }
 
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(
         <React.Suspense fallback={null}>
@@ -127,16 +125,16 @@ describe('web hooks', () => {
   })
 
   it('can handle useLoader hook with an array of strings', async () => {
-    const MockMesh = new THREE.Mesh()
+    const MockMesh = new Mesh()
 
-    const MockGroup = new THREE.Group()
-    const mat1 = new THREE.MeshBasicMaterial()
+    const MockGroup = new Group()
+    const mat1 = new MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new Mesh(new BoxBufferGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
-    const mat2 = new THREE.MeshBasicMaterial()
+    const mat2 = new MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new Mesh(new BoxBufferGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
@@ -168,7 +166,7 @@ describe('web hooks', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
+    let scene: Scene = null!
     await act(async () => {
       scene = render(
         <React.Suspense fallback={null}>
@@ -184,23 +182,23 @@ describe('web hooks', () => {
   })
 
   it('can handle useGraph hook', async () => {
-    const group = new THREE.Group()
-    const mat1 = new THREE.MeshBasicMaterial()
+    const group = new Group()
+    const mat1 = new MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new Mesh(new BoxBufferGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
-    const mat2 = new THREE.MeshBasicMaterial()
+    const mat2 = new MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new Mesh(new BoxBufferGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
-    const subGroup = new THREE.Group()
-    const mat3 = new THREE.MeshBasicMaterial()
+    const subGroup = new Group()
+    const mat3 = new MeshBasicMaterial()
     mat3.name = 'Mat 3'
-    const mesh3 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat3)
+    const mesh3 = new Mesh(new BoxBufferGeometry(2, 2), mat3)
     mesh3.name = 'Mesh 3'
-    const mat4 = new THREE.MeshBasicMaterial()
+    const mat4 = new MeshBasicMaterial()
     mat4.name = 'Mat 4'
-    const mesh4 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat4)
+    const mesh4 = new Mesh(new BoxBufferGeometry(2, 2), mat4)
     mesh4.name = 'Mesh 4'
 
     subGroup.add(mesh3, mesh4)

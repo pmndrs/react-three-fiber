@@ -3,15 +3,13 @@ jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 import * as React from 'react'
 // @ts-ignore
 import * as Stdlib from 'three-stdlib'
-import * as THREE from 'three'
+import { Mesh, Camera, Scene, Raycaster } from 'three'
 
-import { extend, useFrame, useLoader, useThree } from '@react-three/fiber'
+import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
 import ReactThreeTestRenderer from '../index'
-
-extend(THREE)
 
 const resolvers = []
 
@@ -22,9 +20,9 @@ const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void
 describe('ReactThreeTestRenderer Hooks', () => {
   it('can handle useThree hook', async () => {
     let result = {} as {
-      camera: THREE.Camera
-      scene: THREE.Scene
-      raycaster: THREE.Raycaster
+      camera: Camera
+      scene: Scene
+      raycaster: Raycaster
       size: { width: number; height: number }
     }
 
@@ -43,14 +41,14 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     await ReactThreeTestRenderer.create(<Component />)
 
-    expect(result.camera instanceof THREE.Camera).toBeTruthy()
-    expect(result.scene instanceof THREE.Scene).toBeTruthy()
-    expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
+    expect(result.camera instanceof Camera).toBeTruthy()
+    expect(result.scene instanceof Scene).toBeTruthy()
+    expect(result.raycaster instanceof Raycaster).toBeTruthy()
     expect(result.size).toEqual({ height: 0, width: 0 })
   })
 
   it('can handle useLoader hook', async () => {
-    const MockMesh = new THREE.Mesh()
+    const MockMesh = new Mesh()
     // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((url, onLoad) => {
@@ -78,7 +76,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useFrame hook using test renderers advanceFrames function', async () => {
     const Component = () => {
-      const meshRef = React.useRef<THREE.Mesh>(null!)
+      const meshRef = React.useRef<Mesh>(null!)
       useFrame((_, delta) => {
         meshRef.current.rotation.x += delta
       })
