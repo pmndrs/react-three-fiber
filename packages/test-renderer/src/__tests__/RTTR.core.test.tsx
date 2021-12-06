@@ -137,7 +137,7 @@ describe('ReactThreeTestRenderer Core', () => {
     const renderer = await ReactThreeTestRenderer.create(<Component />)
 
     expect(renderer.scene.children[0].instance.position.x).toEqual(7)
-    expect(renders).toBe(12)
+    expect(renders).toBe(6)
   })
 
   it('updates types & names', async () => {
@@ -291,16 +291,7 @@ describe('ReactThreeTestRenderer Core', () => {
     await renderer.update(<Log key="bar" name="Bar" />)
     await renderer.unmount()
 
-    expect(log).toEqual([
-      'render Foo',
-      'render Foo',
-      'mount Foo',
-      'render Bar',
-      'render Bar',
-      'unmount Foo',
-      'mount Bar',
-      'unmount Bar',
-    ])
+    expect(log).toEqual(['render Foo', 'mount Foo', 'render Bar', 'unmount Foo', 'mount Bar', 'unmount Bar'])
   })
 
   it('gives a ref to native components', async () => {

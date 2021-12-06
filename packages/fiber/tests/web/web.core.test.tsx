@@ -188,7 +188,7 @@ describe('web core', () => {
     })
 
     expect(scene.children[0].position.x).toEqual(7)
-    expect(renders).toBe(12)
+    expect(renders).toBe(6)
   })
 
   it('updates types & names', async () => {
@@ -352,7 +352,7 @@ describe('web core', () => {
       unmountComponentAtNode(canvas)
     })
 
-    expect(log).toEqual(['render Foo', 'render Foo', 'mount Foo', 'unmount Foo'])
+    expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
