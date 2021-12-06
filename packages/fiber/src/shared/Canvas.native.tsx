@@ -3,8 +3,7 @@ import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
-import pick from 'lodash-es/pick'
-import omit from 'lodash-es/omit'
+import { pick, omit } from '../core/utils'
 import { extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
@@ -23,10 +22,9 @@ type UnblockProps = {
   children: React.ReactNode
 }
 
-const CANVAS_PROPS = [
+const CANVAS_PROPS: Array<keyof Props> = [
   'gl',
   'events',
-  'size',
   'shadows',
   'linear',
   'flat',
@@ -70,8 +68,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
 
-    const canvasProps = pick(props, CANVAS_PROPS)
-    const viewProps = omit(props, CANVAS_PROPS)
+    const canvasProps = pick<Props>(props, CANVAS_PROPS)
+    const viewProps = omit<Props>(props, CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
