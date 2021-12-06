@@ -1,8 +1,13 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
+import * as THREE from 'three'
+
+import { extend } from '@react-three/fiber'
 
 import ReactThreeTestRenderer from '../index'
+
+extend(THREE)
 
 describe('ReactThreeTestRenderer instance methods', () => {
   const ExampleComponent = () => {
