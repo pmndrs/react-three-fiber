@@ -45,6 +45,12 @@ export function filterKeys<TObj extends { [key: string]: any }, TOmit extends bo
   }, {} as any)
 }
 
+export const pick = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
+  filterKeys<Partial<TObj>, false, keyof TObj>(obj, false, ...keys)
+
+export const omit = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
+  filterKeys<Partial<TObj>, true, keyof TObj>(obj, true, ...keys)
+
 // A collection of compare functions
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',

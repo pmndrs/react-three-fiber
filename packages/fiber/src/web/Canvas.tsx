@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
-import { filterKeys } from '../core/utils'
+import { pick, omit } from '../core/utils'
 import { extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
@@ -69,8 +69,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
 
-  const canvasProps = filterKeys<Partial<Props>, false, keyof Props>(props, false, ...CANVAS_PROPS)
-  const divProps = filterKeys<Partial<Props>, true, keyof Props>(props, true, ...CANVAS_PROPS)
+  const canvasProps = pick<Props>(props, CANVAS_PROPS)
+  const divProps = omit<Props>(props, CANVAS_PROPS)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
