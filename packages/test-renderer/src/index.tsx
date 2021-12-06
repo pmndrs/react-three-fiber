@@ -1,6 +1,8 @@
 import * as React from 'react'
+import * as THREE from 'three'
 
 import {
+  extend,
   _roots as mockRoots,
   render,
   reconciler,
@@ -19,6 +21,9 @@ import { createEventFirer } from './fireEvent'
 import type { MockScene } from './types/internal'
 import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
+
+// Extend catalogue for render API in tests.
+extend(THREE)
 
 const act = _act as unknown as Act
 
