@@ -13,5 +13,6 @@ export type {
   RootState,
 } from './core/store'
 export type { ThreeEvent, Events, EventManager } from './core/events'
+export type { ObjectMap } from './core/utils'
 export * from './web/Canvas'
 export * from './web'
