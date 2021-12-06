@@ -26,6 +26,30 @@ describe('ReactThreeTestRenderer Core', () => {
     expect(renderer.scene.children[0].type).toEqual('Mesh')
   })
 
+  it('renders a simple component with useTransition', async () => {
+    const Mesh = () => {
+      const [name, setName] = React.useState<string>()
+
+      React.useLayoutEffect(() => {
+        ;(React as any).startTransition(() => void setName('mesh'))
+      })
+
+      return (
+        <mesh name={name}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+    const renderer = await ReactThreeTestRenderer.create(
+      <React.Suspense fallback={null}>
+        <Mesh />
+      </React.Suspense>,
+    )
+
+    expect(renderer.scene.children[0].props.name).toEqual('mesh')
+  })
+
   it('renders an empty scene', async () => {
     const Empty = () => {
       return null
