@@ -468,14 +468,16 @@ describe('web core', () => {
       }
     }
 
-    expect(() => {
-      act(async () => {
+    const testExtend = async () => {
+      await act(async () => {
         extend({ MyColor })
 
         // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
         render(<myColor args={[0x0000ff]} />, canvas)
       })
-    }).not.toThrow()
+    }
+
+    expect(() => testExtend()).not.toThrow()
   })
 
   it('should set renderer props via gl prop', async () => {
