@@ -14,10 +14,17 @@ export const expectOne = <TItem>(items: TItem[], msg: string) => {
 
 export const matchProps = (props: Obj, filter: Obj) => {
   for (const key in filter) {
-    if (props[key] !== filter[key]) {
+    // Check for matches if filter contains regex matchers
+    const isRegex = filter[key] instanceof RegExp
+    const shouldMatch = isRegex && typeof props[key] === 'string'
+    const match = shouldMatch && filter[key].test(props[key])
+
+    // Bail if props aren't identical and filters found no match
+    if (props[key] !== filter[key] && !match) {
       return false
     }
   }
+
   return true
 }
 
