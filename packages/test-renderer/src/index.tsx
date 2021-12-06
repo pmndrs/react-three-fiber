@@ -20,6 +20,8 @@ import type { MockScene } from './types/internal'
 import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
+const act = _act as unknown as Act
+
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas({
     width: options?.width,
@@ -38,9 +40,9 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
   let scene: MockScene = null!
 
-  await reconciler.act(async () => {
-    scene = (render(element, _fiber, { frameloop: 'never', ...options, events: undefined }).getState()
-      .scene as unknown) as MockScene
+  await act(async () => {
+    scene = render(element, _fiber, { frameloop: 'never', ...options, events: undefined }).getState()
+      .scene as unknown as MockScene
   })
 
   const _store = mockRoots.get(_fiber)!.store
@@ -48,7 +50,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   return {
     scene: wrapFiber(scene),
     unmount: async () => {
-      await reconciler.act(async () => {
+      await act(async () => {
         unmount(_fiber)
       })
     },
@@ -78,7 +80,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     update: async (newElement: React.ReactNode) => {
       const fiber = mockRoots.get(_fiber)?.fiber
       if (fiber) {
-        await reconciler.act(async () => {
+        await act(async () => {
           reconciler.updateContainer(newElement, fiber, null, () => null)
         })
       }
@@ -90,7 +92,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     toGraph: () => {
       return toGraph(scene)
     },
-    fireEvent: createEventFirer(reconciler.act, _store),
+    fireEvent: createEventFirer(act, _store),
     advanceFrames: async (frames: number, delta: number | number[] = 1) => {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
@@ -113,8 +115,6 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     },
   }
 }
-
-const act = (_act as unknown) as Act
 
 export * as ReactThreeTest from './types'
 export default { create, act }
