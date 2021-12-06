@@ -179,7 +179,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-const act = reconciler.act
+const act = (React as any).unstable_act
 function createPortal(children: React.ReactNode, container: THREE.Object3D): React.ReactNode {
   return reconciler.createPortal(children, container, null, null)
 }
