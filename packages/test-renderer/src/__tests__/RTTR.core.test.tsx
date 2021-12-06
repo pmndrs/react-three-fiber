@@ -8,7 +8,7 @@ import ReactThreeTestRenderer from '../index'
 type ExampleComp = Mesh<BoxBufferGeometry, Material>
 
 describe('ReactThreeTestRenderer Core', () => {
-  it('renders a simple component in default blocking mode', async () => {
+  it('renders a simple component', async () => {
     const Mesh = () => {
       return (
         <mesh>
@@ -21,44 +21,6 @@ describe('ReactThreeTestRenderer Core', () => {
       <React.Suspense fallback={null}>
         <Mesh />
       </React.Suspense>,
-    )
-
-    expect(renderer.scene.children[0].type).toEqual('Mesh')
-  })
-
-  it('renders a simple component in legacy mode', async () => {
-    const Mesh = () => {
-      return (
-        <mesh>
-          <boxGeometry args={[2, 2]} />
-          <meshBasicMaterial />
-        </mesh>
-      )
-    }
-    const renderer = await ReactThreeTestRenderer.create(
-      <React.Suspense fallback={null}>
-        <Mesh />
-      </React.Suspense>,
-      { mode: 'legacy' },
-    )
-
-    expect(renderer.scene.children[0].type).toEqual('Mesh')
-  })
-
-  it('renders a simple component in concurrent mode', async () => {
-    const Mesh = () => {
-      return (
-        <mesh>
-          <boxGeometry args={[2, 2]} />
-          <meshBasicMaterial />
-        </mesh>
-      )
-    }
-    const renderer = await ReactThreeTestRenderer.create(
-      <React.Suspense fallback={null}>
-        <Mesh />
-      </React.Suspense>,
-      { mode: 'concurrent' },
     )
 
     expect(renderer.scene.children[0].type).toEqual('Mesh')
@@ -356,24 +318,7 @@ describe('ReactThreeTestRenderer Core', () => {
     }
 
     const vertices = new Float32Array([
-      -1.0,
-      -1.0,
-      1.0,
-      1.0,
-      -1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      1.0,
-      -1.0,
-      1.0,
-      1.0,
-      -1.0,
-      -1.0,
-      1.0,
+      -1.0, -1.0, 1.0, 1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0,
     ])
 
     const Mesh = () => {
