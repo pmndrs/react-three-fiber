@@ -94,7 +94,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
         },
       )
     }
-  }, [width, height, children, canvasProps])
+  }, [width, height, children, canvasProps, events])
 
   React.useEffect(() => {
     const container = canvasRef.current

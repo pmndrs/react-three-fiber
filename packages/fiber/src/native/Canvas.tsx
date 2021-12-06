@@ -69,6 +69,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [context, setContext] = React.useState<GLContext | null>(null)
     const [bind, setBind] = React.useState()
+
     const canvasProps = pick<Props>(props, CANVAS_PROPS)
     const viewProps = omit<Props>(props, CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)

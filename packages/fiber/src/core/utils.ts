@@ -45,9 +45,15 @@ export function filterKeys<TObj extends { [key: string]: any }, TOmit extends bo
   }, {} as any)
 }
 
+/**
+ * Clones an object and cherry-picks keys.
+ */
 export const pick = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
   filterKeys<Partial<TObj>, false, keyof TObj>(obj, false, ...keys)
 
+/**
+ * Clones an object and prunes or omits keys.
+ */
 export const omit = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
   filterKeys<Partial<TObj>, true, keyof TObj>(obj, true, ...keys)
 
