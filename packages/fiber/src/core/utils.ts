@@ -25,10 +25,15 @@ export function calculateDpr(dpr: Dpr) {
 
 // Prunes or picks keys from an object
 export function filterKeys<O extends { [key: string]: any }, K extends string[]>(obj: O, prune = false, ...keys: K) {
-  // @ts-ignore
-  const keysToSelect = new Set(keys.flat())
-  // @ts-ignore
-  return Object.fromEntries(Object.entries(obj).filter(([key]) => keysToSelect.has(key) === !prune))
+  const keysToSelect = new Set(keys)
+
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    if (keysToSelect.has(key) === !prune) {
+      acc[key] = value
+    }
+
+    return acc
+  }, {} as { [key: string]: any })
 }
 
 // A collection of compare functions
