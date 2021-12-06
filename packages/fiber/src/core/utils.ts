@@ -23,6 +23,17 @@ export function calculateDpr(dpr: Dpr) {
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
+export const filterKeys = (obj: any, prune = false, ...keys: string[]) => {
+  // @ts-ignore
+  const keysToSelect = new Set(keys.flat())
+  // @ts-ignore
+  return Object.fromEntries(Object.entries(obj).filter(([key]) => keysToSelect.has(key) === !prune))
+}
+
+export const pick = (obj: any, keys: string[]) => filterKeys(obj, false, ...keys)
+
+export const omit = (obj: any, keys: string[]) => filterKeys(obj, true, ...keys)
+
 // A collection of compare functions
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',
