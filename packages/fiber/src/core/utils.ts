@@ -23,17 +23,26 @@ export function calculateDpr(dpr: Dpr) {
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
-// Prunes or picks keys from an object
-export function filterKeys<O extends { [key: string]: any }, K extends string[]>(obj: O, prune = false, ...keys: K) {
+/**
+ * Picks or omits keys from an object
+ * `omit` will filter out keys, and otherwise cherry-pick them.
+ */
+export function filterKeys<TObj extends { [key: string]: any }, TOmit extends boolean, TKey extends keyof TObj>(
+  obj: TObj,
+  omit: TOmit,
+  ...keys: TKey[]
+): TOmit extends true ? Omit<TObj, TKey> : Pick<TObj, TKey> {
   const keysToSelect = new Set(keys)
 
   return Object.entries(obj).reduce((acc, [key, value]) => {
-    if (keysToSelect.has(key) === !prune) {
+    const shouldInclude = !omit
+
+    if (keysToSelect.has(key as TKey) === shouldInclude) {
       acc[key] = value
     }
 
     return acc
-  }, {} as { [key: string]: any })
+  }, {} as any)
 }
 
 // A collection of compare functions

@@ -21,10 +21,9 @@ export interface Props
 type SetBlock = false | Promise<null> | null
 type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
-const CANVAS_PROPS = [
+const CANVAS_PROPS: Array<keyof Props> = [
   'gl',
   'events',
-  'size',
   'shadows',
   'linear',
   'flat',
@@ -70,8 +69,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
 
-  const canvasProps = filterKeys<Partial<Props>, typeof CANVAS_PROPS>(props, false, ...CANVAS_PROPS)
-  const divProps = filterKeys<Partial<Props>, typeof CANVAS_PROPS>(props, true, ...CANVAS_PROPS)
+  const canvasProps = filterKeys<Partial<Props>, false, keyof Props>(props, false, ...CANVAS_PROPS)
+  const divProps = filterKeys<Partial<Props>, true, keyof Props>(props, true, ...CANVAS_PROPS)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 

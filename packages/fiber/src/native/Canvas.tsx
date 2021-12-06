@@ -24,10 +24,9 @@ type UnblockProps = {
   children: React.ReactNode
 }
 
-const CANVAS_PROPS = [
+const CANVAS_PROPS: Array<keyof Props> = [
   'gl',
   'events',
-  'size',
   'shadows',
   'linear',
   'flat',
@@ -70,8 +69,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [context, setContext] = React.useState<GLContext | null>(null)
     const [bind, setBind] = React.useState()
-    const canvasProps = filterKeys<Partial<Props>, typeof CANVAS_PROPS>(props, false, ...CANVAS_PROPS)
-    const viewProps = filterKeys<Partial<Props>, typeof CANVAS_PROPS>(props, true, ...CANVAS_PROPS)
+    const canvasProps = filterKeys<Partial<Props>, false, keyof Props>(props, false, ...CANVAS_PROPS)
+    const viewProps = filterKeys<Partial<Props>, true, keyof Props>(props, true, ...CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
