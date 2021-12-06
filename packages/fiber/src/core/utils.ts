@@ -23,6 +23,40 @@ export function calculateDpr(dpr: Dpr) {
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
+/**
+ * Picks or omits keys from an object
+ * `omit` will filter out keys, and otherwise cherry-pick them.
+ */
+export function filterKeys<TObj extends { [key: string]: any }, TOmit extends boolean, TKey extends keyof TObj>(
+  obj: TObj,
+  omit: TOmit,
+  ...keys: TKey[]
+): TOmit extends true ? Omit<TObj, TKey> : Pick<TObj, TKey> {
+  const keysToSelect = new Set(keys)
+
+  return Object.entries(obj).reduce((acc, [key, value]) => {
+    const shouldInclude = !omit
+
+    if (keysToSelect.has(key as TKey) === shouldInclude) {
+      acc[key] = value
+    }
+
+    return acc
+  }, {} as any)
+}
+
+/**
+ * Clones an object and cherry-picks keys.
+ */
+export const pick = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
+  filterKeys<Partial<TObj>, false, keyof TObj>(obj, false, ...keys)
+
+/**
+ * Clones an object and prunes or omits keys.
+ */
+export const omit = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
+  filterKeys<Partial<TObj>, true, keyof TObj>(obj, true, ...keys)
+
 // A collection of compare functions
 export const is = {
   obj: (a: any) => a === Object(a) && !is.arr(a) && typeof a !== 'function',

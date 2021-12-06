@@ -4,7 +4,7 @@ import * as React from 'react'
 import { render, RenderResult } from '@testing-library/react'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { Canvas, act, useThree } from '../../src/web'
+import { Canvas, act } from '../../src'
 
 // @ts-ignore
 HTMLCanvasElement.prototype.getContext = function () {

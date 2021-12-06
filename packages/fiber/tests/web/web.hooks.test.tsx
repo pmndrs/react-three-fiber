@@ -9,7 +9,7 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
-import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src/web/index'
+import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
 
 const resolvers = []
 

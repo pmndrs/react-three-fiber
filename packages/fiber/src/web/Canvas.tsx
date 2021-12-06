@@ -3,8 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
-import pick from 'lodash-es/pick'
-import omit from 'lodash-es/omit'
+import { pick, omit } from '../core/utils'
 import { extend, render, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
@@ -22,10 +21,9 @@ export interface Props
 type SetBlock = false | Promise<null> | null
 type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
-const CANVAS_PROPS = [
+const CANVAS_PROPS: Array<keyof Props> = [
   'gl',
   'events',
-  'size',
   'shadows',
   'linear',
   'flat',
@@ -71,8 +69,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
 
-  const canvasProps = pick(props, CANVAS_PROPS)
-  const divProps = omit(props, CANVAS_PROPS)
+  const canvasProps = pick<Props>(props, CANVAS_PROPS)
+  const divProps = omit<Props>(props, CANVAS_PROPS)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -96,7 +94,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
         },
       )
     }
-  }, [width, height, children, canvasProps])
+  }, [width, height, children, canvasProps, events])
 
   React.useEffect(() => {
     const container = canvasRef.current
