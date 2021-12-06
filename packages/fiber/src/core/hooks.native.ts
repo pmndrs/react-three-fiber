@@ -87,7 +87,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
                   res(data)
                 },
                 onProgress,
-                (error) => reject(`Could not load ${url}: ${error.message}`),
+                (error: ErrorEvent) => reject(`Could not load ${url}: ${error.message}`),
               )
             }
 

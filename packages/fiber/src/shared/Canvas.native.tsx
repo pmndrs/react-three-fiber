@@ -9,7 +9,7 @@ import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<View>, 'dpr' | 'size' | 'events'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'dpr' | 'size' | 'events'>, ViewProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
