@@ -7,7 +7,7 @@
   "private": false,
   "main": "dist/test-renderer.cjs.js",
   "module": "dist/test-renderer.esm.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/test-renderer.d.ts",
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
   },
@@ -22,8 +22,7 @@
     ]
   },
   "scripts": {
-    "prebuild": "rimraf dist",
-    "build": "tsc"
+    "prebuild": "rimraf dist && tsc"
   },
   "peerDependencies": {
     "react": ">=17.0",

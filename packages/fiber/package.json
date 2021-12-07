@@ -29,7 +29,7 @@
   },
   "main": "dist/fiber.cjs.js",
   "module": "dist/fiber.esm.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/fiber.d.ts",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
@@ -37,8 +37,7 @@
     ]
   },
   "scripts": {
-    "prebuild": "rimraf dist",
-    "build": "tsc"
+    "prebuild": "rimraf dist && tsc"
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",

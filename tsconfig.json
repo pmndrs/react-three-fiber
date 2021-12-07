@@ -15,5 +15,6 @@
     "noImplicitThis": false,
     "baseUrl": "./"
   },
-  "include": ["packages/*/src/**/*"]
+  "include": ["packages/*/src/**/*"],
+  "exclude": ["packages/*/**/__tests__/*", "packages/*/__mocks__/*"]
 }

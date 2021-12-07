@@ -9,7 +9,7 @@ const config = require('./babel.config')
 const IMPORT_REGEX = /(require\(['"]|from ['"])\.+\/[^'"]+/g
 
 // Checks if file extension is a module
-const MODULE_REGEX = /\.(mjs|tsx|ts|jsx|js)$/
+const MODULE_REGEX = /(\.d)?\.(mjs|tsx|ts|jsx|js)$/
 
 /**
  * Returns true if filename ends with mjs, js/jsx, ts/jsx, etc.
@@ -70,7 +70,10 @@ async function transform(filePath, type) {
   // Get file name, transform platform file extensions
   const [name, ...exts] = path.basename(filePath).split('.')
   const [_, platform] = exts.reverse()
-  const ext = platform ? `${platform}.js` : 'js'
+
+  // Respect platform ext, exclude .d.ts suffix
+  const hasPlatform = platform && platform !== 'd'
+  const ext = hasPlatform ? `${platform}.js` : 'js'
 
   // Write output
   const targetDir = path.dirname(filePath).replace('src', 'dist')
@@ -81,11 +84,19 @@ async function transform(filePath, type) {
  * Transforms a lib with esm and cjs output.
  */
 async function transformLib(lib) {
-  const entryDir = path.resolve(process.cwd(), 'packages', lib, 'src')
-  const paths = await recursiveReaddir(entryDir)
+  const srcDir = path.resolve(process.cwd(), 'packages', lib, 'src')
+  const paths = await recursiveReaddir(srcDir)
 
+  // Clean & build TS
+  execSync(`npm --prefix packages/${lib} run prebuild`)
+
+  // Create entrypoint
+  const entryPoint = path.resolve(srcDir, `../dist/${lib}.d.ts`)
+  fs.writeFileSync(entryPoint, "export * from './index'")
+
+  // Transform
   await Promise.all(
-    paths.map(async (filePath) => {
+    [entryPoint, ...paths].map(async (filePath) => {
       // Don't transform non-modules
       if (!isModule(filePath)) return
       // Don't transform tests
@@ -112,12 +123,5 @@ async function transformLib(lib) {
   })
 
   // Build & transform libs
-  await Promise.all(
-    libs.map(async (lib) => {
-      execSync(`npm --prefix packages/${lib} run build`)
-
-      const dir = path.resolve(process.cwd(), 'packages', lib)
-      await transformLib(dir)
-    }),
-  )
+  await Promise.all(libs.map(transformLib))
 })()
