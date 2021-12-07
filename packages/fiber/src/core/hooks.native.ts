@@ -13,8 +13,8 @@ import {
   useThree,
   useFrame,
   useGraph,
-  // Import with file extension so bundlers don't rewrite to itself
-  // @ts-ignore
+  // Ensure import is not redirected to this file
+  // @ts-expect-error
 } from './hooks.ts'
 
 /**

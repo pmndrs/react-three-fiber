@@ -109,19 +109,16 @@ async function transformLib(lib) {
   )
 }
 
-// Build libs
-;(async () => {
-  // Get list of packages
-  const packagesDir = path.resolve(process.cwd(), 'packages')
+// Get list of packages
+const packagesDir = path.resolve(process.cwd(), 'packages')
 
-  // Filter to libs
-  const libs = fs.readdirSync(packagesDir).filter((lib) => {
-    const packagePath = path.resolve(packagesDir, lib, 'package.json')
-    const hasPackage = fs.existsSync(packagePath)
+// Filter to libs
+const libs = fs.readdirSync(packagesDir).filter((lib) => {
+  const packagePath = path.resolve(packagesDir, lib, 'package.json')
+  const hasPackage = fs.existsSync(packagePath)
 
-    return hasPackage
-  })
+  return hasPackage
+})
 
-  // Build & transform libs
-  await Promise.all(libs.map(transformLib))
-})()
+// Build & transform libs
+Promise.all(libs.map(transformLib))
