@@ -14,7 +14,8 @@
   "preconstruct": {
     "packages": [
       "packages/*"
-    ]
+    ],
+    "distFilenameStrategy": "unscoped-package-name"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -23,9 +24,9 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "preconstruct dev",
-    "build": "preconstruct build",
-    "dev": "preconstruct dev",
+    "postinstall": "npm run dev",
+    "build": "node build",
+    "dev": "preconstruct dev && npm run build",
     "prepare": "husky install",
     "eslint": "eslint --fix src/**/*.{ts,tsx}",
     "test": "jest --coverage",
@@ -71,7 +72,9 @@
     "pretty-quick": "^3.1.1",
     "react": "^18.0.0-beta-96ca8d915-20211115",
     "react-dom": "^18.0.0-beta-96ca8d915-20211115",
+    "recursive-readdir": "^2.2.2",
     "regenerator-runtime": "^0.13.9",
+    "rimraf": "^3.0.2",
     "three": "^0.132.2",
     "three-stdlib": "^2.4.0",
     "ts-jest": "^27.0.5",

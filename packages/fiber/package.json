@@ -27,9 +27,9 @@
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
   },
-  "main": "dist/react-three-fiber.cjs.js",
-  "module": "dist/react-three-fiber.esm.js",
-  "types": "dist/react-three-fiber.cjs.d.ts",
+  "main": "dist/fiber.cjs.js",
+  "module": "dist/fiber.esm.js",
+  "types": "dist/index.d.ts",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
@@ -37,7 +37,8 @@
     ]
   },
   "scripts": {
-    "prebuild": "cp ../../readme.md readme.md"
+    "prebuild": "rimraf dist",
+    "build": "tsc"
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",

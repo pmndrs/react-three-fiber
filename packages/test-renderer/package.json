@@ -5,9 +5,9 @@
   "author": "Josh Ellis",
   "license": "MIT",
   "private": false,
-  "main": "dist/react-three-test-renderer.cjs.js",
-  "module": "dist/react-three-test-renderer.esm.js",
-  "types": "dist/react-three-test-renderer.cjs.d.ts",
+  "main": "dist/test-renderer.cjs.js",
+  "module": "dist/test-renderer.esm.js",
+  "types": "dist/index.d.ts",
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
   },
@@ -20,6 +20,10 @@
     "entrypoints": [
       "index.tsx"
     ]
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc"
   },
   "peerDependencies": {
     "react": ">=17.0",

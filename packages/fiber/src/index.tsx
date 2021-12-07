@@ -15,4 +15,4 @@ export type {
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { ObjectMap } from './core/utils'
 export * from './shared/Canvas'
-export * from './shared'
+export * from './shared/index'
