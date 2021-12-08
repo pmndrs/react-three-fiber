@@ -382,8 +382,19 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext: any) => parentHostContext,
     createTextInstance: () => {},
-    finalizeInitialChildren: () => false,
-    commitMount: () => {},
+    finalizeInitialChildren(instance: Instance) {
+      // https://github.com/facebook/react/issues/20271
+      // Returning true will trigger commitMount
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      return !!localState.handlers
+    },
+    commitMount(instance: Instance /*, type, props*/) {
+      // https://github.com/facebook/react/issues/20271
+      // This will make sure events are only added once to the central container
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      if (instance.raycast && localState.handlers && localState.eventCount)
+        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+    },
     shouldDeprioritizeSubtree: () => false,
     prepareForCommit: () => null,
     preparePortalMount: (containerInfo: any) => prepare(containerInfo),
