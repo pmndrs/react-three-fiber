@@ -243,7 +243,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       invalidateInstance(instance)
     })
 
-    if (rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+    if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
       // Pre-emptively remove the instance from the interaction manager
       const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
@@ -585,11 +585,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       return parentHostContext
     },
     createTextInstance() {},
-    finalizeInitialChildren() {
-      return false
+    finalizeInitialChildren(instance: Instance) {
+      // https://github.com/facebook/react/issues/20271
+      // Returning true will trigger commitMount
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      return !!localState.handlers
     },
-    commitMount() {
-      // noop
+    commitMount(instance: Instance /*, type, props*/) {
+      // https://github.com/facebook/react/issues/20271
+      // This will make sure events are only added once to the central container
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      if (instance.raycast && localState.handlers && localState.eventCount)
+        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
     },
     shouldDeprioritizeSubtree() {
       return false
