@@ -103,6 +103,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
 
+      // Throw if an object or literal was passed for args
+      if (!Array.isArray(args)) throw 'The args prop must be an array!'
+
       // Instanciate new object, link it to the root
       // Append memoized props with args so it's not forgotten
       instance = prepare(new target(...args), { root, memoizedProps: { args: args.length === 0 ? null : args } })
@@ -325,6 +328,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         // This is a data object, let's extract critical information about it
         const { args: argsNew = [], children: cN, ...restNew } = newProps
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
+
+        // Throw if an object or literal was passed for args
+        if (!Array.isArray(argsNew)) throw 'The args prop must be an array!'
+
         // If it has new props or arguments, then it needs to be re-instanciated
         if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
         // Create a diff-set, flag if there are any changes
