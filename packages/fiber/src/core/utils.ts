@@ -258,7 +258,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     return instance
   })
 
-  if (rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
     const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
