@@ -408,7 +408,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       } else if (child.attachObject) {
         delete parentInstance[child.attachObject[0]][child.attachObject[1]]
       } else if (child.attach && !is.fun(child.attach)) {
-        parentInstance[child.attach] = null
+        // Prefer to not unset meshes' material/geometry.
+        if (parentInstance.isMesh && child.attach === 'material') {
+          parentInstance.material = new THREE.MeshBasicMaterial()
+        } else if (parentInstance.isMesh && child.attach === 'geometry') {
+          parentInstance.geometry = new THREE.BufferGeometry()
+        } else {
+          parentInstance[child.attach] = null
+        }
       } else if (is.arr(child.attachFns)) {
         const [, detachFn] = child.attachFns as AttachFnsType
         if (is.str(detachFn) && is.fun(parentInstance[detachFn])) {
