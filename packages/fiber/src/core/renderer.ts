@@ -243,6 +243,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       invalidateInstance(instance)
     })
 
+    if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+      // Pre-emptively remove the instance from the interaction manager
+      const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+      if (index > -1) rootState.internal.interaction.splice(index, 1)
+      // Add the instance to the interaction manager only when it has handlers
+      if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+    }
+
     // Call the update lifecycle when it is being updated
     if (changes.length && instance.__r3f?.parent) updateInstance(instance)
     return instance
