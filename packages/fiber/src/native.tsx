@@ -14,5 +14,5 @@ export type {
 } from './core/store'
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { ObjectMap } from './core/utils'
-export * from './web/Canvas'
-export * from './web'
+export * from './native/Canvas'
+export * from './native/index'

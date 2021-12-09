@@ -21,7 +21,7 @@ import {
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
+import { render, act, unmountComponentAtNode, useFrame, extend } from '../../src/web/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
@@ -188,7 +188,7 @@ describe('web core', () => {
     })
 
     expect(scene.children[0].position.x).toEqual(7)
-    expect(renders).toBe(12)
+    expect(renders).toBe(6)
   })
 
   it('updates types & names', async () => {
@@ -352,7 +352,49 @@ describe('web core', () => {
       unmountComponentAtNode(canvas)
     })
 
-    expect(log).toEqual(['render Foo', 'render Foo', 'mount Foo', 'unmount Foo'])
+    expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
+  })
+
+  it('will mount/unmount event handlers correctly', async () => {
+    let state: RootState = null!
+    let mounted = false
+    let attachEvents = false
+
+    const EventfulComponent = () => (mounted ? <group onClick={attachEvents ? () => void 0 : undefined} /> : null)
+
+    // Test initial mount without events
+    mounted = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
+
+    // Test initial mount with events
+    attachEvents = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).not.toBe(0)
+
+    // Test events update
+    attachEvents = false
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
+
+    attachEvents = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).not.toBe(0)
+
+    // Test unmount with events
+    mounted = false
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
@@ -426,6 +468,41 @@ describe('web core', () => {
     expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
   })
 
+  it('should toggle render mode in xr', async () => {
+    let state: RootState = null!
+
+    await act(async () => {
+      state = render(<group />, canvas).getState()
+      state.gl.xr.isPresenting = true
+      state.gl.xr.dispatchEvent({ type: 'sessionstart' })
+    })
+
+    expect(state.gl.xr.enabled).toEqual(true)
+
+    await act(async () => {
+      state.gl.xr.isPresenting = false
+      state.gl.xr.dispatchEvent({ type: 'sessionend' })
+    })
+
+    expect(state.gl.xr.enabled).toEqual(false)
+  })
+
+  it('should respect frameloop="never" in xr', async () => {
+    let respected = true
+
+    await act(async () => {
+      const TestGroup = () => {
+        useFrame(() => (respected = false))
+        return <group />
+      }
+      const state = render(<TestGroup />, canvas, { frameloop: 'never' }).getState()
+      state.gl.xr.isPresenting = true
+      state.gl.xr.dispatchEvent({ type: 'sessionstart' })
+    })
+
+    expect(respected).toEqual(true)
+  })
+
   it('will render components that are extended', async () => {
     class MyColor extends Color {
       constructor(col: number) {
@@ -433,14 +510,16 @@ describe('web core', () => {
       }
     }
 
-    expect(() => {
-      act(async () => {
+    const testExtend = async () => {
+      await act(async () => {
         extend({ MyColor })
 
         // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
         render(<myColor args={[0x0000ff]} />, canvas)
       })
-    }).not.toThrow()
+    }
+
+    expect(() => testExtend()).not.toThrow()
   })
 
   it('should set renderer props via gl prop', async () => {
