@@ -1,7 +1,8 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
-import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
+import useMeasure from 'react-use-measure'
+import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
 import { extend, render, unmountComponentAtNode, RenderProps } from './index'
@@ -42,7 +43,7 @@ function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
-  }, [])
+  }, [set])
   return null
 }
 

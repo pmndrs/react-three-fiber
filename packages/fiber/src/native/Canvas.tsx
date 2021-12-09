@@ -44,7 +44,7 @@ function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
-  }, [])
+  }, [set])
   return null
 }
 

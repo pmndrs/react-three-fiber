@@ -27,7 +27,7 @@
     "build": "preconstruct build",
     "dev": "preconstruct dev",
     "prepare": "husky install",
-    "eslint": "eslint --fix src/**/*.{ts,tsx}",
+    "eslint": "eslint --fix packages/**/src/**/*.{ts,tsx}",
     "test": "jest --coverage",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",

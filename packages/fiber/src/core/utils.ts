@@ -139,8 +139,9 @@ export function diffProps(
   // Catch removed props, prepend them so they can be reset or removed
   if (remove) {
     const previousKeys = Object.keys(previous)
-    for (let i = 0; i < previousKeys.length; i++)
+    for (let i = 0; i < previousKeys.length; i++) {
       if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
+    }
   }
 
   entries.forEach(([key, value]) => {
@@ -207,7 +208,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // destory the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
         // instance does not have constructor, just set it to 0
-      } else value = 0
+      } else {
+        value = 0
+      }
     }
 
     // Deal with pointer events ...
@@ -229,8 +232,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         value &&
         (value as ClassConstructor).constructor &&
         targetProp.constructor.name === (value as ClassConstructor).constructor.name
-      )
+      ) {
         targetProp.copy(value)
+      }
       // If nothing else fits, just set the single value, ignore undefined
       // https://github.com/pmndrs/react-three-fiber/issues/274
       else if (value !== undefined) {
@@ -250,8 +254,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       currentInstance[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
+      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
         currentInstance[key].encoding = THREE.sRGBEncoding
+      }
     }
 
     invalidateInstance(instance)

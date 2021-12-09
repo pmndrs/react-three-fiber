@@ -101,8 +101,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       instance = prepare<Instance>(object, { root, primitive: true })
     } else {
       const target = catalogue[name]
-      if (!target)
+      if (!target) {
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+      }
 
       // Throw if an object or literal was passed for args
       if (!Array.isArray(args)) throw 'The args prop must be an array!'
@@ -324,8 +325,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
       insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
-      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) return [true]
-      else {
+      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
+        return [true]
+      } else {
         // This is a data object, let's extract critical information about it
         const { args: argsNew = [], children: cN, ...restNew } = newProps
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
@@ -400,8 +402,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       const localState = (instance?.__r3f ?? {}) as LocalState
-      if (instance.raycast && localState.handlers && localState.eventCount)
+      if (instance.raycast && localState.handlers && localState.eventCount) {
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+      }
     },
     shouldDeprioritizeSubtree: () => false,
     prepareForCommit: () => null,

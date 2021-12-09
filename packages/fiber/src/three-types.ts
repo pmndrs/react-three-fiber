@@ -397,7 +397,7 @@ declare global {
       matrix4: Matrix4Props
       quaternion: QuaternionProps
       bufferAttribute: BufferAttributeProps
-      float32BufferAttribute: Float32BufferAttributeProps                   
+      float32BufferAttribute: Float32BufferAttributeProps
       instancedBufferAttribute: InstancedBufferAttributeProps
       color: ColorProps
       fog: FogProps
