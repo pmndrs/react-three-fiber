@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import Reconciler from 'react-reconciler'
+import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 // @ts-ignore
 import { DefaultEventPriority, IdleEventPriority } from 'react-reconciler/constants'
 import { is, prepare, diffProps, DiffSet, applyProps, updateInstance, invalidateInstance } from './utils'
@@ -263,7 +264,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        reconciler.runWithPriority(IdleEventPriority, () => {
+        scheduleCallback(idlePriority, () => {
           try {
             child.dispose()
           } catch (e) {
