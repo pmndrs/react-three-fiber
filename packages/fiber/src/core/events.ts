@@ -398,10 +398,7 @@ export function createEvents(store: UseStore<RootState>) {
           if (handler) {
             // Forward all events back to their respective handlers with the exception of click events,
             // which must use the initial target
-            if (
-              (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
-              internal.initialHits.includes(eventObject)
-            ) {
+            if (!isClickEvent || internal.initialHits.includes(eventObject)) {
               // Missed events have to come first
               pointerMissed(
                 event,
@@ -409,6 +406,14 @@ export function createEvents(store: UseStore<RootState>) {
               )
               // Now call the handler
               handler(data as ThreeEvent<PointerEvent>)
+            }
+          } else {
+            // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
+            if (isClickEvent && internal.initialHits.includes(eventObject)) {
+              pointerMissed(
+                event,
+                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
+              )
             }
           }
         }
