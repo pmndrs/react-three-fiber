@@ -36,7 +36,7 @@ export interface NodeProps<T, P> {
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode
-  ref?: React.Ref<React.ReactNode>
+  ref?: React.RefCallback<T> | React.RefObject<React.ReactNode> | null
   key?: React.Key
   onUpdate?: (self: T) => void
 }
@@ -80,7 +80,6 @@ export type LineLoopProps = Object3DNode<THREE.LineLoop, typeof THREE.LineLoop>
 // export type LineProps = Object3DNode<THREE.Line, typeof THREE.Line>
 export type PointsProps = Object3DNode<THREE.Points, typeof THREE.Points>
 export type GroupProps = Object3DNode<THREE.Group, typeof THREE.Group>
-export type ImmediateRenderObjectProps = Object3DNode<THREE.ImmediateRenderObject, typeof THREE.ImmediateRenderObject>
 
 export type CameraProps = Object3DNode<THREE.Camera, typeof THREE.Camera>
 export type PerspectiveCameraProps = Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera>
@@ -242,6 +241,7 @@ export type Matrix3Props = Node<THREE.Matrix3, typeof THREE.Matrix3>
 export type Matrix4Props = Node<THREE.Matrix4, typeof THREE.Matrix4>
 export type QuaternionProps = Node<THREE.Quaternion, typeof THREE.Quaternion>
 export type BufferAttributeProps = Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
+export type Float32BufferAttributeProps = Node<THREE.Float32BufferAttribute, typeof THREE.Float32BufferAttribute>
 export type InstancedBufferAttributeProps = Node<THREE.InstancedBufferAttribute, typeof THREE.InstancedBufferAttribute>
 export type ColorProps = Node<THREE.Color, ColorArray>
 export type FogProps = Node<THREE.Fog, typeof THREE.Fog>
@@ -270,7 +270,6 @@ declare global {
       // line: LineProps
       points: PointsProps
       group: GroupProps
-      immediateRenderObject: ImmediateRenderObjectProps
 
       // cameras
       camera: CameraProps
@@ -398,6 +397,7 @@ declare global {
       matrix4: Matrix4Props
       quaternion: QuaternionProps
       bufferAttribute: BufferAttributeProps
+      float32BufferAttribute: Float32BufferAttributeProps                   
       instancedBufferAttribute: InstancedBufferAttributeProps
       color: ColorProps
       fog: FogProps

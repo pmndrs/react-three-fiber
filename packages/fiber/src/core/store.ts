@@ -2,9 +2,8 @@ import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
-import shallow from 'zustand/shallow'
 import { prepare, Instance, InstanceProps } from './renderer'
-import { DomEvent, EventManager, ThreeEvent } from './events'
+import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -53,11 +52,12 @@ export type InternalState = {
   priority: number
   frames: number
   lastProps: StoreProps
+  lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
-  hovered: Map<string, DomEvent>
+  hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, Intersection>>
+  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
 
@@ -90,7 +90,8 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
-  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
+  onPointerMissed?: (event: MouseEvent) => void
 
   events: EventManager<any>
   internal: InternalState
@@ -119,7 +120,7 @@ export type StoreProps = {
           ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
           ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
       >
-  onPointerMissed?: (event: ThreeEvent<PointerEvent>) => void
+  onPointerMissed?: (event: MouseEvent) => void
 }
 
 export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
@@ -160,9 +161,9 @@ const createStore = (
     else gl.shadowMap.type = THREE.PCFSoftShadowMap
   }
 
-  // Set color management
-  if (!linear) gl.outputEncoding = THREE.sRGBEncoding
-  if (!flat) gl.toneMapping = THREE.ACESFilmicToneMapping
+  // Set color preferences
+  if (linear) gl.outputEncoding = THREE.LinearEncoding
+  if (flat) gl.toneMapping = THREE.NoToneMapping
 
   // clock.elapsedTime is updated using advance(timestamp)
   if (frameloop === 'never') {
@@ -278,15 +279,18 @@ const createStore = (
       },
       setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
 
+      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => set(() => ({ frameloop })),
+
       events: { connected: false },
       internal: {
         active: false,
         priority: 0,
         frames: 0,
         lastProps: props,
+        lastEvent: React.createRef(),
 
         interaction: [],
-        hovered: new Map<string, DomEvent>(),
+        hovered: new Map<string, ThreeEvent<DomEvent>>(),
         subscribers: [],
         initialClick: [0, 0],
         initialHits: [],
@@ -322,10 +326,14 @@ const createStore = (
     }
   })
 
+  const state = rootState.getState()
+
   // Resize camera and renderer on changes to size and pixelratio
-  rootState.subscribe(
-    () => {
-      const { camera, size, viewport, internal } = rootState.getState()
+  let oldSize = state.size
+  let oldDpr = state.viewport.dpr
+  rootState.subscribe(() => {
+    const { camera, size, viewport, internal } = rootState.getState()
+    if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
       if (!(internal.lastProps.camera instanceof THREE.Camera)) {
@@ -345,12 +353,12 @@ const createStore = (
       // Update renderer
       gl.setPixelRatio(viewport.dpr)
       gl.setSize(size.width, size.height)
-    },
-    (state) => [state.viewport.dpr, state.size],
-    shallow,
-  )
 
-  const state = rootState.getState()
+      oldSize = size
+      oldDpr = viewport.dpr
+    }
+  })
+
   // Update size
   if (size) state.setSize(size.width, size.height)
 

@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "7.0.15",
+  "version": "7.0.21",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -12,7 +12,8 @@
   "author": "Paul Henschel (https://github.com/drcmda)",
   "license": "MIT",
   "maintainers": [
-    "Josh Ellis (https://github.com/joshuaellis)"
+    "Josh Ellis (https://github.com/joshuaellis)",
+    "Cody Bennett (https://github.com/codyjasonbennett)"
   ],
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
@@ -44,7 +45,7 @@
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.26.2",
     "react-three-fiber": "0.0.0-deprecated",
-    "react-use-measure": "^2.0.4",
+    "react-use-measure": "^2.1.1",
     "resize-observer-polyfill": "^1.5.1",
     "scheduler": "^0.20.2",
     "use-asset": "^1.0.4",

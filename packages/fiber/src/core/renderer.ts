@@ -14,7 +14,8 @@ export type LocalState = {
   objects: Instance[]
   parent: Instance | null
   primitive?: boolean
-  handlers: { count: number } & Partial<EventHandlers>
+  eventCount: number
+  handlers: Partial<EventHandlers>
   memoizedProps: {
     [key: string]: any
   }
@@ -97,7 +98,8 @@ function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
     instance.__r3f = {
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
-      handlers: { count: 0 },
+      eventCount: 0,
+      handlers: {},
       objects: [],
       parent: null,
       ...state,
@@ -154,7 +156,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     const root = localState.root
     const rootState = root?.getState?.() ?? {}
     const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
-    const prevHandlers = localState.handlers?.count
+    const prevHandlers = localState.eventCount
 
     // Prepare memoized props
     if (instance.__r3f) instance.__r3f.memoizedProps = memoized
@@ -198,7 +200,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       if (isEvent) {
         if (value) localState.handlers[key as keyof EventHandlers] = value as any
         else delete localState.handlers[key as keyof EventHandlers]
-        localState.handlers.count = Object.keys(localState.handlers).length
+        localState.eventCount = Object.keys(localState.handlers).length
       }
       // Special treatment for objects with support for set/copy, and layers
       else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
@@ -216,7 +218,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         )
           targetProp.copy(value)
         // If nothing else fits, just set the single value, ignore undefined
-        // https://github.com/react-spring/react-three-fiber/issues/274
+        // https://github.com/pmndrs/react-three-fiber/issues/274
         else if (value !== undefined) {
           const isColor = targetProp instanceof THREE.Color
           // Allow setting array scalars
@@ -226,14 +228,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           // Otherwise just set ...
           else targetProp.set(value)
           // Auto-convert sRGB colors, for now ...
-          // https://github.com/react-spring/react-three-fiber/issues/344
+          // https://github.com/pmndrs/react-three-fiber/issues/344
           if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
         }
         // Else, just overwrite the value
       } else {
         currentInstance[key] = value
         // Auto-convert sRGB textures, for now ...
-        // https://github.com/react-spring/react-three-fiber/issues/344
+        // https://github.com/pmndrs/react-three-fiber/issues/344
         if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
           currentInstance[key].encoding = THREE.sRGBEncoding
       }
@@ -241,16 +243,17 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       invalidateInstance(instance)
     })
 
-    if (rootState.internal && instance.raycast && prevHandlers !== localState.handlers?.count) {
+    if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
       // Pre-emptively remove the instance from the interaction manager
       const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
       if (index > -1) rootState.internal.interaction.splice(index, 1)
       // Add the instance to the interaction manager only when it has handlers
-      if (localState.handlers.count) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+      if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
     }
 
     // Call the update lifecycle when it is being updated
     if (changes.length && instance.__r3f?.parent) updateInstance(instance)
+    return instance
   }
 
   function invalidateInstance(instance: Instance) {
@@ -293,6 +296,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       const target = catalogue[name] || (THREE as any)[name]
       if (!target)
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+
+      // Throw if an object or literal was passed for args
+      if (!Array.isArray(args)) throw 'The args prop must be an array!'
 
       // Instanciate new object, link it to the root
       // Append memoized props with args so it's not forgotten
@@ -413,7 +419,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else if (is.fun(detachFn)) {
           detachFn(child, parentInstance)
         }
-      } else if (child.isObject3D) {
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
         if (child.__r3f?.root) {
@@ -534,6 +540,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         // This is a data object, let's extract critical information about it
         const { args: argsNew = [], children: cN, ...restNew } = newProps
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
+
+        // Throw if an object or literal was passed for args
+        if (!Array.isArray(argsNew)) throw 'The args prop must be an array!'
+
         // If it has new props or arguments, then it needs to be re-instanciated
         if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
         // Create a diff-set, flag if there are any changes
@@ -582,11 +592,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
       return parentHostContext
     },
     createTextInstance() {},
-    finalizeInitialChildren() {
-      return false
+    finalizeInitialChildren(instance: Instance) {
+      // https://github.com/facebook/react/issues/20271
+      // Returning true will trigger commitMount
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      return !!localState.handlers
     },
-    commitMount() {
-      // noop
+    commitMount(instance: Instance /*, type, props*/) {
+      // https://github.com/facebook/react/issues/20271
+      // This will make sure events are only added once to the central container
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      if (instance.raycast && localState.handlers && localState.eventCount)
+        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
     },
     shouldDeprioritizeSubtree() {
       return false

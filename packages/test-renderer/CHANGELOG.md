@@ -1,5 +1,53 @@
 # @react-three/test-renderer
 
+## 7.0.20
+
+### Patch Changes
+
+- 65e4147: up usemeasure, add last event to internals"
+- Updated dependencies [65e4147]
+  - @react-three/fiber@7.0.21
+
+## 7.0.19
+
+### Patch Changes
+
+- 54cb0fd: update react-use-measure, allow it to use the offsetSize
+- Updated dependencies [54cb0fd]
+  - @react-three/fiber@7.0.20
+
+## 7.0.18
+
+### Patch Changes
+
+- 7aa2eab: fix: remove zustand subcribe selector
+- Updated dependencies [7aa2eab]
+  - @react-three/fiber@7.0.19
+
+## 7.0.17
+
+### Patch Changes
+
+- 6780f58: fix unmount pointer capture
+- Updated dependencies [6780f58]
+  - @react-three/fiber@7.0.18
+
+## 7.0.16
+
+### Patch Changes
+
+- 894c550: fix: event count
+- Updated dependencies [894c550]
+  - @react-three/fiber@7.0.17
+
+## 7.0.15
+
+### Patch Changes
+
+- c7a4220: patch: applyprops returns the same instance
+- Updated dependencies [c7a4220]
+  - @react-three/fiber@7.0.16
+
 ## 7.0.14
 
 ### Patch Changes
