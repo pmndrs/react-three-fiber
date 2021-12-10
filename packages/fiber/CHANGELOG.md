@@ -1,5 +1,41 @@
 # @react-three/fiber
 
+## 7.0.21
+
+### Patch Changes
+
+- 65e4147: up usemeasure, add last event to internals"
+
+## 7.0.20
+
+### Patch Changes
+
+- 54cb0fd: update react-use-measure, allow it to use the offsetSize
+
+## 7.0.19
+
+### Patch Changes
+
+- 7aa2eab: fix: remove zustand subcribe selector
+
+## 7.0.18
+
+### Patch Changes
+
+- 6780f58: fix unmount pointer capture
+
+## 7.0.17
+
+### Patch Changes
+
+- 894c550: fix: event count
+
+## 7.0.16
+
+### Patch Changes
+
+- c7a4220: patch: applyprops returns the same instance
+
 ## 7.0.15
 
 ### Patch Changes

@@ -15,6 +15,8 @@ import {
   sRGBEncoding,
   Object3D,
   WebGLRenderer,
+  LinearEncoding,
+  NoToneMapping,
 } from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
@@ -353,6 +355,48 @@ describe('web core', () => {
     expect(log).toEqual(['render Foo', 'render Foo', 'mount Foo', 'unmount Foo'])
   })
 
+  it('will mount/unmount event handlers correctly', async () => {
+    let state: RootState = null!
+    let mounted = false
+    let attachEvents = false
+
+    const EventfulComponent = () => (mounted ? <group onClick={attachEvents ? () => void 0 : undefined} /> : null)
+
+    // Test initial mount without events
+    mounted = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
+
+    // Test initial mount with events
+    attachEvents = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).not.toBe(0)
+
+    // Test events update
+    attachEvents = false
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
+
+    attachEvents = true
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).not.toBe(0)
+
+    // Test unmount with events
+    mounted = false
+    await act(async () => {
+      state = render(<EventfulComponent />, canvas).getState()
+    })
+    expect(state.internal.interaction.length).toBe(0)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     let camera: Camera = null!
 
@@ -431,8 +475,8 @@ describe('web core', () => {
       }
     }
 
-    expect(async () => {
-      await act(async () => {
+    expect(() => {
+      act(async () => {
         extend({ MyColor })
 
         // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
@@ -463,5 +507,27 @@ describe('web core', () => {
     })
 
     expect(gl instanceof Renderer).toBe(true)
+  })
+
+  it('should respect color management preferences via gl', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        gl: { outputEncoding: LinearEncoding, toneMapping: NoToneMapping },
+      }).getState().gl
+    })
+
+    expect(gl.outputEncoding).toBe(LinearEncoding)
+    expect(gl.toneMapping).toBe(NoToneMapping)
+
+    await act(async () => {
+      gl = render(<group />, canvas, {
+        flat: true,
+        linear: true,
+      }).getState().gl
+    })
+
+    expect(gl.outputEncoding).toBe(LinearEncoding)
+    expect(gl.toneMapping).toBe(NoToneMapping)
   })
 })
