@@ -198,9 +198,9 @@ export function createEvents(store: UseStore<RootState>) {
 
     const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
     // Add native event props
-    let extractEventProps: any = {}
-    for (let prop in Object.getPrototypeOf(event)) {
-      let property = event[prop as keyof DomEvent]
+    const extractEventProps: any = {}
+    for (const prop in event) {
+      const property = event[prop as keyof DomEvent]
       // Only copy over atomics, leave functions alone as these should be
       // called as event.nativeEvent.fn()
       if (typeof property !== 'function') extractEventProps[prop] = property
