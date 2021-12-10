@@ -338,7 +338,6 @@ const createStore = (
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
       if (!camera.manual && !(internal.lastProps.camera instanceof THREE.Camera)) {
-        console.log('update camera')
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
