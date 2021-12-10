@@ -67,7 +67,7 @@ export type InternalState = {
 export type RootState = {
   gl: THREE.WebGLRenderer
   scene: THREE.Scene
-  camera: Camera
+  camera: Camera & { manual?: boolean }
   controls: THREE.EventDispatcher | null
   raycaster: Raycaster
   mouse: THREE.Vector2
@@ -113,13 +113,14 @@ export type StoreProps = {
   dpr?: Dpr
   clock?: THREE.Clock
   raycaster?: Partial<Raycaster>
-  camera?:
+  camera?: (
     | Camera
     | Partial<
         ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
           ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
           ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
       >
+  ) & { manual?: boolean }
   onPointerMissed?: (event: MouseEvent) => void
 }
 
@@ -336,7 +337,8 @@ const createStore = (
     if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
-      if (!(internal.lastProps.camera instanceof THREE.Camera)) {
+      if (!camera.manual && !(internal.lastProps.camera instanceof THREE.Camera)) {
+        console.log('update camera')
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
