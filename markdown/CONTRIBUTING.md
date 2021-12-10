@@ -10,7 +10,7 @@ You want to release some new features that haven't been released yet:
 yarn changeset:add
 ```
 
-Follow the prompt to flag which packages need to update although with `react-spring` we keep all our packages at the same version.
+Follow the prompt to flag which packages need to update although with `pmndrs` we keep all our packages at the same version.
 
 Then you'll run:
 
