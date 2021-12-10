@@ -1,6 +1,7 @@
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
+import * as THREE from 'three'
 import { render, RenderResult } from '@testing-library/react'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
@@ -40,24 +41,32 @@ describe('web Canvas', () => {
   })
 
   it('should forward ref three object', async () => {
-    const r = React.createRef<THREE.Mesh>()
-    const ref = React.useRef<THREE.Object3D>()
-    const refSpecific = React.useRef<THREE.Mesh | null>(null)
-
     // Note: Passing directly should be less strict, and assigning current should be more strict
-    await act(async () => {
-      render(
-        <>
-          <mesh ref={ref} />
-          <mesh ref={refSpecific} />
-          <mesh ref={(r) => (refSpecific.current = r)} />
-        </>,
+    let immutableRef!: React.RefObject<THREE.Mesh>
+    let mutableRef!: React.MutableRefObject<THREE.Object3D | undefined>
+    let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
+
+    const RefTest = () => {
+      immutableRef = React.createRef()
+      mutableRef = React.useRef()
+      mutableRefSpecific = React.useRef(null)
+
+      return (
+        <Canvas>
+          <mesh ref={immutableRef} />
+          <mesh ref={mutableRef} />
+          <mesh ref={(r) => (mutableRefSpecific.current = r)} />
+        </Canvas>
       )
+    }
+
+    await act(async () => {
+      render(<RefTest />)
     })
 
-    expect(r.current).toBeTruthy()
-    expect(ref.current).toBeTruthy()
-    expect(refSpecific.current).toBeTruthy()
+    expect(immutableRef.current).toBeTruthy()
+    expect(mutableRef.current).toBeTruthy()
+    expect(mutableRefSpecific.current).toBeTruthy()
   })
 
   it('should correctly unmount', async () => {
