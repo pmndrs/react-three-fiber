@@ -233,7 +233,6 @@ export function createEvents(store: UseStore<RootState>) {
     const { internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
-
       const localState = { stopped: false }
 
       for (const hit of intersections) {
@@ -385,7 +384,7 @@ export function createEvents(store: UseStore<RootState>) {
       if (isClickEvent && !hits.length) {
         if (delta <= 2) {
           pointerMissed(constructEvent(event, null, [], { delta }), internal.interaction)
-          if (onPointerMissed) onPointerMissed(event as ThreeEvent<PointerEvent>)
+          if (onPointerMissed) onPointerMissed(event)
         }
       }
       // Take care of unhover
@@ -435,7 +434,7 @@ export function createEvents(store: UseStore<RootState>) {
             // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
             if (isClickEvent && internal.initialHits.includes(eventObject)) {
               pointerMissed(
-                event,
+                data as ThreeEvent<MouseEvent>,
                 internal.interaction.filter((object) => !internal.initialHits.includes(object)),
               )
             }
