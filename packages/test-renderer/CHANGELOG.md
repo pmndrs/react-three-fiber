@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.21
+
+### Patch Changes
+
+- 259e1fa: add camera:manual
+- Updated dependencies [259e1fa]
+  - @react-three/fiber@7.0.22
+
 ## 7.0.20
 
 ### Patch Changes
