@@ -193,12 +193,10 @@ describe('ReactThreeTestRenderer Core', () => {
         type: 'mesh',
         props: {},
         children: [
-          { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+          { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshBasicMaterial',
-            props: {
-              attach: 'material',
-            },
+            props: {},
             children: [],
           },
         ],
@@ -216,10 +214,10 @@ describe('ReactThreeTestRenderer Core', () => {
         type: 'mesh',
         props: {},
         children: [
-          { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+          { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshStandardMaterial',
-            props: { attach: 'material' },
+            props: {},
             children: [],
           },
         ],

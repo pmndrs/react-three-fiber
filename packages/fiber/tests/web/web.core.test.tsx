@@ -270,7 +270,7 @@ describe('web core', () => {
       await act(async () => {
         scene = render(
           <hasObject3dMethods>
-            <mesh attachFns={['customAttach', 'detach']} />
+            <mesh attach={['customAttach', 'detach']} />
           </hasObject3dMethods>,
           canvas,
         ).getState().scene
@@ -302,7 +302,7 @@ describe('web core', () => {
         scene = render(
           <hasObject3dMethods>
             <mesh
-              attachFns={[
+              attach={[
                 (mesh: Mesh) => {
                   attachedMesh = mesh
                 },
