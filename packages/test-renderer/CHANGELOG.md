@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.23
+
+### Patch Changes
+
+- 7f46ddf: cleanup captured pointers when released (#1914)
+- Updated dependencies [7f46ddf]
+  - @react-three/fiber@7.0.24
+
 ## 7.0.22
 
 ### Patch Changes
