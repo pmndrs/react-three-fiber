@@ -25,6 +25,7 @@ import { render, act, unmountComponentAtNode, useFrame, extend } from '../../src
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
+import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
 
@@ -295,18 +296,18 @@ describe('web core', () => {
 
     it('attachFns as functions', async () => {
       let scene: Scene = null!
-      let attachedMesh: Mesh = null!
-      let detachedMesh: Mesh = null!
+      let attachedMesh: Instance = null!
+      let detachedMesh: Instance = null!
 
       await act(async () => {
         scene = render(
           <hasObject3dMethods>
             <mesh
               attach={[
-                (mesh: Mesh) => {
+                (mesh: Instance) => {
                   attachedMesh = mesh
                 },
-                (mesh: Mesh) => {
+                (mesh: Instance) => {
                   detachedMesh = mesh
                 },
               ]}
@@ -317,7 +318,7 @@ describe('web core', () => {
       })
 
       expect(attachedMesh).toBeDefined()
-      expect(attachedMesh?.type).toBe('Mesh')
+      expect(attachedMesh?.type).toBe('Object3D')
       // attaching is *instead of* being a regular child
       expect(scene.children[0].children.length).toBe(0)
 
