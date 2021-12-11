@@ -8,8 +8,7 @@ import { dispose, calculateDpr } from '../core/utils'
 import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size } from '../core/store'
 import { createRenderer, extend, Root } from '../core/renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
-import { createPointerEvents as events, getEventPriority } from './events'
-import { EventManager } from '../core/events'
+import { getEventPriority, EventManager } from './events'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -194,14 +193,12 @@ reconciler.injectIntoDevTools({
   version: '18.0.0',
 })
 
-export * from '../core/hooks'
 export {
   context,
   render,
   createRoot,
   unmountComponentAtNode,
   createPortal,
-  events,
   reconciler,
   applyProps,
   dispose,
