@@ -4,7 +4,7 @@ import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio }
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core/index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
