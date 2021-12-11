@@ -73,7 +73,8 @@ function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
 
-/** Release pointer captures.
+/**
+ * Release pointer captures.
  * This is called by releasePointerCapture in the API, and when an object is removed.
  */
 function releaseInternalPointerCapture(
@@ -327,12 +328,13 @@ export function createEvents(store: UseStore<RootState>) {
         return () => cancelPointer([])
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
-          if ('pointerId' in event) {
+          const { internal } = store.getState()
+          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
-            store.getState().internal.capturedMap.delete(event.pointerId)
+            internal.capturedMap.delete(event.pointerId)
+            cancelPointer([])
           }
-          cancelPointer([])
         }
     }
 
