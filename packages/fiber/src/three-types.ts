@@ -119,10 +119,6 @@ export type OctahedronBufferGeometryProps = BufferGeometryNode<
   THREE.OctahedronBufferGeometry,
   typeof THREE.OctahedronBufferGeometry
 >
-export type ParametricBufferGeometryProps = BufferGeometryNode<
-  THREE.ParametricBufferGeometry,
-  typeof THREE.ParametricBufferGeometry
->
 export type PlaneBufferGeometryProps = BufferGeometryNode<THREE.PlaneBufferGeometry, typeof THREE.PlaneBufferGeometry>
 export type PolyhedronBufferGeometryProps = BufferGeometryNode<
   THREE.PolyhedronBufferGeometry,
@@ -138,7 +134,6 @@ export type TetrahedronBufferGeometryProps = BufferGeometryNode<
   THREE.TetrahedronBufferGeometry,
   typeof THREE.TetrahedronBufferGeometry
 >
-export type TextBufferGeometryProps = BufferGeometryNode<THREE.TextBufferGeometry, typeof THREE.TextBufferGeometry>
 export type TorusBufferGeometryProps = BufferGeometryNode<THREE.TorusBufferGeometry, typeof THREE.TorusBufferGeometry>
 export type TorusKnotBufferGeometryProps = BufferGeometryNode<
   THREE.TorusKnotBufferGeometry,
@@ -146,7 +141,6 @@ export type TorusKnotBufferGeometryProps = BufferGeometryNode<
 >
 export type TubeBufferGeometryProps = BufferGeometryNode<THREE.TubeBufferGeometry, typeof THREE.TubeBufferGeometry>
 export type WireframeGeometryProps = BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
-export type ParametricGeometryProps = BufferGeometryNode<THREE.ParametricGeometry, typeof THREE.ParametricGeometry>
 export type TetrahedronGeometryProps = BufferGeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
 export type OctahedronGeometryProps = BufferGeometryNode<THREE.OctahedronGeometry, typeof THREE.OctahedronGeometry>
 export type IcosahedronGeometryProps = BufferGeometryNode<THREE.IcosahedronGeometry, typeof THREE.IcosahedronGeometry>
@@ -158,7 +152,6 @@ export type PolyhedronGeometryProps = BufferGeometryNode<THREE.PolyhedronGeometr
 export type TubeGeometryProps = BufferGeometryNode<THREE.TubeGeometry, typeof THREE.TubeGeometry>
 export type TorusKnotGeometryProps = BufferGeometryNode<THREE.TorusKnotGeometry, typeof THREE.TorusKnotGeometry>
 export type TorusGeometryProps = BufferGeometryNode<THREE.TorusGeometry, typeof THREE.TorusGeometry>
-export type TextGeometryProps = BufferGeometryNode<THREE.TextGeometry, typeof THREE.TextGeometry>
 export type SphereGeometryProps = BufferGeometryNode<THREE.SphereGeometry, typeof THREE.SphereGeometry>
 export type RingGeometryProps = BufferGeometryNode<THREE.RingGeometry, typeof THREE.RingGeometry>
 export type PlaneGeometryProps = BufferGeometryNode<THREE.PlaneGeometry, typeof THREE.PlaneGeometry>
@@ -290,19 +283,16 @@ declare global {
       icosahedronBufferGeometry: IcosahedronBufferGeometryProps
       latheBufferGeometry: LatheBufferGeometryProps
       octahedronBufferGeometry: OctahedronBufferGeometryProps
-      parametricBufferGeometry: ParametricBufferGeometryProps
       planeBufferGeometry: PlaneBufferGeometryProps
       polyhedronBufferGeometry: PolyhedronBufferGeometryProps
       ringBufferGeometry: RingBufferGeometryProps
       shapeBufferGeometry: ShapeBufferGeometryProps
       sphereBufferGeometry: SphereBufferGeometryProps
       tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
-      textBufferGeometry: TextBufferGeometryProps
       torusBufferGeometry: TorusBufferGeometryProps
       torusKnotBufferGeometry: TorusKnotBufferGeometryProps
       tubeBufferGeometry: TubeBufferGeometryProps
       wireframeGeometry: WireframeGeometryProps
-      parametricGeometry: ParametricGeometryProps
       tetrahedronGeometry: TetrahedronGeometryProps
       octahedronGeometry: OctahedronGeometryProps
       icosahedronGeometry: IcosahedronGeometryProps
@@ -311,7 +301,6 @@ declare global {
       tubeGeometry: TubeGeometryProps
       torusKnotGeometry: TorusKnotGeometryProps
       torusGeometry: TorusGeometryProps
-      textGeometry: TextGeometryProps
       sphereGeometry: SphereGeometryProps
       ringGeometry: RingGeometryProps
       planeGeometry: PlaneGeometryProps
