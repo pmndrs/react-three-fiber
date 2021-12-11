@@ -9,7 +9,7 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
-import { render, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
+import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
 
 const resolvers = []
 
@@ -60,7 +60,7 @@ describe('web hooks', () => {
     }
 
     await act(async () => {
-      render(<Component />, canvas)
+      createRoot(canvas).render(<Component />)
     })
 
     expect(result.camera instanceof Camera).toBeTruthy()
@@ -88,7 +88,12 @@ describe('web hooks', () => {
     }
 
     let scene: Scene = null!
-    await act(async () => (scene = render(<Component />, canvas, { frameloop: 'never' }).getState().scene))
+    await act(
+      async () =>
+        (scene = createRoot(canvas, { frameloop: 'never' })
+          .render(<Component />)
+          .getState().scene),
+    )
     advance(Date.now())
     expect(scene.children[0].position.x).toEqual(1)
     expect(frameCalls.length).toBeGreaterThan(0)
@@ -111,12 +116,13 @@ describe('web hooks', () => {
 
     let scene: Scene = null!
     await act(async () => {
-      scene = render(
-        <React.Suspense fallback={null}>
-          <Component />
-        </React.Suspense>,
-        canvas,
-      ).getState().scene
+      scene = createRoot(canvas)
+        .render(
+          <React.Suspense fallback={null}>
+            <Component />
+          </React.Suspense>,
+        )
+        .getState().scene
     })
 
     await waitFor(() => expect(scene.children[0]).toBeDefined())
@@ -168,12 +174,13 @@ describe('web hooks', () => {
 
     let scene: Scene = null!
     await act(async () => {
-      scene = render(
-        <React.Suspense fallback={null}>
-          <Component />
-        </React.Suspense>,
-        canvas,
-      ).getState().scene
+      scene = createRoot(canvas)
+        .render(
+          <React.Suspense fallback={null}>
+            <Component />
+          </React.Suspense>,
+        )
+        .getState().scene
     })
 
     await waitFor(() => expect(scene.children[0]).toBeDefined())
@@ -213,7 +220,7 @@ describe('web hooks', () => {
     }
 
     await act(async () => {
-      render(<Component />, canvas)
+      createRoot(canvas).render(<Component />)
     })
 
     expect(result).toEqual({
