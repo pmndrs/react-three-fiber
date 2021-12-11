@@ -338,12 +338,7 @@ describe('ReactThreeTestRenderer Core', () => {
       return (
         <mesh>
           <bufferGeometry attach="geometry">
-            <bufferAttribute
-              attachObject={['attributes', 'position']}
-              array={vertices}
-              count={vertices.length / 3}
-              itemSize={3}
-            />
+            <bufferAttribute attach="attributes-position" array={vertices} count={vertices.length / 3} itemSize={3} />
           </bufferGeometry>
           <meshBasicMaterial attach="material" color="hotpink" />
         </mesh>

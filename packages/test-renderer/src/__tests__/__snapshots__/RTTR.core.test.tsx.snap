@@ -31,10 +31,6 @@ Array [
                     -1,
                     1,
                   ],
-                  "attachObject": Array [
-                    "attributes",
-                    "position",
-                  ],
                   "count": 6,
                   "itemSize": 3,
                 },
