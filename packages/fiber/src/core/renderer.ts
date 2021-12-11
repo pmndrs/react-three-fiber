@@ -218,7 +218,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: Instance) => x !== child)
       } else if (child.attachObject) {
         delete parentInstance[child.attachObject[0]][child.attachObject[1]]
-      } else if (child.attach && !is.fun(child.attach)) {
+      } else if (child.attach && !is.fun(child.attach) && parentInstance[child.attach] === child) {
         parentInstance[child.attach] = null
       } else if (is.arr(child.attachFns)) {
         const [, detachFn] = child.attachFns as AttachFnsType
@@ -340,6 +340,17 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         // Create a diff-set, flag if there are any changes
         const diff = diffProps(instance, restNew, restOld, true)
         if (diff.changes.length) return [false, diff]
+
+        // If instance was never attached, attach it
+        if (instance.attach && typeof instance.attach !== 'function') {
+          const localState = instance.__r3f
+          const parent = localState.parent
+
+          if (parent && parent[instance.attach] !== instance) {
+            appendChild(parent, instance)
+          }
+        }
+
         // Otherwise do not touch the instance
         return null
       }
