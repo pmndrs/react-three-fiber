@@ -5,7 +5,7 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
-import { createTouchEvents } from './events'
+import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
@@ -120,7 +120,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
         size: { width, height },
-        events: events || createTouchEvents,
+        events: events || createPointerEvents,
         onCreated,
       }).render(
         <ErrorBoundary set={setError}>
