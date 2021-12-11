@@ -15,4 +15,6 @@ export type {
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { ObjectMap } from './core/utils'
 export * from './shared/Canvas'
-export * from './shared/index'
+export { createPointerEvents as events } from './shared/events'
+export * from './core/hooks'
+export * from './core'

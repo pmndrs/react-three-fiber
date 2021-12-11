@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+// @ts-ignore
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
@@ -73,7 +75,32 @@ function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
 
-/** Release pointer captures.
+// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+// Gives React a clue as to how import the current interaction is
+export function getEventPriority() {
+  let name = window?.event?.type
+  switch (name) {
+    case 'click':
+    case 'contextmenu':
+    case 'dblclick':
+    case 'pointercancel':
+    case 'pointerdown':
+    case 'pointerup':
+      return DiscreteEventPriority
+    case 'pointermove':
+    case 'pointerout':
+    case 'pointerover':
+    case 'pointerenter':
+    case 'pointerleave':
+    case 'wheel':
+      return ContinuousEventPriority
+    default:
+      return DefaultEventPriority
+  }
+}
+
+/**
+ * Release pointer captures.
  * This is called by releasePointerCapture in the API, and when an object is removed.
  */
 function releaseInternalPointerCapture(
@@ -327,12 +354,13 @@ export function createEvents(store: UseStore<RootState>) {
         return () => cancelPointer([])
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
-          if ('pointerId' in event) {
+          const { internal } = store.getState()
+          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
-            store.getState().internal.capturedMap.delete(event.pointerId)
+            internal.capturedMap.delete(event.pointerId)
+            cancelPointer([])
           }
-          cancelPointer([])
         }
     }
 
@@ -398,10 +426,7 @@ export function createEvents(store: UseStore<RootState>) {
           if (handler) {
             // Forward all events back to their respective handlers with the exception of click events,
             // which must use the initial target
-            if (
-              (name !== 'onClick' && name !== 'onContextMenu' && name !== 'onDoubleClick') ||
-              internal.initialHits.includes(eventObject)
-            ) {
+            if (!isClickEvent || internal.initialHits.includes(eventObject)) {
               // Missed events have to come first
               pointerMissed(
                 event,
@@ -409,6 +434,14 @@ export function createEvents(store: UseStore<RootState>) {
               )
               // Now call the handler
               handler(data as ThreeEvent<PointerEvent>)
+            }
+          } else {
+            // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
+            if (isClickEvent && internal.initialHits.includes(eventObject)) {
+              pointerMissed(
+                event,
+                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
+              )
             }
           }
         }

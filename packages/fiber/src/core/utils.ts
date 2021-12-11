@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { EventHandlers } from './events'
-import { Instance, InstanceProps, LocalState } from './renderer'
+import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
 
 export const DEFAULT = '__default'
@@ -118,6 +118,39 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
   return object
 }
 
+function resolve(instance: Instance, key: string) {
+  let target = instance
+  if (key.includes('-')) {
+    const entries = key.split('-')
+    const last = entries.pop() as string
+    target = entries.reduce((acc, key) => acc[key], instance)
+    return { target, key: last }
+  } else return { target, key }
+}
+
+export function attach(parent: Instance, child: Instance, type: AttachType) {
+  if (is.str(type)) {
+    const { target, key } = resolve(parent, type)
+    parent.__r3f.previousAttach = target[key]
+    target[key] = child
+  } else if (is.arr(type)) {
+    const [attach] = type
+    if (is.str(attach)) parent[attach](child)
+    else if (is.fun(attach)) attach(parent, child)
+  }
+}
+
+export function detach(parent: Instance, child: Instance, type: AttachType) {
+  if (is.str(type)) {
+    const { target, key } = resolve(parent, type)
+    target[key] = parent.__r3f.previousAttach
+  } else if (is.arr(type)) {
+    const [, detach] = type
+    if (is.str(detach)) parent[detach](child)
+    else if (is.fun(detach)) detach(parent, child)
+  }
+}
+
 // Shallow check arrays, but check objects atomically
 function checkShallow(a: any, b: any) {
   if (is.arr(a) && is.equ(a, b)) return true
@@ -139,8 +172,9 @@ export function diffProps(
   // Catch removed props, prepend them so they can be reset or removed
   if (remove) {
     const previousKeys = Object.keys(previous)
-    for (let i = 0; i < previousKeys.length; i++)
+    for (let i = 0; i < previousKeys.length; i++) {
       if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
+    }
   }
 
   entries.forEach(([key, value]) => {
@@ -207,7 +241,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // destory the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
         // instance does not have constructor, just set it to 0
-      } else value = 0
+      } else {
+        value = 0
+      }
     }
 
     // Deal with pointer events ...
@@ -229,8 +265,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         value &&
         (value as ClassConstructor).constructor &&
         targetProp.constructor.name === (value as ClassConstructor).constructor.name
-      )
+      ) {
         targetProp.copy(value)
+      }
       // If nothing else fits, just set the single value, ignore undefined
       // https://github.com/pmndrs/react-three-fiber/issues/274
       else if (value !== undefined) {
@@ -250,15 +287,16 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       currentInstance[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
+      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
         currentInstance[key].encoding = THREE.sRGBEncoding
+      }
     }
 
     invalidateInstance(instance)
     return instance
   })
 
-  if (rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
     const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
     if (index > -1) rootState.internal.interaction.splice(index, 1)

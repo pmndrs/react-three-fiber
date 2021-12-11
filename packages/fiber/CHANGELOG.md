@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 7.0.23
+
+### Patch Changes
+
+- 30d38b1: remove logs
+
+## 7.0.22
+
+### Patch Changes
+
+- 259e1fa: add camera:manual
+
 ## 7.0.21
 
 ### Patch Changes

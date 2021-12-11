@@ -1,14 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import {
-  extend,
-  _roots as mockRoots,
-  render,
-  reconciler,
-  unmountComponentAtNode as unmount,
-  act as _act,
-} from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act as _act } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -43,11 +36,12 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
   const _fiber = canvas
 
+  const _root = createRoot(_fiber, { frameloop: 'never', ...options, events: undefined })
+
   let scene: MockScene = null!
 
   await act(async () => {
-    scene = render(element, _fiber, { frameloop: 'never', ...options, events: undefined }).getState()
-      .scene as unknown as MockScene
+    scene = _root.render(element).getState().scene as unknown as MockScene
   })
 
   const _store = mockRoots.get(_fiber)!.store
@@ -56,7 +50,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     scene: wrapFiber(scene),
     unmount: async () => {
       await act(async () => {
-        unmount(_fiber)
+        _root.unmount()
       })
     },
     getInstance: () => {

@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react'
 import styled from 'styled-components'
-import { HashRouter, Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
+import { HashRouter, Link, Route, Routes, useMatch, useLocation, useParams } from 'react-router-dom'
 import { useErrorBoundary } from 'use-error-boundary'
 import { Global, Page as PageImpl } from './styles'
 import * as demos from './demos'
@@ -26,31 +26,28 @@ function ErrorBoundary({ children, fallback, name }: any) {
   return didCatch ? fallback(error) : <ErrorBoundary key={name}>{children}</ErrorBoundary>
 }
 
+function Item() {
+  let params = useParams()
+  const Component = visibleComponents[params.name].Component
+  return (
+    <ErrorBoundary
+      key={params.name}
+      fallback={(e: any) => <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>}>
+      <Component />
+    </ErrorBoundary>
+  )
+}
+
 function Intro() {
+  const Component = visibleComponents[defaultComponent].Component
   return (
     <Page>
       <Suspense fallback={<HtmlLoader />}>
-        <Switch>
-          <Route exact path="/" component={visibleComponents[defaultComponent].Component} />
-          <Route
-            exact
-            path="/demo/:name"
-            render={({ match }) => {
-              const Component = visibleComponents[match.params.name].Component
-              return (
-                <ErrorBoundary
-                  key={match.params.name}
-                  fallback={(e: any) => (
-                    <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>
-                  )}>
-                  <Component />
-                </ErrorBoundary>
-              )
-            }}
-          />
-        </Switch>
+        <Routes>
+          <Route path="/" element={<Component />} />
+          <Route path="/demo/:name" element={<Item />} />
+        </Routes>
       </Suspense>
-
       <Dots />
     </Page>
   )
@@ -58,7 +55,7 @@ function Intro() {
 
 function Dots() {
   const location = useLocation()
-  const match: any = useRouteMatch('/demo/:name')
+  const match: any = useMatch('/demo/:name')
   const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
   const { bright } = visibleComponents[match?.params.name ?? defaultComponent]
   return (

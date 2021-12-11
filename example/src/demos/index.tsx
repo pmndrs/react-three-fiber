@@ -38,6 +38,13 @@ const SuspenseAndErrors = {
   dev: true,
   bright: true,
 }
+const SuspenseMaterial = {
+  descr: '',
+  tags: [],
+  Component: lazy(() => import('./SuspenseMaterial')),
+  dev: true,
+  bright: true,
+}
 
 export {
   Reparenting,
@@ -56,6 +63,7 @@ export {
   Layers,
   MultiMaterial,
   SuspenseAndErrors,
+  SuspenseMaterial,
   ContextMenuOverride,
   Viewcube,
   Gltf,

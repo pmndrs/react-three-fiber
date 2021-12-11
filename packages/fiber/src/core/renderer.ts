@@ -1,9 +1,20 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import Reconciler from 'react-reconciler'
+import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 // @ts-ignore
 import { DefaultEventPriority, IdleEventPriority } from 'react-reconciler/constants'
-import { is, prepare, diffProps, DiffSet, applyProps, updateInstance, invalidateInstance } from './utils'
+import {
+  is,
+  prepare,
+  diffProps,
+  DiffSet,
+  applyProps,
+  updateInstance,
+  invalidateInstance,
+  attach,
+  detach,
+} from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
@@ -17,13 +28,15 @@ export type LocalState = {
   primitive?: boolean
   eventCount: number
   handlers: Partial<EventHandlers>
+  attach?: AttachType
+  previousAttach?: any
   memoizedProps: {
     [key: string]: any
   }
 }
 
-export type AttachFnType = (self: Instance, parent: Instance) => void
-export type AttachFnsType = [attach: string | AttachFnType, detach: string | AttachFnType]
+export type AttachFnType = (parent: Instance, self: Instance) => void
+export type AttachType = string | [attach: string | AttachFnType, detach: string | AttachFnType]
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
@@ -31,8 +44,6 @@ export type AttachFnsType = [attach: string | AttachFnType, detach: string | Att
 export type BaseInstance = Omit<THREE.Object3D, 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
   __r3f: LocalState
   children: Instance[]
-  attach?: string
-  attachFns?: AttachFnsType
   remove: (...object: Instance[]) => Instance
   add: (...object: Instance[]) => Instance
   raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
@@ -46,7 +57,7 @@ export type InstanceProps = {
   object?: object
   visible?: boolean
   dispose?: null
-  attach?: string
+  attach?: AttachType
 }
 
 interface Catalogue {
@@ -73,7 +84,7 @@ let extend = (objects: object): void => void (catalogue = { ...catalogue, ...obj
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
   function createInstance(
     type: string,
-    { args = [], ...props }: InstanceProps,
+    { args = [], attach, ...props }: InstanceProps,
     root: UseStore<RootState> | Instance,
     hostContext?: any,
     internalInstanceHandle?: Reconciler.Fiber,
@@ -94,27 +105,33 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     // Assert that by now we have a valid root
     if (!root || !isStore(root)) throw `No valid root for ${name}!`
 
+    // Auto-attach geometries and materials
+    if (attach === undefined) {
+      if (name.endsWith('Geometry')) attach = 'geometry'
+      else if (name.endsWith('Material')) attach = 'material'
+    }
+
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { root, primitive: true })
+      instance = prepare<Instance>(object, { root, attach, primitive: true })
     } else {
       const target = catalogue[name]
-      if (!target)
+      if (!target) {
         throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://github.com/pmndrs/react-three-fiber/blob/master/markdown/api.md#using-3rd-party-objects-declaratively`
+      }
+
+      // Throw if an object or literal was passed for args
+      if (!Array.isArray(args)) throw 'The args prop must be an array!'
 
       // Instanciate new object, link it to the root
       // Append memoized props with args so it's not forgotten
-      instance = prepare(new target(...args), { root, memoizedProps: { args: args.length === 0 ? null : args } })
-    }
-
-    // Auto-attach geometries and materials
-    if (!('attachFns' in props)) {
-      if (name.endsWith('Geometry')) {
-        props = { attach: 'geometry', ...props }
-      } else if (name.endsWith('Material')) {
-        props = { attach: 'material', ...props }
-      }
+      instance = prepare(new target(...args), {
+        root,
+        attach,
+        // TODO: Figure out what this is for
+        memoizedProps: { args: args.length === 0 ? null : args },
+      })
     }
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
@@ -125,38 +142,20 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   }
 
   function appendChild(parentInstance: Instance, child: Instance) {
-    let addedAsChild = false
+    let added = false
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
-      if (child.attachArray) {
-        if (!is.arr(parentInstance[child.attachArray])) parentInstance[child.attachArray] = []
-        parentInstance[child.attachArray].push(child)
-      } else if (child.attachObject) {
-        if (!is.obj(parentInstance[child.attachObject[0]])) parentInstance[child.attachObject[0]] = {}
-        parentInstance[child.attachObject[0]][child.attachObject[1]] = child
-      } else if (child.attach && !is.fun(child.attach)) {
-        parentInstance[child.attach] = child
-      } else if (is.arr(child.attachFns)) {
-        const [attachFn] = child.attachFns as AttachFnsType
-        if (is.str(attachFn) && is.fun(parentInstance[attachFn])) {
-          parentInstance[attachFn](child)
-        } else if (is.fun(attachFn)) {
-          attachFn(child, parentInstance)
-        }
+      if (child.__r3f.attach) {
+        attach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
-        addedAsChild = true
+        added = true
       }
-
-      if (!addedAsChild) {
-        // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
-        // that is, anything that's a child in React but not a child in the scenegraph.
-        parentInstance.__r3f.objects.push(child)
-      }
-      if (!child.__r3f) {
-        prepare(child, {})
-      }
+      // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
+      // that is, anything that's a child in React but not a child in the scenegraph.
+      if (!added) parentInstance.__r3f.objects.push(child)
+      if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
@@ -166,13 +165,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
     let added = false
     if (child) {
-      if (child.attachArray) {
-        const array = parentInstance[child.attachArray]
-        if (!is.arr(array)) parentInstance[child.attachArray] = []
-        array.splice(array.indexOf(beforeChild), 0, child)
-      } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
-        // attach and attachObject don't have an order anyway, so just append
-        return appendChild(parentInstance, child)
+      if (child.__r3f.attach) {
+        attach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
@@ -182,12 +176,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         added = true
       }
 
-      if (!added) {
-        parentInstance.__r3f.objects.push(child)
-      }
-      if (!child.__r3f) {
-        prepare(child, {})
-      }
+      if (!added) parentInstance.__r3f.objects.push(child)
+      if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
@@ -200,28 +190,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
-      if (child.__r3f) {
-        child.__r3f.parent = null
-      }
-
-      if (parentInstance.__r3f?.objects) {
+      // Clear the parent reference
+      if (child.__r3f) child.__r3f.parent = null
+      // Remove child from the parents objects
+      if (parentInstance.__r3f?.objects)
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-      }
-
       // Remove attachment
-      if (child.attachArray) {
-        parentInstance[child.attachArray] = parentInstance[child.attachArray].filter((x: Instance) => x !== child)
-      } else if (child.attachObject) {
-        delete parentInstance[child.attachObject[0]][child.attachObject[1]]
-      } else if (child.attach && !is.fun(child.attach)) {
-        parentInstance[child.attach] = null
-      } else if (is.arr(child.attachFns)) {
-        const [, detachFn] = child.attachFns as AttachFnsType
-        if (is.str(detachFn) && is.fun(parentInstance[detachFn])) {
-          parentInstance[detachFn](child)
-        } else if (is.fun(detachFn)) {
-          detachFn(child, parentInstance)
-        }
+      if (child.__r3f.attach) {
+        detach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
         // Remove interactivity
@@ -260,7 +236,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        reconciler.runWithPriority(IdleEventPriority, () => {
+        scheduleCallback(idlePriority, () => {
           try {
             child.dispose()
           } catch (e) {
@@ -320,16 +296,22 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
       insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
-      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) return [true]
-      else {
+      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
+        return [true]
+      } else {
         // This is a data object, let's extract critical information about it
         const { args: argsNew = [], children: cN, ...restNew } = newProps
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
+
+        // Throw if an object or literal was passed for args
+        if (!Array.isArray(argsNew)) throw 'The args prop must be an array!'
+
         // If it has new props or arguments, then it needs to be re-instanciated
         if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
         // Create a diff-set, flag if there are any changes
         const diff = diffProps(instance, restNew, restOld, true)
         if (diff.changes.length) return [false, diff]
+
         // Otherwise do not touch the instance
         return null
       }
@@ -348,16 +330,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       else applyProps(instance, diff)
     },
     hideInstance(instance: Instance) {
-      if (instance.isObject3D) {
-        instance.visible = false
-        invalidateInstance(instance)
-      }
+      // Deatch while the instance is hidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) detach(parent, instance, type)
+      if (instance.isObject3D) instance.visible = false
+      invalidateInstance(instance)
     },
     unhideInstance(instance: Instance, props: InstanceProps) {
-      if ((instance.isObject3D && props.visible == null) || props.visible) {
-        instance.visible = true
-        invalidateInstance(instance)
-      }
+      // Re-attach when the instance is unhidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) attach(parent, instance, type)
+      if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
+      invalidateInstance(instance)
     },
     createInstance,
     removeChild,
@@ -382,8 +366,20 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext: any) => parentHostContext,
     createTextInstance: () => {},
-    finalizeInitialChildren: () => false,
-    commitMount: () => {},
+    finalizeInitialChildren(instance: Instance) {
+      // https://github.com/facebook/react/issues/20271
+      // Returning true will trigger commitMount
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      return !!localState.handlers
+    },
+    commitMount(instance: Instance /*, type, props*/) {
+      // https://github.com/facebook/react/issues/20271
+      // This will make sure events are only added once to the central container
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      if (instance.raycast && localState.handlers && localState.eventCount) {
+        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+      }
+    },
     shouldDeprioritizeSubtree: () => false,
     prepareForCommit: () => null,
     preparePortalMount: (containerInfo: any) => prepare(containerInfo),

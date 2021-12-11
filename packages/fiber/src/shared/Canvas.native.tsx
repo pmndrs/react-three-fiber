@@ -4,12 +4,12 @@ import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio }
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, render, unmountComponentAtNode, RenderProps } from './index'
-import { createPointerEvents } from './events'
+import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'dpr' | 'size' | 'events'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>, ViewProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
@@ -42,7 +42,7 @@ function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
-  }, [])
+  }, [set])
   return null
 }
 
@@ -97,42 +97,37 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       setCanvas(canvasShim)
     }, [])
 
-    // Execute JSX in the reconciler as a layout-effect
-    React.useLayoutEffect(() => {
-      if (width > 0 && height > 0 && canvas) {
-        // Overwrite onCreated to apply RN bindings
-        const onCreated = (state: RootState) => {
-          // Bind events after creation
-          setBind(state.events.handlers)
+    if (width > 0 && height > 0 && canvas) {
+      // Overwrite onCreated to apply RN bindings
+      const onCreated = (state: RootState) => {
+        // Bind events after creation
+        setBind(state.events.handlers)
 
-          // Bind render to RN bridge
-          const context = state.gl.getContext() as ExpoWebGLRenderingContext
-          const renderFrame = state.gl.render.bind(state.gl)
-          state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-            renderFrame(scene, camera)
-            context.endFrameEXP()
-          }
-
-          return canvasProps?.onCreated?.(state)
+        // Bind render to RN bridge
+        const context = state.gl.getContext() as ExpoWebGLRenderingContext
+        const renderFrame = state.gl.render.bind(state.gl)
+        state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+          renderFrame(scene, camera)
+          context.endFrameEXP()
         }
 
-        render(
-          <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-          </ErrorBoundary>,
-          canvas,
-          {
-            ...canvasProps,
-            // expo-gl can only render at native dpr/resolution
-            // https://github.com/expo/expo-three/issues/39
-            dpr: PixelRatio.get(),
-            size: { width, height },
-            events: events || createPointerEvents,
-            onCreated,
-          },
-        )
+        return canvasProps?.onCreated?.(state)
       }
-    }, [width, height, children, canvas, canvasProps, events])
+
+      createRoot(canvas, {
+        ...canvasProps,
+        // expo-gl can only render at native dpr/resolution
+        // https://github.com/expo/expo-three/issues/39
+        dpr: PixelRatio.get(),
+        size: { width, height },
+        events: events || createTouchEvents,
+        onCreated,
+      }).render(
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>,
+      )
+    }
 
     React.useEffect(() => {
       return () => unmountComponentAtNode(canvas!)

@@ -193,12 +193,10 @@ describe('ReactThreeTestRenderer Core', () => {
         type: 'mesh',
         props: {},
         children: [
-          { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+          { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshBasicMaterial',
-            props: {
-              attach: 'material',
-            },
+            props: {},
             children: [],
           },
         ],
@@ -216,10 +214,10 @@ describe('ReactThreeTestRenderer Core', () => {
         type: 'mesh',
         props: {},
         children: [
-          { type: 'boxGeometry', props: { args: [2, 2], attach: 'geometry' }, children: [] },
+          { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshStandardMaterial',
-            props: { attach: 'material' },
+            props: {},
             children: [],
           },
         ],
@@ -340,12 +338,7 @@ describe('ReactThreeTestRenderer Core', () => {
       return (
         <mesh>
           <bufferGeometry attach="geometry">
-            <bufferAttribute
-              attachObject={['attributes', 'position']}
-              array={vertices}
-              count={vertices.length / 3}
-              itemSize={3}
-            />
+            <bufferAttribute attach="attributes-position" array={vertices} count={vertices.length / 3} itemSize={3} />
           </bufferGeometry>
           <meshBasicMaterial attach="material" color="hotpink" />
         </mesh>

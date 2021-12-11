@@ -56,8 +56,9 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
         state.internal.active &&
         (state.frameloop === 'always' || state.internal.frames > 0) &&
         !state.gl.xr?.isPresenting
-      )
+      ) {
         repeat += render(timestamp, state)
+      }
     })
     // Run after-effects
     run(globalAfterEffects, timestamp)

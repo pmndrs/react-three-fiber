@@ -1,6 +1,4 @@
 import { UseStore } from 'zustand'
-// @ts-ignore
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
 import { GestureResponderEvent, View } from 'react-native'
@@ -27,25 +25,6 @@ const DOM_EVENTS = {
   [EVENTS.HOVERIN]: 'onPointerOver',
   [EVENTS.HOVEROUT]: 'onPointerOut',
   [EVENTS.PRESSMOVE]: 'onPointerMove',
-}
-
-// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-// Gives React a clue as to how import the current interaction is
-export function getEventPriority() {
-  let name = window?.event?.type
-  switch (name) {
-    case EVENTS.PRESS:
-    case EVENTS.PRESSIN:
-    case EVENTS.PRESSOUT:
-    case EVENTS.LONGPRESS:
-      return DiscreteEventPriority
-    case EVENTS.HOVERIN:
-    case EVENTS.HOVEROUT:
-    case EVENTS.PRESSMOVE:
-      return ContinuousEventPriority
-    default:
-      return DefaultEventPriority
-  }
 }
 
 export function createPointerEvents(store: UseStore<RootState>): EventManager<View> {

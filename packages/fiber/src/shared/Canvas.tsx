@@ -1,10 +1,11 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
-import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
+import useMeasure from 'react-use-measure'
+import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, render, unmountComponentAtNode, RenderProps } from './index'
+import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -42,7 +43,7 @@ function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
     set(new Promise(() => null))
     return () => set(false)
-  }, [])
+  }, [set])
   return null
 }
 
@@ -68,6 +69,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
+  const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
   const canvasProps = pick<Props>(props, CANVAS_PROPS)
   const divProps = omit<Props>(props, CANVAS_PROPS)
@@ -79,27 +81,25 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  // Execute JSX in the reconciler as a layout-effect
+  if (width > 0 && height > 0 && canvas) {
+    createRoot(canvas, {
+      ...canvasProps,
+      size: { width, height },
+      events: events || createPointerEvents,
+    }).render(
+      <ErrorBoundary set={setError}>
+        <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+      </ErrorBoundary>,
+    )
+  }
+
   React.useLayoutEffect(() => {
-    if (width > 0 && height > 0) {
-      render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
-        canvasRef.current,
-        {
-          ...canvasProps,
-          size: { width, height },
-          events: events || createPointerEvents,
-        },
-      )
-    }
-  }, [width, height, children, canvasProps, events])
+    setCanvas(canvasRef.current)
+  }, [])
 
   React.useEffect(() => {
-    const container = canvasRef.current
-    return () => unmountComponentAtNode(container)
-  }, [])
+    return () => unmountComponentAtNode(canvas!)
+  }, [canvas])
 
   return (
     <div
