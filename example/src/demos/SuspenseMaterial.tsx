@@ -21,13 +21,7 @@ export default function App() {
 
 function SlowMaterial({ arg = 0 }) {
   suspend(() => new Promise((res) => setTimeout(res, 1000)), [arg])
-
-  React.useEffect(() => {
-    console.log('  mount slow material')
-    return () => console.log('  unmount slow material')
-  }, [])
-
-  return <meshStandardMaterial name="main" color="green" />
+  return <meshStandardMaterial name="main" color="salmon" toneMapped={false} />
 }
 
 function FallbackMaterial() {
