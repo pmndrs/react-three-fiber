@@ -56,7 +56,70 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas, config?: RenderProps<TCanvas>) {
   return {
-    render: (element: React.ReactNode) => render(element, canvas, config),
+    render: (element: React.ReactNode) => {
+      let { gl, size, events, onCreated, ...props } = config || {}
+      // Allow size to take on container bounds initially
+      if (!size) {
+        size = {
+          width: canvas.parentElement?.clientWidth ?? 0,
+          height: canvas.parentElement?.clientHeight ?? 0,
+        }
+      }
+
+      let root = roots.get(canvas)
+      let fiber = root?.fiber
+      let store = root?.store
+      let state = store?.getState()
+
+      if (fiber && state) {
+        // When a root was found, see if any fundamental props must be changed or exchanged
+
+        // Check pixelratio
+        if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
+        // Check size
+        if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
+        // Check frameloop
+        if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
+
+        // For some props we want to reset the entire root
+
+        // Changes to the color-space
+        const linearChanged = props.linear !== state.internal.lastProps.linear
+        if (linearChanged) {
+          unmountComponentAtNode(canvas)
+          fiber = undefined
+        }
+      }
+
+      if (!fiber) {
+        // If no root has been found, make one
+
+        // Create gl
+        const glRenderer = createRendererInstance(gl, canvas)
+
+        // Create store
+        store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
+        const state = store.getState()
+        // Create renderer
+        fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
+        // Map it
+        roots.set(canvas, { fiber, store })
+        // Store events internally
+        if (events) state.set({ events: events(store) })
+      }
+
+      if (store && fiber) {
+        reconciler.updateContainer(
+          <Provider store={store} element={element} onCreated={onCreated} target={canvas} />,
+          fiber,
+          null,
+          () => undefined,
+        )
+        return store
+      } else {
+        throw 'Error creating root!'
+      }
+    },
     unmount: () => unmountComponentAtNode(canvas),
   }
 }
@@ -64,69 +127,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas, config?: RenderPro
 function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
-  { gl, size, events, onCreated, ...props }: RenderProps<TCanvas> = {},
+  config: RenderProps<TCanvas> = {},
 ): UseStore<RootState> {
-  // Allow size to take on container bounds initially
-  if (!size) {
-    size = {
-      width: canvas.parentElement?.clientWidth ?? 0,
-      height: canvas.parentElement?.clientHeight ?? 0,
-    }
-  }
-
-  let root = roots.get(canvas)
-  let fiber = root?.fiber
-  let store = root?.store
-  let state = store?.getState()
-
-  if (fiber && state) {
-    // When a root was found, see if any fundamental props must be changed or exchanged
-
-    // Check pixelratio
-    if (props.dpr !== undefined && state.viewport.dpr !== calculateDpr(props.dpr)) state.setDpr(props.dpr)
-    // Check size
-    if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
-    // Check frameloop
-    if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
-
-    // For some props we want to reset the entire root
-
-    // Changes to the color-space
-    const linearChanged = props.linear !== state.internal.lastProps.linear
-    if (linearChanged) {
-      unmountComponentAtNode(canvas)
-      fiber = undefined
-    }
-  }
-
-  if (!fiber) {
-    // If no root has been found, make one
-
-    // Create gl
-    const glRenderer = createRendererInstance(gl, canvas)
-
-    // Create store
-    store = createStore(applyProps, invalidate, advance, { gl: glRenderer, size, ...props })
-    const state = store.getState()
-    // Create renderer
-    fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
-    // Map it
-    roots.set(canvas, { fiber, store })
-    // Store events internally
-    if (events) state.set({ events: events(store) })
-  }
-
-  if (store && fiber) {
-    reconciler.updateContainer(
-      <Provider store={store} element={element} onCreated={onCreated} target={canvas} />,
-      fiber,
-      null,
-      () => undefined,
-    )
-    return store
-  } else {
-    throw 'Error creating root!'
-  }
+  console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
+  return createRoot(canvas, config).render(element)
 }
 
 function Provider<TElement extends Element>({

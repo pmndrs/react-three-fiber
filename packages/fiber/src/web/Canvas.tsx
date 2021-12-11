@@ -5,7 +5,7 @@ import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, render, unmountComponentAtNode, RenderProps } from './index'
+import { extend, createRoot, unmountComponentAtNode, RenderProps } from './index'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -80,22 +80,17 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  // Execute JSX in the reconciler as a layout-effect
-  React.useLayoutEffect(() => {
-    if (width > 0 && height > 0) {
-      render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
-        canvasRef.current,
-        {
-          ...canvasProps,
-          size: { width, height },
-          events: events || createPointerEvents,
-        },
-      )
-    }
-  }, [width, height, children, canvasProps, events])
+  if (width > 0 && height > 0) {
+    createRoot(canvasRef.current, {
+      ...canvasProps,
+      size: { width, height },
+      events: events || createPointerEvents,
+    }).render(
+      <ErrorBoundary set={setError}>
+        <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+      </ErrorBoundary>,
+    )
+  }
 
   React.useEffect(() => {
     const container = canvasRef.current

@@ -4,7 +4,7 @@ import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { GLContext, extend, render, unmountComponentAtNode, RenderProps } from './index'
+import { GLContext, extend, createRoot, unmountComponentAtNode, RenderProps } from './index'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -85,21 +85,19 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       setSize({ width, height })
     }, [])
 
-    // Execute JSX in the reconciler as a layout-effect
-    React.useLayoutEffect(() => {
-      if (width > 0 && height > 0 && context) {
-        const store = render(
-          <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-          </ErrorBoundary>,
-          context,
-          { ...canvasProps, size: { width, height }, events: events || createTouchEvents },
-        )
-
-        const state = store.getState()
-        setBind(state.events.connected.getEventHandlers())
-      }
-    }, [width, height, children, context, canvasProps, events])
+    if (width > 0 && height > 0 && context) {
+      const store = createRoot(context, {
+        ...canvasProps,
+        size: { width, height },
+        events: events || createTouchEvents,
+      }).render(
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>,
+      )
+      const state = store.getState()
+      setBind(state.events.connected.getEventHandlers())
+    }
 
     React.useEffect(() => {
       return () => unmountComponentAtNode(context!)

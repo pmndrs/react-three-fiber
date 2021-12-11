@@ -80,7 +80,70 @@ const createRendererInstance = (gl: GLProps, context: GLContext): THREE.WebGLRen
 
 function createRoot<TView extends View>(context: GLContext, config?: RenderProps<TView>) {
   return {
-    render: (element: React.ReactNode) => render(element, context, config),
+    render: (element: React.ReactNode) => {
+      let { gl, size = { width: 0, height: 0 }, events, onCreated, ...props } = config || {}
+      let root = roots.get(context)
+      let fiber = root?.fiber
+      let store = root?.store
+      let state = store?.getState()
+
+      if (fiber && state) {
+        // When a root was found, see if any fundamental props must be changed or exchanged
+
+        // Check size
+        if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
+        // Check frameloop
+        if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
+
+        // For some props we want to reset the entire root
+
+        // Changes to the color-space
+        const linearChanged = props.linear !== state.internal.lastProps.linear
+        if (linearChanged) {
+          unmountComponentAtNode(context)
+          fiber = undefined
+        }
+      }
+
+      if (!fiber) {
+        // If no root has been found, make one
+
+        // Create gl
+        const glRenderer = createRendererInstance(gl, context)
+
+        // Create store
+        store = createStore(applyProps, invalidate, advance, {
+          gl: glRenderer,
+          size,
+          ...props,
+          // expo-gl can only render at native dpr/resolution
+          // https://github.com/expo/expo-three/issues/39
+          dpr: PixelRatio.get(),
+        })
+        const state = store.getState()
+        // Create renderer
+        fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
+        // Map it
+        roots.set(context, { fiber, store })
+        // Store event manager internally and connect it
+        if (events) {
+          state.set({ events: events(store) })
+          state.get().events.connect?.(context)
+        }
+      }
+
+      if (store && fiber) {
+        reconciler.updateContainer(
+          <Provider store={store} element={element} onCreated={onCreated} />,
+          fiber,
+          null,
+          () => undefined,
+        )
+        return store
+      } else {
+        throw 'Error creating root!'
+      }
+    },
     unmount: () => unmountComponentAtNode(context),
   }
 }
@@ -88,69 +151,10 @@ function createRoot<TView extends View>(context: GLContext, config?: RenderProps
 function render<TView extends View>(
   element: React.ReactNode,
   context: GLContext,
-  { gl, size = { width: 0, height: 0 }, events, onCreated, ...props }: RenderProps<TView> = {},
+  config: RenderProps<TView> = {},
 ): UseStore<RootState> {
-  let root = roots.get(context)
-  let fiber = root?.fiber
-  let store = root?.store
-  let state = store?.getState()
-
-  if (fiber && state) {
-    // When a root was found, see if any fundamental props must be changed or exchanged
-
-    // Check size
-    if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
-    // Check frameloop
-    if (state.frameloop !== props.frameloop) state.setFrameloop(props.frameloop)
-
-    // For some props we want to reset the entire root
-
-    // Changes to the color-space
-    const linearChanged = props.linear !== state.internal.lastProps.linear
-    if (linearChanged) {
-      unmountComponentAtNode(context)
-      fiber = undefined
-    }
-  }
-
-  if (!fiber) {
-    // If no root has been found, make one
-
-    // Create gl
-    const glRenderer = createRendererInstance(gl, context)
-
-    // Create store
-    store = createStore(applyProps, invalidate, advance, {
-      gl: glRenderer,
-      size,
-      ...props,
-      // expo-gl can only render at native dpr/resolution
-      // https://github.com/expo/expo-three/issues/39
-      dpr: PixelRatio.get(),
-    })
-    const state = store.getState()
-    // Create renderer
-    fiber = reconciler.createContainer(store, ConcurrentRoot, false, null)
-    // Map it
-    roots.set(context, { fiber, store })
-    // Store event manager internally and connect it
-    if (events) {
-      state.set({ events: events(store) })
-      state.get().events.connect?.(context)
-    }
-  }
-
-  if (store && fiber) {
-    reconciler.updateContainer(
-      <Provider store={store} element={element} onCreated={onCreated} />,
-      fiber,
-      null,
-      () => undefined,
-    )
-    return store
-  } else {
-    throw 'Error creating root!'
-  }
+  console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
+  return createRoot(context, config).render(element)
 }
 
 function Provider({
