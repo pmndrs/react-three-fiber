@@ -29,13 +29,14 @@ export type LocalState = {
   eventCount: number
   handlers: Partial<EventHandlers>
   attach?: AttachType
+  previousAttach?: any
   memoizedProps: {
     [key: string]: any
   }
 }
 
 export type AttachFnType = (parent: Instance, self: Instance) => void
-export type AttachType = string | AttachFnType | [attach: string | AttachFnType, detach?: string | AttachFnType]
+export type AttachType = string | [attach: string | AttachFnType, detach: string | AttachFnType]
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
@@ -311,16 +312,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         const diff = diffProps(instance, restNew, restOld, true)
         if (diff.changes.length) return [false, diff]
 
-        // TODO: Figure out what this is for
-        /*// If instance was never attached, attach it
-        if (instance.attach && typeof instance.attach !== 'function') {
-          const localState = instance.__r3f
-          const parent = localState.parent
-          if (parent && parent[instance.attach] !== instance) {
-            appendChild(parent, instance)
-          }
-        }*/
-
         // Otherwise do not touch the instance
         return null
       }
@@ -339,16 +330,18 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       else applyProps(instance, diff)
     },
     hideInstance(instance: Instance) {
-      if (instance.isObject3D) {
-        instance.visible = false
-        invalidateInstance(instance)
-      }
+      // Deatch while the instance is hidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) detach(parent, instance, type)
+      if (instance.isObject3D) instance.visible = false
+      invalidateInstance(instance)
     },
     unhideInstance(instance: Instance, props: InstanceProps) {
-      if ((instance.isObject3D && props.visible == null) || props.visible) {
-        instance.visible = true
-        invalidateInstance(instance)
-      }
+      // Re-attach when the instance is unhidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) attach(parent, instance, type)
+      if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
+      invalidateInstance(instance)
     },
     createInstance,
     removeChild,
