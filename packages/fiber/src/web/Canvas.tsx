@@ -69,6 +69,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
+  const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
   const canvasProps = pick<Props>(props, CANVAS_PROPS)
   const divProps = omit<Props>(props, CANVAS_PROPS)
@@ -80,8 +81,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  if (width > 0 && height > 0) {
-    createRoot(canvasRef.current, {
+  if (width > 0 && height > 0 && canvas) {
+    createRoot(canvas, {
       ...canvasProps,
       size: { width, height },
       events: events || createPointerEvents,
@@ -92,10 +93,13 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     )
   }
 
-  React.useEffect(() => {
-    const container = canvasRef.current
-    return () => unmountComponentAtNode(container)
+  React.useLayoutEffect(() => {
+    setCanvas(canvasRef.current)
   }, [])
+
+  React.useEffect(() => {
+    return () => unmountComponentAtNode(canvas!)
+  }, [canvas])
 
   return (
     <div
