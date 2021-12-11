@@ -47,6 +47,7 @@
     "expo-asset": "^8.4.3",
     "expo-file-system": "^13.0.3",
     "expo-gl": "^11.0.3",
+    "expo": "^43.0.1",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.27.0-rc.0",
     "react-use-measure": "^2.1.1",

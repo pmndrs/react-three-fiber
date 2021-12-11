@@ -1,4 +1,6 @@
 import * as THREE from 'three'
+// @ts-ignore
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
@@ -71,6 +73,30 @@ export interface PointerCaptureTarget {
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
+}
+
+// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+// Gives React a clue as to how import the current interaction is
+export function getEventPriority() {
+  let name = window?.event?.type
+  switch (name) {
+    case 'click':
+    case 'contextmenu':
+    case 'dblclick':
+    case 'pointercancel':
+    case 'pointerdown':
+    case 'pointerup':
+      return DiscreteEventPriority
+    case 'pointermove':
+    case 'pointerout':
+    case 'pointerover':
+    case 'pointerenter':
+    case 'pointerleave':
+    case 'wheel':
+      return ContinuousEventPriority
+    default:
+      return DefaultEventPriority
+  }
 }
 
 /**

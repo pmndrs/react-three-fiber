@@ -21,10 +21,9 @@ import {
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { createRoot, act, unmountComponentAtNode, useFrame, extend } from '../../src/web/index'
+import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
 import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
-import { ReactThreeFiber } from '../../src'
 import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>

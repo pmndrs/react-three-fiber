@@ -1,21 +1,19 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet } from 'react-native'
+import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { GLContext, extend, createRoot, unmountComponentAtNode, RenderProps } from './index'
+import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<View>, 'size' | 'events'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>, ViewProps {
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
   events?: (store: UseStore<RootState>) => EventManager<any>
-  nativeRef_EXPERIMENTAL?: React.MutableRefObject<any>
-  onContextCreate?: (gl: ExpoWebGLRenderingContext) => Promise<any> | void
 }
 
 type SetBlock = false | Promise<null> | null
@@ -60,15 +58,15 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
-  ({ children, fallback, style, events, nativeRef_EXPERIMENTAL, onContextCreate, ...props }, forwardedRef) => {
+  ({ children, fallback, style, events, ...props }, forwardedRef) => {
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
-    const [context, setContext] = React.useState<GLContext | null>(null)
-    const [bind, setBind] = React.useState()
+    const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
+    const [bind, setBind] = React.useState<any>()
 
     const canvasProps = pick<Props>(props, CANVAS_PROPS)
     const viewProps = omit<Props>(props, CANVAS_PROPS)
@@ -85,40 +83,59 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       setSize({ width, height })
     }, [])
 
-    if (width > 0 && height > 0 && context) {
-      const store = createRoot(context, {
+    const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
+      const canvasShim = {
+        width: context.drawingBufferWidth,
+        height: context.drawingBufferHeight,
+        style: {},
+        addEventListener: (() => {}) as any,
+        removeEventListener: (() => {}) as any,
+        clientHeight: context.drawingBufferHeight,
+        getContext: (() => context) as any,
+      } as HTMLCanvasElement
+
+      setCanvas(canvasShim)
+    }, [])
+
+    if (width > 0 && height > 0 && canvas) {
+      // Overwrite onCreated to apply RN bindings
+      const onCreated = (state: RootState) => {
+        // Bind events after creation
+        setBind(state.events.handlers)
+
+        // Bind render to RN bridge
+        const context = state.gl.getContext() as ExpoWebGLRenderingContext
+        const renderFrame = state.gl.render.bind(state.gl)
+        state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+          renderFrame(scene, camera)
+          context.endFrameEXP()
+        }
+
+        return canvasProps?.onCreated?.(state)
+      }
+
+      createRoot(canvas, {
         ...canvasProps,
+        // expo-gl can only render at native dpr/resolution
+        // https://github.com/expo/expo-three/issues/39
+        dpr: PixelRatio.get(),
         size: { width, height },
         events: events || createTouchEvents,
+        onCreated,
       }).render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,
       )
-      const state = store.getState()
-      setBind(state.events.connected.getEventHandlers())
     }
 
     React.useEffect(() => {
-      return () => unmountComponentAtNode(context!)
-    }, [context])
+      return () => unmountComponentAtNode(canvas!)
+    }, [canvas])
 
     return (
       <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && (
-          <GLView
-            nativeRef_EXPERIMENTAL={(ref: any) => {
-              if (nativeRef_EXPERIMENTAL && !nativeRef_EXPERIMENTAL.current) {
-                nativeRef_EXPERIMENTAL.current = ref
-              }
-            }}
-            onContextCreate={async (gl) => {
-              await onContextCreate?.(gl)
-              setContext(gl)
-            }}
-            style={StyleSheet.absoluteFill}
-          />
-        )}
+        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )
   },

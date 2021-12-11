@@ -14,5 +14,7 @@ export type {
 } from './core/store'
 export type { ThreeEvent, Events, EventManager } from './core/events'
 export type { ObjectMap } from './core/utils'
+export * from './native/hooks'
 export * from './native/Canvas'
-export * from './native/index'
+export { createTouchEvents as events } from './native/events'
+export * from './core'
