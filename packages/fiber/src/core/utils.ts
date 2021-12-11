@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
 import { EventHandlers } from './events'
-import { Instance, InstanceProps, LocalState } from './renderer'
+import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
 
 export const DEFAULT = '__default'
@@ -116,6 +116,46 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
     }
   }
   return object
+}
+
+function resolve(instance: Instance, key: string) {
+  let target = instance
+  if (key.includes('-')) {
+    const entries = key.split('-')
+    const last = entries.pop() as string
+    target = entries.reduce((acc, key) => acc[key], instance)
+    return { target, key: last }
+  } else return { target, key }
+}
+
+export function attach(parent: Instance, child: Instance, type: AttachType) {
+  if (is.str(type)) {
+    const { target, key } = resolve(parent, type)
+    target[key] = child
+  } else if (is.fun(type)) {
+    type(parent, child)
+  } else if (is.arr(type)) {
+    const [attach] = type
+    if (is.str(attach)) parent[attach](child)
+    else if (is.fun(attach)) attach(parent, child)
+  }
+}
+
+export function detach(parent: Instance, child: Instance, type: AttachType) {
+  if (is.str(type)) {
+    const { target, key } = resolve(parent, type)
+    target[key] = null
+  } else if (is.fun(type)) {
+    // type(parent, child)
+    // It would not make sense to call the function here again
+    // But the if-check is necessary still!
+  } else if (is.arr(type)) {
+    const [, detach] = type
+    if (detach) {
+      if (is.str(detach)) parent[detach](child)
+      else if (is.fun(detach)) detach(parent, child)
+    }
+  }
 }
 
 // Shallow check arrays, but check objects atomically
