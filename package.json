@@ -72,7 +72,7 @@
     "react": "^18.0.0-rc.0",
     "react-dom": "^18.0.0-rc.0",
     "react-native": "0.64.3",
-    "react-test-renderer": "18.0.0-rc.0",
+    "react-test-renderer": "^18.0.0-rc.0",
     "regenerator-runtime": "^0.13.9",
     "three": "^0.135.0",
     "three-stdlib": "^2.6.1",

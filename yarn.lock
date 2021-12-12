@@ -8294,6 +8294,11 @@ react-dom@^18.0.0-rc.0:
     object-assign "^4.1.1"
     scheduler "0.21.0-rc.0-next-f2a59df48-20211208"
 
+react-is@18.0.0-rc.0-next-f2a59df48-20211208:
+  version "18.0.0-rc.0-next-f2a59df48-20211208"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.0.0-rc.0-next-f2a59df48-20211208.tgz#c50b7b764bf181c5ffe78a091ec56bd5d7303154"
+  integrity sha512-241AowbvmjjFzohG6KLOwClqbNc9xEksYPiox+W+hE8RFiNSJ/6YNroYhz5QzLKcI6SluH4tKW3TQUNcr/wzzQ==
+
 "react-is@^16.12.0 || ^17.0.0", react-is@^17.0.1:
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-17.0.2.tgz#e691d4a8e9c789365655539ab372762b0efb54f0"
@@ -8303,11 +8308,6 @@ react-is@^16.8.1:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
   integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
-
-react-is@^18.0.0-rc.0:
-  version "18.0.0-rc.0-next-f2a59df48-20211208"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-18.0.0-rc.0-next-f2a59df48-20211208.tgz#c50b7b764bf181c5ffe78a091ec56bd5d7303154"
-  integrity sha512-241AowbvmjjFzohG6KLOwClqbNc9xEksYPiox+W+hE8RFiNSJ/6YNroYhz5QzLKcI6SluH4tKW3TQUNcr/wzzQ==
 
 react-merge-refs@^1.1.0:
   version "1.1.0"
@@ -8383,15 +8383,15 @@ react-shallow-renderer@^16.13.1:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0"
 
-react-test-renderer@18.0.0-rc.0:
-  version "18.0.0-rc.0"
-  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-18.0.0-rc.0.tgz#1859a2f10210f5d666faa34a22c93b5ecc869e77"
-  integrity sha512-F2+eDS0iQXwsLGa9laE6xyfmLcMzPOOy93bhQ1gq1r6kxn8/3eOnVxuw8itt7bT/mjgad/O6qzy/oAth9hhWEw==
+react-test-renderer@^18.0.0-rc.0:
+  version "18.0.0-rc.0-next-f2a59df48-20211208"
+  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-18.0.0-rc.0-next-f2a59df48-20211208.tgz#3eccd48e89db0ef77d8292e8a5a969b2b629a43c"
+  integrity sha512-F7jgrEW1gmNN6sY1PtA4PEcyCv3tw+jAWaHLlWdGij/4QQoWjRnQMvl2Teja46Y3bsmls6OyrjtJXu3wAumbSA==
   dependencies:
     object-assign "^4.1.1"
-    react-is "^18.0.0-rc.0"
+    react-is "18.0.0-rc.0-next-f2a59df48-20211208"
     react-shallow-renderer "^16.13.1"
-    scheduler "^0.21.0-rc.0"
+    scheduler "0.21.0-rc.0-next-f2a59df48-20211208"
 
 react-use-measure@^2.1.1:
   version "2.1.1"
@@ -8782,7 +8782,7 @@ scheduler@0.21.0-rc.0:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
 
-scheduler@0.21.0-rc.0-next-f2a59df48-20211208, scheduler@^0.21.0-rc.0:
+scheduler@0.21.0-rc.0-next-f2a59df48-20211208:
   version "0.21.0-rc.0-next-f2a59df48-20211208"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.21.0-rc.0-next-f2a59df48-20211208.tgz#54e18e1d360194fd54b47a00616e46403fcabdf1"
   integrity sha512-x0oLd3YIih9GHqWTaFYejVe6Au+4TadOWZciAq8m4+Fuo5qCi4/3M35a9irVSIP3+qcg/fCqHKJETT9G0ejD1A==

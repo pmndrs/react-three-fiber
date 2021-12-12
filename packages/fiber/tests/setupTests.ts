@@ -2,9 +2,6 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 import * as THREE from 'three'
 import { extend } from '../src'
 
-// Mock scheduler to test React features
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 // Polyfills WebGL canvas
 // @ts-expect-error
 HTMLCanvasElement.prototype.getContext = function () {
