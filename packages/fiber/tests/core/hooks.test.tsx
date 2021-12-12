@@ -1,5 +1,3 @@
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 import * as React from 'react'
 import { Group, Camera, Scene, Raycaster, Mesh, BoxBufferGeometry, MeshBasicMaterial } from 'three'
 // @ts-ignore

@@ -1,11 +1,12 @@
 import * as React from 'react'
-import { render, RenderResult } from '@testing-library/react'
+import { View } from 'react-native'
+import { render, RenderAPI } from '@testing-library/react-native'
 
-import { Canvas, act } from '../../src'
+import { Canvas, act } from '../../src/native'
 
-describe('web Canvas', () => {
+describe('native Canvas', () => {
   it('should correctly mount', async () => {
-    let renderer: RenderResult = null!
+    let renderer: RenderAPI = null!
 
     await act(async () => {
       renderer = render(
@@ -19,7 +20,7 @@ describe('web Canvas', () => {
   })
 
   it('should forward ref', async () => {
-    const ref = React.createRef<HTMLCanvasElement>()
+    const ref = React.createRef<View>()
 
     await act(async () => {
       render(
@@ -33,7 +34,8 @@ describe('web Canvas', () => {
   })
 
   it('should correctly unmount', async () => {
-    let renderer: RenderResult = null!
+    let renderer: RenderAPI = null!
+
     await act(async () => {
       renderer = render(
         <Canvas>
