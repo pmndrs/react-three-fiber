@@ -47,7 +47,7 @@ beforeAll(() => {
   })
 })
 
-describe('web core', () => {
+describe('renderer', () => {
   let canvas: HTMLCanvasElement = null!
 
   beforeEach(() => {

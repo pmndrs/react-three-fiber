@@ -1,17 +1,9 @@
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { Canvas, act } from '../../src'
 
-// @ts-ignore
-HTMLCanvasElement.prototype.getContext = function () {
-  return createWebGLContext(this)
-}
-
-describe('events ', () => {
+describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
 
@@ -27,9 +19,9 @@ describe('events ', () => {
     })
 
     const evt = new PointerEvent('pointerdown')
-    //@ts-ignore
+    // @ts-ignore
     evt.offsetX = 577
-    //@ts-ignore
+    // @ts-ignore
     evt.offsetY = 480
 
     fireEvent(document.querySelector('canvas') as HTMLCanvasElement, evt)
@@ -305,7 +297,7 @@ describe('events ', () => {
     expect(handleClickRear).not.toHaveBeenCalled()
   })
 
-  describe('pointer capture', () => {
+  describe('web pointer capture', () => {
     const handlePointerMove = jest.fn()
     const handlePointerDown = jest.fn((ev) => (ev.target as any).setPointerCapture(ev.pointerId))
 

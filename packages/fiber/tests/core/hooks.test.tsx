@@ -15,7 +15,7 @@ const { waitFor } = asyncUtils(act, (resolver: () => void) => {
   resolvers.push(resolver)
 })
 
-describe('web hooks', () => {
+describe('hooks', () => {
   let canvas: HTMLCanvasElement = null!
 
   beforeEach(() => {
