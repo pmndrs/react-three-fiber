@@ -1,23 +1,5 @@
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 import * as React from 'react'
-import {
-  Color,
-  Group,
-  Camera,
-  Scene,
-  Mesh,
-  BoxBufferGeometry,
-  MeshBasicMaterial,
-  MeshStandardMaterial,
-  PCFSoftShadowMap,
-  ACESFilmicToneMapping,
-  sRGBEncoding,
-  Object3D,
-  WebGLRenderer,
-  LinearEncoding,
-  NoToneMapping,
-} from 'three'
+import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
@@ -26,23 +8,23 @@ import { UseStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
-type ComponentMesh = Mesh<BoxBufferGeometry, MeshBasicMaterial>
+type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
 /* This class is used for one of the tests */
-class HasObject3dMember extends Object3D {
-  public attachment?: Object3D = undefined
+class HasObject3dMember extends THREE.Object3D {
+  public attachment?: THREE.Object3D = undefined
 }
 
 /* This class is used for one of the tests */
-class HasObject3dMethods extends Object3D {
-  attachedObj3d?: Object3D
-  detachedObj3d?: Object3D
+class HasObject3dMethods extends THREE.Object3D {
+  attachedObj3d?: THREE.Object3D
+  detachedObj3d?: THREE.Object3D
 
-  customAttach(obj3d: Object3D) {
+  customAttach(obj3d: THREE.Object3D) {
     this.attachedObj3d = obj3d
   }
 
-  detach(obj3d: Object3D) {
+  detach(obj3d: THREE.Object3D) {
     this.detachedObj3d = obj3d
   }
 }
@@ -65,7 +47,7 @@ beforeAll(() => {
   })
 })
 
-describe('web core', () => {
+describe('renderer', () => {
   let canvas: HTMLCanvasElement = null!
 
   beforeEach(() => {
@@ -90,7 +72,7 @@ describe('web core', () => {
         </mesh>
       )
     }
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(<Mesh />)
@@ -100,14 +82,14 @@ describe('web core', () => {
     expect(scene.children[0].type).toEqual('Mesh')
     expect((scene.children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
     )
   })
 
   it('renders an empty scene', async () => {
     const Empty = () => null
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(<Empty />)
@@ -139,7 +121,7 @@ describe('web core', () => {
       )
     }
 
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(<Parent />)
@@ -153,7 +135,7 @@ describe('web core', () => {
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
     expect(
-      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type,
+      (scene.children[0].children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type,
     ).toEqual('MeshBasicMaterial')
   })
 
@@ -188,7 +170,7 @@ describe('web core', () => {
       return null
     }
 
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(<Component />)
@@ -200,7 +182,7 @@ describe('web core', () => {
   })
 
   it('updates types & names', async () => {
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(
@@ -213,10 +195,12 @@ describe('web core', () => {
         .getState().scene
     })
 
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>).material.type).toEqual(
       'MeshBasicMaterial',
     )
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshBasicMaterial>).material.name).toEqual('basicMat')
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>).material.name).toEqual(
+      'basicMat',
+    )
 
     await act(async () => {
       scene = createRoot(canvas)
@@ -230,16 +214,45 @@ describe('web core', () => {
         .getState().scene
     })
 
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.type).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type).toEqual(
       'MeshStandardMaterial',
     )
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, MeshStandardMaterial>).material.name).toEqual(
+    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.name).toEqual(
       'standardMat',
     )
   })
 
+  it('should forward ref three object', async () => {
+    // Note: Passing directly should be less strict, and assigning current should be more strict
+    let immutableRef!: React.RefObject<THREE.Mesh>
+    let mutableRef!: React.MutableRefObject<THREE.Object3D | undefined>
+    let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
+
+    const RefTest = () => {
+      immutableRef = React.createRef()
+      mutableRef = React.useRef()
+      mutableRefSpecific = React.useRef(null)
+
+      return (
+        <>
+          <mesh ref={immutableRef} />
+          <mesh ref={mutableRef} />
+          <mesh ref={(r) => (mutableRefSpecific.current = r)} />
+        </>
+      )
+    }
+
+    await act(async () => {
+      createRoot(canvas).render(<RefTest />)
+    })
+
+    expect(immutableRef.current).toBeTruthy()
+    expect(mutableRef.current).toBeTruthy()
+    expect(mutableRefSpecific.current).toBeTruthy()
+  })
+
   it('attaches Object3D children that use attach', async () => {
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(
@@ -258,7 +271,7 @@ describe('web core', () => {
   })
 
   it('can attach a Scene', async () => {
-    let scene: Scene = null!
+    let scene: THREE.Scene = null!
     await act(async () => {
       scene = createRoot(canvas)
         .render(
@@ -278,7 +291,7 @@ describe('web core', () => {
 
   describe('attaches Object3D children that use attachFns', () => {
     it('attachFns as strings', async () => {
-      let scene: Scene = null!
+      let scene: THREE.Scene = null!
       await act(async () => {
         scene = createRoot(canvas)
           .render(
@@ -307,7 +320,7 @@ describe('web core', () => {
     })
 
     it('attachFns as functions', async () => {
-      let scene: Scene = null!
+      let scene: THREE.Scene = null!
       let attachedMesh: Instance = null!
       let detachedMesh: Instance = null!
 
@@ -422,7 +435,7 @@ describe('web core', () => {
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
-    let camera: Camera = null!
+    let camera: THREE.Camera = null!
 
     await act(async () => {
       camera = createRoot(canvas, { orthographic: true, camera: { position: [0, 0, 5] } })
@@ -479,7 +492,7 @@ describe('web core', () => {
       }).render(<group />)
     })
 
-    expect(state.getState().gl.shadowMap.type).toBe(PCFSoftShadowMap)
+    expect(state.getState().gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
@@ -490,8 +503,8 @@ describe('web core', () => {
       }).render(<group />)
     })
 
-    expect(state.getState().gl.toneMapping).toBe(ACESFilmicToneMapping)
-    expect(state.getState().gl.outputEncoding).toBe(sRGBEncoding)
+    expect(state.getState().gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(state.getState().gl.outputEncoding).toBe(THREE.sRGBEncoding)
   })
 
   it('should toggle render mode in xr', async () => {
@@ -534,7 +547,7 @@ describe('web core', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends Color {
+    class MyColor extends THREE.Color {
       constructor(col: number) {
         super(col)
       }
@@ -566,7 +579,7 @@ describe('web core', () => {
   })
 
   it('should set a renderer via gl callback', async () => {
-    class Renderer extends WebGLRenderer {}
+    class Renderer extends THREE.WebGLRenderer {}
 
     let gl: Renderer = null!
     await act(async () => {
@@ -584,14 +597,14 @@ describe('web core', () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
       gl = createRoot(canvas, {
-        gl: { outputEncoding: LinearEncoding, toneMapping: NoToneMapping },
+        gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping },
       })
         .render(<group />)
         .getState().gl
     })
 
-    expect(gl.outputEncoding).toBe(LinearEncoding)
-    expect(gl.toneMapping).toBe(NoToneMapping)
+    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
+    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
 
     await act(async () => {
       gl = createRoot(canvas, {
@@ -602,7 +615,7 @@ describe('web core', () => {
         .getState().gl
     })
 
-    expect(gl.outputEncoding).toBe(LinearEncoding)
-    expect(gl.toneMapping).toBe(NoToneMapping)
+    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
+    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
   })
 })

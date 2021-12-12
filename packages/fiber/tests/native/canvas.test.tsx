@@ -1,28 +1,29 @@
 import * as React from 'react'
-import { render, RenderResult } from '@testing-library/react'
+import { View } from 'react-native'
+import { act, create, ReactTestRenderer } from 'react-test-renderer'
 
-import { Canvas, act } from '../../src'
+import { Canvas } from '../../src/native'
 
-describe('web Canvas', () => {
+describe('native Canvas', () => {
   it('should correctly mount', async () => {
-    let renderer: RenderResult = null!
+    let renderer: ReactTestRenderer = null!
 
     await act(async () => {
-      renderer = render(
+      renderer = create(
         <Canvas>
           <group />
         </Canvas>,
       )
     })
 
-    expect(renderer.container).toMatchSnapshot()
+    expect(renderer.toTree()).toMatchSnapshot()
   })
 
   it('should forward ref', async () => {
-    const ref = React.createRef<HTMLCanvasElement>()
+    const ref = React.createRef<View>()
 
     await act(async () => {
-      render(
+      create(
         <Canvas ref={ref}>
           <group />
         </Canvas>,
@@ -33,9 +34,10 @@ describe('web Canvas', () => {
   })
 
   it('should correctly unmount', async () => {
-    let renderer: RenderResult = null!
+    let renderer: ReactTestRenderer = null!
+
     await act(async () => {
-      renderer = render(
+      renderer = create(
         <Canvas>
           <group />
         </Canvas>,
