@@ -41,8 +41,22 @@ jest.mock('react-native', () => ({
   ),
 }))
 jest.mock('react-native/Libraries/Pressability/Pressability.js', () => ({}))
-jest.mock('expo-asset', () => ({}))
-jest.mock('expo-file-system', () => ({}))
+class Asset {
+  name = 'test asset'
+  type = 'glb'
+  hash = null
+  uri = 'test://null'
+  localUri = 'test://null'
+  width = 800
+  height = 400
+  static fromURI = () => this
+  static fromModule = () => this
+  static downloadAsync = async () => new Promise((res) => res(this))
+}
+jest.mock('expo-asset', () => ({ Asset }))
+jest.mock('expo-file-system', () => ({
+  readAsStringAsync: async () => new Promise((res) => res('')),
+}))
 jest.mock('expo-gl', () => ({
   GLView: ({ onContextCreate }: { onContextCreate: (gl: any) => void }) => {
     React.useLayoutEffect(() => {
