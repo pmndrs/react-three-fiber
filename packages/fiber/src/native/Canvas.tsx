@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { View, ViewProps, Pressable, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
+import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
@@ -101,7 +101,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       // Overwrite onCreated to apply RN bindings
       const onCreated = (state: RootState) => {
         // Bind events after creation
-        setBind(state.events.handlers)
+        const handlers = state.events.connect?.(canvas)
+        setBind(handlers)
 
         // Bind render to RN bridge
         const context = state.gl.getContext() as ExpoWebGLRenderingContext
@@ -134,9 +135,9 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <Pressable {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
-      </Pressable>
+      </View>
     )
   },
 )

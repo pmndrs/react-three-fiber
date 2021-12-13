@@ -2,6 +2,8 @@ import { UseStore } from 'zustand'
 import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
 import { GestureResponderEvent, View } from 'react-native'
+// @ts-ignore
+import Pressability from 'react-native/Libraries/Pressability/Pressability'
 
 const EVENTS = {
   PRESS: 'onPress',
@@ -53,12 +55,19 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
       const { set, events } = store.getState()
       events.disconnect?.()
 
-      set((state) => ({ events: { ...state.events, connected: true } }))
+      const connected = new Pressability(events?.handlers)
+      set((state) => ({ events: { ...state.events, connected } }))
+
+      const handlers = connected.getEventHandlers()
+      return handlers
     },
     disconnect: () => {
-      const { set } = store.getState()
+      const { set, events } = store.getState()
 
-      set((state) => ({ events: { ...state.events, connected: false } }))
+      if (events.connected) {
+        events.connected.reset()
+        set((state) => ({ events: { ...state.events, connected: false } }))
+      }
     },
   }
 }
