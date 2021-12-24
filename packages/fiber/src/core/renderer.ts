@@ -196,6 +196,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
         } else value = 0
       }
 
+      const isLinear = rootState?.gl?.outputEncoding === THREE.LinearEncoding
+
       // Deal with pointer events ...
       if (isEvent) {
         if (value) localState.handlers[key as keyof EventHandlers] = value as any
@@ -229,14 +231,14 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
           else targetProp.set(value)
           // Auto-convert sRGB colors, for now ...
           // https://github.com/pmndrs/react-three-fiber/issues/344
-          if (!rootState.linear && isColor) targetProp.convertSRGBToLinear()
+          if (!isLinear && isColor) targetProp.convertSRGBToLinear()
         }
         // Else, just overwrite the value
       } else {
         currentInstance[key] = value
         // Auto-convert sRGB textures, for now ...
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        if (!rootState.linear && currentInstance[key] instanceof THREE.Texture)
+        if (!isLinear && currentInstance[key] instanceof THREE.Texture)
           currentInstance[key].encoding = THREE.sRGBEncoding
       }
 
