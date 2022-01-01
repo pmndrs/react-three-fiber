@@ -353,7 +353,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     isPrimaryRenderer: false,
     getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
     // @ts-ignore
-    now: is.fun(performance.now) ? performance.now : is.fun(Date.now) ? Date.now : undefined,
+    now:
+      typeof performance !== 'undefined' && is.fun(performance.now)
+        ? performance.now
+        : is.fun(Date.now)
+        ? Date.now
+        : undefined,
     // @ts-ignore
     scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
     // @ts-ignore
