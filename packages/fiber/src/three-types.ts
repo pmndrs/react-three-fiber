@@ -179,7 +179,7 @@ export type ShaderMaterialProps = MaterialNode<THREE.ShaderMaterial, [THREE.Shad
 export type PointsMaterialProps = MaterialNode<THREE.PointsMaterial, [THREE.PointsMaterialParameters]>
 export type MeshPhysicalMaterialProps = Overwrite<
   MaterialNode<THREE.MeshPhysicalMaterial, [THREE.MeshPhysicalMaterialParameters]>,
-  { sheenColor?: Color }
+  { sheenColor?: Color; attenuationColor?: Color; specularColor?: Color }
 >
 export type MeshStandardMaterialProps = Overwrite<
   MaterialNode<THREE.MeshStandardMaterial, [THREE.MeshStandardMaterialParameters]>,

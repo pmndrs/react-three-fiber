@@ -51,7 +51,7 @@
     "@types/react-reconciler": "^0.26.2",
     "@types/react-test-renderer": "^17.0.1",
     "@types/scheduler": "^0.16.2",
-    "@types/three": "^0.130.0",
+    "@types/three": "^0.135.0",
     "@typescript-eslint/eslint-plugin": "^4.28.4",
     "@typescript-eslint/parser": "^4.28.4",
     "eslint": "^7.31.0",
