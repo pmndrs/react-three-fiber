@@ -59,10 +59,7 @@ export type Object3DNode<T, P> = Overwrite<
   EventHandlers
 
 export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
-export type MaterialNode<T extends THREE.Material, P> = Overwrite<
-  Node<T, P>,
-  { color?: Color; emissive?: Color; sheenColor?: Color }
->
+export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
 export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
 
 // export type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
@@ -180,12 +177,27 @@ export type SpriteMaterialProps = MaterialNode<THREE.SpriteMaterial, [THREE.Spri
 export type RawShaderMaterialProps = MaterialNode<THREE.RawShaderMaterial, [THREE.ShaderMaterialParameters]>
 export type ShaderMaterialProps = MaterialNode<THREE.ShaderMaterial, [THREE.ShaderMaterialParameters]>
 export type PointsMaterialProps = MaterialNode<THREE.PointsMaterial, [THREE.PointsMaterialParameters]>
-export type MeshPhysicalMaterialProps = MaterialNode<THREE.MeshPhysicalMaterial, [THREE.MeshPhysicalMaterialParameters]>
-export type MeshStandardMaterialProps = MaterialNode<THREE.MeshStandardMaterial, [THREE.MeshStandardMaterialParameters]>
-export type MeshPhongMaterialProps = MaterialNode<THREE.MeshPhongMaterial, [THREE.MeshPhongMaterialParameters]>
-export type MeshToonMaterialProps = MaterialNode<THREE.MeshToonMaterial, [THREE.MeshToonMaterialParameters]>
+export type MeshPhysicalMaterialProps = Overwrite<
+  MaterialNode<THREE.MeshPhysicalMaterial, [THREE.MeshPhysicalMaterialParameters]>,
+  { sheenColor?: Color }
+>
+export type MeshStandardMaterialProps = Overwrite<
+  MaterialNode<THREE.MeshStandardMaterial, [THREE.MeshStandardMaterialParameters]>,
+  { emissive?: Color }
+>
+export type MeshPhongMaterialProps = Overwrite<
+  MaterialNode<THREE.MeshPhongMaterial, [THREE.MeshPhongMaterialParameters]>,
+  { emissive?: Color; specular?: Color }
+>
+export type MeshToonMaterialProps = Overwrite<
+  MaterialNode<THREE.MeshToonMaterial, [THREE.MeshToonMaterialParameters]>,
+  { emissive?: Color }
+>
 export type MeshNormalMaterialProps = MaterialNode<THREE.MeshNormalMaterial, [THREE.MeshNormalMaterialParameters]>
-export type MeshLambertMaterialProps = MaterialNode<THREE.MeshLambertMaterial, [THREE.MeshLambertMaterialParameters]>
+export type MeshLambertMaterialProps = Overwrite<
+  MaterialNode<THREE.MeshLambertMaterial, [THREE.MeshLambertMaterialParameters]>,
+  { emissive?: Color }
+>
 export type MeshDepthMaterialProps = MaterialNode<THREE.MeshDepthMaterial, [THREE.MeshDepthMaterialParameters]>
 export type MeshDistanceMaterialProps = MaterialNode<THREE.MeshDistanceMaterial, [THREE.MeshDistanceMaterialParameters]>
 export type MeshBasicMaterialProps = MaterialNode<THREE.MeshBasicMaterial, [THREE.MeshBasicMaterialParameters]>
