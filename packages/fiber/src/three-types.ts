@@ -59,7 +59,10 @@ export type Object3DNode<T, P> = Overwrite<
   EventHandlers
 
 export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
-export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
+export type MaterialNode<T extends THREE.Material, P> = Overwrite<
+  Node<T, P>,
+  { color?: Color; emissive?: Color; sheenColor?: Color }
+>
 export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
 
 // export type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
@@ -397,7 +400,7 @@ declare global {
       matrix4: Matrix4Props
       quaternion: QuaternionProps
       bufferAttribute: BufferAttributeProps
-      float32BufferAttribute: Float32BufferAttributeProps                   
+      float32BufferAttribute: Float32BufferAttributeProps
       instancedBufferAttribute: InstancedBufferAttributeProps
       color: ColorProps
       fog: FogProps
