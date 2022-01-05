@@ -397,6 +397,50 @@ describe('web core', () => {
     expect(state.internal.interaction.length).toBe(0)
   })
 
+  it('will create an identical instance when reconstructing', async () => {
+    let state: RootState = null!
+    const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
+
+    const Test = ({ n }: { n: number }) => (
+      // @ts-expect-error args isn't a valid prop but changing it will swap
+      <group args={[n]} onPointerOver={() => null}>
+        <group />
+      </group>
+    )
+
+    await act(async () => {
+      state = render(<Test n={1} />, canvas).getState()
+    })
+
+    instances.push({
+      uuid: state.scene.children[0].uuid,
+      parentUUID: state.scene.children[0].parent?.uuid,
+      childUUID: state.scene.children[0].children[0]?.uuid,
+    })
+
+    await act(async () => {
+      state = render(<Test n={2} />, canvas).getState()
+    })
+
+    instances.push({
+      uuid: state.scene.children[0].uuid,
+      parentUUID: state.scene.children[0].parent?.uuid,
+      childUUID: state.scene.children[0].children[0]?.uuid,
+    })
+
+    const [oldInstance, newInstance] = instances
+
+    // Created a new instance
+    expect(oldInstance.uuid).not.toBe(newInstance.uuid)
+
+    // Preserves scene hierarchy
+    expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
+    expect(oldInstance.childUUID).toBe(newInstance.childUUID)
+
+    // Rebinds events
+    expect(state.internal.interaction.length).not.toBe(0)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     let camera: Camera = null!
 

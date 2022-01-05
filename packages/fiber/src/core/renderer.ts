@@ -493,6 +493,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     removeChild(parent, instance)
     appendChild(parent, newInstance)
 
+    // Re-bind event handlers
+    if (newInstance.raycast && newInstance.__r3f.eventCount) {
+      const rootState = newInstance.__r3f.root.getState()
+      rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
+    }
+
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
     // https://github.com/facebook/react/pull/15021
