@@ -446,7 +446,9 @@ describe('renderer', () => {
     )
 
     await act(async () => {
-      state = render(<Test n={1} />, canvas).getState()
+      state = createRoot(canvas)
+        .render(<Test n={1} />)
+        .getState()
     })
 
     instances.push({
@@ -456,7 +458,9 @@ describe('renderer', () => {
     })
 
     await act(async () => {
-      state = render(<Test n={2} />, canvas).getState()
+      state = createRoot(canvas)
+        .render(<Test n={2} />)
+        .getState()
     })
 
     instances.push({
