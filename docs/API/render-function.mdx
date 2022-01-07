@@ -16,7 +16,7 @@ window.addEventListener('resize', () =>
   render(<mesh />, document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
-  })
+  }),
 )
 
 window.dispatchEvent(new Event('resize'))
@@ -72,7 +72,7 @@ createRoot(canvas).render(
       <boxGeometry />
       <meshStandardMaterial />
     </mesh>
-  </>
+  </>,
 )
 ```
 
@@ -87,17 +87,13 @@ createRoot(canvasNode).render(
   <mesh>
     <boxGeometry />
     <meshStandardMaterial />
-  </mesh>
+  </mesh>,
 )
 
 // Out:
 
 import { createRoot, extend } from '@react-three/fiber'
-import {
-  Mesh as _Mesh,
-  BoxGeometry as _BoxGeometry,
-  MeshStandardMaterial as _MeshStandardMaterial,
-} from 'three'
+import { Mesh as _Mesh, BoxGeometry as _BoxGeometry, MeshStandardMaterial as _MeshStandardMaterial } from 'three'
 
 extend({
   Mesh: _Mesh,
@@ -109,6 +105,6 @@ createRoot(canvasNode).render(
   <mesh>
     <boxGeometry />
     <meshStandardMaterial />
-  </mesh>
+  </mesh>,
 )
 ```

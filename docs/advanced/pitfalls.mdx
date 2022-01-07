@@ -105,7 +105,7 @@ return <mesh position-x={x} />
 
 ### ✅ Fetch state directly
 
-For instance using [Zustand](https://github.com/react-spring/zustand).
+For instance using [Zustand](https://github.com/pmndrs/zustand).
 
 ```jsx
 useFrame(() => (ref.current.position.x = api.getState().x))
@@ -114,7 +114,7 @@ return <mesh ref={ref} />
 
 ### ✅ Or, subscribe transiently
 
-See: [transient updates for often occurring state changes](https://github.com/react-spring/zustand#transient-updates-for-often-occuring-state-changes).
+See: [transient updates for often occurring state changes](https://github.com/pmndrs/zustand#transient-updates-for-often-occuring-state-changes).
 
 ```jsx
 const ref = useRef()
@@ -122,9 +122,9 @@ useEffect(
   () =>
     api.subscribe(
       (x) => (ref.current.position.x = x),
-      (state) => state.x
+      (state) => state.x,
     ),
-  []
+  [],
 )
 return <mesh ref={ref} />
 ```

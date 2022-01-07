@@ -117,9 +117,8 @@ function Foo() {
 ```
 
 <Hint>
-  Be careful about what you do inside useFrame! You should never setState in there! You calculations
-  should be slim and you should mind all the commonly known pitfalls when dealing with loops in
-  general, like re-use of variables, etc.
+  Be careful about what you do inside useFrame! You should never setState in there! You calculations should be slim and
+  you should mind all the commonly known pitfalls when dealing with loops in general, like re-use of variables, etc.
 </Hint>
 
 ### Taking over the render-loop
@@ -141,8 +140,8 @@ function RenderOnTop() {
 ```
 
 <Hint>
-  Callbacks will be executed in order of ascending priority values (lowest first, highest last.),
-  similar to the DOM's z-order.
+  Callbacks will be executed in order of ascending priority values (lowest first, highest last.), similar to the DOM's
+  z-order.
 </Hint>
 
 ### Negative indices
@@ -185,13 +184,13 @@ function App() {
 ```
 
 <Hint>
-  Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This
-  allows you to re-use loaded data everywhere in the component tree.
+  Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use
+  loaded data everywhere in the component tree.
 </Hint>
 
 <Hint>
-  Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use
-  them. Refer to the automatic disposal section in the API.
+  Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the
+  automatic disposal section in the API.
 </Hint>
 
 ### Loader extensions

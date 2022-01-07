@@ -38,8 +38,8 @@ function Controls() {
 ```
 
 <Hint>
-  Drei's controls do this automatically for you. If you use react-spring to animate your scene then
-  it will also take care of it.
+  Drei's controls do this automatically for you. If you use react-spring to animate your scene then it will also take
+  care of it.
 </Hint>
 
 Generally you can call invalidate whenever you need to render:
@@ -101,7 +101,7 @@ Each mesh is a draw call, you should be mindful of how many of these you employ:
 
 <Codesandbox id="h873k" />
 
-Setting up instancing is not so hard, consult [the three.js docs](https://threejs.org/docs/index.html?q=instance#api/en/objects/InstancedMesh) if you need help.
+Setting up instancing is not so hard, consult [the three.js docs](https://threejs.org/docs/#api/en/objects/InstancedMesh) if you need help.
 
 ```jsx
 function Instances({ count = 100000, temp = new THREE.Object3D() }) {
@@ -300,6 +300,4 @@ It simulates heavy load by creating hundreds of THREE.TextGeometry instances (51
   />
 </p>
 
-<Hint>
-  Until React 18 comes out officially the concurrency option in React Three Fiber is experimental!
-</Hint>
+<Hint>Until React 18 comes out officially the concurrency option in React Three Fiber is experimental!</Hint>

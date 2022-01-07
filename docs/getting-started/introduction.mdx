@@ -29,9 +29,8 @@ No. There is no additional overhead. Components participate in a unified renderl
 <table>
   <tr>
     <td>
-      Let's make a re-usable component that has its own state, reacts to user-input and participates
-      in the render-loop. (
-      <a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).
+      Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop.
+      (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).
     </td>
     <td>
       <a href="https://codesandbox.io/s/rrppl0y8l4">
@@ -62,8 +61,7 @@ function Box(props) {
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}
-    >
+      onPointerOut={(event) => setHover(false)}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -77,7 +75,7 @@ ReactDOM.render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )
 ```
 
@@ -106,8 +104,7 @@ function Box(props: JSX.IntrinsicElements['mesh']) {
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}
-    >
+      onPointerOut={(event) => setHover(false)}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -121,7 +118,7 @@ ReactDOM.render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-  document.getElementById('root')
+  document.getElementById('root'),
 )
 ```
 
@@ -177,8 +174,7 @@ function Box(props) {
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}
-    >
+      onPointerOut={(event) => setHover(false)}>
       <boxGeometry args={[1, 1, 1]} />
       <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
@@ -205,9 +201,9 @@ export default function App() {
 
 You need to be versed in both React and `three.js` before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for `three.js`, make sure you at least glance over the following links:
 
-- Make sure you have a [basic grasp of `three.js`](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
+- Make sure you have a [basic grasp of `three.js`](https://threejs.org/docs/#manual/en/introduction/Creating-a-scene). Keep that site open.
 - When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
-- [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ...), _all_ three.js exports are native to React Three Fiber.
+- [Look up](https://threejs.org/docs/#api/en/objects/Mesh) the JSX elements that you see (mesh, ...), _all_ three.js exports are native to React Three Fiber.
 - Try changing some values, scroll through our [API](/react-three-fiber/API/canvas) to see what the various settings and hooks do.
 
 ### Some reading material:
@@ -221,16 +217,16 @@ You need to be versed in both React and `three.js` before rushing into this. If 
 
 ### Ecosystem
 
-- [`@react-three/gltfjsx`](https://github.com/react-spring/gltfjsx) &ndash; turns GLTFs into JSX components
-- [`@react-three/drei`](https://github.com/react-spring/drei) &ndash; useful helpers for react-three-fiber
-- [`@react-three/postprocessing`](https://github.com/react-spring/react-postprocessing) &ndash; post-processing effects
-- [`@react-three/flex`](https://github.com/react-spring/react-three-flex) &ndash; flexbox for react-three-fiber
-- [`@react-three/xr`](https://github.com/react-spring/react-xr) &ndash; VR/AR controllers and events
-- [`@react-three/cannon`](https://github.com/react-spring/use-cannon) &ndash; physics based hooks
+- [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
+- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
+- [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
+- [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
+- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics based hooks
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; accessibility tools for react-three-fiber
-- [`zustand`](https://github.com/react-spring/zustand) &ndash; state management
-- [`react-spring`](https://github.com/react-spring/react-spring) &ndash; a spring-physics-based animation library
-- [`react-use-gesture`](https://github.com/react-spring/react-use-gesture) &ndash; mouse/touch gestures
+- [`zustand`](https://github.com/pmndrs/zustand) &ndash; state management
+- [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
+- [`react-use-gesture`](https://github.com/pmndrs/use-gesture) &ndash; mouse/touch gestures
 
 ### How to contribute
 
