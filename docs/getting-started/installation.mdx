@@ -1,0 +1,168 @@
+---
+title: Installation
+description: Learn how to install react-three-fiber
+nav: 1
+---
+
+```bash
+npm install three @react-three/fiber
+```
+
+> Fiber is compatible with React v16.8+ and works with ReactDOM and React Native.
+
+Getting started with React Three Fiber is not nearly has hard as you might have thought, but various frameworks may require particular attention.
+
+We've put together guides for getting started with each popular framework:
+
+- Create React App
+- Next.js
+- CDN w/o build tools
+- React Native
+
+If you just want to give it a try, fork this [example on codesandbox](https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js)!
+
+## Create React App
+
+`create-react-app` will work out of the box, nothing special here!
+
+```bash
+# Create app
+npx create-react-app my-app
+cd my-app
+
+# Install dependencies
+npm install three @react-three/fiber
+
+# Start
+npm run start
+```
+
+## Next.js
+
+It should work out of the box but you will encounter untranspiled add-ons in the three.js ecosystem, in that case you can install the `next-transpile-modules` module:
+
+```bash
+npm install next-transpile-modules --save-dev
+```
+
+Then, add this to your `next.config.js`
+
+```js
+const withTM = require('next-transpile-modules')(['three'])
+module.exports = withTM()
+```
+
+Make sure to check out our [official next.js starter](https://github.com/pmndrs/react-three-next), too!
+
+## Without build tools
+
+You can use React Three Fiber with browser-ready ES Modules from [skypack.dev](https://skypack.dev) and a JSX-like syntax powered by [htm](https://github.com/developit/htm).
+
+```jsx
+import ReactDOM from 'https://cdn.skypack.dev/react-dom'
+import React, { useRef, useState } from 'https://cdn.skypack.dev/react'
+import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber'
+import htm from 'https://cdn.skypack.dev/htm'
+
+const html = htm.bind(React.createElement)
+ReactDOM.render(html`<${Canvas}>...<//>`, document.getElementById('root'))
+```
+
+<details>
+<summary>Full example</summary>
+
+```jsx
+import ReactDOM from 'https://cdn.skypack.dev/react-dom'
+import React, { useRef, useState } from 'https://cdn.skypack.dev/react'
+import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber'
+import htm from 'https://cdn.skypack.dev/htm'
+
+const html = htm.bind(React.createElement)
+
+function Box(props) {
+  const mesh = useRef()
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
+  useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
+  return html` <mesh
+    ...${props}
+    ref=${mesh}
+    scale=${active ? 1.5 : 1}
+    onClick=${() => setActive(!active)}
+    onPointerOver=${() => setHover(true)}
+    onPointerOut=${() => setHover(false)}
+  >
+    <boxGeometry args=${[1, 1, 1]} />
+    <meshStandardMaterial color=${hovered ? 'hotpink' : 'orange'} />
+  </mesh>`
+}
+
+ReactDOM.render(
+  html` <${Canvas}>
+    <ambientLight />
+    <pointLight position=${[10, 10, 10]} />
+    <${Box} position=${[-1.2, 0, 0]} />
+    <${Box} position=${[1.2, 0, 0]} />
+  <//>`,
+  document.getElementById('root'),
+)
+```
+
+</details>
+
+## React Native
+
+This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI.
+
+```bash
+# Install expo-cli, this will create our app
+npm install expo-cli -g
+
+# Create app and cd into it
+expo init my-app
+cd my-app
+
+# Install dependencies
+npm install three @react-three/fiber@beta react@rc
+
+# Start
+expo start
+```
+
+Some configuration may be required to tell the Metro bundler about your assets if you use `useLoader` or Drei abstractions like `useGLTF` and `useTexture`:
+
+```js
+// metro.config.js
+module.exports = {
+  resolver: {
+    sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
+    assetExts: ['glb', 'png', 'jpg'],
+  },
+}
+```
+
+Just import from native targets and that's it!
+
+```jsx
+import React, { Suspense } from 'react'
+import { useGLTF } from '@react-three/drei/native'
+import { Canvas } from '@react-three/fiber/native'
+import modelPath from './assets/model.glb'
+
+function Model(props) {
+  const { scene } = useGLTF(modelPath)
+  return <primitive {...props} object={scene} />
+}
+
+function App() {
+  return (
+    <Canvas>
+      <Suspense fallback={null}>
+        <Model />
+      </Suspense>
+    </Canvas>
+  )
+}
+
+export default App
+```

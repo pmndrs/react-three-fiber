@@ -1,0 +1,163 @@
+---
+title: Using with TypeScript
+description: This guide will help through common scenarios and how to approach them with TypeScript.
+nav: 18
+---
+
+This tutorial will assume some React and TypeScript knowledge. You can fork and follow along from [this starter codesandbox](https://codesandbox.io/s/brnsm).
+
+## Typing with useRef
+
+React's `useRef` won't automatically infer types despite pointing it to a typed ref.
+
+You can type the ref yourself by passing an type through `useRef`'s generics:
+
+```tsx
+import { useRef, useEffect } from 'react'
+import { Mesh } from 'three'
+
+function Box(props) {
+  const ref = useRef<Mesh>(null!)
+
+  useEffect(() => {
+    console.log(Boolean(ref.current))
+  }, [])
+
+  return (
+    <mesh {...props} ref={props}>
+      <boxGeometry />
+      <meshBasicMaterial />
+    </mesh>
+  )
+}
+```
+
+The exclamation mark is a non-null assertion that will let TS know that `ref.current` is defined when we access it in effects.
+
+## Typing shorthand props
+
+react-three-fiber accepts short-hand props like scalars, strings, and arrays so you can declaratively set properties without side effects.
+
+Here are the different variations of props:
+
+```tsx
+import { Euler, Vector3, Color } from 'three'
+
+rotation: Euler || [x, y, z]
+position: Vector3 || [x, y, z] || scalar
+color: Color || 'hotpink' || 0xffffff
+```
+
+Each property has extended types which you can pull from to type these properties.
+
+```tsx
+import { Euler, Vector3, Color } from '@react-three/fiber'
+// or
+// import { ReactThreeFiber } from '@react-three/fiber'
+// ReactThreeFiber.Euler, ReactThreeFiber.Vector3, etc.
+
+rotation: Euler
+position: Vector3
+color: Color
+```
+
+This is particularly useful if you are typing properties outside of components, such as a store or a hook.
+
+## Extend usage
+
+react-three-fiber can also accept third-party elements and extend them into its internal catalogue.
+
+```tsx
+import { useRef, useEffect } from 'react'
+import { GridHelper } from 'three'
+import { extend } from '@react-three/fiber'
+
+// Create our custom element
+class CustomElement extends GridHelper {}
+
+// Extend so the reconciler will learn about it
+extend({ CustomElement })
+```
+
+The catalogue teaches the underlying reconciler how to create fibers for these elements and treat them within the scene.
+
+You can then declaratively create custom elements with primitives, but TypeScript won't know about them nor their props.
+
+```html
+// error: 'customElement' does not exist on type 'JSX.IntrinsicElements'
+
+<customElement />
+```
+
+### Node Helpers
+
+react-three-fiber exports helpers that you can use to define different types of nodes. These nodes will type an element that we'll attach to the global JSX namespace.
+
+```tsx
+Node
+Object3DNode
+BufferGeometryNode
+MaterialNode
+LightNode
+```
+
+### Extending JSX.IntrinsicElements
+
+Since our custom element is an object, we'll use `Object3DNode` to define it.
+
+```tsx
+import { useRef, useEffect } from 'react'
+import { GridHelper } from 'three'
+import { extend, Object3DNode } from '@react-three/fiber'
+
+// Create our custom element
+class CustomElement extends GridHelper {}
+
+// Extend so the reconciler will learn about it
+extend({ CustomElement })
+
+// Add types to JSX.Intrinsic elements so primitives pick up on it
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      customElement: Object3DNode<CustomElement, typeof CustomElement>
+    }
+  }
+}
+
+// react-three-fiber will create your custom component and TypeScript will understand it
+;<customComponent />
+```
+
+## Exported types
+
+react-three-fiber is extensible and exports types for its internals, such as render props, canvas props, and events:
+
+```tsx
+// Event raycaster intersection
+Intersection
+
+// `useFrame` internal subscription and render callback
+Subscription
+RenderCallback
+
+// `useThree`'s returned internal state
+RootState
+Performance
+Dpr
+Size
+Viewport
+Camera
+
+// Canvas props
+Props
+
+// Supported events
+Events
+
+// Event manager signature (is completely modular)
+EventManager
+
+// Wraps a platform event as it's passed through the event manager
+ThreeEvent
+```

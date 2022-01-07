@@ -1,0 +1,81 @@
+---
+title: Canvas
+description: 'The Canvas object is your portal into three.js.'
+nav: 4
+---
+
+The `Canvas` object is where you start to define your React Three Fiber Scene.
+
+```jsx
+import React from 'react'
+import { Canvas } from '@react-three/fiber'
+
+const App = () => (
+  <Canvas>
+    <pointLight position={[10, 10, 10]} />
+    <mesh>
+      <sphereBufferGeometry />
+      <meshStandardMaterial color="hotpink" />
+    </mesh>
+  </Canvas>
+)
+```
+
+### Render Props
+
+| Prop            | Description                                                                                                                                       | Default                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| children        | three.js JSX elements or regular components                                                                                                       |                                                          |
+| gl              | Props that go into the default renderer, or your own renderer. Also accepts a synchronous callback like `gl={canvas => new Renderer({ canvas })}` | `{}`                                                     |
+| camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }` |
+| shadows         | Props that go into `gl.shadowMap`, can also be set true for `PCFsoft`                                                                             | `false`                                                  |
+| raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                     |
+| vr              | Switches renderer to VR mode, then uses `gl.setAnimationLoop`                                                                                     | `false`                                                  |
+| mode            | React mode: legacy, blocking, concurrent                                                                                                          | `blocking`                                               |
+| frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                 |
+| resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`  |
+| orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                  |
+| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `undefined`                                              |
+| linear          | Switch off automatic sRGB encoding and gamma correction                                                                                           | `false`                                                  |
+| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                  |
+| onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                          |
+| onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                          |
+
+### Render defaults
+
+Canvas uses the [render function](/react-three-fiber/API/render-function) which will create a translucent `THREE.WebGLRenderer` with the following constructor args:
+
+- antialias=true
+- alpha=true
+- powerPreference="high-performance"
+
+and with the following properties:
+
+- outputEncoding = THREE.sRGBEncoding
+- toneMapping = THREE.ACESFilmicToneMapping
+
+It will also create the following scene internals:
+
+- A `THREE.Perspective` camera
+- A `THREE.Orthographic` cam if `orthographic` is true
+- A `THREE.PCFSoftShadowMap` if `shadows` is true
+- A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
+
+<Hint>
+
+The colorspace will be set to sRGB (unless "linear" is true), all colors and textures will be
+auto-converted. Consult [donmccurdy.com: Color Management in
+three.js](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs) for more information
+about this. Unless "flat" is true it will set up `THREE.ACESFilmicToneMapping` for slightly more
+contrast.
+
+</Hint>
+
+<Hint>
+
+Canvas creates a [resize observer](https://github.com/pmndrs/react-use-measure) to update the canvas size.
+
+Consider Resize-Observer polyfills for older Safari browsers. We recommend
+[juggle/resize-observer](https://github.com/juggle/resize-observer).
+
+</Hint>
