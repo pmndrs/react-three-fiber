@@ -1,0 +1,256 @@
+---
+title: Hooks
+description: Hooks are the heart of react-three-fiber
+nav: 7
+---
+
+Hooks allow you to tie or request specific information to your component. For instance, components that want to participate in the renderloop can use `useFrame`, components that need to be informed of three.js specifics can use `useThree` and so on. All hooks clean up after themselves once the component unmounts.
+
+<Hint>Hooks can only be used inside the Canvas element because they rely on context!</Hint>
+
+❌ You cannot expect something like this to work:
+
+```jsx
+import { useThree } from '@react-three/fiber'
+
+function App() {
+  const { size } = useThree() // This will just crash
+  return (
+    <Canvas>
+      <mesh>
+```
+
+✅ Do this instead:
+
+```jsx
+function Foo() {
+  const { size } = useThree()
+
+function App() {
+  return (
+    <Canvas>
+      <Foo />
+```
+
+## useThree
+
+This hook gives you access to the state model which contains the default renderer, the scene, your camera, and so on. It also gives you the current size of the canvas in screen and viewport coordinates.
+
+```jsx
+import { useThree } from '@react-three/fiber'
+
+function Foo() {
+  const state = useThree()
+```
+
+The hook is reactive, if you resize the browser for instance, you get fresh measurements, same applies to any of the state objects that may change.
+
+### State properties
+
+| Prop            | Description                                               | Type                                                                                                                                                                                                           |
+| --------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| gl              | Renderer                                                  | `THREE.WebGLRenderer`                                                                                                                                                                                          |
+| scene           | Scene                                                     | `THREE.Scene`                                                                                                                                                                                                  |
+| camera          | Camera                                                    | `THREE.PerspectiveCamera`                                                                                                                                                                                      |
+| mouse           | Contains updated, normalized, centric pointer coordinates | `THREE.Vector2`                                                                                                                                                                                                |
+| clock           | Running system clock                                      | `THREE.Clock`                                                                                                                                                                                                  |
+| vr              | True when the system is in VR mode                        | `boolean`                                                                                                                                                                                                      |
+| linear          | True when the colorspace is linear                        | `boolean`                                                                                                                                                                                                      |
+| flat            | True when no tonemapping is used                          | `boolean`                                                                                                                                                                                                      |
+| frameloop       | React render-mode                                         | `always`, `demand`, `never`                                                                                                                                                                                    |
+| performance     | System regression                                         | `{ current: number, min: number, max: number, debounce: number, regress: () => void }`                                                                                                                         |
+| size            | Canvas size in pixels                                     | `{ width: number, height: number }`                                                                                                                                                                            |
+| viewport        | Viewport size in three.js units                           | `{ width: number, height: number, initialDpr: number, dpr: number, factor: number, distance: number, aspect: number, getCurrentViewport: (camera?: Camera, target?: THREE.Vector3, size?: Size) => Viewport }` |
+| set             | Allows you to set any state property                      | `(state: SetState<RootState>) => void`                                                                                                                                                                         |
+| get             | Allows you to retrieve any state property non-reactively  | `() => GetState<RootState>`                                                                                                                                                                                    |
+| invalidate      | Request a new render, given that `frameloop === 'demand'` | `() => void`                                                                                                                                                                                                   |
+| advance         | Advance one tick, given that `frameloop === 'never'`      | `(timestamp: number, runGlobalEffects?: boolean) => void`                                                                                                                                                      |
+| setSize         | Resize the canvas                                         | `(width: number, height: number) => void`                                                                                                                                                                      |
+| setDpr          | Set the pixel-ratio                                       | `(dpr: number) => void`                                                                                                                                                                                        |
+| onPointerMissed | Response for pointer clicks that have missed a target     | `() => void`                                                                                                                                                                                                   |
+| events          | Pointer-event handling                                    | `{ connected: TargetNode, handlers: Events, connect: (target: TargetNode) => void, disconnect: () => void }`                                                                                                   |     |
+
+### Selector
+
+You can also select properties, this allows you to avoid needless re-render for components that are interested only in particulars. Reactivity does not include deeper three.js internals!
+
+```jsx
+// Will only trigger re-render when the default camera is exchanged
+const camera = useThree((state) => state.camera)
+// Will only re-render on resize changes
+const viewport = useThree((state) => state.viewport)
+// ❌ You cannot expect reactivity from three.js internals!
+const zoom = useThree((state) => state.camera.zoom)
+```
+
+### Reading state from outside of the component cycle
+
+```jsx
+function Foo() {
+  const get = useThree((state) => state.get)
+  ...
+  get() // Get fresh state from anywhere you want
+```
+
+### Exchanging defaults
+
+```jsx
+function Foo() {
+  const set = useThree((state) => state.set)
+  ...
+  useEffect(() => {
+    set({ camera: new THREE.OrthographicCamera(...) })
+  }, [])
+```
+
+## useFrame
+
+This hook allows you to execute code on every rendered frame, like running effects, updating controls, and so on. You receive the state (same as `useThree`) and a clock delta. Your callback function will be invoked just before a frame is rendered. When the component unmounts it is unsubscribed automatically from the render-loop.
+
+```jsx
+import { useFrame } from '@react-three/fiber'
+
+function Foo() {
+  useFrame((state, delta) => {
+    // This function runs 60 times/second inside the global render-loop
+  })
+```
+
+<Hint>
+  Be careful about what you do inside useFrame! You should never setState in there! You calculations should be slim and
+  you should mind all the commonly known pitfalls when dealing with loops in general, like re-use of variables, etc.
+</Hint>
+
+### Taking over the render-loop
+
+If you need more control you may pass a numerical `renderPriority` value. This will cause React Three Fiber to disable automatic rendering altogether. It will now be your responsibility to render, which is useful when you're working with effect composers, heads-up displays, etc.
+
+```jsx
+function Render() {
+  // Takes over the render-loop, the user has the responsibility to render
+  useFrame(({ gl, scene, camera }) => {
+    gl.render(scene, camera)
+  }, 1)
+
+function RenderOnTop() {
+  // This will execute *after* Render's useframe
+  useFrame(({ gl, ... }) => {
+    gl.render(...)
+  }, 2)
+```
+
+<Hint>
+  Callbacks will be executed in order of ascending priority values (lowest first, highest last.), similar to the DOM's
+  z-order.
+</Hint>
+
+### Negative indices
+
+Using negative indices will **not take over the render loop**, but it can be useful if you really must order the sequence of useFrames across the component tree.
+
+```jsx
+function A() {
+  // This will execute first
+  useFrame(() => ..., -1)
+
+function B() {
+  // This useFrame will execute *after* A's
+  useFrame(() => ..., -2)
+```
+
+## useLoader
+
+This hook loads assets and suspends for easier fallback- and error-handling. It can take any three.js loader as its first argument: GLTFLoader, OBJLoader, TextureLoader, FontLoader, etc. It is based on [React.Suspense](https://reactjs.org/docs/concurrent-mode-suspense.html), so fallback-handling and [error-handling](https://reactjs.org/docs/error-boundaries.html) happen at the parental level.
+
+```jsx
+import { Suspense } from 'react'
+import { useLoader } from '@react-three/fiber'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+
+function Model() {
+  const result = useLoader(GLTFLoader, '/model.glb')
+  // You don't need to check for the presence of the result, when we're here
+  // the result is guaranteed to be present since useLoader suspends the component
+  return <primitive object={result.scene} />
+}
+
+function App() {
+  return (
+    <Suspense fallback={<FallbackComponent /> /* or null */}>
+      <Model />
+    </Suspense>
+  )
+}
+```
+
+<Hint>
+  Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use
+  loaded data everywhere in the component tree.
+</Hint>
+
+<Hint>
+  Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the
+  automatic disposal section in the API.
+</Hint>
+
+### Loader extensions
+
+You can provide a callback as the third argument if you need to configure your loader:
+
+```jsx
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+
+useLoader(GLTFLoader, url, (loader) => {
+  const dracoLoader = new DRACOLoader()
+  dracoLoader.setDecoderPath('/draco-gltf/')
+  loader.setDRACOLoader(dracoLoader)
+})
+```
+
+### Loading multiple assets at once
+
+It can also make multiple requests in parallel:
+
+```jsx
+const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
+```
+
+### Loading status
+
+You can get the loading status from a callback you provide as the fourth argument. Though consider alternatives like THREE.DefaultLoadingManager or better yet, [Drei's](https://github.com/pmndrs/drei) loading helpers.
+
+```jsx
+useLoader(loader, url, extensions, xhr => {
+  console.log((xhr.loaded / xhr.total * 100) + '% loaded')
+}
+```
+
+### Special treatment of GLTFLoaders and all loaders that return a scene prop
+
+If a `result.scene` prop is found the hook will automatically create a object & material collection: `{ nodes, materials }`. This lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it. [GLTFJSX](https://github.com/pmndrs/gltfjsx) specifically relies on this data.
+
+```jsx
+const { nodes, material } = useLoader(GLTFLoader, url)
+```
+
+### Pre-loading assets
+
+You can pre-load assets in global space so that models can be loaded in anticipation before they're mounted in the component tree.
+
+```jsx
+useLoader.preload(GLTFLoader, '/model.glb' /* extensions */)
+```
+
+## useGraph
+
+Convenience hook which creates a memoized, named object/material collection from any [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D).
+
+```jsx
+import { useLoader } from '@react-three/fiber'
+
+function Model(url) {
+  const scene = useLoader(OBJLoader, url)
+  const { nodes, materials } = useGraph(scene)
+  return <mesh geometry={nodes.robot.geometry} material={materials.metal} />
+}
+```

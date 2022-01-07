@@ -126,13 +126,77 @@ Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 
 </details>
 
+<details>
+  <summary>Show React Native example</summary>
+
+This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI.
+
+```bash
+# Install expo-cli, this will create our app
+npm install expo-cli -g
+# Create app and cd into it
+expo init my-app
+cd my-app
+# Install dependencies
+npm install three @react-three/fiber@beta react@rc
+# Start
+expo start
+```
+
+Some configuration may be required to tell the Metro bundler about your assets if you use `useLoader` or Drei abstractions like `useGLTF` and `useTexture`:
+
+```js
+// metro.config.js
+module.exports = {
+  resolver: {
+    sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
+    assetExts: ['glb', 'png', 'jpg'],
+  },
+}
+```
+
+```tsx
+import React, { useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber/native'
+function Box(props) {
+  const mesh = useRef(null)
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
+  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
+  return (
+    <mesh
+      {...props}
+      ref={mesh}
+      scale={active ? 1.5 : 1}
+      onClick={(event) => setActive(!active)}
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
+export default function App() {
+  return (
+    <Canvas>
+      <ambientLight />
+      <pointLight position={[10, 10, 10]} />
+      <Box position={[-1.2, 0, 0]} />
+      <Box position={[1.2, 0, 0]} />
+    </Canvas>
+  )
+}
+```
+
+</details>
+
 ---
 
 # Documentation, tutorials, examples
 
 Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
 
-<a href="https://docs.pmnd.rs/react-three-fiber"><img src="/markdown/docs.jpg"></a>
+<a href="https://docs.pmnd.rs/react-three-fiber"><img src="/docs/preview.jpg"></a>
 
 # Fundamentals
 
@@ -141,7 +205,7 @@ You need to be versed in both React and Threejs before rushing into this. If you
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
-4. Try changing some values, scroll through our [Api](/markdown/api.md) to see what the various settings and hooks do.
+4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber/api) to see what the various settings and hooks do.
 
 Some reading material:
 

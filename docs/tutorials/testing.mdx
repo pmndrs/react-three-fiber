@@ -1,0 +1,119 @@
+---
+title: 'Testing'
+description: Let's test our 3D Scene
+nav: 19
+---
+
+Like with every other application testing is an important factor when it comes to releasing an application into the wild and when it comes to React Three Fiber we can use React Three Test Renderer to achieve this.
+
+We will be testing the [sandbox](https://codesandbox.io/s/98ppy) we created in [events and interactions](events-and-interaction).
+
+## How to test React Three Fiber
+
+Let's start by installing the React Three Test Renderer:
+
+```bash
+npm install @react-three/test-renderer --save-dev
+```
+
+Afterwards, if you are using Create React App you can just add a file that ends in `.test.js` and start writing your code, because React Three Test Renderer is testing library agnostic, so it works with libraries such as `jest`, `jasmine` etc.
+
+Let's create an `App.test.js` and set up all our test cases:
+
+```jsx
+import ReactThreeTestRenderer from '@react-three/test-renderer'
+import { MyRotatingBox } from './App'
+
+test('mesh to have two children', async () => {
+  const renderer = await ReactThreeTestRenderer.create(<MyRotatingBox />)
+})
+
+test('click event makes box bigger', async () => {
+  const renderer = await ReactThreeTestRenderer.create(<MyRotatingBox />)
+})
+```
+
+In here we created three tests and in each we made sure we created the renderer by using the `create` function.
+
+Let's start with the first test and make sure our mesh has two children, the material and cube.
+
+We can start by getting the scene and it's children from the test instance we just created like so:
+
+```js
+const meshChildren = renderer.scene.children
+```
+
+If you log this mesh out you can see that it returns an array of one element since that's all we have in the scene.
+
+Using this we can make sure to get that first child and use the `allChildren` property on it like so:
+
+```js
+const meshChildren = renderer.scene.children[0].allChildren
+```
+
+There is also one property called `children` but this one is meant to be used for things like groups as this one does not return the geometry and the materials, for that we need `allChildren`.
+
+Now to create our assertion:
+
+```js
+expect(meshChildren.length).toBe(2)
+```
+
+Our first test case looks like this:
+
+```js
+test('mesh to have two children', async () => {
+  const renderer = await ReactThreeTestRenderer.create(<MyRotatingBox />)
+  const mesh = renderer.scene.children[0].allChildren
+  expect(mesh.length).toBe(2)
+})
+```
+
+## Testing interactions
+
+Now that we have gotten the first test out of the way we can test our interaction and make sure that when we click on the mesh it does indeed update the scale.
+
+We can do that by utilizing the `fireEvent` method existing in a test instance.
+
+We know we can get the mesh with:
+
+```js
+const mesh = renderer.scene.children[0]
+```
+
+Since we already have that we can fire an event in it like so:
+
+```js
+await renderer.fireEvent(mesh, 'click')
+```
+
+With that done, all that's left to do is the tree demonstration of our scene and make sure the scale prop on our mesh has updated:
+
+```js
+expect(mesh.props.scale).toBe(1.5)
+```
+
+In the end our test looks something like this:
+
+```js
+test('click event makes box bigger', async () => {
+  const renderer = await ReactThreeTestRenderer.create(<MyRotatingBox />)
+  const mesh = renderer.scene.children[0]
+  expect(mesh.props.scale).toBe(1)
+  await renderer.fireEvent(mesh, 'click')
+  expect(mesh.props.scale).toBe(1.5)
+})
+```
+
+If you want to learn more about React Three Test Renderer you can checkout the repo and their docs:
+
+- [Repo](https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer)
+- [React Three Test Renderer API](https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/rttr.md#create)
+- [React Three Test Instance API](https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/rttr-instance.md)
+
+## Exercises
+
+- Check the color of the Box we created
+- Check the rotation using the `advanceFrames` method.
+
+<Codesandbox id="hqut4" tests />
