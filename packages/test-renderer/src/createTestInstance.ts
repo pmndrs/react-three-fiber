@@ -24,7 +24,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   }
 
   public get parent(): ReactThreeTestInstance | null {
-    const parent = this._fiber.__r3f.parent
+    const parent = this._fiber.__r3f?.parent ?? this._fiber.parent
     if (parent !== null) {
       return wrapFiber(parent)
     }
