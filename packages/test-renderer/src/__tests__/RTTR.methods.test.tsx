@@ -1,8 +1,12 @@
+import { BoxHelper, Object3D } from 'three'
+
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
 
 import * as React from 'react'
 
 import ReactThreeTestRenderer from '../index'
+import { useThree } from '@react-three/fiber/src'
+import { useRef } from 'react'
 
 describe('ReactThreeTestRenderer instance methods', () => {
   const ExampleComponent = () => {
@@ -17,6 +21,28 @@ describe('ReactThreeTestRenderer instance methods', () => {
           <meshBasicMaterial color={0x0000ff} />
         </mesh>
       </group>
+    )
+  }
+
+  const MANUALLY_MOUNTED_COMPONENT_NAME = 'not-mounted-by-r3f'
+
+  const WithManuallyManagedComponent = () => {
+    const { scene } = useThree((three) => three)
+    const ref = useRef<Object3D>()
+
+    React.useEffect(() => {
+      if (!ref.current) return
+      const manuallyManagedComponent = new BoxHelper(ref.current)
+      manuallyManagedComponent.name = MANUALLY_MOUNTED_COMPONENT_NAME
+      manuallyManagedComponent.visible = false
+      scene.add(manuallyManagedComponent)
+    }, [])
+
+    return (
+      <mesh name="mesh_01" ref={ref}>
+        <boxBufferGeometry args={[2, 2]} />
+        <meshStandardMaterial color={0x0000ff} />
+      </mesh>
     )
   }
 
@@ -97,5 +123,15 @@ describe('ReactThreeTestRenderer instance methods', () => {
     expect(foundAllByColorAndName).toEqual([])
 
     expect(() => scene.findByProps({ color: 0x0000ff })).toThrow()
+  })
+
+  it('should also find three components which are not mounted via r3f and not throw', async () => {
+    const { scene } = await ReactThreeTestRenderer.create(<WithManuallyManagedComponent />)
+    expect(() => scene.findByProps({ name: MANUALLY_MOUNTED_COMPONENT_NAME })).not.toThrow()
+    expect(() => scene.findByProps({ name: MANUALLY_MOUNTED_COMPONENT_NAME })).not.toThrow(
+      "Cannot read properties of undefined (reading 'memoizedProps')",
+    )
+    const instance = scene.findByProps({ name: MANUALLY_MOUNTED_COMPONENT_NAME }).instance
+    expect(instance).toBeDefined()
   })
 })
