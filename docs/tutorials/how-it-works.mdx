@@ -1,7 +1,6 @@
 ---
 title: How does it work?
-description:
-  This is an advanced guide on the inner workings of Fiber, if you are just getting started, take a
+description: This is an advanced guide on the inner workings of Fiber, if you are just getting started, take a
   look at our introduction!
 nav: 20
 ---
@@ -53,9 +52,9 @@ scene.add(group)
 Our `Canvas` element will create a new scene, and Fiber will instantiate new objects for each component and correctly compose them together in a scene graph!
 
 <Callout>
-  Additionally, Fiber will: - Setup a new perspective camera at [0, 0, 0] and set it as default -
-  Setup a **render loop** with automatic render to screen - Setup pointer events via raycasting on
-  all meshes with `onPointer*` props - Setup tone mapping - Automatically handle window resize
+  Additionally, Fiber will: - Setup a new perspective camera at [0, 0, 0] and set it as default - Setup a **render
+  loop** with automatic render to screen - Setup pointer events via raycasting on all meshes with `onPointer*` props -
+  Setup tone mapping - Automatically handle window resize
 </Callout>
 
 **Let's break this down!**
@@ -74,9 +73,7 @@ Object creation is handled transparently by the Fiber renderer, the name of the 
 <boxBufferGeometry args={[1, 2, 3]} />
 ```
 
-<Callout>
-  Note that the object will be created only when first adding the component the React three!
-</Callout>
+<Callout>Note that the object will be created only when first adding the component the React three!</Callout>
 
 ## The `attach` props
 
@@ -115,9 +112,9 @@ mesh.geometry = new THREE.BoxBufferGeometry()
 As you can see, the `attach` prop is telling Fiber to set the parent's `material` property to a reference to our `<meshNormalMaterial />` object.
 
 <Callout>
-  Note that while we used geometry and material for this example, Fiber also infers the attach
-  property from the constructor name, so anything with `material` or `geometry` will automatically
-  get attached to the correct property of its parent.
+  Note that while we used geometry and material for this example, Fiber also infers the attach property from the
+  constructor name, so anything with `material` or `geometry` will automatically get attached to the correct property of
+  its parent.
 </Callout>
 
 The same is true for `attachArray` which, instead of setting the property, will push to an existing array:
@@ -166,7 +163,7 @@ mesh.scale.set(3, 4, 5)
 
 ## Pointer Events
 
-[Pointer Events](/react-three-fiber/API/events) are transparently handled by Fiber. On startup, it will create a [raycaster](https://threejs.org/docs/#api/en/core/Raycaster) for mouse picking.
+[Pointer Events](/react-three-fiber/api/events) are transparently handled by Fiber. On startup, it will create a [raycaster](https://threejs.org/docs/#api/en/core/Raycaster) for mouse picking.
 
 Every object with `onPointer` props will be added to the array of objects checked every frame by the raycaster:
 
