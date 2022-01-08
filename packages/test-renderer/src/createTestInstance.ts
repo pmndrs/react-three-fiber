@@ -12,7 +12,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   }
 
   public get instance(): Object3D {
-    return (this._fiber as unknown) as TInstance
+    return this._fiber as unknown as TInstance
   }
 
   public get type(): string {
@@ -20,7 +20,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   }
 
   public get props(): Obj {
-    return this._fiber.__r3f.memoizedProps
+    return this._fiber.__r3f?.memoizedProps ?? this._fiber
   }
 
   public get parent(): ReactThreeTestInstance | null {
@@ -50,7 +50,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
        */
       return [
         ...(fiber.children || []).map((fib) => wrapFiber(fib as MockInstance)),
-        ...fiber.__r3f.objects.map((fib) => wrapFiber(fib as MockInstance)),
+        ...(fiber.__r3f?.objects ?? []).map((fib) => wrapFiber(fib as MockInstance)),
       ]
     } else {
       return (fiber.children || []).map((fib) => wrapFiber(fib as MockInstance))
