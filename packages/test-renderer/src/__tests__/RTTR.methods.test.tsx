@@ -134,4 +134,11 @@ describe('ReactThreeTestRenderer instance methods', () => {
     const instance = scene.findByProps({ name: MANUALLY_MOUNTED_COMPONENT_NAME }).instance
     expect(instance).toBeDefined()
   })
+
+  it('should find the parent of a three component that is mounted not via r3f', async () => {
+    const { scene } = await ReactThreeTestRenderer.create(<WithManuallyManagedComponent />)
+    const testInstance = scene.findByProps({ name: MANUALLY_MOUNTED_COMPONENT_NAME })
+    expect(() => testInstance.parent).not.toThrow()
+    expect(() => testInstance.parent).not.toThrow("Cannot read properties of undefined (reading 'parent')")
+  })
 })
