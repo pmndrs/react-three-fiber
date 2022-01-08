@@ -196,15 +196,15 @@ The `<Canvas />` can now accept non-render props to spread as native props.
 `render` is depreciated in v8 for the new `createRoot` signature.
 
 ```jsx
-import { createRoot } from '@react-three/fiber'
+import { createRoot, events } from '@react-three/fiber'
 
 let root
 
 window.addEventListener('resize', () =>
-  root = createRoot(document.querySelector('canvas'), {
+  (root = createRoot(document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
-  ).render(<mesh />)
+  }).render(<mesh />))
 )
 
 window.dispatchEvent(new Event('resize'))
