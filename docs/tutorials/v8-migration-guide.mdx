@@ -151,6 +151,32 @@ useEffect(() => {
 <Canvas ref={canvasRef} frameloop={frameloop} />
 ```
 
+## Expanded gl prop
+
+The `gl` prop can now accept both constructor args and renderer properties like the `camera` prop.
+
+```jsx
+<Canvas gl={{ alpha: false, physicallyCorrectLights: true }} />
+```
+
+It can also accept a synchronous callback to manually create a renderer.
+
+```jsx
+<Canvas gl={(canvas) => new Renderer({ canvas })} />
+```
+
+## Manual camera manipulation
+
+Cameras can be controlled manually by setting manual to true in `camera`. This will opt out of projection matrix recalculation when the drawing area resizes.
+
+```jsx
+import { PerspectiveCamera } from '@react-three/drei'
+
+;<Canvas camera={{ manual: true }}>
+  <PerspectiveCamera makeDefault args={[45, 1]} />
+</Canvas>
+```
+
 ## Spread Canvas props
 
 The `<Canvas />` can now accept non-render props to spread as native props.
