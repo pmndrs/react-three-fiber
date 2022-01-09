@@ -44,10 +44,10 @@
   "dependencies": {
     "@babel/runtime": "^7.15.4",
     "base64-arraybuffer": "^1.0.1",
-    "expo-asset": "^8.4.3",
-    "expo-file-system": "^13.0.3",
-    "expo-gl": "^11.0.3",
-    "expo": "^43.0.1",
+    "expo-gl": "~11.0.3",
+    "expo-gl-cpp": "~11.0.1",
+    "expo-asset": "~8.4.4",
+    "expo-file-system": "~13.1.0",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.27.0-rc.0",
     "react-use-measure": "^2.1.1",
@@ -61,6 +61,7 @@
     "react": ">=18.0",
     "react-dom": ">=18.0",
     "react-native": ">=0.64",
+    "expo": ">=43.0",
     "three": ">=0.132"
   },
   "peerDependenciesMeta": {
@@ -68,6 +69,9 @@
       "optional": true
     },
     "react-native": {
+      "optional": true
+    },
+    "expo": {
       "optional": true
     }
   }
