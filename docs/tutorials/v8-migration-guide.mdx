@@ -95,7 +95,7 @@ The `mode` prop was removed with React 18, which automatically switches between 
 <Canvas />
 ```
 
-You can enable concurrency with the new `startTransition` and `useTransition` APIs.
+React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule expensive operations and state updates. Use these to de-prioritize expensive operations.
 
 ```jsx
 import { useTransition } from 'react'

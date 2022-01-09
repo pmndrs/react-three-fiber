@@ -133,12 +133,34 @@ return <mesh ref={ref} />
 
 In three.js it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
 
-### ✅ Use concurrent mode
+### ✅ Use startTransition for expensive ops
+
+React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule work and state updates. Use these to de-prioritize expensive operations.
 
 Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
 
 ```jsx
-<Canvas mode="concurrent" />
+import { useTransition } from 'react'
+import { Points } from '@react-three/drei'
+
+const [startTransition, isPending] = useTransition()
+const [radius, setRadius] = useState(1)
+const positions = calculatePositions(radius)
+const colors = calculateColors(radius)
+const sizes = calculateSizes(radius)
+
+<Points
+  positions={positions}
+  colors={colors}
+  sizes={sizes}
+  onPointerOut={() => {
+    startTransition(() => {
+      setRadius(prev => prev + 1)
+    })
+  }}
+>
+  <meshBasicMaterial vertexColors />
+</Points>
 ```
 
 ## Don't re-create objects in loops

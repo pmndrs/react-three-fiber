@@ -65,6 +65,14 @@ Properties that have a `setScalar` method (for instance `Vector3`) can be set li
 <mesh scale={1} />
 ```
 
+## Piercing into nested properties
+
+If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case.
+
+```jsx
+<mesh rotation-x={1} material-uniforms-resolution-value={[512, 512]} />
+```
+
 ## Dealing with non-scene objects
 
 You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well. They take the same properties and constructor arguments they normally would.
@@ -94,44 +102,20 @@ The following attaches a material to the `material` property of a mesh and a geo
   <boxGeometry />
 ```
 
-### Nesting
-
-You can nest primitive objects, too:
-
-```jsx
-<mesh>
-  <meshBasicMaterial attach="material">
-    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
-```
-
-### AttachArray
-
-Sometimes attaching isn't enough. The following example attaches effects to an array called "passes" of the parent `effectComposer`. `attachArray` adds the object to the target array and takes it out on unmount:
-
-```jsx
-<effectComposer>
-  <renderPass attachArray="passes" scene={scene} camera={camera} />
-  <glitchPass attachArray="passes" renderToScreen />
-```
-
-### AttachObject
-
-You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to `parent.attributes.position`.
+You can also deeply nest attach through piercing. The following adds a buffer-attribute to `parent.attributes.position`.
 
 ```jsx
 <bufferGeometry attach="geometry">
-  <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
+  <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
 ```
 
-### AttachFns
-
-Some objects have special add/remove function, you can't easily attach objects. In that case `attachFns` gives you full control.
+Some objects have special add/remove function, you can't easily attach objects. In that case `attach` gives you full control.
 
 The following uses the effect composer from the [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing) library, which works differently than three/examples/jsm. You need to call `Composer.addPass` to add an effect and `Composer.removePass` to remove it.
 
 ```jsx
 <effectComposer>
-  <renderPass attachFns={["addPass", "removePass"]} args={[scene, camera]} />
+  <renderPass args={[scene, camera]} attach={["addPass", "removePass"]} />
 ```
 
 And in the case the add/remove functions are more complex:
@@ -140,18 +124,20 @@ And in the case the add/remove functions are more complex:
 <effectComposer>
   <renderPass
     args={[scene, camera]}
-    attachFns={[
+    attach={[
       (parent, self) => parent.addPass(self),
       (parent, self) => parent.removePass(self)
     ]} />
 ```
 
-## Piercing into nested properties
+### Nesting
 
-If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case.
+You can nest primitive objects, too:
 
 ```jsx
-<mesh rotation-x={1} material-uniforms-resolution-value={[512, 512]} />
+<mesh>
+  <meshBasicMaterial attach="material">
+    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
 ```
 
 ## Putting already existing objects into the scene-graph
@@ -180,6 +166,8 @@ return (
     <orbitControls />
     <transformControls />
 ```
+
+If you're using TypeScript, you'll also need to [extend the JSX namespace](/react-three-fiber/tutorials/typescript#extending-jsx-intrinsic-elements).
 
 ## Disposal
 

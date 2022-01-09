@@ -117,14 +117,6 @@ As you can see, the `attach` prop is telling Fiber to set the parent's `material
   its parent.
 </Callout>
 
-The same is true for `attachArray` which, instead of setting the property, will push to an existing array:
-
-```jsx
-<effectComposer>
-  <renderPass attachArray="passes" scene={scene} camera={camera} />
-  <glitchPass attachArray="passes" renderToScreen />
-```
-
 ## Props
 
 With Fiber, you can pass any three.js property as a React property, and it will be assigned to the constructed object:
