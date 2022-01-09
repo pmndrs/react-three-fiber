@@ -200,14 +200,15 @@ import { createRoot, events } from '@react-three/fiber'
 
 let root
 
-window.addEventListener('resize', () =>
-  (root = createRoot(document.querySelector('canvas'), {
+const handleResize = () => {
+  root = createRoot(document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
-  }).render(<mesh />))
-)
+  }).render(<mesh />)
+}
+handleResize()
 
-window.dispatchEvent(new Event('resize'))
+window.addEventListener('resize', handleResize)
 
 // to unmount
 root.unmount()
