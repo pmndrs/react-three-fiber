@@ -1,0 +1,303 @@
+---
+title: Scaling performance
+description: This is a short primer on how to scale performance.
+nav: 10
+---
+
+Running WebGL can be quite expensive depending on how powerful your devices are. In order to mitigate this, especially if you want to make your application available to a broad variety of devices, including weaker options, you should look into performance optimizations. This article goes through a couple of them.
+
+## On-demand rendering
+
+three.js apps usually run in a game-loop that executes 60 times a second, React Three Fiber is no different. This is perfectly fine when your scene has _constantly_ moving parts in it. This is what generally drains batteries the most and makes fans spin up.
+
+But if the moving parts in your scene are allowed to come to rest, then it would be wasteful to keep rendering. In such cases you can opt into on-demand rendering, which will only render when necessary. This saves battery and keeps noisy fans in check.
+
+Open the sandbox below in a full screen and look into dev tools, you will see that it is completely idle when nothing is going on. It renders only when you move the model.
+
+<Codesandbox id="wvgxp" />
+
+All you need to do is set the canvas `frameloop` prop to `demand`. It will render frames whenever it detects prop changes throughout the component tree.
+
+```jsx
+<Canvas frameloop="demand">
+```
+
+### Triggering manual frames
+
+One major caveat is that if anything in the tree _mutates_ props, then React cannot be aware of it and the display would be stale. For instance, camera controls just grab into the camera and mutate its values. Here you can use React Three Fiber's `invalidate` function to trigger frames manually.
+
+```jsx
+function Controls() {
+  const ref = useRef()
+  const { invalidate, camera, gl } = useThree()
+  useEffect(() => {
+    ref.current.addEventListener('change', invalidate)
+    return () => ref.current.removeEventListener('change', invalidate)
+  }, [])
+  return <orbitControls ref={ref} args={[camera, gl.domElement]} />
+```
+
+<Hint>
+  Drei's controls do this automatically for you. If you use react-spring to animate your scene then it will also take
+  care of it.
+</Hint>
+
+Generally you can call invalidate whenever you need to render:
+
+```jsx
+invalidate()
+```
+
+<Hint>
+
+Calling `invalidate()` will not render immediately, it merely requests a
+new frame to be rendered out. Calling invalidate multiple times will not render multiple times.
+Think of it as a flag to tell the system that something has changed.
+
+</Hint>
+
+## Re-using geometries and materials
+
+Each geometry and material means additional overhead for the GPU. You should try to re-use resources if you know they will repeat.
+
+You could do this globally:
+
+```jsx
+const red = new THREE.MeshLambertMaterial({ color: "red" })
+const sphere = new THREE.SphereGeometry(1, 28, 28)
+
+function Scene() {
+  return (
+    <>
+      <mesh geometry={sphere} material={red} />
+      <mesh position={[1, 2, 3]} geometry={sphere} material={red} />
+```
+
+### Caching with useLoader
+
+<Hint>Every resource that is loaded with useLoader is cached automatically!</Hint>
+
+If you access a resource via useLoader with the same URL, throughout the component tree, then you will always refer to the same asset and thereby re-use it. This is especially useful if you run your GLTF assets through [GLTFJSX](https://github.com/pmndrs/gltfjsx) because it links up geometries and materials and thereby creates re-usable models.
+
+<Codesandbox id="dix1y" />
+
+```jsx
+function Shoe(props) {
+  const { nodes, materials } = useLoader(GLTFLoader, "/shoe.glb")
+  return (
+    <group {...props} dispose={null}>
+      <mesh geometry={nodes.shoe.geometry} material={materials.canvas} />
+    </group>
+  )
+}
+
+<Shoe position={[1, 2, 3]} />
+<Shoe position={[4, 5, 6]} />
+```
+
+## Instancing
+
+Each mesh is a draw call, you should be mindful of how many of these you employ: no more than 1000 as the very maximum, and optimally a few hundred or less. You can win performance back by reducing draw calls, for example by instancing repeating objects. This way you can have hundreds of thousands of objects in a single draw call.
+
+<Codesandbox id="h873k" />
+
+Setting up instancing is not so hard, consult [the three.js docs](https://threejs.org/docs/#api/en/objects/InstancedMesh) if you need help.
+
+```jsx
+function Instances({ count = 100000, temp = new THREE.Object3D() }) {
+  const ref = useRef()
+  useEffect(() => {
+    // Set positions
+    for (let i = 0; i < count; i++) {
+      temp.position.set(Math.random(), Math.random(), Math.random())
+      temp.updateMatrix()
+      ref.current.setMatrixAt(id, temp.matrix)
+    }
+    // Update the instance
+    ref.current.instanceMatrix.needsUpdate = true
+  }, [])
+  return (
+    <instancedMesh ref={ref} args={[null, null, count]}>
+      <boxGeometry />
+      <meshPhongMaterial />
+    </instancedMesh>
+  )
+}
+```
+
+## Level of detail
+
+Sometimes it can be beneficial to reduce the quality of an object the further it is away from the camera. Why would you display it full resolution if it is barely visible. This can be a good strategy to reduce the overall vertex-count which means less work for the GPU.
+
+Scroll in and out to see the effect:
+
+<Codesandbox id="12nmp" />
+
+There is a small component in Drei called `<Detailed />` which sets up LOD without boilerplate. You load or prepare a couple of resolution stages, as many as you like, and then give them the same amount of distances from the camera, starting from highest quality to lowest.
+
+```jsx
+import { Detailed, useGLTF } from '@react-three/drei'
+
+function Model() {
+  const [low, mid, high] = useGLTF(["/low.glb", "/mid.glb", "/high.glb"])
+  return (
+    <Detailed distances={[0, 10, 20]}>
+      <mesh geometry={high} />
+      <mesh geometry={mid} />
+      <mesh geometry={low} />
+    <Detailed/>
+  )
+}
+```
+
+## Nested loading
+
+Nested loading means that lesser textures and models are loaded first, higher-resolution later.
+
+The following sandbox goes through three loading stages:
+
+- A loading indicator
+- Low quality
+- High quality
+
+<Codesandbox id="7duy8" />
+
+And this is how easy it is to achieve it, you can nest suspense and even use it as a fallback:
+
+```jsx
+function App() {
+  return (
+    <Suspense fallback={<span>loading...</span>}>
+      <Canvas>
+        <Suspense fallback={<Model url="/low-quality.glb" />}>
+          <Model url="/high-quality.glb" />
+        </Suspense>
+      </Canvas>
+    </Suspense>
+  )
+}
+
+function Model({ url }) {
+  const { scene } = useGLTF(url)
+  return <primitive object={scene} />
+}
+```
+
+## Movement regression
+
+Websites like Sketchfab make sure the scene is always fluid, running at 60 fps, and responsive, no matter which device is being used or how expensive a loaded model is. They do this by regressing movement, where effects, textures, shadows will slightly reduce quality until still-stand
+
+The following sandbox uses expensive lights and post-processing. In order for it to run relatively smooth it will scale the pixel ratio on movement and also skip heavy post-processing effects like ambient occlusion.
+
+<Codesandbox id="pz0q6" />
+
+When you inspect the state model you will notice an object called `performance`.
+
+```jsx
+performance: {
+  current: 1,
+  min: 0.1,
+  max: 1,
+  debounce: 200,
+  regress: () => void,
+},
+```
+
+- current: Performance factor alternates between min and max
+- min: Performance lower bound (should be less than 1)
+- max: Performance upper bound (no higher than 1)
+- debounce: Debounce timeout until it goes to upper bound (1) again
+- regress(): Function that temporarily regresses performance
+
+You can define defaults like so:
+
+```jsx
+<Canvas performance={{ min: 0.5 }}>...</Canvas>
+```
+
+### This is how you can put the system into regression
+
+The only thing you have to do is call `regress()`. When exactly you do that, that is up to you, but it could be when when the mouse moves, or the scene is moving, for instance when controls fire their change-event.
+
+Say you are using controls, then the following code puts the system in regress when they are active:
+
+```jsx
+const regress = useThree((state) => state.performance.regress)
+useEffect(() => {
+  controls.current?.addEventListener('change', regress)
+```
+
+### This is how you can respond to it
+
+<Hint>Mere calls to regress() will not change or affect anything!</Hint>
+
+Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
+
+For instance, you could simply multiply `current` with the pixelratio to cut down on resolution. If you have defined `min: 0.5` that would mean it will half the resolution for at least 200ms (delay) when regress is called. It can be used for anything else, too: switching off lights when `current < 1`, using lower-res textures, skip post-processing effects, etc. You could of course also animate/lerp these changes.
+
+Here is a small prototype component that scales the pixel ratio:
+
+```jsx
+function AdaptivePixelRatio() {
+  const current = useThree((state) => state.performance.current)
+  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  useEffect(() => {
+    setPixelRatio(window.devicePixelRatio * current)
+  }, [current])
+  return null
+}
+```
+
+Drop this component into the scene, combine it with the code above that calls `regress()`, and you have adaptive resolution:
+
+```jsx
+<AdaptivePixelRatio />
+```
+
+There are pre-made components for this already in the [Drei library](https://github.com/pmndrs/drei/#performance).
+
+## ⚠️ Enable concurrency
+
+React 18 will introduce concurrent scheduling, specifically time slicing via `startTransition` and `useTransition`. This will virtualize the component graph, which then allows you to prioritise components and actions. Think of how a virtual list avoids scaling issues because it only renders as many items as the screen can take, it is not affected by the amount of items it has to render, be it 10 or 100.000.000.
+
+React 18 functions very similar to this, it can potentially defer load and heavy tasks in ways that would be hard or impossible to achieve in a vanilla application. It thereby holds on to a stable framerate even in the most demanding situations.
+
+You can already use it in current React Three Fiber.
+
+```jsx
+<Canvas mode="concurrent">
+```
+
+The following benchmark shows how powerful concurrency can be: https://github.com/drcmda/scheduler-test
+
+It simulates heavy load by creating hundreds of THREE.TextGeometry instances (510 to be exact). This class, like many others in three.js, is expensive and takes a while to construct. If all 510 instances are created the same time **it will cause approximately 1.5 seconds of pure jank** (Apple M1), the tab would normally freeze. It runs in an interval and **will execute every 2 seconds**.
+
+|          | Distributed | At-once |
+| -------- | ----------- | ------- |
+| three.js | ~20fps      | ~5fps   |
+| React    | ~60fps      | ~60fps  |
+
+<p align="center">
+  <img
+    aria-label="three.js distributed"
+    style={{ width: '50%', display: 'inline-block' }}
+    src="https://github.com/drcmda/scheduler-test/raw/master/assets/three-distributed.jpg"
+  />
+  <img
+    aria-label="three.js at once"
+    style={{ width: '50%', display: 'inline-block' }}
+    src="https://github.com/drcmda/scheduler-test/raw/master/assets/three-at-once.jpg"
+  />
+  <img
+    aria-label="React distributed"
+    style={{ width: '50%', display: 'inline-block' }}
+    src="https://github.com/drcmda/scheduler-test/raw/master/assets/react-distributed.jpg"
+  />
+  <img
+    aria-label="React at once"
+    style={{ width: '50%', display: 'inline-block' }}
+    src="https://github.com/drcmda/scheduler-test/raw/master/assets/react-at-once.jpg"
+  />
+</p>
+
+<Hint>Until React 18 comes out officially the concurrency option in React Three Fiber is experimental!</Hint>

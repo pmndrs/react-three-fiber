@@ -270,6 +270,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     removeChild(parent, instance)
     appendChild(parent, newInstance)
 
+    // Re-bind event handlers
+    if (newInstance.raycast && newInstance.__r3f.eventCount) {
+      const rootState = newInstance.__r3f.root.getState()
+      rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
+    }
+
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
     // https://github.com/facebook/react/pull/15021
@@ -353,7 +359,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     isPrimaryRenderer: false,
     getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
     // @ts-ignore
-    now: is.fun(performance.now) ? performance.now : is.fun(Date.now) ? Date.now : undefined,
+    now:
+      typeof performance !== 'undefined' && is.fun(performance.now)
+        ? performance.now
+        : is.fun(Date.now)
+        ? Date.now
+        : undefined,
     // @ts-ignore
     scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
     // @ts-ignore

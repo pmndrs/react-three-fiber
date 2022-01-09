@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.24
+
+### Patch Changes
+
+- 7f46ddf: cleanup captured pointers when released (#1914)
+
 ## 7.0.23
 
 ### Patch Changes

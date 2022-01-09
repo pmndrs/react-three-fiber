@@ -1,0 +1,206 @@
+---
+title: Performance pitfalls
+description: Performance 1x1
+nav: 11
+---
+
+## Tips and Tricks
+
+This is a good overview: https://discoverthreejs.com/tips-and-tricks
+
+The most important gotcha in three.js is that creating objects can be expensive, think twice before you mount/unmount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
+
+```jsx
+const geom = useMemo(() => new BoxBufferGeometry(), [])
+const mat = useMemo(() => new MeshBasicMaterial(), [])
+return items.map(i => <mesh geometry={geom} material={mat} ...
+```
+
+Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as much as you can when you need to display many objects of a similar type!
+
+## Never, ever, setState in loops!
+
+SetState in React is not adequate for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc. Avoid forcing a full component (+ its children) through React and its diffing mechanism 60 times per second!
+
+### ❌ setState in loops is bad
+
+```jsx
+const [x, setX] = useState(0)
+useFrame(() => setX((x) => x + 0.1))
+return <mesh position-x={x} />
+```
+
+### ❌ setState in fast intervals is bad
+
+```jsx
+useEffect(() => void setInterval(() => setX((x) => x + 0.1), 1), [])
+```
+
+### ❌ setState in fast events is bad
+
+```jsx
+<mesh onPointerMove={() => setX((x) => x + 0.1)} />
+```
+
+### ✅ Instead, use refs and mutate
+
+This is why useFrame exists! Consider mutating props safe as long as the component is the only entity that mutates.
+
+```jsx
+const ref = useRef()
+useFrame(() => (ref.current.position.x += 0.01))
+return <mesh ref={ref} />
+```
+
+And the same goes for intervals and events, just use references!
+
+```jsx
+useEffect(() => void setInterval(() => (ref.current.position.x += 0.01), 1), [])
+```
+
+```jsx
+<mesh onPointerMove={() => (ref.current.position.x += 0.01)} />
+```
+
+## Don't let React near animations
+
+Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
+
+### ✅ Use lerp + useFrame
+
+```jsx
+function Signal({ active }) {
+  const ref = useRef()
+  useFrame(() => ref.current.position.x =
+    THREE.MathUtils.lerp(ref.current.position.x, active ? 100 : 0, 0.1)
+  )
+  return <mesh ref={ref} />
+```
+
+### ✅ Or react-spring
+
+React-spring has its own frame-loop and animates outside of React.
+
+```jsx
+import { a, useSpring } from '@react-spring/three'
+
+function Signal({ active }) {
+  const { x } = useSpring({ x: active ? 100 : 0 })
+  return <a.mesh position-x={x} />
+```
+
+## Never bind fast state reactive
+
+Using state-managers and selective state is fine, but not for updates that happen rapidly!
+
+### ❌ Don't bind reactive fast-state
+
+```jsx
+import { useSelector } from 'react-redux'
+
+// Assuming that x gets animated inside the store 60fps
+const x = useSelector((state) => state.x)
+return <mesh position-x={x} />
+```
+
+### ✅ Fetch state directly
+
+For instance using [Zustand](https://github.com/pmndrs/zustand).
+
+```jsx
+useFrame(() => (ref.current.position.x = api.getState().x))
+return <mesh ref={ref} />
+```
+
+### ✅ Or, subscribe transiently
+
+See: [transient updates for often occurring state changes](https://github.com/pmndrs/zustand#transient-updates-for-often-occuring-state-changes).
+
+```jsx
+const ref = useRef()
+useEffect(
+  () =>
+    api.subscribe(
+      (x) => (ref.current.position.x = x),
+      (state) => state.x,
+    ),
+  [],
+)
+return <mesh ref={ref} />
+```
+
+## Don't mount indiscriminately
+
+In three.js it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
+
+### ✅ Use concurrent mode
+
+Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
+
+```jsx
+<Canvas mode="concurrent" />
+```
+
+## Don't re-create objects in loops
+
+Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
+
+### ❌ This is bad news for the GC
+
+This creates a new vector 60 times a second, which allocates memory and forces the GC to eventually kick in.
+
+```jsx
+useFrame(() => {
+  ref.current.position.lerp(new THREE.Vector3(x, y, z), 0.1)
+})
+```
+
+### ✅ Better re-use object
+
+Set up re-used objects in global or local space, now the GC will be silent.
+
+```jsx
+function Foo({ vec = new THREE.Vector(), ...props })
+  useFrame(() => {
+    ref.current.position.lerp(vec.set(x, y, z), 0.1)
+  })
+```
+
+## useLoader instead of plain loaders
+
+three.js loaders give you the ability to load async assets (models, textures, etc), but they are problematic.
+
+### ❌ No re-use is bad for perf
+
+This re-fetches, re-parses for every component instance.
+
+```jsx
+function Component() {
+  const [texture, set] = useState()
+  useEffect(() => void new TextureLoader().load(url, set), [])
+  return texture ? (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  ) : null
+}
+```
+
+Instead use useLoader, which caches assets and makes them available throughout the scene.
+
+### ✅ Cache and re-use objects
+
+```jsx
+function Component() {
+  const texture = useLoader(TextureLoader, url)
+  return (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  )
+}
+```
+
+Regarding GLTF's try to use [GLTFJSX](https://github.com/pmndrs/gltfjsx) as much as you can, this will create immutable JSX graphs which allow you to even re-use full models.

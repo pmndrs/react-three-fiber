@@ -34,8 +34,8 @@ export function createTouchEvents(store: UseStore<RootState>): EventManager<View
     event.persist()
 
     // Apply offset
-    ;(event as any).nativeEvent.offsetX = event.nativeEvent.pageX
-    ;(event as any).nativeEvent.offsetY = event.nativeEvent.pageY
+    ;(event as any).nativeEvent.offsetX = event.nativeEvent.locationX
+    ;(event as any).nativeEvent.offsetY = event.nativeEvent.locationY
 
     // Emulate DOM event
     const callback = handlePointer(DOM_EVENTS[name])
