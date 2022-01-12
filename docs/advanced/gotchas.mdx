@@ -1,0 +1,45 @@
+---
+title: Gotchas
+description: Things that could catch you off guard
+nav: 12
+---
+
+### Consuming context from a foreign provider
+
+At the moment React context [can not be readily used between two renderers](https://github.com/pmndrs/react-three-fiber/issues/43), this is due to a problem within React. If ReactDOM opens up a provider, you will not be able to consume it within `<Canvas>`. If managing state (like Redux) is your problem, then [Zustand](https://github.com/pmndrs/zustand) is likely the best solution, otherwise you can solve it by forwarding the context object that you are trying to access:
+
+```jsx
+function App() {
+  const value = useContext(context)
+  return (
+    <Canvas>
+      <context.Provider value={value}>
+        {/* children can now read state from context */}
+```
+
+There's also a ready-made solution in Drei: [useContextBridge](https://github.com/pmndrs/drei#usecontextbridge) which allows you to forward contexts provided above the `<Canvas />` to be consumed within it.
+
+```jsx
+import { useContextBridge } from "@react-three/drei"
+
+function SceneWrapper() {
+  // bridge any number of contexts
+  const ContextBridge = useContextBridge(ThemeContext, GreetingContext)
+  return (
+    <Canvas>
+      <ContextBridge>
+        <Scene />
+      </ContextBridge>
+    </Canvas>
+  )
+}
+
+function Scene() {
+  // we can now consume a context within the Canvas
+  const theme = React.useContext(ThemeContext)
+  const greeting = React.useContext(GreetingContext)
+  return (
+    //...
+  )
+}
+```

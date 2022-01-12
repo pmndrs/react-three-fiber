@@ -1,0 +1,198 @@
+---
+title: Objects, properties and constructor arguments
+description: 'All the effective ways of using React Three Fiber'
+nav: 6
+---
+
+## Declaring objects
+
+You can use [three.js's entire object catalogue and all properties](https://threejs.org/docs). When in doubt, always consult the docs.
+
+❌ You could lay out an object like this:
+
+```jsx
+<mesh
+  visible
+  userData={{ hello: 'world' }}
+  position={new THREE.Vector3(1, 2, 3)}
+  rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
+  geometry={new THREE.SphereGeometry(1, 16, 16)}
+  material={new THREE.MeshBasicMaterial({ color: new THREE.Color('hotpink'), transparent: true })}
+/>
+```
+
+✅ The problem is that all of these properties will always be re-created. Instead, you should define properties declaratively.
+
+```jsx
+<mesh visible userData={{ hello: 'world' }} position={[1, 2, 3]} rotation={[Math.PI / 2, 0, 0]}>
+  <sphereGeometry args={[1, 16, 16]} />
+  <meshStandardMaterial color="hotpink" transparent />
+</mesh>
+```
+
+## Constructor arguments
+
+In three.js objects are classes that are instantiated. These classes can receive one-time constructor arguments (`new THREE.SphereGeometry(1, 32)`), and properties (`someObject.visible = true`). In React Three Fiber, constructor arguments are always passed as an array via `args`. If args change later on, the object must naturally get reconstructed from scratch!
+
+```jsx
+<sphereGeometry args={[1, 32]} />
+```
+
+## Shortcuts
+
+### Set
+
+All properties whose underlying object has a `.set()` method can directly receive the same arguments that `set` would otherwise take. For example [`THREE.Color.set`](https://threejs.org/docs/#api/en/math/Color.set) can take a color string, so instead of `color={new THREE.Color('hotpink')}` you can simply write `color="hotpink"`. Some `set` methods take multiple arguments, for instance [`THREE.Vector3`](https://threejs.org/docs/#api/en/math/Vector3.set), give it an array in that case `position={[100, 0, 0]}`.
+
+```jsx
+<mesh position={[1, 2, 3]} />
+  <meshStandardMaterial color="hotpink" />
+```
+
+<Hint>
+  If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this
+  will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that
+  expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the
+  other hand, it will overwrite, because more these objects do not have a .set() method.
+</Hint>
+
+### SetScalar
+
+Properties that have a `setScalar` method (for instance `Vector3`) can be set like so:
+
+```jsx
+// Translates to <mesh scale={[1, 1, 1]} />
+<mesh scale={1} />
+```
+
+## Dealing with non-scene objects
+
+You can put non-Object3D primitives (geometries, materials, etc) into the render tree as well. They take the same properties and constructor arguments they normally would.
+
+You might be wondering why you would want to put something in the "scene" that normally would not be part of it, in a vanilla three.js app at least. For the same reason you declare any object: it becomes managed, reactive and auto-disposes. These objects are not technically part of the scene, but they "attach" to a parent which is.
+
+### Attach
+
+Use `attach` to bind objects to their parent. If you unmount the attached object it will be taken off its parent automatically.
+
+The following attaches a material to the `material` property of a mesh and a geometry to the `geometry` property:
+
+```jsx
+<mesh>
+  <meshBasicMaterial attach="material">
+  <boxGeometry attach="geometry">
+```
+
+<Hint>
+  All native elements ending with "Material" receive attach="material", and all elements ending with "Geometry" receive
+  attach="geometry". So you do not have to type it out any longer.
+</Hint>
+
+```jsx
+<mesh>
+  <meshBasicMaterial />
+  <boxGeometry />
+```
+
+### Nesting
+
+You can nest primitive objects, too:
+
+```jsx
+<mesh>
+  <meshBasicMaterial attach="material">
+    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
+```
+
+### AttachArray
+
+Sometimes attaching isn't enough. The following example attaches effects to an array called "passes" of the parent `effectComposer`. `attachArray` adds the object to the target array and takes it out on unmount:
+
+```jsx
+<effectComposer>
+  <renderPass attachArray="passes" scene={scene} camera={camera} />
+  <glitchPass attachArray="passes" renderToScreen />
+```
+
+### AttachObject
+
+You can also attach to named parent properties using `attachObject={[target, name]}`, which adds the object and takes it out on unmount. The following adds a buffer-attribute to `parent.attributes.position`.
+
+```jsx
+<bufferGeometry attach="geometry">
+  <bufferAttribute attachObject={['attributes', 'position']} count={v.length / 3} array={v} itemSize={3} />
+```
+
+### AttachFns
+
+Some objects have special add/remove function, you can't easily attach objects. In that case `attachFns` gives you full control.
+
+The following uses the effect composer from the [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing) library, which works differently than three/examples/jsm. You need to call `Composer.addPass` to add an effect and `Composer.removePass` to remove it.
+
+```jsx
+<effectComposer>
+  <renderPass attachFns={["addPass", "removePass"]} args={[scene, camera]} />
+```
+
+And in the case the add/remove functions are more complex:
+
+```jsx
+<effectComposer>
+  <renderPass
+    args={[scene, camera]}
+    attachFns={[
+      (parent, self) => parent.addPass(self),
+      (parent, self) => parent.removePass(self)
+    ]} />
+```
+
+## Piercing into nested properties
+
+If you want to reach into nested attributes (for instance: `mesh.rotation.x`), just use dash-case.
+
+```jsx
+<mesh rotation-x={1} material-uniforms-resolution-value={[512, 512]} />
+```
+
+## Putting already existing objects into the scene-graph
+
+You can use the `primitive` placeholder for that. You can still give it properties or attach nodes to it. Never add the same object multiple times, this is not allowed in three.js! Primitives will not dispose of the object they carry on unmount, you are responsible for disposing of it!
+
+```jsx
+const mesh = new THREE.Mesh(geometry, material)
+
+function Component() {
+  return <primitive object={mesh} position={[10, 0, 0]} />
+```
+
+## Using 3rd-party objects declaratively
+
+The `extend` function extends React Three Fiber's catalogue of JSX elements. Components added this way can then be referenced in the scene-graph using camel casing similar to other primitives.
+
+```jsx
+import { extend } from '@react-three/fiber'
+import { OrbitControls, TransformControls } from 'three-stdlib'
+extend({ OrbitControls, TransformControls })
+
+// ...
+return (
+  <>
+    <orbitControls />
+    <transformControls />
+```
+
+## Disposal
+
+Freeing resources is a [manual chore in `three.js`](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but React is aware of object-lifecycles, hence React Three Fiber will attempt to free resources for you by calling `object.dispose()`, if present, on all unmounted objects.
+
+If you manage assets by yourself, globally or in a cache, this may _not_ be what you want. You can switch it off by placing `dispose={null}` onto meshes, materials, etc, or even on parent containers like groups, it is now valid for the entire tree.
+
+```jsx
+const globalGeometry = new THREE.BoxGeometry()
+const globalMaterial = new THREE.MeshBasicMaterial()
+
+function Mesh() {
+  return (
+    <group dispose={null}>
+      <mesh geometry={globalGeometry} material={globalMaterial} />
+```
