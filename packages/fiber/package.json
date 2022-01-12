@@ -62,7 +62,7 @@
     "react-dom": ">=18.0",
     "react-native": ">=0.64",
     "expo": ">=43.0",
-    "three": ">=0.132"
+    "three": ">=0.133"
   },
   "peerDependenciesMeta": {
     "react-dom": {
