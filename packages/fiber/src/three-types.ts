@@ -32,7 +32,8 @@ export interface NodeProps<T, P> {
   onUpdate?: (self: T) => void
 }
 
-export type Node<T, P> = Overwrite<Partial<T>, NodeProps<T, P>>
+export type ExtendedColors<T> = { [K in keyof T]: T[K] extends THREE.Color | undefined ? Color : T[K] }
+export type Node<T, P> = ExtendedColors<Overwrite<Partial<T>, NodeProps<T, P>>>
 
 export type Object3DNode<T, P> = Overwrite<
   Node<T, P>,
@@ -49,9 +50,9 @@ export type Object3DNode<T, P> = Overwrite<
 > &
   EventHandlers
 
-export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Overwrite<Node<T, P>, {}>
-export type MaterialNode<T extends THREE.Material, P> = Overwrite<Node<T, P>, { color?: Color }>
-export type LightNode<T extends THREE.Light, P> = Overwrite<Object3DNode<T, P>, { color?: Color }>
+export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Node<T, P>
+export type MaterialNode<T extends THREE.Material, P> = Node<T, P>
+export type LightNode<T extends THREE.Light, P> = Object3DNode<T, P>
 
 // export type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
 export type AudioListenerProps = Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
