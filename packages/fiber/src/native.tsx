@@ -1,3 +1,5 @@
+import './native/polyfills'
+
 export * from './three-types'
 import * as ReactThreeFiber from './three-types'
 export { ReactThreeFiber }
