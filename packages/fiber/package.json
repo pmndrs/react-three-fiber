@@ -43,11 +43,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.15.4",
-    "base64-arraybuffer": "^1.0.1",
     "expo-gl": "~11.0.3",
     "expo-gl-cpp": "~11.0.1",
     "expo-asset": "~8.4.4",
-    "expo-file-system": "~13.1.0",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.27.0-rc.0",
     "react-use-measure": "^2.1.1",
