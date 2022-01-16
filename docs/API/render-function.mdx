@@ -12,14 +12,15 @@ The render functions config has the same options and properties as `Canvas`, but
 import React from 'react'
 import { render, events } from '@react-three/fiber'
 
-window.addEventListener('resize', () =>
+const handleResize = () => {
   render(<mesh />, document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
   }),
-)
+}
+handleResize()
 
-window.dispatchEvent(new Event('resize'))
+window.addEventListener('resize', handleResize)
 ```
 
 To unmount and dispose of all the memory that has been acquired:
@@ -34,19 +35,20 @@ unmountComponentAtNode(document.querySelector('canvas'))
 
 `render` is depreciated in v8 beta for the new `createRoot` signature.
 
-```js
-import { createRoot } from '@react-three/fiber'
+```jsx
+import { createRoot, events } from '@react-three/fiber'
 
 let root
 
-window.addEventListener('resize', () =>
+const handleResize = () => {
   root = createRoot(document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
-  ).render(<mesh />)
-)
+  }).render(<mesh />)
+}
+handleResize()
 
-window.dispatchEvent(new Event('resize'))
+window.addEventListener('resize', handleResize)
 
 // to unmount
 root.unmount()
@@ -76,7 +78,7 @@ createRoot(canvas).render(
 )
 ```
 
-There's an [official babel plugin](@react-three/babel) which will do this for you automatically:
+There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
 
 ```jsx
 // In:
