@@ -73,6 +73,9 @@ export type RootState = {
   mouse: THREE.Vector2
   clock: THREE.Clock
 
+  /**
+   * @deprecated Removed in R3F v8. With R3F v8, WebXR features will automatically enable as you enter a session.
+   */
   vr: boolean
   linear: boolean
   flat: boolean
@@ -103,6 +106,9 @@ export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
+  /**
+   * @deprecated Removed in R3F v8. With R3F v8, WebXR features will automatically enable as you enter a session.
+   */
   vr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
