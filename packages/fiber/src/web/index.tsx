@@ -28,6 +28,9 @@ export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'even
   gl?: GLProps
   events?: (store: UseStore<RootState>) => EventManager<TCanvas>
   size?: Size
+  /**
+   * @deprecated Removed in R3F v8. React 18 will render in blocking mode by default and switch to concurrent via `startTransition`.
+   */
   mode?: typeof modes[number]
   onCreated?: (state: RootState) => void
 }
