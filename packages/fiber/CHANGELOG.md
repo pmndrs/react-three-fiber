@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.25
+
+### Patch Changes
+
+- 8698734: Release latest patches
+
 ## 7.0.24
 
 ### Patch Changes
