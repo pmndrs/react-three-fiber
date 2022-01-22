@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { Root } from './renderer'
 import { RootState } from './store'
 
@@ -21,7 +22,7 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
   for (i = 0; i < effects.length; i++) effects[i](timestamp)
 }
 
-function render(timestamp: number, state: RootState) {
+function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
   // In frameloop='never' mode, clock times are updated using the provided timestamp
@@ -31,7 +32,7 @@ function render(timestamp: number, state: RootState) {
     state.clock.elapsedTime = timestamp
   }
   // Call subscribers (useFrame)
-  for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta)
+  for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta, frame)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Decrease frame count
@@ -84,10 +85,15 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState): void {
+  function advance(
+    timestamp: number,
+    runGlobalEffects: boolean = true,
+    state?: RootState,
+    frame?: THREE.XRFrame,
+  ): void {
     if (runGlobalEffects) run(globalEffects, timestamp)
     if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
-    else render(timestamp, state)
+    else render(timestamp, state, frame)
     if (runGlobalEffects) run(globalAfterEffects, timestamp)
   }
 
