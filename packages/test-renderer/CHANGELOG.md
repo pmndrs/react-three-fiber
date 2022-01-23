@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.24
+
+### Patch Changes
+
+- 8698734: Release latest patches
+- Updated dependencies [8698734]
+  - @react-three/fiber@7.0.25
+
 ## 7.0.23
 
 ### Patch Changes
