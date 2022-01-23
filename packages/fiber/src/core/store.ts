@@ -101,7 +101,10 @@ export type RootState = {
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (event: any, state: RootState) => { offsetX: number; offsetY: number }
+export type ComputeOffsetsFunction = (
+  event: any,
+  state: RootState,
+) => { offsetX: number; offsetY: number; width?: number; height?: number }
 
 export type StoreProps = {
   gl: THREE.WebGLRenderer
