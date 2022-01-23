@@ -229,6 +229,8 @@ const createStore = (
       gl.xr.enabled = gl.xr.isPresenting
 
       // @ts-expect-error
+      // WebXRManager's signature is incorrect.
+      // See: https://github.com/pmndrs/react-three-fiber/pull/2017#discussion_r790134505
       gl.xr.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
     }
 
