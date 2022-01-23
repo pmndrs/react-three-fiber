@@ -118,8 +118,12 @@ export function createEvents(store: UseStore<RootState>) {
     const { raycaster, mouse, camera, size } = state
     // https://github.com/pmndrs/react-three-fiber/pull/782
     // Events trigger outside of canvas when moved
-    const { offsetX, offsetY } = raycaster.computeOffsets?.(event, state) ?? event
-    const { width, height } = size
+    const customOffsets = raycaster.computeOffsets?.(event, state)
+    const offsetX = customOffsets?.offsetX ?? event.offsetX
+    const offsetY = customOffsets?.offsetY ?? event.offsetY
+    const width = customOffsets?.width ?? size.width
+    const height = customOffsets?.height ?? size.height
+
     mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
     raycaster.setFromCamera(mouse, camera)
   }
