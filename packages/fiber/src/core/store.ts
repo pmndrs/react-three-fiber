@@ -32,7 +32,7 @@ export type Raycaster = THREE.Raycaster & {
   computeOffsets?: ComputeOffsetsFunction
 }
 
-export type RenderCallback = (state: RootState, delta: number) => void
+export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
   current: number
@@ -134,7 +134,7 @@ const context = React.createContext<UseStore<RootState>>(null!)
 const createStore = (
   applyProps: ApplyProps,
   invalidate: (state?: RootState) => void,
-  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState) => void,
+  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
   props: StoreProps,
 ): UseStore<RootState> => {
   const {
@@ -220,20 +220,21 @@ const createStore = (
       set((state) => ({ performance: { ...state.performance, current } }))
 
     // Handle frame behavior in WebXR
-    const handleXRFrame = (timestamp: number) => {
+    const handleXRFrame: THREE.XRFrameRequestCallback = (timestamp: number, frame?: THREE.XRFrame) => {
       const state = get()
       if (state.frameloop === 'never') return
 
-      advance(timestamp, true)
+      advance(timestamp, true, state, frame)
     }
 
     // Toggle render switching on session
     const handleSessionChange = () => {
       gl.xr.enabled = gl.xr.isPresenting
-      gl.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
 
-      // If exiting session, request frame
-      if (!gl.xr.isPresenting) invalidate(get())
+      // @ts-expect-error
+      // WebXRManager's signature is incorrect.
+      // See: https://github.com/pmndrs/react-three-fiber/pull/2017#discussion_r790134505
+      gl.xr.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
     }
 
     // WebXR session manager
