@@ -112,7 +112,7 @@ import { useFrame } from '@react-three/fiber'
 
 function Foo() {
   useFrame((state, delta) => {
-    // This function runs 60 times/second inside the global render-loop
+    // This function runs at the native refresh rate inside of a shared render-loop
   })
 ```
 
