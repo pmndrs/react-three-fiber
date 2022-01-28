@@ -112,21 +112,31 @@ ReactDOM.render(
 
 ## React Native
 
-This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI. For the latter, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules).
+R3F v8 adds support for react-native and can be imported from `@react-three/fiber/native`. We use `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and threejs loaders.
+
+To get started, create an app via `expo-cli` or `react-native`:
 
 ```bash
-# Install expo-cli, this will create our app
-npm install expo-cli -g
-
-# Create app and cd into it
-expo init my-app
+# Create a managed/bare app and cd into it
+npx expo-cli init my-app
 cd my-app
 
-# Install dependencies
-npm install three @react-three/fiber react
+# or
 
-# Start
-expo start
+# Create bare app and cd into it
+npx react-native init my-app
+cd my-app
+```
+
+Then install dependencies (for manual installation or migration, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules)):
+
+```bash
+# Automatically install & link expo modules
+npx install-expo-modules
+expo install expo-gl
+
+# Install NPM dependencies
+npm install three @react-three/fiber
 ```
 
 Some configuration may be required to tell the Metro bundler about your assets if you use `useLoader` or Drei abstractions like `useGLTF` and `useTexture`:
@@ -136,33 +146,46 @@ Some configuration may be required to tell the Metro bundler about your assets i
 module.exports = {
   resolver: {
     sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
-    assetExts: ['glb', 'png', 'jpg'],
+    assetExts: ['glb', 'gltf', 'png', 'jpg'],
   },
 }
 ```
 
-Just import from native targets and that's it!
+R3F's API is completely x-platform, so you can use [events](https://docs.pmnd.rs/react-three-fiber/api/events) and [hooks](https://docs.pmnd.rs/react-three-fiber/api/hooks) just as you would on the web.
+
+Just make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` to use their native targets.
 
 ```jsx
-import React, { Suspense } from 'react'
-import { useGLTF } from '@react-three/drei/native'
-import { Canvas } from '@react-three/fiber/native'
-import modelPath from './assets/model.glb'
+import React, { useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber/native'
 
-function Model(props) {
-  const { scene } = useGLTF(modelPath)
-  return <primitive {...props} object={scene} />
-}
-
-function App() {
+function Box(props) {
+  const mesh = useRef(null)
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
+  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
   return (
-    <Canvas>
-      <Suspense fallback={null}>
-        <Model />
-      </Suspense>
-    </Canvas>
+    <mesh
+      {...props}
+      ref={mesh}
+      scale={active ? 1.5 : 1}
+      onClick={(event) => setActive(!active)}
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <Canvas>
+      <ambientLight />
+      <pointLight position={[10, 10, 10]} />
+      <Box position={[-1.2, 0, 0]} />
+      <Box position={[1.2, 0, 0]} />
+    </Canvas>
+  )
+}
 ```
