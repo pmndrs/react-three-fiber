@@ -112,21 +112,34 @@ ReactDOM.render(
 
 ## React Native
 
-This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI. For the latter, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules).
+R3F v8 adds support for react-native and can be imported from `@react-three/fiber/native`. We use `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and threejs loaders.
+
+To get started, create an app via `expo-cli` or `react-native`:
 
 ```bash
-# Install expo-cli, this will create our app
-npm install expo-cli -g
-
-# Create app and cd into it
-expo init my-app
+# Create a managed/bare app and cd into it
+npx expo-cli init my-app
 cd my-app
 
-# Install dependencies
-npm install three @react-three/fiber react
+# or
 
-# Start
-expo start
+# Create bare app and cd into it
+npx react-native init my-app
+cd my-app
+```
+
+Then install dependencies (for manual installation or migration, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules)):
+
+```bash
+# Automatically install expo modules core
+npx install-expo-modules
+
+# Install expo dependencies (expo-asset is a core lib, so we skip it)
+expo install expo-gl
+expo install expo-gl-cpp
+
+# Install NPM dependencies
+npm install three @react-three/fiber
 ```
 
 Some configuration may be required to tell the Metro bundler about your assets if you use `useLoader` or Drei abstractions like `useGLTF` and `useTexture`:
@@ -136,12 +149,14 @@ Some configuration may be required to tell the Metro bundler about your assets i
 module.exports = {
   resolver: {
     sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
-    assetExts: ['glb', 'png', 'jpg'],
+    assetExts: ['glb', 'gltf', 'png', 'jpg'],
   },
 }
 ```
 
-Just import from native targets and that's it!
+R3F's API is completely x-platform, so you can use [events](https://docs.pmnd.rs/react-three-fiber/api/events) and [hooks](https://docs.pmnd.rs/react-three-fiber/api/hooks) just as you would on the web.
+
+Just make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` to use their native targets.
 
 ```jsx
 import React, { Suspense } from 'react'
