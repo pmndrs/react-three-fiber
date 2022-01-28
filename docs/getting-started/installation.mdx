@@ -131,12 +131,9 @@ cd my-app
 Then install dependencies (for manual installation or migration, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules)):
 
 ```bash
-# Automatically install expo modules core
+# Automatically install & link expo modules
 npx install-expo-modules
-
-# Install expo dependencies (expo-asset is a core lib, so we skip it)
 expo install expo-gl
-expo install expo-gl-cpp
 
 # Install NPM dependencies
 npm install three @react-three/fiber
@@ -159,25 +156,36 @@ R3F's API is completely x-platform, so you can use [events](https://docs.pmnd.rs
 Just make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` to use their native targets.
 
 ```jsx
-import React, { Suspense } from 'react'
-import { useGLTF } from '@react-three/drei/native'
-import { Canvas } from '@react-three/fiber/native'
-import modelPath from './assets/model.glb'
+import React, { useRef, useState } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber/native'
 
-function Model(props) {
-  const { scene } = useGLTF(modelPath)
-  return <primitive {...props} object={scene} />
-}
-
-function App() {
+function Box(props) {
+  const mesh = useRef(null)
+  const [hovered, setHover] = useState(false)
+  const [active, setActive] = useState(false)
+  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
   return (
-    <Canvas>
-      <Suspense fallback={null}>
-        <Model />
-      </Suspense>
-    </Canvas>
+    <mesh
+      {...props}
+      ref={mesh}
+      scale={active ? 1.5 : 1}
+      onClick={(event) => setActive(!active)}
+      onPointerOver={(event) => setHover(true)}
+      onPointerOut={(event) => setHover(false)}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
   )
 }
 
-export default App
+export default function App() {
+  return (
+    <Canvas>
+      <ambientLight />
+      <pointLight position={[10, 10, 10]} />
+      <Box position={[-1.2, 0, 0]} />
+      <Box position={[1.2, 0, 0]} />
+    </Canvas>
+  )
+}
 ```
