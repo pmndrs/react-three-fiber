@@ -181,6 +181,28 @@ return (
     <transformControls />
 ```
 
+If you are using Typescript, it is important to let Typescript be aware of the new elements.
+
+```tsx
+import { extend, ReactThreeFiber } from '@react-three/fiber'
+import { OrbitControls } from 'three-stdlib'
+
+extend({ OrbitControls })
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      orbitControls: ReactThreeFiber.Object3DNode<
+        OrbitControls,
+        typeof OrbitControls
+      >
+    }
+  }
+}
+```
+
+
+
 ## Disposal
 
 Freeing resources is a [manual chore in `three.js`](https://threejs.org/docs/#manual/en/introduction/How-to-dispose-of-objects), but React is aware of object-lifecycles, hence React Three Fiber will attempt to free resources for you by calling `object.dispose()`, if present, on all unmounted objects.
