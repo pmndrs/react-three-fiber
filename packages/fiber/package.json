@@ -46,10 +46,8 @@
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.27.0-rc.0",
     "react-use-measure": "^2.1.1",
-    "resize-observer-polyfill": "^1.5.1",
     "scheduler": "0.21.0-rc.0",
     "suspend-react": "^0.0.8",
-    "utility-types": "^3.10.0",
     "zustand": "^3.5.10"
   },
   "peerDependencies": {
