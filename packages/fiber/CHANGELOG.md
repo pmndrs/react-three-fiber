@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.0-beta.0
+
+### Patch Changes
+
+- cf6316c: new beta for library testing
+
 ## 7.0.25
 
 ### Patch Changes
