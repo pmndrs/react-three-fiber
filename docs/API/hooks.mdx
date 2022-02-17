@@ -245,7 +245,7 @@ useLoader.preload(GLTFLoader, '/model.glb' /* extensions */)
 Convenience hook which creates a memoized, named object/material collection from any [`Object3D`](https://threejs.org/docs/#api/en/core/Object3D).
 
 ```jsx
-import { useLoader } from '@react-three/fiber'
+import { useLoader, useGraph } from '@react-three/fiber'
 
 function Model(url) {
   const scene = useLoader(OBJLoader, url)
