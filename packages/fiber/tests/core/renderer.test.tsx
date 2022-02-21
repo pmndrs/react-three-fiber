@@ -486,7 +486,8 @@ describe('renderer', () => {
     let camera: THREE.Camera = null!
 
     await act(async () => {
-      camera = createRoot(canvas, { orthographic: true, camera: { position: [0, 0, 5] } })
+      camera = createRoot(canvas)
+        .configure({ orthographic: true, camera: { position: [0, 0, 5] } })
         .render(<group />)
         .getState().camera
     })
@@ -498,10 +499,9 @@ describe('renderer', () => {
   it('should handle an performance changing functions', async () => {
     let state: UseStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas, {
-        dpr: [1, 2],
-        performance: { min: 0.2 },
-      }).render(<group />)
+      state = createRoot(canvas)
+        .configure({ dpr: [1, 2], performance: { min: 0.2 } })
+        .render(<group />)
     })
 
     expect(state.getState().viewport.initialDpr).toEqual(2)
@@ -535,9 +535,9 @@ describe('renderer', () => {
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
     let state: UseStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas, {
-        shadows: true,
-      }).render(<group />)
+      state = createRoot(canvas)
+        .configure({ shadows: true })
+        .render(<group />)
     })
 
     expect(state.getState().gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
@@ -546,9 +546,9 @@ describe('renderer', () => {
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
     let state: UseStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas, {
-        linear: false,
-      }).render(<group />)
+      state = createRoot(canvas)
+        .configure({ linear: false })
+        .render(<group />)
     })
 
     expect(state.getState().gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -584,7 +584,8 @@ describe('renderer', () => {
         useFrame(() => (respected = false))
         return <group />
       }
-      const state = createRoot(canvas, { frameloop: 'never' })
+      const state = createRoot(canvas)
+        .configure({ frameloop: 'never' })
         .render(<TestGroup />)
         .getState()
       state.gl.xr.isPresenting = true
@@ -616,9 +617,8 @@ describe('renderer', () => {
   it('should set renderer props via gl prop', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas, {
-        gl: { physicallyCorrectLights: true },
-      })
+      gl = createRoot(canvas)
+        .configure({ gl: { physicallyCorrectLights: true } })
         .render(<group />)
         .getState().gl
     })
@@ -631,9 +631,8 @@ describe('renderer', () => {
 
     let gl: Renderer = null!
     await act(async () => {
-      gl = createRoot(canvas, {
-        gl: (canvas) => new Renderer({ canvas }),
-      })
+      gl = createRoot(canvas)
+        .configure({ gl: (canvas) => new Renderer({ canvas }) })
         .render(<group />)
         .getState().gl
     })
@@ -644,9 +643,8 @@ describe('renderer', () => {
   it('should respect color management preferences via gl', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas, {
-        gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping },
-      })
+      gl = createRoot(canvas)
+        .configure({ gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping } })
         .render(<group />)
         .getState().gl
     })
@@ -655,14 +653,11 @@ describe('renderer', () => {
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
 
     await act(async () => {
-      gl = createRoot(canvas, {
-        flat: true,
-        linear: true,
-      })
+      gl = createRoot(canvas)
+        .configure({ flat: true, linear: true })
         .render(<group />)
         .getState().gl
     })
-
     expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
   })

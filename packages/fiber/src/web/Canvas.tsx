@@ -5,7 +5,7 @@ import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -32,7 +32,6 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'frameloop',
   'dpr',
   'performance',
-  'clock',
   'raycaster',
   'camera',
   'onPointerMissed',
@@ -59,7 +58,7 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, events, ...props },
+  { children, fallback, resize, style, events = createPointerEvents, ...props },
   forwardedRef,
 ) {
   // Create a known catalogue of Threejs-native elements
@@ -81,12 +80,13 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
+  const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
+
   if (width > 0 && height > 0 && canvas) {
-    createRoot(canvas, {
-      ...canvasProps,
-      size: { width, height },
-      events: events || createPointerEvents,
-    }).render(
+    if (!root.current) root.current = createRoot<HTMLElement>(canvas)
+
+    root.current.configure({ ...canvasProps, size: { width, height }, events })
+    root.current.render(
       <ErrorBoundary set={setError}>
         <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
       </ErrorBoundary>,

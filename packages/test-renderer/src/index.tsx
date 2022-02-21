@@ -36,7 +36,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
   const _fiber = canvas
 
-  const _root = createRoot(_fiber, { frameloop: 'never', ...options, events: undefined })
+  const _root = createRoot(_fiber).configure({ frameloop: 'never', ...options, events: undefined })
 
   let scene: MockScene = null!
 

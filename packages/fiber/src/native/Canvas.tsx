@@ -4,7 +4,7 @@ import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio }
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -31,7 +31,6 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'orthographic',
   'frameloop',
   'performance',
-  'clock',
   'raycaster',
   'camera',
   'onPointerMissed',
@@ -78,6 +77,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // Throw exception outwards if anything within canvas throws
     if (error) throw error
 
+    const root = React.useRef<ReconcilerRoot<Element>>(null!)
+
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height } = e.nativeEvent.layout
       setSize({ width, height })
@@ -98,6 +99,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [])
 
     if (width > 0 && height > 0 && canvas) {
+      if (!root.current) root.current = createRoot<Element>(canvas)
       // Overwrite onCreated to apply RN bindings
       const onCreated = (state: RootState) => {
         // Bind events after creation
@@ -115,15 +117,16 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         return canvasProps?.onCreated?.(state)
       }
 
-      createRoot(canvas, {
+      root.current.configure({
         ...canvasProps,
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
         size: { width, height },
-        events: events || createTouchEvents,
+        events: (events || createTouchEvents) as (store: UseStore<RootState>) => EventManager<any>,
         onCreated,
-      }).render(
+      })
+      root.current.render(
         <ErrorBoundary set={setError}>
           <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
         </ErrorBoundary>,

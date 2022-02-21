@@ -87,7 +87,8 @@ describe('hooks', () => {
     let scene: THREE.Scene = null!
     await act(
       async () =>
-        (scene = createRoot(canvas, { frameloop: 'never' })
+        (scene = createRoot(canvas)
+          .configure({ frameloop: 'never' })
           .render(<Component />)
           .getState().scene),
     )
