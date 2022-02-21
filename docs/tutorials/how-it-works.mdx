@@ -182,26 +182,14 @@ import { useCamera } from '@react-three/drei'
 return <mesh raycast={useCamera(anotherCamera)} />
 ```
 
-<!--
-  TODO: [See this recipe for more info about this.](/docs/recipes/raycasting)
--->
-
 ## Render Loop
 
 By default, Fiber will setup a render loop that renders the default `scene` from the default `camera` to a [WebGLRenderer](https://threejs.org/docs/#api/en/renderers/WebGLRenderer).
 
 The loop is setup using [setAnimationLoop](https://threejs.org/docs/#api/en/renderers/WebGLRenderer.setAnimationLoop), which will execute its callback every time a new frame is renderable. This is what will happen every render:
 
-<!--
-  TODO: create docs for:
-  - global before/after effects (formerly docs/recipes/effects)
-  - delta (docs/time)
--->
-
 1. All global before effects are executed
 2. Clock delta is saved - implying all `useFrame` calls will share the same `delta`
 3. `useFrame` callbacks are executed in order
 4. `renderer.render(scene, camera)` is called, effectively rendering the scene to screen
 5. All global after effects are executed
-
-_Add about opting out of render_
