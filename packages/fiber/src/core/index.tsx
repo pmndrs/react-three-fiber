@@ -170,7 +170,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       }
 
       // Set shadowmap
-      if (gl.shadowMap.enabled !== !!shadows) {
+      if (gl.shadowMap && gl.shadowMap.enabled !== !!shadows) {
         const old = gl.shadowMap.enabled
         gl.shadowMap.enabled = !!shadows
         if (typeof shadows === 'object') Object.assign(gl.shadowMap, shadows)
