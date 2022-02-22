@@ -18,7 +18,8 @@ const getAsset = (input: Asset | string | number) => {
 }
 
 // Don't pre-process urls, let expo-asset generate an absolute URL
-THREE.LoaderUtils.extractUrlBase = () => './'
+const extractUrlBase = THREE.LoaderUtils.extractUrlBase.bind(THREE.LoaderUtils)
+THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
 // There's no Image in native, so create a data texture instead
 THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
@@ -29,7 +30,7 @@ THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onEr
 
   getAsset(url)
     .downloadAsync()
-    .then((asset) => {
+    .then((asset: Asset) => {
       texture.image = {
         data: asset,
         width: asset.width,
