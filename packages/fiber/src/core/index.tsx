@@ -4,25 +4,16 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { dispose, calculateDpr } from '../core/utils'
-import {
-  Renderer,
-  createStore,
-  StoreProps,
-  isRenderer,
-  context,
-  RootState,
-  Size,
-  Camera,
-  Raycaster,
-} from '../core/store'
-import { createRenderer, extend, Root } from '../core/renderer'
-import { createLoop, addEffect, addAfterEffect, addTail } from '../core/loop'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera, Raycaster } from './store'
+import { createRenderer, extend, Root } from './renderer'
+import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager } from './events'
+import { is, dispose, calculateDpr, EquConfig } from './utils'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
+const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
 
@@ -69,7 +60,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   if (prevRoot) console.warn('R3F.createRoot should only be called once!')
 
   // Create store
-  const store = prevStore || createStore(applyProps, invalidate, advance)
+  const store = prevStore || createStore(invalidate, advance)
   // Create renderer
   const fiber = prevFiber || reconciler.createContainer(store, ConcurrentRoot, false, null)
   // Map it
@@ -80,22 +71,24 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   let configured = false
 
   return {
-    configure({
-      gl: glConfig,
-      size,
-      events,
-      onCreated: onCreatedCallback,
-      shadows = false,
-      linear = false,
-      flat = false,
-      orthographic = false,
-      frameloop = 'always',
-      dpr = [1, 2],
-      performance,
-      raycaster: raycastOptions,
-      camera: cameraOptions,
-      onPointerMissed,
-    }: RenderProps<TCanvas> = {}) {
+    configure(props: RenderProps<TCanvas> = {}) {
+      let {
+        gl: glConfig,
+        size,
+        events,
+        onCreated: onCreatedCallback,
+        shadows = false,
+        linear = false,
+        flat = false,
+        orthographic = false,
+        frameloop = 'always',
+        dpr = [1, 2],
+        performance,
+        raycaster: raycastOptions,
+        camera: cameraOptions,
+        onPointerMissed,
+      } = props
+
       let state = store.getState()
 
       // Set up renderer (one time only!)
@@ -103,16 +96,14 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!state.gl) state.set({ gl: (gl = createRendererInstance(glConfig, canvas)) })
 
       // Set up raycaster (one time only!)
-      if (!state.raycaster) {
-        const raycaster = new THREE.Raycaster() as Raycaster
-        const { params, ...options } = raycastOptions || {}
-        applyProps(raycaster as any, {
-          enabled: true,
-          ...options,
-          params: { ...raycaster.params, ...params },
-        })
-        state.set({ raycaster })
-      }
+      let raycaster = state.raycaster
+      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster() as Raycaster) })
+
+      // Set raycaster options
+      const { params, ...options } = raycastOptions || {}
+      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { enabled: true, ...options })
+      if (!is.equ(params, raycaster.params, shallowLoose))
+        applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
       // Create default camera (one time only!)
       if (!state.camera) {
@@ -170,12 +161,15 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       }
 
       // Set shadowmap
-      if (gl.shadowMap && gl.shadowMap.enabled !== !!shadows) {
-        const old = gl.shadowMap.enabled
-        gl.shadowMap.enabled = !!shadows
-        if (typeof shadows === 'object') Object.assign(gl.shadowMap, shadows)
-        else gl.shadowMap.type = THREE.PCFSoftShadowMap
-        if (old !== gl.shadowMap.enabled) gl.shadowMap.needsUpdate = true
+      if (gl.shadowMap) {
+        const isBoolean = is.boo(shadows)
+        if ((isBoolean && gl.shadowMap.enabled !== shadows) || !is.equ(shadows, gl.shadowMap, shallowLoose)) {
+          const old = gl.shadowMap.enabled
+          gl.shadowMap.enabled = !!shadows
+          if (!isBoolean) Object.assign(gl.shadowMap, shadows)
+          else gl.shadowMap.type = THREE.PCFSoftShadowMap
+          if (old !== gl.shadowMap.enabled) gl.shadowMap.needsUpdate = true
+        }
       }
 
       // Set color management
@@ -185,30 +179,24 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
 
       // Set gl props
-      if (glConfig && typeof glConfig !== 'function' && !(glConfig as any)?.render)
+      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
         applyProps(gl as any, glConfig as any)
-
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
       // Check pixelratio
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
       size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
-      if (state.size.width !== size.width || state.size.height !== size.height) state.setSize(size.width, size.height)
+      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check performance
-      if (
-        performance &&
-        (state.performance.min !== performance.min ||
-          state.performance.max !== performance.max ||
-          state.performance.debounce !== performance.debounce)
-      )
+      if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
-      // onCreated callback
+      // Set locals
       onCreated = onCreatedCallback
       configured = true
 

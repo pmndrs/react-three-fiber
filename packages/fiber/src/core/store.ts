@@ -44,15 +44,14 @@ export type Performance = {
 
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
 
-export const isRenderer = (def: Renderer) => !!def?.render
-export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
+export const isRenderer = (def: any) => !!def?.render
+export const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type InternalState = {
   active: boolean
   priority: number
   frames: number
-  lastProps: StoreProps
   lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
@@ -126,12 +125,9 @@ export type StoreProps = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
-
 const context = React.createContext<UseStore<RootState>>(null!)
 
 const createStore = (
-  applyProps: ApplyProps,
   invalidate: (state?: RootState) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
 ): UseStore<RootState> => {
@@ -246,7 +242,6 @@ const createStore = (
         active: false,
         priority: 0,
         frames: 0,
-        lastProps: {} as StoreProps,
         lastEvent: React.createRef(),
 
         interaction: [],
@@ -296,7 +291,7 @@ const createStore = (
     if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
-      if (!camera.manual && !(internal.lastProps.camera instanceof THREE.Camera)) {
+      if (!camera.manual) {
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
