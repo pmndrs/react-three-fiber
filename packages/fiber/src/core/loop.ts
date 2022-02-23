@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Root } from './renderer'
-import { RootState } from './store'
+import { RootState, Subscription } from './store'
 
 type GlobalRenderCallback = (timeStamp: number) => void
 
@@ -22,6 +22,7 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
   for (i = 0; i < effects.length; i++) effects[i](timestamp)
 }
 
+let subscribers: Subscription[]
 function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
@@ -32,7 +33,8 @@ function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
     state.clock.elapsedTime = timestamp
   }
   // Call subscribers (useFrame)
-  for (i = 0; i < state.internal.subscribers.length; i++) state.internal.subscribers[i].ref.current(state, delta, frame)
+  subscribers = state.internal.subscribers
+  for (i = 0; i < subscribers.length; i++) subscribers[i].ref.current(state, delta, frame)
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Decrease frame count
@@ -43,15 +45,19 @@ function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
 export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let running = false
   let repeat: number
-  function loop(timestamp: number) {
+  let frame: number
+  let state: RootState
+  function loop(timestamp: number): void {
+    frame = requestAnimationFrame(loop)
     running = true
     repeat = 0
 
     // Run effects
-    run(globalEffects, timestamp)
+    if (globalEffects.length) run(globalEffects, timestamp)
+
     // Render all roots
     roots.forEach((root) => {
-      const state = root.store.getState()
+      state = root.store.getState()
       // If the frameloop is invalidated, do not run another frame
       if (
         state.internal.active &&
@@ -61,16 +67,19 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
         repeat += render(timestamp, state)
       }
     })
+
     // Run after-effects
-    run(globalAfterEffects, timestamp)
+    if (globalAfterEffects.length) run(globalAfterEffects, timestamp)
 
-    // Keep on looping if anything invalidates the frameloop
-    if (repeat > 0) return requestAnimationFrame(loop)
-    // Tail call effects, they are called when rendering stops
-    else run(globalTailEffects, timestamp)
+    // Stop the loop if nothing invalidates it
+    if (repeat === 0) {
+      // Tail call effects, they are called when rendering stops
+      if (globalTailEffects.length) run(globalTailEffects, timestamp)
 
-    // Flag end of operation
-    running = false
+      // Flag end of operation
+      running = false
+      return cancelAnimationFrame(frame)
+    }
   }
 
   function invalidate(state?: RootState): void {
