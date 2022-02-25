@@ -63,6 +63,7 @@ export type BufferGeometryNode<T extends THREE.BufferGeometry, P> = Node<T, P>
 export type MaterialNode<T extends THREE.Material, P> = Node<T, P>
 export type LightNode<T extends THREE.Light, P> = Object3DNode<T, P>
 
+export type Object3DProps = Object3DNode<THREE.Object3D, typeof THREE.Object3D>
 // export type AudioProps = Object3DNode<THREE.Audio, typeof THREE.Audio>
 export type AudioListenerProps = Object3DNode<THREE.AudioListener, typeof THREE.AudioListener>
 export type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof THREE.PositionalAudio>
@@ -245,6 +246,8 @@ export type ShapeProps = Node<THREE.Shape, typeof THREE.Shape>
 declare global {
   namespace JSX {
     interface IntrinsicElements {
+      object3D: Object3DProps
+
       // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
       // audio: AudioProps
       audioListener: AudioListenerProps
