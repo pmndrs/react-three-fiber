@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "8.0.0-beta.1",
+  "version": "8.0.0-beta.2",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -42,13 +42,13 @@
     "prebuild": "cp ../../readme.md readme.md"
   },
   "dependencies": {
-    "@babel/runtime": "^7.15.4",
+    "@babel/runtime": "^7.17.2",
     "react-merge-refs": "^1.1.0",
-    "react-reconciler": "^0.27.0-rc.0",
+    "react-reconciler": "^0.27.0-rc.1",
     "react-use-measure": "^2.1.1",
-    "scheduler": "0.21.0-rc.0",
+    "scheduler": "0.21.0-rc.1",
     "suspend-react": "^0.0.8",
-    "zustand": "^3.5.10"
+    "zustand": "^3.7.1"
   },
   "peerDependencies": {
     "react": ">=18.0",
