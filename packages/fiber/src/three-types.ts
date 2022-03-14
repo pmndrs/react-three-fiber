@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { EventHandlers } from './core/events'
+import { EventHandlers, EventLayer } from './core/events'
 import { AttachType } from './core/renderer'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
@@ -23,6 +23,7 @@ export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 export type AttachCallback = string | ((child: any, parentInstance: any) => void)
 
 export interface NodeProps<T, P> {
+  eventLayer?: EventLayer
   attach?: AttachType
   /** Constructor arguments */
   args?: Args<P>
