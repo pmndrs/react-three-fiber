@@ -194,8 +194,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
       // Configure default event layer using the raycaster and onPointerMissed props
-      state.set((state) => ({
-        defaultEventLayer: new EventLayer(
+      state.set((state) => {
+        const defaultEventLayer = new EventLayer(
           0,
           (self, event) => {
             const { mouse, camera, size } = state
@@ -216,10 +216,16 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
             raycaster,
             onPointerMissed,
           },
-        ),
-      }))
-      state.internal.hovered.set(state.defaultEventLayer, new Map())
-      state.internal.initialHits.set(state.defaultEventLayer, [])
+        )
+        return {
+          defaultEventLayer,
+          internal: {
+            ...state.internal,
+            hovered: new Map([[defaultEventLayer, new Map()]]),
+            initialHits: new Map([[defaultEventLayer, []]]),
+          },
+        }
+      })
 
       // Set locals
       onCreated = onCreatedCallback
