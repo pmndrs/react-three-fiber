@@ -324,6 +324,7 @@ reconciler.injectIntoDevTools({
 })
 
 export * from './hooks'
+export { EventLayer } from '../core/events'
 export {
   context,
   render,
