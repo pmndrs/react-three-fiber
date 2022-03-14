@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { UseStore } from 'zustand'
-import { EventHandlers } from './events'
+import { EventHandlers, EventLayer } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
 
@@ -299,7 +299,17 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       }
     }
 
+    if (key === 'eventLayer') {
+      if (value) {
+        localState.eventLayer = value as EventLayer
+        if (!rootState.internal.hovered.get(localState.eventLayer)) {
+          rootState.internal.hovered.set(localState.eventLayer, new Map())
+        }
+      } else delete localState.eventLayer
+    }
+
     invalidateInstance(instance)
+    // FIXME: Why return here?
     return instance
   })
 

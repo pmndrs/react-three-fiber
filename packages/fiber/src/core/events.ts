@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import type { UseStore } from 'zustand'
 import type { Instance } from './renderer'
-import type { RootState } from './store'
+import type { ComputeOffsetsFunction, FilterFunction, RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -71,6 +71,52 @@ export interface PointerCaptureTarget {
   target: Element
 }
 
+export class EventLayer {
+  raycaster: THREE.Raycaster
+  allowPassthrough: 'never' | 'nohits' | 'always'
+  enabled: boolean
+  filter?: FilterFunction
+  computeOffsets?: ComputeOffsetsFunction
+  onPointerMissed?: (event: MouseEvent) => void
+
+  readonly update = (event: DomEvent) => {
+    return this.onUpdate(this, event)
+  }
+
+  constructor(
+    public priority: number,
+    public onUpdate: (thisEventLayer: EventLayer, event: DomEvent) => boolean,
+    options: {
+      enabled?: boolean
+      allowPassthrough?: 'never' | 'nohits' | 'always'
+      filter?: FilterFunction
+      computeOffsets?: ComputeOffsetsFunction
+      onPointerMissed?: (event: MouseEvent) => void
+      raycaster?: THREE.Raycaster
+    } = {},
+  ) {
+    this.raycaster = options.raycaster ?? new THREE.Raycaster()
+    this.enabled = options.enabled ?? true
+    this.allowPassthrough = options.allowPassthrough ?? 'nohits'
+    this.filter = options.filter
+    this.computeOffsets = options.computeOffsets
+    this.onPointerMissed = options.onPointerMissed
+  }
+}
+
+export function getEventLayerForObject(object: THREE.Object3D): EventLayer | undefined {
+  let eventLayer: EventLayer | undefined = undefined
+  let closestAncestorWithEventLayer: THREE.Object3D | null = object
+  while (closestAncestorWithEventLayer) {
+    if ((eventLayer = (closestAncestorWithEventLayer as unknown as Instance).__r3f?.eventLayer)) {
+      break
+    }
+    closestAncestorWithEventLayer = closestAncestorWithEventLayer.parent
+  }
+
+  return eventLayer
+}
+
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
@@ -121,14 +167,22 @@ function releaseInternalPointerCapture(
 }
 
 export function removeInteractivity(store: UseStore<RootState>, object: THREE.Object3D) {
-  const { internal } = store.getState()
+  const state = store.getState()
+  const { internal } = state
+  const eventLayer = getEventLayerForObject(object) ?? store.getState().defaultEventLayer
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
-  internal.initialHits = internal.initialHits.filter((o) => o !== object)
-  internal.hovered.forEach((value, key) => {
-    if (value.eventObject === object || value.object === object) {
-      internal.hovered.delete(key)
-    }
+
+  internal.initialHits.set(
+    eventLayer,
+    internal.initialHits.get(eventLayer)!.filter((o) => o !== object),
+  )
+  internal.hovered.forEach((hoverMap, eventLayer) => {
+    hoverMap.forEach((value, key) => {
+      if (value.eventObject === object || value.object === object) {
+        internal.hovered.get(eventLayer)!.delete(key)
+      }
+    })
   })
   internal.capturedMap.forEach((captures, pointerId) => {
     releaseInternalPointerCapture(internal.capturedMap, object, captures, pointerId)
@@ -137,22 +191,6 @@ export function removeInteractivity(store: UseStore<RootState>, object: THREE.Ob
 
 export function createEvents(store: UseStore<RootState>) {
   const temp = new THREE.Vector3()
-
-  /** Sets up defaultRaycaster */
-  function prepareRay(event: DomEvent) {
-    const state = store.getState()
-    const { raycaster, mouse, camera, size } = state
-    // https://github.com/pmndrs/react-three-fiber/pull/782
-    // Events trigger outside of canvas when moved
-    const customOffsets = raycaster.computeOffsets?.(event, state)
-    const offsetX = customOffsets?.offsetX ?? event.offsetX
-    const offsetY = customOffsets?.offsetY ?? event.offsetY
-    const width = customOffsets?.width ?? size.width
-    const height = customOffsets?.height ?? size.height
-
-    mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-    raycaster.setFromCamera(mouse, camera)
-  }
 
   /** Calculates delta */
   function calculateDistance(event: DomEvent) {
@@ -171,20 +209,23 @@ export function createEvents(store: UseStore<RootState>) {
     )
   }
 
-  function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+  function intersect(
+    eventLayer: EventLayer,
+    objects: THREE.Object3D[],
+    filter?: (objects: THREE.Object3D[]) => THREE.Object3D[],
+  ) {
     const state = store.getState()
-    const { raycaster, internal } = state
     // Skip event handling when noEvents is set
-    if (!raycaster.enabled) return []
+    if (!eventLayer.enabled) return []
 
     const seen = new Set<string>()
     const intersections: Intersection[] = []
 
     // Allow callers to eliminate event objects
-    const eventsObjects = filter ? filter(internal.interaction) : internal.interaction
+    const eventsObjects = filter ? filter(objects) : objects
 
     // Intersect known handler objects and filter against duplicates
-    let intersects = raycaster.intersectObjects(eventsObjects, true).filter((item) => {
+    let intersects = eventLayer.raycaster.intersectObjects(eventsObjects, true).filter((item) => {
       const id = makeId(item as Intersection)
       if (seen.has(id)) return false
       seen.add(id)
@@ -193,7 +234,7 @@ export function createEvents(store: UseStore<RootState>) {
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order
-    if (raycaster.filter) intersects = raycaster.filter(intersects, state)
+    if (eventLayer.filter) intersects = eventLayer.filter(intersects, state)
 
     for (const intersect of intersects) {
       let eventObject: THREE.Object3D | null = intersect.object
@@ -221,12 +262,13 @@ export function createEvents(store: UseStore<RootState>) {
 
   /**  Handles intersections by forwarding them to handlers */
   function handleIntersects(
+    eventLayer: EventLayer,
     intersections: Intersection[],
     event: DomEvent,
     delta: number,
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
-    const { raycaster, mouse, camera, internal } = store.getState()
+    const { mouse, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
@@ -278,7 +320,7 @@ export function createEvents(store: UseStore<RootState>) {
           stopped: localState.stopped,
           delta,
           unprojectedPoint,
-          ray: raycaster.ray,
+          ray: eventLayer.raycaster.ray,
           camera: camera,
           // Hijack stopPropagation, which just sets a flag
           stopPropagation: () => {
@@ -298,11 +340,11 @@ export function createEvents(store: UseStore<RootState>) {
               // An event handler is only allowed to flush other handlers if it is hovered itself
               if (
                 internal.hovered.size &&
-                Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
+                Array.from(internal.hovered.get(eventLayer)!.values()).find((i) => i.eventObject === hit.eventObject)
               ) {
                 // Objects cannot flush out higher up objects that have already caught the event
                 const higher = intersections.slice(0, intersections.indexOf(hit))
-                cancelPointer([...higher, hit])
+                cancelPointer(eventLayer, [...higher, hit])
               }
             }
           },
@@ -322,9 +364,13 @@ export function createEvents(store: UseStore<RootState>) {
     return intersections
   }
 
-  function cancelPointer(hits: Intersection[]) {
+  function cancelPointer(eventLayer: EventLayer, hits: Intersection[]) {
     const { internal } = store.getState()
-    Array.from(internal.hovered.values()).forEach((hoveredObj) => {
+    const hovered = internal.hovered.get(eventLayer)
+    if (!hovered) {
+      return
+    }
+    Array.from(hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
@@ -339,7 +385,7 @@ export function createEvents(store: UseStore<RootState>) {
         const eventObject = hoveredObj.eventObject
         const instance = (eventObject as unknown as Instance).__r3f
         const handlers = instance?.handlers
-        internal.hovered.delete(makeId(hoveredObj))
+        hovered.delete(makeId(hoveredObj))
         if (instance?.eventCount) {
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections: hits || [] }
@@ -351,105 +397,146 @@ export function createEvents(store: UseStore<RootState>) {
   }
 
   const handlePointer = (name: string) => {
-    // Deal with cancelation
-    switch (name) {
-      case 'onPointerLeave':
-      case 'onPointerCancel':
-        return () => cancelPointer([])
-      case 'onLostPointerCapture':
-        return (event: DomEvent) => {
-          const { internal } = store.getState()
-          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
-            // If the object event interface had onLostPointerCapture, we'd call it here on every
-            // object that's getting removed.
-            internal.capturedMap.delete(event.pointerId)
-            cancelPointer([])
-          }
-        }
-    }
-
     // Any other pointer goes here ...
     return (event: DomEvent) => {
-      const { onPointerMissed, internal } = store.getState()
+      const { internal } = store.getState()
 
-      prepareRay(event)
-      internal.lastEvent.current = event
+      const layers = new Map<EventLayer, THREE.Object3D[]>()
 
-      // Get fresh intersects
-      const isPointerMove = name === 'onPointerMove'
-      const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
-      const filter = isPointerMove ? filterPointerEvents : undefined
-      const hits = patchIntersects(intersect(filter), event)
-      const delta = isClickEvent ? calculateDistance(event) : 0
-
-      // Save initial coordinates on pointer-down
-      if (name === 'onPointerDown') {
-        internal.initialClick = [event.offsetX, event.offsetY]
-        internal.initialHits = hits.map((hit) => hit.eventObject)
-      }
-
-      // If a click yields no results, pass it back to the user as a miss
-      // Missed events have to come first in order to establish user-land side-effect clean up
-      if (isClickEvent && !hits.length) {
-        if (delta <= 2) {
-          pointerMissed(event, internal.interaction)
-          if (onPointerMissed) onPointerMissed(event)
+      for (const [eventLayer] of internal.hovered) {
+        if (!layers.has(eventLayer)) {
+          cancelPointer(eventLayer, [])
         }
       }
-      // Take care of unhover
-      if (isPointerMove) cancelPointer(hits)
 
-      handleIntersects(hits, event, delta, (data: ThreeEvent<DomEvent>) => {
-        const eventObject = data.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
-        // Check presence of handlers
-        if (!instance?.eventCount) return
+      for (const object of internal.interaction) {
+        const eventLayer = getEventLayerForObject(object) ?? store.getState().defaultEventLayer
+        if (!layers.get(eventLayer)) {
+          layers.set(eventLayer, [])
+        }
+        layers.get(eventLayer)!.push(object)
+      }
 
-        if (isPointerMove) {
-          // Move event ...
-          if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
-            // When enter or out is present take care of hover-state
-            const id = makeId(data)
-            const hoveredItem = internal.hovered.get(id)
-            if (!hoveredItem) {
-              // If the object wasn't previously hovered, book it and call its handler
-              internal.hovered.set(id, data)
-              handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
-              handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
-            } else if (hoveredItem.stopped) {
-              // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
-              data.stopPropagation()
+      const sortedLayers = [...layers.entries()].sort((a, b) => b[0].priority - a[0].priority)
+
+      let occludeLayers = false
+
+      for (const [eventLayer, objects] of sortedLayers) {
+        // Deal with cancelation
+        switch (name) {
+          case 'onPointerLeave':
+          case 'onPointerCancel':
+            return () => cancelPointer(eventLayer, [])
+          case 'onLostPointerCapture':
+            return (event: DomEvent) => {
+              const { internal } = store.getState()
+              if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+                // If the object event interface had onLostPointerCapture, we'd call it here on every
+                // object that's getting removed.
+                internal.capturedMap.delete(event.pointerId)
+                cancelPointer(eventLayer, [])
+              }
             }
+        }
+
+        const isActive = eventLayer.update(event)
+
+        if (!isActive || occludeLayers) {
+          cancelPointer(eventLayer, [])
+          continue
+        }
+
+        internal.lastEvent.current = event
+
+        // Get fresh intersects
+        const isPointerMove = name === 'onPointerMove'
+        const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
+        const filter = isPointerMove ? filterPointerEvents : undefined
+        // If a higher priority layer occludes this one, set the intersections to empty
+        const hits = patchIntersects(intersect(eventLayer, objects, filter), event)
+        const delta = isClickEvent ? calculateDistance(event) : 0
+
+        // If there's a hit, and passthrough is not allowed, occlude the rest of the layers
+        if (
+          (isActive && eventLayer.allowPassthrough === 'never') ||
+          (hits.length && eventLayer.allowPassthrough === 'nohits')
+        ) {
+          occludeLayers = true
+        }
+
+        // Save initial coordinates on pointer-down
+        if (name === 'onPointerDown') {
+          internal.initialClick = [event.offsetX, event.offsetY]
+          internal.initialHits.set(
+            eventLayer,
+            hits.map((hit) => hit.eventObject),
+          )
+        }
+
+        // If a click yields no results, pass it back to the user as a miss
+        // Missed events have to come first in order to establish user-land side-effect clean up
+        if (isClickEvent && !hits.length) {
+          if (delta <= 2) {
+            pointerMissed(event, objects)
+            if (eventLayer.onPointerMissed) eventLayer.onPointerMissed(event)
           }
-          // Call mouse move
-          handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
-        } else {
-          // All other events ...
-          const handler = handlers[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
-          if (handler) {
-            // Forward all events back to their respective handlers with the exception of click events,
-            // which must use the initial target
-            if (!isClickEvent || internal.initialHits.includes(eventObject)) {
-              // Missed events have to come first
-              pointerMissed(
-                event,
-                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
-              )
-              // Now call the handler
-              handler(data as ThreeEvent<PointerEvent>)
+        }
+
+        // Take care of unhover
+        if (isPointerMove) cancelPointer(eventLayer, hits)
+
+        handleIntersects(eventLayer, hits, event, delta, (data: ThreeEvent<DomEvent>) => {
+          const eventObject = data.eventObject
+          const instance = (eventObject as unknown as Instance).__r3f
+          const handlers = instance?.handlers
+          // Check presence of handlers
+          if (!instance?.eventCount) return
+
+          if (isPointerMove) {
+            // Move event ...
+            if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
+              // When enter or out is present take care of hover-state
+              const id = makeId(data)
+              const hoveredItem = internal.hovered.get(eventLayer)?.get(id)
+              if (!hoveredItem) {
+                // If the object wasn't previously hovered, book it and call its handler
+                internal.hovered.get(eventLayer)!.set(id, data)
+                handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
+                handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
+              } else if (hoveredItem.stopped) {
+                // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+                data.stopPropagation()
+              }
             }
+            // Call mouse move
+            handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
           } else {
-            // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
-            if (isClickEvent && internal.initialHits.includes(eventObject)) {
-              pointerMissed(
-                event,
-                internal.interaction.filter((object) => !internal.initialHits.includes(object)),
-              )
+            // All other events ...
+            const handler = handlers[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
+            if (handler) {
+              // Forward all events back to their respective handlers with the exception of click events,
+              // which must use the initial target
+              if (!isClickEvent || internal.initialHits.get(eventLayer)!.includes(eventObject)) {
+                // Missed events have to come first
+                pointerMissed(
+                  event,
+                  objects.filter((object) => !internal.initialHits.get(eventLayer)!.includes(object)),
+                )
+                // Now call the handler
+                handler(data as ThreeEvent<PointerEvent>)
+              }
+            } else {
+              // Trigger onPointerMissed on all elements that have pointer over/out handlers, but not click and weren't hit
+              if (isClickEvent && internal.initialHits.get(eventLayer)!.includes(eventObject)) {
+                pointerMissed(
+                  event,
+                  objects.filter((object) => !internal.initialHits.get(eventLayer)!.includes(object)),
+                )
+              }
             }
           }
-        }
-      })
+        })
+      }
     }
   }
 

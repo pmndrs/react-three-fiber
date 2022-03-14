@@ -4,10 +4,10 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseStore } from 'zustand'
 
-import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera, Raycaster } from './store'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
-import { getEventPriority, EventManager } from './events'
+import { getEventPriority, EventManager, EventLayer } from './events'
 import { is, dispose, calculateDpr, EquConfig } from './utils'
 
 const roots = new Map<Element, Root>()
@@ -97,7 +97,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
-      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster() as Raycaster) })
+      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
@@ -190,11 +190,36 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
-      // Check pointer missed
-      if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+      // Configure default event layer using the raycaster and onPointerMissed props
+      state.set((state) => ({
+        defaultEventLayer: new EventLayer(
+          0,
+          (self, event) => {
+            const { mouse, camera, size } = state
+            // https://github.com/pmndrs/react-three-fiber/pull/782
+            // Events trigger outside of canvas when moved
+            const customOffsets = self.computeOffsets?.(event, state)
+            const offsetX = customOffsets?.offsetX ?? event.offsetX
+            const offsetY = customOffsets?.offsetY ?? event.offsetY
+            const width = customOffsets?.width ?? size.width
+            const height = customOffsets?.height ?? size.height
+
+            mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
+            raycaster.setFromCamera(mouse, camera)
+
+            return true
+          },
+          {
+            raycaster,
+            onPointerMissed,
+          },
+        ),
+      }))
+      state.internal.hovered.set(state.defaultEventLayer, new Map())
+      state.internal.initialHits.set(state.defaultEventLayer, [])
 
       // Set locals
       onCreated = onCreatedCallback

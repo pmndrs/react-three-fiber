@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseStore } from 'zustand'
-import { prepare, Instance, InstanceProps } from './renderer'
-import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
+import { prepare } from './renderer'
+import { DomEvent, EventLayer, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
@@ -26,11 +26,6 @@ export type Viewport = Size & {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type Raycaster = THREE.Raycaster & {
-  enabled: boolean
-  filter?: FilterFunction
-  computeOffsets?: ComputeOffsetsFunction
-}
 
 export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
@@ -55,19 +50,20 @@ export type InternalState = {
   lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
-  hovered: Map<string, ThreeEvent<DomEvent>>
+  hovered: Map<EventLayer, Map<string, ThreeEvent<DomEvent>>>
   subscribers: Subscription[]
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
+  initialHits: Map<EventLayer, THREE.Object3D[]>
   subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
 }
 
 export type RootState = {
   gl: THREE.WebGLRenderer
   camera: Camera & { manual?: boolean }
-  raycaster: Raycaster
+  raycaster: THREE.Raycaster
   events: EventManager<any>
+  defaultEventLayer: EventLayer
   xr: { connect: () => void; disconnect: () => void }
 
   scene: THREE.Scene
@@ -92,7 +88,6 @@ export type RootState = {
   setSize: (width: number, height: number) => void
   setDpr: (dpr: Dpr) => void
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
-  onPointerMissed?: (event: MouseEvent) => void
 
   internal: InternalState
 }
@@ -113,7 +108,8 @@ export type StoreProps = {
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
-  raycaster?: Partial<Raycaster>
+  // FIXME: Should we keep this or let users provide the defaultEventLayer?
+  raycaster?: Partial<THREE.Raycaster>
   camera?: (
     | Camera
     | Partial<
@@ -163,8 +159,9 @@ const createStore = (
       // Mock objects that have to be configured
       gl: null as unknown as THREE.WebGLRenderer,
       camera: null as unknown as Camera,
-      raycaster: null as unknown as Raycaster,
+      raycaster: null as unknown as THREE.Raycaster,
       events: { connected: false },
+      defaultEventLayer: null as unknown as EventLayer,
       xr: null as unknown as { connect: () => void; disconnect: () => void },
 
       set,
@@ -181,7 +178,6 @@ const createStore = (
       mouse: new THREE.Vector2(),
 
       frameloop: 'always',
-      onPointerMissed: undefined,
 
       performance: {
         current: 1,
@@ -245,10 +241,10 @@ const createStore = (
         lastEvent: React.createRef(),
 
         interaction: [],
-        hovered: new Map<string, ThreeEvent<DomEvent>>(),
+        hovered: new Map(),
         subscribers: [],
         initialClick: [0, 0],
-        initialHits: [],
+        initialHits: new Map(),
         capturedMap: new Map(),
 
         subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {

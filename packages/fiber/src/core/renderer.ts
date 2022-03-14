@@ -16,7 +16,7 @@ import {
   detach,
 } from './utils'
 import { RootState } from './store'
-import { EventHandlers, removeInteractivity } from './events'
+import { EventHandlers, EventLayer, removeInteractivity } from './events'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 
@@ -28,6 +28,7 @@ export type LocalState = {
   primitive?: boolean
   eventCount: number
   handlers: Partial<EventHandlers>
+  eventLayer?: EventLayer
   attach?: AttachType
   previousAttach?: any
   memoizedProps: {

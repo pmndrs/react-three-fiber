@@ -5,6 +5,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is } from './utils'
+import { EventLayer, getEventLayerForObject } from './events'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -31,6 +32,20 @@ export function useThree<T = RootState>(
   equalityFn?: EqualityChecker<T>,
 ) {
   return useStore()(selector, equalityFn)
+}
+
+export function useEventLayer() {
+  const defaultEventLayer = useThree((store) => store.defaultEventLayer)
+  const [eventLayer, setEventLayer] = React.useState<EventLayer>(defaultEventLayer)
+  const objectRef = React.useRef<THREE.Object3D>()
+
+  React.useLayoutEffect(() => {
+    if (objectRef.current) {
+      setEventLayer(getEventLayerForObject(objectRef.current) ?? defaultEventLayer)
+    }
+  }, [defaultEventLayer])
+
+  return [eventLayer, objectRef] as const
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
