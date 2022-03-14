@@ -34,6 +34,9 @@ export function useThree<T = RootState>(
   return useStore()(selector, equalityFn)
 }
 
+/**
+ * Returns [eventLayer, objectRef], and sets eventLayer to the event layer associated with the object referenced by objectRef.
+ */
 export function useEventLayer() {
   const defaultEventLayer = useThree((store) => store.defaultEventLayer)
   const [eventLayer, setEventLayer] = React.useState<EventLayer>(defaultEventLayer)

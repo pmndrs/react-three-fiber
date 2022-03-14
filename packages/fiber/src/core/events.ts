@@ -71,18 +71,61 @@ export interface PointerCaptureTarget {
   target: Element
 }
 
+/**
+ * Class representing event layers. Event layers define how events are generated. Instances can be passed to the
+ * eventLayer prop of elements to specify the event layer for it and its descendants.
+ */
 export class EventLayer {
+  /**
+   * The raycaster associated with the event layer.
+   */
   raycaster: THREE.Raycaster
+  /**
+   * The condition for allowing events to pas through the event layer to layers with lower priority.
+   *
+   * 'never': events will never pass through
+   * 'nohits': events will pass through when no object was intersected on the event layer
+   * 'always': events will always pass through
+   */
   allowPassthrough: 'never' | 'nohits' | 'always'
+  /**
+   * Allows disabling the event layer, in which case events won't be generated.
+   */
   enabled: boolean
+  /**
+   * Allow custom userland intersection sort ordering.
+   *
+   * https://github.com/mrdoob/three.js/issues/16031
+   */
   filter?: FilterFunction
+  /**
+   * Allows calculating custom offsets instead of the event's offsets.
+   *
+   * https://github.com/pmndrs/react-three-fiber/pull/782
+   */
   computeOffsets?: ComputeOffsetsFunction
+  /**
+   * Called when no object was hit.
+   */
   onPointerMissed?: (event: MouseEvent) => void
 
+  /**
+   * Updates the event layer with the newest event data.
+   *
+   * @param event
+   */
   readonly update = (event: DomEvent) => {
     return this.onUpdate(this, event)
   }
 
+  /**
+   * Constructs a new EventLayer.
+   *
+   * @param priority - The priority of the event layer. Higher priority layers are processed first, which may stop events
+   * from being processed by lower priority layers.
+   * @param onUpdate - Callback which executes before every ray-cast. Used to set up the raycaster with the event data.
+   * @param options - Optional parameters corresponding to the rest of EventLayer's fields.
+   */
   constructor(
     public priority: number,
     public onUpdate: (thisEventLayer: EventLayer, event: DomEvent) => boolean,
@@ -104,6 +147,11 @@ export class EventLayer {
   }
 }
 
+/**
+ * Returns the event layer associated with object, or undefined if none. Event layers are inherited from the parent object.
+ *
+ * @param object - The object to return the event layer for.
+ */
 export function getEventLayerForObject(object: THREE.Object3D): EventLayer | undefined {
   let eventLayer: EventLayer | undefined = undefined
   let closestAncestorWithEventLayer: THREE.Object3D | null = object
@@ -401,14 +449,9 @@ export function createEvents(store: UseStore<RootState>) {
     return (event: DomEvent) => {
       const { internal } = store.getState()
 
+      // We build a map of the objects per layer. The cost of this is negligible, but we could find a way to invalidate it
+      // less frequently than on every event.
       const layers = new Map<EventLayer, THREE.Object3D[]>()
-
-      for (const [eventLayer] of internal.hovered) {
-        if (!layers.has(eventLayer)) {
-          cancelPointer(eventLayer, [])
-        }
-      }
-
       for (const object of internal.interaction) {
         const eventLayer = getEventLayerForObject(object) ?? store.getState().defaultEventLayer
         if (!layers.get(eventLayer)) {
@@ -417,8 +460,18 @@ export function createEvents(store: UseStore<RootState>) {
         layers.get(eventLayer)!.push(object)
       }
 
+      // Cancel pointer for hovered objects whose event layer was changed since the start of the hover.
+      // Not perfectly correct, since cancelPointer won't be called the moment the layer changes, but on the first event after.
+      for (const [eventLayer] of internal.hovered) {
+        if (!layers.has(eventLayer)) {
+          cancelPointer(eventLayer, [])
+        }
+      }
+
+      // Sort layers per priority.
       const sortedLayers = [...layers.entries()].sort((a, b) => b[0].priority - a[0].priority)
 
+      // We will save here whether a layer has occluded the rest, or if pass-through is still allowed.
       let occludeLayers = false
 
       for (const [eventLayer, objects] of sortedLayers) {
@@ -441,6 +494,7 @@ export function createEvents(store: UseStore<RootState>) {
 
         const isActive = eventLayer.update(event)
 
+        // If layer is inactive or an above layer occludes, cancel and continue
         if (!isActive || occludeLayers) {
           cancelPointer(eventLayer, [])
           continue
@@ -456,7 +510,7 @@ export function createEvents(store: UseStore<RootState>) {
         const hits = patchIntersects(intersect(eventLayer, objects, filter), event)
         const delta = isClickEvent ? calculateDistance(event) : 0
 
-        // If there's a hit, and passthrough is not allowed, occlude the rest of the layers
+        // Determine whether the rest of the layers should be occluded
         if (
           (isActive && eventLayer.allowPassthrough === 'never') ||
           (hits.length && eventLayer.allowPassthrough === 'nohits')

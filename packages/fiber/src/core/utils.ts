@@ -302,6 +302,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (key === 'eventLayer') {
       if (value) {
         localState.eventLayer = value as EventLayer
+        // Initialize the hovered map with the received event layer
         if (!rootState.internal.hovered.get(localState.eventLayer)) {
           rootState.internal.hovered.set(localState.eventLayer, new Map())
         }
