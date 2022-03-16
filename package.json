@@ -48,7 +48,6 @@
     "@types/lodash-es": "^4.17.4",
     "@types/react": "^17.0.14",
     "@types/react-dom": "^17.0.9",
-    "@types/react-reconciler": "^0.26.2",
     "@types/react-test-renderer": "^17.0.1",
     "@types/scheduler": "^0.16.2",
     "@types/three": "^0.133.0",

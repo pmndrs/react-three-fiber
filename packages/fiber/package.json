@@ -42,6 +42,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.13.10",
+    "@types/react-reconciler": "^0.26.2",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.26.2",
     "react-three-fiber": "0.0.0-deprecated",
