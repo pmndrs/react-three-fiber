@@ -121,8 +121,8 @@ const ref = useRef()
 useEffect(
   () =>
     api.subscribe(
-      (x) => (ref.current.position.x = x),
       (state) => state.x,
+      (x) => (ref.current.position.x = x),
     ),
   [],
 )
