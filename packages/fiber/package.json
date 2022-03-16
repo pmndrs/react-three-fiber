@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.2",
+    "@types/react-reconciler": "^0.26.4",
     "react-merge-refs": "^1.1.0",
     "react-reconciler": "^0.27.0-rc.2",
     "react-use-measure": "^2.1.1",
