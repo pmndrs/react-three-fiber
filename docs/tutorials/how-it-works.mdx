@@ -51,11 +51,13 @@ scene.add(group)
 
 Our `Canvas` element will create a new scene, and Fiber will instantiate new objects for each component and correctly compose them together in a scene graph!
 
-<Callout>
-  Additionally, Fiber will: - Setup a new perspective camera at [0, 0, 0] and set it as default - Setup a **render
-  loop** with automatic render to screen - Setup pointer events via raycasting on all meshes with `onPointer*` props -
-  Setup tone mapping - Automatically handle window resize
-</Callout>
+Additionally, Fiber will: 
+
+- Setup a new perspective camera at [0, 0, 0] and set it as default 
+- Setup a **render loop** with automatic render to screen 
+- Setup pointer events via raycasting on all meshes with `onPointer` props 
+- Setup tone mapping 
+- Automatically handle window resize
 
 **Let's break this down!**
 
@@ -111,11 +113,9 @@ mesh.geometry = new THREE.BoxBufferGeometry()
 
 As you can see, the `attach` prop is telling Fiber to set the parent's `material` property to a reference to our `<meshNormalMaterial />` object.
 
-<Callout>
-  Note that while we used geometry and material for this example, Fiber also infers the attach property from the
-  constructor name, so anything with `material` or `geometry` will automatically get attached to the correct property of
-  its parent.
-</Callout>
+Note that while we used geometry and material for this example, Fiber also infers the attach property from the
+constructor name, so anything with `material` or `geometry` will automatically get attached to the correct property of
+its parent.
 
 The same is true for `attachArray` which, instead of setting the property, will push to an existing array:
 
