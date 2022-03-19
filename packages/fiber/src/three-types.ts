@@ -40,7 +40,7 @@ export type Object3DNode<T, P> = Overwrite<
   {
     position?: Vector3
     up?: Vector3
-    scale?: Vector3
+    scale?: Vector3 | number
     rotation?: Euler
     matrix?: Matrix4
     quaternion?: Quaternion
