@@ -51,12 +51,12 @@ scene.add(group)
 
 Our `Canvas` element will create a new scene, and Fiber will instantiate new objects for each component and correctly compose them together in a scene graph!
 
-Additionally, Fiber will: 
+Additionally, Fiber will:
 
-- Setup a new perspective camera at [0, 0, 0] and set it as default 
-- Setup a **render loop** with automatic render to screen 
-- Setup pointer events via raycasting on all meshes with `onPointer` props 
-- Setup tone mapping 
+- Setup a new perspective camera at [0, 0, 0] and set it as default
+- Setup a **render loop** with automatic render to screen
+- Setup pointer events via raycasting on all meshes with `onPointer` props
+- Setup tone mapping
 - Automatically handle window resize
 
 **Let's break this down!**
@@ -75,7 +75,7 @@ Object creation is handled transparently by the Fiber renderer, the name of the 
 <boxBufferGeometry args={[1, 2, 3]} />
 ```
 
-<Callout>Note that the object will be created only when first adding the component the React three!</Callout>
+<Hint>Note that the object will be created only when first adding the component the React three!</Hint>
 
 ## The `attach` props
 
