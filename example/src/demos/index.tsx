@@ -31,6 +31,7 @@ const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')),
 const MultiMaterial = { descr: '', tags: [], Component: lazy(() => import('./MultiMaterial')), dev: true, bright: true }
 const Gltf = { descr: '', tags: [], Component: lazy(() => import('./Gltf')), dev: true, bright: true }
 const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
+const Inject = { descr: '', tags: [], Component: lazy(() => import('./Inject')), dev: true, bright: true }
 const SuspenseAndErrors = {
   descr: '',
   tags: [],
@@ -67,5 +68,6 @@ export {
   ContextMenuOverride,
   Viewcube,
   Gltf,
+  Inject,
   Test,
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { EventHandlers } from './core/events'
 import { AttachType } from './core/renderer'
+import { RootState } from './core/store'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
@@ -403,6 +404,8 @@ declare global {
       fog: FogProps
       fogExp2: FogExp2Props
       shape: ShapeProps
+
+      inject: { children: React.ReactNode } & { [key: string]: any }
     }
   }
 }

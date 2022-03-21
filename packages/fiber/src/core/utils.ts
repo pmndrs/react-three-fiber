@@ -120,6 +120,18 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
   const instance = object as unknown as Instance
   if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
+      type: '',
+      context: { current: null },
+      getContext: () => {
+        const injects = []
+        let inject = instance.__r3f.context.current
+        while (inject) {
+          const { children, args, ...props } = inject?.memoizedProps ?? {}
+          injects.push(props)
+          inject = inject.context?.current
+        }
+        return injects.reverse().reduce((prev, cur) => ({ ...prev, ...cur }), {})
+      },
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
       eventCount: 0,
@@ -239,11 +251,11 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (value === DEFAULT + 'remove') {
       if (targetProp && targetProp.constructor) {
         // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(memoized.args)
+        value = new targetProp.constructor(...memoized.args)
       } else if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(currentInstance.__r3f.memoizedProps.args)
+        const defaultClassCall = new currentInstance.constructor(...currentInstance.__r3f.memoizedProps.args)
         value = defaultClassCall[targetProp]
         // destory the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()

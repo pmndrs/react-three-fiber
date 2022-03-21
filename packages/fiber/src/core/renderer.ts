@@ -3,7 +3,7 @@ import { UseStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 // @ts-ignore
-import { DefaultEventPriority, IdleEventPriority } from 'react-reconciler/constants'
+import { DefaultEventPriority } from 'react-reconciler/constants'
 import {
   is,
   prepare,
@@ -19,9 +19,13 @@ import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
+export type HostContext = React.MutableRefObject<{ [key: string]: any } | null>
 
 export type LocalState = {
+  type: string
   root: UseStore<RootState>
+  context: React.MutableRefObject<{ [key: string]: any } | null>
+  getContext: () => { [key: string]: any }
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
   parent: Instance | null
@@ -81,12 +85,14 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
+extend({ Inject: THREE.Group })
+
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
   function createInstance(
     type: string,
     { args = [], attach, ...props }: InstanceProps,
     root: UseStore<RootState> | Instance,
-    hostContext?: any,
+    context?: any,
     internalInstanceHandle?: Reconciler.Fiber,
   ) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
@@ -114,7 +120,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { root, attach, primitive: true })
+      instance = prepare<Instance>(object, { type, root, context, attach, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
@@ -127,21 +133,33 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // Instanciate new object, link it to the root
       // Append memoized props with args so it's not forgotten
       instance = prepare(new target(...args), {
+        type,
         root,
+        context,
         attach,
         // TODO: Figure out what this is for
-        memoizedProps: { args: args.length === 0 ? null : args },
+        memoizedProps: { args },
       })
     }
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
     // why it passes "true" here
-    applyProps(instance, props)
+    // There is no reason to apply props to injects
+    if (name !== 'inject') applyProps(instance, props)
     return instance
   }
 
   function appendChild(parentInstance: Instance, child: Instance) {
+    // https://github.com/facebook/react/issues/24138
+    // Injects are special purpose "onion layers" that inject contextual information into the scene graph.
+    // Since react-reconciler does not allow us to access the current host context we trick it by leading
+    // back to it from the first child that is added to it. We just connect the inject to it's own host context.
+    if (parentInstance?.__r3f.type === 'inject') {
+      const context = child?.__r3f.context
+      if (context) context.current = parentInstance.__r3f
+    }
+
     let added = false
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
@@ -228,6 +246,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // Remove references
       if (child.__r3f) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).context
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
@@ -291,6 +310,16 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   }
 
   const reconciler = Reconciler({
+    createInstance,
+    removeChild,
+    appendChild,
+    appendInitialChild: appendChild,
+    insertBefore,
+    supportsMicrotask: true,
+    warnsIfNotActing: true,
+    supportsMutation: true,
+    isPrimaryRenderer: false,
+    noTimeout: -1,
     appendChildToContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
       const { container, root } = getContainer(parentInstance, child)
       // Link current root to the default scene
@@ -301,7 +330,29 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       removeChild(getContainer(parentInstance, child).container, child),
     insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
       insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
+    getRootHostContext: () => ({ current: null }),
+    getChildHostContext: (parentHostContext: HostContext, type: string) => {
+      // This is a little misleading, this function does not determine the host context for the element at hand,
+      // but rather for all the children of it. The context for an inject is and will be the scene, everything
+      // within an inject is contextual to it.
+      if (type === 'inject') return { current: null }
+      return parentHostContext
+    },
+    finalizeInitialChildren(instance: Instance) {
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      // https://github.com/facebook/react/issues/20271
+      // Returning true will trigger commitMount
+      return !!localState.handlers
+    },
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
+      // Injects are special purpose "onion layers" that inject contextual information into the scene graph
+      // Because the context of an inject is still the scene we have to rely on children to give us the inject-context
+      // so that we can set up props.
+      if (type === 'inject' && instance.children.length) {
+        //const context = instance.children[0].__r3f.context
+        //context.props = { ...context.props, ...newProps }
+      }
+      // Create diff-sets
       if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
         return [true]
       } else {
@@ -335,6 +386,23 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // Otherwise just overwrite props
       else applyProps(instance, diff)
     },
+    commitMount(instance: Instance, type, props, int) {
+      // https://github.com/facebook/react/issues/20271
+      // This will make sure events are only added once to the central container
+      const localState = (instance?.__r3f ?? {}) as LocalState
+      if (instance.raycast && localState.handlers && localState.eventCount) {
+        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+      }
+    },
+    getPublicInstance: (instance: Instance) => instance,
+    shouldDeprioritizeSubtree: () => false,
+    prepareForCommit: () => null,
+    preparePortalMount: (containerInfo: any) => prepare(containerInfo),
+    resetAfterCommit: () => {},
+    shouldSetTextContent: () => false,
+    clearContainer: () => false,
+    detachDeletedInstance: () => {},
+    createTextInstance: () => {},
     hideInstance(instance: Instance) {
       // Deatch while the instance is hidden
       const { attach: type, parent } = instance?.__r3f ?? {}
@@ -349,14 +417,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
     },
-    createInstance,
-    removeChild,
-    appendChild,
-    appendInitialChild: appendChild,
-    insertBefore,
-    warnsIfNotActing: true,
-    supportsMutation: true,
-    isPrimaryRenderer: false,
+    hideTextInstance:() => { throw new Error('Text is not allowed in the R3F tree.')}, // prettier-ignore
     getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
     // @ts-ignore
     now:
@@ -371,33 +432,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
     setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
     clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
-    noTimeout: -1,
-    hideTextInstance:() => { throw new Error('Text is not allowed in the R3F tree.')}, // prettier-ignore
-    getPublicInstance: (instance: Instance) => instance,
-    getRootHostContext: () => null,
-    getChildHostContext: (parentHostContext: any) => parentHostContext,
-    createTextInstance: () => {},
-    finalizeInitialChildren(instance: Instance) {
-      // https://github.com/facebook/react/issues/20271
-      // Returning true will trigger commitMount
-      const localState = (instance?.__r3f ?? {}) as LocalState
-      return !!localState.handlers
-    },
-    commitMount(instance: Instance /*, type, props*/) {
-      // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
-      const localState = (instance?.__r3f ?? {}) as LocalState
-      if (instance.raycast && localState.handlers && localState.eventCount) {
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
-      }
-    },
-    shouldDeprioritizeSubtree: () => false,
-    prepareForCommit: () => null,
-    preparePortalMount: (containerInfo: any) => prepare(containerInfo),
-    resetAfterCommit: () => {},
-    shouldSetTextContent: () => false,
-    clearContainer: () => false,
-    detachDeletedInstance: () => {},
   })
 
   return { reconciler, applyProps }
