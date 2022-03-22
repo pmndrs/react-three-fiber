@@ -98,7 +98,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     // Portals do not give us a root, they are themselves treated as a root by the reconciler
     // In order to figure out the actual root we have to climb through fiber internals :(
     if (!isStore(root) && internalInstanceHandle) {
-      context = root.__context
+      context = root.userData
 
       const fn = (node: Reconciler.Fiber): UseStore<RootState> => {
         if (!node.return) return node.stateNode && node.stateNode.containerInfo

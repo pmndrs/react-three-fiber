@@ -5,13 +5,12 @@ import { Canvas, createPortal } from '@react-three/fiber'
 const customCamera = new THREE.PerspectiveCamera()
 
 export default function App() {
-  const [scene1] = useState(() => new THREE.Scene())
-  const [scene2] = useState(() => new THREE.Scene())
-  const [foo, setFoo] = React.useState(2)
+  const [scene1] = useState(() => Object.assign(new THREE.Scene(), { userData: { foo: 1 } }))
+  const [scene2] = useState(() => Object.assign(new THREE.Scene(), { userData: { foo: 2, camera: customCamera } }))
   const [mounted, mount] = React.useReducer(() => true, false)
   React.useEffect(() => {
-    setTimeout(mount, 1000)
-    setTimeout(() => setFoo(3), 2000)
+    const timeout = setTimeout(mount, 1000)
+    return () => clearTimeout(timeout)
   }, [])
 
   const [o] = React.useState(() => new THREE.Group())
@@ -22,10 +21,9 @@ export default function App() {
       {createPortal(
         <group>
           {mounted && <Cube position={[0, 0.5, 0]} color="lightblue" />}
-          {createPortal(<Cube position={[0.5, 0, 0]} color="aquamarine" />, scene2, { foo })}
+          {createPortal(<Cube position={[0.5, 0, 0]} color="aquamarine" />, scene2)}
         </group>,
         scene1,
-        { foo: 1, camera: customCamera },
       )}
       <primitive object={scene1} />
       <primitive object={scene2} />
