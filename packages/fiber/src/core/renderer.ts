@@ -19,13 +19,11 @@ import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
 export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
-export type HostContext = React.MutableRefObject<{ [key: string]: any } | null>
 
 export type LocalState = {
   type: string
   root: UseStore<RootState>
-  context: React.MutableRefObject<{ [key: string]: any } | null>
-  getContext: () => { [key: string]: any }
+  context: { [key: string]: any }
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
   parent: Instance | null
@@ -85,8 +83,6 @@ const getContainer = (container: UseStore<RootState> | Instance, child: Instance
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-extend({ Inject: THREE.Group })
-
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
   function createInstance(
     type: string,
@@ -102,6 +98,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     // Portals do not give us a root, they are themselves treated as a root by the reconciler
     // In order to figure out the actual root we have to climb through fiber internals :(
     if (!isStore(root) && internalInstanceHandle) {
+      context = root.__context
+
       const fn = (node: Reconciler.Fiber): UseStore<RootState> => {
         if (!node.return) return node.stateNode && node.stateNode.containerInfo
         else return fn(node.return)
@@ -151,15 +149,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   }
 
   function appendChild(parentInstance: Instance, child: Instance) {
-    // https://github.com/facebook/react/issues/24138
-    // Injects are special purpose "onion layers" that inject contextual information into the scene graph.
-    // Since react-reconciler does not allow us to access the current host context we trick it by leading
-    // back to it from the first child that is added to it. We just connect the inject to it's own host context.
-    if (parentInstance?.__r3f.type === 'inject') {
-      const context = child?.__r3f.context
-      if (context) context.current = parentInstance.__r3f
-    }
-
     let added = false
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
@@ -330,14 +319,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       removeChild(getContainer(parentInstance, child).container, child),
     insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
       insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
-    getRootHostContext: () => ({ current: null }),
-    getChildHostContext: (parentHostContext: HostContext, type: string) => {
-      // This is a little misleading, this function does not determine the host context for the element at hand,
-      // but rather for all the children of it. The context for an inject is and will be the scene, everything
-      // within an inject is contextual to it.
-      if (type === 'inject') return { current: null }
-      return parentHostContext
-    },
+    getRootHostContext: () => null,
+    getChildHostContext: (parentHostContext: any) => parentHostContext,
     finalizeInitialChildren(instance: Instance) {
       const localState = (instance?.__r3f ?? {}) as LocalState
       // https://github.com/facebook/react/issues/20271
@@ -345,13 +328,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       return !!localState.handlers
     },
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
-      // Injects are special purpose "onion layers" that inject contextual information into the scene graph
-      // Because the context of an inject is still the scene we have to rely on children to give us the inject-context
-      // so that we can set up props.
-      if (type === 'inject' && instance.children.length) {
-        //const context = instance.children[0].__r3f.context
-        //context.props = { ...context.props, ...newProps }
-      }
       // Create diff-sets
       if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
         return [true]

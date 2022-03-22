@@ -282,7 +282,9 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
 }
 
 const act = (React as any).unstable_act
-function createPortal(children: React.ReactNode, container: THREE.Object3D): React.ReactNode {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, hostContext?: any): React.ReactNode {
+  // Attach host context to the container (internal use only!)
+  ;(container as any).__context = Object.assign((container as any).__context || {}, hostContext)
   return reconciler.createPortal(children, container, null, null)
 }
 

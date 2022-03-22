@@ -404,8 +404,6 @@ declare global {
       fog: FogProps
       fogExp2: FogExp2Props
       shape: ShapeProps
-
-      inject: { children: React.ReactNode } & { [key: string]: any }
     }
   }
 }

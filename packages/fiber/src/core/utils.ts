@@ -121,17 +121,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
   if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
       type: '',
-      context: { current: null },
-      getContext: () => {
-        const injects = []
-        let inject = instance.__r3f.context.current
-        while (inject) {
-          const { children, args, ...props } = inject?.memoizedProps ?? {}
-          injects.push(props)
-          inject = inject.context?.current
-        }
-        return injects.reverse().reduce((prev, cur) => ({ ...prev, ...cur }), {})
-      },
+      context: {},
       root: null as unknown as UseStore<RootState>,
       memoizedProps: {},
       eventCount: 0,
