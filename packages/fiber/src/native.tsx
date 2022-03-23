@@ -25,7 +25,7 @@ THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? e
 THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
   const texture = new THREE.Texture()
 
-  // @ts-expect-error
+  // @ts-ignore
   texture.isDataTexture = true
 
   getAsset(url)

@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { extend } from '../src'
 
 // Polyfills WebGL canvas
-// @ts-expect-error
+// @ts-ignore
 HTMLCanvasElement.prototype.getContext = function () {
   return createWebGLContext(this)
 }

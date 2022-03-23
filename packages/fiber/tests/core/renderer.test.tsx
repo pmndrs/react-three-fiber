@@ -129,7 +129,7 @@ describe('renderer', () => {
     })
 
     expect(scene.children[0].type).toEqual('Group')
-    // @ts-expect-error we do append background to group, but it's not wrong because it won't do anything.
+    // @ts-ignore we do append background to group, but it's not wrong because it won't do anything.
     expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
@@ -439,7 +439,7 @@ describe('renderer', () => {
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
     const Test = ({ n }: { n: number }) => (
-      // @ts-expect-error args isn't a valid prop but changing it will swap
+      // @ts-ignore args isn't a valid prop but changing it will swap
       <group args={[n]} onPointerOver={() => null}>
         <group />
       </group>
@@ -606,7 +606,7 @@ describe('renderer', () => {
       await act(async () => {
         extend({ MyColor })
 
-        // @ts-expect-error we're testing the extend feature, i'm not adding it to the namespace
+        // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
         createRoot(canvas).render(<myColor args={[0x0000ff]} />)
       })
     }

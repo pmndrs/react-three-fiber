@@ -71,10 +71,14 @@ describe('is', () => {
 
     expect(is.equ('hello', 'hello')).toBe(true)
     expect(is.equ(1, 1)).toBe(true)
+
     const obj = { type: 'Mesh' }
     expect(is.equ(obj, obj)).toBe(true)
-
+    expect(is.equ({}, {})).toBe(false)
+    expect(is.equ({}, {}, { objects: 'reference' })).toBe(false)
+    expect(is.equ({}, {}, { objects: 'shallow' })).toBe(true)
     expect(is.equ({ a: 1 }, { a: 1 })).toBe(false)
+    expect(is.equ({ a: 1 }, { a: 1 }, { objects: 'reference' })).toBe(false)
     expect(is.equ({ a: 1 }, { a: 1 }, { objects: 'shallow' })).toBe(true)
     expect(is.equ({ a: 1, b: 1 }, { a: 1 }, { objects: 'shallow' })).toBe(false)
     expect(is.equ({ a: 1 }, { a: 1, b: 1 }, { objects: 'shallow' })).toBe(false)
@@ -82,7 +86,12 @@ describe('is', () => {
 
     const arr = [1, 2, 3]
     expect(is.equ(arr, arr)).toBe(true)
+    expect(is.equ([], [])).toBe(true)
+    expect(is.equ([], [], { arrays: 'reference' })).toBe(false)
+    expect(is.equ([], [], { arrays: 'shallow' })).toBe(true)
     expect(is.equ([1, 2, 3], [1, 2, 3])).toBe(true)
+    expect(is.equ([1, 2, 3], [1, 2, 3], { arrays: 'shallow' })).toBe(true)
+    expect(is.equ([1, 2, 3], [1, 2, 3], { arrays: 'reference' })).toBe(false)
     expect(is.equ([1, 2], [1, 2, 3])).toBe(false)
     expect(is.equ([1, 2, 3, 4], [1, 2, 3])).toBe(false)
     expect(is.equ([1, 2], [1, 2, 3], { strict: false })).toBe(true)

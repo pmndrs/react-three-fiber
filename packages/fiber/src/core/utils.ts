@@ -90,7 +90,7 @@ export const is = {
     let i
     for (i in a) if (!(i in b)) return false
     for (i in strict ? b : a) if (a[i] !== b[i]) return false
-    return is.und(i) ? a === b : true
+    return true
   },
 }
 
@@ -123,6 +123,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       type: '',
       context: {},
       root: null as unknown as UseStore<RootState>,
+      previousAttach: {},
       memoizedProps: {},
       eventCount: 0,
       handlers: {},
@@ -147,7 +148,7 @@ function resolve(instance: Instance, key: string) {
 export function attach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    parent.__r3f.previousAttach = target[key]
+    child.__r3f.previousAttach[key] = target[key]
     target[key] = child
   } else if (is.arr(type)) {
     const [attach] = type
@@ -159,7 +160,8 @@ export function attach(parent: Instance, child: Instance, type: AttachType) {
 export function detach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    target[key] = parent.__r3f.previousAttach
+    target[key] = child.__r3f.previousAttach[key]
+    delete child.__r3f.previousAttach[key]
   } else if (is.arr(type)) {
     const [, detach] = type
     if (is.str(detach)) parent[detach](child)

@@ -1,5 +1,5 @@
 import * as React from 'react'
-// @ts-expect-error
+// @ts-ignore
 import * as ReactDOM from 'react-dom/client'
 import App from './App'
 

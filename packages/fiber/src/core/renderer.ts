@@ -31,10 +31,8 @@ export type LocalState = {
   eventCount: number
   handlers: Partial<EventHandlers>
   attach?: AttachType
-  previousAttach?: any
-  memoizedProps: {
-    [key: string]: any
-  }
+  previousAttach: { [key: string]: any }
+  memoizedProps: { [key: string]: any }
 }
 
 export type AttachFnType = (parent: Instance, self: Instance) => void

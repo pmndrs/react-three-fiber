@@ -135,7 +135,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         const handleSessionChange = () => {
           const gl = store.getState().gl
           gl.xr.enabled = gl.xr.isPresenting
-          // @ts-expect-error
+          // @ts-ignore
           // WebXRManager's signature is incorrect.
           // See: https://github.com/pmndrs/react-three-fiber/pull/2017#discussion_r790134505
           gl.xr.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)

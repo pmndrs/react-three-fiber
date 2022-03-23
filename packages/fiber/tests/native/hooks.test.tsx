@@ -30,7 +30,7 @@ describe('useLoader', () => {
     })
 
     // Emulate GLTFLoader
-    // @ts-expect-error
+    // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((input, onLoad) => {
         onLoad(true)
