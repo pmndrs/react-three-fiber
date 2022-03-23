@@ -11,6 +11,7 @@ Array [
               Object {
                 "children": Array [],
                 "props": Object {
+                  "args": Array [],
                   "array": Float32Array [
                     -1,
                     -1,
@@ -37,18 +38,23 @@ Array [
                 "type": "bufferAttribute",
               },
             ],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "bufferGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
+              "args": Array [],
               "color": "hotpink",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {},
+        "props": Object {
+          "args": Array [],
+        },
         "type": "mesh",
       },
       Object {
@@ -64,6 +70,7 @@ Array [
       },
     ],
     "props": Object {
+      "args": Array [],
       "position": Array [
         1,
         2,
@@ -91,7 +98,9 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
   Object {
@@ -108,7 +117,9 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
   Object {
@@ -125,7 +136,9 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]
@@ -149,11 +162,14 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-z": 12,
         },
         "type": "mesh",
@@ -172,11 +188,14 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-y": 12,
         },
         "type": "mesh",
@@ -195,17 +214,22 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]
@@ -229,11 +253,14 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "rotation-x": 1,
         },
         "type": "mesh",
@@ -252,11 +279,14 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-y": 12,
         },
         "type": "mesh",
@@ -275,17 +305,22 @@ Array [
           },
           Object {
             "children": Array [],
-            "props": Object {},
+            "props": Object {
+              "args": Array [],
+            },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]
