@@ -290,13 +290,13 @@ describe('renderer', () => {
   })
 
   describe('attaches Object3D children that use attachFns', () => {
-    it('attachFns as strings', async () => {
+    it('attachFns with cleanup', async () => {
       let scene: THREE.Scene = null!
       await act(async () => {
         scene = createRoot(canvas)
           .render(
             <hasObject3dMethods>
-              <mesh attach={['customAttach', 'detach']} />
+              <mesh attach={(parent, self) => (parent.customAttach(self), () => parent.detach(self))} />
             </hasObject3dMethods>,
           )
           .getState().scene
@@ -328,16 +328,7 @@ describe('renderer', () => {
         scene = createRoot(canvas)
           .render(
             <hasObject3dMethods>
-              <mesh
-                attach={[
-                  (mesh: Instance) => {
-                    attachedMesh = mesh
-                  },
-                  (mesh: Instance) => {
-                    detachedMesh = mesh
-                  },
-                ]}
-              />
+              <mesh attach={(parent) => ((attachedMesh = parent), () => (detachedMesh = parent))} />
             </hasObject3dMethods>,
           )
           .getState().scene

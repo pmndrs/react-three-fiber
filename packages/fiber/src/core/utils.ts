@@ -85,11 +85,16 @@ export const is = {
     const isArr = is.arr(a)
     if (isArr && arrays === 'reference') return a === b
     // Array or Object, shallow compare first to see if it's a match
-    if ((isArr || isObj) && a == b) return true
+    if ((isArr || isObj) && a === b) return true
     // Last resort, go through keys
     let i
     for (i in a) if (!(i in b)) return false
     for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    if (is.und(i)) {
+      if (isArr && a.length === 0 && b.length === 0) return true
+      if (isObj && Object.keys(a).length === 0 && Object.keys(b).length === 0) return true
+      if (a !== b) return false
+    }
     return true
   },
 }
