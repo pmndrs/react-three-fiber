@@ -31,6 +31,7 @@ export type LocalState = {
   eventCount: number
   handlers: Partial<EventHandlers>
   attach?: AttachType
+  attachArray?: string
   previousAttach?: any
   memoizedProps: {
     [key: string]: any
@@ -60,6 +61,7 @@ export type InstanceProps = {
   visible?: boolean
   dispose?: null
   attach?: AttachType
+  attachArray?: string
 }
 
 interface Catalogue {
@@ -86,7 +88,7 @@ let extend = (objects: object): void => void (catalogue = { ...catalogue, ...obj
 function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
   function createInstance(
     type: string,
-    { args = [], attach, ...props }: InstanceProps,
+    { args = [], attach, attachArray, ...props }: InstanceProps,
     root: UseStore<RootState> | Instance,
     context?: any,
     internalInstanceHandle?: Reconciler.Fiber,
@@ -118,7 +120,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { type, root, context, attach, primitive: true })
+      instance = prepare<Instance>(object, { type, root, context, attach, attachArray, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
@@ -135,6 +137,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         root,
         context,
         attach,
+        attachArray,
         // TODO: Figure out what this is for
         memoizedProps: { args },
       })
@@ -153,7 +156,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
       if (child.__r3f.attach) {
-        attach(parentInstance, child, child.__r3f.attach)
+        console.log(child.__r3f.attachArray)
+        attach(parentInstance, child, child.__r3f.attach, child.__r3f.attachArray)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
@@ -173,7 +177,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     let added = false
     if (child) {
       if (child.__r3f.attach) {
-        attach(parentInstance, child, child.__r3f.attach)
+        attach(parentInstance, child, child.__r3f.attach, child.__r3f.attachArray)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
