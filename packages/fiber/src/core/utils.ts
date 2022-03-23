@@ -150,8 +150,17 @@ function resolve(instance: Instance, key: string) {
   } else return { target, key }
 }
 
+const INDEX_REGEX = /-\d+?$/
+
 export function attach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
+    // If attaching into an array (foo-0), create one
+    if (INDEX_REGEX.test(type)) {
+      const root = type.replace(INDEX_REGEX, '')
+      const { target, key } = resolve(parent, root)
+      if (!Array.isArray(target[key])) target[key] = []
+    }
+
     const { target, key } = resolve(parent, type)
     child.__r3f.previousAttach = target[key]
     target[key] = child
