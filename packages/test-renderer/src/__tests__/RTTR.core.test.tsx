@@ -189,12 +189,16 @@ describe('ReactThreeTestRenderer Core', () => {
     expect(renderer.toTree()).toEqual([
       {
         type: 'mesh',
-        props: {},
+        props: {
+          args: [],
+        },
         children: [
           { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshBasicMaterial',
-            props: {},
+            props: {
+              args: [],
+            },
             children: [],
           },
         ],
@@ -210,12 +214,16 @@ describe('ReactThreeTestRenderer Core', () => {
     expect(renderer.toTree()).toEqual([
       {
         type: 'mesh',
-        props: {},
+        props: {
+          args: [],
+        },
         children: [
           { type: 'boxGeometry', props: { args: [2, 2] }, children: [] },
           {
             type: 'meshStandardMaterial',
-            props: {},
+            props: {
+              args: [],
+            },
             children: [],
           },
         ],
@@ -311,7 +319,9 @@ describe('ReactThreeTestRenderer Core', () => {
     expect(renderer.toTree()).toEqual([
       {
         type: 'group',
-        props: {},
+        props: {
+          args: [],
+        },
         children: [],
       },
     ])
