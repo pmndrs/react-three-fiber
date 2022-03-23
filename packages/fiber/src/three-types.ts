@@ -25,7 +25,6 @@ export type AttachCallback = string | ((child: any, parentInstance: any) => void
 
 export interface NodeProps<T, P> {
   attach?: AttachType
-  attachArray?: string
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode
