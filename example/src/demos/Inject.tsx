@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Canvas, createPortal } from '@react-three/fiber'
 
 const customCamera = new THREE.PerspectiveCamera()
@@ -12,9 +12,6 @@ export default function App() {
     const timeout = setTimeout(mount, 1000)
     return () => clearTimeout(timeout)
   }, [])
-
-  const [o] = React.useState(() => new THREE.Group())
-
   return (
     <Canvas>
       <Cube position={[-0.5, 0, 0]} color="hotpink" />
@@ -35,7 +32,7 @@ function Cube({ color, ...props }: any) {
   const ref = React.useRef<THREE.Mesh>(null!)
   useEffect(() => {
     console.log(`from within ${color}.useEffect`, (ref.current as any).__r3f.context)
-  })
+  }, [])
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry />
