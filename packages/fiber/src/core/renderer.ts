@@ -23,7 +23,7 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
 export type LocalState = {
   type: string
   root: UseStore<RootState>
-  context: { [key: string]: any }
+  context: Partial<RootState>
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
   parent: Instance | null
@@ -86,7 +86,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     type: string,
     { args = [], attach, ...props }: InstanceProps,
     root: UseStore<RootState> | Instance,
-    context?: any,
+    context: Partial<RootState> = {},
     internalInstanceHandle?: Reconciler.Fiber,
   ) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
@@ -96,7 +96,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     // Portals do not give us a root, they are themselves treated as a root by the reconciler
     // In order to figure out the actual root we have to climb through fiber internals :(
     if (!isStore(root) && internalInstanceHandle) {
-      context = root.userData
+      context = root.__context as Partial<RootState>
 
       const fn = (node: Reconciler.Fiber): UseStore<RootState> => {
         if (!node.return) return node.stateNode && node.stateNode.containerInfo

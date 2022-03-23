@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import React, { useState, useEffect } from 'react'
-import { Canvas, createPortal } from '@react-three/fiber'
+import { Canvas, createPortal, RootState } from '@react-three/fiber'
 
 const customCamera = new THREE.PerspectiveCamera()
 
 export default function App() {
-  const [scene1] = useState(() => Object.assign(new THREE.Scene(), { userData: { foo: 1 } }))
-  const [scene2] = useState(() => Object.assign(new THREE.Scene(), { userData: { foo: 2, camera: customCamera } }))
+  const [scene1] = useState(() => new THREE.Scene())
+  const [scene2] = useState(() => new THREE.Scene())
   const [mounted, mount] = React.useReducer(() => true, false)
   React.useEffect(() => {
     const timeout = setTimeout(mount, 1000)
@@ -18,9 +18,13 @@ export default function App() {
       {createPortal(
         <group>
           {mounted && <Cube position={[0, 0.5, 0]} color="lightblue" />}
-          {createPortal(<Cube position={[0.5, 0, 0]} color="aquamarine" />, scene2)}
+          {createPortal(<Cube position={[0.5, 0, 0]} color="aquamarine" />, scene2, {
+            camera: customCamera,
+            foo: 1,
+          } as Partial<RootState>)}
         </group>,
         scene1,
+        { camera: customCamera },
       )}
       <primitive object={scene1} />
       <primitive object={scene2} />
