@@ -144,13 +144,13 @@ function resolve(instance: Instance, key: string) {
   } else return { target, key }
 }
 
-export function attach(parent: Instance, child: Instance, attachType: AttachType) {
-  if (is.str(attachType)) {
-    const { target, key } = resolve(parent, attachType)
+export function attach(parent: Instance, child: Instance, type: AttachType) {
+  if (is.str(type)) {
+    const { target, key } = resolve(parent, type)
     parent.__r3f.previousAttach = target[key]
     target[key] = child
-  } else if (is.arr(attachType)) {
-    const [attach] = attachType
+  } else if (is.arr(type)) {
+    const [attach] = type
     if (is.str(attach)) parent[attach](child)
     else if (is.fun(attach)) attach(parent, child)
   }
