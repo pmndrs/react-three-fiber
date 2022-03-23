@@ -123,7 +123,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       type: '',
       context: {},
       root: null as unknown as UseStore<RootState>,
-      previousAttach: {},
+      previousAttach: null,
       memoizedProps: {},
       eventCount: 0,
       handlers: {},
@@ -148,25 +148,17 @@ function resolve(instance: Instance, key: string) {
 export function attach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    child.__r3f.previousAttach[key] = target[key]
+    child.__r3f.previousAttach = target[key]
     target[key] = child
-  } else if (is.arr(type)) {
-    const [attach] = type
-    if (is.str(attach)) parent[attach](child)
-    else if (is.fun(attach)) attach(parent, child)
-  }
+  } else child.__r3f.previousAttach = type(parent, child)
 }
 
 export function detach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    target[key] = child.__r3f.previousAttach[key]
-    delete child.__r3f.previousAttach[key]
-  } else if (is.arr(type)) {
-    const [, detach] = type
-    if (is.str(detach)) parent[detach](child)
-    else if (is.fun(detach)) detach(parent, child)
-  }
+    target[key] = child.__r3f.previousAttach
+  } else child.__r3f?.previousAttach?.(parent, child)
+  delete child.__r3f?.previousAttach
 }
 
 // This function prepares a set of changes to be applied to the instance

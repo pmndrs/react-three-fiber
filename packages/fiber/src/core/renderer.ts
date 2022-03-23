@@ -31,12 +31,12 @@ export type LocalState = {
   eventCount: number
   handlers: Partial<EventHandlers>
   attach?: AttachType
-  previousAttach: { [key: string]: any }
+  previousAttach: any
   memoizedProps: { [key: string]: any }
 }
 
-export type AttachFnType = (parent: Instance, self: Instance) => void
-export type AttachType = string | [attach: string | AttachFnType, detach: string | AttachFnType]
+export type AttachFnType = (parent: Instance, self: Instance) => void | (() => void)
+export type AttachType = string | AttachFnType
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
