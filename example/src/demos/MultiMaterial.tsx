@@ -34,18 +34,14 @@ function TestMultiMaterial() {
     console.log(ref.current.material)
   }, [ok])
   return (
-    <mesh ref={ref}>
+    <mesh ref={ref} material={[]}>
       <boxGeometry />
-      <meshBasicMaterial attachArray="material" color="red" />
-      <meshBasicMaterial attachArray="material" color="green" />
-      <meshBasicMaterial attachArray="material" color="blue" />
-      <meshBasicMaterial attachArray="material" color="pink" />
-      {ok ? (
-        <meshBasicMaterial attachArray="material" color="aquamarine" />
-      ) : (
-        <meshNormalMaterial attachArray="material" />
-      )}
-      <meshBasicMaterial attachArray="material" color="lavender" />
+      <meshBasicMaterial attach="material-0" color="red" />
+      <meshBasicMaterial attach="material-1" color="green" />
+      <meshBasicMaterial attach="material-2" color="blue" />
+      <meshBasicMaterial attach="material-3" color="pink" />
+      {ok ? <meshBasicMaterial attach="material-4" color="aquamarine" /> : <meshNormalMaterial attach="material" />}
+      <meshBasicMaterial attach="material-5" color="lavender" />
     </mesh>
   )
 }
