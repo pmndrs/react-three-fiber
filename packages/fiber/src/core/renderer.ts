@@ -35,7 +35,7 @@ export type LocalState = {
   memoizedProps: { [key: string]: any }
 }
 
-export type AttachFnType = (parent: Instance, self: Instance) => void | (() => void)
+export type AttachFnType = (parent: Instance, self: Instance) => () => void
 export type AttachType = string | AttachFnType
 
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
