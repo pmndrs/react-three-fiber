@@ -150,7 +150,8 @@ function resolve(instance: Instance, key: string) {
   } else return { target, key }
 }
 
-const INDEX_REGEX = /-\d+?$/
+// Checks if a dash-cased string ends with an integer
+const INDEX_REGEX = /-\d+$/
 
 export function attach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
