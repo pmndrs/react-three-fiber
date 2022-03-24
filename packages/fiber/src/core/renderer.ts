@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 // @ts-ignore
@@ -18,12 +18,11 @@ import {
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
-export type Root = { fiber: Reconciler.FiberRoot; store: UseStore<RootState> }
+export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<RootState> }
 
 export type LocalState = {
   type: string
-  root: UseStore<RootState>
-  context: Partial<RootState>
+  root: UseBoundStore<RootState>
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
   parent: Instance | null
@@ -66,18 +65,6 @@ interface Catalogue {
   }
 }
 
-// Type guard to tell a store from a portal
-const isStore = (def: any): def is UseStore<RootState> => def && !!(def as UseStore<RootState>).getState
-const getContainer = (container: UseStore<RootState> | Instance, child: Instance) => ({
-  // If the container is not a root-store then it must be a THREE.Object3D into which part of the
-  // scene is portalled into. Now there can be two variants of this, either that object is part of
-  // the regular jsx tree, in which case it already has __r3f with a valid root attached, or it lies
-  // outside react, in which case we must take the root of the child that is about to be attached to it.
-  root: isStore(container) ? container : container.__r3f?.root ?? child.__r3f.root,
-  // The container is the eventual target into which objects are mounted, it has to be a THREE.Object3D
-  container: isStore(container) ? (container.getState().scene as unknown as Instance) : container,
-})
-
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
@@ -85,27 +72,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function createInstance(
     type: string,
     { args = [], attach, ...props }: InstanceProps,
-    root: UseStore<RootState> | Instance,
-    context: Partial<RootState> = {},
-    internalInstanceHandle?: Reconciler.Fiber,
+    root: UseBoundStore<RootState>,
   ) {
+    if (!root) throw new Error('No root found')
+
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
-
-    // https://github.com/facebook/react/issues/17147
-    // Portals do not give us a root, they are themselves treated as a root by the reconciler
-    // In order to figure out the actual root we have to climb through fiber internals :(
-    if (!isStore(root) && internalInstanceHandle) {
-      context = root.__context as Partial<RootState>
-
-      const fn = (node: Reconciler.Fiber): UseStore<RootState> => {
-        if (!node.return) return node.stateNode && node.stateNode.containerInfo
-        else return fn(node.return)
-      }
-      root = fn(internalInstanceHandle)
-    }
-    // Assert that by now we have a valid root
-    if (!root || !isStore(root)) throw `No valid root for ${name}!`
 
     // Auto-attach geometries and materials
     if (attach === undefined) {
@@ -116,7 +88,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { type, root, context, attach, primitive: true })
+      instance = prepare<Instance>(object, { type, root, attach, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
@@ -131,7 +103,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       instance = prepare(new target(...args), {
         type,
         root,
-        context,
         attach,
         // TODO: Figure out what this is for
         memoizedProps: { args },
@@ -233,7 +204,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // Remove references
       if (child.__r3f) {
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).context
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
@@ -259,7 +229,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     const parent = instance.__r3f?.parent
     if (!parent) return
 
-    const newInstance = createInstance(type, newProps, instance.__r3f.root)
+    const newInstance = createInstance(type, newProps, instance.__r3f?.root)
 
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
@@ -307,16 +277,16 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     supportsMutation: true,
     isPrimaryRenderer: false,
     noTimeout: -1,
-    appendChildToContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) => {
-      const { container, root } = getContainer(parentInstance, child)
+    appendChildToContainer: (container: UseBoundStore<RootState>, child: Instance) => {
+      const scene = container.getState().scene as unknown as Instance
       // Link current root to the default scene
-      container.__r3f.root = root
-      appendChild(container, child)
+      scene.__r3f.root = container
+      appendChild(scene, child)
     },
-    removeChildFromContainer: (parentInstance: UseStore<RootState> | Instance, child: Instance) =>
-      removeChild(getContainer(parentInstance, child).container, child),
-    insertInContainerBefore: (parentInstance: UseStore<RootState> | Instance, child: Instance, beforeChild: Instance) =>
-      insertBefore(getContainer(parentInstance, child).container, child, beforeChild),
+    removeChildFromContainer: (container: UseBoundStore<RootState>, child: Instance) =>
+      removeChild(container.getState().scene as unknown as Instance, child),
+    insertInContainerBefore: (container: UseBoundStore<RootState>, child: Instance, beforeChild: Instance) =>
+      insertBefore(container.getState().scene as unknown as Instance, child, beforeChild),
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext: any) => parentHostContext,
     finalizeInitialChildren(instance: Instance) {
@@ -371,7 +341,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     getPublicInstance: (instance: Instance) => instance,
     shouldDeprioritizeSubtree: () => false,
     prepareForCommit: () => null,
-    preparePortalMount: (containerInfo: any) => prepare(containerInfo),
+    preparePortalMount: (container: UseBoundStore<RootState>) => prepare(container.getState().scene),
     resetAfterCommit: () => {},
     shouldSetTextContent: () => false,
     clearContainer: () => false,

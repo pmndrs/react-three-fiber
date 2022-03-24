@@ -2,14 +2,14 @@ import * as THREE from 'three'
 import * as React from 'react'
 // @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import { EqualityChecker, StateListener, StateSelector, StoreApi, Subscribe, UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 
 import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera, Raycaster } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager } from './events'
 import { is, dispose, calculateDpr, EquConfig } from './utils'
-import { useStore, useThree } from './hooks'
+import { useInject } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -26,7 +26,7 @@ type GLProps =
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
   gl?: GLProps
-  events?: (store: UseStore<RootState>) => EventManager<TCanvas>
+  events?: (store: UseBoundStore<RootState>) => EventManager<TCanvas>
   size?: Size
   onCreated?: (state: RootState) => void
 }
@@ -48,7 +48,7 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
 
 export type ReconcilerRoot<TCanvas extends Element> = {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
-  render: (element: React.ReactNode) => UseStore<RootState>
+  render: (element: React.ReactNode) => UseBoundStore<RootState>
   unmount: () => void
 }
 
@@ -225,7 +225,7 @@ function render<TCanvas extends Element>(
   element: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas> = {},
-): UseStore<RootState> {
+): UseBoundStore<RootState> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
@@ -239,7 +239,7 @@ function Provider<TElement extends Element>({
   target,
 }: {
   onCreated?: (state: RootState) => void
-  store: UseStore<RootState>
+  store: UseBoundStore<RootState>
   element: React.ReactNode
   target: TElement
 }) {
@@ -282,43 +282,28 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-function Inject({ children, state }: { children: React.ReactNode; state: Partial<RootState> }) {
-  const useOriginalStore = useStore()
-  const injected = React.useMemo(() => {
-    const useInjected = (sel: StateSelector<RootState, RootState> = (state) => state) => {
-      // Execute the useStore hook with the selector once, to maintain reactivity, result doesn't matter
-      useOriginalStore(sel)
-      // Inject data and return the result, either selected or raw
-      return sel({ ...useOriginalStore.getState(), ...state })
-    }
-    useInjected.setState = useOriginalStore.setState
-    useInjected.destroy = useOriginalStore.destroy
-    // Patch getState
-    useInjected.getState = (): RootState => {
-      return { ...useOriginalStore.getState(), ...state }
-    }
-    // Patch subscribe
-    useInjected.subscribe = (listener: StateListener<RootState>) => {
-      return useOriginalStore.subscribe((current, previous) => listener({ ...current, ...state }, previous))
-    }
-    return useInjected
-  }, [useOriginalStore, state])
-  // Wrap the hijacked store into a new provider using r3f's default context
-  return <context.Provider value={injected}>{children}</context.Provider>
-}
-
 const act = (React as any).unstable_act
 function createPortal(
   children: React.ReactNode,
   container: THREE.Object3D,
-  context?: Partial<RootState>,
+  state?: Partial<RootState>,
 ): React.ReactNode {
-  ;(container as any).__context = context
-  return reconciler.createPortal(
-    context ? <Inject state={context}>{children}</Inject> : children,
-    container,
-    null,
-    null,
+  return <Portal children={children} container={container} state={state} />
+}
+
+function Portal({
+  state,
+  children,
+  container,
+}: {
+  children: React.ReactNode
+  state?: Partial<RootState>
+  container: THREE.Object3D
+}) {
+  const portalState = React.useMemo(() => ({ ...state, scene: container as THREE.Scene }), [state, container])
+  const portalRoot = useInject(portalState)
+  return (
+    <>{reconciler.createPortal(<context.Provider value={portalRoot}>{children}</context.Provider>, portalRoot, null)}</>
   )
 }
 
@@ -345,6 +330,5 @@ export {
   addAfterEffect,
   addTail,
   act,
-  Inject,
   roots as _roots,
 }

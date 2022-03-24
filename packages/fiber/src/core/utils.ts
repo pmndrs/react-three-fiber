@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
@@ -126,8 +126,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
   if (state?.primitive || !instance.__r3f) {
     instance.__r3f = {
       type: '',
-      context: {},
-      root: null as unknown as UseStore<RootState>,
+      root: null as unknown as UseBoundStore<RootState>,
       previousAttach: null,
       memoizedProps: {},
       eventCount: 0,

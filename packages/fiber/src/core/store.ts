@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
-import create, { GetState, SetState, UseStore } from 'zustand'
-import { prepare, Instance, InstanceProps } from './renderer'
+import create, { GetState, SetState, UseBoundStore } from 'zustand'
+import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
 
@@ -125,12 +125,12 @@ export type StoreProps = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const context = React.createContext<UseStore<RootState>>(null!)
+const context = React.createContext<UseBoundStore<RootState>>(null!)
 
 const createStore = (
   invalidate: (state?: RootState) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
-): UseStore<RootState> => {
+): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
