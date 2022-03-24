@@ -35,7 +35,7 @@ function TestMultiMaterial(props: any) {
     console.log(ref.current.material)
   }, [ok])
   return (
-    <mesh ref={ref} material={useRef([]).current} {...props}>
+    <mesh ref={ref} {...props}>
       <boxGeometry args={[0.75, 0.75, 0.75]} />
       <meshBasicMaterial attach="material-0" color="hotpink" />
       <meshBasicMaterial attach="material-1" color="lightgreen" />
@@ -58,7 +58,7 @@ function TestMultiDelete(props: any) {
     console.log(ref.current.material)
   }, [ok])
   return (
-    <mesh ref={ref} material={useRef([]).current} {...props}>
+    <mesh ref={ref} {...props}>
       <boxGeometry args={[0.75, 0.75, 0.75]} />
       <meshBasicMaterial attach="material-0" color="hotpink" side={THREE.DoubleSide} />
       <meshBasicMaterial attach="material-1" color="lightgreen" side={THREE.DoubleSide} />
