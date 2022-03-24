@@ -5,7 +5,7 @@ import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseBoundStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, useMemoizedFn } from '../core'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -65,13 +65,14 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
+  const onPointerMissed = useMemoizedFn(props.onPointerMissed)
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
-  const canvasProps = pick<Props>(props, CANVAS_PROPS)
-  const divProps = omit<Props>(props, CANVAS_PROPS)
+  const canvasProps = pick<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
+  const divProps = omit<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
