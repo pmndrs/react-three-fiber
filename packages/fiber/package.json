@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "8.0.0-beta.4",
+  "version": "8.0.0-beta.5",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -58,7 +58,7 @@
     "react": ">=18.0",
     "react-dom": ">=18.0",
     "react-native": ">=0.64",
-    "three": ">=0.133"
+    "three": ">=0.139"
   },
   "peerDependenciesMeta": {
     "react-dom": {

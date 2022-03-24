@@ -90,7 +90,7 @@ function Scene() {
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />
-            <meshNormalMaterial color="hotpink" transparent opacity={0.5} />
+            <meshNormalMaterial transparent opacity={0.5} />
           </mesh>
         ) : (
           <mesh>

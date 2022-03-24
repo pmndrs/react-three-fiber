@@ -174,6 +174,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       }
 
       // Set color management
+      if ((THREE as any).ColorManagement) (THREE as any).ColorManagement.legacyMode = false
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
@@ -305,8 +306,8 @@ function Portal({
    *  <Canvas>
    *    {createPortal(...)} */
   const portalState = React.useMemo(() => ({ ...state, scene: container as THREE.Scene }), [state, container])
-  const [Provider, portalRoot] = useInject(portalState)
-  return <>{reconciler.createPortal(<Provider>{children}</Provider>, portalRoot, null)}</>
+  const [PortalProvider, portalRoot] = useInject(portalState)
+  return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
 }
 
 reconciler.injectIntoDevTools({
