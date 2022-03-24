@@ -1,4 +1,4 @@
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { EventManager, Events, createEvents } from '../core/events'
 
@@ -15,7 +15,7 @@ const DOM_EVENTS = {
   onLostPointerCapture: ['lostpointercapture', true],
 } as const
 
-export function createPointerEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
+export function createPointerEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
   return {

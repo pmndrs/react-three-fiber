@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useEffect } from 'react'
-import { Canvas, Inject, createPortal, useThree } from '@react-three/fiber'
+import { Canvas, createPortal, useThree } from '@react-three/fiber'
 
 const customCamera1 = new THREE.PerspectiveCamera()
 const customCamera2 = new THREE.PerspectiveCamera()

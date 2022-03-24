@@ -35,7 +35,7 @@ export function useThree<T = RootState>(
 
 export function useInject(state: Partial<RootState>) {
   const useOriginalStore = useStore()
-  return React.useMemo<UseBoundStore<RootState>>(() => {
+  const useInjectStore = React.useMemo<UseBoundStore<RootState>>(() => {
     const useInjected = (sel: StateSelector<RootState, RootState> = (state) => state) => {
       // Execute the useStore hook with the selector once, to maintain reactivity, result doesn't matter
       useOriginalStore(sel)
@@ -54,6 +54,17 @@ export function useInject(state: Partial<RootState>) {
     }
     return useInjected
   }, [useOriginalStore, state])
+  // Return the patched store and a provider component
+  return React.useMemo(
+    () =>
+      [
+        ({ children }: { children: React.ReactNode }) => (
+          <context.Provider value={useInjectStore}>{children}</context.Provider>
+        ),
+        useInjectStore,
+      ] as [React.FC<{ children: React.ReactNode }>, UseBoundStore<RootState>],
+    [useInjectStore],
+  )
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {

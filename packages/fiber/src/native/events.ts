@@ -1,4 +1,4 @@
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { createEvents, EventManager, Events } from '../core/events'
 import { GestureResponderEvent, View } from 'react-native'
@@ -27,7 +27,7 @@ const DOM_EVENTS = {
   [EVENTS.PRESSMOVE]: 'onPointerMove',
 }
 
-export function createTouchEvents(store: UseStore<RootState>): EventManager<View> {
+export function createTouchEvents(store: UseBoundStore<RootState>): EventManager<View> {
   const { handlePointer } = createEvents(store)
 
   const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {

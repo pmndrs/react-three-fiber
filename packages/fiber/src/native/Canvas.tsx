@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { pick, omit } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
@@ -13,7 +13,7 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'ev
   children: React.ReactNode
   fallback?: React.ReactNode
   style?: ViewStyle
-  events?: (store: UseStore<RootState>) => EventManager<any>
+  events?: (store: UseBoundStore<RootState>) => EventManager<any>
 }
 
 type SetBlock = false | Promise<null> | null
@@ -123,7 +123,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
         size: { width, height },
-        events: (events || createTouchEvents) as (store: UseStore<RootState>) => EventManager<any>,
+        events: (events || createTouchEvents) as (store: UseBoundStore<RootState>) => EventManager<any>,
         onCreated,
       })
       root.current.render(

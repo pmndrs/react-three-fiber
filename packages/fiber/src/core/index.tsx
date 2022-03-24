@@ -282,7 +282,6 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-const act = (React as any).unstable_act
 function createPortal(
   children: React.ReactNode,
   container: THREE.Object3D,
@@ -300,11 +299,14 @@ function Portal({
   state?: Partial<RootState>
   container: THREE.Object3D
 }) {
+  /** This has to be a component because it would not be able to call useThree/useStore otherwise since
+   *  if this is our environment, then we are in in r3f's renderer but in react-dom, it would trigger
+   *  the "R3F hooks can only be used within the Canvas component!" warning:
+   *  <Canvas>
+   *    {createPortal(...)} */
   const portalState = React.useMemo(() => ({ ...state, scene: container as THREE.Scene }), [state, container])
-  const portalRoot = useInject(portalState)
-  return (
-    <>{reconciler.createPortal(<context.Provider value={portalRoot}>{children}</context.Provider>, portalRoot, null)}</>
-  )
+  const [Provider, portalRoot] = useInject(portalState)
+  return <>{reconciler.createPortal(<Provider>{children}</Provider>, portalRoot, null)}</>
 }
 
 reconciler.injectIntoDevTools({
@@ -312,6 +314,8 @@ reconciler.injectIntoDevTools({
   rendererPackageName: '@react-three/fiber',
   version: '18.0.0',
 })
+
+const act = (React as any).unstable_act
 
 export * from './hooks'
 export {

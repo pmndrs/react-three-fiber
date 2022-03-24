@@ -74,8 +74,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     { args = [], attach, ...props }: InstanceProps,
     root: UseBoundStore<RootState>,
   ) {
-    if (!root) throw new Error('No root found')
-
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
 

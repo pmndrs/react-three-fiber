@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { pick, omit } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
@@ -16,7 +16,7 @@ export interface Props
   children: React.ReactNode
   fallback?: React.ReactNode
   resize?: ResizeOptions
-  events?: (store: UseStore<RootState>) => EventManager<any>
+  events?: (store: UseBoundStore<RootState>) => EventManager<any>
 }
 
 type SetBlock = false | Promise<null> | null
