@@ -65,7 +65,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
-  const onPointerMissed = useMemoizedFn(props.onPointerMissed ?? (() => {}))
+  const onPointerMissed = useMemoizedFn(props.onPointerMissed)
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
