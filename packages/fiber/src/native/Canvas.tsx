@@ -4,7 +4,7 @@ import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio }
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseBoundStore } from 'zustand'
 import { pick, omit } from '../core/utils'
-import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
+import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot, useMemoizedFn } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
@@ -62,13 +62,14 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
+    const onPointerMissed = useMemoizedFn(props.onPointerMissed)
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
 
-    const canvasProps = pick<Props>(props, CANVAS_PROPS)
-    const viewProps = omit<Props>(props, CANVAS_PROPS)
+    const canvasProps = pick<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
+    const viewProps = omit<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
