@@ -1,7 +1,7 @@
 import * as React from 'react'
 import styled from 'styled-components'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Global, Loading, Page as PageImpl } from './styles'
+import { Global, Loading, Page, DemoPanel, Dot } from './styles'
 import * as demos from './demos'
 import { Route, Link, useRoute, Redirect } from 'wouter'
 
@@ -64,11 +64,7 @@ function Dots() {
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
           const background = params!.name === name ? 'salmon' : '#fff'
-          return (
-            <Link key={name} to={`/demo/${name}`}>
-              <Spot style={{ background }} />
-            </Link>
-          )
+          return <Dot key={name} to={`/demo/${name}`} style={{ background }} />
         })}
       </DemoPanel>
       <span style={{ color: 'white' }}>{compName}</span>
@@ -84,32 +80,3 @@ export default function App() {
     </>
   )
 }
-
-const Page = styled(PageImpl)`
-  & > h1 {
-    position: absolute;
-    top: 70px;
-    left: 60px;
-  }
-
-  & > span {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-  }
-`
-
-const DemoPanel = styled.div`
-  position: absolute;
-  bottom: 50px;
-  left: 50px;
-  max-width: 250px;
-`
-
-const Spot = styled.div`
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin: 8px;
-`
