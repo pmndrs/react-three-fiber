@@ -4,7 +4,7 @@ import { useErrorBoundary } from 'use-error-boundary'
 import { Global, Page as PageImpl } from './styles'
 import * as demos from './demos'
 import Gestures from './demos/Gestures'
-import { Route, Link, useRoute } from 'wouter'
+import { Route, Link, useRoute, Redirect } from 'wouter'
 
 const defaultComponent = 'Reparenting'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
@@ -47,7 +47,8 @@ function Intro() {
   return (
     <Page>
       <React.Suspense fallback={<HtmlLoader />}>
-        <Route exact path="/demo/:name">
+        <Route path="/" children={<Redirect to={`/demo/${defaultComponent}`} />} />
+        <Route path="/demo/:name">
           <Demo />
         </Route>
       </React.Suspense>
@@ -59,6 +60,8 @@ function Intro() {
 
 function Dots() {
   const [match, params] = useRoute('/demo/:name')
+  if (!match) return null
+
   const compName = match ? params.name : defaultComponent
 
   const { bright } = visibleComponents[compName]
