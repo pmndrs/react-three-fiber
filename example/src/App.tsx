@@ -1,11 +1,12 @@
 import * as React from 'react'
-import styled from 'styled-components'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
-import * as demos from './demos'
-import { Route, Link, useRoute, Redirect } from 'wouter'
+import { Route, useRoute, Redirect } from 'wouter'
 
-const defaultComponent = 'Reparenting'
+import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
+
+import * as demos from './demos'
+
+const DEFAULT_COMPONENT_NAME = 'Reparenting'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 function ErrorBoundary({ children, fallback, name }: any) {
@@ -15,8 +16,8 @@ function ErrorBoundary({ children, fallback, name }: any) {
 
 function Demo() {
   const [match, params] = useRoute('/demo/:name')
-  const compName = match ? params.name : defaultComponent
-  const Component = visibleComponents[compName].Component
+  const compName = match ? params.name : DEFAULT_COMPONENT_NAME
+  const { Component } = visibleComponents[compName]
 
   return (
     <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e}</Error>}>
@@ -25,28 +26,11 @@ function Demo() {
   )
 }
 
-function Intro() {
-  const dev = new URLSearchParams(location.search).get('dev')
-
-  return (
-    <Page>
-      <React.Suspense fallback={<Loading />}>
-        <Route path="/" children={<Redirect to={`/demo/${defaultComponent}`} />} />
-        <Route path="/demo/:name">
-          <Demo />
-        </Route>
-      </React.Suspense>
-
-      {dev === null && <Dots />}
-    </Page>
-  )
-}
-
 function Dots() {
   const [match, params] = useRoute('/demo/:name')
   if (!match) return null
 
-  const compName = match ? params.name : defaultComponent
+  const compName = match ? params.name : DEFAULT_COMPONENT_NAME
 
   return (
     <>
@@ -62,10 +46,21 @@ function Dots() {
 }
 
 export default function App() {
+  const dev = new URLSearchParams(location.search).get('dev')
+
   return (
     <>
       <Global />
-      <Intro />
+      <Page>
+        <React.Suspense fallback={<Loading />}>
+          <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
+          <Route path="/demo/:name">
+            <Demo />
+          </Route>
+        </React.Suspense>
+
+        {dev === null && <Dots />}
+      </Page>
     </>
   )
 }
