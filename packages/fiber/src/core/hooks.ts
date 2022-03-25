@@ -18,6 +18,8 @@ type Extensions = (loader: THREE.Loader) => void
 type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
 type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
+type noop = (...args: any[]) => any
+type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
 
 export type ObjectMap = {
   nodes: { [name: string]: THREE.Object3D }
@@ -31,7 +33,7 @@ export function useStore() {
 }
 
 export function useThree<T = RootState>(
-  selector: StateSelector<RootState, T> = (state) => (state as unknown) as T,
+  selector: StateSelector<RootState, T> = (state) => state as unknown as T,
   equalityFn?: EqualityChecker<T>,
 ) {
   return useStore()(selector, equalityFn)
@@ -89,6 +91,12 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
       ),
     )
   }
+}
+
+export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
+  const fnRef = React.useRef<T | undefined>(fn)
+  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
+  return (...args: Parameters<T>) => fnRef.current?.(...args)
 }
 
 export function useLoader<T, U extends string | string[]>(
