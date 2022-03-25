@@ -1,21 +1,12 @@
 import * as React from 'react'
 import styled from 'styled-components'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Global, Loading, Page, DemoPanel, Dot } from './styles'
+import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
 import * as demos from './demos'
 import { Route, Link, useRoute, Redirect } from 'wouter'
 
 const defaultComponent = 'Reparenting'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
-const label = {
-  position: 'absolute',
-  padding: '10px 20px',
-  bottom: 'unset',
-  right: 'unset',
-  top: 60,
-  left: 60,
-  maxWidth: 380,
-}
 
 function ErrorBoundary({ children, fallback, name }: any) {
   const { ErrorBoundary, didCatch, error } = useErrorBoundary()
@@ -28,9 +19,7 @@ function Demo() {
   const Component = visibleComponents[compName].Component
 
   return (
-    <ErrorBoundary
-      key={compName}
-      fallback={(e: any) => <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>}>
+    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e}</Error>}>
       <Component />
     </ErrorBoundary>
   )

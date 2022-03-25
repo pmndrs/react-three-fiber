@@ -124,4 +124,23 @@ export const Loading = () => {
   )
 }
 
+export const Error = ({ children }: React.PropsWithChildren<{}>) => {
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        padding: '10px 20px',
+        bottom: 'unset',
+        right: 'unset',
+        top: 60,
+        left: 60,
+        maxWidth: 380,
+        border: '2px solid #ff5050',
+        color: '#ff5050',
+      }}>
+      {children}
+    </div>
+  )
+}
+
 export { Global, Page }
