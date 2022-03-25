@@ -99,7 +99,7 @@ export const Dot = styled(Link)`
   margin: 8px;
 `
 
-const LoadingContainer = styled.div/* css */ `
+const LoadingContainer = styled.div`
   position: fixed;
   inset: 0;
   z-index: 100;
@@ -111,7 +111,7 @@ const LoadingContainer = styled.div/* css */ `
   color: white;
 `
 
-const LoadingMessage = styled.div/* css */ `
+const LoadingMessage = styled.div`
   font-size: 10px;
   font-family: 'Inter', Helvetica, sans-serif;
 `
@@ -124,23 +124,20 @@ export const Loading = () => {
   )
 }
 
+const StyledError = styled.div`
+  position: absolute;
+  padding: 10px 20px;
+  bottom: unset;
+  right: unset;
+  top: 60px;
+  left: 60px;
+  max-width: 380px;
+  border: 2px solid #ff5050;
+  color: #ff5050;
+`
+
 export const Error = ({ children }: React.PropsWithChildren<{}>) => {
-  return (
-    <div
-      style={{
-        position: 'absolute',
-        padding: '10px 20px',
-        bottom: 'unset',
-        right: 'unset',
-        top: 60,
-        left: 60,
-        maxWidth: 380,
-        border: '2px solid #ff5050',
-        color: '#ff5050',
-      }}>
-      {children}
-    </div>
-  )
+  return <StyledError>{children}</StyledError>
 }
 
 export { Global, Page }
