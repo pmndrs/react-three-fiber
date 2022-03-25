@@ -22,8 +22,9 @@ function TorusKnot() {
 
 export default function () {
   return (
-    <Canvas style={{ background: '#272730' }} camera={{ position: [0, 0, 50] }}>
+    <Canvas camera={{ position: [0, 0, 50] }}>
       <TorusKnot />
+      <color args={['#2c2d31']} attach="background" />
     </Canvas>
   )
 }
@@ -36,7 +37,7 @@ interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'gl'>, Rea
 function Canvas({ children, resize, style, className, ...props }: Props) {
   const [bind, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const ref = React.useRef<HTMLDivElement>(null!)
-  const [gl] = useState(() => (new SVGRenderer() as unknown) as THREE.WebGLRenderer)
+  const [gl] = useState(() => new SVGRenderer() as unknown as THREE.WebGLRenderer)
 
   React.useLayoutEffect(() => {
     if (size.width > 0 && size.height > 0) render(children, ref.current, { ...props, size, events, gl })
@@ -50,6 +51,7 @@ function Canvas({ children, resize, style, className, ...props }: Props) {
       unmountComponentAtNode(container)
     }
   }, [])
+
   return (
     <div
       ref={mergeRefs([ref, bind])}
