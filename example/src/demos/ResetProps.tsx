@@ -1,30 +1,7 @@
 import * as THREE from 'three'
 import React, { memo, useEffect, useState, useRef } from 'react'
 import { Canvas, useThree, useFrame, extend } from '@react-three/fiber'
-// @ts-ignore
-import { OrbitControls } from 'three-stdlib'
-
-extend({ OrbitControls })
-
-const Orbit = memo(() => {
-  const gl = useThree((state) => state.gl)
-  const camera = useThree((state) => state.camera)
-  const invalidate = useThree((state) => state.invalidate)
-  const regress = useThree((state) => state.performance.regress)
-  const ref = useRef<OrbitControls>()
-  useEffect(() => {
-    const orbit = ref.current
-    const onChange = () => (regress(), invalidate())
-    orbit?.connect(gl.domElement)
-    orbit?.addEventListener('change', onChange)
-    return () => {
-      orbit?.dispose()
-      orbit?.removeEventListener('change', onChange)
-    }
-  }, [])
-  // @ts-ignore
-  return <orbitControls ref={ref} args={[camera]} />
-})
+import { OrbitControls } from '@react-three/drei'
 
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
@@ -104,7 +81,7 @@ function Scene() {
           </meshPhongMaterial>
         </mesh>
       </group>
-      <Orbit />
+      <OrbitControls />
       <AdaptivePixelRatio />
       <AdaptiveEvents />
     </>
