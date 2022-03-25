@@ -1,9 +1,8 @@
 import * as React from 'react'
 import styled from 'styled-components'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Global, Page as PageImpl } from './styles'
+import { Global, Loading, Page as PageImpl } from './styles'
 import * as demos from './demos'
-import Gestures from './demos/Gestures'
 import { Route, Link, useRoute, Redirect } from 'wouter'
 
 const defaultComponent = 'Reparenting'
@@ -16,10 +15,6 @@ const label = {
   top: 60,
   left: 60,
   maxWidth: 380,
-}
-
-function HtmlLoader() {
-  return <span style={{ ...label, border: '2px solid #10af90', color: '#10af90' }}>waiting...</span>
 }
 
 function ErrorBoundary({ children, fallback, name }: any) {
@@ -46,7 +41,7 @@ function Intro() {
 
   return (
     <Page>
-      <React.Suspense fallback={<HtmlLoader />}>
+      <React.Suspense fallback={<Loading />}>
         <Route path="/" children={<Redirect to={`/demo/${defaultComponent}`} />} />
         <Route path="/demo/:name">
           <Demo />

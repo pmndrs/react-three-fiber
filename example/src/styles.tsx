@@ -1,3 +1,4 @@
+import * as React from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
 
 const Page = styled.div`
@@ -67,7 +68,33 @@ const Global = createGlobalStyle`
 
   canvas {
     touch-action: none;
+    background: #2c2d31 !important;
   }
 `
+
+const LoadingContainer = styled.div/* css */ `
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #2c2d31;
+  color: white;
+`
+
+const LoadingMessage = styled.div/* css */ `
+  font-size: 10px;
+  font-family: 'Inter', Helvetica, sans-serif;
+`
+
+export const Loading = () => {
+  return (
+    <LoadingContainer>
+      <LoadingMessage>Loading.</LoadingMessage>
+    </LoadingContainer>
+  )
+}
 
 export { Global, Page }
