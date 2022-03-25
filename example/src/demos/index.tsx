@@ -1,39 +1,30 @@
 import { lazy } from 'react'
 
-const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./Viewcube')), dev: true }
-const Selection = { descr: '', tags: [], Component: lazy(() => import('./Selection')), dev: true }
-const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true }
-const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')), bright: false }
-const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./Reparenting')), dev: true }
-const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./MultiRender')), dev: true }
-const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./MultiScene')), dev: true }
-const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')), dev: true }
+const Viewcube = { Component: lazy(() => import('./Viewcube')) }
+const Selection = { Component: lazy(() => import('./Selection')) }
+const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
+const Gestures = { Component: lazy(() => import('./Gestures')) }
+const Reparenting = { Component: lazy(() => import('./Reparenting')) }
+const MultiRender = { Component: lazy(() => import('./MultiRender')) }
+const MultiScene = { Component: lazy(() => import('./MultiScene')) }
+const Lines = { Component: lazy(() => import('./Lines')) }
 const StopPropagation = {
-  descr: '',
-  tags: [],
   Component: lazy(() => import('./StopPropagation')),
-  dev: true,
 }
 const ContextMenuOverride = {
-  descr: '',
-  tags: [],
   Component: lazy(() => import('./ContextMenuOverride')),
-  dev: true,
 }
-const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./ClickAndHover')), dev: true }
-const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRenderer')), dev: true }
-const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true }
-//const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, }
-const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true }
-const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true }
-const MultiMaterial = { descr: '', tags: [], Component: lazy(() => import('./MultiMaterial')), dev: true }
-const Gltf = { descr: '', tags: [], Component: lazy(() => import('./Gltf')), dev: true }
-const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true }
+const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
+const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
+const ResetProps = { Component: lazy(() => import('./ResetProps')) }
+//const Animation = { Component: lazy(() => import('./Animation')), }
+const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
+const Layers = { Component: lazy(() => import('./Layers')) }
+const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
+const Gltf = { Component: lazy(() => import('./Gltf')) }
+const Test = { Component: lazy(() => import('./Test')) }
 const SuspenseAndErrors = {
-  descr: '',
-  tags: [],
   Component: lazy(() => import('./SuspenseAndErrors')),
-  dev: true,
 }
 
 export {
