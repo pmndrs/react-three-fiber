@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { UseStore } from 'zustand'
+import type { UseBoundStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
 
@@ -94,7 +94,7 @@ function releaseInternalPointerCapture(
   }
 }
 
-export function removeInteractivity(store: UseStore<RootState>, object: THREE.Object3D) {
+export function removeInteractivity(store: UseBoundStore<RootState>, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
@@ -109,7 +109,7 @@ export function removeInteractivity(store: UseStore<RootState>, object: THREE.Ob
   })
 }
 
-export function createEvents(store: UseStore<RootState>) {
+export function createEvents(store: UseBoundStore<RootState>) {
   const temp = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */

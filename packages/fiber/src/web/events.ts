@@ -1,9 +1,9 @@
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import type { EventManager, Events } from '../core/events'
 import { createEvents } from '../core/events'
 
-export function createPointerEvents(store: UseStore<RootState>): EventManager<HTMLElement> {
+export function createPointerEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
   const names = {
     onClick: ['click', false],
@@ -20,10 +20,7 @@ export function createPointerEvents(store: UseStore<RootState>): EventManager<HT
 
   return {
     connected: false,
-    handlers: (Object.keys(names).reduce(
-      (acc, key) => ({ ...acc, [key]: handlePointer(key) }),
-      {},
-    ) as unknown) as Events,
+    handlers: Object.keys(names).reduce((acc, key) => ({ ...acc, [key]: handlePointer(key) }), {}) as unknown as Events,
     connect: (target: HTMLElement) => {
       const { set, events } = store.getState()
       events.disconnect?.()

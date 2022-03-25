@@ -22,7 +22,7 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { render, act, unmountComponentAtNode, extend } from '../../src/web/index'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { ReactThreeFiber } from '../../src'
 
@@ -453,7 +453,7 @@ describe('web core', () => {
   })
 
   it('should handle an performance changing functions', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = render(<group />, canvas, {
         dpr: [1, 2],
@@ -490,7 +490,7 @@ describe('web core', () => {
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = render(<group />, canvas, {
         shadows: true,
@@ -501,7 +501,7 @@ describe('web core', () => {
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = render(<group />, canvas, {
         linear: false,
