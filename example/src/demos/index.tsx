@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 
-// const Animation = { Component: lazy(() => import('./Animation')) }
+const Animation = { Component: lazy(() => import('./Animation')) }
 const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
 const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
@@ -24,7 +24,7 @@ const Test = { Component: lazy(() => import('./Test')) }
 const Viewcube = { Component: lazy(() => import('./Viewcube')) }
 
 export {
-  // Animation,
+  Animation,
   AutoDispose,
   ClickAndHover,
   ContextMenuOverride,
