@@ -42,6 +42,8 @@ function Demo() {
 }
 
 function Intro() {
+  const dev = new URLSearchParams(location.search).get('dev')
+
   return (
     <Page>
       <React.Suspense fallback={<HtmlLoader />}>
@@ -50,7 +52,7 @@ function Intro() {
         </Route>
       </React.Suspense>
 
-      <Dots />
+      {dev === null && <Dots />}
     </Page>
   )
 }
@@ -59,25 +61,16 @@ function Dots() {
   const [match, params] = useRoute('/demo/:name')
   const compName = match ? params.name : defaultComponent
 
-  const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
   const { bright } = visibleComponents[compName]
 
   return (
     <>
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
-          const style = {
-            // to complex to optimize
-            background:
-              (!match && name === defaultComponent) || (match && params.name === name)
-                ? 'salmon'
-                : bright
-                ? '#2c2d31'
-                : 'white',
-          }
-          return dev ? null : (
+          const background = params!.name === name ? 'salmon' : !bright ? '#fff' : '#2c2d31'
+          return (
             <Link key={name} to={`/demo/${name}`}>
-              <Spot style={style} />
+              <Spot style={{ background }} />
             </Link>
           )
         })}
