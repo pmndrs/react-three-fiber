@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "7.0.25",
+  "version": "8.0.0-beta.5",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -30,36 +30,50 @@
   "main": "dist/react-three-fiber.cjs.js",
   "module": "dist/react-three-fiber.esm.js",
   "types": "dist/react-three-fiber.cjs.d.ts",
-  "react-native": "dist/native.js",
+  "react-native": "native/dist/react-three-fiber-native.cjs.js",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
-      "index.tsx"
+      "index.tsx",
+      "native.tsx"
     ]
   },
   "scripts": {
     "prebuild": "cp ../../readme.md readme.md"
   },
   "dependencies": {
-    "@babel/runtime": "^7.13.10",
-    "@types/react-reconciler": "^0.26.2",
+    "@babel/runtime": "^7.17.2",
+    "@types/react-reconciler": "^0.26.4",
     "react-merge-refs": "^1.1.0",
-    "react-reconciler": "^0.26.2",
-    "react-three-fiber": "0.0.0-deprecated",
+    "react-reconciler": "^0.27.0-rc.2",
     "react-use-measure": "^2.1.1",
-    "resize-observer-polyfill": "^1.5.1",
-    "scheduler": "^0.20.2",
-    "use-asset": "^1.0.4",
-    "utility-types": "^3.10.0",
-    "zustand": "^3.5.1"
+    "scheduler": "^0.21.0-rc.2",
+    "suspend-react": "^0.0.8",
+    "zustand": "^3.7.1"
   },
   "peerDependencies": {
-    "react": ">=17.0",
-    "react-dom": ">=17.0",
-    "three": ">=0.133"
+    "expo": ">=43.0",
+    "expo-asset": ">=8.4",
+    "expo-gl": ">=11.0",
+    "react": ">=18.0",
+    "react-dom": ">=18.0",
+    "react-native": ">=0.64",
+    "three": ">=0.139"
   },
   "peerDependenciesMeta": {
     "react-dom": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    },
+    "expo": {
+      "optional": true
+    },
+    "expo-asset": {
+      "optional": true
+    },
+    "expo-gl": {
       "optional": true
     }
   }

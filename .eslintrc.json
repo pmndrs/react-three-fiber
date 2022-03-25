@@ -4,13 +4,7 @@
     "es6": true,
     "node": true
   },
-  "extends": [
-    "prettier",
-    "plugin:prettier/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings"
-  ],
+  "extends": ["prettier", "plugin:prettier/recommended", "plugin:react-hooks/recommended", "plugin:import/recommended"],
   "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -66,5 +60,10 @@
         "project": "./tsconfig.json"
       }
     }
-  ]
+  ],
+  "rules": {
+    "import/no-unresolved": "off",
+    "import/named": "off",
+    "import/namespace": "off"
+  }
 }

@@ -1,0 +1,367 @@
+---
+title: 'v8 Migration Guide'
+description: Changes and new features with v8 and react 18
+nav: 13
+---
+
+## React Native support
+
+With React 18 and Expo 43, you can now ship threejs goodness across web and native. See [installation](/react-three-fiber/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
+
+```diff
+-import { Canvas, useLoader } from '@react-three/fiber'
++import { Canvas, useLoader } from '@react-three/fiber/native'
+
+-import { useGLTF } from '@react-three/drei'
++import { useGLTF } from '@react-three/drei/native'
+```
+
+This is complete with support for Pressability events and native threejs loaders. See [events](/react-three-fiber/api/events) for a complete list of events.
+
+```jsx
+<mesh
+  onClick={(e) => console.log('onPress')}
+  onPointerDown={(e) => console.log('onPressIn')}
+  onPointerUp={(e) => console.log('onPressOut')}
+  onDoubleClick={(e) => console.log('onLongPress')}
+  onPointerOver={(e) => console.log('onHoverIn')}
+  onPointerOut={(e) => console.log('onHoverOut')}
+  onPointerMove={(e) => console.log('onPressMove')}
+  // Not implemented
+  // onContextMenu={(e) => console.log('context menu')}
+  // onWheel={(e) => console.log('wheel spins')}
+/>
+```
+
+```jsx
+import React, { Suspense } from 'react'
+import { useGLTF } from '@react-three/drei/native'
+import { Canvas } from '@react-three/fiber/native'
+import modelPath from './assets/model.glb'
+
+function Model(props) {
+  const { scene } = useGLTF(modelPath)
+  return <primitive {...props} object={scene} />
+}
+
+export default function App() {
+  return (
+    <Canvas>
+      <Suspense fallback={null}>
+        <Model />
+      </Suspense>
+    </Canvas>
+  )
+}
+```
+
+## New dpr default
+
+The default DPR has changed from `1` to `[1, 2]`, which will clamp depending on the screen's native pixel ratio.
+
+This was the most common setting in the wild, so it was brought in as a better default.
+
+```jsx
+<Canvas dpr={[1, 2]} />
+
+// can now be
+
+<Canvas />
+```
+
+## Automatic WebXR switching
+
+The `vr` prop was removed in favor of automatic WebXR switching. Whenever a session is requested, XR features are enabled, and the renderer will render at the native refresh rate. The inverse is true when exiting a session.
+
+> `frameloop` will not be respected while in a session.
+
+```jsx
+<Canvas vr />
+
+// Can now be
+
+<Canvas />
+```
+
+## Automatic concurrency
+
+The `mode` prop was removed with React 18, which automatically switches between blocking (default) and concurrent (async).
+
+```jsx
+<Canvas mode="blocking" />
+
+// Can now be
+
+<Canvas />
+```
+
+React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule expensive operations and state updates. Use these to de-prioritize expensive operations.
+
+```jsx
+import { useTransition } from 'react'
+import { Points } from '@react-three/drei'
+
+const [startTransition, isPending] = useTransition()
+const [radius, setRadius] = useState(1)
+const positions = calculatePositions(radius)
+const colors = calculateColors(radius)
+const sizes = calculateSizes(radius)
+
+<Points
+  positions={positions}
+  colors={colors}
+  sizes={sizes}
+  onPointerOut={() => {
+    startTransition(() => {
+      setRadius(prev => prev + 1)
+    })
+  }}
+>
+  <meshBasicMaterial vertexColors />
+</Points>
+```
+
+## Conditional rendering with frameloop
+
+`frameloop` can now be toggled to render conditionally. This is useful to toggle on user interaction or while in frame.
+
+```jsx
+const [frameloop, setFrameloop] = useState('never')
+
+<Canvas
+  frameloop={frameloop}
+  onClick={() => setFrameloop('always')}
+/>
+
+//
+
+const canvasRef = useRef()
+const [frameloop, setFrameloop] = useState('never')
+
+useEffect(() => {
+  const observer = new IntersectionObserver(([{ isIntersecting }]) => {
+    setFrameloop(isIntersecting ? 'always' : 'never')
+  }, {})
+
+  observer.observe(canvasRef.current)
+
+  return () => observer.disconnect()
+}, [])
+
+<Canvas ref={canvasRef} frameloop={frameloop} />
+```
+
+## Expanded gl prop
+
+The `gl` prop can now accept both constructor args and renderer properties like the `camera` prop.
+
+```jsx
+<Canvas gl={{ alpha: false, physicallyCorrectLights: true }} />
+```
+
+It can also accept a synchronous callback to manually create a renderer.
+
+```jsx
+<Canvas gl={(canvas) => new Renderer({ canvas })} />
+```
+
+## Manual camera manipulation
+
+Cameras can be controlled manually by setting manual to true in `camera`. This will opt out of projection matrix recalculation when the drawing area resizes.
+
+```jsx
+import { PerspectiveCamera } from '@react-three/drei'
+;<Canvas camera={{ manual: true }}>
+  <PerspectiveCamera makeDefault args={[45, 1]} />
+</Canvas>
+```
+
+## Unified attach API
+
+Previously, attach had multiple signatures:
+
+- `attach="name"`
+- `attachObject={["name", "attribute"]}`
+- `attachArray="name"`
+- `attachFns={["add", "remove"]}`
+- `attachFns={[(self, parent) => parent.add(self), (self, parent) => parent.remove(self)]}`
+
+This is now a single, unified signature with support for piercing and named attach functions or custom handlers.
+
+```jsx
+// Attach foo to parent.a
+<foo attach="a" />
+
+// Attach foo to parent.a.b and a.b.c (nested object attach)
+<foo attach="a-b" />
+<foo attach="a-b-c" />
+
+// Attach foo to parent.a[0] and [1] (array attach is just object attach)
+<foo attach="a-0" />
+<foo attach="a-1" />
+
+// Attach foo to parent via named functions that receive self (function attach)
+<foo attach={["add", "remove"} />
+
+// Attach foo to parent via explicit add/remove functions (function attach)
+<foo attach={[(self, parent) => parent.add(self), (self, parent) => parent.remove(self)]} />
+
+// Attach foo to parent array as an append (function attach)
+<foo
+  attach={[
+    (self, parent) => parent.array.push(self),
+    (self, parent) => parent.array = parent.filter(item => item !== self)
+  ]}
+/>
+```
+
+Real-world use-cases:
+
+```jsx
+<directionalLight
+  castShadow
+  position={[2.5, 8, 5]}
+  intensity={1.5}
+  shadow-mapSize={[1024, 1024]}
+  shadow-camera-far={50}
+  shadow-camera-left={-10}
+  shadow-camera-right={10}
+  shadow-camera-top={10}
+  shadow-camera-bottom={-10}
+/>
+
+// can now be
+
+<directionalLight
+  castShadow
+  position={[2.5, 8, 5]}
+  intensity={1.5}
+  shadow-mapSize={[1024, 1024]}
+>
+  <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
+</directionalLight>
+```
+
+```jsx
+<bufferGeometry>
+  <bufferAttribute attachObject={['attributes', 'position']} count={count} array={vertices} itemSize={3} />
+</bufferGeometry>
+
+// Can now be
+
+<bufferGeometry>
+  <bufferAttribute attach="attributes-position" count={count} array={vertices} itemSize={3} />
+</bufferGeometry>
+```
+
+## Spread Canvas props
+
+The `<Canvas />` can now accept non-render props to spread as native props.
+
+```jsx
+<div aria-describedby={...}>
+  <Canvas />
+</div>
+
+// can now be
+
+<Canvas aria-describedby={...} />
+```
+
+## New createRoot API
+
+`render` is depreciated in v8 for the new `createRoot` signature.
+
+```jsx
+import { createRoot, events } from '@react-three/fiber'
+
+let root
+
+const handleResize = () => {
+  root = createRoot(document.querySelector('canvas'), {
+    events,
+    size: { width: window.innerWidth, height: window.innerHeight },
+  }).render(<mesh />)
+}
+handleResize()
+
+window.addEventListener('resize', handleResize)
+
+// to unmount
+root.unmount()
+```
+
+## Tree-shaking via extend
+
+The underlying reconciler no longer pulls in the THREE namespace automatically.
+
+This enables a granular catalogue and tree-shaking via the `extend` API:
+
+```jsx
+import { extend, createRoot } from '@react-three/fiber'
+import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
+
+extend({ Mesh, BoxGeometry, MeshStandardMaterial })
+
+createRoot(canvas).render(
+  <>
+    <mesh>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  </>,
+)
+```
+
+There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
+
+```jsx
+// In:
+
+import { createRoot } from '@react-three/fiber'
+
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
+
+// Out:
+
+import { createRoot, extend } from '@react-three/fiber'
+import { Mesh as _Mesh, BoxGeometry as _BoxGeometry, MeshStandardMaterial as _MeshStandardMaterial } from 'three'
+
+extend({
+  Mesh: _Mesh,
+  BoxGeometry: _BoxGeometry,
+  MeshStandardMaterial: _MeshStandardMaterial,
+})
+
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
+```
+
+No changes are necessary for `@react-three/test-renderer` as THREE is extended automatically.
+
+## RTTR Regex Matchers
+
+test-renderer's `findByProps` and `findAllByProps` now accept RegExp matchers to search for variable or computed properties.
+
+```ts
+testInstance.findByProps(props)
+
+// Also accepts RegExp matchers
+testInstance.findByProps({ [prop]: /^match/i })
+```
+
+```ts
+testInstance.findAllByProps(props)
+
+// Also accepts RegExp matchers
+testInstance.findAllByProps({ [prop]: /^matches/i })
+```

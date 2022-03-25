@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.25-beta.0
+
+### Patch Changes
+
+- cf6316c: new beta for library testing
+- Updated dependencies [cf6316c]
+  - @react-three/fiber@8.0.0-beta.0
+
 ## 7.0.24
 
 ### Patch Changes

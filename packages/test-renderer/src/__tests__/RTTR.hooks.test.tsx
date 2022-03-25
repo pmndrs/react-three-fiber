@@ -1,9 +1,6 @@
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 import * as React from 'react'
-// @ts-ignore
 import * as Stdlib from 'three-stdlib'
-import { Mesh, Camera, Scene, Raycaster } from 'three'
+import * as THREE from 'three'
 
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
@@ -20,9 +17,9 @@ const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void
 describe('ReactThreeTestRenderer Hooks', () => {
   it('can handle useThree hook', async () => {
     let result = {} as {
-      camera: Camera
-      scene: Scene
-      raycaster: Raycaster
+      camera: THREE.Camera
+      scene: THREE.Scene
+      raycaster: THREE.Raycaster
       size: { width: number; height: number }
     }
 
@@ -41,14 +38,14 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     await ReactThreeTestRenderer.create(<Component />)
 
-    expect(result.camera instanceof Camera).toBeTruthy()
-    expect(result.scene instanceof Scene).toBeTruthy()
-    expect(result.raycaster instanceof Raycaster).toBeTruthy()
+    expect(result.camera instanceof THREE.Camera).toBeTruthy()
+    expect(result.scene instanceof THREE.Scene).toBeTruthy()
+    expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
     expect(result.size).toEqual({ height: 0, width: 0 })
   })
 
   it('can handle useLoader hook', async () => {
-    const MockMesh = new Mesh()
+    const MockMesh = new THREE.Mesh()
     // @ts-ignore
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
       load: jest.fn().mockImplementation((url, onLoad) => {
@@ -76,7 +73,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useFrame hook using test renderers advanceFrames function', async () => {
     const Component = () => {
-      const meshRef = React.useRef<Mesh>(null!)
+      const meshRef = React.useRef<THREE.Mesh>(null!)
       useFrame((_, delta) => {
         meshRef.current.rotation.x += delta
       })

@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { useState, useEffect } from 'react'
 import { Canvas, useLoader } from '@react-three/fiber'
-import { useAsset } from 'use-asset'
+import { suspend } from 'suspend-react'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 // Suspends the scene for 2 seconds, simulating loading an async asset
 function AsyncComponent({ cacheKey }: any) {
-  useAsset<any, any>(async () => await new Promise((res) => setTimeout(res, 2000)), cacheKey)
+  suspend(() => new Promise((res) => setTimeout(res, 2000)), [cacheKey])
   return null
 }
 

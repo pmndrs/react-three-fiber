@@ -2,8 +2,9 @@ import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, UseBoundStore } from 'zustand'
-import { prepare, Instance, InstanceProps } from './renderer'
+import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
+import { calculateDpr } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -31,7 +32,7 @@ export type Raycaster = THREE.Raycaster & {
   computeOffsets?: ComputeOffsetsFunction
 }
 
-export type RenderCallback = (state: RootState, delta: number) => void
+export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
   current: number
@@ -43,15 +44,14 @@ export type Performance = {
 
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
 
-export const isRenderer = (def: Renderer) => !!def?.render
-export const isOrthographicCamera = (def: THREE.Camera): def is THREE.OrthographicCamera =>
+export const isRenderer = (def: any) => !!def?.render
+export const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type InternalState = {
   active: boolean
   priority: number
   frames: number
-  lastProps: StoreProps
   lastEvent: React.MutableRefObject<DomEvent | null>
 
   interaction: THREE.Object3D[]
@@ -60,23 +60,21 @@ export type InternalState = {
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
-
   subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
 }
 
 export type RootState = {
   gl: THREE.WebGLRenderer
-  scene: THREE.Scene
   camera: Camera & { manual?: boolean }
-  controls: THREE.EventDispatcher | null
   raycaster: Raycaster
+  events: EventManager<any>
+  xr: { connect: () => void; disconnect: () => void }
+
+  scene: THREE.Scene
+  controls: THREE.EventDispatcher | null
   mouse: THREE.Vector2
   clock: THREE.Clock
 
-  /**
-   * @deprecated Removed in R3F v8. With R3F v8, WebXR features will automatically enable as you enter a session.
-   */
-  vr: boolean
   linear: boolean
   flat: boolean
   frameloop: 'always' | 'demand' | 'never'
@@ -96,7 +94,6 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   onPointerMissed?: (event: MouseEvent) => void
 
-  events: EventManager<any>
   internal: InternalState
 }
 
@@ -109,10 +106,6 @@ export type ComputeOffsetsFunction = (
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
-  /**
-   * @deprecated Removed in R3F v8. With R3F v8, WebXR features will automatically enable as you enter a session.
-   */
-  vr?: boolean
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   flat?: boolean
@@ -120,7 +113,6 @@ export type StoreProps = {
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
-  clock?: THREE.Clock
   raycaster?: Partial<Raycaster>
   camera?: (
     | Camera
@@ -133,76 +125,13 @@ export type StoreProps = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-export type ApplyProps = (instance: Instance, newProps: InstanceProps) => void
-
-export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
-}
-
 const context = React.createContext<UseBoundStore<RootState>>(null!)
 
 const createStore = (
-  applyProps: ApplyProps,
   invalidate: (state?: RootState) => void,
-  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState) => void,
-  props: StoreProps,
+  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
 ): UseBoundStore<RootState> => {
-  const {
-    gl,
-    size,
-    shadows = false,
-    linear = false,
-    flat = false,
-    vr = false,
-    orthographic = false,
-    frameloop = 'always',
-    dpr = 1,
-    performance,
-    clock = new THREE.Clock(),
-    raycaster: raycastOptions,
-    camera: cameraOptions,
-    onPointerMissed,
-  } = props
-
-  // Set shadowmap
-  if (shadows) {
-    gl.shadowMap.enabled = true
-    if (typeof shadows === 'object') Object.assign(gl.shadowMap, shadows)
-    else gl.shadowMap.type = THREE.PCFSoftShadowMap
-  }
-
-  // Set color preferences
-  if (linear) gl.outputEncoding = THREE.LinearEncoding
-  if (flat) gl.toneMapping = THREE.NoToneMapping
-
-  // clock.elapsedTime is updated using advance(timestamp)
-  if (frameloop === 'never') {
-    clock.stop()
-    clock.elapsedTime = 0
-  }
-
   const rootState = create<RootState>((set, get) => {
-    // Create custom raycaster
-    const raycaster = new THREE.Raycaster() as Raycaster
-    const { params, ...options } = raycastOptions || {}
-    applyProps(raycaster as any, { enabled: true, ...options, params: { ...raycaster.params, ...params } })
-
-    // Create default camera
-    const isCamera = cameraOptions instanceof THREE.Camera
-    const camera = isCamera
-      ? (cameraOptions as Camera)
-      : orthographic
-      ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-      : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
-    if (!isCamera) {
-      camera.position.z = 5
-      if (cameraOptions) applyProps(camera as any, cameraOptions as any)
-      // Always look at center by default
-      if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
-    }
-
-    const initialDpr = calculateDpr(dpr)
-
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
     const tempTarget = new THREE.Vector3()
@@ -231,32 +160,34 @@ const createStore = (
       set((state) => ({ performance: { ...state.performance, current } }))
 
     return {
-      gl,
+      // Mock objects that have to be configured
+      gl: null as unknown as THREE.WebGLRenderer,
+      camera: null as unknown as Camera,
+      raycaster: null as unknown as Raycaster,
+      events: { connected: false },
+      xr: null as unknown as { connect: () => void; disconnect: () => void },
 
       set,
       get,
       invalidate: () => invalidate(get()),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
-      linear,
-      flat,
+      linear: false,
+      flat: false,
       scene: prepare<THREE.Scene>(new THREE.Scene()),
-      camera,
+
       controls: null,
-      raycaster,
-      clock,
+      clock: new THREE.Clock(),
       mouse: new THREE.Vector2(),
 
-      vr,
-      frameloop,
-      onPointerMissed,
+      frameloop: 'always',
+      onPointerMissed: undefined,
 
       performance: {
         current: 1,
         min: 0.5,
         max: 1,
         debounce: 200,
-        ...performance,
         regress: () => {
           const state = get()
           // Clear timeout
@@ -273,8 +204,8 @@ const createStore = (
 
       size: { width: 0, height: 0 },
       viewport: {
-        initialDpr,
-        dpr: initialDpr,
+        initialDpr: 0,
+        dpr: 0,
         width: 0,
         height: 0,
         aspect: 0,
@@ -284,19 +215,33 @@ const createStore = (
       },
 
       setSize: (width: number, height: number) => {
+        const camera = get().camera
         const size = { width, height }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
-      setDpr: (dpr: Dpr) => set((state) => ({ viewport: { ...state.viewport, dpr: calculateDpr(dpr) } })),
+      setDpr: (dpr: Dpr) =>
+        set((state) => {
+          const resolved = calculateDpr(dpr)
+          return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
+        }),
+      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => {
+        const clock = get().clock
 
-      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => set(() => ({ frameloop })),
+        // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
+        clock.stop()
+        clock.elapsedTime = 0
 
-      events: { connected: false },
+        if (frameloop !== 'never') {
+          clock.start()
+          clock.elapsedTime = 0
+        }
+        set(() => ({ frameloop }))
+      },
+
       internal: {
         active: false,
         priority: 0,
         frames: 0,
-        lastProps: props,
         lastEvent: React.createRef(),
 
         interaction: [],
@@ -342,11 +287,11 @@ const createStore = (
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
   rootState.subscribe(() => {
-    const { camera, size, viewport, internal } = rootState.getState()
+    const { camera, size, viewport, internal, gl } = rootState.getState()
     if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user
-      if (!camera.manual && !(internal.lastProps.camera instanceof THREE.Camera)) {
+      if (!camera.manual) {
         if (isOrthographicCamera(camera)) {
           camera.left = size.width / -2
           camera.right = size.width / 2
@@ -368,9 +313,6 @@ const createStore = (
       oldDpr = viewport.dpr
     }
   })
-
-  // Update size
-  if (size) state.setSize(size.width, size.height)
 
   // Invalidate on any change
   rootState.subscribe((state) => invalidate(state))

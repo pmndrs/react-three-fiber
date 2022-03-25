@@ -2,7 +2,7 @@
 title: How does it work?
 description: This is an advanced guide on the inner workings of Fiber, if you are just getting started, take a
   look at our introduction!
-nav: 20
+nav: 21
 ---
 
 React Three Fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for **three.js**.
@@ -116,14 +116,6 @@ As you can see, the `attach` prop is telling Fiber to set the parent's `material
 Note that while we used geometry and material for this example, Fiber also infers the attach property from the
 constructor name, so anything with `material` or `geometry` will automatically get attached to the correct property of
 its parent.
-
-The same is true for `attachArray` which, instead of setting the property, will push to an existing array:
-
-```jsx
-<effectComposer>
-  <renderPass attachArray="passes" scene={scene} camera={camera} />
-  <glitchPass attachArray="passes" renderToScreen />
-```
 
 ## Props
 

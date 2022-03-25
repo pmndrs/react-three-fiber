@@ -12,7 +12,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   }
 
   public get instance(): Object3D {
-    return (this._fiber as unknown) as TInstance
+    return this._fiber as unknown as TInstance
   }
 
   public get type(): string {

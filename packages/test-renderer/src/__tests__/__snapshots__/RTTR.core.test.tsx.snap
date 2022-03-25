@@ -11,6 +11,7 @@ Array [
               Object {
                 "children": Array [],
                 "props": Object {
+                  "args": Array [],
                   "array": Float32Array [
                     -1,
                     -1,
@@ -31,10 +32,6 @@ Array [
                     -1,
                     1,
                   ],
-                  "attachObject": Array [
-                    "attributes",
-                    "position",
-                  ],
                   "count": 6,
                   "itemSize": 3,
                 },
@@ -42,20 +39,22 @@ Array [
               },
             ],
             "props": Object {
-              "attach": "geometry",
+              "args": Array [],
             },
             "type": "bufferGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
               "color": "hotpink",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {},
+        "props": Object {
+          "args": Array [],
+        },
         "type": "mesh",
       },
       Object {
@@ -66,12 +65,12 @@ Array [
             0,
             255,
           ],
-          "attach": "background",
         },
         "type": "color",
       },
     ],
     "props": Object {
+      "args": Array [],
       "position": Array [
         1,
         2,
@@ -95,12 +94,13 @@ Array [
             0,
             0,
           ],
-          "attach": "background",
         },
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
   Object {
@@ -113,12 +113,13 @@ Array [
             0,
             255,
           ],
-          "attach": "background",
         },
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
   Object {
@@ -131,12 +132,13 @@ Array [
             0,
             0,
           ],
-          "attach": "background",
         },
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]
@@ -155,19 +157,19 @@ Array [
                 2,
                 2,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-z": 12,
         },
         "type": "mesh",
@@ -181,19 +183,19 @@ Array [
                 4,
                 4,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-y": 12,
         },
         "type": "mesh",
@@ -207,25 +209,27 @@ Array [
                 6,
                 6,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]
@@ -244,19 +248,19 @@ Array [
                 6,
                 6,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "rotation-x": 1,
         },
         "type": "mesh",
@@ -270,19 +274,19 @@ Array [
                 4,
                 4,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-y": 12,
         },
         "type": "mesh",
@@ -296,25 +300,27 @@ Array [
                 2,
                 2,
               ],
-              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
+              "args": Array [],
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
+          "args": Array [],
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": Object {
+      "args": Array [],
+    },
     "type": "group",
   },
 ]

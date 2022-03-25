@@ -4,7 +4,7 @@ description: 'React Three Fiber without the React part'
 nav: 5
 ---
 
-As of version 6 you may use a render function, similar to how `react-dom` and all the other React renderers work. This allows you to shave off `react-dom` (~40kb), `react-use-measure` + `resize-observer-polyfill` (~5kb) and, if you don't need them, `pointer-events` (~7kb) (you need to explicitly import `events` and add them to the config otherwise).
+As of version 6 you may use a render function, similar to how `react-dom` and all the other React renderers work. This allows you to shave off `react-dom` (~40kb), `react-use-measure` (~3kb) and, if you don't need them, `pointer-events` (~7kb) (you need to explicitly import `events` and add them to the config otherwise).
 
 The render functions config has the same options and properties as `Canvas`, but you are responsible for resizing it. It requires an existing DOM `<canvas>` object into which it renders.
 
@@ -12,14 +12,15 @@ The render functions config has the same options and properties as `Canvas`, but
 import React from 'react'
 import { render, events } from '@react-three/fiber'
 
-window.addEventListener('resize', () =>
+const handleResize = () => {
   render(<mesh />, document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
   }),
-)
+}
+handleResize()
 
-window.dispatchEvent(new Event('resize'))
+window.addEventListener('resize', handleResize)
 ```
 
 To unmount and dispose of all the memory that has been acquired:
@@ -34,19 +35,20 @@ unmountComponentAtNode(document.querySelector('canvas'))
 
 `render` is depreciated in v8 beta for the new `createRoot` signature.
 
-```js
-import { createRoot } from '@react-three/fiber'
+```jsx
+import { createRoot, events } from '@react-three/fiber'
 
 let root
 
-window.addEventListener('resize', () =>
+const handleResize = () => {
   root = createRoot(document.querySelector('canvas'), {
     events,
     size: { width: window.innerWidth, height: window.innerHeight },
-  ).render(<mesh />)
-)
+  }).render(<mesh />)
+}
+handleResize()
 
-window.dispatchEvent(new Event('resize'))
+window.addEventListener('resize', handleResize)
 
 // to unmount
 root.unmount()
@@ -76,7 +78,7 @@ createRoot(canvas).render(
 )
 ```
 
-There's an [official babel plugin](@react-three/babel) which will do this for you automatically:
+There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
 
 ```jsx
 // In:

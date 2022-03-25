@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { EventHandlers } from './core/events'
+import { AttachType } from './core/renderer'
 
 export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
@@ -22,17 +23,7 @@ export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
 export type AttachCallback = string | ((child: any, parentInstance: any) => void)
 
 export interface NodeProps<T, P> {
-  /** Attaches this class onto the parent under the given name and nulls it on unmount */
-  attach?: string
-  /** Appends this class to an array on the parent under the given name and removes it on unmount */
-  attachArray?: string
-  /** Adds this class to an object on the parent under the given name and deletes it on unmount */
-  attachObject?: [target: string, name: string]
-  /**
-   * Appends and removes this class to the parent by calling a callback function
-   * or when the given name is a string by calling a method on the parent
-   */
-  attachFns?: [AttachCallback, AttachCallback]
+  attach?: AttachType
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode

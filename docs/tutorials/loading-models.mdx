@@ -1,7 +1,7 @@
 ---
 title: 'Loading Models'
 description: 3D Software to the web!
-nav: 14
+nav: 15
 ---
 
 > All the models in this page were created by Sara Vieira and are freely available to download from any of the sandboxes.
@@ -61,18 +61,8 @@ export default function Model(props) {
   const { nodes, materials } = useGLTF('/Poimandres.gltf')
   return (
     <group ref={group} {...props} dispose={null}>
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Curve007_1.geometry}
-        material={materials['Material.001']}
-      />
-      <mesh
-        castShadow
-        receiveShadow
-        geometry={nodes.Curve007_2.geometry}
-        material={materials['Material.002']}
-      />
+      <mesh castShadow receiveShadow geometry={nodes.Curve007_1.geometry} material={materials['Material.001']} />
+      <mesh castShadow receiveShadow geometry={nodes.Curve007_2.geometry} material={materials['Material.002']} />
     </group>
   )
 }
