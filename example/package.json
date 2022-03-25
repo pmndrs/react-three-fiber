@@ -11,7 +11,6 @@
     "@react-spring/three": "^9.4.4",
     "@react-three/drei": "^8.19.2",
     "@use-gesture/react": "latest",
-    "lodash-es": "^4.17.21",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-merge-refs": "^1.1.0",
