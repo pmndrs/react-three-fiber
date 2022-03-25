@@ -112,7 +112,6 @@ const LoadingContainer = styled.div`
 `
 
 const LoadingMessage = styled.div`
-  font-size: 10px;
   font-family: 'Inter', Helvetica, sans-serif;
 `
 
