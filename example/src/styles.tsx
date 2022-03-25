@@ -63,7 +63,7 @@ const Global = createGlobalStyle`
     overscroll-behavior-y: none;
     font-family: 'Inter var', sans-serif;
     color: black;
-    background: white;
+    background: #2c2d31 !important;
   }
 
   canvas {

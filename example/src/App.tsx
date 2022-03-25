@@ -59,13 +59,11 @@ function Dots() {
 
   const compName = match ? params.name : defaultComponent
 
-  const { bright } = visibleComponents[compName]
-
   return (
     <>
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
-          const background = params!.name === name ? 'salmon' : !bright ? '#fff' : '#2c2d31'
+          const background = params!.name === name ? 'salmon' : '#fff'
           return (
             <Link key={name} to={`/demo/${name}`}>
               <Spot style={{ background }} />
@@ -73,7 +71,7 @@ function Dots() {
           )
         })}
       </DemoPanel>
-      <span style={{ color: bright ? '#2c2d31' : 'white' }}>{compName}</span>
+      <span style={{ color: 'white' }}>{compName}</span>
     </>
   )
 }
