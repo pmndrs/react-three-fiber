@@ -30,17 +30,15 @@ function Dots() {
   const [match, params] = useRoute('/demo/:name')
   if (!match) return null
 
-  const compName = match ? params.name : DEFAULT_COMPONENT_NAME
-
   return (
     <>
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
-          const background = params!.name === name ? 'salmon' : '#fff'
+          const background = params.name === name ? 'salmon' : '#fff'
           return <Dot key={name} to={`/demo/${name}`} style={{ background }} />
         })}
       </DemoPanel>
-      <span style={{ color: 'white' }}>{compName}</span>
+      <span style={{ color: 'white' }}>{params.name}</span>
     </>
   )
 }

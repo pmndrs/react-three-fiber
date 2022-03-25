@@ -26,6 +26,7 @@
     "changeset:add": "changeset add",
     "postinstall": "preconstruct dev",
     "build": "preconstruct build",
+    "examples": "yarn workspace example dev",
     "dev": "preconstruct dev",
     "prepare": "husky install",
     "eslint": "eslint --fix src/**/*.{ts,tsx}",
