@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import React, { useRef, useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
+import { OrbitControls } from '@react-three/drei'
 
 function Viewcube() {
   const { gl, scene, camera, size } = useThree()
@@ -56,6 +57,7 @@ export default function App() {
         <meshNormalMaterial />
       </mesh>
       <Viewcube />
+      <OrbitControls />
     </Canvas>
   )
 }
