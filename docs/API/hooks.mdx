@@ -151,11 +151,11 @@ Using negative indices will **not take over the render loop**, but it can be use
 ```jsx
 function A() {
   // This will execute first
-  useFrame(() => ..., -1)
+  useFrame(() => ..., -2)
 
 function B() {
   // This useFrame will execute *after* A's
-  useFrame(() => ..., -2)
+  useFrame(() => ..., -1)
 ```
 
 ## useLoader
