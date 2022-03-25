@@ -3,11 +3,11 @@ import React, { useRef, useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 
 function Viewcube() {
-  const { gl, scene, camera, viewport } = useThree()
+  const { gl, scene, camera, size } = useThree()
   const virtualScene = useMemo(() => new THREE.Scene(), [])
-  const virtualCam = useRef()
-  const ref = useRef<any>(null!)
-  const [hover, set] = useState(false)
+  const virtualCam = useRef<THREE.OrthographicCamera>(null!)
+  const ref = useRef<THREE.Mesh>(null!)
+  const [hover, set] = useState<number | null>(null)
   const matrix = new THREE.Matrix4()
 
   useFrame(() => {
@@ -17,27 +17,34 @@ function Viewcube() {
     gl.render(scene, camera)
     gl.autoClear = false
     gl.clearDepth()
-    gl.render(virtualScene, camera)
+    gl.render(virtualScene, virtualCam.current)
   }, 1)
 
-  return (
+  return createPortal(
     <>
-      (
-      {createPortal(
-        <>
-          <mesh
-            ref={ref}
-            position={[viewport.width / 2 - 2, viewport.height / 2 - 2, 0]}
-            onPointerOut={(e) => set(false)}
-            onPointerMove={(e) => set(true)}>
-            <meshBasicMaterial color={hover ? 'hotpink' : 'white'} />
-            <boxGeometry args={[1, 1, 1]} />
-          </mesh>
-        </>,
-        virtualScene,
-      )}
-      )
-    </>
+      <orthographicCamera
+        ref={virtualCam}
+        left={-size.width / 2}
+        right={size.width / 2}
+        top={size.height / 2}
+        bottom={-size.height / 2}
+        position={[0, 0, 100]}
+        onUpdate={(self) => self.updateProjectionMatrix()}
+      />
+      <mesh
+        ref={ref}
+        position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
+        onPointerOut={(e) => set(null)}
+        onPointerMove={(e) => set(Math.floor((e.faceIndex || 0) / 2))}>
+        {[...Array(6)].map((_, index) => (
+          <meshLambertMaterial attach={`material-${index}`} key={index} color={hover === index ? 'hotpink' : 'white'} />
+        ))}
+        <boxGeometry args={[60, 60, 60]} />
+      </mesh>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} intensity={0.5} />
+    </>,
+    virtualScene,
   )
 }
 
