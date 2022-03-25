@@ -1,9 +1,10 @@
-import React, { Suspense } from 'react'
+import * as React from 'react'
 import styled from 'styled-components'
-import { HashRouter, Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
 import { useErrorBoundary } from 'use-error-boundary'
 import { Global, Page as PageImpl } from './styles'
 import * as demos from './demos'
+import Gestures from './demos/Gestures'
+import { Route, Link, useRoute } from 'wouter'
 
 const defaultComponent = 'Reparenting'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
@@ -26,30 +27,28 @@ function ErrorBoundary({ children, fallback, name }: any) {
   return didCatch ? fallback(error) : <ErrorBoundary key={name}>{children}</ErrorBoundary>
 }
 
+function Demo() {
+  const [match, params] = useRoute('/demo/:name')
+  const compName = match ? params.name : defaultComponent
+  const Component = visibleComponents[compName].Component
+
+  return (
+    <ErrorBoundary
+      key={compName}
+      fallback={(e: any) => <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>}>
+      <Component />
+    </ErrorBoundary>
+  )
+}
+
 function Intro() {
   return (
     <Page>
-      <Suspense fallback={<HtmlLoader />}>
-        <Switch>
-          <Route exact path="/" component={visibleComponents[defaultComponent].Component} />
-          <Route
-            exact
-            path="/demo/:name"
-            render={({ match }) => {
-              const Component = visibleComponents[match.params.name].Component
-              return (
-                <ErrorBoundary
-                  key={match.params.name}
-                  fallback={(e: any) => (
-                    <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>
-                  )}>
-                  <Component />
-                </ErrorBoundary>
-              )
-            }}
-          />
-        </Switch>
-      </Suspense>
+      <React.Suspense fallback={<HtmlLoader />}>
+        <Route exact path="/demo/:name">
+          <Demo />
+        </Route>
+      </React.Suspense>
 
       <Dots />
     </Page>
@@ -57,10 +56,12 @@ function Intro() {
 }
 
 function Dots() {
-  const location = useLocation()
-  const match: any = useRouteMatch('/demo/:name')
+  const [match, params] = useRoute('/demo/:name')
+  const compName = match ? params.name : defaultComponent
+
   const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
-  const { bright } = visibleComponents[match?.params.name ?? defaultComponent]
+  const { bright } = visibleComponents[compName]
+
   return (
     <>
       <DemoPanel>
@@ -68,7 +69,7 @@ function Dots() {
           const style = {
             // to complex to optimize
             background:
-              (!match && name === defaultComponent) || (match && match.params.name === name)
+              (!match && name === defaultComponent) || (match && params.name === name)
                 ? 'salmon'
                 : bright
                 ? '#2c2d31'
@@ -81,17 +82,17 @@ function Dots() {
           )
         })}
       </DemoPanel>
-      <span style={{ color: bright ? '#2c2d31' : 'white' }}>{match?.params.name ?? defaultComponent}</span>
+      <span style={{ color: bright ? '#2c2d31' : 'white' }}>{compName}</span>
     </>
   )
 }
 
 export default function App() {
   return (
-    <HashRouter>
+    <>
       <Global />
       <Intro />
-    </HashRouter>
+    </>
   )
 }
 
