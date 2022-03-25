@@ -1,51 +1,45 @@
 import { lazy } from 'react'
 
-const Viewcube = { Component: lazy(() => import('./Viewcube')) }
-const Selection = { Component: lazy(() => import('./Selection')) }
-const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
+// const Animation = { Component: lazy(() => import('./Animation')) }
+const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
+const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
+const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
 const Gestures = { Component: lazy(() => import('./Gestures')) }
-const Reparenting = { Component: lazy(() => import('./Reparenting')) }
+const Gltf = { Component: lazy(() => import('./Gltf')) }
+const Layers = { Component: lazy(() => import('./Layers')) }
+const Lines = { Component: lazy(() => import('./Lines')) }
+const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./MultiRender')) }
 const MultiScene = { Component: lazy(() => import('./MultiScene')) }
-const Lines = { Component: lazy(() => import('./Lines')) }
-const StopPropagation = {
-  Component: lazy(() => import('./StopPropagation')),
-}
-const ContextMenuOverride = {
-  Component: lazy(() => import('./ContextMenuOverride')),
-}
-const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
-const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
+const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
+const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
-//const Animation = { Component: lazy(() => import('./Animation')), }
-const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
-const Layers = { Component: lazy(() => import('./Layers')) }
-const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
-const Gltf = { Component: lazy(() => import('./Gltf')) }
+const Selection = { Component: lazy(() => import('./Selection')) }
+const StopPropagation = { Component: lazy(() => import('./StopPropagation')) }
+const SuspenseAndErrors = { Component: lazy(() => import('./SuspenseAndErrors')) }
+const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
 const Test = { Component: lazy(() => import('./Test')) }
-const SuspenseAndErrors = {
-  Component: lazy(() => import('./SuspenseAndErrors')),
-}
+const Viewcube = { Component: lazy(() => import('./Viewcube')) }
 
 export {
-  Reparenting,
+  // Animation,
+  AutoDispose,
+  ClickAndHover,
+  ContextMenuOverride,
+  Gestures,
+  Gltf,
+  Layers,
+  Lines,
+  MultiMaterial,
   MultiRender,
   MultiScene,
-  Selection,
-  Lines,
-  Gestures,
-  StopPropagation,
-  ClickAndHover,
   Pointcloud,
-  SVGRenderer,
+  Reparenting,
   ResetProps,
-  //Animation,
-  AutoDispose,
-  Layers,
-  MultiMaterial,
+  Selection,
+  StopPropagation,
   SuspenseAndErrors,
-  ContextMenuOverride,
-  Viewcube,
-  Gltf,
+  SVGRenderer,
   Test,
+  Viewcube,
 }
