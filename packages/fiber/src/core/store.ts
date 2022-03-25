@@ -26,12 +26,6 @@ export type Viewport = Size & {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type Raycaster = THREE.Raycaster & {
-  enabled: boolean
-  filter?: FilterFunction
-  computeOffsets?: ComputeOffsetsFunction
-}
-
 export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
@@ -66,7 +60,7 @@ export type InternalState = {
 export type RootState = {
   gl: THREE.WebGLRenderer
   camera: Camera & { manual?: boolean }
-  raycaster: Raycaster
+  raycaster: THREE.Raycaster
   events: EventManager<any>
   xr: { connect: () => void; disconnect: () => void }
 
@@ -97,12 +91,6 @@ export type RootState = {
   internal: InternalState
 }
 
-export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (
-  event: any,
-  state: RootState,
-) => { offsetX: number; offsetY: number; width?: number; height?: number }
-
 export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
@@ -113,7 +101,7 @@ export type StoreProps = {
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
-  raycaster?: Partial<Raycaster>
+  raycaster?: Partial<THREE.Raycaster>
   camera?: (
     | Camera
     | Partial<
@@ -163,8 +151,8 @@ const createStore = (
       // Mock objects that have to be configured
       gl: null as unknown as THREE.WebGLRenderer,
       camera: null as unknown as Camera,
-      raycaster: null as unknown as Raycaster,
-      events: { connected: false },
+      raycaster: null as unknown as THREE.Raycaster,
+      events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
 
       set,

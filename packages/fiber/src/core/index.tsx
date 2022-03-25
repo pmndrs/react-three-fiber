@@ -4,7 +4,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { UseBoundStore } from 'zustand'
 
-import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera, Raycaster } from './store'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager } from './events'
@@ -98,7 +98,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
-      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster() as Raycaster) })
+      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
@@ -301,12 +301,11 @@ function Portal({
   container: THREE.Object3D
 }) {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
-   *  if this is our environment, then we are in in r3f's renderer but in react-dom, it would trigger
+   *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const portalState = React.useMemo(() => ({ ...state, scene: container as THREE.Scene }), [state, container])
-  const [PortalProvider, portalRoot] = useInject(portalState)
+  const [PortalProvider, portalRoot] = useInject({ ...state, scene: container as THREE.Scene })
   return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
 }
 

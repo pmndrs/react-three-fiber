@@ -19,6 +19,8 @@ export function createPointerEvents(store: UseBoundStore<RootState>): EventManag
   const { handlePointer } = createEvents(store)
 
   return {
+    priority: 1,
+    enabled: true,
     connected: false,
     handlers: Object.keys(DOM_EVENTS).reduce(
       (acc, key) => ({ ...acc, [key]: handlePointer(key) }),

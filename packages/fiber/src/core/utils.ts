@@ -24,6 +24,12 @@ export function calculateDpr(dpr: Dpr) {
 }
 
 /**
+ * Returns instance root state
+ */
+export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
+  (obj as unknown as Instance).__r3f?.root.getState()
+
+/**
  * Picks or omits keys from an object
  * `omit` will filter out keys, and otherwise cherry-pick them.
  */
@@ -33,14 +39,9 @@ export function filterKeys<TObj extends { [key: string]: any }, TOmit extends bo
   ...keys: TKey[]
 ): TOmit extends true ? Omit<TObj, TKey> : Pick<TObj, TKey> {
   const keysToSelect = new Set(keys)
-
   return Object.entries(obj).reduce((acc, [key, value]) => {
     const shouldInclude = !omit
-
-    if (keysToSelect.has(key as TKey) === shouldInclude) {
-      acc[key] = value
-    }
-
+    if (keysToSelect.has(key as TKey) === shouldInclude) acc[key] = value
     return acc
   }, {} as any)
 }

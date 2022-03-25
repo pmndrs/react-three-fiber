@@ -2,50 +2,63 @@ import * as THREE from 'three'
 import React, { useRef, useMemo, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
+import { useLayoutEffect } from 'react'
+import { useEffect } from 'react'
 
 function Viewcube() {
-  const { gl, scene, camera, size } = useThree()
-  const virtualScene = useMemo(() => new THREE.Scene(), [])
-  const virtualCam = useRef<THREE.OrthographicCamera>(null!)
+  const { gl, scene: defaultScene, camera: defaultCamera, size } = useThree()
+  const [raycaster] = useState(() => new THREE.Raycaster())
+  const [scene] = useState(() => new THREE.Scene())
+  const [camera] = useState(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000))
+
+  useLayoutEffect(() => {
+    camera.left = -size.width / 2
+    camera.right = size.width / 2
+    camera.top = size.height / 2
+    camera.bottom = -size.height / 2
+    camera.position.set(0, 0, 100)
+    camera.updateProjectionMatrix()
+  }, [size])
+
   const ref = useRef<THREE.Mesh>(null!)
   const [hover, set] = useState<number | null>(null)
   const matrix = new THREE.Matrix4()
 
   useFrame(() => {
-    matrix.copy(camera.matrix).invert()
+    matrix.copy(defaultCamera.matrix).invert()
     ref.current.quaternion.setFromRotationMatrix(matrix)
     gl.autoClear = true
-    gl.render(scene, camera)
+    gl.render(defaultScene, defaultCamera)
     gl.autoClear = false
     gl.clearDepth()
-    gl.render(virtualScene, virtualCam.current)
+    gl.render(scene, camera)
   }, 1)
 
-  return createPortal(
+  return (
     <>
-      <orthographicCamera
-        ref={virtualCam}
-        left={-size.width / 2}
-        right={size.width / 2}
-        top={size.height / 2}
-        bottom={-size.height / 2}
-        position={[0, 0, 100]}
-        onUpdate={(self) => self.updateProjectionMatrix()}
-      />
-      <mesh
-        ref={ref}
-        position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
-        onPointerOut={(e) => set(null)}
-        onPointerMove={(e) => set(Math.floor((e.faceIndex || 0) / 2))}>
-        {[...Array(6)].map((_, index) => (
-          <meshLambertMaterial attach={`material-${index}`} key={index} color={hover === index ? 'hotpink' : 'white'} />
-        ))}
-        <boxGeometry args={[60, 60, 60]} />
-      </mesh>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={0.5} />
-    </>,
-    virtualScene,
+      {createPortal(
+        <group>
+          <mesh
+            ref={ref}
+            position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
+            onPointerOut={(e) => set(null)}
+            onPointerMove={(e) => set(Math.floor((e.faceIndex || 0) / 2))}>
+            {[...Array(6)].map((_, index) => (
+              <meshLambertMaterial
+                attach={`material-${index}`}
+                key={index}
+                color={hover === index ? 'hotpink' : 'white'}
+              />
+            ))}
+            <boxGeometry args={[60, 60, 60]} />
+          </mesh>
+          <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={0.5} />
+        </group>,
+        scene,
+        { raycaster, camera },
+      )}
+    </>
   )
 }
 

@@ -55,7 +55,8 @@ export function useInject(state: Partial<RootState>) {
       return useOriginalStore.subscribe((current, previous) => listener({ ...current, ...state }, previous))
     }
     return useInjected
-  }, [useOriginalStore, state])
+  }, [useOriginalStore, ...Object.entries(state).flat()])
+
   // Return the patched store and a provider component
   return React.useMemo(
     () =>

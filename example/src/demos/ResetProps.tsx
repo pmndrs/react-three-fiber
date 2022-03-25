@@ -28,10 +28,10 @@ function AdaptiveEvents() {
   const get = useThree((state) => state.get)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
-    const enabled = get().raycaster.enabled
-    return () => void (get().raycaster.enabled = enabled)
+    const enabled = get().events.enabled
+    return () => void (get().events.enabled = enabled)
   }, [])
-  useEffect(() => void (get().raycaster.enabled = current === 1), [current])
+  useEffect(() => void (get().events.enabled = current === 1), [current])
   return null
 }
 
@@ -81,7 +81,7 @@ function Scene() {
           </meshPhongMaterial>
         </mesh>
       </group>
-      <OrbitControls />
+      <OrbitControls regress />
       <AdaptivePixelRatio />
       <AdaptiveEvents />
     </>
