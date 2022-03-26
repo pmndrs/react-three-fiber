@@ -39,7 +39,7 @@ function Cube({ color, ...props }: any) {
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry />
-      <meshBasicMaterial color={color} />
+      <meshBasicMaterial color={color} toneMapped={false} />
     </mesh>
   )
 }

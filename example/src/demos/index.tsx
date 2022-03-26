@@ -11,7 +11,6 @@ const Layers = { Component: lazy(() => import('./Layers')) }
 const Lines = { Component: lazy(() => import('./Lines')) }
 const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./MultiRender')) }
-const MultiScene = { Component: lazy(() => import('./MultiScene')) }
 const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
 const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
@@ -35,7 +34,6 @@ export {
   Lines,
   MultiMaterial,
   MultiRender,
-  MultiScene,
   Pointcloud,
   Reparenting,
   ResetProps,

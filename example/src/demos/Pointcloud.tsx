@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import React, { useMemo, useRef, useCallback } from 'react'
-import { Canvas, extend } from '@react-three/fiber'
-import { Object3DNode } from '@react-three/fiber/dist/declarations/src/three-types'
+import { Canvas, extend, Object3DNode } from '@react-three/fiber'
 
 class DotMaterial extends THREE.ShaderMaterial {
   constructor() {
@@ -63,7 +62,6 @@ function Particles({ pointCount }: any) {
 export default function App() {
   return (
     <Canvas
-      style={{ background: 'peachpuff' }}
       orthographic
       camera={{ zoom: 40, position: [0, 0, 100] }}
       raycaster={{ params: { Points: { threshold: 0.2 } } }}>

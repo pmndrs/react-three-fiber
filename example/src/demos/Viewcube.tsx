@@ -40,7 +40,7 @@ function Viewcube() {
         <group>
           <mesh
             ref={ref}
-            position={[size.width / 2 - 80, size.height / 2 - 80, 0]}
+            position={[size.width / 2 - 120, size.height / 2 - 120, 0]}
             onPointerOut={(e) => set(null)}
             onPointerMove={(e) => set(Math.floor((e.faceIndex || 0) / 2))}>
             {[...Array(6)].map((_, index) => (
@@ -50,7 +50,7 @@ function Viewcube() {
                 color={hover === index ? 'hotpink' : 'white'}
               />
             ))}
-            <boxGeometry args={[60, 60, 60]} />
+            <boxGeometry args={[80, 80, 80]} />
           </mesh>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={0.5} />

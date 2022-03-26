@@ -56,7 +56,6 @@ export default function App() {
             <Demo />
           </Route>
         </React.Suspense>
-
         {dev === null && <Dots />}
       </Page>
     </>

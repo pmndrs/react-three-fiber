@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { Suspense, useRef, useState, useCallback } from 'react'
 import { Canvas, createPortal, useThree, useFrame } from '@react-three/fiber'
-import { Environment } from '@react-three/drei'
+import { Environment, OrbitControls } from '@react-three/drei'
 
 function HUD() {
   const { gl, scene: defaultScene, camera: defaultCamera, size } = useThree()
@@ -26,12 +26,12 @@ function HUD() {
             position={[0, 0, 0]}
             onPointerOver={(e) => (e.stopPropagation(), hover(true))}
             onPointerOut={(e) => hover(false)}>
-            <meshStandardMaterial color={hovered ? 'orange' : '#252525'} metalness={0.5} roughness={0} />
-            <sphereGeometry args={[0.25, 64, 64]} />
+            <meshStandardMaterial color={hovered ? 'orange' : 'black'} metalness={0.5} roughness={0} />
+            <torusKnotGeometry args={[0.25, 0.1, 128, 32]} />
           </mesh>
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={0.5} />
-          <Environment preset="city" />
+          <Environment preset="warehouse" />
           <Test />
         </Suspense>,
         scene,
@@ -46,7 +46,7 @@ function Test() {
   return null
 }
 
-function Box({ stop = false, color, position }: any) {
+function Plane({ stop = false, color, position }: any) {
   const [hovered, set] = useState(false)
   const onPointerOver = useCallback((e) => {
     if (stop) e.stopPropagation()
@@ -58,22 +58,32 @@ function Box({ stop = false, color, position }: any) {
   }, [])
   return (
     <mesh name={color} position={position} onPointerOver={onPointerOver} onPointerOut={onPointerOut}>
-      <boxBufferGeometry />
-      <meshPhysicalMaterial roughness={0.5} color={hovered ? 'hotpink' : color} />
+      <planeGeometry />
+      <meshPhysicalMaterial
+        metalness={1}
+        roughness={0}
+        color={hovered ? 'orange' : color}
+        toneMapped={false}
+        side={THREE.DoubleSide}
+      />
     </mesh>
   )
 }
 
 export default function App() {
   return (
-    <Canvas camera={{ fov: 50 }}>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
-      <Box color="blue" position={[0.5, 0, -1]} />
-      <Box stop color="green" position={[0, 0, -0.5]} />
-      <Box color="red" position={[-0.5, 0, 0]} />
-      <HUD />
-      <Test />
+    <Canvas camera={{ fov: 75, position: [0, 0, -2.25] }}>
+      <Suspense fallback={null}>
+        <ambientLight />
+        <pointLight position={[10, 10, 10]} />
+        <Plane color="lightblue" position={[0.5, 0, -1]} />
+        <Plane stop color="aquamarine" position={[0, 0, -0.5]} />
+        <Plane color="hotpink" position={[-0.5, 0, 0]} />
+        <HUD />
+        <Test />
+        <Environment preset="dawn" />
+      </Suspense>
+      <OrbitControls />
     </Canvas>
   )
 }

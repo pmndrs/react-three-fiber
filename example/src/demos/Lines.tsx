@@ -135,7 +135,6 @@ export default function App() {
     <Canvas
       frameloop="demand"
       orthographic
-      style={{ background: '#272727', touchAction: 'none' }}
       raycaster={{ params: { Line: { threshold: 5 } } }}
       camera={{ position: [0, 0, 500], zoom: 1 }}>
       <Controls>
