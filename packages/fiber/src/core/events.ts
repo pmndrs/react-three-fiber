@@ -111,6 +111,8 @@ export function removeInteractivity(store: UseBoundStore<RootState>, object: THR
 
 export function createEvents(store: UseBoundStore<RootState>) {
   const temp = new THREE.Vector3()
+  const vector = new THREE.Vector3()
+  const dir = new THREE.Vector3()
 
   /** Sets up defaultRaycaster */
   function prepareRay(event: DomEvent) {
