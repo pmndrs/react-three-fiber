@@ -76,12 +76,12 @@ const Global = createGlobalStyle`
     overscroll-behavior-y: none;
     font-family: 'Inter var', sans-serif;
     color: black;
-    background: #2c2d31 !important;
+    background: #dedddf !important;
   }
 
   canvas {
     touch-action: none;
-    background: #2c2d31 !important;
+    background: #dedddf !important;
   }
 `
 export const DemoPanel = styled.div`
@@ -107,7 +107,7 @@ const LoadingContainer = styled.div`
   align-items: center;
   justify-content: center;
 
-  background-color: #2c2d31;
+  background-color: #dedddf;
   color: white;
 `
 

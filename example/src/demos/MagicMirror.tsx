@@ -96,7 +96,6 @@ function Soda(props: any) {
 }
 
 export default function App() {
-  const [hovered, hover] = useState(false)
   return (
     <Canvas dpr={[1, 2]} camera={{ position: [0, 3, 7] }}>
       <Suspense fallback={null}>
@@ -106,7 +105,6 @@ export default function App() {
             <Lights />
             <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
             <Soda scale={5} position={[2, -2, -1.5]} />
-
             <MagicMirror position={[2, 0, -5]} rotation={[0, 0, 0]}>
               <Lights />
               <Soda scale={8} position={[0, -2, -1.5]} />

@@ -76,7 +76,11 @@ export type RootState = {
 
   size: Size
   viewport: Viewport & {
-    getCurrentViewport: (camera?: Camera, target?: THREE.Vector3, size?: Size) => Omit<Viewport, 'dpr' | 'initialDpr'>
+    getCurrentViewport: (
+      camera?: Camera,
+      target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
+      size?: Size,
+    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
 
   set: SetState<RootState>
