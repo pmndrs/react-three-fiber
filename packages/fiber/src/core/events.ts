@@ -124,8 +124,18 @@ export function createEvents(store: UseBoundStore<RootState>) {
     const width = customOffsets?.width ?? size.width
     const height = customOffsets?.height ?? size.height
 
-    mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-    raycaster.setFromCamera(mouse, camera)
+    mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1);
+
+    // fixes issue with negative near plane for OrthographicCamera
+    // https://stackoverflow.com/questions/63083684/how-to-use-three-js-raycaster-with-orthographiccamera-with-negative-near-plane
+    if (camera instanceof THREE.OrthographicCamera) {
+      vector.set(mouse.x, mouse.y, -1); // z = - 1 important!
+      vector.unproject(camera);
+      dir.set(0, 0, -1).transformDirection(camera.matrixWorld);
+      raycaster.set(vector, dir);
+    } else {
+      raycaster.setFromCamera(mouse, camera);
+    }
   }
 
   /** Calculates delta */
