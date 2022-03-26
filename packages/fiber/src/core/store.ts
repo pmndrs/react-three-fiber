@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
-import create, { GetState, SetState, UseBoundStore } from 'zustand'
+import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
@@ -66,7 +66,7 @@ export type RootState = {
 
   scene: THREE.Scene
   controls: THREE.EventDispatcher | null
-  mouse: THREE.Vector2
+  pointer: THREE.Vector2
   clock: THREE.Clock
 
   linear: boolean
@@ -88,6 +88,7 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   onPointerMissed?: (event: MouseEvent) => void
 
+  previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   internal: InternalState
 }
 
@@ -167,7 +168,7 @@ const createStore = (
 
       controls: null,
       clock: new THREE.Clock(),
-      mouse: new THREE.Vector2(),
+      pointer: new THREE.Vector2(),
 
       frameloop: 'always',
       onPointerMissed: undefined,
@@ -227,6 +228,7 @@ const createStore = (
         set(() => ({ frameloop }))
       },
 
+      previousRoot: undefined,
       internal: {
         active: false,
         priority: 0,

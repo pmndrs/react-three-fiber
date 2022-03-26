@@ -4,7 +4,7 @@ import { Canvas, createPortal, useThree, useFrame } from '@react-three/fiber'
 import { Environment, OrbitControls } from '@react-three/drei'
 
 function HUD() {
-  const { gl, scene: defaultScene, camera: defaultCamera, size } = useThree()
+  const { gl, scene: defaultScene, camera: defaultCamera, events } = useThree()
   const [scene] = useState(() => new THREE.Scene())
   const ref = useRef<THREE.Mesh>(null!)
   const [hovered, hover] = useState(false)
@@ -35,6 +35,7 @@ function HUD() {
           <Test />
         </Suspense>,
         scene,
+        { events: { priority: events.priority + 1 } },
       )}
     </>
   )

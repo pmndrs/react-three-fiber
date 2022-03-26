@@ -1,6 +1,6 @@
 import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
-import { EventManager, Events, createEvents } from '../core/events'
+import { EventManager, Events, createEvents, DomEvent } from '../core/events'
 
 const DOM_EVENTS = {
   onClick: ['click', false],
@@ -21,7 +21,14 @@ export function createPointerEvents(store: UseBoundStore<RootState>): EventManag
   return {
     priority: 1,
     enabled: true,
-    connected: false,
+    compute(event: DomEvent, state: RootState, previous?: RootState) {
+      // https://github.com/pmndrs/react-three-fiber/pull/782
+      // Events trigger outside of canvas when moved, use offsetX/Y by default and allow overrides
+      state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)
+      state.raycaster.setFromCamera(state.pointer, state.camera)
+    },
+
+    connected: undefined,
     handlers: Object.keys(DOM_EVENTS).reduce(
       (acc, key) => ({ ...acc, [key]: handlePointer(key) }),
       {},
@@ -44,7 +51,7 @@ export function createPointerEvents(store: UseBoundStore<RootState>): EventManag
             events.connected.removeEventListener(eventName, event)
           }
         })
-        set((state) => ({ events: { ...state.events, connected: false } }))
+        set((state) => ({ events: { ...state.events, connected: undefined } }))
       }
     },
   }

@@ -17,14 +17,9 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
   ray: THREE.Ray
   camera: Camera
   stopPropagation: () => void
-  /**
-   * @deprecated in favour of nativeEvent. Please use that instead.
-   */
-  sourceEvent: TSourceEvent
   nativeEvent: TSourceEvent
   delta: number
-  spaceX: number
-  spaceY: number
+  pointer: THREE.Vector2
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -61,20 +56,24 @@ export type EventHandlers = {
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (
-  event: any,
-  state: RootState,
-) => { offsetX: number; offsetY: number; width?: number; height?: number }
+export type ComputeFunction = (event: DomEvent, root: RootState, previous?: RootState) => void
 
 export interface EventManager<TTarget> {
+  /** Determines if the event layer is active */
   enabled: boolean
+  /** Event layer priority, higher prioritized layers come first and may stop(-propagate) lower layer  */
   priority: number
+  /** The compute function needs to set up the raycaster and an xy- pointer  */
+  compute?: ComputeFunction
+  /** The filter can re-order or re-structure the intersections  */
   filter?: FilterFunction
-  computeOffsets?: ComputeOffsetsFunction
-
-  connected: TTarget | boolean
+  /** The target node the event layer is tied to */
+  connected?: TTarget
+  /** All the pointer event handlers through which the host forwards native events */
   handlers?: Events
+  /** Allows re-connecting to another target */
   connect?: (target: TTarget) => void
+  /** Removes all existing events handlers from the target */
   disconnect?: () => void
 }
 
@@ -174,10 +173,12 @@ export function createEvents(store: UseBoundStore<RootState>) {
     const intersections: Intersection[] = []
     // Allow callers to eliminate event objects
     const eventsObjects = filter ? filter(state.internal.interaction) : state.internal.interaction
-    // Reset all raycasters
+    // Reset all raycaster cameras to undefined
     eventsObjects.forEach((obj) => {
       const state = getRootState(obj)
-      if (state) state.raycaster.camera = null!
+      if (state) {
+        state.raycaster.camera = undefined!
+      }
     })
 
     // Collect events
@@ -185,21 +186,18 @@ export function createEvents(store: UseBoundStore<RootState>) {
       // Intersect objects
       .flatMap((obj) => {
         const state = getRootState(obj)
-        // Skip event handling when noEvents is set
-        if (!state?.events.enabled) return []
-        // Try to avoid resetting the raycaster
-        if (!state.raycaster.camera) {
-          // https://github.com/pmndrs/react-three-fiber/pull/782
-          // Events trigger outside of canvas when moved
-          const customOffsets = state.events.computeOffsets?.(event, state)
-          const offsetX = customOffsets?.offsetX ?? event.offsetX
-          const offsetY = customOffsets?.offsetY ?? event.offsetY
-          const width = customOffsets?.width ?? state.size.width
-          const height = customOffsets?.height ?? state.size.height
-          state.mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-          state.raycaster.setFromCamera(state.mouse, state.camera)
+        // Skip event handling when noEvents is set, or when the raycasters camera is null
+        if (!state || !state.events.enabled || state.raycaster.camera === null) return []
+
+        // When the camera is undefined we have to call the event layers update function
+        if (state.raycaster.camera === undefined) {
+          state.events.compute?.(event, state, state.previousRoot?.getState())
+          // If the camera is still undefined we have to skip this layer entirely
+          if (state.raycaster.camera === undefined) state.raycaster.camera = null!
         }
-        return state.raycaster.intersectObject(obj, true)
+
+        // Intersect object by object
+        return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
       })
       // Sort by event priority and distance
       .sort((a, b) => {
@@ -217,8 +215,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
       })
 
     // https://github.com/mrdoob/three.js/issues/16031
-    // Allow custom userland intersect sort order
-    // if (raycaster.filter) intersects = raycaster.filter(intersects, state)
+    // Allow custom userland intersect sort order, this likely only makes sense on the root filter
+    if (state.events.filter) intersects = state.events.filter(intersects, state)
 
     for (const intersect of intersects) {
       let eventObject: THREE.Object3D | null = intersect.object
@@ -245,10 +243,10 @@ export function createEvents(store: UseBoundStore<RootState>) {
     delta: number,
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
-    const { raycaster, mouse, camera, internal } = store.getState()
+    const { raycaster, pointer, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
-      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
+      const unprojectedPoint = temp.set(pointer.x, pointer.y, 0).unproject(camera)
 
       const localState = { stopped: false }
 
@@ -291,8 +289,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
         let raycastEvent: any = {
           ...hit,
           ...extractEventProps,
-          spaceX: mouse.x,
-          spaceY: mouse.y,
+          pointer,
           intersections,
           stopped: localState.stopped,
           delta,
@@ -328,7 +325,6 @@ export function createEvents(store: UseBoundStore<RootState>) {
           // there should be a distinction between target and currentTarget
           target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
           currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          sourceEvent: event, // deprecated
           nativeEvent: event,
         }
 

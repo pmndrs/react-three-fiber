@@ -9,7 +9,7 @@ import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager } from './events'
 import { is, dispose, calculateDpr, EquConfig, getRootState } from './utils'
-import { InjectState, useInject, useThree } from './hooks'
+import { InjectState, useInject, useStore, useThree } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -301,12 +301,9 @@ function Portal({
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const priority = useThree((state) => state.events.priority)
-  const [PortalProvider, portalRoot] = useInject({
-    events: { priority: priority + 1 },
-    ...state,
-    scene: container as THREE.Scene,
-  })
+  const previousRoot = useStore()
+  const [raycaster] = React.useState(() => new THREE.Raycaster())
+  const [PortalProvider, portalRoot] = useInject({ previousRoot, raycaster, ...state, scene: container as THREE.Scene })
   return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
 }
 

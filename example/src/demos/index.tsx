@@ -11,6 +11,7 @@ const Layers = { Component: lazy(() => import('./Layers')) }
 const Lines = { Component: lazy(() => import('./Lines')) }
 const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./MultiRender')) }
+const MultiView = { Component: lazy(() => import('./MultiView')) }
 const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
 const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
@@ -21,6 +22,7 @@ const SuspenseMaterial = { Component: lazy(() => import('./SuspenseMaterial')) }
 const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
 const Test = { Component: lazy(() => import('./Test')) }
 const Viewcube = { Component: lazy(() => import('./Viewcube')) }
+const MagicMirror = { Component: lazy(() => import('./MagicMirror')) }
 
 export {
   Animation,
@@ -44,4 +46,6 @@ export {
   SVGRenderer,
   Test,
   Viewcube,
+  MultiView,
+  MagicMirror,
 }

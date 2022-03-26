@@ -5,7 +5,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is } from './utils'
-import { FilterFunction } from './events'
+import { ComputeFunction, DomEvent, FilterFunction } from './events'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -50,7 +50,11 @@ export type InjectState = Partial<
     | 'performance'
     | 'internal'
   > & {
-    events: { enabled?: boolean; priority?: number; filter?: FilterFunction }
+    events: {
+      enabled?: boolean
+      priority?: number
+      compute?: ComputeFunction
+    }
   }
 >
 
