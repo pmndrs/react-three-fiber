@@ -8,8 +8,8 @@ import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager } from './events'
-import { is, dispose, calculateDpr, EquConfig } from './utils'
-import { useInject } from './hooks'
+import { is, dispose, calculateDpr, EquConfig, getRootState } from './utils'
+import { InjectState, useInject, useThree } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -102,7 +102,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
-      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { enabled: true, ...options })
+      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { ...options })
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
@@ -283,11 +283,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  state?: Partial<RootState>,
-): React.ReactNode {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
   return <Portal children={children} container={container} state={state} />
 }
 
@@ -297,7 +293,7 @@ function Portal({
   container,
 }: {
   children: React.ReactNode
-  state?: Partial<RootState>
+  state?: InjectState
   container: THREE.Object3D
 }) {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
@@ -305,7 +301,12 @@ function Portal({
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const [PortalProvider, portalRoot] = useInject({ ...state, scene: container as THREE.Scene })
+  const priority = useThree((state) => state.events.priority)
+  const [PortalProvider, portalRoot] = useInject({
+    events: { priority: priority + 1 },
+    ...state,
+    scene: container as THREE.Scene,
+  })
   return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
 }
 
@@ -333,6 +334,7 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
+  getRootState,
   act,
   roots as _roots,
 }

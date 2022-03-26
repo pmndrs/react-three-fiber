@@ -148,6 +148,9 @@ const createStore = (
       set((state) => ({ performance: { ...state.performance, current } }))
 
     return {
+      set,
+      get,
+
       // Mock objects that have to be configured
       gl: null as unknown as THREE.WebGLRenderer,
       camera: null as unknown as Camera,
@@ -155,8 +158,6 @@ const createStore = (
       events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
 
-      set,
-      get,
       invalidate: () => invalidate(get()),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 

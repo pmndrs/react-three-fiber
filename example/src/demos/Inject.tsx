@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useEffect } from 'react'
-import { Canvas, createPortal, useThree } from '@react-three/fiber'
+import { Canvas, createPortal, useThree, getRootState } from '@react-three/fiber'
 
 const customCamera1 = new THREE.PerspectiveCamera()
 const customCamera2 = new THREE.PerspectiveCamera()
@@ -34,12 +34,7 @@ function Cube({ color, ...props }: any) {
   const camera = useThree((state) => state.camera)
   const ref = React.useRef<THREE.Mesh>(null!)
   useEffect(() => {
-    console.log(
-      `from within ${color}.useEffect`,
-      (ref.current as any).__r3f.root.getState().camera,
-      'camera',
-      camera.uuid,
-    )
+    console.log(`from within ${color}.useEffect`, getRootState(ref.current)?.camera, 'camera', camera.uuid)
   }, [])
   return (
     <mesh ref={ref} {...props}>

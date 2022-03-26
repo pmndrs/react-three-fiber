@@ -4,7 +4,7 @@ import { Canvas, createPortal, useThree, useFrame } from '@react-three/fiber'
 import { Environment } from '@react-three/drei'
 
 function HUD() {
-  const { gl, scene: defaultScene, camera: defaultCamera } = useThree()
+  const { gl, scene: defaultScene, camera: defaultCamera, size } = useThree()
   const [scene] = useState(() => new THREE.Scene())
   const ref = useRef<THREE.Mesh>(null!)
   const [hovered, hover] = useState(false)
@@ -32,12 +32,18 @@ function HUD() {
           <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={0.5} />
           <Environment preset="city" />
+          <Test />
         </Suspense>,
         scene,
-        { events: { enabled: true, priority: 2 } },
       )}
     </>
   )
+}
+
+function Test() {
+  const get = useThree((state) => state.get)
+  console.log(get().scene.uuid)
+  return null
 }
 
 function Box({ stop = false, color, position }: any) {
@@ -67,6 +73,7 @@ export default function App() {
       <Box stop color="green" position={[0, 0, -0.5]} />
       <Box color="red" position={[-0.5, 0, 0]} />
       <HUD />
+      <Test />
     </Canvas>
   )
 }
