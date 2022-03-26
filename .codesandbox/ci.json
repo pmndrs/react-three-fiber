@@ -1,4 +1,28 @@
 {
-  "sandboxes": ["/example"],
+  "sandboxes": [
+    "/example",
+    "./.codesandbox/sandboxes/Layers",
+    "./.codesandbox/sandboxes/MultiMaterial",
+    "./.codesandbox/sandboxes/AutoDispose",
+    "./.codesandbox/sandboxes/ClickAndHover",
+    "./.codesandbox/sandboxes/MultiScene",
+    "./.codesandbox/sandboxes/Inject",
+    "./.codesandbox/sandboxes/Animation",
+    "./.codesandbox/sandboxes/Reparenting",
+    "./.codesandbox/sandboxes/MultiRender",
+    "./.codesandbox/sandboxes/Gltf",
+    "./.codesandbox/sandboxes/Lines",
+    "./.codesandbox/sandboxes/Gestures",
+    "./.codesandbox/sandboxes/Selection",
+    "./.codesandbox/sandboxes/SuspenseAndErrors",
+    "./.codesandbox/sandboxes/ContextMenuOverride",
+    "./.codesandbox/sandboxes/SuspenseMaterial",
+    "./.codesandbox/sandboxes/Viewcube",
+    "./.codesandbox/sandboxes/Pointcloud",
+    "./.codesandbox/sandboxes/Test",
+    "./.codesandbox/sandboxes/SVGRenderer",
+    "./.codesandbox/sandboxes/ResetProps",
+    "./.codesandbox/sandboxes/StopPropagation"
+  ],
   "node": "14"
 }

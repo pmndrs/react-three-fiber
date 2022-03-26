@@ -65,6 +65,7 @@
     "eslint-plugin-react-hooks": "^4.3.0",
     "expo-asset": "^8.4.6",
     "expo-gl": "^11.1.2",
+    "fs-extra": "^10.0.1",
     "husky": "^7.0.4",
     "jest": "^27.5.1",
     "jest-cli": "^27.5.1",
