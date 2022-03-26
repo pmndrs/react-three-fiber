@@ -50,11 +50,8 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
   }, index)
 
   const compute = useCallback((event, state, previous) => {
-    if (!previous.raycaster.camera) previous.events.compute(event, previous, previous.previousRoot?.getState())
-    const [intersection] = previous.raycaster.intersectObject(ref.current)
-    if (!intersection) return false
-    const uv = intersection.uv!
-    state.raycaster.setFromCamera(state.pointer.set(uv.x * 2 - 1, uv.y * 2 - 1), camera)
+    state.pointer.set((event.offsetX / state.size.width / 2) * 2 - 1, -(event.offsetY / state.size.height / 2) * 2 + 1)
+    state.raycaster.setFromCamera(state.pointer, state.camera)
   }, [])
 
   const [el] = useState(() => {
@@ -88,9 +85,9 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
   useEffect(() => {
     if (events.connected) {
       const target = events.connected.parentNode
-      target.appendChild(el)
+      //target.appendChild(el)
       return () => {
-        target.removeChild(el)
+        //target.removeChild(el)
       }
     }
   }, [])
@@ -99,7 +96,7 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
     <>
       {createPortal(
         <>
-          <OrbitControls domElement={el} />
+          {/*<OrbitControls domElement={el} />*/}
           {children}
         </>,
         scene,
