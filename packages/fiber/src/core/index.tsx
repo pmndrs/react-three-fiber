@@ -25,6 +25,7 @@ type GLProps =
   | undefined
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+  parent?: React.MutableRefObject<TCanvas | undefined>
   gl?: GLProps
   events?: (store: UseBoundStore<RootState>) => EventManager<TCanvas>
   size?: Size
@@ -68,6 +69,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
   // Locals
+  let parent = React.createRef<TCanvas | undefined>() as React.MutableRefObject<TCanvas | undefined>
   let onCreated: ((state: RootState) => void) | undefined
   let configured = false
 
@@ -199,17 +201,18 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
       // Set locals
+      parent.current = props.parent?.current
       onCreated = onCreatedCallback
       configured = true
 
       return this
     },
-    render(element: React.ReactNode) {
+    render(children: React.ReactNode) {
       // The root has to be configured before it can be rendered
       if (!configured) this.configure()
 
       reconciler.updateContainer(
-        <Provider store={store} element={element} onCreated={onCreated} target={canvas} />,
+        <Provider store={store} children={children} onCreated={onCreated} parent={parent} rootElement={canvas} />,
         fiber,
         null,
         () => undefined,
@@ -223,26 +226,28 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 }
 
 function render<TCanvas extends Element>(
-  element: React.ReactNode,
+  children: React.ReactNode,
   canvas: TCanvas,
-  config: RenderProps<TCanvas> = {},
+  config: RenderProps<TCanvas>,
 ): UseBoundStore<RootState> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
-  return root.render(element)
+  return root.render(children)
 }
 
 function Provider<TElement extends Element>({
   store,
-  element,
+  children,
   onCreated,
-  target,
+  parent,
+  rootElement,
 }: {
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
-  element: React.ReactNode
-  target: TElement
+  children: React.ReactNode
+  rootElement: TElement
+  parent?: React.MutableRefObject<TElement | undefined>
 }) {
   React.useEffect(() => {
     const state = store.getState()
@@ -250,12 +255,12 @@ function Provider<TElement extends Element>({
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
     // Connect events to the targets parent, this is done to ensure events are registered on
     // a shared target, and not on the canvas itself
-    state.events.connect?.(target.parentNode)
+    state.events.connect?.(parent?.current || rootElement)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return <context.Provider value={store}>{element}</context.Provider>
+  return <context.Provider value={store}>{children}</context.Provider>
 }
 
 function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
