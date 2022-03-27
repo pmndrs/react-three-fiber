@@ -85,6 +85,7 @@ const Global = createGlobalStyle`
   }
 `
 export const DemoPanel = styled.div`
+  z-index: 1000;
   position: absolute;
   bottom: 50px;
   left: 50px;

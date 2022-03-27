@@ -1,10 +1,10 @@
 import * as THREE from 'three'
 import React, { useEffect, Suspense, useState, useMemo } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
-import { useGLTF, Environment, OrbitControls, TransformControls } from '@react-three/drei'
+import { useGLTF, Environment, OrbitControls, TransformControls, CameraShake } from '@react-three/drei'
 import { useCallback } from 'react'
 
-function Window({ index = 1, children, backgroundColor = 'white', placement = 'topright', ...props }: any) {
+function Window({ index = 1, children, backgroundColor = 'white', placement, ...props }: any) {
   const { events, viewport, size } = useThree()
   const [camera] = useState(() => new THREE.PerspectiveCamera(50, 1, 0.1, 1000))
   const [scene] = useState(() => new THREE.Scene())
@@ -57,6 +57,7 @@ function Window({ index = 1, children, backgroundColor = 'white', placement = 't
 
   const [el] = useState(() => {
     const div = document.createElement('div')
+    div.style.zIndex = index
     div.style.position = 'absolute'
     div.style.width = '50%'
     div.style.height = '50%'
@@ -77,24 +78,28 @@ function Window({ index = 1, children, backgroundColor = 'white', placement = 't
         div.style.bottom = '0px'
         div.style.left = '0px'
         break
+      default:
+        div.style.top = '50%'
+        div.style.left = '50%'
+        div.style.transform = 'translate3d(-50%,-50%,0)'
+        break
     }
     return div
   })
 
   useEffect(() => {
-    console.log('trying to attach', events.connected)
     if (events.connected) {
       const target = events.connected
       target.appendChild(el)
       return () => void target.removeChild(el)
     }
-  }, [])
+  }, [events])
 
   return (
     <>
       {createPortal(children, scene, {
         camera,
-        events: { compute, priority: events.priority - 1, connected: el },
+        events: { compute, priority: events.priority + index, connected: el },
       })}
     </>
   )
@@ -112,6 +117,7 @@ export default function App() {
         </Window>
         <Window index={3} placement="topleft" backgroundColor="aquamarine">
           <Scene preset="dawn" />
+          <CameraShake intensity={2} />
         </Window>
         <Window index={4} placement="topright" backgroundColor="lightblue">
           <Scene preset="warehouse" />

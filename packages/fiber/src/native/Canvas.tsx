@@ -106,7 +106,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       // Overwrite onCreated to apply RN bindings
       const onCreated = (state: RootState) => {
         // Bind events after creation
-        const handlers = state.events.connect?.(canvas)
+        const handlers = state.events.connect?.(viewRef.current)
         setBind(handlers)
 
         // Bind render to RN bridge
@@ -122,7 +122,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
       root.current.configure({
         ...canvasProps,
-        parent: (canvasProps.parent || viewRef) as React.MutableRefObject<Element>,
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),

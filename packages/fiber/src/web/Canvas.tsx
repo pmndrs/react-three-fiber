@@ -36,7 +36,6 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'camera',
   'onPointerMissed',
   'onCreated',
-  'parent',
 ]
 
 function Block({ set }: Omit<UnblockProps, 'children'>) {
@@ -87,8 +86,15 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   if (width > 0 && height > 0 && canvas) {
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
-
-    root.current.configure({ ...canvasProps, parent: canvasProps.parent || meshRef, size: { width, height }, events })
+    root.current.configure({
+      ...canvasProps,
+      onCreated: (state) => {
+        state.events.connect?.(meshRef.current)
+        canvasProps.onCreated?.(state)
+      },
+      size: { width, height },
+      events,
+    })
     root.current.render(
       <ErrorBoundary set={setError}>
         <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>

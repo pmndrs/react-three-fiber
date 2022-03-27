@@ -25,7 +25,6 @@ type GLProps =
   | undefined
 
 export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
-  parent?: React.MutableRefObject<TCanvas | undefined>
   gl?: GLProps
   events?: (store: UseBoundStore<RootState>) => EventManager<TCanvas>
   size?: Size
@@ -69,7 +68,6 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
   // Locals
-  let parent = React.createRef<TCanvas | undefined>() as React.MutableRefObject<TCanvas | undefined>
   let onCreated: ((state: RootState) => void) | undefined
   let configured = false
 
@@ -201,7 +199,6 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
       // Set locals
-      parent.current = props.parent?.current
       onCreated = onCreatedCallback
       configured = true
 
@@ -212,7 +209,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!configured) this.configure()
 
       reconciler.updateContainer(
-        <Provider store={store} children={children} onCreated={onCreated} parent={parent} rootElement={canvas} />,
+        <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
         fiber,
         null,
         () => undefined,
@@ -240,7 +237,6 @@ function Provider<TElement extends Element>({
   store,
   children,
   onCreated,
-  parent,
   rootElement,
 }: {
   onCreated?: (state: RootState) => void
@@ -249,15 +245,15 @@ function Provider<TElement extends Element>({
   rootElement: TElement
   parent?: React.MutableRefObject<TElement | undefined>
 }) {
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
-    // Connect events to the targets parent, this is done to ensure events are registered on
-    // a shared target, and not on the canvas itself
-    state.events.connect?.(parent?.current || rootElement)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
+    // Connect events to the targets parent, this is done to ensure events are registered on
+    // a shared target, and not on the canvas itself
+    if (!store.getState().events.connected) state.events.connect?.(rootElement)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return <context.Provider value={store}>{children}</context.Provider>
@@ -334,6 +330,10 @@ function Portal({
   const { events, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
+
+  React.useEffect(() => {
+    console.log('portal.useEffect', previousRoot.getState().events.connected)
+  })
 
   const inject = React.useCallback(
     (state: RootState, injectState?: RootState) => {
