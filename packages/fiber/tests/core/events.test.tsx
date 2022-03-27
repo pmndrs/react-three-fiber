@@ -3,9 +3,6 @@ import { render, fireEvent, RenderResult } from '@testing-library/react'
 
 import { Canvas, act } from '../../src'
 
-console.warn = jest.fn()
-console.error = jest.fn()
-
 describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
