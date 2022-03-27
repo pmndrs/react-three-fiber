@@ -3,10 +3,6 @@ import { render, fireEvent, RenderResult } from '@testing-library/react'
 
 import { Canvas, act } from '../../src'
 
-// Silence react-dom & react-dom/client mismatch in RTL
-console.warn = jest.fn()
-console.error = jest.fn()
-
 describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
