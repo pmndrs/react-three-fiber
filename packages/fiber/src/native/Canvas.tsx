@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseBoundStore } from 'zustand'
@@ -78,6 +79,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // Throw exception outwards if anything within canvas throws
     if (error) throw error
 
+    const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<Element>>(null!)
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
@@ -120,6 +122,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
       root.current.configure({
         ...canvasProps,
+        parent: (canvasProps.parent || viewRef) as React.MutableRefObject<Element>,
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
@@ -139,7 +142,12 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <View
+        {...viewProps}
+        ref={mergeRefs([viewRef, forwardedRef])}
+        onLayout={onLayout}
+        style={{ flex: 1, ...style }}
+        {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )
