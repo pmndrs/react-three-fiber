@@ -9,3 +9,10 @@ pointerEventPolyfill()
 
 // Mock scheduler to test React features
 jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+
+// De-escalate react-dom/client warnings
+const logError = global.console.error
+global.console.error = (...args: any[]) => {
+  if (args.join('').startsWith('Warning')) global.console.warn(...args)
+  return logError(...args)
+}
