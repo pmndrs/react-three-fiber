@@ -54,7 +54,7 @@ function Particles({ pointCount }: any) {
         <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
         <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
       </bufferGeometry>
-      <dotMaterial vertexColors />
+      <dotMaterial vertexColors depthWrite={false} />
     </points>
   )
 }

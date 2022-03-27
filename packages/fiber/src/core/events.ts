@@ -7,19 +7,31 @@ import type { Instance } from './renderer'
 import type { RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
+  /** The event source (the object which registered the handler) */
   eventObject: THREE.Object3D
 }
 
 export interface IntersectionEvent<TSourceEvent> extends Intersection {
+  /** The event source (the object which registered the handler) */
+  eventObject: THREE.Object3D
+  /** An array of intersections */
   intersections: Intersection[]
-  stopped: boolean
+  /** vec3.set(pointer.x, pointer.y, 0).unproject(camera) */
   unprojectedPoint: THREE.Vector3
-  ray: THREE.Ray
-  camera: Camera
-  stopPropagation: () => void
-  nativeEvent: TSourceEvent
-  delta: number
+  /** Normalized event coordinates */
   pointer: THREE.Vector2
+  /** Delta between first click and this event */
+  delta: number
+  /** The ray that pierced it */
+  ray: THREE.Ray
+  /** The camera that was used by the raycaster */
+  camera: Camera
+  /** stopPropagation will stop underlying handlers from firing */
+  stopPropagation: () => void
+  /** The original host event */
+  nativeEvent: TSourceEvent
+  /** If the event was stopped by calling stopPropagation */
+  stopped: boolean
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -182,7 +194,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     })
 
     // Collect events
-    let intersects: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
+    let hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
       // Intersect objects
       .flatMap((obj) => {
         const state = getRootState(obj)
@@ -216,13 +228,14 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order, this likely only makes sense on the root filter
-    if (state.events.filter) intersects = state.events.filter(intersects, state)
+    if (state.events.filter) hits = state.events.filter(hits, state)
 
-    for (const intersect of intersects) {
-      let eventObject: THREE.Object3D | null = intersect.object
+    // Bubble up the events, find the event source (eventObject)
+    for (const hit of hits) {
+      let eventObject: THREE.Object3D | null = hit.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...intersect, eventObject })
+        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...hit, eventObject })
         eventObject = eventObject.parent
       }
     }
@@ -286,7 +299,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
           if (typeof property !== 'function') extractEventProps[prop] = property
         }
 
-        let raycastEvent: any = {
+        let raycastEvent: ThreeEvent<DomEvent> = {
           ...hit,
           ...extractEventProps,
           pointer,

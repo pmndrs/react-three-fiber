@@ -1,7 +1,7 @@
 import * as THREE from 'three'
-import React, { useRef, useEffect, Suspense, useState } from 'react'
+import React, { useEffect, Suspense, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
-import { useGLTF, OrbitControls, ArcballControls, TrackballControls, Environment } from '@react-three/drei'
+import { useGLTF, Environment, OrbitControls } from '@react-three/drei'
 import { useCallback } from 'react'
 
 function Window({ index = 1, children, clearColor = 'white', placement = 'topright', ...props }: any) {
@@ -100,6 +100,27 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
   )
 }
 
+export default function App() {
+  return (
+    <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
+      <Suspense fallback={null}>
+        <Window index={1} placement="bottomleft" clearColor="orange">
+          <Scene preset="lobby" />
+        </Window>
+        <Window index={2} placement="bottomright" clearColor="hotpink">
+          <Scene preset="city" />
+        </Window>
+        <Window index={3} placement="topleft" clearColor="aquamarine">
+          <Scene preset="dawn" />
+        </Window>
+        <Window index={4} placement="topright" clearColor="lightblue">
+          <Scene preset="warehouse" />
+        </Window>
+      </Suspense>
+    </Canvas>
+  )
+}
+
 function useHover() {
   const [hovered, hover] = useState(false)
   return [
@@ -126,44 +147,19 @@ function Soda(props: any) {
   )
 }
 
-export default function App() {
-  return (
-    <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
-      <Suspense fallback={null}>
-        <Window index={1} placement="bottomleft" clearColor="orange">
-          <OrbitControls />
-          <Environment preset="lobby" background />
-          <Scene />
-        </Window>
-        <Window index={2} placement="bottomright" clearColor="hotpink">
-          <ArcballControls />
-          <Environment preset="city" background />
-          <Scene />
-        </Window>
-        <Window index={3} placement="topleft" clearColor="aquamarine">
-          <OrbitControls />
-          <Environment preset="dawn" background />
-          <Scene />
-        </Window>
-        <Window index={4} placement="topright" clearColor="lightblue">
-          <OrbitControls />
-          <Environment preset="warehouse" background />
-          <Scene />
-        </Window>
-      </Suspense>
-    </Canvas>
-  )
-}
-
-function Scene() {
+function Scene({ preset }: any) {
   return (
     <>
       <ambientLight intensity={1} />
       <pointLight position={[20, 30, 10]} />
       <pointLight position={[-10, -10, -10]} color="blue" />
-      <Soda scale={2} position={[-1, -0.5, 1]} />
-      <Soda scale={2} position={[1, -0.5, 1]} />
-      <Soda scale={2} position={[0, -0.5, 0]} />
+      <Soda scale={3} position={[-1, -0.75, 1]} />
+      <Soda scale={3} position={[1, -0.75, 1]} />
+      <Soda scale={3} position={[0, -0.75, 0]} />
+      <Suspense fallback={null}>
+        <Environment preset={preset} background="only" />
+      </Suspense>
+      <OrbitControls />
     </>
   )
 }
