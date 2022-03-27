@@ -331,10 +331,6 @@ function Portal({
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
 
-  React.useEffect(() => {
-    console.log('portal.useEffect', previousRoot.getState().events.connected)
-  })
-
   const inject = React.useCallback(
     (state: RootState, injectState?: RootState) => {
       const intersect: Partial<RootState> = { ...state }
@@ -342,7 +338,12 @@ function Portal({
       if (injectState) {
         // Only the fields of "state" that do not differ from injectState
         Object.keys(state).forEach((key) => {
-          if (state[key as keyof RootState] !== injectState[key as keyof RootState])
+          if (
+            // Some props should be off-limits
+            !['size', 'viewport', 'internal', 'performance'].includes(key) &&
+            // Otherwise filter out the props that are different and let the inject layer take precedence
+            state[key as keyof RootState] !== injectState[key as keyof RootState]
+          )
             delete intersect[key as keyof RootState]
         })
       }

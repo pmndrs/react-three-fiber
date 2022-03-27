@@ -48,6 +48,7 @@ function Window({ index = 1, children, backgroundColor = 'white', placement, ...
 
   const compute = useCallback((event, state, previous) => {
     if (event.target === el) {
+      console.log(state.size, previous.size)
       const width = state.size.width / 2
       const height = state.size.height / 2
       state.pointer.set((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1)
