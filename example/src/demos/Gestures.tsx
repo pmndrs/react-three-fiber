@@ -28,7 +28,7 @@ function Obj({ scale = 1, z = 0, opacity = 1 }) {
       }}
       castShadow
       scale={scale}>
-      <dodecahedronGeometry args={[2, 0]} />
+      <dodecahedronGeometry args={[1, 0]} />
       <meshStandardMaterial transparent opacity={opacity} color={true ? 'hotpink' : 'orange'} />
     </mesh>
   )

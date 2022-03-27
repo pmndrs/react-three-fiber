@@ -1,11 +1,10 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { StateSelector, EqualityChecker, UseBoundStore, StateListener } from 'zustand'
+import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is } from './utils'
-import { ComputeFunction, DomEvent, FilterFunction } from './events'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -34,76 +33,6 @@ export function useThree<T = RootState>(
   equalityFn?: EqualityChecker<T>,
 ) {
   return useStore()(selector, equalityFn)
-}
-
-export type InjectState = Partial<
-  Omit<
-    RootState,
-    | 'set'
-    | 'get'
-    | 'setSize'
-    | 'setFrameloop'
-    | 'setDpr'
-    | 'events'
-    | 'invalidate'
-    | 'advance'
-    | 'performance'
-    | 'internal'
-  > & {
-    events: {
-      enabled?: boolean
-      priority?: number
-      compute?: ComputeFunction
-      connected?: any
-    }
-  }
->
-
-const overrideState = (store: UseBoundStore<RootState>, props: InjectState) => {
-  const { events, ...inject } = props
-  const state = store.getState()
-  return { ...state, ...inject, get: () => overrideState(store, props), events: { ...state.events, ...events } }
-}
-
-const getOverrideKeys = ({ events, ...inject }: InjectState) => {
-  return Object.entries({ ...events, ...inject }).flat()
-}
-
-export function useInject(state: InjectState) {
-  const useOriginalStore = useStore()
-  const useInjectStore = React.useMemo<UseBoundStore<RootState>>(() => {
-    const useInjected = (sel: StateSelector<RootState, RootState> = (state) => state) => {
-      // Execute the useStore hook with the selector once, to maintain reactivity, result doesn't matter
-      useOriginalStore(sel)
-      // Inject data and return the result, either selected or raw
-      return sel(overrideState(useOriginalStore, state))
-    }
-    useInjected.setState = useOriginalStore.setState
-    useInjected.destroy = useOriginalStore.destroy
-    // Patch getState
-    useInjected.getState = (): RootState => {
-      return overrideState(useOriginalStore, state)
-    }
-    // Patch subscribe
-    useInjected.subscribe = (listener: StateListener<RootState>) => {
-      return useOriginalStore.subscribe((current, previous) =>
-        listener(overrideState(useOriginalStore, state), previous),
-      )
-    }
-    return useInjected
-  }, [useOriginalStore, ...getOverrideKeys(state)])
-
-  // Return the patched store and a provider component
-  return React.useMemo(
-    () =>
-      [
-        ({ children }: { children: React.ReactNode }) => (
-          <context.Provider value={useInjectStore} children={children} />
-        ),
-        useInjectStore,
-      ] as [React.FC<{ children: React.ReactNode }>, UseBoundStore<RootState>],
-    [useInjectStore],
-  )
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {

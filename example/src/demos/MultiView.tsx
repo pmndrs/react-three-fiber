@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import React, { useEffect, Suspense, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
-import { useGLTF, Environment, OrbitControls } from '@react-three/drei'
+import { useGLTF, Environment, OrbitControls, TransformControls } from '@react-three/drei'
 import { useCallback } from 'react'
 
 function Window({ index = 1, children, clearColor = 'white', placement = 'topright', ...props }: any) {
@@ -83,6 +83,7 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
   })
 
   useEffect(() => {
+    console.log('trying to attach', events.connected)
     if (events.connected) {
       const target = events.connected
       target.appendChild(el)
@@ -115,6 +116,9 @@ export default function App() {
         </Window>
         <Window index={4} placement="topright" clearColor="lightblue">
           <Scene preset="warehouse" />
+          <TransformControls scale={3} position={[1, -0.75, -1]}>
+            <Soda />
+          </TransformControls>
         </Window>
       </Suspense>
     </Canvas>
@@ -147,7 +151,7 @@ function Soda(props: any) {
   )
 }
 
-function Scene({ preset }: any) {
+function Scene({ children, preset }: any) {
   return (
     <>
       <ambientLight intensity={1} />
@@ -159,7 +163,8 @@ function Scene({ preset }: any) {
       <Suspense fallback={null}>
         <Environment preset={preset} background="only" />
       </Suspense>
-      <OrbitControls />
+      {children}
+      <OrbitControls makeDefault />
     </>
   )
 }

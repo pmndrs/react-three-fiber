@@ -2,14 +2,14 @@ import * as THREE from 'three'
 import * as React from 'react'
 // @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import { UseBoundStore } from 'zustand'
+import create, { UseBoundStore } from 'zustand'
 
 import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
-import { getEventPriority, EventManager } from './events'
+import { getEventPriority, EventManager, ComputeFunction } from './events'
 import { is, dispose, calculateDpr, EquConfig, getRootState } from './utils'
-import { InjectState, useInject, useStore, useThree } from './hooks'
+import { useStore } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -284,12 +284,35 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
+export type InjectState = Partial<
+  Omit<
+    RootState,
+    | 'set'
+    | 'get'
+    | 'setSize'
+    | 'setFrameloop'
+    | 'setDpr'
+    | 'events'
+    | 'invalidate'
+    | 'advance'
+    | 'performance'
+    | 'internal'
+  > & {
+    events: {
+      enabled?: boolean
+      priority?: number
+      compute?: ComputeFunction
+      connected?: any
+    }
+  }
+>
+
 function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
   return <Portal children={children} container={container} state={state} />
 }
 
 function Portal({
-  state,
+  state = {},
   children,
   container,
 }: {
@@ -302,10 +325,54 @@ function Portal({
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
+
+  const { events, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
-  const [PortalProvider, portalRoot] = useInject({ previousRoot, raycaster, ...state, scene: container as THREE.Scene })
-  return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
+
+  const inject = React.useCallback(
+    (state: RootState, injectState?: RootState) => {
+      const intersect: Partial<RootState> = { ...state }
+
+      if (injectState) {
+        // Only the fields of "state" that do not differ from injectState
+        Object.keys(state).forEach((key) => {
+          if (state[key as keyof RootState] !== injectState[key as keyof RootState])
+            delete intersect[key as keyof RootState]
+        })
+      }
+
+      return {
+        ...intersect,
+        scene: container as THREE.Scene,
+        previousRoot,
+        raycaster,
+        events: { ...state.events, ...events },
+        ...rest,
+      } as RootState
+    },
+    [state],
+  )
+
+  const [useInjectStore] = React.useState(() => {
+    const store = create<RootState>((set, get) => ({ ...inject(previousRoot.getState()), set, get }))
+    previousRoot.subscribe((state) => useInjectStore.setState((injectState) => inject(state, injectState)))
+    return store
+  })
+
+  React.useEffect(() => {
+    useInjectStore.setState((injectState) => inject(previousRoot.getState(), injectState))
+  }, [inject])
+
+  return (
+    <>
+      {reconciler.createPortal(
+        <context.Provider value={useInjectStore}>{children}</context.Provider>,
+        useInjectStore,
+        null,
+      )}
+    </>
+  )
 }
 
 reconciler.injectIntoDevTools({
