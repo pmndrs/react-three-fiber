@@ -1,15 +1,13 @@
 import * as THREE from 'three'
 import React, { useRef, useEffect, Suspense, useState } from 'react'
-import { Canvas, useFrame, useThree, createPortal, ReactThreeFiber, Camera, EventManager } from '@react-three/fiber'
-import { useGLTF, useFBO, OrbitControls } from '@react-three/drei'
+import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
+import { useGLTF, OrbitControls, ArcballControls, TrackballControls, Environment } from '@react-three/drei'
 import { useCallback } from 'react'
 
 function Window({ index = 1, children, clearColor = 'white', placement = 'topright', ...props }: any) {
-  const ref = useRef<THREE.Mesh>(null!)
-  const { scene: defaultScene, camera: defaultCamera, events, viewport, size } = useThree()
+  const { events, viewport, size } = useThree()
   const [camera] = useState(() => new THREE.PerspectiveCamera(50, 1, 0.1, 1000))
   const [scene] = useState(() => new THREE.Scene())
-  const fbo = useFBO()
 
   clearColor = new THREE.Color(clearColor).convertLinearToSRGB()
 
@@ -46,12 +44,16 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
     gl.setScissor(left, bottom, width, height)
     gl.setScissorTest(true)
     gl.setClearColor(clearColor)
-    gl.render(defaultScene, camera)
+    gl.render(scene, camera)
   }, index)
 
   const compute = useCallback((event, state, previous) => {
-    state.pointer.set((event.offsetX / state.size.width / 2) * 2 - 1, -(event.offsetY / state.size.height / 2) * 2 + 1)
-    state.raycaster.setFromCamera(state.pointer, state.camera)
+    if (event.target === el) {
+      const width = state.size.width / 2
+      const height = state.size.height / 2
+      state.pointer.set((event.offsetX / width) * 2 - 1, -(event.offsetY / height) * 2 + 1)
+      state.raycaster.setFromCamera(state.pointer, state.camera)
+    }
   }, [])
 
   const [el] = useState(() => {
@@ -59,7 +61,6 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
     div.style.position = 'absolute'
     div.style.width = '50%'
     div.style.height = '50%'
-
     switch (placement) {
       case 'topright':
         div.style.top = '0px'
@@ -78,40 +79,23 @@ function Window({ index = 1, children, clearColor = 'white', placement = 'toprig
         div.style.left = '0px'
         break
     }
-
     return div
   })
 
   useEffect(() => {
     if (events.connected) {
-      const target = events.connected.parentNode
-      //target.appendChild(el)
-      return () => {
-        //target.removeChild(el)
-      }
+      const target = events.connected
+      target.appendChild(el)
+      return () => void target.removeChild(el)
     }
   }, [])
 
   return (
     <>
-      {createPortal(
-        <>
-          {/*<OrbitControls domElement={el} />*/}
-          {children}
-        </>,
-        scene,
-        { camera, events: { compute, priority: events.priority - 1 } },
-      )}
-    </>
-  )
-}
-
-function Lights() {
-  return (
-    <>
-      <ambientLight intensity={1} />
-      <pointLight position={[20, 30, 10]} />
-      <pointLight position={[-10, -10, -10]} color="blue" />
+      {createPortal(children, scene, {
+        camera,
+        events: { compute, priority: events.priority - 1, connected: el },
+      })}
     </>
   )
 }
@@ -146,11 +130,26 @@ export default function App() {
   return (
     <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
       <Suspense fallback={null}>
-        <Window index={1} placement="bottomleft" clearColor="orange" />
-        <Window index={2} placement="bottomright" clearColor="hotpink" />
-        <Window index={3} placement="topleft" clearColor="aquamarine" />
-        <Window index={4} placement="topright" clearColor="lightblue" />
-        <Scene />
+        <Window index={1} placement="bottomleft" clearColor="orange">
+          <OrbitControls />
+          <Environment preset="lobby" background />
+          <Scene />
+        </Window>
+        <Window index={2} placement="bottomright" clearColor="hotpink">
+          <ArcballControls />
+          <Environment preset="city" background />
+          <Scene />
+        </Window>
+        <Window index={3} placement="topleft" clearColor="aquamarine">
+          <OrbitControls />
+          <Environment preset="dawn" background />
+          <Scene />
+        </Window>
+        <Window index={4} placement="topright" clearColor="lightblue">
+          <OrbitControls />
+          <Environment preset="warehouse" background />
+          <Scene />
+        </Window>
       </Suspense>
     </Canvas>
   )
@@ -159,10 +158,12 @@ export default function App() {
 function Scene() {
   return (
     <>
-      <Lights />
-      <Soda scale={2} position={[-1, 0, 1]} />
-      <Soda scale={2} position={[1, 0, 1]} />
-      <Soda scale={2} position={[0, 0, 0]} />
+      <ambientLight intensity={1} />
+      <pointLight position={[20, 30, 10]} />
+      <pointLight position={[-10, -10, -10]} color="blue" />
+      <Soda scale={2} position={[-1, -0.5, 1]} />
+      <Soda scale={2} position={[1, -0.5, 1]} />
+      <Soda scale={2} position={[0, -0.5, 0]} />
     </>
   )
 }

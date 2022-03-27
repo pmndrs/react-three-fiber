@@ -54,6 +54,7 @@ export type InjectState = Partial<
       enabled?: boolean
       priority?: number
       compute?: ComputeFunction
+      connected?: any
     }
   }
 >

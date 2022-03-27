@@ -248,8 +248,9 @@ function Provider<TElement extends Element>({
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
-    // Connect events
-    state.events.connect?.(target)
+    // Connect events to the targets parent, this is done to ensure events are registered on
+    // a shared target, and not on the canvas itself
+    state.events.connect?.(target.parentNode)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
     // eslint-disable-next-line react-hooks/exhaustive-deps

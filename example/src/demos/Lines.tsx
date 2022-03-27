@@ -103,7 +103,7 @@ function Line({ defaultStart, defaultEnd }: any) {
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
         </bufferGeometry>
-        <lineBasicMaterial color="white" />
+        <lineBasicMaterial color="black" />
       </line>
       <EndPoint position={start} onDrag={(v: any) => setStart(v.toArray())} />
       <EndPoint position={end} onDrag={(v: any) => setEnd(v.toArray())} />

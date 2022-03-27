@@ -1,14 +1,15 @@
 import * as THREE from 'three'
-import React, { Suspense, useState, useEffect } from 'react'
+import React, { Suspense, useState, useEffect, useReducer } from 'react'
 import { Canvas, useLoader } from '@react-three/fiber'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 
 function Test() {
-  const [url, set] = useState('/Parrot.glb')
+  const [flag, toggle] = useReducer((state) => !state, true)
   useEffect(() => {
-    setTimeout(() => set('/Stork.glb'), 2000)
+    const interval = setInterval(toggle, 1000)
+    return () => clearInterval(interval)
   }, [])
-  const { scene } = useLoader(GLTFLoader, url) as any
+  const { scene } = useLoader(GLTFLoader, flag ? '/Stork.glb' : '/Parrot.glb') as any
   return <primitive object={scene} />
 }
 

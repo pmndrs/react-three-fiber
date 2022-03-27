@@ -6,7 +6,7 @@ class DotMaterial extends THREE.ShaderMaterial {
   constructor() {
     super({
       transparent: true,
-      uniforms: { size: { value: 10 }, scale: { value: 1 } },
+      uniforms: { size: { value: 15 }, scale: { value: 1 } },
       vertexShader: THREE.ShaderLib.points.vertexShader,
       fragmentShader: `
       varying vec3 vColor;
