@@ -1,15 +1,14 @@
 import * as THREE from 'three'
-import React, { useEffect, Suspense, useState } from 'react'
+import React, { useEffect, Suspense, useState, useMemo } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import { useGLTF, Environment, OrbitControls, TransformControls } from '@react-three/drei'
 import { useCallback } from 'react'
 
-function Window({ index = 1, children, clearColor = 'white', placement = 'topright', ...props }: any) {
+function Window({ index = 1, children, backgroundColor = 'white', placement = 'topright', ...props }: any) {
   const { events, viewport, size } = useThree()
   const [camera] = useState(() => new THREE.PerspectiveCamera(50, 1, 0.1, 1000))
   const [scene] = useState(() => new THREE.Scene())
-
-  clearColor = new THREE.Color(clearColor).convertLinearToSRGB()
+  const clearColor = useMemo(() => new THREE.Color(backgroundColor).convertLinearToSRGB(), [backgroundColor])
 
   useEffect(() => {
     camera.position.set(0, 0, 5)
@@ -105,16 +104,16 @@ export default function App() {
   return (
     <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 5] }}>
       <Suspense fallback={null}>
-        <Window index={1} placement="bottomleft" clearColor="orange">
+        <Window index={1} placement="bottomleft" backgroundColor="orange">
           <Scene preset="lobby" />
         </Window>
-        <Window index={2} placement="bottomright" clearColor="hotpink">
+        <Window index={2} placement="bottomright" backgroundColor="hotpink">
           <Scene preset="city" />
         </Window>
-        <Window index={3} placement="topleft" clearColor="aquamarine">
+        <Window index={3} placement="topleft" backgroundColor="aquamarine">
           <Scene preset="dawn" />
         </Window>
-        <Window index={4} placement="topright" clearColor="lightblue">
+        <Window index={4} placement="topright" backgroundColor="lightblue">
           <Scene preset="warehouse" />
           <TransformControls scale={3} position={[1, -0.75, -1]}>
             <Soda />

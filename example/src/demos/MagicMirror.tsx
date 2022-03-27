@@ -11,8 +11,10 @@ function MagicMirror({ children, clearColor = 'white', ...props }: any) {
   const [scene] = useState(() => new THREE.Scene())
   const fbo = useFBO()
 
-  camera.aspect = 4 / 5
-  camera.updateProjectionMatrix()
+  useEffect(() => {
+    camera.aspect = 4 / 5
+    camera.updateProjectionMatrix()
+  }, [camera])
 
   useFrame((state) => {
     camera.position.copy(state.camera.position)
