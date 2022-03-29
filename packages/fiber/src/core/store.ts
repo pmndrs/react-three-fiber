@@ -114,7 +114,7 @@ export type RootState = {
   /** Advance (render) one step */
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */
-  setEvents: (events: EventManager<any>) => void
+  setEvents: (events: Partial<EventManager<any>>) => void
   /** Shortcut to manual sizing */
   setSize: (width: number, height: number) => void
   /** Shortcut to manual setting the pixel ratio */
