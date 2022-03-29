@@ -609,12 +609,12 @@ describe('renderer', () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
       gl = createRoot(canvas)
-        .configure({ gl: { physicallyCorrectLights: true } })
+        .configure({ gl: { physicallyCorrectLights: false } })
         .render(<group />)
         .getState().gl
     })
 
-    expect(gl.physicallyCorrectLights).toBe(true)
+    expect(gl.physicallyCorrectLights).toBe(false)
   })
 
   it('should set a renderer via gl callback', async () => {
@@ -651,5 +651,24 @@ describe('renderer', () => {
     })
     expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+  })
+
+  it('should respect lighting preferences via gl', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = createRoot(canvas)
+        .render(<group />)
+        .getState().gl
+    })
+
+    expect(gl.physicallyCorrectLights).toBe(true)
+
+    await act(async () => {
+      gl = createRoot(canvas)
+        .configure({ gl: { physicallyCorrectLights: false } })
+        .render(<group />)
+        .getState().gl
+    })
+    expect(gl.physicallyCorrectLights).toBe(false)
   })
 })
