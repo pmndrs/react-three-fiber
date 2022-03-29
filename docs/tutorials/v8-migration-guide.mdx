@@ -55,7 +55,9 @@ export default function App() {
 }
 ```
 
-## New dpr default
+## New gl defaults
+
+### DPR
 
 The default DPR has changed from `1` to `[1, 2]`, which will clamp depending on the screen's native pixel ratio.
 
@@ -69,7 +71,21 @@ This was the most common setting in the wild, so it was brought in as a better d
 <Canvas />
 ```
 
-## Automatic WebXR switching
+### physicallyCorrectLights
+
+`gl.physicallyCorrectLights` has been enabled to calculate lighting consistently with models and PBR workflows (see [#2127](https://github.com/pmndrs/react-three-fiber/issues/2127)).
+
+This multiplies lights' `intensity` by a factor of one instead of PI. For other properties like `decay` and `distance`, see [https://threejs.org/docs/#api/en/lights/PointLight](https://threejs.org/docs/#api/en/lights/PointLight).
+
+You can configure `physicallyCorrectLights` yourself via the `gl` prop:
+
+```jsx
+<Canvas gl={{ physicallyCorrectLights: true | false }} />
+```
+
+## Improved WebXR handling
+
+### Automatic WebXR switching
 
 The `vr` prop was removed in favor of automatic WebXR switching. Whenever a session is requested, XR features are enabled, and the renderer will render at the native refresh rate. The inverse is true when exiting a session.
 
@@ -82,6 +98,16 @@ The `vr` prop was removed in favor of automatic WebXR switching. Whenever a sess
 
 <Canvas />
 ```
+
+### Extended useFrame
+
+In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
+
+```ts
+useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
+```
+
+This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
 
 ## Automatic concurrency
 
@@ -278,10 +304,22 @@ import { createRoot, events } from '@react-three/fiber'
 let root
 
 const handleResize = () => {
+  const size = { width: window.innerWidth, height: window.innerHeight }
+
+  // Create root with a size, events
   root = createRoot(document.querySelector('canvas'), {
     events,
-    size: { width: window.innerWidth, height: window.innerHeight },
-  }).render(<mesh />)
+    size,
+  })
+
+  // Render JSX
+  root.render(<mesh />)
+
+  // Can also tweak root root options after creation:
+  root.configure({ size })
+
+  // Or to unmount and dispose of memory:
+  root.unmount()
 }
 handleResize()
 

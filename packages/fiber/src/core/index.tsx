@@ -177,8 +177,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if ((THREE as any).ColorManagement) (THREE as any).ColorManagement.legacyMode = false
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+      const physicallyCorrectLights =
+        (glConfig as Partial<Properties<THREE.WebGLRenderer>>)?.physicallyCorrectLights ?? true
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
       if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
+      if (gl.physicallyCorrectLights !== physicallyCorrectLights) gl.physicallyCorrectLights = physicallyCorrectLights
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))

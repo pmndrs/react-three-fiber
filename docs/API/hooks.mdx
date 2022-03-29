@@ -110,7 +110,7 @@ This hook allows you to execute code on every rendered frame, like running effec
 import { useFrame } from '@react-three/fiber'
 
 function Foo() {
-  useFrame((state, delta) => {
+  useFrame((state, delta, xrFrame) => {
     // This function runs at the native refresh rate inside of a shared render-loop
   })
 ```
