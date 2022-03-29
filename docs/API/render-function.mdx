@@ -41,10 +41,19 @@ import { createRoot, events } from '@react-three/fiber'
 let root
 
 const handleResize = () => {
+  const size = { width: window.innerWidth, height: window.innerHeight }
+
+  // Create root with a size, events
   root = createRoot(document.querySelector('canvas'), {
     events,
-    size: { width: window.innerWidth, height: window.innerHeight },
-  }).render(<mesh />)
+    size,
+  })
+
+  // Render JSX
+  root.render(<mesh />)
+
+  // Can also tweak root root options after creation:
+  root.configure({ size })
 }
 handleResize()
 
