@@ -55,7 +55,9 @@ export default function App() {
 }
 ```
 
-## New dpr default
+## New gl defaults
+
+### DPR
 
 The default DPR has changed from `1` to `[1, 2]`, which will clamp depending on the screen's native pixel ratio.
 
@@ -67,6 +69,18 @@ This was the most common setting in the wild, so it was brought in as a better d
 // can now be
 
 <Canvas />
+```
+
+### physicallyCorrectLights
+
+`gl.physicallyCorrectLights` has been enabled to calculate lighting consistently with models and PBR workflows (see [#2127](https://github.com/pmndrs/react-three-fiber/issues/2127)).
+
+This multiplies lights' `intensity` by a factor of one instead of PI. For other properties like `decay` and `distance`, see [https://threejs.org/docs/#api/en/lights/PointLight](https://threejs.org/docs/#api/en/lights/PointLight).
+
+You can configure `physicallyCorrectLights` yourself via the `gl` prop:
+
+```jsx
+<Canvas gl={{ physicallyCorrectLights: true | false }} />
 ```
 
 ## Improved WebXR handling
