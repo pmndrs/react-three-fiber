@@ -18,10 +18,15 @@ export type Subscription = {
 export type Dpr = number | [min: number, max: number]
 export type Size = { width: number; height: number }
 export type Viewport = Size & {
+  /** The initial pixel ratio */
   initialDpr: number
+  /** Current pixel ratio */
   dpr: number
+  /** size.width / viewport.width */
   factor: number
+  /** Camera distance */
   distance: number
+  /** Camera aspect ratio: width / height */
   aspect: number
 }
 
@@ -29,10 +34,15 @@ export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
+  /** Current performance normal, between min and max */
   current: number
+  /** How low the performance can go, between 0 and max */
   min: number
+  /** How high the performance can go, between min and max */
   max: number
+  /** Time until current returns to max in ms */
   debounce: number
+  /** Sets current to min, puts the system in regression */
   regress: () => void
 }
 
@@ -47,7 +57,6 @@ export type InternalState = {
   priority: number
   frames: number
   lastEvent: React.MutableRefObject<DomEvent | null>
-
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
@@ -58,23 +67,41 @@ export type InternalState = {
 }
 
 export type RootState = {
+  /** Set current state */
+  set: SetState<RootState>
+  /** Get current state */
+  get: GetState<RootState>
+  /** The instance of the renderer */
   gl: THREE.WebGLRenderer
+  /** Default camera */
   camera: Camera & { manual?: boolean }
-  raycaster: THREE.Raycaster
-  events: EventManager<any>
-  xr: { connect: () => void; disconnect: () => void }
-
+  /** Default scene */
   scene: THREE.Scene
-  controls: THREE.EventDispatcher | null
-  pointer: THREE.Vector2
+  /** Default raycaster */
+  raycaster: THREE.Raycaster
+  /** Default clock */
   clock: THREE.Clock
-
+  /** Event layer interface, contains the event handler and the node they're connected to */
+  events: EventManager<any>
+  /** XR interface */
+  xr: { connect: () => void; disconnect: () => void }
+  /** Currently used controls */
+  controls: THREE.EventDispatcher | null
+  /** Normalized event coordinates */
+  pointer: THREE.Vector2
+  /** @deprecated Normalized event coordinates, use "pointer" instead! */
+  mouse: THREE.Vector2
+  /** Shortcut to gl.outputEncoding = LinearEncoding */
   linear: boolean
+  /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
+  /** Render loop flags */
   frameloop: 'always' | 'demand' | 'never'
+  /** Adaptive performance interface */
   performance: Performance
-
+  /** Reactive pixel-size of the canvas */
   size: Size
+  /** Reactive size of the viewport in threejs units */
   viewport: Viewport & {
     getCurrentViewport: (
       camera?: Camera,
@@ -82,17 +109,23 @@ export type RootState = {
       size?: Size,
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
-
-  set: SetState<RootState>
-  get: GetState<RootState>
+  /** Flags the canvas for render, but doesn't render in itself */
   invalidate: () => void
+  /** Advance (render) one step */
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
+  /** Shortcut to setting the event layer */
+  setEvents: (events: EventManager<any>) => void
+  /** Shortcut to manual sizing */
   setSize: (width: number, height: number) => void
+  /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
+  /** Shortcut to frameloop flags */
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
+  /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
-
+  /** If this state model is layerd (via createPortal) then this contains the previous layer */
   previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
+  /** Internals */
   internal: InternalState
 }
 
@@ -152,6 +185,8 @@ const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
+    const pointer = new THREE.Vector2()
+
     return {
       set,
       get,
@@ -172,7 +207,8 @@ const createStore = (
 
       controls: null,
       clock: new THREE.Clock(),
-      pointer: new THREE.Vector2(),
+      pointer,
+      mouse: pointer,
 
       frameloop: 'always',
       onPointerMissed: undefined,
@@ -208,6 +244,8 @@ const createStore = (
         getCurrentViewport,
       },
 
+      setEvents: (events: Partial<EventManager<any>>) =>
+        set((state) => ({ ...state, events: { ...state.events, events } })),
       setSize: (width: number, height: number) => {
         const camera = get().camera
         const size = { width, height }
