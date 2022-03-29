@@ -9,10 +9,10 @@
   "dependencies": {
     "@react-spring/core": "^9.4.4",
     "@react-spring/three": "^9.4.4",
-    "@react-three/drei": "^8.19.5",
+    "@react-three/drei": "^8.20.2",
     "@use-gesture/react": "latest",
-    "react": "^18.0.0-rc.3",
-    "react-dom": "^18.0.0-rc.3",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "react-merge-refs": "^1.1.0",
     "styled-components": "^5.3.5",
     "three": "^0.139.0",

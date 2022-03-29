@@ -42,12 +42,12 @@
     "prebuild": "cp ../../readme.md readme.md"
   },
   "dependencies": {
-    "@babel/runtime": "^7.17.2",
+    "@babel/runtime": "^7.17.8",
     "@types/react-reconciler": "^0.26.4",
     "react-merge-refs": "^1.1.0",
-    "react-reconciler": "^0.27.0-rc.2",
+    "react-reconciler": "^0.27.0",
     "react-use-measure": "^2.1.1",
-    "scheduler": "^0.21.0-rc.2",
+    "scheduler": "^0.21.0",
     "suspend-react": "^0.0.8",
     "zustand": "^3.7.1"
   },
