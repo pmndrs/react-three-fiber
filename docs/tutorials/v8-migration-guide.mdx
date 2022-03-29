@@ -303,6 +303,9 @@ const handleResize = () => {
 
   // Can also tweak root root options after creation:
   root.configure({ size })
+
+  // Or to unmount and dispose of memory:
+  root.unmount()
 }
 handleResize()
 
