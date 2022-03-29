@@ -4,7 +4,7 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
@@ -488,7 +488,7 @@ describe('renderer', () => {
   })
 
   it('should handle an performance changing functions', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = createRoot(canvas)
         .configure({ dpr: [1, 2], performance: { min: 0.2 } })
@@ -524,7 +524,7 @@ describe('renderer', () => {
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = createRoot(canvas)
         .configure({ shadows: true })
@@ -535,7 +535,7 @@ describe('renderer', () => {
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
-    let state: UseStore<RootState> = null!
+    let state: UseBoundStore<RootState> = null!
     await act(async () => {
       state = createRoot(canvas)
         .configure({ linear: false })

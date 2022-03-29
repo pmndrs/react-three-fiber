@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseBoundStore } from 'zustand'
@@ -78,6 +79,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // Throw exception outwards if anything within canvas throws
     if (error) throw error
 
+    const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<Element>>(null!)
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
@@ -104,7 +106,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       // Overwrite onCreated to apply RN bindings
       const onCreated = (state: RootState) => {
         // Bind events after creation
-        const handlers = state.events.connect?.(canvas)
+        const handlers = state.events.connect?.(viewRef.current)
         setBind(handlers)
 
         // Bind render to RN bridge
@@ -139,7 +141,12 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View {...viewProps} ref={forwardedRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <View
+        {...viewProps}
+        ref={mergeRefs([viewRef, forwardedRef])}
+        onLayout={onLayout}
+        style={{ flex: 1, ...style }}
+        {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )

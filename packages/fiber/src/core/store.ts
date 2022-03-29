@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import * as ReactThreeFiber from '../three-types'
-import create, { GetState, SetState, UseBoundStore } from 'zustand'
+import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
@@ -26,12 +26,6 @@ export type Viewport = Size & {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type Raycaster = THREE.Raycaster & {
-  enabled: boolean
-  filter?: FilterFunction
-  computeOffsets?: ComputeOffsetsFunction
-}
-
 export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
@@ -66,13 +60,13 @@ export type InternalState = {
 export type RootState = {
   gl: THREE.WebGLRenderer
   camera: Camera & { manual?: boolean }
-  raycaster: Raycaster
+  raycaster: THREE.Raycaster
   events: EventManager<any>
   xr: { connect: () => void; disconnect: () => void }
 
   scene: THREE.Scene
   controls: THREE.EventDispatcher | null
-  mouse: THREE.Vector2
+  pointer: THREE.Vector2
   clock: THREE.Clock
 
   linear: boolean
@@ -82,7 +76,11 @@ export type RootState = {
 
   size: Size
   viewport: Viewport & {
-    getCurrentViewport: (camera?: Camera, target?: THREE.Vector3, size?: Size) => Omit<Viewport, 'dpr' | 'initialDpr'>
+    getCurrentViewport: (
+      camera?: Camera,
+      target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
+      size?: Size,
+    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
 
   set: SetState<RootState>
@@ -94,14 +92,9 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   onPointerMissed?: (event: MouseEvent) => void
 
+  previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   internal: InternalState
 }
-
-export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeOffsetsFunction = (
-  event: any,
-  state: RootState,
-) => { offsetX: number; offsetY: number; width?: number; height?: number }
 
 export type StoreProps = {
   gl: THREE.WebGLRenderer
@@ -113,7 +106,7 @@ export type StoreProps = {
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
   dpr?: Dpr
-  raycaster?: Partial<Raycaster>
+  raycaster?: Partial<THREE.Raycaster>
   camera?: (
     | Camera
     | Partial<
@@ -160,15 +153,16 @@ const createStore = (
       set((state) => ({ performance: { ...state.performance, current } }))
 
     return {
+      set,
+      get,
+
       // Mock objects that have to be configured
       gl: null as unknown as THREE.WebGLRenderer,
       camera: null as unknown as Camera,
-      raycaster: null as unknown as Raycaster,
-      events: { connected: false },
+      raycaster: null as unknown as THREE.Raycaster,
+      events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
 
-      set,
-      get,
       invalidate: () => invalidate(get()),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
@@ -178,7 +172,7 @@ const createStore = (
 
       controls: null,
       clock: new THREE.Clock(),
-      mouse: new THREE.Vector2(),
+      pointer: new THREE.Vector2(),
 
       frameloop: 'always',
       onPointerMissed: undefined,
@@ -238,6 +232,7 @@ const createStore = (
         set(() => ({ frameloop }))
       },
 
+      previousRoot: undefined,
       internal: {
         active: false,
         priority: 0,

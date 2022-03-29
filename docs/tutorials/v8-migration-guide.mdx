@@ -83,7 +83,9 @@ You can configure `physicallyCorrectLights` yourself via the `gl` prop:
 <Canvas gl={{ physicallyCorrectLights: true | false }} />
 ```
 
-## Automatic WebXR switching
+## Improved WebXR handling
+
+### Automatic WebXR switching
 
 The `vr` prop was removed in favor of automatic WebXR switching. Whenever a session is requested, XR features are enabled, and the renderer will render at the native refresh rate. The inverse is true when exiting a session.
 
@@ -96,6 +98,16 @@ The `vr` prop was removed in favor of automatic WebXR switching. Whenever a sess
 
 <Canvas />
 ```
+
+### Extended useFrame
+
+In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
+
+```ts
+useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
+```
+
+This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
 
 ## Automatic concurrency
 
@@ -292,10 +304,19 @@ import { createRoot, events } from '@react-three/fiber'
 let root
 
 const handleResize = () => {
+  const size = { width: window.innerWidth, height: window.innerHeight }
+
+  // Create root with a size, events
   root = createRoot(document.querySelector('canvas'), {
     events,
-    size: { width: window.innerWidth, height: window.innerHeight },
-  }).render(<mesh />)
+    size,
+  })
+
+  // Render JSX
+  root.render(<mesh />)
+
+  // Can also tweak root root options after creation:
+  root.configure({ size })
 }
 handleResize()
 

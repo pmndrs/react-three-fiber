@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { StateSelector, EqualityChecker, UseBoundStore, StateListener } from 'zustand'
+import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
@@ -33,40 +33,6 @@ export function useThree<T = RootState>(
   equalityFn?: EqualityChecker<T>,
 ) {
   return useStore()(selector, equalityFn)
-}
-
-export function useInject(state: Partial<RootState>) {
-  const useOriginalStore = useStore()
-  const useInjectStore = React.useMemo<UseBoundStore<RootState>>(() => {
-    const useInjected = (sel: StateSelector<RootState, RootState> = (state) => state) => {
-      // Execute the useStore hook with the selector once, to maintain reactivity, result doesn't matter
-      useOriginalStore(sel)
-      // Inject data and return the result, either selected or raw
-      return sel({ ...useOriginalStore.getState(), ...state })
-    }
-    useInjected.setState = useOriginalStore.setState
-    useInjected.destroy = useOriginalStore.destroy
-    // Patch getState
-    useInjected.getState = (): RootState => {
-      return { ...useOriginalStore.getState(), ...state }
-    }
-    // Patch subscribe
-    useInjected.subscribe = (listener: StateListener<RootState>) => {
-      return useOriginalStore.subscribe((current, previous) => listener({ ...current, ...state }, previous))
-    }
-    return useInjected
-  }, [useOriginalStore, state])
-  // Return the patched store and a provider component
-  return React.useMemo(
-    () =>
-      [
-        ({ children }: { children: React.ReactNode }) => (
-          <context.Provider value={useInjectStore}>{children}</context.Provider>
-        ),
-        useInjectStore,
-      ] as [React.FC<{ children: React.ReactNode }>, UseBoundStore<RootState>],
-    [useInjectStore],
-  )
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {

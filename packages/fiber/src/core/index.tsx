@@ -2,14 +2,14 @@ import * as THREE from 'three'
 import * as React from 'react'
 // @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import { UseBoundStore } from 'zustand'
+import create, { UseBoundStore } from 'zustand'
 
-import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera, Raycaster } from './store'
+import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
-import { getEventPriority, EventManager } from './events'
-import { is, dispose, calculateDpr, EquConfig } from './utils'
-import { useInject } from './hooks'
+import { getEventPriority, EventManager, ComputeFunction } from './events'
+import { is, dispose, calculateDpr, EquConfig, getRootState } from './utils'
+import { useStore } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -98,11 +98,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
-      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster() as Raycaster) })
+      if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
-      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { enabled: true, ...options })
+      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { ...options })
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
@@ -207,12 +207,12 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       return this
     },
-    render(element: React.ReactNode) {
+    render(children: React.ReactNode) {
       // The root has to be configured before it can be rendered
       if (!configured) this.configure()
 
       reconciler.updateContainer(
-        <Provider store={store} element={element} onCreated={onCreated} target={canvas} />,
+        <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
         fiber,
         null,
         () => undefined,
@@ -226,38 +226,40 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 }
 
 function render<TCanvas extends Element>(
-  element: React.ReactNode,
+  children: React.ReactNode,
   canvas: TCanvas,
-  config: RenderProps<TCanvas> = {},
+  config: RenderProps<TCanvas>,
 ): UseBoundStore<RootState> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
-  return root.render(element)
+  return root.render(children)
 }
 
 function Provider<TElement extends Element>({
   store,
-  element,
+  children,
   onCreated,
-  target,
+  rootElement,
 }: {
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
-  element: React.ReactNode
-  target: TElement
+  children: React.ReactNode
+  rootElement: TElement
+  parent?: React.MutableRefObject<TElement | undefined>
 }) {
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
-    // Connect events
-    state.events.connect?.(target)
     // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
+    // Connect events to the targets parent, this is done to ensure events are registered on
+    // a shared target, and not on the canvas itself
+    if (!store.getState().events.connected) state.events.connect?.(rootElement)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return <context.Provider value={store}>{element}</context.Provider>
+  return <context.Provider value={store}>{children}</context.Provider>
 }
 
 function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
@@ -286,31 +288,100 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
-function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  state?: Partial<RootState>,
-): React.ReactNode {
+export type InjectState = Partial<
+  Omit<
+    RootState,
+    | 'set'
+    | 'get'
+    | 'setSize'
+    | 'setFrameloop'
+    | 'setDpr'
+    | 'events'
+    | 'invalidate'
+    | 'advance'
+    | 'performance'
+    | 'internal'
+  > & {
+    events: {
+      enabled?: boolean
+      priority?: number
+      compute?: ComputeFunction
+      connected?: any
+    }
+  }
+>
+
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
   return <Portal children={children} container={container} state={state} />
 }
 
 function Portal({
-  state,
+  state = {},
   children,
   container,
 }: {
   children: React.ReactNode
-  state?: Partial<RootState>
+  state?: InjectState
   container: THREE.Object3D
 }) {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
-   *  if this is our environment, then we are in in r3f's renderer but in react-dom, it would trigger
+   *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const portalState = React.useMemo(() => ({ ...state, scene: container as THREE.Scene }), [state, container])
-  const [PortalProvider, portalRoot] = useInject(portalState)
-  return <>{reconciler.createPortal(<PortalProvider>{children}</PortalProvider>, portalRoot, null)}</>
+
+  const { events, ...rest } = state
+  const previousRoot = useStore()
+  const [raycaster] = React.useState(() => new THREE.Raycaster())
+
+  const inject = React.useCallback(
+    (state: RootState, injectState?: RootState) => {
+      const intersect: Partial<RootState> = { ...state }
+
+      if (injectState) {
+        // Only the fields of "state" that do not differ from injectState
+        Object.keys(state).forEach((key) => {
+          if (
+            // Some props should be off-limits
+            !['size', 'viewport', 'internal', 'performance'].includes(key) &&
+            // Otherwise filter out the props that are different and let the inject layer take precedence
+            state[key as keyof RootState] !== injectState[key as keyof RootState]
+          )
+            delete intersect[key as keyof RootState]
+        })
+      }
+
+      return {
+        ...intersect,
+        scene: container as THREE.Scene,
+        previousRoot,
+        raycaster,
+        events: { ...state.events, ...events },
+        ...rest,
+      } as RootState
+    },
+    [state],
+  )
+
+  const [useInjectStore] = React.useState(() => {
+    const store = create<RootState>((set, get) => ({ ...inject(previousRoot.getState()), set, get }))
+    previousRoot.subscribe((state) => useInjectStore.setState((injectState) => inject(state, injectState)))
+    return store
+  })
+
+  React.useEffect(() => {
+    useInjectStore.setState((injectState) => inject(previousRoot.getState(), injectState))
+  }, [inject])
+
+  return (
+    <>
+      {reconciler.createPortal(
+        <context.Provider value={useInjectStore}>{children}</context.Provider>,
+        useInjectStore,
+        null,
+      )}
+    </>
+  )
 }
 
 reconciler.injectIntoDevTools({
@@ -337,6 +408,7 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
+  getRootState,
   act,
   roots as _roots,
 }

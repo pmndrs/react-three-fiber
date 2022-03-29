@@ -68,6 +68,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const onPointerMissed = useMemoizedFn(props.onPointerMissed)
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const meshRef = React.useRef<HTMLDivElement>(null!)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
@@ -85,8 +86,15 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   if (width > 0 && height > 0 && canvas) {
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
-
-    root.current.configure({ ...canvasProps, size: { width, height }, events })
+    root.current.configure({
+      ...canvasProps,
+      onCreated: (state) => {
+        state.events.connect?.(meshRef.current)
+        canvasProps.onCreated?.(state)
+      },
+      size: { width, height },
+      events,
+    })
     root.current.render(
       <ErrorBoundary set={setError}>
         <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
@@ -104,7 +112,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   return (
     <div
-      ref={containerRef}
+      ref={mergeRefs([meshRef, containerRef])}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       {...divProps}>
       <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
