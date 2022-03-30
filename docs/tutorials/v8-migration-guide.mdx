@@ -98,10 +98,9 @@ Concurrency is now part of React 18, which automatically switches between blocki
 React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule expensive operations and state updates. Use these to de-prioritize expensive operations.
 
 ```jsx
-import { useTransition } from 'react'
+import { startTransition } from 'react'
 import { Points } from '@react-three/drei'
 
-const [startTransition, isPending] = useTransition()
 const [radius, setRadius] = useState(1)
 const positions = calculatePositions(radius)
 const colors = calculateColors(radius)
@@ -116,6 +115,16 @@ const sizes = calculateSizes(radius)
   <meshBasicMaterial vertexColors />
 </Points>
 ```
+
+### Examples
+
+Please be careful, this is an extreme stress test. It creates so much load that without React the browser will freeze or crash.
+
+<p>
+  <a href="https://codesandbox.io/s/qjo4t">
+    <img width="49%" src="https://codesandbox.io/api/v1/sandboxes/qjo4t/screenshot.png" alt="View splitting" />
+  </a>
+</p>
 
 ## Conditional rendering with frameloop
 
