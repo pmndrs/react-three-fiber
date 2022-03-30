@@ -1,5 +1,16 @@
 # @react-three/fiber
 
+## 8.0.0
+
+### Major Changes
+
+- 385ba9c: v8 major, react-18 compat
+- 04c07b8: v8 major, react-18 compat
+
+### Patch Changes
+
+- 347ea79: new beta for library testing
+
 ## 8.0.0-beta.0
 
 ### Major Changes
