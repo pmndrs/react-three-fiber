@@ -378,7 +378,9 @@ No changes are necessary for `@react-three/test-renderer` as THREE is extended a
 
 `createPortal` allows you to write a declarative JSX scene into a pre-existing, foreign object. This has been very useful for portals, heads-up displays, view-cubes, view splitting, etc.
 
-But these things were very limited and lacked event support as well as support for eco-system packages (for instance putting OrbitControls into a split view). With this release `createPortal` creates a virtual state-model in which everything keeps functioning. Events work, you can use any 3rd party eco-system control and throw it in there.
+But these things were very limited and lacked event support as well as support for eco-system packages (for instance putting OrbitControls into a split view).
+
+With this release `createPortal` creates a virtual state-model in which everything keeps functioning. Events work, you can use any 3rd party eco-system control and throw it in there.
 
 The event layering part of this was submitted by [@theatre_js](https://twitter.com/theatre_js) and [@AndrewPrifer](https://twitter.com/AndrewPrifer) 🎉.
 
@@ -392,6 +394,31 @@ function HeadsUpDisplay({ children }) {
   })
 }
 ```
+
+The event system in particular can now be layered, so that you can have portals inside portals with event priority. You can also inject objects into RootState right away, these will become the defaults inside the portalled state world and anything using `useThree` inside will receive these objects.
+
+Here is an example of a layered portal:
+
+```jsx
+createPortal(children, scene, {
+  camera: myCustomCamera,
+  events: {
+    priority: previousPriority - 1,
+    compute: (event, state, previous) => {
+      // First we call the previous state-onion-layers compute, this is what makes it possible to nest portals
+      if (!previous.raycaster.camera) previous.events.compute(event, previous, previous.previousRoot.getState())
+      // We run a quick check against the textured plane itself, if it isn't hit there's no need to raycast at all
+      const [intersection] = previous.raycaster.intersectObject(ref.current)
+      if (!intersection) return false
+      // We take that hits uv coords, set up this layers raycaster, et voilà, we have raycasting with perspective shift
+      const uv = intersection.uv
+      state.raycaster.setFromCamera(state.pointer.set(uv.x * 2 - 1, uv.y * 2 - 1), camera)
+    },
+  },
+})
+```
+
+`createPortal` can still be considered low-level and the exact API for `compute` is still experimental at this point. Expect ready-made components for portals, hud's and view-splitting to come to drei soon.
 
 ### Examples
 
@@ -424,3 +451,5 @@ testInstance.findAllByProps(props)
 // Also accepts RegExp matchers
 testInstance.findAllByProps({ [prop]: /^matches/i })
 ```
+
+React-three-test-renderer was submitted by [@_josh_ellis_](https://twitter.com/_josh_ellis_) 🎉.
