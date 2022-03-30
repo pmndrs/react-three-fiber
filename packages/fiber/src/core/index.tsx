@@ -356,15 +356,20 @@ function Portal({
         scene: container as THREE.Scene,
         previousRoot,
         raycaster,
-        events: { ...state.events, ...events },
+        events: { ...state.events, ...injectState?.events, ...events },
         ...rest,
       } as RootState
     },
     [state],
   )
-
   const [useInjectStore] = React.useState(() => {
-    const store = create<RootState>((set, get) => ({ ...inject(previousRoot.getState()), set, get }))
+    const store = create<RootState>((set, get) => ({
+      ...inject(previousRoot.getState()),
+      set,
+      get,
+      setEvents: (events: Partial<EventManager<any>>) =>
+        set((state) => ({ ...state, events: { ...state.events, ...events } })),
+    }))
     previousRoot.subscribe((state) => useInjectStore.setState((injectState) => inject(state, injectState)))
     return store
   })

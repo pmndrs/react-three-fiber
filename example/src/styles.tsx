@@ -81,7 +81,24 @@ const Global = createGlobalStyle`
 
   canvas {
     touch-action: none;
-    background: #dedddf !important;
+  }
+
+  .container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .text {
+    line-height: 1em;
+    text-align: left;
+    font-size: 8em;
+    word-break: break-word;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
   }
 `
 export const DemoPanel = styled.div`

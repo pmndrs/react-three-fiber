@@ -246,7 +246,7 @@ const createStore = (
       },
 
       setEvents: (events: Partial<EventManager<any>>) =>
-        set((state) => ({ ...state, events: { ...state.events, events } })),
+        set((state) => ({ ...state, events: { ...state.events, ...events } })),
       setSize: (width: number, height: number) => {
         const camera = get().camera
         const size = { width, height }
