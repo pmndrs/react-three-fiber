@@ -183,6 +183,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
       if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
 
+      // Update color management state
+      if (state.legacy !== legacy) state.set(() => ({ legacy }))
+      if (state.linear !== linear) state.set(() => ({ linear }))
+      if (state.flat !== flat) state.set(() => ({ flat }))
+
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
         applyProps(gl as any, glConfig as any)

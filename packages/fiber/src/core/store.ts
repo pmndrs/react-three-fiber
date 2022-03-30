@@ -91,6 +91,8 @@ export type RootState = {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
+  /* Whether to enable r139's THREE.ColorManagement.legacyMode */
+  legacy: boolean
   /** Shortcut to gl.outputEncoding = LinearEncoding */
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
@@ -133,9 +135,9 @@ export type StoreProps = {
   gl: THREE.WebGLRenderer
   size: Size
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
+  legacy?: boolean
   linear?: boolean
   flat?: boolean
-  legacy?: boolean
   orthographic?: boolean
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
@@ -202,6 +204,7 @@ const createStore = (
       invalidate: () => invalidate(get()),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
+      legacy: false,
       linear: false,
       flat: false,
       scene: prepare<THREE.Scene>(new THREE.Scene()),

@@ -3,7 +3,15 @@ import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
+import {
+  createRoot,
+  act,
+  unmountComponentAtNode,
+  useFrame,
+  extend,
+  ReactThreeFiber,
+  ReconcilerRoot,
+} from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
@@ -651,5 +659,25 @@ describe('renderer', () => {
     })
     expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+  })
+
+  it('should respect legacy prop', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = createRoot(canvas)
+        .configure({ legacy: true })
+        .render(<group />)
+        .getState().gl
+    })
+
+    expect((THREE as any).ColorManagement.legacyMode).toBe(true)
+
+    await act(async () => {
+      gl = createRoot(canvas)
+        .configure({ legacy: false })
+        .render(<group />)
+        .getState().gl
+    })
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
   })
 })
