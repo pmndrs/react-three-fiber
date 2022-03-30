@@ -296,9 +296,21 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
         // Otherwise just set ...
         else targetProp.set(value)
+        // For versions of three which don't support THREE.ColorManagement,
+        // Auto-convert sRGB colors
+        // https://github.com/pmndrs/react-three-fiber/issues/344
+        const supportsColorManagement = (THREE as any).ColorManagement
+        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
-    } else currentInstance[key] = value
+    } else {
+      currentInstance[key] = value
+      // Auto-convert sRGB textures, for now ...
+      // https://github.com/pmndrs/react-three-fiber/issues/344
+      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
+        currentInstance[key].encoding = THREE.sRGBEncoding
+      }
+    }
 
     invalidateInstance(instance)
   })
