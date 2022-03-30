@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.2
+
+### Patch Changes
+
+- 8035d1f: fix: legacy mode
+
 ## 8.0.1
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.2
+
+### Patch Changes
+
+- 8035d1f: fix: legacy mode
+- Updated dependencies [8035d1f]
+  - @react-three/fiber@8.0.2
+
 ## 8.0.1
 
 ### Patch Changes
