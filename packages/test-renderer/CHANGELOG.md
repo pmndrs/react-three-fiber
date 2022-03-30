@@ -1,5 +1,16 @@
 # @react-three/test-renderer
 
+## 8.0.0-beta.0
+
+### Major Changes
+
+- 385ba9c: v8 major, react-18 compat
+
+### Patch Changes
+
+- Updated dependencies [385ba9c]
+  - @react-three/fiber@8.0.0-beta.0
+
 ## 7.0.25-beta.0
 
 ### Patch Changes

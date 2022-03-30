@@ -2,6 +2,12 @@
 
 ## 8.0.0-beta.0
 
+### Major Changes
+
+- 385ba9c: v8 major, react-18 compat
+
+## 8.0.0-beta.0
+
 ### Patch Changes
 
 - cf6316c: new beta for library testing
