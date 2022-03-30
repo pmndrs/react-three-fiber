@@ -4,9 +4,13 @@ description: Changes and new features with v8 and react 18
 nav: 13
 ---
 
+Work on version 8 has begun 3 Sep 2021 and is perhaps the biggest update to fiber yet. We've tried our best to keep breaking-changes to a minimum, they mostly affect rarely used api's like `attach`. This release brings a ton of performance related fixes, but also includes some new and ground breaking features.
+
 ## React Native support
 
-With React 18 and Expo 43, you can now ship threejs goodness across web and native. See [installation](/react-three-fiber/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
+With React 18 and Expo 43, you can now ship threejs goodness across web and native. These apps are not confined to a web-view, they are truly native OpenGLES. Now expo-gl, which does the hard lifting, has existed for a while, but we've addressed some of the common concerns related to interop and making the three eco system readily work in the native space. For instance, you handle assets the same exact way you'd treat them in a web app.
+
+See [installation](/react-three-fiber/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
 
 ```diff
 - import { Canvas, useLoader } from '@react-three/fiber'
@@ -453,3 +457,21 @@ testInstance.findAllByProps({ [prop]: /^matches/i })
 ```
 
 React-three-test-renderer was submitted by [@_josh_ellis_](https://twitter.com/_josh_ellis_) 🎉.
+
+## Deprecated
+
+```diff
+useFrame((state) => {
+- state.mouse
++ state.pointer
+```
+
+```diff
+onClick={(event) => {
+- event.sourceEvent
++ event.nativeEvent
+
+- event.spaceX
+- event.spaceY
++ event.pointer
+```

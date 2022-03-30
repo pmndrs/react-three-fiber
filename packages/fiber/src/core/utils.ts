@@ -301,7 +301,6 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     } else currentInstance[key] = value
 
     invalidateInstance(instance)
-    return instance
   })
 
   if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
@@ -314,6 +313,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
 
   // Call the update lifecycle when it is being updated, but only when it is part of the scene
   if (changes.length && instance.parent) updateInstance(instance)
+
+  return instance
 }
 
 export function invalidateInstance(instance: Instance) {
