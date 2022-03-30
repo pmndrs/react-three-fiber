@@ -81,6 +81,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         shadows = false,
         linear = false,
         flat = false,
+        legacy = false,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -174,7 +175,9 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       }
 
       // Set color management
-      if ((THREE as any).ColorManagement) (THREE as any).ColorManagement.legacyMode = false
+      if ((THREE as any).ColorManagement) {
+        ;(THREE as any).ColorManagement.legacyMode = !legacy
+      }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding

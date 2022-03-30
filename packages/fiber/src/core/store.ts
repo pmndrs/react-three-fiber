@@ -135,6 +135,7 @@ export type StoreProps = {
   shadows?: boolean | Partial<THREE.WebGLShadowMap>
   linear?: boolean
   flat?: boolean
+  legacy?: boolean
   orthographic?: boolean
   frameloop?: 'always' | 'demand' | 'never'
   performance?: Partial<Omit<Performance, 'regress'>>
