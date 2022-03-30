@@ -165,7 +165,7 @@ The `gl` prop can now accept both constructor args and renderer properties like 
 <Canvas gl={{ alpha: false, physicallyCorrectLights: true }} />
 ```
 
-It can also accept a synchronous callback to manually create a renderer.
+It can also accept a synchronous callback to manually create a renderer. This allows you to use any custom renderer you want.
 
 ```jsx
 <Canvas gl={(canvas) => new Renderer({ canvas })} />
@@ -309,32 +309,39 @@ import {
 + createRoot(canvas).configure({ events }).render(<mesh />)
 ```
 
-Here is a more generic setup with responsive resize:
+Here is a typical setup:
 
 ```jsx
-import { createRoot, events } from '@react-three/fiber'
+import * as THREE from 'three'
+import { extend, createRoot, events } from '@react-three/fiber'
 
-// createRoot should only be called once
-let root = createRoot(document.querySelector('canvas'))
-// You can then configure it, same props that canvas normally takes
-root.configure({ events })
+extend(THREE)
 
-function handleResize() {
-  const width = window.innerWidth
-  const height = window.innerHeight
-  // Change configuration later on
-  root.configure({ size: { width, height } })
-}
+const root = createRoot(document.querySelector('#root'))
 
-handleResize()
-window.addEventListener('resize', handleResize)
+window.addEventListener('resize', () => {
+  root.configure({
+    events,
+    camera: { position: [0, 0, 50]., fov: 50 },
+    size: { width: window.innerWidth, height: window.innerHeight }
+  })
+  root.render(<App />)
+})
+window.dispatchEvent(new Event('resize'))
 
-// Render the scene
-root.render(<mesh />)
-
-// Unmount the root
-root.unmount()
+// This is how you would unmount the root
+// root.unmount()
 ```
+
+### Examples
+
+This is a custom-renderer example using the createRoot api:
+
+<p>
+  <a href="https://codesandbox.io/s/zcuqh">
+    <img width="49%" src="https://codesandbox.io/api/v1/sandboxes/zcuqh/screenshot.png" alt="View splitting" />
+  </a>
+</p>
 
 ## Tree-shaking via extend
 
