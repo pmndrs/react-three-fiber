@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.1
+
+### Patch Changes
+
+- 26db195: add legacy flag to turn of three.colormanagement
+
 ## 8.0.0
 
 ### Major Changes

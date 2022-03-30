@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.1
+
+### Patch Changes
+
+- 26db195: add legacy flag to turn of three.colormanagement
+- Updated dependencies [26db195]
+  - @react-three/fiber@8.0.1
+
 ## 8.0.0
 
 ### Major Changes
