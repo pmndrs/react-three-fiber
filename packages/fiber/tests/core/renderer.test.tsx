@@ -3,15 +3,7 @@ import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import {
-  createRoot,
-  act,
-  unmountComponentAtNode,
-  useFrame,
-  extend,
-  ReactThreeFiber,
-  ReconcilerRoot,
-} from '../../src/index'
+import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
