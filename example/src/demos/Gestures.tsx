@@ -28,7 +28,7 @@ function Obj({ scale = 1, z = 0, opacity = 1 }) {
       }}
       castShadow
       scale={scale}>
-      <dodecahedronGeometry args={[2, 0]} />
+      <dodecahedronGeometry args={[1, 0]} />
       <meshStandardMaterial transparent opacity={opacity} color={true ? 'hotpink' : 'orange'} />
     </mesh>
   )
@@ -36,7 +36,7 @@ function Obj({ scale = 1, z = 0, opacity = 1 }) {
 
 export default function App() {
   return (
-    <Canvas style={{ background: '#222' }}>
+    <Canvas>
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <pointLight position={[-10, -10, -10]} />

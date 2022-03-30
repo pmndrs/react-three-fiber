@@ -54,7 +54,6 @@ The hook is reactive, if you resize the browser for instance, you get fresh meas
 | camera          | Camera                                                    | `THREE.PerspectiveCamera`                                                                                                                                                                                      |
 | mouse           | Contains updated, normalized, centric pointer coordinates | `THREE.Vector2`                                                                                                                                                                                                |
 | clock           | Running system clock                                      | `THREE.Clock`                                                                                                                                                                                                  |
-| vr              | True when the system is in VR mode                        | `boolean`                                                                                                                                                                                                      |
 | linear          | True when the colorspace is linear                        | `boolean`                                                                                                                                                                                                      |
 | flat            | True when no tonemapping is used                          | `boolean`                                                                                                                                                                                                      |
 | frameloop       | React render-mode                                         | `always`, `demand`, `never`                                                                                                                                                                                    |
@@ -111,7 +110,7 @@ This hook allows you to execute code on every rendered frame, like running effec
 import { useFrame } from '@react-three/fiber'
 
 function Foo() {
-  useFrame((state, delta) => {
+  useFrame((state, delta, xrFrame) => {
     // This function runs at the native refresh rate inside of a shared render-loop
   })
 ```

@@ -101,14 +101,9 @@ function Line({ defaultStart, defaultEnd }: any) {
     <>
       <line ref={lineRef as any}>
         <bufferGeometry>
-          <bufferAttribute
-            attachObject={['attributes', 'position']}
-            count={positions.length / 3}
-            array={positions}
-            itemSize={3}
-          />
+          <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
         </bufferGeometry>
-        <lineBasicMaterial color="white" />
+        <lineBasicMaterial color="black" />
       </line>
       <EndPoint position={start} onDrag={(v: any) => setStart(v.toArray())} />
       <EndPoint position={end} onDrag={(v: any) => setEnd(v.toArray())} />
@@ -140,7 +135,6 @@ export default function App() {
     <Canvas
       frameloop="demand"
       orthographic
-      style={{ background: '#272727', touchAction: 'none' }}
       raycaster={{ params: { Line: { threshold: 5 } } }}
       camera={{ position: [0, 0, 500], zoom: 1 }}>
       <Controls>

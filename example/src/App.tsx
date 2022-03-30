@@ -1,125 +1,63 @@
-import React, { Suspense } from 'react'
-import styled from 'styled-components'
-import { HashRouter, Link, Route, Switch, useRouteMatch, useLocation } from 'react-router-dom'
+import * as React from 'react'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Global, Page as PageImpl } from './styles'
+import { Route, useRoute, Redirect } from 'wouter'
+
+import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
+
 import * as demos from './demos'
 
-const defaultComponent = 'Reparenting'
+const DEFAULT_COMPONENT_NAME = 'MagicMirror'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
-const label = {
-  position: 'absolute',
-  padding: '10px 20px',
-  bottom: 'unset',
-  right: 'unset',
-  top: 60,
-  left: 60,
-  maxWidth: 380,
-}
-
-function HtmlLoader() {
-  return <span style={{ ...label, border: '2px solid #10af90', color: '#10af90' }}>waiting...</span>
-}
 
 function ErrorBoundary({ children, fallback, name }: any) {
   const { ErrorBoundary, didCatch, error } = useErrorBoundary()
   return didCatch ? fallback(error) : <ErrorBoundary key={name}>{children}</ErrorBoundary>
 }
 
-function Intro() {
-  return (
-    <Page>
-      <Suspense fallback={<HtmlLoader />}>
-        <Switch>
-          <Route exact path="/" component={visibleComponents[defaultComponent].Component} />
-          <Route
-            exact
-            path="/demo/:name"
-            render={({ match }) => {
-              const Component = visibleComponents[match.params.name].Component
-              return (
-                <ErrorBoundary
-                  key={match.params.name}
-                  fallback={(e: any) => (
-                    <span style={{ ...label, border: '2px solid #ff5050', color: '#ff5050' }}>{e}</span>
-                  )}>
-                  <Component />
-                </ErrorBoundary>
-              )
-            }}
-          />
-        </Switch>
-      </Suspense>
+function Demo() {
+  const [match, params] = useRoute('/demo/:name')
+  const compName = match ? params.name : DEFAULT_COMPONENT_NAME
+  const { Component } = visibleComponents[compName]
 
-      <Dots />
-    </Page>
+  return (
+    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e}</Error>}>
+      <Component />
+    </ErrorBoundary>
   )
 }
 
 function Dots() {
-  const location = useLocation()
-  const match: any = useRouteMatch('/demo/:name')
-  const dev = React.useMemo(() => new URLSearchParams(location.search).get('dev'), [location.search])
-  const { bright } = visibleComponents[match?.params.name ?? defaultComponent]
+  const [match, params] = useRoute('/demo/:name')
+  if (!match) return null
+
   return (
     <>
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
-          const style = {
-            // to complex to optimize
-            background:
-              (!match && name === defaultComponent) || (match && match.params.name === name)
-                ? 'salmon'
-                : bright
-                ? '#2c2d31'
-                : 'white',
-          }
-          return dev ? null : (
-            <Link key={name} to={`/demo/${name}`}>
-              <Spot style={style} />
-            </Link>
-          )
+          const background = params.name === name ? 'salmon' : '#fff'
+          return <Dot key={name} to={`/demo/${name}`} style={{ background }} />
         })}
       </DemoPanel>
-      <span style={{ color: bright ? '#2c2d31' : 'white' }}>{match?.params.name ?? defaultComponent}</span>
+      <span style={{ color: 'white' }}>{params.name}</span>
     </>
   )
 }
 
 export default function App() {
+  const dev = new URLSearchParams(location.search).get('dev')
+
   return (
-    <HashRouter>
+    <>
       <Global />
-      <Intro />
-    </HashRouter>
+      <Page>
+        <React.Suspense fallback={<Loading />}>
+          <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
+          <Route path="/demo/:name">
+            <Demo />
+          </Route>
+        </React.Suspense>
+        {dev === null && <Dots />}
+      </Page>
+    </>
   )
 }
-
-const Page = styled(PageImpl)`
-  & > h1 {
-    position: absolute;
-    top: 70px;
-    left: 60px;
-  }
-
-  & > span {
-    position: absolute;
-    bottom: 60px;
-    right: 60px;
-  }
-`
-
-const DemoPanel = styled.div`
-  position: absolute;
-  bottom: 50px;
-  left: 50px;
-  max-width: 250px;
-`
-
-const Spot = styled.div`
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  margin: 8px;
-`

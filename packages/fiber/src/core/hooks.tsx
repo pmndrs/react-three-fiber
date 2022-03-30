@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
-import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
-import { useAsset } from 'use-asset'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
+import { buildGraph, ObjectMap, is } from './utils'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -14,17 +15,12 @@ export interface Loader<T> extends THREE.Loader {
   ): unknown
 }
 
-type Extensions = (loader: THREE.Loader) => void
-type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
-type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
-type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
+export type Extensions = (loader: THREE.Loader) => void
+export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
+export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
+export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 type noop = (...args: any[]) => any
 type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
-
-export type ObjectMap = {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
-}
 
 export function useStore() {
   const store = React.useContext(context)
@@ -47,21 +43,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   // Subscribe on mount, unsubscribe on unmount
   React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
   return null
-}
-
-function buildGraph(object: THREE.Object3D) {
-  const data: ObjectMap = { nodes: {}, materials: {} }
-  if (object) {
-    object.traverse((obj: any) => {
-      if (obj.name) {
-        data.nodes[obj.name] = obj
-      }
-      if (obj.material && !data.materials[obj.material.name]) {
-        data.materials[obj.material.name] = obj.material
-      }
-    })
-  }
-  return data
 }
 
 export function useGraph(object: THREE.Object3D) {
@@ -107,7 +88,7 @@ export function useLoader<T, U extends string | string[]>(
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = useAsset(loadingFn<T>(extensions, onProgress), Proto, ...keys)
+  const results = suspend(loadingFn<T>(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
     ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
@@ -120,10 +101,10 @@ useLoader.preload = function <T, U extends string | string[]>(
   extensions?: Extensions,
 ) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return useAsset.preload(loadingFn<T>(extensions), Proto, ...keys)
+  return preload(loadingFn<T>(extensions), [Proto, ...keys])
 }
 
 useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return useAsset.clear(Proto, ...keys)
+  return clear([Proto, ...keys])
 }

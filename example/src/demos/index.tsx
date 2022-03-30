@@ -1,63 +1,51 @@
 import { lazy } from 'react'
 
-const Viewcube = { descr: '', tags: [], Component: lazy(() => import('./Viewcube')), dev: true, bright: true }
-const Selection = { descr: '', tags: [], Component: lazy(() => import('./Selection')), dev: true }
-const Pointcloud = { descr: '', tags: [], Component: lazy(() => import('./Pointcloud')), dev: true, bright: true }
-const Gestures = { descr: '', tags: [], Component: lazy(() => import('./Gestures')), bright: false }
-const Reparenting = { descr: '', tags: [], Component: lazy(() => import('./Reparenting')), dev: true, bright: true }
-const MultiRender = { descr: '', tags: [], Component: lazy(() => import('./MultiRender')), dev: true, bright: true }
-const MultiScene = { descr: '', tags: [], Component: lazy(() => import('./MultiScene')), dev: true }
-const Lines = { descr: '', tags: [], Component: lazy(() => import('./Lines')), dev: true }
-const StopPropagation = {
-  descr: '',
-  tags: [],
-  Component: lazy(() => import('./StopPropagation')),
-  dev: true,
-  bright: true,
-}
-const ContextMenuOverride = {
-  descr: '',
-  tags: [],
-  Component: lazy(() => import('./ContextMenuOverride')),
-  dev: true,
-  bright: true,
-}
-const ClickAndHover = { descr: '', tags: [], Component: lazy(() => import('./ClickAndHover')), dev: true, bright: true }
-const SVGRenderer = { descr: '', tags: [], Component: lazy(() => import('./SVGRenderer')), dev: true, bright: true }
-const ResetProps = { descr: '', tags: [], Component: lazy(() => import('./ResetProps')), dev: true, bright: true }
-//const Animation = { descr: '', tags: [], Component: lazy(() => import('./Animation')), dev: true, bright: true }
-const AutoDispose = { descr: '', tags: [], Component: lazy(() => import('./AutoDispose')), dev: true, bright: true }
-const Layers = { descr: '', tags: [], Component: lazy(() => import('./Layers')), dev: true, bright: true }
-const MultiMaterial = { descr: '', tags: [], Component: lazy(() => import('./MultiMaterial')), dev: true, bright: true }
-const Gltf = { descr: '', tags: [], Component: lazy(() => import('./Gltf')), dev: true, bright: true }
-const Test = { descr: '', tags: [], Component: lazy(() => import('./Test')), dev: true, bright: true }
-const SuspenseAndErrors = {
-  descr: '',
-  tags: [],
-  Component: lazy(() => import('./SuspenseAndErrors')),
-  dev: true,
-  bright: true,
-}
+const Animation = { Component: lazy(() => import('./Animation')) }
+const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
+const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
+const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
+const Gestures = { Component: lazy(() => import('./Gestures')) }
+const Gltf = { Component: lazy(() => import('./Gltf')) }
+const Inject = { Component: lazy(() => import('./Inject')) }
+const Layers = { Component: lazy(() => import('./Layers')) }
+const Lines = { Component: lazy(() => import('./Lines')) }
+const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
+const MultiRender = { Component: lazy(() => import('./MultiRender')) }
+const MultiView = { Component: lazy(() => import('./MultiView')) }
+const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
+const Reparenting = { Component: lazy(() => import('./Reparenting')) }
+const ResetProps = { Component: lazy(() => import('./ResetProps')) }
+const Selection = { Component: lazy(() => import('./Selection')) }
+const StopPropagation = { Component: lazy(() => import('./StopPropagation')) }
+const SuspenseAndErrors = { Component: lazy(() => import('./SuspenseAndErrors')) }
+const SuspenseMaterial = { Component: lazy(() => import('./SuspenseMaterial')) }
+const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
+const Test = { Component: lazy(() => import('./Test')) }
+const Viewcube = { Component: lazy(() => import('./Viewcube')) }
+const MagicMirror = { Component: lazy(() => import('./MagicMirror')) }
 
 export {
-  Reparenting,
-  MultiRender,
-  MultiScene,
-  Selection,
-  Lines,
-  Gestures,
-  StopPropagation,
-  ClickAndHover,
-  Pointcloud,
-  SVGRenderer,
-  ResetProps,
-  //Animation,
+  Animation,
   AutoDispose,
-  Layers,
-  MultiMaterial,
-  SuspenseAndErrors,
+  ClickAndHover,
   ContextMenuOverride,
-  Viewcube,
+  Gestures,
   Gltf,
+  Inject,
+  Layers,
+  Lines,
+  MultiMaterial,
+  MultiRender,
+  Pointcloud,
+  Reparenting,
+  ResetProps,
+  Selection,
+  StopPropagation,
+  SuspenseAndErrors,
+  SuspenseMaterial,
+  SVGRenderer,
   Test,
+  Viewcube,
+  MultiView,
+  MagicMirror,
 }

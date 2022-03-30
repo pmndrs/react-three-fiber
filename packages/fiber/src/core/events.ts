@@ -1,27 +1,37 @@
 import * as THREE from 'three'
+// @ts-ignore
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
+import { getRootState } from './utils'
 import type { UseBoundStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
 
 export interface Intersection extends THREE.Intersection {
+  /** The event source (the object which registered the handler) */
   eventObject: THREE.Object3D
 }
 
 export interface IntersectionEvent<TSourceEvent> extends Intersection {
+  /** The event source (the object which registered the handler) */
+  eventObject: THREE.Object3D
+  /** An array of intersections */
   intersections: Intersection[]
-  stopped: boolean
+  /** vec3.set(pointer.x, pointer.y, 0).unproject(camera) */
   unprojectedPoint: THREE.Vector3
-  ray: THREE.Ray
-  camera: Camera
-  stopPropagation: () => void
-  /**
-   * @deprecated in favour of nativeEvent. Please use that instead.
-   */
-  sourceEvent: TSourceEvent
-  nativeEvent: TSourceEvent
+  /** Normalized event coordinates */
+  pointer: THREE.Vector2
+  /** Delta between first click and this event */
   delta: number
-  spaceX: number
-  spaceY: number
+  /** The ray that pierced it */
+  ray: THREE.Ray
+  /** The camera that was used by the raycaster */
+  camera: Camera
+  /** stopPropagation will stop underlying handlers from firing */
+  stopPropagation: () => void
+  /** The original host event */
+  nativeEvent: TSourceEvent
+  /** If the event was stopped by calling stopPropagation */
+  stopped: boolean
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -57,10 +67,25 @@ export type EventHandlers = {
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
 }
 
+export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
+export type ComputeFunction = (event: DomEvent, root: RootState, previous?: RootState) => void
+
 export interface EventManager<TTarget> {
-  connected: TTarget | boolean
+  /** Determines if the event layer is active */
+  enabled: boolean
+  /** Event layer priority, higher prioritized layers come first and may stop(-propagate) lower layer  */
+  priority: number
+  /** The compute function needs to set up the raycaster and an xy- pointer  */
+  compute?: ComputeFunction
+  /** The filter can re-order or re-structure the intersections  */
+  filter?: FilterFunction
+  /** The target node the event layer is tied to */
+  connected?: TTarget
+  /** All the pointer event handlers through which the host forwards native events */
   handlers?: Events
+  /** Allows re-connecting to another target */
   connect?: (target: TTarget) => void
+  /** Removes all existing events handlers from the target */
   disconnect?: () => void
 }
 
@@ -71,6 +96,30 @@ export interface PointerCaptureTarget {
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
+}
+
+// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+// Gives React a clue as to how import the current interaction is
+export function getEventPriority() {
+  let name = window?.event?.type
+  switch (name) {
+    case 'click':
+    case 'contextmenu':
+    case 'dblclick':
+    case 'pointercancel':
+    case 'pointerdown':
+    case 'pointerup':
+      return DiscreteEventPriority
+    case 'pointermove':
+    case 'pointerout':
+    case 'pointerover':
+    case 'pointerenter':
+    case 'pointerleave':
+    case 'wheel':
+      return ContinuousEventPriority
+    default:
+      return DefaultEventPriority
+  }
 }
 
 /**
@@ -95,12 +144,13 @@ function releaseInternalPointerCapture(
 }
 
 export function removeInteractivity(store: UseBoundStore<RootState>, object: THREE.Object3D) {
-  const { internal } = store.getState()
+  const { events, internal } = store.getState()
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
   internal.initialHits = internal.initialHits.filter((o) => o !== object)
   internal.hovered.forEach((value, key) => {
     if (value.eventObject === object || value.object === object) {
+      // Clear out intersects, they are outdated by now
       internal.hovered.delete(key)
     }
   })
@@ -111,22 +161,6 @@ export function removeInteractivity(store: UseBoundStore<RootState>, object: THR
 
 export function createEvents(store: UseBoundStore<RootState>) {
   const temp = new THREE.Vector3()
-
-  /** Sets up defaultRaycaster */
-  function prepareRay(event: DomEvent) {
-    const state = store.getState()
-    const { raycaster, mouse, camera, size } = state
-    // https://github.com/pmndrs/react-three-fiber/pull/782
-    // Events trigger outside of canvas when moved
-    const customOffsets = raycaster.computeOffsets?.(event, state)
-    const offsetX = customOffsets?.offsetX ?? event.offsetX
-    const offsetY = customOffsets?.offsetY ?? event.offsetY
-    const width = customOffsets?.width ?? size.width
-    const height = customOffsets?.height ?? size.height
-
-    mouse.set((offsetX / width) * 2 - 1, -(offsetY / height) * 2 + 1)
-    raycaster.setFromCamera(mouse, camera)
-  }
 
   /** Calculates delta */
   function calculateDistance(event: DomEvent) {
@@ -145,48 +179,70 @@ export function createEvents(store: UseBoundStore<RootState>) {
     )
   }
 
-  function intersect(filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
+  function intersect(event: DomEvent, filter?: (objects: THREE.Object3D[]) => THREE.Object3D[]) {
     const state = store.getState()
-    const { raycaster, internal } = state
-    // Skip event handling when noEvents is set
-    if (!raycaster.enabled) return []
-
-    const seen = new Set<string>()
+    const duplicates = new Set<string>()
     const intersections: Intersection[] = []
-
     // Allow callers to eliminate event objects
-    const eventsObjects = filter ? filter(internal.interaction) : internal.interaction
-
-    // Intersect known handler objects and filter against duplicates
-    let intersects = raycaster.intersectObjects(eventsObjects, true).filter((item) => {
-      const id = makeId(item as Intersection)
-      if (seen.has(id)) return false
-      seen.add(id)
-      return true
+    const eventsObjects = filter ? filter(state.internal.interaction) : state.internal.interaction
+    // Reset all raycaster cameras to undefined
+    eventsObjects.forEach((obj) => {
+      const state = getRootState(obj)
+      if (state) {
+        state.raycaster.camera = undefined!
+      }
     })
 
-    // https://github.com/mrdoob/three.js/issues/16031
-    // Allow custom userland intersect sort order
-    if (raycaster.filter) intersects = raycaster.filter(intersects, state)
+    // Collect events
+    let hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
+      // Intersect objects
+      .flatMap((obj) => {
+        const state = getRootState(obj)
+        // Skip event handling when noEvents is set, or when the raycasters camera is null
+        if (!state || !state.events.enabled || state.raycaster.camera === null) return []
 
-    for (const intersect of intersects) {
-      let eventObject: THREE.Object3D | null = intersect.object
+        // When the camera is undefined we have to call the event layers update function
+        if (state.raycaster.camera === undefined) {
+          state.events.compute?.(event, state, state.previousRoot?.getState())
+          // If the camera is still undefined we have to skip this layer entirely
+          if (state.raycaster.camera === undefined) state.raycaster.camera = null!
+        }
+
+        // Intersect object by object
+        return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
+      })
+      // Sort by event priority and distance
+      .sort((a, b) => {
+        const aState = getRootState(a.object)
+        const bState = getRootState(b.object)
+        if (!aState || !bState) return 0
+        return bState.events.priority - aState.events.priority || a.distance - b.distance
+      })
+      // Filter out duplicates
+      .filter((item) => {
+        const id = makeId(item as Intersection)
+        if (duplicates.has(id)) return false
+        duplicates.add(id)
+        return true
+      })
+
+    // https://github.com/mrdoob/three.js/issues/16031
+    // Allow custom userland intersect sort order, this likely only makes sense on the root filter
+    if (state.events.filter) hits = state.events.filter(hits, state)
+
+    // Bubble up the events, find the event source (eventObject)
+    for (const hit of hits) {
+      let eventObject: THREE.Object3D | null = hit.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...intersect, eventObject })
+        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...hit, eventObject })
         eventObject = eventObject.parent
       }
     }
-    return intersections
-  }
 
-  /**  Creates filtered intersects and returns an array of positive hits */
-  function patchIntersects(intersections: Intersection[], event: DomEvent) {
-    const { internal } = store.getState()
-    // If the interaction is captured, make all capturing targets  part of the
-    // intersect.
-    if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
-      for (let captureData of internal.capturedMap.get(event.pointerId)!.values()) {
+    // If the interaction is captured, make all capturing targets part of the intersect.
+    if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
+      for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
         intersections.push(captureData.intersection)
       }
     }
@@ -200,10 +256,10 @@ export function createEvents(store: UseBoundStore<RootState>) {
     delta: number,
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
-    const { raycaster, mouse, camera, internal } = store.getState()
+    const { raycaster, pointer, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
-      const unprojectedPoint = temp.set(mouse.x, mouse.y, 0).unproject(camera)
+      const unprojectedPoint = temp.set(pointer.x, pointer.y, 0).unproject(camera)
 
       const localState = { stopped: false }
 
@@ -243,11 +299,10 @@ export function createEvents(store: UseBoundStore<RootState>) {
           if (typeof property !== 'function') extractEventProps[prop] = property
         }
 
-        let raycastEvent: any = {
+        let raycastEvent: ThreeEvent<DomEvent> = {
           ...hit,
           ...extractEventProps,
-          spaceX: mouse.x,
-          spaceY: mouse.y,
+          pointer,
           intersections,
           stopped: localState.stopped,
           delta,
@@ -283,7 +338,6 @@ export function createEvents(store: UseBoundStore<RootState>) {
           // there should be a distinction between target and currentTarget
           target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
           currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          sourceEvent: event, // deprecated
           nativeEvent: event,
         }
 
@@ -346,14 +400,15 @@ export function createEvents(store: UseBoundStore<RootState>) {
     return (event: DomEvent) => {
       const { onPointerMissed, internal } = store.getState()
 
-      prepareRay(event)
+      //prepareRay(event)
       internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      const hits = patchIntersects(intersect(filter), event)
+      //const hits = patchIntersects(intersect(filter), event)
+      const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
       // Save initial coordinates on pointer-down

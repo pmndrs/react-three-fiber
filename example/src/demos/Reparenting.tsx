@@ -27,13 +27,13 @@ function RenderToPortal({ targets }: any) {
 }
 
 export default function Group() {
-  const [ref1, set1] = useState()
-  const [ref2, set2] = useState()
+  const [ref1, set1] = useState<THREE.Group>(null!)
+  const [ref2, set2] = useState<THREE.Group>(null!)
   return (
     <Canvas onCreated={() => console.log('onCreated')}>
       <group>
-        <group ref={set1} position={[0, 0, 0]} />
-        <group ref={set2} position={[2, 0, 0]} />
+        <group ref={set1 as any} position={[0, 0, 0]} />
+        <group ref={set2 as any} position={[2, 0, 0]} />
         {ref1 && ref2 && <RenderToPortal targets={[ref1, ref2]} />}
       </group>
     </Canvas>

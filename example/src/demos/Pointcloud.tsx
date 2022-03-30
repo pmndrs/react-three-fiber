@@ -1,13 +1,12 @@
 import * as THREE from 'three'
 import React, { useMemo, useRef, useCallback } from 'react'
-import { Canvas, extend } from '@react-three/fiber'
-import { Object3DNode } from '@react-three/fiber/dist/declarations/src/three-types'
+import { Canvas, extend, Object3DNode } from '@react-three/fiber'
 
 class DotMaterial extends THREE.ShaderMaterial {
   constructor() {
     super({
       transparent: true,
-      uniforms: { size: { value: 10 }, scale: { value: 1 } },
+      uniforms: { size: { value: 15 }, scale: { value: 1 } },
       vertexShader: THREE.ShaderLib.points.vertexShader,
       fragmentShader: `
       varying vec3 vColor;
@@ -51,16 +50,11 @@ function Particles({ pointCount }: any) {
 
   return (
     <points ref={points} onPointerOver={hover} onPointerOut={unhover}>
-      <bufferGeometry attach="geometry">
-        <bufferAttribute
-          attachObject={['attributes', 'position']}
-          count={positions.length / 3}
-          array={positions}
-          itemSize={3}
-        />
-        <bufferAttribute attachObject={['attributes', 'color']} count={colors.length / 3} array={colors} itemSize={3} />
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+        <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
       </bufferGeometry>
-      <dotMaterial vertexColors />
+      <dotMaterial vertexColors depthWrite={false} />
     </points>
   )
 }
@@ -68,7 +62,6 @@ function Particles({ pointCount }: any) {
 export default function App() {
   return (
     <Canvas
-      style={{ background: 'peachpuff' }}
       orthographic
       camera={{ zoom: 40, position: [0, 0, 100] }}
       raycaster={{ params: { Points: { threshold: 0.2 } } }}>

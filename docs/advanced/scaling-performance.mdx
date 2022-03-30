@@ -37,9 +37,7 @@ function Controls() {
   return <orbitControls ref={ref} args={[camera, gl.domElement]} />
 ```
 
-<Hint>
-  Drei's controls do this automatically for you.
-</Hint>
+<Hint>Drei's controls do this automatically for you.</Hint>
 
 Generally you can call invalidate whenever you need to render:
 
@@ -255,17 +253,11 @@ Drop this component into the scene, combine it with the code above that calls `r
 
 There are pre-made components for this already in the [Drei library](https://github.com/pmndrs/drei/#performance).
 
-## ⚠️ Enable concurrency
+## Enable concurrency
 
-React 18 will introduce concurrent scheduling, specifically time slicing via `startTransition` and `useTransition`. This will virtualize the component graph, which then allows you to prioritise components and actions. Think of how a virtual list avoids scaling issues because it only renders as many items as the screen can take, it is not affected by the amount of items it has to render, be it 10 or 100.000.000.
+React 18 introduces concurrent scheduling, specifically time slicing via `startTransition` and `useTransition`. This will virtualize the component graph, which then allows you to prioritise components and actions. Think of how a virtual list avoids scaling issues because it only renders as many items as the screen can take, it is not affected by the amount of items it has to render, be it 10 or 100.000.000.
 
 React 18 functions very similar to this, it can potentially defer load and heavy tasks in ways that would be hard or impossible to achieve in a vanilla application. It thereby holds on to a stable framerate even in the most demanding situations.
-
-You can already use it in current React Three Fiber.
-
-```jsx
-<Canvas mode="concurrent">
-```
 
 The following benchmark shows how powerful concurrency can be: https://github.com/drcmda/scheduler-test
 
@@ -299,4 +291,4 @@ It simulates heavy load by creating hundreds of THREE.TextGeometry instances (51
   />
 </p>
 
-<Hint>Until React 18 comes out officially the concurrency option in React Three Fiber is experimental!</Hint>
+For more on how to use this API, see [use startTransition for expensive ops](/react-three-fiber/advanced/pitfalls#use-starttransition-for-expensive-ops).

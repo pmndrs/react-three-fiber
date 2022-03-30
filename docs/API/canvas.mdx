@@ -21,7 +21,7 @@ const App = () => (
 )
 ```
 
-### Render Props
+## Render Props
 
 | Prop            | Description                                                                                                                                       | Default                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
@@ -30,20 +30,18 @@ const App = () => (
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }` |
 | shadows         | Props that go into `gl.shadowMap`, can also be set true for `PCFsoft`                                                                             | `false`                                                  |
 | raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                     |
-| vr              | Switches renderer to VR mode, then uses `gl.setAnimationLoop`                                                                                     | `false`                                                  |
-| mode            | React mode: legacy, blocking, concurrent                                                                                                          | `blocking`                                               |
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                 |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`  |
 | orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                  |
-| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `undefined`                                              |
+| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                 |
 | linear          | Switch off automatic sRGB encoding and gamma correction                                                                                           | `false`                                                  |
 | flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                  |
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                          |
 | onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                          |
 
-### Render defaults
+## Render defaults
 
-Canvas uses the [render function](/react-three-fiber/api/render-function) which will create a translucent `THREE.WebGLRenderer` with the following constructor args:
+Canvas uses [createRoot](#createroot) which will create a translucent `THREE.WebGLRenderer` with the following constructor args:
 
 - antialias=true
 - alpha=true
@@ -61,21 +59,100 @@ It will also create the following scene internals:
 - A `THREE.PCFSoftShadowMap` if `shadows` is true
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
-<Hint>
+In recent versions of threejs, `THREE.ColorManagement.legacy` will be set to false to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture encoding conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
 
-The colorspace will be set to sRGB (unless "linear" is true), all colors and textures will be
-auto-converted. Consult [donmccurdy.com: Color Management in
-three.js](https://www.donmccurdy.com/2020/06/17/color-management-in-threejs) for more information
-about this. Unless "flat" is true it will set up `THREE.ACESFilmicToneMapping` for slightly more
-contrast.
+## Custom Canvas
 
-</Hint>
+R3F can render to a root, similar to how `react-dom` and all the other React renderers work. This allows you to shave off `react-dom` (~40kb), `react-use-measure` (~3kb) and, if you don't need them, `pointer-events` (~7kb) (you need to explicitly import `events` and add them to the config otherwise).
 
-<Hint>
+Roots have the same options and properties as `Canvas`, but you are responsible for resizing it. It requires an existing DOM `<canvas>` object into which it renders.
 
-Canvas creates a [resize observer](https://github.com/pmndrs/react-use-measure) to update the canvas size.
+### CreateRoot
 
-Consider Resize-Observer polyfills for older Safari browsers. We recommend
-[juggle/resize-observer](https://github.com/juggle/resize-observer).
+Creates a root targeting a canvas, rendering JSX.
 
-</Hint>
+```jsx
+import { createRoot, events } from '@react-three/fiber'
+
+let root
+
+const handleResize = () => {
+  const size = { width: window.innerWidth, height: window.innerHeight }
+
+  // Create root with a size, events
+  root = createRoot(document.querySelector('canvas'), {
+    events,
+    size,
+  })
+
+  // Render JSX
+  root.render(<mesh />)
+
+  // Can also tweak root root options after creation:
+  root.configure({ size })
+
+  // Or to unmount and dispose of memory:
+  root.unmount()
+}
+handleResize()
+
+window.addEventListener('resize', handleResize)
+
+// to unmount
+root.unmount()
+```
+
+## Tree-shaking
+
+New with v8, the underlying reconciler no longer pulls in the THREE namespace automatically.
+
+This enables a granular catalogue which also enables tree-shaking via the `extend` API:
+
+```jsx
+import { extend, createRoot } from '@react-three/fiber'
+import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
+
+extend({ Mesh, BoxGeometry, MeshStandardMaterial })
+
+createRoot(canvas).render(
+  <>
+    <mesh>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  </>,
+)
+```
+
+There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
+
+```jsx
+// In:
+
+import { createRoot } from '@react-three/fiber'
+
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
+
+// Out:
+
+import { createRoot, extend } from '@react-three/fiber'
+import { Mesh as _Mesh, BoxGeometry as _BoxGeometry, MeshStandardMaterial as _MeshStandardMaterial } from 'three'
+
+extend({
+  Mesh: _Mesh,
+  BoxGeometry: _BoxGeometry,
+  MeshStandardMaterial: _MeshStandardMaterial,
+})
+
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
+```

@@ -1,5 +1,3 @@
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
-
 import * as React from 'react'
 
 import ReactThreeTestRenderer from '../index'
@@ -97,5 +95,21 @@ describe('ReactThreeTestRenderer instance methods', () => {
     expect(foundAllByColorAndName).toEqual([])
 
     expect(() => scene.findByProps({ color: 0x0000ff })).toThrow()
+  })
+
+  it('searches RegExp via .findByProps() / .findAllByProps()', async () => {
+    const { scene } = await ReactThreeTestRenderer.create(<ExampleComponent />)
+
+    const single = scene.findByProps({
+      name: /^mesh_01$/,
+    })
+
+    expect(single.type).toEqual('Mesh')
+
+    const multiple = scene.findAllByProps({
+      name: /^mesh_\d+$/,
+    })
+
+    expect(multiple.length).toEqual(2)
   })
 })

@@ -1,0 +1,9 @@
+{
+  "mode": "pre",
+  "tag": "beta",
+  "initialVersions": {
+    "@react-three/fiber": "8.0.0-beta-05",
+    "@react-three/test-renderer": "8.0.0-beta-00"
+  },
+  "changesets": ["tender-deers-swim"]
+}

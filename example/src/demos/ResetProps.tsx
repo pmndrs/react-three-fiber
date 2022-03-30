@@ -1,30 +1,7 @@
 import * as THREE from 'three'
 import React, { memo, useEffect, useState, useRef } from 'react'
 import { Canvas, useThree, useFrame, extend } from '@react-three/fiber'
-// @ts-ignore
-import { OrbitControls } from 'three-stdlib'
-
-extend({ OrbitControls })
-
-const Orbit = memo(() => {
-  const gl = useThree((state) => state.gl)
-  const camera = useThree((state) => state.camera)
-  const invalidate = useThree((state) => state.invalidate)
-  const regress = useThree((state) => state.performance.regress)
-  const ref = useRef<OrbitControls>()
-  useEffect(() => {
-    const orbit = ref.current
-    const onChange = () => (regress(), invalidate())
-    orbit?.connect(gl.domElement)
-    orbit?.addEventListener('change', onChange)
-    return () => {
-      orbit?.dispose()
-      orbit?.removeEventListener('change', onChange)
-    }
-  }, [])
-  // @ts-ignore
-  return <orbitControls ref={ref} args={[camera]} />
-})
+import { OrbitControls } from '@react-three/drei'
 
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
@@ -51,10 +28,10 @@ function AdaptiveEvents() {
   const get = useThree((state) => state.get)
   const current = useThree((state) => state.performance.current)
   useEffect(() => {
-    const enabled = get().raycaster.enabled
-    return () => void (get().raycaster.enabled = enabled)
+    const enabled = get().events.enabled
+    return () => void (get().events.enabled = enabled)
   }, [])
-  useEffect(() => void (get().raycaster.enabled = current === 1), [current])
+  useEffect(() => void (get().events.enabled = current === 1), [current])
   return null
 }
 
@@ -73,7 +50,6 @@ function Scene() {
 
   return (
     <>
-      <color attach="background" args={[color]} />
       <ambientLight intensity={0.5} />
       <pointLight position={[10, 10, 10]} intensity={2} />
       <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
@@ -90,7 +66,7 @@ function Scene() {
         {showCube ? (
           <mesh position={[1.5, 0, 0]}>
             <boxGeometry args={[1, 1]} />
-            <meshNormalMaterial color="hotpink" transparent opacity={0.5} />
+            <meshNormalMaterial transparent opacity={0.5} />
           </mesh>
         ) : (
           <mesh>
@@ -105,7 +81,7 @@ function Scene() {
           </meshPhongMaterial>
         </mesh>
       </group>
-      <Orbit />
+      <OrbitControls regress />
       <AdaptivePixelRatio />
       <AdaptiveEvents />
     </>
@@ -114,7 +90,7 @@ function Scene() {
 
 export default function App() {
   return (
-    <Canvas gl={{ alpha: false }} dpr={[1, 2]} frameloop="always" performance={{ min: 0.1 }}>
+    <Canvas dpr={[1, 2]} frameloop="always" performance={{ min: 0.1 }}>
       <Scene />
     </Canvas>
   )

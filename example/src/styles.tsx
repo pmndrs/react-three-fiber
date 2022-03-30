@@ -1,4 +1,6 @@
+import * as React from 'react'
 import styled, { createGlobalStyle } from 'styled-components'
+import { Link } from 'wouter'
 
 const Page = styled.div`
   position: relative;
@@ -13,6 +15,18 @@ const Page = styled.div`
     color: white;
     line-height: 0.59em;
     letter-spacing: -2px;
+  }
+
+  & > h1 {
+    position: absolute;
+    top: 70px;
+    left: 60px;
+  }
+
+  & > span {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
   }
 
   @media only screen and (max-width: 1000px) {
@@ -62,12 +76,68 @@ const Global = createGlobalStyle`
     overscroll-behavior-y: none;
     font-family: 'Inter var', sans-serif;
     color: black;
-    background: white;
+    background: #dedddf !important;
   }
 
   canvas {
     touch-action: none;
+    background: #dedddf !important;
   }
 `
+export const DemoPanel = styled.div`
+  z-index: 1000;
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+  max-width: 250px;
+`
+
+export const Dot = styled(Link)`
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 8px;
+`
+
+const LoadingContainer = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #dedddf;
+  color: white;
+`
+
+const LoadingMessage = styled.div`
+  font-family: 'Inter', Helvetica, sans-serif;
+`
+
+export const Loading = () => {
+  return (
+    <LoadingContainer>
+      <LoadingMessage>Loading.</LoadingMessage>
+    </LoadingContainer>
+  )
+}
+
+const StyledError = styled.div`
+  position: absolute;
+  padding: 10px 20px;
+  bottom: unset;
+  right: unset;
+  top: 60px;
+  left: 60px;
+  max-width: 380px;
+  border: 2px solid #ff5050;
+  color: #ff5050;
+`
+
+export const Error = ({ children }: React.PropsWithChildren<{}>) => {
+  return <StyledError>{children}</StyledError>
+}
 
 export { Global, Page }
