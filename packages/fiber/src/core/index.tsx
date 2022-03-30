@@ -176,7 +176,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set color management
       if ((THREE as any).ColorManagement) {
-        ;(THREE as any).ColorManagement.legacyMode = !legacy
+        ;(THREE as any).ColorManagement.legacyMode = legacy
       }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
