@@ -41,7 +41,7 @@ Yes. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, 
 </table>
 
 ```jsx
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
@@ -68,14 +68,13 @@ function Box(props) {
   )
 }
 
-ReactDOM.render(
+createRoot(document.getElementById('root')).render(
   <Canvas>
     <ambientLight />
     <pointLight position={[10, 10, 10]} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-  document.getElementById('root'),
 )
 ```
 
@@ -88,7 +87,7 @@ npm install @types/three
 
 ```tsx
 import * as THREE from 'three'
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
@@ -111,14 +110,13 @@ function Box(props: JSX.IntrinsicElements['mesh']) {
   )
 }
 
-ReactDOM.render(
+createRoot(document.getElementById('root')).render(
   <Canvas>
     <ambientLight />
     <pointLight position={[10, 10, 10]} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
-  </Canvas>,
-  document.getElementById('root'),
+  </Canvas>
 )
 ```
 
