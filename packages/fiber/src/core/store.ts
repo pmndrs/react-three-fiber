@@ -320,7 +320,7 @@ const createStore = (
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
   rootState.subscribe(() => {
-    const { camera, size, viewport, internal, gl } = rootState.getState()
+    const { camera, size, viewport, gl } = rootState.getState()
     if (size !== oldSize || viewport.dpr !== oldDpr) {
       // https://github.com/pmndrs/react-three-fiber/issues/92
       // Do not mess with the camera if it belongs to the user

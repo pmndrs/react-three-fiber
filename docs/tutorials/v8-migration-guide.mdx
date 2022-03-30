@@ -9,11 +9,11 @@ nav: 13
 With React 18 and Expo 43, you can now ship threejs goodness across web and native. See [installation](/react-three-fiber/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
 
 ```diff
--import { Canvas, useLoader } from '@react-three/fiber'
-+import { Canvas, useLoader } from '@react-three/fiber/native'
+- import { Canvas, useLoader } from '@react-three/fiber'
++ import { Canvas, useLoader } from '@react-three/fiber/native'
 
--import { useGLTF } from '@react-three/drei'
-+import { useGLTF } from '@react-three/drei/native'
+- import { useGLTF } from '@react-three/drei'
++ import { useGLTF } from '@react-three/drei/native'
 ```
 
 This is complete with support for Pressability events and native threejs loaders. See [events](/react-three-fiber/api/events) for a complete list of events.
@@ -55,56 +55,36 @@ export default function App() {
 }
 ```
 
-## New dpr default
+React Native support was submitted by [@Cody_J_Bennett](https://twitter.com/Cody_J_Bennett). 🎉
 
-The default DPR has changed from `1` to `[1, 2]`, which will clamp depending on the screen's native pixel ratio.
+## Zustand and suspend-react
+
+Fiber uses [zustand](https://zustand.js.org/) to manage state. It's a simple, powerful, and performant state management library for React. And [suspend-react](https://github.com/pmndrs/suspend-react) to manage async ops and suspense (useLoader for instance). You can use these in your projects as well as they are to get closer interop with fiber.
+
+## New pixel ratio default
+
+The default DPR has changed from `1` to `[1, 2]`, which will clamp between 1 and 2, but prefer 2, depending on the screen's native pixel ratio.
 
 This was the most common setting in the wild, so it was brought in as a better default.
 
-```jsx
-<Canvas dpr={[1, 2]} />
-
-// can now be
-
-<Canvas />
+```diff
+- <Canvas dpr={[1, 2]} />
++ <Canvas />
 ```
 
-## Improved WebXR handling
+## Color management
 
-### Automatic WebXR switching
+Color management is now being handled by Three R139. We set `THREE.ColorManagement.legacyMode` to `false`. Now all colors will be converted from sRGB to linear space.
 
-The `vr` prop was removed in favor of automatic WebXR switching. Whenever a session is requested, XR features are enabled, and the renderer will render at the native refresh rate. The inverse is true when exiting a session.
-
-> `frameloop` will not be respected while in a session.
-
-```jsx
-<Canvas vr />
-
-// Can now be
-
-<Canvas />
-```
-
-### Extended useFrame
-
-In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
-
-```ts
-useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
-```
-
-This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
+Check out https://threejs.org/docs/index.html#manual/en/introduction/Color-management for information.
 
 ## Automatic concurrency
 
-The `mode` prop was removed with React 18, which automatically switches between blocking (default) and concurrent (async).
+Concurrency is now part of React 18, which automatically switches between blocking (default) and concurrent (async).
 
-```jsx
-<Canvas mode="blocking" />
-
-// Can now be
-
-<Canvas />
+```diff
+- <Canvas mode="concurrent" />
++ <Canvas />
 ```
 
 React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule expensive operations and state updates. Use these to de-prioritize expensive operations.
@@ -123,11 +103,7 @@ const sizes = calculateSizes(radius)
   positions={positions}
   colors={colors}
   sizes={sizes}
-  onPointerOut={() => {
-    startTransition(() => {
-      setRadius(prev => prev + 1)
-    })
-  }}
+  onPointerOut={() => startTransition(() => setRadius(prev => prev + 1))}
 >
   <meshBasicMaterial vertexColors />
 </Points>
@@ -144,9 +120,11 @@ const [frameloop, setFrameloop] = useState('never')
   frameloop={frameloop}
   onClick={() => setFrameloop('always')}
 />
+```
 
-//
+Another usecase would be using intersection observers to stop the canvas when it's out of view.
 
+```jsx
 const canvasRef = useRef()
 const [frameloop, setFrameloop] = useState('never')
 
@@ -156,7 +134,6 @@ useEffect(() => {
   }, {})
 
   observer.observe(canvasRef.current)
-
   return () => observer.disconnect()
 }, [])
 
@@ -177,14 +154,45 @@ It can also accept a synchronous callback to manually create a renderer.
 <Canvas gl={(canvas) => new Renderer({ canvas })} />
 ```
 
+## Improved WebXR handling
+
+### Automatic WebXR switching
+
+The `vr` prop was removed in favor of automatic WebXR switching. Whenever a session is requested, XR features are enabled, and the renderer will render at the native refresh rate. The inverse is true when exiting a session.
+
+> `frameloop` will not be respected while in a session.
+
+```diff
+- <Canvas vr />
++ <Canvas />
+```
+
+### Extended useFrame
+
+In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
+
+```ts
+useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
+```
+
+This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
+
 ## Manual camera manipulation
 
-Cameras can be controlled manually by setting manual to true in `camera`. This will opt out of projection matrix recalculation when the drawing area resizes.
+By default fiber is responsive and will set up cameras properly on resize (aspect ratio etc).
+
+Cameras can be controlled manually by setting `manual` to true in `camera`. This will opt out of projection matrix recalculation when the drawing area resizes.
+
+```jsx
+<Canvas camera={{ manual: true }}>
+```
+
+This is also supported by all cameras that you create, be it a THREE.PerspectiveCamera or drei/cameras, put `manual` on it and fiber will not touch it.
 
 ```jsx
 import { PerspectiveCamera } from '@react-three/drei'
-;<Canvas camera={{ manual: true }}>
-  <PerspectiveCamera makeDefault args={[45, 1]} />
+;<Canvas>
+  <PerspectiveCamera makeDefault manual />
 </Canvas>
 ```
 
@@ -212,106 +220,102 @@ This is now a single, unified signature with support for piercing and named atta
 <foo attach="a-0" />
 <foo attach="a-1" />
 
-// Attach foo to parent via named functions that receive self (function attach)
-<foo attach={["add", "remove"} />
+// Attach foo to parent via explicit add/remove functions
+<foo attach={(parent, self) => {
+  parent.add(self)
+  return () => parent.remove(self)
+} />
 
-// Attach foo to parent via explicit add/remove functions (function attach)
-<foo attach={[(self, parent) => parent.add(self), (self, parent) => parent.remove(self)]} />
-
-// Attach foo to parent array as an append (function attach)
-<foo
-  attach={[
-    (self, parent) => parent.array.push(self),
-    (self, parent) => parent.array = parent.filter(item => item !== self)
-  ]}
-/>
+// The same as a one liner
+<foo attach={(parent, self) => (parent.add(self), () => parent.remove(self))} />
 ```
 
-Real-world use-cases:
+### Real-world use-cases:
 
-```jsx
-<directionalLight
-  castShadow
-  position={[2.5, 8, 5]}
-  intensity={1.5}
-  shadow-mapSize={[1024, 1024]}
-  shadow-camera-far={50}
-  shadow-camera-left={-10}
-  shadow-camera-right={10}
-  shadow-camera-top={10}
-  shadow-camera-bottom={-10}
-/>
+Attaching to nested objects:
 
-// can now be
-
-<directionalLight
-  castShadow
-  position={[2.5, 8, 5]}
-  intensity={1.5}
-  shadow-mapSize={[1024, 1024]}
->
-  <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
-</directionalLight>
+```diff
+- <directionalLight
+-   castShadow
+-   position={[2.5, 8, 5]}
+-   shadow-mapSize={[1024, 1024]}
+-   shadow-camera-far={50}
+-   shadow-camera-left={-10}
+-   shadow-camera-right={10}
+-   shadow-camera-top={10}
+-   shadow-camera-bottom={-10}
+- />
++ <directionalLight castShadow position={[2.5, 8, 5]} shadow-mapSize={[1024, 1024]}>
++   <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
++ </directionalLight>
 ```
 
-```jsx
+```diff
 <bufferGeometry>
-  <bufferAttribute attachObject={['attributes', 'position']} count={count} array={vertices} itemSize={3} />
+-   <bufferAttribute attachObject={['attributes', 'position']} count={count} array={vertices} itemSize={3} />
++   <bufferAttribute attach="attributes-position" count={count} array={vertices} itemSize={3} />
 </bufferGeometry>
+```
 
-// Can now be
+Arrays must be explcit now:
 
-<bufferGeometry>
-  <bufferAttribute attach="attributes-position" count={count} array={vertices} itemSize={3} />
-</bufferGeometry>
+```diff
+<mesh>
+-  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />}
++  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+</mesh>
 ```
 
 ## Spread Canvas props
 
-The `<Canvas />` can now accept non-render props to spread as native props.
+The `<Canvas />` can now accept non-render props to spread as native props: styles, classes, events, a11y, ...
 
-```jsx
-<div aria-describedby={...}>
-  <Canvas />
-</div>
-
-// can now be
-
-<Canvas aria-describedby={...} />
+```diff
+- <div aria-describedby={...}>
+-  <Canvas />
+- </div>
++ <Canvas aria-describedby={...} />
 ```
 
 ## New createRoot API
 
 `render` is depreciated in v8 for the new `createRoot` signature.
 
+```diff
+import {
+- render,
++ createRoot,
+  events
+} from '@react-three/fiber'
+
+- render(<mesh />, canvas, { event })
++ createRoot(canvas).configure({ events }).render(<mesh />)
+```
+
+Here is a more generic setup with responsive resize:
+
 ```jsx
 import { createRoot, events } from '@react-three/fiber'
 
-let root
+// createRoot should only be called once
+let root = createRoot(document.querySelector('canvas'))
+// You can then configure it, same props that canvas normally takes
+root.configure({ events })
 
-const handleResize = () => {
-  const size = { width: window.innerWidth, height: window.innerHeight }
-
-  // Create root with a size, events
-  root = createRoot(document.querySelector('canvas'), {
-    events,
-    size,
-  })
-
-  // Render JSX
-  root.render(<mesh />)
-
-  // Can also tweak root root options after creation:
-  root.configure({ size })
-
-  // Or to unmount and dispose of memory:
-  root.unmount()
+function handleResize() {
+  const width = window.innerWidth
+  const height = window.innerHeight
+  // Change configuration later on
+  root.configure({ size: { width, height } })
 }
-handleResize()
 
+handleResize()
 window.addEventListener('resize', handleResize)
 
-// to unmount
+// Render the scene
+root.render(<mesh />)
+
+// Unmount the root
 root.unmount()
 ```
 
@@ -328,12 +332,10 @@ import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
 extend({ Mesh, BoxGeometry, MeshStandardMaterial })
 
 createRoot(canvas).render(
-  <>
-    <mesh>
-      <boxGeometry />
-      <meshStandardMaterial />
-    </mesh>
-  </>,
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
 )
 ```
 
@@ -371,6 +373,39 @@ createRoot(canvasNode).render(
 ```
 
 No changes are necessary for `@react-three/test-renderer` as THREE is extended automatically.
+
+## createPortal creates a state enclave
+
+`createPortal` allows you to write a declarative JSX scene into a pre-existing, foreign object. This has been very useful for portals, heads-up displays, view-cubes, view splitting, etc.
+
+But these things were very limited and lacked event support as well as support for eco-system packages (for instance putting OrbitControls into a split view). With this release `createPortal` creates a virtual state-model in which everything keeps functioning. Events work, you can use any 3rd party eco-system control and throw it in there.
+
+The event layering part of this was submitted by [@theatre_js](https://twitter.com/theatre_js) and [@AndrewPrifer](https://twitter.com/AndrewPrifer) 🎉.
+
+```jsx
+import { createPortal } from '@react-three/fiber'
+
+function HeadsUpDisplay({ children }) {
+  const [scene] = useState(() => new THREE.Scene())
+  return createPortal(children, scene, {
+    /* Override RootState here */
+  })
+}
+```
+
+### Examples
+
+<p>
+  <a href="https://codesandbox.io/s/1wmlew">
+    <img width="49%" src="https://codesandbox.io/api/v1/sandboxes/1wmlew/screenshot.png" alt="View splitting" />
+  </a>
+  <a href="https://codesandbox.io/s/kp1w5u">
+    <img width="49%" src="https://codesandbox.io/api/v1/sandboxes/kp1w5u/screenshot.png" alt="Portals" />
+  </a>
+  <a href="https://codesandbox.io/s/dioqhj">
+    <img width="49%" src="https://codesandbox.io/api/v1/sandboxes/dioqhj/screenshot.png" alt="Heads-up displays" />
+  </a>
+</p>
 
 ## RTTR Regex Matchers
 
