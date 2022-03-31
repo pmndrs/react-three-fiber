@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.4
+
+### Patch Changes
+
+- e981a72: fix: mock three color management, loosen peer dep
+
 ## 8.0.3
 
 ### Patch Changes
