@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Canvas, createPortal } from '@react-three/fiber'
+import { useReducer } from 'react'
 
 function Icosahedron() {
   const [active, set] = useState(false)
@@ -13,17 +14,12 @@ function Icosahedron() {
 }
 
 function RenderToPortal({ targets }: any) {
-  const [target, set] = useState(targets[0])
-  useEffect(() => void setTimeout(() => set(targets[1]), 500), [targets])
-  return (
-    <>
-      <mesh position={[-2, 0, 0]}>
-        <sphereGeometry args={[0.5, 16, 16]} />
-        <meshNormalMaterial />
-      </mesh>
-      {createPortal(<Icosahedron />, target)}
-    </>
-  )
+  const [target, toggle] = useReducer((state) => (state + 1) % targets.length, 0)
+  useEffect(() => {
+    const interval = setInterval(toggle, 1000)
+    return () => clearInterval(interval)
+  }, [targets])
+  return <>{createPortal(<Icosahedron />, targets[target])}</>
 }
 
 export default function Group() {
@@ -32,7 +28,11 @@ export default function Group() {
   return (
     <Canvas onCreated={() => console.log('onCreated')}>
       <group>
-        <group ref={set1 as any} position={[0, 0, 0]} />
+        <group ref={set1 as any} position={[-2, 0, 0]} />
+        <mesh position={[0, 0, 0]}>
+          <sphereGeometry args={[0.5, 16, 16]} />
+          <meshNormalMaterial />
+        </mesh>
         <group ref={set2 as any} position={[2, 0, 0]} />
         {ref1 && ref2 && <RenderToPortal targets={[ref1, ref2]} />}
       </group>

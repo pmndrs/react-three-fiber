@@ -23,6 +23,7 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
 }
 
 let subscribers: Subscription[]
+let subscription: Subscription
 function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
@@ -34,7 +35,10 @@ function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   }
   // Call subscribers (useFrame)
   subscribers = state.internal.subscribers
-  for (i = 0; i < subscribers.length; i++) subscribers[i].ref.current(state, delta, frame)
+  for (i = 0; i < subscribers.length; i++) {
+    subscription = subscribers[i]
+    subscription.ref.current(subscription.store.getState(), delta, frame)
+  }
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Decrease frame count

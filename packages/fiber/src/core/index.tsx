@@ -317,7 +317,7 @@ export type InjectState = Partial<
 >
 
 function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
-  return <Portal children={children} container={container} state={state} />
+  return <Portal key={container.uuid} children={children} container={container} state={state} />
 }
 
 function Portal({

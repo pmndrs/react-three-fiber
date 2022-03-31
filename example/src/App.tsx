@@ -6,7 +6,7 @@ import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
 
 import * as demos from './demos'
 
-const DEFAULT_COMPONENT_NAME = 'MagicMirror'
+const DEFAULT_COMPONENT_NAME = 'Portals'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 function ErrorBoundary({ children, fallback, name }: any) {

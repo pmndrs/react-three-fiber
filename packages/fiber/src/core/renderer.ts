@@ -119,7 +119,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     let added = false
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
-      if (child.__r3f.attach) {
+      if (child.__r3f?.attach) {
         attach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
@@ -128,7 +128,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       }
       // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
       // that is, anything that's a child in React but not a child in the scenegraph.
-      if (!added) parentInstance.__r3f.objects.push(child)
+      if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
       updateInstance(child)
@@ -139,7 +139,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
     let added = false
     if (child) {
-      if (child.__r3f.attach) {
+      if (child.__r3f?.attach) {
         attach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
@@ -150,7 +150,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         added = true
       }
 
-      if (!added) parentInstance.__r3f.objects.push(child)
+      if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
       updateInstance(child)
@@ -170,7 +170,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (parentInstance.__r3f?.objects)
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
       // Remove attachment
-      if (child.__r3f.attach) {
+      if (child.__r3f?.attach) {
         detach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)

@@ -36,12 +36,13 @@ export function useThree<T = RootState>(
 }
 
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
-  const subscribe = useStore().getState().internal.subscribe
+  const store = useStore()
+  const subscribe = store.getState().internal.subscribe
   // Update ref
   const ref = React.useRef<RenderCallback>(callback)
   React.useLayoutEffect(() => void (ref.current = callback), [callback])
   // Subscribe on mount, unsubscribe on unmount
-  React.useLayoutEffect(() => subscribe(ref, renderPriority), [renderPriority, subscribe])
+  React.useLayoutEffect(() => subscribe(ref, renderPriority, store), [renderPriority, subscribe, store])
   return null
 }
 

@@ -13,6 +13,7 @@ export interface Intersection extends THREE.Intersection {
 export type Subscription = {
   ref: React.MutableRefObject<RenderCallback>
   priority: number
+  store: UseBoundStore<RootState, StoreApi<RootState>>
 }
 
 export type Dpr = number | [min: number, max: number]
@@ -63,7 +64,11 @@ export type InternalState = {
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
-  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority?: number) => () => void
+  subscribe: (
+    callback: React.MutableRefObject<RenderCallback>,
+    priority: number,
+    store: UseBoundStore<RootState, StoreApi<RootState>>,
+  ) => () => void
 }
 
 export type RootState = {
@@ -288,7 +293,11 @@ const createStore = (
         initialHits: [],
         capturedMap: new Map(),
 
-        subscribe: (ref: React.MutableRefObject<RenderCallback>, priority = 0) => {
+        subscribe: (
+          ref: React.MutableRefObject<RenderCallback>,
+          priority: number,
+          store: UseBoundStore<RootState, StoreApi<RootState>>,
+        ) => {
           set(({ internal }) => ({
             internal: {
               ...internal,
@@ -299,7 +308,7 @@ const createStore = (
               priority: internal.priority + (priority > 0 ? 1 : 0),
               // Register subscriber and sort layers from lowest to highest, meaning,
               // highest priority renders last (on top of the other frames)
-              subscribers: [...internal.subscribers, { ref, priority }].sort((a, b) => a.priority - b.priority),
+              subscribers: [...internal.subscribers, { ref, priority, store }].sort((a, b) => a.priority - b.priority),
             },
           }))
           return () => {

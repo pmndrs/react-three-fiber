@@ -22,7 +22,7 @@ const SuspenseMaterial = { Component: lazy(() => import('./SuspenseMaterial')) }
 const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
 const Test = { Component: lazy(() => import('./Test')) }
 const Viewcube = { Component: lazy(() => import('./Viewcube')) }
-const MagicMirror = { Component: lazy(() => import('./MagicMirror')) }
+const Portals = { Component: lazy(() => import('./Portals')) }
 const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 
 export {
@@ -48,6 +48,6 @@ export {
   Test,
   Viewcube,
   MultiView,
-  MagicMirror,
+  Portals,
   ViewTracking,
 }
