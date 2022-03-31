@@ -193,6 +193,11 @@ export function createEvents(store: UseBoundStore<RootState>) {
       }
     })
 
+    if (!state.previousRoot) {
+      // Make sure root-level pointer and ray are set up
+      state.events.compute?.(event, state)
+    }
+
     // Collect events
     let hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
       // Intersect objects

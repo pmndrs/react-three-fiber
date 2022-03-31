@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import React, { useState, useEffect, useRef, useReducer } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 
 function Test() {
   const [o1] = useState(
@@ -14,6 +14,11 @@ function Test() {
     const interval = setInterval(toggle, 1000)
     return () => clearInterval(interval)
   }, [])
+
+  useFrame((state) => {
+    console.log(state.pointer.x)
+  })
+
   return <primitive object={which ? o1 : o2} />
 }
 

@@ -338,6 +338,7 @@ function Portal({
   const { events, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
+  const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = React.useCallback(
     (state: RootState, injectState?: RootState) => {
@@ -361,7 +362,7 @@ function Portal({
         scene: container as THREE.Scene,
         previousRoot,
         raycaster,
-        events: { ...state.events, ...injectState?.events, ...events },
+        events: { ...state.events, ...injectState?.events, pointer, mouse: pointer, ...events },
         ...rest,
       } as RootState
     },
