@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.5
+
+### Patch Changes
+
+- 227c328: fix pointer for root and portals
+
 ## 8.0.4
 
 ### Patch Changes

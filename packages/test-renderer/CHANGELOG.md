@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.4
+
+### Patch Changes
+
+- 227c328: fix pointer for root and portals
+- Updated dependencies [227c328]
+  - @react-three/fiber@8.0.5
+
 ## 8.0.3
 
 ### Patch Changes
