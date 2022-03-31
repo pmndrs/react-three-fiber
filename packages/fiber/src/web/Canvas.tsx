@@ -28,6 +28,7 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'shadows',
   'linear',
   'flat',
+  'legacy',
   'orthographic',
   'frameloop',
   'dpr',
