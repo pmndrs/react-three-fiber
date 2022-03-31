@@ -652,4 +652,24 @@ describe('renderer', () => {
     expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
   })
+
+  it('should respect legacy prop', async () => {
+    let gl: THREE.WebGLRenderer = null!
+    await act(async () => {
+      gl = createRoot(canvas)
+        .configure({ legacy: true })
+        .render(<group />)
+        .getState().gl
+    })
+
+    expect((THREE as any).ColorManagement.legacyMode).toBe(true)
+
+    await act(async () => {
+      gl = createRoot(canvas)
+        .configure({ legacy: false })
+        .render(<group />)
+        .getState().gl
+    })
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+  })
 })

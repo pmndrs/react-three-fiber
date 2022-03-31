@@ -84,9 +84,16 @@ This was the most common setting in the wild, so it was brought in as a better d
 
 Color management is now being handled by Three R139. Therefore we set `THREE.ColorManagement.legacyMode` to `false` and cede to touch colors and textures since everything will now be converted from sRGB to linear space by Three itself.
 
+You can manipulate this yourself with the `legacy` prop:
+
+```jsx
+// sets THREE.ColorManagement.legacyMode = true
+<Canvas legacy={true}>
+```
+
 While you can of course use Fiber with any Three version you like we recommend updating to R139.
 
-Check out https://threejs.org/docs/index.html#manual/en/introduction/Color-management for information.
+Check out https://threejs.org/docs/#manual/en/introduction/Color-management for information.
 
 ## Automatic concurrency
 
