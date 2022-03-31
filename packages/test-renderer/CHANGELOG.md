@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.5
+
+### Patch Changes
+
+- d4bafb9: fix re-parenting, useframe not working properly in portals, attach crash
+- Updated dependencies [d4bafb9]
+  - @react-three/fiber@8.0.6
+
 ## 8.0.4
 
 ### Patch Changes
