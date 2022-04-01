@@ -339,7 +339,6 @@ function Portal({
   const [raycaster] = React.useState(() => new THREE.Raycaster())
   const [pointer] = React.useState(() => new THREE.Vector2())
 
-  type OtherState = Omit<RootState, 'size' | 'viewport' | 'internal' | 'performance'>
   const inject = React.useCallback(
     (prevRootState: RootState, injectState?: RootState) => {
       const { events, ...rest } = state
@@ -348,12 +347,19 @@ function Portal({
       if (injectState) {
         // Only the fields of "state" that do not differ from injectState
 
-        // Some props should be off-limits. Discarding off-limits props from being checked
-        let { size: _, viewport: __, internal: ___, performance: ____, ...otherState } = prevRootState
-        for (let key in otherState) {
+        const protectedKeys: Readonly<Record<string, string>> = {
+          size: 'size',
+          viewport: 'viewport',
+          internal: 'internal',
+          performance: 'performance',
+        }
+
+        for (let key in prevRootState) {
           if (
+            // Some props should be off-limits
+            !protectedKeys[key] &&
             // Filter out the props that are different and let the inject layer take precedence
-            otherState[key as keyof OtherState] !== injectState[key as keyof RootState]
+            prevRootState[key as keyof RootState] !== injectState[key as keyof RootState]
           )
             delete intersect[key as keyof RootState]
         }
