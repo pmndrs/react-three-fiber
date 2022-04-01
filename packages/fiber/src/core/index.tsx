@@ -339,6 +339,7 @@ function Portal({
   const [raycaster] = React.useState(() => new THREE.Raycaster())
   const [pointer] = React.useState(() => new THREE.Vector2())
 
+  type OtherState = Omit<RootState, 'size' | 'viewport' | 'internal' | 'performance'>
   const inject = React.useCallback(
     (prevRootState: RootState, injectState?: RootState) => {
       const { events, ...rest } = state
@@ -352,7 +353,7 @@ function Portal({
         for (let key in otherState) {
           if (
             // Filter out the props that are different and let the inject layer take precedence
-            prevRootState[key as keyof RootState] !== injectState[key as keyof RootState]
+            otherState[key as keyof OtherState] !== injectState[key as keyof RootState]
           )
             delete intersect[key as keyof RootState]
         }
