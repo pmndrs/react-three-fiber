@@ -23,22 +23,6 @@ type UnblockProps = {
   children: React.ReactNode
 }
 
-const CANVAS_PROPS: Array<keyof Props> = [
-  'gl',
-  'events',
-  'shadows',
-  'linear',
-  'flat',
-  'legacy',
-  'orthographic',
-  'frameloop',
-  'performance',
-  'raycaster',
-  'camera',
-  'onPointerMissed',
-  'onCreated',
-]
-
 function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
     set(new Promise(() => null))

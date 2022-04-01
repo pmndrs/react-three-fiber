@@ -345,7 +345,7 @@ type CanvasProps<T extends Platform> = Omit<
   T extends 'web' ? WebCanvasProps : NativeCanvasProps,
   'children' | 'fallback' | 'resize' | 'style' | 'events'
 >
-export function extractCanvasProps<T extends Platform>(target: T, props: CanvasProps<T>) {
+export function extractCanvasProps<T extends Platform>(platform: T, props: CanvasProps<T>) {
   let {
     gl,
     shadows,
@@ -377,7 +377,7 @@ export function extractCanvasProps<T extends Platform>(target: T, props: CanvasP
     onCreated,
   }
 
-  if (target === 'web') {
+  if (platform === 'web') {
     let { dpr } = wrapperProps
     canvasProps.dpr = dpr
   }
