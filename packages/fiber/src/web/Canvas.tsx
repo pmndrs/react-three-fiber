@@ -4,7 +4,6 @@ import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseBoundStore } from 'zustand'
-import { pick, omit } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, useMemoizedFn } from '../core'
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
@@ -22,22 +21,43 @@ export interface Props
 type SetBlock = false | Promise<null> | null
 type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
-const CANVAS_PROPS: Array<keyof Props> = [
-  'gl',
-  'events',
-  'shadows',
-  'linear',
-  'flat',
-  'legacy',
-  'orthographic',
-  'frameloop',
-  'dpr',
-  'performance',
-  'raycaster',
-  'camera',
-  'onPointerMissed',
-  'onCreated',
-]
+function extractDivAndCanvasProps(props: Omit<Props, 'children' | 'fallback' | 'resize' | 'style' | 'events'>) {
+  let {
+    gl,
+    shadows,
+    linear,
+    flat,
+    legacy,
+    orthographic,
+    frameloop,
+    dpr,
+    performance,
+    raycaster,
+    camera,
+    onPointerMissed,
+    onCreated,
+    ...divProps
+  } = props
+
+  return {
+    canvasProps: {
+      gl,
+      shadows,
+      linear,
+      flat,
+      legacy,
+      orthographic,
+      frameloop,
+      dpr,
+      performance,
+      raycaster,
+      camera,
+      onPointerMissed,
+      onCreated,
+    },
+    divProps,
+  }
+}
 
 function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
@@ -59,22 +79,21 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, events = createPointerEvents, ...props },
+  { children, fallback, resize, style, events = createPointerEvents, onPointerMissed: _onPointerMissed, ...props },
   forwardedRef,
 ) {
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
-  const onPointerMissed = useMemoizedFn(props.onPointerMissed)
+  const onPointerMissed = useMemoizedFn(_onPointerMissed)
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const meshRef = React.useRef<HTMLDivElement>(null!)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
-  const canvasProps = pick<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
-  const divProps = omit<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
+  const { canvasProps, divProps } = extractDivAndCanvasProps({ ...props, onPointerMissed })
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
