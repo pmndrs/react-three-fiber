@@ -335,26 +335,27 @@ function Portal({
    *  <Canvas>
    *    {createPortal(...)} */
 
-  const { events, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
   const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = React.useCallback(
-    (state: RootState, injectState?: RootState) => {
-      const intersect: Partial<RootState> = { ...state }
+    (prevRootState: RootState, injectState?: RootState) => {
+      const { events, ...rest } = state
+      const intersect: Partial<RootState> = { ...prevRootState }
 
       if (injectState) {
         // Only the fields of "state" that do not differ from injectState
-        Object.keys(state).forEach((key) => {
+
+        // Some props should be off-limits. Discarding off-limits props from being checked
+        let { size: _, viewport: __, internal: ___, performance: ____, ...otherState } = prevRootState
+        for (let key in otherState) {
           if (
-            // Some props should be off-limits
-            !['size', 'viewport', 'internal', 'performance'].includes(key) &&
-            // Otherwise filter out the props that are different and let the inject layer take precedence
-            state[key as keyof RootState] !== injectState[key as keyof RootState]
+            // Filter out the props that are different and let the inject layer take precedence
+            prevRootState[key as keyof RootState] !== injectState[key as keyof RootState]
           )
             delete intersect[key as keyof RootState]
-        })
+        }
       }
 
       return {
@@ -362,7 +363,7 @@ function Portal({
         scene: container as THREE.Scene,
         previousRoot,
         raycaster,
-        events: { ...state.events, ...injectState?.events, pointer, mouse: pointer, ...events },
+        events: { ...prevRootState.events, ...injectState?.events, pointer, mouse: pointer, ...events },
         ...rest,
       } as RootState
     },
