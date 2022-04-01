@@ -4,7 +4,7 @@ import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { UseBoundStore } from 'zustand'
-import { pick, omit } from '../core/utils'
+import { extractCanvasProps } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot, useMemoizedFn } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
@@ -59,19 +59,18 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
 }
 
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
-  ({ children, fallback, style, events, ...props }, forwardedRef) => {
+  ({ children, fallback, style, events, onPointerMissed: _onPointerMissed, ...props }, forwardedRef) => {
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
-    const onPointerMissed = useMemoizedFn(props.onPointerMissed)
+    const onPointerMissed = useMemoizedFn(_onPointerMissed)
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
 
-    const canvasProps = pick<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
-    const viewProps = omit<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
+    const { canvasProps, wrapperProps: viewProps } = extractCanvasProps('native', { ...props, onPointerMissed })
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 

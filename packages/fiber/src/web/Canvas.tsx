@@ -8,6 +8,7 @@ import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps
 import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
+import { extractCanvasProps } from '../core/utils'
 
 export interface Props
   extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
@@ -20,44 +21,6 @@ export interface Props
 
 type SetBlock = false | Promise<null> | null
 type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
-
-function extractDivAndCanvasProps(props: Omit<Props, 'children' | 'fallback' | 'resize' | 'style' | 'events'>) {
-  let {
-    gl,
-    shadows,
-    linear,
-    flat,
-    legacy,
-    orthographic,
-    frameloop,
-    dpr,
-    performance,
-    raycaster,
-    camera,
-    onPointerMissed,
-    onCreated,
-    ...divProps
-  } = props
-
-  return {
-    canvasProps: {
-      gl,
-      shadows,
-      linear,
-      flat,
-      legacy,
-      orthographic,
-      frameloop,
-      dpr,
-      performance,
-      raycaster,
-      camera,
-      onPointerMissed,
-      onCreated,
-    },
-    divProps,
-  }
-}
 
 function Block({ set }: Omit<UnblockProps, 'children'>) {
   React.useLayoutEffect(() => {
@@ -93,7 +56,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
-  const { canvasProps, divProps } = extractDivAndCanvasProps({ ...props, onPointerMissed })
+  const { canvasProps, wrapperProps: divProps } = extractCanvasProps('web', { ...props, onPointerMissed })
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 

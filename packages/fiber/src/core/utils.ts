@@ -1,5 +1,7 @@
 import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
+import type { Props as NativeCanvasProps } from '../native'
+import type { Props as WebCanvasProps } from '../web/Canvas'
 import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
@@ -336,4 +338,52 @@ export function invalidateInstance(instance: Instance) {
 
 export function updateInstance(instance: Instance) {
   instance.onUpdate?.(instance)
+}
+
+type Platform = 'web' | 'native'
+type CanvasProps<T extends Platform> = Omit<
+  T extends 'web' ? WebCanvasProps : NativeCanvasProps,
+  'children' | 'fallback' | 'resize' | 'style' | 'events'
+>
+export function extractCanvasProps<T extends Platform>(target: T, props: CanvasProps<T>) {
+  let {
+    gl,
+    shadows,
+    linear,
+    flat,
+    legacy,
+    orthographic,
+    frameloop,
+    performance,
+    raycaster,
+    camera,
+    onPointerMissed,
+    onCreated,
+    ...wrapperProps
+  } = props
+
+  let canvasProps: CanvasProps<'web'> = {
+    gl,
+    shadows,
+    linear,
+    flat,
+    legacy,
+    orthographic,
+    frameloop,
+    performance,
+    raycaster,
+    camera,
+    onPointerMissed,
+    onCreated,
+  }
+
+  if (target === 'web') {
+    let { dpr } = wrapperProps
+    canvasProps.dpr = dpr
+  }
+
+  return {
+    canvasProps,
+    wrapperProps,
+  }
 }
