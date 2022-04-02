@@ -342,20 +342,24 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
   }
 }
 
+// Keys that shouldn't be copied between R3F stores
+const privateKeys = [
+  'set',
+  'get',
+  'setSize',
+  'setFrameloop',
+  'setDpr',
+  'events',
+  'invalidate',
+  'advance',
+  'performance',
+  'internal',
+] as const
+
+type PrivateKeys = typeof privateKeys[number]
+
 export type InjectState = Partial<
-  Omit<
-    RootState,
-    | 'set'
-    | 'get'
-    | 'setSize'
-    | 'setFrameloop'
-    | 'setDpr'
-    | 'events'
-    | 'invalidate'
-    | 'advance'
-    | 'performance'
-    | 'internal'
-  > & {
+  Omit<RootState, PrivateKeys> & {
     events: {
       enabled?: boolean
       priority?: number
@@ -398,7 +402,7 @@ function Portal({
         Object.keys(state).forEach((key) => {
           if (
             // Some props should be off-limits
-            !['size', 'viewport', 'internal', 'performance'].includes(key) &&
+            !privateKeys.includes(key as PrivateKeys) &&
             // Otherwise filter out the props that are different and let the inject layer take precedence
             state[key as keyof RootState] !== injectState[key as keyof RootState]
           )
