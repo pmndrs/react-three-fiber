@@ -4,7 +4,7 @@ import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
-import { buildGraph, ObjectMap, is } from './utils'
+import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -45,11 +45,10 @@ export function useThree<T = RootState>(
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
   const store = useStore()
   const subscribe = store.getState().internal.subscribe
-  // Update ref
-  const ref = React.useRef<RenderCallback>(callback)
-  React.useLayoutEffect(() => void (ref.current = callback), [callback])
+  // Memoize ref
+  const ref = useMutableCallback(callback)
   // Subscribe on mount, unsubscribe on unmount
-  React.useLayoutEffect(() => subscribe(ref, renderPriority, store), [renderPriority, subscribe, store])
+  useIsomorphicLayoutEffect(() => subscribe(ref, renderPriority, store), [renderPriority, subscribe, store])
   return null
 }
 

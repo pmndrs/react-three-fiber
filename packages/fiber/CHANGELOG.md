@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.0.8
+
+### Patch Changes
+
+- 952a566: fix: react SSR
+
+## 8.0.7
+
+### Patch Changes
+
+- f63806b: fix: react SSR
+
 ## 8.0.6
 
 ### Patch Changes
