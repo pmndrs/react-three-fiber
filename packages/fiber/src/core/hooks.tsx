@@ -19,14 +19,6 @@ export type Extensions = (loader: THREE.Loader) => void
 export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
 export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
-type noop = (...args: any[]) => any
-type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
-
-export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
-  const fnRef = React.useRef<T | undefined>(fn)
-  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
-  return (...args: Parameters<T>) => fnRef.current?.(...args)
-}
 
 export function useStore() {
   const store = React.useContext(context)

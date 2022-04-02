@@ -3,8 +3,8 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { pick, omit } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, useMemoizedFn } from '../core'
+import { useMemoizedFn, pick, omit } from '../core/utils'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
