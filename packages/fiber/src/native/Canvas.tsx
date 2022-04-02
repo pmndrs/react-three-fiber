@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { SetBlock, Block, ErrorBoundary, useMemoizedFn, pick, omit } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback, pick, omit } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
@@ -34,19 +34,19 @@ const CANVAS_PROPS: Array<keyof Props> = [
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
-  ({ children, style, events, ...props }, forwardedRef) => {
+  ({ children, style, events, onPointerMissed, ...props }, forwardedRef) => {
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
-    const onPointerMissed = useMemoizedFn(props.onPointerMissed)
 
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
 
-    const canvasProps = pick<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
-    const viewProps = omit<Props>({ ...props, onPointerMissed }, CANVAS_PROPS)
+    const handlePointerMissed = useMutableCallback(onPointerMissed)
+    const canvasProps = pick<Props>(props, CANVAS_PROPS)
+    const viewProps = omit<Props>(props, CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
@@ -98,6 +98,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
       root.current.configure({
         ...canvasProps,
+        // Pass mutable reference to onPointerMissed so it's free to update
+        onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
