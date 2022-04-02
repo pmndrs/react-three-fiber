@@ -5,7 +5,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
-import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dpr } from './store'
+import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dpr, Performance } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
