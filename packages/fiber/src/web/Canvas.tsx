@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { useMemoizedFn, pick, omit } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMemoizedFn, useIsomorphicLayoutEffect, pick, omit } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 
@@ -17,9 +17,6 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
    */
   resize?: ResizeOptions
 }
-
-type SetBlock = false | Promise<null> | null
-type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
 const CANVAS_PROPS: Array<keyof Props> = [
   'gl',
@@ -37,25 +34,6 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'onPointerMissed',
   'onCreated',
 ]
-
-function Block({ set }: Omit<UnblockProps, 'children'>) {
-  React.useLayoutEffect(() => {
-    set(new Promise(() => null))
-    return () => set(false)
-  }, [set])
-  return null
-}
-
-class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
-  state = { error: false }
-  static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(error: any) {
-    this.props.set(error)
-  }
-  render() {
-    return this.state.error ? null : this.props.children
-  }
-}
 
 /**
  * A DOM canvas which accepts threejs elements as children.
@@ -106,13 +84,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     )
   }
 
-  React.useLayoutEffect(() => {
-    setCanvas(canvasRef.current)
+  useIsomorphicLayoutEffect(() => {
+    const canvas = canvasRef.current
+    setCanvas(canvas)
+    return () => unmountComponentAtNode(canvas)
   }, [])
-
-  React.useEffect(() => {
-    return () => unmountComponentAtNode(canvas!)
-  }, [canvas])
 
   return (
     <div

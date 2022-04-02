@@ -5,12 +5,41 @@ import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
 
+// React currently throws a warning when using useLayoutEffect on the server.
+// To get around it, we can conditionally useEffect on the server (no-op) and
+// useLayoutEffect on the client.
+const isSSR =
+  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
+export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
+
+export type SetBlock = false | Promise<null> | null
+export type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
+
+export function Block({ set }: Omit<UnblockProps, 'children'>) {
+  useIsomorphicLayoutEffect(() => {
+    set(new Promise(() => null))
+    return () => set(false)
+  }, [set])
+  return null
+}
+
+export class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
+  state = { error: false }
+  static getDerivedStateFromError = () => ({ error: true })
+  componentDidCatch(error: any) {
+    this.props.set(error)
+  }
+  render() {
+    return this.state.error ? null : this.props.children
+  }
+}
+
 type noop = (...args: any[]) => any
 type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
 
 export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
   const fnRef = React.useRef<T | undefined>(fn)
-  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
+  useIsomorphicLayoutEffect(() => void (fnRef.current = fn), [fn])
   return (...args: Parameters<T>) => fnRef.current?.(...args)
 }
 

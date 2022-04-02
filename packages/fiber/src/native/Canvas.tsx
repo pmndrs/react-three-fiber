@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { useMemoizedFn, pick, omit } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMemoizedFn, pick, omit } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
@@ -11,12 +11,6 @@ import { RootState } from '../core/store'
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
-}
-
-type SetBlock = false | Promise<null> | null
-type UnblockProps = {
-  set: React.Dispatch<React.SetStateAction<SetBlock>>
-  children: React.ReactNode
 }
 
 const CANVAS_PROPS: Array<keyof Props> = [
@@ -34,25 +28,6 @@ const CANVAS_PROPS: Array<keyof Props> = [
   'onPointerMissed',
   'onCreated',
 ]
-
-function Block({ set }: Omit<UnblockProps, 'children'>) {
-  React.useLayoutEffect(() => {
-    set(new Promise(() => null))
-    return () => set(false)
-  }, [set])
-  return null
-}
-
-class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
-  state = { error: false }
-  static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(error: any) {
-    this.props.set(error)
-  }
-  render() {
-    return this.state.error ? null : this.props.children
-  }
-}
 
 /**
  * A native canvas which accepts threejs elements as children.
