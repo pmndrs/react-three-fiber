@@ -12,8 +12,10 @@ import { EventManager } from '../core/events'
 
 // React currently throws a warning when using useLayoutEffect on the server.
 // To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect in the browser.
-const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
+// useLayoutEffect on the client.
+const isSSR =
+  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
+const useIsomorphicLayoutEffect = isSSR ? React.useLayoutEffect : React.useEffect
 
 export interface Props
   extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
