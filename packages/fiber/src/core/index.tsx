@@ -9,7 +9,7 @@ import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dp
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
-import { is, dispose, calculateDpr, EquConfig, getRootState } from './utils'
+import { is, dispose, calculateDpr, EquConfig, getRootState, useIsomorphicLayoutEffect } from './utils'
 import { useStore } from './hooks'
 
 const roots = new Map<Element, Root>()
@@ -302,7 +302,7 @@ function Provider<TElement extends Element>({
   rootElement: TElement
   parent?: React.MutableRefObject<TElement | undefined>
 }) {
-  React.useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))

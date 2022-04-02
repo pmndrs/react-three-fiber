@@ -1,4 +1,5 @@
-import * as React from 'react'
+// use default export for jest.spyOn
+import React from 'react'
 import { render, RenderResult } from '@testing-library/react'
 
 import { Canvas, act } from '../../src'
@@ -43,5 +44,19 @@ describe('web Canvas', () => {
     })
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  it('plays nice with react SSR', async () => {
+    const useLayoutEffect = jest.spyOn(React, 'useLayoutEffect')
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <group />
+        </Canvas>,
+      )
+    })
+
+    expect(useLayoutEffect).not.toHaveBeenCalled()
   })
 })
