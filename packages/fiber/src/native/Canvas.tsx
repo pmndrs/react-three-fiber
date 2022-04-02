@@ -8,7 +8,7 @@ import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
