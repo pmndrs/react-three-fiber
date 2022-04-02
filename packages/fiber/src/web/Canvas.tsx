@@ -78,7 +78,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
     root.current.configure({
       ...canvasProps,
-      onPointerMissed: handlePointerMissed.current,
+      onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
         state.events.connect?.(meshRef.current)
         canvasProps.onCreated?.(state)

@@ -98,7 +98,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
       root.current.configure({
         ...canvasProps,
-        onPointerMissed: handlePointerMissed.current,
+        onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
