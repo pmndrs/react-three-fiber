@@ -5,7 +5,19 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
-import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dpr, Performance } from './store'
+import {
+  Renderer,
+  createStore,
+  isRenderer,
+  context,
+  RootState,
+  Size,
+  Camera,
+  Dpr,
+  Performance,
+  PrivateKeys,
+  privateKeys,
+} from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
@@ -341,22 +353,6 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
     })
   }
 }
-
-// Keys that shouldn't be copied between R3F stores
-const privateKeys = [
-  'set',
-  'get',
-  'setSize',
-  'setFrameloop',
-  'setDpr',
-  'events',
-  'invalidate',
-  'advance',
-  'performance',
-  'internal',
-] as const
-
-type PrivateKeys = typeof privateKeys[number]
 
 export type InjectState = Partial<
   Omit<RootState, PrivateKeys> & {

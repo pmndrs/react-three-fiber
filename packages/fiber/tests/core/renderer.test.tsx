@@ -3,9 +3,19 @@ import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
+import {
+  createRoot,
+  act,
+  unmountComponentAtNode,
+  useFrame,
+  extend,
+  ReactThreeFiber,
+  useThree,
+  InjectState,
+  createPortal,
+} from '../../src/index'
 import { UseBoundStore } from 'zustand'
-import { RootState } from '../../src/core/store'
+import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
@@ -671,5 +681,39 @@ describe('renderer', () => {
         .getState().gl
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+  })
+
+  it('can handle createPortal', async () => {
+    const scene = new THREE.Scene()
+
+    let state: RootState = null!
+    let portalState: InjectState = null!
+
+    const Component = () => {
+      const three = useThree()
+      portalState = three
+
+      return <group />
+    }
+
+    await act(async () => {
+      state = createRoot(canvas)
+        .render(createPortal(<Component />, scene, { scene }))
+        .getState()
+    })
+
+    // Renders into portal target
+    expect(scene.children.length).not.toBe(0)
+
+    // Creates an isolated state enclave
+    expect(state.scene).not.toBe(scene)
+    expect(portalState.scene).toBe(scene)
+
+    // Preserves internal keys
+    const overwrittenKeys = ['events', 'internal']
+    const respectedKeys = privateKeys.filter(
+      (key) => overwrittenKeys.includes(key) || state[key] === (portalState as RootState)[key],
+    )
+    expect(respectedKeys).toStrictEqual(privateKeys)
   })
 })

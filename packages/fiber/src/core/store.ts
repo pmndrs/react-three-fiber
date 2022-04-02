@@ -5,6 +5,22 @@ import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr } from './utils'
 
+// Keys that shouldn't be copied between R3F stores
+export const privateKeys = [
+  'set',
+  'get',
+  'setSize',
+  'setFrameloop',
+  'setDpr',
+  'events',
+  'invalidate',
+  'advance',
+  'performance',
+  'internal',
+] as const
+
+export type PrivateKeys = typeof privateKeys[number]
+
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
