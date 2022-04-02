@@ -10,7 +10,7 @@ import { Dpr, RootState } from './store'
 // useLayoutEffect on the client.
 const isSSR =
   typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-export const useIsomorphicLayoutEffect = isSSR ? React.useLayoutEffect : React.useEffect
+export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
 
 export type SetBlock = false | Promise<null> | null
 export type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
