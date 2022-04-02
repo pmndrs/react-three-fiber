@@ -12,6 +12,28 @@ const isSSR =
   typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
 export const useIsomorphicLayoutEffect = isSSR ? React.useLayoutEffect : React.useEffect
 
+export type SetBlock = false | Promise<null> | null
+export type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
+
+export function Block({ set }: Omit<UnblockProps, 'children'>) {
+  useIsomorphicLayoutEffect(() => {
+    set(new Promise(() => null))
+    return () => set(false)
+  }, [set])
+  return null
+}
+
+export class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
+  state = { error: false }
+  static getDerivedStateFromError = () => ({ error: true })
+  componentDidCatch(error: any) {
+    this.props.set(error)
+  }
+  render() {
+    return this.state.error ? null : this.props.children
+  }
+}
+
 type noop = (...args: any[]) => any
 type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
 
