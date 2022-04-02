@@ -10,6 +10,11 @@ import { createPointerEvents } from './events'
 import { RootState } from '../core/store'
 import { EventManager } from '../core/events'
 
+// React currently throws a warning when using useLayoutEffect on the server.
+// To get around it, we can conditionally useEffect on the server (no-op) and
+// useLayoutEffect in the browser.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? React.useLayoutEffect : React.useEffect
+
 export interface Props
   extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
     React.HTMLAttributes<HTMLDivElement> {
@@ -103,13 +108,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     )
   }
 
-  React.useLayoutEffect(() => {
-    setCanvas(canvasRef.current)
+  useIsomorphicLayoutEffect(() => {
+    const canvas = canvasRef.current
+    setCanvas(canvas)
+    return () => unmountComponentAtNode(canvas)
   }, [])
-
-  React.useEffect(() => {
-    return () => unmountComponentAtNode(canvas!)
-  }, [canvas])
 
   return (
     <div
