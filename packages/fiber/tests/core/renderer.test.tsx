@@ -6,13 +6,13 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 import {
   createRoot,
   act,
-  unmountComponentAtNode,
   useFrame,
   extend,
   ReactThreeFiber,
   useThree,
   InjectState,
   createPortal,
+  ReconcilerRoot,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -58,10 +58,10 @@ beforeAll(() => {
 })
 
 describe('renderer', () => {
-  let canvas: HTMLCanvasElement = null!
+  let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
   beforeEach(() => {
-    canvas = createCanvas({
+    const canvas = createCanvas({
       beforeReturn: (canvas) => {
         //@ts-ignore
         canvas.getContext = (type: string) => {
@@ -71,6 +71,11 @@ describe('renderer', () => {
         }
       },
     })
+    root = createRoot(canvas)
+  })
+
+  afterEach(() => {
+    root.unmount()
   })
 
   it('renders a simple component', async () => {
@@ -84,9 +89,7 @@ describe('renderer', () => {
     }
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Mesh />)
-        .getState().scene
+      scene = root.render(<Mesh />).getState().scene
     })
 
     expect(scene.children[0].type).toEqual('Mesh')
@@ -101,9 +104,7 @@ describe('renderer', () => {
     const Empty = () => null
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Empty />)
-        .getState().scene
+      scene = root.render(<Empty />).getState().scene
     })
 
     expect(scene.type).toEqual('Scene')
@@ -133,9 +134,7 @@ describe('renderer', () => {
 
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Parent />)
-        .getState().scene
+      scene = root.render(<Parent />).getState().scene
     })
 
     expect(scene.children[0].type).toEqual('Group')
@@ -182,9 +181,7 @@ describe('renderer', () => {
 
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Component />)
-        .getState().scene
+      scene = root.render(<Component />).getState().scene
     })
 
     expect(scene.children[0].position.x).toEqual(7)
@@ -194,7 +191,7 @@ describe('renderer', () => {
   it('updates types & names', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <mesh>
             <meshBasicMaterial name="basicMat">
@@ -213,7 +210,7 @@ describe('renderer', () => {
     )
 
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <mesh>
             <meshStandardMaterial name="standardMat">
@@ -253,7 +250,7 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      createRoot(canvas).render(<RefTest />)
+      root.render(<RefTest />)
     })
 
     expect(immutableRef.current).toBeTruthy()
@@ -264,7 +261,7 @@ describe('renderer', () => {
   it('attaches Object3D children that use attach', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <hasObject3dMember>
             <mesh attach="attachment" />
@@ -283,7 +280,7 @@ describe('renderer', () => {
   it('can attach a Scene', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <hasObject3dMember>
             <scene attach="attachment" />
@@ -303,7 +300,7 @@ describe('renderer', () => {
     it('attachFns with cleanup', async () => {
       let scene: THREE.Scene = null!
       await act(async () => {
-        scene = createRoot(canvas)
+        scene = root
           .render(
             <hasObject3dMethods>
               <mesh attach={(parent, self) => (parent.customAttach(self), () => parent.detach(self))} />
@@ -322,7 +319,7 @@ describe('renderer', () => {
       expect((scene.children[0] as HasObject3dMethods).detachedObj3d).toBeUndefined()
 
       await act(async () => {
-        createRoot(canvas).render(<hasObject3dMethods />)
+        root.render(<hasObject3dMethods />)
       })
 
       const detachedMesh = (scene.children[0] as HasObject3dMethods).detachedObj3d
@@ -335,7 +332,7 @@ describe('renderer', () => {
       let detachedMesh: Instance = null!
 
       await act(async () => {
-        scene = createRoot(canvas)
+        scene = root
           .render(
             <hasObject3dMethods>
               <mesh attach={(parent) => ((attachedMesh = parent), () => (detachedMesh = parent))} />
@@ -350,7 +347,7 @@ describe('renderer', () => {
       expect(scene.children[0].children.length).toBe(0)
 
       await act(async () => {
-        createRoot(canvas).render(<hasObject3dMethods />)
+        root.render(<hasObject3dMethods />)
       })
 
       expect(detachedMesh).toBe(attachedMesh)
@@ -373,11 +370,11 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      createRoot(canvas).render(<Log key="foo" name="Foo" />)
+      root.render(<Log key="foo" name="Foo" />)
     })
 
     await act(async () => {
-      unmountComponentAtNode(canvas)
+      root.unmount()
     })
 
     expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
@@ -393,44 +390,34 @@ describe('renderer', () => {
     // Test initial mount without events
     mounted = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
 
     // Test initial mount with events
     attachEvents = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).not.toBe(0)
 
     // Test events update
     attachEvents = false
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
 
     attachEvents = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).not.toBe(0)
 
     // Test unmount with events
     mounted = false
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
   })
@@ -447,9 +434,7 @@ describe('renderer', () => {
     )
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<Test n={1} />)
-        .getState()
+      state = root.render(<Test n={1} />).getState()
     })
 
     instances.push({
@@ -459,9 +444,7 @@ describe('renderer', () => {
     })
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<Test n={2} />)
-        .getState()
+      state = root.render(<Test n={2} />).getState()
     })
 
     instances.push({
@@ -487,7 +470,7 @@ describe('renderer', () => {
     let camera: THREE.Camera = null!
 
     await act(async () => {
-      camera = createRoot(canvas)
+      camera = root
         .configure({ orthographic: true, camera: { position: [0, 0, 5] } })
         .render(<group />)
         .getState().camera
@@ -500,9 +483,7 @@ describe('renderer', () => {
   it('should handle an performance changing functions', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ dpr: [1, 2], performance: { min: 0.2 } })
-        .render(<group />)
+      state = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
 
     expect(state.getState().viewport.initialDpr).toEqual(2)
@@ -536,9 +517,7 @@ describe('renderer', () => {
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ shadows: true })
-        .render(<group />)
+      state = root.configure({ shadows: true }).render(<group />)
     })
 
     expect(state.getState().gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
@@ -547,9 +526,7 @@ describe('renderer', () => {
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ linear: false })
-        .render(<group />)
+      state = root.configure({ linear: false }).render(<group />)
     })
 
     expect(state.getState().gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -560,9 +537,7 @@ describe('renderer', () => {
     let state: RootState = null!
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<group />)
-        .getState()
+      state = root.render(<group />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
@@ -585,7 +560,7 @@ describe('renderer', () => {
         useFrame(() => (respected = false))
         return <group />
       }
-      const state = createRoot(canvas)
+      const state = root
         .configure({ frameloop: 'never' })
         .render(<TestGroup />)
         .getState()
@@ -608,7 +583,7 @@ describe('renderer', () => {
         extend({ MyColor })
 
         // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
-        createRoot(canvas).render(<myColor args={[0x0000ff]} />)
+        root.render(<myColor args={[0x0000ff]} />)
       })
     }
 
@@ -618,7 +593,7 @@ describe('renderer', () => {
   it('should set renderer props via gl prop', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ gl: { physicallyCorrectLights: true } })
         .render(<group />)
         .getState().gl
@@ -632,7 +607,7 @@ describe('renderer', () => {
 
     let gl: Renderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ gl: (canvas) => new Renderer({ canvas }) })
         .render(<group />)
         .getState().gl
@@ -644,7 +619,7 @@ describe('renderer', () => {
   it('should respect color management preferences via gl', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping } })
         .render(<group />)
         .getState().gl
@@ -654,7 +629,7 @@ describe('renderer', () => {
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
 
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ flat: true, linear: true })
         .render(<group />)
         .getState().gl
@@ -666,7 +641,7 @@ describe('renderer', () => {
   it('should respect legacy prop', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ legacy: true })
         .render(<group />)
         .getState().gl
@@ -675,7 +650,7 @@ describe('renderer', () => {
     expect((THREE as any).ColorManagement.legacyMode).toBe(true)
 
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ legacy: false })
         .render(<group />)
         .getState().gl
@@ -697,9 +672,7 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(createPortal(<Component />, scene, { scene }))
-        .getState()
+      state = root.render(createPortal(<Component />, scene, { scene })).getState()
     })
 
     // Renders into portal target
