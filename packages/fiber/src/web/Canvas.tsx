@@ -3,20 +3,19 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { UseBoundStore } from 'zustand'
-import { pick, omit } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps, useMemoizedFn } from '../core'
+import { useMemoizedFn, pick, omit } from '../core/utils'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
-import { RootState } from '../core/store'
-import { EventManager } from '../core/events'
 
-export interface Props
-  extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>,
-    React.HTMLAttributes<HTMLDivElement> {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
+  /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
+  /**
+   * Options to pass to useMeasure.
+   * @see https://github.com/pmndrs/react-use-measure#api
+   */
   resize?: ResizeOptions
-  events?: (store: UseBoundStore<RootState>) => EventManager<any>
 }
 
 type SetBlock = false | Promise<null> | null
@@ -58,6 +57,10 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
+/**
+ * A DOM canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
 export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
   { children, fallback, resize, style, events = createPointerEvents, ...props },
   forwardedRef,
