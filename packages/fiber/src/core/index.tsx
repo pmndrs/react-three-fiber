@@ -4,7 +4,8 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
-import { Renderer, createStore, StoreProps, isRenderer, context, RootState, Size, Camera } from './store'
+import * as ReactThreeFiber from '../three-types'
+import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dpr, Performance } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
@@ -24,11 +25,59 @@ type GLProps =
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = Omit<StoreProps, 'gl' | 'events' | 'size'> & {
+export type RenderProps<TCanvas extends Element> = {
+  /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
-  events?: (store: UseBoundStore<RootState>) => EventManager<TCanvas>
+  /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
+  /**
+   * Enables PCFsoft shadows. Can accept `gl.shadowMap` options for fine-tuning.
+   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
+   */
+  shadows?: boolean | Partial<THREE.WebGLShadowMap>
+  /**
+   * Disables three r139 color management.
+   * @see https://threejs.org/docs/#manual/en/introduction/Color-management
+   */
+  legacy?: boolean
+  /** Switch off automatic sRGB encoding and gamma correction */
+  linear?: boolean
+  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
+  flat?: boolean
+  /** Creates an orthographic camera */
+  orthographic?: boolean
+  /**
+   * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
+   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
+   */
+  frameloop?: 'always' | 'demand' | 'never'
+  /**
+   * R3F performance options for adaptive performance.
+   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
+   */
+  performance?: Partial<Omit<Performance, 'regress'>>
+  /** Target pixel ratio. Can clamp between a range: `[min, max]` */
+  dpr?: Dpr
+  /** Props that go into the default raycaster */
+  raycaster?: Partial<THREE.Raycaster>
+  /** A `THREE.Camera` instance or props that go into the default camera */
+  camera?: (
+    | Camera
+    | Partial<
+        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
+          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
+          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+      >
+  ) & {
+    /** Flags the camera as manual, putting projection into your own hands */
+    manual?: boolean
+  }
+  /** An R3F event manager to manage elements' pointer events */
+  events?: (store: UseBoundStore<RootState>) => EventManager<HTMLElement>
+  /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
+  /** Response for pointer clicks that have missed any target */
+  onPointerMissed?: (event: MouseEvent) => void
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
