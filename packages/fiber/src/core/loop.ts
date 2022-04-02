@@ -14,8 +14,23 @@ let i
 let globalEffects: GlobalRenderCallback[] = []
 let globalAfterEffects: GlobalRenderCallback[] = []
 let globalTailEffects: GlobalRenderCallback[] = []
+
+/**
+ * Adds a global render callback which is called each frame.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#addEffect
+ */
 export const addEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalEffects)
+
+/**
+ * Adds a global after-render callback which is called each frame.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#addAfterEffect
+ */
 export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(callback, globalAfterEffects)
+
+/**
+ * Adds a global callback which is called when rendering stops.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#addTail
+ */
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 function run(effects: GlobalRenderCallback[], timestamp: number) {
@@ -51,6 +66,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   let repeat: number
   let frame: number
   let state: RootState
+
   function loop(timestamp: number): void {
     frame = requestAnimationFrame(loop)
     running = true
@@ -110,5 +126,17 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     if (runGlobalEffects) run(globalAfterEffects, timestamp)
   }
 
-  return { loop, invalidate, advance }
+  return {
+    loop,
+    /**
+     * Invalidates the view, requesting a frame to be rendered. Will globally invalidate unless passed a root's state.
+     * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
+     */
+    invalidate,
+    /**
+     * Advances the frameloop and runs render effects, useful for when manually rendering via `frameloop="never"`.
+     * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
+     */
+    advance,
+  }
 }

@@ -22,12 +22,22 @@ export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coe
 type noop = (...args: any[]) => any
 type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
 
+export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
+  const fnRef = React.useRef<T | undefined>(fn)
+  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
+  return (...args: Parameters<T>) => fnRef.current?.(...args)
+}
+
 export function useStore() {
   const store = React.useContext(context)
   if (!store) throw `R3F hooks can only be used within the Canvas component!`
   return store
 }
 
+/**
+ * Accesses R3F's internal state, containing renderer, canvas, scene, etc.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usethree
+ */
 export function useThree<T = RootState>(
   selector: StateSelector<RootState, T> = (state) => state as unknown as T,
   equalityFn?: EqualityChecker<T>,
@@ -35,6 +45,11 @@ export function useThree<T = RootState>(
   return useStore()(selector, equalityFn)
 }
 
+/**
+ * Executes a callback before render in a shared frame loop.
+ * Can order effects with render priority or manually render with a positive priority.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe
+ */
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
   const store = useStore()
   const subscribe = store.getState().internal.subscribe
@@ -46,6 +61,10 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   return null
 }
 
+/**
+ * Returns a node graph of an object with named nodes & materials.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usegraph
+ */
 export function useGraph(object: THREE.Object3D) {
   return React.useMemo(() => buildGraph(object), [object])
 }
@@ -75,12 +94,12 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
   }
 }
 
-export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
-  const fnRef = React.useRef<T | undefined>(fn)
-  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
-  return (...args: Parameters<T>) => fnRef.current?.(...args)
-}
-
+/**
+ * Synchronously loads and caches assets with a three loader.
+ *
+ * Note: this hook's caller must be wrapped with `React.Suspense`
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
+ */
 export function useLoader<T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
@@ -96,6 +115,9 @@ export function useLoader<T, U extends string | string[]>(
     : BranchingReturn<T, GLTF, GLTF & ObjectMap>
 }
 
+/**
+ * Preloads an asset into cache as a side-effect.
+ */
 useLoader.preload = function <T, U extends string | string[]>(
   Proto: new () => LoaderResult<T>,
   input: U,
@@ -105,6 +127,9 @@ useLoader.preload = function <T, U extends string | string[]>(
   return preload(loadingFn<T>(extensions), [Proto, ...keys])
 }
 
+/**
+ * Removes a loaded asset from cache.
+ */
 useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([Proto, ...keys])

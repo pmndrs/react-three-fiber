@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import * as ReactThreeFiber from '../three-types'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
@@ -134,29 +133,6 @@ export type RootState = {
   previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   /** Internals */
   internal: InternalState
-}
-
-export type StoreProps = {
-  gl: THREE.WebGLRenderer
-  size: Size
-  shadows?: boolean | Partial<THREE.WebGLShadowMap>
-  legacy?: boolean
-  linear?: boolean
-  flat?: boolean
-  orthographic?: boolean
-  frameloop?: 'always' | 'demand' | 'never'
-  performance?: Partial<Omit<Performance, 'regress'>>
-  dpr?: Dpr
-  raycaster?: Partial<THREE.Raycaster>
-  camera?: (
-    | Camera
-    | Partial<
-        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-      >
-  ) & { manual?: boolean }
-  onPointerMissed?: (event: MouseEvent) => void
 }
 
 const context = React.createContext<UseBoundStore<RootState>>(null!)
