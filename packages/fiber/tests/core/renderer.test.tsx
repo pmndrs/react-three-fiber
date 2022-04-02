@@ -4,15 +4,14 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import {
+  ReconcilerRoot,
   createRoot,
   act,
   useFrame,
   extend,
   ReactThreeFiber,
   useThree,
-  InjectState,
   createPortal,
-  ReconcilerRoot,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -662,7 +661,7 @@ describe('renderer', () => {
     const scene = new THREE.Scene()
 
     let state: RootState = null!
-    let portalState: InjectState = null!
+    let portalState: RootState = null!
 
     const Component = () => {
       const three = useThree()
@@ -684,9 +683,7 @@ describe('renderer', () => {
 
     // Preserves internal keys
     const overwrittenKeys = ['events', 'internal']
-    const respectedKeys = privateKeys.filter(
-      (key) => overwrittenKeys.includes(key) || state[key] === (portalState as RootState)[key],
-    )
+    const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
   })
 })
