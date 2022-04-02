@@ -3,16 +3,9 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { useMemoizedFn, pick, omit } from '../core/utils'
+import { useMemoizedFn, useIsomorphicLayoutEffect, pick, omit } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
-
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect on the client.
-const isSSR =
-  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-const useIsomorphicLayoutEffect = isSSR ? React.useLayoutEffect : React.useEffect
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode

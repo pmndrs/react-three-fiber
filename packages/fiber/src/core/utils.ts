@@ -5,12 +5,19 @@ import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
 
+// React currently throws a warning when using useLayoutEffect on the server.
+// To get around it, we can conditionally useEffect on the server (no-op) and
+// useLayoutEffect on the client.
+const isSSR =
+  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
+export const useIsomorphicLayoutEffect = isSSR ? React.useLayoutEffect : React.useEffect
+
 type noop = (...args: any[]) => any
 type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
 
 export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
   const fnRef = React.useRef<T | undefined>(fn)
-  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
+  useIsomorphicLayoutEffect(() => void (fnRef.current = fn), [fn])
   return (...args: Parameters<T>) => fnRef.current?.(...args)
 }
 
