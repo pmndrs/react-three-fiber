@@ -663,7 +663,14 @@ describe('renderer', () => {
     let state: RootState = null!
     let portalState: RootState = null!
 
-    const Component = () => {
+    const Normal = () => {
+      const three = useThree()
+      state = three
+
+      return <group />
+    }
+
+    const Portal = () => {
       const three = useThree()
       portalState = three
 
@@ -671,7 +678,14 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      state = root.render(createPortal(<Component />, scene, { scene })).getState()
+      root
+        .render(
+          <>
+            <Normal />
+            {createPortal(<Portal />, scene, { scene })}
+          </>,
+        )
+        .getState()
     })
 
     // Renders into portal target
@@ -682,7 +696,7 @@ describe('renderer', () => {
     expect(portalState.scene).toBe(scene)
 
     // Preserves internal keys
-    const overwrittenKeys = ['events', 'internal']
+    const overwrittenKeys = ['events']
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
   })
