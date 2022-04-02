@@ -12,6 +12,12 @@ const isSSR =
   typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
 export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
 
+export function useMutableCallback<T>(fn: T) {
+  const ref = React.useRef<T>(fn)
+  useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
+  return ref
+}
+
 export type SetBlock = false | Promise<null> | null
 export type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
@@ -32,15 +38,6 @@ export class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> },
   render() {
     return this.state.error ? null : this.props.children
   }
-}
-
-type noop = (...args: any[]) => any
-type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
-
-export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
-  const fnRef = React.useRef<T | undefined>(fn)
-  useIsomorphicLayoutEffect(() => void (fnRef.current = fn), [fn])
-  return (...args: Parameters<T>) => fnRef.current?.(...args)
 }
 
 export const DEFAULT = '__default'
