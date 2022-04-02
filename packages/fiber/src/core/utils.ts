@@ -1,10 +1,20 @@
 import * as THREE from 'three'
+import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import type { Props as NativeCanvasProps } from '../native'
 import type { Props as WebCanvasProps } from '../web/Canvas'
 import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState } from './store'
+
+type noop = (...args: any[]) => any
+type PickFunction<T extends noop> = (...args: Parameters<T>) => ReturnType<T>
+
+export function useMemoizedFn<T extends noop>(fn?: T): PickFunction<T> {
+  const fnRef = React.useRef<T | undefined>(fn)
+  React.useLayoutEffect(() => void (fnRef.current = fn), [fn])
+  return (...args: Parameters<T>) => fnRef.current?.(...args)
+}
 
 export const DEFAULT = '__default'
 

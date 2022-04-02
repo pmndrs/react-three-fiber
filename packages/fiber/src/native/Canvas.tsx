@@ -3,18 +3,15 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { UseBoundStore } from 'zustand'
-import { extractCanvasProps } from '../core/utils'
-import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot, useMemoizedFn } from '../core'
+
+import { useMemoizedFn, extractCanvasProps } from '../core/utils'
+import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
-import { EventManager } from '../core/events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'events'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, ViewProps {
   children: React.ReactNode
-  fallback?: React.ReactNode
   style?: ViewStyle
-  events?: (store: UseBoundStore<RootState>) => EventManager<any>
 }
 
 type SetBlock = false | Promise<null> | null
@@ -42,8 +39,12 @@ class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { erro
   }
 }
 
+/**
+ * A native canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
-  ({ children, fallback, style, events, onPointerMissed: _onPointerMissed, ...props }, forwardedRef) => {
+  ({ children, style, events, onPointerMissed: _onPointerMissed, ...props }, forwardedRef) => {
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
@@ -110,7 +111,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
         size: { width, height },
-        events: (events || createTouchEvents) as (store: UseBoundStore<RootState>) => EventManager<any>,
+        events: events || createTouchEvents,
         onCreated,
       })
       root.current.render(

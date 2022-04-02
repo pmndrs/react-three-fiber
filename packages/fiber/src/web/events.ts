@@ -15,6 +15,7 @@ const DOM_EVENTS = {
   onLostPointerCapture: ['lostpointercapture', true],
 } as const
 
+/** Default R3F event manager for web */
 export function createPointerEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
