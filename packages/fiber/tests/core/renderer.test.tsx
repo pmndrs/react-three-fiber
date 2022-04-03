@@ -678,14 +678,12 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      root
-        .render(
-          <>
-            <Normal />
-            {createPortal(<Portal />, scene, { scene })}
-          </>,
-        )
-        .getState()
+      root.render(
+        <>
+          <Normal />
+          {createPortal(<Portal />, scene, { scene })}
+        </>,
+      )
     })
 
     // Renders into portal target
