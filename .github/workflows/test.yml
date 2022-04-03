@@ -31,3 +31,9 @@ jobs:
 
       - name: Jest run
         run: yarn test
+
+      - name: Report Fiber size
+        run: yarn analyze-fiber
+
+      - name: Report Test Renderer size
+        run: yarn analyze-test

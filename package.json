@@ -35,7 +35,9 @@
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
     "validate": "preconstruct validate",
     "release": "yarn build && yarn changeset publish",
-    "vers": "yarn changeset version"
+    "vers": "yarn changeset version",
+    "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
+    "analyze-test": "cd packages/test-renderer && npm publish --dry-run"
   },
   "devDependencies": {
     "@babel/core": "7.17.8",
