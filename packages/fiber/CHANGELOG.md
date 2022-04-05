@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.9
+
+### Patch Changes
+
+- 624df949: fix: canvas unmount race condition"
+
 ## 8.0.8
 
 ### Patch Changes
