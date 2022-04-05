@@ -95,9 +95,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   }
 
   useIsomorphicLayoutEffect(() => {
-    const canvas = canvasRef.current
-    setCanvas(canvas)
-    return () => unmountComponentAtNode(canvas)
+    setCanvas(canvasRef.current)
+  }, [])
+
+  React.useEffect(() => {
+    return () => unmountComponentAtNode(canvas!)
   }, [])
 
   return (
