@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.7
+
+### Patch Changes
+
+- eb321afd: fix: remount bug, allow portals to inject custom size
+- Updated dependencies [eb321afd]
+  - @react-three/fiber@8.0.10
+
 ## 8.0.6
 
 ### Patch Changes

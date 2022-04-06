@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.10
+
+### Patch Changes
+
+- eb321afd: fix: remount bug, allow portals to inject custom size
+
 ## 8.0.9
 
 ### Patch Changes
