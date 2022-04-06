@@ -3,7 +3,7 @@ import * as React from 'react'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr } from './utils'
+import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -30,7 +30,6 @@ export type Viewport = Size & {
   aspect: number
 }
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
 
 export type Performance = {
@@ -47,10 +46,7 @@ export type Performance = {
 }
 
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
-
 export const isRenderer = (def: any) => !!def?.render
-export const isOrthographicCamera = (def: any): def is THREE.OrthographicCamera =>
-  def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 export type InternalState = {
   active: boolean
@@ -311,22 +307,7 @@ const createStore = (
   rootState.subscribe(() => {
     const { camera, size, viewport, gl } = rootState.getState()
     if (size !== oldSize || viewport.dpr !== oldDpr) {
-      // https://github.com/pmndrs/react-three-fiber/issues/92
-      // Do not mess with the camera if it belongs to the user
-      if (!camera.manual) {
-        if (isOrthographicCamera(camera)) {
-          camera.left = size.width / -2
-          camera.right = size.width / 2
-          camera.top = size.height / 2
-          camera.bottom = size.height / -2
-        } else {
-          camera.aspect = size.width / size.height
-        }
-        camera.updateProjectionMatrix()
-        // https://github.com/pmndrs/react-three-fiber/issues/178
-        // Update matrix world since the renderer is a frame late
-        camera.updateMatrixWorld()
-      }
+      updateCamera(camera, size)
       // Update renderer
       gl.setPixelRatio(viewport.dpr)
       gl.setSize(size.width, size.height)

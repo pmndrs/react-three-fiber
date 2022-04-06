@@ -8,13 +8,12 @@ export type {
   Dpr,
   Size,
   Viewport,
-  Camera,
   RenderCallback,
   Performance,
   RootState,
 } from './core/store'
-export type { ThreeEvent, Events, EventManager } from './core/events'
-export type { ObjectMap } from './core/utils'
+export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/events'
+export type { ObjectMap, Camera } from './core/utils'
 export * from './web/Canvas'
 export { createPointerEvents as events } from './web/events'
 export * from './core'

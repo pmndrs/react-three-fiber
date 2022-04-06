@@ -3,7 +3,11 @@ import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
-import { Dpr, RootState } from './store'
+import { Dpr, RootState, Size } from './store'
+
+export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
+  def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
 // React currently throws a warning when using useLayoutEffect on the server.
 // To get around it, we can conditionally useEffect on the server (no-op) and
@@ -372,4 +376,23 @@ export function invalidateInstance(instance: Instance) {
 
 export function updateInstance(instance: Instance) {
   instance.onUpdate?.(instance)
+}
+
+export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) {
+  // https://github.com/pmndrs/react-three-fiber/issues/92
+  // Do not mess with the camera if it belongs to the user
+  if (!camera.manual) {
+    if (isOrthographicCamera(camera)) {
+      camera.left = size.width / -2
+      camera.right = size.width / 2
+      camera.top = size.height / 2
+      camera.bottom = size.height / -2
+    } else {
+      camera.aspect = size.width / size.height
+    }
+    camera.updateProjectionMatrix()
+    // https://github.com/pmndrs/react-three-fiber/issues/178
+    // Update matrix world since the renderer is a frame late
+    camera.updateMatrixWorld()
+  }
 }

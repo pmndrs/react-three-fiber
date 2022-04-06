@@ -5,11 +5,20 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
-import { Renderer, createStore, isRenderer, context, RootState, Size, Camera, Dpr, Performance } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { Renderer, createStore, isRenderer, context, RootState, Size, Dpr, Performance } from './store'
+import { createRenderer, extend, Instance, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
-import { is, dispose, calculateDpr, EquConfig, getRootState, useIsomorphicLayoutEffect } from './utils'
+import {
+  is,
+  dispose,
+  calculateDpr,
+  EquConfig,
+  getRootState,
+  useIsomorphicLayoutEffect,
+  Camera,
+  updateCamera,
+} from './utils'
 import { useStore } from './hooks'
 
 const roots = new Map<Element, Root>()
@@ -355,13 +364,16 @@ export type InjectState = Partial<
     | 'advance'
     | 'performance'
     | 'internal'
+    | 'size'
+    | 'viewport'
   > & {
-    events: {
+    events?: {
       enabled?: boolean
       priority?: number
       compute?: ComputeFunction
       connected?: any
     }
+    size?: { width: number; height: number }
   }
 >
 
@@ -384,7 +396,7 @@ function Portal({
    *  <Canvas>
    *    {createPortal(...)} */
 
-  const { events, ...rest } = state
+  const { events, size, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
   const [pointer] = React.useState(() => new THREE.Vector2())
@@ -395,49 +407,81 @@ function Portal({
 
       if (injectState) {
         // Only the fields of "state" that do not differ from injectState
+        // Some props should be off-limits
+        // Otherwise filter out the props that are different and let the inject layer take precedence
         Object.keys(state).forEach((key) => {
           if (
-            // Some props should be off-limits
-            !['size', 'viewport', 'internal', 'performance'].includes(key) &&
-            // Otherwise filter out the props that are different and let the inject layer take precedence
-            state[key as keyof RootState] !== injectState[key as keyof RootState]
-          )
+            state[key as keyof RootState] !== injectState[key as keyof RootState] &&
+            !['internal', 'performance'].includes(key)
+          ) {
             delete intersect[key as keyof RootState]
+          }
         })
       }
 
+      let viewport = undefined
+      if (injectState && size) {
+        const camera = injectState.camera
+        // Calculate the override viewport, if present
+        viewport = state.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
+        // Update the portal camera, if it differs from the previous layer
+        if (camera !== state.camera) updateCamera(camera, size)
+      }
+
       return {
+        // The intersect consists of the previous root state
         ...intersect,
+        // Portals have their own scene, which forms the root, a raycaster and a pointer
         scene: container as THREE.Scene,
-        previousRoot,
         raycaster,
-        events: { ...state.events, ...injectState?.events, pointer, mouse: pointer, ...events },
+        pointer,
+        mouse: pointer,
+        // Their previous root is the layer before it
+        previousRoot,
+        // Events, size and viewport can be overridden by the inject layer
+        events: { ...state.events, ...injectState?.events, ...events },
+        size: { ...state.size, ...size },
+        viewport: { ...state.viewport, ...viewport },
         ...rest,
       } as RootState
     },
     [state],
   )
-  const [useInjectStore] = React.useState(() => {
+
+  const [usePortalStore] = React.useState(() => {
+    // Create a mirrored store, based on the previous root with a few overrides ...
+    const defaultTarget = new THREE.Vector3()
+    const previousState = previousRoot.getState()
     const store = create<RootState>((set, get) => ({
-      ...inject(previousRoot.getState()),
+      ...inject(previousState),
+      // Set and get refer to this root-state
       set,
       get,
+      // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
     }))
-    previousRoot.subscribe((state) => useInjectStore.setState((injectState) => inject(state, injectState)))
     return store
   })
 
   React.useEffect(() => {
-    useInjectStore.setState((injectState) => inject(previousRoot.getState(), injectState))
+    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+    const unsub = previousRoot.subscribe((prev) => usePortalStore.setState((state) => inject(prev, state)))
+    return () => {
+      unsub()
+      usePortalStore.destroy()
+    }
+  }, [])
+
+  React.useEffect(() => {
+    usePortalStore.setState((injectState) => inject(previousRoot.getState(), injectState))
   }, [inject])
 
   return (
     <>
       {reconciler.createPortal(
-        <context.Provider value={useInjectStore}>{children}</context.Provider>,
-        useInjectStore,
+        <context.Provider value={usePortalStore}>{children}</context.Provider>,
+        usePortalStore,
         null,
       )}
     </>

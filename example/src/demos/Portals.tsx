@@ -112,12 +112,9 @@ const App = () => (
         <Lights />
         <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
         <Soda scale={5} position={[2, -2, -1.5]} />
-        {/* Second layer, a portal inside the portal */}
         <Portal scale={[4, 5, 1]} position={[2, 0, -5]} rotation={[0, 0, 0]}>
           <Lights />
           <Soda scale={8} position={[0, -2, -1.5]} />
-          {/* Inside here we are in a state mirror, hence all eco system packages work.
-              Environment for instance only affects the portal, nothing leaks out */}
           <Environment preset="city" background="only" />
         </Portal>
       </Portal>

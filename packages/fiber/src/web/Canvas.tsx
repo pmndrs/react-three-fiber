@@ -57,8 +57,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   React.useMemo(() => extend(THREE), [])
 
   const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
-  const meshRef = React.useRef<HTMLDivElement>(null!)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
+  const meshRef = React.useRef<HTMLDivElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
@@ -99,8 +99,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   }, [])
 
   React.useEffect(() => {
-    return () => unmountComponentAtNode(canvas!)
-  }, [])
+    if (canvas) return () => unmountComponentAtNode(canvas!)
+  }, [canvas])
 
   return (
     <div

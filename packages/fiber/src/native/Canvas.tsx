@@ -115,8 +115,10 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }
 
     React.useEffect(() => {
-      return () => unmountComponentAtNode(canvas!)
-    }, [])
+      if (canvas) {
+        return () => unmountComponentAtNode(canvas!)
+      }
+    }, [canvas])
 
     return (
       <View
