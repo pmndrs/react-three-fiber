@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.0.10
+
+### Patch Changes
+
+- eb321afd: fix: remount bug, allow portals to inject custom size
+
+## 8.0.9
+
+### Patch Changes
+
+- 624df949: fix: canvas unmount race condition"
+
 ## 8.0.8
 
 ### Patch Changes

@@ -1,5 +1,21 @@
 # @react-three/test-renderer
 
+## 8.0.7
+
+### Patch Changes
+
+- eb321afd: fix: remount bug, allow portals to inject custom size
+- Updated dependencies [eb321afd]
+  - @react-three/fiber@8.0.10
+
+## 8.0.6
+
+### Patch Changes
+
+- 624df949: fix: canvas unmount race condition"
+- Updated dependencies [624df949]
+  - @react-three/fiber@8.0.9
+
 ## 8.0.5
 
 ### Patch Changes
