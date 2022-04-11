@@ -17,6 +17,8 @@ export const privateKeys = [
   'advance',
   'performance',
   'internal',
+  'size',
+  'viewport',
 ] as const
 
 export type PrivateKeys = typeof privateKeys[number]
