@@ -414,7 +414,6 @@ function Portal({
             state[key as keyof RootState] !== injectState[key as keyof RootState]
           )
             delete intersect[key as keyof RootState]
-          }
         })
       }
 
