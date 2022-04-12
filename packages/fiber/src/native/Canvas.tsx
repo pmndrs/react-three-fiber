@@ -3,38 +3,42 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, pick, omit } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
-
-const CANVAS_PROPS: Array<keyof Props> = [
-  'gl',
-  'events',
-  'shadows',
-  'linear',
-  'flat',
-  'legacy',
-  'orthographic',
-  'frameloop',
-  'performance',
-  'raycaster',
-  'camera',
-  'onPointerMissed',
-  'onCreated',
-]
 
 /**
  * A native canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
-  ({ children, style, events, onPointerMissed, ...props }, forwardedRef) => {
+  (
+    {
+      children,
+      style,
+      gl,
+      events = createTouchEvents,
+      shadows,
+      linear,
+      flat,
+      legacy,
+      orthographic,
+      frameloop,
+      performance,
+      raycaster,
+      camera,
+      onPointerMissed,
+      onCreated,
+      ...props
+    },
+    forwardedRef,
+  ) => {
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
@@ -45,8 +49,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const [bind, setBind] = React.useState<any>()
 
     const handlePointerMissed = useMutableCallback(onPointerMissed)
-    const canvasProps = pick<Props>(props, CANVAS_PROPS)
-    const viewProps = omit<Props>(props, CANVAS_PROPS)
     const [block, setBlock] = React.useState<SetBlock>(false)
     const [error, setError] = React.useState<any>(false)
 
@@ -79,33 +81,41 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     if (width > 0 && height > 0 && canvas) {
       if (!root.current) root.current = createRoot<Element>(canvas)
-      // Overwrite onCreated to apply RN bindings
-      const onCreated = (state: RootState) => {
-        // Bind events after creation
-        const handlers = state.events.connect?.(viewRef.current)
-        setBind(handlers)
-
-        // Bind render to RN bridge
-        const context = state.gl.getContext() as ExpoWebGLRenderingContext
-        const renderFrame = state.gl.render.bind(state.gl)
-        state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-          renderFrame(scene, camera)
-          context.endFrameEXP()
-        }
-
-        return canvasProps?.onCreated?.(state)
-      }
 
       root.current.configure({
-        ...canvasProps,
-        // Pass mutable reference to onPointerMissed so it's free to update
-        onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+        gl,
+        events,
+        shadows,
+        linear,
+        flat,
+        legacy,
+        orthographic,
+        frameloop,
+        performance,
+        raycaster,
+        camera,
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
         size: { width, height },
-        events: events || createTouchEvents,
-        onCreated,
+        // Pass mutable reference to onPointerMissed so it's free to update
+        onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+        // Overwrite onCreated to apply RN bindings
+        onCreated: (state: RootState) => {
+          // Bind events after creation
+          const handlers = state.events.connect?.(viewRef.current)
+          setBind(handlers)
+
+          // Bind render to RN bridge
+          const context = state.gl.getContext() as ExpoWebGLRenderingContext
+          const renderFrame = state.gl.render.bind(state.gl)
+          state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+            renderFrame(scene, camera)
+            context.endFrameEXP()
+          }
+
+          return onCreated?.(state)
+        },
       })
       root.current.render(
         <ErrorBoundary set={setError}>
@@ -122,7 +132,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     return (
       <View
-        {...viewProps}
+        {...props}
         ref={mergeRefs([viewRef, forwardedRef])}
         onLayout={onLayout}
         style={{ flex: 1, ...style }}

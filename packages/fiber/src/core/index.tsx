@@ -5,7 +5,18 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
-import { Renderer, createStore, isRenderer, context, RootState, Size, Dpr, Performance } from './store'
+import {
+  Renderer,
+  createStore,
+  isRenderer,
+  context,
+  RootState,
+  Size,
+  Dpr,
+  Performance,
+  PrivateKeys,
+  privateKeys,
+} from './store'
 import { createRenderer, extend, Instance, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
@@ -352,21 +363,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
 }
 
 export type InjectState = Partial<
-  Omit<
-    RootState,
-    | 'set'
-    | 'get'
-    | 'setSize'
-    | 'setFrameloop'
-    | 'setDpr'
-    | 'events'
-    | 'invalidate'
-    | 'advance'
-    | 'performance'
-    | 'internal'
-    | 'size'
-    | 'viewport'
-  > & {
+  Omit<RootState, PrivateKeys> & {
     events?: {
       enabled?: boolean
       priority?: number
@@ -411,11 +408,12 @@ function Portal({
         // Otherwise filter out the props that are different and let the inject layer take precedence
         Object.keys(state).forEach((key) => {
           if (
-            state[key as keyof RootState] !== injectState[key as keyof RootState] &&
-            !['internal', 'performance'].includes(key)
-          ) {
+            // Some props should be off-limits
+            !privateKeys.includes(key as PrivateKeys) &&
+            // Otherwise filter out the props that are different and let the inject layer take precedence
+            state[key as keyof RootState] !== injectState[key as keyof RootState]
+          )
             delete intersect[key as keyof RootState]
-          }
         })
       }
 

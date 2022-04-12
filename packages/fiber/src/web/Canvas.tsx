@@ -3,15 +3,7 @@ import * as THREE from 'three'
 import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import {
-  SetBlock,
-  Block,
-  ErrorBoundary,
-  useMutableCallback,
-  useIsomorphicLayoutEffect,
-  pick,
-  omit,
-} from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 
@@ -26,29 +18,32 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
   resize?: ResizeOptions
 }
 
-const CANVAS_PROPS: Array<keyof Props> = [
-  'gl',
-  'events',
-  'shadows',
-  'linear',
-  'flat',
-  'legacy',
-  'orthographic',
-  'frameloop',
-  'dpr',
-  'performance',
-  'raycaster',
-  'camera',
-  'onPointerMissed',
-  'onCreated',
-]
-
 /**
  * A DOM canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  { children, fallback, resize, style, onPointerMissed, events = createPointerEvents, ...props },
+  {
+    children,
+    fallback,
+    resize,
+    style,
+    gl,
+    events = createPointerEvents,
+    shadows,
+    linear,
+    flat,
+    legacy,
+    orthographic,
+    frameloop,
+    dpr,
+    performance,
+    raycaster,
+    camera,
+    onPointerMissed,
+    onCreated,
+    ...props
+  },
   forwardedRef,
 ) {
   // Create a known catalogue of Threejs-native elements
@@ -62,8 +57,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
-  const canvasProps = pick<Props>(props, CANVAS_PROPS)
-  const divProps = omit<Props>(props, CANVAS_PROPS)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -77,15 +70,25 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   if (width > 0 && height > 0 && canvas) {
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
     root.current.configure({
-      ...canvasProps,
+      gl,
+      events,
+      shadows,
+      linear,
+      flat,
+      legacy,
+      orthographic,
+      frameloop,
+      dpr,
+      performance,
+      raycaster,
+      camera,
+      size: { width, height },
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
         state.events.connect?.(meshRef.current)
-        canvasProps.onCreated?.(state)
+        onCreated?.(state)
       },
-      size: { width, height },
-      events,
     })
     root.current.render(
       <ErrorBoundary set={setError}>
@@ -106,7 +109,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     <div
       ref={mergeRefs([meshRef, containerRef])}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
-      {...divProps}>
+      {...props}>
       <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
         {fallback}
       </canvas>

@@ -69,35 +69,6 @@ export function calculateDpr(dpr: Dpr) {
 export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
   (obj as unknown as Instance).__r3f?.root.getState()
 
-/**
- * Picks or omits keys from an object
- * `omit` will filter out keys, and otherwise cherry-pick them.
- */
-export function filterKeys<TObj extends { [key: string]: any }, TOmit extends boolean, TKey extends keyof TObj>(
-  obj: TObj,
-  omit: TOmit,
-  ...keys: TKey[]
-): TOmit extends true ? Omit<TObj, TKey> : Pick<TObj, TKey> {
-  const keysToSelect = new Set(keys)
-  return Object.entries(obj).reduce((acc, [key, value]) => {
-    const shouldInclude = !omit
-    if (keysToSelect.has(key as TKey) === shouldInclude) acc[key] = value
-    return acc
-  }, {} as any)
-}
-
-/**
- * Clones an object and cherry-picks keys.
- */
-export const pick = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
-  filterKeys<Partial<TObj>, false, keyof TObj>(obj, false, ...keys)
-
-/**
- * Clones an object and prunes or omits keys.
- */
-export const omit = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
-  filterKeys<Partial<TObj>, true, keyof TObj>(obj, true, ...keys)
-
 export type EquConfig = {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
   arrays?: 'reference' | 'shallow'

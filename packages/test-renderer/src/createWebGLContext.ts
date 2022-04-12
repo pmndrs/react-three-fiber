@@ -482,9 +482,7 @@ class WebGLRenderingContext {
       }
     })
 
-    Object.keys(enums).forEach((key) => {
-      this[key] = enums[key]
-    })
+    Object.assign(this, enums)
   }
 
   getShaderPrecisionFormat = () => {
