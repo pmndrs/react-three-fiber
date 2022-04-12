@@ -225,12 +225,12 @@ describe('renderer', () => {
   it('should forward ref three object', async () => {
     // Note: Passing directly should be less strict, and assigning current should be more strict
     let immutableRef!: React.RefObject<THREE.Mesh>
-    let mutableRef!: React.MutableRefObject<THREE.Object3D | undefined>
+    let mutableRef!: React.MutableRefObject<THREE.Mesh | null>
     let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
 
     const RefTest = () => {
       immutableRef = React.createRef()
-      mutableRef = React.useRef()
+      mutableRef = React.useRef(null)
       mutableRefSpecific = React.useRef(null)
 
       return (
