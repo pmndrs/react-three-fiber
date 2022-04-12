@@ -27,7 +27,7 @@ export interface NodeProps<T, P> {
   /** Constructor arguments */
   args?: Args<P>
   children?: React.ReactNode
-  ref?: React.RefCallback<T> | React.RefObject<React.ReactNode> | null
+  ref?: React.Ref<T>
   key?: React.Key
   onUpdate?: (self: T) => void
 }
