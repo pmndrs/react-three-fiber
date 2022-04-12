@@ -20,6 +20,8 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dp
 export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
   (
     {
+      children,
+      style,
       gl,
       events = createTouchEvents,
       shadows,
@@ -33,8 +35,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       camera,
       onPointerMissed,
       onCreated,
-      children,
-      style,
       ...props
     },
     forwardedRef,
