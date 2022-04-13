@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.11
+
+### Patch Changes
+
+- 5167b1e4: memoized.args can be undefined
+
 ## 8.0.10
 
 ### Patch Changes

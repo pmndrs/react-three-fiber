@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.8
+
+### Patch Changes
+
+- 5167b1e4: memoized.args can be undefined
+- Updated dependencies [5167b1e4]
+  - @react-three/fiber@8.0.11
+
 ## 8.0.7
 
 ### Patch Changes
