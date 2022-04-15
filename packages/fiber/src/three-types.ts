@@ -156,6 +156,7 @@ export type ConeGeometryProps = BufferGeometryNode<THREE.ConeGeometry, typeof TH
 export type CylinderGeometryProps = BufferGeometryNode<THREE.CylinderGeometry, typeof THREE.CylinderGeometry>
 export type CircleGeometryProps = BufferGeometryNode<THREE.CircleGeometry, typeof THREE.CircleGeometry>
 export type BoxGeometryProps = BufferGeometryNode<THREE.BoxGeometry, typeof THREE.BoxGeometry>
+export type CapsuleGeometryProps = BufferGeometryNode<THREE.CapsuleBufferGeometry, typeof THREE.CapsuleBufferGeometry>
 
 export type MaterialProps = MaterialNode<THREE.Material, [THREE.MaterialParameters]>
 export type ShadowMaterialProps = MaterialNode<THREE.ShadowMaterial, [THREE.ShaderMaterialParameters]>
@@ -315,6 +316,7 @@ declare global {
       cylinderGeometry: CylinderGeometryProps
       circleGeometry: CircleGeometryProps
       boxGeometry: BoxGeometryProps
+      capsuleGeometry: CapsuleGeometryProps
 
       // materials
       material: MaterialProps
