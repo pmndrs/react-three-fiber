@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-// @ts-ignore
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 

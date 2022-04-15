@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-// @ts-ignore
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { getRootState } from './utils'
 import type { UseBoundStore } from 'zustand'
