@@ -694,7 +694,7 @@ describe('renderer', () => {
     expect(portalState.scene).toBe(scene)
 
     // Preserves internal keys
-    const overwrittenKeys = ['events', 'size', 'viewport']
+    const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
   })

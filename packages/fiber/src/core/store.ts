@@ -15,8 +15,6 @@ export const privateKeys = [
   'events',
   'invalidate',
   'advance',
-  'performance',
-  'internal',
   'size',
   'viewport',
 ] as const

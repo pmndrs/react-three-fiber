@@ -399,31 +399,30 @@ function Portal({
   const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = React.useCallback(
-    (state: RootState, injectState?: RootState) => {
-      const intersect: Partial<RootState> = { ...state }
+    (rootState: RootState, injectState: RootState) => {
+      const intersect: Partial<RootState> = { ...rootState } // all prev state props
 
-      if (injectState) {
-        // Only the fields of "state" that do not differ from injectState
-        // Some props should be off-limits
-        // Otherwise filter out the props that are different and let the inject layer take precedence
-        Object.keys(state).forEach((key) => {
-          if (
-            // Some props should be off-limits
-            !privateKeys.includes(key as PrivateKeys) &&
-            // Otherwise filter out the props that are different and let the inject layer take precedence
-            state[key as keyof RootState] !== injectState[key as keyof RootState]
-          )
-            delete intersect[key as keyof RootState]
-        })
-      }
+      // Only the fields of "rootState" that do not differ from injectState
+      // Some props should be off-limits
+      // Otherwise filter out the props that are different and let the inject layer take precedence
+      Object.keys(rootState).forEach((key) => {
+        if (
+          // Some props should be off-limits
+          privateKeys.includes(key as PrivateKeys) ||
+          // Otherwise filter out the props that are different and let the inject layer take precedence
+          rootState[key as keyof RootState] !== injectState[key as keyof RootState]
+        ) {
+          delete intersect[key as keyof RootState]
+        }
+      })
 
       let viewport = undefined
       if (injectState && size) {
         const camera = injectState.camera
         // Calculate the override viewport, if present
-        viewport = state.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
+        viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
         // Update the portal camera, if it differs from the previous layer
-        if (camera !== state.camera) updateCamera(camera, size)
+        if (camera !== rootState.camera) updateCamera(camera, size)
       }
 
       return {
@@ -437,9 +436,9 @@ function Portal({
         // Their previous root is the layer before it
         previousRoot,
         // Events, size and viewport can be overridden by the inject layer
-        events: { ...state.events, ...injectState?.events, ...events },
-        size: { ...state.size, ...size },
-        viewport: { ...state.viewport, ...viewport },
+        events: { ...rootState.events, ...injectState?.events, ...events },
+        size: { ...rootState.size, ...size },
+        viewport: { ...rootState.viewport, ...viewport },
         ...rest,
       } as RootState
     },
@@ -448,10 +447,17 @@ function Portal({
 
   const [usePortalStore] = React.useState(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
-    const defaultTarget = new THREE.Vector3()
     const previousState = previousRoot.getState()
     const store = create<RootState>((set, get) => ({
-      ...inject(previousState),
+      ...previousState,
+      scene: container as THREE.Scene,
+      raycaster,
+      pointer,
+      mouse: pointer,
+      previousRoot,
+      events: { ...previousState.events, ...events },
+      size: { ...previousState.size, ...size },
+      ...rest,
       // Set and get refer to this root-state
       set,
       get,
