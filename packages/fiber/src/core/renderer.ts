@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-// @ts-ignore
 import { DefaultEventPriority } from 'react-reconciler/constants'
 import {
   is,
