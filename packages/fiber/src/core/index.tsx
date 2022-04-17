@@ -155,6 +155,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
+        defaultPriority = 0,
         performance,
         raycaster: raycastOptions,
         camera: cameraOptions,
