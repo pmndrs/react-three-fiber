@@ -266,6 +266,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (events && !state.events.handlers) state.set({ events: events(store) })
       // Check pixelratio
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+      // Check default priority
+      if (defaultPriority !== state.defaultPriority) state.setDefaultPriority(defaultPriority)
       // Check size, allow it to take on container bounds initially
       size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
       if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
