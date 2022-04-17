@@ -40,6 +40,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     performance,
     raycaster,
     camera,
+    defaultPriority,
     onPointerMissed,
     onCreated,
     ...props
@@ -83,6 +84,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       raycaster,
       camera,
       size: { width, height },
+      defaultPriority,
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {

@@ -121,6 +121,8 @@ export type RootState = {
   performance: Performance
   /** Reactive pixel-size of the canvas */
   size: Size
+  /** The default priority for useFrame loops */
+  defaultPriority: number
   /** Reactive size of the viewport in threejs units */
   viewport: Viewport & {
     getCurrentViewport: (
@@ -139,6 +141,8 @@ export type RootState = {
   setSize: (width: number, height: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
+  /** Shortcut for manual setting the default priority of useFrame subscriptions */
+  setDefaultPriority: (defaultPriority: number) => void
   /** Shortcut to frameloop flags */
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   /** When the canvas was clicked but nothing was hit */
@@ -232,6 +236,7 @@ const createStore = (
       },
 
       size: { width: 0, height: 0 },
+      defaultPriority: 0,
       viewport: {
         initialDpr: 0,
         dpr: 0,
@@ -255,6 +260,7 @@ const createStore = (
           const resolved = calculateDpr(dpr)
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
+      setDefaultPriority: (defaultPriority: number) => set((state) => ({ ...state, defaultPriority: defaultPriority })),
       setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => {
         const clock = get().clock
 

@@ -78,6 +78,8 @@ export type RenderProps<TCanvas extends Element> = {
   performance?: Partial<Omit<Performance, 'regress'>>
   /** Target pixel ratio. Can clamp between a range: `[min, max]` */
   dpr?: Dpr
+  /** The default priority for useFrame loops */
+  defaultPriority?: number
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
   /** A `THREE.Camera` instance or props that go into the default camera */
