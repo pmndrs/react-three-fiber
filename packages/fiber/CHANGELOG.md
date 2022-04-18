@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.12
+
+### Patch Changes
+
+- 3d10413f: fix portal layers
+
 ## 8.0.11
 
 ### Patch Changes

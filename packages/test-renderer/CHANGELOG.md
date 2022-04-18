@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.9
+
+### Patch Changes
+
+- 3d10413f: fix portal layers
+- Updated dependencies [3d10413f]
+  - @react-three/fiber@8.0.12
+
 ## 8.0.8
 
 ### Patch Changes
