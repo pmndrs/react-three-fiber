@@ -128,3 +128,18 @@ function App() {
   return <Canvas events={eventManagerFactory} />
 }
 ```
+
+### Using a different target element
+
+There are cases in which you may want to connect the event handlers to another DOM element instead of the canvas. It's possible to do so using the `connect` function of the event manager:
+
+```jsx
+function App() {
+  const target = useRef()
+  return (
+    <div ref={target}>
+      <Canvas onCreated={(state) => state.events.connect(target.current)}></Canvas>
+    </div>
+  )
+}
+```
