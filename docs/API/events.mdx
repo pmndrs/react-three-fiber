@@ -99,3 +99,32 @@ onPointerUp={e => {
   e.target.releasePointerCapture(e.pointerId)
 }}
 ```
+
+### Customizing the event settings
+
+For some advanced usage it's possible to customize the setting of the event manager globally with the `events` prop on `<Canvas/>`:
+
+```tsx
+import { Canvas, events } from '@react-three/fiber'
+
+const eventManagerFactory: Parameters<typeof Canvas>[0]['events'] = (state) => ({
+  // Default configuration
+  ...events(state),
+
+  // Determines if the event layer is active
+  enabled: true,
+
+  // Event layer priority, higher prioritized layers come first and may stop(-propagate) lower layer
+  priority: 1,
+
+  // The filter can re-order or re-structure the intersections
+  filter: (items: THREE.Intersection[], state: RootState) => items,
+
+  // Find more configuration default on ./packages/fiber/src/web/events.ts
+  // And type definitions in ./packages/fiber/src/core/events.ts
+})
+
+function App() {
+  return <Canvas events={eventManagerFactory} />
+}
+```
