@@ -331,7 +331,7 @@ const root = createRoot(document.querySelector('#root'))
 window.addEventListener('resize', () => {
   root.configure({
     events,
-    camera: { position: [0, 0, 50]., fov: 50 },
+    camera: { position: [0, 0, 50], fov: 50 },
     size: { width: window.innerWidth, height: window.innerHeight }
   })
   root.render(<App />)
