@@ -48,8 +48,25 @@ npm install next-transpile-modules --save-dev
 Then, add this to your `next.config.js`
 
 ```js
-const withTM = require('next-transpile-modules')(['three'])
-module.exports = withTM()
+const withTM = require("next-transpile-modules")([
+    "three",
+    "@react-three/fiber",
+    "@react-three/drei",
+  ]);
+  
+  module.exports = withTM({
+    webpack(config, options) {
+      config.module.rules.push({
+        test: /\.(glb|gltf)$/,
+        use: {
+          loader: "file-loader",
+        },
+      });
+  
+      return config;
+    },
+  });
+
 ```
 
 Make sure to check out our [official next.js starter](https://github.com/pmndrs/react-three-next), too!
