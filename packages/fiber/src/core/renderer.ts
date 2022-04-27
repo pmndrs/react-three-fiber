@@ -343,7 +343,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     shouldSetTextContent: () => false,
     clearContainer: () => false,
     detachDeletedInstance: () => {},
-    createTextInstance: () => {},
     hideInstance(instance: Instance) {
       // Deatch while the instance is hidden
       const { attach: type, parent } = instance?.__r3f ?? {}
@@ -358,7 +357,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
     },
-    hideTextInstance:() => { throw new Error('Text is not allowed in the R3F tree.')}, // prettier-ignore
+    createTextInstance: () => {},
+    hideTextInstance: () => {
+      throw new Error('Text is not allowed in the R3F tree.')
+    },
+    unhideTextInstance: () => {},
     getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
     // @ts-ignore
     now:
