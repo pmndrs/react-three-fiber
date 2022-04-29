@@ -102,11 +102,12 @@ The following attaches a material to the `material` property of a mesh and a geo
   <boxGeometry />
 ```
 
-You can also deeply nest attach through piercing. The following adds a buffer-attribute to `parent.attributes.position`.
+You can also deeply nest attach through piercing. The following adds a buffer-attribute to `geometry.attributes.position` and then adds the buffer geometry to `mesh.geometry`.
 
 ```jsx
-<bufferGeometry attach="geometry">
-  <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
+<mesh>
+  <bufferGeometry>
+    <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
 ```
 
 #### More examples
