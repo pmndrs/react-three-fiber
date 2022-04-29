@@ -112,30 +112,35 @@ You can also deeply nest attach through piercing. The following adds a buffer-at
 #### More examples
 
 ```jsx
-// Attach foo to parent.a
-<foo attach="a" />
+// Attach bar to foo.a
+<foo>
+  <bar attach="a" />
 
-// Attach foo to parent.a.b and a.b.c (nested object attach)
-<foo attach="a-b" />
-<foo attach="a-b-c" />
+// Attach bar to foo.a.b and foo.a.b.c (nested object attach)
+<foo>
+  <bar attach="a-b" />
+  <bar attach="a-b-c" />
 
-// Attach foo to parent.a[0] and [1] (array attach is just object attach)
-<foo attach="a-0" />
-<foo attach="a-1" />
+// Attach bar to foo.a[0] and foo.a[1] (array attach is just object attach)
+<foo>
+  <bar attach="a-0" />
+  <bar attach="a-1" />
 
-// Attach foo to parent via explicit add/remove functions
-<foo attach={(parent, self) => {
-  parent.add(self)
-  return () => parent.remove(self)
-} />
+// Attach bar to foo via explicit add/remove functions
+<foo>
+  <bar attach={(parent, self) => {
+    parent.add(self)
+    return () => parent.remove(self)
+  } />
 
 // The same as a one liner
-<foo attach={(parent, self) => (parent.add(self), () => parent.remove(self))} />
+<foo>
+  <bar attach={(parent, self) => (parent.add(self), () => parent.remove(self))} />
 ```
 
 #### Real-world use-cases:
 
-Attaching to nested objects:
+Attaching to nested objects, for instance a shadow-camera:
 
 ```diff
 - <directionalLight
@@ -153,22 +158,12 @@ Attaching to nested objects:
 + </directionalLight>
 ```
 
-Arrays must be explicit now:
+Arrays must have explicit order, for instance multi-materials:
 
 ```jsx
 <mesh>
   {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
 </mesh>
-```
-
-#### Nesting
-
-You can nest primitive objects, too:
-
-```jsx
-<mesh>
-  <meshBasicMaterial attach="material">
-    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
 ```
 
 ## Putting already existing objects into the scene-graph
