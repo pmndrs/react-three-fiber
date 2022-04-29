@@ -93,7 +93,7 @@ The following attaches a material to the `material` property of a mesh and a geo
 
 <Hint>
   All native elements ending with "Material" receive attach="material", and all elements ending with "Geometry" receive
-  attach="geometry". So you do not have to type it out any longer.
+  attach="geometry". You do not strictly have to type it out!
 </Hint>
 
 ```jsx
@@ -109,28 +109,59 @@ You can also deeply nest attach through piercing. The following adds a buffer-at
   <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
 ```
 
-Some objects have special add/remove function, you can't easily attach objects. In that case `attach` gives you full control.
-
-The following uses the effect composer from the [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing) library, which works differently than three/examples/jsm. You need to call `Composer.addPass` to add an effect and `Composer.removePass` to remove it.
+#### More examples
 
 ```jsx
-<effectComposer>
-  <renderPass args={[scene, camera]} attach={["addPass", "removePass"]} />
+// Attach foo to parent.a
+<foo attach="a" />
+
+// Attach foo to parent.a.b and a.b.c (nested object attach)
+<foo attach="a-b" />
+<foo attach="a-b-c" />
+
+// Attach foo to parent.a[0] and [1] (array attach is just object attach)
+<foo attach="a-0" />
+<foo attach="a-1" />
+
+// Attach foo to parent via explicit add/remove functions
+<foo attach={(parent, self) => {
+  parent.add(self)
+  return () => parent.remove(self)
+} />
+
+// The same as a one liner
+<foo attach={(parent, self) => (parent.add(self), () => parent.remove(self))} />
 ```
 
-And in the case the add/remove functions are more complex:
+#### Real-world use-cases:
+
+Attaching to nested objects:
+
+```diff
+- <directionalLight
+-   castShadow
+-   position={[2.5, 8, 5]}
+-   shadow-mapSize={[1024, 1024]}
+-   shadow-camera-far={50}
+-   shadow-camera-left={-10}
+-   shadow-camera-right={10}
+-   shadow-camera-top={10}
+-   shadow-camera-bottom={-10}
+- />
++ <directionalLight castShadow position={[2.5, 8, 5]} shadow-mapSize={[1024, 1024]}>
++   <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
++ </directionalLight>
+```
+
+Arrays must be explicit now:
 
 ```jsx
-<effectComposer>
-  <renderPass
-    args={[scene, camera]}
-    attach={[
-      (parent, self) => parent.addPass(self),
-      (parent, self) => parent.removePass(self)
-    ]} />
+<mesh>
+  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+</mesh>
 ```
 
-### Nesting
+#### Nesting
 
 You can nest primitive objects, too:
 
