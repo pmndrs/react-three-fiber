@@ -366,8 +366,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>) {
     let added = false
     if (child) {
       if (child.attachArray) {
-        const array = parentInstance[child.attachArray]
-        if (!is.arr(array)) parentInstance[child.attachArray] = []
+        let array = parentInstance[child.attachArray]
+        if (!is.arr(array)) {
+          parentInstance[child.attachArray] = []
+          array = parentInstance[child.attachArray]
+        }
         array.splice(array.indexOf(beforeChild), 0, child)
       } else if (child.attachObject || (child.attach && !is.fun(child.attach))) {
         // attach and attachObject don't have an order anyway, so just append
