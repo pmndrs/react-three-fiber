@@ -185,7 +185,11 @@ export function attach(parent: Instance, child: Instance, type: AttachType) {
 export function detach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    target[key] = child.__r3f.previousAttach
+    const previous = child.__r3f.previousAttach
+    // When the previous value was undefined, it means the value was never set to begin with
+    if (previous === undefined) delete target[key]
+    // Otherwise set the previous value
+    else target[key] = previous
   } else child.__r3f?.previousAttach?.(parent, child)
   delete child.__r3f?.previousAttach
 }
