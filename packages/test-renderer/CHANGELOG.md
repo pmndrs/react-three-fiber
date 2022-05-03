@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.10
+
+### Patch Changes
+
+- 9d77d8e2: fix: detach attribute removal
+- Updated dependencies [9d77d8e2]
+  - @react-three/fiber@8.0.13
+
 ## 8.0.9
 
 ### Patch Changes

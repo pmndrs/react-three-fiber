@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.13
+
+### Patch Changes
+
+- 9d77d8e2: fix: detach attribute removal
+
 ## 8.0.12
 
 ### Patch Changes
