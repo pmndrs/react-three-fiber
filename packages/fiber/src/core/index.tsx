@@ -120,6 +120,27 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
+const logRecoverableError =
+  typeof reportError === 'function'
+    ? // In modern browsers, reportError will dispatch an error event,
+      // emulating an uncaught JavaScript error.
+      reportError
+    : (error: any) => {
+        // In older browsers and test environments, fallback to console.error.
+        console.error(error)
+      }
+
+type CreateContainerTypeFix = (
+  containerInfo: Parameters<typeof reconciler.createContainer>[0],
+  tag: Parameters<typeof reconciler.createContainer>[1],
+  hydrationCallbacks: Parameters<typeof reconciler.createContainer>[3],
+  isStrictMode: boolean,
+  concurrentUpdatesByDefaultOverride: any,
+  identifierPrefi: any,
+  onRecoverableError: any,
+  transitionCallbacks: any,
+) => ReturnType<typeof reconciler.createContainer>
+
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   let prevRoot = roots.get(canvas)
@@ -131,7 +152,18 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   // Create store
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
-  const fiber = prevFiber || reconciler.createContainer(store, ConcurrentRoot, false, null)
+  const fiber =
+    prevFiber ||
+    (reconciler.createContainer as unknown as CreateContainerTypeFix)(
+      store,
+      ConcurrentRoot,
+      null,
+      false,
+      null,
+      null,
+      logRecoverableError,
+      null,
+    )
   // Map it
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
