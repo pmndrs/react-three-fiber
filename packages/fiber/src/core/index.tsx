@@ -120,16 +120,6 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
-const logRecoverableError =
-  typeof reportError === 'function'
-    ? // In modern browsers, reportError will dispatch an error event,
-      // emulating an uncaught JavaScript error.
-      reportError
-    : (error: any) => {
-        // In older browsers and test environments, fallback to console.error.
-        console.error(error)
-      }
-
 type CreateContainerTypeFix = (
   containerInfo: Parameters<typeof reconciler.createContainer>[0],
   tag: Parameters<typeof reconciler.createContainer>[1],
@@ -148,6 +138,16 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   let prevStore = prevRoot?.store
 
   if (prevRoot) console.warn('R3F.createRoot should only be called once!')
+
+  // Report when an error was detected in a previous render
+  // https://github.com/pmndrs/react-three-fiber/pull/2261
+  const logRecoverableError =
+    typeof reportError === 'function'
+      ? // In modern browsers, reportError will dispatch an error event,
+        // emulating an uncaught JavaScript error.
+        reportError
+      : // In older browsers and test environments, fallback to console.error.
+        console.error
 
   // Create store
   const store = prevStore || createStore(invalidate, advance)
