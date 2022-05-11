@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 7.0.26
+
+### Patch Changes
+
+- 13dde9b8: insertBefore supports attachArray
+
 ## 7.0.25
 
 ### Patch Changes

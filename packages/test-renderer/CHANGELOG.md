@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.25
+
+### Patch Changes
+
+- 13dde9b8: insertBefore supports attachArray
+- Updated dependencies [13dde9b8]
+  - @react-three/fiber@7.0.26
+
 ## 7.0.24
 
 ### Patch Changes
