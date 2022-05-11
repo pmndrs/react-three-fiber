@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.11
+
+### Patch Changes
+
+- 5559a119: Add support for recoverable errors
+- Updated dependencies [5559a119]
+  - @react-three/fiber@8.0.14
+
 ## 8.0.10
 
 ### Patch Changes

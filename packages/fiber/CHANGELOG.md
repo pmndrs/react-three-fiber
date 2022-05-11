@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.14
+
+### Patch Changes
+
+- 5559a119: Add support for recoverable errors
+
 ## 8.0.13
 
 ### Patch Changes
