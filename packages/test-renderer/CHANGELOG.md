@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 7.0.27
+
+### Patch Changes
+
+- 462615e7: bump version
+- Updated dependencies [462615e7]
+  - @react-three/fiber@7.0.28
+
 ## 7.0.26
 
 ### Patch Changes
