@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.15
+
+### Patch Changes
+
+- c4715d5f: allow invalidate to preempt more than 1 frame
+
 ## 8.0.14
 
 ### Patch Changes

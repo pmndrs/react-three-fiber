@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.12
+
+### Patch Changes
+
+- c4715d5f: allow invalidate to preempt more than 1 frame
+- Updated dependencies [c4715d5f]
+  - @react-three/fiber@8.0.15
+
 ## 8.0.11
 
 ### Patch Changes
