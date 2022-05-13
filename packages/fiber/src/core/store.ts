@@ -128,7 +128,7 @@ export type RootState = {
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
   /** Flags the canvas for render, but doesn't render in itself */
-  invalidate: () => void
+  invalidate: (frames?: number) => void
   /** Advance (render) one step */
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */
@@ -150,7 +150,7 @@ export type RootState = {
 const context = React.createContext<UseBoundStore<RootState>>(null!)
 
 const createStore = (
-  invalidate: (state?: RootState) => void,
+  invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
 ): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
@@ -194,7 +194,7 @@ const createStore = (
       events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
 
-      invalidate: () => invalidate(get()),
+      invalidate: (frames = 1) => invalidate(get(), frames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
       legacy: false,
