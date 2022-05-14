@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.16
+
+### Patch Changes
+
+- 669c45c: correctly type useLoader results
+
 ## 8.0.15
 
 ### Patch Changes
