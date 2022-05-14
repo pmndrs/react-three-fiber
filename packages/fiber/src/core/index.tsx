@@ -16,7 +16,7 @@ import {
   PrivateKeys,
   privateKeys,
 } from './store'
-import { createRenderer, extend, Instance, Root } from './renderer'
+import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
@@ -120,17 +120,6 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
-type CreateContainerTypeFix = (
-  containerInfo: Parameters<typeof reconciler.createContainer>[0],
-  tag: Parameters<typeof reconciler.createContainer>[1],
-  hydrationCallbacks: Parameters<typeof reconciler.createContainer>[3],
-  isStrictMode: boolean,
-  concurrentUpdatesByDefaultOverride: any,
-  identifierPrefi: any,
-  onRecoverableError: any,
-  transitionCallbacks: any,
-) => ReturnType<typeof reconciler.createContainer>
-
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   let prevRoot = roots.get(canvas)
@@ -153,17 +142,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
   const fiber =
-    prevFiber ||
-    (reconciler.createContainer as unknown as CreateContainerTypeFix)(
-      store,
-      ConcurrentRoot,
-      null,
-      false,
-      null,
-      null,
-      logRecoverableError,
-      null,
-    )
+    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
   // Map it
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
