@@ -1,17 +1,21 @@
 import * as THREE from 'three'
-import { Asset } from 'expo-asset'
+import type { Asset } from 'expo-asset'
+
+// Check if expo-asset is installed (available with expo modules)
+let expAsset: typeof Asset | undefined
+try {
+  expAsset = require('expo-asset')?.Asset
+} catch (_) {}
 
 /**
  * Generates an asset based on input type.
  */
-const getAsset = (input: Asset | string | number) => {
-  if (input instanceof Asset) return input
-
+function getAsset(input: string | number) {
   switch (typeof input) {
     case 'string':
-      return Asset.fromURI(input)
+      return expAsset!.fromURI(input)
     case 'number':
-      return Asset.fromModule(input)
+      return expAsset!.fromModule(input)
     default:
       throw 'Invalid asset! Must be a URI or module.'
   }
@@ -20,7 +24,7 @@ const getAsset = (input: Asset | string | number) => {
 let injected = false
 
 export function polyfills() {
-  if (injected) return
+  if (!expAsset || injected) return
   injected = true
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
