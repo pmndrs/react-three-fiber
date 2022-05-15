@@ -46,6 +46,8 @@ export function polyfills() {
           width: asset.width,
           height: asset.height,
         }
+        texture.flipY = true
+        texture.unpackAlignment = 1
         texture.needsUpdate = true
 
         onLoad?.(texture)
