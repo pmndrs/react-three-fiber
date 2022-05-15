@@ -32,6 +32,7 @@ export function polyfills() {
   THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
   // There's no Image in native, so create a data texture instead
+  const prevTextureLoad = THREE.TextureLoader.prototype.load
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     const texture = new THREE.Texture()
 
@@ -58,6 +59,7 @@ export function polyfills() {
   }
 
   // Fetches assets via XMLHttpRequest
+  const prevFileLoad = THREE.FileLoader.prototype.load
   THREE.FileLoader.prototype.load = function (url, onLoad, onProgress, onError) {
     if (this.path) url = this.path + url
 
@@ -128,5 +130,12 @@ export function polyfills() {
       })
 
     return request
+  }
+
+  // Cleanup function
+  return () => {
+    THREE.LoaderUtils.extractUrlBase = extractUrlBase
+    THREE.TextureLoader.prototype.load = prevTextureLoad
+    THREE.FileLoader.prototype.load = prevFileLoad
   }
 }

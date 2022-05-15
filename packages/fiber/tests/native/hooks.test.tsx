@@ -7,6 +7,9 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 import { asyncUtils } from '../../../shared/asyncUtils'
 
 import { createRoot, useLoader, act } from '../../src/native'
+import { polyfills } from '../../src/native/polyfills'
+
+polyfills()
 
 const resolvers = []
 
