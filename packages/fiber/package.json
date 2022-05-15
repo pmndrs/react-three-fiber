@@ -35,8 +35,7 @@
   "preconstruct": {
     "entrypoints": [
       "index.tsx",
-      "native.tsx",
-      "native.web.tsx"
+      "native.tsx"
     ]
   },
   "scripts": {
