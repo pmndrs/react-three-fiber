@@ -61,14 +61,15 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<Element>>(null!)
 
+    // Inject and cleanup RN polyfills if able
+    React.useLayoutEffect(() => polyfills(), [])
+
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height } = e.nativeEvent.layout
       setSize({ width, height })
     }, [])
 
     const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
-      polyfills()
-
       const canvasShim = {
         width: context.drawingBufferWidth,
         height: context.drawingBufferHeight,
