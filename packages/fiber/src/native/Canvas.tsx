@@ -7,6 +7,7 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/util
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState } from '../core/store'
+import { polyfills } from './polyfills'
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -66,6 +67,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [])
 
     const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
+      polyfills()
+
       const canvasShim = {
         width: context.drawingBufferWidth,
         height: context.drawingBufferHeight,
