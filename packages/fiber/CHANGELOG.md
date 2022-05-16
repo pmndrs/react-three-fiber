@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.17
+
+### Patch Changes
+
+- 9e3369e: fix dom resize, improve native tree shaking
+
 ## 8.0.16
 
 ### Patch Changes
