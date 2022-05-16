@@ -107,12 +107,16 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   return (
     <div
-      ref={mergeRefs([meshRef, containerRef])}
+      ref={meshRef}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       {...props}>
-      <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
-        {fallback}
-      </canvas>
+      <div
+        ref={containerRef}
+        style={{ width: '100%', height: '100%' }}>
+        <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
+          {fallback}
+        </canvas>
+      </div>
     </div>
   )
 })
