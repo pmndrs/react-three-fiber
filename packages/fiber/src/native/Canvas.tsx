@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
@@ -48,6 +47,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
+    React.useImperativeHandle(forwardedRef, () => viewRef.current)
 
     const handlePointerMissed = useMutableCallback(onPointerMissed)
     const [block, setBlock] = React.useState<SetBlock>(false)
@@ -135,12 +135,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View
-        {...props}
-        ref={mergeRefs([viewRef, forwardedRef])}
-        onLayout={onLayout}
-        style={{ flex: 1, ...style }}
-        {...bind}>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )
