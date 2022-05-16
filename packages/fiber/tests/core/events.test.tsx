@@ -3,6 +3,8 @@ import { render, fireEvent, RenderResult } from '@testing-library/react'
 
 import { Canvas, act } from '../../src'
 
+const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
+
 describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
@@ -24,7 +26,7 @@ describe('events', () => {
     // @ts-ignore
     evt.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt)
+    fireEvent(getContainer(), evt)
 
     expect(handlePointerDown).toHaveBeenCalled()
   })
@@ -50,7 +52,7 @@ describe('events', () => {
     //@ts-ignore
     evt.offsetY = 0
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt)
+    fireEvent(getContainer(), evt)
 
     expect(handleClick).not.toHaveBeenCalled()
     expect(handleMissed).toHaveBeenCalledWith(evt)
@@ -77,7 +79,7 @@ describe('events', () => {
     //@ts-ignore
     down.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, down)
+    fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
     //@ts-ignore
@@ -91,7 +93,7 @@ describe('events', () => {
     //@ts-ignore
     evt.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt)
+    fireEvent(getContainer(), evt)
 
     expect(handleClick).toHaveBeenCalled()
     expect(handleMissed).not.toHaveBeenCalled()
@@ -120,7 +122,7 @@ describe('events', () => {
     //@ts-ignore
     down.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, down)
+    fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
     //@ts-ignore
@@ -134,7 +136,7 @@ describe('events', () => {
     //@ts-ignore
     evt.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt)
+    fireEvent(getContainer(), evt)
 
     expect(handleClick).toHaveBeenCalled()
     expect(handleMissed).not.toHaveBeenCalled()
@@ -160,7 +162,7 @@ describe('events', () => {
     //@ts-ignore
     evt.offsetY = 0
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt)
+    fireEvent(getContainer(), evt)
     expect(handleMissed).toHaveBeenCalledWith(evt)
   })
 
@@ -191,7 +193,7 @@ describe('events', () => {
     //@ts-ignore
     evt1.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt1)
+    fireEvent(getContainer(), evt1)
 
     expect(handlePointerMove).toHaveBeenCalled()
     expect(handlePointerOver).toHaveBeenCalled()
@@ -203,7 +205,7 @@ describe('events', () => {
     //@ts-ignore
     evt2.offsetY = 0
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt2)
+    fireEvent(getContainer(), evt2)
 
     expect(handlePointerOut).toHaveBeenCalled()
   })
@@ -235,7 +237,7 @@ describe('events', () => {
     //@ts-ignore
     evt1.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt1)
+    fireEvent(getContainer(), evt1)
 
     expect(handlePointerEnter).toHaveBeenCalled()
 
@@ -245,7 +247,7 @@ describe('events', () => {
     //@ts-ignore
     evt2.offsetY = 0
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, evt2)
+    fireEvent(getContainer(), evt2)
 
     expect(handlePointerLeave).toHaveBeenCalled()
   })
@@ -275,7 +277,7 @@ describe('events', () => {
     //@ts-ignore
     down.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, down)
+    fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
     //@ts-ignore
@@ -283,7 +285,7 @@ describe('events', () => {
     //@ts-ignore
     up.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, up)
+    fireEvent(getContainer(), up)
 
     const event = new MouseEvent('click')
     //@ts-ignore
@@ -291,7 +293,7 @@ describe('events', () => {
     //@ts-ignore
     event.offsetY = 480
 
-    fireEvent(document.querySelector('canvas')?.parentNode as HTMLDivElement, event)
+    fireEvent(getContainer(), event)
 
     expect(handleClickFront).toHaveBeenCalled()
     expect(handleClickRear).not.toHaveBeenCalled()
@@ -324,7 +326,7 @@ describe('events', () => {
         return renderResult
       })
 
-      const canvas = document.querySelector('canvas')?.parentNode as HTMLDivElement
+      const canvas = getContainer()
 
       canvas.setPointerCapture = jest.fn()
       canvas.releasePointerCapture = jest.fn()
