@@ -344,16 +344,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     clearContainer: () => false,
     detachDeletedInstance: () => {},
     hideInstance(instance: Instance) {
-      // Detach while the instance is hidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
-      if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
       invalidateInstance(instance)
     },
     unhideInstance(instance: Instance, props: InstanceProps) {
-      // Re-attach when the instance is unhidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
-      if (type && parent) attach(parent, instance, type)
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
     },
