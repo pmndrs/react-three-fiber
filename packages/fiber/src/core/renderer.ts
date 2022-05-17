@@ -101,7 +101,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         type,
         root,
         attach,
-        // TODO: Figure out what this is for
+        // Save args in case we need to reconstruct later for HMR
         memoizedProps: { args },
       })
     }
@@ -179,7 +179,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         }
       }
 
-      // Allow objects to bail out of recursive dispose alltogether by passing dispose={null}
+      // Allow objects to bail out of recursive dispose altogether by passing dispose={null}
       // Never dispose of primitives because their state may be kept outside of React!
       // In order for an object to be able to dispose it has to have
       //   - a dispose method,
@@ -344,7 +344,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     clearContainer: () => false,
     detachDeletedInstance: () => {},
     hideInstance(instance: Instance) {
-      // Deatch while the instance is hidden
+      // Detach while the instance is hidden
       const { attach: type, parent } = instance?.__r3f ?? {}
       if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
