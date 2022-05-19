@@ -255,7 +255,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       }
 
       // Safely set color management if available.
-      // Avoid accessing THREE.ColorManagement to play nice with bundlers
+      // Avoid accessing THREE.ColorManagement to play nice with older versions
       if ('ColorManagement' in THREE) {
         setDeep(THREE, legacy, ['ColorManagement', 'legacyMode'])
       }
