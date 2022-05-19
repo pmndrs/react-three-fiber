@@ -638,21 +638,13 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
-    let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = root
-        .configure({ legacy: true })
-        .render(<group />)
-        .getState().gl
+      root.configure({ legacy: true }).render(<group />)
     })
-
     expect((THREE as any).ColorManagement.legacyMode).toBe(true)
 
     await act(async () => {
-      gl = root
-        .configure({ legacy: false })
-        .render(<group />)
-        .getState().gl
+      root.configure({ legacy: false }).render(<group />)
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
   })

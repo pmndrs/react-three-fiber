@@ -28,6 +28,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
+  setDeep,
 } from './utils'
 import { useStore } from './hooks'
 
@@ -253,9 +254,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         }
       }
 
-      // Set color management
-      if ((THREE as any).ColorManagement) {
-        ;(THREE as any).ColorManagement.legacyMode = legacy
+      // Safely set color management if available.
+      // Avoid accessing THREE.ColorManagement to play nice with older versions
+      if ('ColorManagement' in THREE) {
+        setDeep(THREE, legacy, ['ColorManagement', 'legacyMode'])
       }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
