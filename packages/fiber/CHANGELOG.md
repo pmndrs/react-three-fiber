@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.18
+
+### Patch Changes
+
+- be567c1: fix: suspense attach and three compat in webpack
+
 ## 8.0.17
 
 ### Patch Changes
