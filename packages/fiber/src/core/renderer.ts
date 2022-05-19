@@ -80,6 +80,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (attach === undefined) {
       if (name.endsWith('Geometry')) attach = 'geometry'
       else if (name.endsWith('Material')) attach = 'material'
+      else if (name.startsWith('Fog')) attach = 'fog'
     }
 
     if (type === 'primitive') {
