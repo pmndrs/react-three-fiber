@@ -638,10 +638,10 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
-    // await act(async () => {
-    //   root.configure({ legacy: true }).render(<group />)
-    // })
-    // expect((THREE as any).ColorManagement.legacyMode).toBe(true)
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.legacyMode).toBe(true)
 
     await act(async () => {
       root.configure({ legacy: false }).render(<group />)
