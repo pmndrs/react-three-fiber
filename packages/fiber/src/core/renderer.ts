@@ -248,6 +248,11 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
     }
 
+    // The attach attribute implies that the object attaches itself on the parent
+    if (newInstance.__r3f?.attach) {
+      attach(parent, newInstance, newInstance.__r3f.attach)
+    }
+
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
     // https://github.com/facebook/react/pull/15021
