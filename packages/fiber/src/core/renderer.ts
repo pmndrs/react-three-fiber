@@ -250,7 +250,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
     // The attach attribute implies that the object attaches itself on the parent
     if (newInstance.__r3f?.attach) {
-      attach(parent, instance, newInstance.__r3f.attach)
+      attach(parent, newInstance, newInstance.__r3f.attach)
     }
 
     // This evil hack switches the react-internal fiber node
