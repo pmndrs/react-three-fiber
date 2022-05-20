@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.19
+
+### Patch Changes
+
+- 360b45a: fix: handle attach on reconstruct
+
 ## 8.0.18
 
 ### Patch Changes
