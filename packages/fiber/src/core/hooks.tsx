@@ -52,9 +52,10 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   return null
 }
 
-export function useUpdate(callback: UpdateCallback, stage: string = 'update'): null {
+export function useUpdate(callback: UpdateCallback, stage: string = 'update') {
   const stagesMap = useStore().getState().internal.stagesMap
   const ref = useMutableCallback(callback)
+
   useIsomorphicLayoutEffect(() => {
     if (stagesMap[stage]) {
       stagesMap[stage].add(ref)
@@ -62,7 +63,6 @@ export function useUpdate(callback: UpdateCallback, stage: string = 'update'): n
       throw `A '${stage}' stage does not exist.`
     }
   }, [stage])
-  return null
 }
 
 /**

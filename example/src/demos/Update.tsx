@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react'
-import { Canvas, useThree, useUpdate } from '@react-three/fiber'
+import { Canvas, FixedStage, Stage, Standard, useThree, useUpdate } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import { Group } from 'three'
+import { useEffect } from 'react'
 
-// TODO: Test creating a custom pipeline.
+// TODO: Throw error if Update or Render stage is not included.
 // TODO: Create method for modifying FixedStage options.
 // TODO: Decide best way to pass through remainder/factor for fixed states and write interp example.
 // TODO: Add render with 'auto' | 'manual' options to root.
@@ -39,6 +40,8 @@ function Update() {
     }
   }, 'fixed')
 
+  useEffect(() => console.log(state), [])
+
   return (
     <group ref={groupRef}>
       <a.mesh rotation-y={rotation} scale-x={scale} scale-z={scale} onClick={() => setActive(Number(!active))}>
@@ -51,8 +54,21 @@ function Update() {
 }
 
 export default function App() {
+  const InputStage = new Stage('input')
+  const PhysicsStage = new FixedStage('physics')
+  const stages = [
+    Standard.Early,
+    InputStage,
+    Standard.Fixed,
+    PhysicsStage,
+    Standard.Update,
+    Standard.Late,
+    Standard.Render,
+    Standard.After,
+  ]
+
   return (
-    <Canvas>
+    <Canvas pipeline={stages}>
       <Update />
     </Canvas>
   )

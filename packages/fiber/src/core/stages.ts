@@ -89,28 +89,3 @@ const After = new Stage('after')
 
 export const Standard = { Early, Fixed, Update, Late, Render, After }
 export const StandardPipeline = [Early, Fixed, Update, Late, Render, After]
-
-// stages: readonly Stage[]
-
-// export function createPipelines<TCanvas>(roots: Map<TCanvas, Root>) {
-//     roots.forEach((root) => {
-//         const stagesMap = root.store.getState().internal.stagesMap
-
-//         for (const stage of stages) {
-//             stagesMap[stage.name] = stage
-//         }
-//     })
-
-//   const useUpdate = (callback: UpdateCallback, stage: typeof stages[number]['name']) => {
-//     const ref = useRef(callback)
-//     ref.current = callback
-
-//     useLayoutEffect(() => {
-//       return stagesMap[stage].add(ref)
-//     }, [stage])
-//   }
-
-//   return {
-//     useUpdate,
-//   }
-// }

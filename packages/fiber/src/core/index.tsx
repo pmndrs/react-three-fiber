@@ -31,7 +31,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
-import { Stage, StandardPipeline } from './stages'
+import { Stage, Standard, StandardPipeline } from './stages'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -293,6 +293,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Create update pipeline. If no custom pipeline is supplied, use the standard.
       pipeline = pipeline ?? StandardPipeline
+
+      if (!pipeline.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
+      if (!pipeline.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
+
       state.set(({ internal }) => ({ internal: { ...internal, stages: pipeline! } }))
       for (const stage of pipeline) {
         state.internal.stagesMap[stage.name] = stage
