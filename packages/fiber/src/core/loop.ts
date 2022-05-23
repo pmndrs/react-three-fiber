@@ -54,6 +54,10 @@ function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
     subscription = subscribers[i]
     subscription.ref.current(subscription.store.getState(), delta, frame)
   }
+  // Call subscribers (useUpdate)
+  for (const stage of state.internal.stages) {
+    stage.frame(state, delta, frame)
+  }
   // Render content
   if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
   // Decrease frame count

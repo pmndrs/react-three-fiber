@@ -4,6 +4,7 @@ import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
+import { Stage } from './stages'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -64,17 +65,21 @@ export type Performance = {
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
 export const isRenderer = (def: any) => !!def?.render
 
+export type StagesMap = { [key: string]: Stage }
+
 export type InternalState = {
-  active: boolean
-  priority: number
-  frames: number
-  lastEvent: React.MutableRefObject<DomEvent | null>
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
+  lastEvent: React.MutableRefObject<DomEvent | null>
+  active: boolean
+  priority: number
+  frames: number
+  stages: Stage[]
+  stagesMap: StagesMap
   subscribe: (
     callback: React.MutableRefObject<RenderCallback>,
     priority: number,
@@ -269,18 +274,21 @@ const createStore = (
 
       previousRoot: undefined,
       internal: {
-        active: false,
-        priority: 0,
-        frames: 0,
-        lastEvent: React.createRef(),
-
+        // Events
         interaction: [],
         hovered: new Map<string, ThreeEvent<DomEvent>>(),
         subscribers: [],
         initialClick: [0, 0],
         initialHits: [],
         capturedMap: new Map(),
+        lastEvent: React.createRef(),
 
+        // Updates
+        active: false,
+        priority: 0,
+        frames: 0,
+        stages: [],
+        stagesMap: {},
         subscribe: (
           ref: React.MutableRefObject<RenderCallback>,
           priority: number,

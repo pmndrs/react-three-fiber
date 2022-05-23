@@ -31,6 +31,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
+import { Stage, StandardPipeline } from './stages'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -98,6 +99,8 @@ export type RenderProps<TCanvas extends Element> = {
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
+  /** Create a custom pipeline of stages */
+  pipeline?: Stage[]
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
@@ -169,6 +172,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
+        pipeline,
       } = props
 
       let state = store.getState()
@@ -286,6 +290,13 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+
+      // Create update pipeline. If no custom pipeline is supplied, use the standard.
+      pipeline = pipeline ?? StandardPipeline
+      state.set(({ internal }) => ({ internal: { ...internal, stages: pipeline! } }))
+      for (const stage of pipeline) {
+        state.internal.stagesMap[stage.name] = stage
+      }
 
       // Set locals
       onCreated = onCreatedCallback
