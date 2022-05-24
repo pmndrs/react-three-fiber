@@ -8,6 +8,8 @@ export interface UpdateCallback {
 
 export type UpdateCallbackRef = MutableRefObject<UpdateCallback>
 
+export type FixedStageOptions = { fixedStep?: number; maxSubSteps?: number }
+
 export class Stage {
   name: string
   subscribers: UpdateCallbackRef[]
@@ -73,7 +75,7 @@ export class FixedStage extends Stage {
     this.accumulator = this.accumulator % this.fixedStep
   }
 
-  set(options: { fixedStep?: number; maxSubSteps?: number }) {
+  set(options: FixedStageOptions) {
     const { fixedStep, maxSubSteps } = options
     if (fixedStep) this.fixedStep = fixedStep
     if (maxSubSteps) this.maxSubsteps = maxSubSteps

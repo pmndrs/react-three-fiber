@@ -4,7 +4,7 @@ import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
-import { Stage } from './stages'
+import { FixedStage, FixedStageOptions, Stage } from './stages'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -65,7 +65,8 @@ export type Performance = {
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
 export const isRenderer = (def: any) => !!def?.render
 
-export type StagesMap = { [key: string]: Stage }
+type StageTypes = Stage | FixedStage
+export type StagesMap = { [key: string]: StageTypes }
 
 export type InternalState = {
   interaction: THREE.Object3D[]
@@ -78,7 +79,7 @@ export type InternalState = {
   active: boolean
   priority: number
   frames: number
-  stages: Stage[]
+  stages: StageTypes[]
   stagesMap: StagesMap
   subscribe: (
     callback: React.MutableRefObject<RenderCallback>,
@@ -144,6 +145,8 @@ export type RootState = {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
+  /** Shortcut to set FixedStage options */
+  setFixedStage: (name: string, options: FixedStageOptions) => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
@@ -271,7 +274,15 @@ const createStore = (
         }
         set(() => ({ frameloop }))
       },
-
+      setFixedStage: (name: string, options: FixedStageOptions) => {
+        const internal = get().internal
+        const stage = internal.stagesMap[name]
+        if (stage instanceof FixedStage) {
+          stage.set(options)
+        } else {
+          console.warn(`No FixedStage named ${name} exist.`)
+        }
+      },
       previousRoot: undefined,
       internal: {
         // Events
