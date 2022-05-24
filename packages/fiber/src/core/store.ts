@@ -145,8 +145,10 @@ export type RootState = {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
-  /** Shortcut to set FixedStage options */
-  setFixedStage: (name: string, options: FixedStageOptions) => void
+  /** Shortcut to set stage options */
+  setStage: (name: string, options: FixedStageOptions) => void
+  /** Convenience get function for stages */
+  getStage: (name: string) => StageTypes | undefined
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
@@ -274,13 +276,22 @@ const createStore = (
         }
         set(() => ({ frameloop }))
       },
-      setFixedStage: (name: string, options: FixedStageOptions) => {
+      setStage: (name: string, options: FixedStageOptions) => {
         const internal = get().internal
         const stage = internal.stagesMap[name]
         if (stage instanceof FixedStage) {
           stage.set(options)
         } else {
-          console.warn(`No FixedStage named ${name} exist.`)
+          console.warn(`No FixedStage named ${name} exists.`)
+        }
+      },
+      getStage: (name: string) => {
+        const internal = get().internal
+        const stage = internal.stagesMap[name]
+        if (stage) {
+          return stage
+        } else {
+          console.warn(`No Stage named ${name} exists.`)
         }
       },
       previousRoot: undefined,
