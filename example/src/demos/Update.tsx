@@ -16,6 +16,7 @@ function Update() {
   const groupRef = useRef<THREE.Group>(null!)
   const matRef = useRef<THREE.MeshBasicMaterial>(null!)
   const [fixed] = useState(() => ({ scale: new THREE.Vector3(), color: new THREE.Color() }))
+  const [prev] = useState(() => ({ scale: new THREE.Vector3(), color: new THREE.Color() }))
 
   const [active, setActive] = useState(0)
   const state = useThree()
@@ -32,23 +33,25 @@ function Update() {
     if (groupRef.current) {
       const t = clock.getElapsedTime()
       const scalar = (Math.sin(t) + 2) / 2
+      prev.scale.copy(fixed.scale)
       fixed.scale.set(scalar, scalar, scalar)
       // groupRef.current.scale.set(scalar, scalar, scalar)
     }
 
     if (matRef.current) {
       const t = clock.getElapsedTime()
-      const factor = Math.sin(t) + 1
-      fixed.color.lerpColors(colorA, colorB, factor)
-      // matRef.current.color.lerpColors(colorA, colorB, factor)
+      const alpha = Math.sin(t) + 1
+      prev.color.copy(fixed.color)
+      fixed.color.lerpColors(colorA, colorB, alpha)
+      // matRef.current.color.lerpColors(colorA, colorB, alpha)
     }
   }, 'fixed')
 
   useUpdate((state) => {
     // With interpolation of the fixed stage
-    const factor = (state.getStage('fixed') as FixedStage)?.get().factor
-    groupRef.current.scale.lerp(fixed.scale, factor)
-    matRef.current.color.lerp(fixed.color, factor)
+    const alpha = (state.getStage('fixed') as FixedStage)?.get().alpha
+    groupRef.current.scale.lerpVectors(prev.scale, fixed.scale, alpha)
+    matRef.current.color.lerpColors(prev.color, fixed.color, alpha)
 
     if (groupRef.current) {
       groupRef.current.rotation.x = groupRef.current.rotation.y += 0.005

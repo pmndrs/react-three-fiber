@@ -44,7 +44,7 @@ export class FixedStage extends Stage {
   private fixedStep: number
   private maxSubsteps: number
   private accumulator: number
-  private factor: number
+  private alpha: number
 
   constructor(name: string, fixedStep = FPS_30, maxSubSteps = 5) {
     super(name)
@@ -52,7 +52,7 @@ export class FixedStage extends Stage {
     this.fixedStep = fixedStep
     this.maxSubsteps = maxSubSteps
     this.accumulator = 0
-    this.factor = 0
+    this.alpha = 0
   }
 
   frame(state: RootState, delta: number, frame?: THREE.XRFrame | undefined) {
@@ -75,7 +75,7 @@ export class FixedStage extends Stage {
     // If the this.accumulator is bigger than delta, set it to 1.
     // It should never be bigger than delta unless something went wrong.
     this.accumulator = this.accumulator % this.fixedStep
-    this.factor = this.accumulator / this.fixedStep
+    this.alpha = this.accumulator / this.fixedStep
   }
 
   set(options: FixedStageOptions) {
@@ -89,7 +89,7 @@ export class FixedStage extends Stage {
       fixedStep: this.fixedStep,
       maxSubsteps: this.maxSubsteps,
       accumulator: this.accumulator,
-      factor: this.factor,
+      alpha: this.alpha,
     }
   }
 }
