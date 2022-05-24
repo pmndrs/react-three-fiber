@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useMemo } from 'react'
 import { Canvas, FixedStage, Stage, Standard, useThree, useUpdate } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
@@ -19,7 +19,9 @@ function Update() {
   const [prev] = useState(() => ({ scale: new THREE.Vector3(), color: new THREE.Color() }))
 
   const [active, setActive] = useState(0)
-  const state = useThree()
+  const getStage = useThree((state) => state.getStage)
+  const fixedStage = useMemo(() => getStage('fixed') as FixedStage, [getStage])
+
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
     spring: active,
@@ -49,7 +51,10 @@ function Update() {
 
   useUpdate((state) => {
     // With interpolation of the fixed stage
-    const alpha = (state.getStage('fixed') as FixedStage)?.get().alpha
+    const alpha = fixedStage.get().alpha
+    // Can also get from inside the loop using state.
+    // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
+
     groupRef.current.scale.lerpVectors(prev.scale, fixed.scale, alpha)
     matRef.current.color.lerpColors(prev.color, fixed.color, alpha)
 
@@ -59,10 +64,9 @@ function Update() {
   })
 
   useEffect(() => {
-    state.setStage('fixed', { fixedStep: 1 / 15 })
-  }, [state])
-
-  useEffect(() => console.log(state), [state])
+    // state.setStage('fixed', { fixedStep: 1 / 15 })
+    fixedStage.set({ fixedStep: 1 / 15 })
+  }, [fixedStage])
 
   return (
     <group ref={groupRef}>
