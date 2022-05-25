@@ -119,8 +119,10 @@ export type RootState = {
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
-  /** Render loop flags */
+  /** Update loop flags */
   frameloop: 'always' | 'demand' | 'never'
+  /** Render function flags */
+  render: 'auto' | 'manual'
   /** Adaptive performance interface */
   performance: Performance
   /** Reactive pixel-size of the canvas */
@@ -143,10 +145,10 @@ export type RootState = {
   setSize: (width: number, height: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
-  /** Shortcut to frameloop flags */
+  /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
-  /** Shortcut to set stage options */
-  setStage: (name: string, options: FixedStageOptions) => void
+  /** Shortcut to setting render flags */
+  setRender: (render?: 'auto' | 'manual') => void
   /** Convenience get function for stages */
   getStage: (name: string) => StageTypes | undefined
   /** When the canvas was clicked but nothing was hit */
@@ -218,6 +220,7 @@ const createStore = (
       mouse: pointer,
 
       frameloop: 'always',
+      render: 'auto',
       onPointerMissed: undefined,
 
       performance: {
@@ -276,15 +279,7 @@ const createStore = (
         }
         set(() => ({ frameloop }))
       },
-      setStage: (name: string, options: FixedStageOptions) => {
-        const internal = get().internal
-        const stage = internal.stagesMap[name]
-        if (stage instanceof FixedStage) {
-          stage.set(options)
-        } else {
-          console.warn(`No FixedStage named ${name} exists.`)
-        }
-      },
+      setRender: (render: 'auto' | 'manual' = 'auto') => set(() => ({ render })),
       getStage: (name: string) => {
         const internal = get().internal
         const stage = internal.stagesMap[name]

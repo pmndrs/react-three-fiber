@@ -101,6 +101,7 @@ export type RenderProps<TCanvas extends Element> = {
   onPointerMissed?: (event: MouseEvent) => void
   /** Create a custom pipeline of stages */
   pipeline?: Stage[]
+  render?: 'auto' | 'manual'
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
@@ -173,6 +174,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         camera: cameraOptions,
         onPointerMissed,
         pipeline,
+        render,
       } = props
 
       let state = store.getState()
@@ -285,6 +287,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
+      // Check render
+      if (state.render !== render) state.setRender(render)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check performance

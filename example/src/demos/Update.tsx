@@ -4,7 +4,7 @@ import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-// TODO: Add render with 'auto' | 'manual' options to root.
+// ✅ Add render with 'auto' | 'manual' flags to root.
 // TODO: Remove useFrame loop and move useFrame subscribers to the useUpdate loop (inside update stage?)
 // TODO: Refactor priority and frames in the store. They are confusing and I don't think necessary.
 // TODO: Add a maxDelta in loops for tab safety. (It keeps accumulating.)
@@ -63,6 +63,8 @@ function Update() {
     }
   })
 
+  useUpdate(({ gl, scene, camera }) => gl.render(scene, camera), 'render')
+
   useEffect(() => {
     // state.setStage('fixed', { fixedStep: 1 / 15 })
     fixedStage.set({ fixedStep: 1 / 15 })
@@ -94,7 +96,7 @@ export default function App() {
   ]
 
   return (
-    <Canvas pipeline={stages}>
+    <Canvas pipeline={stages} render="manual">
       <Update />
     </Canvas>
   )
