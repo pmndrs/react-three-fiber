@@ -39,7 +39,7 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
 
 let subscribers: Subscription[]
 let subscription: Subscription
-function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
+function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
   // In frameloop='never' mode, clock times are updated using the provided timestamp
@@ -88,7 +88,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
         (state.frameloop === 'always' || state.internal.frames > 0) &&
         !state.gl.xr?.isPresenting
       ) {
-        repeat += render(timestamp, state)
+        repeat += update(timestamp, state)
       }
     })
 
@@ -125,8 +125,8 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     frame?: THREE.XRFrame,
   ): void {
     if (runGlobalEffects) run(globalEffects, timestamp)
-    if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
-    else render(timestamp, state, frame)
+    if (!state) roots.forEach((root) => update(timestamp, root.store.getState()))
+    else update(timestamp, state, frame)
     if (runGlobalEffects) run(globalAfterEffects, timestamp)
   }
 
