@@ -4,7 +4,12 @@ import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
+// ✅ Create a custom pipeline for advanced usecases.
+// ✅ Throw error if Update or Render stage is not included in a pipeline.
+// ✅ Add alpha to FixedStage and write interpolation example.
+// ✅ Add getStage method for interacting with Stages. Can get() and set() this way.
 // ✅ Add render with 'auto' | 'manual' flags to root.
+// ✅ Update useFrame to use mutation for subscriptions.
 // TODO: Remove useFrame loop and move useFrame subscribers to the useUpdate loop (inside update stage?)
 // TODO: Refactor priority and frames in the store. They are confusing and I don't think necessary.
 // TODO: Add a maxDelta in loops for tab safety. (It keeps accumulating.)
@@ -18,6 +23,7 @@ function Update() {
   const [fixed] = useState(() => ({ scale: new THREE.Vector3(), color: new THREE.Color() }))
   const [prev] = useState(() => ({ scale: new THREE.Vector3(), color: new THREE.Color() }))
 
+  const interpolate = true
   const [active, setActive] = useState(0)
   const getStage = useThree((state) => state.getStage)
   const fixedStage = useMemo(() => getStage('fixed') as FixedStage, [getStage])
@@ -37,7 +43,6 @@ function Update() {
       const scalar = (Math.sin(t) + 2) / 2
       prev.scale.copy(fixed.scale)
       fixed.scale.set(scalar, scalar, scalar)
-      // groupRef.current.scale.set(scalar, scalar, scalar)
     }
 
     if (matRef.current) {
@@ -45,7 +50,6 @@ function Update() {
       const alpha = Math.sin(t) + 1
       prev.color.copy(fixed.color)
       fixed.color.lerpColors(colorA, colorB, alpha)
-      // matRef.current.color.lerpColors(colorA, colorB, alpha)
     }
   }, 'fixed')
 
@@ -55,8 +59,13 @@ function Update() {
     // Can also get from inside the loop using state.
     // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
 
-    groupRef.current.scale.lerpVectors(prev.scale, fixed.scale, alpha)
-    matRef.current.color.lerpColors(prev.color, fixed.color, alpha)
+    if (interpolate) {
+      groupRef.current.scale.lerpVectors(prev.scale, fixed.scale, alpha)
+      matRef.current.color.lerpColors(prev.color, fixed.color, alpha)
+    } else {
+      groupRef.current.scale.copy(fixed.scale)
+      matRef.current.color.copy(fixed.color)
+    }
 
     if (groupRef.current) {
       groupRef.current.rotation.x = groupRef.current.rotation.y += 0.005
@@ -65,8 +74,8 @@ function Update() {
 
   useUpdate(({ gl, scene, camera }) => gl.render(scene, camera), 'render')
 
+  // Modify the fixed stage's step at runtime.
   useEffect(() => {
-    // state.setStage('fixed', { fixedStep: 1 / 15 })
     fixedStage.set({ fixedStep: 1 / 15 })
   }, [fixedStage])
 
@@ -83,7 +92,7 @@ function Update() {
 
 export default function App() {
   const InputStage = new Stage('input')
-  const PhysicsStage = new FixedStage('physics')
+  const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
   const stages = [
     Standard.Early,
     InputStage,

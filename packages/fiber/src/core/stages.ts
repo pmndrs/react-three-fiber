@@ -38,7 +38,7 @@ export class Stage {
   }
 }
 
-const FPS_30 = 1 / 30
+const FPS_50 = 1 / 50
 
 export class FixedStage extends Stage {
   private fixedStep: number
@@ -46,11 +46,11 @@ export class FixedStage extends Stage {
   private accumulator: number
   private alpha: number
 
-  constructor(name: string, fixedStep = FPS_30, maxSubSteps = 5) {
+  constructor(name: string, options?: { fixedStep?: number; maxSubSteps?: number }) {
     super(name)
 
-    this.fixedStep = fixedStep
-    this.maxSubsteps = maxSubSteps
+    this.fixedStep = options?.fixedStep ?? FPS_50
+    this.maxSubsteps = options?.maxSubSteps ?? 6
     this.accumulator = 0
     this.alpha = 0
   }
