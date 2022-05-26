@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create, { UseBoundStore } from 'zustand'
+import create, { StoreApi, UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
 import {
@@ -15,6 +15,7 @@ import {
   Performance,
   PrivateKeys,
   privateKeys,
+  Subscription,
 } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
@@ -117,6 +118,44 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
       alpha: true,
       ...gl,
     })
+}
+
+const createPipeline = (pipeline: Stage[] | undefined, store: UseBoundStore<RootState, StoreApi<RootState>>) => {
+  const state = store.getState()
+  let subscribers: Subscription[]
+  let subscription: Subscription
+
+  pipeline = pipeline ?? StandardPipeline
+
+  if (!pipeline.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
+  if (!pipeline.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
+
+  state.set(({ internal }) => ({ internal: { ...internal, stages: pipeline! } }))
+  for (const stage of pipeline) {
+    state.internal.stagesMap[stage.name] = stage
+  }
+
+  // Add useFrame loop to update stage
+  const updateStage = state.getStage('update')
+  const frameCallback = {
+    current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
+      subscribers = state.internal.subscribers
+      for (let i = 0; i < subscribers.length; i++) {
+        subscription = subscribers[i]
+        subscription.ref.current(subscription.store.getState(), delta, frame)
+      }
+    },
+  }
+  updateStage!.add(frameCallback, store)
+
+  // Add render callback to render stage
+  const renderStage = state.getStage('render')
+  const renderCallback = {
+    current: (state: RootState) => {
+      if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
+    },
+  }
+  renderStage!.add(renderCallback, store)
 }
 
 export type ReconcilerRoot<TCanvas extends Element> = {
@@ -295,16 +334,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
-      // Create update pipeline. If no custom pipeline is supplied, use the standard.
-      pipeline = pipeline ?? StandardPipeline
-
-      if (!pipeline.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
-      if (!pipeline.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
-
-      state.set(({ internal }) => ({ internal: { ...internal, stages: pipeline! } }))
-      for (const stage of pipeline) {
-        state.internal.stagesMap[stage.name] = stage
-      }
+      // Create update pipeline.
+      if (pipeline !== state.internal.stages) createPipeline(pipeline, store)
 
       // Set locals
       onCreated = onCreatedCallback

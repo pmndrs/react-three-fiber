@@ -37,8 +37,6 @@ function run(effects: GlobalRenderCallback[], timestamp: number) {
   for (i = 0; i < effects.length; i++) effects[i](timestamp)
 }
 
-let subscribers: Subscription[]
-let subscription: Subscription
 function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
@@ -60,7 +58,6 @@ function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
 }
 
 export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
-  let init = true
   let running = false
   let repeat: number
   let frame: number
@@ -76,34 +73,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
     // Render all roots
     roots.forEach((root) => {
-      const store = root.store
-      state = store.getState()
-
-      // Initialize the loop on first run
-      if (init) {
-        // Add useFrame loop to update stage
-        const updateStage = state.getStage('update')
-        const frameCallback = {
-          current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
-            subscribers = state.internal.subscribers
-            for (i = 0; i < subscribers.length; i++) {
-              subscription = subscribers[i]
-              subscription.ref.current(subscription.store.getState(), delta, frame)
-            }
-          },
-        }
-        updateStage!.add(frameCallback, store)
-
-        // Add render callback to render stage
-        const renderStage = state.getStage('render')
-        const renderCallback = {
-          current: (state: RootState) => {
-            if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
-          },
-        }
-        renderStage!.add(renderCallback, store)
-        init = false
-      }
+      state = root.store.getState()
 
       // If the frameloop is invalidated, do not run another frame
       if (
