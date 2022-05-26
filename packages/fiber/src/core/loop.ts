@@ -50,7 +50,7 @@ function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   }
   // Call subscribers (useUpdate)
   for (const stage of state.internal.stages) {
-    stage.frame(state, delta, frame)
+    stage.frame(delta, frame)
   }
 
   state.internal.frames = Math.max(0, state.internal.frames - 1)
@@ -74,7 +74,8 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
     // Render all roots
     roots.forEach((root) => {
-      state = root.store.getState()
+      const store = root.store
+      state = store.getState()
 
       // Initialize the loop on first run
       if (init) {
@@ -89,7 +90,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
             }
           },
         }
-        updateStage!.add(frameCallback)
+        updateStage!.add(frameCallback, store)
 
         // Add render callback to render stage
         const renderStage = state.getStage('render')
@@ -98,7 +99,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
             if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
           },
         }
-        renderStage!.add(renderCallback)
+        renderStage!.add(renderCallback, store)
         init = false
       }
 

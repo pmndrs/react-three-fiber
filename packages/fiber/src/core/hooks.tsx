@@ -53,10 +53,11 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
 }
 
 export function useUpdate(callback: UpdateCallback, stage: string = 'update') {
-  const stagesMap = useStore().getState().internal.stagesMap
+  const store = useStore()
+  const stagesMap = store.getState().internal.stagesMap
   const ref = useMutableCallback(callback)
   if (!stagesMap[stage]) throw `A '${stage}' stage does not exist.`
-  useIsomorphicLayoutEffect(() => stagesMap[stage].add(ref), [stage])
+  useIsomorphicLayoutEffect(() => stagesMap[stage].add(ref, store), [stage])
 }
 
 /**

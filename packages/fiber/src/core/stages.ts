@@ -1,5 +1,5 @@
-import { MutableRefObject, useLayoutEffect, useRef } from 'react'
-import { Root } from './renderer'
+import { MutableRefObject } from 'react'
+import { StoreApi, UseBoundStore } from 'zustand'
 import { RootState } from './store'
 
 export interface UpdateCallback {
@@ -7,32 +7,34 @@ export interface UpdateCallback {
 }
 
 export type UpdateCallbackRef = MutableRefObject<UpdateCallback>
+type Store = UseBoundStore<RootState, StoreApi<RootState>>
+export type UpdateSubscription = { ref: UpdateCallbackRef; store: Store }
 
 export type FixedStageOptions = { fixedStep?: number; maxSubSteps?: number }
 
 export class Stage {
   name: string
-  subscribers: UpdateCallbackRef[]
+  subscribers: UpdateSubscription[]
 
   constructor(name: string) {
     this.name = name
     this.subscribers = []
   }
 
-  frame(state: RootState, delta: number, frame?: THREE.XRFrame | undefined) {
+  frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const subs = this.subscribers
 
     for (let i = 0; i < subs.length; i++) {
-      subs[i].current(state, delta, frame)
+      subs[i].ref.current(subs[i].store.getState(), delta, frame)
     }
   }
 
-  add(callback: UpdateCallbackRef) {
-    this.subscribers = [...this.subscribers, callback]
+  add(ref: UpdateCallbackRef, store: Store) {
+    this.subscribers = [...this.subscribers, { ref, store }]
 
     return () => {
-      this.subscribers = this.subscribers.filter((cb) => {
-        return cb !== callback
+      this.subscribers = this.subscribers.filter((sub) => {
+        return sub.ref !== ref
       })
     }
   }
@@ -55,7 +57,7 @@ export class FixedStage extends Stage {
     this.alpha = 0
   }
 
-  frame(state: RootState, delta: number, frame?: THREE.XRFrame | undefined) {
+  frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const initialTime = performance.now()
     let substeps = 0
 
@@ -65,7 +67,7 @@ export class FixedStage extends Stage {
       this.accumulator -= this.fixedStep
       substeps++
 
-      super.frame(state, this.fixedStep, frame)
+      super.frame(this.fixedStep, frame)
 
       if (performance.now() - initialTime > this.fixedStep * 1000) {
         // The framerate is not interactive anymore. Better bail out.
