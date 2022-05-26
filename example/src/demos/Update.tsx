@@ -8,10 +8,10 @@ import * as THREE from 'three'
 // ✅ Throw error if Update or Render stage is not included in a pipeline.
 // ✅ Add alpha to FixedStage and write interpolation example.
 // ✅ Add getStage method for interacting with Stages. Can get() and set() this way.
-// ✅ Add render with 'auto' | 'manual' flags to root.
+// ✅ Add render with 'auto' | 'manual' flags to root. The priority flag is deprecated for the render flag.
+// ✅ The render function is executed inside the render stage.
 // ✅ Update useFrame to use mutation for subscriptions.
 // ✅ The useFrame loop is executed in the update stage.
-// TODO: Refactor priority and frames in the store. They are confusing and I don't think necessary.
 // TODO: Add a maxDelta in loops for tab safety. (It keeps accumulating.)
 
 const colorA = new THREE.Color('#6246ea')
