@@ -48,24 +48,17 @@ function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
     state.clock.oldTime = state.clock.elapsedTime
     state.clock.elapsedTime = timestamp
   }
-  // Call subscribers (useFrame)
-  subscribers = state.internal.subscribers
-  for (i = 0; i < subscribers.length; i++) {
-    subscription = subscribers[i]
-    subscription.ref.current(subscription.store.getState(), delta, frame)
-  }
   // Call subscribers (useUpdate)
   for (const stage of state.internal.stages) {
     stage.frame(state, delta, frame)
   }
-  // Render content
-  if (!state.internal.priority && state.gl.render && state.render === 'auto') state.gl.render(state.scene, state.camera)
-  // Decrease frame count
+
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   return state.frameloop === 'always' ? 1 : state.internal.frames
 }
 
 export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
+  let init = true
   let running = false
   let repeat: number
   let frame: number
@@ -82,6 +75,33 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     // Render all roots
     roots.forEach((root) => {
       state = root.store.getState()
+
+      // Initialize the loop on first run
+      if (init) {
+        // Add useFrame loop to update stage
+        const updateStage = state.getStage('update')
+        const frameCallback = {
+          current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
+            subscribers = state.internal.subscribers
+            for (i = 0; i < subscribers.length; i++) {
+              subscription = subscribers[i]
+              subscription.ref.current(subscription.store.getState(), delta, frame)
+            }
+          },
+        }
+        updateStage!.add(frameCallback)
+
+        // Add render callback to render stage
+        const renderStage = state.getStage('render')
+        const renderCallback = {
+          current: (state: RootState) => {
+            if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
+          },
+        }
+        renderStage!.add(renderCallback)
+        init = false
+      }
+
       // If the frameloop is invalidated, do not run another frame
       if (
         state.internal.active &&

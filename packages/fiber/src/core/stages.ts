@@ -23,7 +23,7 @@ export class Stage {
     const subs = this.subscribers
 
     for (let i = 0; i < subs.length; i++) {
-      subs[i].current(state, delta)
+      subs[i].current(state, delta, frame)
     }
   }
 
@@ -65,7 +65,7 @@ export class FixedStage extends Stage {
       this.accumulator -= this.fixedStep
       substeps++
 
-      super.frame(state, this.fixedStep)
+      super.frame(state, this.fixedStep, frame)
 
       if (performance.now() - initialTime > this.fixedStep * 1000) {
         // The framerate is not interactive anymore. Better bail out.

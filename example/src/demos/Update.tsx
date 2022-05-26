@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react'
-import { Canvas, FixedStage, Stage, Standard, useThree, useUpdate } from '@react-three/fiber'
+import { Canvas, FixedStage, Stage, Standard, useFrame, useThree, useUpdate } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -10,7 +10,7 @@ import * as THREE from 'three'
 // ✅ Add getStage method for interacting with Stages. Can get() and set() this way.
 // ✅ Add render with 'auto' | 'manual' flags to root.
 // ✅ Update useFrame to use mutation for subscriptions.
-// TODO: Remove useFrame loop and move useFrame subscribers to the useUpdate loop (inside update stage?)
+// ✅ The useFrame loop is executed in the update stage.
 // TODO: Refactor priority and frames in the store. They are confusing and I don't think necessary.
 // TODO: Add a maxDelta in loops for tab safety. (It keeps accumulating.)
 
@@ -56,7 +56,8 @@ function Update() {
   useUpdate((state) => {
     // With interpolation of the fixed stage
     const alpha = fixedStage.get().alpha
-    // Can also get from inside the loop using state.
+
+    // Can also get from inside the loop using state
     // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
 
     if (interpolate) {
@@ -66,12 +67,17 @@ function Update() {
       groupRef.current.scale.copy(fixed.scale)
       matRef.current.color.copy(fixed.color)
     }
+  })
 
+  // For backwards compatability, useFrame gets executed in the update stage
+  // A positive priority switches rendering to manual
+  useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.x = groupRef.current.rotation.y += 0.005
     }
   })
 
+  // Use our own render function by setting render to 'manual'
   useUpdate(({ gl, scene, camera }) => gl.render(scene, camera), 'render')
 
   // Modify the fixed stage's step at runtime.
