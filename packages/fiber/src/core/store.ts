@@ -81,6 +81,7 @@ export type InternalState = {
   frames: number
   stages: StageTypes[]
   stagesMap: StagesMap
+  maxDelta: number
   subscribe: (
     callback: React.MutableRefObject<RenderCallback>,
     priority: number,
@@ -306,6 +307,7 @@ const createStore = (
         frames: 0,
         stages: [],
         stagesMap: {},
+        maxDelta: 1 / 10,
         subscribe: (
           ref: React.MutableRefObject<RenderCallback>,
           priority: number,

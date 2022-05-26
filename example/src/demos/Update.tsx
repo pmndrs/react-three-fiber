@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react'
+import React, { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react'
 import { Canvas, FixedStage, Stage, Standard, useFrame, useThree, useUpdate } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
@@ -12,10 +12,45 @@ import * as THREE from 'three'
 // ✅ The render function is executed inside the render stage.
 // ✅ Update useFrame to use mutation for subscriptions.
 // ✅ The useFrame loop is executed in the update stage.
-// TODO: Add a maxDelta in loops for tab safety. (It keeps accumulating.)
+// ✅ Add a maxDelta in loops for tab safety.
 
 const colorA = new THREE.Color('#6246ea')
 const colorB = new THREE.Color('#e45858')
+
+// Quick and dirty HUD implementation.
+function useHud() {
+  const size = useThree((state) => state.size)
+
+  const hud = useMemo(() => {
+    const hudCanvas = document.createElement('canvas')
+    hudCanvas.width = size.width
+    hudCanvas.height = size.height
+    const hudBitmap = hudCanvas.getContext('2d')!
+    hudBitmap.font = '600 40px Inter'
+    hudBitmap.textAlign = 'center'
+    hudBitmap.fillStyle = 'rgba(245,10,10,0.75)'
+    hudBitmap.fillText('Canvas drawn HUD', size.width / 2, size.height / 2)
+    return hudCanvas
+  }, [size.height, size.width])
+
+  const camera = useMemo(
+    () => new THREE.OrthographicCamera(-size.width / 2, size.width / 2, size.height / 2, -size.height / 2, 0, 30),
+    [size.height, size.width],
+  )
+  const [scene] = useState(() => new THREE.Scene())
+  const texture = useMemo(() => new THREE.CanvasTexture(hud), [hud])
+  const material = useMemo(() => new THREE.MeshBasicMaterial({ map: texture, transparent: true }), [texture])
+  const mesh = useMemo(
+    () => new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), material),
+    [material, size.height, size.width],
+  )
+
+  useLayoutEffect(() => {
+    scene.add(mesh)
+  }, [scene, mesh])
+
+  return { scene, camera }
+}
 
 function Update() {
   const groupRef = useRef<THREE.Group>(null!)
@@ -27,6 +62,8 @@ function Update() {
   const [active, setActive] = useState(0)
   const getStage = useThree((state) => state.getStage)
   const fixedStage = useMemo(() => getStage('fixed') as FixedStage, [getStage])
+
+  const { scene: sceneHud, camera: cameraHud } = useHud()
 
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
@@ -78,7 +115,16 @@ function Update() {
   })
 
   // Use our own render function by setting render to 'manual'
-  useUpdate(({ gl, scene, camera }) => gl.render(scene, camera), 'render')
+  useUpdate(({ gl, scene, camera }) => {
+    if (gl.autoClear) gl.autoClear = false
+    gl.clear()
+    gl.render(scene, camera)
+  }, 'render')
+
+  useUpdate(({ gl }) => {
+    gl.clearDepth()
+    gl.render(sceneHud, cameraHud)
+  }, 'hud')
 
   // Modify the fixed stage's step at runtime.
   useEffect(() => {
@@ -99,6 +145,7 @@ function Update() {
 export default function App() {
   const InputStage = new Stage('input')
   const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
+  const HudStage = new Stage('hud')
   const stages = [
     Standard.Early,
     InputStage,
@@ -107,6 +154,7 @@ export default function App() {
     Standard.Update,
     Standard.Late,
     Standard.Render,
+    HudStage,
     Standard.After,
   ]
 

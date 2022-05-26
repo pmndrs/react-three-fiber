@@ -69,13 +69,15 @@ export class FixedStage extends Stage {
 
       super.frame(this.fixedStep, frame)
 
-      if (performance.now() - initialTime > this.fixedStep * 1000) {
-        // The framerate is not interactive anymore. Better bail out.
+      if (performance.now() - initialTime > this.fixedStep * 200) {
+        // The framerate is not interactive anymore.
         break
       }
     }
-    // If the this.accumulator is bigger than delta, set it to 1.
-    // It should never be bigger than delta unless something went wrong.
+
+    // The accumulator will only be larger than the fixed step if we had to
+    // bail early due to hitting the max substep limit. In that case, we want to
+    // shave off the excess so we don't fall behind next frame.
     this.accumulator = this.accumulator % this.fixedStep
     this.alpha = this.accumulator / this.fixedStep
   }
