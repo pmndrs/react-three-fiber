@@ -38,7 +38,7 @@ export function createPointerEvents(store: UseBoundStore<RootState>): EventManag
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))
-      Object.entries(events?.handlers ?? []).forEach(([name, event]) => {
+      Object.entries(events.handlers ?? []).forEach(([name, event]) => {
         const [eventName, passive] = DOM_EVENTS[name as keyof typeof DOM_EVENTS]
         target.addEventListener(eventName, event, { passive })
       })

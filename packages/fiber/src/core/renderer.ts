@@ -225,7 +225,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     const parent = instance.__r3f?.parent
     if (!parent) return
 
-    const newInstance = createInstance(type, newProps, instance.__r3f?.root)
+    const newInstance = createInstance(type, newProps, instance.__r3f.root)
 
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
@@ -334,7 +334,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     commitMount(instance: Instance, type, props, int) {
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
-      const localState = (instance?.__r3f ?? {}) as LocalState
+      const localState = (instance.__r3f ?? {}) as LocalState
       if (instance.raycast && localState.handlers && localState.eventCount) {
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
       }

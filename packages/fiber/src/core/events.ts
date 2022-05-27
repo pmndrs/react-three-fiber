@@ -143,7 +143,7 @@ function releaseInternalPointerCapture(
 }
 
 export function removeInteractivity(store: UseBoundStore<RootState>, object: THREE.Object3D) {
-  const { events, internal } = store.getState()
+  const { internal } = store.getState()
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
   internal.initialHits = internal.initialHits.filter((o) => o !== object)
@@ -354,14 +354,14 @@ export function createEvents(store: UseBoundStore<RootState>) {
     return intersections
   }
 
-  function cancelPointer(hits: Intersection[]) {
+  function cancelPointer(intersections: Intersection[]) {
     const { internal } = store.getState()
     Array.from(internal.hovered.values()).forEach((hoveredObj) => {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
-        !hits.length ||
-        !hits.find(
+        !intersections.length ||
+        !intersections.find(
           (hit) =>
             hit.object === hoveredObj.object &&
             hit.index === hoveredObj.index &&
@@ -374,7 +374,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
         internal.hovered.delete(makeId(hoveredObj))
         if (instance?.eventCount) {
           // Clear out intersects, they are outdated by now
-          const data = { ...hoveredObj, intersections: hits || [] }
+          const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
         }

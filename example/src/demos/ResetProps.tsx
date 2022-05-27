@@ -1,6 +1,6 @@
 import * as THREE from 'three'
-import React, { memo, useEffect, useState, useRef } from 'react'
-import { Canvas, useThree, useFrame, extend } from '@react-three/fiber'
+import React, { useEffect, useState, useRef } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 
 function AdaptivePixelRatio() {
@@ -36,7 +36,7 @@ function AdaptiveEvents() {
 }
 
 function Scene() {
-  const group = useRef<THREE.Group>()
+  const group = useRef<THREE.Group>(null!)
   const [showCube, setShowCube] = useState(false)
   const [hovered, setHovered] = useState(false)
   const [color, setColor] = useState('pink')
