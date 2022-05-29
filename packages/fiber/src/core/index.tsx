@@ -100,8 +100,8 @@ export type RenderProps<TCanvas extends Element> = {
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
-  /** Create a custom pipeline of stages */
-  pipeline?: Stage[]
+  /** Create a custom lifecycle of stages */
+  stages?: Stage[]
   render?: 'auto' | 'manual'
 }
 
@@ -120,18 +120,18 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     })
 }
 
-const createPipeline = (pipeline: Stage[] | undefined, store: UseBoundStore<RootState, StoreApi<RootState>>) => {
+const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootState, StoreApi<RootState>>) => {
   const state = store.getState()
   let subscribers: Subscription[]
   let subscription: Subscription
 
-  pipeline = pipeline ?? StandardPipeline
+  stages = stages ?? StandardPipeline
 
-  if (!pipeline.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
-  if (!pipeline.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
+  if (!stages.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
+  if (!stages.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
 
-  state.set(({ internal }) => ({ internal: { ...internal, stages: pipeline! } }))
-  for (const stage of pipeline) {
+  state.set(({ internal }) => ({ internal: { ...internal, stages: stages! } }))
+  for (const stage of stages) {
     state.internal.stagesMap[stage.name] = stage
   }
 
@@ -212,7 +212,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
-        pipeline,
+        stages,
         render,
       } = props
 
@@ -334,8 +334,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
-      // Create update pipeline.
-      if (pipeline !== state.internal.stages) createPipeline(pipeline, store)
+      // Create update stages.
+      if (stages !== state.internal.stages) createStages(stages, store)
 
       // Set locals
       onCreated = onCreatedCallback

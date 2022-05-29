@@ -41,7 +41,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     camera,
     onPointerMissed,
     onCreated,
-    pipeline,
+    stages,
     render,
     ...props
   },
@@ -84,7 +84,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       performance,
       raycaster,
       camera,
-      pipeline,
+      stages,
       render,
       size: { width, height },
       // Pass mutable reference to onPointerMissed so it's free to update
