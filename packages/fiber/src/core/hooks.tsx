@@ -4,7 +4,7 @@ import { StateSelector, EqualityChecker } from 'zustand'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
-import { UpdateCallback } from './stages'
+import { Stages, UpdateCallback } from './stages'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -52,11 +52,18 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   return null
 }
 
-export function useUpdate(callback: UpdateCallback, stage: string = 'update') {
+/**
+ * Executes a callback in a given update stage.
+ * The default stages can be accessed through the Stages enum.
+ */
+export function useUpdate(callback: UpdateCallback, stage: string = Stages.Update) {
   const store = useStore()
   const stagesMap = store.getState().internal.stagesMap
+  // Memoize ref
   const ref = useMutableCallback(callback)
+  // Throw an error if a stage does not exist
   if (!stagesMap[stage]) throw `A '${stage}' stage does not exist.`
+  // Subscribe on mount, unsubscribe on unmount
   useIsomorphicLayoutEffect(() => stagesMap[stage].add(ref, store), [stage])
 }
 

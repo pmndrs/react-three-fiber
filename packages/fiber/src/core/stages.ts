@@ -10,8 +10,14 @@ export type UpdateCallbackRef = MutableRefObject<UpdateCallback>
 type Store = UseBoundStore<RootState, StoreApi<RootState>>
 export type UpdateSubscription = { ref: UpdateCallbackRef; store: Store }
 
-export type FixedStageOptions = { fixedStep?: number; maxSubSteps?: number }
+export type FixedStageOptions = { fixedStep?: number; maxSubsteps?: number }
+export type FixedStageProps = { fixedStep: number; maxSubsteps: number; accumulator: number; alpha: number }
 
+/**
+ * Class representing a stage that updates every frame.
+ * Stages are used to build a lifecycle of effects for an app's frameloop.
+ * @param {string} name - Name of the stage.
+ */
 export class Stage {
   name: string
   subscribers: UpdateSubscription[]
@@ -21,6 +27,11 @@ export class Stage {
     this.subscribers = []
   }
 
+  /**
+   * Executes all callback subscriptions on the stage.
+   * @param {number} delta - Delta time between frame calls.
+   * @param {THREE.XRFrame | undefined} [frame] - The XR frame if it exists.
+   */
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const subs = this.subscribers
 
@@ -29,6 +40,12 @@ export class Stage {
     }
   }
 
+  /**
+   * Adds a callback subscriber to the stage.
+   * @param {UpdateCallbackRef} ref - The mutable callback reference.
+   * @param {Store} store - The store to be used with the callback execution.
+   * @returns {() => void} A function to remove the subscription.
+   */
   add(ref: UpdateCallbackRef, store: Store) {
     this.subscribers.push({ ref, store })
 
@@ -40,9 +57,17 @@ export class Stage {
   }
 }
 
-// Using Unity's default here.
+// Using Unity's fixedStep default.
 const FPS_50 = 1 / 50
 
+/**
+ * Class representing a stage that updates every frame at a fixed rate.
+ * @param {string} name - Name of the stage.
+ * @param {FixedStageOptions} [options] - Options for the fixed stage.
+ * @param {number} [options.fixedStep] - Fixed step rate.
+ * @param {number} [options.maxSubsteps] - Maximum number of substeps.
+ * @extends Stage
+ */
 export class FixedStage extends Stage {
   private fixedStep: number
   private maxSubsteps: number
@@ -58,6 +83,11 @@ export class FixedStage extends Stage {
     this.alpha = 0
   }
 
+  /**
+   * Executes all callback subscriptions on the stage.
+   * @param {number} delta - Delta time between frame calls.
+   * @param {THREE.XRFrame | undefined} [frame] - The XR frame if it exists.
+   */
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const initialTime = performance.now()
     let substeps = 0
@@ -77,19 +107,33 @@ export class FixedStage extends Stage {
     }
 
     // The accumulator will only be larger than the fixed step if we had to
-    // bail early due to hitting the max substep limit. In that case, we want to
-    // shave off the excess so we don't fall behind next frame.
+    // bail early due to hitting the max substep limit or execution time lagging.
+    // In that case, we want to shave off the excess so we don't fall behind next frame.
     this.accumulator = this.accumulator % this.fixedStep
     this.alpha = this.accumulator / this.fixedStep
   }
 
+  /**
+   * Set the fixed stage properties.
+   * @param {FixedStageOptions} options - Options for the fixed stage.
+   * @param {number} [options.fixedStep] - Fixed step rate.
+   * @param {number} [options.maxSubsteps] - Maximum number of substeps.
+   */
   set(options: FixedStageOptions) {
-    const { fixedStep, maxSubSteps } = options
+    const { fixedStep, maxSubsteps } = options
     if (fixedStep) this.fixedStep = fixedStep
-    if (maxSubSteps) this.maxSubsteps = maxSubSteps
+    if (maxSubsteps) this.maxSubsteps = maxSubsteps
   }
 
-  get() {
+  /**
+   * Get the fixed stage properties.
+   * @returns {FixedStageProps} props The fixed stage properties.
+   * @returns {number} props.fixedStep The fixed step rate.
+   * @returns {number} props.maxSubsteps The maximum number of substeps.
+   * @returns {number} props.accumulator The time left over in the accumulator.
+   * @returns {number} props.alpha The ratio of remaining time and step size. Useful for interpolation.
+   */
+  get(): FixedStageProps {
     return {
       fixedStep: this.fixedStep,
       maxSubsteps: this.maxSubsteps,
@@ -106,8 +150,8 @@ const Late = new Stage('late')
 const Render = new Stage('render')
 const After = new Stage('after')
 
-export const Standard = { Early, Fixed, Update, Late, Render, After }
-export const StandardStages = [Early, Fixed, Update, Late, Render, After]
+export const StandardStages = { Early, Fixed, Update, Late, Render, After }
+export const StandardLifecycle = [Early, Fixed, Update, Late, Render, After]
 
 export enum Stages {
   Early = 'early',

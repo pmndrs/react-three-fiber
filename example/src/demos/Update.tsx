@@ -3,7 +3,7 @@ import {
   Canvas,
   FixedStage,
   Stage,
-  Standard,
+  StandardStages as Standard,
   useFrame,
   useThree,
   useUpdate,

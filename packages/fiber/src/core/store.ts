@@ -303,11 +303,20 @@ const createStore = (
 
         // Updates
         active: false,
-        priority: 0,
         frames: 0,
+        /**
+         * The ordered stages defining the lifecycle.
+         */
         stages: [],
+        /**
+         * The stages map, where the key is the stage name and the value is the stage.
+         */
         stagesMap: {},
+        /**
+         * The max delta time between two frames.
+         */
         maxDelta: 1 / 10,
+        priority: 0,
         subscribe: (
           ref: React.MutableRefObject<RenderCallback>,
           priority: number,

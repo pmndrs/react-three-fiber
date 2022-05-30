@@ -32,7 +32,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
-import { Stage, Standard, StandardStages } from './stages'
+import { Stage, StandardLifecycle, StandardStages } from './stages'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -125,10 +125,10 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
   let subscribers: Subscription[]
   let subscription: Subscription
 
-  stages = stages ?? StandardStages
+  stages = stages ?? StandardLifecycle
 
-  if (!stages.includes(Standard.Update)) throw 'The Standard.Update stage is required for R3F.'
-  if (!stages.includes(Standard.Render)) throw 'The Standard.Render stage is required for R3F.'
+  if (!stages.includes(StandardStages.Update)) throw 'The StandardStages.Update stage is required for R3F.'
+  if (!stages.includes(StandardStages.Render)) throw 'The StandardStages.Render stage is required for R3F.'
 
   state.set(({ internal }) => ({ internal: { ...internal, stages: stages! } }))
   for (const stage of stages) {
