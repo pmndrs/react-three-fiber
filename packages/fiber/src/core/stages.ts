@@ -30,7 +30,7 @@ export class Stage {
   }
 
   add(ref: UpdateCallbackRef, store: Store) {
-    this.subscribers = [...this.subscribers, { ref, store }]
+    this.subscribers.push({ ref, store })
 
     return () => {
       this.subscribers = this.subscribers.filter((sub) => {
