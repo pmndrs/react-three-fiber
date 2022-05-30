@@ -40,6 +40,7 @@ export class Stage {
   }
 }
 
+// Using Unity's default here.
 const FPS_50 = 1 / 50
 
 export class FixedStage extends Stage {
@@ -106,4 +107,13 @@ const Render = new Stage('render')
 const After = new Stage('after')
 
 export const Standard = { Early, Fixed, Update, Late, Render, After }
-export const StandardPipeline = [Early, Fixed, Update, Late, Render, After]
+export const StandardStages = [Early, Fixed, Update, Late, Render, After]
+
+export enum Stages {
+  Early = 'early',
+  Fixed = 'fixed',
+  Update = 'update',
+  Late = 'late',
+  Render = 'render',
+  After = 'after',
+}

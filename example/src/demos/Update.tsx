@@ -1,26 +1,49 @@
 import React, { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react'
-import { Canvas, FixedStage, Stage, Standard, useFrame, useThree, useUpdate } from '@react-three/fiber'
+import {
+  Canvas,
+  FixedStage,
+  Stage,
+  Standard,
+  useFrame,
+  useThree,
+  useUpdate,
+  Stages as StandardStages,
+} from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
 
-// ✅ Create a custom pipeline for advanced usecases.
-// ✅ Throw error if Update or Render stage is not included in a pipeline.
-// ✅ Add alpha to FixedStage and write interpolation example.
-// ✅ Add getStage method for interacting with Stages. Can get() and set() this way.
-// ✅ Add render with 'auto' | 'manual' flags to root. The priority flag is deprecated for the render flag.
-// ✅ The render function is executed inside the render stage.
-// ✅ Update useFrame to use mutation for subscriptions.
-// ✅ The useFrame loop is executed in the update stage.
-// ✅ Add a maxDelta in loops for tab safety.
-
 const colorA = new THREE.Color('#6246ea')
 const colorB = new THREE.Color('#e45858')
+
+const InputStage = new Stage('input')
+const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
+const HudStage = new Stage('hud')
+const stages = [
+  Standard.Early,
+  InputStage,
+  Standard.Fixed,
+  PhysicsStage,
+  Standard.Update,
+  Standard.Late,
+  Standard.Render,
+  HudStage,
+  Standard.After,
+]
+
+enum CustomStages {
+  Input = 'input',
+  Physics = 'physics',
+  Hud = 'hud',
+}
+
+// TS workaround for extending an enum
+type Stages = StandardStages | CustomStages
+const Stages = { ...StandardStages, ...CustomStages }
 
 // Quick and dirty HUD implementation.
 function useHud() {
   const size = useThree((state) => state.size)
-
   const hud = useMemo(() => {
     const hudCanvas = document.createElement('canvas')
     hudCanvas.width = size.width
@@ -88,7 +111,7 @@ function Update() {
       prev.color.copy(fixed.color)
       fixed.color.lerpColors(colorA, colorB, alpha)
     }
-  }, 'fixed')
+  }, Stages.Fixed)
 
   useUpdate((state) => {
     // With interpolation of the fixed stage
@@ -119,12 +142,12 @@ function Update() {
     if (gl.autoClear) gl.autoClear = false
     gl.clear()
     gl.render(scene, camera)
-  }, 'render')
+  }, Stages.Render)
 
   useUpdate(({ gl }) => {
     gl.clearDepth()
     gl.render(sceneHud, cameraHud)
-  }, 'hud')
+  }, Stages.Hud)
 
   // Modify the fixed stage's step at runtime.
   useEffect(() => {
@@ -143,23 +166,8 @@ function Update() {
 }
 
 export default function App() {
-  const InputStage = new Stage('input')
-  const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
-  const HudStage = new Stage('hud')
-  const stages = [
-    Standard.Early,
-    InputStage,
-    Standard.Fixed,
-    PhysicsStage,
-    Standard.Update,
-    Standard.Late,
-    Standard.Render,
-    HudStage,
-    Standard.After,
-  ]
-
   return (
-    <Canvas pipeline={stages} render="manual">
+    <Canvas stages={stages} render="manual">
       <Update />
     </Canvas>
   )
