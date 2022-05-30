@@ -287,8 +287,8 @@ Arrays must be explcit now:
 
 ```diff
 <mesh>
--  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />}
-+  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+-  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />)}
++  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />)}
 </mesh>
 ```
 
