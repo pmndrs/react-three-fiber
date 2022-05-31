@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.20
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+
 ## 8.0.19
 
 ### Patch Changes

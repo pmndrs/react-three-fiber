@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.13
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+- Updated dependencies [4c87bce]
+  - @react-three/fiber@8.0.20
+
 ## 8.0.12
 
 ### Patch Changes
