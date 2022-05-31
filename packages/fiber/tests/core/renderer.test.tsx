@@ -276,6 +276,36 @@ describe('renderer', () => {
     expect(scene.children[0].children.length).toBe(0)
   })
 
+  it('attaches multiple primitives that use attach', async () => {
+    const mesh = new THREE.Mesh()
+
+    let scene: THREE.Scene = null!
+    await act(async () => {
+      scene = root
+        .render(
+          <>
+            <hasObject3dMember>
+              <primitive object={mesh} attach="attachment" />
+            </hasObject3dMember>
+            <hasObject3dMember>
+              <primitive object={mesh} attach="attachment" />
+            </hasObject3dMember>
+          </>,
+        )
+        .getState().scene
+    })
+
+    const [member1, member2] = scene.children as HasObject3dMember[]
+
+    expect(member1).not.toBe(member2)
+
+    expect(member1.attachment).toBe(mesh)
+    expect(member2.attachment).toBe(mesh)
+
+    expect(member1.children.length).toBe(0)
+    expect(member2.children.length).toBe(0)
+  })
+
   it('can attach a Scene', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
