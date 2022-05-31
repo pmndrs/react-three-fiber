@@ -69,6 +69,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       setSize({ width, height })
     }, [])
 
+    // Called on context create or swap
+    // https://github.com/pmndrs/react-three-fiber/pull/2297
     const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
       const canvasShim = {
         width: context.drawingBufferWidth,
@@ -80,12 +82,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         getContext: (() => context) as any,
       } as HTMLCanvasElement
 
+      root.current = createRoot<Element>(canvasShim)
       setCanvas(canvasShim)
     }, [])
 
-    if (width > 0 && height > 0 && canvas) {
-      if (!root.current) root.current = createRoot<Element>(canvas)
-
+    if (root.current && width > 0 && height > 0) {
       root.current.configure({
         gl,
         events,
