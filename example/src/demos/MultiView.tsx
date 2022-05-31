@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import {
   useGLTF,

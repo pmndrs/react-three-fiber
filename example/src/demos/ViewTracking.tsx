@@ -1,20 +1,12 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import {
-  useGLTF,
-  Preload,
-  OrbitControls,
-  PerspectiveCamera,
-  CameraShake,
-  TransformControls,
-  Environment,
-} from '@react-three/drei'
-import { Canvas, createPortal, useFrame, useThree } from '@react-three/fiber'
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useGLTF, Preload, OrbitControls, PerspectiveCamera, TransformControls, Environment } from '@react-three/drei'
+import { Canvas, createPortal, ThreeEvent, useFrame, useThree } from '@react-three/fiber'
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import useRefs from 'react-use-refs'
 
 function Soda(props: any) {
-  const ref = useRef()
+  const ref = useRef<THREE.Group>(null!)
   const [hovered, spread] = useHover()
   const { nodes, materials } = useGLTF(
     'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/soda-bottle/model.gltf',
@@ -32,7 +24,13 @@ function Soda(props: any) {
 
 function useHover() {
   const [hovered, hover] = useState(false)
-  return [hovered, { onPointerOver: (e) => (e.stopPropagation(), hover(true)), onPointerOut: () => hover(false) }]
+  return [
+    hovered,
+    {
+      onPointerOver: (e: ThreeEvent<PointerEvent>) => (e.stopPropagation(), hover(true)),
+      onPointerOut: () => hover(false),
+    },
+  ]
 }
 
 function Duck(props: any) {
@@ -96,9 +94,6 @@ function Container({ scene, index, children, frames, rect, track }: any) {
     }
 
     camera.updateProjectionMatrix()
-    if (left === undefined) {
-      debugger
-    }
     state.gl.setViewport(left, positiveYUpBottom, width, height)
     state.gl.setScissor(left, positiveYUpBottom, width, height)
     state.gl.setScissorTest(true)
