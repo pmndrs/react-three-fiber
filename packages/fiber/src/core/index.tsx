@@ -557,7 +557,7 @@ function Portal({
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
-  version: '18.0.0',
+  version: React.version,
 })
 
 const act = (React as any).unstable_act
