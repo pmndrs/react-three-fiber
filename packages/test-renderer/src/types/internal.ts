@@ -1,15 +1,15 @@
 import * as THREE from 'three'
-import { UseStore } from 'zustand'
+import { UseBoundStore } from 'zustand'
 
 import type { BaseInstance, LocalState, RootState } from '@react-three/fiber'
 
-export type MockUseStoreState = UseStore<RootState>
+export type MockUseStoreState = UseBoundStore<RootState>
 
 export interface MockInstance extends Omit<BaseInstance, '__r3f'> {
-  __r3f: Omit<LocalState, 'root' | 'objects' | 'parent'> & {
+  __r3f: Omit<LocalState, 'root' | 'objects' | 'parents'> & {
     root: MockUseStoreState
     objects: MockSceneChild[]
-    parent: MockInstance
+    parents: MockInstance[]
   }
 }
 

@@ -138,7 +138,7 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
 // Each object in the scene carries a small LocalState descriptor
 export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = object as unknown as Instance
-  if (state?.primitive || !instance.__r3f) {
+  if (!instance.__r3f) {
     instance.__r3f = {
       type: '',
       root: null as unknown as UseBoundStore<RootState>,
@@ -147,7 +147,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       eventCount: 0,
       handlers: {},
       objects: [],
-      parent: null,
+      parents: [],
       ...state,
     }
   }
@@ -333,7 +333,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     invalidateInstance(instance)
   })
 
-  if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (localState.parents?.length && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
     const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
