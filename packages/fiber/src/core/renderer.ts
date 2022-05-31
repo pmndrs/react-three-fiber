@@ -137,9 +137,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
     let added = false
     if (child) {
-      if (child.__r3f?.attach) {
-        attach(parentInstance, child, child.__r3f.attach)
-      } else if (child.isObject3D && parentInstance.isObject3D) {
+      if (!child.__r3f?.attach && child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
