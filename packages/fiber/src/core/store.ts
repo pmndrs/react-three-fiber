@@ -286,29 +286,24 @@ const createStore = (
           priority: number,
           store: UseBoundStore<RootState, StoreApi<RootState>>,
         ) => {
-          set(({ internal }) => ({
-            internal: {
-              ...internal,
-              // If this subscription was given a priority, it takes rendering into its own hands
-              // For that reason we switch off automatic rendering and increase the manual flag
-              // As long as this flag is positive there can be no internal rendering at all
-              // because there could be multiple render subscriptions
-              priority: internal.priority + (priority > 0 ? 1 : 0),
-              // Register subscriber and sort layers from lowest to highest, meaning,
-              // highest priority renders last (on top of the other frames)
-              subscribers: [...internal.subscribers, { ref, priority, store }].sort((a, b) => a.priority - b.priority),
-            },
-          }))
+          const internal = get().internal
+          // If this subscription was given a priority, it takes rendering into its own hands
+          // For that reason we switch off automatic rendering and increase the manual flag
+          // As long as this flag is positive there can be no internal rendering at all
+          // because there could be multiple render subscriptions
+          internal.priority = internal.priority + (priority > 0 ? 1 : 0)
+          internal.subscribers.push({ ref, priority, store })
+          // Register subscriber and sort layers from lowest to highest, meaning,
+          // highest priority renders last (on top of the other frames)
+          internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
           return () => {
-            set(({ internal }) => ({
-              internal: {
-                ...internal,
-                // Decrease manual flag if this subscription had a priority
-                priority: internal.priority - (priority > 0 ? 1 : 0),
-                // Remove subscriber from list
-                subscribers: internal.subscribers.filter((s) => s.ref !== ref),
-              },
-            }))
+            const internal = get().internal
+            if (internal?.subscribers) {
+              // Decrease manual flag if this subscription had a priority
+              internal.priority = internal.priority - (priority > 0 ? 1 : 0)
+              // Remove subscriber from list
+              internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
+            }
           }
         },
       },
