@@ -41,7 +41,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
     expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
-    expect(result.size).toEqual({ height: 0, width: 0 })
+    expect(result.size).toEqual({ height: 0, width: 0, updateStyle: false })
   })
 
   it('can handle useLoader hook', async () => {

@@ -32,7 +32,7 @@ export type Subscription = {
 }
 
 export type Dpr = number | [min: number, max: number]
-export type Size = { width: number; height: number }
+export type Size = { width: number; height: number; updateStyle?: boolean }
 export type Viewport = Size & {
   /** The initial pixel ratio */
   initialDpr: number
@@ -134,7 +134,7 @@ export type RootState = {
   /** Shortcut to setting the event layer */
   setEvents: (events: Partial<EventManager<any>>) => void
   /** Shortcut to manual sizing */
-  setSize: (width: number, height: number) => void
+  setSize: (width: number, height: number, updateStyle?: boolean) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
@@ -229,7 +229,7 @@ const createStore = (
         },
       },
 
-      size: { width: 0, height: 0 },
+      size: { width: 0, height: 0, updateStyle: false },
       viewport: {
         initialDpr: 0,
         dpr: 0,
@@ -243,9 +243,9 @@ const createStore = (
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      setSize: (width: number, height: number) => {
+      setSize: (width: number, height: number, updateStyle?: boolean) => {
         const camera = get().camera
-        const size = { width, height }
+        const size = { width, height, updateStyle }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) =>
@@ -321,7 +321,7 @@ const createStore = (
       updateCamera(camera, size)
       // Update renderer
       gl.setPixelRatio(viewport.dpr)
-      gl.setSize(size.width, size.height)
+      gl.setSize(size.width, size.height, size.updateStyle)
 
       oldSize = size
       oldDpr = viewport.dpr
