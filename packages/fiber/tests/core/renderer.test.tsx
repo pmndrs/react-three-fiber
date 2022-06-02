@@ -455,10 +455,20 @@ describe('renderer', () => {
     let state: RootState = null!
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
+    let lastAttached: Instance = null!
+    let lastDetached: Instance = null!
+
     const Test = ({ n }: { n: number }) => (
       // @ts-ignore args isn't a valid prop but changing it will swap
       <group args={[n]} onPointerOver={() => null}>
         <group />
+        <group attach="test" />
+        <group
+          attach={(parent) => {
+            lastAttached = parent
+            return () => void (lastDetached = parent)
+          }}
+        />
       </group>
     )
 
@@ -471,6 +481,12 @@ describe('renderer', () => {
       parentUUID: state.scene.children[0].parent?.uuid,
       childUUID: state.scene.children[0].children[0]?.uuid,
     })
+
+    // Has initial attachments
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+    expect(lastAttached).not.toBe(null)
+    expect(lastAttached.uuid).toBe(state.scene.children[0].uuid)
+    expect(lastDetached).toBe(null)
 
     await act(async () => {
       state = root.render(<Test n={2} />).getState()
@@ -490,6 +506,13 @@ describe('renderer', () => {
     // Preserves scene hierarchy
     expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
     expect(oldInstance.childUUID).toBe(newInstance.childUUID)
+
+    // Preserves initial attachments
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+    expect(lastAttached).not.toBe(null)
+    expect(lastAttached.uuid).toBe(newInstance.uuid)
+    expect(lastDetached).not.toBe(null)
+    expect(lastDetached.uuid).toBe(oldInstance.uuid)
 
     // Rebinds events
     expect(state.internal.interaction.length).not.toBe(0)

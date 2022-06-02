@@ -234,7 +234,12 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       instance.children = []
     }
 
-    instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
+    // Copy over child attachments
+    for (const child of instance.__r3f.objects) {
+      appendChild(newInstance, child)
+      detach(instance, child, child.__r3f.attach!)
+      attach(newInstance, child, child.__r3f.attach!)
+    }
     instance.__r3f.objects = []
 
     for (const parent of parents) {
@@ -248,7 +253,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
     }
 
-    // The attach attribute implies that the object attaches itself on the parent
+    // Attach instance to parent
     if (newInstance.__r3f?.attach) {
       for (const parent of parents) {
         attach(parent, newInstance, newInstance.__r3f.attach)
