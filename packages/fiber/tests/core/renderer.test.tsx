@@ -459,12 +459,16 @@ describe('renderer', () => {
       // @ts-ignore args isn't a valid prop but changing it will swap
       <group args={[n]} onPointerOver={() => null}>
         <group />
+        <group attach="test" />
       </group>
     )
 
     await act(async () => {
       state = root.render(<Test n={1} />).getState()
     })
+
+    // Has initial attachment
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
 
     instances.push({
       uuid: state.scene.children[0].uuid,
@@ -475,6 +479,9 @@ describe('renderer', () => {
     await act(async () => {
       state = root.render(<Test n={2} />).getState()
     })
+
+    // Preserves initial attachment
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
 
     instances.push({
       uuid: state.scene.children[0].uuid,
