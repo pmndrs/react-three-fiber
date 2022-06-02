@@ -236,6 +236,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
     // Copy over child attachments
     for (const child of instance.__r3f.objects) {
+      removeChild(instance, child)
       appendChild(newInstance, child)
       if (child.__r3f.attach) attach(newInstance, child, child.__r3f.attach)
     }
