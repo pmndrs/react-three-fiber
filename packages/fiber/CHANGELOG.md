@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.21
+
+### Patch Changes
+
+- 3098b9b: fix: resizing in worker contexts, copy over attachments on reconstruct
+
 ## 8.0.20
 
 ### Patch Changes
