@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.22
+
+### Patch Changes
+
+- 419e854: fix: always prepare primitives
+
 ## 8.0.21
 
 ### Patch Changes
