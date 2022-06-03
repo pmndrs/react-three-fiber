@@ -85,7 +85,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { type, root, attach, primitive: true })
+      instance = prepare<Instance>(object, { ...object.__r3f, type, root, attach, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
