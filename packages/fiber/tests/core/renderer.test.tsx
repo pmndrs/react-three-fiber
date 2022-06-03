@@ -518,6 +518,38 @@ describe('renderer', () => {
     expect(state.internal.interaction.length).not.toBe(0)
   })
 
+  it('can swap primitives', async () => {
+    let state: RootState = null!
+
+    const o1 = new THREE.Group()
+    o1.add(new THREE.Group())
+    const o2 = new THREE.Group()
+
+    const Test = ({ n }: { n: number }) => (
+      <primitive object={n === 1 ? o1 : o2}>
+        <group attach="test" />
+      </primitive>
+    )
+
+    await act(async () => {
+      state = root.render(<Test n={1} />).getState()
+    })
+
+    // Initial object is added with children and attachments
+    expect(state.scene.children[0]).toBe(o1)
+    expect(state.scene.children[0].children.length).toBe(1)
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+
+    await act(async () => {
+      state = root.render(<Test n={2} />).getState()
+    })
+
+    // Swapped to object 2, does not copy old children, copies attachments
+    expect(state.scene.children[0]).toBe(o2)
+    expect(state.scene.children[0].children.length).toBe(0)
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     let camera: THREE.Camera = null!
 
