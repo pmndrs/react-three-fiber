@@ -115,7 +115,7 @@ function Update() {
 
   useUpdate((state) => {
     // With interpolation of the fixed stage
-    const alpha = fixedStage.get().alpha
+    const alpha = fixedStage.alpha
 
     // Can also get from inside the loop using state
     // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
@@ -151,7 +151,7 @@ function Update() {
 
   // Modify the fixed stage's step at runtime.
   useEffect(() => {
-    fixedStage.set({ fixedStep: 1 / 15 })
+    fixedStage.fixedStep = 1 / 15
   }, [fixedStage])
 
   return (

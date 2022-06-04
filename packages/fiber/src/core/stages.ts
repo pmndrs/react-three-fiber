@@ -69,18 +69,18 @@ const FPS_50 = 1 / 50
  * @extends Stage
  */
 export class FixedStage extends Stage {
-  private fixedStep: number
-  private maxSubsteps: number
-  private accumulator: number
-  private alpha: number
+  private _fixedStep: number
+  private _maxSubsteps: number
+  private _accumulator: number
+  private _alpha: number
 
   constructor(name: string, options?: { fixedStep?: number; maxSubSteps?: number }) {
     super(name)
 
-    this.fixedStep = options?.fixedStep ?? FPS_50
-    this.maxSubsteps = options?.maxSubSteps ?? 6
-    this.accumulator = 0
-    this.alpha = 0
+    this._fixedStep = options?.fixedStep ?? FPS_50
+    this._maxSubsteps = options?.maxSubSteps ?? 6
+    this._accumulator = 0
+    this._alpha = 0
   }
 
   /**
@@ -92,15 +92,15 @@ export class FixedStage extends Stage {
     const initialTime = performance.now()
     let substeps = 0
 
-    this.accumulator += delta
+    this._accumulator += delta
 
-    while (this.accumulator >= this.fixedStep && substeps < this.maxSubsteps) {
-      this.accumulator -= this.fixedStep
+    while (this._accumulator >= this._fixedStep && substeps < this._maxSubsteps) {
+      this._accumulator -= this._fixedStep
       substeps++
 
-      super.frame(this.fixedStep, frame)
+      super.frame(this._fixedStep, frame)
 
-      if (performance.now() - initialTime > this.fixedStep * 200) {
+      if (performance.now() - initialTime > this._fixedStep * 200) {
         // The framerate is not interactive anymore.
         break
       }
@@ -109,37 +109,32 @@ export class FixedStage extends Stage {
     // The accumulator will only be larger than the fixed step if we had to
     // bail early due to hitting the max substep limit or execution time lagging.
     // In that case, we want to shave off the excess so we don't fall behind next frame.
-    this.accumulator = this.accumulator % this.fixedStep
-    this.alpha = this.accumulator / this.fixedStep
+    this._accumulator = this._accumulator % this._fixedStep
+    this._alpha = this._accumulator / this._fixedStep
   }
 
-  /**
-   * Set the fixed stage properties.
-   * @param {FixedStageOptions} options - Options for the fixed stage.
-   * @param {number} [options.fixedStep] - Fixed step rate.
-   * @param {number} [options.maxSubsteps] - Maximum number of substeps.
-   */
-  set(options: FixedStageOptions) {
-    const { fixedStep, maxSubsteps } = options
-    if (fixedStep) this.fixedStep = fixedStep
-    if (maxSubsteps) this.maxSubsteps = maxSubsteps
+  get fixedStep() {
+    return this._fixedStep
   }
 
-  /**
-   * Get the fixed stage properties.
-   * @returns {FixedStageProps} props The fixed stage properties.
-   * @returns {number} props.fixedStep The fixed step rate.
-   * @returns {number} props.maxSubsteps The maximum number of substeps.
-   * @returns {number} props.accumulator The time left over in the accumulator.
-   * @returns {number} props.alpha The ratio of remaining time and step size. Useful for interpolation.
-   */
-  get(): FixedStageProps {
-    return {
-      fixedStep: this.fixedStep,
-      maxSubsteps: this.maxSubsteps,
-      accumulator: this.accumulator,
-      alpha: this.alpha,
-    }
+  set fixedStep(fixedStep: number) {
+    this._fixedStep = fixedStep
+  }
+
+  get maxSubsteps() {
+    return this._maxSubsteps
+  }
+
+  set maxSubsteps(maxSubsteps: number) {
+    this._maxSubsteps = maxSubsteps
+  }
+
+  get accumulator() {
+    return this._accumulator
+  }
+
+  get alpha() {
+    return this._alpha
   }
 }
 
