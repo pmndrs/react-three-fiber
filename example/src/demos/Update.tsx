@@ -34,40 +34,6 @@ const Stages = {
   After: Standard.After,
 }
 
-// Quick and dirty HUD implementation.
-function useHud() {
-  const size = useThree((state) => state.size)
-  const hud = useMemo(() => {
-    const hudCanvas = document.createElement('canvas')
-    hudCanvas.width = size.width
-    hudCanvas.height = size.height
-    const hudBitmap = hudCanvas.getContext('2d')!
-    hudBitmap.font = '600 40px Inter'
-    hudBitmap.textAlign = 'center'
-    hudBitmap.fillStyle = 'rgba(245,10,10,0.75)'
-    hudBitmap.fillText('Canvas drawn HUD', size.width / 2, size.height / 2)
-    return hudCanvas
-  }, [size.height, size.width])
-
-  const camera = useMemo(
-    () => new THREE.OrthographicCamera(-size.width / 2, size.width / 2, size.height / 2, -size.height / 2, 0, 30),
-    [size.height, size.width],
-  )
-  const [scene] = useState(() => new THREE.Scene())
-  const texture = useMemo(() => new THREE.CanvasTexture(hud), [hud])
-  const material = useMemo(() => new THREE.MeshBasicMaterial({ map: texture, transparent: true }), [texture])
-  const mesh = useMemo(
-    () => new THREE.Mesh(new THREE.PlaneBufferGeometry(size.width, size.height), material),
-    [material, size.height, size.width],
-  )
-
-  useLayoutEffect(() => {
-    scene.add(mesh)
-  }, [scene, mesh])
-
-  return { scene, camera }
-}
-
 function Update() {
   const groupRef = useRef<THREE.Group>(null!)
   const matRef = useRef<THREE.MeshBasicMaterial>(null!)
@@ -76,8 +42,6 @@ function Update() {
 
   const interpolate = true
   const [active, setActive] = useState(0)
-
-  const { scene: sceneHud, camera: cameraHud } = useHud()
 
   // create a common spring that will be used later to interpolate other values
   const { spring } = useSpring({
@@ -134,11 +98,6 @@ function Update() {
     gl.clear()
     gl.render(scene, camera)
   }, Stages.Render)
-
-  useUpdate(({ gl }) => {
-    gl.clearDepth()
-    gl.render(sceneHud, cameraHud)
-  }, Stages.Hud)
 
   // Modify the fixed stage's step at runtime.
   useEffect(() => {
