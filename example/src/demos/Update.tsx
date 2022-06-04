@@ -1,14 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useLayoutEffect } from 'react'
-import {
-  Canvas,
-  FixedStage,
-  Stage,
-  StandardStages as Standard,
-  useFrame,
-  useThree,
-  useUpdate,
-  Stages as StandardStages,
-} from '@react-three/fiber'
+import { Canvas, FixedStage, Stage, useFrame, useThree, useUpdate, Stages as Standard } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three'
@@ -19,7 +10,7 @@ const colorB = new THREE.Color('#e45858')
 const InputStage = new Stage('input')
 const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
 const HudStage = new Stage('hud')
-const stages = [
+const lifecycle = [
   Standard.Early,
   InputStage,
   Standard.Fixed,
@@ -31,15 +22,17 @@ const stages = [
   Standard.After,
 ]
 
-enum CustomStages {
-  Input = 'input',
-  Physics = 'physics',
-  Hud = 'hud',
+const Stages = {
+  Early: Standard.Early,
+  Input: InputStage,
+  Fixed: Standard.Fixed,
+  Physics: PhysicsStage,
+  Update: Standard.Update,
+  Late: Standard.Late,
+  Render: Standard.Render,
+  Hud: HudStage,
+  After: Standard.After,
 }
-
-// TS workaround for extending an enum
-type Stages = StandardStages | CustomStages
-const Stages = { ...StandardStages, ...CustomStages }
 
 // Quick and dirty HUD implementation.
 function useHud() {
@@ -83,8 +76,6 @@ function Update() {
 
   const interpolate = true
   const [active, setActive] = useState(0)
-  const getStage = useThree((state) => state.getStage)
-  const fixedStage = useMemo(() => getStage('fixed') as FixedStage, [getStage])
 
   const { scene: sceneHud, camera: cameraHud } = useHud()
 
@@ -115,7 +106,7 @@ function Update() {
 
   useUpdate((state) => {
     // With interpolation of the fixed stage
-    const alpha = fixedStage.alpha
+    const alpha = Stages.Fixed.alpha
 
     // Can also get from inside the loop using state
     // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
@@ -151,8 +142,8 @@ function Update() {
 
   // Modify the fixed stage's step at runtime.
   useEffect(() => {
-    fixedStage.fixedStep = 1 / 15
-  }, [fixedStage])
+    Stages.Fixed.fixedStep = 1 / 15
+  }, [])
 
   return (
     <group ref={groupRef}>
@@ -167,7 +158,7 @@ function Update() {
 
 export default function App() {
   return (
-    <Canvas stages={stages} render="manual">
+    <Canvas stages={lifecycle} render="manual">
       <Update />
     </Canvas>
   )

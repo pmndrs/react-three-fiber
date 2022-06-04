@@ -32,7 +32,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
-import { Stage, StandardLifecycle, StandardStages } from './stages'
+import { Stage, Lifecycle, Stages } from './stages'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -125,18 +125,14 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
   let subscribers: Subscription[]
   let subscription: Subscription
 
-  stages = stages ?? StandardLifecycle
+  stages = stages ?? Lifecycle
 
-  if (!stages.includes(StandardStages.Update)) throw 'The StandardStages.Update stage is required for R3F.'
-  if (!stages.includes(StandardStages.Render)) throw 'The StandardStages.Render stage is required for R3F.'
+  if (!stages.includes(Stages.Update)) throw 'The Stages.Update stage is required for R3F.'
+  if (!stages.includes(Stages.Render)) throw 'The Stages.Render stage is required for R3F.'
 
   state.set(({ internal }) => ({ internal: { ...internal, stages: stages! } }))
-  for (const stage of stages) {
-    state.internal.stagesMap[stage.name] = stage
-  }
 
   // Add useFrame loop to update stage
-  const updateStage = state.getStage('update')
   const frameCallback = {
     current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
       subscribers = state.internal.subscribers
@@ -146,16 +142,15 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
       }
     },
   }
-  updateStage!.add(frameCallback, store)
+  Stages.Update.add(frameCallback, store)
 
   // Add render callback to render stage
-  const renderStage = state.getStage('render')
   const renderCallback = {
     current: (state: RootState) => {
       if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
     },
   }
-  renderStage!.add(renderCallback, store)
+  Stages.Render.add(renderCallback, store)
 }
 
 export type ReconcilerRoot<TCanvas extends Element> = {

@@ -65,8 +65,7 @@ export type Performance = {
 export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
 export const isRenderer = (def: any) => !!def?.render
 
-type StageTypes = Stage | FixedStage
-export type StagesMap = { [key: string]: StageTypes }
+export type StageTypes = Stage | FixedStage
 
 export type InternalState = {
   interaction: THREE.Object3D[]
@@ -79,8 +78,9 @@ export type InternalState = {
   active: boolean
   priority: number
   frames: number
+  /** The ordered stages defining the lifecycle. */
   stages: StageTypes[]
-  stagesMap: StagesMap
+  /** The max delta time between two frames. */
   maxDelta: number
   subscribe: (
     callback: React.MutableRefObject<RenderCallback>,
@@ -150,8 +150,6 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   /** Shortcut to setting render flags */
   setRender: (render?: 'auto' | 'manual') => void
-  /** Convenience get function for stages */
-  getStage: (name: string) => StageTypes | undefined
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
@@ -281,15 +279,6 @@ const createStore = (
         set(() => ({ frameloop }))
       },
       setRender: (render: 'auto' | 'manual' = 'auto') => set(() => ({ render })),
-      getStage: (name: string) => {
-        const internal = get().internal
-        const stage = internal.stagesMap[name]
-        if (stage) {
-          return stage
-        } else {
-          console.warn(`No Stage named ${name} exists.`)
-        }
-      },
       previousRoot: undefined,
       internal: {
         // Events
@@ -304,17 +293,7 @@ const createStore = (
         // Updates
         active: false,
         frames: 0,
-        /**
-         * The ordered stages defining the lifecycle.
-         */
         stages: [],
-        /**
-         * The stages map, where the key is the stage name and the value is the stage.
-         */
-        stagesMap: {},
-        /**
-         * The max delta time between two frames.
-         */
         maxDelta: 1 / 10,
         priority: 0,
         subscribe: (

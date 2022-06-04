@@ -145,14 +145,5 @@ const Late = new Stage('late')
 const Render = new Stage('render')
 const After = new Stage('after')
 
-export const StandardStages = { Early, Fixed, Update, Late, Render, After }
-export const StandardLifecycle = [Early, Fixed, Update, Late, Render, After]
-
-export enum Stages {
-  Early = 'early',
-  Fixed = 'fixed',
-  Update = 'update',
-  Late = 'late',
-  Render = 'render',
-  After = 'after',
-}
+export const Stages = { Early, Fixed, Update, Late, Render, After }
+export const Lifecycle = [Early, Fixed, Update, Late, Render, After]
