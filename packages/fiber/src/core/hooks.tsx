@@ -59,13 +59,12 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
 export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update) {
   const store = useStore()
   const stages = store.getState().internal.stages
-  const match = stages.find((s) => s === stage)
   // Memoize ref
   const ref = useMutableCallback(callback)
-  // Throw an error if a stage does not exist
-  if (!match) throw `A '${stage}' stage does not exist.`
+  // Throw an error if a stage does not exist in the lifecycle
+  if (!stages.includes(stage)) throw `The stage does not exist in the lifecycle.`
   // Subscribe on mount, unsubscribe on unmount
-  useIsomorphicLayoutEffect(() => match.add(ref, store), [stage])
+  useIsomorphicLayoutEffect(() => stage.add(ref, store), [stage])
 }
 
 /**

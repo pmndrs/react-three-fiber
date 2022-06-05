@@ -16,14 +16,11 @@ export type FixedStageProps = { fixedStep: number; maxSubsteps: number; accumula
 /**
  * Class representing a stage that updates every frame.
  * Stages are used to build a lifecycle of effects for an app's frameloop.
- * @param {string} name - Name of the stage.
  */
 export class Stage {
-  name: string
   subscribers: UpdateSubscription[]
 
-  constructor(name: string) {
-    this.name = name
+  constructor() {
     this.subscribers = []
   }
 
@@ -74,8 +71,8 @@ export class FixedStage extends Stage {
   private _accumulator: number
   private _alpha: number
 
-  constructor(name: string, options?: { fixedStep?: number; maxSubSteps?: number }) {
-    super(name)
+  constructor(options?: { fixedStep?: number; maxSubSteps?: number }) {
+    super()
 
     this._fixedStep = options?.fixedStep ?? FPS_50
     this._maxSubsteps = options?.maxSubSteps ?? 6
@@ -138,12 +135,12 @@ export class FixedStage extends Stage {
   }
 }
 
-const Early = new Stage('early')
-const Fixed = new FixedStage('fixed')
-const Update = new Stage('update')
-const Late = new Stage('late')
-const Render = new Stage('render')
-const After = new Stage('after')
+const Early = new Stage()
+const Fixed = new FixedStage()
+const Update = new Stage()
+const Late = new Stage()
+const Render = new Stage()
+const After = new Stage()
 
 export const Stages = { Early, Fixed, Update, Late, Render, After }
 export const Lifecycle = [Early, Fixed, Update, Late, Render, After]

@@ -46,7 +46,7 @@ function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
     state.clock.oldTime = state.clock.elapsedTime
     state.clock.elapsedTime = timestamp
   } else {
-    delta = Math.min(delta, state.internal.maxDelta)
+    delta = Math.max(Math.min(delta, state.internal.maxDelta), 0)
   }
   // Call subscribers (useUpdate)
   for (const stage of state.internal.stages) {

@@ -7,9 +7,9 @@ import * as THREE from 'three'
 const colorA = new THREE.Color('#6246ea')
 const colorB = new THREE.Color('#e45858')
 
-const InputStage = new Stage('input')
-const PhysicsStage = new FixedStage('physics', { fixedStep: 1 / 30 })
-const HudStage = new Stage('hud')
+const InputStage = new Stage()
+const PhysicsStage = new FixedStage({ fixedStep: 1 / 30 })
+const HudStage = new Stage()
 const lifecycle = [
   Standard.Early,
   InputStage,
