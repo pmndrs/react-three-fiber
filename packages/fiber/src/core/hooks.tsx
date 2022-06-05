@@ -62,7 +62,7 @@ export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.U
   // Memoize ref
   const ref = useMutableCallback(callback)
   // Throw an error if a stage does not exist in the lifecycle
-  if (!stages.includes(stage)) throw `The stage does not exist in the lifecycle.`
+  if (!stages.includes(stage)) throw `An invoked stage does not exist in the lifecycle.`
   // Subscribe on mount, unsubscribe on unmount
   useIsomorphicLayoutEffect(() => stage.add(ref, store), [stage])
 }
