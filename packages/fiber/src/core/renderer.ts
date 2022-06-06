@@ -45,6 +45,8 @@ export type BaseInstance = Omit<THREE.Object3D, 'children' | 'attach' | 'add' | 
   remove: (...object: Instance[]) => Instance
   add: (...object: Instance[]) => Instance
   raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
+  onUpdate?: (self: Instance) => any
+  onMount?: (self: Instance) => any
 }
 export type Instance = BaseInstance & { [key: string]: any }
 
@@ -272,6 +274,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         }
       }
     })
+
+    newInstance.onMount?.(newInstance)
   }
 
   const reconciler = Reconciler({
@@ -301,7 +305,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       const localState = (instance?.__r3f ?? {}) as LocalState
       // https://github.com/facebook/react/issues/20271
       // Returning true will trigger commitMount
-      return !!localState.handlers || !!localState.attach
+      return !!localState.handlers || !!localState.attach || instance.onMount
     },
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
       // Create diff-sets
@@ -352,6 +356,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
           attach(parent, instance, localState.attach)
         }
       }
+
+      instance.onMount?.(instance)
     },
     getPublicInstance: (instance: Instance) => instance,
     shouldDeprioritizeSubtree: () => false,
