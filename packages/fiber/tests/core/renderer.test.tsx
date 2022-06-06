@@ -775,4 +775,22 @@ describe('renderer', () => {
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
   })
+
+  it('should safely call onMount', async () => {
+    let safe = false
+
+    await act(async () => {
+      root.render(
+        <group
+          attach={(_, self: any) => {
+            self.attached = true
+            return () => void (self.attached = false)
+          }}
+          onMount={(self: any) => void (safe = self.attached)}
+        />,
+      )
+    })
+
+    expect(safe).toBe(true)
+  })
 })
