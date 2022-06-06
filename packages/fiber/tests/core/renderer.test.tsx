@@ -779,18 +779,31 @@ describe('renderer', () => {
   it('should safely call onMount', async () => {
     let safe = false
 
-    await act(async () => {
-      root.render(
+    const Test = (props: any) => {
+      safe = false
+      return (
         <group
-          attach={(_, self: any) => {
-            self.attached = true
-            return () => void (self.attached = false)
-          }}
+          {...props}
+          attach={(_, self: any) => ((self.attached = true), () => (self.attached = false))}
           onMount={(self: any) => void (safe = self.attached)}
-        />,
+        />
       )
-    })
+    }
 
+    // Mount
+    await act(async () => root.render(<Test args={[0]} />))
     expect(safe).toBe(true)
+
+    // Reconstruct
+    await act(async () => root.render(<Test args={[1]} />))
+    expect(safe).toBe(true)
+
+    // Update
+    await act(async () => root.render(<Test args={[1]} foo />))
+    expect(safe).toBe(false)
+
+    // Unmount
+    await act(async () => root.render(null))
+    expect(safe).toBe(false)
   })
 })
