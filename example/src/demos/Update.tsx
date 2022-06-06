@@ -8,7 +8,7 @@ const colorA = new THREE.Color('#6246ea')
 const colorB = new THREE.Color('#e45858')
 
 const InputStage = new Stage()
-const PhysicsStage = new FixedStage({ fixedStep: 1 / 30 })
+const PhysicsStage = new FixedStage(1 / 30)
 const HudStage = new Stage()
 const lifecycle = [
   Standard.Early,

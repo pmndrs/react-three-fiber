@@ -60,9 +60,8 @@ const FPS_50 = 1 / 50
 /**
  * Class representing a stage that updates every frame at a fixed rate.
  * @param {string} name - Name of the stage.
- * @param {FixedStageOptions} [options] - Options for the fixed stage.
- * @param {number} [options.fixedStep] - Fixed step rate.
- * @param {number} [options.maxSubsteps] - Maximum number of substeps.
+ * @param {number} [fixedStep] - Fixed step rate.
+ * @param {number} [maxSubsteps] - Maximum number of substeps.
  * @extends Stage
  */
 export class FixedStage extends Stage {
@@ -71,11 +70,11 @@ export class FixedStage extends Stage {
   private _accumulator: number
   private _alpha: number
 
-  constructor(options?: { fixedStep?: number; maxSubSteps?: number }) {
+  constructor(fixedStep?: number, maxSubSteps?: number) {
     super()
 
-    this._fixedStep = options?.fixedStep ?? FPS_50
-    this._maxSubsteps = options?.maxSubSteps ?? 6
+    this._fixedStep = fixedStep ?? FPS_50
+    this._maxSubsteps = maxSubSteps ?? 6
     this._accumulator = 0
     this._alpha = 0
   }
