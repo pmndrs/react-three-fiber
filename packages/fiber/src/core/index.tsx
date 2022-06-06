@@ -16,6 +16,8 @@ import {
   PrivateKeys,
   privateKeys,
   Subscription,
+  FrameloopLegacy,
+  Frameloop,
 } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
@@ -72,7 +74,7 @@ export type RenderProps<TCanvas extends Element> = {
    * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
    * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
    */
-  frameloop?: 'always' | 'demand' | 'never'
+  frameloop?: Frameloop
   /**
    * R3F performance options for adaptive performance.
    * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
@@ -147,7 +149,7 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
   // Add render callback to render stage
   const renderCallback = {
     current: (state: RootState) => {
-      if (state.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
+      if (state.internal.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
     },
   }
   Stages.Render.add(renderCallback, store)
@@ -208,7 +210,6 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         camera: cameraOptions,
         onPointerMissed,
         stages,
-        render,
       } = props
 
       let state = store.getState()
@@ -321,8 +322,6 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
-      // Check render
-      if (state.render !== render) state.setRender(render)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check performance

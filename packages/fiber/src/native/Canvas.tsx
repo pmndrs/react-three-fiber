@@ -36,7 +36,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
       onPointerMissed,
       onCreated,
       stages,
-      render,
       ...props
     },
     forwardedRef,
@@ -101,7 +100,6 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         raycaster,
         camera,
         stages,
-        render,
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
