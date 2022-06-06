@@ -86,8 +86,7 @@ function Update() {
 
   // For backwards compatability, useFrame gets executed in the update stage
   // A positive priority switches rendering to manual
-  useFrame((state) => {
-    console.log(state)
+  useFrame(() => {
     if (groupRef.current) {
       groupRef.current.rotation.x = groupRef.current.rotation.y += 0.005
     }
