@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.14
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+- Updated dependencies [29d03c64]
+  - @react-three/fiber@8.0.23
+
 ## 8.0.13
 
 ### Patch Changes

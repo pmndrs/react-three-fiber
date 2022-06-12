@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.23
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+
 ## 8.0.22
 
 ### Patch Changes
