@@ -24,7 +24,7 @@ export type LocalState = {
   root: UseBoundStore<RootState>
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
-  parents: Instance[]
+  parent: Instance | null
   primitive?: boolean
   eventCount: number
   handlers: Partial<EventHandlers>
@@ -85,7 +85,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (type === 'primitive') {
       if (props.object === undefined) throw `Primitives without 'object' are invalid!`
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { ...object.__r3f, type, root, attach, primitive: true })
+      instance = prepare<Instance>(object, { type, root, attach, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
@@ -128,7 +128,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       // that is, anything that's a child in React but not a child in the scenegraph.
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
-      child.__r3f.parents.push(parentInstance)
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -148,7 +148,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
-      child.__r3f.parents.push(parentInstance)
+      child.__r3f.parent = parentInstance
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -161,7 +161,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
     if (child) {
       // Clear the parent reference
-      if (child.__r3f) child.__r3f.parents = child.__r3f.parents.filter((parent) => parent !== parentInstance)
+      if (child.__r3f) child.__r3f.parent = null
       // Remove child from the parents objects
       if (parentInstance.__r3f?.objects)
         parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
@@ -220,8 +220,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   }
 
   function switchInstance(instance: Instance, type: string, newProps: InstanceProps, fiber: Reconciler.Fiber) {
-    const parents = instance.__r3f?.parents
-    if (!parents?.length) return
+    const parent = instance.__r3f?.parent
+    if (!parent) return
 
     const newInstance = createInstance(type, newProps, instance.__r3f.root)
 
@@ -242,10 +242,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     }
     instance.__r3f.objects = []
 
-    for (const parent of parents) {
-      removeChild(parent, instance)
-      appendChild(parent, newInstance)
-    }
+    removeChild(parent, instance)
+    appendChild(parent, newInstance)
 
     // Re-bind event handlers
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
@@ -255,9 +253,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
     // Attach instance to parent
     if (newInstance.__r3f?.attach) {
-      for (const parent of parents) {
-        attach(parent, newInstance, newInstance.__r3f.attach)
-      }
+      attach(parent, newInstance, newInstance.__r3f.attach)
     }
 
     // This evil hack switches the react-internal fiber node
@@ -347,10 +343,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       }
 
       // The attach attribute implies that the object attaches itself on the parent
-      if (localState.attach) {
-        for (const parent of localState.parents) {
-          attach(parent, instance, localState.attach)
-        }
+      if (localState.parent && localState.attach) {
+        attach(localState.parent, instance, localState.attach)
       }
     },
     getPublicInstance: (instance: Instance) => instance,
