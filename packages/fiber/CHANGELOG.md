@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.24
+
+### Patch Changes
+
+- ee8e785: fix: attach timings
+
 ## 8.0.23
 
 ### Patch Changes
