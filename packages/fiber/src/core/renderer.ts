@@ -117,9 +117,10 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function appendChild(parentInstance: Instance, child: Instance) {
     let added = false
     if (child) {
-      // The attach attribute implies that the object attaches itself on the parent.
-      // That is handled at commit to avoid duplication during Suspense
-      if (!child.__r3f?.attach && child.isObject3D && parentInstance.isObject3D) {
+      // The attach attribute implies that the object attaches itself on the parent
+      if (child.__r3f?.attach) {
+        attach(parentInstance, child, child.__r3f.attach)
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         // add in the usual parent-child way
         parentInstance.add(child)
         added = true
@@ -137,7 +138,9 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
   function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
     let added = false
     if (child) {
-      if (!child.__r3f?.attach && child.isObject3D && parentInstance.isObject3D) {
+      if (child.__r3f?.attach) {
+        attach(parentInstance, child, child.__r3f.attach)
+      } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
@@ -234,12 +237,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       instance.children = []
     }
 
-    // Copy over child attachments
-    for (const child of instance.__r3f.objects) {
-      appendChild(newInstance, child)
-      detach(instance, child, child.__r3f.attach!)
-      attach(newInstance, child, child.__r3f.attach!)
-    }
+    instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
     removeChild(parent, instance)
@@ -249,11 +247,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
       const rootState = newInstance.__r3f.root.getState()
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
-    }
-
-    // Attach instance to parent
-    if (newInstance.__r3f?.attach) {
-      attach(parent, newInstance, newInstance.__r3f.attach)
     }
 
     // This evil hack switches the react-internal fiber node
@@ -297,7 +290,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       const localState = (instance?.__r3f ?? {}) as LocalState
       // https://github.com/facebook/react/issues/20271
       // Returning true will trigger commitMount
-      return !!localState.handlers || !!localState.attach
+      return !!localState.handlers
     },
     prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
       // Create diff-sets
@@ -341,11 +334,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       if (instance.raycast && localState.handlers && localState.eventCount) {
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
       }
-
-      // The attach attribute implies that the object attaches itself on the parent
-      if (localState.parent && localState.attach) {
-        attach(localState.parent, instance, localState.attach)
-      }
     },
     getPublicInstance: (instance: Instance) => instance,
     shouldDeprioritizeSubtree: () => false,
@@ -356,10 +344,16 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     clearContainer: () => false,
     detachDeletedInstance: () => {},
     hideInstance(instance: Instance) {
+      // Deatch while the instance is hidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
       invalidateInstance(instance)
     },
     unhideInstance(instance: Instance, props: InstanceProps) {
+      // Re-attach when the instance is unhidden
+      const { attach: type, parent } = instance?.__r3f ?? {}
+      if (type && parent) attach(parent, instance, type)
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
     },
