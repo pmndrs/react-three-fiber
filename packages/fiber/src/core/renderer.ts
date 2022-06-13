@@ -237,12 +237,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
       instance.children = []
     }
 
-    // Copy over child attachments
-    for (const child of instance.__r3f.objects) {
-      appendChild(newInstance, child)
-      detach(instance, child, child.__r3f.attach!)
-      attach(newInstance, child, child.__r3f.attach!)
-    }
+    instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
     removeChild(parent, instance)
@@ -252,11 +247,6 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
       const rootState = newInstance.__r3f.root.getState()
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
-    }
-
-    // Attach instance to parent
-    if (newInstance.__r3f?.attach) {
-      attach(parent, newInstance, newInstance.__r3f.attach)
     }
 
     // This evil hack switches the react-internal fiber node
