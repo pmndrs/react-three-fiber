@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.15
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+- Updated dependencies [b7cd0f42]
+  - @react-three/fiber@8.0.25
+
 ## 8.0.14
 
 ### Patch Changes

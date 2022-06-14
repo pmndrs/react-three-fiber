@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "8.0.24",
+  "version": "8.0.25",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",

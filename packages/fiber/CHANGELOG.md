@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.25
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+
 ## 8.0.24
 
 ### Patch Changes
