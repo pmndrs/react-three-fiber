@@ -312,29 +312,27 @@ const createStore = (
 
   const state = rootState.getState()
 
-  // Resize camera and renderer on changes to size and pixelratio
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
-  rootState.subscribe(() => {
-    const { camera, size, viewport, gl } = rootState.getState()
-    if (size !== oldSize || viewport.dpr !== oldDpr) {
-      updateCamera(camera, size)
-      // Update renderer
-      gl.setPixelRatio(viewport.dpr)
-      gl.setSize(size.width, size.height, size.updateStyle)
-
-      oldSize = size
-      oldDpr = viewport.dpr
-    }
-  })
-
-  // Update viewport once the camera changes
   let oldCamera = state.camera
   rootState.subscribe(() => {
-    const { camera, set } = rootState.getState()
+    const { camera, size, viewport, gl, set } = rootState.getState()
+
+    // Resize camera and renderer on changes to size and pixelratio
+    if (size !== oldSize || viewport.dpr !== oldDpr) {
+      oldSize = size
+      oldDpr = viewport.dpr
+      // Update camera & renderer
+      updateCamera(camera, size)
+      gl.setPixelRatio(viewport.dpr)
+      gl.setSize(size.width, size.height, size.updateStyle)
+    }
+
+    // Update viewport once the camera changes
     if (camera !== oldCamera) {
-      set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
       oldCamera = camera
+      // Update viewport
+      set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
     }
   })
 
