@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 8.0.16
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+- Updated dependencies [7b6df9df]
+  - @react-three/fiber@8.0.26
+
 ## 8.0.15
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.26
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+
 ## 8.0.25
 
 ### Patch Changes
