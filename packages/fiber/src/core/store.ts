@@ -328,6 +328,16 @@ const createStore = (
     }
   })
 
+  // Update viewport once the camera changes
+  let oldCamera = state.camera
+  rootState.subscribe(() => {
+    const { camera, set } = rootState.getState()
+    if (camera !== oldCamera) {
+      set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
+      oldCamera = camera
+    }
+  })
+
   // Invalidate on any change
   rootState.subscribe((state) => invalidate(state))
 
