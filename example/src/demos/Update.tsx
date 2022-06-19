@@ -72,9 +72,6 @@ function Update() {
     // With interpolation of the fixed stage
     const alpha = Stages.Fixed.alpha
 
-    // Can also get from inside the loop using state
-    // const alpha = (state.getStage('fixed') as FixedStage).get().alpha
-
     if (interpolate) {
       groupRef.current.scale.lerpVectors(prev.scale, fixed.scale, alpha)
       matRef.current.color.lerpColors(prev.color, fixed.color, alpha)
