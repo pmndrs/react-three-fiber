@@ -18,10 +18,12 @@ export type FixedStageProps = { fixedStep: number; maxSubsteps: number; accumula
  * Stages are used to build a lifecycle of effects for an app's frameloop.
  */
 export class Stage {
-  subscribers: UpdateSubscription[]
+  private subscribers: UpdateSubscription[]
+  private _delta: number
 
   constructor() {
     this.subscribers = []
+    this._delta = 0
   }
 
   /**
@@ -31,10 +33,13 @@ export class Stage {
    */
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const subs = this.subscribers
+    const initialTime = performance.now()
 
     for (let i = 0; i < subs.length; i++) {
       subs[i].ref.current(subs[i].store.getState(), delta, frame)
     }
+
+    this._delta = performance.now() - initialTime
   }
 
   /**
@@ -51,6 +56,10 @@ export class Stage {
         return sub.ref !== ref
       })
     }
+  }
+
+  get delta() {
+    return this._delta
   }
 }
 
@@ -69,6 +78,8 @@ export class FixedStage extends Stage {
   private _maxSubsteps: number
   private _accumulator: number
   private _alpha: number
+  private _fixedDelta: number
+  private _substepDelta: number[]
 
   constructor(fixedStep?: number, maxSubSteps?: number) {
     super()
@@ -77,6 +88,8 @@ export class FixedStage extends Stage {
     this._maxSubsteps = maxSubSteps ?? 6
     this._accumulator = 0
     this._alpha = 0
+    this._fixedDelta = 0
+    this._substepDelta = []
   }
 
   /**
@@ -87,6 +100,7 @@ export class FixedStage extends Stage {
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const initialTime = performance.now()
     let substeps = 0
+    this._substepDelta = []
 
     this._accumulator += delta
 
@@ -95,6 +109,7 @@ export class FixedStage extends Stage {
       substeps++
 
       super.frame(this._fixedStep, frame)
+      this._substepDelta.push(super.delta)
 
       if (performance.now() - initialTime > this._fixedStep * 200) {
         // The framerate is not interactive anymore.
@@ -102,11 +117,21 @@ export class FixedStage extends Stage {
       }
     }
 
+    this._fixedDelta = performance.now() - initialTime
+
     // The accumulator will only be larger than the fixed step if we had to
     // bail early due to hitting the max substep limit or execution time lagging.
     // In that case, we want to shave off the excess so we don't fall behind next frame.
     this._accumulator = this._accumulator % this._fixedStep
     this._alpha = this._accumulator / this._fixedStep
+  }
+
+  get delta() {
+    return this._fixedDelta
+  }
+
+  get substepDelta() {
+    return this._substepDelta
   }
 
   get fixedStep() {
