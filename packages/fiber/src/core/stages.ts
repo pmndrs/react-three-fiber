@@ -110,11 +110,6 @@ export class FixedStage extends Stage {
 
       super.frame(this._fixedStep, frame)
       this._substepDelta.push(super.delta)
-
-      if (performance.now() - initialTime > this._fixedStep * 200) {
-        // The framerate is not interactive anymore.
-        break
-      }
     }
 
     this._fixedDelta = performance.now() - initialTime
