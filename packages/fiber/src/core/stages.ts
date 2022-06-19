@@ -19,11 +19,11 @@ export type FixedStageProps = { fixedStep: number; maxSubsteps: number; accumula
  */
 export class Stage {
   private subscribers: UpdateSubscription[]
-  private _delta: number
+  private _frameTime: number
 
   constructor() {
     this.subscribers = []
-    this._delta = 0
+    this._frameTime = 0
   }
 
   /**
@@ -39,7 +39,7 @@ export class Stage {
       subs[i].ref.current(subs[i].store.getState(), delta, frame)
     }
 
-    this._delta = performance.now() - initialTime
+    this._frameTime = performance.now() - initialTime
   }
 
   /**
@@ -58,8 +58,8 @@ export class Stage {
     }
   }
 
-  get delta() {
-    return this._delta
+  get frameTime() {
+    return this._frameTime
   }
 }
 
@@ -78,8 +78,8 @@ export class FixedStage extends Stage {
   private _maxSubsteps: number
   private _accumulator: number
   private _alpha: number
-  private _fixedDelta: number
-  private _substepDelta: number[]
+  private _fixedFrameTime: number
+  private _substepFrameTime: number[]
 
   constructor(fixedStep?: number, maxSubSteps?: number) {
     super()
@@ -88,8 +88,8 @@ export class FixedStage extends Stage {
     this._maxSubsteps = maxSubSteps ?? 6
     this._accumulator = 0
     this._alpha = 0
-    this._fixedDelta = 0
-    this._substepDelta = []
+    this._fixedFrameTime = 0
+    this._substepFrameTime = []
   }
 
   /**
@@ -100,7 +100,7 @@ export class FixedStage extends Stage {
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const initialTime = performance.now()
     let substeps = 0
-    this._substepDelta = []
+    this._substepFrameTime = []
 
     this._accumulator += delta
 
@@ -109,10 +109,10 @@ export class FixedStage extends Stage {
       substeps++
 
       super.frame(this._fixedStep, frame)
-      this._substepDelta.push(super.delta)
+      this._substepFrameTime.push(super.frameTime)
     }
 
-    this._fixedDelta = performance.now() - initialTime
+    this._fixedFrameTime = performance.now() - initialTime
 
     // The accumulator will only be larger than the fixed step if we had to
     // bail early due to hitting the max substep limit or execution time lagging.
@@ -121,12 +121,12 @@ export class FixedStage extends Stage {
     this._alpha = this._accumulator / this._fixedStep
   }
 
-  get delta() {
-    return this._fixedDelta
+  get frameTime() {
+    return this._fixedFrameTime
   }
 
-  get substepDelta() {
-    return this._substepDelta
+  get substepFrameTime() {
+    return this._substepFrameTime
   }
 
   get fixedStep() {
