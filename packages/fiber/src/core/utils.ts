@@ -236,7 +236,7 @@ export function diffProps(
 // This function applies a set of changes to the instance
 export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
-  const localState = (instance?.__r3f ?? {}) as LocalState
+  const localState = (instance.__r3f ?? {}) as LocalState
   const root = localState.root
   const rootState = root?.getState?.() ?? {}
   const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)

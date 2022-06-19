@@ -33,7 +33,7 @@ export type Subscription = {
 }
 
 export type Dpr = number | [min: number, max: number]
-export type Size = { width: number; height: number }
+export type Size = { width: number; height: number; updateStyle?: boolean }
 export type Viewport = Size & {
   /** The initial pixel ratio */
   initialDpr: number
@@ -149,7 +149,7 @@ export type RootState = {
   /** Shortcut to setting the event layer */
   setEvents: (events: Partial<EventManager<any>>) => void
   /** Shortcut to manual sizing */
-  setSize: (width: number, height: number) => void
+  setSize: (width: number, height: number, updateStyle?: boolean) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
@@ -244,7 +244,7 @@ const createStore = (
         },
       },
 
-      size: { width: 0, height: 0 },
+      size: { width: 0, height: 0, updateStyle: false },
       viewport: {
         initialDpr: 0,
         dpr: 0,
@@ -258,9 +258,9 @@ const createStore = (
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      setSize: (width: number, height: number) => {
+      setSize: (width: number, height: number, updateStyle?: boolean) => {
         const camera = get().camera
-        const size = { width, height }
+        const size = { width, height, updateStyle }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) =>
@@ -349,19 +349,27 @@ const createStore = (
 
   const state = rootState.getState()
 
-  // Resize camera and renderer on changes to size and pixelratio
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
+  let oldCamera = state.camera
   rootState.subscribe(() => {
-    const { camera, size, viewport, gl } = rootState.getState()
-    if (size !== oldSize || viewport.dpr !== oldDpr) {
-      updateCamera(camera, size)
-      // Update renderer
-      gl.setPixelRatio(viewport.dpr)
-      gl.setSize(size.width, size.height)
+    const { camera, size, viewport, gl, set } = rootState.getState()
 
+    // Resize camera and renderer on changes to size and pixelratio
+    if (size !== oldSize || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
+      // Update camera & renderer
+      updateCamera(camera, size)
+      gl.setPixelRatio(viewport.dpr)
+      gl.setSize(size.width, size.height, size.updateStyle)
+    }
+
+    // Update viewport once the camera changes
+    if (camera !== oldCamera) {
+      oldCamera = camera
+      // Update viewport
+      set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
     }
   })
 

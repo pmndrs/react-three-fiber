@@ -319,7 +319,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
       size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
-      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
+      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height, size.updateStyle)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed

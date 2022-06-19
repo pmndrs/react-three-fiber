@@ -1,5 +1,47 @@
 # @react-three/fiber
 
+## 8.0.26
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+
+## 8.0.25
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+
+## 8.0.24
+
+### Patch Changes
+
+- ee8e785: fix: attach timings
+
+## 8.0.23
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+
+## 8.0.22
+
+### Patch Changes
+
+- 419e854: fix: always prepare primitives
+
+## 8.0.21
+
+### Patch Changes
+
+- 3098b9b: fix: resizing in worker contexts, copy over attachments on reconstruct
+
+## 8.0.20
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+
 ## 8.0.19
 
 ### Patch Changes
