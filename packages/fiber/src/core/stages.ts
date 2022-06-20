@@ -79,7 +79,7 @@ export class FixedStage extends Stage {
   private _accumulator: number
   private _alpha: number
   private _fixedFrameTime: number
-  private _substepFrameTime: number[]
+  private _substepTimes: number[]
 
   constructor(fixedStep?: number, maxSubSteps?: number) {
     super()
@@ -89,7 +89,7 @@ export class FixedStage extends Stage {
     this._accumulator = 0
     this._alpha = 0
     this._fixedFrameTime = 0
-    this._substepFrameTime = []
+    this._substepTimes = []
   }
 
   /**
@@ -100,7 +100,7 @@ export class FixedStage extends Stage {
   frame(delta: number, frame?: THREE.XRFrame | undefined) {
     const initialTime = performance.now()
     let substeps = 0
-    this._substepFrameTime = []
+    this._substepTimes = []
 
     this._accumulator += delta
 
@@ -109,7 +109,7 @@ export class FixedStage extends Stage {
       substeps++
 
       super.frame(this._fixedStep, frame)
-      this._substepFrameTime.push(super.frameTime)
+      this._substepTimes.push(super.frameTime)
     }
 
     this._fixedFrameTime = performance.now() - initialTime
@@ -125,8 +125,8 @@ export class FixedStage extends Stage {
     return this._fixedFrameTime
   }
 
-  get substepFrameTime() {
-    return this._substepFrameTime
+  get substepTimes() {
+    return this._substepTimes
   }
 
   get fixedStep() {
