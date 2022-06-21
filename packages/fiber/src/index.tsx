@@ -15,6 +15,7 @@ export type {
 export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
 export * from './web/Canvas'
+export { createEvents } from './core/events'
 export { createPointerEvents as events } from './web/events'
 export * from './core'
 export { Stage, FixedStage, Stages } from './core/stages'

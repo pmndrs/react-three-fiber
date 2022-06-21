@@ -256,12 +256,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
         // Toggle render switching on session
         const handleSessionChange = () => {
-          const gl = store.getState().gl
-          gl.xr.enabled = gl.xr.isPresenting
-          // @ts-ignore
-          // WebXRManager's signature is incorrect.
-          // See: https://github.com/pmndrs/react-three-fiber/pull/2017#discussion_r790134505
-          gl.xr.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+          const state = store.getState()
+          state.gl.xr.enabled = state.gl.xr.isPresenting
+
+          state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
+          if (!state.gl.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager

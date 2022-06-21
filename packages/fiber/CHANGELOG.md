@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.0.27
+
+### Patch Changes
+
+- 7940995: fix: resume on xrsession end, export internal events
+
 ## 8.0.26
 
 ### Patch Changes
