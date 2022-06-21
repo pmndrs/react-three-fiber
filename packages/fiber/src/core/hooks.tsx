@@ -3,8 +3,9 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
-import { context, RootState, RenderCallback } from './store'
+import { context, RootState, RenderCallback, StageTypes } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { Stage, Stages, UpdateCallback } from './stages'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -50,6 +51,21 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   // Subscribe on mount, unsubscribe on unmount
   useIsomorphicLayoutEffect(() => subscribe(ref, renderPriority, store), [renderPriority, subscribe, store])
   return null
+}
+
+/**
+ * Executes a callback in a given update stage.
+ * Uses the stage instance to indetify which stage to target in the lifecycle.
+ */
+export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update) {
+  const store = useStore()
+  const stages = store.getState().internal.stages
+  // Memoize ref
+  const ref = useMutableCallback(callback)
+  // Throw an error if a stage does not exist in the lifecycle
+  if (!stages.includes(stage)) throw new Error(`An invoked stage does not exist in the lifecycle.`)
+  // Subscribe on mount, unsubscribe on unmount
+  useIsomorphicLayoutEffect(() => stage.add(ref, store), [stage])
 }
 
 /**

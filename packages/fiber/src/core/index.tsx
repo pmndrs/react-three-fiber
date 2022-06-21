@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create, { UseBoundStore } from 'zustand'
+import create, { StoreApi, UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
 import {
@@ -15,6 +15,9 @@ import {
   Performance,
   PrivateKeys,
   privateKeys,
+  Subscription,
+  FrameloopLegacy,
+  Frameloop,
 } from './store'
 import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
@@ -31,6 +34,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
+import { Stage, Lifecycle, Stages } from './stages'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -70,7 +74,7 @@ export type RenderProps<TCanvas extends Element> = {
    * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
    * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
    */
-  frameloop?: 'always' | 'demand' | 'never'
+  frameloop?: Frameloop
   /**
    * R3F performance options for adaptive performance.
    * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
@@ -98,6 +102,9 @@ export type RenderProps<TCanvas extends Element> = {
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
+  /** Create a custom lifecycle of stages */
+  stages?: Stage[]
+  render?: 'auto' | 'manual'
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
@@ -113,6 +120,39 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
       alpha: true,
       ...gl,
     })
+}
+
+const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootState, StoreApi<RootState>>) => {
+  const state = store.getState()
+  let subscribers: Subscription[]
+  let subscription: Subscription
+
+  stages = stages ?? Lifecycle
+
+  if (!stages.includes(Stages.Update)) throw 'The Stages.Update stage is required for R3F.'
+  if (!stages.includes(Stages.Render)) throw 'The Stages.Render stage is required for R3F.'
+
+  state.set(({ internal }) => ({ internal: { ...internal, stages: stages! } }))
+
+  // Add useFrame loop to update stage
+  const frameCallback = {
+    current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
+      subscribers = state.internal.subscribers
+      for (let i = 0; i < subscribers.length; i++) {
+        subscription = subscribers[i]
+        subscription.ref.current(subscription.store.getState(), delta, frame)
+      }
+    },
+  }
+  Stages.Update.add(frameCallback, store)
+
+  // Add render callback to render stage
+  const renderCallback = {
+    current: (state: RootState) => {
+      if (state.internal.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
+    },
+  }
+  Stages.Render.add(renderCallback, store)
 }
 
 export type ReconcilerRoot<TCanvas extends Element> = {
@@ -169,6 +209,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
+        stages,
       } = props
 
       let state = store.getState()
@@ -285,6 +326,9 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+
+      // Create update stages.
+      if (stages !== state.internal.stages) createStages(stages, store)
 
       // Set locals
       onCreated = onCreatedCallback
