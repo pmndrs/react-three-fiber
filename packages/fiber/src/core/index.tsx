@@ -287,7 +287,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
             }
           : { width: 0, height: 0, top: 0, left: 0 })
       if (!is.equ(size, state.size, shallowLoose)) {
-        state.setSize(size.width, size.height, size.top, size.left, size.updateStyle)
+        state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
       }
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)

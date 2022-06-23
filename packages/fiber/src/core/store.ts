@@ -134,8 +134,12 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */
   setEvents: (events: Partial<EventManager<any>>) => void
-  /** Shortcut to manual sizing */
-  setSize: (width: number, height: number, top?: number, left?: number, updateStyle?: boolean) => void
+  /**
+   * Shortcut to manual sizing
+   *
+   * @todo before releasing next major version (v9), re-order arguments here to width, height, top, left, updateStyle
+   */
+  setSize: (width: number, height: number, updateStyle?: boolean, top?: number, left?: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
@@ -246,7 +250,7 @@ const createStore = (
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      setSize: (width: number, height: number, top?: number, left?: number, updateStyle?: boolean) => {
+      setSize: (width: number, height: number, updateStyle?: boolean, top?: number, left?: number) => {
         const camera = get().camera
         const size = { width, height, top: top || 0, left: left || 0, updateStyle }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
