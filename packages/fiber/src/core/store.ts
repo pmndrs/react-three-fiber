@@ -4,7 +4,6 @@ import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
-import { RectReadOnly } from 'react-use-measure'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
