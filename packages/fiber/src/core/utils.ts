@@ -219,7 +219,8 @@ export function diffProps(
     // When props match bail out
     if (is.equ(value, previous[key])) return
     // Collect handlers and bail out
-    if (/^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(key)) return changes.push([key, value, true, []])
+    if (/^on(Pointer|DragOver|Drop|Click|DoubleClick|ContextMenu|Wheel)/.test(key))
+      return changes.push([key, value, true, []])
     // Split dashed props
     let entries: string[] = []
     if (key.includes('-')) entries = key.split('-')

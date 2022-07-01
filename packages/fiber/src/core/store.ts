@@ -141,6 +141,10 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
+  /** When the canvas was dragover but nothing was hit */
+  onDragOverMissed?: (event: DragEvent) => void
+  /** When the canvas was dropped but nothing was hit */
+  onDropMissed?: (event: DragEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
   previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   /** Internals */
@@ -209,6 +213,8 @@ const createStore = (
 
       frameloop: 'always',
       onPointerMissed: undefined,
+      onDragOverMissed: undefined,
+      onDropMissed: undefined,
 
       performance: {
         current: 1,

@@ -40,6 +40,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     raycaster,
     camera,
     onPointerMissed,
+    onDragOverMissed,
+    onDropMissed,
     onCreated,
     ...props
   },
@@ -57,6 +59,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   React.useImperativeHandle(forwardedRef, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
+  const handleDragOverMissed = useMutableCallback(onDragOverMissed)
+  const handleDropMissed = useMutableCallback(onDropMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -85,6 +89,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       size: { width, height },
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+      onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
+      onDropMissed: (...args) => handleDropMissed.current?.(...args),
       onCreated: (state) => {
         state.events.connect?.(divRef.current)
         onCreated?.(state)

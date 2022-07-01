@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { render, fireEvent, RenderResult } from '@testing-library/react'
+import { render, fireEvent, createEvent, RenderResult } from '@testing-library/react'
 
 import { Canvas, act } from '../../src'
 
@@ -208,6 +208,149 @@ describe('events', () => {
     fireEvent(getContainer(), evt2)
 
     expect(handlePointerOut).toHaveBeenCalled()
+  })
+
+  it('can handle dragover events via onDragOverEnter & onDragOverLeave', async () => {
+    const handleDragOverEnter = jest.fn()
+    const handleDragOverLeave = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onDragOverEnter={handleDragOverEnter} onDragOverLeave={handleDragOverLeave}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Note: DragEvent is not implemented in jsdom yet: https://github.com/jsdom/jsdom/issues/2913
+    // however, @react-testing/library does simulate it
+    let evt = createEvent.dragOver(getContainer())
+    //@ts-ignore
+    evt.offsetX = 577
+    //@ts-ignore
+    evt.offsetY = 480
+
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragOverEnter).toHaveBeenCalled()
+
+    // pretend we moved out over from the target
+    //@ts-ignore
+    evt.offsetX = 1
+    //@ts-ignore
+    evt.offsetY = 1
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragOverLeave).toHaveBeenCalled()
+  })
+
+  it('can handle onDragOverMissed', async () => {
+    const handleDragOverMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onDragOverMissed={handleDragOverMissed}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Note: DragEvent is not implemented in jsdom yet: https://github.com/jsdom/jsdom/issues/2913
+    // https://developer.mozilla.org/en-US/docs/Web/API/DragEvent
+    // however, @react-testing/library does simulate it
+    let evt = createEvent.dragOver(getContainer())
+    //@ts-ignore
+    evt.offsetX = 1
+    //@ts-ignore
+    evt.offsetY = 1
+
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragOverMissed).toHaveBeenCalled()
+  })
+
+  it('can handle onDragEnter & onDragLeave', async () => {
+    const handleDragEnter = jest.fn()
+    const handleDragLeave = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Note: DragEvent is not implemented in jsdom yet: https://github.com/jsdom/jsdom/issues/2913
+    // https://developer.mozilla.org/en-US/docs/Web/API/DragEvent
+    // however, @react-testing/library does simulate it
+    let evt = createEvent.dragEnter(getContainer())
+    //@ts-ignore
+    evt.offsetX = 10
+    //@ts-ignore
+    evt.offsetY = 10
+
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragEnter).toHaveBeenCalled()
+
+    evt = createEvent.dragLeave(getContainer())
+    //@ts-ignore
+    evt.offsetX = 0
+    //@ts-ignore
+    evt.offsetY = 0
+
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragLeave).toHaveBeenCalled()
+  })
+
+  it('can handle onDrop & onDropMissed', async () => {
+    const handleOnDrop = jest.fn()
+    const handleOnDropMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onDropMissed={handleOnDropMissed}>
+          <mesh onDrop={handleOnDrop}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Note: DragEvent is not implemented in jsdom yet: https://github.com/jsdom/jsdom/issues/2913
+    // however, @react-testing/library does simulate it
+    let evt = createEvent.drop(getContainer())
+    //@ts-ignore
+    evt.offsetX = 577
+    //@ts-ignore
+    evt.offsetY = 480
+
+    fireEvent(getContainer(), evt)
+
+    expect(handleOnDrop).toHaveBeenCalled()
+
+    // pretend we moved out over from the target
+    //@ts-ignore
+    evt.offsetX = 1
+    //@ts-ignore
+    evt.offsetY = 1
+    fireEvent(getContainer(), evt)
+
+    // second event shouldn't register
+    expect(handleOnDrop).toHaveBeenCalledTimes(1)
+    expect(handleOnDropMissed).toHaveBeenCalled()
   })
 
   it('should handle stopPropagation', async () => {

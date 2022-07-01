@@ -4,6 +4,7 @@ const Animation = { Component: lazy(() => import('./Animation')) }
 const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
 const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
+const FileDragDrop = { Component: lazy(() => import('./FileDragDrop')) }
 const Gestures = { Component: lazy(() => import('./Gestures')) }
 const Gltf = { Component: lazy(() => import('./Gltf')) }
 const Inject = { Component: lazy(() => import('./Inject')) }
@@ -30,6 +31,7 @@ export {
   AutoDispose,
   ClickAndHover,
   ContextMenuOverride,
+  FileDragDrop,
   Gestures,
   Gltf,
   Inject,

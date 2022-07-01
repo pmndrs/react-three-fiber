@@ -98,6 +98,10 @@ export type RenderProps<TCanvas extends Element> = {
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
+  /** Response for dragover events that have missed any target */
+  onDragOverMissed?: (event: DragEvent) => void
+  /** Response for drop events that have missed any target */
+  onDropMissed?: (event: DragEvent) => void
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
@@ -169,6 +173,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
+        onDragOverMissed,
+        onDropMissed,
       } = props
 
       let state = store.getState()
@@ -282,6 +288,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
+      // Check dragover missed
+      if (!state.onDragOverMissed) state.set({ onDragOverMissed })
+      // Check drop missed
+      if (!state.onDropMissed) state.set({ onDropMissed })
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
