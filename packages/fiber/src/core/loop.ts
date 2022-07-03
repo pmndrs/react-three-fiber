@@ -124,6 +124,8 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
     else render(timestamp, state, frame)
     if (runGlobalEffects) run(globalAfterEffects, timestamp)
+    if (runGlobalEffects) run(globalTailEffects, timestamp)
+
   }
 
   return {
