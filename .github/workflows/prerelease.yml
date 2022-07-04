@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   canary_release:
-    name: Release V9 Prelelase
+    name: V9 Prerelase
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
