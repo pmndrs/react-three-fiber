@@ -1,4 +1,4 @@
-name: V9 Canary Builds
+name: V9 Prerelease Builds
 
 on:
   push:
@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   canary_release:
-    name: Release V9 Canary
+    name: Release V9 Prelelase
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -36,5 +36,5 @@ jobs:
 
       - name: Publish Snapshot Release
         run: |
-          yarn changeset version --snapshot canary
-          yarn release --no-git-tag --snapshot canary --tag canary
+          yarn changeset version --snapshot next
+          yarn release --no-git-tag --snapshot next --tag next
