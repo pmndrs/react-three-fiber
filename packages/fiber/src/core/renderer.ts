@@ -36,6 +36,22 @@ export type LocalState = {
 export type AttachFnType = (parent: Instance, self: Instance) => () => void
 export type AttachType = string | AttachFnType
 
+interface HostConfig {
+  type: string
+  props: InstanceProps
+  container: UseBoundStore<RootState>
+  instance: Instance
+  textInstance: never
+  suspenseInstance: Instance
+  hydratableInstance: Instance
+  publicInstance: Instance
+  hostContext: never
+  updatePayload: Array<boolean | number | DiffSet>
+  childSet: never
+  timeoutHandle: typeof setTimeout | undefined
+  noTimeout: -1
+}
+
 // This type clamps down on a couple of assumptions that we can make regarding native types, which
 // could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
 // What they all need to have in common is defined here ...
@@ -114,7 +130,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     return instance
   }
 
-  function appendChild(parentInstance: Instance, child: Instance) {
+  function appendChild(parentInstance: HostConfig['instance'], child: HostConfig['instance']) {
     let added = false
     if (child) {
       // The attach attribute implies that the object attaches itself on the parent
@@ -135,7 +151,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
   }
 
-  function insertBefore(parentInstance: Instance, child: Instance, beforeChild: Instance) {
+  function insertBefore(
+    parentInstance: HostConfig['instance'],
+    child: HostConfig['instance'],
+    beforeChild: HostConfig['instance'],
+  ) {
     let added = false
     if (child) {
       if (child.__r3f?.attach) {
@@ -157,11 +177,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
   }
 
-  function removeRecursive(array: Instance[], parent: Instance, dispose: boolean = false) {
+  function removeRecursive(array: HostConfig['instance'][], parent: HostConfig['instance'], dispose: boolean = false) {
     if (array) [...array].forEach((child) => removeChild(parent, child, dispose))
   }
 
-  function removeChild(parentInstance: Instance, child: Instance, dispose?: boolean) {
+  function removeChild(parentInstance: HostConfig['instance'], child: HostConfig['instance'], dispose?: boolean) {
     if (child) {
       // Clear the parent reference
       if (child.__r3f) child.__r3f.parent = null
@@ -222,7 +242,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
   }
 
-  function switchInstance(instance: Instance, type: string, newProps: InstanceProps, fiber: Reconciler.Fiber) {
+  function switchInstance(
+    instance: HostConfig['instance'],
+    type: HostConfig['type'],
+    newProps: HostConfig['props'],
+    fiber: Reconciler.Fiber,
+  ) {
     const parent = instance.__r3f?.parent
     if (!parent) return
 
@@ -264,19 +289,19 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   }
 
   const reconciler = Reconciler<
-    string,
-    InstanceProps,
-    UseBoundStore<RootState>,
-    Instance,
-    never,
-    Instance,
-    Instance,
-    Instance,
-    never,
-    Array<boolean | number | DiffSet>,
-    never,
-    typeof setTimeout | undefined,
-    -1
+    HostConfig['type'],
+    HostConfig['props'],
+    HostConfig['container'],
+    HostConfig['instance'],
+    HostConfig['textInstance'],
+    HostConfig['suspenseInstance'],
+    HostConfig['hydratableInstance'],
+    HostConfig['publicInstance'],
+    HostConfig['hostContext'],
+    HostConfig['updatePayload'],
+    HostConfig['childSet'],
+    HostConfig['timeoutHandle'],
+    HostConfig['noTimeout']
   >({
     createInstance,
     removeChild,
