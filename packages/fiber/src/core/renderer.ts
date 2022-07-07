@@ -310,8 +310,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     insertBefore,
     supportsMutation: true,
     isPrimaryRenderer: false,
-    supportsPersistence: true,
-    supportsHydration: true,
+    supportsPersistence: false,
+    supportsHydration: false,
     noTimeout: -1,
     appendChildToContainer: (container, child) => {
       const scene = container.getState().scene as unknown as Instance
