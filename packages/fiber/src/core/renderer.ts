@@ -67,7 +67,7 @@ interface Catalogue {
 let catalogue: Catalogue = {}
 let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
 
-function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: () => any) {
+function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?: () => any) {
   function createInstance(
     type: string,
     { args = [], attach, ...props }: InstanceProps,
@@ -108,7 +108,7 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
-    // why it passes "true" here
+    // why it passes “true” here
     // There is no reason to apply props to injects
     if (name !== 'inject') applyProps(instance, props)
     return instance
@@ -263,36 +263,50 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
     })
   }
 
-  const reconciler = Reconciler({
+  const reconciler = Reconciler<
+    string,
+    InstanceProps,
+    UseBoundStore<RootState>,
+    Instance,
+    never,
+    Instance,
+    Instance,
+    Instance,
+    never,
+    Array<boolean | number | DiffSet>,
+    never,
+    typeof setTimeout | undefined,
+    -1
+  >({
     createInstance,
     removeChild,
     appendChild,
     appendInitialChild: appendChild,
     insertBefore,
-    supportsMicrotask: true,
-    warnsIfNotActing: true,
     supportsMutation: true,
     isPrimaryRenderer: false,
+    supportsPersistence: true,
+    supportsHydration: true,
     noTimeout: -1,
-    appendChildToContainer: (container: UseBoundStore<RootState>, child: Instance) => {
+    appendChildToContainer: (container, child) => {
       const scene = container.getState().scene as unknown as Instance
       // Link current root to the default scene
       scene.__r3f.root = container
       appendChild(scene, child)
     },
-    removeChildFromContainer: (container: UseBoundStore<RootState>, child: Instance) =>
+    removeChildFromContainer: (container, child) =>
       removeChild(container.getState().scene as unknown as Instance, child),
-    insertInContainerBefore: (container: UseBoundStore<RootState>, child: Instance, beforeChild: Instance) =>
+    insertInContainerBefore: (container, child, beforeChild) =>
       insertBefore(container.getState().scene as unknown as Instance, child, beforeChild),
     getRootHostContext: () => null,
-    getChildHostContext: (parentHostContext: any) => parentHostContext,
-    finalizeInitialChildren(instance: Instance) {
-      const localState = (instance?.__r3f ?? {}) as LocalState
+    getChildHostContext: (parentHostContext) => parentHostContext,
+    finalizeInitialChildren(instance) {
+      const localState = instance?.__r3f ?? {}
       // https://github.com/facebook/react/issues/20271
       // Returning true will trigger commitMount
-      return !!localState.handlers
+      return Boolean(localState.handlers)
     },
-    prepareUpdate(instance: Instance, type: string, oldProps: any, newProps: any) {
+    prepareUpdate(instance, _type, oldProps, newProps) {
       // Create diff-sets
       if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
         return [true]
@@ -304,8 +318,8 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         // Throw if an object or literal was passed for args
         if (!Array.isArray(argsNew)) throw 'The args prop must be an array!'
 
-        // If it has new props or arguments, then it needs to be re-instanciated
-        if (argsNew.some((value: any, index: number) => value !== argsOld[index])) return [true]
+        // If it has new props or arguments, then it needs to be re-instantiated
+        if (argsNew.some((value, index) => value !== argsOld[index])) return [true]
         // Create a diff-set, flag if there are any changes
         const diff = diffProps(instance, restNew, restOld, true)
         if (diff.changes.length) return [false, diff]
@@ -314,20 +328,13 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         return null
       }
     },
-    commitUpdate(
-      instance: Instance,
-      [reconstruct, diff]: [boolean, DiffSet],
-      type: string,
-      oldProps: InstanceProps,
-      newProps: InstanceProps,
-      fiber: Reconciler.Fiber,
-    ) {
+    commitUpdate(instance, [reconstruct, diff]: [boolean, DiffSet], type, _oldProps, newProps, fiber) {
       // Reconstruct when args or <primitive object={...} have changes
       if (reconstruct) switchInstance(instance, type, newProps, fiber)
       // Otherwise just overwrite props
       else applyProps(instance, diff)
     },
-    commitMount(instance: Instance, type, props, int) {
+    commitMount(instance, _type, _props, _int) {
       // https://github.com/facebook/react/issues/20271
       // This will make sure events are only added once to the central container
       const localState = (instance.__r3f ?? {}) as LocalState
@@ -335,47 +342,41 @@ function createRenderer<TCanvas>(roots: Map<TCanvas, Root>, getEventPriority?: (
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
       }
     },
-    getPublicInstance: (instance: Instance) => instance,
-    shouldDeprioritizeSubtree: () => false,
+    getPublicInstance: (instance) => instance,
     prepareForCommit: () => null,
-    preparePortalMount: (container: UseBoundStore<RootState>) => prepare(container.getState().scene),
+    preparePortalMount: (container) => prepare(container.getState().scene),
     resetAfterCommit: () => {},
     shouldSetTextContent: () => false,
     clearContainer: () => false,
-    detachDeletedInstance: () => {},
-    hideInstance(instance: Instance) {
+    hideInstance(instance) {
       // Deatch while the instance is hidden
       const { attach: type, parent } = instance?.__r3f ?? {}
       if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
       invalidateInstance(instance)
     },
-    unhideInstance(instance: Instance, props: InstanceProps) {
+    unhideInstance(instance, props) {
       // Re-attach when the instance is unhidden
       const { attach: type, parent } = instance?.__r3f ?? {}
       if (type && parent) attach(parent, instance, type)
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
     },
-    createTextInstance: () => {},
+    createTextInstance: () => {
+      throw new Error('Text is not allowed in the R3F tree.')
+    },
     hideTextInstance: () => {
       throw new Error('Text is not allowed in the R3F tree.')
     },
     unhideTextInstance: () => {},
-    getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
-    // @ts-ignore
     now:
       typeof performance !== 'undefined' && is.fun(performance.now)
         ? performance.now
         : is.fun(Date.now)
         ? Date.now
-        : undefined,
-    // @ts-ignore
-    scheduleTimeout: is.fun(setTimeout) ? setTimeout : undefined,
-    // @ts-ignore
-    cancelTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
-    setTimeout: is.fun(setTimeout) ? setTimeout : undefined,
-    clearTimeout: is.fun(clearTimeout) ? clearTimeout : undefined,
+        : () => 0,
+    scheduleTimeout: () => (is.fun(setTimeout) ? setTimeout : undefined),
+    cancelTimeout: () => (is.fun(clearTimeout) ? clearTimeout : undefined),
   })
 
   return { reconciler, applyProps }
