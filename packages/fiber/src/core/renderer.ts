@@ -108,7 +108,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
     // view yet. If the callback relies on references for instance, they won't be ready yet, this is
-    // why it passes “true” here
+    // why it passes "true" here
     // There is no reason to apply props to injects
     if (name !== 'inject') applyProps(instance, props)
     return instance
