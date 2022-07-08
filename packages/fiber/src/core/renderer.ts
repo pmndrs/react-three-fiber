@@ -394,6 +394,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       throw new Error('Text is not allowed in the R3F tree.')
     },
     unhideTextInstance: () => {},
+    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
+    // @ts-ignore
+    getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
     now:
       typeof performance !== 'undefined' && is.fun(performance.now)
         ? performance.now
