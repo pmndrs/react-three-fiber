@@ -396,7 +396,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     unhideTextInstance: () => {},
     // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
     // @ts-ignore
-    getCurrentEventPriority: () => (getEventPriority ? getEventPriority() : DefaultEventPriority),
+    getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),
+    beforeActiveInstanceBlur: () => {},
+    afterActiveInstanceBlur: () => {},
+    detachDeletedInstance: () => {},
     now:
       typeof performance !== 'undefined' && is.fun(performance.now)
         ? performance.now
