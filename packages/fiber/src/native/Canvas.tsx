@@ -5,7 +5,7 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
-import { RootState } from '../core/store'
+import { RootState, Size } from '../core/store'
 import { polyfills } from './polyfills'
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
@@ -44,7 +44,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
 
-    const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
+    const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
     React.useImperativeHandle(forwardedRef, () => viewRef.current)
@@ -65,8 +65,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     React.useLayoutEffect(() => polyfills(), [])
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-      const { width, height } = e.nativeEvent.layout
-      setSize({ width, height })
+      const { width, height, x, y } = e.nativeEvent.layout
+      setSize({ width, height, top: y, left: x })
     }, [])
 
     // Called on context create or swap
@@ -102,7 +102,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
-        size: { width, height },
+        size: { width, height, top, left },
         // Pass mutable reference to onPointerMissed so it's free to update
         onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
         // Overwrite onCreated to apply RN bindings
