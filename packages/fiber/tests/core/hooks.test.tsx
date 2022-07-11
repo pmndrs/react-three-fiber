@@ -8,7 +8,7 @@ import { asyncUtils } from '../../../shared/asyncUtils'
 
 import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
 
-const resolvers = []
+const resolvers: (() => void)[] = []
 
 const { waitFor } = asyncUtils(act, (resolver: () => void) => {
   resolvers.push(resolver)
@@ -67,7 +67,7 @@ describe('hooks', () => {
   })
 
   it('can handle useFrame hook', async () => {
-    const frameCalls = []
+    const frameCalls: number[] = []
 
     const Component = () => {
       const ref = React.useRef<THREE.Mesh>(null!)
@@ -99,15 +99,16 @@ describe('hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest.fn().mockImplementation((url, onLoad) => {
-        onLoad(MockMesh)
-      }),
-    }))
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest.fn().mockImplementation((url, onLoad) => {
+            onLoad(MockMesh)
+          }),
+        } as unknown as Stdlib.GLTFLoader),
+    )
 
     const Component = () => {
-      // @ts-ignore
       const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
       return <primitive object={model} />
     }
@@ -142,22 +143,22 @@ describe('hooks', () => {
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest
-        .fn()
-        .mockImplementationOnce((url, onLoad) => {
-          onLoad(MockMesh)
-        })
-        .mockImplementationOnce((url, onLoad) => {
-          onLoad({ scene: MockGroup })
-        }),
-      // @ts-ignore
-      setPath: () => {},
-    }))
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest
+            .fn()
+            .mockImplementationOnce((url, onLoad) => {
+              onLoad(MockMesh)
+            })
+            .mockImplementationOnce((url, onLoad) => {
+              onLoad({ scene: MockGroup })
+            }),
+          setPath: () => {},
+        } as unknown as Stdlib.GLTFLoader),
+    )
 
     const Component = () => {
-      // @ts-ignore
       const [mockMesh, mockScene] = useLoader(Stdlib.GLTFLoader, ['/suzanne.glb', '/myModels.glb'], (loader) => {
         loader.setPath('/public/models')
       })

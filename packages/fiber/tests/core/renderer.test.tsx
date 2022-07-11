@@ -19,6 +19,10 @@ import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
+interface ObjectWithBackground extends THREE.Object3D {
+  background: THREE.Color
+}
+
 /* This class is used for one of the tests */
 class HasObject3dMember extends THREE.Object3D {
   public attachment?: THREE.Object3D = undefined
@@ -38,6 +42,12 @@ class HasObject3dMethods extends THREE.Object3D {
   }
 }
 
+class MyColor extends THREE.Color {
+  constructor(col: number) {
+    super(col)
+  }
+}
+
 extend({ HasObject3dMember, HasObject3dMethods })
 
 declare global {
@@ -45,6 +55,7 @@ declare global {
     interface IntrinsicElements {
       hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
       hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
+      myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
     }
   }
 }
@@ -137,8 +148,7 @@ describe('renderer', () => {
     })
 
     expect(scene.children[0].type).toEqual('Group')
-    // @ts-ignore we do append background to group, but it's not wrong because it won't do anything.
-    expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
+    expect((scene.children[0] as ObjectWithBackground).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
@@ -603,17 +613,10 @@ describe('renderer', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends THREE.Color {
-      constructor(col: number) {
-        super(col)
-      }
-    }
-
     const testExtend = async () => {
       await act(async () => {
         extend({ MyColor })
 
-        // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
         root.render(<myColor args={[0x0000ff]} />)
       })
     }

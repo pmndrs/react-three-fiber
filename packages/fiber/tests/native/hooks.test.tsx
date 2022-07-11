@@ -11,7 +11,7 @@ import { polyfills } from '../../src/native/polyfills'
 
 polyfills()
 
-const resolvers = []
+const resolvers: (() => void)[] = []
 
 const { waitFor } = asyncUtils(act, (resolver: () => void) => {
   resolvers.push(resolver)
@@ -33,15 +33,17 @@ describe('useLoader', () => {
     })
 
     // Emulate GLTFLoader
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest.fn().mockImplementation((input, onLoad) => {
-        onLoad(true)
-      }),
-      parse: jest.fn().mockImplementation((data, _, onLoad) => {
-        onLoad(true)
-      }),
-    }))
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest.fn().mockImplementation((input, onLoad) => {
+            onLoad(true)
+          }),
+          parse: jest.fn().mockImplementation((data, _, onLoad) => {
+            onLoad(true)
+          }),
+        } as unknown as Stdlib.GLTFLoader),
+    )
   })
 
   it('produces data textures for TextureLoader', async () => {
