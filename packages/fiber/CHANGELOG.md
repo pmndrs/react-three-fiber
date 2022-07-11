@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.1.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
 ## 8.0.27
 
 ### Patch Changes
