@@ -102,7 +102,7 @@ describe('hooks', () => {
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
       () =>
         ({
-          load: jest.fn().mockImplementation((url, onLoad) => {
+          load: jest.fn().mockImplementation((_url, onLoad) => {
             onLoad(MockMesh)
           }),
         } as unknown as Stdlib.GLTFLoader),
@@ -148,10 +148,10 @@ describe('hooks', () => {
         ({
           load: jest
             .fn()
-            .mockImplementationOnce((url, onLoad) => {
+            .mockImplementationOnce((_url, onLoad) => {
               onLoad(MockMesh)
             })
-            .mockImplementationOnce((url, onLoad) => {
+            .mockImplementationOnce((_url, onLoad) => {
               onLoad({ scene: MockGroup })
             }),
           setPath: () => {},

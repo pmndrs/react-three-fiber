@@ -49,7 +49,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
       () =>
         ({
-          load: jest.fn().mockImplementation((url, onLoad) => {
+          load: jest.fn().mockImplementation((_url, onLoad) => {
             onLoad(MockMesh)
           }),
         } as unknown as Stdlib.GLTFLoader),

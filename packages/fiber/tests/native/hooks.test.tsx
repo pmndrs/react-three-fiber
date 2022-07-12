@@ -36,10 +36,10 @@ describe('useLoader', () => {
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
       () =>
         ({
-          load: jest.fn().mockImplementation((input, onLoad) => {
+          load: jest.fn().mockImplementation((_input, onLoad) => {
             onLoad(true)
           }),
-          parse: jest.fn().mockImplementation((data, _, onLoad) => {
+          parse: jest.fn().mockImplementation((_data, _, onLoad) => {
             onLoad(true)
           }),
         } as unknown as Stdlib.GLTFLoader),
