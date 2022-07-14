@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.2.0
+
+### Minor Changes
+
+- 9770d7d: feat: expose ThreeElements interface for JSX elements
+
 ## 8.1.0
 
 ### Minor Changes
