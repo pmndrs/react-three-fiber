@@ -48,7 +48,7 @@ interface HostConfig {
   hostContext: never
   updatePayload: Array<boolean | number | DiffSet>
   childSet: never
-  timeoutHandle: typeof setTimeout | undefined
+  timeoutHandle: number | undefined
   noTimeout: -1
 }
 
