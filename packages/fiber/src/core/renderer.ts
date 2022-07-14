@@ -406,8 +406,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         : is.fun(Date.now)
         ? Date.now
         : () => 0,
-    scheduleTimeout: () => (is.fun(setTimeout) ? setTimeout : undefined),
-    cancelTimeout: () => (is.fun(clearTimeout) ? clearTimeout : undefined),
+    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
+    scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
+    cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
   })
 
   return { reconciler, applyProps }
