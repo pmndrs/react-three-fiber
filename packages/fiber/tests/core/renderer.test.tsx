@@ -12,6 +12,7 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
+  Overwrite,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -56,6 +57,7 @@ declare global {
       hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
       hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
       myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
+      group: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
     }
   }
 }
@@ -436,7 +438,6 @@ describe('renderer', () => {
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
     const Test = ({ n }: { n: number }) => (
-      // @ts-ignore args isn't a valid prop but changing it will swap
       <group args={[n]} onPointerOver={() => null}>
         <group />
       </group>
