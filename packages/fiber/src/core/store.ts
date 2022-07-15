@@ -32,7 +32,7 @@ export type Subscription = {
 }
 
 export type Dpr = number | [min: number, max: number]
-export type Size = { width: number; height: number; updateStyle?: boolean }
+export type Size = { width: number; height: number; top: number; left: number; updateStyle?: boolean }
 export type Viewport = Size & {
   /** The initial pixel ratio */
   initialDpr: number
@@ -133,8 +133,12 @@ export type RootState = {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */
   setEvents: (events: Partial<EventManager<any>>) => void
-  /** Shortcut to manual sizing */
-  setSize: (width: number, height: number, updateStyle?: boolean) => void
+  /**
+   * Shortcut to manual sizing
+   *
+   * @todo before releasing next major version (v9), re-order arguments here to width, height, top, left, updateStyle
+   */
+  setSize: (width: number, height: number, updateStyle?: boolean, top?: number, left?: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
@@ -161,19 +165,19 @@ const createStore = (
       camera: Camera = get().camera,
       target: THREE.Vector3 | Parameters<THREE.Vector3['set']> = defaultTarget,
       size: Size = get().size,
-    ) {
-      const { width, height } = size
+    ): Omit<Viewport, 'dpr' | 'initialDpr'> {
+      const { width, height, top, left } = size
       const aspect = width / height
       if (target instanceof THREE.Vector3) tempTarget.copy(target)
       else tempTarget.set(...target)
       const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
       if (isOrthographicCamera(camera)) {
-        return { width: width / camera.zoom, height: height / camera.zoom, factor: 1, distance, aspect }
+        return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
       } else {
         const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
         const h = 2 * Math.tan(fov / 2) * distance // visible height
         const w = h * (width / height)
-        return { width: w, height: h, factor: width / w, distance, aspect }
+        return { width: w, height: h, top, left, factor: width / w, distance, aspect }
       }
     }
 
@@ -183,7 +187,7 @@ const createStore = (
 
     const pointer = new THREE.Vector2()
 
-    return {
+    const rootState: RootState = {
       set,
       get,
 
@@ -229,12 +233,14 @@ const createStore = (
         },
       },
 
-      size: { width: 0, height: 0, updateStyle: false },
+      size: { width: 0, height: 0, top: 0, left: 0, updateStyle: false },
       viewport: {
         initialDpr: 0,
         dpr: 0,
         width: 0,
         height: 0,
+        top: 0,
+        left: 0,
         aspect: 0,
         distance: 0,
         factor: 0,
@@ -243,9 +249,9 @@ const createStore = (
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      setSize: (width: number, height: number, updateStyle?: boolean) => {
+      setSize: (width: number, height: number, updateStyle?: boolean, top?: number, left?: number) => {
         const camera = get().camera
-        const size = { width, height, updateStyle }
+        const size = { width, height, top: top || 0, left: left || 0, updateStyle }
         set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
       },
       setDpr: (dpr: Dpr) =>
@@ -308,6 +314,8 @@ const createStore = (
         },
       },
     }
+
+    return rootState
   })
 
   const state = rootState.getState()
