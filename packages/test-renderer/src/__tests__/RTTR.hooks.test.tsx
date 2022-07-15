@@ -8,7 +8,7 @@ import { asyncUtils } from '../../../shared/asyncUtils'
 
 import ReactThreeTestRenderer from '../index'
 
-const resolvers = []
+const resolvers: (() => void)[] = []
 
 const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void) => {
   resolvers.push(resolver)
