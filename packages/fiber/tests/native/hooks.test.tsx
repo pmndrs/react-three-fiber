@@ -23,7 +23,6 @@ describe('useLoader', () => {
   beforeEach(() => {
     canvas = createCanvas({
       beforeReturn: (canvas) => {
-        //@ts-ignore
         canvas.getContext = (type: string) => {
           if (type === 'webgl' || type === 'webgl2') {
             return createWebGLContext(canvas)

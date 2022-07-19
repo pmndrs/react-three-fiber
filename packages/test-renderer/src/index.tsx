@@ -25,7 +25,6 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     width: options?.width,
     height: options?.height,
     beforeReturn: (canvas) => {
-      //@ts-ignore
       canvas.getContext = (type: string) => {
         if (type === 'webgl' || type === 'webgl2') {
           return createWebGLContext(canvas)
