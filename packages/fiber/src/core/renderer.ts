@@ -107,7 +107,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
   }
 
-  function removeChild(parent: HostConfig['instance'], child: HostConfig['instance']) {
+  function removeRecursive(array: HostConfig['instance'][], parent: HostConfig['instance'], dispose: boolean = false) {
+    if (array) [...array].forEach((child) => removeChild(parent, child, dispose))
+  }
+
+  function removeChild(parent: HostConfig['instance'], child: HostConfig['instance'], dispose?: boolean) {
     child.parent = null
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
@@ -118,8 +122,24 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       removeInteractivity(child.root, child.object as unknown as THREE.Object3D)
     }
 
+    // Allow objects to bail out of recursive dispose altogether by passing dispose={null}
+    // Never dispose of primitives because their state may be kept outside of React!
+    // In order for an object to be able to dispose it has to have
+    //   - a dispose method,
+    //   - it cannot be a <primitive object={...} />
+    //   - it cannot be a THREE.Scene, because three has broken its own api
+    //
+    // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
+    // when the reconciler calls it, but then carry our own check recursively
+    const isPrimitive = child.type === 'primitive'
+    const shouldDispose = dispose ?? (!isPrimitive && child.props.dispose !== null)
+
+    // Remove nested child objects. Primitives should not have objects and children that are
+    // attached to them declaratively ...
+    if (!isPrimitive) removeRecursive(child.children, child, shouldDispose)
+
     // Dispose object whenever the reconciler feels like it
-    if (child.type !== 'primitive' && child.type !== 'scene' && child.props.dispose !== null) {
+    if (child.type !== 'scene' && shouldDispose) {
       const dispose = child.object.dispose
       if (typeof dispose === 'function') {
         scheduleCallback(idlePriority, () => {
@@ -133,7 +153,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
     child.object = null
 
-    invalidateInstance(child)
+    if (dispose === undefined) invalidateInstance(child)
   }
 
   function commitInstance(instance: Instance) {
