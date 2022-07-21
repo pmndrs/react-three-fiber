@@ -237,15 +237,13 @@ export function applyProps(object: any, data: InstanceProps | DiffSet) {
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
-      const args = instance.props?.args ?? []
-
       if (targetProp && targetProp.constructor) {
         // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(...args)
+        value = new targetProp.constructor(...(instance.props.args ?? []))
       } else if (target.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
-        const defaultClassCall = new target.constructor(...args)
+        const defaultClassCall = new target.constructor(...(target.__r3f?.props.args ?? []))
         value = defaultClassCall[targetProp]
         // destroy the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
