@@ -30,7 +30,7 @@ import {
   updateCamera,
   setDeep,
 } from './utils'
-import { useStore } from './hooks'
+import { useStore, useThree } from './hooks'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -332,6 +332,11 @@ function render<TCanvas extends Element>(
   return root.render(children)
 }
 
+function Scene({ children }: { children: React.ReactNode }) {
+  const scene = useThree((state) => state.scene)
+  return <primitive object={scene}>{children}</primitive>
+}
+
 function Provider<TElement extends Element>({
   store,
   children,
@@ -355,7 +360,11 @@ function Provider<TElement extends Element>({
     if (!store.getState().events.connected) state.events.connect?.(rootElement)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  return <context.Provider value={store}>{children}</context.Provider>
+  return (
+    <context.Provider value={store}>
+      <Scene>{children}</Scene>
+    </context.Provider>
+  )
 }
 
 function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
@@ -506,7 +515,9 @@ function Portal({
   return (
     <>
       {reconciler.createPortal(
-        <context.Provider value={usePortalStore}>{children}</context.Provider>,
+        <context.Provider value={usePortalStore}>
+          <Scene>{children}</Scene>
+        </context.Provider>,
         usePortalStore,
         null,
       )}

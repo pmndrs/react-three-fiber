@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
-import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
 
@@ -204,7 +203,7 @@ const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: prepare<THREE.Scene>(new THREE.Scene()),
+      scene: new THREE.Scene(),
 
       controls: null,
       clock: new THREE.Clock(),

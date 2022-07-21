@@ -1,8 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
-import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
+import { AttachType, Instance, InstanceProps } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -50,11 +49,10 @@ export class ErrorBoundary extends React.Component<
 export const DEFAULT = '__default'
 
 export type DiffSet = {
-  memoized: { [key: string]: any }
   changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][]
 }
 
-export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
+export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).changes
 export type ClassConstructor = { new (): void }
 
 export type ObjectMap = {
@@ -70,7 +68,7 @@ export function calculateDpr(dpr: Dpr) {
  * Returns instance root state
  */
 export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
-  (obj as unknown as Instance).__r3f?.root.getState()
+  ((obj as any).__r3f as Instance)?.root.getState()
 
 export type EquConfig = {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
@@ -135,26 +133,7 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
   }
 }
 
-// Each object in the scene carries a small LocalState descriptor
-export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
-  const instance = object as unknown as Instance
-  if (state?.primitive || !instance.__r3f) {
-    instance.__r3f = {
-      type: '',
-      root: null as unknown as UseBoundStore<RootState>,
-      previousAttach: null,
-      memoizedProps: {},
-      eventCount: 0,
-      handlers: {},
-      objects: [],
-      parent: null,
-      ...state,
-    }
-  }
-  return object
-}
-
-function resolve(instance: Instance, key: string) {
+function resolve(instance: any, key: string) {
   let target = instance
   if (key.includes('-')) {
     const entries = key.split('-')
@@ -172,26 +151,26 @@ export function attach(parent: Instance, child: Instance, type: AttachType) {
     // If attaching into an array (foo-0), create one
     if (INDEX_REGEX.test(type)) {
       const root = type.replace(INDEX_REGEX, '')
-      const { target, key } = resolve(parent, root)
+      const { target, key } = resolve(parent.object, root)
       if (!Array.isArray(target[key])) target[key] = []
     }
 
-    const { target, key } = resolve(parent, type)
-    child.__r3f.previousAttach = target[key]
-    target[key] = child
-  } else child.__r3f.previousAttach = type(parent, child)
+    const { target, key } = resolve(parent.object, type)
+    child.previousAttach = target[key]
+    target[key] = child.object
+  } else child.previousAttach = type(parent.object, child.object)
 }
 
 export function detach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
-    const { target, key } = resolve(parent, type)
-    const previous = child.__r3f.previousAttach
+    const { target, key } = resolve(parent.object, type)
+    const previous = child.previousAttach
     // When the previous value was undefined, it means the value was never set to begin with
-    if (previous === undefined) delete target[key]
+    if (previous === undefined) delete target.object[key]
     // Otherwise set the previous value
-    else target[key] = previous
-  } else child.__r3f?.previousAttach?.(parent, child)
-  delete child.__r3f?.previousAttach
+    else target.object[key] = previous
+  } else child.previousAttach?.(parent.object, child.object)
+  delete child.previousAttach
 }
 
 // This function prepares a set of changes to be applied to the instance
@@ -201,7 +180,6 @@ export function diffProps(
   { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
   remove = false,
 ): DiffSet {
-  const localState = (instance?.__r3f ?? {}) as LocalState
   const entries = Object.entries(props)
   const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
 
@@ -215,7 +193,7 @@ export function diffProps(
 
   entries.forEach(([key, value]) => {
     // Bail out on primitive object
-    if (instance.__r3f?.primitive && key === 'object') return
+    if (instance.type === 'primitive' && key === 'object') return
     // When props match bail out
     if (is.equ(value, previous[key])) return
     // Collect handlers and bail out
@@ -226,36 +204,29 @@ export function diffProps(
     changes.push([key, value, false, entries])
   })
 
-  const memoized: { [key: string]: any } = { ...props }
-  if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
-  if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
-
-  return { memoized, changes }
+  return { changes }
 }
 
 // This function applies a set of changes to the instance
-export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
+export function applyProps(object: any, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
-  const localState = (instance.__r3f ?? {}) as LocalState
-  const root = localState.root
+  const instance = (object.__r3f ?? {}) as Instance
+  const root = instance.root
   const rootState = root?.getState?.() ?? {}
-  const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
-  const prevHandlers = localState.eventCount
-
-  // Prepare memoized props
-  if (instance.__r3f) instance.__r3f.memoizedProps = memoized
+  const { changes } = isDiffSet(data) ? data : diffProps(instance, data)
+  const prevHandlers = instance.eventCount
 
   changes.forEach(([key, value, isEvent, keys]) => {
-    let currentInstance = instance
-    let targetProp = currentInstance[key]
+    let target = object
+    let targetProp = target[key]
 
     // Revolve dashed props
     if (keys.length) {
-      targetProp = keys.reduce((acc, key) => acc[key], instance)
+      targetProp = keys.reduce((acc, key) => acc[key], object)
       // If the target is atomic, it forces us to switch the root
       if (!(targetProp && targetProp.set)) {
         const [name, ...reverseEntries] = keys.reverse()
-        currentInstance = reverseEntries.reverse().reduce((acc, key) => acc[key], instance)
+        target = reverseEntries.reverse().reduce((acc, key) => acc[key], object)
         key = name
       }
     }
@@ -266,27 +237,29 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
+      const args = instance.props?.args ?? []
+
       if (targetProp && targetProp.constructor) {
         // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(...(memoized.args ?? []))
-      } else if (currentInstance.constructor) {
+        value = new targetProp.constructor(...args)
+      } else if (target.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
+        const defaultClassCall = new target.constructor(...args)
         value = defaultClassCall[targetProp]
-        // destory the instance
+        // destroy the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
-        // instance does not have constructor, just set it to 0
       } else {
+        // instance does not have constructor, just set it to 0
         value = 0
       }
     }
 
     // Deal with pointer events ...
     if (isEvent) {
-      if (value) localState.handlers[key as keyof EventHandlers] = value as any
-      else delete localState.handlers[key as keyof EventHandlers]
-      localState.eventCount = Object.keys(localState.handlers).length
+      if (value) instance.handlers[key as keyof EventHandlers] = value as any
+      else delete instance.handlers[key as keyof EventHandlers]
+      instance.eventCount = Object.keys(instance.handlers).length
     }
     // Special treatment for objects with support for set/copy, and layers
     else if (targetProp && targetProp.set && (targetProp.copy || targetProp instanceof THREE.Layers)) {
@@ -322,38 +295,31 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       }
       // Else, just overwrite the value
     } else {
-      currentInstance[key] = value
+      target[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
-        currentInstance[key].encoding = THREE.sRGBEncoding
+      if (!rootState.linear && target[key] instanceof THREE.Texture) {
+        target[key].encoding = THREE.sRGBEncoding
       }
     }
 
     invalidateInstance(instance)
   })
 
-  if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (instance.parent && rootState.internal && instance.object.raycast && prevHandlers !== instance.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
-    const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+    const index = rootState.internal.interaction.indexOf(instance.object as unknown as THREE.Object3D)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+    if (instance.eventCount) rootState.internal.interaction.push(instance.object as unknown as THREE.Object3D)
   }
-
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
 
   return instance
 }
 
 export function invalidateInstance(instance: Instance) {
-  const state = instance.__r3f?.root?.getState?.()
+  const state = instance.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()
-}
-
-export function updateInstance(instance: Instance) {
-  instance.onUpdate?.(instance)
 }
 
 export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) {
