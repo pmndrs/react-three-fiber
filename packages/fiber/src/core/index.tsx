@@ -135,7 +135,7 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
 
   // Add useFrame loop to update stage
   const frameCallback = {
-    current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
+    current: (state: RootState, delta: number, frame?: XRFrame | undefined) => {
       subscribers = state.internal.subscribers
       for (let i = 0; i < subscribers.length; i++) {
         subscription = subscribers[i]
@@ -247,7 +247,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
-        const handleXRFrame: THREE.XRFrameRequestCallback = (timestamp: number, frame?: THREE.XRFrame) => {
+        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
           advance(timestamp, true, state, frame)
