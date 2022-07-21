@@ -310,11 +310,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     shouldSetTextContent: () => false,
     clearContainer: () => false,
     hideInstance(instance) {
-      if (instance.object.isObject3D) instance.object.visible = false
+      if (instance.object?.isObject3D) instance.object.visible = false
       invalidateInstance(instance)
     },
     unhideInstance(instance) {
-      if (instance.object.isObject3D && instance.props.visible !== false) instance.object.visible = true
+      if (instance.object?.isObject3D && instance.props.visible !== false) instance.object.visible = true
       invalidateInstance(instance)
     },
     createTextInstance: () => {
