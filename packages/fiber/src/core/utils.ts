@@ -166,9 +166,9 @@ export function detach(parent: Instance, child: Instance, type: AttachType) {
     const { target, key } = resolve(parent.object, type)
     const previous = child.previousAttach
     // When the previous value was undefined, it means the value was never set to begin with
-    if (previous === undefined) delete target.object[key]
+    if (previous === undefined) delete target[key]
     // Otherwise set the previous value
-    else target.object[key] = previous
+    else target[key] = previous
   } else child.previousAttach?.(parent.object, child.object)
   delete child.previousAttach
 }
