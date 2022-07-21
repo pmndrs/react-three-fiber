@@ -173,23 +173,31 @@ export function detach(parent: Instance, child: Instance, type: AttachType) {
   delete child.previousAttach
 }
 
+const REACT_RESERVED_PROPS = ['children', 'key', 'ref']
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps(
   instance: Instance,
-  { children: cN, key: kN, ref: rN, ...props }: InstanceProps,
-  { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
+  props: InstanceProps,
+  previous: InstanceProps = {},
   remove = false,
 ): DiffSet {
-  const entries = Object.entries(props)
-  const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
+  // Filter react reserved keys
+  const entries: [string, any][] = []
+  for (const key in props) {
+    if (REACT_RESERVED_PROPS.includes(key)) continue
+    else entries.push([key, props[key]])
+  }
 
   // Catch removed props, prepend them so they can be reset or removed
   if (remove) {
-    const previousKeys = Object.keys(previous)
-    for (let i = 0; i < previousKeys.length; i++) {
-      if (!props.hasOwnProperty(previousKeys[i])) entries.unshift([previousKeys[i], DEFAULT + 'remove'])
+    for (const key in previous) {
+      if (REACT_RESERVED_PROPS.includes(key)) continue
+      else if (!props.hasOwnProperty(key)) entries.unshift([key, DEFAULT + 'remove'])
     }
   }
+
+  const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
 
   entries.forEach(([key, value]) => {
     // Bail out on primitive object
