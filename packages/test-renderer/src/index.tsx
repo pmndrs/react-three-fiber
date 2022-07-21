@@ -11,7 +11,7 @@ import { createCanvas } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
 
-import type { MockScene } from './types/internal'
+import type { MockInstance } from './types/internal'
 import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
@@ -34,28 +34,22 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     },
   })
 
-  const _fiber = canvas
+  const _root = createRoot(canvas).configure({ frameloop: 'never', ...options, events: undefined })
+  const _store = mockRoots.get(canvas)!.store
 
-  const _root = createRoot(_fiber).configure({ frameloop: 'never', ...options, events: undefined })
-
-  let scene: MockScene = null!
-
-  await act(async () => {
-    scene = _root.render(element).getState().scene as unknown as MockScene
-  })
-
-  const _store = mockRoots.get(_fiber)!.store
+  await act(async () => _root.render(element))
+  const scene = (_store.getState().scene as any).__r3f as MockInstance<THREE.Scene>
 
   return {
     scene: wrapFiber(scene),
-    unmount: async () => {
+    async unmount() {
       await act(async () => {
         _root.unmount()
       })
     },
-    getInstance: () => {
+    getInstance() {
       // this is our root
-      const fiber = mockRoots.get(_fiber)?.fiber
+      const fiber = mockRoots.get(canvas)?.fiber
       const current = fiber?.current.child.child
       if (current) {
         const root = {
@@ -78,8 +72,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
         return null
       }
     },
-    update: async (newElement: React.ReactNode) => {
-      const fiber = mockRoots.get(_fiber)?.fiber
+    async update(newElement: React.ReactNode) {
+      const fiber = mockRoots.get(canvas)?.fiber
       if (fiber) {
         await act(async () => {
           reconciler.updateContainer(newElement, fiber, null, () => null)
@@ -87,14 +81,14 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       }
       return
     },
-    toTree: () => {
+    toTree() {
       return toTree(scene)
     },
-    toGraph: () => {
+    toGraph() {
       return toGraph(scene)
     },
     fireEvent: createEventFirer(act, _store),
-    advanceFrames: async (frames: number, delta: number | number[] = 1) => {
+    async advanceFrames(frames: number, delta: number | number[] = 1) {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
 
