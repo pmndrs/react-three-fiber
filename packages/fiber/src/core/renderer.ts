@@ -3,7 +3,7 @@ import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { DefaultEventPriority } from 'react-reconciler/constants'
-import { is, diffProps, DiffSet, applyProps, invalidateInstance, attach, detach } from './utils'
+import { is, diffProps, applyProps, invalidateInstance, attach, detach } from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
@@ -46,7 +46,7 @@ interface HostConfig {
   hydratableInstance: Instance
   publicInstance: any
   hostContext: never
-  updatePayload: null | [true] | [false, DiffSet]
+  updatePayload: null | [true] | [false, InstanceProps]
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
@@ -116,7 +116,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
 
-    if (child.props.attach) detach(parent, child, child.props.attach)
+    if (child.props.attach) detach(parent, child)
     else if (child.object.isObject3D && parent.object.isObject3D) {
       parent.object.remove(child.object)
       removeInteractivity(child.root, child.object as unknown as THREE.Object3D)
@@ -178,13 +178,13 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
     // Append children
     for (const child of instance.children) {
-      if (child.props.attach) attach(instance, child, child.props.attach)
+      if (child.props.attach) attach(instance, child)
       else if (child.object.isObject3D) instance.object.add(child.object)
     }
 
     // Append to container
     if (!instance.parent.parent) {
-      if (instance.props.attach) attach(instance.parent, instance, instance.props.attach)
+      if (instance.props.attach) attach(instance.parent, instance)
       else if (instance.object.isObject3D) instance.parent.object.add(instance.object)
     }
 
@@ -218,7 +218,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
     // Append to scene-graph
     if (parent.parent) {
-      if (newInstance.props.attach) attach(parent, newInstance, newInstance.props.attach)
+      if (newInstance.props.attach) attach(parent, newInstance)
       else if (newInstance.object.isObject3D) parent.object.add(newInstance.object)
     }
 
@@ -227,8 +227,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       for (const child of instance.children) {
         appendChild(newInstance, child)
         if (child.props.attach) {
-          detach(instance, child, child.props.attach)
-          attach(newInstance, child, child.props.attach)
+          detach(instance, child)
+          attach(newInstance, child)
         }
       }
       instance.children = []
@@ -287,8 +287,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
 
       // Create a diff-set, flag if there are any changes
-      const diff = diffProps(instance, newProps, oldProps, true)
-      if (diff.changes.length) return [false, diff]
+      const changedProps = diffProps(instance, newProps, oldProps, true)
+      if (Object.keys(changedProps).length) return [false, changedProps]
 
       // Otherwise do not touch the instance
       return null
