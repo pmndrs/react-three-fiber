@@ -178,14 +178,20 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
     // Append children
     for (const child of instance.children) {
-      if (child.props.attach) attach(instance, child)
-      else if (child.object.isObject3D) instance.object.add(child.object)
+      if (child.props.attach) {
+        attach(instance, child)
+      } else if (child.object.isObject3D && instance.object.isObject3D) {
+        instance.object.add(child.object)
+      }
     }
 
     // Append to container
     if (!instance.parent.parent) {
-      if (instance.props.attach) attach(instance.parent, instance)
-      else if (instance.object.isObject3D) instance.parent.object.add(instance.object)
+      if (instance.props.attach) {
+        attach(instance.parent, instance)
+      } else if (instance.object.isObject3D && instance.parent.object.isObject3D) {
+        instance.parent.object.add(instance.object)
+      }
     }
 
     // Apply props to object
