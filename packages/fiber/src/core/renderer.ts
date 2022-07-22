@@ -29,7 +29,6 @@ export interface Instance {
   children: Instance[]
   props: InstanceProps
   object: any | null
-
   eventCount: number
   handlers: Partial<EventHandlers>
   attach?: AttachType
@@ -43,8 +42,8 @@ interface HostConfig {
   instance: Instance
   textInstance: never
   suspenseInstance: Instance
-  hydratableInstance: Instance
-  publicInstance: any
+  hydratableInstance: never
+  publicInstance: Instance['object']
   hostContext: never
   updatePayload: null | [true] | [false, InstanceProps]
   childSet: never
@@ -66,7 +65,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     type: string,
     { args = [], object = null, ...props }: InstanceProps,
     root: UseBoundStore<RootState>,
-  ): Instance {
+  ): HostConfig['instance'] {
     const name = `${type[0].toUpperCase()}${type.slice(1)}`
     const target = catalogue[name]
 
@@ -75,7 +74,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
     if (type === 'primitive' && !object) throw `Primitives without 'object' are invalid!`
 
-    const instance: Instance = {
+    const instance: HostConfig['instance'] = {
       root,
       type,
       parent: null,
@@ -107,8 +106,14 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
   }
 
-  function removeRecursive(array: HostConfig['instance'][], parent: HostConfig['instance'], dispose: boolean = false) {
-    if (array) [...array].forEach((child) => removeChild(parent, child, dispose))
+  function removeRecursive(
+    children: HostConfig['instance'][],
+    parent: HostConfig['instance'],
+    dispose: boolean = false,
+  ) {
+    for (const child of children) {
+      removeChild(parent, child, dispose)
+    }
   }
 
   function removeChild(parent: HostConfig['instance'], child: HostConfig['instance'], dispose?: boolean) {
@@ -157,7 +162,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     if (dispose === undefined) invalidateInstance(child)
   }
 
-  function commitInstance(instance: Instance) {
+  function commitInstance(instance: HostConfig['instance']) {
     // Don't handle commit for containers
     if (!instance.parent) return
 
@@ -186,8 +191,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       }
     }
 
-    // Append to container
-    if (!instance.parent.parent && instance.parent.object) {
+    // Append to parent
+    if (instance.parent.object) {
       if (instance.props.attach) {
         attach(instance.parent, instance)
       } else if (instance.object.isObject3D && instance.parent.object.isObject3D) {
