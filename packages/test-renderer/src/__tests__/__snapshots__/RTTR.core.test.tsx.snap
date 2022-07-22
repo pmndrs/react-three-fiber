@@ -1,9 +1,53 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`ReactThreeTestRenderer Core can render a composite component & correctly build simple graph 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [],
+        "name": "",
+        "type": undefined,
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": Array [],
+            "name": "",
+            "type": "BoxGeometry",
+          },
+          Object {
+            "children": Array [],
+            "name": "",
+            "type": "MeshBasicMaterial",
+          },
+        ],
+        "name": "",
+        "type": "Mesh",
+      },
+    ],
+    "name": "",
+    "type": "Group",
+  },
+]
+`;
+
 exports[`ReactThreeTestRenderer Core correctly builds a tree 1`] = `
 Array [
   Object {
     "children": Array [
+      Object {
+        "children": Array [],
+        "props": Object {
+          "args": Array [
+            0,
+            0,
+            255,
+          ],
+          "attach": "background",
+        },
+        "type": "color",
+      },
       Object {
         "children": Array [
           Object {
@@ -32,6 +76,7 @@ Array [
                     -1,
                     1,
                   ],
+                  "attach": "attributes-position",
                   "count": 6,
                   "itemSize": 3,
                 },
@@ -40,6 +85,34 @@ Array [
             ],
             "props": Object {
               "args": Array [],
+              "attach": "geometry",
+              "children": <bufferAttribute
+                array={
+                  Float32Array [
+                    -1,
+                    -1,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    -1,
+                    -1,
+                    1,
+                  ]
+                }
+                attach="attributes-position"
+                count={6}
+                itemSize={3}
+              />,
             },
             "type": "bufferGeometry",
           },
@@ -47,6 +120,7 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
               "color": "hotpink",
             },
             "type": "meshBasicMaterial",
@@ -54,23 +128,62 @@ Array [
         ],
         "props": Object {
           "args": Array [],
-        },
-        "type": "mesh",
-      },
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
-            0,
-            0,
-            255,
+          "children": Array [
+            <bufferGeometry
+              attach="geometry"
+            >
+              <bufferAttribute
+                array={
+                  Float32Array [
+                    -1,
+                    -1,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    -1,
+                    1,
+                    1,
+                    -1,
+                    -1,
+                    1,
+                  ]
+                }
+                attach="attributes-position"
+                count={6}
+                itemSize={3}
+              />
+            </bufferGeometry>,
+            <meshBasicMaterial
+              attach="material"
+              color="hotpink"
+            />,
           ],
         },
-        "type": "color",
+        "type": "mesh",
       },
     ],
     "props": Object {
       "args": Array [],
+      "children": Array [
+        <Child
+          col={
+            Array [
+              0,
+              0,
+              255,
+            ]
+          }
+        />,
+        <Mesh />,
+        <Null />,
+      ],
       "position": Array [
         1,
         2,
@@ -78,6 +191,92 @@ Array [
       ],
     },
     "type": "group",
+  },
+]
+`;
+
+exports[`ReactThreeTestRenderer Core exposes the instance 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [],
+        "props": Object {
+          "args": Array [
+            2,
+            2,
+          ],
+          "attach": "geometry",
+        },
+        "type": "boxGeometry",
+      },
+      Object {
+        "children": Array [],
+        "props": Object {
+          "args": Array [],
+          "attach": "material",
+        },
+        "type": "meshBasicMaterial",
+      },
+    ],
+    "props": Object {
+      "args": Array [],
+      "children": Array [
+        <boxGeometry
+          args={
+            Array [
+              2,
+              2,
+            ]
+          }
+        />,
+        <meshBasicMaterial />,
+      ],
+    },
+    "type": "mesh",
+  },
+]
+`;
+
+exports[`ReactThreeTestRenderer Core exposes the instance 2`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [],
+        "props": Object {
+          "args": Array [
+            2,
+            2,
+          ],
+          "attach": "geometry",
+        },
+        "type": "boxGeometry",
+      },
+      Object {
+        "children": Array [],
+        "props": Object {
+          "args": Array [],
+          "attach": "material",
+        },
+        "type": "meshStandardMaterial",
+      },
+    ],
+    "props": Object {
+      "args": Array [],
+      "children": Array [
+        <boxGeometry
+          args={
+            Array [
+              2,
+              2,
+            ]
+          }
+        />,
+        <meshBasicMaterial />,
+      ],
+    },
+    "type": "mesh",
   },
 ]
 `;
@@ -94,12 +293,23 @@ Array [
             0,
             0,
           ],
+          "attach": "background",
         },
         "type": "color",
       },
     ],
     "props": Object {
       "args": Array [],
+      "children": <color
+        args={
+          Array [
+            0,
+            0,
+            0,
+          ]
+        }
+        attach="background"
+      />,
     },
     "type": "group",
   },
@@ -113,12 +323,23 @@ Array [
             0,
             255,
           ],
+          "attach": "background",
         },
         "type": "color",
       },
     ],
     "props": Object {
       "args": Array [],
+      "children": <color
+        args={
+          Array [
+            0,
+            0,
+            255,
+          ]
+        }
+        attach="background"
+      />,
     },
     "type": "group",
   },
@@ -132,10 +353,33 @@ Array [
             0,
             0,
           ],
+          "attach": "background",
         },
         "type": "color",
       },
     ],
+    "props": Object {
+      "args": Array [],
+      "children": <color
+        args={
+          Array [
+            255,
+            0,
+            0,
+          ]
+        }
+        attach="background"
+      />,
+    },
+    "type": "group",
+  },
+]
+`;
+
+exports[`ReactThreeTestRenderer Core toTree() handles nested Fragments 1`] = `
+Array [
+  Object {
+    "children": Array [],
     "props": Object {
       "args": Array [],
     },
@@ -157,6 +401,7 @@ Array [
                 2,
                 2,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -164,12 +409,24 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  2,
+                  2,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
           "position-z": 12,
         },
         "type": "mesh",
@@ -183,6 +440,7 @@ Array [
                 4,
                 4,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -190,12 +448,24 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  4,
+                  4,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
           "position-y": 12,
         },
         "type": "mesh",
@@ -209,6 +479,7 @@ Array [
                 6,
                 6,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -216,12 +487,24 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  6,
+                  6,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
           "position-x": 12,
         },
         "type": "mesh",
@@ -229,6 +512,47 @@ Array [
     ],
     "props": Object {
       "args": Array [],
+      "children": Array [
+        <mesh
+          position-z={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                2,
+                2,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+        <mesh
+          position-y={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                4,
+                4,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+        <mesh
+          position-x={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                6,
+                6,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+      ],
     },
     "type": "group",
   },
@@ -245,9 +569,10 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [
-                6,
-                6,
+                2,
+                2,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -255,13 +580,25 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
-          "rotation-x": 1,
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  2,
+                  2,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
+          "position-z": 12,
         },
         "type": "mesh",
       },
@@ -274,6 +611,7 @@ Array [
                 4,
                 4,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -281,12 +619,24 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  4,
+                  4,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
           "position-y": 12,
         },
         "type": "mesh",
@@ -297,9 +647,10 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [
-                2,
-                2,
+                6,
+                6,
               ],
+              "attach": "geometry",
             },
             "type": "boxGeometry",
           },
@@ -307,12 +658,24 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [],
+              "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
           "args": Array [],
+          "children": Array [
+            <boxGeometry
+              args={
+                Array [
+                  6,
+                  6,
+                ]
+              }
+            />,
+            <meshBasicMaterial />,
+          ],
           "position-x": 12,
         },
         "type": "mesh",
@@ -320,6 +683,47 @@ Array [
     ],
     "props": Object {
       "args": Array [],
+      "children": Array [
+        <mesh
+          position-z={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                2,
+                2,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+        <mesh
+          position-y={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                4,
+                4,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+        <mesh
+          position-x={12}
+        >
+          <boxGeometry
+            args={
+              Array [
+                6,
+                6,
+              ]
+            }
+          />
+          <meshBasicMaterial />
+        </mesh>,
+      ],
     },
     "type": "group",
   },
