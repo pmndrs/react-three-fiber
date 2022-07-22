@@ -38,34 +38,24 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
-  const scene = (_store.getState().scene as any).__r3f as MockInstance<THREE.Scene>
+  const _scene = (_store.getState().scene as any).__r3f as MockInstance<THREE.Scene>
 
   return {
-    scene: wrapFiber(scene),
+    scene: wrapFiber(_scene),
     async unmount() {
       await act(async () => {
         _root.unmount()
       })
     },
     getInstance() {
-      // this is our root
-      const fiber = mockRoots.get(canvas)?.fiber
-      const current = fiber?.current?.child?.child?.child?.child
-      if (!current) return null
+      // Bail if canvas is unmounted
+      if (!mockRoots.has(canvas)) return null
 
-      /**
-       * we wrap our child in a Provider component
-       * and context.Provider, so do a little
-       * artificial dive to get round this and
-       * pass context.Provider as if it was the
-       * actual react root
-       */
-      const root = { current }
+      // Traverse fiber nodes for R3F root
+      let root = { current: mockRoots.get(canvas)!.fiber.current }
+      while (root.current.stateNode !== _scene) root.current = root.current.child
 
-      /**
-       * so this actually returns the instance
-       * the user has passed through as a Fiber
-       */
+      // Return R3F instance from root
       return reconciler.getPublicRootInstance(root)
     },
     async update(newElement: React.ReactNode) {
@@ -76,10 +66,10 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       })
     },
     toTree() {
-      return toTree(scene)
+      return toTree(_scene)
     },
     toGraph() {
-      return toGraph(scene)
+      return toGraph(_scene)
     },
     fireEvent: createEventFirer(act, _store),
     async advanceFrames(frames: number, delta: number | number[] = 1) {
