@@ -569,8 +569,8 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [
-                2,
-                2,
+                6,
+                6,
               ],
               "attach": "geometry",
             },
@@ -591,14 +591,14 @@ Array [
             <boxGeometry
               args={
                 Array [
-                  2,
-                  2,
+                  6,
+                  6,
                 ]
               }
             />,
             <meshBasicMaterial />,
           ],
-          "position-z": 12,
+          "rotation-x": 1,
         },
         "type": "mesh",
       },
@@ -646,21 +646,21 @@ Array [
           Object {
             "children": Array [],
             "props": Object {
-              "args": Array [
-                6,
-                6,
-              ],
-              "attach": "geometry",
-            },
-            "type": "boxGeometry",
-          },
-          Object {
-            "children": Array [],
-            "props": Object {
               "args": Array [],
               "attach": "material",
             },
             "type": "meshBasicMaterial",
+          },
+          Object {
+            "children": Array [],
+            "props": Object {
+              "args": Array [
+                2,
+                2,
+              ],
+              "attach": "geometry",
+            },
+            "type": "boxGeometry",
           },
         ],
         "props": Object {

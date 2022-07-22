@@ -69,13 +69,11 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
       return reconciler.getPublicRootInstance(root)
     },
     async update(newElement: React.ReactNode) {
-      const fiber = mockRoots.get(canvas)?.fiber
-      if (fiber) {
-        await act(async () => {
-          reconciler.updateContainer(newElement, fiber, null, () => null)
-        })
-      }
-      return
+      if (!mockRoots.has(canvas)) return console.warn('RTTR: attempted to update an unmounted root!')
+
+      await act(async () => {
+        _root.render(newElement)
+      })
     },
     toTree() {
       return toTree(scene)
