@@ -116,8 +116,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
 
-    if (child.props.attach) detach(parent, child)
-    else if (child.object.isObject3D && parent.object.isObject3D) {
+    if (child.props.attach) {
+      detach(parent, child)
+    } else if (child.object.isObject3D && parent.object.isObject3D) {
       parent.object.remove(child.object)
       removeInteractivity(child.root, child.object as unknown as THREE.Object3D)
     }
@@ -286,14 +287,14 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     insertInContainerBefore: () => {},
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext) => parentHostContext,
-    prepareUpdate(instance, type, oldProps, newProps) {
+    prepareUpdate(instance, _type, oldProps, newProps) {
       // Reconstruct primitives if object prop changes
-      if (type === 'primitive' && oldProps.object !== newProps.object) return [true]
+      if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
       // Reconstruct elements if args change
       if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
 
       // Create a diff-set, flag if there are any changes
-      const changedProps = diffProps(instance, newProps, oldProps, true)
+      const changedProps = diffProps(newProps, oldProps, true)
       if (Object.keys(changedProps).length) return [false, changedProps]
 
       // Otherwise do not touch the instance
@@ -303,9 +304,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       const [reconstruct, changedProps] = diff!
 
       // Reconstruct when args or <primitive object={...} have changes
-      if (reconstruct) switchInstance(instance, type, newProps, fiber)
+      if (reconstruct) return switchInstance(instance, type, newProps, fiber)
+
       // Otherwise just overwrite props
-      else applyProps(instance.object, changedProps)
+      Object.assign(instance.props, newProps)
+      applyProps(instance.object, changedProps)
     },
     finalizeInitialChildren: () => true,
     commitMount: commitInstance,

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { EventHandlers } from './events'
-import { AttachType, Instance, InstanceProps } from './renderer'
+import { Instance, InstanceProps } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -177,24 +177,26 @@ export function detach(parent: Instance, child: Instance) {
 }
 
 const DEFAULT = '__default'
-const REACT_RESERVED_PROPS = ['children', 'key', 'ref']
-const INSTANCE_RESERVED_PROPS = ['args', 'object', 'dispose', 'attach']
+const RESERVED_PROPS = [
+  // React internal props
+  'children',
+  'key',
+  'ref',
+  // Instance props
+  'args',
+  'dispose',
+  'attach',
+  // 'object', -- internal to primitives
+]
 
 // This function prepares a set of changes to be applied to the instance
-export function diffProps(
-  instance: Instance,
-  newProps: InstanceProps,
-  oldProps: InstanceProps,
-  remove = false,
-): InstanceProps {
+export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remove = false): InstanceProps {
   const changedProps: InstanceProps = {}
 
   // Sort through props
   for (const key in newProps) {
     // Skip reserved keys
-    if (REACT_RESERVED_PROPS.includes(key as typeof REACT_RESERVED_PROPS[number])) continue
-    // Skip primitives
-    if (instance.type === 'primitive' && key === 'object') continue
+    if (RESERVED_PROPS.includes(key)) continue
     // Skip if props match
     if (is.equ(newProps[key], oldProps[key])) continue
 
@@ -205,7 +207,7 @@ export function diffProps(
   // Catch removed props, prepend them so they can be reset or removed
   if (remove) {
     for (const key in oldProps) {
-      if (REACT_RESERVED_PROPS.includes(key)) continue
+      if (RESERVED_PROPS.includes(key)) continue
       else if (!newProps.hasOwnProperty(key)) changedProps[key] = DEFAULT + 'remove'
     }
   }
@@ -214,20 +216,16 @@ export function diffProps(
 }
 
 // This function applies a set of changes to the instance
-export function applyProps(object: any, newProps: any, oldProps?: any) {
+export function applyProps(object: any, props: any) {
   const instance = object.__r3f as Instance | undefined
   const rootState = instance?.root.getState()
   const prevHandlers = instance?.eventCount
 
-  for (const prop in newProps) {
-    let value = newProps[prop]
+  for (const prop in props) {
+    let value = props[prop]
 
     // Don't mutate reserved keys
-    if (REACT_RESERVED_PROPS.includes(prop as typeof REACT_RESERVED_PROPS[number])) continue
-    if (INSTANCE_RESERVED_PROPS.includes(prop as typeof INSTANCE_RESERVED_PROPS[number])) continue
-
-    // Don't mutate unchanged keys
-    if (newProps[prop] === oldProps?.[prop]) continue
+    if (RESERVED_PROPS.includes(prop)) continue
 
     // Deal with pointer events ...
     if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
