@@ -190,18 +190,13 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     if (!instance.parent.parent) {
       if (instance.props.attach) {
         attach(instance.parent, instance)
-      } else if (instance.object.isObject3D && instance.parent.object.isObject3D) {
+      } else if (instance.object.isObject3D && instance.parent.object?.isObject3D) {
         instance.parent.object.add(instance.object)
       }
     }
 
     // Apply props to object
     applyProps(instance.object, instance.props)
-
-    // Add interactivity
-    if (instance.object.raycast && instance.handlers && instance.eventCount) {
-      instance.root.getState().internal.interaction.push(instance.object as unknown as THREE.Object3D)
-    }
 
     invalidateInstance(instance)
   }
