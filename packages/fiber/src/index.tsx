@@ -1,7 +1,7 @@
 export * from './three-types'
 import * as ReactThreeFiber from './three-types'
 export { ReactThreeFiber }
-export type { Instance, InstanceProps } from './core/renderer'
+export type { Instance } from './core/renderer'
 export type {
   Intersection,
   Subscription,
