@@ -344,10 +344,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       invalidateInstance(instance)
     },
     createTextInstance: () => {
-      throw new Error('Text is not allowed in the R3F tree.')
+      throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
     },
     hideTextInstance: () => {
-      throw new Error('Text is not allowed in the R3F tree.')
+      throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
     },
     unhideTextInstance: () => {},
     // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874

@@ -8,12 +8,19 @@ export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect on the client.
-const isSSR =
-  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
+/**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+export const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
 
 export function useMutableCallback<T>(fn: T) {
   const ref = React.useRef<T>(fn)
