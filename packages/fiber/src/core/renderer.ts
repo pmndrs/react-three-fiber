@@ -207,17 +207,16 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   }
 
   function switchInstance(
-    instance: HostConfig['instance'],
+    oldInstance: HostConfig['instance'],
     type: HostConfig['type'],
     props: HostConfig['props'],
     fiber: Reconciler.Fiber,
   ) {
     // Create a new instance
-    const newInstance = createInstance(type, props, instance.root)
+    const newInstance = createInstance(type, props, oldInstance.root)
 
-    // Replace instance in scene-graph
-    const parent = instance.parent!
-    removeChild(parent, instance)
+    // Link up new instance
+    const parent = oldInstance.parent!
     appendChild(parent, newInstance)
 
     // Commit new instance object
@@ -230,16 +229,20 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
 
     // Move children to new instance
-    if (instance.type !== 'primitive') {
-      for (const child of instance.children) {
-        appendChild(newInstance, child)
-        if (child.props.attach) {
-          detach(instance, child)
-          attach(newInstance, child)
-        }
+    for (const child of oldInstance.children) {
+      appendChild(newInstance, child)
+      if (child.props.attach) {
+        detach(oldInstance, child)
+        attach(newInstance, child)
+      } else if (child.object.isObject3D && oldInstance.object.isObject3D) {
+        oldInstance.object.remove(child.object)
+        newInstance.object.add(child.object)
       }
-      instance.children = []
     }
+
+    // Cleanup old instance
+    oldInstance.children = []
+    removeChild(parent, oldInstance)
 
     // This evil hack switches the react-internal fiber node
     // https://github.com/facebook/react/issues/14983
