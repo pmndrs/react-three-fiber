@@ -1,5 +1,107 @@
 # @react-three/fiber
 
+## 8.2.1
+
+### Patch Changes
+
+- 25e35a1: fix: prefer useLayoutEffect in react-native
+
+## 8.2.0
+
+### Minor Changes
+
+- 9770d7d: feat: expose ThreeElements interface for JSX elements
+
+## 8.1.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
+## 8.0.27
+
+### Patch Changes
+
+- 7940995: fix: resume on xrsession end, export internal events
+
+## 8.0.26
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+
+## 8.0.25
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+
+## 8.0.24
+
+### Patch Changes
+
+- ee8e785: fix: attach timings
+
+## 8.0.23
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+
+## 8.0.22
+
+### Patch Changes
+
+- 419e854: fix: always prepare primitives
+
+## 8.0.21
+
+### Patch Changes
+
+- 3098b9b: fix: resizing in worker contexts, copy over attachments on reconstruct
+
+## 8.0.20
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+
+## 8.0.19
+
+### Patch Changes
+
+- 360b45a: fix: handle attach on reconstruct
+
+## 8.0.18
+
+### Patch Changes
+
+- be567c1: fix: suspense attach and three compat in webpack
+
+## 8.0.17
+
+### Patch Changes
+
+- 9e3369e: fix dom resize, improve native tree shaking
+
+## 8.0.16
+
+### Patch Changes
+
+- 669c45c: correctly type useLoader results
+
+## 8.0.15
+
+### Patch Changes
+
+- c4715d5f: allow invalidate to preempt more than 1 frame
+
+## 8.0.14
+
+### Patch Changes
+
+- 5559a119: Add support for recoverable errors
+
 ## 8.0.13
 
 ### Patch Changes

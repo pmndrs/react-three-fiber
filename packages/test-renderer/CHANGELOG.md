@@ -1,5 +1,64 @@
 # @react-three/test-renderer
 
+## 9.0.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
+### Patch Changes
+
+- Updated dependencies [8d0f708c]
+  - @react-three/fiber@8.1.0
+
+## 8.0.16
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+- Updated dependencies [7b6df9df]
+  - @react-three/fiber@8.0.26
+
+## 8.0.15
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+- Updated dependencies [b7cd0f42]
+  - @react-three/fiber@8.0.25
+
+## 8.0.14
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+- Updated dependencies [29d03c64]
+  - @react-three/fiber@8.0.23
+
+## 8.0.13
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+- Updated dependencies [4c87bce]
+  - @react-three/fiber@8.0.20
+
+## 8.0.12
+
+### Patch Changes
+
+- c4715d5f: allow invalidate to preempt more than 1 frame
+- Updated dependencies [c4715d5f]
+  - @react-three/fiber@8.0.15
+
+## 8.0.11
+
+### Patch Changes
+
+- 5559a119: Add support for recoverable errors
+- Updated dependencies [5559a119]
+  - @react-three/fiber@8.0.14
+
 ## 8.0.10
 
 ### Patch Changes

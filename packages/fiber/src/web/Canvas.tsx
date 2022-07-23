@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import mergeRefs from 'react-merge-refs'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
@@ -51,10 +50,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
 
-  const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
-  const meshRef = React.useRef<HTMLDivElement>(null!)
+  const divRef = React.useRef<HTMLDivElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
+  React.useImperativeHandle(forwardedRef, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
@@ -67,7 +67,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
 
-  if (width > 0 && height > 0 && canvas) {
+  if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
     root.current.configure({
       gl,
@@ -82,11 +82,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       performance,
       raycaster,
       camera,
-      size: { width, height },
+      size: containerRect,
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
-        state.events.connect?.(meshRef.current)
+        state.events.connect?.(divRef.current)
         onCreated?.(state)
       },
     })
@@ -107,12 +107,14 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   return (
     <div
-      ref={mergeRefs([meshRef, containerRef])}
+      ref={divRef}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
       {...props}>
-      <canvas ref={mergeRefs([canvasRef, forwardedRef])} style={{ display: 'block' }}>
-        {fallback}
-      </canvas>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+        <canvas ref={canvasRef} style={{ display: 'block' }}>
+          {fallback}
+        </canvas>
+      </div>
     </div>
   )
 })

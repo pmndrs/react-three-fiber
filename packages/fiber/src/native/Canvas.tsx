@@ -1,12 +1,12 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import mergeRefs from 'react-merge-refs'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
-import { RootState } from '../core/store'
+import { RootState, Size } from '../core/store'
+import { polyfills } from './polyfills'
 
 export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -44,9 +44,10 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
 
-    const [{ width, height }, setSize] = React.useState({ width: 0, height: 0 })
+    const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
+    React.useImperativeHandle(forwardedRef, () => viewRef.current)
 
     const handlePointerMissed = useMutableCallback(onPointerMissed)
     const [block, setBlock] = React.useState<SetBlock>(false)
@@ -60,11 +61,16 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<Element>>(null!)
 
+    // Inject and cleanup RN polyfills if able
+    React.useLayoutEffect(() => polyfills(), [])
+
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
-      const { width, height } = e.nativeEvent.layout
-      setSize({ width, height })
+      const { width, height, x, y } = e.nativeEvent.layout
+      setSize({ width, height, top: y, left: x })
     }, [])
 
+    // Called on context create or swap
+    // https://github.com/pmndrs/react-three-fiber/pull/2297
     const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
       const canvasShim = {
         width: context.drawingBufferWidth,
@@ -76,12 +82,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         getContext: (() => context) as any,
       } as HTMLCanvasElement
 
+      root.current = createRoot<Element>(canvasShim)
       setCanvas(canvasShim)
     }, [])
 
-    if (width > 0 && height > 0 && canvas) {
-      if (!root.current) root.current = createRoot<Element>(canvas)
-
+    if (root.current && width > 0 && height > 0) {
       root.current.configure({
         gl,
         events,
@@ -97,7 +102,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         // expo-gl can only render at native dpr/resolution
         // https://github.com/expo/expo-three/issues/39
         dpr: PixelRatio.get(),
-        size: { width, height },
+        size: { width, height, top, left },
         // Pass mutable reference to onPointerMissed so it's free to update
         onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
         // Overwrite onCreated to apply RN bindings
@@ -131,12 +136,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View
-        {...props}
-        ref={mergeRefs([viewRef, forwardedRef])}
-        onLayout={onLayout}
-        style={{ flex: 1, ...style }}
-        {...bind}>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )

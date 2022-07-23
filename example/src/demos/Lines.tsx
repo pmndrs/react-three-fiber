@@ -118,8 +118,10 @@ function Controls({ children }: any) {
   const ref = useRef<OrbitControls>(null!)
   useEffect(() => {
     const current = ref.current
-    current.addEventListener('change', invalidate)
-    return () => current.removeEventListener('change', invalidate)
+    const onChange = () => invalidate()
+
+    current.addEventListener('change', onChange)
+    return () => current.removeEventListener('change', onChange)
   }, [invalidate])
 
   return (

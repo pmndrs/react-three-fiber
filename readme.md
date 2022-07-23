@@ -110,7 +110,7 @@ function Box(props: JSX.IntrinsicElements['mesh']) {
   )
 }
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById('root') as HTMLElement).render(
   <Canvas>
     <ambientLight />
     <pointLight position={[10, 10, 10]} />

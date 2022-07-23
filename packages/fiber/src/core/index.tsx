@@ -16,7 +16,7 @@ import {
   PrivateKeys,
   privateKeys,
 } from './store'
-import { createRenderer, extend, Instance, Root } from './renderer'
+import { createRenderer, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
@@ -28,6 +28,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
+  setDeep,
 } from './utils'
 import { useStore } from './hooks'
 
@@ -128,10 +129,21 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
   if (prevRoot) console.warn('R3F.createRoot should only be called once!')
 
+  // Report when an error was detected in a previous render
+  // https://github.com/pmndrs/react-three-fiber/pull/2261
+  const logRecoverableError =
+    typeof reportError === 'function'
+      ? // In modern browsers, reportError will dispatch an error event,
+        // emulating an uncaught JavaScript error.
+        reportError
+      : // In older browsers and test environments, fallback to console.error.
+        console.error
+
   // Create store
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
-  const fiber = prevFiber || reconciler.createContainer(store, ConcurrentRoot, false, null)
+  const fiber =
+    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
   // Map it
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
@@ -203,12 +215,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
         // Toggle render switching on session
         const handleSessionChange = () => {
-          const gl = store.getState().gl
-          gl.xr.enabled = gl.xr.isPresenting
-          // @ts-ignore
-          // WebXRManager's signature is incorrect.
-          // See: https://github.com/pmndrs/react-three-fiber/pull/2017#discussion_r790134505
-          gl.xr.setAnimationLoop(gl.xr.isPresenting ? handleXRFrame : null)
+          const state = store.getState()
+          state.gl.xr.enabled = state.gl.xr.isPresenting
+
+          state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
+          if (!state.gl.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager
@@ -242,9 +253,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         }
       }
 
-      // Set color management
-      if ((THREE as any).ColorManagement) {
-        ;(THREE as any).ColorManagement.legacyMode = legacy
+      // Safely set color management if available.
+      // Avoid accessing THREE.ColorManagement to play nice with older versions
+      if ('ColorManagement' in THREE) {
+        setDeep(THREE, legacy, ['ColorManagement', 'legacyMode'])
       }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
@@ -264,8 +276,19 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check pixelratio
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
-      size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
-      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height)
+      size =
+        size ||
+        (canvas.parentElement
+          ? {
+              width: canvas.parentElement.clientWidth,
+              height: canvas.parentElement.clientHeight,
+              top: canvas.parentElement.clientTop,
+              left: canvas.parentElement.clientLeft,
+            }
+          : { width: 0, height: 0, top: 0, left: 0 })
+      if (!is.equ(size, state.size, shallowLoose)) {
+        state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
+      }
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -369,7 +392,7 @@ export type InjectState = Partial<
       compute?: ComputeFunction
       connected?: any
     }
-    size?: { width: number; height: number }
+    size?: Size
   }
 >
 
@@ -494,7 +517,7 @@ function Portal({
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
-  version: '18.0.0',
+  version: React.version,
 })
 
 const act = (React as any).unstable_act

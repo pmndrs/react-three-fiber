@@ -56,17 +56,19 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     getInstance: () => {
       // this is our root
       const fiber = mockRoots.get(_fiber)?.fiber
-      const root = {
-        /**
-         * we wrap our child in a Provider component
-         * and context.Provider, so do a little
-         * artificial dive to get round this and
-         * pass context.Provider as if it was the
-         * actual react root
-         */
-        current: fiber.current.child.child,
-      }
-      if (fiber.current.child.child) {
+      const current = fiber?.current.child.child
+      if (current) {
+        const root = {
+          /**
+           * we wrap our child in a Provider component
+           * and context.Provider, so do a little
+           * artificial dive to get round this and
+           * pass context.Provider as if it was the
+           * actual react root
+           */
+          current,
+        }
+
         /**
          * so this actually returns the instance
          * the user has passed through as a Fiber

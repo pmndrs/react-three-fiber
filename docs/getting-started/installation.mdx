@@ -8,9 +8,9 @@ nav: 1
 npm install three @react-three/fiber
 ```
 
-> Fiber is compatible with React v16.8+ and works with ReactDOM and React Native.
+> Fiber is compatible with React v18.0.0+ and works with ReactDOM and React Native.
 
-Getting started with React Three Fiber is not nearly has hard as you might have thought, but various frameworks may require particular attention.
+Getting started with React Three Fiber is not nearly as hard as you might have thought, but various frameworks may require particular attention.
 
 We've put together guides for getting started with each popular framework:
 
@@ -56,13 +56,13 @@ Make sure to check out our [official next.js starter](https://github.com/pmndrs/
 
 ## Without build tools
 
-You can use React Three Fiber with browser-ready ES Modules from [skypack.dev](https://skypack.dev) and a JSX-like syntax powered by [htm](https://github.com/developit/htm).
+You can use React Three Fiber with browser-ready ES Modules from [esm.sh](https://esm.sh) and a JSX-like syntax powered by [htm](https://github.com/developit/htm).
 
 ```jsx
-import ReactDOM from 'https://cdn.skypack.dev/react-dom'
-import React, { useRef, useState } from 'https://cdn.skypack.dev/react'
-import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber'
-import htm from 'https://cdn.skypack.dev/htm'
+import ReactDOM from 'https://esm.sh/react-dom'
+import React, { useRef, useState } from 'https://esm.sh/react'
+import { Canvas, useFrame } from 'https://esm.sh/@react-three/fiber'
+import htm from 'https://esm.sh/htm'
 
 const html = htm.bind(React.createElement)
 ReactDOM.render(html`<${Canvas}>...<//>`, document.getElementById('root'))
@@ -72,10 +72,10 @@ ReactDOM.render(html`<${Canvas}>...<//>`, document.getElementById('root'))
 <summary>Full example</summary>
 
 ```jsx
-import ReactDOM from 'https://cdn.skypack.dev/react-dom'
-import React, { useRef, useState } from 'https://cdn.skypack.dev/react'
-import { Canvas, useFrame } from 'https://cdn.skypack.dev/@react-three/fiber'
-import htm from 'https://cdn.skypack.dev/htm'
+import ReactDOM from 'https://esm.sh/react-dom'
+import React, { useRef, useState } from 'https://esm.sh/react'
+import { Canvas, useFrame } from 'https://esm.sh/@react-three/fiber'
+import htm from 'https://esm.sh/htm'
 
 const html = htm.bind(React.createElement)
 
@@ -132,7 +132,7 @@ Then install dependencies (for manual installation or migration, see [expo modul
 
 ```bash
 # Automatically install & link expo modules
-npx install-expo-modules
+npx install-expo-modules@latest
 expo install expo-gl
 
 # Install NPM dependencies

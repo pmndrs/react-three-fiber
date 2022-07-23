@@ -217,7 +217,8 @@ This is also supported by all cameras that you create, be it a THREE.Perspective
 
 ```jsx
 import { PerspectiveCamera } from '@react-three/drei'
-;<Canvas>
+
+<Canvas>
   <PerspectiveCamera makeDefault manual />
 </Canvas>
 ```
@@ -287,8 +288,8 @@ Arrays must be explcit now:
 
 ```diff
 <mesh>
--  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />}
-+  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+-  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />)}
++  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />)}
 </mesh>
 ```
 

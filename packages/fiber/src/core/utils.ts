@@ -9,12 +9,19 @@ export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect on the client.
-const isSSR =
-  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
+/**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+export const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
 
 export function useMutableCallback<T>(fn: T) {
   const ref = React.useRef<T>(fn)
@@ -236,7 +243,7 @@ export function diffProps(
 // This function applies a set of changes to the instance
 export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
-  const localState = (instance?.__r3f ?? {}) as LocalState
+  const localState = (instance.__r3f ?? {}) as LocalState
   const root = localState.root
   const rootState = root?.getState?.() ?? {}
   const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
@@ -317,7 +324,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = (THREE as any).ColorManagement
+        const supportsColorManagement = 'ColorManagement' in THREE
         if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
@@ -373,4 +380,14 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     // Update matrix world since the renderer is a frame late
     camera.updateMatrixWorld()
   }
+}
+
+/**
+ * Safely sets a deeply-nested value on an object.
+ */
+export function setDeep(obj: any, value: any, keys: string[]) {
+  const key = keys.pop()!
+  const target = keys.reduce((acc, key) => acc[key], obj)
+
+  return (target[key] = value)
 }
