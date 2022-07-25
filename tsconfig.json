@@ -16,5 +16,6 @@
     "noImplicitThis": false,
     "baseUrl": "./"
   },
-  "include": ["packages/*/src/**/*"]
+  "include": ["packages/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
