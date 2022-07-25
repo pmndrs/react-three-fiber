@@ -38,9 +38,7 @@ function run(effects: Set<SubItem>, timestamp: number) {
   effects.forEach(({callback}) => callback(timestamp))
 }
 
-let subscribers: Subscription[]
-let subscription: Subscription
-function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
+function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
   // In frameloop='never' mode, clock times are updated using the provided timestamp
@@ -48,16 +46,14 @@ function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
     delta = timestamp - state.clock.elapsedTime
     state.clock.oldTime = state.clock.elapsedTime
     state.clock.elapsedTime = timestamp
+  } else {
+    delta = Math.max(Math.min(delta, state.internal.maxDelta), 0)
   }
-  // Call subscribers (useFrame)
-  subscribers = state.internal.subscribers
-  for (i = 0; i < subscribers.length; i++) {
-    subscription = subscribers[i]
-    subscription.ref.current(subscription.store.getState(), delta, frame)
+  // Call subscribers (useUpdate)
+  for (const stage of state.internal.stages) {
+    stage.frame(delta, frame)
   }
-  // Render content
-  if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
-  // Decrease frame count
+
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   return state.frameloop === 'always' ? 1 : state.internal.frames
 }
@@ -79,13 +75,14 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     // Render all roots
     roots.forEach((root) => {
       state = root.store.getState()
+
       // If the frameloop is invalidated, do not run another frame
       if (
         state.internal.active &&
         (state.frameloop === 'always' || state.internal.frames > 0) &&
         !state.gl.xr?.isPresenting
       ) {
-        repeat += render(timestamp, state)
+        repeat += update(timestamp, state)
       }
     })
 
@@ -122,8 +119,8 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     frame?: THREE.XRFrame,
   ): void {
     if (runGlobalEffects) run(globalEffects, timestamp)
-    if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
-    else render(timestamp, state, frame)
+    if (!state) roots.forEach((root) => update(timestamp, root.store.getState()))
+    else update(timestamp, state, frame)
     if (runGlobalEffects) run(globalAfterEffects, timestamp)
   }
 

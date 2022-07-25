@@ -516,4 +516,5 @@ class WebGLRenderingContext {
   getShaderInfoLog = () => ''
 }
 
-export const createWebGLContext = (canvas: HTMLCanvasElement) => new WebGLRenderingContext(canvas)
+export const createWebGLContext = (canvas: HTMLCanvasElement) =>
+  new WebGLRenderingContext(canvas) as unknown as RenderingContext

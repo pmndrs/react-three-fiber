@@ -21,10 +21,8 @@ describe('events', () => {
     })
 
     const evt = new PointerEvent('pointerdown')
-    // @ts-ignore
-    evt.offsetX = 577
-    // @ts-ignore
-    evt.offsetY = 480
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), evt)
 
@@ -47,10 +45,8 @@ describe('events', () => {
     })
 
     const evt = new MouseEvent('click')
-    //@ts-ignore
-    evt.offsetX = 0
-    //@ts-ignore
-    evt.offsetY = 0
+    Object.defineProperty(evt, 'offsetX', { get: () => 0 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 0 })
 
     fireEvent(getContainer(), evt)
 
@@ -74,24 +70,18 @@ describe('events', () => {
     })
 
     const down = new PointerEvent('pointerdown')
-    //@ts-ignore
-    down.offsetX = 577
-    //@ts-ignore
-    down.offsetY = 480
+    Object.defineProperty(down, 'offsetX', { get: () => 577 })
+    Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
-    //@ts-ignore
-    up.offsetX = 577
-    //@ts-ignore
-    up.offsetY = 480
+    Object.defineProperty(up, 'offsetX', { get: () => 577 })
+    Object.defineProperty(up, 'offsetY', { get: () => 480 })
 
     const evt = new MouseEvent('click')
-    //@ts-ignore
-    evt.offsetX = 577
-    //@ts-ignore
-    evt.offsetY = 480
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), evt)
 
@@ -117,24 +107,18 @@ describe('events', () => {
     })
 
     const down = new PointerEvent('pointerdown')
-    //@ts-ignore
-    down.offsetX = 577
-    //@ts-ignore
-    down.offsetY = 480
+    Object.defineProperty(down, 'offsetX', { get: () => 577 })
+    Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
-    //@ts-ignore
-    up.offsetX = 577
-    //@ts-ignore
-    up.offsetY = 480
+    Object.defineProperty(up, 'offsetX', { get: () => 577 })
+    Object.defineProperty(up, 'offsetY', { get: () => 480 })
 
     const evt = new MouseEvent('click')
-    //@ts-ignore
-    evt.offsetX = 577
-    //@ts-ignore
-    evt.offsetY = 480
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), evt)
 
@@ -157,10 +141,8 @@ describe('events', () => {
     })
 
     const evt = new MouseEvent('click')
-    //@ts-ignore
-    evt.offsetX = 0
-    //@ts-ignore
-    evt.offsetY = 0
+    Object.defineProperty(evt, 'offsetX', { get: () => 0 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 0 })
 
     fireEvent(getContainer(), evt)
     expect(handleMissed).toHaveBeenCalledWith(evt)
@@ -188,10 +170,8 @@ describe('events', () => {
     })
 
     const evt1 = new PointerEvent('pointermove')
-    //@ts-ignore
-    evt1.offsetX = 577
-    //@ts-ignore
-    evt1.offsetY = 480
+    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), evt1)
 
@@ -200,10 +180,8 @@ describe('events', () => {
     expect(handlePointerEnter).toHaveBeenCalled()
 
     const evt2 = new PointerEvent('pointermove')
-    //@ts-ignore
-    evt2.offsetX = 0
-    //@ts-ignore
-    evt2.offsetY = 0
+    Object.defineProperty(evt2, 'offsetX', { get: () => 0 })
+    Object.defineProperty(evt2, 'offsetY', { get: () => 0 })
 
     fireEvent(getContainer(), evt2)
 
@@ -232,20 +210,16 @@ describe('events', () => {
     })
 
     const evt1 = new PointerEvent('pointermove')
-    //@ts-ignore
-    evt1.offsetX = 577
-    //@ts-ignore
-    evt1.offsetY = 480
+    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), evt1)
 
     expect(handlePointerEnter).toHaveBeenCalled()
 
     const evt2 = new PointerEvent('pointermove')
-    //@ts-ignore
-    evt2.offsetX = 0
-    //@ts-ignore
-    evt2.offsetY = 0
+    Object.defineProperty(evt2, 'offsetX', { get: () => 0 })
+    Object.defineProperty(evt2, 'offsetY', { get: () => 0 })
 
     fireEvent(getContainer(), evt2)
 
@@ -272,26 +246,20 @@ describe('events', () => {
     })
 
     const down = new PointerEvent('pointerdown')
-    //@ts-ignore
-    down.offsetX = 577
-    //@ts-ignore
-    down.offsetY = 480
+    Object.defineProperty(down, 'offsetX', { get: () => 577 })
+    Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), down)
 
     const up = new PointerEvent('pointerup')
-    //@ts-ignore
-    up.offsetX = 577
-    //@ts-ignore
-    up.offsetY = 480
+    Object.defineProperty(up, 'offsetX', { get: () => 577 })
+    Object.defineProperty(up, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), up)
 
     const event = new MouseEvent('click')
-    //@ts-ignore
-    event.offsetX = 577
-    //@ts-ignore
-    event.offsetY = 480
+    Object.defineProperty(event, 'offsetX', { get: () => 577 })
+    Object.defineProperty(event, 'offsetY', { get: () => 480 })
 
     fireEvent(getContainer(), event)
 
@@ -332,10 +300,8 @@ describe('events', () => {
       canvas.releasePointerCapture = jest.fn()
 
       const down = new PointerEvent('pointerdown', { pointerId })
-      //@ts-ignore
-      down.offsetX = 577
-      //@ts-ignore
-      down.offsetY = 480
+      Object.defineProperty(down, 'offsetX', { get: () => 577 })
+      Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
       await act(async () => canvas.dispatchEvent(down))
@@ -351,10 +317,8 @@ describe('events', () => {
       expect(canvas.releasePointerCapture).toHaveBeenCalledWith(pointerId)
 
       const move = new PointerEvent('pointerdown', { pointerId })
-      //@ts-ignore
-      move.offsetX = 577
-      //@ts-ignore
-      move.offsetY = 480
+      Object.defineProperty(move, 'offsetX', { get: () => 577 })
+      Object.defineProperty(move, 'offsetY', { get: () => 480 })
 
       await act(async () => canvas.dispatchEvent(move))
 
