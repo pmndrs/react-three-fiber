@@ -51,7 +51,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
 
-  const [containerRef, { width, height }] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
@@ -68,7 +68,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
 
   const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
 
-  if (width > 0 && height > 0 && canvas) {
+  if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
     if (!root.current) root.current = createRoot<HTMLElement>(canvas)
     root.current.configure({
       gl,
@@ -84,7 +84,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       raycaster,
       camera,
       stages,
-      size: { width, height },
+      size: containerRect,
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {

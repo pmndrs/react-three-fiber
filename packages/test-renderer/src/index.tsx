@@ -20,17 +20,29 @@ extend(THREE)
 
 const act = _act as unknown as Act
 
+type X =
+  | ((contextId: 'webgl', options?: WebGLContextAttributes) => WebGLRenderingContext | null)
+  | ((contextId: 'webgl2', options?: WebGLContextAttributes) => WebGL2RenderingContext | null)
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas({
     width: options?.width,
     height: options?.height,
     beforeReturn: (canvas) => {
-      //@ts-ignore
-      canvas.getContext = (type: string) => {
-        if (type === 'webgl' || type === 'webgl2') {
+      function getContext(contextId: '2d', options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D | null
+      function getContext(
+        contextId: 'bitmaprenderer',
+        options?: ImageBitmapRenderingContextSettings,
+      ): ImageBitmapRenderingContext | null
+      function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
+      function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
+      function getContext(contextId: string): RenderingContext | null {
+        if (contextId === 'webgl' || contextId === 'webgl2') {
           return createWebGLContext(canvas)
         }
+        return null
       }
+
+      canvas.getContext = getContext
     },
   })
 

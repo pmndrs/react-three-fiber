@@ -1,5 +1,23 @@
 # @react-three/fiber
 
+## 8.2.1
+
+### Patch Changes
+
+- 25e35a1: fix: prefer useLayoutEffect in react-native
+
+## 8.2.0
+
+### Minor Changes
+
+- 9770d7d: feat: expose ThreeElements interface for JSX elements
+
+## 8.1.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
 ## 8.0.27
 
 ### Patch Changes

@@ -223,7 +223,7 @@ You can get the loading status from a callback you provide as the fourth argumen
 ```jsx
 useLoader(loader, url, extensions, xhr => {
   console.log((xhr.loaded / xhr.total * 100) + '% loaded')
-}
+})
 ```
 
 ### Special treatment of GLTFLoaders and all loaders that return a scene prop

@@ -11,7 +11,7 @@ import { polyfills } from '../../src/native/polyfills'
 
 polyfills()
 
-const resolvers = []
+const resolvers: (() => void)[] = []
 
 const { waitFor } = asyncUtils(act, (resolver: () => void) => {
   resolvers.push(resolver)
@@ -23,25 +23,39 @@ describe('useLoader', () => {
   beforeEach(() => {
     canvas = createCanvas({
       beforeReturn: (canvas) => {
-        //@ts-ignore
-        canvas.getContext = (type: string) => {
-          if (type === 'webgl' || type === 'webgl2') {
+        function getContext(
+          contextId: '2d',
+          options?: CanvasRenderingContext2DSettings,
+        ): CanvasRenderingContext2D | null
+        function getContext(
+          contextId: 'bitmaprenderer',
+          options?: ImageBitmapRenderingContextSettings,
+        ): ImageBitmapRenderingContext | null
+        function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
+        function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
+        function getContext(contextId: string): RenderingContext | null {
+          if (contextId === 'webgl' || contextId === 'webgl2') {
             return createWebGLContext(canvas)
           }
+          return null
         }
+
+        canvas.getContext = getContext
       },
     })
 
     // Emulate GLTFLoader
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest.fn().mockImplementation((input, onLoad) => {
-        onLoad(true)
-      }),
-      parse: jest.fn().mockImplementation((data, _, onLoad) => {
-        onLoad(true)
-      }),
-    }))
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest.fn().mockImplementation((_input, onLoad) => {
+            onLoad(true)
+          }),
+          parse: jest.fn().mockImplementation((_data, _, onLoad) => {
+            onLoad(true)
+          }),
+        } as unknown as Stdlib.GLTFLoader),
+    )
   })
 
   it('produces data textures for TextureLoader', async () => {

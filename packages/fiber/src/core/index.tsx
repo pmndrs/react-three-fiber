@@ -317,8 +317,19 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check pixelratio
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
-      size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
-      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height, size.updateStyle)
+      size =
+        size ||
+        (canvas.parentElement
+          ? {
+              width: canvas.parentElement.clientWidth,
+              height: canvas.parentElement.clientHeight,
+              top: canvas.parentElement.clientTop,
+              left: canvas.parentElement.clientLeft,
+            }
+          : { width: 0, height: 0, top: 0, left: 0 })
+      if (!is.equ(size, state.size, shallowLoose)) {
+        state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
+      }
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -425,7 +436,7 @@ export type InjectState = Partial<
       compute?: ComputeFunction
       connected?: any
     }
-    size?: { width: number; height: number }
+    size?: Size
   }
 >
 

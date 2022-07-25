@@ -12,12 +12,17 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
+  Overwrite,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
+
+interface ObjectWithBackground extends THREE.Object3D {
+  background: THREE.Color
+}
 
 /* This class is used for one of the tests */
 class HasObject3dMember extends THREE.Object3D {
@@ -38,13 +43,23 @@ class HasObject3dMethods extends THREE.Object3D {
   }
 }
 
-extend({ HasObject3dMember, HasObject3dMethods })
+class MyColor extends THREE.Color {
+  constructor(col: number) {
+    super(col)
+  }
+}
+
+class MyGroup extends THREE.Group {}
+
+extend({ HasObject3dMember, HasObject3dMethods, MyGroup })
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
       hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
+      myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
+      myGroup: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
     }
   }
 }
@@ -62,12 +77,24 @@ describe('renderer', () => {
   beforeEach(() => {
     const canvas = createCanvas({
       beforeReturn: (canvas) => {
-        //@ts-ignore
-        canvas.getContext = (type: string) => {
-          if (type === 'webgl' || type === 'webgl2') {
+        function getContext(
+          contextId: '2d',
+          options?: CanvasRenderingContext2DSettings,
+        ): CanvasRenderingContext2D | null
+        function getContext(
+          contextId: 'bitmaprenderer',
+          options?: ImageBitmapRenderingContextSettings,
+        ): ImageBitmapRenderingContext | null
+        function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
+        function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
+        function getContext(contextId: string): RenderingContext | null {
+          if (contextId === 'webgl' || contextId === 'webgl2') {
             return createWebGLContext(canvas)
           }
+          return null
         }
+
+        canvas.getContext = getContext
       },
     })
     root = createRoot(canvas)
@@ -137,8 +164,7 @@ describe('renderer', () => {
     })
 
     expect(scene.children[0].type).toEqual('Group')
-    // @ts-ignore we do append background to group, but it's not wrong because it won't do anything.
-    expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
+    expect((scene.children[0] as ObjectWithBackground).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
@@ -426,10 +452,9 @@ describe('renderer', () => {
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
     const Test = ({ n }: { n: number }) => (
-      // @ts-ignore args isn't a valid prop but changing it will swap
-      <group args={[n]} onPointerOver={() => null}>
+      <myGroup args={[n]} onPointerOver={() => null}>
         <group />
-      </group>
+      </myGroup>
     )
 
     await act(async () => {
@@ -603,17 +628,10 @@ describe('renderer', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends THREE.Color {
-      constructor(col: number) {
-        super(col)
-      }
-    }
-
     const testExtend = async () => {
       await act(async () => {
         extend({ MyColor })
 
-        // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
         root.render(<myColor args={[0x0000ff]} />)
       })
     }

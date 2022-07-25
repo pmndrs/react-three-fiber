@@ -3,17 +3,18 @@ import { Root } from './renderer'
 import { RootState, Subscription } from './store'
 
 type GlobalRenderCallback = (timeStamp: number) => void
+type SubItem = {callback: GlobalRenderCallback}
 
-function createSubs(callback: GlobalRenderCallback, subs: GlobalRenderCallback[]): () => void {
-  const index = subs.length
-  subs.push(callback)
-  return () => void subs.splice(index, 1)
+function createSubs(callback: GlobalRenderCallback, subs: Set<SubItem>): () => void {
+  const sub = {callback}
+  subs.add(sub);
+  return () => void subs.delete(sub);
 }
 
 let i
-let globalEffects: GlobalRenderCallback[] = []
-let globalAfterEffects: GlobalRenderCallback[] = []
-let globalTailEffects: GlobalRenderCallback[] = []
+let globalEffects: Set<SubItem> = new Set()
+let globalAfterEffects: Set<SubItem> = new Set()
+let globalTailEffects: Set<SubItem> = new Set()
 
 /**
  * Adds a global render callback which is called each frame.
@@ -33,8 +34,8 @@ export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(cal
  */
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
-function run(effects: GlobalRenderCallback[], timestamp: number) {
-  for (i = 0; i < effects.length; i++) effects[i](timestamp)
+function run(effects: Set<SubItem>, timestamp: number) {
+  effects.forEach(({callback}) => callback(timestamp))
 }
 
 function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
@@ -69,7 +70,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     repeat = 0
 
     // Run effects
-    if (globalEffects.length) run(globalEffects, timestamp)
+    if (globalEffects.size) run(globalEffects, timestamp)
 
     // Render all roots
     roots.forEach((root) => {
@@ -86,12 +87,12 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     })
 
     // Run after-effects
-    if (globalAfterEffects.length) run(globalAfterEffects, timestamp)
+    if (globalAfterEffects.size) run(globalAfterEffects, timestamp)
 
     // Stop the loop if nothing invalidates it
     if (repeat === 0) {
       // Tail call effects, they are called when rendering stops
-      if (globalTailEffects.length) run(globalTailEffects, timestamp)
+      if (globalTailEffects.size) run(globalTailEffects, timestamp)
 
       // Flag end of operation
       running = false

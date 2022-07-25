@@ -1,5 +1,16 @@
 # @react-three/test-renderer
 
+## 9.0.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
+### Patch Changes
+
+- Updated dependencies [8d0f708c]
+  - @react-three/fiber@8.1.0
+
 ## 8.0.16
 
 ### Patch Changes
