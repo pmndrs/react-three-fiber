@@ -41,7 +41,7 @@ interface HostConfig {
   props: InstanceProps
   container: UseBoundStore<RootState>
   instance: Instance
-  textInstance: never
+  textInstance: void
   suspenseInstance: Instance
   hydratableInstance: Instance
   publicInstance: Instance
@@ -314,15 +314,21 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     supportsHydration: false,
     noTimeout: -1,
     appendChildToContainer: (container, child) => {
+      if (!child) return
+
       const scene = container.getState().scene as unknown as Instance
       // Link current root to the default scene
       scene.__r3f.root = container
       appendChild(scene, child)
     },
-    removeChildFromContainer: (container, child) =>
-      removeChild(container.getState().scene as unknown as Instance, child),
-    insertInContainerBefore: (container, child, beforeChild) =>
-      insertBefore(container.getState().scene as unknown as Instance, child, beforeChild),
+    removeChildFromContainer: (container, child) => {
+      if (!child) return
+      removeChild(container.getState().scene as unknown as Instance, child)
+    },
+    insertInContainerBefore: (container, child, beforeChild) => {
+      if (!child || !beforeChild) return
+      insertBefore(container.getState().scene as unknown as Instance, child, beforeChild)
+    },
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext) => parentHostContext,
     finalizeInitialChildren(instance) {
@@ -367,7 +373,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
       }
     },
-    getPublicInstance: (instance) => instance,
+    getPublicInstance: (instance) => instance!,
     prepareForCommit: () => null,
     preparePortalMount: (container) => prepare(container.getState().scene),
     resetAfterCommit: () => {},
@@ -388,7 +394,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       invalidateInstance(instance)
     },
     createTextInstance: () => {
-      throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
+      console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
     },
     hideTextInstance: () => {
       throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
