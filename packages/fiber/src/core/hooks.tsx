@@ -5,6 +5,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { FiberError } from './error'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -22,7 +23,7 @@ export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coe
 
 export function useStore() {
   const store = React.useContext(context)
-  if (!store) throw `R3F hooks can only be used within the Canvas component!`
+  if (!store) throw new FiberError('R3F hooks can only be used within the Canvas component!')
   return store
 }
 
@@ -77,7 +78,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
                 res(data)
               },
               onProgress,
-              (error) => reject(`Could not load ${input}: ${error.message}`),
+              (error) => reject(new FiberError(`Could not load ${input}: ${error.message})`)),
             ),
           ),
       ),
