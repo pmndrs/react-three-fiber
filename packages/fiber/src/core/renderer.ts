@@ -344,7 +344,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
 
         // Throw if an object or literal was passed for args
-        if (!Array.isArray(argsNew)) throw new Error('The args prop must be an array!')
+        if (!Array.isArray(argsNew)) throw new FiberError('The args prop must be an array!')
 
         // If it has new props or arguments, then it needs to be re-instantiated
         if (argsNew.some((value, index) => value !== argsOld[index])) return [true]
