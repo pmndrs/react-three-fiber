@@ -1,16 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
 import { extend, Canvas, useThree, ReactThreeFiber } from '@react-three/fiber'
-// @ts-ignore
 import { OrbitControls } from 'three-stdlib'
 extend({ OrbitControls })
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      orbitControls: ReactThreeFiber.Node<OrbitControls, typeof OrbitControls>
-    }
-  }
-}
 
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)
