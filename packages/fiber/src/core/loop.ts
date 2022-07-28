@@ -3,12 +3,12 @@ import { Root } from './renderer'
 import { RootState, Subscription } from './store'
 
 type GlobalRenderCallback = (timeStamp: number) => void
-type SubItem = {callback: GlobalRenderCallback}
+type SubItem = { callback: GlobalRenderCallback }
 
 function createSubs(callback: GlobalRenderCallback, subs: Set<SubItem>): () => void {
-  const sub = {callback}
-  subs.add(sub);
-  return () => void subs.delete(sub);
+  const sub = { callback }
+  subs.add(sub)
+  return () => void subs.delete(sub)
 }
 
 let i
@@ -35,7 +35,7 @@ export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(cal
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 function run(effects: Set<SubItem>, timestamp: number) {
-  effects.forEach(({callback}) => callback(timestamp))
+  effects.forEach(({ callback }) => callback(timestamp))
 }
 
 let subscribers: Subscription[]
