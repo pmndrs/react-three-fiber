@@ -85,8 +85,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       handlers: {},
     }
 
-    if (object) object.__r3f = instance
-
     return instance
   }
 
@@ -100,8 +98,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     child: HostConfig['instance'],
     beforeChild: HostConfig['instance'],
   ) {
-    if (!child) return
-
     child.parent = parent
     parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
   }
@@ -157,24 +153,27 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         })
       }
     }
+    delete child.object.__r3f
     child.object = null
 
     if (dispose === undefined) invalidateInstance(child)
   }
 
   function commitInstance(instance: HostConfig['instance']) {
-    // Don't handle commit for containers
-    if (!instance.parent) return
-
     // Create object
-    if (instance.type !== 'primitive' && !instance.object) {
+    if (instance.type !== 'primitive') {
       const name = `${instance.type[0].toUpperCase()}${instance.type.slice(1)}`
       const target = catalogue[name]
 
       const { args = [] } = instance.props
       instance.object = new target(...args)
-      instance.object.__r3f = instance
     }
+
+    // Attach object instance handle
+    instance.object.__r3f = instance
+
+    // Don't handle children for containers
+    if (!instance.parent) return
 
     // Auto-attach geometry and materials to meshes
     if (!instance.props.attach) {
