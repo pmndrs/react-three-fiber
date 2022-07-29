@@ -53,14 +53,12 @@ class MyGroup extends THREE.Group {}
 
 extend({ HasObject3dMember, HasObject3dMethods, MyGroup })
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
-      hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
-      myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
-      myGroup: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
-    }
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
+    hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
+    myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
+    myGroup: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
   }
 }
 

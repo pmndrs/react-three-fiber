@@ -74,7 +74,12 @@ Roots have the same options and properties as `Canvas`, but you are responsible 
 Creates a root targeting a canvas, rendering JSX.
 
 ```jsx
-import { createRoot, events } from '@react-three/fiber'
+import * as THREE from 'three'
+import { extend, createRoot, events } from '@react-three/fiber'
+
+// Register the THREE namespace as native JSX elements.
+// See below for notes on tree-shaking
+extend(THREE)
 
 let root
 
