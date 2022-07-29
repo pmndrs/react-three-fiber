@@ -54,7 +54,7 @@
     "@types/react-native": "0.67.4",
     "@types/react-test-renderer": "^17.0.1",
     "@types/scheduler": "^0.16.2",
-    "@types/three": "^0.139.0",
+    "@types/three": "^0.141.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",
     "eslint": "^8.12.0",
@@ -78,7 +78,7 @@
     "react-native": "0.67.4",
     "react-test-renderer": "^18.0.0",
     "regenerator-runtime": "^0.13.9",
-    "three": "^0.139.0",
+    "three": "^0.141.0",
     "three-stdlib": "^2.8.11",
     "ts-jest": "^27.1.4",
     "typescript": "^4.6.3"

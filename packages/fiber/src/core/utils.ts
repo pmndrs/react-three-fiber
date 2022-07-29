@@ -321,11 +321,6 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         else if (targetProp instanceof THREE.Layers && value instanceof THREE.Layers) targetProp.mask = value.mask
         // Otherwise just set ...
         else targetProp.set(value)
-        // For versions of three which don't support THREE.ColorManagement,
-        // Auto-convert sRGB colors
-        // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = 'ColorManagement' in THREE
-        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
@@ -380,14 +375,4 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     // Update matrix world since the renderer is a frame late
     camera.updateMatrixWorld()
   }
-}
-
-/**
- * Safely sets a deeply-nested value on an object.
- */
-export function setDeep(obj: any, value: any, keys: string[]) {
-  const key = keys.pop()!
-  const target = keys.reduce((acc, key) => acc[key], obj)
-
-  return (target[key] = value)
 }

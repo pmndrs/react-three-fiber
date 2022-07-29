@@ -3,7 +3,7 @@ import { StoreApi, UseBoundStore } from 'zustand'
 import { RootState } from './store'
 
 export interface UpdateCallback {
-  (state: RootState, delta: number, frame?: THREE.XRFrame | undefined): void
+  (state: RootState, delta: number, frame?: XRFrame): void
 }
 
 export type UpdateCallbackRef = MutableRefObject<UpdateCallback>
@@ -28,10 +28,10 @@ export class Stage {
 
   /**
    * Executes all callback subscriptions on the stage.
-   * @param {number} delta - Delta time between frame calls.
-   * @param {THREE.XRFrame | undefined} [frame] - The XR frame if it exists.
+   * @param delta - Delta time between frame calls.
+   * @param [frame] - The XR frame if it exists.
    */
-  frame(delta: number, frame?: THREE.XRFrame | undefined) {
+  frame(delta: number, frame?: XRFrame) {
     const subs = this.subscribers
     const initialTime = performance.now()
 
@@ -44,9 +44,9 @@ export class Stage {
 
   /**
    * Adds a callback subscriber to the stage.
-   * @param {UpdateCallbackRef} ref - The mutable callback reference.
-   * @param {Store} store - The store to be used with the callback execution.
-   * @returns {() => void} A function to remove the subscription.
+   * @param ref - The mutable callback reference.
+   * @param store - The store to be used with the callback execution.
+   * @returns A function to remove the subscription.
    */
   add(ref: UpdateCallbackRef, store: Store) {
     this.subscribers.push({ ref, store })
@@ -68,10 +68,9 @@ const FPS_50 = 1 / 50
 
 /**
  * Class representing a stage that updates every frame at a fixed rate.
- * @param {string} name - Name of the stage.
- * @param {number} [fixedStep] - Fixed step rate.
- * @param {number} [maxSubsteps] - Maximum number of substeps.
- * @extends Stage
+ * @param name - Name of the stage.
+ * @param [fixedStep] - Fixed step rate.
+ * @param [maxSubsteps] - Maximum number of substeps.
  */
 export class FixedStage extends Stage {
   private _fixedStep: number
@@ -94,10 +93,10 @@ export class FixedStage extends Stage {
 
   /**
    * Executes all callback subscriptions on the stage.
-   * @param {number} delta - Delta time between frame calls.
-   * @param {THREE.XRFrame | undefined} [frame] - The XR frame if it exists.
+   * @param delta - Delta time between frame calls.
+   * @param [frame] - The XR frame if it exists.
    */
-  frame(delta: number, frame?: THREE.XRFrame | undefined) {
+  frame(delta: number, frame?: XRFrame) {
     const initialTime = performance.now()
     let substeps = 0
     this._substepTimes = []

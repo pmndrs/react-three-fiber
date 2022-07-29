@@ -57,7 +57,7 @@
     "react": ">=18.0",
     "react-dom": ">=18.0",
     "react-native": ">=0.64",
-    "three": ">=0.133"
+    "three": ">=0.141"
   },
   "peerDependenciesMeta": {
     "react-dom": {

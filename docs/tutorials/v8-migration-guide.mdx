@@ -198,7 +198,7 @@ The `vr` prop was removed in favor of automatic WebXR switching. Whenever a sess
 In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
 
 ```ts
-useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
+useFrame((state: RootState, delta: number, frame?: XRFrame) => { ... })
 ```
 
 This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
@@ -218,7 +218,7 @@ This is also supported by all cameras that you create, be it a THREE.Perspective
 ```jsx
 import { PerspectiveCamera } from '@react-three/drei'
 
-<Canvas>
+;<Canvas>
   <PerspectiveCamera makeDefault manual />
 </Canvas>
 ```
@@ -333,7 +333,7 @@ window.addEventListener('resize', () => {
   root.configure({
     events,
     camera: { position: [0, 0, 50], fov: 50 },
-    size: { width: window.innerWidth, height: window.innerHeight }
+    size: { width: window.innerWidth, height: window.innerHeight },
   })
   root.render(<App />)
 })

@@ -38,7 +38,7 @@ function run(effects: Set<SubItem>, timestamp: number) {
   effects.forEach(({callback}) => callback(timestamp))
 }
 
-function update(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
+function update(timestamp: number, state: RootState, frame?: XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
   // In frameloop='never' mode, clock times are updated using the provided timestamp
@@ -112,12 +112,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  function advance(
-    timestamp: number,
-    runGlobalEffects: boolean = true,
-    state?: RootState,
-    frame?: THREE.XRFrame,
-  ): void {
+  function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState, frame?: XRFrame): void {
     if (runGlobalEffects) run(globalEffects, timestamp)
     if (!state) roots.forEach((root) => update(timestamp, root.store.getState()))
     else update(timestamp, state, frame)

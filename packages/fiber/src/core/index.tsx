@@ -31,7 +31,6 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
-  setDeep,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -136,7 +135,7 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
 
   // Add useFrame loop to update stage
   const frameCallback = {
-    current: (state: RootState, delta: number, frame?: THREE.XRFrame | undefined) => {
+    current: (state: RootState, delta: number, frame?: XRFrame | undefined) => {
       subscribers = state.internal.subscribers
       for (let i = 0; i < subscribers.length; i++) {
         subscription = subscribers[i]
@@ -248,7 +247,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
-        const handleXRFrame: THREE.XRFrameRequestCallback = (timestamp: number, frame?: THREE.XRFrame) => {
+        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
           advance(timestamp, true, state, frame)
@@ -294,11 +293,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         }
       }
 
-      // Safely set color management if available.
-      // Avoid accessing THREE.ColorManagement to play nice with older versions
-      if ('ColorManagement' in THREE) {
-        setDeep(THREE, legacy, ['ColorManagement', 'legacyMode'])
-      }
+      // Set color management
+      ;(THREE as any).ColorManagement.legacyMode = legacy
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
