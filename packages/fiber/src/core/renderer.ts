@@ -40,7 +40,7 @@ interface HostConfig {
   props: InstanceProps
   container: UseBoundStore<RootState>
   instance: Instance
-  textInstance: never
+  textInstance: void
   suspenseInstance: Instance
   hydratableInstance: never
   publicInstance: Instance['object']
@@ -259,6 +259,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     return newInstance
   }
 
+  // Don't handle text instances, warn on undefined behavior
+  const handleTextInstance = () =>
+    console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
+
   const reconciler = Reconciler<
     HostConfig['type'],
     HostConfig['props'],
@@ -314,7 +318,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     finalizeInitialChildren: () => true,
     commitMount: commitInstance,
-    getPublicInstance: (instance) => instance.object,
+    getPublicInstance: (instance) => instance!.object,
     prepareForCommit: () => null,
     preparePortalMount: (container) => container,
     resetAfterCommit: () => {},
@@ -342,13 +346,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
       invalidateInstance(instance)
     },
-    createTextInstance: () => {
-      throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
-    },
-    hideTextInstance: () => {
-      throw new Error('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
-    },
-    unhideTextInstance: () => {},
+    createTextInstance: handleTextInstance,
+    hideTextInstance: handleTextInstance,
+    unhideTextInstance: handleTextInstance,
     // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
     // @ts-ignore
     getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),

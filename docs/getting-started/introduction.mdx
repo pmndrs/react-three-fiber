@@ -89,9 +89,9 @@ npm install @types/three
 import * as THREE from 'three'
 import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 
-function Box(props: JSX.IntrinsicElements['mesh']) {
+function Box(props: ThreeElements['mesh']) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)

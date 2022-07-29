@@ -2,7 +2,6 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "types": ["vite/client"],
     "allowJs": false,
     "skipLibCheck": false,
     "esModuleInterop": false,
@@ -16,5 +15,5 @@
     "noEmit": true,
     "jsx": "react"
   },
-  "include": ["./src", "../packages/*"]
+  "include": ["./src", "./typings/*.d.ts", "../packages/*"]
 }

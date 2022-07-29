@@ -89,9 +89,9 @@ npm install @types/three
 import * as THREE from 'three'
 import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 
-function Box(props: JSX.IntrinsicElements['mesh']) {
+function Box(props: ThreeElements['mesh']) {
   const ref = useRef<THREE.Mesh>(null!)
   const [hovered, hover] = useState(false)
   const [clicked, click] = useState(false)
@@ -116,7 +116,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
     <pointLight position={[10, 10, 10]} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
-  </Canvas>
+  </Canvas>,
 )
 ```
 

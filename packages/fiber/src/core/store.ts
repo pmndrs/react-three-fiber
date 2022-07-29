@@ -46,7 +46,7 @@ export type Viewport = Size & {
   aspect: number
 }
 
-export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
+export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
 
 type LegacyAlways = 'always'
 export type FrameloopMode = LegacyAlways | 'auto' | 'demand' | 'never'
@@ -169,7 +169,7 @@ const context = React.createContext<UseBoundStore<RootState>>(null!)
 
 const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
-  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
+  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()

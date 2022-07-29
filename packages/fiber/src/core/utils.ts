@@ -339,13 +339,3 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     camera.updateMatrixWorld()
   }
 }
-
-/**
- * Safely sets a deeply-nested value on an object.
- */
-export function setDeep(obj: any, value: any, keys: string[]) {
-  const key = keys.pop()!
-  const target = keys.reduce((acc, key) => acc[key], obj)
-
-  return (target[key] = value)
-}
