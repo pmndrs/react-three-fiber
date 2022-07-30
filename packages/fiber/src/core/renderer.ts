@@ -88,16 +88,20 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     return instance
   }
 
-  function appendChild(parent: HostConfig['instance'], child: HostConfig['instance']) {
+  function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
+    if (!child) return
+
     child.parent = parent
     parent.children.push(child)
   }
 
   function insertBefore(
     parent: HostConfig['instance'],
-    child: HostConfig['instance'],
-    beforeChild: HostConfig['instance'],
+    child: HostConfig['instance'] | HostConfig['textInstance'],
+    beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
   ) {
+    if (!child || !beforeChild) return
+
     child.parent = parent
     parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
   }
@@ -112,7 +116,13 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
   }
 
-  function removeChild(parent: HostConfig['instance'], child: HostConfig['instance'], dispose?: boolean) {
+  function removeChild(
+    parent: HostConfig['instance'],
+    child: HostConfig['instance'] | HostConfig['textInstance'],
+    dispose?: boolean,
+  ) {
+    if (!child) return
+
     child.parent = null
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
@@ -318,7 +328,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     finalizeInitialChildren: () => true,
     commitMount: commitInstance,
-    getPublicInstance: (instance) => instance!.object,
+    getPublicInstance: (instance) => instance?.object,
     prepareForCommit: () => null,
     preparePortalMount: (container) => container,
     resetAfterCommit: () => {},

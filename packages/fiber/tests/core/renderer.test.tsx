@@ -17,6 +17,7 @@ import {
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
+import { suspend } from 'suspend-react'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
@@ -737,5 +738,24 @@ describe('renderer', () => {
     const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
+  })
+
+  it('should gracefully handle text', async () => {
+    // Mount
+    await act(async () => root.render(<>one</>))
+    // Update
+    await act(async () => root.render(<>two</>))
+    // Unmount
+    await act(async () => root.render(<></>))
+
+    // Suspense
+    const Test = () => suspend(async () => null, [])
+    await act(async () => {
+      root.render(
+        <React.Suspense>
+          <Test />
+        </React.Suspense>,
+      )
+    })
   })
 })
