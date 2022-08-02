@@ -117,22 +117,22 @@ R3F v8 adds support for react-native and can be imported from `@react-three/fibe
 To get started, create an app via `expo` or `react-native`:
 
 ```bash
-# Create a managed/bare app and cd into it
+# Create a managed/bare app
 npx create-expo-app
 cd my-app
 
 # or
 
-# Create bare app and cd into it
+# Create and link bare app
 npx react-native init my-app
+npx install-expo-modules@latest
 cd my-app
 ```
 
 Then install dependencies (for manual installation or migration, see [expo modules installation](https://docs.expo.dev/bare/installing-expo-modules)):
 
 ```bash
-# Automatically install & link expo modules
-npx install-expo-modules@latest
+# Automatically install
 expo install expo-gl
 
 # Install NPM dependencies
