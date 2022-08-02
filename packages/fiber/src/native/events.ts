@@ -3,6 +3,7 @@ import { RootState } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
 import { GestureResponderEvent } from 'react-native'
 // @ts-ignore
+// eslint-disable-next-line
 import Pressability from 'react-native/Libraries/Pressability/Pressability'
 
 const EVENTS = {
