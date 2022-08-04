@@ -8,7 +8,7 @@ import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 import { polyfills } from './polyfills'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
+export interface Props extends Omit<RenderProps, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
@@ -59,7 +59,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     if (error) throw error
 
     const viewRef = React.useRef<View>(null!)
-    const root = React.useRef<ReconcilerRoot<Element>>(null!)
+    const root = React.useRef<ReconcilerRoot>(null!)
 
     // Inject and cleanup RN polyfills if able
     React.useLayoutEffect(() => polyfills(), [])
@@ -82,7 +82,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         getContext: (() => context) as any,
       } as HTMLCanvasElement
 
-      root.current = createRoot<Element>(canvasShim)
+      root.current = createRoot(canvasShim)
       setCanvas(canvasShim)
     }, [])
 

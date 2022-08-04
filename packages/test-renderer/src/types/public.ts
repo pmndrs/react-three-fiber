@@ -15,7 +15,7 @@ export type MockSyntheticEvent = {
   [key: string]: any
 }
 
-export type CreateOptions = CreateCanvasParameters & RenderProps<HTMLCanvasElement>
+export type CreateOptions = CreateCanvasParameters & RenderProps
 
 export type Act = (cb: () => Promise<any>) => Promise<any>
 

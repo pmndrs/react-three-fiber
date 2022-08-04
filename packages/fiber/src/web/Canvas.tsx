@@ -6,7 +6,7 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayout
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
+export interface Props extends Omit<RenderProps, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
@@ -65,10 +65,10 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
+  const root = React.useRef<ReconcilerRoot>(null!)
 
   if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-    if (!root.current) root.current = createRoot<HTMLElement>(canvas)
+    if (!root.current) root.current = createRoot(canvas)
     root.current.configure({
       gl,
       events,
