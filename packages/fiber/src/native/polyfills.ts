@@ -17,7 +17,7 @@ function getAsset(input: string | number) {
     case 'number':
       return expAsset!.fromModule(input)
     default:
-      throw 'Invalid asset! Must be a URI or module.'
+      throw new Error('R3F: Invalid asset! Must be a URI or module.')
   }
 }
 
