@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.3.0
+
+### Minor Changes
+
+- 9c450ec: feat: improve errors
+
 ## 8.2.3
 
 ### Patch Changes
