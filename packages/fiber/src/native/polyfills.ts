@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import type { Asset } from 'expo-asset'
-import { FiberError } from '../core/error'
 
 // Check if expo-asset is installed (available with expo modules)
 let expAsset: typeof Asset | undefined
@@ -18,7 +17,7 @@ function getAsset(input: string | number) {
     case 'number':
       return expAsset!.fromModule(input)
     default:
-      throw new FiberError('Invalid asset! Must be a URI or module.')
+      throw new Error('Invalid asset! Must be a URI or module.')
   }
 }
 
