@@ -5,6 +5,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { LoadingManager } from 'three'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -92,7 +93,7 @@ function loadingFn<T>(extensions?: Extensions, onProgress?: (event: ProgressEven
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
 export function useLoader<T, U extends string | string[]>(
-  Proto: new () => LoaderResult<T>,
+  Proto: new (manager?: LoadingManager) => LoaderResult<T>,
   input: U,
   extensions?: Extensions,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
