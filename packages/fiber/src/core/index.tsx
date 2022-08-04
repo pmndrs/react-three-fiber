@@ -33,7 +33,15 @@ import {
 import { useStore } from './hooks'
 import { OffscreenCanvas } from 'three'
 
-const roots = new Map<Element, Root>()
+/**
+ * Type representing something that can be rendered to by a WebGL renderer.
+ *
+ * @note Ideally, OffscreenCanvas would come from ts's default lib.dom.d.ts however it does not seem to be
+ * included at the time of writing so we use the embedded three definition
+ */
+export type RenderableSurface = HTMLCanvasElement | OffscreenCanvas
+
+const roots = new Map<RenderableSurface, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
@@ -42,11 +50,11 @@ type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? ne
 
 type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement) => Renderer)
+  | ((canvas: RenderableSurface) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = {
+export type RenderProps = {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -101,10 +109,8 @@ export type RenderProps<TCanvas extends Element> = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
-  const customRenderer = (
-    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
-  ) as THREE.WebGLRenderer
+const createRendererInstance = (gl: GLProps, canvas: RenderableSurface): THREE.WebGLRenderer => {
+  const customRenderer = (typeof gl === 'function' ? gl(canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
   else
     return new THREE.WebGLRenderer({
@@ -116,8 +122,8 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     })
 }
 
-export type ReconcilerRoot<TCanvas extends Element> = {
-  configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
+export type ReconcilerRoot = {
+  configure: (config?: RenderProps) => ReconcilerRoot
   render: (element: React.ReactNode) => UseBoundStore<RootState>
   unmount: () => void
 }
@@ -140,7 +146,7 @@ function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, default
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+function createRoot(canvas: RenderableSurface): ReconcilerRoot {
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -171,7 +177,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   let configured = false
 
   return {
-    configure(props: RenderProps<TCanvas> = {}) {
+    configure(props: RenderProps = {}) {
       let {
         gl: glConfig,
         size: propsSize,
@@ -331,18 +337,14 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   }
 }
 
-function render<TCanvas extends Element>(
-  children: React.ReactNode,
-  canvas: TCanvas,
-  config: RenderProps<TCanvas>,
-): UseBoundStore<RootState> {
+function render(children: React.ReactNode, canvas: RenderableSurface, config: RenderProps): UseBoundStore<RootState> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
   return root.render(children)
 }
 
-function Provider<TElement extends Element>({
+function Provider({
   store,
   children,
   onCreated,
@@ -351,8 +353,8 @@ function Provider<TElement extends Element>({
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
   children: React.ReactNode
-  rootElement: TElement
-  parent?: React.MutableRefObject<TElement | undefined>
+  rootElement: RenderableSurface
+  parent?: React.MutableRefObject<RenderableSurface | undefined>
 }) {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
@@ -368,7 +370,7 @@ function Provider<TElement extends Element>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
+function unmountComponentAtNode(canvas: RenderableSurface, callback?: (canvas: RenderableSurface) => void) {
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {
