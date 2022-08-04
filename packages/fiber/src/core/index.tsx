@@ -31,6 +31,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
+import { OffscreenCanvas } from 'three'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -100,11 +101,10 @@ export type RenderProps<TCanvas extends Element> = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const createRendererInstance = <TElement extends HTMLCanvasElement>(
-  gl: GLProps,
-  canvas: TElement,
-): THREE.WebGLRenderer => {
-  const customRenderer = (typeof gl === 'function' ? gl(canvas) : gl) as THREE.WebGLRenderer
+const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
+  const customRenderer = (
+    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
+  ) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
   else
     return new THREE.WebGLRenderer({
@@ -122,12 +122,16 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
-function computeInitialSize(canvas: HTMLCanvasElement, defaultSize?: Size): Size {
+function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
+  return maybeCanvas instanceof HTMLCanvasElement
+}
+
+function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
   if (defaultSize) {
     return defaultSize
   }
 
-  if (canvas.parentElement) {
+  if (isCanvas(canvas) && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
 
     return { width, height, top, left }
@@ -136,15 +140,7 @@ function computeInitialSize(canvas: HTMLCanvasElement, defaultSize?: Size): Size
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function elementIsCanvas(maybeCanvas: Element): maybeCanvas is HTMLCanvasElement {
-  return maybeCanvas.tagName === 'CANVAS'
-}
-
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
-  if (!elementIsCanvas(canvas)) {
-    throw new Error('The root element should be an HTML canvas')
-  }
-
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
