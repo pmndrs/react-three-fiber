@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState, Suspense } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import { useGLTF, OrbitControls, useFBO, Environment } from '@react-three/drei'
 
@@ -110,16 +110,22 @@ const App = () => (
       {/* First layer, a portal */}
       <Portal scale={[4, 5, 1]} position={[0, 2.5, 0]} rotation={[0, 0, 0]}>
         <Lights />
-        <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
-        <Soda scale={5} position={[2, -2, -1.5]} />
+        <Suspense fallback={null}>
+          <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
+          <Soda scale={5} position={[2, -2, -1.5]} />
+        </Suspense>
         <Portal scale={[4, 5, 1]} position={[2, 0, -5]} rotation={[0, 0, 0]}>
           <Lights />
-          <Soda scale={8} position={[0, -2, -1.5]} />
-          <Environment preset="city" background="only" />
+          <Suspense fallback={null}>
+            <Soda scale={8} position={[0, -2, -1.5]} />
+            <Environment preset="city" background="only" />
+          </Suspense>
         </Portal>
       </Portal>
-      <Ramen scale={4} position={[-2, 0, 2]} />
-      <Soda scale={5} position={[1.5, 0, 3]} />
+      <Suspense fallback={null}>
+        <Ramen scale={4} position={[-2, 0, 2]} />
+        <Soda scale={5} position={[1.5, 0, 3]} />
+      </Suspense>
     </group>
     <OrbitControls />
   </Canvas>
