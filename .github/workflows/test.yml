@@ -24,16 +24,19 @@ jobs:
           install-command: yarn --immutable --silent
 
       - name: Check types
-        run: yarn typecheck
+        run: yarn run typecheck
+
+      - name: Check lint
+        run: yarn run eslint
 
       - name: Build
-        run: yarn build
+        run: yarn run build
 
       - name: Jest run
-        run: yarn test
+        run: yarn run test
 
       - name: Report Fiber size
-        run: yarn analyze-fiber
+        run: yarn run analyze-fiber
 
       - name: Report Test Renderer size
-        run: yarn analyze-test
+        run: yarn run analyze-test

@@ -99,17 +99,19 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
 
     if (type === 'primitive') {
-      if (props.object === undefined) throw `Primitives without 'object' are invalid!`
+      if (props.object === undefined) throw new Error("R3F: Primitives without 'object' are invalid!")
       const object = props.object as Instance
       instance = prepare<Instance>(object, { type, root, attach, primitive: true })
     } else {
       const target = catalogue[name]
       if (!target) {
-        throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`
+        throw new Error(
+          `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
+        )
       }
 
       // Throw if an object or literal was passed for args
-      if (!Array.isArray(args)) throw 'The args prop must be an array!'
+      if (!Array.isArray(args)) throw new Error('R3F: The args prop must be an array!')
 
       // Instanciate new object, link it to the root
       // Append memoized props with args so it's not forgotten
@@ -351,7 +353,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         const { args: argsOld = [], children: cO, ...restOld } = oldProps
 
         // Throw if an object or literal was passed for args
-        if (!Array.isArray(argsNew)) throw 'The args prop must be an array!'
+        if (!Array.isArray(argsNew)) throw new Error('R3F: the args prop must be an array!')
 
         // If it has new props or arguments, then it needs to be re-instantiated
         if (argsNew.some((value, index) => value !== argsOld[index])) return [true]

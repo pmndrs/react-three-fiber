@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.3.0
+
+### Minor Changes
+
+- 9c450ec: feat: improve errors
+
+## 8.2.3
+
+### Patch Changes
+
+- b8d2eab: fix: improve useLoader signature, initial size on createRoot
+
 ## 8.2.2
 
 ### Patch Changes
