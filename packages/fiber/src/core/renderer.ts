@@ -70,9 +70,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     const target = catalogue[name]
 
     if (type !== 'primitive' && !target)
-      throw `${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`
+      throw new Error(`R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`)
 
-    if (type === 'primitive' && !object) throw `Primitives without 'object' are invalid!`
+    if (type === 'primitive' && !object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
 
     const instance: HostConfig['instance'] = {
       root,
