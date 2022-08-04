@@ -2,8 +2,10 @@ import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
 import { GestureResponderEvent } from 'react-native'
+/* eslint-disable import/default, import/no-named-as-default, import/no-named-as-default-member */
 // @ts-ignore
 import Pressability from 'react-native/Libraries/Pressability/Pressability'
+/* eslint-enable import/default, import/no-named-as-default, import/no-named-as-default-member */
 
 const EVENTS = {
   PRESS: 'onPress',

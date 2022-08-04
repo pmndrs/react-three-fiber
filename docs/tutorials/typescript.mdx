@@ -101,7 +101,7 @@ MaterialNode
 LightNode
 ```
 
-### Extending JSX.IntrinsicElements
+### Extending ThreeElements
 
 Since our custom element is an object, we'll use `Object3DNode` to define it.
 
@@ -116,12 +116,10 @@ class CustomElement extends GridHelper {}
 // Extend so the reconciler will learn about it
 extend({ CustomElement })
 
-// Add types to JSX.Intrinsic elements so primitives pick up on it
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      customElement: Object3DNode<CustomElement, typeof CustomElement>
-    }
+// Add types to ThreeElements elements so primitives pick up on it
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    customElement: Object3DNode<CustomElement, typeof CustomElement>
   }
 }
 

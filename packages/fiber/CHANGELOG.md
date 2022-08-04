@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.2.2
+
+### Patch Changes
+
+- acd6f04: fix: warn on stray text
+
 ## 8.2.1
 
 ### Patch Changes
