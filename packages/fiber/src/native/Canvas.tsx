@@ -52,7 +52,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     const handlePointerMissed = useMutableCallback(onPointerMissed)
     const [block, setBlock] = React.useState<SetBlock>(false)
-    const [error, setError] = React.useState<any>(false)
+    const [error, setError] = React.useState<Error | undefined>(undefined)
 
     // Suspend this component if block is a promise (2nd run)
     if (block) throw block

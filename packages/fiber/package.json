@@ -51,12 +51,12 @@
     "zustand": "^3.7.1"
   },
   "peerDependencies": {
-    "expo": ">=43.0",
-    "expo-asset": ">=8.4",
-    "expo-gl": ">=11.0",
+    "expo": ">=46.0",
+    "expo-asset": ">=8.6",
+    "expo-gl": ">=11.4",
     "react": ">=18.0",
     "react-dom": ">=18.0",
-    "react-native": ">=0.64",
+    "react-native": ">=0.69",
     "three": ">=0.141"
   },
   "peerDependenciesMeta": {
