@@ -23,7 +23,7 @@ export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coe
 
 export function useStore() {
   const store = React.useContext(context)
-  if (!store) throw new Error('R3F hooks can only be used within the Canvas component!')
+  if (!store) throw new Error('R3F: Hooks can only be used within the Canvas component!')
   return store
 }
 
