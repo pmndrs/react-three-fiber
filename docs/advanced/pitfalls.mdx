@@ -18,9 +18,11 @@ return items.map(i => <mesh geometry={geom} material={mat} ...
 
 Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as much as you can when you need to display many objects of a similar type!
 
-## Never, ever, setState in loops!
+## Avoid setState in loops
 
-SetState in React is not adequate for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc. Avoid forcing a full component (+ its children) through React and its diffing mechanism 60 times per second!
+SetState in React is not suitable for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc.
+
+SetState becomes less of an issue if you think of your app as running in a loop. _Threejs is fundamentally loop based._ This is because in order to carry out re-curring operationg it is in many cases not enough to just set a value, you need deltas, `needsUpdate`, imperative functions, and so on.
 
 ### ❌ setState in loops is bad
 
@@ -44,15 +46,15 @@ useEffect(() => void setInterval(() => setX((x) => x + 0.1), 1), [])
 
 ### ✅ Instead, use refs and mutate
 
-This is why useFrame exists! Consider mutating props safe as long as the component is the only entity that mutates.
+In general you should prefer useFrame! Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
 
 ```jsx
 const ref = useRef()
-useFrame(() => (ref.current.position.x += 0.01))
+useFrame((state, delta) => (ref.current.position.x += delta))
 return <mesh ref={ref} />
 ```
 
-And the same goes for intervals and events, just use references!
+As for for intervals and events, just use references!
 
 ```jsx
 useEffect(() => void setInterval(() => (ref.current.position.x += 0.01), 1), [])
@@ -62,24 +64,24 @@ useEffect(() => void setInterval(() => (ref.current.position.x += 0.01), 1), [])
 <mesh onPointerMove={() => (ref.current.position.x += 0.01)} />
 ```
 
-## Don't let React near animations
+## Handle animations in loops
 
-Instead use lerp, or animation libs that animate outside of React! Avoid libs like react-motion that re-render the component 60fps!
+The frame loop is where you should place your animations. For instance using lerp, or damp.
 
 ### ✅ Use lerp + useFrame
 
 ```jsx
 function Signal({ active }) {
   const ref = useRef()
-  useFrame(() => ref.current.position.x =
-    THREE.MathUtils.lerp(ref.current.position.x, active ? 100 : 0, 0.1)
-  )
+  useFrame((state, delta) => {
+    ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, active ? 100 : 0, 0.1)
+  })
   return <mesh ref={ref} />
 ```
 
 ### ✅ Or react-spring
 
-React-spring has its own frame-loop and animates outside of React.
+Or, use animation libraries. React-spring has its own frame-loop and animates outside of React. Framer-motion is another popular alternative.
 
 ```jsx
 import { a, useSpring } from '@react-spring/three'
@@ -89,7 +91,7 @@ function Signal({ active }) {
   return <a.mesh position-x={x} />
 ```
 
-## Never bind fast state reactive
+## Do not bind to fast state reactively
 
 Using state-managers and selective state is fine, but not for updates that happen rapidly!
 
@@ -131,7 +133,7 @@ return <mesh ref={ref} />
 
 ## Don't mount indiscriminately
 
-In three.js it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials get re-compiled, etc.
+In threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials et al get re-compiled, which is expensive.
 
 ### ✅ Use startTransition for expensive ops
 
@@ -167,7 +169,7 @@ const sizes = calculateSizes(radius)
 
 Try to avoid creating too much effort for the garbage collector, re-pool objects when you can!
 
-### ❌ This is bad news for the GC
+### ❌ Bad news for the GC
 
 This creates a new vector 60 times a second, which allocates memory and forces the GC to eventually kick in.
 
@@ -190,7 +192,7 @@ function Foo({ vec = new THREE.Vector(), ...props })
 
 ## useLoader instead of plain loaders
 
-three.js loaders give you the ability to load async assets (models, textures, etc), but they are problematic.
+Threejs loaders give you the ability to load async assets (models, textures, etc), but if you do not re-use assets it can quickly become problematic.
 
 ### ❌ No re-use is bad for perf
 

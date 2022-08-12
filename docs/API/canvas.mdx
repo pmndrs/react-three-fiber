@@ -81,32 +81,25 @@ import { extend, createRoot, events } from '@react-three/fiber'
 // See below for notes on tree-shaking
 extend(THREE)
 
-let root
+// Create a react root
+const root = createRoot(document.querySelector('canvas'))
 
-const handleResize = () => {
-  const size = { width: window.innerWidth, height: window.innerHeight }
+// Configure the root, inject events optionally, set camera, etc
+root.configure({ events, camera: { position: [0, 0, 50] } })
 
-  // Create root with a size, events
-  root = createRoot(document.querySelector('canvas'), {
-    events,
-    size,
-  })
+// createRoot by design is not responsive, you have to take care of resize yourself
+window.addEventListener('resize', () => {
+  root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
+})
 
-  // Render JSX
-  root.render(<mesh />)
+// Trigger resize
+window.dispatchEvent(new Event('resize'))
 
-  // Can also tweak root root options after creation:
-  root.configure({ size })
+// Render entry point
+root.render(<App />)
 
-  // Or to unmount and dispose of memory:
-  root.unmount()
-}
-handleResize()
-
-window.addEventListener('resize', handleResize)
-
-// to unmount
-root.unmount()
+// Unmount and dispose of memory
+// root.unmount()
 ```
 
 ## Tree-shaking
