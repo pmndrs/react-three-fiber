@@ -6,7 +6,9 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayout
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
+export interface CanvasProps
+  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
+    React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
@@ -21,7 +23,7 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
  * A DOM canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
+export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps>(function Canvas(
   {
     children,
     fallback,
