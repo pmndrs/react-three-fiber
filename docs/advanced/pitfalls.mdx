@@ -22,7 +22,7 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 SetState in React is not suitable for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc.
 
-SetState becomes less of an issue if you think of your app as running in a loop. _Threejs is fundamentally loop based._ This is because in order to carry out re-curring operationg it is in many cases not enough to just set a value, you need deltas, `needsUpdate`, imperative functions, and so on.
+It becomes less of an issue if you think of your app as running in a loop. _Threejs is fundamentally loop based._ This is because in order to carry out re-curring operations it is not enough to just set a value, you need deltas, `needsUpdate`, imperative functions, and so on.
 
 ### ❌ setState in loops is bad
 
@@ -35,13 +35,16 @@ return <mesh position-x={x} />
 ### ❌ setState in fast intervals is bad
 
 ```jsx
-useEffect(() => void setInterval(() => setX((x) => x + 0.1), 1), [])
+useEffect(() => {
+  const interval = setInterval(() => setX((x) => x + 0.1), 1)
+  return () => clearInterval(interval)
+}, [])
 ```
 
 ### ❌ setState in fast events is bad
 
 ```jsx
-<mesh onPointerMove={() => setX((x) => x + 0.1)} />
+<mesh onPointerMove={(e) => setX((x) => e.point.x)} />
 ```
 
 ### ✅ Instead, use refs and mutate
@@ -57,11 +60,14 @@ return <mesh ref={ref} />
 As for for intervals and events, just use references!
 
 ```jsx
-useEffect(() => void setInterval(() => (ref.current.position.x += 0.01), 1), [])
+useEffect(() => {
+  const interval = setInterval(() => ref.current.position.x += 0.1), 1)
+  return () => clearInterval(interval)
+}, [])
 ```
 
 ```jsx
-<mesh onPointerMove={() => (ref.current.position.x += 0.01)} />
+<mesh onPointerMove={(e) => (ref.current.position.x = e.point.x)} />
 ```
 
 ## Handle animations in loops
@@ -120,20 +126,45 @@ See: [transient updates for often occurring state changes](https://github.com/pm
 
 ```jsx
 const ref = useRef()
-useEffect(
-  () =>
-    api.subscribe(
-      (state) => state.x,
-      (x) => (ref.current.position.x = x),
-    ),
-  [],
-)
+useEffect(() => {
+  api.subscribe(
+    (state) => state.x,
+    (x) => (ref.current.position.x = x),
+  )
+}, [])
 return <mesh ref={ref} />
 ```
 
 ## Don't mount indiscriminately
 
-In threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because materials et al get re-compiled, which is expensive.
+In threejs it is very common to not re-mount at all, see the ["disposing of things"](https://discoverthreejs.com/tips-and-tricks/) section in discover-three. This is because buffers and materials get re-initialized/compiled, which can be expensive.
+
+### ❌ Avoid mounting runtime
+
+```jsx
+{
+  stage === 1 && <Stage1 />
+}
+{
+  stage === 2 && <Stage2 />
+}
+{
+  stage === 3 && <Stage3 />
+}
+```
+
+### ✅ Consider using visibility instead
+
+```jsx
+<Stage1 visible={stage === 1} />
+<Stage2 visible={stage === 2} />
+<Stage3 visible={stage === 3} />
+
+function Stage1(props) {
+  return (
+    <group {...props}>
+      ...
+```
 
 ### ✅ Use startTransition for expensive ops
 
