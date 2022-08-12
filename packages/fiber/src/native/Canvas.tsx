@@ -8,7 +8,7 @@ import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 import { polyfills } from './polyfills'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
+export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
@@ -17,7 +17,7 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dp
  * A native canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
+export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
   (
     {
       children,
