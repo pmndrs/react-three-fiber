@@ -127,12 +127,12 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
   let subscribers: Subscription[]
   let subscription: Subscription
 
-  stages = stages ?? Lifecycle
+  const _stages = stages ?? Lifecycle
 
-  if (!stages.includes(Stages.Update)) throw 'The Stages.Update stage is required for R3F.'
-  if (!stages.includes(Stages.Render)) throw 'The Stages.Render stage is required for R3F.'
+  if (!_stages.includes(Stages.Update)) throw 'The Stages.Update stage is required for R3F.'
+  if (!_stages.includes(Stages.Render)) throw 'The Stages.Render stage is required for R3F.'
 
-  state.set(({ internal }) => ({ internal: { ...internal, stages: stages! } }))
+  state.set(({ internal }) => ({ internal: { ...internal, stages: _stages } }))
 
   // Add useFrame loop to update stage
   const frameCallback = {
@@ -344,8 +344,8 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
-      // Create update stages.
-      if (stages !== state.internal.stages) createStages(stages, store)
+      // Create update stages. Only do this once on init
+      if (state.internal.stages.length === 0) createStages(stages, store)
 
       // Set locals
       onCreated = onCreatedCallback
