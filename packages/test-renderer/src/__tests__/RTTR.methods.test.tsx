@@ -7,11 +7,11 @@ describe('ReactThreeTestRenderer instance methods', () => {
     return (
       <group>
         <mesh name="mesh_01">
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshStandardMaterial color={0x0000ff} />
         </mesh>
         <mesh name="mesh_02">
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial color={0x0000ff} />
         </mesh>
       </group>
@@ -61,10 +61,10 @@ describe('ReactThreeTestRenderer instance methods', () => {
     expect(foundAllByMesh[0].instance.name).toEqual('mesh_01')
     expect(foundAllByMesh[1].instance.name).toEqual('mesh_02')
 
-    const foundAllByBoxBufferGeometry = scene.findAllByType('BoxBufferGeometry')
+    const foundAllByBoxGeometry = scene.findAllByType('BoxGeometry')
 
-    expect(foundAllByBoxBufferGeometry).toHaveLength(0)
-    expect(foundAllByBoxBufferGeometry).toEqual([])
+    expect(foundAllByBoxGeometry).toHaveLength(0)
+    expect(foundAllByBoxGeometry).toEqual([])
 
     expect(() => scene.findByType('BufferGeometry')).toThrow()
   })
