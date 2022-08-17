@@ -61,10 +61,10 @@ describe('ReactThreeTestRenderer instance methods', () => {
     expect(foundAllByMesh[0].instance.name).toEqual('mesh_01')
     expect(foundAllByMesh[1].instance.name).toEqual('mesh_02')
 
-    const foundAllByBoxGeometry = scene.findAllByType('BoxGeometry')
+    const foundAllByBoxBufferGeometry = scene.findAllByType('BoxBufferGeometry')
 
-    expect(foundAllByBoxGeometry).toHaveLength(0)
-    expect(foundAllByBoxGeometry).toEqual([])
+    expect(foundAllByBoxBufferGeometry).toHaveLength(0)
+    expect(foundAllByBoxBufferGeometry).toEqual([])
 
     expect(() => scene.findByType('BufferGeometry')).toThrow()
   })
