@@ -15,7 +15,7 @@ const Obj = () => {
   })
   return (
     <mesh ref={meshRef}>
-      <boxBufferGeometry args={[1, 1, 1]} />
+      <boxGeometry args={[1, 1, 1]} />
       <meshNormalMaterial />
     </mesh>
   )

@@ -21,7 +21,7 @@ function MyApp() {
       <group>
         <mesh>
           <meshNormalMaterial />
-          <boxBufferGeometry args={[2, 2, 2]} />
+          <boxGeometry args={[2, 2, 2]} />
         </mesh>
       </group>
     </Canvas>
@@ -40,7 +40,7 @@ const group = new THREE.Group() // <group>
 
 const mesh = new THREE.Mesh() // <mesh />
 const material = new THREE.MeshNormalMaterial() // <meshNormalMaterial />
-const geometry = new THREE.BoxBufferGeometry(2, 2, 2) // <boxBufferGeometry />
+const geometry = new THREE.BoxGeometry(2, 2, 2) // <boxGeometry />
 
 mesh.material = material
 mesh.geometry = geometry
@@ -66,13 +66,13 @@ Additionally, Fiber will:
 In three.js, we can create new object using the classic JS API:
 
 ```js
-const myBox = new THREE.BoxBufferGeometry(1, 2, 3)
+const myBox = new THREE.BoxGeometry(1, 2, 3)
 ```
 
-Object creation is handled transparently by the Fiber renderer, the name of the constructor `BoxBufferGeometry` is equivalent to the camel case component `<boxBufferGeometry />`, while the constructor arguments - in our example `[1, 2, 3]` - are passed via the `args` prop:
+Object creation is handled transparently by the Fiber renderer, the name of the constructor `BoxGeometry` is equivalent to the camel case component `<boxGeometry />`, while the constructor arguments - in our example `[1, 2, 3]` - are passed via the `args` prop:
 
 ```jsx
-<boxBufferGeometry args={[1, 2, 3]} />
+<boxGeometry args={[1, 2, 3]} />
 ```
 
 <Hint>Note that the object will be created only when first adding the component the React three!</Hint>
@@ -100,7 +100,7 @@ With the `attach` prop, we can precisely tell the renderer what property to atta
 ```jsx
 <mesh>
   <meshNormalMaterial attach="material" />
-  <boxBufferGeometry attach="geometry" />
+  <boxGeometry attach="geometry" />
 </mesh>
 ```
 
@@ -108,7 +108,7 @@ This will _explicitly_ tell Fiber to render like this:
 
 ```js
 mesh.material = new THREE.MeshNormalMaterial()
-mesh.geometry = new THREE.BoxBufferGeometry()
+mesh.geometry = new THREE.BoxGeometry()
 ```
 
 As you can see, the `attach` prop is telling Fiber to set the parent's `material` property to a reference to our `<meshNormalMaterial />` object.

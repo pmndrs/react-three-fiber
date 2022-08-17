@@ -7,11 +7,11 @@ describe('ReactThreeTestRenderer instance methods', () => {
     return (
       <group>
         <mesh name="mesh_01">
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshStandardMaterial color={0x0000ff} />
         </mesh>
         <mesh name="mesh_02">
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial color={0x0000ff} />
         </mesh>
       </group>

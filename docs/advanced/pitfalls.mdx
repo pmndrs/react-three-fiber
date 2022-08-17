@@ -11,7 +11,7 @@ This is a good overview: https://discoverthreejs.com/tips-and-tricks
 The most important gotcha in three.js is that creating objects can be expensive, think twice before you mount/unmount things! Every material or light that you put into the scene has to compile, every geometry you create will be processed. Share materials and geometries if you can, either in global scope or locally:
 
 ```jsx
-const geom = useMemo(() => new BoxBufferGeometry(), [])
+const geom = useMemo(() => new BoxGeometry(), [])
 const mat = useMemo(() => new MeshBasicMaterial(), [])
 return items.map(i => <mesh geometry={geom} material={mat} ...
 ```
