@@ -256,7 +256,7 @@ export type ShapeProps = Node<THREE.Shape, typeof THREE.Shape>
 export interface ThreeElements {
   object3D: Object3DProps
 
-  // `audio` works but conflicts with @types/react
+  // `audio` works but conflicts with @types/react. Try using PositionalAudio from @react-three/drei instead
   // audio: AudioProps
   audioListener: AudioListenerProps
   positionalAudio: PositionalAudioProps
