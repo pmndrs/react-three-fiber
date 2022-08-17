@@ -256,7 +256,7 @@ export type ShapeProps = Node<THREE.Shape, typeof THREE.Shape>
 export interface ThreeElements {
   object3D: Object3DProps
 
-  // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
+  // `audio` works but conflicts with @types/react
   // audio: AudioProps
   audioListener: AudioListenerProps
   positionalAudio: PositionalAudioProps
@@ -286,24 +286,6 @@ export interface ThreeElements {
   // geometry
   instancedBufferGeometry: InstancedBufferGeometryProps
   bufferGeometry: BufferGeometryProps
-  boxBufferGeometry: BoxBufferGeometryProps
-  circleBufferGeometry: CircleBufferGeometryProps
-  coneBufferGeometry: ConeBufferGeometryProps
-  cylinderBufferGeometry: CylinderBufferGeometryProps
-  dodecahedronBufferGeometry: DodecahedronBufferGeometryProps
-  extrudeBufferGeometry: ExtrudeBufferGeometryProps
-  icosahedronBufferGeometry: IcosahedronBufferGeometryProps
-  latheBufferGeometry: LatheBufferGeometryProps
-  octahedronBufferGeometry: OctahedronBufferGeometryProps
-  planeBufferGeometry: PlaneBufferGeometryProps
-  polyhedronBufferGeometry: PolyhedronBufferGeometryProps
-  ringBufferGeometry: RingBufferGeometryProps
-  shapeBufferGeometry: ShapeBufferGeometryProps
-  sphereBufferGeometry: SphereBufferGeometryProps
-  tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
-  torusBufferGeometry: TorusBufferGeometryProps
-  torusKnotBufferGeometry: TorusKnotBufferGeometryProps
-  tubeBufferGeometry: TubeBufferGeometryProps
   wireframeGeometry: WireframeGeometryProps
   tetrahedronGeometry: TetrahedronGeometryProps
   octahedronGeometry: OctahedronGeometryProps
