@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.3.1
+
+### Patch Changes
+
+- aaeb2b8: fix(types): accept readonly arrays for vector props
+
 ## 8.3.0
 
 ### Minor Changes
