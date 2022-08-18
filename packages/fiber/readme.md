@@ -164,7 +164,7 @@ Some reading material:
 
 - [Threejs-docs](https://threejs.org/docs)
 - [Threejs-examples](https://threejs.org/examples)
-- [Threejs-fundamentals](https://threejsfundamentals.org)
+- [Threejs-fundamentals](https://threejs.org/manual/#en/fundamentals)
 - [Discover Threejs](https://discoverthreejs.com)
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
 - [react-three-fiber alligator.io tutorial](https://alligator.io/react/react-with-threejs) by [@dghez\_](https://twitter.com/dghez_)
