@@ -63,7 +63,7 @@ Returns an object representing the rendered tree similar to [`react-test-rendere
 renderer.toGraph()
 ```
 
-Returns an object representing the [`scene graph`](https://threejsfundamentals.org/threejs/lessons/threejs-scenegraph.html). This will not include all elements such as ones that use `attach`.
+Returns an object representing the [`scene graph`](https://threejs.org/manual/#en/scenegraph). This will not include all elements such as ones that use `attach`.
 
 ### `fireEvent()` <a id="create-fireevent"></a>
 
