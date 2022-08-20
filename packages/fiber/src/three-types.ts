@@ -286,24 +286,6 @@ export interface ThreeElements {
   // geometry
   instancedBufferGeometry: InstancedBufferGeometryProps
   bufferGeometry: BufferGeometryProps
-  boxBufferGeometry: BoxBufferGeometryProps
-  circleBufferGeometry: CircleBufferGeometryProps
-  coneBufferGeometry: ConeBufferGeometryProps
-  cylinderBufferGeometry: CylinderBufferGeometryProps
-  dodecahedronBufferGeometry: DodecahedronBufferGeometryProps
-  extrudeBufferGeometry: ExtrudeBufferGeometryProps
-  icosahedronBufferGeometry: IcosahedronBufferGeometryProps
-  latheBufferGeometry: LatheBufferGeometryProps
-  octahedronBufferGeometry: OctahedronBufferGeometryProps
-  planeBufferGeometry: PlaneBufferGeometryProps
-  polyhedronBufferGeometry: PolyhedronBufferGeometryProps
-  ringBufferGeometry: RingBufferGeometryProps
-  shapeBufferGeometry: ShapeBufferGeometryProps
-  sphereBufferGeometry: SphereBufferGeometryProps
-  tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
-  torusBufferGeometry: TorusBufferGeometryProps
-  torusKnotBufferGeometry: TorusKnotBufferGeometryProps
-  tubeBufferGeometry: TubeBufferGeometryProps
   wireframeGeometry: WireframeGeometryProps
   tetrahedronGeometry: TetrahedronGeometryProps
   octahedronGeometry: OctahedronGeometryProps
