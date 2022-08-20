@@ -5,6 +5,7 @@ import type { Options as ResizeOptions } from 'react-use-measure'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
+import { DomEvent } from '../core/events'
 
 export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
@@ -17,6 +18,10 @@ export interface CanvasProps
    * @see https://github.com/pmndrs/react-use-measure#api
    */
   resize?: ResizeOptions
+  /** The target where events are being subscribed to, default: the div that wraps canvas */
+  eventTarget?: HTMLElement
+  /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
+  eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
 /**
@@ -31,6 +36,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
     style,
     gl,
     events = createPointerEvents,
+    eventTarget,
+    eventPrefix,
     shadows,
     linear,
     flat,
@@ -90,7 +97,20 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
-        state.events.connect?.(divRef.current)
+        // Connect to event source
+        state.events.connect?.(eventTarget ? eventTarget : divRef.current)
+        // Set up compute function
+        if (eventPrefix) {
+          state.setEvents({
+            compute: (event, state) => {
+              const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
+              const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+              state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+              state.raycaster.setFromCamera(state.pointer, state.camera)
+            },
+          })
+        }
+        // Call onCreated callback
         onCreated?.(state)
       },
     })
