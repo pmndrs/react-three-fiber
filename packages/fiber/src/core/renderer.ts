@@ -328,11 +328,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       Object.assign(instance.props, newProps)
       applyProps(instance.object, changedProps)
     },
-    finalizeInitialChildren(instance) {
-      commitInstance(instance)
-      return false
-    },
-    // commitMount: commitInstance,
+    finalizeInitialChildren: () => true,
+    commitMount: commitInstance,
     getPublicInstance: (instance) => instance?.object,
     prepareForCommit: () => null,
     preparePortalMount: (container) => container,
