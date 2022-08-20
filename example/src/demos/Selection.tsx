@@ -6,7 +6,7 @@ function Sphere() {
   console.log('sphere', hovered)
   return (
     <mesh onPointerOver={(e) => (e.stopPropagation(), set(true))} onPointerOut={(e) => set(false)}>
-      <sphereBufferGeometry args={[0.5, 64, 64]} />
+      <sphereGeometry args={[0.5, 64, 64]} />
       <meshBasicMaterial color={hovered ? 'hotpink' : 'indianred'} />
     </mesh>
   )

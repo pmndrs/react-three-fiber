@@ -21,7 +21,7 @@ function Box(props: any) {
       onClick={() => setClicked(!clicked)}
       scale={clicked ? [1.5, 1.5, 1.5] : [1, 1, 1]}
       {...props}>
-      <boxBufferGeometry />
+      <boxGeometry />
       <meshBasicMaterial color={hovered ? 'hotpink' : 'aquamarine'} />
     </mesh>
   )

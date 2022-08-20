@@ -278,7 +278,7 @@ describe('ReactThreeTestRenderer Core', () => {
         log.push('render ' + this.props.name)
         return (
           <mesh>
-            <boxBufferGeometry args={[2, 2]} />
+            <boxGeometry args={[2, 2]} />
             <meshStandardMaterial />
           </mesh>
         )
