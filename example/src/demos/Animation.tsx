@@ -17,7 +17,7 @@ export default function Box() {
   return (
     <Canvas>
       <a.mesh rotation-y={rotation} scale-x={scale} scale-z={scale} onClick={() => setActive(Number(!active))}>
-        <boxBufferGeometry />
+        <boxGeometry />
         <a.meshBasicMaterial color={color} />
       </a.mesh>
       <OrbitControls />

@@ -147,11 +147,11 @@ describe('hooks', () => {
     const MockGroup = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
     const mat2 = new THREE.MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
@@ -203,20 +203,20 @@ describe('hooks', () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
     const mat2 = new THREE.MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
     const subGroup = new THREE.Group()
     const mat3 = new THREE.MeshBasicMaterial()
     mat3.name = 'Mat 3'
-    const mesh3 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat3)
+    const mesh3 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat3)
     mesh3.name = 'Mesh 3'
     const mat4 = new THREE.MeshBasicMaterial()
     mat4.name = 'Mat 4'
-    const mesh4 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat4)
+    const mesh4 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat4)
     mesh4.name = 'Mesh 4'
 
     subGroup.add(mesh3, mesh4)

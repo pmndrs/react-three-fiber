@@ -107,7 +107,7 @@ describe('renderer', () => {
     const Mesh = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -151,7 +151,7 @@ describe('renderer', () => {
     const Child = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )

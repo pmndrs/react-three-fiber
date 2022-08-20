@@ -5,8 +5,11 @@ import type { Options as ResizeOptions } from 'react-use-measure'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
+import { DomEvent } from '../core/events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
+export interface CanvasProps
+  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
+    React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
@@ -15,13 +18,17 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
    * @see https://github.com/pmndrs/react-use-measure#api
    */
   resize?: ResizeOptions
+  /** The target where events are being subscribed to, default: the div that wraps canvas */
+  eventTarget?: HTMLElement
+  /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
+  eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
 /**
  * A DOM canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
+export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps>(function Canvas(
   {
     children,
     fallback,
@@ -29,6 +36,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     style,
     gl,
     events = createPointerEvents,
+    eventTarget,
+    eventPrefix,
     shadows,
     linear,
     flat,
@@ -88,7 +97,20 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
-        state.events.connect?.(divRef.current)
+        // Connect to event source
+        state.events.connect?.(eventTarget ? eventTarget : divRef.current)
+        // Set up compute function
+        if (eventPrefix) {
+          state.setEvents({
+            compute: (event, state) => {
+              const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
+              const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+              state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+              state.raycaster.setFromCamera(state.pointer, state.camera)
+            },
+          })
+        }
+        // Call onCreated callback
         onCreated?.(state)
       },
     })
