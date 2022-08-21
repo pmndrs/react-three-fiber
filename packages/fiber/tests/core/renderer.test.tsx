@@ -12,7 +12,6 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
-  Overwrite,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -49,16 +48,13 @@ class MyColor extends THREE.Color {
   }
 }
 
-class MyGroup extends THREE.Group {}
-
-extend({ HasObject3dMember, HasObject3dMethods, MyGroup })
+extend({ HasObject3dMember, HasObject3dMethods })
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
     hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
     hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
     myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
-    myGroup: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
   }
 }
 
@@ -449,14 +445,17 @@ describe('renderer', () => {
     let state: RootState = null!
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
-    const Test = ({ n }: { n: number }) => (
-      <myGroup args={[n]} onPointerOver={() => null}>
+    const object1 = new THREE.Group()
+    const object2 = new THREE.Group()
+
+    const Test = ({ first }: { first?: boolean }) => (
+      <primitive object={first ? object1 : object2} onPointerOver={() => null}>
         <group />
-      </myGroup>
+      </primitive>
     )
 
     await act(async () => {
-      state = root.render(<Test n={1} />).getState()
+      state = root.render(<Test first />).getState()
     })
 
     instances.push({
@@ -464,9 +463,10 @@ describe('renderer', () => {
       parentUUID: state.scene.children[0].parent?.uuid,
       childUUID: state.scene.children[0].children[0]?.uuid,
     })
+    expect(state.scene.children[0]).toBe(object1)
 
     await act(async () => {
-      state = root.render(<Test n={2} />).getState()
+      state = root.render(<Test />).getState()
     })
 
     instances.push({
@@ -477,8 +477,8 @@ describe('renderer', () => {
 
     const [oldInstance, newInstance] = instances
 
-    // Created a new instance
-    expect(oldInstance.uuid).not.toBe(newInstance.uuid)
+    // Swapped to new instance
+    expect(state.scene.children[0]).toBe(object2)
 
     // Preserves scene hierarchy
     expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
