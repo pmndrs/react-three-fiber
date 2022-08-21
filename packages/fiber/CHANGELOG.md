@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.5.0
+
+### Minor Changes
+
+- edc8252: feat: handle primitive children, auto-attach via instanceof
+
 ## 8.3.1
 
 ### Patch Changes
