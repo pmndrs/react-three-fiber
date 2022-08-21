@@ -258,11 +258,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
     // forces r3f to re-parent the children and non-scene objects
-    // This can not include primitives, which should not have declarative children
-    if (type !== 'primitive' && instance.children) {
-      instance.children.forEach((child) => appendChild(newInstance, child))
-      instance.children = []
+    for (const child of instance.children) {
+      if (child.__r3f) appendChild(newInstance, child)
     }
+    instance.children = instance.children.filter((child) => !child.__r3f)
 
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
@@ -386,15 +385,15 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     shouldSetTextContent: () => false,
     clearContainer: () => false,
     hideInstance(instance) {
-      // Deatch while the instance is hidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
+      // Detach while the instance is hidden
+      const { attach: type, parent } = instance.__r3f ?? {}
       if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
       invalidateInstance(instance)
     },
     unhideInstance(instance, props) {
       // Re-attach when the instance is unhidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
+      const { attach: type, parent } = instance.__r3f ?? {}
       if (type && parent) attach(parent, instance, type)
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)
