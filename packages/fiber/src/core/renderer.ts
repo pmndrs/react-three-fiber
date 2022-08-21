@@ -119,9 +119,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
 
     // Auto-attach geometries and materials
-    if (instance.attach === undefined) {
-      if (instance instanceof THREE.BufferGeometry) instance.attach = 'geometry'
-      else if (instance instanceof THREE.Material) instance.attach = 'material'
+    if (instance.__r3f.attach === undefined) {
+      if (instance instanceof THREE.BufferGeometry) instance.__r3f.attach = 'geometry'
+      else if (instance instanceof THREE.Material) instance.__r3f.attach = 'material'
     }
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
