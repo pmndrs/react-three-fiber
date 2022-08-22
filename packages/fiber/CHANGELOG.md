@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.6.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
 ## 8.5.1
 
 ### Patch Changes
