@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.5.1
+
+### Patch Changes
+
+- 87821d9: fix: null-check instance.children on reconstruct
+
 ## 8.5.0
 
 ### Minor Changes
