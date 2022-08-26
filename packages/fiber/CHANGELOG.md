@@ -1,5 +1,23 @@
 # @react-three/fiber
 
+## 8.6.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
+## 8.5.1
+
+### Patch Changes
+
+- 87821d9: fix: null-check instance.children on reconstruct
+
+## 8.5.0
+
+### Minor Changes
+
+- edc8252: feat: handle primitive children, auto-attach via instanceof
+
 ## 8.3.1
 
 ### Patch Changes

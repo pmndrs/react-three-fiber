@@ -258,10 +258,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
     // forces r3f to re-parent the children and non-scene objects
-    for (const child of instance.children) {
-      if (child.__r3f) appendChild(newInstance, child)
+    if (instance.children) {
+      for (const child of instance.children) {
+        if (child.__r3f) appendChild(newInstance, child)
+      }
+      instance.children = instance.children.filter((child) => !child.__r3f)
     }
-    instance.children = instance.children.filter((child) => !child.__r3f)
 
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []

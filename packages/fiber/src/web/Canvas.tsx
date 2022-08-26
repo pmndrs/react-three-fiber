@@ -19,7 +19,7 @@ export interface CanvasProps
    */
   resize?: ResizeOptions
   /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventTarget?: HTMLElement
+  eventSource?: HTMLElement
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
@@ -36,7 +36,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
     style,
     gl,
     events = createPointerEvents,
-    eventTarget,
+    eventSource,
     eventPrefix,
     shadows,
     linear,
@@ -98,7 +98,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
         // Connect to event source
-        state.events.connect?.(eventTarget ? eventTarget : divRef.current)
+        state.events.connect?.(eventSource ? eventSource : divRef.current)
         // Set up compute function
         if (eventPrefix) {
           state.setEvents({

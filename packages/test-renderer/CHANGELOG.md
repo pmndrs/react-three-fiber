@@ -1,5 +1,16 @@
 # @react-three/test-renderer
 
+## 10.0.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
+### Patch Changes
+
+- Updated dependencies [85c80e70]
+  - @react-three/fiber@8.6.0
+
 ## 9.0.0
 
 ### Minor Changes
