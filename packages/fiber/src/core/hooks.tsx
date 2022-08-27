@@ -51,7 +51,7 @@ export function useFrame(callback: RenderCallback | undefined, renderPriority: n
   // Subscribe on mount, unsubscribe on unmount
   useIsomorphicLayoutEffect(() => {
     if (!callback) return
-    subscribe(ref, renderPriority, store)
+    return subscribe(ref, renderPriority, store)
   }, [renderPriority, subscribe, store])
   return null
 }
