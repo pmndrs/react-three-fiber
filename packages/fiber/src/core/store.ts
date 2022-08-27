@@ -356,7 +356,7 @@ const createStore = (
 
   const state = rootStore.getState()
 
-  prepare(state.scene, rootStore)
+  prepare(state.scene, rootStore, '', {})
 
   let oldSize = state.size
   let oldDpr = state.viewport.dpr

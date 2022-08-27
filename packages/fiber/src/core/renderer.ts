@@ -79,11 +79,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     // Throw if an object or literal was passed for args
     if (!Array.isArray(args)) throw new Error('R3F: The args prop must be an array!')
 
-    object ??= new target(...args)
-
-    const instance = prepare(object, root)
-    instance.type = type
-    instance.props = { ...props, args }
+    const instance = prepare(object ?? new target(...args), root, type, { ...props, args })
 
     // Auto-attach geometries and materials
     if (instance.props.attach === undefined) {
@@ -91,6 +87,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
     }
 
+    // Set initial props
     applyProps(instance.object, props)
 
     return instance
@@ -322,13 +319,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     getPublicInstance: (instance) => instance?.object!,
     prepareForCommit: () => null,
-    preparePortalMount: (container) => prepare(container.getState().scene, container),
+    preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
     resetAfterCommit: () => {},
     shouldSetTextContent: () => false,
     clearContainer: () => false,
     hideInstance(instance) {
-      if (!instance.object) return
-
       if (instance.props.attach && instance.parent?.object) {
         detach(instance.parent, instance)
       } else if (instance.object instanceof THREE.Object3D) {
@@ -338,8 +333,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       invalidateInstance(instance)
     },
     unhideInstance(instance) {
-      if (!instance.object) return
-
       if (instance.props.attach && instance.parent?.object) {
         attach(instance.parent, instance)
       } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
