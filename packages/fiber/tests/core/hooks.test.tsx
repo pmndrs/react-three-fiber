@@ -109,6 +109,42 @@ describe('hooks', () => {
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
+  it('can handle useFrame hook with an empty argument', async () => {
+    const frameCalls: number[] = []
+
+    const Component = ({ animate = false }) => {
+      const ref = React.useRef<THREE.Mesh>(null!)
+
+      useFrame(
+        animate
+          ? (_, delta) => {
+              frameCalls.push(delta)
+              ref.current.position.x = 1
+            }
+          : undefined,
+      )
+
+      return (
+        <mesh ref={ref}>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    let scene: THREE.Scene = null!
+    await act(
+      async () =>
+        (scene = createRoot(canvas)
+          .configure({ frameloop: 'never' })
+          .render(<Component />)
+          .getState().scene),
+    )
+    advance(Date.now())
+    expect(scene.children[0].position.x).toEqual(0)
+    expect(frameCalls.length).toEqual(0)
+  })
+
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
