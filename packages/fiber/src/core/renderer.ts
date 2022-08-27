@@ -245,7 +245,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
   // Don't handle text instances, warn on undefined behavior
   const handleTextInstance = () =>
-    console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
+    console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
   const reconciler = Reconciler<
     HostConfig['type'],
@@ -290,9 +290,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     prepareUpdate(instance, _type, oldProps, newProps) {
       // Reconstruct primitives if object prop changes
       if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
-
-      // Throw if an object or literal was passed for args
-      if (newProps.args && !Array.isArray(newProps.args)) throw new Error('R3F: the args prop must be an array!')
 
       // Reconstruct elements if args change
       if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
