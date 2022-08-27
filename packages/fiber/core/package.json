@@ -1,0 +1,5 @@
+{
+  "main": "dist/react-three-fiber-core.cjs.js",
+  "module": "dist/react-three-fiber-core.esm.js",
+  "types": "dist/react-three-fiber-core.cjs.d.ts"
+}

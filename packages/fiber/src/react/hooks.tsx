@@ -3,9 +3,10 @@ import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
-import { context, RootState, RenderCallback } from './store'
-import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { RootState, RenderCallback } from '../core/store'
+import { buildGraph, ObjectMap, is } from '../core/utils'
 import { LoadingManager } from 'three'
+import { context } from './context'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -125,4 +126,25 @@ useLoader.preload = function <T, U extends string | string[]>(
 useLoader.clear = function <T, U extends string | string[]>(Proto: new () => LoaderResult<T>, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([Proto, ...keys])
+}
+
+/**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+
+export const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
+
+export function useMutableCallback<T>(fn: T) {
+  const ref = React.useRef<T>(fn)
+  useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
+  return ref
 }
