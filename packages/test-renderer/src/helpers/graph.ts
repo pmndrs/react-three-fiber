@@ -1,4 +1,4 @@
-import type { MockScene, MockSceneChild } from '../types/internal'
+import type { MockInstance } from '../types/internal'
 import type { SceneGraphItem } from '../types/public'
 
 const graphObjectFactory = (
@@ -11,5 +11,5 @@ const graphObjectFactory = (
   children,
 })
 
-export const toGraph = (object: MockScene | MockSceneChild): SceneGraphItem[] =>
-  object.children.map((child) => graphObjectFactory(child.type, child.name || '', toGraph(child)))
+export const toGraph = (object: MockInstance): SceneGraphItem[] =>
+  object.children.map((child) => graphObjectFactory(child.object.type, child.object.name ?? '', toGraph(child)))
