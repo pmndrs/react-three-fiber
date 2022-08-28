@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { EventHandlers } from './events'
-import { Instance, InstanceProps } from './renderer'
-import { Dpr, RootState, Size } from './store'
-import { UseBoundStore } from 'zustand'
+import type { UseBoundStore } from 'zustand'
+import type { EventHandlers } from './events'
+import type { Dpr, RootState, Size } from './store'
+import type { Instance, InstanceProps } from './types'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>

@@ -20,4 +20,4 @@ function getContext(contextId: string): RenderingContext | null {
 HTMLCanvasElement.prototype.getContext = getContext
 
 // Extend catalogue for render API in tests
-extend(THREE)
+extend(THREE as any)

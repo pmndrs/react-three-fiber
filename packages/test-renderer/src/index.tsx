@@ -16,7 +16,7 @@ import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
 // Extend catalogue for render API in tests.
-extend(THREE)
+extend(THREE as any)
 
 const act = _act as unknown as Act
 

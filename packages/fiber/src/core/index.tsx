@@ -3,7 +3,6 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { StoreApi, UseBoundStore } from 'zustand'
 
-import * as ReactThreeFiber from '../three-types'
 import {
   Renderer,
   createStore,
@@ -36,6 +35,7 @@ import {
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
 import { OffscreenCanvas } from 'three'
+import { InstanceProps } from './types'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -87,11 +87,9 @@ export type RenderProps<TCanvas extends Element> = {
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
-    | Partial<
-        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
-      >
+    | InstanceProps<typeof THREE.Camera>
+    | InstanceProps<typeof THREE.PerspectiveCamera>
+    | InstanceProps<typeof THREE.OrthographicCamera>
   ) & {
     /** Flags the camera as manual, putting projection into your own hands */
     manual?: boolean

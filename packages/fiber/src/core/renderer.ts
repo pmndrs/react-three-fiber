@@ -4,34 +4,12 @@ import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
 import { RootState } from './store'
-import { EventHandlers, removeInteractivity, getEventPriority } from './events'
+import { removeInteractivity, getEventPriority } from './events'
+import type { InstanceProps, Instance, Catalogue } from './types'
 
-export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<RootState> }
-
-export type AttachFnType = (parent: any, self: any) => () => void
-export type AttachType = string | AttachFnType
-
-export type InstanceProps = {
-  [key: string]: unknown
-} & {
-  args?: any[]
-  object?: any
-  visible?: boolean
-  dispose?: null
-  attach?: AttachType
-}
-
-export interface Instance {
-  root: UseBoundStore<RootState>
-  type: string
-  parent: Instance | null
-  children: Instance[]
-  props: InstanceProps
-  object: unknown & { __r3f?: Instance }
-  eventCount: number
-  handlers: Partial<EventHandlers>
-  attach?: AttachType
-  previousAttach?: any
+export interface Root {
+  fiber: Reconciler.FiberRoot
+  store: UseBoundStore<RootState>
 }
 
 interface HostConfig {
@@ -50,14 +28,8 @@ interface HostConfig {
   noTimeout: -1
 }
 
-interface Catalogue {
-  [name: string]: {
-    new (...args: any): any
-  }
-}
-
 const catalogue: Catalogue = {}
-const extend = (objects: object): void => void Object.assign(catalogue, objects)
+const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
 function createInstance(
   type: string,

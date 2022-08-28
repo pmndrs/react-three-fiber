@@ -3,19 +3,10 @@ import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import {
-  ReconcilerRoot,
-  createRoot,
-  act,
-  useFrame,
-  extend,
-  ReactThreeFiber,
-  useThree,
-  createPortal,
-} from '../../src/index'
+import { ReconcilerRoot, createRoot, act, useFrame, extend, useThree, createPortal } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
-import { Instance } from '../../src/core/renderer'
+import { Instance, Node } from '../../src/core/types'
 import { suspend } from 'suspend-react'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
@@ -53,9 +44,9 @@ extend({ HasObject3dMember, HasObject3dMethods })
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
-    hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
-    myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
+    hasObject3dMember: Node<typeof HasObject3dMember>
+    hasObject3dMethods: Node<typeof HasObject3dMethods>
+    myColor: Node<typeof MyColor>
   }
 }
 
