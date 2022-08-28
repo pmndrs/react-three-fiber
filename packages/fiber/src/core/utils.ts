@@ -221,6 +221,8 @@ const RESERVED_PROPS = [
   'dispose',
   'attach',
   // 'object', -- internal to primitives
+  // Behavior flags
+  'dispose',
 ]
 
 // This function prepares a set of changes to be applied to the instance
