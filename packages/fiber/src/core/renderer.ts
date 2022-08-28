@@ -140,6 +140,7 @@ function removeRecursive(children: HostConfig['instance'][], parent: HostConfig[
 function removeChild(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
+  recursive = true,
   dispose?: boolean,
 ) {
   if (!child) return
@@ -169,7 +170,7 @@ function removeChild(
 
   // Remove nested child objects. Primitives should not have objects and children that are
   // attached to them declaratively ...
-  if (!isPrimitive) removeRecursive(child.children, child, shouldDispose)
+  if (!isPrimitive && recursive) removeRecursive(child.children, child, shouldDispose)
 
   // Dispose object whenever the reconciler feels like it
   if (child.type !== 'scene' && shouldDispose) {
@@ -207,7 +208,7 @@ function switchInstance(
 
   // Link up new instance
   appendChild(parent, newInstance)
-  removeChild(parent, oldInstance)
+  removeChild(parent, oldInstance, false)
   oldInstance.children = []
 
   // Re-bind event handlers
