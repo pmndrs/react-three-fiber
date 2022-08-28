@@ -19,9 +19,9 @@ import {
   FrameloopLegacy,
   Frameloop,
 } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { reconciler, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
-import { getEventPriority, EventManager, ComputeFunction } from './events'
+import { EventManager, ComputeFunction } from './events'
 import {
   is,
   dispose,
@@ -31,6 +31,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
+  applyProps,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -38,7 +39,6 @@ import { OffscreenCanvas } from 'three'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
-const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>

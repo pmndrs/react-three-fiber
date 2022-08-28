@@ -250,8 +250,8 @@ export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remo
 }
 
 // This function applies a set of changes to the instance
-export function applyProps(object: any, props: any) {
-  const instance = object.__r3f as Instance | undefined
+export function applyProps(object: Instance['object'], props: InstanceProps) {
+  const instance = object.__r3f
   const rootState = instance?.root.getState()
   const prevHandlers = instance?.eventCount
 
