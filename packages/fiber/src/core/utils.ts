@@ -24,7 +24,7 @@ export const useIsomorphicLayoutEffect =
     ? React.useLayoutEffect
     : React.useEffect
 
-export function useMutableCallback<T>(fn: T) {
+export function useMutableCallback<T>(fn: T): React.MutableRefObject<T> {
   const ref = React.useRef<T>(fn)
   useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
   return ref
@@ -62,15 +62,15 @@ export type ObjectMap = {
   materials: { [name: string]: THREE.Material }
 }
 
-export function calculateDpr(dpr: Dpr) {
+export function calculateDpr(dpr: Dpr): number {
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
 }
 
 /**
  * Returns instance root state
  */
-export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
-  ((obj as any).__r3f as Instance)?.root.getState()
+export const getRootState = <T = THREE.Object3D>(obj: T): RootState | undefined =>
+  (obj as Instance<T>['object']).__r3f?.root.getState()
 
 export type EquConfig = {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
@@ -115,7 +115,7 @@ export const is = {
 }
 
 // Collects nodes and materials from a THREE.Object3D
-export function buildGraph(object: THREE.Object3D) {
+export function buildGraph(object: THREE.Object3D): ObjectMap {
   const data: ObjectMap = { nodes: {}, materials: {} }
   if (object) {
     object.traverse((obj: any) => {
@@ -126,11 +126,16 @@ export function buildGraph(object: THREE.Object3D) {
   return data
 }
 
+interface Disposable {
+  type?: string
+  dispose?: () => void
+}
+
 // Disposes an object and all its properties
-export function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
-  if (obj.dispose && obj.type !== 'Scene') obj.dispose()
+export function dispose<T extends Disposable>(obj: T): void {
+  if (obj.type !== 'Scene') obj.dispose?.()
   for (const p in obj) {
-    ;(p as any).dispose?.()
+    ;(p as Disposable).dispose?.()
     delete obj[p]
   }
 }
@@ -149,7 +154,12 @@ function getInstanceProps<T = any>(queue: Fiber['pendingProps']): InstanceProps<
 }
 
 // Each object in the scene carries a small LocalState descriptor
-export function prepare<T = any>(target: T, root: UseBoundStore<RootState>, type: string, props: InstanceProps) {
+export function prepare<T = any>(
+  target: T,
+  root: UseBoundStore<RootState>,
+  type: string,
+  props: InstanceProps,
+): Instance<T> {
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor
@@ -171,7 +181,7 @@ export function prepare<T = any>(target: T, root: UseBoundStore<RootState>, type
   return instance
 }
 
-function resolve(root: any, key: string) {
+function resolve(root: any, key: string): { root: any; key: string; target: any } {
   let target = root[key]
   if (!key.includes('-')) return { root, key, target }
 
@@ -189,7 +199,7 @@ function resolve(root: any, key: string) {
 // Checks if a dash-cased string ends with an integer
 const INDEX_REGEX = /-\d+$/
 
-export function attach(parent: Instance, child: Instance) {
+export function attach(parent: Instance, child: Instance): void {
   if (is.str(child.props.attach)) {
     // If attaching into an array (foo-0), create one
     if (INDEX_REGEX.test(child.props.attach)) {
@@ -206,7 +216,7 @@ export function attach(parent: Instance, child: Instance) {
   }
 }
 
-export function detach(parent: Instance, child: Instance) {
+export function detach(parent: Instance, child: Instance): void {
   if (is.str(child.props.attach)) {
     const { root, key } = resolve(parent.object, child.props.attach)
     const previous = child.previousAttach
@@ -260,7 +270,7 @@ export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remo
 }
 
 // This function applies a set of changes to the instance
-export function applyProps<T = any>(object: Instance<T>['object'], props: InstanceProps<T>) {
+export function applyProps<T = any>(object: Instance<T>['object'], props: InstanceProps<T>): Instance<T>['object'] {
   const instance = object.__r3f
   const rootState = instance?.root.getState()
   const prevHandlers = instance?.eventCount
@@ -360,12 +370,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
   return object
 }
 
-export function invalidateInstance(instance: Instance) {
+export function invalidateInstance(instance: Instance): void {
   const state = instance.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()
 }
 
-export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) {
+export function updateCamera(camera: Camera & { manual?: boolean }, size: Size): void {
   // https://github.com/pmndrs/react-three-fiber/issues/92
   // Do not mess with the camera if it belongs to the user
   if (!camera.manual) {
