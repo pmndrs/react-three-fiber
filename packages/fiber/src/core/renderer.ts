@@ -177,8 +177,8 @@ function removeChild(
   if (!isPrimitive && recursive) removeRecursive(child.children, child, shouldDispose)
 
   // Dispose object whenever the reconciler feels like it
-  if (child.type !== 'scene' && shouldDispose) {
-    const dispose = (child.object as unknown as any).dispose
+  if (child.object.type !== 'Scene' && shouldDispose) {
+    const dispose = child.object.dispose
     if (typeof dispose === 'function') {
       scheduleCallback(idlePriority, () => {
         try {
@@ -287,7 +287,8 @@ const reconciler = Reconciler<
     // Reconstruct primitives if object prop changes
     if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
 
-    // Reconstruct elements if args change
+    // Reconstruct instance if args change
+    if (newProps.args?.length !== oldProps.args?.length) return [true]
     if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
 
     // Create a diff-set, flag if there are any changes

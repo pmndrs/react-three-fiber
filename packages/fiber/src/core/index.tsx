@@ -422,7 +422,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
             if (state.gl?.xr) state.xr.disconnect()
-            dispose(state)
+            dispose(state.scene)
             roots.delete(canvas)
             if (callback) callback(canvas)
           } catch (e) {
