@@ -233,7 +233,7 @@ const RESERVED_PROPS = [
   'args',
   'dispose',
   'attach',
-  // 'object', -- internal to primitives
+  'object',
   // Behavior flags
   'dispose',
 ]
