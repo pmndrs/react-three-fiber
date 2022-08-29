@@ -4,7 +4,7 @@ import type { Fiber } from 'react-reconciler'
 import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
 import type { Dpr, RootState, Size } from './store'
-import type { Instance, InstanceProps } from './types'
+import type { Instance, InstanceProps } from './renderer'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -149,12 +149,7 @@ function getInstanceProps<T = any>(queue: Fiber['pendingProps']): InstanceProps<
 }
 
 // Each object in the scene carries a small LocalState descriptor
-export function prepare<T = THREE.Object3D>(
-  target: T,
-  root: UseBoundStore<RootState>,
-  type: string,
-  props: InstanceProps,
-) {
+export function prepare<T = any>(target: T, root: UseBoundStore<RootState>, type: string, props: InstanceProps) {
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor
@@ -240,17 +235,17 @@ const RESERVED_PROPS = [
 
 // This function prepares a set of changes to be applied to the instance
 export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remove = false): InstanceProps {
-  const changedProps: InstanceProps = {}
+  const changedProps: Record<string, unknown> = {}
 
   // Sort through props
   for (const key in newProps) {
     // Skip reserved keys
     if (RESERVED_PROPS.includes(key)) continue
     // Skip if props match
-    if (is.equ(newProps[key], oldProps[key])) continue
+    if (is.equ((newProps as Record<string, unknown>)[key], (oldProps as Record<string, unknown>)[key])) continue
 
     // Props changed, add them
-    changedProps[key] = newProps[key]
+    changedProps[key] = (newProps as Record<string, unknown>)[key]
   }
 
   // Catch removed props, prepend them so they can be reset or removed
@@ -261,17 +256,17 @@ export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remo
     }
   }
 
-  return changedProps
+  return changedProps as InstanceProps
 }
 
 // This function applies a set of changes to the instance
-export function applyProps(object: Instance['object'], props: InstanceProps) {
+export function applyProps<T = any>(object: Instance<T>['object'], props: InstanceProps<T>) {
   const instance = object.__r3f
   const rootState = instance?.root.getState()
   const prevHandlers = instance?.eventCount
 
   for (const prop in props) {
-    let value = props[prop]
+    let value = (props as Record<string, unknown>)[prop]
 
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
@@ -355,7 +350,9 @@ export function applyProps(object: Instance['object'], props: InstanceProps) {
     const index = rootState.internal.interaction.indexOf(instance.object)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (instance.eventCount && instance.props.raycast !== null) rootState.internal.interaction.push(instance.object)
+    if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
+      rootState.internal.interaction.push(instance.object)
+    }
   }
 
   if (instance) invalidateInstance(instance)

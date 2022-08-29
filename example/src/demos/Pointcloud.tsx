@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { extend, Canvas, useThree } from '@react-three/fiber'
+import { extend, Canvas, useThree, ReactThreeFiber } from '@react-three/fiber'
 import * as THREE from 'three'
 import { OrbitControls } from 'three-stdlib'
 extend({ OrbitControls })

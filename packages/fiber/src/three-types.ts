@@ -1,17 +1,11 @@
 import type * as THREE from 'three'
-import type { UseBoundStore } from 'zustand'
-import type { EventHandlers } from './events'
-import type { RootState } from './store'
-
-export type AttachFnType<O = any> = (parent: any, self: O) => () => void
-export type AttachType<O = any> = string | AttachFnType<O>
+import type { EventHandlers } from './core/events'
+import type { InstanceProps, ConstructorRepresentation } from './core/renderer'
 
 type Mutable<T> = { [K in keyof T]: T[K] | Readonly<T[K]> }
 type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 type WithoutFunctions<T> = Pick<T, NonFunctionKeys<T>>
 type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
-type ConstructorRepresentation = new (...args: any[]) => any
-type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
 
 interface MathRepresentation {
   set(...args: any[]): any
@@ -36,52 +30,32 @@ interface RaycastableRepresentation {
 }
 type EventProps<T> = T extends RaycastableRepresentation ? EventHandlers : {}
 
-export type InstanceProps<T = any, P = T extends Function ? T['prototype'] : {}> = {
-  args?: Args<T>
-  object?: T
-  visible?: boolean
-  dispose?: null
-  attach?: AttachType<T>
-} & Partial<MathProps<P> & EventProps<P>>
-
-export interface Instance<O = any> {
-  root: UseBoundStore<RootState>
-  type: string
-  parent: Instance | null
-  children: Instance[]
-  props: InstanceProps<O>
-  object: O & { __r3f?: Instance<O> }
-  eventCount: number
-  handlers: Partial<EventHandlers>
-  attach?: AttachType<O>
-  previousAttach?: any
-}
-
 interface ReactProps<T> {
   children?: React.ReactNode
   ref?: React.Ref<T>
   key?: React.Key
 }
 
+type NodeProps<T extends Function, P = T extends Function ? T['prototype'] : {}> = InstanceProps<T> &
+  Partial<ReactProps<P> & MathProps<P> & EventProps<P>>
+
 export type Node<T extends Function> = Mutable<
-  Overwrite<Partial<WithoutFunctions<T['prototype']>>, InstanceProps<T> & ReactProps<T['prototype']>>
+  Overwrite<Partial<WithoutFunctions<T['prototype']>>, Omit<NodeProps<T>, 'object'>>
 >
 
 type ThreeExports = typeof THREE
-export type ThreeElements = {
+type ThreeElementsImpl = {
   [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
-    ? Omit<Node<ThreeExports[K]>, 'object'>
+    ? Node<ThreeExports[K]>
     : never
 }
 
-export interface Catalogue {
-  [name: string]: ConstructorRepresentation
-}
+export interface ThreeElements extends ThreeElementsImpl {}
 
 declare global {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {
-      primitive: Omit<Node<any>, 'args'>
+      primitive: Omit<NodeProps<any>, 'args'>
     }
   }
 }

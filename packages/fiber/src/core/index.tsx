@@ -3,6 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { StoreApi, UseBoundStore } from 'zustand'
 
+import * as ReactThreeFiber from '../three-types'
 import {
   Renderer,
   createStore,
@@ -35,7 +36,6 @@ import {
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
 import { OffscreenCanvas } from 'three'
-import { InstanceProps } from './types'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -87,9 +87,11 @@ export type RenderProps<TCanvas extends Element> = {
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
-    | InstanceProps<typeof THREE.Camera>
-    | InstanceProps<typeof THREE.PerspectiveCamera>
-    | InstanceProps<typeof THREE.OrthographicCamera>
+    | Partial<
+        ReactThreeFiber.Node<typeof THREE.Camera> &
+          ReactThreeFiber.Node<typeof THREE.PerspectiveCamera> &
+          ReactThreeFiber.Node<typeof THREE.OrthographicCamera>
+      >
   ) & {
     /** Flags the camera as manual, putting projection into your own hands */
     manual?: boolean
@@ -240,9 +242,9 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
-      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { ...options })
+      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
       if (!is.equ(params, raycaster.params, shallowLoose))
-        applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
+        applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
 
       // Create default camera (one time only!)
       if (!state.camera) {
@@ -254,7 +256,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
           : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
-          if (cameraOptions) applyProps(camera as any, cameraOptions as any)
+          if (cameraOptions) applyProps(camera, cameraOptions as any)
           // Always look at center by default
           if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
@@ -324,7 +326,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-        applyProps(gl as any, glConfig as any)
+        applyProps(gl, glConfig as any)
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
       // Check pixelratio

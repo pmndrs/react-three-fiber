@@ -4,12 +4,43 @@ import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
 import { RootState } from './store'
-import { removeInteractivity, getEventPriority } from './events'
-import type { InstanceProps, Instance, Catalogue } from './types'
+import { removeInteractivity, getEventPriority, EventHandlers } from './events'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
   store: UseBoundStore<RootState>
+}
+
+export type AttachFnType<O = any> = (parent: any, self: O) => () => void
+export type AttachType<O = any> = string | AttachFnType<O>
+
+export type ConstructorRepresentation = new (...args: any[]) => any
+
+export interface Catalogue {
+  [name: string]: ConstructorRepresentation
+}
+
+export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
+
+export type InstanceProps<T = any> = {
+  args?: Args<T>
+  object?: T
+  visible?: boolean
+  dispose?: null
+  attach?: AttachType<T>
+}
+
+export interface Instance<O = any> {
+  root: UseBoundStore<RootState>
+  type: string
+  parent: Instance | null
+  children: Instance[]
+  props: InstanceProps<O>
+  object: O & { __r3f?: Instance<O> }
+  eventCount: number
+  handlers: Partial<EventHandlers>
+  attach?: AttachType<O>
+  previousAttach?: any
 }
 
 interface HostConfig {
@@ -185,7 +216,7 @@ function switchInstance(
   }
 
   // Re-bind event handlers
-  if (newInstance.props.raycast !== null && newInstance.object instanceof THREE.Object3D && newInstance.eventCount) {
+  if (newInstance.object.raycast !== null && newInstance.object instanceof THREE.Object3D && newInstance.eventCount) {
     const rootState = newInstance.root.getState()
     rootState.internal.interaction.push(newInstance.object)
   }
@@ -280,7 +311,7 @@ const reconciler = Reconciler<
   // This will make sure events are only added once to the central container
   finalizeInitialChildren: (instance) => instance.eventCount > 0,
   commitMount(instance) {
-    if (instance.props.raycast !== null && instance.object instanceof THREE.Object3D && instance.eventCount) {
+    if (instance.object.raycast !== null && instance.object instanceof THREE.Object3D && instance.eventCount) {
       const rootState = instance.root.getState()
       rootState.internal.interaction.push(instance.object)
     }

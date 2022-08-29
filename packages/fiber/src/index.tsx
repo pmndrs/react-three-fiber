@@ -1,14 +1,15 @@
-import { Node, ThreeElements } from './core/types'
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {
-      primitive: Omit<Node<any>, 'args'>
-    }
-  }
-}
-
-export type { AttachFnType, AttachType, Node, ThreeElements, Catalogue, Instance, InstanceProps } from './core/types'
+export * from './three-types'
+import * as ReactThreeFiber from './three-types'
+export { ReactThreeFiber }
+export type {
+  AttachFnType,
+  AttachType,
+  ConstructorRepresentation,
+  Catalogue,
+  Args,
+  InstanceProps,
+  Instance,
+} from './core/renderer'
 export type {
   Intersection,
   Subscription,
