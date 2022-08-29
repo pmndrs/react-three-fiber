@@ -33,7 +33,7 @@ const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalog
 
 function createInstance(
   type: string,
-  { args = [], object, ...props }: InstanceProps,
+  props: HostConfig['props'],
   root: UseBoundStore<RootState>,
 ): HostConfig['instance'] {
   const name = `${type[0].toUpperCase()}${type.slice(1)}`
@@ -44,12 +44,13 @@ function createInstance(
       `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
     )
 
-  if (type === 'primitive' && !object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
+  if (type === 'primitive' && !props.object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
 
   // Throw if an object or literal was passed for args
-  if (!Array.isArray(args)) throw new Error('R3F: The args prop must be an array!')
+  if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
-  const instance = prepare(object ?? new target(...args), root, type, { ...props, args })
+  const object = props.object ?? new target(...(props.args ?? []))
+  const instance = prepare(object, root, type, props)
 
   // Auto-attach geometries and materials
   if (instance.props.attach === undefined) {
@@ -167,9 +168,6 @@ function switchInstance(
   props: HostConfig['props'],
   fiber: Reconciler.Fiber,
 ) {
-  const parent = oldInstance.parent
-  if (!parent) return
-
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
 
@@ -177,11 +175,14 @@ function switchInstance(
   for (const child of oldInstance.children) {
     appendChild(newInstance, child)
   }
+  oldInstance.children = []
 
   // Link up new instance
-  appendChild(parent, newInstance)
-  removeChild(parent, oldInstance, false)
-  oldInstance.children = []
+  const parent = oldInstance.parent
+  if (parent) {
+    appendChild(parent, newInstance)
+    removeChild(parent, oldInstance, false)
+  }
 
   // Re-bind event handlers
   if (newInstance.props.raycast !== null && newInstance.object instanceof THREE.Object3D && newInstance.eventCount) {
@@ -272,7 +273,7 @@ const reconciler = Reconciler<
     if (reconstruct) return switchInstance(instance, type, newProps, fiber)
 
     // Otherwise just overwrite props
-    Object.assign(instance.props, newProps)
+    Object.assign(instance.props, changedProps)
     applyProps(instance.object, changedProps)
   },
   // https://github.com/facebook/react/issues/20271

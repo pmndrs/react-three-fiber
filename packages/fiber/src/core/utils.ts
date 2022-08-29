@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import type { Fiber } from 'react-reconciler'
 import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
 import type { Dpr, RootState, Size } from './store'
@@ -134,27 +135,42 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
   }
 }
 
+const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
+
+// Gets only instance props from reconciler fibers
+function getInstanceProps<T = any>(queue: Fiber['pendingProps']): InstanceProps<T> {
+  const props: Record<string, unknown> = {}
+
+  for (const key in queue) {
+    if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = queue[key]
+  }
+
+  return props as InstanceProps<T>
+}
+
 // Each object in the scene carries a small LocalState descriptor
 export function prepare<T = THREE.Object3D>(
-  object: T,
+  target: T,
   root: UseBoundStore<RootState>,
   type: string,
-  { args = [], ...props }: InstanceProps,
+  props: InstanceProps,
 ) {
+  const object = target as unknown as Instance['object']
+
   // Create instance descriptor
-  let instance: Instance | undefined = (object as unknown as Instance['object']).__r3f
+  let instance = object.__r3f
   if (!instance) {
     instance = {
       root,
       type,
       parent: null,
       children: [],
-      props: { ...props, args },
-      object: object as unknown as Instance['object'],
+      props: getInstanceProps(props),
+      object,
       eventCount: 0,
       handlers: {},
     }
-    ;(object as unknown as Instance['object']).__r3f = instance
+    object.__r3f = instance
   }
 
   return instance
@@ -212,10 +228,7 @@ export function detach(parent: Instance, child: Instance) {
 
 const DEFAULT = '__default'
 const RESERVED_PROPS = [
-  // React internal props
-  'children',
-  'key',
-  'ref',
+  ...REACT_INTERNAL_PROPS,
   // Instance props
   'args',
   'dispose',
