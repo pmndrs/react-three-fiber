@@ -50,12 +50,12 @@ type ThreeElementsImpl = {
     : never
 }
 
-export interface ThreeElements extends ThreeElementsImpl {}
+export interface ThreeElements extends ThreeElementsImpl {
+  primitive: Omit<NodeProps<any>, 'args'>
+}
 
 declare global {
   namespace JSX {
-    interface IntrinsicElements extends ThreeElements {
-      primitive: Omit<NodeProps<any>, 'args'>
-    }
+    interface IntrinsicElements extends ThreeElements {}
   }
 }
