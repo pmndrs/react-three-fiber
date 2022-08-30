@@ -57,7 +57,7 @@ export class ErrorBoundary extends React.Component<
 
 export type ClassConstructor = { new (): void }
 
-export type ObjectMap = {
+export interface ObjectMap {
   nodes: { [name: string]: THREE.Object3D }
   materials: { [name: string]: THREE.Material }
 }
@@ -72,7 +72,7 @@ export function calculateDpr(dpr: Dpr): number {
 export const getRootState = <T = THREE.Object3D>(obj: T): RootState | undefined =>
   (obj as Instance<T>['object']).__r3f?.root.getState()
 
-export type EquConfig = {
+export interface EquConfig {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
   arrays?: 'reference' | 'shallow'
   /** Compare objects by reference equality a === b (default), or by shallow equality */

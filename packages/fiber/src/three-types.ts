@@ -22,7 +22,7 @@ type MathProps<P> = {
         ? M | Parameters<M['set']> | Parameters<M['setScalar']>[0]
         : M | Parameters<M['set']>
       : {}
-    : never
+    : {}
 }
 
 interface RaycastableRepresentation {
@@ -36,7 +36,7 @@ interface ReactProps<P> {
   key?: React.Key
 }
 
-type NodeProps<T extends Function, P = T extends Function ? T['prototype'] : {}> = Omit<InstanceProps<T>, 'object'> &
+type NodeProps<T extends Function, P = T['prototype']> = Omit<InstanceProps<T>, 'object'> &
   Partial<ReactProps<P> & MathProps<P> & EventProps<P>>
 
 export type Node<T extends Function> = Mutable<Overwrite<Partial<WithoutFunctions<T['prototype']>>, NodeProps<T>>>
