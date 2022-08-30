@@ -2,10 +2,10 @@ import type * as THREE from 'three'
 import type { EventHandlers } from './core/events'
 import type { InstanceProps, ConstructorRepresentation } from './core/renderer'
 
-type Mutable<T> = { [K in keyof T]: T[K] | Readonly<T[K]> }
-type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
-type WithoutFunctions<T> = Pick<T, NonFunctionKeys<T>>
-type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
+type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
+type NonFunctionKeys<P> = { [K in keyof P]: P[K] extends Function ? never : K }[keyof P]
+type WithoutFunctions<P> = Pick<P, NonFunctionKeys<P>>
+type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 
 interface MathRepresentation {
   set(...args: any[]): any
@@ -13,8 +13,8 @@ interface MathRepresentation {
 interface VectorRepresentation extends MathRepresentation {
   setScalar(s: number): any
 }
-type MathProps<T> = {
-  [K in keyof T]: T[K] extends infer M
+type MathProps<P> = {
+  [K in keyof P]: P[K] extends infer M
     ? M extends THREE.Color
       ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
       : M extends MathRepresentation
@@ -28,20 +28,18 @@ type MathProps<T> = {
 interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
 }
-type EventProps<T> = T extends RaycastableRepresentation ? EventHandlers : {}
+type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
 
-interface ReactProps<T> {
+interface ReactProps<P> {
   children?: React.ReactNode
-  ref?: React.Ref<T>
+  ref?: React.Ref<P>
   key?: React.Key
 }
 
-type NodeProps<T extends Function, P = T extends Function ? T['prototype'] : {}> = InstanceProps<T> &
+type NodeProps<T extends Function, P = T extends Function ? T['prototype'] : {}> = Omit<InstanceProps<T>, 'object'> &
   Partial<ReactProps<P> & MathProps<P> & EventProps<P>>
 
-export type Node<T extends Function> = Mutable<
-  Overwrite<Partial<WithoutFunctions<T['prototype']>>, Omit<NodeProps<T>, 'object'>>
->
+export type Node<T extends Function> = Mutable<Overwrite<Partial<WithoutFunctions<T['prototype']>>, NodeProps<T>>>
 
 type ThreeExports = typeof THREE
 type ThreeElementsImpl = {
@@ -51,7 +49,7 @@ type ThreeElementsImpl = {
 }
 
 export interface ThreeElements extends ThreeElementsImpl {
-  primitive: Omit<NodeProps<any>, 'args'>
+  primitive: Omit<Node<any>, 'args'> & { object: any }
 }
 
 declare global {
