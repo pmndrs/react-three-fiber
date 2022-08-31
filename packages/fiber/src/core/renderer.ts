@@ -342,7 +342,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       const scene = container.getState().scene as unknown as Instance
       if (!scene.__r3f) return
 
-      insertBefore(container.getState().scene as unknown as Instance, child, beforeChild)
+      insertBefore(scene, child, beforeChild)
     },
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext) => parentHostContext,
