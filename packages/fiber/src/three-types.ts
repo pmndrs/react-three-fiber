@@ -4,7 +4,6 @@ import type { InstanceProps, ConstructorRepresentation } from './core/renderer'
 
 type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
 type NonFunctionKeys<P> = { [K in keyof P]: P[K] extends Function ? never : K }[keyof P]
-type WithoutFunctions<P> = Pick<P, NonFunctionKeys<P>>
 type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 
 interface MathRepresentation {
@@ -37,7 +36,7 @@ interface ReactProps<P> {
 }
 
 type NodeProps<T extends Function, P = T['prototype']> = Partial<
-  Overwrite<WithoutFunctions<P>, ReactProps<P> & MathProps<P> & EventProps<P>>
+  Overwrite<P, ReactProps<P> & MathProps<P> & EventProps<P>>
 >
 
 export type Node<T extends Function> = Mutable<Overwrite<NodeProps<T>, Omit<InstanceProps<T>, 'object'>>>
