@@ -323,7 +323,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     appendChildToContainer: (container, child) => {
       if (!child) return
 
+      // Don't append to unmounted container
       const scene = container.getState().scene as unknown as Instance
+      if (!scene.__r3f) return
+
       // Link current root to the default scene
       scene.__r3f.root = container
       appendChild(scene, child)
@@ -334,6 +337,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     insertInContainerBefore: (container, child, beforeChild) => {
       if (!child || !beforeChild) return
+
+      // Don't append to unmounted container
+      const scene = container.getState().scene as unknown as Instance
+      if (!scene.__r3f) return
+
       insertBefore(container.getState().scene as unknown as Instance, child, beforeChild)
     },
     getRootHostContext: () => null,
