@@ -29,7 +29,7 @@ describe('ReactThreeTestRenderer Core', () => {
       const [name, setName] = React.useState<string>()
 
       React.useLayoutEffect(() => {
-        ;(React as any).startTransition(() => void setName('mesh'))
+        React.startTransition(() => void setName('mesh'))
       })
 
       return (

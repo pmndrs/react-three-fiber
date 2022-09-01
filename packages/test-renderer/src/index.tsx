@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import { extend, _roots as mockRoots, createRoot, reconciler, act as _act } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act as _act, Instance } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -48,7 +48,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
-  const _scene = (_store.getState().scene as any).__r3f
+  const _scene = (_store.getState().scene as Instance<THREE.Scene>['object']).__r3f!
 
   return {
     scene: wrapFiber(_scene),
