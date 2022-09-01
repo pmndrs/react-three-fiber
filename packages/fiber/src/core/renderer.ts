@@ -176,6 +176,9 @@ function removeChild(
   // attached to them declaratively ...
   if (!isPrimitive && recursive) removeRecursive(child.children, child, shouldDispose)
 
+  // Unlink instance object
+  delete child.object.__r3f
+
   // Dispose object whenever the reconciler feels like it
   if (child.object.type !== 'Scene' && shouldDispose) {
     const dispose = child.object.dispose
@@ -269,17 +272,22 @@ const reconciler = Reconciler<
   appendInitialChild: appendChild,
   insertBefore,
   appendChildToContainer(container, child) {
-    if (!child) return
-    const scene = (container.getState().scene as unknown as Instance['object']).__r3f!
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !scene) return
+
     appendChild(scene, child)
   },
   removeChildFromContainer(container, child) {
-    if (!child) return
-    removeChild((container.getState().scene as unknown as Instance['object']).__r3f!, child)
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !scene) return
+
+    removeChild(scene, child)
   },
   insertInContainerBefore(container, child, beforeChild) {
-    if (!child || !beforeChild) return
-    insertBefore((container.getState().scene as unknown as Instance['object']).__r3f!, child, beforeChild)
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !beforeChild || !scene) return
+
+    insertBefore(scene, child, beforeChild)
   },
   getRootHostContext: () => null,
   getChildHostContext: (parentHostContext) => parentHostContext,
