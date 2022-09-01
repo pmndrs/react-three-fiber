@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.6.1
+
+### Patch Changes
+
+- 7a0b5670: fix(core): don't append to unmounted containers
+
 ## 8.6.0
 
 ### Minor Changes
