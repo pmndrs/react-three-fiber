@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.6.2
+
+### Patch Changes
+
+- 57c12e9c: fix(types): @react-three/drei declaration files
+
 ## 8.6.1
 
 ### Patch Changes
