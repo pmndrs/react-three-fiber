@@ -3,17 +3,7 @@ import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { DefaultEventPriority } from 'react-reconciler/constants'
-import {
-  is,
-  prepare,
-  diffProps,
-  DiffSet,
-  applyProps,
-  updateInstance,
-  invalidateInstance,
-  attach,
-  detach,
-} from './utils'
+import { is, prepare, diffProps, DiffSet, applyProps, invalidateInstance, attach, detach } from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
@@ -148,7 +138,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
-      updateInstance(child)
       invalidateInstance(child)
     }
   }
@@ -174,7 +163,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
-      updateInstance(child)
       invalidateInstance(child)
     }
   }

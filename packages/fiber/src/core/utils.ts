@@ -343,19 +343,12 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
-
   return instance
 }
 
 export function invalidateInstance(instance: Instance) {
   const state = instance.__r3f?.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()
-}
-
-export function updateInstance(instance: Instance) {
-  instance.onUpdate?.(instance)
 }
 
 export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) {

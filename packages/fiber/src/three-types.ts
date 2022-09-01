@@ -39,7 +39,6 @@ export interface NodeProps<T, P> {
   children?: React.ReactNode
   ref?: React.Ref<T>
   key?: React.Key
-  onUpdate?: (self: T) => void
 }
 
 export type ExtendedColors<T> = { [K in keyof T]: T[K] extends THREE.Color | undefined ? Color : T[K] }
