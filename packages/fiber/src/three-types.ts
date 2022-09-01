@@ -35,11 +35,13 @@ interface ReactProps<P> {
   key?: React.Key
 }
 
-type NodeProps<T extends Function, P = T['prototype']> = Partial<
+type NodeProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
   Overwrite<P, ReactProps<P> & MathProps<P> & EventProps<P>>
 >
 
-export type Node<T extends Function> = Mutable<Overwrite<NodeProps<T>, Omit<InstanceProps<T>, 'object'>>>
+export type Node<T extends ConstructorRepresentation> = Mutable<
+  Overwrite<NodeProps<T>, Omit<InstanceProps<T>, 'object'>>
+>
 
 type ThreeExports = typeof THREE
 type ThreeElementsImpl = {
