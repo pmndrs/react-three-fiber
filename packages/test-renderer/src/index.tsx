@@ -5,13 +5,11 @@ import { extend, _roots as mockRoots, createRoot, reconciler, act as _act } from
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
-import { is } from './helpers/is'
 
 import { createCanvas } from './createTestCanvas'
 import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
 
-import type { MockInstance } from './types/internal'
 import type { CreateOptions, Renderer, Act } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
@@ -50,7 +48,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
-  const _scene = (_store.getState().scene as any).__r3f as MockInstance<THREE.Scene>
+  const _scene = (_store.getState().scene as any).__r3f
 
   return {
     scene: wrapFiber(_scene),
@@ -92,7 +90,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
       storeSubscribers.forEach((subscriber) => {
         for (let i = 0; i < frames; i++) {
-          if (is.arr(delta)) {
+          if (Array.isArray(delta)) {
             promises.push(
               new Promise(() => subscriber.ref.current(state, (delta as number[])[i] || (delta as number[])[-1])),
             )

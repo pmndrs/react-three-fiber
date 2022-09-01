@@ -1,15 +1,3 @@
-import { UseBoundStore } from 'zustand'
-import type { Instance, RootState } from '@react-three/fiber'
-
-export type MockUseStoreState = UseBoundStore<RootState>
-
-export interface MockInstance<O = any> extends Omit<Instance, 'root' | 'parent' | 'children' | 'object'> {
-  root: MockUseStoreState
-  parent: MockInstance
-  children: MockInstance[]
-  object: O
-}
-
 export type CreateCanvasParameters = {
   beforeReturn?: (canvas: HTMLCanvasElement) => void
   width?: number

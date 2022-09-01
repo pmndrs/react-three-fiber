@@ -1,5 +1,5 @@
+import type { Instance } from '@react-three/fiber'
 import type { TreeNode, Tree } from '../types/public'
-import type { MockInstance } from '../types/internal'
 import { lowerCaseFirstLetter } from './strings'
 
 const treeObjectFactory = (
@@ -12,7 +12,7 @@ const treeObjectFactory = (
   children,
 })
 
-const toTreeBranch = (children: MockInstance[]): TreeNode[] =>
+const toTreeBranch = (children: Instance[]): TreeNode[] =>
   children.map((child) => {
     return treeObjectFactory(
       lowerCaseFirstLetter(child.object.type || child.object.constructor.name),
@@ -21,4 +21,4 @@ const toTreeBranch = (children: MockInstance[]): TreeNode[] =>
     )
   })
 
-export const toTree = (root: MockInstance<THREE.Scene>): Tree => toTreeBranch(root.children)
+export const toTree = (root: Instance<THREE.Scene>): Tree => toTreeBranch(root.children)
