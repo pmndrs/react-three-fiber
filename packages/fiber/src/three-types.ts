@@ -3,7 +3,7 @@ import type { EventHandlers } from './core/events'
 import type { InstanceProps, ConstructorRepresentation } from './core/renderer'
 
 type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
-type NonFunctionKeys<P> = { [K in keyof P]: P[K] extends Function ? never : K }[keyof P]
+type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
 type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 
 interface MathRepresentation {

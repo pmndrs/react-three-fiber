@@ -740,6 +740,30 @@ describe('renderer', () => {
     expect(respectedKeys).toStrictEqual(privateKeys)
   })
 
+  it('can handle createPortal on unmounted container', async () => {
+    let groupHandle!: THREE.Group | null
+    function Test(props: any) {
+      const [group, setGroup] = React.useState(null)
+      groupHandle = group
+
+      return (
+        <group {...props} ref={setGroup}>
+          {group && createPortal(<mesh />, group)}
+        </group>
+      )
+    }
+
+    await act(async () => root.render(<Test key={0} />))
+
+    expect(groupHandle).toBeDefined()
+    const prevUUID = groupHandle!.uuid
+
+    await act(async () => root.render(<Test key={1} />))
+
+    expect(groupHandle).toBeDefined()
+    expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+
   it('should gracefully handle text', async () => {
     const warn = console.warn
     console.warn = jest.fn()
