@@ -174,6 +174,7 @@ export function prepare<T = any>(
       object,
       eventCount: 0,
       handlers: {},
+      isHidden: false,
     }
     object.__r3f = instance
   }

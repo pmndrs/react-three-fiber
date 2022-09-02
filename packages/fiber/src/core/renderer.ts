@@ -41,6 +41,7 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
+  isHidden: boolean
 }
 
 interface HostConfig {
@@ -101,9 +102,7 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
-  if (child.props.attach) {
-    attach(parent, child)
-  } else if (parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
+  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
     parent.object.add(child.object)
   }
 
@@ -120,9 +119,8 @@ function insertBefore(
   child.parent = parent
   parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
 
-  if (child.props.attach) {
-    attach(parent, child)
-  } else if (
+  if (
+    !child.props.attach &&
     parent.object instanceof THREE.Object3D &&
     child.object instanceof THREE.Object3D &&
     beforeChild.object instanceof THREE.Object3D
@@ -276,6 +274,11 @@ const reconciler = Reconciler<
     if (!child || !scene) return
 
     appendChild(scene, child)
+
+    if (child.props.attach) attach(scene, child)
+    for (const childInstance of child.children) {
+      if (childInstance.props.attach) attach(child, childInstance)
+    }
   },
   removeChildFromContainer(container, child) {
     const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
@@ -288,6 +291,11 @@ const reconciler = Reconciler<
     if (!child || !beforeChild || !scene) return
 
     insertBefore(scene, child, beforeChild)
+
+    if (child.props.attach) attach(scene, child)
+    for (const childInstance of child.children) {
+      if (childInstance.props.attach) attach(child, childInstance)
+    }
   },
   getRootHostContext: () => null,
   getChildHostContext: (parentHostContext) => parentHostContext,
@@ -338,15 +346,19 @@ const reconciler = Reconciler<
       instance.object.visible = false
     }
 
+    instance.isHidden = true
     invalidateInstance(instance)
   },
   unhideInstance(instance) {
-    if (instance.props.attach && instance.parent?.object) {
-      attach(instance.parent, instance)
-    } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
-      instance.object.visible = true
+    if (instance.isHidden) {
+      if (instance.props.attach && instance.parent?.object) {
+        attach(instance.parent, instance)
+      } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
+        instance.object.visible = true
+      }
     }
 
+    instance.isHidden = false
     invalidateInstance(instance)
   },
   createTextInstance: handleTextInstance,
