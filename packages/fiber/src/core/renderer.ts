@@ -102,7 +102,9 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
-  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
+  if (child.props.attach) {
+    if (parent.parent) attach(parent, child)
+  } else if (parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
     parent.object.add(child.object)
   }
 
@@ -119,8 +121,9 @@ function insertBefore(
   child.parent = parent
   parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
 
-  if (
-    !child.props.attach &&
+  if (child.props.attach) {
+    if (parent.parent) attach(parent, child)
+  } else if (
     parent.object instanceof THREE.Object3D &&
     child.object instanceof THREE.Object3D &&
     beforeChild.object instanceof THREE.Object3D
@@ -203,20 +206,18 @@ function switchInstance(
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
 
-  // Move children to new instance
-  for (const child of oldInstance.children) {
-    appendChild(newInstance, child)
-    if (child.props.attach) attach(newInstance, child)
-  }
-  oldInstance.children = []
-
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
     appendChild(parent, newInstance)
-    if (newInstance.props.attach) attach(parent, newInstance)
     removeChild(parent, oldInstance, false)
   }
+
+  // Move children to new instance
+  for (const child of oldInstance.children) {
+    appendChild(newInstance, child)
+  }
+  oldInstance.children = []
 
   // Re-bind event handlers
   if (newInstance.object.raycast !== null && newInstance.object instanceof THREE.Object3D && newInstance.eventCount) {
