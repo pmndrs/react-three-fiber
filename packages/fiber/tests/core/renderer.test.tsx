@@ -788,4 +788,49 @@ describe('renderer', () => {
     expect(console.warn).toHaveBeenCalled()
     console.warn = warn
   })
+
+  it('should gracefully interrupt when building up the tree', async () => {
+    const calls: string[] = []
+    let lastAttached!: string | undefined
+    let lastMounted!: string | undefined
+
+    function SuspenseComponent({ reconstruct = false }: { reconstruct?: boolean }) {
+      suspend(async (reconstruct) => reconstruct, [reconstruct])
+
+      return (
+        <group key={reconstruct ? 0 : 1} name="parent">
+          <group
+            name="child"
+            ref={(self) => void (lastMounted = self?.uuid)}
+            attach={(parent, self) => {
+              calls.push('attach')
+              lastAttached = self.uuid
+              return () => calls.push('detach')
+            }}
+          />
+        </group>
+      )
+    }
+
+    function Test(props: { reconstruct?: boolean }) {
+      React.useLayoutEffect(() => void calls.push('useLayoutEffect'), [])
+
+      return (
+        <group name="suspense">
+          <SuspenseComponent {...props} />
+        </group>
+      )
+    }
+
+    await act(async () => root.render(<Test />))
+
+    // Should complete tree before layout-effects fire
+    expect(calls).toStrictEqual(['attach', 'useLayoutEffect'])
+    expect(lastAttached).toBe(lastMounted)
+
+    await act(async () => root.render(<Test reconstruct />))
+
+    expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
+    expect(lastAttached).toBe(lastMounted)
+  })
 })
