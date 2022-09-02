@@ -206,6 +206,7 @@ function switchInstance(
   // Move children to new instance
   for (const child of oldInstance.children) {
     appendChild(newInstance, child)
+    if (child.props.attach) attach(newInstance, child)
   }
   oldInstance.children = []
 
@@ -213,6 +214,7 @@ function switchInstance(
   const parent = oldInstance.parent
   if (parent) {
     appendChild(parent, newInstance)
+    if (newInstance.props.attach) attach(parent, newInstance)
     removeChild(parent, oldInstance, false)
   }
 
@@ -238,6 +240,11 @@ function switchInstance(
   invalidateInstance(newInstance)
 
   return newInstance
+}
+
+function attachRecursive(parent: Instance, child: Instance) {
+  if (child.props.attach) attach(parent, child)
+  for (const childInstance of child.children) attachRecursive(child, childInstance)
 }
 
 // Don't handle text instances, warn on undefined behavior
@@ -274,11 +281,7 @@ const reconciler = Reconciler<
     if (!child || !scene) return
 
     appendChild(scene, child)
-
-    if (child.props.attach) attach(scene, child)
-    for (const childInstance of child.children) {
-      if (childInstance.props.attach) attach(child, childInstance)
-    }
+    attachRecursive(scene, child)
   },
   removeChildFromContainer(container, child) {
     const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
@@ -291,11 +294,7 @@ const reconciler = Reconciler<
     if (!child || !beforeChild || !scene) return
 
     insertBefore(scene, child, beforeChild)
-
-    if (child.props.attach) attach(scene, child)
-    for (const childInstance of child.children) {
-      if (childInstance.props.attach) attach(child, childInstance)
-    }
+    attachRecursive(scene, child)
   },
   getRootHostContext: () => null,
   getChildHostContext: (parentHostContext) => parentHostContext,
