@@ -4,7 +4,7 @@ import type { Fiber } from 'react-reconciler'
 import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
 import type { Dpr, RootState, Size } from './store'
-import type { Instance, InstanceProps } from './renderer'
+import type { Instance } from './renderer'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -143,14 +143,14 @@ export function dispose<T extends Disposable>(obj: T): void {
 const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
 
 // Gets only instance props from reconciler fibers
-function getInstanceProps<T = any>(queue: Fiber['pendingProps']): InstanceProps<T> {
-  const props: Record<string, unknown> = {}
+function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instance<T>['props'] {
+  const props: Instance<T>['props'] = {}
 
   for (const key in queue) {
     if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = queue[key]
   }
 
-  return props as InstanceProps<T>
+  return props
 }
 
 // Each object in the scene carries a small LocalState descriptor
@@ -158,7 +158,7 @@ export function prepare<T = any>(
   target: T,
   root: UseBoundStore<RootState>,
   type: string,
-  props: InstanceProps,
+  props: Instance<T>['props'],
 ): Instance<T> {
   const object = target as unknown as Instance['object']
 
@@ -244,18 +244,22 @@ const RESERVED_PROPS = [
 ]
 
 // This function prepares a set of changes to be applied to the instance
-export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remove = false): InstanceProps {
-  const changedProps: Record<string, unknown> = {}
+export function diffProps<T = any>(
+  newProps: Instance<T>['props'],
+  oldProps: Instance<T>['props'],
+  remove = false,
+): Instance<T>['props'] {
+  const changedProps: Instance<T>['props'] = {}
 
   // Sort through props
   for (const key in newProps) {
     // Skip reserved keys
     if (RESERVED_PROPS.includes(key)) continue
     // Skip if props match
-    if (is.equ((newProps as Record<string, unknown>)[key], (oldProps as Record<string, unknown>)[key])) continue
+    if (is.equ(newProps[key], oldProps[key])) continue
 
     // Props changed, add them
-    changedProps[key] = (newProps as Record<string, unknown>)[key]
+    changedProps[key] = newProps[key]
   }
 
   // Catch removed props, prepend them so they can be reset or removed
@@ -266,17 +270,17 @@ export function diffProps(newProps: InstanceProps, oldProps: InstanceProps, remo
     }
   }
 
-  return changedProps as InstanceProps
+  return changedProps
 }
 
 // This function applies a set of changes to the instance
-export function applyProps<T = any>(object: Instance<T>['object'], props: InstanceProps<T>): Instance<T>['object'] {
+export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
   const rootState = instance?.root.getState()
   const prevHandlers = instance?.eventCount
 
   for (const prop in props) {
-    let value = (props as Record<string, unknown>)[prop]
+    let value = props[prop]
 
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue

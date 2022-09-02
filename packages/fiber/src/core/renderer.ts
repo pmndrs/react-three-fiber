@@ -22,7 +22,7 @@ export interface Catalogue {
 
 export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
 
-export type InstanceProps<T = any> = {
+export interface InstanceProps<T = any> {
   args?: Args<T>
   object?: T
   visible?: boolean
@@ -35,7 +35,7 @@ export interface Instance<O = any> {
   type: string
   parent: Instance | null
   children: Instance[]
-  props: InstanceProps<O>
+  props: InstanceProps<O> & Record<string, unknown>
   object: O & { __r3f?: Instance<O> }
   eventCount: number
   handlers: Partial<EventHandlers>
@@ -45,7 +45,7 @@ export interface Instance<O = any> {
 
 interface HostConfig {
   type: string
-  props: InstanceProps
+  props: Instance['props']
   container: UseBoundStore<RootState>
   instance: Instance
   textInstance: void
@@ -53,7 +53,7 @@ interface HostConfig {
   hydratableInstance: never
   publicInstance: Instance['object']
   hostContext: never
-  updatePayload: null | [true] | [false, InstanceProps]
+  updatePayload: null | [true] | [false, Instance['props']]
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
@@ -157,7 +157,7 @@ function removeChild(
     detach(parent, child)
   } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
     parent.object.remove(child.object)
-    removeInteractivity(child.root, child.object as unknown as THREE.Object3D)
+    removeInteractivity(child.root, child.object)
   }
 
   // Allow objects to bail out of recursive dispose altogether by passing dispose={null}
@@ -231,8 +231,8 @@ function switchInstance(
     if (fiber !== null) {
       fiber.stateNode = newInstance
       if (fiber.ref) {
-        if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance.object)
-        else (fiber.ref as Reconciler.RefObject).current = newInstance.object
+        if (typeof fiber.ref === 'function') fiber.ref(newInstance.object)
+        else fiber.ref.current = newInstance.object
       }
     }
   })
