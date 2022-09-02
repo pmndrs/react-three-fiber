@@ -40,7 +40,7 @@ type NodeProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Parti
 >
 
 export type Node<T extends ConstructorRepresentation> = Mutable<
-  Overwrite<NodeProps<T>, Omit<InstanceProps<T>, 'object'>>
+  Overwrite<NodeProps<T>, Omit<InstanceProps<InstanceType<T>>, 'object'>>
 >
 
 type ThreeExports = typeof THREE
