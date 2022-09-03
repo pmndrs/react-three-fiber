@@ -24,7 +24,7 @@ export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coe
 
 export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.MutableRefObject<LocalState> {
   const instance = React.useRef<LocalState>(null!)
-  useIsomorphicLayoutEffect(() => void (instance.current = (ref.current as Instance).__r3f), [ref])
+  useIsomorphicLayoutEffect(() => void (instance.current = (ref.current as unknown as Instance).__r3f), [ref])
   return instance
 }
 
