@@ -22,6 +22,12 @@ export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
 export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
+/**
+ * Exposes an object's {@link LocalState}.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useInstanceHandle
+ *
+ * **Note**: this is an escape hatch to react-internal fields. Expect this to change significantly between versions.
+ */
 export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.MutableRefObject<LocalState> {
   const instance = React.useRef<LocalState>(null!)
   useIsomorphicLayoutEffect(() => void (instance.current = (ref.current as unknown as Instance).__r3f), [ref])
