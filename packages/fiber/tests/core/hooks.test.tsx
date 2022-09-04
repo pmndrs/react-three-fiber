@@ -6,7 +6,19 @@ import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLCo
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
-import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
+import {
+  createRoot,
+  advance,
+  useLoader,
+  act,
+  useThree,
+  useGraph,
+  useFrame,
+  ObjectMap,
+  useInstanceHandle,
+  LocalState,
+} from '../../src'
+import { Instance } from 'packages/fiber/src/core/renderer'
 
 const resolvers: (() => void)[] = []
 
@@ -248,5 +260,18 @@ describe('hooks', () => {
         [mat4.name]: mat4,
       },
     })
+  })
+
+  it('can handle useInstanceHandle hook', async () => {
+    const ref = React.createRef<THREE.Group>()
+    let instance!: React.MutableRefObject<LocalState>
+
+    const Component = () => {
+      instance = useInstanceHandle(ref)
+      return <group ref={ref} />
+    }
+    await act(async () => createRoot(canvas).render(<Component />))
+
+    expect(instance.current).toBe((ref.current as unknown as Instance).__r3f)
   })
 })
