@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.7.0
+
+### Minor Changes
+
+- f5db1b78: feat: useInstanceHandle, flushGlobalEffects
+
 ## 8.6.2
 
 ### Patch Changes
