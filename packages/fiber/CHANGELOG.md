@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.7.1
+
+### Patch Changes
+
+- 962cc270: fix: allow canvas eventsource to be a ref
+
 ## 8.7.0
 
 ### Minor Changes

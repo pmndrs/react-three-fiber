@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 10.0.1
+
+### Patch Changes
+
+- 962cc270: fix: allow canvas eventsource to be a ref
+- Updated dependencies [962cc270]
+  - @react-three/fiber@8.7.1
+
 ## 10.0.0
 
 ### Minor Changes
