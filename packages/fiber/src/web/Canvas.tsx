@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
+import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
@@ -17,7 +17,7 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
    */
   resize?: ResizeOptions
   /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventSource?: HTMLElement
+  eventSource?: HTMLElement | React.MutableRefObject<HTMLElement>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
@@ -94,7 +94,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
       onCreated: (state) => {
         // Connect to event source
-        state.events.connect?.(eventSource ? eventSource : divRef.current)
+        state.events.connect?.(eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
         // Set up compute function
         if (eventPrefix) {
           state.setEvents({
