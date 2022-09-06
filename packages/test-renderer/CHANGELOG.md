@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 10.0.2
+
+### Patch Changes
+
+- 7f801e60: fix: events in portals carry the wrong raycaster, camera, etc
+- Updated dependencies [7f801e60]
+  - @react-three/fiber@8.7.2
+
 ## 10.0.1
 
 ### Patch Changes
