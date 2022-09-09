@@ -136,15 +136,15 @@ interface Disposable {
 export function dispose<T extends Disposable>(obj: T): void {
   if (obj.type !== 'Scene') obj.dispose?.()
   for (const p in obj) {
-    ;(p as Disposable).dispose?.()
-    delete obj[p]
+    const prop = obj[p] as Disposable | undefined
+    if (prop?.type !== 'Scene') prop?.dispose?.()
   }
 }
 
-const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
+export const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
 
 // Gets only instance props from reconciler fibers
-function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instance<T>['props'] {
+export function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instance<T>['props'] {
   const props: Instance<T>['props'] = {}
 
   for (const key in queue) {
@@ -233,8 +233,8 @@ export function detach(parent: Instance, child: Instance): void {
   delete child.previousAttach
 }
 
-const DEFAULT = '__default'
-const RESERVED_PROPS = [
+export const DEFAULT = '__default'
+export const RESERVED_PROPS = [
   ...REACT_INTERNAL_PROPS,
   // Instance props
   'args',
@@ -247,8 +247,8 @@ const RESERVED_PROPS = [
 
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
-  newProps: Instance<T>['props'],
   oldProps: Instance<T>['props'],
+  newProps: Instance<T>['props'],
   remove = false,
 ): Instance<T>['props'] {
   const changedProps: Instance<T>['props'] = {}
@@ -304,7 +304,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (value === DEFAULT + 'remove') {
       if (target && target.constructor) {
         // use the prop constructor to find the default it should be
-        value = new target.constructor(...(instance?.props.args ?? []))
+        value = new target.constructor(...(target.__r3f?.props.args ?? instance?.props.args ?? []))
       } else if (root.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore

@@ -1,5 +1,20 @@
 import * as THREE from 'three'
-import { is, resolve, applyProps } from '../src/core/utils'
+import { Instance } from '../src'
+import {
+  is,
+  dispose,
+  REACT_INTERNAL_PROPS,
+  getInstanceProps,
+  prepare,
+  resolve,
+  attach,
+  detach,
+  RESERVED_PROPS,
+  diffProps,
+  DEFAULT,
+  applyProps,
+  updateCamera,
+} from '../src/core/utils'
 
 describe('is', () => {
   const myFunc = () => null
@@ -99,6 +114,70 @@ describe('is', () => {
   })
 })
 
+describe('dispose', () => {
+  it('should dispose of objects and their properties', () => {
+    const mesh = Object.assign(new THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>(), { dispose: jest.fn() })
+    mesh.material.dispose = jest.fn()
+    mesh.geometry.dispose = jest.fn()
+
+    dispose(mesh)
+    expect(mesh.dispose).toBeCalled()
+    expect(mesh.material.dispose).toBeCalled()
+    expect(mesh.geometry.dispose).toBeCalled()
+  })
+
+  it('should not dispose of a THREE.Scene', () => {
+    const scene = Object.assign(new THREE.Scene(), { dispose: jest.fn() })
+
+    dispose(scene)
+    expect(scene.dispose).not.toBeCalled()
+
+    const disposable = { dispose: jest.fn(), scene }
+    dispose(disposable)
+    expect(disposable.dispose).toBeCalled()
+    expect(disposable.scene.dispose).not.toBeCalled()
+  })
+})
+
+describe('getInstanceProps', () => {
+  it('should filter internal props without accessing them', () => {
+    const get = jest.fn()
+    const set = jest.fn()
+
+    const props = { foo: true }
+    const filtered = getInstanceProps(
+      REACT_INTERNAL_PROPS.reduce((acc, key) => ({ ...acc, [key]: { get, set } }), props),
+    )
+
+    expect(filtered).toStrictEqual(props)
+    expect(get).not.toBeCalled()
+    expect(set).not.toBeCalled()
+  })
+})
+
+describe('prepare', () => {
+  it('should create an instance descriptor', () => {
+    const object = new THREE.Object3D()
+    const root = null!
+    const instance = prepare(object, root, 'object3D', { name: 'object' })
+
+    expect(instance.root).toBe(root)
+    expect(instance.type).toBe('object3D')
+    expect(instance.props.name).toBe('object')
+    expect(instance.object).toBe(object)
+    expect((object as Instance<THREE.Object3D>['object']).__r3f).toBe(instance)
+  })
+
+  it('should not overwrite descriptors', () => {
+    const containerDesc = {}
+    const container = { __r3f: containerDesc }
+
+    const instance = prepare(container, null!, 'container', {})
+    expect(container.__r3f).toBe(containerDesc)
+    expect(instance).toBe(containerDesc)
+  })
+})
+
 describe('resolve', () => {
   it('should resolve pierced props', () => {
     const object = { foo: { bar: 1 } }
@@ -120,10 +199,126 @@ describe('resolve', () => {
   })
 })
 
+describe('attach / detach', () => {
+  it('should attach & detach using string values', () => {
+    const parent = prepare({ prop: null }, null!, '', {})
+    const child = prepare({}, null!, '', { attach: 'prop' })
+
+    attach(parent, child)
+    expect(parent.object.prop).toBe(child.object)
+    expect(child.previousAttach).toBe(null)
+
+    detach(parent, child)
+    expect(parent.object.prop).toBe(null)
+    expect(child.previousAttach).toBe(undefined)
+  })
+
+  it('should attach & detach using attachFns', () => {
+    const mount = jest.fn()
+    const unmount = jest.fn()
+
+    const parent = prepare({}, null!, '', {})
+    const child = prepare({}, null!, '', { attach: () => (mount(), unmount) })
+
+    attach(parent, child)
+    expect(mount).toBeCalledTimes(1)
+    expect(unmount).toBeCalledTimes(0)
+    expect(child.previousAttach).toBe(unmount)
+
+    detach(parent, child)
+    expect(mount).toBeCalledTimes(1)
+    expect(unmount).toBeCalledTimes(1)
+    expect(child.previousAttach).toBe(undefined)
+  })
+
+  it('should create array when using array-index syntax', () => {
+    const parent = prepare({ prop: null }, null!, '', {})
+    const child = prepare({}, null!, '', { attach: 'prop-0' })
+
+    attach(parent, child)
+    expect(parent.object.prop).toStrictEqual([child.object])
+    expect(child.previousAttach).toBe(undefined)
+
+    detach(parent, child)
+    expect((parent.object.prop as unknown as Array<never>).length).toBe(1)
+    expect((parent.object.prop as unknown as Array<never>)[0]).toBe(undefined)
+    expect(child.previousAttach).toBe(undefined)
+  })
+})
+
+describe('diffProps', () => {
+  it('should filter changed props', () => {
+    const oldProps = { foo: true }
+    const newProps = { foo: true, bar: false }
+
+    const filtered = diffProps(oldProps, newProps)
+    expect(filtered).toStrictEqual({ bar: false })
+  })
+
+  it('should pick removed props for HMR', () => {
+    const oldProps = { foo: true, bar: false }
+    const newProps = { foo: true }
+
+    const filtered = diffProps(oldProps, newProps, true)
+    expect(filtered).toStrictEqual({ bar: DEFAULT + 'remove' })
+  })
+
+  it('should filter reserved props without accessing them', () => {
+    const get = jest.fn()
+    const set = jest.fn()
+
+    const props = { foo: true }
+    const filtered = diffProps(
+      {},
+      RESERVED_PROPS.reduce((acc, key) => ({ ...acc, [key]: { get, set } }), props),
+    )
+
+    expect(filtered).toStrictEqual(props)
+    expect(get).not.toBeCalled()
+    expect(set).not.toBeCalled()
+  })
+})
+
 describe('applyProps', () => {
   it('should apply props to foreign objects', () => {
     const target = new THREE.Object3D()
     expect(() => applyProps(target, {})).not.toThrow()
+  })
+
+  it('should filter reserved props without accessing them', () => {
+    const get = jest.fn()
+    const set = jest.fn()
+
+    const props = { foo: true }
+    const target = {}
+    applyProps(
+      target,
+      RESERVED_PROPS.reduce((acc, key) => ({ ...acc, [key]: { get, set } }), props),
+    )
+
+    expect(target).toStrictEqual(props)
+    expect(get).not.toBeCalled()
+    expect(set).not.toBeCalled()
+  })
+
+  it('should reset removed props for HMR', () => {
+    const target = new THREE.Object3D()
+    const instance = prepare(target, { getState: () => null! } as any, '', {})
+    prepare(target.scale, null!, '', { args: [5, 5, 5] })
+    target.position.setScalar(10)
+
+    // Recreate from args
+    applyProps(target, { scale: DEFAULT + 'remove' })
+    expect(target.scale.toArray()).toStrictEqual([5, 5, 5])
+
+    // Recreate from scratch
+    applyProps(target, { position: DEFAULT + 'remove' })
+    expect(target.position.toArray()).toStrictEqual([0, 0, 0])
+
+    // Recreate from instance args
+    instance.props.args = [1, 2, 3]
+    applyProps(target, { position: DEFAULT + 'remove' })
+    expect(target.position.toArray()).toStrictEqual([1, 2, 3])
   })
 
   it('should overwrite non-atomic properties', () => {
@@ -176,5 +371,47 @@ describe('applyProps', () => {
     applyProps(target, { 'material-color': 0x000000 })
 
     expect(target.material.color.getHex()).toBe(0x000000)
+  })
+})
+
+describe('updateCamera', () => {
+  it('updates camera matrices', () => {
+    const size = { width: 1280, height: 800, left: 0, top: 0 }
+
+    const perspective = new THREE.PerspectiveCamera()
+    perspective.updateProjectionMatrix = jest.fn()
+    perspective.updateMatrixWorld = jest.fn()
+    updateCamera(perspective, size)
+    expect(perspective.updateProjectionMatrix).toBeCalled()
+    expect(perspective.updateMatrixWorld).toBeCalled()
+    expect(perspective.projectionMatrix.toArray()).toMatchSnapshot()
+    expect(perspective.matrixWorld.toArray()).toMatchSnapshot()
+
+    const orthographic = new THREE.OrthographicCamera()
+    orthographic.updateProjectionMatrix = jest.fn()
+    orthographic.updateMatrixWorld = jest.fn()
+    updateCamera(orthographic, size)
+    expect(orthographic.updateProjectionMatrix).toBeCalled()
+    expect(orthographic.updateMatrixWorld).toBeCalled()
+    expect(orthographic.projectionMatrix.toArray()).toMatchSnapshot()
+    expect(orthographic.matrixWorld.toArray()).toMatchSnapshot()
+  })
+
+  it('respects camera.manual', () => {
+    const size = { width: 0, height: 0, left: 0, top: 0 }
+
+    const perspective = Object.assign(new THREE.PerspectiveCamera(), { manual: true })
+    perspective.updateProjectionMatrix = jest.fn()
+    perspective.updateMatrixWorld = jest.fn()
+    updateCamera(perspective, size)
+    expect(perspective.updateProjectionMatrix).not.toBeCalled()
+    expect(perspective.updateMatrixWorld).not.toBeCalled()
+
+    const orthographic = Object.assign(new THREE.OrthographicCamera(), { manual: true })
+    orthographic.updateProjectionMatrix = jest.fn()
+    orthographic.updateMatrixWorld = jest.fn()
+    updateCamera(orthographic, size)
+    expect(orthographic.updateProjectionMatrix).not.toBeCalled()
+    expect(orthographic.updateMatrixWorld).not.toBeCalled()
   })
 })
