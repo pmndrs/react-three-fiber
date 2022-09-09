@@ -12,6 +12,7 @@ import {
 } from '../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../src/core/store'
+import { suspend } from 'suspend-react'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
@@ -606,5 +607,23 @@ describe('renderer', () => {
 
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+
+  it('should gracefully handle text', async () => {
+    const warn = console.warn
+    console.warn = jest.fn()
+
+    // Mount
+    await act(async () => root.render(<>one</>))
+    // Update
+    await act(async () => root.render(<>two</>))
+    // Unmount
+    await act(async () => root.render(<></>))
+    // Suspense
+    const Test = () => suspend(async () => <>four</>, [])
+    await act(async () => root.render(<Test />))
+
+    expect(console.warn).toHaveBeenCalled()
+    console.warn = warn
   })
 })
