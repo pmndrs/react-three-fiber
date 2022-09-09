@@ -167,7 +167,7 @@ function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: 
     return { width, height, top, left }
   }
 
-  return { ...size, width: 0, height: 0, top: 0, left: 0 }
+  return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
