@@ -183,7 +183,7 @@ export function prepare<T = any>(
   return instance
 }
 
-function resolve(root: any, key: string): { root: any; key: string; target: any } {
+export function resolve(root: any, key: string): { root: any; key: string; target: any } {
   let target = root[key]
   if (!key.includes('-')) return { root, key, target }
 

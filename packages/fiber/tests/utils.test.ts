@@ -1,4 +1,5 @@
-import { is } from '../src/core/utils'
+import * as THREE from 'three'
+import { is, resolve, applyProps } from '../src/core/utils'
 
 describe('is', () => {
   const myFunc = () => null
@@ -95,5 +96,85 @@ describe('is', () => {
     expect(is.equ([1, 2], [1, 2, 3])).toBe(false)
     expect(is.equ([1, 2, 3, 4], [1, 2, 3])).toBe(false)
     expect(is.equ([1, 2], [1, 2, 3], { strict: false })).toBe(true)
+  })
+})
+
+describe('resolve', () => {
+  it('should resolve pierced props', () => {
+    const object = { foo: { bar: 1 } }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(object['foo'])
+    expect(key).toBe('bar')
+    expect(target).toBe(root[key])
+  })
+
+  it('should switch roots for atomic targets', () => {
+    const bar = new THREE.Vector3()
+    const object = { foo: { bar } }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(object)
+    expect(key).toBe('bar')
+    expect(target).toBe(bar)
+  })
+})
+
+describe('applyProps', () => {
+  it('should apply props to foreign objects', () => {
+    const target = new THREE.Object3D()
+    expect(() => applyProps(target, {})).not.toThrow()
+  })
+
+  it('should overwrite non-atomic properties', () => {
+    const foo = { value: true }
+    const target = { foo }
+    applyProps(target, { foo: { value: false } })
+
+    expect(target.foo).not.toBe(foo)
+    expect(target.foo.value).toBe(false)
+  })
+
+  it('should prefer to copy from external props', async () => {
+    const color = new THREE.Color()
+    color.copy = jest.fn()
+
+    const target = { color }
+
+    // Same constructor
+    applyProps(target, { color: new THREE.Color() })
+    expect(target.color).toBeInstanceOf(THREE.Color)
+    expect(color.copy).toHaveBeenCalledTimes(1)
+
+    // Different constructor
+    applyProps(target, { color: new THREE.Vector3() })
+    expect(target.color).toBeInstanceOf(THREE.Vector3)
+    expect(color.copy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should prefer to set when props are an array', async () => {
+    const target = new THREE.Object3D()
+    applyProps(target, { position: [1, 2, 3] })
+
+    expect(target.position.toArray()).toStrictEqual([1, 2, 3])
+  })
+
+  it('should set with scalar shorthand where applicable', async () => {
+    const target = new THREE.Object3D()
+    applyProps(target, { scale: 5 })
+
+    expect(target.scale.toArray()).toStrictEqual([5, 5, 5])
+
+    const material = new THREE.MeshBasicMaterial()
+    applyProps(material, { color: 0x000000 })
+
+    expect(material.color.getHex()).toBe(0x000000)
+  })
+
+  it('should pierce into nested properties', () => {
+    const target = new THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>()
+    applyProps(target, { 'material-color': 0x000000 })
+
+    expect(target.material.color.getHex()).toBe(0x000000)
   })
 })
