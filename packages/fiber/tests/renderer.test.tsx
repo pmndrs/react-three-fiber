@@ -1,9 +1,18 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, useFrame, extend, ThreeElement, useThree, createPortal } from '../src/index'
+import {
+  ReconcilerRoot,
+  createRoot,
+  act,
+  useFrame,
+  extend,
+  ThreeElement,
+  useThree,
+  createPortal,
+  RootState,
+} from '../src/index'
 import { UseBoundStore } from 'zustand'
-import { privateKeys, RootState } from '../src/core/store'
-import { Instance } from '../src/core/renderer'
+import { privateKeys } from '../src/core/store'
 import { suspend } from 'suspend-react'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
