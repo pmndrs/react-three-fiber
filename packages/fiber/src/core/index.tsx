@@ -161,22 +161,13 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
-function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
-  return maybeCanvas instanceof HTMLCanvasElement
-}
-
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
-  if (defaultSize) {
-    return defaultSize
-  }
-
-  if (isCanvas(canvas) && canvas.parentElement) {
+function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
+  if (!size && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-
     return { width, height, top, left }
   }
 
-  return { width: 0, height: 0, top: 0, left: 0 }
+  return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
@@ -334,7 +325,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {
-        state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
+        state.setSize(size.width, size.height, size.top, size.left)
       }
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
