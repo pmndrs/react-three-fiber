@@ -45,3 +45,5 @@ export interface TreeNode {
 }
 
 export type Tree = TreeNode[]
+
+export type { Act } from '@react-three/fiber'
