@@ -561,14 +561,12 @@ reconciler.injectIntoDevTools({
   version: React.version,
 })
 
-declare module 'react' {
-  const unstable_act: <T = any>(cb: () => Promise<T>) => Promise<T>
-}
+type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  */
-const act = React.unstable_act
+const act: Act = (React as any).unstable_act
 
 export * from './hooks'
 export {
@@ -587,6 +585,7 @@ export {
   addAfterEffect,
   addTail,
   getRootState,
+  Act,
   act,
   roots as _roots,
 }
