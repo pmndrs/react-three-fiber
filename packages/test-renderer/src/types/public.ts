@@ -17,8 +17,6 @@ export type MockSyntheticEvent = {
 
 export type CreateOptions = CreateCanvasParameters & RenderProps<HTMLCanvasElement>
 
-export type Act = (cb: () => Promise<any>) => Promise<any>
-
 export type Renderer = {
   scene: ReactThreeTestInstance
   unmount: () => Promise<void>
