@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import { extend, _roots as mockRoots, createRoot, reconciler, act as _act } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -12,13 +12,11 @@ import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
 
 import type { MockScene } from './types/internal'
-import type { CreateOptions, Renderer, Act } from './types/public'
+import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
 // Extend catalogue for render API in tests.
 extend(THREE)
-
-const act = _act as unknown as Act
 
 type X =
   | ((contextId: 'webgl', options?: WebGLContextAttributes) => WebGLRenderingContext | null)
