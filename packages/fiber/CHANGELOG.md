@@ -1,5 +1,23 @@
 # @react-three/fiber
 
+## 8.7.2
+
+### Patch Changes
+
+- 7f801e60: fix: events in portals carry the wrong raycaster, camera, etc
+
+## 8.7.1
+
+### Patch Changes
+
+- 962cc270: fix: allow canvas eventsource to be a ref
+
+## 8.7.0
+
+### Minor Changes
+
+- f5db1b78: feat: useInstanceHandle, flushGlobalEffects
+
 ## 8.6.2
 
 ### Patch Changes
