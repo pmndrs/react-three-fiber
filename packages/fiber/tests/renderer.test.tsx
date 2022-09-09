@@ -50,9 +50,9 @@ extend({ HasObject3dMember, HasObject3dMethods })
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    hasObject3dMember: ReactThreeFiber.Node<typeof HasObject3dMember>
-    hasObject3dMethods: ReactThreeFiber.Node<typeof HasObject3dMethods>
-    myColor: ReactThreeFiber.Node<typeof MyColor>
+    hasObject3dMember: ReactThreeFiber.ThreeElement<typeof HasObject3dMember>
+    hasObject3dMethods: ReactThreeFiber.ThreeElement<typeof HasObject3dMethods>
+    myColor: ReactThreeFiber.ThreeElement<typeof MyColor>
   }
 }
 

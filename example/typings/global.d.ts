@@ -4,7 +4,7 @@ import { DotMaterial } from '../src/demos/Pointcloud'
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    orbitControls: ReactThreeFiber.Node<typeof OrbitControls>
-    dotMaterial: ReactThreeFiber.Node<typeof DotMaterial>
+    orbitControls: ReactThreeFiber.ThreeElement<typeof OrbitControls>
+    dotMaterial: ReactThreeFiber.ThreeElement<typeof DotMaterial>
   }
 }

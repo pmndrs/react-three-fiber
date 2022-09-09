@@ -88,9 +88,9 @@ export type RenderProps<TCanvas extends Element> = {
   camera?: (
     | Camera
     | Partial<
-        ReactThreeFiber.Node<typeof THREE.Camera> &
-          ReactThreeFiber.Node<typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.Node<typeof THREE.OrthographicCamera>
+        ReactThreeFiber.ThreeElement<typeof THREE.Camera> &
+          ReactThreeFiber.ThreeElement<typeof THREE.PerspectiveCamera> &
+          ReactThreeFiber.ThreeElement<typeof THREE.OrthographicCamera>
       >
   ) & {
     /** Flags the camera as manual, putting projection into your own hands */

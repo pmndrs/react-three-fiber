@@ -35,23 +35,23 @@ interface ReactProps<P> {
   key?: React.Key
 }
 
-type NodeProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
+type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
   Overwrite<P, ReactProps<P> & MathProps<P> & EventProps<P>>
 >
 
-export type Node<T extends ConstructorRepresentation> = Mutable<
-  Overwrite<NodeProps<T>, Omit<InstanceProps<InstanceType<T>>, 'object'>>
+export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
+  Overwrite<ElementProps<T>, Omit<InstanceProps<InstanceType<T>>, 'object'>>
 >
 
 type ThreeExports = typeof THREE
 type ThreeElementsImpl = {
   [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
-    ? Node<ThreeExports[K]>
+    ? ThreeElement<ThreeExports[K]>
     : never
 }
 
 export interface ThreeElements extends ThreeElementsImpl {
-  primitive: Omit<Node<any>, 'args'> & { object: any }
+  primitive: Omit<ThreeElement<any>, 'args'> & { object: any }
 }
 
 declare global {
