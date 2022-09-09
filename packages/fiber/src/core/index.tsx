@@ -561,7 +561,14 @@ reconciler.injectIntoDevTools({
   version: React.version,
 })
 
-const act = (React as any).unstable_act
+declare module 'react' {
+  const unstable_act: <T = any>(cb: () => Promise<T>) => Promise<T>
+}
+
+/**
+ * Safely flush async effects when testing, simulating a legacy root.
+ */
+const act = React.unstable_act
 
 export * from './hooks'
 export {
