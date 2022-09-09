@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { StoreApi, UseBoundStore } from 'zustand'
 
-import * as ReactThreeFiber from '../three-types'
+import { ThreeElement } from '../three-types'
 import {
   Renderer,
   createStore,
@@ -88,9 +88,9 @@ export type RenderProps<TCanvas extends Element> = {
   camera?: (
     | Camera
     | Partial<
-        ReactThreeFiber.ThreeElement<typeof THREE.Camera> &
-          ReactThreeFiber.ThreeElement<typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.ThreeElement<typeof THREE.OrthographicCamera>
+        ThreeElement<typeof THREE.Camera> &
+          ThreeElement<typeof THREE.PerspectiveCamera> &
+          ThreeElement<typeof THREE.OrthographicCamera>
       >
   ) & {
     /** Flags the camera as manual, putting projection into your own hands */

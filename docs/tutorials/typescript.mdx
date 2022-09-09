@@ -34,35 +34,6 @@ function Box(props) {
 
 The exclamation mark is a non-null assertion that will let TS know that `ref.current` is defined when we access it in effects.
 
-## Typing shorthand props
-
-react-three-fiber accepts short-hand props like scalars, strings, and arrays so you can declaratively set properties without side effects.
-
-Here are the different variations of props:
-
-```tsx
-import { Euler, Vector3, Color } from 'three'
-
-rotation: Euler || [x, y, z]
-position: Vector3 || [x, y, z] || scalar
-color: Color || 'hotpink' || 0xffffff
-```
-
-Each property has extended types which you can pull from to type these properties.
-
-```tsx
-import { Euler, Vector3, Color } from '@react-three/fiber'
-// or
-// import { ReactThreeFiber } from '@react-three/fiber'
-// ReactThreeFiber.Euler, ReactThreeFiber.Vector3, etc.
-
-rotation: Euler
-position: Vector3
-color: Color
-```
-
-This is particularly useful if you are typing properties outside of components, such as a store or a hook.
-
 ## Extend usage
 
 react-three-fiber can also accept third-party elements and extend them into its internal catalogue.

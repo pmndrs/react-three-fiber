@@ -1,15 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import {
-  ReconcilerRoot,
-  createRoot,
-  act,
-  useFrame,
-  extend,
-  ReactThreeFiber,
-  useThree,
-  createPortal,
-} from '../src/index'
+import { ReconcilerRoot, createRoot, act, useFrame, extend, ThreeElement, useThree, createPortal } from '../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../src/core/store'
 import { Instance } from '../src/core/renderer'
@@ -50,9 +41,9 @@ extend({ HasObject3dMember, HasObject3dMethods })
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    hasObject3dMember: ReactThreeFiber.ThreeElement<typeof HasObject3dMember>
-    hasObject3dMethods: ReactThreeFiber.ThreeElement<typeof HasObject3dMethods>
-    myColor: ReactThreeFiber.ThreeElement<typeof MyColor>
+    hasObject3dMember: ThreeElement<typeof HasObject3dMember>
+    hasObject3dMethods: ThreeElement<typeof HasObject3dMethods>
+    myColor: ThreeElement<typeof MyColor>
   }
 }
 

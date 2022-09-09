@@ -1,6 +1,4 @@
 export * from './three-types'
-import * as ReactThreeFiber from './three-types'
-export { ReactThreeFiber }
 export type {
   AttachFnType,
   AttachType,
