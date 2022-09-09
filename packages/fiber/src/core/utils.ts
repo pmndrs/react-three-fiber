@@ -4,7 +4,7 @@ import type { Fiber } from 'react-reconciler'
 import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
 import type { Dpr, RootState, Size } from './store'
-import type { Instance } from './renderer'
+import type { ConstructorRepresentation, Instance } from './renderer'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -55,8 +55,6 @@ export class ErrorBoundary extends React.Component<
     return this.state.error ? null : this.props.children
   }
 }
-
-export type ClassConstructor = { new (): void }
 
 export interface ObjectMap {
   nodes: { [name: string]: THREE.Object3D }
@@ -127,7 +125,7 @@ export function buildGraph(object: THREE.Object3D): ObjectMap {
   return data
 }
 
-interface Disposable {
+export interface Disposable {
   type?: string
   dispose?: () => void
 }
@@ -329,8 +327,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       else if (
         target.copy &&
         value &&
-        (value as ClassConstructor).constructor &&
-        target.constructor.name === (value as ClassConstructor).constructor.name
+        (value as ConstructorRepresentation).constructor &&
+        target.constructor.name === (value as ConstructorRepresentation).constructor.name
       ) {
         target.copy(value)
       }
