@@ -1,4 +1,4 @@
-import { is } from '../../src/core/utils'
+import { is } from '../src/core/utils'
 
 describe('is', () => {
   const myFunc = () => null

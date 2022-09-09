@@ -1,2 +1,4 @@
-const mock = {}
-export default mock
+export default class {
+  getEventHandlers = () => ({})
+  reset() {}
+}

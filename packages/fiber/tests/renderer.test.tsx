@@ -9,9 +9,9 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
-} from '../../src/index'
+} from '../src/index'
 import { UseBoundStore } from 'zustand'
-import { privateKeys, RootState } from '../../src/core/store'
+import { privateKeys, RootState } from '../src/core/store'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 

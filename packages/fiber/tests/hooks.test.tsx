@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
-import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
+import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../src'
 
 const root = createRoot(document.createElement('canvas'))
 
