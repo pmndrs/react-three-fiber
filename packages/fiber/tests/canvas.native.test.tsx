@@ -1,48 +1,43 @@
 import * as React from 'react'
 import { View } from 'react-native'
-import { act, create, ReactTestRenderer } from 'react-test-renderer'
-
-import { Canvas } from '../../src/native'
+import { create } from 'react-test-renderer'
+import { Canvas, act } from '../src/native'
 
 describe('native Canvas', () => {
   it('should correctly mount', async () => {
-    let renderer: ReactTestRenderer = null!
-
-    await act(async () => {
-      renderer = create(
+    const renderer = await act(async () =>
+      create(
         <Canvas>
           <group />
         </Canvas>,
-      )
-    })
+      ),
+    )
 
-    expect(renderer.toTree()).toMatchSnapshot()
+    expect(renderer.toJSON()).toMatchSnapshot()
   })
 
   it('should forward ref', async () => {
     const ref = React.createRef<View>()
 
-    await act(async () => {
+    await act(async () =>
       create(
         <Canvas ref={ref}>
           <group />
         </Canvas>,
-      )
-    })
+      ),
+    )
 
-    expect(ref.current).toBeDefined()
+    expect(ref.current).toBeInstanceOf(View)
   })
 
   it('should correctly unmount', async () => {
-    let renderer: ReactTestRenderer = null!
-
-    await act(async () => {
-      renderer = create(
+    const renderer = await act(async () =>
+      create(
         <Canvas>
           <group />
         </Canvas>,
-      )
-    })
+      ),
+    )
 
     expect(() => renderer.unmount()).not.toThrow()
   })
