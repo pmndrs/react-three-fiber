@@ -159,8 +159,6 @@ export function removeInteractivity(store: UseBoundStore<RootState>, object: THR
 }
 
 export function createEvents(store: UseBoundStore<RootState>) {
-  const temp = new THREE.Vector3()
-
   /** Calculates delta */
   function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
@@ -260,95 +258,97 @@ export function createEvents(store: UseBoundStore<RootState>) {
     delta: number,
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
-    const { raycaster, pointer, camera, internal } = store.getState()
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
-      const unprojectedPoint = temp.set(pointer.x, pointer.y, 0).unproject(camera)
-
       const localState = { stopped: false }
-
       for (const hit of intersections) {
-        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
+        const state = getRootState(hit.object)
+        if (state) {
+          const { raycaster, pointer, camera, internal } = state
+          const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
 
-        const setPointerCapture = (id: number) => {
-          const captureData = { intersection: hit, target: event.target as Element }
-          if (internal.capturedMap.has(id)) {
-            // if the pointerId was previously captured, we add the hit to the
-            // event capturedMap.
-            internal.capturedMap.get(id)!.set(hit.eventObject, captureData)
-          } else {
-            // if the pointerId was not previously captured, we create a map
-            // containing the hitObject, and the hit. hitObject is used for
-            // faster access.
-            internal.capturedMap.set(id, new Map([[hit.eventObject, captureData]]))
-          }
-          // Call the original event now
-          ;(event.target as Element).setPointerCapture(id)
-        }
+          const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
 
-        const releasePointerCapture = (id: number) => {
-          const captures = internal.capturedMap.get(id)
-          if (captures) {
-            releaseInternalPointerCapture(internal.capturedMap, hit.eventObject, captures, id)
-          }
-        }
-
-        // Add native event props
-        let extractEventProps: any = {}
-        // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
-        for (let prop in event) {
-          let property = event[prop as keyof DomEvent]
-          // Only copy over atomics, leave functions alone as these should be
-          // called as event.nativeEvent.fn()
-          if (typeof property !== 'function') extractEventProps[prop] = property
-        }
-
-        let raycastEvent: ThreeEvent<DomEvent> = {
-          ...hit,
-          ...extractEventProps,
-          pointer,
-          intersections,
-          stopped: localState.stopped,
-          delta,
-          unprojectedPoint,
-          ray: raycaster.ray,
-          camera: camera,
-          // Hijack stopPropagation, which just sets a flag
-          stopPropagation: () => {
-            // https://github.com/pmndrs/react-three-fiber/issues/596
-            // Events are not allowed to stop propagation if the pointer has been captured
-            const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
-
-            // We only authorize stopPropagation...
-            if (
-              // ...if this pointer hasn't been captured
-              !capturesForPointer ||
-              // ... or if the hit object is capturing the pointer
-              capturesForPointer.has(hit.eventObject)
-            ) {
-              raycastEvent.stopped = localState.stopped = true
-              // Propagation is stopped, remove all other hover records
-              // An event handler is only allowed to flush other handlers if it is hovered itself
-              if (
-                internal.hovered.size &&
-                Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
-              ) {
-                // Objects cannot flush out higher up objects that have already caught the event
-                const higher = intersections.slice(0, intersections.indexOf(hit))
-                cancelPointer([...higher, hit])
-              }
+          const setPointerCapture = (id: number) => {
+            const captureData = { intersection: hit, target: event.target as Element }
+            if (internal.capturedMap.has(id)) {
+              // if the pointerId was previously captured, we add the hit to the
+              // event capturedMap.
+              internal.capturedMap.get(id)!.set(hit.eventObject, captureData)
+            } else {
+              // if the pointerId was not previously captured, we create a map
+              // containing the hitObject, and the hit. hitObject is used for
+              // faster access.
+              internal.capturedMap.set(id, new Map([[hit.eventObject, captureData]]))
             }
-          },
-          // there should be a distinction between target and currentTarget
-          target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          nativeEvent: event,
-        }
+            // Call the original event now
+            ;(event.target as Element).setPointerCapture(id)
+          }
 
-        // Call subscribers
-        callback(raycastEvent)
-        // Event bubbling may be interrupted by stopPropagation
-        if (localState.stopped === true) break
+          const releasePointerCapture = (id: number) => {
+            const captures = internal.capturedMap.get(id)
+            if (captures) {
+              releaseInternalPointerCapture(internal.capturedMap, hit.eventObject, captures, id)
+            }
+          }
+
+          // Add native event props
+          let extractEventProps: any = {}
+          // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
+          for (let prop in event) {
+            let property = event[prop as keyof DomEvent]
+            // Only copy over atomics, leave functions alone as these should be
+            // called as event.nativeEvent.fn()
+            if (typeof property !== 'function') extractEventProps[prop] = property
+          }
+
+          let raycastEvent: ThreeEvent<DomEvent> = {
+            ...hit,
+            ...extractEventProps,
+            pointer,
+            intersections,
+            stopped: localState.stopped,
+            delta,
+            unprojectedPoint,
+            ray: raycaster.ray,
+            camera: camera,
+            // Hijack stopPropagation, which just sets a flag
+            stopPropagation: () => {
+              // https://github.com/pmndrs/react-three-fiber/issues/596
+              // Events are not allowed to stop propagation if the pointer has been captured
+              const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
+
+              // We only authorize stopPropagation...
+              if (
+                // ...if this pointer hasn't been captured
+                !capturesForPointer ||
+                // ... or if the hit object is capturing the pointer
+                capturesForPointer.has(hit.eventObject)
+              ) {
+                raycastEvent.stopped = localState.stopped = true
+                // Propagation is stopped, remove all other hover records
+                // An event handler is only allowed to flush other handlers if it is hovered itself
+                if (
+                  internal.hovered.size &&
+                  Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
+                ) {
+                  // Objects cannot flush out higher up objects that have already caught the event
+                  const higher = intersections.slice(0, intersections.indexOf(hit))
+                  cancelPointer([...higher, hit])
+                }
+              }
+            },
+            // there should be a distinction between target and currentTarget
+            target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+            currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+            nativeEvent: event,
+          }
+
+          // Call subscribers
+          callback(raycastEvent)
+          // Event bubbling may be interrupted by stopPropagation
+          if (localState.stopped === true) break
+        }
       }
     }
     return intersections
