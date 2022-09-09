@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { Instance } from '../src'
+import { UseBoundStore } from 'zustand'
+import { RootState, Instance } from '../src'
 import {
   is,
   dispose,
@@ -15,6 +16,14 @@ import {
   applyProps,
   updateCamera,
 } from '../src/core/utils'
+
+// Mocks a Zustand store
+const storeMock: UseBoundStore<RootState> = Object.assign(() => null!, {
+  getState: () => null!,
+  setState() {},
+  subscribe: () => () => {},
+  destroy() {},
+})
 
 describe('is', () => {
   const myFunc = () => null
@@ -158,10 +167,9 @@ describe('getInstanceProps', () => {
 describe('prepare', () => {
   it('should create an instance descriptor', () => {
     const object = new THREE.Object3D()
-    const root = null!
-    const instance = prepare(object, root, 'object3D', { name: 'object' })
+    const instance = prepare(object, storeMock, 'object3D', { name: 'object' })
 
-    expect(instance.root).toBe(root)
+    expect(instance.root).toBe(storeMock)
     expect(instance.type).toBe('object3D')
     expect(instance.props.name).toBe('object')
     expect(instance.object).toBe(object)
@@ -172,7 +180,7 @@ describe('prepare', () => {
     const containerDesc = {}
     const container = { __r3f: containerDesc }
 
-    const instance = prepare(container, null!, 'container', {})
+    const instance = prepare(container, storeMock, 'container', {})
     expect(container.__r3f).toBe(containerDesc)
     expect(instance).toBe(containerDesc)
   })
@@ -201,8 +209,8 @@ describe('resolve', () => {
 
 describe('attach / detach', () => {
   it('should attach & detach using string values', () => {
-    const parent = prepare({ prop: null }, null!, '', {})
-    const child = prepare({}, null!, '', { attach: 'prop' })
+    const parent = prepare({ prop: null }, storeMock, '', {})
+    const child = prepare({}, storeMock, '', { attach: 'prop' })
 
     attach(parent, child)
     expect(parent.object.prop).toBe(child.object)
@@ -217,8 +225,8 @@ describe('attach / detach', () => {
     const mount = jest.fn()
     const unmount = jest.fn()
 
-    const parent = prepare({}, null!, '', {})
-    const child = prepare({}, null!, '', { attach: () => (mount(), unmount) })
+    const parent = prepare({}, storeMock, '', {})
+    const child = prepare({}, storeMock, '', { attach: () => (mount(), unmount) })
 
     attach(parent, child)
     expect(mount).toBeCalledTimes(1)
@@ -232,8 +240,8 @@ describe('attach / detach', () => {
   })
 
   it('should create array when using array-index syntax', () => {
-    const parent = prepare({ prop: null }, null!, '', {})
-    const child = prepare({}, null!, '', { attach: 'prop-0' })
+    const parent = prepare({ prop: null }, storeMock, '', {})
+    const child = prepare({}, storeMock, '', { attach: 'prop-0' })
 
     attach(parent, child)
     expect(parent.object.prop).toStrictEqual([child.object])
@@ -303,8 +311,7 @@ describe('applyProps', () => {
 
   it('should reset removed props for HMR', () => {
     const target = new THREE.Object3D()
-    const instance = prepare(target, { getState: () => null! } as any, '', {})
-    prepare(target.scale, null!, '', { args: [5, 5, 5] })
+    prepare(target.scale, storeMock, '', { args: [5, 5, 5] })
     target.position.setScalar(10)
 
     // Recreate from args
@@ -316,7 +323,7 @@ describe('applyProps', () => {
     expect(target.position.toArray()).toStrictEqual([0, 0, 0])
 
     // Recreate from instance args
-    instance.props.args = [1, 2, 3]
+    prepare(target, storeMock, '', { args: [1, 2, 3] })
     applyProps(target, { position: DEFAULT + 'remove' })
     expect(target.position.toArray()).toStrictEqual([1, 2, 3])
   })
