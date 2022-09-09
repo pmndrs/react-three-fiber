@@ -1,8 +1,18 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
-import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap, useInstanceHandle } from '../src'
-import { Instance, LocalState } from '../src/core/renderer'
+import {
+  createRoot,
+  advance,
+  useLoader,
+  act,
+  useThree,
+  useGraph,
+  useFrame,
+  ObjectMap,
+  useInstanceHandle,
+  Instance,
+} from '../src'
 
 const root = createRoot(document.createElement('canvas'))
 
@@ -188,7 +198,7 @@ describe('hooks', () => {
 
   it('can handle useInstanceHandle hook', async () => {
     const ref = React.createRef<THREE.Group>()
-    let instance!: React.MutableRefObject<LocalState>
+    let instance!: React.MutableRefObject<Instance>
 
     const Component = () => {
       instance = useInstanceHandle(ref)
@@ -196,6 +206,6 @@ describe('hooks', () => {
     }
     await act(async () => root.render(<Component />))
 
-    expect(instance.current).toBe((ref.current as unknown as Instance).__r3f)
+    expect(instance.current).toBe((ref.current as unknown as Instance<THREE.Group>['object']).__r3f)
   })
 })
