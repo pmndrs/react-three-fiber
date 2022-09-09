@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-
 import { Canvas, act } from '../../src'
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement

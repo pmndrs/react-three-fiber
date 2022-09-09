@@ -1,47 +1,11 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
-import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
-
 import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
 
-const resolvers: (() => void)[] = []
-
-const { waitFor } = asyncUtils(act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
+const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {
-  let canvas: HTMLCanvasElement = null!
-
-  beforeEach(() => {
-    canvas = createCanvas({
-      beforeReturn: (canvas) => {
-        function getContext(
-          contextId: '2d',
-          options?: CanvasRenderingContext2DSettings,
-        ): CanvasRenderingContext2D | null
-        function getContext(
-          contextId: 'bitmaprenderer',
-          options?: ImageBitmapRenderingContextSettings,
-        ): ImageBitmapRenderingContext | null
-        function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
-        function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
-        function getContext(contextId: string): RenderingContext | null {
-          if (contextId === 'webgl' || contextId === 'webgl2') {
-            return createWebGLContext(canvas)
-          }
-          return null
-        }
-
-        canvas.getContext = getContext
-      },
-    })
-  })
-
   it('can handle useThree hook', async () => {
     let result = {} as {
       camera: THREE.Camera
@@ -68,9 +32,7 @@ describe('hooks', () => {
       return <group />
     }
 
-    await act(async () => {
-      createRoot(canvas).render(<Component />)
-    })
+    await act(async () => root.render(<Component />))
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
@@ -96,14 +58,9 @@ describe('hooks', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
-    await act(
-      async () =>
-        (scene = createRoot(canvas)
-          .configure({ frameloop: 'never' })
-          .render(<Component />)
-          .getState().scene),
-    )
+    const store = await act(async () => root.configure({ frameloop: 'never' }).render(<Component />))
+    const { scene } = store.getState()
+
     advance(Date.now())
     expect(scene.children[0].position.x).toEqual(1)
     expect(frameCalls.length).toBeGreaterThan(0)
@@ -125,18 +82,8 @@ describe('hooks', () => {
       return <primitive object={model} />
     }
 
-    let scene: THREE.Scene = null!
-    await act(async () => {
-      scene = createRoot(canvas)
-        .render(
-          <React.Suspense fallback={null}>
-            <Component />
-          </React.Suspense>,
-        )
-        .getState().scene
-    })
-
-    await waitFor(() => expect(scene.children[0]).toBeDefined())
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
   })
@@ -183,18 +130,8 @@ describe('hooks', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
-    await act(async () => {
-      scene = createRoot(canvas)
-        .render(
-          <React.Suspense fallback={null}>
-            <Component />
-          </React.Suspense>,
-        )
-        .getState().scene
-    })
-
-    await waitFor(() => expect(scene.children[0]).toBeDefined())
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
   })
@@ -230,9 +167,7 @@ describe('hooks', () => {
       return <mesh />
     }
 
-    await act(async () => {
-      createRoot(canvas).render(<Component />)
-    })
+    await act(async () => root.render(<Component />))
 
     expect(result).toEqual({
       nodes: {

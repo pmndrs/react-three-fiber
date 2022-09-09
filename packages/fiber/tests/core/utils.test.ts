@@ -8,7 +8,7 @@ describe('is', () => {
   const myUnd = undefined
   const myArr = [1, 2, 3]
 
-  it('should tell me if something IS a function', () => {
+  it('should tell me if something is a function', () => {
     expect(is.fun(myFunc)).toBe(true)
 
     expect(is.fun(myObj)).toBe(false)
@@ -17,7 +17,7 @@ describe('is', () => {
     expect(is.fun(myUnd)).toBe(false)
     expect(is.fun(myArr)).toBe(false)
   })
-  it('should tell me if something IS an object', () => {
+  it('should tell me if something is an object', () => {
     expect(is.obj(myFunc)).toBe(false)
 
     expect(is.obj(myObj)).toBe(true)
@@ -27,7 +27,7 @@ describe('is', () => {
     expect(is.obj(myUnd)).toBe(false)
     expect(is.obj(myArr)).toBe(false)
   })
-  it('should tell me if something IS a string', () => {
+  it('should tell me if something is a string', () => {
     expect(is.str(myFunc)).toBe(false)
     expect(is.str(myObj)).toBe(false)
 
@@ -37,7 +37,7 @@ describe('is', () => {
     expect(is.str(myUnd)).toBe(false)
     expect(is.str(myArr)).toBe(false)
   })
-  it('should tell me if something IS a number', () => {
+  it('should tell me if something is a number', () => {
     expect(is.num(myFunc)).toBe(false)
     expect(is.num(myObj)).toBe(false)
     expect(is.num(myStr)).toBe(false)
@@ -47,7 +47,7 @@ describe('is', () => {
     expect(is.num(myUnd)).toBe(false)
     expect(is.num(myArr)).toBe(false)
   })
-  it('should tell me if something IS undefined', () => {
+  it('should tell me if something is undefined', () => {
     expect(is.und(myFunc)).toBe(false)
     expect(is.und(myObj)).toBe(false)
     expect(is.und(myStr)).toBe(false)
