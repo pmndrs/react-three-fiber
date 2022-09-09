@@ -1,18 +1,8 @@
 import * as React from 'react'
 import * as Stdlib from 'three-stdlib'
 import * as THREE from 'three'
-
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
-
 import ReactThreeTestRenderer from '../index'
-
-const resolvers: (() => void)[] = []
-
-const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
 
 describe('ReactThreeTestRenderer Hooks', () => {
   it('can handle useThree hook', async () => {
@@ -61,14 +51,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
       return <primitive object={model} />
     }
 
-    const renderer = await ReactThreeTestRenderer.create(
-      <React.Suspense fallback={null}>
-        <Component />
-      </React.Suspense>,
-    )
-
-    await waitFor(() => expect(renderer.scene.children[0]).toBeDefined())
-
+    const renderer = await ReactThreeTestRenderer.create(<Component />)
     expect(renderer.scene.children[0].instance).toBe(MockMesh)
   })
 
