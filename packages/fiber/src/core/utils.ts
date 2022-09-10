@@ -331,7 +331,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else if (target?.set && typeof value !== 'object') {
       const isColor = target instanceof THREE.Color
       // Allow setting array scalars
-      if (!isColor && target.setScalar) target.setScalar(value)
+      if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set ...
       else if (value !== undefined) target.set(value)
     }
