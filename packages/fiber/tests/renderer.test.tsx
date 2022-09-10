@@ -210,13 +210,6 @@ describe('renderer', () => {
 
     const { scene } = store.getState()
 
-    // TODO: Scheduler isn't being flushed and Jest's mocks are clashing here.
-    // We need a way to check usage of dispose after unmount that works with Jest
-    dispose()
-    childDispose()
-    attachDispose()
-    detach()
-
     // Cleans up scene-graph
     expect(scene.children.length).toBe(0)
     // Calls dispose on top-level instance
