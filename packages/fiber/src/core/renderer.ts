@@ -177,7 +177,7 @@ function removeChild(
 
   // Unlink instances
   child.parent = null
-  if (recursive === undefined) {
+  if (!recursive) {
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
   }
