@@ -287,7 +287,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     // Deal with pointer events ...
     if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
-      if (value) instance.handlers[prop as keyof EventHandlers] = value as any
+      if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
     }
