@@ -290,8 +290,7 @@ describe('renderer', () => {
     // Initial
     await act(async () => root.render(<Test object={object1} />))
     expect(ref.current).toBe(object1)
-    expect(ref.current!.children[0]).toBe(child1)
-    expect(ref.current!.children[1]).toBe(child.current)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
 
     // Throw on undefined
@@ -303,15 +302,13 @@ describe('renderer', () => {
     // Update
     await act(async () => root.render(<Test object={object2} />))
     expect(ref.current).toBe(object2)
-    expect(ref.current!.children[0]).toBe(child2)
-    expect(ref.current!.children[1]).toBe(child.current)
+    expect(ref.current!.children).toStrictEqual([child2, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
 
     // Revert
     await act(async () => root.render(<Test object={object1} />))
     expect(ref.current).toBe(object1)
-    expect(ref.current!.children[0]).toBe(child1)
-    expect(ref.current!.children[1]).toBe(child.current)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
   })
 
