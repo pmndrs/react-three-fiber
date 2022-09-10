@@ -343,14 +343,21 @@ describe('applyProps', () => {
     const color = new THREE.Color()
     color.copy = jest.fn()
 
-    const target = { color }
+    const target = { color, layer: new THREE.Layers() }
 
-    // Same constructor
+    // Same constructor, copy
     applyProps(target, { color: new THREE.Color() })
     expect(target.color).toBeInstanceOf(THREE.Color)
     expect(color.copy).toHaveBeenCalledTimes(1)
 
-    // Different constructor
+    // Same constructor, Layers
+    const layer = new THREE.Layers()
+    layer.mask = 5
+    applyProps(target, { layer })
+    expect(target.layer).toBeInstanceOf(THREE.Layers)
+    expect(target.layer.mask).toBe(layer.mask)
+
+    // Different constructor, overwrite
     applyProps(target, { color: new THREE.Vector3() })
     expect(target.color).toBeInstanceOf(THREE.Vector3)
     expect(color.copy).toHaveBeenCalledTimes(1)
@@ -364,15 +371,20 @@ describe('applyProps', () => {
   })
 
   it('should set with scalar shorthand where applicable', async () => {
+    // Vector3#setScalar
     const target = new THREE.Object3D()
     applyProps(target, { scale: 5 })
-
     expect(target.scale.toArray()).toStrictEqual([5, 5, 5])
 
+    // Color#set
     const material = new THREE.MeshBasicMaterial()
     applyProps(material, { color: 0x000000 })
-
     expect(material.color.getHex()).toBe(0x000000)
+
+    // No-op on undefined
+    const mesh = new THREE.Mesh()
+    applyProps(mesh, { position: undefined })
+    expect(mesh.position.toArray()).toStrictEqual([0, 0, 0])
   })
 
   it('should pierce into nested properties', () => {
