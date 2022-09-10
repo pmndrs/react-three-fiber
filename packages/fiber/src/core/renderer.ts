@@ -177,7 +177,7 @@ function removeChild(
 
   // Unlink instances
   child.parent = null
-  if (!recursive) {
+  if (recursive === undefined) {
     const childIndex = parent.children.indexOf(child)
     if (childIndex !== -1) parent.children.splice(childIndex, 1)
   }
@@ -239,13 +239,6 @@ function switchInstance(
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
 
-  // Link up new instance
-  const parent = oldInstance.parent
-  if (parent) {
-    removeChild(parent, oldInstance, false)
-    appendChild(parent, newInstance)
-  }
-
   // Move children to new instance
   for (const child of oldInstance.children) {
     removeChild(oldInstance, child, false, false)
@@ -253,10 +246,11 @@ function switchInstance(
   }
   oldInstance.children = []
 
-  // Re-bind event handlers
-  if (newInstance.object.raycast !== null && newInstance.object instanceof THREE.Object3D && newInstance.eventCount) {
-    const rootState = newInstance.root.getState()
-    rootState.internal.interaction.push(newInstance.object)
+  // Link up new instance
+  const parent = oldInstance.parent
+  if (parent) {
+    removeChild(parent, oldInstance, true, false)
+    appendChild(parent, newInstance)
   }
 
   // This evil hack switches the react-internal fiber node
