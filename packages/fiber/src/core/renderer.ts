@@ -213,7 +213,7 @@ function removeChild(
 
   // Remove nested child objects. Primitives should not have objects and children that are
   // attached to them declaratively ...
-  if (!isPrimitive && recursive) removeRecursive(child.children, child, recursive, shouldDispose)
+  if (recursive) removeRecursive(child.children, child, recursive, shouldDispose)
 
   // Unlink instance object
   delete child.object.__r3f

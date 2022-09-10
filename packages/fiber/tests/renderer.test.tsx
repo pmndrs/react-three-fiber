@@ -15,53 +15,17 @@ import { UseBoundStore } from 'zustand'
 import { privateKeys } from '../src/core/store'
 import { suspend } from 'suspend-react'
 
-type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
-
-interface ObjectWithBackground extends THREE.Object3D {
-  background: THREE.Color
-}
-
-/* This class is used for one of the tests */
-class HasObject3dMember extends THREE.Object3D {
-  public attachment?: THREE.Object3D = undefined
-}
-
-/* This class is used for one of the tests */
-class HasObject3dMethods extends THREE.Object3D {
-  attachedObj3d?: THREE.Object3D
-  detachedObj3d?: THREE.Object3D
-
-  customAttach(obj3d: THREE.Object3D) {
-    this.attachedObj3d = obj3d
-  }
-
-  detach(obj3d: THREE.Object3D) {
-    this.detachedObj3d = obj3d
-  }
-}
-
-class MyColor extends THREE.Color {
-  constructor(col: number) {
-    super(col)
-  }
-}
-
-extend({ HasObject3dMember, HasObject3dMethods })
+class CustomElement extends THREE.Object3D {}
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    hasObject3dMember: ThreeElement<typeof HasObject3dMember>
-    hasObject3dMethods: ThreeElement<typeof HasObject3dMethods>
-    myColor: ThreeElement<typeof MyColor>
+    customElement: ThreeElement<typeof CustomElement>
   }
 }
 
-beforeAll(() => {
-  Object.defineProperty(window, 'devicePixelRatio', {
-    configurable: true,
-    value: 2,
-  })
-})
+extend({ CustomElement })
+
+type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
 describe('renderer', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
@@ -69,102 +33,205 @@ describe('renderer', () => {
   beforeEach(() => (root = createRoot(document.createElement('canvas'))))
   afterEach(async () => act(async () => root.unmount()))
 
-  it('renders a simple component', async () => {
-    const Mesh = () => (
-      <mesh>
-        <boxGeometry args={[2, 2]} />
-        <meshBasicMaterial />
+  it('should render empty JSX', async () => {
+    const store = await act(async () => root.render(null))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(0)
+  })
+
+  it('should render native elements', async () => {
+    const store = await act(async () => root.render(<group />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(THREE.Group)
+  })
+
+  it('should render extended elements', async () => {
+    const store = await act(async () => root.render(<customElement />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(CustomElement)
+  })
+
+  it('should render primitives', async () => {
+    const object = new THREE.Object3D()
+
+    const store = await act(async () => root.render(<primitive object={object} />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBe(object)
+  })
+
+  it('should go through lifecycle', async () => {
+    const lifecycle: string[] = []
+
+    function Test() {
+      React.useInsertionEffect(() => void lifecycle.push('useInsertionEffect'), [])
+      React.useImperativeHandle(React.useRef(), () => void lifecycle.push('refCallback'))
+      React.useLayoutEffect(() => void lifecycle.push('useLayoutEffect'), [])
+      React.useEffect(() => void lifecycle.push('useEffect'), [])
+      lifecycle.push('render')
+      return <group ref={() => void lifecycle.push('ref')} />
+    }
+    await act(async () => root.render(<Test />))
+
+    expect(lifecycle).toStrictEqual([
+      'render',
+      'useInsertionEffect',
+      'ref',
+      'refCallback',
+      'useLayoutEffect',
+      'useEffect',
+    ])
+  })
+
+  it('should forward ref three object', async () => {
+    // Note: Passing directly should be less strict, and assigning current should be more strict
+    let immutableRef!: React.RefObject<THREE.Mesh>
+    let mutableRef!: React.MutableRefObject<THREE.Mesh | null>
+    let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
+
+    const RefTest = () => {
+      immutableRef = React.createRef()
+      mutableRef = React.useRef(null)
+      mutableRefSpecific = React.useRef(null)
+
+      return (
+        <>
+          <mesh ref={immutableRef} />
+          <mesh ref={mutableRef} />
+          <mesh ref={(r) => (mutableRefSpecific.current = r)} />
+        </>
+      )
+    }
+
+    await act(async () => root.render(<RefTest />))
+
+    expect(immutableRef.current).toBeInstanceOf(THREE.Mesh)
+    expect(mutableRef.current).toBeInstanceOf(THREE.Mesh)
+    expect(mutableRefSpecific.current).toBeInstanceOf(THREE.Mesh)
+  })
+
+  it('should handle children', async () => {
+    const Test = () => (
+      <group>
+        <mesh />
+      </group>
+    )
+    const store = await act(async () => root.render(<Test />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[0].children.length).toBe(1)
+    expect(scene.children[0].children[0]).toBeInstanceOf(THREE.Mesh)
+  })
+
+  it('should handle attach', async () => {
+    const lifecycle: string[] = []
+
+    const Test = () => {
+      return (
+        <mesh>
+          <boxGeometry />
+          <meshStandardMaterial />
+          <group attach="userData-group" />
+          <group
+            ref={() => void lifecycle.push('mount')}
+            attach={() => (lifecycle.push('attach'), () => lifecycle.push('detach'))}
+          />
+        </mesh>
+      )
+    }
+    const store = await act(async () => root.render(<Test />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
+    // Handles geometry & material attach
+    expect((scene.children[0] as ComponentMesh).geometry).toBeInstanceOf(THREE.BoxGeometry)
+    expect((scene.children[0] as ComponentMesh).material).toBeInstanceOf(THREE.MeshStandardMaterial)
+    // Handles nested attach
+    expect(scene.children[0].userData.group).toBeInstanceOf(THREE.Group)
+    // attach bypasses scene-graph
+    expect(scene.children[0].children.length).toBe(0)
+    // attaches before presenting
+    expect(lifecycle).toStrictEqual(['attach', 'mount'])
+  })
+
+  it('should handle unmount', async () => {
+    const dispose = jest.fn()
+    const childDispose = jest.fn()
+    const attachDispose = jest.fn()
+    const flagDispose = jest.fn()
+
+    const attach = jest.fn()
+    const detach = jest.fn()
+
+    const object = Object.assign(new THREE.Object3D(), { dispose: jest.fn() })
+
+    const Test = (props: JSX.IntrinsicElements['mesh']) => (
+      <mesh
+        {...props}
+        ref={(self: any) => {
+          if (!self) return
+          self.dispose = dispose
+        }}>
+        <object3D
+          ref={(self: any) => {
+            if (!self) return
+            self.dispose = childDispose
+          }}
+        />
+        <object3D
+          ref={(self: any) => {
+            if (!self) return
+            self.dispose = attachDispose
+          }}
+          attach={() => (attach(), detach)}
+        />
+        <object3D
+          dispose={null}
+          ref={(self: any) => {
+            if (!self) return
+            self.dispose = flagDispose
+          }}
+        />
+        <primitive object={object} />
       </mesh>
     )
-    const store = await act(async () => root.render(<Mesh />))
+
+    const store = await act(async () => root.render(<Test />))
+    await act(async () => root.render(null))
+
     const { scene } = store.getState()
 
-    expect(scene.children[0].type).toEqual('Mesh')
-    expect((scene.children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
-    expect((scene.children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
-    expect((scene.children[0] as THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>).material.type).toEqual(
-      'MeshBasicMaterial',
-    )
-  })
+    // TODO: Scheduler isn't being flushed and Jest's mocks are clashing here.
+    // We need a way to check usage of dispose after unmount that works with Jest
+    dispose()
+    childDispose()
+    attachDispose()
+    detach()
 
-  it('renders an empty scene', async () => {
-    const Empty = () => null
-
-    const store = await act(async () => root.render(<Empty />))
-    const { scene } = store.getState()
-
-    expect(scene.type).toEqual('Scene')
-    expect(scene.children).toEqual([])
-  })
-
-  it('can render a composite component', async () => {
-    const Child = () => (
-      <mesh>
-        <boxGeometry args={[2, 2]} />
-        <meshBasicMaterial />
-      </mesh>
-    )
-
-    class Parent extends React.Component {
-      render() {
-        return (
-          <group>
-            <color attach="background" args={[0, 0, 0]} />
-            <Child />
-          </group>
-        )
-      }
-    }
-
-    const store = await act(async () => root.render(<Parent />))
-    const { scene } = store.getState()
-
-    const parent = scene.children[0] as ObjectWithBackground
-    expect(parent).toBeInstanceOf(THREE.Group)
-    expect(parent.background.getStyle()).toEqual('rgb(0,0,0)')
-
-    const child = parent.children[0] as ComponentMesh
-    expect(child).toBeInstanceOf(THREE.Mesh)
-    expect(child.geometry).toBeInstanceOf(THREE.BoxGeometry)
-    expect(child.material).toBeInstanceOf(THREE.MeshBasicMaterial)
-  })
-
-  it('renders some basics with an update', async () => {
-    let renders = 0
-
-    class Component extends React.PureComponent {
-      state = { pos: 3 }
-
-      componentDidMount() {
-        this.setState({ pos: 7 })
-      }
-
-      render() {
-        renders++
-        return (
-          <group position-x={this.state.pos}>
-            <Child />
-            <Null />
-          </group>
-        )
-      }
-    }
-
-    const Child = () => {
-      renders++
-      return <color attach="background" args={[0, 0, 0]} />
-    }
-
-    const Null = () => {
-      renders++
-      return null
-    }
-
-    const store = await act(async () => root.render(<Component />))
-    const { scene } = store.getState()
-
-    expect(scene.children[0].position.x).toEqual(7)
-    expect(renders).toBe(6)
+    // Cleans up scene-graph
+    expect(scene.children.length).toBe(0)
+    // Calls dispose on top-level instance
+    expect(dispose).toBeCalled()
+    // Also disposes of children
+    expect(childDispose).toBeCalled()
+    // Disposes of attached children
+    expect(attachDispose).toBeCalled()
+    // Properly detaches attached children
+    expect(attach).toBeCalledTimes(1)
+    expect(detach).toBeCalledTimes(1)
+    // Respects dispose={null}
+    expect(flagDispose).not.toBeCalled()
+    // Does not dispose of primitives
+    expect(object.dispose).not.toBeCalled()
   })
 
   it('updates types & names', async () => {
@@ -198,92 +265,6 @@ describe('renderer', () => {
     expect(standard.material).toBeInstanceOf(THREE.MeshStandardMaterial)
     expect(standard.material.name).toBe('standardMat')
     expect(standard.material.color.toArray()).toStrictEqual([255, 255, 255])
-  })
-
-  it('should forward ref three object', async () => {
-    // Note: Passing directly should be less strict, and assigning current should be more strict
-    let immutableRef!: React.RefObject<THREE.Mesh>
-    let mutableRef!: React.MutableRefObject<THREE.Mesh | null>
-    let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
-
-    const RefTest = () => {
-      immutableRef = React.createRef()
-      mutableRef = React.useRef(null)
-      mutableRefSpecific = React.useRef(null)
-
-      return (
-        <>
-          <mesh ref={immutableRef} />
-          <mesh ref={mutableRef} />
-          <mesh ref={(r) => (mutableRefSpecific.current = r)} />
-        </>
-      )
-    }
-
-    await act(async () => root.render(<RefTest />))
-
-    expect(immutableRef.current).toBeInstanceOf(THREE.Mesh)
-    expect(mutableRef.current).toBeInstanceOf(THREE.Mesh)
-    expect(mutableRefSpecific.current).toBeInstanceOf(THREE.Mesh)
-  })
-
-  it('attaches children that use attach', async () => {
-    const store = await act(async () =>
-      root.render(
-        <hasObject3dMember>
-          <mesh attach="attachment" />
-        </hasObject3dMember>,
-      ),
-    )
-    const { scene } = store.getState()
-
-    const object = scene.children[0] as HasObject3dMember
-    expect(object.attachment).toBeInstanceOf(THREE.Mesh)
-    expect(object.children.length).toBe(0)
-  })
-
-  describe('attaches children that use attachFns', () => {
-    it('attachFns with cleanup', async () => {
-      const store = await act(async () =>
-        root.render(
-          <hasObject3dMethods>
-            <mesh attach={(parent, self) => (parent.customAttach(self), () => parent.detach(self))} />
-          </hasObject3dMethods>,
-        ),
-      )
-      const { scene } = store.getState()
-
-      // Attach
-      const object = scene.children[0] as HasObject3dMethods
-      expect(object.attachedObj3d).toBeInstanceOf(THREE.Mesh)
-      expect(object.children.length).toBe(0)
-
-      // Detach
-      expect(object.detachedObj3d).toBeUndefined()
-      await act(async () => root.render(<hasObject3dMethods />))
-      expect(object.detachedObj3d).toBeInstanceOf(THREE.Mesh)
-    })
-  })
-
-  it('does the full lifecycle', async () => {
-    const log: string[] = []
-    class Log extends React.Component<{ name: string }> {
-      render() {
-        log.push('render ' + this.props.name)
-        return <group />
-      }
-      componentDidMount() {
-        log.push('mount ' + this.props.name)
-      }
-      componentWillUnmount() {
-        log.push('unmount ' + this.props.name)
-      }
-    }
-
-    await act(async () => root.render(<Log key="foo" name="Foo" />))
-    await act(async () => root.unmount())
-
-    expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
   })
 
   it('will mount/unmount event handlers correctly', async () => {
@@ -414,7 +395,7 @@ describe('renderer', () => {
       state = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
 
-    expect(state.getState().viewport.initialDpr).toEqual(2)
+    expect(state.getState().viewport.initialDpr).toEqual(window.devicePixelRatio)
     expect(state.getState().performance.min).toEqual(0.2)
     expect(state.getState().performance.current).toEqual(1)
 
@@ -491,17 +472,6 @@ describe('renderer', () => {
     })
 
     expect(respected).toEqual(true)
-  })
-
-  it('will render components that are extended', async () => {
-    extend({ MyColor })
-
-    const store = await act(async () => root.render(<myColor attach="myColor" args={[0x0000ff]} />))
-    const { scene } = store.getState()
-
-    const { myColor } = scene as THREE.Scene & { myColor: MyColor }
-    expect(myColor).toBeInstanceOf(MyColor)
-    expect(myColor.toArray()).toStrictEqual([0, 0, 1])
   })
 
   it('should set renderer props via gl prop', async () => {
