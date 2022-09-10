@@ -300,10 +300,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
-      if (target && typeof target === 'object' && target.constructor) {
-        // use the prop constructor to find the default it should be
-        value = new target.constructor(...(target.__r3f?.props.args ?? instance?.props.args ?? []))
-      } else if (root.constructor) {
+      if (root.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
         const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))

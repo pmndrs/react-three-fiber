@@ -318,12 +318,7 @@ describe('applyProps', () => {
     }
 
     const target = new Target()
-    prepare(target.scale, storeMock, '', { args: [5, 5, 5] })
     target.position.setScalar(10)
-
-    // Recreate from args
-    applyProps(target, { scale: DEFAULT + 'remove' })
-    expect(target.scale.toArray()).toStrictEqual([5, 5, 5])
 
     // Recreate from scratch
     applyProps(target, { position: DEFAULT + 'remove' })
