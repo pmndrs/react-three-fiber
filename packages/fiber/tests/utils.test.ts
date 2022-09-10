@@ -310,7 +310,14 @@ describe('applyProps', () => {
   })
 
   it('should reset removed props for HMR', () => {
-    const target = new THREE.Object3D()
+    class Target extends THREE.Object3D {
+      constructor(x = 0, y = 0, z = 0) {
+        super()
+        this.position.set(x, y, z)
+      }
+    }
+
+    const target = new Target()
     prepare(target.scale, storeMock, '', { args: [5, 5, 5] })
     target.position.setScalar(10)
 
