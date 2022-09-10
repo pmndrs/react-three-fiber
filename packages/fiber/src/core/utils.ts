@@ -313,37 +313,30 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       }
     }
 
-    // Special treatment for objects with support for set/copy, and layers
-    if (target && target.set && (target.copy || target instanceof THREE.Layers)) {
-      // If value is an array
-      if (Array.isArray(value)) {
-        if (target.fromArray) target.fromArray(value)
-        else target.set(...value)
-      }
-      // Test again target.copy(class) next ...
-      else if (
-        target.copy &&
-        value &&
-        (value as ConstructorRepresentation).constructor &&
-        target.constructor.name === (value as ConstructorRepresentation).constructor.name
-      ) {
-        target.copy(value)
-      }
-      // If nothing else fits, just set the single value, ignore undefined
-      // https://github.com/pmndrs/react-three-fiber/issues/274
-      else if (value !== undefined) {
-        const isColor = target instanceof THREE.Color
-        // Layers have no copy function, we must therefore copy the mask property
-        if (target instanceof THREE.Layers && value instanceof THREE.Layers) target.mask = value.mask
-        // Overwrite atomic properties
-        else if (typeof value === 'object') root[key] = value
-        // Allow setting array scalars
-        else if (!isColor && target.setScalar) target.setScalar(value)
-        // Otherwise just set ...
-        else target.set(value)
-      }
-      // Else, just overwrite the value
-    } else {
+    // Copy if properties match signatures
+    if (target?.constructor === (value as ConstructorRepresentation)?.constructor && target.copy) {
+      target.copy(value)
+    }
+    // Layers have no copy function, we must therefore copy the mask property
+    else if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
+      target.mask = value.mask
+    }
+    // Set array types
+    else if (target?.set && Array.isArray(value)) {
+      if (target.fromArray) target.fromArray(value)
+      else target.set(...value)
+    }
+    // Set literal types, ignore undefined
+    // https://github.com/pmndrs/react-three-fiber/issues/274
+    else if (target?.set && typeof value !== 'object') {
+      const isColor = target instanceof THREE.Color
+      // Allow setting array scalars
+      if (!isColor && target.setScalar) target.setScalar(value)
+      // Otherwise just set ...
+      else if (value !== undefined) target.set(value)
+    }
+    // Else, just overwrite the value
+    else {
       root[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
