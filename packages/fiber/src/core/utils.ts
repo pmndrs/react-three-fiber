@@ -331,16 +331,16 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       }
       // If nothing else fits, just set the single value, ignore undefined
       // https://github.com/pmndrs/react-three-fiber/issues/274
-      else if (typeof value === 'number' || value instanceof THREE.Layers) {
+      else if (value !== undefined) {
         const isColor = target instanceof THREE.Color
-        // Allow setting array scalars
-        if (!isColor && target.setScalar) target.setScalar(value)
         // Layers have no copy function, we must therefore copy the mask property
-        else if (target instanceof THREE.Layers && value instanceof THREE.Layers) target.mask = value.mask
+        if (target instanceof THREE.Layers && value instanceof THREE.Layers) target.mask = value.mask
+        // Overwrite atomic properties
+        else if (typeof value === 'object') root[key] = value
+        // Allow setting array scalars
+        else if (!isColor && target.setScalar) target.setScalar(value)
         // Otherwise just set ...
         else target.set(value)
-      } else if (value !== undefined) {
-        root[key] = value
       }
       // Else, just overwrite the value
     } else {
