@@ -190,30 +190,25 @@ function removeChild(
     removeInteractivity(child.root, child.object)
   }
 
-  // Allow objects to bail out of recursive dispose altogether by passing dispose={null}
-  // Never dispose of primitives because their state may be kept outside of React!
-  // In order for an object to be able to dispose it has to have
-  //   - a dispose method,
-  //   - it cannot be a <primitive object={...} />
-  //   - it cannot be a THREE.Scene, because three has broken its own api
-  //
-  // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
-  // when the reconciler calls it, but then carry our own check recursively
+  // Allow objects to bail out of unmount disposal with dispose={null}
   const shouldDispose = child.props.dispose !== null && dispose !== false
 
-  // Remove nested child objects. Primitives should not have objects and children that are
-  // attached to them declaratively ...
+  // Recursively remove instance children
   if (recursive !== false) {
-    for (const childInstance of child.children) {
-      removeChild(child, childInstance, shouldDispose, true)
-    }
+    for (const node of child.children) removeChild(child, node, shouldDispose, true)
+    child.children = []
   }
 
   // Unlink instance object
   delete child.object.__r3f
 
-  // Dispose object whenever the reconciler feels like it
-  if (child.type !== 'primitive' && child.object.type !== 'Scene' && shouldDispose) {
+  // Dispose object whenever the reconciler feels like it.
+  // Never dispose of primitives because their state may be kept outside of React!
+  // In order for an object to be able to dispose it
+  //   - has a dispose method
+  //   - cannot be a <primitive object={...} />
+  //   - cannot be a THREE.Scene, because three has broken its own API
+  if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
     const dispose = child.object.dispose
     if (typeof dispose === 'function') {
       scheduleCallback(idlePriority, () => {
