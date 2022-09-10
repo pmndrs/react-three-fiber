@@ -173,6 +173,10 @@ describe('renderer', () => {
     const detach = jest.fn()
 
     const object = Object.assign(new THREE.Object3D(), { dispose: jest.fn() })
+    const objectExternal = Object.assign(new THREE.Object3D(), { dispose: jest.fn() })
+    object.add(objectExternal)
+
+    const disposeDeclarativePrimitive = jest.fn()
 
     const Test = (props: JSX.IntrinsicElements['mesh']) => (
       <mesh
@@ -201,7 +205,14 @@ describe('renderer', () => {
             self.dispose = flagDispose
           }}
         />
-        <primitive object={object} />
+        <primitive object={object}>
+          <object3D
+            ref={(self: any) => {
+              if (!self) return
+              self.dispose = disposeDeclarativePrimitive
+            }}
+          />
+        </primitive>
       </mesh>
     )
 
@@ -225,6 +236,9 @@ describe('renderer', () => {
     expect(flagDispose).not.toBeCalled()
     // Does not dispose of primitives
     expect(object.dispose).not.toBeCalled()
+    // Only disposes of declarative primitive children
+    expect(objectExternal.dispose).not.toBeCalled()
+    expect(disposeDeclarativePrimitive).toBeCalled()
   })
 
   it('updates types & names', async () => {
