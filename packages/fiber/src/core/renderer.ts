@@ -331,6 +331,10 @@ const reconciler = Reconciler<
     // Reconstruct primitives if object prop changes
     if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
 
+    // Throw if an object or literal was passed for args
+    if (newProps.args !== undefined && !Array.isArray(newProps.args))
+      throw new Error('R3F: The args prop must be an array!')
+
     // Reconstruct instance if args change
     if (newProps.args?.length !== oldProps.args?.length) return [true]
     if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
