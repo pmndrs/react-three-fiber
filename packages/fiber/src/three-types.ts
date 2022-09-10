@@ -51,7 +51,7 @@ type ThreeElementsImpl = {
 }
 
 export interface ThreeElements extends ThreeElementsImpl {
-  primitive: Omit<ThreeElement<any>, 'args'> & { object: any }
+  primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
 }
 
 declare global {
