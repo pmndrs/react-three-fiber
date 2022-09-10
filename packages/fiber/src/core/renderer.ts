@@ -167,29 +167,20 @@ function insertBefore(
   invalidateInstance(child)
 }
 
-function removeRecursive(
-  children: HostConfig['instance'][],
-  parent: HostConfig['instance'],
-  recursive: boolean = false,
-  dispose: boolean = false,
-) {
-  for (const child of children) {
-    removeChild(parent, child, recursive, dispose)
-  }
-}
-
 function removeChild(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
-  recursive = true,
   dispose?: boolean,
+  recursive?: boolean,
 ) {
   if (!child) return
 
   // Unlink instances
   child.parent = null
-  const childIndex = parent.children.indexOf(child)
-  if (childIndex !== -1) parent.children.splice(childIndex, 1)
+  if (recursive === undefined) {
+    const childIndex = parent.children.indexOf(child)
+    if (childIndex !== -1) parent.children.splice(childIndex, 1)
+  }
 
   // Eagerly tear down tree
   if (child.props.attach) {
@@ -208,18 +199,21 @@ function removeChild(
   //
   // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
   // when the reconciler calls it, but then carry our own check recursively
-  const isPrimitive = child.type === 'primitive'
-  const shouldDispose = dispose ?? (!isPrimitive && child.props.dispose !== null)
+  const shouldDispose = child.props.dispose !== null && dispose !== false
 
   // Remove nested child objects. Primitives should not have objects and children that are
   // attached to them declaratively ...
-  if (recursive) removeRecursive(child.children, child, recursive, shouldDispose)
+  if (recursive !== false) {
+    for (const childInstance of child.children) {
+      removeChild(child, childInstance, shouldDispose, true)
+    }
+  }
 
   // Unlink instance object
   delete child.object.__r3f
 
   // Dispose object whenever the reconciler feels like it
-  if (child.object.type !== 'Scene' && shouldDispose) {
+  if (child.type !== 'primitive' && child.object.type !== 'Scene' && shouldDispose) {
     const dispose = child.object.dispose
     if (typeof dispose === 'function') {
       scheduleCallback(idlePriority, () => {
