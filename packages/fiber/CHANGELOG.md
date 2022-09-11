@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.7.3
+
+### Patch Changes
+
+- eb5a3be4: fix: if there is an eventsource pointerevent will be set to none
+
 ## 8.7.2
 
 ### Patch Changes

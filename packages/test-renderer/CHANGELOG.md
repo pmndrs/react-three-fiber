@@ -1,5 +1,13 @@
 # @react-three/test-renderer
 
+## 10.0.3
+
+### Patch Changes
+
+- eb5a3be4: fix: if there is an eventsource pointerevent will be set to none
+- Updated dependencies [eb5a3be4]
+  - @react-three/fiber@8.7.3
+
 ## 10.0.2
 
 ### Patch Changes
