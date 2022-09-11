@@ -125,10 +125,14 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
     if (canvas) return () => unmountComponentAtNode(canvas!)
   }, [canvas])
 
+  // When the event source is not this div, we need to set pointer-events to none
+  // Or else the canvas will block events from reaching the event source
+  const pointerEvents = eventSource ? 'none' : 'auto'
+
   return (
     <div
       ref={divRef}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
+      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', pointerEvents, ...style }}
       {...props}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
         <canvas ref={canvasRef} style={{ display: 'block' }}>
