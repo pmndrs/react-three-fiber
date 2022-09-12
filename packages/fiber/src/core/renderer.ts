@@ -141,12 +141,15 @@ function insertBefore(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
   beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
+  replace: boolean = false,
 ) {
   if (!child || !beforeChild) return
 
   // Link instances
   child.parent = parent
-  parent.children.splice(parent.children.indexOf(beforeChild), 0, child)
+  const childIndex = parent.children.indexOf(beforeChild)
+  if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
+  if (replace) beforeChild.parent = null
 
   // Manually splice Object3Ds
   if (
@@ -244,8 +247,7 @@ function switchInstance(
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
-    removeChild(parent, oldInstance, true, false)
-    appendChild(parent, newInstance)
+    insertBefore(parent, newInstance, oldInstance, true)
   }
 
   // This evil hack switches the react-internal fiber node
