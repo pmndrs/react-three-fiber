@@ -12,7 +12,6 @@ import {
   detach,
   RESERVED_PROPS,
   diffProps,
-  DEFAULT,
   applyProps,
   updateCamera,
 } from '../src/core/utils'
@@ -256,19 +255,40 @@ describe('attach / detach', () => {
 
 describe('diffProps', () => {
   it('should filter changed props', () => {
-    const oldProps = { foo: true }
+    const instance = prepare({}, storeMock, '', { foo: true })
     const newProps = { foo: true, bar: false }
 
-    const filtered = diffProps(oldProps, newProps)
+    const filtered = diffProps(instance, newProps)
     expect(filtered).toStrictEqual({ bar: false })
   })
 
   it('should pick removed props for HMR', () => {
-    const oldProps = { foo: true, bar: false }
-    const newProps = { foo: true }
+    const instance = prepare(new THREE.Object3D(), storeMock, '', { position: [0, 0, 1] })
+    const newProps = {}
 
-    const filtered = diffProps(oldProps, newProps, true)
-    expect(filtered).toStrictEqual({ bar: DEFAULT + 'remove' })
+    const filtered = diffProps(instance, newProps, true)
+    expect(filtered).toStrictEqual({ position: new THREE.Object3D().position })
+  })
+
+  it('should reset removed props for HMR', () => {
+    class Target extends THREE.Object3D {
+      constructor(x = 0, y = 0, z = 0) {
+        super()
+        this.position.set(x, y, z)
+      }
+    }
+
+    const target = new Target()
+    const instance = prepare(target, storeMock, '', { position: 10 })
+
+    // Recreate from scratch
+    let filtered = diffProps(instance, {}, true)
+    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([0, 0, 0])
+
+    // Recreate from instance args
+    instance.props = { args: [1, 2, 3], position: 10 }
+    filtered = diffProps(instance, {}, true)
+    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([1, 2, 3])
   })
 
   it('should filter reserved props without accessing them', () => {
@@ -277,7 +297,7 @@ describe('diffProps', () => {
 
     const props = { foo: true }
     const filtered = diffProps(
-      {},
+      prepare({}, storeMock, '', {}),
       RESERVED_PROPS.reduce((acc, key) => ({ ...acc, [key]: { get, set } }), props),
     )
 
@@ -307,27 +327,6 @@ describe('applyProps', () => {
     expect(target).toStrictEqual(props)
     expect(get).not.toBeCalled()
     expect(set).not.toBeCalled()
-  })
-
-  it('should reset removed props for HMR', () => {
-    class Target extends THREE.Object3D {
-      constructor(x = 0, y = 0, z = 0) {
-        super()
-        this.position.set(x, y, z)
-      }
-    }
-
-    const target = new Target()
-    target.position.setScalar(10)
-
-    // Recreate from scratch
-    applyProps(target, { position: DEFAULT + 'remove' })
-    expect(target.position.toArray()).toStrictEqual([0, 0, 0])
-
-    // Recreate from instance args
-    prepare(target, storeMock, '', { args: [1, 2, 3] })
-    applyProps(target, { position: DEFAULT + 'remove' })
-    expect(target.position.toArray()).toStrictEqual([1, 2, 3])
   })
 
   it('should overwrite non-atomic properties', () => {

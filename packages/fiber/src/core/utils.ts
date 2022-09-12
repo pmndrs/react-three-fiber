@@ -231,7 +231,6 @@ export function detach(parent: Instance, child: Instance): void {
   delete child.previousAttach
 }
 
-export const DEFAULT = '__default'
 export const RESERVED_PROPS = [
   ...REACT_INTERNAL_PROPS,
   // Instance props
@@ -245,28 +244,46 @@ export const RESERVED_PROPS = [
 
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
-  oldProps: Instance<T>['props'],
+  instance: Instance<T>,
   newProps: Instance<T>['props'],
-  remove = false,
+  resetRemoved = false,
 ): Instance<T>['props'] {
   const changedProps: Instance<T>['props'] = {}
 
   // Sort through props
-  for (const key in newProps) {
+  for (const prop in newProps) {
     // Skip reserved keys
-    if (RESERVED_PROPS.includes(key)) continue
+    if (RESERVED_PROPS.includes(prop)) continue
     // Skip if props match
-    if (is.equ(newProps[key], oldProps[key])) continue
+    if (is.equ(newProps[prop], instance.props[prop])) continue
 
     // Props changed, add them
-    changedProps[key] = newProps[key]
+    changedProps[prop] = newProps[prop]
   }
 
-  // Catch removed props, prepend them so they can be reset or removed
-  if (remove) {
-    for (const key in oldProps) {
-      if (RESERVED_PROPS.includes(key)) continue
-      else if (!newProps.hasOwnProperty(key)) changedProps[key] = DEFAULT + 'remove'
+  // Reset removed props for HMR
+  if (resetRemoved) {
+    for (const prop in instance.props) {
+      if (RESERVED_PROPS.includes(prop) || newProps.hasOwnProperty(prop)) continue
+
+      const { root, key } = resolve(instance.object, prop)
+
+      // https://github.com/mrdoob/three.js/issues/21209
+      // HMR/fast-refresh relies on the ability to cancel out props, but threejs
+      // has no means to do this. Hence we curate a small collection of value-classes
+      // with their respective constructor/set arguments
+      // For removed props, try to set default values, if possible
+      if (root.constructor) {
+        // create a blank slate of the instance and copy the particular parameter.
+        // @ts-ignore
+        const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))
+        changedProps[key] = defaultClassCall[key]
+        // destroy the instance
+        if (defaultClassCall.dispose) defaultClassCall.dispose()
+      } else {
+        // instance does not have constructor, just set it to 0
+        changedProps[key] = 0
+      }
     }
   }
 
@@ -294,27 +311,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     const { root, key, target } = resolve(object, prop)
 
-    // https://github.com/mrdoob/three.js/issues/21209
-    // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-    // has no means to do this. Hence we curate a small collection of value-classes
-    // with their respective constructor/set arguments
-    // For removed props, try to set default values, if possible
-    if (value === DEFAULT + 'remove') {
-      if (root.constructor) {
-        // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))
-        value = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
-      } else {
-        // instance does not have constructor, just set it to 0
-        value = 0
-      }
-    }
-
     // Copy if properties match signatures
-    if (target?.constructor === (value as ConstructorRepresentation)?.constructor && target.copy) {
+    if (target?.copy && target?.constructor === (value as ConstructorRepresentation)?.constructor) {
       target.copy(value)
     }
     // Layers have no copy function, we must therefore copy the mask property

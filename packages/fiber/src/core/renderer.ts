@@ -329,7 +329,7 @@ const reconciler = Reconciler<
     if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
 
     // Create a diff-set, flag if there are any changes
-    const changedProps = diffProps(oldProps, newProps, true)
+    const changedProps = diffProps(instance, newProps, true)
     if (Object.keys(changedProps).length) return [false, changedProps]
 
     // Otherwise do not touch the instance
