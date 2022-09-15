@@ -71,7 +71,8 @@ export type ObjectMap = {
 }
 
 export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
 /**
