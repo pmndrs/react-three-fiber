@@ -100,7 +100,12 @@ function makeId(event: Intersection) {
 // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
 // Gives React a clue as to how import the current interaction is
 export function getEventPriority() {
-  let name = window?.event?.type
+  // Get a handle to the current global scope in window and worker contexts if able
+  // https://github.com/pmndrs/react-three-fiber/pull/2493
+  const globalScope = (typeof self !== 'undefined' && self) || (typeof window !== 'undefined' && window)
+  if (!globalScope) return DefaultEventPriority
+
+  const name = globalScope.event?.type
   switch (name) {
     case 'click':
     case 'contextmenu':
