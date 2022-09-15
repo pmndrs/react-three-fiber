@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.7.4
+
+### Patch Changes
+
+- 259c8895: fix: use self to get global context before window
+
 ## 8.7.3
 
 ### Patch Changes
