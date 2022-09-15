@@ -366,7 +366,9 @@ const createStore = (
       // Update camera & renderer
       updateCamera(camera, size)
       gl.setPixelRatio(viewport.dpr)
-      gl.setSize(size.width, size.height)
+      // Play nice with offscreen canvas contexts
+      const updateStyle = typeof window !== 'undefined' || !(gl.domElement instanceof HTMLCanvasElement)
+      gl.setSize(size.width, size.height, updateStyle)
     }
 
     // Update viewport once the camera changes
