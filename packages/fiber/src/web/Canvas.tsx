@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import { useContextBridge } from 'its-fine'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
@@ -60,6 +61,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE as any), [])
 
+  const Bridge = useContextBridge()
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
@@ -115,9 +117,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
       },
     })
     root.current.render(
-      <ErrorBoundary set={setError}>
-        <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-      </ErrorBoundary>,
+      <Bridge>
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>
+      </Bridge>,
     )
   }
 

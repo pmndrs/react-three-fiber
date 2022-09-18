@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import { useContextBridge } from 'its-fine'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
@@ -45,6 +46,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE as any), [])
 
+    const Bridge = useContextBridge()
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
@@ -125,9 +127,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
         },
       })
       root.current.render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
+        <Bridge>
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>
+        </Bridge>,
       )
     }
 
