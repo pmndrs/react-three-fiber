@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { StoreApi, UseBoundStore } from 'zustand'
 
-import * as ReactThreeFiber from '../three-types'
+import { ThreeElement } from '../three-types'
 import {
   Renderer,
   createStore,
@@ -19,9 +19,9 @@ import {
   FrameloopLegacy,
   Frameloop,
 } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { reconciler, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
-import { getEventPriority, EventManager, ComputeFunction } from './events'
+import { EventManager, ComputeFunction } from './events'
 import {
   is,
   dispose,
@@ -31,6 +31,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
+  applyProps,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -38,7 +39,6 @@ import { OffscreenCanvas } from 'three'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
-const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
@@ -88,9 +88,9 @@ export type RenderProps<TCanvas extends Element> = {
   camera?: (
     | Camera
     | Partial<
-        ReactThreeFiber.Object3DNode<THREE.Camera, typeof THREE.Camera> &
-          ReactThreeFiber.Object3DNode<THREE.PerspectiveCamera, typeof THREE.PerspectiveCamera> &
-          ReactThreeFiber.Object3DNode<THREE.OrthographicCamera, typeof THREE.OrthographicCamera>
+        ThreeElement<typeof THREE.Camera> &
+          ThreeElement<typeof THREE.PerspectiveCamera> &
+          ThreeElement<typeof THREE.OrthographicCamera>
       >
   ) & {
     /** Flags the camera as manual, putting projection into your own hands */
@@ -233,9 +233,9 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
-      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster as any, { ...options })
+      if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
       if (!is.equ(params, raycaster.params, shallowLoose))
-        applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
+        applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
 
       // Create default camera (one time only!)
       if (!state.camera) {
@@ -247,7 +247,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
           : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
-          if (cameraOptions) applyProps(camera as any, cameraOptions as any)
+          if (cameraOptions) applyProps(camera, cameraOptions as any)
           // Always look at center by default
           if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
@@ -317,7 +317,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-        applyProps(gl as any, glConfig as any)
+        applyProps(gl, glConfig as any)
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
       // Check pixelratio
@@ -413,7 +413,7 @@ function unmountComponentAtNode<TElement extends Element>(canvas: TElement, call
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
             if (state.gl?.xr) state.xr.disconnect()
-            dispose(state)
+            dispose(state.scene)
             roots.delete(canvas)
             if (callback) callback(canvas)
           } catch (e) {

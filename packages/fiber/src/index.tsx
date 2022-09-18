@@ -1,7 +1,13 @@
 export * from './three-types'
-import * as ReactThreeFiber from './three-types'
-export { ReactThreeFiber }
-export type { BaseInstance, LocalState } from './core/renderer'
+export type {
+  AttachFnType,
+  AttachType,
+  ConstructorRepresentation,
+  Catalogue,
+  Args,
+  InstanceProps,
+  Instance,
+} from './core/renderer'
 export type {
   Intersection,
   Subscription,

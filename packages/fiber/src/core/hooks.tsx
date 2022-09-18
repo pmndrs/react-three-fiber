@@ -7,7 +7,7 @@ import { context, RootState, RenderCallback, StageTypes } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
 import { Stage, Stages, UpdateCallback } from './stages'
 import { LoadingManager } from 'three'
-import { LocalState, Instance } from './renderer'
+import { Instance } from './renderer'
 
 export interface Loader<T> extends THREE.Loader {
   load(
@@ -24,14 +24,17 @@ export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent
 export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
 
 /**
- * Exposes an object's {@link LocalState}.
+ * Exposes an object's {@link Instance}.
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useInstanceHandle
  *
  * **Note**: this is an escape hatch to react-internal fields. Expect this to change significantly between versions.
  */
-export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.MutableRefObject<LocalState> {
-  const instance = React.useRef<LocalState>(null!)
-  useIsomorphicLayoutEffect(() => void (instance.current = (ref.current as unknown as Instance).__r3f), [ref])
+export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.MutableRefObject<Instance> {
+  const instance = React.useRef<Instance>(null!)
+  useIsomorphicLayoutEffect(
+    () => void (instance.current = (ref.current as unknown as Instance<O>['object']).__r3f!),
+    [ref],
+  )
   return instance
 }
 

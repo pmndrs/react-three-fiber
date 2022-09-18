@@ -58,7 +58,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasPr
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
-  React.useMemo(() => extend(THREE), [])
+  React.useMemo(() => extend(THREE as any), [])
 
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)

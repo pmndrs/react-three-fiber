@@ -2,421 +2,399 @@ import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { DefaultEventPriority } from 'react-reconciler/constants'
-import { is, prepare, diffProps, DiffSet, applyProps, invalidateInstance, attach, detach } from './utils'
+import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
 import { RootState } from './store'
-import { EventHandlers, removeInteractivity } from './events'
+import { removeInteractivity, getEventPriority, EventHandlers } from './events'
 
-export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<RootState> }
-
-export type LocalState = {
-  type: string
-  root: UseBoundStore<RootState>
-  // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
-  objects: Instance[]
-  parent: Instance | null
-  primitive?: boolean
-  eventCount: number
-  handlers: Partial<EventHandlers>
-  attach?: AttachType
-  previousAttach: any
-  memoizedProps: { [key: string]: any }
+export interface Root {
+  fiber: Reconciler.FiberRoot
+  store: UseBoundStore<RootState>
 }
 
-export type AttachFnType = (parent: Instance, self: Instance) => () => void
-export type AttachType = string | AttachFnType
+export type AttachFnType<O = any> = (parent: any, self: O) => () => void
+export type AttachType<O = any> = string | AttachFnType<O>
+
+export type ConstructorRepresentation = new (...args: any[]) => any
+
+export interface Catalogue {
+  [name: string]: ConstructorRepresentation
+}
+
+export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
+
+export interface InstanceProps<T = any> {
+  args?: Args<T>
+  object?: T
+  visible?: boolean
+  dispose?: null
+  attach?: AttachType<T>
+}
+
+export interface Instance<O = any> {
+  root: UseBoundStore<RootState>
+  type: string
+  parent: Instance | null
+  children: Instance[]
+  props: InstanceProps<O> & Record<string, unknown>
+  object: O & { __r3f?: Instance<O> }
+  eventCount: number
+  handlers: Partial<EventHandlers>
+  attach?: AttachType<O>
+  previousAttach?: any
+  isHidden: boolean
+}
 
 interface HostConfig {
   type: string
-  props: InstanceProps
+  props: Instance['props']
   container: UseBoundStore<RootState>
   instance: Instance
   textInstance: void
   suspenseInstance: Instance
-  hydratableInstance: Instance
-  publicInstance: Instance
+  hydratableInstance: never
+  publicInstance: Instance['object']
   hostContext: never
-  updatePayload: Array<boolean | number | DiffSet>
+  updatePayload: null | [true] | [false, Instance['props']]
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
 }
 
-// This type clamps down on a couple of assumptions that we can make regarding native types, which
-// could anything from scene objects, THREE.Objects, JSM, user-defined classes and non-scene objects.
-// What they all need to have in common is defined here ...
-export type BaseInstance = Omit<THREE.Object3D, 'children' | 'attach' | 'add' | 'remove' | 'raycast'> & {
-  __r3f: LocalState
-  children: Instance[]
-  remove: (...object: Instance[]) => Instance
-  add: (...object: Instance[]) => Instance
-  raycast?: (raycaster: THREE.Raycaster, intersects: THREE.Intersection[]) => void
-}
-export type Instance = BaseInstance & { [key: string]: any }
+const catalogue: Catalogue = {}
+const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
-export type InstanceProps = {
-  [key: string]: unknown
-} & {
-  args?: any[]
-  object?: object
-  visible?: boolean
-  dispose?: null
-  attach?: AttachType
-}
+function createInstance(
+  type: string,
+  props: HostConfig['props'],
+  root: UseBoundStore<RootState>,
+): HostConfig['instance'] {
+  // Get target from catalogue
+  const name = `${type[0].toUpperCase()}${type.slice(1)}`
+  const target = catalogue[name]
 
-interface Catalogue {
-  [name: string]: {
-    new (...args: any): Instance
+  // Validate element target
+  if (type !== 'primitive' && !target)
+    throw new Error(
+      `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
+    )
+
+  // Validate primitives
+  if (type === 'primitive' && !props.object) throw new Error(`R3F: Primitives without 'object' are invalid!`)
+
+  // Throw if an object or literal was passed for args
+  if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
+
+  // Create instance
+  const object = props.object ?? new target(...(props.args ?? []))
+  const instance = prepare(object, root, type, props)
+
+  // Auto-attach geometries and materials
+  if (instance.props.attach === undefined) {
+    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
+    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
   }
+
+  // Set initial props
+  applyProps(instance.object, props)
+
+  return instance
 }
 
-let catalogue: Catalogue = {}
-let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
+// https://github.com/facebook/react/issues/20271
+// This will make sure events and attach are only handled once when trees are complete
+function handleContainerEffects(parent: Instance, child: Instance) {
+  // Bail if tree isn't mounted or parent is not a container.
+  // This ensures that the tree is finalized and React won't discard results to Suspense
+  const state = child.root.getState()
+  if (!parent.parent && parent.object !== state.scene) return
 
-function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?: () => any) {
-  function createInstance(
-    type: string,
-    { args = [], attach, ...props }: InstanceProps,
-    root: UseBoundStore<RootState>,
+  // Handle interactivity
+  if (child.eventCount > 0 && child.object.raycast !== null && child.object instanceof THREE.Object3D) {
+    state.internal.interaction.push(child.object)
+  }
+
+  // Handle attach
+  if (child.props.attach) attach(parent, child)
+  for (const childInstance of child.children) handleContainerEffects(child, childInstance)
+}
+
+function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
+  if (!child) return
+
+  // Link instances
+  child.parent = parent
+  parent.children.push(child)
+
+  // Add Object3Ds if able
+  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
+    parent.object.add(child.object)
+  }
+
+  // Attach tree once complete
+  handleContainerEffects(parent, child)
+
+  // Tree was updated, request a frame
+  invalidateInstance(child)
+}
+
+function insertBefore(
+  parent: HostConfig['instance'],
+  child: HostConfig['instance'] | HostConfig['textInstance'],
+  beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
+  replace: boolean = false,
+) {
+  if (!child || !beforeChild) return
+
+  // Link instances
+  child.parent = parent
+  const childIndex = parent.children.indexOf(beforeChild)
+  if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
+  if (replace) beforeChild.parent = null
+
+  // Manually splice Object3Ds
+  if (
+    !child.props.attach &&
+    parent.object instanceof THREE.Object3D &&
+    child.object instanceof THREE.Object3D &&
+    beforeChild.object instanceof THREE.Object3D
   ) {
-    let name = `${type[0].toUpperCase()}${type.slice(1)}`
-    let instance: Instance
+    child.object.parent = parent.object
+    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), 0, child.object)
+    child.object.dispatchEvent({ type: 'added' })
+  }
 
-    if (type === 'primitive') {
-      if (props.object === undefined) throw new Error("R3F: Primitives without 'object' are invalid!")
-      const object = props.object as Instance
-      instance = prepare<Instance>(object, { type, root, attach, primitive: true })
-    } else {
-      const target = catalogue[name]
-      if (!target) {
-        throw new Error(
-          `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
-        )
-      }
+  // Attach tree once complete
+  handleContainerEffects(parent, child)
 
-      // Throw if an object or literal was passed for args
-      if (!Array.isArray(args)) throw new Error('R3F: The args prop must be an array!')
+  // Tree was updated, request a frame
+  invalidateInstance(child)
+}
 
-      // Instanciate new object, link it to the root
-      // Append memoized props with args so it's not forgotten
-      instance = prepare(new target(...args), {
-        type,
-        root,
-        attach,
-        // Save args in case we need to reconstruct later for HMR
-        memoizedProps: { args },
+function removeChild(
+  parent: HostConfig['instance'],
+  child: HostConfig['instance'] | HostConfig['textInstance'],
+  dispose?: boolean,
+  recursive?: boolean,
+) {
+  if (!child) return
+
+  // Unlink instances
+  child.parent = null
+  if (recursive === undefined) {
+    const childIndex = parent.children.indexOf(child)
+    if (childIndex !== -1) parent.children.splice(childIndex, 1)
+  }
+
+  // Eagerly tear down tree
+  if (child.props.attach) {
+    detach(parent, child)
+  } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
+    parent.object.remove(child.object)
+    removeInteractivity(child.root, child.object)
+  }
+
+  // Allow objects to bail out of unmount disposal with dispose={null}
+  const shouldDispose = child.props.dispose !== null && dispose !== false
+
+  // Recursively remove instance children
+  if (recursive !== false) {
+    for (const node of child.children) removeChild(child, node, shouldDispose, true)
+    child.children = []
+  }
+
+  // Unlink instance object
+  delete child.object.__r3f
+
+  // Dispose object whenever the reconciler feels like it.
+  // Never dispose of primitives because their state may be kept outside of React!
+  // In order for an object to be able to dispose it
+  //   - has a dispose method
+  //   - cannot be a <primitive object={...} />
+  //   - cannot be a THREE.Scene, because three has broken its own API
+  if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
+    const dispose = child.object.dispose
+    if (typeof dispose === 'function') {
+      scheduleCallback(idlePriority, () => {
+        try {
+          dispose()
+        } catch (e) {
+          /* ... */
+        }
       })
     }
-
-    // Auto-attach geometries and materials
-    if (instance.__r3f.attach === undefined) {
-      if (instance instanceof THREE.BufferGeometry) instance.__r3f.attach = 'geometry'
-      else if (instance instanceof THREE.Material) instance.__r3f.attach = 'material'
-    }
-
-    // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
-    // view yet. If the callback relies on references for instance, they won't be ready yet, this is
-    // why it passes "true" here
-    // There is no reason to apply props to injects
-    if (name !== 'inject') applyProps(instance, props)
-    return instance
   }
 
-  function appendChild(parentInstance: HostConfig['instance'], child: HostConfig['instance']) {
-    let added = false
-    if (child) {
-      // The attach attribute implies that the object attaches itself on the parent
-      if (child.__r3f?.attach) {
-        attach(parentInstance, child, child.__r3f.attach)
-      } else if (child.isObject3D && parentInstance.isObject3D) {
-        // add in the usual parent-child way
-        parentInstance.add(child)
-        added = true
-      }
-      // This is for anything that used attach, and for non-Object3Ds that don't get attached to props;
-      // that is, anything that's a child in React but not a child in the scenegraph.
-      if (!added) parentInstance.__r3f?.objects.push(child)
-      if (!child.__r3f) prepare(child, {})
-      child.__r3f.parent = parentInstance
-      invalidateInstance(child)
-    }
-  }
-
-  function insertBefore(
-    parentInstance: HostConfig['instance'],
-    child: HostConfig['instance'],
-    beforeChild: HostConfig['instance'],
-  ) {
-    let added = false
-    if (child) {
-      if (child.__r3f?.attach) {
-        attach(parentInstance, child, child.__r3f.attach)
-      } else if (child.isObject3D && parentInstance.isObject3D) {
-        child.parent = parentInstance as unknown as THREE.Object3D
-        child.dispatchEvent({ type: 'added' })
-        const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
-        const index = restSiblings.indexOf(beforeChild)
-        parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
-        added = true
-      }
-
-      if (!added) parentInstance.__r3f?.objects.push(child)
-      if (!child.__r3f) prepare(child, {})
-      child.__r3f.parent = parentInstance
-      invalidateInstance(child)
-    }
-  }
-
-  function removeRecursive(array: HostConfig['instance'][], parent: HostConfig['instance'], dispose: boolean = false) {
-    if (array) [...array].forEach((child) => removeChild(parent, child, dispose))
-  }
-
-  function removeChild(parentInstance: HostConfig['instance'], child: HostConfig['instance'], dispose?: boolean) {
-    if (child) {
-      // Clear the parent reference
-      if (child.__r3f) child.__r3f.parent = null
-      // Remove child from the parents objects
-      if (parentInstance.__r3f?.objects)
-        parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
-      // Remove attachment
-      if (child.__r3f?.attach) {
-        detach(parentInstance, child, child.__r3f.attach)
-      } else if (child.isObject3D && parentInstance.isObject3D) {
-        parentInstance.remove(child)
-        // Remove interactivity
-        if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
-        }
-      }
-
-      // Allow objects to bail out of recursive dispose altogether by passing dispose={null}
-      // Never dispose of primitives because their state may be kept outside of React!
-      // In order for an object to be able to dispose it has to have
-      //   - a dispose method,
-      //   - it cannot be a <primitive object={...} />
-      //   - it cannot be a THREE.Scene, because three has broken it's own api
-      //
-      // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
-      // when the reconciler calls it, but then carry our own check recursively
-      const isPrimitive = child.__r3f?.primitive
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !isPrimitive : dispose
-
-      // Remove nested child objects. Primitives should not have objects and children that are
-      // attached to them declaratively ...
-      if (!isPrimitive) {
-        removeRecursive(child.__r3f?.objects, child, shouldDispose)
-        removeRecursive(child.children, child, shouldDispose)
-      }
-
-      // Remove references
-      if (child.__r3f) {
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-        if (!isPrimitive) delete (child as Partial<Instance>).__r3f
-      }
-
-      // Dispose item whenever the reconciler feels like it
-      if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        scheduleCallback(idlePriority, () => {
-          try {
-            child.dispose()
-          } catch (e) {
-            /* ... */
-          }
-        })
-      }
-
-      invalidateInstance(parentInstance)
-    }
-  }
-
-  function switchInstance(
-    instance: HostConfig['instance'],
-    type: HostConfig['type'],
-    newProps: HostConfig['props'],
-    fiber: Reconciler.Fiber,
-  ) {
-    const parent = instance.__r3f?.parent
-    if (!parent) return
-
-    const newInstance = createInstance(type, newProps, instance.__r3f.root)
-
-    // https://github.com/pmndrs/react-three-fiber/issues/1348
-    // When args change the instance has to be re-constructed, which then
-    // forces r3f to re-parent the children and non-scene objects
-    if (instance.children) {
-      for (const child of instance.children) {
-        if (child.__r3f) appendChild(newInstance, child)
-      }
-      instance.children = instance.children.filter((child) => !child.__r3f)
-    }
-
-    instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
-    instance.__r3f.objects = []
-
-    removeChild(parent, instance)
-    appendChild(parent, newInstance)
-
-    // Re-bind event handlers
-    if (newInstance.raycast && newInstance.__r3f.eventCount) {
-      const rootState = newInstance.__r3f.root.getState()
-      rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
-    }
-
-    // This evil hack switches the react-internal fiber node
-    // https://github.com/facebook/react/issues/14983
-    // https://github.com/facebook/react/pull/15021
-    ;[fiber, fiber.alternate].forEach((fiber) => {
-      if (fiber !== null) {
-        fiber.stateNode = newInstance
-        if (fiber.ref) {
-          if (typeof fiber.ref === 'function') (fiber as unknown as any).ref(newInstance)
-          else (fiber.ref as Reconciler.RefObject).current = newInstance
-        }
-      }
-    })
-  }
-
-  // Don't handle text instances, warn on undefined behavior
-  const handleTextInstance = () =>
-    console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
-
-  const reconciler = Reconciler<
-    HostConfig['type'],
-    HostConfig['props'],
-    HostConfig['container'],
-    HostConfig['instance'],
-    HostConfig['textInstance'],
-    HostConfig['suspenseInstance'],
-    HostConfig['hydratableInstance'],
-    HostConfig['publicInstance'],
-    HostConfig['hostContext'],
-    HostConfig['updatePayload'],
-    HostConfig['childSet'],
-    HostConfig['timeoutHandle'],
-    HostConfig['noTimeout']
-  >({
-    createInstance,
-    removeChild,
-    appendChild,
-    appendInitialChild: appendChild,
-    insertBefore,
-    supportsMutation: true,
-    isPrimaryRenderer: false,
-    supportsPersistence: false,
-    supportsHydration: false,
-    noTimeout: -1,
-    appendChildToContainer: (container, child) => {
-      if (!child) return
-
-      // Don't append to unmounted container
-      const scene = container.getState().scene as unknown as Instance
-      if (!scene.__r3f) return
-
-      // Link current root to the default scene
-      scene.__r3f.root = container
-      appendChild(scene, child)
-    },
-    removeChildFromContainer: (container, child) => {
-      if (!child) return
-      removeChild(container.getState().scene as unknown as Instance, child)
-    },
-    insertInContainerBefore: (container, child, beforeChild) => {
-      if (!child || !beforeChild) return
-
-      // Don't append to unmounted container
-      const scene = container.getState().scene as unknown as Instance
-      if (!scene.__r3f) return
-
-      insertBefore(scene, child, beforeChild)
-    },
-    getRootHostContext: () => null,
-    getChildHostContext: (parentHostContext) => parentHostContext,
-    finalizeInitialChildren(instance) {
-      const localState = instance?.__r3f ?? {}
-      // https://github.com/facebook/react/issues/20271
-      // Returning true will trigger commitMount
-      return Boolean(localState.handlers)
-    },
-    prepareUpdate(instance, _type, oldProps, newProps) {
-      // Create diff-sets
-      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
-        return [true]
-      } else {
-        // This is a data object, let's extract critical information about it
-        const { args: argsNew = [], children: cN, ...restNew } = newProps
-        const { args: argsOld = [], children: cO, ...restOld } = oldProps
-
-        // Throw if an object or literal was passed for args
-        if (!Array.isArray(argsNew)) throw new Error('R3F: the args prop must be an array!')
-
-        // If it has new props or arguments, then it needs to be re-instantiated
-        if (argsNew.some((value, index) => value !== argsOld[index])) return [true]
-        // Create a diff-set, flag if there are any changes
-        const diff = diffProps(instance, restNew, restOld, true)
-        if (diff.changes.length) return [false, diff]
-
-        // Otherwise do not touch the instance
-        return null
-      }
-    },
-    commitUpdate(instance, [reconstruct, diff]: [boolean, DiffSet], type, _oldProps, newProps, fiber) {
-      // Reconstruct when args or <primitive object={...} have changes
-      if (reconstruct) switchInstance(instance, type, newProps, fiber)
-      // Otherwise just overwrite props
-      else applyProps(instance, diff)
-    },
-    commitMount(instance, _type, _props, _int) {
-      // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
-      const localState = (instance.__r3f ?? {}) as LocalState
-      if (instance.raycast && localState.handlers && localState.eventCount) {
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
-      }
-    },
-    getPublicInstance: (instance) => instance!,
-    prepareForCommit: () => null,
-    preparePortalMount: (container) => prepare(container.getState().scene),
-    resetAfterCommit: () => {},
-    shouldSetTextContent: () => false,
-    clearContainer: () => false,
-    hideInstance(instance) {
-      // Detach while the instance is hidden
-      const { attach: type, parent } = instance.__r3f ?? {}
-      if (type && parent) detach(parent, instance, type)
-      if (instance.isObject3D) instance.visible = false
-      invalidateInstance(instance)
-    },
-    unhideInstance(instance, props) {
-      // Re-attach when the instance is unhidden
-      const { attach: type, parent } = instance.__r3f ?? {}
-      if (type && parent) attach(parent, instance, type)
-      if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
-      invalidateInstance(instance)
-    },
-    createTextInstance: handleTextInstance,
-    hideTextInstance: handleTextInstance,
-    unhideTextInstance: handleTextInstance,
-    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-    // @ts-ignore
-    getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),
-    beforeActiveInstanceBlur: () => {},
-    afterActiveInstanceBlur: () => {},
-    detachDeletedInstance: () => {},
-    now:
-      typeof performance !== 'undefined' && is.fun(performance.now)
-        ? performance.now
-        : is.fun(Date.now)
-        ? Date.now
-        : () => 0,
-    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
-    scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
-    cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
-  })
-
-  return { reconciler, applyProps }
+  // Tree was updated, request a frame for top-level instance
+  if (dispose === undefined) invalidateInstance(child)
 }
 
-export { prepare, createRenderer, extend }
+function switchInstance(
+  oldInstance: HostConfig['instance'],
+  type: HostConfig['type'],
+  props: HostConfig['props'],
+  fiber: Reconciler.Fiber,
+) {
+  // Create a new instance
+  const newInstance = createInstance(type, props, oldInstance.root)
+
+  // Move children to new instance
+  for (const child of oldInstance.children) {
+    removeChild(oldInstance, child, false, false)
+    appendChild(newInstance, child)
+  }
+  oldInstance.children = []
+
+  // Link up new instance
+  const parent = oldInstance.parent
+  if (parent) {
+    insertBefore(parent, newInstance, oldInstance, true)
+  }
+
+  // This evil hack switches the react-internal fiber node
+  // https://github.com/facebook/react/issues/14983
+  // https://github.com/facebook/react/pull/15021
+  ;[fiber, fiber.alternate].forEach((fiber) => {
+    if (fiber !== null) {
+      fiber.stateNode = newInstance
+      if (fiber.ref) {
+        if (typeof fiber.ref === 'function') fiber.ref(newInstance.object)
+        else fiber.ref.current = newInstance.object
+      }
+    }
+  })
+
+  // Tree was updated, request a frame
+  invalidateInstance(newInstance)
+
+  return newInstance
+}
+
+// Don't handle text instances, warn on undefined behavior
+const handleTextInstance = () =>
+  console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
+
+const reconciler = Reconciler<
+  HostConfig['type'],
+  HostConfig['props'],
+  HostConfig['container'],
+  HostConfig['instance'],
+  HostConfig['textInstance'],
+  HostConfig['suspenseInstance'],
+  HostConfig['hydratableInstance'],
+  HostConfig['publicInstance'],
+  HostConfig['hostContext'],
+  HostConfig['updatePayload'],
+  HostConfig['childSet'],
+  HostConfig['timeoutHandle'],
+  HostConfig['noTimeout']
+>({
+  supportsMutation: true,
+  isPrimaryRenderer: false,
+  supportsPersistence: false,
+  supportsHydration: false,
+  noTimeout: -1,
+  createInstance,
+  removeChild,
+  appendChild,
+  appendInitialChild: appendChild,
+  insertBefore,
+  appendChildToContainer(container, child) {
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !scene) return
+
+    appendChild(scene, child)
+  },
+  removeChildFromContainer(container, child) {
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !scene) return
+
+    removeChild(scene, child)
+  },
+  insertInContainerBefore(container, child, beforeChild) {
+    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    if (!child || !beforeChild || !scene) return
+
+    insertBefore(scene, child, beforeChild)
+  },
+  getRootHostContext: () => null,
+  getChildHostContext: (parentHostContext) => parentHostContext,
+  prepareUpdate(instance, _type, oldProps, newProps) {
+    // Reconstruct primitives if object prop changes
+    if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
+
+    // Throw if an object or literal was passed for args
+    if (newProps.args !== undefined && !Array.isArray(newProps.args))
+      throw new Error('R3F: The args prop must be an array!')
+
+    // Reconstruct instance if args change
+    if (newProps.args?.length !== oldProps.args?.length) return [true]
+    if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
+
+    // Create a diff-set, flag if there are any changes
+    const changedProps = diffProps(instance, newProps, true)
+    if (Object.keys(changedProps).length) return [false, changedProps]
+
+    // Otherwise do not touch the instance
+    return null
+  },
+  commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
+    const [reconstruct, changedProps] = diff!
+
+    // Reconstruct when args or <primitive object={...} have changes
+    if (reconstruct) return switchInstance(instance, type, newProps, fiber)
+
+    // Otherwise just overwrite props
+    Object.assign(instance.props, changedProps)
+    applyProps(instance.object, changedProps)
+  },
+  finalizeInitialChildren: () => false,
+  commitMount() {},
+  getPublicInstance: (instance) => instance?.object!,
+  prepareForCommit: () => null,
+  preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
+  resetAfterCommit: () => {},
+  shouldSetTextContent: () => false,
+  clearContainer: () => false,
+  hideInstance(instance) {
+    if (instance.props.attach && instance.parent?.object) {
+      detach(instance.parent, instance)
+    } else if (instance.object instanceof THREE.Object3D) {
+      instance.object.visible = false
+    }
+
+    instance.isHidden = true
+    invalidateInstance(instance)
+  },
+  unhideInstance(instance) {
+    if (instance.isHidden) {
+      if (instance.props.attach && instance.parent?.object) {
+        attach(instance.parent, instance)
+      } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
+        instance.object.visible = true
+      }
+    }
+
+    instance.isHidden = false
+    invalidateInstance(instance)
+  },
+  createTextInstance: handleTextInstance,
+  hideTextInstance: handleTextInstance,
+  unhideTextInstance: handleTextInstance,
+  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
+  // @ts-ignore
+  getCurrentEventPriority: () => getEventPriority(),
+  beforeActiveInstanceBlur: () => {},
+  afterActiveInstanceBlur: () => {},
+  detachDeletedInstance: () => {},
+  now:
+    typeof performance !== 'undefined' && is.fun(performance.now)
+      ? performance.now
+      : is.fun(Date.now)
+      ? Date.now
+      : () => 0,
+  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
+  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
+  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+})
+
+export { extend, reconciler }

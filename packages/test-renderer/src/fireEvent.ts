@@ -1,16 +1,14 @@
-import ReactReconciler from 'react-reconciler'
+import type { UseBoundStore } from 'zustand'
+import type { RootState } from '@react-three/fiber'
 
 import { toEventHandlerName } from './helpers/strings'
 
 import { ReactThreeTestInstance } from './createTestInstance'
 
-import type { MockSyntheticEvent } from './types/public'
-import type { MockUseStoreState, MockEventData } from './types/internal'
+import type { Act, MockSyntheticEvent } from './types/public'
+import type { MockEventData } from './types/internal'
 
-export const createEventFirer = (
-  act: ReactReconciler.Reconciler<unknown, unknown, unknown, unknown, unknown>['act'],
-  store: MockUseStoreState,
-) => {
+export const createEventFirer = (act: Act, store: UseBoundStore<RootState>) => {
   const findEventHandler = (
     element: ReactThreeTestInstance,
     eventName: string,

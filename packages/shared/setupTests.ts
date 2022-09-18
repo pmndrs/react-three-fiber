@@ -11,7 +11,10 @@ declare global {
 global.IS_REACT_ACT_ENVIRONMENT = true
 
 // Mock scheduler to test React features
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+jest.mock('scheduler', () => ({
+  ...jest.requireActual('scheduler/unstable_mock'),
+  unstable_scheduleCallback: (_: any, callback: () => void) => callback(),
+}))
 
 // PointerEvent is not in JSDOM
 // https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
@@ -57,4 +60,4 @@ function getContext(contextId: string): RenderingContext | null {
 HTMLCanvasElement.prototype.getContext = getContext
 
 // Extend catalogue for render API in tests
-extend(THREE)
+extend(THREE as any)

@@ -50,8 +50,13 @@ describe('ReactThreeTestRenderer Events', () => {
 
     const { scene, fireEvent } = await ReactThreeTestRenderer.create(<Component />)
 
-    expect(async () => await fireEvent(scene.children[0], 'onPointerUp')).not.toThrow()
+    const warn = console.warn.bind(console)
+    console.warn = jest.fn()
 
+    expect(async () => await fireEvent(scene.children[0], 'onPointerUp')).not.toThrow()
+    expect(console.warn).toBeCalled()
     expect(handlePointerDown).not.toHaveBeenCalled()
+
+    console.warn = warn
   })
 })

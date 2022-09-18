@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
-import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
+import { calculateDpr, Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
 import { FixedStage, Stage } from './stages'
 
 // Keys that shouldn't be copied between R3F stores
@@ -168,7 +167,7 @@ const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): UseBoundStore<RootState> => {
-  const rootState = create<RootState>((set, get) => {
+  const rootStore = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
     const tempTarget = new THREE.Vector3()
@@ -215,7 +214,7 @@ const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: prepare<THREE.Scene>(new THREE.Scene()),
+      scene: new THREE.Scene(),
 
       controls: null,
       clock: new THREE.Clock(),
@@ -351,13 +350,15 @@ const createStore = (
     return rootState
   })
 
-  const state = rootState.getState()
+  const state = rootStore.getState()
+
+  prepare(state.scene, rootStore, '', {})
 
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
   let oldCamera = state.camera
-  rootState.subscribe(() => {
-    const { camera, size, viewport, gl, set } = rootState.getState()
+  rootStore.subscribe(() => {
+    const { camera, size, viewport, gl, set } = rootStore.getState()
 
     // Resize camera and renderer on changes to size and pixelratio
     if (size !== oldSize || viewport.dpr !== oldDpr) {
@@ -380,10 +381,10 @@ const createStore = (
   })
 
   // Invalidate on any change
-  rootState.subscribe((state) => invalidate(state))
+  rootStore.subscribe((state) => invalidate(state))
 
   // Return root state
-  return rootState
+  return rootStore
 }
 
 export { createStore, context }

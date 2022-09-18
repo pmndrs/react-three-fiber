@@ -176,7 +176,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => (obj as unknown as Instance).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
+        (name) =>
+          (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -242,7 +243,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
       let eventObject: THREE.Object3D | null = hit.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...hit, eventObject })
+        if ((eventObject as Instance<THREE.Object3D>['object']).__r3f?.eventCount)
+          intersections.push({ ...hit, eventObject })
         eventObject = eventObject.parent
       }
     }
@@ -374,10 +376,10 @@ export function createEvents(store: UseBoundStore<RootState>) {
         )
       ) {
         const eventObject = hoveredObj.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
+        const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
         internal.hovered.delete(makeId(hoveredObj))
         if (instance?.eventCount) {
+          const handlers = instance.handlers
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
@@ -439,10 +441,11 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
       handleIntersects(hits, event, delta, (data: ThreeEvent<DomEvent>) => {
         const eventObject = data.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
+        const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
+
         // Check presence of handlers
         if (!instance?.eventCount) return
+        const handlers = instance.handlers
 
         if (isPointerMove) {
           // Move event ...
@@ -493,7 +496,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     objects.forEach((object: THREE.Object3D) =>
-      (object as unknown as Instance).__r3f?.handlers.onPointerMissed?.(event),
+      (object as Instance<THREE.Object3D>['object']).__r3f?.handlers.onPointerMissed?.(event),
     )
   }
 
