@@ -2,7 +2,8 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, useContextBridge, FiberProvider } from '../core/utils'
+import { useContextBridge, FiberProvider } from 'its-fine'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
@@ -13,11 +14,7 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
   style?: ViewStyle
 }
 
-/**
- * A native canvas which accepts threejs elements as children.
- * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
- */
-export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
+const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
   (
     {
       children,
@@ -45,8 +42,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE as any), [])
 
-    const [fiber, setFiber] = React.useState<any>(null)
-    const Bridge = useContextBridge(fiber)
+    const Bridge = useContextBridge()
 
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
@@ -143,11 +139,21 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
     }, [canvas])
 
     return (
-      <FiberProvider setFiber={setFiber}>
-        <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-          {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
-        </View>
-      </FiberProvider>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+      </View>
     )
   },
 )
+
+/**
+ * A native canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
+export const Canvas = React.forwardRef<View, CanvasProps>(function CanvasWrapper(props, ref) {
+  return (
+    <FiberProvider>
+      <CanvasImpl {...props} ref={ref} />
+    </FiberProvider>
+  )
+})

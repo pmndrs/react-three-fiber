@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.1
+
+### Patch Changes
+
+- 370d3ae5: refactor: pull context bridge from its-fine
+
 ## 8.8.0
 
 ### Minor Changes
