@@ -33,28 +33,6 @@ describe('native Canvas', () => {
     expect(ref.current).toBeDefined()
   })
 
-  it('should forward context', async () => {
-    const ParentContext = React.createContext<boolean>(null!)
-    let receivedValue!: boolean
-
-    function Test() {
-      receivedValue = React.useContext(ParentContext)
-      return null
-    }
-
-    await act(async () => {
-      create(
-        <ParentContext.Provider value={true}>
-          <Canvas>
-            <Test />
-          </Canvas>
-        </ParentContext.Provider>,
-      )
-    })
-
-    expect(receivedValue).toBe(true)
-  })
-
   it('should correctly unmount', async () => {
     let renderer: ReactTestRenderer = null!
 
