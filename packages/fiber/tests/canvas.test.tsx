@@ -29,6 +29,28 @@ describe('web Canvas', () => {
     expect(ref.current).toBeInstanceOf(HTMLCanvasElement)
   })
 
+  it('should forward context', async () => {
+    const ParentContext = React.createContext<boolean>(null!)
+    let receivedValue!: boolean
+
+    function Test() {
+      receivedValue = React.useContext(ParentContext)
+      return null
+    }
+
+    await act(async () => {
+      render(
+        <ParentContext.Provider value={true}>
+          <Canvas>
+            <Test />
+          </Canvas>
+        </ParentContext.Provider>,
+      )
+    })
+
+    expect(receivedValue).toBe(true)
+  })
+
   it('should correctly unmount', async () => {
     const renderer = await act(async () =>
       render(
