@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.0
+
+### Minor Changes
+
+- 46d8b440: bridge cross-container context
+
 ## 8.7.4
 
 ### Patch Changes
