@@ -1,5 +1,16 @@
 # @react-three/test-renderer
 
+## 11.0.0
+
+### Minor Changes
+
+- 46d8b440: bridge cross-container context
+
+### Patch Changes
+
+- Updated dependencies [46d8b440]
+  - @react-three/fiber@8.8.0
+
 ## 10.0.3
 
 ### Patch Changes
