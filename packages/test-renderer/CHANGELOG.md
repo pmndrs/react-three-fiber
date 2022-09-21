@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.0.17
+
+### Patch Changes
+
+- 786ccb46: fix: restore RTTR version
+
 ## 8.0.16
 
 ### Patch Changes
