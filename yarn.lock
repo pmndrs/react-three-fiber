@@ -7586,6 +7586,14 @@ react-native@0.67.4:
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
 
+react-nil@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.2.0.tgz#0f2e110b50cf12bdf1eebf43bfdb4b348a271c11"
+  integrity sha512-54yJ8+vFyJlZHiFBLny0RKQ0/FSG32y8pZt0oV7duxaW3lEM9pc6D2Hhnvu0TToJKPCAJ/A5XmjY8nDETxrrGg==
+  dependencies:
+    "@types/react-reconciler" "^0.26.7"
+    react-reconciler "^0.27.0"
+
 react-reconciler@^0.27.0:
   version "0.27.0"
   resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.27.0.tgz#360124fdf2d76447c7491ee5f0e04503ed9acf5b"
