@@ -2,7 +2,16 @@ import * as React from 'react'
 import * as THREE from 'three'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
+import {
+  isRef,
+  SetBlock,
+  Block,
+  ErrorBoundary,
+  useMutableCallback,
+  useIsomorphicLayoutEffect,
+  useContextBridge,
+  FiberProvider,
+} from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
@@ -56,6 +65,9 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE), [])
+
+  const [fiber, setFiber] = React.useState<any>(null)
+  const Bridge = useContextBridge(fiber)
 
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
@@ -111,9 +123,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
       },
     })
     root.current.render(
-      <ErrorBoundary set={setError}>
-        <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-      </ErrorBoundary>,
+      <Bridge>
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>
+      </Bridge>,
     )
   }
 
@@ -130,15 +144,17 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(f
   const pointerEvents = eventSource ? 'none' : 'auto'
 
   return (
-    <div
-      ref={divRef}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', pointerEvents, ...style }}
-      {...props}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} style={{ display: 'block' }}>
-          {fallback}
-        </canvas>
+    <FiberProvider setFiber={setFiber}>
+      <div
+        ref={divRef}
+        style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', pointerEvents, ...style }}
+        {...props}>
+        <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+          <canvas ref={canvasRef} style={{ display: 'block' }}>
+            {fallback}
+          </canvas>
+        </div>
       </div>
-    </div>
+    </FiberProvider>
   )
 })

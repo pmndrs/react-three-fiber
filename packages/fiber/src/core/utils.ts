@@ -4,6 +4,7 @@ import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState, Size } from './store'
+import type { Fiber } from 'react-reconciler'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -28,6 +29,88 @@ export function useMutableCallback<T>(fn: T) {
   const ref = React.useRef<T>(fn)
   useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
   return ref
+}
+
+/**
+ * Traverses up or down a {@link Fiber}, return `true` to stop and select a node.
+ */
+function traverseFiber(fiber: Fiber, ascending: boolean, selector: (node: Fiber) => boolean | void): Fiber | undefined {
+  if (selector(fiber) === true) return fiber
+
+  let child = ascending ? fiber.return : fiber.child
+  while (child) {
+    const match = traverseFiber(child, ascending, selector)
+    if (match) return match
+
+    child = child.sibling
+  }
+}
+
+// Active contexts
+const contexts: React.Context<any>[] = []
+
+/**
+ * Represents a react-context bridge provider component.
+ */
+export type ContextBridge = React.FC<{ children?: React.ReactNode }>
+
+/**
+ * React Context currently cannot be shared across [React renderers](https://reactjs.org/docs/codebase-overview.html#renderers) but explicitly forwarded between providers (see [react#17275](https://github.com/facebook/react/issues/17275)). This hook returns a {@link ContextBridge} of live context providers to pierce Context across renderers.
+ *
+ * Pass {@link ContextBridge} as a component to a secondary renderer to enable context-sharing within its children.
+ */
+export function useContextBridge(fiber?: Fiber): ContextBridge {
+  if (fiber) {
+    traverseFiber(fiber, true, (node) => {
+      const context = node.type?._context
+      if (!context || contexts.includes(context)) return
+
+      // In development, React will warn about using contexts between renderers because
+      // of the above issue. We'll hide the warning because this hook works as expected
+      // https://github.com/facebook/react/pull/12779
+      Object.defineProperties(context, {
+        _currentRenderer: {
+          get() {
+            return null
+          },
+          set() {},
+        },
+        _currentRenderer2: {
+          get() {
+            return null
+          },
+          set() {},
+        },
+      })
+
+      contexts.push(context)
+    })
+  }
+
+  return contexts.reduce(
+    (Prev, context) => {
+      const value = (
+        React as any
+      ).__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED.ReactCurrentDispatcher.current?.readContext(context)
+      return (props) => React.createElement(Prev, null, React.createElement(context.Provider, { ...props, value }))
+    },
+    (props) => React.createElement(React.Fragment, props),
+  )
+}
+
+/**
+ * Exposes the current react-internal {@link Fiber}.
+ */
+export class FiberProvider extends React.Component<{ setFiber: React.Dispatch<Fiber>; children?: React.ReactNode }> {
+  private _reactInternals!: Fiber
+
+  componentDidMount() {
+    this.props.setFiber(this._reactInternals)
+  }
+
+  render() {
+    return this.props.children
+  }
 }
 
 export type SetBlock = false | Promise<null> | null

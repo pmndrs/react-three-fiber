@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback, useContextBridge, FiberProvider } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
@@ -43,6 +43,9 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
+
+    const [fiber, setFiber] = React.useState<any>(null)
+    const Bridge = useContextBridge(fiber)
 
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
@@ -123,9 +126,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         },
       })
       root.current.render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
+        <Bridge>
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>
+        </Bridge>,
       )
     }
 
@@ -136,9 +141,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
-      </View>
+      <FiberProvider setFiber={setFiber}>
+        <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+          {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+        </View>
+      </FiberProvider>
     )
   },
 )
