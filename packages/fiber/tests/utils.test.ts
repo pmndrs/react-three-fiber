@@ -1,7 +1,4 @@
-import * as React from 'react'
 import * as THREE from 'three'
-import { act, render } from 'react-nil'
-import { create } from 'react-test-renderer'
 import type { UseBoundStore } from 'zustand'
 import type { RootState, Instance } from '../src'
 import {
@@ -17,8 +14,6 @@ import {
   diffProps,
   applyProps,
   updateCamera,
-  useContextBridge,
-  FiberProvider,
 } from '../src/core/utils'
 
 // Mocks a Zustand store
@@ -438,73 +433,5 @@ describe('updateCamera', () => {
     updateCamera(orthographic, size)
     expect(orthographic.updateProjectionMatrix).not.toBeCalled()
     expect(orthographic.updateMatrixWorld).not.toBeCalled()
-  })
-})
-
-describe('useContextBridge', () => {
-  it('forwards live context between renderers', async () => {
-    const Context1 = React.createContext<string>(null!)
-    const Context2 = React.createContext<string>(null!)
-
-    const values: string[] = []
-
-    function Test() {
-      values.push(React.useContext(Context1), React.useContext(Context2))
-
-      return null
-    }
-
-    const Canvas = React.memo(() => {
-      const [fiber, setFiber] = React.useState<any>(null)
-      const Bridge = useContextBridge(fiber)
-      render(
-        <Bridge>
-          <Test />
-        </Bridge>,
-      )
-
-      return (
-        <FiberProvider setFiber={setFiber}>
-          <Context2.Provider value="invalid" />
-        </FiberProvider>
-      )
-    })
-
-    function Providers(props: { values: [value1: string, value2?: string]; children: React.ReactNode }) {
-      const [value1, value2] = props.values
-      return (
-        <Context1.Provider value="invalid">
-          <Context1.Provider value={value1}>
-            {value2 ? <Context2.Provider value={value2}>{props.children}</Context2.Provider> : props.children}
-          </Context1.Provider>
-        </Context1.Provider>
-      )
-    }
-
-    await act(async () =>
-      create(
-        <Providers values={['value1', 'value2']}>
-          <Canvas />
-        </Providers>,
-      ),
-    )
-
-    await act(async () =>
-      create(
-        <Providers values={['value1__new', 'value2__new']}>
-          <Canvas />
-        </Providers>,
-      ),
-    )
-
-    await act(async () =>
-      create(
-        <Providers values={['value1__new2']}>
-          <Canvas />
-        </Providers>,
-      ),
-    )
-
-    expect(values).toStrictEqual(['value1', 'value2', 'value1__new', 'value2__new', 'value1__new2', null])
   })
 })
