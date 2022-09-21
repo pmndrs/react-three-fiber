@@ -2207,6 +2207,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-reconciler@^0.28.0":
+  version "0.28.0"
+  resolved "https://registry.yarnpkg.com/@types/react-reconciler/-/react-reconciler-0.28.0.tgz#513acbed173140e958c909041ca14eb40412077f"
+  integrity sha512-5cjk9ottZAj7eaTsqzPUIlrVbh3hBAO2YaEL1rkjHKB3xNAId7oU8GhzvAX+gfmlfoxTwJnBjPxEHyxkEA1Ffg==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-test-renderer@^17.0.1":
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/@types/react-test-renderer/-/react-test-renderer-17.0.2.tgz#5f800a39b12ac8d2a2149e7e1885215bcf4edbbf"
@@ -5359,6 +5366,13 @@ istanbul-reports@^3.1.3:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
+its-fine@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/its-fine/-/its-fine-1.0.0.tgz#e1c17f4420a433c9e96d264330e96a82c6edc33b"
+  integrity sha512-EEVcyr+sR21lxLZg3U84HpY3Mb9aKmGYqxPsIbf/Ea4fO4qpvE/7lX5qtrkuCnljJ9RLMaSaeMq35PeLa+oM0w==
+  dependencies:
+    "@types/react-reconciler" "^0.28.0"
+
 jest-changed-files@^27.5.1:
   version "27.5.1"
   resolved "https://registry.yarnpkg.com/jest-changed-files/-/jest-changed-files-27.5.1.tgz#a348aed00ec9bf671cc58a66fcbe7c3dfd6a68f5"
@@ -7585,14 +7599,6 @@ react-native@0.67.4:
     use-subscription "^1.0.0"
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
-
-react-nil@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/react-nil/-/react-nil-1.2.0.tgz#0f2e110b50cf12bdf1eebf43bfdb4b348a271c11"
-  integrity sha512-54yJ8+vFyJlZHiFBLny0RKQ0/FSG32y8pZt0oV7duxaW3lEM9pc6D2Hhnvu0TToJKPCAJ/A5XmjY8nDETxrrGg==
-  dependencies:
-    "@types/react-reconciler" "^0.26.7"
-    react-reconciler "^0.27.0"
 
 react-reconciler@^0.27.0:
   version "0.27.0"
