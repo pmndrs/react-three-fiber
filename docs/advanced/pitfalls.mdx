@@ -170,13 +170,13 @@ function Stage1(props) {
 
 React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule work and state updates. Use these to de-prioritize expensive operations.
 
-Switch React to `@experimental` and flag the canvas as concurrent. Now React will schedule and defer expensive operations. You don't need to do anything else, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
+Since version 8 of Fiber canvases use concurrent mode by default, which means React will schedule and defer expensive operations. You don't need to do anything, but you can play around with the [experimental scheduler](https://github.com/drcmda/scheduler-test) and see if marking ops with a lesser priority makes a difference.
 
 ```jsx
 import { useTransition } from 'react'
 import { Points } from '@react-three/drei'
 
-const [startTransition, isPending] = useTransition()
+const [isPending, startTransition] = useTransition()
 const [radius, setRadius] = useState(1)
 const positions = calculatePositions(radius)
 const colors = calculateColors(radius)
