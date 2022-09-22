@@ -5366,10 +5366,10 @@ istanbul-reports@^3.1.3:
     html-escaper "^2.0.0"
     istanbul-lib-report "^3.0.0"
 
-its-fine@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/its-fine/-/its-fine-1.0.0.tgz#e1c17f4420a433c9e96d264330e96a82c6edc33b"
-  integrity sha512-EEVcyr+sR21lxLZg3U84HpY3Mb9aKmGYqxPsIbf/Ea4fO4qpvE/7lX5qtrkuCnljJ9RLMaSaeMq35PeLa+oM0w==
+its-fine@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/its-fine/-/its-fine-1.0.1.tgz#5b336ae72d221b01d8ed5d41fbacaac4c301eff5"
+  integrity sha512-E7ihBaOViboN99S9x1UkYVSrHyCguSls9ndOmLsq74wFZ6mUr+7PUSjykywVC5Ip065USSGdrjnys23nZb7xcQ==
   dependencies:
     "@types/react-reconciler" "^0.28.0"
 
