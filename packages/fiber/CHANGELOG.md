@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.2
+
+### Patch Changes
+
+- dc389ed6: fix(Canvas): prevent remount on context update
+
 ## 8.8.1
 
 ### Patch Changes
