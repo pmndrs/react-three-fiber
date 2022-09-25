@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.3
+
+### Patch Changes
+
+- 9f571239: fix #2506, events should fall back to rootstate"
+
 ## 8.8.2
 
 ### Patch Changes
