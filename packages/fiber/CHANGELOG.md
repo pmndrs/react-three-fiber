@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.4
+
+### Patch Changes
+
+- 2f2dc9f9: chore: upgrade bridge to harden suspense behavior
+
 ## 8.8.3
 
 ### Patch Changes
