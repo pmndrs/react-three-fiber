@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.5
+
+### Patch Changes
+
+- 530a06d6: fix: upgrade deps to work-around CRA
+
 ## 8.8.4
 
 ### Patch Changes
