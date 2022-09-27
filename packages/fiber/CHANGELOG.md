@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.6
+
+### Patch Changes
+
+- 02a558bb: fix: upgrade deps
+
 ## 8.8.5
 
 ### Patch Changes
