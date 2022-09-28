@@ -254,7 +254,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-  changes.forEach(([key, value, isEvent, keys]) => {
+  for (let i = 0; i < changes.length; i++) {
+    let [key, value, isEvent, keys] = changes[i]
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -340,7 +341,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     }
 
     invalidateInstance(instance)
-  })
+  }
 
   if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
