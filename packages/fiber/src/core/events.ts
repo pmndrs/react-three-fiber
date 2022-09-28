@@ -496,7 +496,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     for (let i = 0; i < objects.length; i++) {
-      (objects[i] as Instance<THREE.Object3D>['object']).__r3f?.handlers.onPointerMissed?.(event),
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onPointerMissed?.(event)
     }
   }
 
