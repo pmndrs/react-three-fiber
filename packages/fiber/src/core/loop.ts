@@ -132,7 +132,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
 
   function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState, frame?: XRFrame): void {
     if (runGlobalEffects) flushGlobalEffects('before', timestamp)
-    if (!state) for (const root of roots.values()) {update(timestamp, root.store.getState())}
+    if (!state) for (const root of roots.values()) update(timestamp, root.store.getState())
     else update(timestamp, state, frame)
     if (runGlobalEffects) flushGlobalEffects('after', timestamp)
   }
