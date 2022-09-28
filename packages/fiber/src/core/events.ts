@@ -201,24 +201,26 @@ export function createEvents(store: UseBoundStore<RootState>) {
       state.events.compute?.(event, state)
     }
 
+    function handleRaycast(obj: THREE.Object3D<THREE.Event>) {
+      const state = getRootState(obj)
+      // Skip event handling when noEvents is set, or when the raycasters camera is null
+      if (!state || !state.events.enabled || state.raycaster.camera === null) return []
+
+      // When the camera is undefined we have to call the event layers update function
+      if (state.raycaster.camera === undefined) {
+        state.events.compute?.(event, state, state.previousRoot?.getState())
+        // If the camera is still undefined we have to skip this layer entirely
+        if (state.raycaster.camera === undefined) state.raycaster.camera = null!
+      }
+
+      // Intersect object by object
+      return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
+    }
+
     // Collect events
     let hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
       // Intersect objects
-      .flatMap((obj) => {
-        const state = getRootState(obj)
-        // Skip event handling when noEvents is set, or when the raycasters camera is null
-        if (!state || !state.events.enabled || state.raycaster.camera === null) return []
-
-        // When the camera is undefined we have to call the event layers update function
-        if (state.raycaster.camera === undefined) {
-          state.events.compute?.(event, state, state.previousRoot?.getState())
-          // If the camera is still undefined we have to skip this layer entirely
-          if (state.raycaster.camera === undefined) state.raycaster.camera = null!
-        }
-
-        // Intersect object by object
-        return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
-      })
+      .flatMap(handleRaycast)
       // Sort by event priority and distance
       .sort((a, b) => {
         const aState = getRootState(a.object)
@@ -320,7 +322,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
             ray: raycaster.ray,
             camera: camera,
             // Hijack stopPropagation, which just sets a flag
-            stopPropagation: () => {
+            stopPropagation() {
               // https://github.com/pmndrs/react-three-fiber/issues/596
               // Events are not allowed to stop propagation if the pointer has been captured
               const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
@@ -389,7 +391,14 @@ export function createEvents(store: UseBoundStore<RootState>) {
     }
   }
 
-  const handlePointer = (name: string) => {
+  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onPointerMissed?.(event)
+    }
+  }
+
+  function handlePointer(name: string) {
     // Deal with cancelation
     switch (name) {
       case 'onPointerLeave':
@@ -408,17 +417,17 @@ export function createEvents(store: UseBoundStore<RootState>) {
     }
 
     // Any other pointer goes here ...
-    return (event: DomEvent) => {
+    return function handleEvent(event: DomEvent) {
       const { onPointerMissed, internal } = store.getState()
 
-      //prepareRay(event)
+      // prepareRay(event)
       internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      //const hits = patchIntersects(intersect(filter), event)
+      // const hits = patchIntersects(intersect(filter), event)
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
@@ -439,7 +448,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       // Take care of unhover
       if (isPointerMove) cancelPointer(hits)
 
-      handleIntersects(hits, event, delta, (data: ThreeEvent<DomEvent>) => {
+      function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
         const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
 
@@ -490,14 +499,9 @@ export function createEvents(store: UseBoundStore<RootState>) {
             }
           }
         }
-      })
-    }
-  }
+      }
 
-  function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
-    for (let i = 0; i < objects.length; i++) {
-      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
-      instance?.handlers.onPointerMissed?.(event)
+      handleIntersects(hits, event, delta, onIntersect)
     }
   }
 
