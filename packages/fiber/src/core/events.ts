@@ -189,12 +189,12 @@ export function createEvents(store: UseBoundStore<RootState>) {
     // Allow callers to eliminate event objects
     const eventsObjects = filter ? filter(state.internal.interaction) : state.internal.interaction
     // Reset all raycaster cameras to undefined
-    eventsObjects.forEach((obj) => {
-      const state = getRootState(obj)
+    for (let i = 0; i < eventsObjects.length; i++) {
+      const state = getRootState(eventsObjects[i])
       if (state) {
         state.raycaster.camera = undefined!
       }
-    })
+    }
 
     if (!state.previousRoot) {
       // Make sure root-level pointer and ray are set up
@@ -363,7 +363,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
   function cancelPointer(intersections: Intersection[]) {
     const { internal } = store.getState()
-    Array.from(internal.hovered.values()).forEach((hoveredObj) => {
+    for (const hoveredObj of internal.hovered.values()) {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
@@ -386,7 +386,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
         }
       }
-    })
+    }
   }
 
   const handlePointer = (name: string) => {
@@ -495,9 +495,9 @@ export function createEvents(store: UseBoundStore<RootState>) {
   }
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
-    objects.forEach((object: THREE.Object3D) =>
-      (object as Instance<THREE.Object3D>['object']).__r3f?.handlers.onPointerMissed?.(event),
-    )
+    for (let i = 0; i < objects.length; i++) {
+      (objects[i] as Instance<THREE.Object3D>['object']).__r3f?.handlers.onPointerMissed?.(event),
+    }
   }
 
   return { handlePointer }
