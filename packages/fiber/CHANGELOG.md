@@ -1,5 +1,35 @@
 # @react-three/fiber
 
+## 8.8.6
+
+### Patch Changes
+
+- 02a558bb: fix: upgrade deps
+
+## 8.8.5
+
+### Patch Changes
+
+- 530a06d6: fix: upgrade deps to work-around CRA
+
+## 8.8.4
+
+### Patch Changes
+
+- 2f2dc9f9: chore: upgrade bridge to harden suspense behavior
+
+## 8.8.3
+
+### Patch Changes
+
+- 9f571239: fix #2506, events should fall back to rootstate"
+
+## 8.8.2
+
+### Patch Changes
+
+- dc389ed6: fix(Canvas): prevent remount on context update
+
 ## 8.8.1
 
 ### Patch Changes
