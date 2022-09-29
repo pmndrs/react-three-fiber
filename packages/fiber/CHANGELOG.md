@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.7
+
+### Patch Changes
+
+- bedb16e7: fix: prefer named functions, for loops in hot paths
+
 ## 8.8.6
 
 ### Patch Changes
