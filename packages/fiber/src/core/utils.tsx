@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
+import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
 import type { Fiber } from 'react-reconciler'
 import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
@@ -29,6 +30,28 @@ export function useMutableCallback<T>(fn: T): React.MutableRefObject<T> {
   const ref = React.useRef<T>(fn)
   useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
   return ref
+}
+
+export type Bridge = React.FC<{ children?: React.ReactNode }>
+
+const STRICT_MODE = Symbol.for('react.strict_mode')
+
+/**
+ * Bridges renderer Context and StrictMode from a primary renderer.
+ */
+export function useBridge(): Bridge {
+  const fiber = useFiber()
+  const strict = React.useMemo(() => !!traverseFiber(fiber, true, (node) => node.type === STRICT_MODE), [fiber])
+  const ContextBridge = useContextBridge()
+
+  return React.useMemo(() => {
+    const Root = strict ? React.StrictMode : React.Fragment
+    return ({ children }) => (
+      <Root>
+        <ContextBridge>{children}</ContextBridge>
+      </Root>
+    )
+  }, [strict, ContextBridge])
 }
 
 export type SetBlock = false | Promise<null> | null
@@ -69,7 +92,7 @@ export function calculateDpr(dpr: Dpr): number {
 /**
  * Returns instance root state
  */
-export const getRootState = <T = THREE.Object3D>(obj: T): RootState | undefined =>
+export const getRootState = <T = THREE.Object3D,>(obj: T): RootState | undefined =>
   (obj as Instance<T>['object']).__r3f?.root.getState()
 
 export interface EquConfig {
