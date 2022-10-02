@@ -41,7 +41,7 @@ const STRICT_MODE = Symbol.for('react.strict_mode')
  */
 export function useBridge(): Bridge {
   const fiber = useFiber()
-  const strict = React.useMemo(() => !!traverseFiber(fiber, true, (node) => node.type === STRICT_MODE), [fiber])
+  const strict = !!traverseFiber(fiber, true, (node) => node.type === STRICT_MODE)
   const ContextBridge = useContextBridge()
 
   return React.useMemo(() => {
