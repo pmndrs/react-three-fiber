@@ -34,24 +34,27 @@ export function useMutableCallback<T>(fn: T): React.MutableRefObject<T> {
 
 export type Bridge = React.FC<{ children?: React.ReactNode }>
 
-const STRICT_MODE = Symbol.for('react.strict_mode')
-
 /**
  * Bridges renderer Context and StrictMode from a primary renderer.
  */
 export function useBridge(): Bridge {
   const fiber = useFiber()
-  const strict = !!traverseFiber(fiber, true, (node) => node.type === STRICT_MODE)
   const ContextBridge = useContextBridge()
 
-  return React.useMemo(() => {
-    const Root = strict ? React.StrictMode : React.Fragment
-    return ({ children }) => (
-      <Root>
-        <ContextBridge>{children}</ContextBridge>
-      </Root>
-    )
-  }, [strict, ContextBridge])
+  return React.useMemo(
+    () =>
+      ({ children }) => {
+        const strict = !!traverseFiber(fiber, true, (node) => node.type === React.StrictMode)
+        const Root = strict ? React.StrictMode : React.Fragment
+
+        return (
+          <Root>
+            <ContextBridge>{children}</ContextBridge>
+          </Root>
+        )
+      },
+    [fiber, ContextBridge],
+  )
 }
 
 export type SetBlock = false | Promise<null> | null
