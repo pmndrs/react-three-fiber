@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.8
+
+### Patch Changes
+
+- fcb183e3: fix: call onUpdate for attached children prop update
+
 ## 8.8.7
 
 ### Patch Changes
