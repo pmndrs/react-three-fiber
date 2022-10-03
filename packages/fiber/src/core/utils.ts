@@ -352,7 +352,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   }
 
   // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
+  if (changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }
