@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.9
+
+### Patch Changes
+
+- 4254400e: fix(createPortal): use correct JSX type
+
 ## 8.8.8
 
 ### Patch Changes
