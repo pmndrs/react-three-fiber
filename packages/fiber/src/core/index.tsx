@@ -406,7 +406,7 @@ export type InjectState = Partial<
   }
 >
 
-function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal key={container.uuid} children={children} container={container} state={state} />
 }
 
@@ -418,7 +418,7 @@ function Portal({
   children: React.ReactNode
   state?: InjectState
   container: THREE.Object3D
-}) {
+}): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
