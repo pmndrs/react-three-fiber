@@ -1,5 +1,167 @@
 # @react-three/fiber
 
+## 8.8.9
+
+### Patch Changes
+
+- 4254400e: fix(createPortal): use correct JSX type
+
+## 8.8.8
+
+### Patch Changes
+
+- fcb183e3: fix: call onUpdate for attached children prop update
+
+## 8.8.7
+
+### Patch Changes
+
+- bedb16e7: fix: prefer named functions, for loops in hot paths
+
+## 8.8.6
+
+### Patch Changes
+
+- 02a558bb: fix: upgrade deps
+
+## 8.8.5
+
+### Patch Changes
+
+- 530a06d6: fix: upgrade deps to work-around CRA
+
+## 8.8.4
+
+### Patch Changes
+
+- 2f2dc9f9: chore: upgrade bridge to harden suspense behavior
+
+## 8.8.3
+
+### Patch Changes
+
+- 9f571239: fix #2506, events should fall back to rootstate"
+
+## 8.8.2
+
+### Patch Changes
+
+- dc389ed6: fix(Canvas): prevent remount on context update
+
+## 8.8.1
+
+### Patch Changes
+
+- 370d3ae5: refactor: pull context bridge from its-fine
+
+## 8.8.0
+
+### Minor Changes
+
+- 46d8b440: bridge cross-container context
+
+## 8.7.4
+
+### Patch Changes
+
+- 259c8895: fix: use self to get global context before window
+
+## 8.7.3
+
+### Patch Changes
+
+- eb5a3be4: fix: if there is an eventsource pointerevent will be set to none
+
+## 8.7.2
+
+### Patch Changes
+
+- 7f801e60: fix: events in portals carry the wrong raycaster, camera, etc
+
+## 8.7.1
+
+### Patch Changes
+
+- 962cc270: fix: allow canvas eventsource to be a ref
+
+## 8.7.0
+
+### Minor Changes
+
+- f5db1b78: feat: useInstanceHandle, flushGlobalEffects
+
+## 8.6.2
+
+### Patch Changes
+
+- 57c12e9c: fix(types): @react-three/drei declaration files
+
+## 8.6.1
+
+### Patch Changes
+
+- 7a0b5670: fix(core): don't append to unmounted containers
+
+## 8.6.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
+## 8.5.1
+
+### Patch Changes
+
+- 87821d9: fix: null-check instance.children on reconstruct
+
+## 8.5.0
+
+### Minor Changes
+
+- edc8252: feat: handle primitive children, auto-attach via instanceof
+
+## 8.3.1
+
+### Patch Changes
+
+- aaeb2b8: fix(types): accept readonly arrays for vector props
+
+## 8.3.0
+
+### Minor Changes
+
+- 9c450ec: feat: improve errors
+
+## 8.2.3
+
+### Patch Changes
+
+- b8d2eab: fix: improve useLoader signature, initial size on createRoot
+
+## 8.2.2
+
+### Patch Changes
+
+- acd6f04: fix: warn on stray text
+
+## 8.2.1
+
+### Patch Changes
+
+- 25e35a1: fix: prefer useLayoutEffect in react-native
+
+## 8.2.0
+
+### Minor Changes
+
+- 9770d7d: feat: expose ThreeElements interface for JSX elements
+
+## 8.1.0
+
+### Minor Changes
+
+- 8d0f708c: Expose position information in state.size
+
 ## 8.0.27
 
 ### Patch Changes

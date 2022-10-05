@@ -31,6 +31,7 @@ import {
   setDeep,
 } from './utils'
 import { useStore } from './hooks'
+import { OffscreenCanvas } from 'three'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
@@ -112,7 +113,7 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
   else
     return new THREE.WebGLRenderer({
       powerPreference: 'high-performance',
-      canvas: canvas as unknown as HTMLCanvasElement,
+      canvas: canvas,
       antialias: true,
       alpha: true,
       ...gl,
@@ -125,11 +126,29 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
+function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
+  return maybeCanvas instanceof HTMLCanvasElement
+}
+
+function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
+  if (defaultSize) {
+    return defaultSize
+  }
+
+  if (isCanvas(canvas) && canvas.parentElement) {
+    const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
+
+    return { width, height, top, left }
+  }
+
+  return { width: 0, height: 0, top: 0, left: 0 }
+}
+
 function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
-  let prevRoot = roots.get(canvas)
-  let prevFiber = prevRoot?.fiber
-  let prevStore = prevRoot?.store
+  const prevRoot = roots.get(canvas)
+  const prevFiber = prevRoot?.fiber
+  const prevStore = prevRoot?.store
 
   if (prevRoot) console.warn('R3F.createRoot should only be called once!')
 
@@ -159,7 +178,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
     configure(props: RenderProps<TCanvas> = {}) {
       let {
         gl: glConfig,
-        size,
+        size: propsSize,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -282,8 +301,10 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Check pixelratio
       if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
-      size = size || { width: canvas.parentElement?.clientWidth ?? 0, height: canvas.parentElement?.clientHeight ?? 0 }
-      if (!is.equ(size, state.size, shallowLoose)) state.setSize(size.width, size.height, size.updateStyle)
+      const size = computeInitialSize(canvas, propsSize)
+      if (!is.equ(size, state.size, shallowLoose)) {
+        state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
+      }
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -391,11 +412,11 @@ export type InjectState = Partial<
       compute?: ComputeFunction
       connected?: any
     }
-    size?: { width: number; height: number }
+    size?: Size
   }
 >
 
-function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal key={container.uuid} children={children} container={container} state={state} />
 }
 
@@ -407,7 +428,7 @@ function Portal({
   children: React.ReactNode
   state?: InjectState
   container: THREE.Object3D
-}) {
+}): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:

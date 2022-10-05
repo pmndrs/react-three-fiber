@@ -16,7 +16,7 @@ describe('native Canvas', () => {
       )
     })
 
-    expect(renderer.toTree()).toMatchSnapshot()
+    expect(renderer.toJSON()).toMatchSnapshot()
   })
 
   it('should forward ref', async () => {

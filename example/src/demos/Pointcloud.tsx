@@ -1,8 +1,10 @@
+import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
+import { extend, Canvas, useThree, ReactThreeFiber } from '@react-three/fiber'
 import * as THREE from 'three'
-import React, { useMemo, useRef, useCallback } from 'react'
-import { Canvas, extend, Object3DNode } from '@react-three/fiber'
+import { OrbitControls } from 'three-stdlib'
+extend({ OrbitControls })
 
-class DotMaterial extends THREE.ShaderMaterial {
+export class DotMaterial extends THREE.ShaderMaterial {
   constructor() {
     super({
       transparent: true,
@@ -18,14 +20,6 @@ class DotMaterial extends THREE.ShaderMaterial {
 }
 
 extend({ DotMaterial })
-
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      dotMaterial: Object3DNode<DotMaterial, typeof DotMaterial>
-    }
-  }
-}
 
 const white = new THREE.Color('white')
 const hotpink = new THREE.Color('hotpink')

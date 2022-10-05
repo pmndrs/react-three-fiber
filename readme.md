@@ -89,9 +89,9 @@ npm install @types/three
 import * as THREE from 'three'
 import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 
-function Box(props: JSX.IntrinsicElements['mesh']) {
+function Box(props: ThreeElements['mesh']) {
   const ref = useRef<THREE.Mesh>(null!)
   const [hovered, hover] = useState(false)
   const [clicked, click] = useState(false)
@@ -116,7 +116,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
     <pointLight position={[10, 10, 10]} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
-  </Canvas>
+  </Canvas>,
 )
 ```
 
@@ -209,7 +209,7 @@ Some reading material:
 
 - [Threejs-docs](https://threejs.org/docs)
 - [Threejs-examples](https://threejs.org/examples)
-- [Threejs-fundamentals](https://threejsfundamentals.org)
+- [Threejs-fundamentals](https://threejs.org/manual/#en/fundamentals)
 - [Discover Threejs](https://discoverthreejs.com)
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
 - [react-three-fiber alligator.io tutorial](https://alligator.io/react/react-with-threejs) by [@dghez\_](https://twitter.com/dghez_)

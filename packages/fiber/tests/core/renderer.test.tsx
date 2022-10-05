@@ -19,6 +19,10 @@ import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
+interface ObjectWithBackground extends THREE.Object3D {
+  background: THREE.Color
+}
+
 /* This class is used for one of the tests */
 class HasObject3dMember extends THREE.Object3D {
   public attachment?: THREE.Object3D = undefined
@@ -38,14 +42,19 @@ class HasObject3dMethods extends THREE.Object3D {
   }
 }
 
+class MyColor extends THREE.Color {
+  constructor(col: number) {
+    super(col)
+  }
+}
+
 extend({ HasObject3dMember, HasObject3dMethods })
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
-      hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
-    }
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
+    hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
+    myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
   }
 }
 
@@ -62,12 +71,24 @@ describe('renderer', () => {
   beforeEach(() => {
     const canvas = createCanvas({
       beforeReturn: (canvas) => {
-        //@ts-ignore
-        canvas.getContext = (type: string) => {
-          if (type === 'webgl' || type === 'webgl2') {
+        function getContext(
+          contextId: '2d',
+          options?: CanvasRenderingContext2DSettings,
+        ): CanvasRenderingContext2D | null
+        function getContext(
+          contextId: 'bitmaprenderer',
+          options?: ImageBitmapRenderingContextSettings,
+        ): ImageBitmapRenderingContext | null
+        function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
+        function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
+        function getContext(contextId: string): RenderingContext | null {
+          if (contextId === 'webgl' || contextId === 'webgl2') {
             return createWebGLContext(canvas)
           }
+          return null
         }
+
+        canvas.getContext = getContext
       },
     })
     root = createRoot(canvas)
@@ -81,7 +102,7 @@ describe('renderer', () => {
     const Mesh = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -125,7 +146,7 @@ describe('renderer', () => {
     const Child = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -137,8 +158,7 @@ describe('renderer', () => {
     })
 
     expect(scene.children[0].type).toEqual('Group')
-    // @ts-ignore we do append background to group, but it's not wrong because it won't do anything.
-    expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
+    expect((scene.children[0] as ObjectWithBackground).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
@@ -425,15 +445,17 @@ describe('renderer', () => {
     let state: RootState = null!
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
-    const Test = ({ n }: { n: number }) => (
-      // @ts-ignore args isn't a valid prop but changing it will swap
-      <group args={[n]} onPointerOver={() => null}>
+    const object1 = new THREE.Group()
+    const object2 = new THREE.Group()
+
+    const Test = ({ first }: { first?: boolean }) => (
+      <primitive object={first ? object1 : object2} onPointerOver={() => null}>
         <group />
-      </group>
+      </primitive>
     )
 
     await act(async () => {
-      state = root.render(<Test n={1} />).getState()
+      state = root.render(<Test first />).getState()
     })
 
     instances.push({
@@ -441,9 +463,10 @@ describe('renderer', () => {
       parentUUID: state.scene.children[0].parent?.uuid,
       childUUID: state.scene.children[0].children[0]?.uuid,
     })
+    expect(state.scene.children[0]).toBe(object1)
 
     await act(async () => {
-      state = root.render(<Test n={2} />).getState()
+      state = root.render(<Test />).getState()
     })
 
     instances.push({
@@ -454,8 +477,8 @@ describe('renderer', () => {
 
     const [oldInstance, newInstance] = instances
 
-    // Created a new instance
-    expect(oldInstance.uuid).not.toBe(newInstance.uuid)
+    // Swapped to new instance
+    expect(state.scene.children[0]).toBe(object2)
 
     // Preserves scene hierarchy
     expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
@@ -603,17 +626,10 @@ describe('renderer', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends THREE.Color {
-      constructor(col: number) {
-        super(col)
-      }
-    }
-
     const testExtend = async () => {
       await act(async () => {
         extend({ MyColor })
 
-        // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
         root.render(<myColor args={[0x0000ff]} />)
       })
     }
@@ -721,5 +737,29 @@ describe('renderer', () => {
     const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
+  })
+
+  it('can handle createPortal on unmounted container', async () => {
+    let groupHandle!: THREE.Group | null
+    function Test(props: any) {
+      const [group, setGroup] = React.useState(null)
+      groupHandle = group
+
+      return (
+        <group {...props} ref={setGroup}>
+          {group && createPortal(<mesh />, group)}
+        </group>
+      )
+    }
+
+    await act(async () => root.render(<Test key={0} />))
+
+    expect(groupHandle).toBeDefined()
+    const prevUUID = groupHandle!.uuid
+
+    await act(async () => root.render(<Test key={1} />))
+
+    expect(groupHandle).toBeDefined()
+    expect(prevUUID).not.toBe(groupHandle!.uuid)
   })
 })

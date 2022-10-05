@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { EventHandlers } from './core/events'
 import { AttachType } from './core/renderer'
 
-export type NonFunctionKeys<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
+export type NonFunctionKeys<T> = { [K in keyof T]-?: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
 
 /**
@@ -11,10 +11,20 @@ export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
 type Args<T> = T extends new (...args: any) => any ? ConstructorParameters<T> : T
 
 export type Euler = THREE.Euler | Parameters<THREE.Euler['set']>
-export type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']>
-export type Vector2 = THREE.Vector2 | Parameters<THREE.Vector2['set']> | Parameters<THREE.Vector2['setScalar']>[0]
-export type Vector3 = THREE.Vector3 | Parameters<THREE.Vector3['set']> | Parameters<THREE.Vector3['setScalar']>[0]
-export type Vector4 = THREE.Vector4 | Parameters<THREE.Vector4['set']> | Parameters<THREE.Vector4['setScalar']>[0]
+export type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']> | Readonly<THREE.Matrix4['set']>
+
+/**
+ * Turn an implementation of THREE.Vector in to the type that an r3f component would accept as a prop.
+ */
+type VectorLike<VectorClass extends THREE.Vector> =
+  | VectorClass
+  | Parameters<VectorClass['set']>
+  | Readonly<Parameters<VectorClass['set']>>
+  | Parameters<VectorClass['setScalar']>[0]
+
+export type Vector2 = VectorLike<THREE.Vector2>
+export type Vector3 = VectorLike<THREE.Vector3>
+export type Vector4 = VectorLike<THREE.Vector4>
 export type Color = ConstructorParameters<typeof THREE.Color> | THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
 export type ColorArray = typeof THREE.Color | Parameters<THREE.Color['set']>
 export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>[0]
@@ -243,168 +253,170 @@ export type FogProps = Node<THREE.Fog, typeof THREE.Fog>
 export type FogExp2Props = Node<THREE.FogExp2, typeof THREE.FogExp2>
 export type ShapeProps = Node<THREE.Shape, typeof THREE.Shape>
 
+export interface ThreeElements {
+  object3D: Object3DProps
+
+  // `audio` works but conflicts with @types/react. Try using PositionalAudio from @react-three/drei instead
+  // audio: AudioProps
+  audioListener: AudioListenerProps
+  positionalAudio: PositionalAudioProps
+
+  mesh: MeshProps
+  instancedMesh: InstancedMeshProps
+  scene: SceneProps
+  sprite: SpriteProps
+  lOD: LODProps
+  skinnedMesh: SkinnedMeshProps
+  skeleton: SkeletonProps
+  bone: BoneProps
+  lineSegments: LineSegmentsProps
+  lineLoop: LineLoopProps
+  // see `audio`
+  // line: LineProps
+  points: PointsProps
+  group: GroupProps
+
+  // cameras
+  camera: CameraProps
+  perspectiveCamera: PerspectiveCameraProps
+  orthographicCamera: OrthographicCameraProps
+  cubeCamera: CubeCameraProps
+  arrayCamera: ArrayCameraProps
+
+  // geometry
+  instancedBufferGeometry: InstancedBufferGeometryProps
+  bufferGeometry: BufferGeometryProps
+  boxBufferGeometry: BoxBufferGeometryProps
+  circleBufferGeometry: CircleBufferGeometryProps
+  coneBufferGeometry: ConeBufferGeometryProps
+  cylinderBufferGeometry: CylinderBufferGeometryProps
+  dodecahedronBufferGeometry: DodecahedronBufferGeometryProps
+  extrudeBufferGeometry: ExtrudeBufferGeometryProps
+  icosahedronBufferGeometry: IcosahedronBufferGeometryProps
+  latheBufferGeometry: LatheBufferGeometryProps
+  octahedronBufferGeometry: OctahedronBufferGeometryProps
+  planeBufferGeometry: PlaneBufferGeometryProps
+  polyhedronBufferGeometry: PolyhedronBufferGeometryProps
+  ringBufferGeometry: RingBufferGeometryProps
+  shapeBufferGeometry: ShapeBufferGeometryProps
+  sphereBufferGeometry: SphereBufferGeometryProps
+  tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
+  torusBufferGeometry: TorusBufferGeometryProps
+  torusKnotBufferGeometry: TorusKnotBufferGeometryProps
+  tubeBufferGeometry: TubeBufferGeometryProps
+  wireframeGeometry: WireframeGeometryProps
+  tetrahedronGeometry: TetrahedronGeometryProps
+  octahedronGeometry: OctahedronGeometryProps
+  icosahedronGeometry: IcosahedronGeometryProps
+  dodecahedronGeometry: DodecahedronGeometryProps
+  polyhedronGeometry: PolyhedronGeometryProps
+  tubeGeometry: TubeGeometryProps
+  torusKnotGeometry: TorusKnotGeometryProps
+  torusGeometry: TorusGeometryProps
+  sphereGeometry: SphereGeometryProps
+  ringGeometry: RingGeometryProps
+  planeGeometry: PlaneGeometryProps
+  latheGeometry: LatheGeometryProps
+  shapeGeometry: ShapeGeometryProps
+  extrudeGeometry: ExtrudeGeometryProps
+  edgesGeometry: EdgesGeometryProps
+  coneGeometry: ConeGeometryProps
+  cylinderGeometry: CylinderGeometryProps
+  circleGeometry: CircleGeometryProps
+  boxGeometry: BoxGeometryProps
+  capsuleGeometry: CapsuleGeometryProps
+
+  // materials
+  material: MaterialProps
+  shadowMaterial: ShadowMaterialProps
+  spriteMaterial: SpriteMaterialProps
+  rawShaderMaterial: RawShaderMaterialProps
+  shaderMaterial: ShaderMaterialProps
+  pointsMaterial: PointsMaterialProps
+  meshPhysicalMaterial: MeshPhysicalMaterialProps
+  meshStandardMaterial: MeshStandardMaterialProps
+  meshPhongMaterial: MeshPhongMaterialProps
+  meshToonMaterial: MeshToonMaterialProps
+  meshNormalMaterial: MeshNormalMaterialProps
+  meshLambertMaterial: MeshLambertMaterialProps
+  meshDepthMaterial: MeshDepthMaterialProps
+  meshDistanceMaterial: MeshDistanceMaterialProps
+  meshBasicMaterial: MeshBasicMaterialProps
+  meshMatcapMaterial: MeshMatcapMaterialProps
+  lineDashedMaterial: LineDashedMaterialProps
+  lineBasicMaterial: LineBasicMaterialProps
+
+  // primitive
+  primitive: PrimitiveProps
+
+  // lights and other
+  light: LightProps
+  spotLightShadow: SpotLightShadowProps
+  spotLight: SpotLightProps
+  pointLight: PointLightProps
+  rectAreaLight: RectAreaLightProps
+  hemisphereLight: HemisphereLightProps
+  directionalLightShadow: DirectionalLightShadowProps
+  directionalLight: DirectionalLightProps
+  ambientLight: AmbientLightProps
+  lightShadow: LightShadowProps
+  ambientLightProbe: AmbientLightProbeProps
+  hemisphereLightProbe: HemisphereLightProbeProps
+  lightProbe: LightProbeProps
+
+  // helpers
+  spotLightHelper: SpotLightHelperProps
+  skeletonHelper: SkeletonHelperProps
+  pointLightHelper: PointLightHelperProps
+  hemisphereLightHelper: HemisphereLightHelperProps
+  gridHelper: GridHelperProps
+  polarGridHelper: PolarGridHelperProps
+  directionalLightHelper: DirectionalLightHelperProps
+  cameraHelper: CameraHelperProps
+  boxHelper: BoxHelperProps
+  box3Helper: Box3HelperProps
+  planeHelper: PlaneHelperProps
+  arrowHelper: ArrowHelperProps
+  axesHelper: AxesHelperProps
+
+  // textures
+  texture: TextureProps
+  videoTexture: VideoTextureProps
+  dataTexture: DataTextureProps
+  dataTexture3D: DataTexture3DProps
+  compressedTexture: CompressedTextureProps
+  cubeTexture: CubeTextureProps
+  canvasTexture: CanvasTextureProps
+  depthTexture: DepthTextureProps
+
+  // misc
+  raycaster: RaycasterProps
+  vector2: Vector2Props
+  vector3: Vector3Props
+  vector4: Vector4Props
+  euler: EulerProps
+  matrix3: Matrix3Props
+  matrix4: Matrix4Props
+  quaternion: QuaternionProps
+  bufferAttribute: BufferAttributeProps
+  float16BufferAttribute: Float16BufferAttributeProps
+  float32BufferAttribute: Float32BufferAttributeProps
+  float64BufferAttribute: Float64BufferAttributeProps
+  int8BufferAttribute: Int8BufferAttributeProps
+  int16BufferAttribute: Int16BufferAttributeProps
+  int32BufferAttribute: Int32BufferAttributeProps
+  uint8BufferAttribute: Uint8BufferAttributeProps
+  uint16BufferAttribute: Uint16BufferAttributeProps
+  uint32BufferAttribute: Uint32BufferAttributeProps
+  instancedBufferAttribute: InstancedBufferAttributeProps
+  color: ColorProps
+  fog: FogProps
+  fogExp2: FogExp2Props
+  shape: ShapeProps
+}
+
 declare global {
   namespace JSX {
-    interface IntrinsicElements {
-      object3D: Object3DProps
-
-      // `audio` works but conflicts with @types/react. Try using Audio from react-three-fiber/components instead
-      // audio: AudioProps
-      audioListener: AudioListenerProps
-      positionalAudio: PositionalAudioProps
-
-      mesh: MeshProps
-      instancedMesh: InstancedMeshProps
-      scene: SceneProps
-      sprite: SpriteProps
-      lOD: LODProps
-      skinnedMesh: SkinnedMeshProps
-      skeleton: SkeletonProps
-      bone: BoneProps
-      lineSegments: LineSegmentsProps
-      lineLoop: LineLoopProps
-      // see `audio`
-      // line: LineProps
-      points: PointsProps
-      group: GroupProps
-
-      // cameras
-      camera: CameraProps
-      perspectiveCamera: PerspectiveCameraProps
-      orthographicCamera: OrthographicCameraProps
-      cubeCamera: CubeCameraProps
-      arrayCamera: ArrayCameraProps
-
-      // geometry
-      instancedBufferGeometry: InstancedBufferGeometryProps
-      bufferGeometry: BufferGeometryProps
-      boxBufferGeometry: BoxBufferGeometryProps
-      circleBufferGeometry: CircleBufferGeometryProps
-      coneBufferGeometry: ConeBufferGeometryProps
-      cylinderBufferGeometry: CylinderBufferGeometryProps
-      dodecahedronBufferGeometry: DodecahedronBufferGeometryProps
-      extrudeBufferGeometry: ExtrudeBufferGeometryProps
-      icosahedronBufferGeometry: IcosahedronBufferGeometryProps
-      latheBufferGeometry: LatheBufferGeometryProps
-      octahedronBufferGeometry: OctahedronBufferGeometryProps
-      planeBufferGeometry: PlaneBufferGeometryProps
-      polyhedronBufferGeometry: PolyhedronBufferGeometryProps
-      ringBufferGeometry: RingBufferGeometryProps
-      shapeBufferGeometry: ShapeBufferGeometryProps
-      sphereBufferGeometry: SphereBufferGeometryProps
-      tetrahedronBufferGeometry: TetrahedronBufferGeometryProps
-      torusBufferGeometry: TorusBufferGeometryProps
-      torusKnotBufferGeometry: TorusKnotBufferGeometryProps
-      tubeBufferGeometry: TubeBufferGeometryProps
-      wireframeGeometry: WireframeGeometryProps
-      tetrahedronGeometry: TetrahedronGeometryProps
-      octahedronGeometry: OctahedronGeometryProps
-      icosahedronGeometry: IcosahedronGeometryProps
-      dodecahedronGeometry: DodecahedronGeometryProps
-      polyhedronGeometry: PolyhedronGeometryProps
-      tubeGeometry: TubeGeometryProps
-      torusKnotGeometry: TorusKnotGeometryProps
-      torusGeometry: TorusGeometryProps
-      sphereGeometry: SphereGeometryProps
-      ringGeometry: RingGeometryProps
-      planeGeometry: PlaneGeometryProps
-      latheGeometry: LatheGeometryProps
-      shapeGeometry: ShapeGeometryProps
-      extrudeGeometry: ExtrudeGeometryProps
-      edgesGeometry: EdgesGeometryProps
-      coneGeometry: ConeGeometryProps
-      cylinderGeometry: CylinderGeometryProps
-      circleGeometry: CircleGeometryProps
-      boxGeometry: BoxGeometryProps
-      capsuleGeometry: CapsuleGeometryProps
-
-      // materials
-      material: MaterialProps
-      shadowMaterial: ShadowMaterialProps
-      spriteMaterial: SpriteMaterialProps
-      rawShaderMaterial: RawShaderMaterialProps
-      shaderMaterial: ShaderMaterialProps
-      pointsMaterial: PointsMaterialProps
-      meshPhysicalMaterial: MeshPhysicalMaterialProps
-      meshStandardMaterial: MeshStandardMaterialProps
-      meshPhongMaterial: MeshPhongMaterialProps
-      meshToonMaterial: MeshToonMaterialProps
-      meshNormalMaterial: MeshNormalMaterialProps
-      meshLambertMaterial: MeshLambertMaterialProps
-      meshDepthMaterial: MeshDepthMaterialProps
-      meshDistanceMaterial: MeshDistanceMaterialProps
-      meshBasicMaterial: MeshBasicMaterialProps
-      meshMatcapMaterial: MeshMatcapMaterialProps
-      lineDashedMaterial: LineDashedMaterialProps
-      lineBasicMaterial: LineBasicMaterialProps
-
-      // primitive
-      primitive: PrimitiveProps
-
-      // lights and other
-      light: LightProps
-      spotLightShadow: SpotLightShadowProps
-      spotLight: SpotLightProps
-      pointLight: PointLightProps
-      rectAreaLight: RectAreaLightProps
-      hemisphereLight: HemisphereLightProps
-      directionalLightShadow: DirectionalLightShadowProps
-      directionalLight: DirectionalLightProps
-      ambientLight: AmbientLightProps
-      lightShadow: LightShadowProps
-      ambientLightProbe: AmbientLightProbeProps
-      hemisphereLightProbe: HemisphereLightProbeProps
-      lightProbe: LightProbeProps
-
-      // helpers
-      spotLightHelper: SpotLightHelperProps
-      skeletonHelper: SkeletonHelperProps
-      pointLightHelper: PointLightHelperProps
-      hemisphereLightHelper: HemisphereLightHelperProps
-      gridHelper: GridHelperProps
-      polarGridHelper: PolarGridHelperProps
-      directionalLightHelper: DirectionalLightHelperProps
-      cameraHelper: CameraHelperProps
-      boxHelper: BoxHelperProps
-      box3Helper: Box3HelperProps
-      planeHelper: PlaneHelperProps
-      arrowHelper: ArrowHelperProps
-      axesHelper: AxesHelperProps
-
-      // textures
-      texture: TextureProps
-      videoTexture: VideoTextureProps
-      dataTexture: DataTextureProps
-      dataTexture3D: DataTexture3DProps
-      compressedTexture: CompressedTextureProps
-      cubeTexture: CubeTextureProps
-      canvasTexture: CanvasTextureProps
-      depthTexture: DepthTextureProps
-
-      // misc
-      raycaster: RaycasterProps
-      vector2: Vector2Props
-      vector3: Vector3Props
-      vector4: Vector4Props
-      euler: EulerProps
-      matrix3: Matrix3Props
-      matrix4: Matrix4Props
-      quaternion: QuaternionProps
-      bufferAttribute: BufferAttributeProps
-      float16BufferAttribute: Float16BufferAttributeProps
-      float32BufferAttribute: Float32BufferAttributeProps
-      float64BufferAttribute: Float64BufferAttributeProps
-      int8BufferAttribute: Int8BufferAttributeProps
-      int16BufferAttribute: Int16BufferAttributeProps
-      int32BufferAttribute: Int32BufferAttributeProps
-      uint8BufferAttribute: Uint8BufferAttributeProps
-      uint16BufferAttribute: Uint16BufferAttributeProps
-      uint32BufferAttribute: Uint32BufferAttributeProps
-      instancedBufferAttribute: InstancedBufferAttributeProps
-      color: ColorProps
-      fog: FogProps
-      fogExp2: FogExp2Props
-      shape: ShapeProps
-    }
+    interface IntrinsicElements extends ThreeElements {}
   }
 }

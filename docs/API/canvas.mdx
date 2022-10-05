@@ -14,7 +14,7 @@ const App = () => (
   <Canvas>
     <pointLight position={[10, 10, 10]} />
     <mesh>
-      <sphereBufferGeometry />
+      <sphereGeometry />
       <meshStandardMaterial color="hotpink" />
     </mesh>
   </Canvas>
@@ -23,23 +23,25 @@ const App = () => (
 
 ## Render Props
 
-| Prop            | Description                                                                                                                                       | Default                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| children        | three.js JSX elements or regular components                                                                                                       |                                                          |
-| gl              | Props that go into the default renderer, or your own renderer. Also accepts a synchronous callback like `gl={canvas => new Renderer({ canvas })}` | `{}`                                                     |
-| camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }` |
-| shadows         | Props that go into `gl.shadowMap`, can also be set true for `PCFsoft`                                                                             | `false`                                                  |
-| raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                     |
-| frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                 |
-| resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`  |
-| orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                  |
-| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                 |
-| legacy          | Enables THREE.ColorManagement.legacyMode in three r139 or later                                                                                   | `false`                                                  |
-| linear          | Switch off automatic sRGB encoding and gamma correction                                                                                           | `false`                                                  |
-| events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`            |
-| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                  |
-| onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                          |
-| onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                          |
+| Prop            | Description                                                                                                                                       | Default                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| children        | three.js JSX elements or regular components                                                                                                       |                                                                   |
+| gl              | Props that go into the default renderer, or your own renderer. Also accepts a synchronous callback like `gl={canvas => new Renderer({ canvas })}` | `{}`                                                              |
+| camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`          |
+| shadows         | Props that go into `gl.shadowMap`, can also be set true for `PCFsoft`                                                                             | `false`                                                           |
+| raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                              |
+| frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                          |
+| resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`           |
+| orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                           |
+| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                          |
+| legacy          | Enables THREE.ColorManagement.legacyMode in three r139 or later                                                                                   | `false`                                                           |
+| linear          | Switch off automatic sRGB encoding and gamma correction                                                                                           | `false`                                                           |
+| events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`                     |
+| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.MutableRefObject<HTMLElement>`, `gl.domElement.parentNode` |
+| eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                          |
+| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                           |
+| onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                                   |
+| onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                                   |
 
 ## Render defaults
 
@@ -74,34 +76,32 @@ Roots have the same options and properties as `Canvas`, but you are responsible 
 Creates a root targeting a canvas, rendering JSX.
 
 ```jsx
-import { createRoot, events } from '@react-three/fiber'
+import * as THREE from 'three'
+import { extend, createRoot, events } from '@react-three/fiber'
 
-let root
+// Register the THREE namespace as native JSX elements.
+// See below for notes on tree-shaking
+extend(THREE)
 
-const handleResize = () => {
-  const size = { width: window.innerWidth, height: window.innerHeight }
+// Create a react root
+const root = createRoot(document.querySelector('canvas'))
 
-  // Create root with a size, events
-  root = createRoot(document.querySelector('canvas'), {
-    events,
-    size,
-  })
+// Configure the root, inject events optionally, set camera, etc
+root.configure({ events, camera: { position: [0, 0, 50] } })
 
-  // Render JSX
-  root.render(<mesh />)
+// createRoot by design is not responsive, you have to take care of resize yourself
+window.addEventListener('resize', () => {
+  root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
+})
 
-  // Can also tweak root root options after creation:
-  root.configure({ size })
+// Trigger resize
+window.dispatchEvent(new Event('resize'))
 
-  // Or to unmount and dispose of memory:
-  root.unmount()
-}
-handleResize()
+// Render entry point
+root.render(<App />)
 
-window.addEventListener('resize', handleResize)
-
-// to unmount
-root.unmount()
+// Unmount and dispose of memory
+// root.unmount()
 ```
 
 ## Tree-shaking

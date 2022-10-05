@@ -8,13 +8,21 @@ import { Dpr, RootState, Size } from './store'
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
+export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect on the client.
-const isSSR =
-  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
+/**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+export const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
 
 export function useMutableCallback<T>(fn: T) {
   const ref = React.useRef<T>(fn)
@@ -34,13 +42,13 @@ export function Block({ set }: Omit<UnblockProps, 'children'>) {
 }
 
 export class ErrorBoundary extends React.Component<
-  { set: React.Dispatch<any>; children: React.ReactNode },
+  { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
   { error: boolean }
 > {
   state = { error: false }
   static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(error: any) {
-    this.props.set(error)
+  componentDidCatch(err: Error) {
+    this.props.set(err)
   }
   render() {
     return this.state.error ? null : this.props.children
@@ -63,7 +71,8 @@ export type ObjectMap = {
 }
 
 export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
 /**
@@ -246,7 +255,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-  changes.forEach(([key, value, isEvent, keys]) => {
+  for (let i = 0; i < changes.length; i++) {
+    let [key, value, isEvent, keys] = changes[i]
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -332,7 +342,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     }
 
     invalidateInstance(instance)
-  })
+  }
 
   if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
@@ -343,7 +353,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   }
 
   // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
+  if (changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }
