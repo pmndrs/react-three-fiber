@@ -3,7 +3,7 @@ import { Canvas } from '@react-three/fiber'
 import { a, useSpring } from '@react-spring/three'
 import { OrbitControls } from '@react-three/drei'
 
-export default function Box() {
+export default function FileDragDrop() {
   const [active, setActive] = useState(0)
   const [activeBg, setActiveBg] = useState(0)
   // create a common spring that will be used later to interpolate other values
