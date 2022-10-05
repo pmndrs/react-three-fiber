@@ -403,8 +403,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
           const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
-          // @ts-ignore
-          handlers.onDragOverLeave?.(data)
+          handlers.onDragOverLeave?.(data as ThreeEvent<DragEvent>)
         }
       }
     }
@@ -414,6 +413,20 @@ export function createEvents(store: UseBoundStore<RootState>) {
     for (let i = 0; i < objects.length; i++) {
       const instance = (objects[i] as unknown as Instance).__r3f
       instance?.handlers.onPointerMissed?.(event)
+    }
+  }
+
+  function dragOverMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as unknown as Instance).__r3f
+      instance?.handlers.onDragOverMissed?.(event)
+    }
+  }
+
+  function dropMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as unknown as Instance).__r3f
+      instance?.handlers.onDropMissed?.(event)
     }
   }
 
@@ -550,16 +563,6 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
       handleIntersects(hits, event, delta, onIntersect)
     }
-  }
-
-  function dragOverMissed(event: DragEvent, objects: THREE.Object3D[]) {
-    objects.forEach((object: THREE.Object3D) =>
-      (object as unknown as Instance).__r3f?.handlers.onDragOverMissed?.(event),
-    )
-  }
-
-  function dropMissed(event: DragEvent, objects: THREE.Object3D[]) {
-    objects.forEach((object: THREE.Object3D) => (object as unknown as Instance).__r3f?.handlers.onDropMissed?.(event))
   }
 
   return { handlePointer }
