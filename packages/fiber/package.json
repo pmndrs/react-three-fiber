@@ -44,12 +44,12 @@
   "dependencies": {
     "@babel/runtime": "^7.17.8",
     "@types/react-reconciler": "^0.26.7",
-    "its-fine": "^1.0.4",
+    "its-fine": "^1.0.5",
     "react-reconciler": "^0.27.0",
     "react-use-measure": "^2.1.1",
     "scheduler": "^0.21.0",
     "suspend-react": "^0.0.8",
-    "zustand": "^3.7.1"
+    "zustand": "^4.1.2"
   },
   "peerDependencies": {
     "expo": ">=46.0",

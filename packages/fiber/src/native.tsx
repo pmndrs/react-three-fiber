@@ -17,6 +17,7 @@ export type {
   RenderCallback,
   Performance,
   RootState,
+  RootStore,
 } from './core/store'
 export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
