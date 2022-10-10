@@ -47,8 +47,8 @@ export interface Viewport extends Size {
   aspect: number
 }
 
-// TODO: rename to UpdateCallback
 export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
+export type UpdateCallback = RenderCallback
 
 export type LegacyAlways = 'always'
 export type FrameloopMode = LegacyAlways | 'auto' | 'demand' | 'never'
