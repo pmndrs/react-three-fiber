@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
-import { getRootState } from './utils'
+import { Camera, getRootState } from './utils'
 import type { UseBoundStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
@@ -10,7 +10,7 @@ export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export interface IntersectionEvent<TSourceEvent> extends Intersection {
+export interface ThreeEvent<TEvent> extends Intersection {
   /** The event source (the object which registered the handler) */
   eventObject: THREE.Object3D
   /** An array of intersections */
@@ -28,16 +28,14 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
   /** stopPropagation will stop underlying handlers from firing */
   stopPropagation: () => void
   /** The original host event */
-  nativeEvent: TSourceEvent
+  nativeEvent: TEvent
   /** If the event was stopped by calling stopPropagation */
   stopped: boolean
 }
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = IntersectionEvent<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
-export type Events = {
+export interface Events {
   onClick: EventListener
   onContextMenu: EventListener
   onDoubleClick: EventListener
@@ -50,7 +48,7 @@ export type Events = {
   onLostPointerCapture: EventListener
 }
 
-export type EventHandlers = {
+export interface EventHandlers {
   onClick?: (event: ThreeEvent<MouseEvent>) => void
   onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
   onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void

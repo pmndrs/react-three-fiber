@@ -21,19 +21,20 @@ export const privateKeys = [
 
 export type PrivateKeys = typeof privateKeys[number]
 
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
-}
-
-export type Subscription = {
+export interface Subscription {
   ref: React.MutableRefObject<RenderCallback>
   priority: number
   store: UseBoundStore<RootState, StoreApi<RootState>>
 }
 
 export type Dpr = number | [min: number, max: number]
-export type Size = { width: number; height: number; top: number; left: number }
-export type Viewport = Size & {
+export interface Size {
+  width: number
+  height: number
+  top: number
+  left: number
+}
+export interface Viewport extends Size {
   /** The initial pixel ratio */
   initialDpr: number
   /** Current pixel ratio */
@@ -46,15 +47,16 @@ export type Viewport = Size & {
   aspect: number
 }
 
+// TODO: rename to UpdateCallback
 export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
 
-type LegacyAlways = 'always'
+export type LegacyAlways = 'always'
 export type FrameloopMode = LegacyAlways | 'auto' | 'demand' | 'never'
-type FrameloopRender = 'auto' | 'manual'
+export type FrameloopRender = 'auto' | 'manual'
 export type FrameloopLegacy = 'always' | 'demand' | 'never'
 export type Frameloop = FrameloopLegacy | { mode?: FrameloopMode; render?: FrameloopRender; maxDelta?: number }
 
-export type Performance = {
+export interface Performance {
   /** Current performance normal, between min and max */
   current: number
   /** How low the performance can go, between 0 and max */
@@ -67,12 +69,14 @@ export type Performance = {
   regress: () => void
 }
 
-export type Renderer = { render: (scene: THREE.Scene, camera: THREE.Camera) => any }
+export interface Renderer {
+  render: (scene: THREE.Scene, camera: THREE.Camera) => any
+}
 export const isRenderer = (def: any) => !!def?.render
 
 export type StageTypes = Stage | FixedStage
 
-export type InternalState = {
+export interface InternalState {
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
@@ -96,7 +100,12 @@ export type InternalState = {
   ) => () => void
 }
 
-export type RootState = {
+export interface XRManager {
+  connect: () => void
+  disconnect: () => void
+}
+
+export interface RootState {
   /** Set current state */
   set: SetState<RootState>
   /** Get current state */
@@ -114,7 +123,7 @@ export type RootState = {
   /** Event layer interface, contains the event handler and the node they're connected to */
   events: EventManager<any>
   /** XR interface */
-  xr: { connect: () => void; disconnect: () => void }
+  xr: XRManager
   /** Currently used controls */
   controls: THREE.EventDispatcher | null
   /** Normalized event coordinates */
@@ -206,7 +215,7 @@ const createStore = (
       camera: null as unknown as Camera,
       raycaster: null as unknown as THREE.Raycaster,
       events: { priority: 1, enabled: true, connected: false },
-      xr: null as unknown as { connect: () => void; disconnect: () => void },
+      xr: null as unknown as XRManager,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),

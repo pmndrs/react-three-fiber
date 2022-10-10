@@ -1,17 +1,8 @@
-import { MutableRefObject } from 'react'
 import { StoreApi, UseBoundStore } from 'zustand'
-import { RootState } from './store'
+import { RootState, Subscription } from './store'
 
-export interface UpdateCallback {
-  (state: RootState, delta: number, frame?: XRFrame): void
-}
-
-export type UpdateCallbackRef = MutableRefObject<UpdateCallback>
-type Store = UseBoundStore<RootState, StoreApi<RootState>>
-export type UpdateSubscription = { ref: UpdateCallbackRef; store: Store }
-
-export type FixedStageOptions = { fixedStep?: number; maxSubsteps?: number }
-export type FixedStageProps = { fixedStep: number; maxSubsteps: number; accumulator: number; alpha: number }
+// TODO: Remove deprecated fields in `Subscription`
+export type UpdateSubscription = Omit<Subscription, 'priority'>
 
 /**
  * Class representing a stage that updates every frame.
@@ -48,7 +39,7 @@ export class Stage {
    * @param store - The store to be used with the callback execution.
    * @returns A function to remove the subscription.
    */
-  add(ref: UpdateCallbackRef, store: Store) {
+  add(ref: UpdateSubscription['ref'], store: UseBoundStore<RootState, StoreApi<RootState>>) {
     this.subscribers.push({ ref, store })
 
     return () => {

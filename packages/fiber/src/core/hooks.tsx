@@ -5,7 +5,7 @@ import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, StageTypes } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
-import { Stage, Stages, UpdateCallback } from './stages'
+import { Stages } from './stages'
 import { LoadingManager } from 'three'
 import { Instance } from './renderer'
 
@@ -74,7 +74,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
  * Executes a callback in a given update stage.
  * Uses the stage instance to indetify which stage to target in the lifecycle.
  */
-export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update) {
+export function useUpdate(callback: RenderCallback, stage: StageTypes = Stages.Update) {
   const store = useStore()
   const stages = store.getState().internal.stages
   // Memoize ref

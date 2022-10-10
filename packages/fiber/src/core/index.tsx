@@ -589,3 +589,43 @@ export {
   act,
   roots as _roots,
 }
+
+export type {
+  AttachFnType,
+  AttachType,
+  ConstructorRepresentation,
+  Catalogue,
+  Args,
+  InstanceProps,
+  Instance,
+} from './renderer'
+export type {
+  Subscription,
+  Dpr,
+  Size,
+  Viewport,
+  RenderCallback,
+  LegacyAlways,
+  FrameloopMode,
+  FrameloopRender,
+  FrameloopLegacy,
+  Frameloop,
+  Performance,
+  Renderer,
+  XRManager,
+  RootState,
+} from './store'
+export type {
+  Intersection,
+  ThreeEvent,
+  DomEvent,
+  Events,
+  EventHandlers,
+  FilterFunction,
+  ComputeFunction,
+  EventManager,
+  createEvents,
+} from './events'
+export type { ObjectMap, Camera } from './utils'
+export type { GlobalRenderCallback, GlobalEffectType, flushGlobalEffects } from './loop'
+export { Stage, FixedStage, Stages } from './stages'
