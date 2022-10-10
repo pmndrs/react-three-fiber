@@ -605,6 +605,7 @@ export type {
   Size,
   Viewport,
   RenderCallback,
+  UpdateCallback,
   LegacyAlways,
   FrameloopMode,
   FrameloopRender,
