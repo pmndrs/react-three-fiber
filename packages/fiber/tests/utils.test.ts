@@ -261,6 +261,18 @@ describe('diffProps', () => {
     expect(filtered).toStrictEqual({ bar: false })
   })
 
+  it('invalidates pierced props when root is changed', async () => {
+    const texture1 = { needsUpdate: false, name: '' } as THREE.Texture
+    const texture2 = { needsUpdate: false, name: '' } as THREE.Texture
+
+    const oldProps = { map: texture1, 'map-needsUpdate': true, 'map-name': 'test' }
+    const newProps = { map: texture2, 'map-needsUpdate': true, 'map-name': 'test' }
+
+    const instance = prepare({}, storeMock, '', oldProps)
+    const filtered = diffProps(instance, newProps)
+    expect(filtered).toStrictEqual(newProps)
+  })
+
   it('should pick removed props for HMR', () => {
     const instance = prepare(new THREE.Object3D(), storeMock, '', { position: [0, 0, 1] })
     const newProps = {}
