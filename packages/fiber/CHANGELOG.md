@@ -1,5 +1,29 @@
 # @react-three/fiber
 
+## 8.8.10
+
+### Patch Changes
+
+- 00c24718: fix: invalidate pierced props
+
+## 8.8.9
+
+### Patch Changes
+
+- 4254400e: fix(createPortal): use correct JSX type
+
+## 8.8.8
+
+### Patch Changes
+
+- fcb183e3: fix: call onUpdate for attached children prop update
+
+## 8.8.7
+
+### Patch Changes
+
+- bedb16e7: fix: prefer named functions, for loops in hot paths
+
 ## 8.8.6
 
 ### Patch Changes
