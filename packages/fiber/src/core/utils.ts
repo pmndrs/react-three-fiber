@@ -260,6 +260,11 @@ export function diffProps<T = any>(
 
     // Props changed, add them
     changedProps[prop] = newProps[prop]
+
+    // Reset pierced props
+    for (const other in newProps) {
+      if (other.startsWith(`${prop}-`)) changedProps[other] = newProps[other]
+    }
   }
 
   // Reset removed props for HMR
