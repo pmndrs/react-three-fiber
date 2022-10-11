@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.10
+
+### Patch Changes
+
+- 00c24718: fix: invalidate pierced props
+
 ## 8.8.9
 
 ### Patch Changes
