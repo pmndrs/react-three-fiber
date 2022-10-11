@@ -235,7 +235,8 @@ export function diffProps(
     changes.push([key, value, false, entries])
 
     // Reset pierced props
-    for (const [prop, value] of entries) {
+    for (const prop in props) {
+      const value = props[prop]
       if (prop.startsWith(`${key}-`)) changes.push([prop, value, false, prop.split('-')])
     }
   })
