@@ -233,6 +233,12 @@ export function diffProps(
     let entries: string[] = []
     if (key.includes('-')) entries = key.split('-')
     changes.push([key, value, false, entries])
+
+    // Reset pierced props
+    for (const prop in props) {
+      const value = props[prop]
+      if (prop.startsWith(`${key}-`)) changes.push([prop, value, false, prop.split('-')])
+    }
   })
 
   const memoized: { [key: string]: any } = { ...props }

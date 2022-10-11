@@ -762,4 +762,26 @@ describe('renderer', () => {
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
   })
+
+  it('invalidates pierced props when root is changed', async () => {
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    const texture1 = { needsUpdate: false, name: '' } as THREE.Texture
+    const texture2 = { needsUpdate: false, name: '' } as THREE.Texture
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture1} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture1)
+    expect(texture1.needsUpdate).toBe(true)
+    expect(texture1.name).toBe('test')
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture2} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture2)
+    expect(texture2.needsUpdate).toBe(true)
+    expect(texture2.name).toBe('test')
+  })
 })
