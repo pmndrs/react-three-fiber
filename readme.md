@@ -31,13 +31,16 @@ Yes. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, 
 ### What does it look like?
 
 <table>
-  <tr>
-    <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).</td>
-    <td>
-      <a href="https://codesandbox.io/s/rrppl0y8l4">
-        <img src="https://i.imgur.com/sS4ArrZ.gif" /></td>
-      </a>
-  </tr>
+  <tbody>
+    <tr>
+      <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).</td>
+      <td>
+        <a href="https://codesandbox.io/s/rrppl0y8l4">
+          <img src="https://i.imgur.com/sS4ArrZ.gif" />
+        </a>
+      </td>
+    </tr>
+  </tbody>
 </table>
 
 ```jsx
