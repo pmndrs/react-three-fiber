@@ -17,7 +17,15 @@ import {
   privateKeys,
 } from './store'
 import { createRenderer, extend, Root } from './renderer'
-import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects, GlobalRenderCallback } from './loop'
+import {
+  createLoop,
+  addEffect,
+  addAfterEffect,
+  addTail,
+  GlobalEffectType,
+  flushGlobalEffects,
+  GlobalRenderCallback,
+} from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
   is,
@@ -549,6 +557,7 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
+  GlobalEffectType,
   flushGlobalEffects,
   getRootState,
   act,
