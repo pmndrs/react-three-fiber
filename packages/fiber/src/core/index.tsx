@@ -1,4 +1,4 @@
-export {
+export type {
   Intersection,
   ThreeEvent,
   DomEvent,
@@ -7,20 +7,12 @@ export {
   FilterFunction,
   ComputeFunction,
   EventManager,
-  createEvents,
 } from './events'
+export { createEvents } from './events'
 export * from './hooks'
-export {
-  GlobalRenderCallback,
-  GlobalEffectType,
-  flushGlobalEffects,
-  addEffect,
-  addAfterEffect,
-  addTail,
-  invalidate,
-  advance,
-} from './loop'
-export {
+export type { GlobalRenderCallback, GlobalEffectType } from './loop'
+export { flushGlobalEffects, addEffect, addAfterEffect, addTail, invalidate, advance } from './loop'
+export type {
   AttachFnType,
   AttachType,
   ConstructorRepresentation,
@@ -28,22 +20,12 @@ export {
   Args,
   InstanceProps,
   Instance,
-  extend,
-  reconciler,
 } from './reconciler'
-export {
-  _roots,
-  render,
-  createRoot,
-  unmountComponentAtNode,
-  createPortal,
-  ReconcilerRoot,
-  GLProps,
-  CameraProps,
-  RenderProps,
-} from './renderer'
+export { extend, reconciler } from './reconciler'
+export type { ReconcilerRoot, GLProps, CameraProps, RenderProps } from './renderer'
+export { _roots, render, createRoot, unmountComponentAtNode, createPortal } from './renderer'
 export { Stage, FixedStage, Stages } from './stages'
-export {
+export type {
   Subscription,
   Dpr,
   Size,
@@ -60,6 +42,7 @@ export {
   XRManager,
   RootState,
   RootStore,
-  context,
 } from './store'
-export { ObjectMap, Camera, applyProps, getRootState, dispose, Disposable, act, Act } from './utils'
+export { context } from './store'
+export type { ObjectMap, Camera, Disposable, Act } from './utils'
+export { applyProps, getRootState, dispose, act } from './utils'
