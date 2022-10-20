@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import type { UseBoundStore } from 'zustand'
-import type { RootState, Instance } from '../src'
+import type { Instance, RootStore } from '../src'
 import {
   is,
   dispose,
@@ -17,7 +16,7 @@ import {
 } from '../src/core/utils'
 
 // Mocks a Zustand store
-const storeMock: UseBoundStore<RootState> = Object.assign(() => null!, {
+const storeMock: RootStore = Object.assign(() => null!, {
   getState: () => null!,
   setState() {},
   subscribe: () => () => {},
@@ -260,6 +259,18 @@ describe('diffProps', () => {
 
     const filtered = diffProps(instance, newProps)
     expect(filtered).toStrictEqual({ bar: false })
+  })
+
+  it('invalidates pierced props when root is changed', async () => {
+    const texture1 = { needsUpdate: false, name: '' } as THREE.Texture
+    const texture2 = { needsUpdate: false, name: '' } as THREE.Texture
+
+    const oldProps = { map: texture1, 'map-needsUpdate': true, 'map-name': 'test' }
+    const newProps = { map: texture2, 'map-needsUpdate': true, 'map-name': 'test' }
+
+    const instance = prepare({}, storeMock, '', oldProps)
+    const filtered = diffProps(instance, newProps)
+    expect(filtered).toStrictEqual(newProps)
   })
 
   it('should pick removed props for HMR', () => {

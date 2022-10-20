@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
+import create, { StoreApi, UseBoundStore } from 'zustand'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
 import { FixedStage, Stage } from './stages'
@@ -24,7 +24,7 @@ export type PrivateKeys = typeof privateKeys[number]
 export interface Subscription {
   ref: React.MutableRefObject<RenderCallback>
   priority: number
-  store: UseBoundStore<RootState, StoreApi<RootState>>
+  store: RootStore
 }
 
 export type Dpr = number | [min: number, max: number]
@@ -93,11 +93,7 @@ export interface InternalState {
   render: 'auto' | 'manual'
   /** The max delta time between two frames. */
   maxDelta: number
-  subscribe: (
-    callback: React.MutableRefObject<RenderCallback>,
-    priority: number,
-    store: UseBoundStore<RootState, StoreApi<RootState>>,
-  ) => () => void
+  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority: number, store: RootStore) => () => void
 }
 
 export interface XRManager {
@@ -107,9 +103,9 @@ export interface XRManager {
 
 export interface RootState {
   /** Set current state */
-  set: SetState<RootState>
+  set: StoreApi<RootState>['setState']
   /** Get current state */
-  get: GetState<RootState>
+  get: StoreApi<RootState>['getState']
   /** The instance of the renderer */
   gl: THREE.WebGLRenderer
   /** Default camera */
@@ -165,17 +161,19 @@ export interface RootState {
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
-  previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
+  previousRoot?: RootStore
   /** Internals */
   internal: InternalState
 }
 
-const context = React.createContext<UseBoundStore<RootState>>(null!)
+export type RootStore = UseBoundStore<StoreApi<RootState>>
+
+const context = React.createContext<RootStore>(null!)
 
 const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
-): UseBoundStore<RootState> => {
+): RootStore => {
   const rootStore = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
@@ -320,11 +318,7 @@ const createStore = (
         render: 'auto',
         maxDelta: 1 / 10,
         priority: 0,
-        subscribe: (
-          ref: React.MutableRefObject<RenderCallback>,
-          priority: number,
-          store: UseBoundStore<RootState, StoreApi<RootState>>,
-        ) => {
+        subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number, store: RootStore) => {
           const state = get()
           const internal = state.internal
           // If this subscription was given a priority, it takes rendering into its own hands

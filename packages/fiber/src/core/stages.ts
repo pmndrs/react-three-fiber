@@ -1,5 +1,5 @@
 import { StoreApi, UseBoundStore } from 'zustand'
-import { RootState, Subscription } from './store'
+import { RootState, RootStore, Subscription } from './store'
 
 // TODO: Remove deprecated fields in `Subscription`
 export type UpdateSubscription = Omit<Subscription, 'priority'>
@@ -39,7 +39,7 @@ export class Stage {
    * @param store - The store to be used with the callback execution.
    * @returns A function to remove the subscription.
    */
-  add(ref: UpdateSubscription['ref'], store: UseBoundStore<RootState, StoreApi<RootState>>) {
+  add(ref: UpdateSubscription['ref'], store: RootStore) {
     this.subscribers.push({ ref, store })
 
     return () => {

@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { StateSelector, EqualityChecker } from 'zustand'
 import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, UpdateCallback, StageTypes } from './store'
@@ -49,8 +48,8 @@ export function useStore() {
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usethree
  */
 export function useThree<T = RootState>(
-  selector: StateSelector<RootState, T> = (state) => state as unknown as T,
-  equalityFn?: EqualityChecker<T>,
+  selector: (state: RootState) => T = (state) => state as unknown as T,
+  equalityFn?: <T>(state: T, newState: T) => boolean,
 ) {
   return useStore()(selector, equalityFn)
 }

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create, { StoreApi, UseBoundStore } from 'zustand'
+import create from 'zustand'
 
 import { ThreeElement } from '../three-types'
 import {
@@ -18,6 +18,7 @@ import {
   Subscription,
   FrameloopLegacy,
   Frameloop,
+  RootStore,
 } from './store'
 import { reconciler, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
@@ -97,7 +98,7 @@ export type RenderProps<TCanvas extends Element> = {
     manual?: boolean
   }
   /** An R3F event manager to manage elements' pointer events */
-  events?: (store: UseBoundStore<RootState>) => EventManager<HTMLElement>
+  events?: (store: RootStore) => EventManager<HTMLElement>
   /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
@@ -122,7 +123,7 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     })
 }
 
-const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootState, StoreApi<RootState>>) => {
+const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   const state = store.getState()
   let subscribers: Subscription[]
   let subscription: Subscription
@@ -157,7 +158,7 @@ const createStages = (stages: Stage[] | undefined, store: UseBoundStore<RootStat
 
 export type ReconcilerRoot<TCanvas extends Element> = {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
-  render: (element: React.ReactNode) => UseBoundStore<RootState>
+  render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
 
@@ -366,7 +367,7 @@ function render<TCanvas extends Element>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
-): UseBoundStore<RootState> {
+): RootStore {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
@@ -380,7 +381,7 @@ function Provider<TElement extends Element>({
   rootElement,
 }: {
   onCreated?: (state: RootState) => void
-  store: UseBoundStore<RootState>
+  store: RootStore
   children: React.ReactNode
   rootElement: TElement
   parent?: React.MutableRefObject<TElement | undefined>
@@ -437,7 +438,7 @@ export type InjectState = Partial<
   }
 >
 
-function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.ReactNode {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal key={container.uuid} children={children} container={container} state={state} />
 }
 
@@ -449,7 +450,7 @@ function Portal({
   children: React.ReactNode
   state?: InjectState
   container: THREE.Object3D
-}) {
+}): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
