@@ -1,5 +1,4 @@
-import { StoreApi, UseBoundStore } from 'zustand'
-import { RootState, RootStore, Subscription } from './store'
+import type { Subscription, RootStore } from './store'
 
 // TODO: Remove deprecated fields in `Subscription`
 export type UpdateSubscription = Omit<Subscription, 'priority'>

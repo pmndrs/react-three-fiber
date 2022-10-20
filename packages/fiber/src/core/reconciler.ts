@@ -2,8 +2,8 @@ import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
-import { RootState, RootStore } from './store'
-import { removeInteractivity, getEventPriority, EventHandlers } from './events'
+import type { RootStore } from './store'
+import { removeInteractivity, getEventPriority, type EventHandlers } from './events'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -60,7 +60,7 @@ interface HostConfig {
 }
 
 const catalogue: Catalogue = {}
-const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
+export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue
@@ -268,7 +268,7 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
-const reconciler = Reconciler<
+export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
   HostConfig['container'],
@@ -391,5 +391,3 @@ const reconciler = Reconciler<
   scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
   cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
 })
-
-export { extend, reconciler }

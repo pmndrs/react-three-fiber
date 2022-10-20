@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
-import { Camera, getRootState } from './utils'
-import type { Instance } from './renderer'
+import { type Camera, getRootState } from './utils'
+import type { Instance } from './reconciler'
 import type { RootState, RootStore } from './store'
 
 export interface Intersection extends THREE.Intersection {

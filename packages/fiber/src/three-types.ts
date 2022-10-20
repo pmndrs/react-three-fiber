@@ -1,6 +1,5 @@
 import type * as THREE from 'three'
-import type { EventHandlers } from './core/events'
-import type { InstanceProps, ConstructorRepresentation } from './core/renderer'
+import type { EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 
 type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
 type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]

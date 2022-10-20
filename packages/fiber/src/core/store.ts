@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import create, { StoreApi, UseBoundStore } from 'zustand'
-import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
-import { FixedStage, Stage } from './stages'
+import create, { type StoreApi, type UseBoundStore } from 'zustand'
+import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
+import { calculateDpr, type Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
+import type { FixedStage, Stage } from './stages'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -109,7 +109,7 @@ export interface RootState {
   /** The instance of the renderer */
   gl: THREE.WebGLRenderer
   /** Default camera */
-  camera: Camera & { manual?: boolean }
+  camera: Camera
   /** Default scene */
   scene: THREE.Scene
   /** Default raycaster */
@@ -168,9 +168,9 @@ export interface RootState {
 
 export type RootStore = UseBoundStore<StoreApi<RootState>>
 
-const context = React.createContext<RootStore>(null!)
+export const context = React.createContext<RootStore>(null!)
 
-const createStore = (
+export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
@@ -389,5 +389,3 @@ const createStore = (
   // Return root state
   return rootStore
 }
-
-export { createStore, context }

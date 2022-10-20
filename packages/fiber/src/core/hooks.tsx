@@ -1,12 +1,12 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, UpdateCallback, StageTypes } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
 import { Stages } from './stages'
-import { LoadingManager } from 'three'
-import { Instance } from './renderer'
+import type { LoadingManager } from 'three'
+import type { Instance } from './reconciler'
 
 export interface Loader<T> extends THREE.Loader {
   load(
