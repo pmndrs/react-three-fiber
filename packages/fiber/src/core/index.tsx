@@ -616,6 +616,7 @@ export type {
   Renderer,
   XRManager,
   RootState,
+  RootStore,
 } from './store'
 export type {
   Intersection,
