@@ -1,14 +1,13 @@
 import * as THREE from 'three'
-import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
-import { RootState } from './store'
+import { RootState, RootStore } from './store'
 import { removeInteractivity, getEventPriority, EventHandlers } from './events'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
-  store: UseBoundStore<RootState>
+  store: RootStore
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
@@ -31,7 +30,7 @@ export interface InstanceProps<T = any> {
 }
 
 export interface Instance<O = any> {
-  root: UseBoundStore<RootState>
+  root: RootStore
   type: string
   parent: Instance | null
   children: Instance[]
@@ -47,7 +46,7 @@ export interface Instance<O = any> {
 interface HostConfig {
   type: string
   props: Instance['props']
-  container: UseBoundStore<RootState>
+  container: RootStore
   instance: Instance
   textInstance: void
   suspenseInstance: Instance
@@ -63,11 +62,7 @@ interface HostConfig {
 const catalogue: Catalogue = {}
 const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
-function createInstance(
-  type: string,
-  props: HostConfig['props'],
-  root: UseBoundStore<RootState>,
-): HostConfig['instance'] {
+function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue
   const name = `${type[0].toUpperCase()}${type.slice(1)}`
   const target = catalogue[name]

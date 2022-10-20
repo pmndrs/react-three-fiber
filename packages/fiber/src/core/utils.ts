@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import type { Fiber } from 'react-reconciler'
-import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
-import type { Dpr, RootState, Size } from './store'
+import type { Dpr, RootState, RootStore, Size } from './store'
 import type { ConstructorRepresentation, Instance } from './renderer'
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
@@ -154,12 +153,7 @@ export function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instanc
 }
 
 // Each object in the scene carries a small LocalState descriptor
-export function prepare<T = any>(
-  target: T,
-  root: UseBoundStore<RootState>,
-  type: string,
-  props: Instance<T>['props'],
-): Instance<T> {
+export function prepare<T = any>(target: T, root: RootStore, type: string, props: Instance<T>['props']): Instance<T> {
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor

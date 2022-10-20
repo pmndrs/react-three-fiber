@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import type { UseBoundStore } from 'zustand'
-import type { RootState, Instance } from '../src'
+import type { Instance, RootStore } from '../src'
 import {
   is,
   dispose,
@@ -17,7 +16,7 @@ import {
 } from '../src/core/utils'
 
 // Mocks a Zustand store
-const storeMock: UseBoundStore<RootState> = Object.assign(() => null!, {
+const storeMock: RootStore = Object.assign(() => null!, {
   getState: () => null!,
   setState() {},
   subscribe: () => () => {},
