@@ -394,3 +394,22 @@ export function updateCamera(camera: Camera, size: Size): void {
     camera.updateMatrixWorld()
   }
 }
+
+/**
+ * Get a handle to the supported `now` function for react-internal performance profiling.
+ */
+export const now =
+  typeof performance !== 'undefined' && is.fun(performance.now)
+    ? performance.now
+    : is.fun(Date.now)
+    ? Date.now
+    : () => 0
+
+/**
+ * Get a handle to the current global scope in window and worker contexts if able
+ * https://github.com/pmndrs/react-three-fiber/pull/2493
+ */
+export const globalScope =
+  (typeof global !== 'undefined' && global) ||
+  (typeof self !== 'undefined' && self) ||
+  (typeof window !== 'undefined' && window)

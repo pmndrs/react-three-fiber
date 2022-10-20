@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { type Camera, getRootState } from './utils'
 import type { Instance } from './reconciler'
 import type { RootState, RootStore } from './store'
@@ -92,35 +91,6 @@ export interface PointerCaptureTarget {
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
-}
-
-// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-// Gives React a clue as to how import the current interaction is
-export function getEventPriority() {
-  // Get a handle to the current global scope in window and worker contexts if able
-  // https://github.com/pmndrs/react-three-fiber/pull/2493
-  const globalScope = (typeof self !== 'undefined' && self) || (typeof window !== 'undefined' && window)
-  if (!globalScope) return DefaultEventPriority
-
-  const name = globalScope.event?.type
-  switch (name) {
-    case 'click':
-    case 'contextmenu':
-    case 'dblclick':
-    case 'pointercancel':
-    case 'pointerdown':
-    case 'pointerup':
-      return DiscreteEventPriority
-    case 'pointermove':
-    case 'pointerout':
-    case 'pointerover':
-    case 'pointerenter':
-    case 'pointerleave':
-    case 'wheel':
-      return ContinuousEventPriority
-    default:
-      return DefaultEventPriority
-  }
 }
 
 /**
