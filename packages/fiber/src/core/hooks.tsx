@@ -17,10 +17,10 @@ export interface Loader<T> extends THREE.Loader {
 }
 
 export type LoaderProto<T> = new (...args: any) => Loader<T extends unknown ? any : T>
-// TODO: move LoaderReturnType to LoaderResult in v9
 export type LoaderReturnType<T, L extends LoaderProto<T>> = T extends unknown
   ? Awaited<ReturnType<InstanceType<L>['loadAsync']>>
   : T
+// TODO: this isn't used anywhere, remove in v9
 export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 export type Extensions<T extends { prototype: LoaderProto<any> }> = (loader: T['prototype']) => void
 export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
