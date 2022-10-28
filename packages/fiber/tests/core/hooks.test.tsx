@@ -211,6 +211,21 @@ describe('hooks', () => {
     expect(scene.children[0]).toBe(MockMesh)
   })
 
+  it('can handle useLoader with a loader extension', async () => {
+    class Loader extends THREE.Loader {
+      load = (_url: string) => null
+    }
+
+    let proto!: Loader
+
+    function Test() {
+      return useLoader(Loader, '', (loader) => (proto = loader))
+    }
+    await act(async () => createRoot(canvas).render(<Test />))
+
+    expect(proto).toBeInstanceOf(Loader)
+  })
+
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
