@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.9.0
+
+### Minor Changes
+
+- a458b4dd: fix(loop): export flush methods and types
+
 ## 8.8.11
 
 ### Patch Changes

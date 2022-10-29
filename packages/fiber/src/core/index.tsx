@@ -21,7 +21,7 @@ import {
   RootStore,
 } from './store'
 import { reconciler, extend, Root } from './renderer'
-import { createLoop, addEffect, addAfterEffect, addTail } from './loop'
+import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
 import { EventManager, ComputeFunction } from './events'
 import {
   is,
@@ -585,6 +585,7 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
+  flushGlobalEffects,
   getRootState,
   Act,
   act,
