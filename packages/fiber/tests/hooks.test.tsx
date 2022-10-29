@@ -157,7 +157,7 @@ describe('hooks', () => {
     function Test() {
       return useLoader(Loader, '', (loader) => (proto = loader))
     }
-    await act(async () => createRoot(canvas).render(<Test />))
+    await act(async () => root.render(<Test />))
 
     expect(proto).toBeInstanceOf(Loader)
   })
