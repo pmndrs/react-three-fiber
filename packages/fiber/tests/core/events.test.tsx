@@ -366,6 +366,7 @@ describe('events', () => {
       expect(handlePointerLeave).not.toHaveBeenCalled();
 
       await act(async () => canvas.dispatchEvent(moveIn))
+      expect(handlePointerMove).toHaveBeenCalledTimes(3);
 
       const up = new PointerEvent('pointerup', { pointerId })
       Object.defineProperty(up, 'offsetX', { get: () => 577 })

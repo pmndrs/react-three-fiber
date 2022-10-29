@@ -252,7 +252,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     // If the interaction is captured, make all capturing targets part of the intersect.
     if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
       for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
-        intersections.push(captureData.intersection)
+        if (!duplicates.has(makeId(captureData.intersection))) intersections.push(captureData.intersection)
       }
     }
     return intersections
