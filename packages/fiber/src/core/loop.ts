@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Root } from './renderer'
 import { RootState, Subscription } from './store'
 
-type GlobalRenderCallback = (timeStamp: number) => void
+export type GlobalRenderCallback = (timeStamp: number) => void
 type SubItem = { callback: GlobalRenderCallback }
 
 function createSubs(callback: GlobalRenderCallback, subs: Set<SubItem>): () => void {
