@@ -224,7 +224,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       .sort((a, b) => {
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
-        if (!aState || !bState) return 0
+        if (!aState || !bState) return a.distance - b.distance
         return bState.events.priority - aState.events.priority || a.distance - b.distance
       })
       // Filter out duplicates
