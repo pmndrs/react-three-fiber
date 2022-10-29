@@ -252,7 +252,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     // If the interaction is captured, make all capturing targets part of the intersect.
     if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
       for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
-        intersections.push(captureData.intersection)
+        if (!duplicates.has(makeId(captureData.intersection))) intersections.push(captureData.intersection)
       }
     }
     return intersections
@@ -403,7 +403,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           const { internal } = store.getState()
-          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+          if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
             internal.capturedMap.delete(event.pointerId)
