@@ -403,7 +403,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           const { internal } = store.getState()
-          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+          if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
             internal.capturedMap.delete(event.pointerId)
