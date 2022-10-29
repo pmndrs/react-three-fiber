@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.8.11
+
+### Patch Changes
+
+- 2068f0cc: fix: events pointerlock, useLoader extension types
+
 ## 8.8.10
 
 ### Patch Changes

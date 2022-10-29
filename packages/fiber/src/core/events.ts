@@ -222,7 +222,7 @@ export function createEvents(store: RootStore) {
       .sort((a, b) => {
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
-        if (!aState || !bState) return 0
+        if (!aState || !bState) return a.distance - b.distance
         return bState.events.priority - aState.events.priority || a.distance - b.distance
       })
       // Filter out duplicates
@@ -251,7 +251,7 @@ export function createEvents(store: RootStore) {
     // If the interaction is captured, make all capturing targets part of the intersect.
     if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
       for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
-        intersections.push(captureData.intersection)
+        if (!duplicates.has(makeId(captureData.intersection))) intersections.push(captureData.intersection)
       }
     }
     return intersections
@@ -404,7 +404,7 @@ export function createEvents(store: RootStore) {
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           const { internal } = store.getState()
-          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+          if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
             internal.capturedMap.delete(event.pointerId)
