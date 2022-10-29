@@ -585,6 +585,7 @@ export {
   addEffect,
   addAfterEffect,
   addTail,
+  createEvents,
   flushGlobalEffects,
   getRootState,
   Act,
@@ -628,8 +629,7 @@ export type {
   FilterFunction,
   ComputeFunction,
   EventManager,
-  createEvents,
 } from './events'
 export type { ObjectMap, Camera } from './utils'
-export type { GlobalRenderCallback, GlobalEffectType, flushGlobalEffects } from './loop'
+export type { GlobalRenderCallback, GlobalEffectType } from './loop'
 export { Stage, FixedStage, Stages } from './stages'
