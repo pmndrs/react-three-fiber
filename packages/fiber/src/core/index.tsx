@@ -22,7 +22,7 @@ import {
 } from './store'
 import { reconciler, extend, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
-import { EventManager, ComputeFunction } from './events'
+import { EventManager, ComputeFunction, createEvents } from './events'
 import {
   is,
   dispose,
