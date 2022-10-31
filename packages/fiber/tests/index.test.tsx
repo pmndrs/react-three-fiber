@@ -221,14 +221,14 @@ describe('createPortal', () => {
 })
 
 function getExports(source: string): string[] {
-  const program = ts.createProgram([source], {})
+  const program = ts.createProgram([source], { jsx: ts.JsxEmit.React })
   const checker = program.getTypeChecker()
   const sourceFile = program.getSourceFile(source)!
 
   const sourceFileSymbol = checker.getSymbolAtLocation(sourceFile)!
   const moduleExports = checker.getExportsOfModule(sourceFileSymbol)
 
-  return moduleExports.map(({ escapedName }) => escapedName) as unknown as string[]
+  return moduleExports.map(({ escapedName }) => escapedName).sort() as unknown as string[]
 }
 
 describe('exports', () => {
