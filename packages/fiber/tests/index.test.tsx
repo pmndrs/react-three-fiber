@@ -1,5 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import * as ts from 'typescript'
+import * as path from 'path'
 import { ReconcilerRoot, createRoot, act, useFrame, useThree, createPortal, RootState, RootStore } from '../src/index'
 import { privateKeys } from '../src/core/store'
 
@@ -215,5 +217,26 @@ describe('createPortal', () => {
 
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+})
+
+function getExports(source: string): string[] {
+  const program = ts.createProgram([source], {})
+  const checker = program.getTypeChecker()
+  const sourceFile = program.getSourceFile(source)!
+
+  const sourceFileSymbol = checker.getSymbolAtLocation(sourceFile)!
+  const moduleExports = checker.getExportsOfModule(sourceFileSymbol)
+
+  return moduleExports.map(({ escapedName }) => escapedName) as unknown as string[]
+}
+
+describe('exports', () => {
+  it('are consistent between targets', () => {
+    const webExports = getExports(path.resolve(__dirname, '../src/index.tsx'))
+    const nativeExports = getExports(path.resolve(__dirname, '../src/native.tsx'))
+
+    expect(webExports).toMatchSnapshot()
+    expect(webExports).toStrictEqual(nativeExports)
   })
 })
