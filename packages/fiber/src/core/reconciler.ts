@@ -1,9 +1,10 @@
 import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
-import { RootState, RootStore } from './store'
-import { removeInteractivity, getEventPriority, EventHandlers } from './events'
+import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, now } from './utils'
+import type { RootStore } from './store'
+import { removeInteractivity, type EventHandlers } from './events'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -60,7 +61,7 @@ interface HostConfig {
 }
 
 const catalogue: Catalogue = {}
-const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
+export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue
@@ -268,7 +269,7 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
-const reconciler = Reconciler<
+export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
   HostConfig['container'],
@@ -375,21 +376,39 @@ const reconciler = Reconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
+  // SSR fallbacks
+  now,
+  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
+  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+  // @ts-ignore Deprecated experimental APIs
+  // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
   // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-  // @ts-ignore
-  getCurrentEventPriority: () => getEventPriority(),
   beforeActiveInstanceBlur: () => {},
   afterActiveInstanceBlur: () => {},
   detachDeletedInstance: () => {},
-  now:
-    typeof performance !== 'undefined' && is.fun(performance.now)
-      ? performance.now
-      : is.fun(Date.now)
-      ? Date.now
-      : () => 0,
-  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
-  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
-  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
-})
+  // Gives React a clue as to how import the current interaction is
+  // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+  getCurrentEventPriority() {
+    if (!globalScope) return DefaultEventPriority
 
-export { extend, reconciler }
+    const name = globalScope.event?.type
+    switch (name) {
+      case 'click':
+      case 'contextmenu':
+      case 'dblclick':
+      case 'pointercancel':
+      case 'pointerdown':
+      case 'pointerup':
+        return DiscreteEventPriority
+      case 'pointermove':
+      case 'pointerout':
+      case 'pointerover':
+      case 'pointerenter':
+      case 'pointerleave':
+      case 'wheel':
+        return ContinuousEventPriority
+      default:
+        return DefaultEventPriority
+    }
+  },
+})

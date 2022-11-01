@@ -1,5 +1,4 @@
-import { StoreApi, UseBoundStore } from 'zustand'
-import { RootState, RootStore, Subscription } from './store'
+import type { Subscription, RootStore } from './store'
 
 // TODO: Remove deprecated fields in `Subscription`
 export type UpdateSubscription = Omit<Subscription, 'priority'>
@@ -144,12 +143,12 @@ export class FixedStage extends Stage {
   }
 }
 
-const Early = new Stage()
-const Fixed = new FixedStage()
-const Update = new Stage()
-const Late = new Stage()
-const Render = new Stage()
-const After = new Stage()
+const Early = /*#__PURE__*/ new Stage()
+const Fixed = /*#__PURE__*/ new FixedStage()
+const Update = /*#__PURE__*/ new Stage()
+const Late = /*#__PURE__*/ new Stage()
+const Render = /*#__PURE__*/ new Stage()
+const After = /*#__PURE__*/ new Stage()
 
 export const Stages = { Early, Fixed, Update, Late, Render, After }
 export const Lifecycle = [Early, Fixed, Update, Late, Render, After]

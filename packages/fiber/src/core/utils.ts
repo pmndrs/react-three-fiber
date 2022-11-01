@@ -3,9 +3,16 @@ import * as React from 'react'
 import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
 import type { Dpr, RootState, RootStore, Size } from './store'
-import type { ConstructorRepresentation, Instance } from './renderer'
+import type { ConstructorRepresentation, Instance } from './reconciler'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
+
+/**
+ * Safely flush async effects when testing, simulating a legacy root.
+ */
+export const act: Act = (React as any).unstable_act
+
+export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
@@ -369,7 +376,7 @@ export function invalidateInstance(instance: Instance): void {
   if (state && state.internal.frames === 0) state.invalidate()
 }
 
-export function updateCamera(camera: Camera & { manual?: boolean }, size: Size): void {
+export function updateCamera(camera: Camera, size: Size): void {
   // https://github.com/pmndrs/react-three-fiber/issues/92
   // Do not mess with the camera if it belongs to the user
   if (!camera.manual) {
@@ -387,3 +394,22 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size):
     camera.updateMatrixWorld()
   }
 }
+
+/**
+ * Get a handle to the supported `now` function for react-internal performance profiling.
+ */
+export const now =
+  typeof performance !== 'undefined' && is.fun(performance.now)
+    ? performance.now
+    : is.fun(Date.now)
+    ? Date.now
+    : () => 0
+
+/**
+ * Get a handle to the current global scope in window and worker contexts if able
+ * https://github.com/pmndrs/react-three-fiber/pull/2493
+ */
+export const globalScope =
+  (typeof global !== 'undefined' && global) ||
+  (typeof self !== 'undefined' && self) ||
+  (typeof window !== 'undefined' && window)
