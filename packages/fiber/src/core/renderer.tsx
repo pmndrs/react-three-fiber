@@ -46,7 +46,6 @@ export type GLProps =
   | Renderer
   | ((canvas: HTMLCanvasElement) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
-  | undefined
 
 export type CameraProps = (
   | Camera
@@ -108,7 +107,10 @@ export interface RenderProps<TCanvas extends Element> {
   render?: 'auto' | 'manual'
 }
 
-const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
+const createRendererInstance = <TElement extends Element>(
+  gl: GLProps | undefined,
+  canvas: TElement,
+): THREE.WebGLRenderer => {
   const customRenderer = (
     typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
   ) as THREE.WebGLRenderer
