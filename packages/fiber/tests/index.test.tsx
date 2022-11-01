@@ -232,11 +232,15 @@ function getExports(source: string): string[] {
 }
 
 describe('exports', () => {
+  it('matches public API', () => {
+    const webExports = getExports(path.resolve(__dirname, '../src/index.tsx'))
+    expect(webExports).toMatchSnapshot()
+  })
+
   it('are consistent between targets', () => {
     const webExports = getExports(path.resolve(__dirname, '../src/index.tsx'))
     const nativeExports = getExports(path.resolve(__dirname, '../src/native.tsx'))
 
-    expect(webExports).toMatchSnapshot()
     expect(webExports).toStrictEqual(nativeExports)
   })
 })

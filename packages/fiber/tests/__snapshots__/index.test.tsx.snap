@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`exports are consistent between targets 1`] = `
+exports[`exports matches public API 1`] = `
 Array [
   "Act",
   "Args",
