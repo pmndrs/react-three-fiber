@@ -24,6 +24,7 @@ export type {
 export { extend, reconciler } from './reconciler'
 export type { ReconcilerRoot, GLProps, CameraProps, RenderProps, InjectState } from './renderer'
 export { _roots, render, createRoot, unmountComponentAtNode, createPortal } from './renderer'
+export type { UpdateSubscription } from './stages'
 export { Stage, FixedStage, Stages } from './stages'
 export type {
   Subscription,
@@ -39,6 +40,7 @@ export type {
   Frameloop,
   Performance,
   Renderer,
+  StageTypes,
   XRManager,
   RootState,
   RootStore,
