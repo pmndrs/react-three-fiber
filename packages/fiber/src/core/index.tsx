@@ -22,7 +22,7 @@ export type {
   Instance,
 } from './reconciler'
 export { extend, reconciler } from './reconciler'
-export type { ReconcilerRoot, GLProps, CameraProps, RenderProps } from './renderer'
+export type { ReconcilerRoot, GLProps, CameraProps, RenderProps, InjectState } from './renderer'
 export { _roots, render, createRoot, unmountComponentAtNode, createPortal } from './renderer'
 export { Stage, FixedStage, Stages } from './stages'
 export type {
