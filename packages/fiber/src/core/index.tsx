@@ -32,13 +32,12 @@ import {
 } from './utils'
 import { useStore } from './hooks'
 import { OffscreenCanvas } from 'three'
+import type { Properties } from '../three-types'
 
 const roots = new Map<Element, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
-
-type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
 
 type GLProps =
   | Renderer
