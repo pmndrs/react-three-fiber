@@ -81,17 +81,7 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
   // Create instance
-  const object = props.object ?? new target(...(props.args ?? []))
-  const instance = prepare(object, root, type, props)
-
-  // Auto-attach geometries and materials
-  if (instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
-  }
-
-  // Set initial props
-  applyProps(instance.object, props)
+  const instance = prepare(props.object, root, type, props)
 
   return instance
 }
@@ -103,6 +93,25 @@ function handleContainerEffects(parent: Instance, child: Instance) {
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
   if (!parent.parent && parent.object !== state.scene) return
+
+  if (!child.object) {
+    // Get target from catalogue
+    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+    const target = catalogue[name]
+
+    // Create object
+    child.object = child.props.object ?? new target(...(child.props.args ?? []))
+    child.object.__r3f = child
+  }
+
+  // Auto-attach geometries and materials
+  if (child.props.attach === undefined) {
+    if (child.object instanceof THREE.BufferGeometry) child.props.attach = 'geometry'
+    else if (child.object instanceof THREE.Material) child.props.attach = 'material'
+  }
+
+  // Set initial props
+  applyProps(child.object, child.props)
 
   // Handle interactivity
   if (child.eventCount > 0 && child.object.raycast !== null && child.object instanceof THREE.Object3D) {
@@ -121,13 +130,13 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
+  // Attach tree once complete
+  handleContainerEffects(parent, child)
+
   // Add Object3Ds if able
   if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
     parent.object.add(child.object)
   }
-
-  // Attach tree once complete
-  handleContainerEffects(parent, child)
 
   // Tree was updated, request a frame
   invalidateInstance(child)
@@ -147,6 +156,9 @@ function insertBefore(
   if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
   if (replace) beforeChild.parent = null
 
+  // Attach tree once complete
+  handleContainerEffects(parent, child)
+
   // Manually splice Object3Ds
   if (
     !child.props.attach &&
@@ -158,9 +170,6 @@ function insertBefore(
     parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), 0, child.object)
     child.object.dispatchEvent({ type: 'added' })
   }
-
-  // Attach tree once complete
-  handleContainerEffects(parent, child)
 
   // Tree was updated, request a frame
   invalidateInstance(child)
