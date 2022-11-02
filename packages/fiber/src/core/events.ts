@@ -4,6 +4,7 @@ import { getRootState } from './utils'
 import type { UseBoundStore } from 'zustand'
 import type { Instance } from './renderer'
 import type { RootState } from './store'
+import type { Properties } from '../three-types'
 
 export interface Intersection extends THREE.Intersection {
   /** The event source (the object which registered the handler) */
@@ -34,7 +35,7 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = IntersectionEvent<TEvent>
+export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
 export type Events = {
