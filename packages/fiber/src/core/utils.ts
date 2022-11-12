@@ -5,6 +5,19 @@ import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
+/**
+ * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ */
+const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const ColorManagement: ColorManagementRepresentation | null =
+  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
@@ -333,8 +346,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = 'ColorManagement' in THREE
-        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!ColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
@@ -389,14 +401,4 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     // Update matrix world since the renderer is a frame late
     camera.updateMatrixWorld()
   }
-}
-
-/**
- * Safely sets a deeply-nested value on an object.
- */
-export function setDeep(obj: any, value: any, keys: string[]) {
-  const key = keys.pop()!
-  const target = keys.reduce((acc, key) => acc[key], obj)
-
-  return (target[key] = value)
 }
