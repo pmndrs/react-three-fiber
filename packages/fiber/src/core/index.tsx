@@ -274,7 +274,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       // Safely set color management if available.
       // Avoid accessing THREE.ColorManagement to play nice with older versions
       if (ColorManagement) {
-        if ('enabled' in ColorManagement) ColorManagement.enabled = legacy
+        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
