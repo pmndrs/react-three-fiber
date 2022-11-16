@@ -222,6 +222,7 @@ Some helpful material:
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
+- [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; Constructive solid geometry
 - [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapie) &ndash; physics using Rapier
 - [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
@@ -229,6 +230,7 @@ Some helpful material:
 - [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
 - [`react-use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
+- [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 
 # How to contribute
 
