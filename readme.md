@@ -212,9 +212,7 @@ Some helpful material:
 
 - [Threejs-docs](https://threejs.org/docs)
 - [Threejs-examples](https://threejs.org/examples)
-- [Threejs-fundamentals](https://threejs.org/manual/#en/fundamentals)
-- [Discover Threejs](https://discoverthreejs.com)
-- [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
+- [Discover Threejs](https://discoverthreejs.com), especially [do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for best practices
 - [Bruno Simons Threejs Jouney](https://threejs-journey.com) now includes a full R3F chapter
 
 # Ecosystem
