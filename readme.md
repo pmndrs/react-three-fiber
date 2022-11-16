@@ -208,15 +208,14 @@ You need to be versed in both React and Threejs before rushing into this. If you
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber/API) to see what the various settings and hooks do.
 
-Some reading material:
+Some helpful material:
 
 - [Threejs-docs](https://threejs.org/docs)
 - [Threejs-examples](https://threejs.org/examples)
 - [Threejs-fundamentals](https://threejs.org/manual/#en/fundamentals)
-- [three.js-journey](https://threejs-journey.com)
 - [Discover Threejs](https://discoverthreejs.com)
 - [Do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for performance and best practices
-- [react-three-fiber alligator.io tutorial](https://alligator.io/react/react-with-threejs) by [@dghez\_](https://twitter.com/dghez_)
+- [Bruno Simons Threejs Jouney](https://threejs-journey.com) now includes a full R3F chapter
 
 # Ecosystem
 
@@ -225,7 +224,8 @@ Some reading material:
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
-- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics based hooks
+- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapie) &ndash; physics using Rapier
+- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; state management
 - [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
