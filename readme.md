@@ -13,7 +13,7 @@ react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#
 Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
 
 ```bash
-npm install three @react-three/fiber
+npm install three @types/three @react-three/fiber
 ```
 
 #### Does it have limitations?
@@ -217,18 +217,20 @@ Some helpful material:
 
 # Ecosystem
 
-- [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
-- [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; Constructive solid geometry
+- [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; constructive solid geometry
 - [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapie) &ndash; physics using Rapier
 - [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
-- [`zustand`](https://github.com/pmndrs/zustand) &ndash; state management
+- [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
+- [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
+- [`valtio`](https://github.com/pmndrs/valtio) &ndash; proxy based state management
 - [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
-- [`react-use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
+- [`use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 
