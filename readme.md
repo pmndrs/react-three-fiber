@@ -212,8 +212,8 @@ Some helpful material:
 
 - [Threejs-docs](https://threejs.org/docs)
 - [Threejs-examples](https://threejs.org/examples)
-- [Discover Threejs](https://discoverthreejs.com), especially [do's and don'ts](https://discoverthreejs.com/tips-and-tricks) for best practices
-- [Bruno Simons Threejs Jouney](https://threejs-journey.com) now includes a full R3F chapter
+- [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
+- [Bruno Simons Threejs Jouney](https://threejs-journey.com) now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
 
 # Ecosystem
 
