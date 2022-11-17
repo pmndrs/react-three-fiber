@@ -223,7 +223,7 @@ Some helpful material:
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
 - [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; constructive solid geometry
-- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapie) &ndash; physics using Rapier
+- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier) &ndash; physics using Rapier
 - [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
