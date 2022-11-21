@@ -224,9 +224,11 @@ Some helpful material:
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
 - [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; constructive solid geometry
-- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier) &ndash; physics using Rapier
-- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
+- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier) &ndash; 3D physics using Rapier
+- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; 3D physics using Cannon
+- [`@react-three/p2`](https://github.com/pmndrs/use-p2) &ndash; 2D physics using P2
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
+- [`@react-three/gpu-pathtracer`](https://github.com/pmndrs/react-three-gpu-pathtracer) &ndash; realistic path tracing
 - [`create-r3f-app next`](https://github.com/pmndrs/react-three-next) &ndash; nextjs starter
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
 - [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
