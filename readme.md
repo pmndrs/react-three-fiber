@@ -234,6 +234,7 @@ Some helpful material:
 - [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
 - [`valtio`](https://github.com/pmndrs/valtio) &ndash; proxy based state management
 - [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
+- [`framer-motion-3d`](https://www.framer.com/docs/three-introduction/) &ndash; framer motion, a popular animation library
 - [`use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
