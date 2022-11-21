@@ -28,7 +28,7 @@ No. There is no overhead. Components render outside of React. It outperforms Thr
 
 #### Can it keep up with frequent feature updates to Threejs?
 
-Yes. It merely expresses Threejs in JSX: `<mesh />` becomes `new THREE.Mesh()`, and that happens dynamically. If a new Threejs version adds, removes or changes features, it will be available to you instantly without depending on updates to this library.
+Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new THREE.Mesh()`. If a new Threejs version adds, removes or changes features, it will be available to you instantly without depending on updates to this library.
 
 ### What does it look like?
 
