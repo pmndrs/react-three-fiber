@@ -8,6 +8,8 @@
 [![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
+<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg"></a>
+
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
 Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
@@ -196,8 +198,6 @@ export default function App() {
 # Documentation, tutorials, examples
 
 Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
-
-<a href="https://docs.pmnd.rs/react-three-fiber"><img src="/docs/preview.jpg"></a>
 
 # Fundamentals
 
