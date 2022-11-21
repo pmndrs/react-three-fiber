@@ -227,6 +227,7 @@ Some helpful material:
 - [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier) &ndash; physics using Rapier
 - [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; physics using Cannon
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
+- [`create-r3f-app next`](https://github.com/pmndrs/react-three-next) &ndash; nextjs starter
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
 - [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
 - [`valtio`](https://github.com/pmndrs/valtio) &ndash; proxy based state management
