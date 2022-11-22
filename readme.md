@@ -199,24 +199,9 @@ export default function App() {
 
 Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
 
-# Fundamentals
-
-You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
-
-1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
-2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
-3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
-4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber) to see what the various settings and hooks do.
-
-Some helpful material:
-
-- [Threejs-docs](https://threejs.org/docs) and [examples](https://threejs.org/examples)
-- [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
-- [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
-
-<a href="https://threejs-journey.com"><img src="/docs/banner-journey.jpg"></a>
-
 # Ecosystem
+
+There is a vibrant and extensive eco system around three-fiber, full of libraries, helpers and abstractions.
 
 - [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers for react-three-fiber
 - [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
@@ -239,6 +224,24 @@ Some helpful material:
 - [`use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
+- [`miniplex`](https://github.com/hmans/miniplex/tree/main/packages/miniplex-react) &ndash; ECS (entity management system)
+
+# Fundamentals
+
+You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
+
+1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
+2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
+3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
+4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber) to see what the various settings and hooks do.
+
+Some helpful material:
+
+- [Threejs-docs](https://threejs.org/docs) and [examples](https://threejs.org/examples)
+- [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
+- [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
+
+<a href="https://threejs-journey.com"><img src="/docs/banner-journey.jpg"></a>
 
 # How to contribute
 
