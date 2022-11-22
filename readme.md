@@ -229,6 +229,7 @@ Some helpful material:
 - [`@react-three/p2`](https://github.com/pmndrs/use-p2) &ndash; 2D physics using P2
 - [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
 - [`@react-three/gpu-pathtracer`](https://github.com/pmndrs/react-three-gpu-pathtracer) &ndash; realistic path tracing
+- [`lamina`](https://github.com/pmndrs/lamina) &ndash; layer based shader materials
 - [`create-r3f-app next`](https://github.com/pmndrs/react-three-next) &ndash; nextjs starter
 - [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
 - [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
