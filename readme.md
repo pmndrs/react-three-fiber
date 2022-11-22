@@ -226,7 +226,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 - [`miniplex`](https://github.com/hmans/miniplex/tree/main/packages/miniplex-react) &ndash; ECS (entity management system)
 
-# Fundamentals
+# First steps
 
 You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
 
