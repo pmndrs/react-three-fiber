@@ -242,6 +242,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 - [`miniplex`](https://github.com/hmans/miniplex/tree/main/packages/miniplex-react) &ndash; ECS (entity management system)
+- [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
 
 # How to contribute
 
