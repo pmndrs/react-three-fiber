@@ -220,7 +220,7 @@ Some helpful material:
 
 There is a vibrant and extensive eco system around three-fiber, full of libraries, helpers and abstractions.
 
-- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers for react-three-fiber
+- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers, this is an eco system in itself
 - [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
