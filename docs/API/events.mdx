@@ -143,3 +143,14 @@ function App() {
   )
 }
 ```
+or the `pointerEvents` prop on the `Canvas` ( this will also set `pointer-events: none` instead of `auto`)
+```jsx
+function App() {
+  const target = useRef()
+  return (
+    <div ref={target}>
+      <Canvas pointerEvents={target}></Canvas>
+    </div>
+  )
+}
+```
