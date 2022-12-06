@@ -133,7 +133,15 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
   return (
     <div
       ref={divRef}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', pointerEvents, ...style }}
+      style={{
+        position: 'relative',
+        touchAction: 'none',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        pointerEvents,
+        ...style,
+      }}
       {...props}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
         <canvas ref={canvasRef} style={{ display: 'block' }}>
