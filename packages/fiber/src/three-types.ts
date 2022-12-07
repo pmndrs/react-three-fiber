@@ -188,7 +188,7 @@ export type MeshMatcapMaterialProps = MaterialNode<THREE.MeshMatcapMaterial, [TH
 export type LineDashedMaterialProps = MaterialNode<THREE.LineDashedMaterial, [THREE.LineDashedMaterialParameters]>
 export type LineBasicMaterialProps = MaterialNode<THREE.LineBasicMaterial, [THREE.LineBasicMaterialParameters]>
 
-export type PrimitiveProps = { object: any } & { [properties: string]: any }
+export type PrimitiveProps = { object: object } & { [properties: string]: any }
 
 export type LightProps = LightNode<THREE.Light, typeof THREE.Light>
 export type SpotLightShadowProps = Node<THREE.SpotLightShadow, typeof THREE.SpotLightShadow>
