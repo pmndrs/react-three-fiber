@@ -21,7 +21,7 @@ const App = () => (
 )
 ```
 
-## Render Props
+## Props
 
 | Prop            | Description                                                                                                                                       | Default                                                           |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -43,7 +43,7 @@ const App = () => (
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                                   |
 | onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                                   |
 
-## Render defaults
+## Defaults
 
 Canvas uses [createRoot](#createroot) which will create a translucent `THREE.WebGLRenderer` with the following constructor args:
 
@@ -64,6 +64,42 @@ It will also create the following scene internals:
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
 In recent versions of threejs, `THREE.ColorManagement.legacy` will be set to false to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture encoding conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
+
+## Setup
+
+The canvas is wrapped into an outer `div` and an inner one.
+
+The outer wrapper (divRef):
+
+- controls basic styling
+- is responsive to fill the parent, so you can control how big the canvas is by changing the parents width and height
+- prevents the browser from interfering with the events it receives via `touch-action: "none"`. In some cases you may not want that, for instance if on mobile the canvas is part of a scroll region, or if it is supposed to behave like an image without interaction. In that case you may prefer `touch-action: "auto"`
+
+The inner wrapper (containerRef):
+
+- is used for hosting the canvas itself as well as 3rd party overlays (drei/Html, etc)
+
+```jsx
+function Canvas({ style, fallback, ...props }) {
+  // ...
+  return (
+    <div
+      ref={divRef}
+      style={{
+        position: 'relative',
+        touchAction: 'none',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        ...style,
+      }}
+      {...props}>
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+        <canvas ref={canvasRef} style={{ display: 'block' }}>
+          {fallback}
+```
+
+<Hint>You can opt out of, or overwrite style properties either by giving canvas a style prop, or a className.</Hint>
 
 ## Custom Canvas
 
