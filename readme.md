@@ -8,7 +8,7 @@
 [![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
-<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg"></a>
+<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg" /></a>
 
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
@@ -214,7 +214,7 @@ Some helpful material:
 - [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
 - [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
 
-<a href="https://threejs-journey.com"><img src="/docs/banner-journey.jpg"></a>
+<a href="https://threejs-journey.com"><img src="/docs/banner-journey.jpg" /></a>
 
 # Ecosystem
 
