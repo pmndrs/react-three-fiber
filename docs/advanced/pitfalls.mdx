@@ -20,9 +20,7 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 ## Avoid setState in loops
 
-SetState in React is not suitable for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc.
-
-It becomes less of an issue if you think of your app as running in a loop. _Threejs is fundamentally loop based._ This is because in order to carry out re-curring operations it is not enough to just set a value, you need deltas, `needsUpdate`, imperative functions, and so on.
+SetState is not suitable for fast updates. You don't want to involve React 60 or 120 times per second, even if in theory it could handle it. It comes down to this: it is not enough to just set a value, _you need managed frame deltas_, or else your project will run at different speeds depending on the end-users system refresh-rate, many updates in threejs need update flags (needsUpdate), or imperative functions.
 
 ### ❌ setState in loops is bad
 
@@ -47,9 +45,9 @@ useEffect(() => {
 <mesh onPointerMove={(e) => setX((x) => e.point.x)} />
 ```
 
-### ✅ Instead, use refs and mutate
+### ✅ Instead, just mutate
 
-In general you should prefer useFrame! Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
+In general you should prefer useFrame. Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
 
 ```jsx
 const ref = useRef()
@@ -57,17 +55,19 @@ useFrame((state, delta) => (ref.current.position.x += delta))
 return <mesh ref={ref} />
 ```
 
-As for for intervals and events, just use references!
+Same goes for events, use references.
+
+```jsx
+<mesh onPointerMove={(e) => (ref.current.position.x = e.point.x)} />
+```
+
+If you must use intervals, use references as well, but keep in mind that this is not refresh-rate independent.
 
 ```jsx
 useEffect(() => {
   const interval = setInterval(() => ref.current.position.x += 0.1), 1)
   return () => clearInterval(interval)
 }, [])
-```
-
-```jsx
-<mesh onPointerMove={(e) => (ref.current.position.x = e.point.x)} />
 ```
 
 ## Handle animations in loops
@@ -99,7 +99,7 @@ function Signal({ active }) {
 
 ## Do not bind to fast state reactively
 
-Using state-managers and selective state is fine, but not for updates that happen rapidly!
+Using state-managers and selective state is fine, but not for updates that happen rapidly for the same reason as above.
 
 ### ❌ Don't bind reactive fast-state
 
@@ -215,7 +215,8 @@ useFrame(() => {
 Set up re-used objects in global or local space, now the GC will be silent.
 
 ```jsx
-function Foo({ vec = new THREE.Vector(), ...props })
+function Foo(props)
+  const vec = new THREE.Vector()
   useFrame(() => {
     ref.current.position.lerp(vec.set(x, y, z), 0.1)
   })
