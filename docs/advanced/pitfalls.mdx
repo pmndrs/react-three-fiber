@@ -117,25 +117,10 @@ return <mesh position-x={x} />
 
 ### ✅ Fetch state directly
 
-For instance using [Zustand](https://github.com/pmndrs/zustand).
+For instance using [Zustand](https://github.com/pmndrs/zustand) (same in Redux et al).
 
 ```jsx
 useFrame(() => (ref.current.position.x = api.getState().x))
-return <mesh ref={ref} />
-```
-
-### ✅ Or, subscribe transiently
-
-See: [transient updates for often occurring state changes](https://github.com/pmndrs/zustand#transient-updates-for-often-occuring-state-changes).
-
-```jsx
-const ref = useRef()
-useEffect(() => {
-  api.subscribe(
-    (state) => state.x,
-    (x) => (ref.current.position.x = x),
-  )
-}, [])
 return <mesh ref={ref} />
 ```
 
