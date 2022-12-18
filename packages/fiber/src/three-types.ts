@@ -39,7 +39,7 @@ type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Pa
 >
 
 export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
-  Overwrite<ElementProps<T>, Omit<InstanceProps<InstanceType<T>>, 'object'>>
+  Overwrite<ElementProps<T>, Omit<InstanceProps<InstanceType<T>, T>, 'object'>>
 >
 
 type ThreeExports = typeof THREE

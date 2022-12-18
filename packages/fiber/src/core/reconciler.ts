@@ -22,8 +22,8 @@ export interface Catalogue {
 
 export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
 
-export interface InstanceProps<T = any> {
-  args?: Args<T>
+export interface InstanceProps<T = any, P = any> {
+  args?: Args<P>
   object?: T
   visible?: boolean
   dispose?: null
