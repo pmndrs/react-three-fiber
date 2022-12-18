@@ -19,8 +19,8 @@ type MathProps<P> = {
       ? M extends VectorRepresentation
         ? M | Parameters<M['set']> | Parameters<M['setScalar']>[0]
         : M | Parameters<M['set']>
-      : {}
-    : {}
+      : M
+    : P[K]
 }
 
 interface RaycastableRepresentation {
