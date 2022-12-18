@@ -35,7 +35,7 @@ interface ReactProps<P> {
 }
 
 type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
-  Overwrite<P, ReactProps<P> & MathProps<P> & EventProps<P>>
+  Overwrite<P, MathProps<EventProps<P>> & ReactProps<P>>
 >
 
 export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
