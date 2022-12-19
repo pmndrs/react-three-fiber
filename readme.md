@@ -132,6 +132,9 @@ Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 <details>
   <summary>Show React Native example</summary>
 
+> **Warning**
+> Rendering on the iOS simulator is not working, but real devices render just fine. See [relevant issue](https://github.com/pmndrs/react-three-fiber/issues/2546).
+
 This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI.
 
 ```bash
