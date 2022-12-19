@@ -6,22 +6,26 @@ type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K 
 type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 
 interface MathRepresentation {
-  set(...args: any[]): any
+  set(...args: number[]): any
 }
 interface VectorRepresentation extends MathRepresentation {
   setScalar(s: number): any
 }
-type WithMathProps<P> = {
-  [K in keyof P]: P[K] extends infer M
-    ? M extends THREE.Color
-      ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
-      : M extends MathRepresentation
-      ? M extends VectorRepresentation
-        ? M | Parameters<M['set']> | Parameters<M['setScalar']>[0]
-        : M | Parameters<M['set']>
-      : M
-    : P[K]
-}
+
+export type MathType<T extends MathRepresentation> = T extends THREE.Color
+  ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
+  : T extends VectorRepresentation
+  ? T | Parameters<T['set']> | Parameters<T['setScalar']>[0]
+  : T | Parameters<T['set']>
+
+export type Vector2 = MathType<THREE.Vector2>
+export type Vector3 = MathType<THREE.Vector3>
+export type Vector4 = MathType<THREE.Vector4>
+export type Color = MathType<THREE.Color>
+export type Layers = MathType<THREE.Layers>
+export type Quaternion = MathType<THREE.Quaternion>
+
+type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation ? MathType<P[K]> : P[K] }
 
 interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
