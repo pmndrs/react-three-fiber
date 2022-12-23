@@ -31,6 +31,7 @@ export type LocalState = {
   attach?: AttachType
   previousAttach: any
   memoizedProps: { [key: string]: any }
+  autoRemovedBeforeAppend?: boolean
 }
 
 export type AttachFnType = (parent: Instance, self: Instance) => () => void
@@ -268,7 +269,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
-    removeChild(parent, instance)
+    if (!instance.__r3f.autoRemovedBeforeAppend) {
+      removeChild(parent, instance)
+    }
+    if (newInstance.parent) {
+      newInstance.__r3f.autoRemovedBeforeAppend = true
+    }
     appendChild(parent, newInstance)
 
     // Re-bind event handlers
