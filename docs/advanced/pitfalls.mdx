@@ -20,11 +20,13 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 ## Avoid setState in loops
 
-Even if React could handle it you wouldn't want to involve it 60 or 120 times per second.
+TLDR, don't, use `useFrame`.
 
-Performance risks aside, it is not enough to just set values in succession, _you need managed frame deltas_ or else your project will run at different speeds depending on the end-users system. Also, many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
+- Threejs is loop based, it does not work like the DOM does. **Fast updates are carried out in `useFrame` by mutation**. `useFrame` is your per-component render-loop.
 
-It is better to get used to the idea that threejs is inherently loop driven, whereas frameworks are reactive. You need both, reactivity for state and props, loops for animation. Let React handle the former while Fiber gives you an outlet for the latter: useFrame. This hook runs in a combined frameloop and includes deltas and much more.
+- It is not enough to set values in succession, _you need frame deltas_. Instead of `position.x += 0.1` consider `position.x += delta` or else your project will run at different speeds depending on the end-users system. Many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
+
+- You might be tempted to setState inside `useFrame` but there is no reason to. Involving React 60 or 120 times per second aside, you would only complicate something as simple as an update by routing it through Reacts scheduler, triggering component render etc.
 
 ### ❌ setState in loops is bad
 
