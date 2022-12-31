@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.9.2
+
+### Patch Changes
+
+- 2aeb6500: fix: primitives are incorrectly swapped on key change in maps
+
+## 8.9.1
+
+### Patch Changes
+
+- 0cf11797: fix(events): type spread event props
+
 ## 8.9.0
 
 ### Minor Changes

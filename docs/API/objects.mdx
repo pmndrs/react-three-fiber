@@ -132,7 +132,7 @@ You can also deeply nest attach through piercing. The following adds a buffer-at
   <bar attach={(parent, self) => {
     parent.add(self)
     return () => parent.remove(self)
-  } />
+  }} />
 
 // The same as a one liner
 <foo>

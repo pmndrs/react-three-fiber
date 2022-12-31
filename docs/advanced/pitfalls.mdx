@@ -20,19 +20,15 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 ## Avoid setState in loops
 
-SetState in React is not suitable for fast updates, for instance in order to move or animate something, or even if you receive fast data from somewhere: remote, events, etc.
+TLDR, don't, mutate inside `useFrame`!
 
-It becomes less of an issue if you think of your app as running in a loop. _Threejs is fundamentally loop based._ This is because in order to carry out re-curring operations it is not enough to just set a value, you need deltas, `needsUpdate`, imperative functions, and so on.
+- Threejs has a render-loop, it does not work like the DOM does. **Fast updates are carried out in `useFrame` by mutation**. `useFrame` is your per-component render-loop.
+
+- It is not enough to set values in succession, _you need frame deltas_. Instead of `position.x += 0.1` consider `position.x += delta` or your project will run at different speeds depending on the end-users system. Many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
+
+- You might be tempted to setState inside `useFrame` but there is no reason to. You would only complicate something as simple as an update by routing it through Reacts scheduler, triggering component render etc.
 
 ### ❌ setState in loops is bad
-
-```jsx
-const [x, setX] = useState(0)
-useFrame(() => setX((x) => x + 0.1))
-return <mesh position-x={x} />
-```
-
-### ❌ setState in fast intervals is bad
 
 ```jsx
 useEffect(() => {
@@ -41,15 +37,23 @@ useEffect(() => {
 }, [])
 ```
 
+### ❌ setState in useFrame is bad
+
+```jsx
+const [x, setX] = useState(0)
+useFrame(() => setX((x) => x + 0.1))
+return <mesh position-x={x} />
+```
+
 ### ❌ setState in fast events is bad
 
 ```jsx
 <mesh onPointerMove={(e) => setX((x) => e.point.x)} />
 ```
 
-### ✅ Instead, use refs and mutate
+### ✅ Instead, just mutate, use deltas
 
-In general you should prefer useFrame! Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
+In general you should prefer useFrame. Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
 
 ```jsx
 const ref = useRef()
@@ -57,17 +61,19 @@ useFrame((state, delta) => (ref.current.position.x += delta))
 return <mesh ref={ref} />
 ```
 
-As for for intervals and events, just use references!
+Same goes for events, use references.
+
+```jsx
+<mesh onPointerMove={(e) => (ref.current.position.x = e.point.x)} />
+```
+
+If you must use intervals, use references as well, but keep in mind that this is not refresh-rate independent.
 
 ```jsx
 useEffect(() => {
   const interval = setInterval(() => ref.current.position.x += 0.1), 1)
   return () => clearInterval(interval)
 }, [])
-```
-
-```jsx
-<mesh onPointerMove={(e) => (ref.current.position.x = e.point.x)} />
 ```
 
 ## Handle animations in loops
@@ -99,7 +105,7 @@ function Signal({ active }) {
 
 ## Do not bind to fast state reactively
 
-Using state-managers and selective state is fine, but not for updates that happen rapidly!
+Using state-managers and selective state is fine, but not for updates that happen rapidly for the same reason as above.
 
 ### ❌ Don't bind reactive fast-state
 
@@ -113,25 +119,10 @@ return <mesh position-x={x} />
 
 ### ✅ Fetch state directly
 
-For instance using [Zustand](https://github.com/pmndrs/zustand).
+For instance using [Zustand](https://github.com/pmndrs/zustand) (same in Redux et al).
 
 ```jsx
 useFrame(() => (ref.current.position.x = api.getState().x))
-return <mesh ref={ref} />
-```
-
-### ✅ Or, subscribe transiently
-
-See: [transient updates for often occurring state changes](https://github.com/pmndrs/zustand#transient-updates-for-often-occuring-state-changes).
-
-```jsx
-const ref = useRef()
-useEffect(() => {
-  api.subscribe(
-    (state) => state.x,
-    (x) => (ref.current.position.x = x),
-  )
-}, [])
 return <mesh ref={ref} />
 ```
 
@@ -215,7 +206,8 @@ useFrame(() => {
 Set up re-used objects in global or local space, now the GC will be silent.
 
 ```jsx
-function Foo({ vec = new THREE.Vector(), ...props })
+function Foo(props)
+  const vec = new THREE.Vector()
   useFrame(() => {
     ref.current.position.lerp(vec.set(x, y, z), 0.1)
   })
