@@ -102,7 +102,6 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
         !state.gl.xr?.isPresenting &&
         state.frameloop !== 'never'
       ) {
-        console.log(state.frameloop, state.internal.frames)
         repeat += render(timestamp, state)
       }
     }
