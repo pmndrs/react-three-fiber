@@ -156,7 +156,7 @@ function insertBefore(
     beforeChild.object instanceof THREE.Object3D
   ) {
     child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), 0, child.object)
+    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
     child.object.dispatchEvent({ type: 'added' })
   }
 
