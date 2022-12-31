@@ -393,6 +393,35 @@ describe('renderer', () => {
     expect(disposeDeclarativePrimitive).toBeCalled()
   })
 
+  it('can swap 4 array primitives', async () => {
+    const a = new THREE.Group()
+    const b = new THREE.Group()
+    const c = new THREE.Group()
+    const d = new THREE.Group()
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} object={group} />
+        ))}
+      </>
+    )
+
+    const array = [a, b, c, d]
+    const store = await act(async () => root.render(<Test array={array} />))
+    const { scene } = store.getState()
+
+    expect(scene.children).toStrictEqual(array)
+
+    const reversedArray = [d, c, b, a]
+    await act(async () => root.render(<Test array={reversedArray} />))
+    expect(scene.children).toStrictEqual(reversedArray)
+
+    const mixedArray = [b, a, d, c]
+    await act(async () => root.render(<Test array={mixedArray} />))
+    expect(scene.children).toStrictEqual(mixedArray)
+  })
+
   it('should gracefully handle text', async () => {
     const warn = console.warn
     console.warn = jest.fn()
