@@ -20,29 +20,29 @@ Try to use [instancing](https://codesandbox.io/s/r3f-instanced-colors-8fo01) as 
 
 ## Avoid setState in loops
 
-TLDR, don't, use `useFrame`.
+TLDR, don't, mutate inside `useFrame`!
 
-- Threejs is loop based, it does not work like the DOM does. **Fast updates are carried out in `useFrame` by mutation**. `useFrame` is your per-component render-loop.
+- Threejs has a render-loop, it does not work like the DOM does. **Fast updates are carried out in `useFrame` by mutation**. `useFrame` is your per-component render-loop.
 
-- It is not enough to set values in succession, _you need frame deltas_. Instead of `position.x += 0.1` consider `position.x += delta` or else your project will run at different speeds depending on the end-users system. Many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
+- It is not enough to set values in succession, _you need frame deltas_. Instead of `position.x += 0.1` consider `position.x += delta` or your project will run at different speeds depending on the end-users system. Many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
 
-- You might be tempted to setState inside `useFrame` but there is no reason to. Involving React 60 or 120 times per second aside, you would only complicate something as simple as an update by routing it through Reacts scheduler, triggering component render etc.
+- You might be tempted to setState inside `useFrame` but there is no reason to. You would only complicate something as simple as an update by routing it through Reacts scheduler, triggering component render etc.
 
 ### ❌ setState in loops is bad
-
-```jsx
-const [x, setX] = useState(0)
-useFrame(() => setX((x) => x + 0.1))
-return <mesh position-x={x} />
-```
-
-### ❌ setState in fast intervals is bad
 
 ```jsx
 useEffect(() => {
   const interval = setInterval(() => setX((x) => x + 0.1), 1)
   return () => clearInterval(interval)
 }, [])
+```
+
+### ❌ setState in useFrame is bad
+
+```jsx
+const [x, setX] = useState(0)
+useFrame(() => setX((x) => x + 0.1))
+return <mesh position-x={x} />
 ```
 
 ### ❌ setState in fast events is bad
