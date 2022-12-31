@@ -520,6 +520,54 @@ describe('renderer', () => {
     expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
   })
 
+  it('can swap 4 array primitives', async () => {
+    let state: RootState = null!
+    const a = new THREE.Group()
+    const b = new THREE.Group()
+    const c = new THREE.Group()
+    const d = new THREE.Group()
+    const array = [a, b, c, d]
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} object={group} />
+        ))}
+      </>
+    )
+
+    await act(async () => {
+      state = root.render(<Test array={array} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(a)
+    expect(state.scene.children[1]).toBe(b)
+    expect(state.scene.children[2]).toBe(c)
+    expect(state.scene.children[3]).toBe(d)
+
+    const reversedArray = [...array.reverse()]
+
+    await act(async () => {
+      state = root.render(<Test array={reversedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(d)
+    expect(state.scene.children[1]).toBe(c)
+    expect(state.scene.children[2]).toBe(b)
+    expect(state.scene.children[3]).toBe(a)
+
+    const mixedArray = [b, a, d, c]
+
+    await act(async () => {
+      state = root.render(<Test array={mixedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(b)
+    expect(state.scene.children[1]).toBe(a)
+    expect(state.scene.children[2]).toBe(d)
+    expect(state.scene.children[3]).toBe(c)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     let camera: THREE.Camera = null!
 
