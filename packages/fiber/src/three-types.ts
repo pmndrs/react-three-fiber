@@ -14,8 +14,8 @@ interface VectorRepresentation extends MathRepresentation {
 
 export type MathType<T extends MathRepresentation> = T extends THREE.Color
   ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
-  : T extends VectorRepresentation
-  ? T | Parameters<T['set']> | Parameters<T['setScalar']>[0]
+  : T extends VectorRepresentation | THREE.Layers
+  ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>
 
 export type Vector2 = MathType<THREE.Vector2>
