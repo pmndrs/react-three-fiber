@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.10.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
 ## 8.9.2
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.1.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
 ## 8.0.17
 
 ### Patch Changes
