@@ -1,0 +1,40 @@
+{
+  "name": "@react-three/eslint-plugin",
+  "version": "0.0.0",
+  "description": "The must have ESLint plugin when developing with react-three-fiber.",
+  "keywords": [
+    "react",
+    "renderer",
+    "fiber",
+    "three",
+    "threejs",
+    "eslint"
+  ],
+  "author": "Michael Dougall (https://github.com/itsdouges)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-fiber/packages/eslint-plugin#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
+  },
+  "main": "dist/react-three-eslint-plugin.cjs.js",
+  "module": "dist/react-three-eslint-plugin.esm.js",
+  "types": "dist/react-three-eslint-plugin.cjs.d.ts",
+  "sideEffects": false,
+  "preconstruct": {
+    "entrypoints": [
+      "index.ts"
+    ]
+  },
+  "dependencies": {
+    "eslint": "^8.12.0",
+    "@babel/runtime": "^7.17.8"
+  }
+}
