@@ -117,7 +117,9 @@ export function useLoader<T, U extends string | string[], L extends LoaderProto<
   input: U,
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
-  placeholder?: U extends any[] ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[] : BranchingReturn<R, GLTF, GLTF & ObjectMap>
+  placeholder?: U extends any[]
+    ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[]
+    : BranchingReturn<R, GLTF, GLTF & ObjectMap>,
 ): U extends any[] ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[] : BranchingReturn<R, GLTF, GLTF & ObjectMap> {
   if (!input && placeholder) return placeholder
 
