@@ -1,7 +1,7 @@
 {
   "name": "@react-three/eslint-plugin",
   "version": "0.0.0",
-  "description": "The must have ESLint plugin when developing with react-three-fiber.",
+  "description": "The must have ESLint plugin when developing with @react-three/fiber",
   "keywords": [
     "react",
     "renderer",
@@ -34,7 +34,17 @@
     ]
   },
   "dependencies": {
-    "eslint": "^8.12.0",
-    "@babel/runtime": "^7.17.8"
+    "@babel/runtime": "^7.17.8",
+    "eslint": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.4.10",
+    "@types/lodash": "^4.14.191",
+    "ts-node": "^10.9.1",
+    "lodash": "^4.17.19",
+    "prettier": "^2.6.1"
+  },
+  "scripts": {
+    "codegen": "ts-node scripts/codegen.ts"
   }
 }

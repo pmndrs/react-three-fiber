@@ -1,4 +1,7 @@
+// THIS FILE WAS GENERATED DO NOT MODIFY BY HAND
+// @command yarn codegen:eslint
+
 export default {
-  extends: ['./configs/base'],
+  plugins: ['@react-three'],
   rules: {},
 }
