@@ -52,9 +52,9 @@ Enable the rules that you would like to use.
 🔧 Automatically fixable by the `--fix` [CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).<br>
 💡 Manually fixable by [editor suggestions](https://eslint.org/docs/developer-guide/working-with-rules#providing-suggestions).
 
-| Rule                                   | Description                             | ✅  | 🔧  | 💡  |
-| -------------------------------------- | --------------------------------------- | --- | --- | --- |
-| <a href="#">no-clone-in-frame-loop</a> | Disallow `.clone()` inside frame loops. |     |     |     |
+| Rule                   | Description                             | ✅  | 🔧  | 💡  |
+| ---------------------- | --------------------------------------- | --- | --- | --- |
+| no-clone-in-frame-loop | Disallow `.clone()` inside frame loops. |     |     |     |
 
 ## Shareable configs
 
