@@ -35,7 +35,7 @@ async function generateConfig(name: string, rules: FoundRule[]) {
     export default {
       plugins: ['@react-three'],
       rules: {
-        ${rules.map((rule) => `'@react-three/${rule.moduleName}': 'error'`)}
+        ${rules.map((rule) => `'@react-three/${rule.moduleName}': 'error'`).join(',')}
       },
     }
   `
@@ -56,10 +56,10 @@ async function writeFile(filepath: string, code: string) {
 
 async function generateRuleIndex(rules: FoundRule[]) {
   const code = `
-    ${rules.map((rule) => `import ${camelCase(rule.moduleName)} from './${rule.moduleName}'`)}
+    ${rules.map((rule) => `import ${camelCase(rule.moduleName)} from './${rule.moduleName}'`).join('\n')}
 
     export default {
-    ${rules.map((rule) => `'${rule.moduleName}': ${camelCase(rule.moduleName)}`)}
+    ${rules.map((rule) => `'${rule.moduleName}': ${camelCase(rule.moduleName)}`).join(',')}
     }
   `
 
@@ -74,7 +74,7 @@ async function generatePluginIndex() {
     export { default as rules } from './rules/index'
 
     export const configs = {
-      ${generatedConfigs.map((config) => `${config.name},`).join('\n')}
+      ${generatedConfigs.map((config) => `${config.name}`).join(',')}
     }
   `
 
