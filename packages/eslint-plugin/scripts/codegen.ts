@@ -1,6 +1,6 @@
 import type { Rule } from 'eslint'
 import fs from 'fs/promises'
-import { join, extname } from 'path'
+import { join, extname, relative } from 'path'
 import { camelCase } from 'lodash'
 import { format, resolveConfig } from 'prettier'
 
@@ -14,9 +14,16 @@ interface FoundRule {
   moduleName: string
 }
 
+interface GeneratedConfig {
+  name: string
+  path: string
+}
+
 const ignore = ['index.ts']
-const rulesDir = join(__dirname, '../src/rules')
-const configsDir = join(__dirname, '../src/configs')
+const srcDir = join(__dirname, '../src')
+const rulesDir = join(srcDir, 'rules')
+const configsDir = join(srcDir, 'configs')
+const generatedConfigs: GeneratedConfig[] = []
 
 async function generateConfig(name: string, rules: FoundRule[]) {
   const code = `
@@ -30,6 +37,8 @@ async function generateConfig(name: string, rules: FoundRule[]) {
 
   const filepath = join(configsDir, `${name}.ts`)
   await writeFile(filepath, code)
+
+  generatedConfigs.push({ name: camelCase(name), path: './' + relative(srcDir, join(configsDir, name)) })
 }
 
 async function writeFile(filepath: string, code: string) {
@@ -47,6 +56,21 @@ async function generateRuleIndex(rules: FoundRule[]) {
   `
 
   const filepath = join(rulesDir, 'index.ts')
+  await writeFile(filepath, code)
+}
+
+async function generatePluginIndex() {
+  const code = `
+    ${generatedConfigs.map((config) => `import ${config.name} from '${config.path}'`).join('\n')}
+
+    export { default as rules } from './rules/index'
+
+    export const configs = {
+      ${generatedConfigs.map((config) => `${config.name},`).join('\n')}
+    }
+  `
+
+  const filepath = join(srcDir, 'index.ts')
   await writeFile(filepath, code)
 }
 
@@ -72,6 +96,7 @@ async function generate() {
   await generateRuleIndex(rules)
   await generateConfig('all', rules)
   await generateConfig('recommended', recommended)
+  await generatePluginIndex()
 }
 
 generate()

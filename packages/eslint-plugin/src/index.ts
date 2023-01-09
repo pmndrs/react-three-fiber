@@ -1,11 +1,12 @@
+// THIS FILE WAS GENERATED DO NOT MODIFY BY HAND
+// @command yarn codegen:eslint
+
 import all from './configs/all'
 import recommended from './configs/recommended'
-import rules from './rules/index'
 
-export default {
-  rules,
-  configs: {
-    all,
-    recommended,
-  },
+export { default as rules } from './rules/index'
+
+export const configs = {
+  all,
+  recommended,
 }
