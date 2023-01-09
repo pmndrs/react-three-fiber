@@ -4,6 +4,7 @@ const rule: Rule.RuleModule = {
   meta: {
     docs: {
       recommended: false,
+      description: 'Disallow `.clone()` inside frame loops.',
     },
   },
   create() {

@@ -1,7 +1,7 @@
 {
   "name": "@react-three/eslint-plugin",
   "version": "0.0.0",
-  "description": "The must have ESLint plugin when developing with @react-three/fiber",
+  "description": "An ESLint plugin which provides lint rules for @react-three/fiber.",
   "keywords": [
     "react",
     "renderer",
