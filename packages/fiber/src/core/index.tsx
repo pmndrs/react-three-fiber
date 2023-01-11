@@ -51,10 +51,11 @@ export type RenderProps<TCanvas extends Element> = {
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
   /**
-   * Enables PCFsoft shadows. Can accept `gl.shadowMap` options for fine-tuning.
+   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
+   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
-  shadows?: boolean | Partial<THREE.WebGLShadowMap>
+  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
   /**
    * Disables three r139 color management.
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
@@ -261,14 +262,25 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set shadowmap
       if (gl.shadowMap) {
-        const isBoolean = is.boo(shadows)
-        if ((isBoolean && gl.shadowMap.enabled !== shadows) || !is.equ(shadows, gl.shadowMap, shallowLoose)) {
-          const old = gl.shadowMap.enabled
-          gl.shadowMap.enabled = !!shadows
-          if (!isBoolean) Object.assign(gl.shadowMap, shadows)
-          else gl.shadowMap.type = THREE.PCFSoftShadowMap
-          if (old !== gl.shadowMap.enabled) gl.shadowMap.needsUpdate = true
+        const oldEnabled = gl.shadowMap.enabled
+        const oldType = gl.shadowMap.type
+        gl.shadowMap.enabled = !!shadows
+
+        if (is.boo(shadows)) {
+          gl.shadowMap.type = THREE.PCFSoftShadowMap
+        } else if (is.str(shadows)) {
+          const types = {
+            basic: THREE.BasicShadowMap,
+            percentage: THREE.PCFShadowMap,
+            soft: THREE.PCFSoftShadowMap,
+            variance: THREE.VSMShadowMap,
+          }
+          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+        } else if (is.obj(shadows)) {
+          Object.assign(gl.shadowMap, shadows)
         }
+
+        if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
       }
 
       // Safely set color management if available.
