@@ -9,9 +9,9 @@ interface VectorRepresentation extends MathRepresentation {
   setScalar(s: number): any
 }
 
-export type MathType<T extends MathRepresentation> = T extends THREE.Color
+export type MathType<T extends MathRepresentation | THREE.Euler> = T extends THREE.Color
   ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
-  : T extends VectorRepresentation | THREE.Layers
+  : T extends VectorRepresentation | THREE.Layers | THREE.Euler
   ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>
 
@@ -21,15 +21,16 @@ export type Vector4 = MathType<THREE.Vector4>
 export type Color = MathType<THREE.Color>
 export type Layers = MathType<THREE.Layers>
 export type Quaternion = MathType<THREE.Quaternion>
+export type Euler = MathType<THREE.Euler>
 
-type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation ? MathType<P[K]> : P[K] }
+type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation | THREE.Euler ? MathType<P[K]> : P[K] }
 
 interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
 }
 type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
 
-interface ReactProps<P> {
+export interface ReactProps<P> {
   children?: React.ReactNode
   ref?: React.Ref<P>
   key?: React.Key
