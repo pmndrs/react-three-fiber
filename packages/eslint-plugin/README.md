@@ -52,9 +52,9 @@ Enable the rules that you would like to use.
 <!-- START_RULE_CODEGEN -->
 <!-- @command yarn codegen:eslint -->
 
-| Rule                   | Description                             | ✅  | 🔧  | 💡  |
-| ---------------------- | --------------------------------------- | --- | --- | --- |
-| no-clone-in-frame-loop | Disallow `.clone()` inside frame loops. |     |     |     |
+| Rule                                                                        | Description                             | ✅  | 🔧  | 💡  |
+| --------------------------------------------------------------------------- | --------------------------------------- | --- | --- | --- |
+| <a href="./docs/rules/no-clone-in-frame-loop.md">no-clone-in-frame-loop</a> | Disallow `.clone()` inside frame loops. |     |     |     |
 
 <!-- END_CODEGEN -->
 

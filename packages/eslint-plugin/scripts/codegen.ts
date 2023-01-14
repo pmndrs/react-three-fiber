@@ -21,9 +21,22 @@ interface GeneratedConfig {
 
 const ignore = ['index.ts']
 const srcDir = join(__dirname, '../src')
+const docsDir = join(__dirname, '../docs/rules')
 const rulesDir = join(srcDir, 'rules')
 const configsDir = join(srcDir, 'configs')
 const generatedConfigs: GeneratedConfig[] = []
+
+async function ruleDocsPath(name: string): Promise<string> {
+  const absolutePath = join(docsDir, name + '.md')
+  const relativePath = '.' + absolutePath.replace(process.cwd(), '')
+
+  try {
+    await fs.readFile(absolutePath)
+    return relativePath
+  } catch (_) {
+    throw new Error(`invariant: rule ${name} should have docs at ${absolutePath}`)
+  }
+}
 
 async function generateConfig(name: string, rules: FoundRule[]) {
   const code = `
@@ -81,18 +94,22 @@ async function generateReadme(rules: FoundRule[]) {
   const filepath = join(srcDir, '../', 'README.md')
   const readme = await fs.readFile(filepath, 'utf-8')
 
+  const rows: string[] = []
+
+  for (const rule of rules) {
+    const docsPath = await ruleDocsPath(rule.moduleName)
+    const row = `| ${link(rule.moduleName, docsPath)} | ${rule.module.meta?.docs?.description} | ${conditional(
+      '✅',
+      rule.module.meta?.docs?.recommended,
+    )} | ${conditional('🔧', rule.module.meta?.fixable)} | ${conditional('💡', rule.module.meta?.hasSuggestions)} |`
+
+    rows.push(row)
+  }
+
   const code = `
 | Rule | Description | ✅ | 🔧 | 💡 | 
 | ---- | -- | -- | -- | -- |
-${rules
-  .map(
-    (rule) =>
-      `| ${link(rule.moduleName, rule.module.meta?.docs?.url)} | ${rule.module.meta?.docs?.description} | ${conditional(
-        '✅',
-        rule.module.meta?.docs?.recommended,
-      )} | ${conditional('🔧', rule.module.meta?.fixable)} | ${conditional('💡', rule.module.meta?.hasSuggestions)} |`,
-  )
-  .join('\n')}
+${rows.join('\n')}
   `
 
   const found = /<!-- START_RULE_CODEGEN -->(.|\n)*<!-- END_CODEGEN -->/.exec(readme)
