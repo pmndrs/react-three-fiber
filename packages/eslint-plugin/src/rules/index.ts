@@ -1,8 +1,8 @@
 // THIS FILE WAS GENERATED DO NOT MODIFY BY HAND
 // @command yarn codegen:eslint
 
-import noCloneInFrameLoop from './no-clone-in-frame-loop'
+import noObjectCreationInLoops from './no-object-creation-in-loops'
 
 export default {
-  'no-clone-in-frame-loop': noCloneInFrameLoop,
+  'no-object-creation-in-loops': noObjectCreationInLoops,
 }

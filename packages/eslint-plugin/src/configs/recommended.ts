@@ -3,5 +3,7 @@
 
 export default {
   plugins: ['@react-three'],
-  rules: {},
+  rules: {
+    '@react-three/no-object-creation-in-loops': 'error',
+  },
 }
