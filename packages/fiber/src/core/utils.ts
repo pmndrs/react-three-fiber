@@ -311,6 +311,9 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
   for (const prop in props) {
     let value = props[prop]
 
+    // Ignore undefined props
+    if (value === undefined) continue
+
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
 
