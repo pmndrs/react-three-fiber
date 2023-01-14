@@ -1,6 +1,3 @@
-<!--- THIS FILE WAS GENERATED DO NOT MODIFY BY HAND -->
-<!--- @command yarn codegen:eslint -->
-
 # @react-three/eslint-plugin
 
 [![Version](https://img.shields.io/npm/v/@react-three/eslint-plugin?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/eslint-plugin)
@@ -52,13 +49,16 @@ Enable the rules that you would like to use.
 🔧 Automatically fixable by the `--fix` [CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).<br>
 💡 Manually fixable by [editor suggestions](https://eslint.org/docs/developer-guide/working-with-rules#providing-suggestions).
 
+<!-- START_RULE_CODEGEN -->
+<!-- @command yarn codegen:eslint -->
+
 | Rule                   | Description                             | ✅  | 🔧  | 💡  |
 | ---------------------- | --------------------------------------- | --- | --- | --- |
 | no-clone-in-frame-loop | Disallow `.clone()` inside frame loops. |     |     |     |
 
-## Shareable configs
+<!-- END_CODEGEN -->
 
-<!-- This part of the readme is not currently codegen'd. If you add more configs make sure to update this. -->
+## Shareable configs
 
 ### Recommended
 
