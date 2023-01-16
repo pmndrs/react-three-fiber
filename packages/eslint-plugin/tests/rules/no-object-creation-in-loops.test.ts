@@ -1,7 +1,57 @@
 import { RuleTester } from 'eslint'
+import rule from '../../src/rules/no-object-creation-in-loops'
 
-const rule = new RuleTester({})
+const tester = new RuleTester({
+  parserOptions: { ecmaVersion: 2015 },
+})
 
-describe('no-clone-in-frame-loop', () => {
-  it('should error on violation')
+tester.run('no-object-creation-in-loops', rule, {
+  valid: [
+    `
+    const vec = new THREE.Vector3()
+
+    useFrame(() => {
+      ref.current.position.copy(vec)
+    })
+  `,
+    `
+    const vec = new THREE.Vector3()
+
+    useFrame(() => {
+      ref.current.position.lerp(vec.set(x, y, z), 0.1)
+    })
+  `,
+    `
+    const vec = new Vector3()
+
+    useFrame(() => {
+      ref.current.position.copy(vec)
+    })
+  `,
+    `
+    const vec = new Vector3()
+
+    useFrame(() => {
+      ref.current.position.lerp(vec.set(x, y, z), 0.1)
+    })
+  `,
+  ],
+  invalid: [
+    {
+      code: `
+        useFrame(() => {
+          ref.current.position.lerp(new THREE.Vector3(x, y, z), 0.1)
+        })
+      `,
+      errors: [{ messageId: 'noNew' }],
+    },
+    {
+      code: `
+        useFrame(() => {
+          ref.current.position.lerp(new Vector3(x, y, z), 0.1)
+        })
+      `,
+      errors: [{ messageId: 'noNew' }],
+    },
+  ],
 })
