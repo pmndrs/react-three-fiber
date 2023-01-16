@@ -5,11 +5,12 @@ const rule: Rule.RuleModule = {
   meta: {
     messages: {
       noNew:
-        'Creating new objects in the frame loop can cause performance problems. Instead, create in the parent scope.',
+        'Instantiating new objects in the frame loop can cause performance problems. Instead, create in the parent scope.',
     },
     docs: {
       recommended: true,
-      description: 'Disallow creating objects in loops causing the garbage collector to do more work than necessary.',
+      description:
+        'Disallow instantiating new objects in the frame loop which can cause the garbage collector to do more work than necessary.',
     },
   },
   create(ctx) {

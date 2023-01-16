@@ -1,5 +1,5 @@
 import { RuleTester } from 'eslint'
-import rule from '../../src/rules/no-object-creation-in-loops'
+import rule from '../../src/rules/no-new-in-loop'
 
 const tester = new RuleTester({
   parserOptions: { ecmaVersion: 2015 },
