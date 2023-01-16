@@ -1,11 +1,11 @@
-import type { Rule, AST } from 'eslint'
+import type { Rule } from 'eslint'
 import * as ESTree from 'estree'
 
 const rule: Rule.RuleModule = {
   meta: {
     messages: {
       noNew:
-        'Creating new objects in the frame loop can cause performance problems, instead create in the parent scope.',
+        'Creating new objects in the frame loop can cause performance problems. Instead, create in the parent scope.',
     },
     docs: {
       recommended: true,

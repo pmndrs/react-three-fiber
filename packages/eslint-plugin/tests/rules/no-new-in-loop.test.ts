@@ -5,7 +5,7 @@ const tester = new RuleTester({
   parserOptions: { ecmaVersion: 2015 },
 })
 
-tester.run('no-object-creation-in-loops', rule, {
+tester.run('no-new-in-loop', rule, {
   valid: [
     `
     const vec = new THREE.Vector3()

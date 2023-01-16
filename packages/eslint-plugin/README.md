@@ -52,9 +52,9 @@ Enable the rules that you would like to use.
 <!-- START_RULE_CODEGEN -->
 <!-- @command yarn codegen:eslint -->
 
-| Rule                                                                                  | Description                                                                                      | ✅  | 🔧  | 💡  |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --- | --- | --- |
-| <a href="./docs/rules/no-object-creation-in-loops.md">no-object-creation-in-loops</a> | Disallow creating objects in loops causing the garbage collector to do more work than necessary. | ✅  |     |     |
+| Rule                                                        | Description                                                                                      | ✅  | 🔧  | 💡  |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | --- | --- | --- |
+| <a href="./docs/rules/no-new-in-loop.md">no-new-in-loop</a> | Disallow creating objects in loops causing the garbage collector to do more work than necessary. | ✅  |     |     |
 
 <!-- END_CODEGEN -->
 
