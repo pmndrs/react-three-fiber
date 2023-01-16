@@ -49,7 +49,7 @@
     "react-use-measure": "^2.1.1",
     "scheduler": "^0.21.0",
     "suspend-react": "^0.0.8",
-    "zustand": "^4.1.2"
+    "zustand": "~4.2.0"
   },
   "peerDependencies": {
     "expo": ">=46.0",
