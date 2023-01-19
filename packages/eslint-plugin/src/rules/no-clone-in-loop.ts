@@ -1,5 +1,6 @@
 import type { Rule } from 'eslint'
 import * as ESTree from 'estree'
+import { gitHubUrl } from 'packages/eslint-plugin/lib/url'
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -8,6 +9,7 @@ const rule: Rule.RuleModule = {
         'Cloning vectors in the frame loop can cause performance problems. Instead, copy using one from the parent scope.',
     },
     docs: {
+      url: gitHubUrl('no-clone-in-loop'),
       recommended: true,
       description:
         'Disallow cloning vectors in the frame loop which can cause the garbage collector to do more work than necessary.',

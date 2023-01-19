@@ -1,25 +1,37 @@
-Instantiating new objects in the frame loop wastes large amounts of memory causing the garbage collector to do more work than needed.
-Instead,
-reuse objects from outside.
+Instantiating new objects in the frame loop can waste large amounts of memory,
+especially bad for large CPU containers such as Three.js classes and any GPU resource as there is no reliable garbage collection there.
+Instead create once in a `useMemo` or a single shared reference outside of the component.
 
 #### ❌ Incorrect
 
-This creates a new vector 60+ times a second which allocates loads of memory and forces the garbage collector to eventually kick in cleaning them up.
+This creates a new vector 60+ times a second allocating large amounts of memory.
 
 ```js
-useFrame(() => {
-  ref.current.position.lerp(new THREE.Vector3(x, y, z), 0.1)
-})
+function MoveTowards({ x, y, z }) {
+  const ref = useRef()
+
+  useFrame(() => {
+    ref.current.position.lerp(new THREE.Vector3(x, y, z), 0.1)
+  })
+
+  return <mesh ref={ref} />
+}
 ```
 
 #### ✅ Correct
 
-This creates a vector outside of the frame loop to be reused causing no extra effort for the garbage collector.
+This creates a vector outside of the frame loop to be reused each frame.
 
 ```js
-const vec = new THREE.Vector3()
+const tempVec = new THREE.Vector3()
 
-useFrame(() => {
-  ref.current.position.lerp(vec.set(x, y, z), 0.1)
-})
+function MoveTowards({ x, y, z }) {
+  const ref = useRef()
+
+  useFrame(() => {
+    ref.current.position.lerp(tempVec.set(x, y, z), 0.1)
+  })
+
+  return <mesh ref={ref} />
+}
 ```
