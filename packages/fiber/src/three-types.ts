@@ -47,11 +47,12 @@ export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
 >
 
 type ThreeExports = typeof THREE
-type ThreeElementsImpl = {
+type ThreeElementsType = {
   [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
     ? ThreeElement<ThreeExports[K]>
     : never
 }
+interface ThreeElementsImpl extends ThreeElementsType {}
 
 export interface ThreeElements extends ThreeElementsImpl {
   primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
