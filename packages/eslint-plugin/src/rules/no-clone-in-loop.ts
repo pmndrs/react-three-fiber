@@ -1,6 +1,6 @@
 import type { Rule } from 'eslint'
 import * as ESTree from 'estree'
-import { gitHubUrl } from 'packages/eslint-plugin/lib/url'
+import { gitHubUrl } from '../lib/url'
 
 const rule: Rule.RuleModule = {
   meta: {
