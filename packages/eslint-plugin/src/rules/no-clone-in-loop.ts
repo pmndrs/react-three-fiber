@@ -11,8 +11,7 @@ const rule: Rule.RuleModule = {
     docs: {
       url: gitHubUrl('no-clone-in-loop'),
       recommended: true,
-      description:
-        'Disallow cloning vectors in the frame loop which can cause the garbage collector to do more work than necessary.',
+      description: 'Disallow cloning vectors in the frame loop which can cause performance problems.',
     },
   },
   create(ctx) {

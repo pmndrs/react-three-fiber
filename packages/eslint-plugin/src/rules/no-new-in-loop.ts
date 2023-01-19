@@ -11,8 +11,7 @@ const rule: Rule.RuleModule = {
     docs: {
       url: gitHubUrl('no-new-in-loop'),
       recommended: true,
-      description:
-        'Disallow instantiating new objects in the frame loop which can cause the garbage collector to do more work than necessary.',
+      description: 'Disallow instantiating new objects in the frame loop which can cause performance problems.',
     },
   },
   create(ctx) {

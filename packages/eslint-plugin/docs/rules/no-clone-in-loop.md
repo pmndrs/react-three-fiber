@@ -1,5 +1,5 @@
 Cloning vectors in the frame loop instantiates new objects wasting large amounts of memory,
-especially bad for Three.js classes.
+which is especially bad for Three.js classes.
 Instead create once in a `useMemo` or a single shared reference outside of the component.
 
 #### ❌ Incorrect

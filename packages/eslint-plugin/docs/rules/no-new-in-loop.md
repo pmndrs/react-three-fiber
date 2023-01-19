@@ -1,5 +1,5 @@
 Instantiating new objects in the frame loop can waste large amounts of memory,
-especially bad for large CPU containers such as Three.js classes and any GPU resource as there is no reliable garbage collection there.
+which is especially bad for large CPU containers such as Three.js classes and any GPU resource as there is no reliable garbage collection.
 Instead create once in a `useMemo` or a single shared reference outside of the component.
 
 #### ❌ Incorrect
