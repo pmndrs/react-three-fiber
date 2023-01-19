@@ -2,6 +2,8 @@ import type * as THREE from 'three'
 import type { EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 import type { Mutable, Overwrite } from './core/utils'
 
+export { Overwrite }
+
 interface MathRepresentation {
   set(...args: number[]): any
 }

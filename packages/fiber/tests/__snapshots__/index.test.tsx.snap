@@ -45,6 +45,7 @@ Array [
   "LoaderReturnType",
   "MathType",
   "ObjectMap",
+  "Overwrite",
   "Performance",
   "Quaternion",
   "ReactProps",
