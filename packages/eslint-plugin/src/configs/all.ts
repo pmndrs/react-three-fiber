@@ -4,6 +4,7 @@
 export default {
   plugins: ['@react-three'],
   rules: {
-    '@react-three/no-clone-in-frame-loop': 'error',
+    '@react-three/no-clone-in-loop': 'error',
+    '@react-three/no-new-in-loop': 'error',
   },
 }
