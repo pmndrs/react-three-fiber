@@ -9,8 +9,8 @@ import type { Instance } from './reconciler'
 
 export interface Loader<T> extends THREE.Loader {
   load(
-    url: string,
-    onLoad?: (result: T) => void,
+    url: string | string[],
+    onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
   ): unknown
