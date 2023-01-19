@@ -6,7 +6,7 @@ const rule: Rule.RuleModule = {
   meta: {
     messages: {
       noClone:
-        'Cloning vectors in the frame loop can cause performance problems. Instead, copy using one from the parent scope.',
+        'Cloning vectors in the frame loop can cause performance problems. Instead, create once in a useMemo or a single, shared reference outside of the component.',
     },
     docs: {
       url: gitHubUrl('no-clone-in-loop'),
