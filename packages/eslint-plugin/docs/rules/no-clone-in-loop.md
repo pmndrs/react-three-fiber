@@ -35,3 +35,18 @@ function Direction({ targetPosition }) {
   return <mesh ref={ref} />
 }
 ```
+
+This creates a vector once outside of the frame loop inside a `useMemo` to be reused each frame.
+
+```js
+function Direction({ targetPosition }) {
+  const ref = useRef()
+  const tempVec = useMemo(() => new THREE.Vector3())
+
+  useFrame(() => {
+    const direction = tempVec.copy(ref.current.position).sub(targetPosition).normalize()
+  })
+
+  return <mesh ref={ref} />
+}
+```

@@ -35,3 +35,18 @@ function MoveTowards({ x, y, z }) {
   return <mesh ref={ref} />
 }
 ```
+
+This creates a vector once outside of the frame loop inside a `useMemo` to be reused each frame.
+
+```js
+function MoveTowards({ x, y, z }) {
+  const ref = useRef()
+  const tempVec = useMemo(() => new THREE.Vector3())
+
+  useFrame(() => {
+    ref.current.position.lerp(tempVec.set(x, y, z), 0.1)
+  })
+
+  return <mesh ref={ref} />
+}
+```
