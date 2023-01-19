@@ -314,12 +314,15 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
 
-    // Deal with pointer events ...
+    // Deal with pointer events, including removing them if undefined
     if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
     }
+
+    // Ignore setting undefined props
+    if (value === undefined) continue
 
     const { root, key, target } = resolve(object, prop)
 
