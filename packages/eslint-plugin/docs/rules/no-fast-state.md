@@ -78,3 +78,22 @@ function MatchPointer() {
   )
 }
 ```
+
+This sets state in the frame loop but only when a condition changes.
+
+```js
+function MatchPointer() {
+  const ref = useRef()
+  const [outside, setOutside] = useState(false)
+
+  useFrame((_, delta) => {
+    if (ref.current.position.x > 200 && !outside) {
+      setOutside(true)
+    } else if (ref.current.position.x <= 200 && outside) {
+      setOutside(false)
+    }
+  })
+
+  return <mesh ref={ref} />
+}
+```
