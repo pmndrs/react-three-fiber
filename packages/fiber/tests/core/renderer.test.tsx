@@ -832,4 +832,21 @@ describe('renderer', () => {
     expect(texture2.needsUpdate).toBe(true)
     expect(texture2.name).toBe('test')
   })
+
+  // https://github.com/mrdoob/three.js/issues/21209
+  it("can handle HMR default where three.js isn't reliable", async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test() {
+      const [scale, setScale] = React.useState(true)
+      const props: any = {}
+      if (scale) props.scale = 0.5
+      React.useEffect(() => void setScale(false), [])
+      return <mesh ref={ref} {...props} />
+    }
+
+    await act(async () => root.render(<Test />))
+
+    expect(ref.current!.scale.toArray()).toStrictEqual(new THREE.Object3D().scale.toArray())
+  })
 })

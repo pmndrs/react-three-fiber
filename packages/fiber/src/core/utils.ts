@@ -282,18 +282,15 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
-      if (targetProp && targetProp.constructor) {
-        // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(...(memoized.args ?? []))
-      } else if (currentInstance.constructor) {
+      if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
         const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[targetProp]
-        // destory the instance
+        value = defaultClassCall[key]
+        // destroy the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
-        // instance does not have constructor, just set it to 0
       } else {
+        // instance does not have constructor, just set it to 0
         value = 0
       }
     }
