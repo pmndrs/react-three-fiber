@@ -1,5 +1,5 @@
 import { RuleTester } from 'eslint'
-import rule from '../../src/rules/no-new-in-loop'
+import rule from '../../src/rules/no-fast-state'
 
 const tester = new RuleTester({
   parserOptions: { ecmaVersion: 2015 },
@@ -54,6 +54,8 @@ tester.run('no-fast-state', rule, {
     },
     {
       code: `
+        const [x, setX] = useState(0)
+
         useFrame(() => {
           setX((x) => x + 0.1)
         })

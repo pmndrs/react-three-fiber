@@ -1,5 +1,5 @@
 import type { Rule } from 'eslint'
-import * as ESTree from 'estree'
+import type { NewExpression } from 'estree'
 import { gitHubUrl } from '../lib/url'
 
 const rule: Rule.RuleModule = {
@@ -16,7 +16,7 @@ const rule: Rule.RuleModule = {
   },
   create(ctx) {
     return {
-      ['CallExpression[callee.name=useFrame] NewExpression'](node: ESTree.NewExpression) {
+      ['CallExpression[callee.name=useFrame] NewExpression'](node: NewExpression) {
         ctx.report({
           messageId: 'noNew',
           node: node,
