@@ -286,7 +286,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // create a blank slate of the instance and copy the particular parameter.
         // @ts-ignore
         const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[targetProp]
+        value = defaultClassCall[key]
         // destroy the instance
         if (defaultClassCall.dispose) defaultClassCall.dispose()
       } else {
