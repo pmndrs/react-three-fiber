@@ -834,7 +834,7 @@ describe('renderer', () => {
   })
 
   // https://github.com/mrdoob/three.js/issues/21209
-  it("can handle HMR where three.js isn't reliable", async () => {
+  it("can handle HMR default where three.js isn't reliable", async () => {
     const ref = React.createRef<THREE.Mesh>()
 
     function Test() {
