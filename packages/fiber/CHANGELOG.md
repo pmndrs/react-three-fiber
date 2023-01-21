@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.10.1
+
+### Patch Changes
+
+- bfa0298f: fix memoized identity
+
 ## 8.10.0
 
 ### Minor Changes
