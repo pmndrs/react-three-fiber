@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.1.1
+
+### Patch Changes
+
+- 9a776b71: fix(RTTR): backport traverse, update fixes
+
 ## 8.1.0
 
 ### Minor Changes
