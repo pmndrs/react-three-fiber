@@ -1,3 +1,4 @@
+import { useFrame } from '@react-three/fiber'
 import * as React from 'react'
 import * as THREE from 'three'
 
@@ -6,7 +7,7 @@ import ReactThreeTestRenderer from '../index'
 type ExampleComp = THREE.Mesh<THREE.BoxBufferGeometry, THREE.Material>
 
 describe('ReactThreeTestRenderer Core', () => {
-  it('renders a simple component', async () => {
+  it('renders JSX', async () => {
     const Mesh = () => {
       return (
         <mesh>
@@ -15,12 +16,28 @@ describe('ReactThreeTestRenderer Core', () => {
         </mesh>
       )
     }
-    const renderer = await ReactThreeTestRenderer.create(
-      <React.Suspense fallback={null}>
-        <Mesh />
-      </React.Suspense>,
-    )
 
+    const renderer = await ReactThreeTestRenderer.create(<Mesh />)
+    expect(renderer.scene.children[0].type).toEqual('Mesh')
+    await renderer.update(<Mesh />)
+    expect(renderer.scene.children[0].type).toEqual('Mesh')
+  })
+
+  it('renders a simple component with hooks', async () => {
+    const Mesh = () => {
+      const meshRef = React.useRef<THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>>()
+      useFrame(() => void (meshRef.current!.position.x += 0.01))
+      return (
+        <mesh>
+          <boxGeometry args={[2, 2]} />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    const renderer = await ReactThreeTestRenderer.create(<Mesh />)
+    expect(renderer.scene.children[0].type).toEqual('Mesh')
+    await renderer.update(<Mesh />)
     expect(renderer.scene.children[0].type).toEqual('Mesh')
   })
 
