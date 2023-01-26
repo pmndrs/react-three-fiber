@@ -29,6 +29,11 @@ type RenderApi = {
 }
 
 export const renderApi: RenderApi = {
+  callback: {
+    current(state: RootState) {
+      if (state.gl.render) state.gl.render(state.scene, state.camera)
+    },
+  },
   add: (store: RootStore) => {
     if (renderApi.callback) renderApi.remove = Stages.Render.add(renderApi.callback, store)
   },
@@ -304,7 +309,6 @@ export const createStore = (
       },
       setRender: (render: FrameloopRender) =>
         set((state) => {
-          console.log(state.internal.render, render)
           if (state.internal.render === render) return {}
           if (render === 'auto') renderApi.add(rootStore)
           if (render === 'manual') renderApi.remove && renderApi.remove()

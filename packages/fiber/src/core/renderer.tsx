@@ -150,13 +150,8 @@ const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   }
   Stages.Update.add(frameCallback, store)
 
-  // Add render callback to render stage
-  renderApi.callback = {
-    current(state: RootState) {
-      if (state.gl.render) state.gl.render(state.scene, state.camera)
-    },
-  }
-  renderApi.add(store)
+  // Add render callback to Render stage on setup
+  if (state.internal.render === 'auto') renderApi.add(store)
 }
 
 export interface ReconcilerRoot<TCanvas extends Element> {
