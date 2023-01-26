@@ -48,6 +48,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
     onPointerMissed,
     onCreated,
     stages,
+    render,
     ...props
   },
   forwardedRef,
@@ -92,6 +93,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
       raycaster,
       camera,
       stages,
+      render,
       size: containerRect,
       // Pass mutable reference to onPointerMissed so it's free to update
       onPointerMissed: (...args) => handlePointerMissed.current?.(...args),

@@ -3,7 +3,7 @@ import * as React from 'react'
 import create, { type StoreApi, type UseBoundStore } from 'zustand'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
-import type { FixedStage, Stage } from './stages'
+import { FixedStage, Stage, Stages } from './stages'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -11,6 +11,7 @@ export const privateKeys = [
   'get',
   'setSize',
   'setFrameloop',
+  'setRender',
   'setDpr',
   'events',
   'invalidate',
@@ -20,6 +21,18 @@ export const privateKeys = [
 ] as const
 
 export type PrivateKeys = typeof privateKeys[number]
+
+type RenderApi = {
+  callback?: { current(state: RootState): void }
+  add: (store: RootStore) => void
+  remove?: () => void
+}
+
+export const renderApi: RenderApi = {
+  add: (store: RootStore) => {
+    if (renderApi.callback) renderApi.remove = Stages.Render.add(renderApi.callback, store)
+  },
+}
 
 export interface Subscription {
   ref: React.MutableRefObject<RenderCallback>
@@ -51,10 +64,8 @@ export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) 
 export type UpdateCallback = RenderCallback
 
 export type LegacyAlways = 'always'
-export type FrameloopMode = LegacyAlways | 'auto' | 'demand' | 'never'
+export type Frameloop = LegacyAlways | 'auto' | 'demand' | 'never'
 export type FrameloopRender = 'auto' | 'manual'
-export type FrameloopLegacy = 'always' | 'demand' | 'never'
-export type Frameloop = FrameloopLegacy | { mode?: FrameloopMode; render?: FrameloopRender; maxDelta?: number }
 
 export interface Performance {
   /** Current performance normal, between min and max */
@@ -90,7 +101,7 @@ export interface InternalState {
   /** The ordered stages defining the lifecycle. */
   stages: StageTypes[]
   /** Render function flags */
-  render: 'auto' | 'manual'
+  render: FrameloopRender
   /** The max delta time between two frames. */
   maxDelta: number
   subscribe: (callback: React.MutableRefObject<RenderCallback>, priority: number, store: RootStore) => () => void
@@ -133,7 +144,7 @@ export interface RootState {
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
   /** Update frame loop flags */
-  frameloop: FrameloopLegacy
+  frameloop: Frameloop
   /** Adaptive performance interface */
   performance: Performance
   /** Reactive pixel-size of the canvas */
@@ -156,8 +167,10 @@ export interface RootState {
   setSize: (width: number, height: number, top?: number, left?: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
-  /** Shortcut to setting frameloop flags */
+  /** Shortcut to setting frameloop flag */
   setFrameloop: (frameloop: Frameloop) => void
+  /** Shortcut to setting render flag */
+  setRender: (render: FrameloopRender) => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layerd (via createPortal) then this contains the previous layer */
@@ -278,17 +291,6 @@ export const createStore = (
         }),
       setFrameloop: (frameloop: Frameloop) => {
         const state = get()
-        const mode: FrameloopLegacy =
-          typeof frameloop === 'string'
-            ? frameloop
-            : frameloop?.mode === 'auto'
-            ? 'always'
-            : frameloop?.mode ?? state.frameloop
-        const render =
-          typeof frameloop === 'string' ? state.internal.render : frameloop?.render ?? state.internal.render
-        const maxDelta =
-          typeof frameloop === 'string' ? state.internal.maxDelta : frameloop?.maxDelta ?? state.internal.maxDelta
-
         const clock = state.clock
         // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
         clock.stop()
@@ -298,8 +300,16 @@ export const createStore = (
           clock.start()
           clock.elapsedTime = 0
         }
-        set(() => ({ frameloop: mode, internal: { ...state.internal, render, maxDelta } }))
+        set({ frameloop })
       },
+      setRender: (render: FrameloopRender) =>
+        set((state) => {
+          console.log(state.internal.render, render)
+          if (state.internal.render === render) return {}
+          if (render === 'auto') renderApi.add(rootStore)
+          if (render === 'manual') renderApi.remove && renderApi.remove()
+          return { internal: { ...state.internal, render } }
+        }),
       previousRoot: undefined,
       internal: {
         // Events
@@ -339,9 +349,9 @@ export const createStore = (
             if (internal?.subscribers) {
               // Decrease manual flag if this subscription had a priority
               internal.priority = internal.priority - (priority > 0 ? 1 : 0)
-              // We use the render flag and deprecate priority
-              if (!internal.priority && state.internal.render === 'manual')
-                set(() => ({ internal: { ...state.internal, render: 'auto' } }))
+              // TODO: Remove priority API completely.
+              // if (!internal.priority && state.internal.render === 'manual')
+              //   set(() => ({ internal: { ...state.internal, render: 'auto' } }))
               // Remove subscriber from list
               internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
             }

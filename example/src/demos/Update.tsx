@@ -114,7 +114,7 @@ function Update() {
 
 export default function App() {
   return (
-    <Canvas stages={lifecycle} frameloop={{ mode: 'auto', render: 'manual' }}>
+    <Canvas stages={lifecycle} render="manual">
       <Update />
     </Canvas>
   )

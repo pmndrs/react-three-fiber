@@ -18,6 +18,7 @@ import {
   Subscription,
   Frameloop,
   RootStore,
+  renderApi,
 } from './store'
 import { reconciler, Root } from './reconciler'
 import { invalidate, advance } from './loop'
@@ -150,12 +151,12 @@ const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   Stages.Update.add(frameCallback, store)
 
   // Add render callback to render stage
-  const renderCallback = {
+  renderApi.callback = {
     current(state: RootState) {
-      if (state.internal.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
+      if (state.gl.render) state.gl.render(state.scene, state.camera)
     },
   }
-  Stages.Render.add(renderCallback, store)
+  renderApi.add(store)
 }
 
 export interface ReconcilerRoot<TCanvas extends Element> {
@@ -222,6 +223,7 @@ export function createRoot<TCanvas extends Element>(canvas: TCanvas): Reconciler
         camera: cameraOptions,
         onPointerMissed,
         stages,
+        render,
       } = props
 
       let state = store.getState()
@@ -331,7 +333,9 @@ export function createRoot<TCanvas extends Element>(canvas: TCanvas): Reconciler
         state.setSize(size.width, size.height, size.top, size.left)
       }
       // Check frameloop
-      if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
+      if (frameloop) state.setFrameloop(frameloop)
+      // Check render
+      if (render) state.setRender(render)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check performance
