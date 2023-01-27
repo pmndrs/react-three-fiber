@@ -46,73 +46,47 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     },
   })
 
-  const _fiber = canvas
+  const _root = createRoot(canvas).configure({ frameloop: 'never', ...options, events: undefined })
+  const _store = mockRoots.get(canvas)!.store
 
-  const _root = createRoot(_fiber).configure({ frameloop: 'never', ...options, events: undefined })
-
-  let scene: MockScene = null!
-
-  await act(async () => {
-    scene = _root.render(element).getState().scene as unknown as MockScene
-  })
-
-  const _store = mockRoots.get(_fiber)!.store
+  await act(async () => _root.render(element))
+  const scene = _store.getState().scene as unknown as MockScene
 
   return {
     scene: wrapFiber(scene),
-    unmount: async () => {
-      await act(async () => {
-        _root.unmount()
-      })
+    async unmount() {
+      await act(async () => _root.unmount())
     },
-    getInstance: () => {
-      // this is our root
-      const fiber = mockRoots.get(_fiber)?.fiber
-      const current = fiber?.current.child.child
-      if (current) {
-        const root = {
-          /**
-           * we wrap our child in a Provider component
-           * and context.Provider, so do a little
-           * artificial dive to get round this and
-           * pass context.Provider as if it was the
-           * actual react root
-           */
-          current,
-        }
+    getInstance() {
+      // Bail if canvas is unmounted
+      if (!mockRoots.has(canvas)) return null
 
-        /**
-         * so this actually returns the instance
-         * the user has passed through as a Fiber
-         */
-        return reconciler.getPublicRootInstance(root)
-      } else {
-        return null
-      }
+      // Traverse fiber nodes for R3F root
+      const root = { current: mockRoots.get(canvas)!.fiber.current }
+      while (!root.current.child?.stateNode) root.current = root.current.child
+
+      // Return R3F instance from root
+      return reconciler.getPublicRootInstance(root)
     },
-    update: async (newElement: React.ReactNode) => {
-      const fiber = mockRoots.get(_fiber)?.fiber
-      if (fiber) {
-        await act(async () => {
-          reconciler.updateContainer(newElement, fiber, null, () => null)
-        })
-      }
-      return
+    async update(newElement: React.ReactNode) {
+      if (!mockRoots.has(canvas)) return console.warn('RTTR: attempted to update an unmounted root!')
+
+      await act(async () => _root.render(newElement))
     },
-    toTree: () => {
+    toTree() {
       return toTree(scene)
     },
-    toGraph: () => {
+    toGraph() {
       return toGraph(scene)
     },
     fireEvent: createEventFirer(act, _store),
-    advanceFrames: async (frames: number, delta: number | number[] = 1) => {
+    async advanceFrames(frames: number, delta: number | number[] = 1) {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
 
       const promises: Promise<void>[] = []
 
-      storeSubscribers.forEach((subscriber) => {
+      for (const subscriber of storeSubscribers) {
         for (let i = 0; i < frames; i++) {
           if (is.arr(delta)) {
             promises.push(
@@ -122,7 +96,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
             promises.push(new Promise(() => subscriber.ref.current(state, delta as number)))
           }
         }
-      })
+      }
 
       Promise.all(promises)
     },
