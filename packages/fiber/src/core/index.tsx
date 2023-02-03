@@ -418,7 +418,7 @@ export type InjectState = Partial<
 >
 
 function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
-  return <Portal key={container.uuid} children={children} container={container} state={state} />
+  return <Portal children={children} container={container} state={state} />
 }
 
 function Portal({
@@ -435,7 +435,6 @@ function Portal({
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-
   const { events, size, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
