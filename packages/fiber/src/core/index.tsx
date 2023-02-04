@@ -435,7 +435,6 @@ function Portal({
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-
   const { events, size, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
@@ -453,7 +452,9 @@ function Portal({
           // Some props should be off-limits
           privateKeys.includes(key as PrivateKeys) ||
           // Otherwise filter out the props that are different and let the inject layer take precedence
-          rootState[key as keyof RootState] !== injectState[key as keyof RootState]
+          // Unless the inject layer props is undefined, then we keep the root layer
+          (rootState[key as keyof RootState] !== injectState[key as keyof RootState] &&
+            injectState[key as keyof RootState])
         ) {
           delete intersect[key as keyof RootState]
         }

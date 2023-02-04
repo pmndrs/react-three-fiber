@@ -267,6 +267,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
     const rootState = store.getState()
+
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const localState = { stopped: false }
@@ -424,7 +425,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      // const hits = patchIntersects(intersect(filter), event)
+
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
@@ -449,6 +450,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
         const eventObject = data.eventObject
         const instance = (eventObject as unknown as Instance).__r3f
         const handlers = instance?.handlers
+
         // Check presence of handlers
         if (!instance?.eventCount) return
 
