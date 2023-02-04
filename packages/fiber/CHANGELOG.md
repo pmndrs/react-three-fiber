@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.10.2
+
+### Patch Changes
+
+- 564edbbb: fix port inject layers, it should allow root props to overwrite indefined portal props"
+
 ## 8.10.1
 
 ### Patch Changes
