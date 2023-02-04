@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.10.4
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
 ## 8.10.3
 
 ### Patch Changes
