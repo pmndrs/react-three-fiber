@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.10.3
+
+### Patch Changes
+
+- d06d2879: fix: align useLoader type, public fields from builds
+
 ## 8.10.2
 
 ### Patch Changes

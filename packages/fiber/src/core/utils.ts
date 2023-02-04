@@ -41,11 +41,12 @@ export function Block({ set }: Omit<UnblockProps, 'children'>) {
   return null
 }
 
-export class ErrorBoundary extends React.Component<
-  { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
-  { error: boolean }
-> {
-  state = { error: false }
+type ErrorBoundaryProps = { set: React.Dispatch<Error | undefined>; children: React.ReactNode }
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, { error: boolean }> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { error: false }
+  }
   static getDerivedStateFromError = () => ({ error: true })
   componentDidCatch(err: Error) {
     this.props.set(err)
