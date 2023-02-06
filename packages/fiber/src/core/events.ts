@@ -87,6 +87,10 @@ export interface EventManager<TTarget> {
   connect?: (target: TTarget) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
+  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
+   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   */
+  update?: () => void
 }
 
 export interface PointerCaptureTarget {

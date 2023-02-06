@@ -120,26 +120,76 @@ const eventManagerFactory: Parameters<typeof Canvas>[0]['events'] = (state) => (
   // The filter can re-order or re-structure the intersections
   filter: (items: THREE.Intersection[], state: RootState) => items,
 
+  // The compute defines how pointer events are translated into the raycaster and pointer vector2
+  compute: (event: DomEvent, state: RootState, previous?: RootState) => {
+    state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)
+    state.raycaster.setFromCamera(state.pointer, state.camera)
+  },
+
   // Find more configuration default on ./packages/fiber/src/web/events.ts
   // And type definitions in ./packages/fiber/src/core/events.ts
 })
 
 function App() {
-  return <Canvas events={eventManagerFactory} />
+  return (
+    <Canvas events={eventManagerFactory}>
 }
 ```
 
 ### Using a different target element
 
-There are cases in which you may want to connect the event handlers to another DOM element instead of the canvas. It's possible to do so using the `connect` function of the event manager:
+There are cases in which you may want to connect the event handlers to another DOM element instead of the canvas. This is usually done to have events on a shared parent, which allows both the canvas, and dom overlays to receive events.
+
+You can either use the event manager:
+
+```jsx
+const events => useThree(state => state.events)
+useEffect(() => {
+  state.events.connect(domNode)
+```
+
+Or, the `eventSource` shortcut on the canvas (DOM only), which accepts dom-nodes and React.RefObjects to dom-nodes.
 
 ```jsx
 function App() {
   const target = useRef()
   return (
     <div ref={target}>
-      <Canvas onCreated={(state) => state.events.connect(target.current)}></Canvas>
-    </div>
-  )
+      <Canvas eventSource={target.current}>
+```
+
+### Using a different prefix (DOM only)
+
+By default Fiber will use offsetX/offsetY to set up the raycaster. You can change this with the `eventPrefix` shortcut.
+
+```jsx
+function App() {
+  return (
+    <Canvas eventPrefix="client">
+```
+
+### Allow raycast without user interaction
+
+By default Fiber will only raycast when the user is interacting with the canvas. If, for instance, the camera moves a hoverable object underneath the cursor it will not trigger a hover event. If this is wanted behaviour you can force a raycast by executing `update()`, call it whenever necessary.
+
+```jsx
+const events => useThree(state => state.events)
+useEffect(() => {
+  // Will trigger a onPointerMove with the last-known pointer event
+  state.events.update()
+```
+
+You can abstract this into more complex logic.
+
+```jsx
+function RaycastWhenCameraMoves() {
+  const matrix = new THREE.Matrix4()
+  useFrame((state) => {
+    // Act only when the camera has moved
+    if (!matrix.equals(state.camera.matrixWorld)) {
+      state.events.update()
+      matrix.copy(state.camera.matrixWorld)
+    }
+  })
 }
 ```

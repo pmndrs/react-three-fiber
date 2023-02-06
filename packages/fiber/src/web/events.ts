@@ -34,6 +34,10 @@ export function createPointerEvents(store: UseBoundStore<RootState>): EventManag
       (acc, key) => ({ ...acc, [key]: handlePointer(key) }),
       {},
     ) as unknown as Events,
+    update: () => {
+      const { events, internal } = store.getState()
+      if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
+    },
     connect: (target: HTMLElement) => {
       const { set, events } = store.getState()
       events.disconnect?.()
