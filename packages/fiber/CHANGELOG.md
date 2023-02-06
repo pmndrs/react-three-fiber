@@ -1,5 +1,12 @@
 # @react-three/fiber
 
+## 8.11.0
+
+### Minor Changes
+
+- 2917a47b: events.update, allow raycast w/o user interaction
+- 521bfb07: events.update, allow raycast w/o user interaction
+
 ## 8.10.4
 
 ### Patch Changes
