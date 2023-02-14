@@ -354,8 +354,10 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.__r3f?.parent) updateInstance(instance)
+  // Call the update lifecycle when it is being updated, but only when it is part of the scene.
+  // Skip updates to the `onUpdate` prop itself
+  const isCircular = changes.length === 1 && changes[0][0] === 'onUpdate'
+  if (!isCircular && changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }
