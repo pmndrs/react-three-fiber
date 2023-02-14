@@ -156,6 +156,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       handlers: {},
       objects: [],
       parent: null,
+      fiber: null,
       ...state,
     }
   }

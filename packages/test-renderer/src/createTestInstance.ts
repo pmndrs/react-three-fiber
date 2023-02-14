@@ -2,7 +2,7 @@ import { Object3D } from 'three'
 
 import type { MockInstance, MockScene, Obj, TestInstanceChildOpts } from './types/internal'
 
-import { expectOne, matchProps, findAll } from './helpers/testInstance'
+import { expectOne, matchProps, findAll, getMemoizedProps } from './helpers/testInstance'
 
 export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   _fiber: MockInstance
@@ -20,7 +20,7 @@ export class ReactThreeTestInstance<TInstance extends Object3D = Object3D> {
   }
 
   public get props(): Obj {
-    return this._fiber.__r3f.memoizedProps
+    return getMemoizedProps(this._fiber)
   }
 
   public get parent(): ReactThreeTestInstance | null {

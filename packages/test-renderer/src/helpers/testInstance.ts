@@ -1,5 +1,21 @@
 import { ReactThreeTestInstance } from '../createTestInstance'
-import type { Obj } from '../types/internal'
+import type { MockInstance, Obj } from '../types/internal'
+
+const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
+
+export function getMemoizedProps(instance: MockInstance): Record<string, unknown> {
+  const props: Record<string, unknown> = { args: [] }
+
+  // Gets only instance props from instance Fiber
+  const fiber = instance.__r3f.fiber?.alternate ?? instance.__r3f.fiber
+  if (fiber) {
+    for (const key in fiber.memoizedProps) {
+      if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = fiber.memoizedProps[key]
+    }
+  }
+
+  return props
+}
 
 export const expectOne = <TItem>(items: TItem[], msg: string) => {
   if (items.length === 1) {
