@@ -849,4 +849,16 @@ describe('renderer', () => {
 
     expect(ref.current!.scale.toArray()).toStrictEqual(new THREE.Object3D().scale.toArray())
   })
+
+  it("onUpdate shouldn't update itself", async () => {
+    const one = jest.fn()
+    const two = jest.fn()
+
+    const Test = (props: Partial<JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
+    await act(async () => root.render(<Test onUpdate={one} />))
+    await act(async () => root.render(<Test onUpdate={two} />))
+
+    expect(one).toBeCalledTimes(1)
+    expect(two).toBeCalledTimes(0)
+  })
 })
