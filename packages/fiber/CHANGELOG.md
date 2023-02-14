@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.1
+
+### Patch Changes
+
+- 58cadeff: fix: skip circular onUpdate calls
+
 ## 8.11.0
 
 ### Minor Changes
