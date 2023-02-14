@@ -1,27 +1,31 @@
 import { ReactThreeTestInstance } from '../createTestInstance'
 import type { MockInstance, Obj } from '../types/internal'
 
-const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
-const R3F_INSTANCE_PROPS = ['attach', 'object']
+const INTERNAL_PROPS = [
+  // Exclude react-internal props
+  'children',
+  'key',
+  'ref',
+  // Exclude "correct" JSX props from breaking snapshots
+  // TODO: remove in v9
+  // https://github.com/pmndrs/react-three-fiber/pull/2757#issuecomment-1430362907
+  'attach',
+  'object',
+]
 
 export function getMemoizedProps(instance: MockInstance): Record<string, unknown> {
-  const props: Record<string, unknown> = { args: [] }
+  const props: Record<string, unknown> = {}
 
-  // Gets only instance props from instance Fiber
-  const fiber = instance.__r3f.fiber?.alternate ?? instance.__r3f.fiber
-  if (fiber) {
-    for (const key in fiber.memoizedProps) {
-      // Exclude react-internal keys from snapshots
-      if (REACT_INTERNAL_PROPS.includes(key)) continue
-
-      // Exclude "correct" JSX props from breaking snapshots
-      // TODO: remove in v9
-      // https://github.com/pmndrs/react-three-fiber/pull/2757#issuecomment-1430362907
-      if (R3F_INSTANCE_PROPS.includes(key)) continue
-
-      props[key] = fiber.memoizedProps[key]
+  // Gets only instance props from its Fiber
+  for (const fiber of [instance.__r3f.fiber, instance.__r3f.fiber?.alternate]) {
+    if (fiber) {
+      for (const key in fiber.memoizedProps) {
+        if (!INTERNAL_PROPS.includes(key)) props[key] ??= fiber.memoizedProps[key]
+      }
     }
   }
+
+  props.args ??= []
 
   return props
 }

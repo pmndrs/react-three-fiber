@@ -304,8 +304,8 @@ Array [
             "children": Array [],
             "props": Object {
               "args": Array [
-                6,
-                6,
+                2,
+                2,
               ],
             },
             "type": "boxGeometry",
