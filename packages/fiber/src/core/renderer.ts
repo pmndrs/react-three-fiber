@@ -30,7 +30,6 @@ export type LocalState = {
   handlers: Partial<EventHandlers>
   attach?: AttachType
   previousAttach: any
-  memoizedProps: { [key: string]: any }
   autoRemovedBeforeAppend?: boolean
 }
 
@@ -114,8 +113,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         type,
         root,
         attach,
-        // Save args in case we need to reconstruct later for HMR
-        memoizedProps: { args },
       })
     }
 
@@ -226,7 +223,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
         if (!isPrimitive) delete (child as Partial<Instance>).__r3f
       }
 

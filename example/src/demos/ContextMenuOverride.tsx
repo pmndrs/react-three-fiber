@@ -12,7 +12,8 @@ export default function App() {
       <ambientLight />
       <pointLight position={[10, 10, 10]} />
       <mesh
-        position={[0, 0, 0]}
+        scale={[2, 2, 2]}
+        position={[1, 0, 0]}
         onContextMenu={(ev) => {
           ev.nativeEvent.preventDefault()
           set((value) => !value)

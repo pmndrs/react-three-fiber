@@ -56,13 +56,13 @@ export class ErrorBoundary extends React.Component<
 }
 
 export const DEFAULT = '__default'
+export const DEFAULTS = new Map()
 
 export type DiffSet = {
-  memoized: { [key: string]: any }
   changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][]
 }
 
-export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
+export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).changes
 export type ClassConstructor = { new (): void }
 
 export type ObjectMap = {
@@ -152,7 +152,6 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       type: '',
       root: null as unknown as UseBoundStore<RootState>,
       previousAttach: null,
-      memoizedProps: {},
       eventCount: 0,
       handlers: {},
       objects: [],
@@ -241,11 +240,7 @@ export function diffProps(
     }
   })
 
-  const memoized: { [key: string]: any } = { ...props }
-  if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
-  if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
-
-  return { memoized, changes }
+  return { changes }
 }
 
 // This function applies a set of changes to the instance
@@ -254,11 +249,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   const localState = (instance.__r3f ?? {}) as LocalState
   const root = localState.root
   const rootState = root?.getState?.() ?? {}
-  const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
+  const { changes } = isDiffSet(data) ? data : diffProps(instance, data)
   const prevHandlers = localState.eventCount
-
-  // Prepare memoized props
-  if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
   for (let i = 0; i < changes.length; i++) {
     let [key, value, isEvent, keys] = changes[i]
@@ -284,11 +276,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (value === DEFAULT + 'remove') {
       if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(currentInstance.constructor)
+        if (!ctor) {
+          // @ts-ignore
+          ctor = new currentInstance.constructor()
+          DEFAULTS.set(currentInstance.constructor, ctor)
+        }
+        value = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         value = 0
@@ -313,7 +307,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        targetProp.constructor === (value as ClassConstructor).constructor
       ) {
         targetProp.copy(value)
       }
