@@ -16,7 +16,7 @@ import {
   PrivateKeys,
   privateKeys,
 } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { createRenderer, extend, prepare, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
@@ -81,6 +81,8 @@ export type RenderProps<TCanvas extends Element> = {
   dpr?: Dpr
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
+  /** Allows you to render your components to a custom scene */
+  scene?: THREE.Scene
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
@@ -175,6 +177,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       let {
         gl: glConfig,
         size: propsSize,
+        scene,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -221,6 +224,11 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
           if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+      }
+
+      // Set up scene (one time only!)
+      if (!state.scene) {
+        state.set({ scene: prepare(scene || new THREE.Scene()) })
       }
 
       // Set up XR (one time only!)
