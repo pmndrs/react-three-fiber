@@ -158,7 +158,7 @@ function App() {
       <Canvas eventSource={target.current}>
 ```
 
-### Using a different prefix (DOM only)
+### Using a different prefix (DOM only)
 
 By default Fiber will use offsetX/offsetY to set up the raycaster. You can change this with the `eventPrefix` shortcut.
 
@@ -168,7 +168,7 @@ function App() {
     <Canvas eventPrefix="client">
 ```
 
-### Allow raycast without user interaction
+### Allow raycast without user interaction
 
 By default Fiber will only raycast when the user is interacting with the canvas. If, for instance, the camera moves a hoverable object underneath the cursor it will not trigger a hover event. If this is wanted behaviour you can force a raycast by executing `update()`, call it whenever necessary.
 
