@@ -56,6 +56,7 @@ export class ErrorBoundary extends React.Component<
 }
 
 export const DEFAULT = '__default'
+export const DEFAULTS = new Map()
 
 export type DiffSet = {
   memoized: { [key: string]: any }
@@ -284,11 +285,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (value === DEFAULT + 'remove') {
       if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(currentInstance.constructor)
+        if (!ctor) {
+          // @ts-ignore
+          ctor = new currentInstance.constructor()
+          DEFAULTS.set(currentInstance.constructor, ctor)
+        }
+        value = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         value = 0
@@ -313,7 +316,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        targetProp.constructor === (value as ClassConstructor).constructor
       ) {
         targetProp.copy(value)
       }
