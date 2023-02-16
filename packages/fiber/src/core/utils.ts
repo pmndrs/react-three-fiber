@@ -341,7 +341,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       currentInstance[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
+      if (
+        !rootState.linear &&
+        currentInstance[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        currentInstance[key].format === THREE.RGBAFormat &&
+        currentInstance[key].type === THREE.UnsignedByteType
+      ) {
         currentInstance[key].encoding = THREE.sRGBEncoding
       }
     }
