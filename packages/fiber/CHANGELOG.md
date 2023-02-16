@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.2
+
+### Patch Changes
+
+- 41d655cd: fix: hmr, srgb encode
+
 ## 8.11.1
 
 ### Patch Changes
