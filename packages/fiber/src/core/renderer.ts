@@ -21,7 +21,6 @@ export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<RootState
 
 export type LocalState = {
   type: string
-  fiber: Reconciler.Fiber | null
   root: UseBoundStore<RootState>
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
@@ -31,6 +30,7 @@ export type LocalState = {
   handlers: Partial<EventHandlers>
   attach?: AttachType
   previousAttach: any
+  memoizedProps: { [key: string]: any }
   autoRemovedBeforeAppend?: boolean
 }
 
@@ -89,8 +89,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     type: string,
     { args = [], attach, ...props }: InstanceProps,
     root: UseBoundStore<RootState>,
-    _hostContext: null,
-    fiber: Reconciler.Fiber,
   ) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
@@ -116,7 +114,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         type,
         root,
         attach,
-        fiber,
+        // Save args in case we need to reconstruct later for HMR
+        memoizedProps: { args },
       })
     }
 
@@ -131,7 +130,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     // why it passes "true" here
     // There is no reason to apply props to injects
     if (name !== 'inject') applyProps(instance, props)
-    instance.__r3f.fiber = fiber
     return instance
   }
 
@@ -228,6 +226,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
         delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
+        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
         if (!isPrimitive) delete (child as Partial<Instance>).__r3f
       }
 
@@ -255,7 +254,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     const parent = instance.__r3f?.parent
     if (!parent) return
 
-    const newInstance = createInstance(type, newProps, instance.__r3f.root, null, fiber)
+    const newInstance = createInstance(type, newProps, instance.__r3f.root)
 
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then

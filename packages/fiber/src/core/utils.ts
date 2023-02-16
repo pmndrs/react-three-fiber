@@ -59,10 +59,11 @@ export const DEFAULT = '__default'
 export const DEFAULTS = new Map()
 
 export type DiffSet = {
+  memoized: { [key: string]: any }
   changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][]
 }
 
-export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).changes
+export const isDiffSet = (def: any): def is DiffSet => def && !!(def as DiffSet).memoized && !!(def as DiffSet).changes
 export type ClassConstructor = { new (): void }
 
 export type ObjectMap = {
@@ -152,11 +153,11 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
       type: '',
       root: null as unknown as UseBoundStore<RootState>,
       previousAttach: null,
+      memoizedProps: {},
       eventCount: 0,
       handlers: {},
       objects: [],
       parent: null,
-      fiber: null,
       ...state,
     }
   }
@@ -241,7 +242,11 @@ export function diffProps(
     }
   })
 
-  return { changes }
+  const memoized: { [key: string]: any } = { ...props }
+  if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
+  if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
+
+  return { memoized, changes }
 }
 
 // This function applies a set of changes to the instance
@@ -250,8 +255,11 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   const localState = (instance.__r3f ?? {}) as LocalState
   const root = localState.root
   const rootState = root?.getState?.() ?? {}
-  const { changes } = isDiffSet(data) ? data : diffProps(instance, data)
+  const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
   const prevHandlers = localState.eventCount
+
+  // Prepare memoized props
+  if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
   for (let i = 0; i < changes.length; i++) {
     let [key, value, isEvent, keys] = changes[i]
