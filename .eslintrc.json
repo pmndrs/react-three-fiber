@@ -6,17 +6,12 @@
   },
   "extends": [
     "prettier",
-    "prettier/react",
-    "prettier/@typescript-eslint",
     "plugin:prettier/recommended",
     "plugin:react-hooks/recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "prettier",
-    "prettier/react",
-    "prettier/@typescript-eslint"
+    "plugin:import/recommended",
+    "plugin:@react-three/recommended"
   ],
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier", "@react-three"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
@@ -60,7 +55,7 @@
       },
       "alias": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
-        "map": [["react-three-fiber", "./src/targets/web.tsx"]]
+        "map": [["@react-three/fiber", "./packages/fiber/src/web"]]
       }
     }
   },
@@ -71,5 +66,10 @@
         "project": "./tsconfig.json"
       }
     }
-  ]
+  ],
+  "rules": {
+    "import/no-unresolved": "off",
+    "import/named": "off",
+    "import/namespace": "off"
+  }
 }

@@ -1,0 +1,79 @@
+---
+title: 'Events and Interaction'
+description: Let's make our meshes react to user input.
+nav: 13
+---
+
+This tutorial will assume some React knowledge, and will be based on [this starter codesandbox](https://codesandbox.io/s/getting-started-01-12q81?from-embed), so just fork it and follow along!
+
+After we have our continuous loop running the next step would be to allow our mesh to react to user interaction, so in this part let's attach a click handler to the cube and make it bigger on click.
+
+## User Interaction
+
+Any Object3D that has a raycast method can receive a large number of events, for instance a mesh:
+
+```jsx
+<mesh
+  onClick={(e) => console.log('click')}
+  onContextMenu={(e) => console.log('context menu')}
+  onDoubleClick={(e) => console.log('double click')}
+  onWheel={(e) => console.log('wheel spins')}
+  onPointerUp={(e) => console.log('up')}
+  onPointerDown={(e) => console.log('down')}
+  onPointerOver={(e) => console.log('over')}
+  onPointerOut={(e) => console.log('out')}
+  onPointerEnter={(e) => console.log('enter')}
+  onPointerLeave={(e) => console.log('leave')}
+  onPointerMove={(e) => console.log('move')}
+  onPointerMissed={() => console.log('missed')}
+  onUpdate={(self) => console.log('props have been updated')}
+/>
+```
+
+From this we can see that what we need to do is use the old `onClick` event we use on any DOM element to react to a user clicking the mesh.
+
+Let's add it then:
+
+```jsx
+<mesh onClick={() => alert('Hellooo')} ref={myMesh}>
+  <boxGeometry />
+  <meshPhongMaterial color="royalblue" />
+</mesh>
+```
+
+We did it! We created the most boring interaction in the story of 3D and we made an alert show up. Now let's make it actually animate our mesh.
+
+Let's start by setting some state to check if the mesh is active:
+
+```jsx
+const [active, setActive] = useState(false)
+```
+
+After we have this we can set the scale with a ternary operator like so:
+
+```jsx
+<mesh scale={active ? 1.5 : 1} onClick={() => setActive(!active)} ref={myMesh}>
+  <boxGeometry />
+  <meshPhongMaterial color="royalblue" />
+</mesh>
+```
+
+If you try to click on your mesh now, it scales up and down. We just made our first interactive 3D mesh!
+
+What we did in this chapter was:
+
+- Attached a click handler to our mesh
+- Added some state to track if the mesh is currently active
+- Changed the scale based on that state
+
+<Codesandbox id="98ppy" />
+
+**Exercises**
+
+- Change other props of the mesh like the `position` or even the `color` of the material.
+- Use `onPointerOver` and `onPointerOut` to change the props of the mesh on hover events.
+
+## Next steps
+
+We just made our mesh react to user interaction but it looks pretty bland without any transition, right?
+In the next chapter let's integrate `react-spring` into our project to make this into an actual animation.

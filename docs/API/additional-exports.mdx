@@ -1,0 +1,21 @@
+---
+title: Additional Exports
+nav: 9
+---
+
+| export             | usage                                                          |
+| ------------------ | -------------------------------------------------------------- |
+| addEffect          | Adds a global render callback which is called each frame       |
+| addAfterEffect     | Adds a global after-render callback which is called each frame |
+| addTail            | Adds a global callback which is called when rendering stops    |
+| flushGlobalEffects | Flushes global render-effects for when manually driving a loop |
+| invalidate         | Forces view global invalidation                                |
+| advance            | Advances the frameloop (given that it's set to 'never')        |
+| extend             | Extends the native-object catalogue                            |
+| createPortal       | Creates a portal (it's a React feature for re-parenting)       |
+| createRoot         | Creates a root that can render three JSX into a canvas         |
+| events             | Dom pointer-event system                                       |
+| applyProps         | `applyProps(element, props)` sets element properties,          |
+| act                | usage with react-testing                                       |
+| useInstanceHandle  | Exposes react-internal local state from `instance.__r3f`       |
+|                    |                                                                |

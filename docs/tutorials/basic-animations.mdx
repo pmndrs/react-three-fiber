@@ -1,0 +1,91 @@
+---
+title: Basic Animations
+description: This guide will help you understand refs, useFrame and how to make basic animations with Fiber
+nav: 16
+---
+
+This tutorial will assume some React knowledge, and will be based on [this starter codesandbox](https://codesandbox.io/s/getting-started-01-12q81?from-embed), so just fork it and follow along!
+
+We will build a really small, continuous animation loop, that will be the basic building block of more advanced animations later on.
+
+## useFrame
+
+`useFrame` is a Fiber hook that lets you execute code on every frame of Fiber's render loop. This can have a lot of uses, but we will focus on building an animation with it.
+
+It's important to remember that **Fiber hooks can only be called inside a `<Canvas />` parent**!
+
+```jsx
+import { useFrame } from '@react-three/fiber'
+
+function MyAnimatedBox() {
+  useFrame(() => {
+    console.log("Hey, I'm executing every frame!")
+  })
+  return (
+    <mesh>
+      <boxGeometry />
+      <meshBasicMaterial color="royalblue" />
+    </mesh>
+  )
+}
+```
+
+This loop is the basic building block of our animation, the callback we pass to `useFrame` will be executed every frame and it will be passed an object containing the state of our Fiber scene:
+
+For example, we can extract time information from the `clock` parameter, to know how much time has elapsed in our application, and use that time to animate a value:
+
+```jsx
+useFrame(({ clock }) => {
+  const a = clock.getElapsedTime()
+  console.log(a) // the value will be 0 at scene initialization and grow each frame
+})
+```
+
+`clock` is a [three.js Clock](https://threejs.org/docs/#api/en/core/Clock) object, from which we are getting the total elapsed time, which will be key for our animations.
+
+## Animating with Refs
+
+It would be tempting to just update the state of our component via `setState` and let it change the `mesh` via props, but going through state isn't ideal, when dealing with continuous updates, commonly know as [transient updates]().
+Instead, we want to **directly mutate our mesh each frame**. First, we'll have to get a `reference` to it, via the `useRef` React hook:
+
+```jsx
+import React from 'react'
+
+function MyAnimatedBox() {
+  const myMesh = React.useRef()
+  return (
+    <mesh ref={myMesh}>
+      <boxGeometry />
+      <meshBasicMaterial color="royalblue" />
+    </mesh>
+  )
+}
+```
+
+`myMesh` will now hold a reference to the actual three.js object, which we can now freely mutate in `useFrame`, without having to worry about React:
+
+```jsx
+useFrame(({ clock }) => {
+  myMesh.current.rotation.x = clock.getElapsedTime()
+})
+```
+
+Let's have a closer look:
+
+- We are destructuring `clock` from the argument passed to `useFrame`, which we know is the state of our Fiber scene.
+- We are accessing the `rotation.x` property of `myMesh.current` object, which is a reference to our mesh object
+- We are assigning our time-dependent value `a` to the `rotation` on the `x` axis, meaning our object will now infinitely rotate between -1 and 1 radians around the x axis!
+
+<Codesandbox id="29gxw" />
+
+**Exercises**
+
+- Try `Math.sin(clock.getElapsedTime())` and see how your animation changes
+
+## Next steps
+
+Now that you understand the basic technique for animating in Fiber, [learn how event works](/react-three-fiber/tutorials/events-and-interaction)!
+
+If you want to go deeper into animations, check these out:
+
+- [Animating with React Spring](/react-three-fiber/tutorials/using-with-react-spring)

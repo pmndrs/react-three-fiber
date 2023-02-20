@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
+    "lib": ["es2019", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
@@ -11,14 +12,10 @@
     "declaration": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
-    "outDir": "dist",
     "resolveJsonModule": true,
     "noImplicitThis": false,
-    "baseUrl": "./src",
-    "paths": {
-      "react-three-fiber": ["./"]
-    }
+    "baseUrl": "./"
   },
-  "include": ["./src", "tests"],
-  "exclude": ["./node_modules/**/*"]
+  "include": ["packages/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

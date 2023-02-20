@@ -3,6 +3,8 @@ coverage/
 dist/
 build/
 types/
+# commit types in src
+!packages/*/src/types/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
