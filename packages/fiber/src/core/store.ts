@@ -70,7 +70,8 @@ export type InternalState = {
   frames: number
   lastEvent: React.MutableRefObject<DomEvent | null>
   interaction: THREE.Object3D[]
-  hovered: Map<string, ThreeEvent<DomEvent>>
+  hovered: Map<string, ThreeEvent<DomEvent>> // entered objects
+  topHovered?: ThreeEvent<DomEvent> // hovered object
   subscribers: Subscription[]
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]

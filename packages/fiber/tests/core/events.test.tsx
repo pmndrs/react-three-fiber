@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
 
-import { Canvas, act } from '../../src'
+import { Canvas, act, events } from '../../src'
+import { InputAccessoryView } from 'react-native'
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
@@ -275,11 +276,16 @@ describe('events', () => {
     const handlePointerLeave = jest.fn()
 
     /* This component lets us unmount the event-handling object */
-    function PointerCaptureTest(props: { hasMesh: boolean, manualRelease?: boolean }) {
+    function PointerCaptureTest(props: { hasMesh: boolean; manualRelease?: boolean }) {
       return (
         <Canvas>
           {props.hasMesh && (
-            <mesh onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={props.manualRelease ? handlePointerUp : undefined} onPointerLeave={handlePointerLeave} onPointerEnter={handlePointerEnter}>
+            <mesh
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={props.manualRelease ? handlePointerUp : undefined}
+              onPointerLeave={handlePointerLeave}
+              onPointerEnter={handlePointerEnter}>
               <boxGeometry args={[2, 2]} />
               <meshBasicMaterial />
             </mesh>
@@ -350,9 +356,9 @@ describe('events', () => {
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
       await act(async () => canvas.dispatchEvent(moveIn))
-      expect(handlePointerEnter).toHaveBeenCalledTimes(1);
-      expect(handlePointerMove).toHaveBeenCalledTimes(1);
-  
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+      expect(handlePointerMove).toHaveBeenCalledTimes(1)
+
       const down = new PointerEvent('pointerdown', { pointerId })
       Object.defineProperty(down, 'offsetX', { get: () => 577 })
       Object.defineProperty(down, 'offsetY', { get: () => 480 })
@@ -362,11 +368,11 @@ describe('events', () => {
       // If we move the pointer now, when it is captured, it should raise the onPointerMove event even though the pointer is not over the element,
       // and NOT raise the onPointerLeave event.
       await act(async () => canvas.dispatchEvent(moveOut))
-      expect(handlePointerMove).toHaveBeenCalledTimes(2);
-      expect(handlePointerLeave).not.toHaveBeenCalled();
+      expect(handlePointerMove).toHaveBeenCalledTimes(2)
+      expect(handlePointerLeave).not.toHaveBeenCalled()
 
       await act(async () => canvas.dispatchEvent(moveIn))
-      expect(handlePointerMove).toHaveBeenCalledTimes(3);
+      expect(handlePointerMove).toHaveBeenCalledTimes(3)
 
       const up = new PointerEvent('pointerup', { pointerId })
       Object.defineProperty(up, 'offsetX', { get: () => 577 })
@@ -377,12 +383,112 @@ describe('events', () => {
       await act(async () => canvas.dispatchEvent(lostpointercapture))
 
       // The pointer is still over the element, so onPointerLeave should not have been called.
-      expect(handlePointerLeave).not.toHaveBeenCalled();
+      expect(handlePointerLeave).not.toHaveBeenCalled()
 
       // The element pointer should no longer be captured, so moving it away should call onPointerLeave.
-      await act(async () => canvas.dispatchEvent(moveOut));
-      expect(handlePointerEnter).toHaveBeenCalledTimes(1);
+      await act(async () => canvas.dispatchEvent(moveOut))
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('pointer events order', () => {
+    let log: string[] = []
+    const addToLog = (s: string) => log.push(s)
+    const extractLog = () => {
+      const result = log
+      log = []
+      return result
+    }
+
+    function Scene({ withFilter }: any) {
+      const eventManagerFactory = React.useCallback(
+        (state: any) => ({
+          ...events(state),
+          filter: (intersections: any[]) => {
+            return intersections[0] ? [intersections[0]] : []
+          },
+        }),
+        [],
+      )
+      return (
+        <Canvas events={withFilter ? eventManagerFactory : undefined}>
+          <mesh
+            onPointerOver={() => addToLog('box over')}
+            onPointerOut={() => addToLog('box out')}
+            onPointerEnter={() => addToLog('box enter')}
+            onPointerLeave={() => addToLog('box leave')}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+          <mesh
+            onPointerOver={() => addToLog('plane over')}
+            onPointerOut={() => addToLog('plane out')}
+            onPointerEnter={() => addToLog('plane enter')}
+            onPointerLeave={() => addToLog('plane leave')}>
+            <planeGeometry args={[10, 10]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>
+      )
+    }
+
+    const moveToPos = async (x: number, y: number) => {
+      const moveEvent = new PointerEvent('pointermove', { pointerId: 2345 })
+      Object.defineProperty(moveEvent, 'offsetX', { get: () => x })
+      Object.defineProperty(moveEvent, 'offsetY', { get: () => y })
+      fireEvent(getContainer(), moveEvent)
+    }
+
+    const moveToBox = () => moveToPos(577, 480)
+    const moveToPlane = () => moveToPos(300, 480)
+    const moveOutside = () => moveToPos(-10000, -10000)
+
+    it('should have correct order', async () => {
+      let renderResult: RenderResult = undefined!
+      await act(async () => {
+        renderResult = render(<Scene />)
+        return renderResult
+      })
+
+      moveToPlane()
+      expect(extractLog()).toEqual(['plane enter', 'plane over'])
+      moveOutside()
+      expect(extractLog()).toEqual(['plane out', 'plane leave'])
+    })
+
+    it('should have correct order for two objects', async () => {
+      let renderResult: RenderResult = undefined!
+      await act(async () => {
+        renderResult = render(<Scene />)
+        return renderResult
+      })
+
+      moveToPlane()
+      expect(extractLog()).toEqual(['plane enter', 'plane over'])
+      moveToBox()
+      expect(extractLog()).toEqual(['plane out', 'box enter', 'box over'])
+      moveToPlane()
+      expect(extractLog()).toEqual(['box out', 'box leave', 'plane over'])
+      moveOutside()
+      expect(extractLog()).toEqual(['plane out', 'plane leave'])
+    })
+
+    it('should raise Enter with Over, Leave with Out events when filtering one object', async () => {
+      let renderResult: RenderResult = undefined!
+      await act(async () => {
+        renderResult = render(<Scene withFilter />)
+        return renderResult
+      })
+
+      moveToPlane()
+      expect(extractLog()).toEqual(['plane enter', 'plane over'])
+      moveToBox()
+      expect(extractLog()).toEqual(['plane out', 'plane leave', 'box enter', 'box over'])
+      moveToPlane()
+      expect(extractLog()).toEqual(['box out', 'box leave', 'plane enter', 'plane over'])
+      moveOutside()
+      expect(extractLog()).toEqual(['plane out', 'plane leave'])
     })
   })
 })

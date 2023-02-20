@@ -370,23 +370,29 @@ export function createEvents(store: UseBoundStore<RootState>) {
     for (const hoveredObj of internal.hovered.values()) {
       // When no objects were hit or the the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
-      if (
-        !intersections.length ||
-        !intersections.find(
-          (hit) =>
-            hit.object === hoveredObj.object &&
-            hit.index === hoveredObj.index &&
-            hit.instanceId === hoveredObj.instanceId,
-        )
-      ) {
-        const eventObject = hoveredObj.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
+      const intersection = intersections.find(
+        (hit) =>
+          hit.object === hoveredObj.object &&
+          hit.index === hoveredObj.index &&
+          hit.instanceId === hoveredObj.instanceId,
+      )
+      const eventObject = hoveredObj.eventObject
+      const instance = (eventObject as unknown as Instance).__r3f
+      const handlers = instance?.handlers
+      if (!intersection) {
         internal.hovered.delete(makeId(hoveredObj))
-        if (instance?.eventCount) {
-          // Clear out intersects, they are outdated by now
-          const data = { ...hoveredObj, intersections }
+      }
+      if (instance?.eventCount) {
+        // Clear out intersects, they are outdated by now
+        const data = { ...hoveredObj, intersections }
+        if (
+          internal.topHovered &&
+          makeId(internal.topHovered) === makeId(hoveredObj)
+          // if top intersection changed
+        ) {
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
+        }
+        if (!intersection) {
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
         }
       }
@@ -454,6 +460,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
         const eventObject = data.eventObject
         const instance = (eventObject as unknown as Instance).__r3f
         const handlers = instance?.handlers
+        const isTopmost = data.intersections[0]?.object === eventObject
 
         // Check presence of handlers
         if (!instance?.eventCount) return
@@ -467,9 +474,13 @@ export function createEvents(store: UseBoundStore<RootState>) {
             if (!hoveredItem) {
               // If the object wasn't previously hovered, book it and call its handler
               internal.hovered.set(id, data)
-              handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
               handlers.onPointerEnter?.(data as ThreeEvent<PointerEvent>)
-            } else if (hoveredItem.stopped) {
+            }
+            if (isTopmost && internal.topHovered?.eventObject !== eventObject) {
+              handlers.onPointerOver?.(data as ThreeEvent<PointerEvent>)
+              internal.topHovered = data
+            }
+            if (hoveredItem?.stopped) {
               // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
               data.stopPropagation()
             }
