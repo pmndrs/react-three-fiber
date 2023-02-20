@@ -2,7 +2,6 @@ import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
 
 import { Canvas, act, events } from '../../src'
-import { InputAccessoryView } from 'react-native'
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
