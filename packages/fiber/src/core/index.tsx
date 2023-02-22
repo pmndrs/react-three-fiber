@@ -346,7 +346,7 @@ function render<TCanvas extends Canvas>(
   return root.render(children)
 }
 
-function Provider<TElement extends Element>({
+function Provider<TCanvas extends Canvas>({
   store,
   children,
   onCreated,
@@ -355,8 +355,7 @@ function Provider<TElement extends Element>({
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
   children: React.ReactNode
-  rootElement: TElement
-  parent?: React.MutableRefObject<TElement | undefined>
+  rootElement: TCanvas
 }) {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
