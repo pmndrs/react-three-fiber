@@ -39,9 +39,11 @@ const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
+type Canvas = HTMLCanvasElement | OffscreenCanvas
+
 type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement) => Renderer)
+  | ((canvas: Canvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
@@ -102,9 +104,7 @@ export type RenderProps<TCanvas extends Element> = {
 }
 
 const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
-  const customRenderer = (
-    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
-  ) as THREE.WebGLRenderer
+  const customRenderer = (typeof gl === 'function' ? gl(canvas as unknown as Canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
   else
     return new THREE.WebGLRenderer({
@@ -122,18 +122,11 @@ export type ReconcilerRoot<TCanvas extends Element> = {
   unmount: () => void
 }
 
-function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
-  return maybeCanvas instanceof HTMLCanvasElement
-}
+function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
+  if (defaultSize) return defaultSize
 
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
-  if (defaultSize) {
-    return defaultSize
-  }
-
-  if (isCanvas(canvas) && canvas.parentElement) {
+  if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-
     return { width, height, top, left }
   }
 
