@@ -34,18 +34,20 @@ import { useStore } from './hooks'
 import { OffscreenCanvas } from 'three'
 import type { Properties } from '../three-types'
 
-const roots = new Map<Element, Root>()
+type Canvas = HTMLCanvasElement | OffscreenCanvas
+
+const roots = new Map<Canvas, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement) => Renderer)
+  | ((canvas: Canvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = {
+export type RenderProps<TCanvas extends Canvas> = {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -101,10 +103,8 @@ export type RenderProps<TCanvas extends Element> = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
-  const customRenderer = (
-    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
-  ) as THREE.WebGLRenderer
+const createRendererInstance = <TCanvas extends Canvas>(gl: GLProps, canvas: TCanvas): THREE.WebGLRenderer => {
+  const customRenderer = (typeof gl === 'function' ? gl(canvas as unknown as Canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
   else
     return new THREE.WebGLRenderer({
@@ -116,31 +116,24 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     })
 }
 
-export type ReconcilerRoot<TCanvas extends Element> = {
+export type ReconcilerRoot<TCanvas extends Canvas> = {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => UseBoundStore<RootState>
   unmount: () => void
 }
 
-function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
-  return maybeCanvas instanceof HTMLCanvasElement
-}
+function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
+  if (defaultSize) return defaultSize
 
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
-  if (defaultSize) {
-    return defaultSize
-  }
-
-  if (isCanvas(canvas) && canvas.parentElement) {
+  if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-
     return { width, height, top, left }
   }
 
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -343,7 +336,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   }
 }
 
-function render<TCanvas extends Element>(
+function render<TCanvas extends Canvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
@@ -354,7 +347,7 @@ function render<TCanvas extends Element>(
   return root.render(children)
 }
 
-function Provider<TElement extends Element>({
+function Provider<TCanvas extends Canvas>({
   store,
   children,
   onCreated,
@@ -363,8 +356,7 @@ function Provider<TElement extends Element>({
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
   children: React.ReactNode
-  rootElement: TElement
-  parent?: React.MutableRefObject<TElement | undefined>
+  rootElement: TCanvas
 }) {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
@@ -380,7 +372,7 @@ function Provider<TElement extends Element>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
+function unmountComponentAtNode<TCanvas extends Canvas>(canvas: TCanvas, callback?: (canvas: TCanvas) => void) {
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {
