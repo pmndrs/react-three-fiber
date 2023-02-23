@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.3
+
+### Patch Changes
+
+- 2bce569c: fix: progressively set colormanagement
+
 ## 8.11.2
 
 ### Patch Changes
