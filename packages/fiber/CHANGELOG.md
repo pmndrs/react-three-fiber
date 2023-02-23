@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.5
+
+### Patch Changes
+
+- c658f763: fix: update canvas prop types
+
 ## 8.11.4
 
 ### Patch Changes
