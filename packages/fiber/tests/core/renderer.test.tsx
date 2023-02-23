@@ -686,6 +686,7 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
+    // r139 legacyMode
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
     })
@@ -695,6 +696,19 @@ describe('renderer', () => {
       root.configure({ legacy: false }).render(<group />)
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+
+    // r150 !enabled
+    ;(THREE as any).ColorManagement.enabled = true
+
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
+
+    await act(async () => {
+      root.configure({ legacy: false }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
   })
 
   it('can handle createPortal', async () => {
