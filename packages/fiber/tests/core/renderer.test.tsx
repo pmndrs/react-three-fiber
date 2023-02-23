@@ -737,12 +737,12 @@ describe('renderer', () => {
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
     })
-    expect((THREE as any).ColorManagement.legacy).toBe(false)
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
 
     await act(async () => {
       root.configure({ legacy: false }).render(<group />)
     })
-    expect((THREE as any).ColorManagement.legacy).toBe(true)
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
   })
 
   it('can handle createPortal', async () => {
