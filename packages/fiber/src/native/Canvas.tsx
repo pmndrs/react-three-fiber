@@ -62,7 +62,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     if (error) throw error
 
     const viewRef = React.useRef<View>(null!)
-    const root = React.useRef<ReconcilerRoot<Element>>(null!)
+    const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
     // Inject and cleanup RN polyfills if able
     React.useLayoutEffect(() => polyfills(), [])
@@ -85,7 +85,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         getContext: (() => context) as any,
       } as HTMLCanvasElement
 
-      root.current = createRoot<Element>(canvasShim)
+      root.current = createRoot<HTMLCanvasElement>(canvasShim)
       setCanvas(canvasShim)
     }, [])
 
