@@ -31,7 +31,6 @@ import {
   ColorManagement,
 } from './utils'
 import { useStore } from './hooks'
-import { OffscreenCanvas } from 'three'
 import type { Properties } from '../three-types'
 
 type Canvas = HTMLCanvasElement | OffscreenCanvas
@@ -128,6 +127,13 @@ function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
   if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
     return { width, height, top, left }
+  } else if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      top: 0,
+      left: 0,
+    }
   }
 
   return { width: 0, height: 0, top: 0, left: 0 }
@@ -297,13 +303,13 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         applyProps(gl as any, glConfig as any)
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {
         state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
       }
+      // Check pixelratio
+      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
