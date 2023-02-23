@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.4
+
+### Patch Changes
+
+- 970aa58b: fix: play nice with offscreencanvas
+
 ## 8.11.3
 
 ### Patch Changes
