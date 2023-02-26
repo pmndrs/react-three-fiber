@@ -5,6 +5,19 @@ import type { EventHandlers } from './events'
 import type { Dpr, RootState, RootStore, Size } from './store'
 import type { ConstructorRepresentation, Instance } from './reconciler'
 
+/**
+ * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ */
+const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const ColorManagement: ColorManagementRepresentation | null =
+  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+
 export type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
 export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 export type Properties<T> = Pick<T, NonFunctionKeys<T>>
@@ -347,6 +360,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set ...
       else if (value !== undefined) target.set(value)
+
+      // For versions of three which don't support THREE.ColorManagement,
+      // Auto-convert sRGB colors
+      // https://github.com/pmndrs/react-three-fiber/issues/344
+      if (!ColorManagement && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {

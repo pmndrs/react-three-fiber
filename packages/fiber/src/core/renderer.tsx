@@ -31,6 +31,7 @@ import {
   Camera,
   updateCamera,
   applyProps,
+  ColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -317,7 +318,10 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
       }
 
       // Set color management
-      ;(THREE as any).ColorManagement.legacyMode = legacy
+      if (ColorManagement) {
+        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
+        else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
+      }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
