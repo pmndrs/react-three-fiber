@@ -262,6 +262,8 @@ export const RESERVED_PROPS = [
   'dispose',
 ]
 
+export const DEFAULTS = new Map()
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
   instance: Instance<T>,
@@ -300,11 +302,12 @@ export function diffProps<T = any>(
       // For removed props, try to set default values, if possible
       if (root.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))
-        changedProps[key] = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(root.constructor)
+        if (!ctor) {
+          ctor = new root.constructor()
+          DEFAULTS.set(root.constructor, ctor)
+        }
+        changedProps[key] = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         changedProps[key] = 0
