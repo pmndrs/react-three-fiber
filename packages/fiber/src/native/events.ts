@@ -63,6 +63,10 @@ export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
       }),
       {},
     ) as unknown as Events,
+    update: () => {
+      const { events, internal } = store.getState()
+      if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
+    },
     connect: () => {
       const { set, events } = store.getState()
       events.disconnect?.()

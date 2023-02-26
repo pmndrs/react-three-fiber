@@ -84,6 +84,10 @@ export interface EventManager<TTarget> {
   connect?: (target: TTarget) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
+  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
+   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   */
+  update?: () => void
 }
 
 export interface PointerCaptureTarget {
@@ -396,7 +400,7 @@ export function createEvents(store: RootStore) {
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      // const hits = patchIntersects(intersect(filter), event)
+
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
