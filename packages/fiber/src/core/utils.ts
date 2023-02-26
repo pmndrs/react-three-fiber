@@ -371,7 +371,13 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       root[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState?.linear && root[key] instanceof THREE.Texture) {
+      if (
+        !rootState?.linear &&
+        root[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        root[key].format === THREE.RGBAFormat &&
+        root[key].type === THREE.UnsignedByteType
+      ) {
         root[key].encoding = THREE.sRGBEncoding
       }
     }
