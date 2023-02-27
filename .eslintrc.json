@@ -4,8 +4,14 @@
     "es6": true,
     "node": true
   },
-  "extends": ["prettier", "plugin:prettier/recommended", "plugin:react-hooks/recommended", "plugin:import/recommended"],
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier"],
+  "extends": [
+    "prettier",
+    "plugin:prettier/recommended",
+    "plugin:react-hooks/recommended",
+    "plugin:import/recommended",
+    "plugin:@react-three/recommended"
+  ],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier", "@react-three"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {

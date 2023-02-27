@@ -370,8 +370,8 @@ export const createStore = (
       // Update camera & renderer
       updateCamera(camera, size)
       gl.setPixelRatio(viewport.dpr)
-      // Play nice with offscreen canvas contexts
-      const updateStyle = gl.domElement instanceof HTMLCanvasElement
+
+      const updateStyle = typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement
       gl.setSize(size.width, size.height, updateStyle)
     }
 

@@ -297,24 +297,9 @@ describe('diffProps', () => {
   })
 
   it('should reset removed props for HMR', () => {
-    class Target extends THREE.Object3D {
-      constructor(x = 0, y = 0, z = 0) {
-        super()
-        this.position.set(x, y, z)
-      }
-    }
-
-    const target = new Target()
-    const instance = prepare(target, storeMock, '', { position: 10 })
-
-    // Recreate from scratch
-    let filtered = diffProps(instance, {}, true)
-    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([0, 0, 0])
-
-    // Recreate from instance args
-    instance.props = { args: [1, 2, 3], position: 10 }
-    filtered = diffProps(instance, {}, true)
-    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([1, 2, 3])
+    const instance = prepare(new THREE.Object3D(), storeMock, '', { scale: 10 })
+    const filtered = diffProps(instance, {}, true)
+    expect((filtered.scale as THREE.Vector3).toArray()).toStrictEqual([1, 1, 1])
   })
 
   it('should filter reserved props without accessing them', () => {

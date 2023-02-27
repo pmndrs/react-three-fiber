@@ -5,6 +5,19 @@ import type { EventHandlers } from './events'
 import type { Dpr, RootState, RootStore, Size } from './store'
 import type { ConstructorRepresentation, Instance } from './reconciler'
 
+/**
+ * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ */
+const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const ColorManagement: ColorManagementRepresentation | null =
+  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+
 export type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
 export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 export type Properties<T> = Pick<T, NonFunctionKeys<T>>
@@ -249,6 +262,8 @@ export const RESERVED_PROPS = [
   'dispose',
 ]
 
+export const DEFAULTS = new Map()
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
   instance: Instance<T>,
@@ -287,11 +302,12 @@ export function diffProps<T = any>(
       // For removed props, try to set default values, if possible
       if (root.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))
-        changedProps[key] = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(root.constructor)
+        if (!ctor) {
+          ctor = new root.constructor()
+          DEFAULTS.set(root.constructor, ctor)
+        }
+        changedProps[key] = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         changedProps[key] = 0
@@ -347,13 +363,24 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set ...
       else if (value !== undefined) target.set(value)
+
+      // For versions of three which don't support THREE.ColorManagement,
+      // Auto-convert sRGB colors
+      // https://github.com/pmndrs/react-three-fiber/issues/344
+      if (!ColorManagement && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {
       root[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState?.linear && root[key] instanceof THREE.Texture) {
+      if (
+        !rootState?.linear &&
+        root[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        root[key].format === THREE.RGBAFormat &&
+        root[key].type === THREE.UnsignedByteType
+      ) {
         root[key].encoding = THREE.sRGBEncoding
       }
     }

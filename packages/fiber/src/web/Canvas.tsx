@@ -74,10 +74,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
+  const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
   if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-    if (!root.current) root.current = createRoot<HTMLElement>(canvas)
+    if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
     root.current.configure({
       gl,
       events,
