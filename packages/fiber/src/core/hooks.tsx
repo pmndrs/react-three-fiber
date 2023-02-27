@@ -9,7 +9,7 @@ import type { Instance } from './reconciler'
 
 export interface Loader<T> extends THREE.Loader {
   load(
-    url: string | string[],
+    url: string | string[] | string[][],
     onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
@@ -130,7 +130,12 @@ function loadingFn<L extends LoaderProto<any>>(
  * Note: this hook's caller must be wrapped with `React.Suspense`
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
-export function useLoader<T, U extends string | string[], L extends LoaderProto<T>, R = LoaderReturnType<T, L>>(
+export function useLoader<
+  T,
+  U extends string | string[] | string[][],
+  L extends LoaderProto<T>,
+  R = LoaderReturnType<T, L>,
+>(
   Proto: L,
   input: U,
   extensions?: Extensions<L>,
@@ -148,7 +153,7 @@ export function useLoader<T, U extends string | string[], L extends LoaderProto<
 /**
  * Preloads an asset into cache as a side-effect.
  */
-useLoader.preload = function <T, U extends string | string[], L extends LoaderProto<T>>(
+useLoader.preload = function <T, U extends string | string[] | string[][], L extends LoaderProto<T>>(
   Proto: L,
   input: U,
   extensions?: Extensions<L>,
@@ -160,7 +165,7 @@ useLoader.preload = function <T, U extends string | string[], L extends LoaderPr
 /**
  * Removes a loaded asset from cache.
  */
-useLoader.clear = function <T, U extends string | string[], L extends LoaderProto<T>>(Proto: L, input: U) {
+useLoader.clear = function <T, U extends string | string[] | string[][], L extends LoaderProto<T>>(Proto: L, input: U) {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([Proto, ...keys])
 }
