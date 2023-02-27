@@ -17,8 +17,8 @@ export interface Loader<T> extends THREE.Loader {
   loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
 }
 
-export type LoaderProto<T> = new (...args: any) => Loader<T extends unknown ? any : T>
-export type Extensions<T extends { prototype: LoaderProto<any> }> = (loader: T['prototype']) => void
+export type LoaderProto<T> = new (...args: any[]) => Loader<T>
+export type Extensions<T> = (loader: Loader<T>) => void
 export type BranchingReturn<T, Parent, Coerced> = T extends Parent ? Coerced : T
 
 /**
@@ -93,11 +93,8 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
 
 const isGLTF = (data: unknown): data is GLTF => (data as any)?.scene instanceof THREE.Object3D
 
-function loadingFn<T, L extends LoaderProto<T>>(
-  extensions?: Extensions<L>,
-  onProgress?: (event: ProgressEvent<EventTarget>) => void,
-) {
-  return function (Proto: L, ...input: string[]): Promise<T[]> {
+function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
+  return function (Proto: LoaderProto<T>, ...input: string[]): Promise<T[]> {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
@@ -130,8 +127,8 @@ function loadingFn<T, L extends LoaderProto<T>>(
 export function useLoader<T, U extends string | string[] | string[][]>(
   Proto: LoaderProto<T>,
   input: U,
-  extensions?: Extensions<typeof Proto>,
-  onProgress?: (event: ProgressEvent<EventTarget>) => void,
+  extensions?: Extensions<T>,
+  onProgress?: (event: ProgressEvent) => void,
 ): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
@@ -148,7 +145,7 @@ export function useLoader<T, U extends string | string[] | string[][]>(
 useLoader.preload = function <T, U extends string | string[] | string[][]>(
   Proto: LoaderProto<T>,
   input: U,
-  extensions?: Extensions<typeof Proto>,
+  extensions?: Extensions<T>,
 ): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return preload(loadingFn(extensions), [Proto, ...keys])
