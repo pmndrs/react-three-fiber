@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
-import { context, RootState, RenderCallback, UpdateCallback, StageTypes } from './store'
+import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootStore } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
 import { Stages } from './stages'
 import type { Instance } from './reconciler'
@@ -13,8 +13,8 @@ export interface Loader<T> extends THREE.Loader {
     onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
-  ): unknown
-  loadAsync(url: string, onProgress?: (event: ProgressEvent) => void): Promise<T>
+  ): T
+  loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
 }
 
 export type LoaderProto<T> = new (...args: any) => Loader<T extends unknown ? any : T>
@@ -42,7 +42,7 @@ export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.Muta
   return instance
 }
 
-export function useStore() {
+export function useStore(): RootStore {
   const store = React.useContext(context)
   if (!store) throw new Error('R3F: Hooks can only be used within the Canvas component!')
   return store
@@ -55,7 +55,7 @@ export function useStore() {
 export function useThree<T = RootState>(
   selector: (state: RootState) => T = (state) => state as unknown as T,
   equalityFn?: <T>(state: T, newState: T) => boolean,
-) {
+): T {
   return useStore()(selector, equalityFn)
 }
 
@@ -78,7 +78,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
  * Executes a callback in a given update stage.
  * Uses the stage instance to indetify which stage to target in the lifecycle.
  */
-export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update) {
+export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update): void {
   const store = useStore()
   const stages = store.getState().internal.stages
   // Memoize ref
@@ -93,15 +93,17 @@ export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.U
  * Returns a node graph of an object with named nodes & materials.
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usegraph
  */
-export function useGraph(object: THREE.Object3D) {
+export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-function loadingFn<L extends LoaderProto<any>>(
+const isGLTF = (data: unknown): data is GLTF => (data as any)?.scene instanceof THREE.Object3D
+
+function loadingFn<T, L extends LoaderProto<T>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
-  return function (Proto: L, ...input: string[]) {
+  return function (Proto: L, ...input: string[]): Promise<LoaderReturnType<T, L>[]> {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
@@ -109,11 +111,11 @@ function loadingFn<L extends LoaderProto<any>>(
     return Promise.all(
       input.map(
         (input) =>
-          new Promise((res, reject) =>
+          new Promise<LoaderReturnType<T, L>>((res, reject) =>
             loader.load(
               input,
-              (data: any) => {
-                if (data.scene) Object.assign(data, buildGraph(data.scene))
+              (data: LoaderReturnType<T, L>) => {
+                if (isGLTF(data)) Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
               onProgress,
@@ -131,42 +133,39 @@ function loadingFn<L extends LoaderProto<any>>(
  * Note: this hook's caller must be wrapped with `React.Suspense`
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
-export function useLoader<
-  T,
-  U extends string | string[] | string[][],
-  L extends LoaderProto<T>,
-  R = LoaderReturnType<T, L>,
->(
-  Proto: L,
+export function useLoader<T, U extends string | string[] | string[][]>(
+  Proto: LoaderProto<T>,
   input: U,
-  extensions?: Extensions<L>,
+  extensions?: Extensions<typeof Proto>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
-): U extends any[] ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[] : BranchingReturn<R, GLTF, GLTF & ObjectMap> {
+): U extends any[]
+  ? BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>[]
+  : BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn<L>(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
+  const results = suspend(loadingFn(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
-    ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[]
-    : BranchingReturn<R, GLTF, GLTF & ObjectMap>
+    ? BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>[]
+    : BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>
 }
 
 /**
  * Preloads an asset into cache as a side-effect.
  */
-useLoader.preload = function <T, U extends string | string[] | string[][], L extends LoaderProto<T>>(
-  Proto: L,
+useLoader.preload = function <T, U extends string | string[] | string[][]>(
+  Proto: LoaderProto<T>,
   input: U,
-  extensions?: Extensions<L>,
-) {
+  extensions?: Extensions<typeof Proto>,
+): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(loadingFn<L>(extensions), [Proto, ...keys])
+  return preload(loadingFn(extensions), [Proto, ...keys])
 }
 
 /**
  * Removes a loaded asset from cache.
  */
-useLoader.clear = function <T, U extends string | string[] | string[][], L extends LoaderProto<T>>(Proto: L, input: U) {
+useLoader.clear = function <T, U extends string | string[] | string[][]>(Proto: LoaderProto<T>, input: U): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([Proto, ...keys])
 }
