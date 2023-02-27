@@ -83,7 +83,6 @@ export interface Loader<T> extends THREE.Loader {
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
   ): any
-  loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
 }
 
 export type LoaderProto<T> = new (...args: any[]) => Loader<T>
