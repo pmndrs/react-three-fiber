@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootStore } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
@@ -13,11 +12,12 @@ export interface Loader<T> extends THREE.Loader {
     onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
-  ): T
+  ): unknown
   loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
 }
 
 export type LoaderProto<T> = new (...args: any[]) => Loader<T>
+export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMap : T
 export type Extensions<T> = (loader: Loader<T>) => void
 export type BranchingReturn<T, Parent, Coerced> = T extends Parent ? Coerced : T
 
@@ -91,10 +91,8 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-const isGLTF = (data: unknown): data is GLTF => (data as any)?.scene instanceof THREE.Object3D
-
 function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
-  return function (Proto: LoaderProto<T>, ...input: string[]): Promise<T[]> {
+  return function (Proto: LoaderProto<T>, ...input: string[]) {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
@@ -102,13 +100,11 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
     return Promise.all(
       input.map(
         (input) =>
-          new Promise<T>((res, reject) =>
+          new Promise<LoaderResult<T>>((res, reject) =>
             loader.load(
               input,
-              (data: T) => {
-                if (isGLTF(data)) Object.assign(data, buildGraph(data.scene))
-                res(data)
-              },
+              (data: any) =>
+                res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
               onProgress,
               (error) => reject(new Error(`Could not load ${input}: ${error.message})`)),
             ),
@@ -129,14 +125,14 @@ export function useLoader<T, U extends string | string[] | string[][]>(
   input: U,
   extensions?: Extensions<T>,
   onProgress?: (event: ProgressEvent) => void,
-): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
+) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
-  // Return the object/s
-  return (Array.isArray(input) ? results : results[0]) as U extends any[]
-    ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
-    : BranchingReturn<T, GLTF, GLTF & ObjectMap>
+  // Return the object(s)
+  return (Array.isArray(input) ? results : results[0]) as unknown as U extends any[]
+    ? LoaderResult<T>[]
+    : LoaderResult<T>
 }
 
 /**

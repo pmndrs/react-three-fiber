@@ -40,6 +40,7 @@ Array [
   "LegacyAlways",
   "Loader",
   "LoaderProto",
+  "LoaderResult",
   "MathType",
   "ObjectMap",
   "Overwrite",
