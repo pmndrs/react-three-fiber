@@ -18,14 +18,8 @@ export interface Loader<T> extends THREE.Loader {
 }
 
 export type LoaderProto<T> = new (...args: any) => Loader<T extends unknown ? any : T>
-export type LoaderReturnType<T, L extends LoaderProto<T>> = T extends unknown
-  ? Awaited<ReturnType<InstanceType<L>['loadAsync']>>
-  : T
-// TODO: this isn't used anywhere, remove in v9
-export type LoaderResult<T> = T extends any[] ? Loader<T[number]> : Loader<T>
 export type Extensions<T extends { prototype: LoaderProto<any> }> = (loader: T['prototype']) => void
-export type ConditionalType<Child, Parent, Truthy, Falsy> = Child extends Parent ? Truthy : Falsy
-export type BranchingReturn<T, Parent, Coerced> = ConditionalType<T, Parent, Coerced, T>
+export type BranchingReturn<T, Parent, Coerced> = T extends Parent ? Coerced : T
 
 /**
  * Exposes an object's {@link Instance}.
@@ -103,7 +97,7 @@ function loadingFn<T, L extends LoaderProto<T>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
-  return function (Proto: L, ...input: string[]): Promise<LoaderReturnType<T, L>[]> {
+  return function (Proto: L, ...input: string[]): Promise<T[]> {
     // Construct new loader and run extensions
     const loader = new Proto()
     if (extensions) extensions(loader)
@@ -111,10 +105,10 @@ function loadingFn<T, L extends LoaderProto<T>>(
     return Promise.all(
       input.map(
         (input) =>
-          new Promise<LoaderReturnType<T, L>>((res, reject) =>
+          new Promise<T>((res, reject) =>
             loader.load(
               input,
-              (data: LoaderReturnType<T, L>) => {
+              (data: T) => {
                 if (isGLTF(data)) Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
@@ -138,16 +132,14 @@ export function useLoader<T, U extends string | string[] | string[][]>(
   input: U,
   extensions?: Extensions<typeof Proto>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
-): U extends any[]
-  ? BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>[]
-  : BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap> {
+): U extends any[] ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[] : BranchingReturn<T, GLTF, GLTF & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
-    ? BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>[]
-    : BranchingReturn<LoaderReturnType<T, typeof Proto>, GLTF, GLTF & ObjectMap>
+    ? BranchingReturn<T, GLTF, GLTF & ObjectMap>[]
+    : BranchingReturn<T, GLTF, GLTF & ObjectMap>
 }
 
 /**
