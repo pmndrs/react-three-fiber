@@ -6,21 +6,6 @@ import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffec
 import { Stages } from './stages'
 import type { Instance } from './reconciler'
 
-export interface Loader<T> extends THREE.Loader {
-  load(
-    url: string | string[] | string[][],
-    onLoad?: (result: T, ...args: any[]) => void,
-    onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void,
-  ): unknown
-  loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
-}
-
-export type LoaderProto<T> = new (...args: any[]) => Loader<T>
-export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMap : T
-export type Extensions<T> = (loader: Loader<T>) => void
-export type BranchingReturn<T, Parent, Coerced> = T extends Parent ? Coerced : T
-
 /**
  * Exposes an object's {@link Instance}.
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useInstanceHandle
@@ -90,6 +75,20 @@ export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.U
 export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
+
+export interface Loader<T> extends THREE.Loader {
+  load(
+    url: string | string[] | string[][],
+    onLoad?: (result: T, ...args: any[]) => void,
+    onProgress?: (event: ProgressEvent) => void,
+    onError?: (event: ErrorEvent) => void,
+  ): unknown
+  loadAsync(url: string | string[] | string[][], onProgress?: (event: ProgressEvent) => void): Promise<T>
+}
+
+export type LoaderProto<T> = new (...args: any[]) => Loader<T>
+export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMap : T
+export type Extensions<T> = (loader: Loader<T>) => void
 
 function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
   return function (Proto: LoaderProto<T>, ...input: string[]) {
