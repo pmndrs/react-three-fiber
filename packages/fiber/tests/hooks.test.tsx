@@ -149,12 +149,14 @@ describe('hooks', () => {
 
   it('can handle useLoader with a loader extension', async () => {
     class Loader extends THREE.Loader {
-      load = (_url: string) => null
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
     }
 
     let proto!: Loader
 
-    function Test() {
+    function Test(): null {
       return useLoader(Loader, '', (loader) => (proto = loader))
     }
     await act(async () => root.render(<Test />))

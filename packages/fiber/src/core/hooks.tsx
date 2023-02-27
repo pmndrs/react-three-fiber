@@ -82,7 +82,7 @@ export interface Loader<T> extends THREE.Loader {
     onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
     onError?: (event: ErrorEvent) => void,
-  ): any
+  ): unknown
 }
 
 export type LoaderProto<T> = new (...args: any[]) => Loader<T>
