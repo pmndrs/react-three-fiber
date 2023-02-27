@@ -2,12 +2,36 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
 import type { Fiber } from 'react-reconciler'
-import type { UseBoundStore } from 'zustand'
 import type { EventHandlers } from './events'
-import type { Dpr, RootState, Size } from './store'
-import type { ConstructorRepresentation, Instance } from './renderer'
+import type { Dpr, RootState, RootStore, Size } from './store'
+import type { ConstructorRepresentation, Instance } from './reconciler'
 
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+/**
+ * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ */
+const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const ColorManagement: ColorManagementRepresentation | null =
+  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+
+export type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
+export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
+export type Properties<T> = Pick<T, NonFunctionKeys<T>>
+export type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
+
+export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
+
+/**
+ * Safely flush async effects when testing, simulating a legacy root.
+ */
+export const act: Act = (React as any).unstable_act
+
+export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
@@ -180,12 +204,7 @@ export function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instanc
 }
 
 // Each object in the scene carries a small LocalState descriptor
-export function prepare<T = any>(
-  target: T,
-  root: UseBoundStore<RootState>,
-  type: string,
-  props: Instance<T>['props'],
-): Instance<T> {
+export function prepare<T = any>(target: T, root: RootStore, type: string, props: Instance<T>['props']): Instance<T> {
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor
@@ -269,6 +288,8 @@ export const RESERVED_PROPS = [
   'dispose',
 ]
 
+export const DEFAULTS = new Map()
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
   instance: Instance<T>,
@@ -307,11 +328,12 @@ export function diffProps<T = any>(
       // For removed props, try to set default values, if possible
       if (root.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new root.constructor(...(root.__r3f?.props.args ?? []))
-        changedProps[key] = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(root.constructor)
+        if (!ctor) {
+          ctor = new root.constructor()
+          DEFAULTS.set(root.constructor, ctor)
+        }
+        changedProps[key] = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         changedProps[key] = 0
@@ -334,12 +356,15 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
 
-    // Deal with pointer events ...
+    // Deal with pointer events, including removing them if undefined
     if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
     }
+
+    // Ignore setting undefined props
+    if (value === undefined) continue
 
     const { root, key, target } = resolve(object, prop)
 
@@ -364,13 +389,24 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set ...
       else if (value !== undefined) target.set(value)
+
+      // For versions of three which don't support THREE.ColorManagement,
+      // Auto-convert sRGB colors
+      // https://github.com/pmndrs/react-three-fiber/issues/344
+      if (!ColorManagement && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {
       root[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState?.linear && root[key] instanceof THREE.Texture) {
+      if (
+        !rootState?.linear &&
+        root[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        root[key].format === THREE.RGBAFormat &&
+        root[key].type === THREE.UnsignedByteType
+      ) {
         root[key].encoding = THREE.sRGBEncoding
       }
     }
@@ -401,7 +437,7 @@ export function invalidateInstance(instance: Instance): void {
   if (state && state.internal.frames === 0) state.invalidate()
 }
 
-export function updateCamera(camera: Camera & { manual?: boolean }, size: Size): void {
+export function updateCamera(camera: Camera, size: Size): void {
   // https://github.com/pmndrs/react-three-fiber/issues/92
   // Do not mess with the camera if it belongs to the user
   if (!camera.manual) {
@@ -419,3 +455,22 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size):
     camera.updateMatrixWorld()
   }
 }
+
+/**
+ * Get a handle to the supported `now` function for react-internal performance profiling.
+ */
+export const now =
+  typeof performance !== 'undefined' && is.fun(performance.now)
+    ? performance.now
+    : is.fun(Date.now)
+    ? Date.now
+    : () => 0
+
+/**
+ * Get a handle to the current global scope in window and worker contexts if able
+ * https://github.com/pmndrs/react-three-fiber/pull/2493
+ */
+export const globalScope =
+  (typeof global !== 'undefined' && global) ||
+  (typeof self !== 'undefined' && self) ||
+  (typeof window !== 'undefined' && window)

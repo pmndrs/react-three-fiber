@@ -1,14 +1,14 @@
 import * as THREE from 'three'
-import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
+import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare } from './utils'
-import { RootState } from './store'
-import { removeInteractivity, getEventPriority, EventHandlers } from './events'
+import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, now } from './utils'
+import type { RootStore } from './store'
+import { removeInteractivity, type EventHandlers } from './events'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
-  store: UseBoundStore<RootState>
+  store: RootStore
 }
 
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
@@ -22,8 +22,8 @@ export interface Catalogue {
 
 export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
 
-export interface InstanceProps<T = any> {
-  args?: Args<T>
+export interface InstanceProps<T = any, P = any> {
+  args?: Args<P>
   object?: T
   visible?: boolean
   dispose?: null
@@ -31,7 +31,7 @@ export interface InstanceProps<T = any> {
 }
 
 export interface Instance<O = any> {
-  root: UseBoundStore<RootState>
+  root: RootStore
   type: string
   parent: Instance | null
   children: Instance[]
@@ -42,12 +42,13 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
+  autoRemovedBeforeAppend?: boolean
 }
 
 interface HostConfig {
   type: string
   props: Instance['props']
-  container: UseBoundStore<RootState>
+  container: RootStore
   instance: Instance
   textInstance: void
   suspenseInstance: Instance
@@ -61,13 +62,9 @@ interface HostConfig {
 }
 
 const catalogue: Catalogue = {}
-const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
+export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
-function createInstance(
-  type: string,
-  props: HostConfig['props'],
-  root: UseBoundStore<RootState>,
-): HostConfig['instance'] {
+function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue
   const name = `${type[0].toUpperCase()}${type.slice(1)}`
   const target = catalogue[name]
@@ -159,7 +156,7 @@ function insertBefore(
     beforeChild.object instanceof THREE.Object3D
   ) {
     child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), 0, child.object)
+    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
     child.object.dispatchEvent({ type: 'added' })
   }
 
@@ -247,7 +244,12 @@ function switchInstance(
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
-    insertBefore(parent, newInstance, oldInstance, true)
+    // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
+    // insertBefore(parent, newInstance, oldInstance, true)
+
+    if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
+    if (newInstance.parent) newInstance.autoRemovedBeforeAppend = true
+    appendChild(parent, newInstance)
   }
 
   // This evil hack switches the react-internal fiber node
@@ -273,7 +275,7 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
-const reconciler = Reconciler<
+export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
   HostConfig['container'],
@@ -380,21 +382,39 @@ const reconciler = Reconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
+  // SSR fallbacks
+  now,
+  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
+  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+  // @ts-ignore Deprecated experimental APIs
+  // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
   // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-  // @ts-ignore
-  getCurrentEventPriority: () => getEventPriority(),
   beforeActiveInstanceBlur: () => {},
   afterActiveInstanceBlur: () => {},
   detachDeletedInstance: () => {},
-  now:
-    typeof performance !== 'undefined' && is.fun(performance.now)
-      ? performance.now
-      : is.fun(Date.now)
-      ? Date.now
-      : () => 0,
-  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
-  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
-  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
-})
+  // Gives React a clue as to how import the current interaction is
+  // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+  getCurrentEventPriority() {
+    if (!globalScope) return DefaultEventPriority
 
-export { extend, reconciler }
+    const name = globalScope.event?.type
+    switch (name) {
+      case 'click':
+      case 'contextmenu':
+      case 'dblclick':
+      case 'pointercancel':
+      case 'pointerdown':
+      case 'pointerup':
+        return DiscreteEventPriority
+      case 'pointermove':
+      case 'pointerout':
+      case 'pointerover':
+      case 'pointerenter':
+      case 'pointerleave':
+      case 'wheel':
+        return ContinuousEventPriority
+      default:
+        return DefaultEventPriority
+    }
+  },
+})

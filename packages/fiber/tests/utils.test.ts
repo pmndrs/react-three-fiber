@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import type { UseBoundStore } from 'zustand'
-import type { RootState, Instance } from '../src'
+import { extend, Instance, RootStore, ThreeElement } from '../src'
 import {
   is,
   dispose,
@@ -16,8 +15,23 @@ import {
   updateCamera,
 } from '../src/core/utils'
 
+class TestElement {
+  public value: string
+  constructor() {
+    this.value = 'initial'
+  }
+}
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    testElement: ThreeElement<typeof TestElement>
+  }
+}
+
+extend({ TestElement })
+
 // Mocks a Zustand store
-const storeMock: UseBoundStore<RootState> = Object.assign(() => null!, {
+const storeMock: RootStore = Object.assign(() => null!, {
   getState: () => null!,
   setState() {},
   subscribe: () => () => {},
@@ -283,24 +297,9 @@ describe('diffProps', () => {
   })
 
   it('should reset removed props for HMR', () => {
-    class Target extends THREE.Object3D {
-      constructor(x = 0, y = 0, z = 0) {
-        super()
-        this.position.set(x, y, z)
-      }
-    }
-
-    const target = new Target()
-    const instance = prepare(target, storeMock, '', { position: 10 })
-
-    // Recreate from scratch
-    let filtered = diffProps(instance, {}, true)
-    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([0, 0, 0])
-
-    // Recreate from instance args
-    instance.props = { args: [1, 2, 3], position: 10 }
-    filtered = diffProps(instance, {}, true)
-    expect((filtered.position as THREE.Vector3).toArray()).toStrictEqual([1, 2, 3])
+    const instance = prepare(new THREE.Object3D(), storeMock, '', { scale: 10 })
+    const filtered = diffProps(instance, {}, true)
+    expect((filtered.scale as THREE.Vector3).toArray()).toStrictEqual([1, 1, 1])
   })
 
   it('should filter reserved props without accessing them', () => {
@@ -403,6 +402,13 @@ describe('applyProps', () => {
     applyProps(target, { 'material-color': 0x000000 })
 
     expect(target.material.color.getHex()).toBe(0x000000)
+  })
+
+  it('should not apply a prop if it is undefined', async () => {
+    const target = new TestElement()
+    applyProps(target, { value: undefined })
+
+    expect(target.value).toBe('initial')
   })
 })
 

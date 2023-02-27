@@ -1,9 +1,7 @@
 import * as THREE from 'three'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
-import { getRootState } from './utils'
-import type { UseBoundStore } from 'zustand'
-import type { Instance } from './renderer'
-import type { RootState } from './store'
+import { getRootState, type Properties } from './utils'
+import type { Instance } from './reconciler'
+import type { RootState, RootStore } from './store'
 
 export interface Intersection extends THREE.Intersection {
   /** The event source (the object which registered the handler) */
@@ -34,10 +32,10 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
 }
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = IntersectionEvent<TEvent>
+export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
-export type Events = {
+export interface Events {
   onClick: EventListener
   onContextMenu: EventListener
   onDoubleClick: EventListener
@@ -50,7 +48,7 @@ export type Events = {
   onLostPointerCapture: EventListener
 }
 
-export type EventHandlers = {
+export interface EventHandlers {
   onClick?: (event: ThreeEvent<MouseEvent>) => void
   onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
   onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
@@ -86,6 +84,10 @@ export interface EventManager<TTarget> {
   connect?: (target: TTarget) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
+  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
+   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   */
+  update?: () => void
 }
 
 export interface PointerCaptureTarget {
@@ -95,35 +97,6 @@ export interface PointerCaptureTarget {
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
-}
-
-// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-// Gives React a clue as to how import the current interaction is
-export function getEventPriority() {
-  // Get a handle to the current global scope in window and worker contexts if able
-  // https://github.com/pmndrs/react-three-fiber/pull/2493
-  const globalScope = (typeof self !== 'undefined' && self) || (typeof window !== 'undefined' && window)
-  if (!globalScope) return DefaultEventPriority
-
-  const name = globalScope.event?.type
-  switch (name) {
-    case 'click':
-    case 'contextmenu':
-    case 'dblclick':
-    case 'pointercancel':
-    case 'pointerdown':
-    case 'pointerup':
-      return DiscreteEventPriority
-    case 'pointermove':
-    case 'pointerout':
-    case 'pointerover':
-    case 'pointerenter':
-    case 'pointerleave':
-    case 'wheel':
-      return ContinuousEventPriority
-    default:
-      return DefaultEventPriority
-  }
 }
 
 /**
@@ -147,7 +120,7 @@ function releaseInternalPointerCapture(
   }
 }
 
-export function removeInteractivity(store: UseBoundStore<RootState>, object: THREE.Object3D) {
+export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
@@ -163,7 +136,7 @@ export function removeInteractivity(store: UseBoundStore<RootState>, object: THR
   })
 }
 
-export function createEvents(store: UseBoundStore<RootState>) {
+export function createEvents(store: RootStore) {
   /** Calculates delta */
   function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
@@ -225,7 +198,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       .sort((a, b) => {
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
-        if (!aState || !bState) return 0
+        if (!aState || !bState) return a.distance - b.distance
         return bState.events.priority - aState.events.priority || a.distance - b.distance
       })
       // Filter out duplicates
@@ -254,7 +227,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     // If the interaction is captured, make all capturing targets part of the intersect.
     if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
       for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
-        intersections.push(captureData.intersection)
+        if (!duplicates.has(makeId(captureData.intersection))) intersections.push(captureData.intersection)
       }
     }
     return intersections
@@ -407,7 +380,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           const { internal } = store.getState()
-          if ('pointerId' in event && !internal.capturedMap.has(event.pointerId)) {
+          if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
             // object that's getting removed.
             internal.capturedMap.delete(event.pointerId)
@@ -427,7 +400,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      // const hits = patchIntersects(intersect(filter), event)
+
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 

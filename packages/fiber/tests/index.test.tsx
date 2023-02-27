@@ -1,7 +1,8 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, useFrame, useThree, createPortal, RootState } from '../src/index'
-import { UseBoundStore } from 'zustand'
+import * as ts from 'typescript'
+import * as path from 'path'
+import { ReconcilerRoot, createRoot, act, useFrame, useThree, createPortal, RootState, RootStore } from '../src/index'
 import { privateKeys } from '../src/core/store'
 
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
@@ -26,35 +27,35 @@ describe('createRoot', () => {
   })
 
   it('should handle an performance changing functions', async () => {
-    let state: UseBoundStore<RootState> = null!
+    let store: RootStore = null!
     await act(async () => {
-      state = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
+      store = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
 
-    expect(state.getState().viewport.initialDpr).toEqual(window.devicePixelRatio)
-    expect(state.getState().performance.min).toEqual(0.2)
-    expect(state.getState().performance.current).toEqual(1)
+    expect(store.getState().viewport.initialDpr).toEqual(window.devicePixelRatio)
+    expect(store.getState().performance.min).toEqual(0.2)
+    expect(store.getState().performance.current).toEqual(1)
 
     await act(async () => {
-      state.getState().setDpr(0.1)
+      store.getState().setDpr(0.1)
     })
 
-    expect(state.getState().viewport.dpr).toEqual(0.1)
+    expect(store.getState().viewport.dpr).toEqual(0.1)
 
     jest.useFakeTimers()
 
     await act(async () => {
-      state.getState().performance.regress()
+      store.getState().performance.regress()
       jest.advanceTimersByTime(100)
     })
 
-    expect(state.getState().performance.current).toEqual(0.2)
+    expect(store.getState().performance.current).toEqual(0.2)
 
     await act(async () => {
       jest.advanceTimersByTime(200)
     })
 
-    expect(state.getState().performance.current).toEqual(1)
+    expect(store.getState().performance.current).toEqual(1)
 
     jest.useRealTimers()
   })
@@ -148,6 +149,19 @@ describe('createRoot', () => {
 
     await act(async () => root.configure({ legacy: false }).render(<group />))
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+
+    // r150 !enabled
+    ;(THREE as any).ColorManagement.enabled = true
+
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
+
+    await act(async () => {
+      root.configure({ legacy: false }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
   })
 })
 
@@ -216,5 +230,30 @@ describe('createPortal', () => {
 
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+})
+
+function getExports(source: string): string[] {
+  const program = ts.createProgram([source], { jsx: ts.JsxEmit.React })
+  const checker = program.getTypeChecker()
+  const sourceFile = program.getSourceFile(source)!
+
+  const sourceFileSymbol = checker.getSymbolAtLocation(sourceFile)!
+  const moduleExports = checker.getExportsOfModule(sourceFileSymbol)
+
+  return moduleExports.map(({ escapedName }) => escapedName).sort() as unknown as string[]
+}
+
+describe('exports', () => {
+  it('matches public API', () => {
+    const webExports = getExports(path.resolve(__dirname, '../src/index.tsx'))
+    expect(webExports).toMatchSnapshot()
+  })
+
+  it('are consistent between targets', () => {
+    const webExports = getExports(path.resolve(__dirname, '../src/index.tsx'))
+    const nativeExports = getExports(path.resolve(__dirname, '../src/native.tsx'))
+
+    expect(webExports).toStrictEqual(nativeExports)
   })
 })

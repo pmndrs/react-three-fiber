@@ -1,5 +1,4 @@
-import { UseBoundStore } from 'zustand'
-import { RootState } from '../core/store'
+import { RootState, RootStore } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
 import { GestureResponderEvent } from 'react-native'
 /* eslint-disable import/default, import/no-named-as-default, import/no-named-as-default-member */
@@ -31,7 +30,7 @@ const DOM_EVENTS = {
 }
 
 /** Default R3F event manager for react-native */
-export function createTouchEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
+export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
   const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {
@@ -64,6 +63,10 @@ export function createTouchEvents(store: UseBoundStore<RootState>): EventManager
       }),
       {},
     ) as unknown as Events,
+    update: () => {
+      const { events, internal } = store.getState()
+      if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
+    },
     connect: () => {
       const { set, events } = store.getState()
       events.disconnect?.()

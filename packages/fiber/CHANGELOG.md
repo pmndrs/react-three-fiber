@@ -1,5 +1,96 @@
 # @react-three/fiber
 
+## 8.11.5
+
+### Patch Changes
+
+- c658f763: fix: update canvas prop types
+
+## 8.11.4
+
+### Patch Changes
+
+- 970aa58b: fix: play nice with offscreencanvas
+
+## 8.11.3
+
+### Patch Changes
+
+- 2bce569c: fix: progressively set colormanagement
+
+## 8.11.2
+
+### Patch Changes
+
+- 41d655cd: fix: hmr, srgb encode
+
+## 8.11.1
+
+### Patch Changes
+
+- 58cadeff: fix: skip circular onUpdate calls
+
+## 8.11.0
+
+### Minor Changes
+
+- 2917a47b: events.update, allow raycast w/o user interaction
+- 521bfb07: events.update, allow raycast w/o user interaction
+
+## 8.10.4
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
+## 8.10.3
+
+### Patch Changes
+
+- d06d2879: fix: align useLoader type, public fields from builds
+
+## 8.10.2
+
+### Patch Changes
+
+- 564edbbb: fix port inject layers, it should allow root props to overwrite indefined portal props"
+
+## 8.10.1
+
+### Patch Changes
+
+- bfa0298f: fix memoized identity
+
+## 8.10.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
+## 8.9.2
+
+### Patch Changes
+
+- 2aeb6500: fix: primitives are incorrectly swapped on key change in maps
+
+## 8.9.1
+
+### Patch Changes
+
+- 0cf11797: fix(events): type spread event props
+
+## 8.9.0
+
+### Minor Changes
+
+- a458b4dd: fix(loop): export flush methods and types
+
+## 8.8.11
+
+### Patch Changes
+
+- 2068f0cc: fix: events pointerlock, useLoader extension types
+
 ## 8.8.10
 
 ### Patch Changes
