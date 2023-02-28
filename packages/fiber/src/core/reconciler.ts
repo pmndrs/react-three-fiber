@@ -89,7 +89,7 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
 
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
-function handleContainerEffects(parent: Instance, child: Instance) {
+function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance, replace: boolean = false) {
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
@@ -119,9 +119,24 @@ function handleContainerEffects(parent: Instance, child: Instance) {
     state.internal.interaction.push(child.object)
   }
 
-  // Handle attach
-  if (child.props.attach) attach(parent, child)
+  // Append instance
+  if (child.props.attach) {
+    attach(parent, child)
+  } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
+    if (beforeChild) {
+      child.object.parent = parent.object
+      parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
+      child.object.dispatchEvent({ type: 'added' })
+    } else {
+      parent.object.add(child.object)
+    }
+  }
+
+  // Link subtree
   for (const childInstance of child.children) handleContainerEffects(child, childInstance)
+
+  // Tree was updated, request a frame
+  invalidateInstance(child)
 }
 
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
@@ -133,14 +148,6 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
 
   // Attach tree once complete
   handleContainerEffects(parent, child)
-
-  // Add Object3Ds if able
-  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
-    parent.object.add(child.object)
-  }
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
 }
 
 function insertBefore(
@@ -158,22 +165,7 @@ function insertBefore(
   if (replace) beforeChild.parent = null
 
   // Attach tree once complete
-  handleContainerEffects(parent, child)
-
-  // Manually splice Object3Ds
-  if (
-    !child.props.attach &&
-    parent.object instanceof THREE.Object3D &&
-    child.object instanceof THREE.Object3D &&
-    beforeChild.object instanceof THREE.Object3D
-  ) {
-    child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
-    child.object.dispatchEvent({ type: 'added' })
-  }
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
+  handleContainerEffects(parent, child, beforeChild, replace)
 }
 
 function removeChild(
