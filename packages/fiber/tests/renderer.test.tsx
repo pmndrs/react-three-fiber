@@ -5,7 +5,7 @@ import { suspend } from 'suspend-react'
 
 class Mock extends THREE.Group {
   static instances: string[]
-  constructor(name: string) {
+  constructor(name: string = '') {
     super()
     this.name = name
     Mock.instances.push(name)
@@ -55,29 +55,32 @@ describe('renderer', () => {
   })
 
   it('should render native elements', async () => {
-    const store = await act(async () => root.render(<group />))
+    const store = await act(async () => root.render(<group name="native" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[0].name).toBe('native')
   })
 
   it('should render extended elements', async () => {
-    const store = await act(async () => root.render(<mock />))
+    const store = await act(async () => root.render(<mock name="mock" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBeInstanceOf(Mock)
+    expect(scene.children[0].name).toBe('mock')
   })
 
   it('should render primitives', async () => {
     const object = new THREE.Object3D()
 
-    const store = await act(async () => root.render(<primitive object={object} />))
+    const store = await act(async () => root.render(<primitive name="primitive" object={object} />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBe(object)
+    expect(object.name).toBe('primitive')
   })
 
   it('should go through lifecycle', async () => {
