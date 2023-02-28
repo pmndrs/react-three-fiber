@@ -31,12 +31,18 @@ import {
   Camera,
   updateCamera,
   applyProps,
+  ColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
-import { OffscreenCanvas } from 'three'
 
-export const _roots = new Map<Element, Root>()
+// TODO: fix type resolve
+declare var OffscreenCanvas: any
+type OffscreenCanvas = any
+
+type Canvas = HTMLCanvasElement | OffscreenCanvas
+
+export const _roots = new Map<Canvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
@@ -44,7 +50,7 @@ type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? ne
 
 export type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement) => Renderer)
+  | ((canvas: Canvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
 export type CameraProps = (
@@ -59,16 +65,17 @@ export type CameraProps = (
   manual?: boolean
 }
 
-export interface RenderProps<TCanvas extends Element> {
+export interface RenderProps<TCanvas extends Canvas> {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
   /**
-   * Enables PCFsoft shadows. Can accept `gl.shadowMap` options for fine-tuning.
+   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
+   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
-  shadows?: boolean | Partial<THREE.WebGLShadowMap>
+  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
   /**
    * Disables three r139 color management.
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
@@ -107,18 +114,16 @@ export interface RenderProps<TCanvas extends Element> {
   render?: 'auto' | 'manual'
 }
 
-const createRendererInstance = <TElement extends Element>(
+const createRendererInstance = <TCanvas extends Canvas>(
   gl: GLProps | undefined,
-  canvas: TElement,
+  canvas: TCanvas,
 ): THREE.WebGLRenderer => {
-  const customRenderer = (
-    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
-  ) as THREE.WebGLRenderer
+  const customRenderer = (typeof gl === 'function' ? gl(canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
 
   return new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
-    canvas: canvas,
+    canvas: canvas as HTMLCanvasElement,
     antialias: true,
     alpha: true,
     ...gl,
@@ -158,22 +163,29 @@ const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   Stages.Render.add(renderCallback, store)
 }
 
-export interface ReconcilerRoot<TCanvas extends Element> {
+export interface ReconcilerRoot<TCanvas extends Canvas> {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
 
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
+function computeInitialSize(canvas: Canvas, size?: Size): Size {
   if (!size && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
     return { width, height, top, left }
+  } else if (!size && typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      top: 0,
+      left: 0,
+    }
   }
 
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
-export function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = _roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -296,18 +308,32 @@ export function createRoot<TCanvas extends Element>(canvas: TCanvas): Reconciler
 
       // Set shadowmap
       if (gl.shadowMap) {
-        const isBoolean = is.boo(shadows)
-        if ((isBoolean && gl.shadowMap.enabled !== shadows) || !is.equ(shadows, gl.shadowMap, shallowLoose)) {
-          const old = gl.shadowMap.enabled
-          gl.shadowMap.enabled = !!shadows
-          if (!isBoolean) Object.assign(gl.shadowMap, shadows)
-          else gl.shadowMap.type = THREE.PCFSoftShadowMap
-          if (old !== gl.shadowMap.enabled) gl.shadowMap.needsUpdate = true
+        const oldEnabled = gl.shadowMap.enabled
+        const oldType = gl.shadowMap.type
+        gl.shadowMap.enabled = !!shadows
+
+        if (is.boo(shadows)) {
+          gl.shadowMap.type = THREE.PCFSoftShadowMap
+        } else if (is.str(shadows)) {
+          const types = {
+            basic: THREE.BasicShadowMap,
+            percentage: THREE.PCFShadowMap,
+            soft: THREE.PCFSoftShadowMap,
+            variance: THREE.VSMShadowMap,
+          }
+          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+        } else if (is.obj(shadows)) {
+          Object.assign(gl.shadowMap, shadows)
         }
+
+        if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
       }
 
       // Set color management
-      ;(THREE as any).ColorManagement.legacyMode = legacy
+      if (ColorManagement) {
+        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
+        else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
+      }
       const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
       const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
@@ -323,13 +349,13 @@ export function createRoot<TCanvas extends Element>(canvas: TCanvas): Reconciler
         applyProps(gl, glConfig as any)
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {
         state.setSize(size.width, size.height, size.top, size.left)
       }
+      // Check pixelratio
+      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -365,7 +391,7 @@ export function createRoot<TCanvas extends Element>(canvas: TCanvas): Reconciler
   }
 }
 
-export function render<TCanvas extends Element>(
+export function render<TCanvas extends Canvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
@@ -376,20 +402,19 @@ export function render<TCanvas extends Element>(
   return root.render(children)
 }
 
-interface ProviderProps<TElement extends Element> {
+interface ProviderProps<TCanvas extends Canvas> {
   onCreated?: (state: RootState) => void
   store: RootStore
   children: React.ReactNode
-  rootElement: TElement
-  parent?: React.MutableRefObject<TElement | undefined>
+  rootElement: TCanvas
 }
 
-function Provider<TElement extends Element>({
+function Provider<TCanvas extends Canvas>({
   store,
   children,
   onCreated,
   rootElement,
-}: ProviderProps<TElement>): JSX.Element {
+}: ProviderProps<TCanvas>): JSX.Element {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
@@ -404,9 +429,9 @@ function Provider<TElement extends Element>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-export function unmountComponentAtNode<TElement extends Element>(
-  canvas: TElement,
-  callback?: (canvas: TElement) => void,
+export function unmountComponentAtNode<TCanvas extends Canvas>(
+  canvas: TCanvas,
+  callback?: (canvas: TCanvas) => void,
 ): void {
   const root = _roots.get(canvas)
   const fiber = root?.fiber
@@ -478,7 +503,9 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
           // Some props should be off-limits
           privateKeys.includes(key as PrivateKeys) ||
           // Otherwise filter out the props that are different and let the inject layer take precedence
-          rootState[key as keyof RootState] !== injectState[key as keyof RootState]
+          // Unless the inject layer props is undefined, then we keep the root layer
+          (rootState[key as keyof RootState] !== injectState[key as keyof RootState] &&
+            injectState[key as keyof RootState])
         ) {
           delete intersect[key as keyof RootState]
         }

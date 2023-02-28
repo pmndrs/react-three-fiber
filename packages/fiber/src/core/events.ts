@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { type Camera, getRootState } from './utils'
+import { getRootState, type Properties } from './utils'
 import type { Instance } from './reconciler'
 import type { RootState, RootStore } from './store'
 
@@ -8,7 +8,7 @@ export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
 
-export interface ThreeEvent<TEvent> extends Intersection {
+export interface IntersectionEvent<TSourceEvent> extends Intersection {
   /** The event source (the object which registered the handler) */
   eventObject: THREE.Object3D
   /** An array of intersections */
@@ -26,11 +26,13 @@ export interface ThreeEvent<TEvent> extends Intersection {
   /** stopPropagation will stop underlying handlers from firing */
   stopPropagation: () => void
   /** The original host event */
-  nativeEvent: TEvent
+  nativeEvent: TSourceEvent
   /** If the event was stopped by calling stopPropagation */
   stopped: boolean
 }
 
+export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
+export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
 export interface Events {
@@ -82,6 +84,10 @@ export interface EventManager<TTarget> {
   connect?: (target: TTarget) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
+  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
+   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   */
+  update?: () => void
 }
 
 export interface PointerCaptureTarget {
@@ -394,7 +400,7 @@ export function createEvents(store: RootStore) {
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      // const hits = patchIntersects(intersect(filter), event)
+
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 

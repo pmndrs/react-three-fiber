@@ -22,8 +22,8 @@ export interface Catalogue {
 
 export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
 
-export interface InstanceProps<T = any> {
-  args?: Args<T>
+export interface InstanceProps<T = any, P = any> {
+  args?: Args<P>
   object?: T
   visible?: boolean
   dispose?: null
@@ -42,6 +42,7 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
+  autoRemovedBeforeAppend?: boolean
 }
 
 interface HostConfig {
@@ -167,7 +168,7 @@ function insertBefore(
     beforeChild.object instanceof THREE.Object3D
   ) {
     child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), 0, child.object)
+    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
     child.object.dispatchEvent({ type: 'added' })
   }
 
@@ -252,7 +253,12 @@ function switchInstance(
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
-    insertBefore(parent, newInstance, oldInstance, true)
+    // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
+    // insertBefore(parent, newInstance, oldInstance, true)
+
+    if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
+    if (newInstance.parent) newInstance.autoRemovedBeforeAppend = true
+    appendChild(parent, newInstance)
   }
 
   // This evil hack switches the react-internal fiber node
