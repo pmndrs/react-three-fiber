@@ -2,13 +2,14 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
+import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 import { polyfills } from './polyfills'
 
-export interface Props extends Omit<RenderProps, 'size' | 'dpr'>, ViewProps {
+export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
@@ -17,7 +18,7 @@ export interface Props extends Omit<RenderProps, 'size' | 'dpr'>, ViewProps {
  * A native canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
+const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
   (
     {
       children,
@@ -44,6 +45,8 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE), [])
 
+    const Bridge = useContextBridge()
+
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
     const [bind, setBind] = React.useState<any>()
@@ -59,7 +62,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     if (error) throw error
 
     const viewRef = React.useRef<View>(null!)
-    const root = React.useRef<ReconcilerRoot>(null!)
+    const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
     // Inject and cleanup RN polyfills if able
     React.useLayoutEffect(() => polyfills(), [])
@@ -82,7 +85,7 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         getContext: (() => context) as any,
       } as HTMLCanvasElement
 
-      root.current = createRoot(canvasShim)
+      root.current = createRoot<HTMLCanvasElement>(canvasShim)
       setCanvas(canvasShim)
     }, [])
 
@@ -123,9 +126,11 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
         },
       })
       root.current.render(
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>,
+        <Bridge>
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>
+        </Bridge>,
       )
     }
 
@@ -142,3 +147,15 @@ export const Canvas = /*#__PURE__*/ React.forwardRef<View, Props>(
     )
   },
 )
+
+/**
+ * A native canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
+export const Canvas = React.forwardRef<View, Props>(function CanvasWrapper(props, ref) {
+  return (
+    <FiberProvider>
+      <CanvasImpl {...props} ref={ref} />
+    </FiberProvider>
+  )
+})

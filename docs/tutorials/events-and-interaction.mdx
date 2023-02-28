@@ -1,7 +1,7 @@
 ---
 title: 'Events and Interaction'
 description: Let's make our meshes react to user input.
-nav: 14
+nav: 13
 ---
 
 This tutorial will assume some React knowledge, and will be based on [this starter codesandbox](https://codesandbox.io/s/getting-started-01-12q81?from-embed), so just fork it and follow along!
@@ -10,7 +10,7 @@ After we have our continuous loop running the next step would be to allow our me
 
 ## User Interaction
 
-Any mesh in React Three Fiber has a large number of events, 13 to be more precise:
+Any Object3D that has a raycast method can receive a large number of events, for instance a mesh:
 
 ```jsx
 <mesh

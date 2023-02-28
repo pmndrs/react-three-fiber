@@ -31,6 +31,7 @@ export type LocalState = {
   attach?: AttachType
   previousAttach: any
   memoizedProps: { [key: string]: any }
+  autoRemovedBeforeAppend?: boolean
 }
 
 export type AttachFnType = (parent: Instance, self: Instance) => () => void
@@ -92,12 +93,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance
 
-    // Auto-attach geometries and materials
-    if (attach === undefined) {
-      if (name.endsWith('Geometry')) attach = 'geometry'
-      else if (name.endsWith('Material')) attach = 'material'
-    }
-
     if (type === 'primitive') {
       if (props.object === undefined) throw new Error("R3F: Primitives without 'object' are invalid!")
       const object = props.object as Instance
@@ -122,6 +117,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         // Save args in case we need to reconstruct later for HMR
         memoizedProps: { args },
       })
+    }
+
+    // Auto-attach geometries and materials
+    if (instance.__r3f.attach === undefined) {
+      if (instance instanceof THREE.BufferGeometry) instance.__r3f.attach = 'geometry'
+      else if (instance instanceof THREE.Material) instance.__r3f.attach = 'material'
     }
 
     // It should NOT call onUpdate on object instanciation, because it hasn't been added to the
@@ -258,16 +259,22 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     // https://github.com/pmndrs/react-three-fiber/issues/1348
     // When args change the instance has to be re-constructed, which then
     // forces r3f to re-parent the children and non-scene objects
-    // This can not include primitives, which should not have declarative children
-    if (type !== 'primitive' && instance.children) {
-      instance.children.forEach((child) => appendChild(newInstance, child))
-      instance.children = []
+    if (instance.children) {
+      for (const child of instance.children) {
+        if (child.__r3f) appendChild(newInstance, child)
+      }
+      instance.children = instance.children.filter((child) => !child.__r3f)
     }
 
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
-    removeChild(parent, instance)
+    if (!instance.__r3f.autoRemovedBeforeAppend) {
+      removeChild(parent, instance)
+    }
+    if (newInstance.parent) {
+      newInstance.__r3f.autoRemovedBeforeAppend = true
+    }
     appendChild(parent, newInstance)
 
     // Re-bind event handlers
@@ -322,7 +329,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     appendChildToContainer: (container, child) => {
       if (!child) return
 
+      // Don't append to unmounted container
       const scene = container.getState().scene as unknown as Instance
+      if (!scene.__r3f) return
+
       // Link current root to the default scene
       scene.__r3f.root = container
       appendChild(scene, child)
@@ -333,7 +343,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     insertInContainerBefore: (container, child, beforeChild) => {
       if (!child || !beforeChild) return
-      insertBefore(container.getState().scene as unknown as Instance, child, beforeChild)
+
+      // Don't append to unmounted container
+      const scene = container.getState().scene as unknown as Instance
+      if (!scene.__r3f) return
+
+      insertBefore(scene, child, beforeChild)
     },
     getRootHostContext: () => null,
     getChildHostContext: (parentHostContext) => parentHostContext,
@@ -386,15 +401,15 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     shouldSetTextContent: () => false,
     clearContainer: () => false,
     hideInstance(instance) {
-      // Deatch while the instance is hidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
+      // Detach while the instance is hidden
+      const { attach: type, parent } = instance.__r3f ?? {}
       if (type && parent) detach(parent, instance, type)
       if (instance.isObject3D) instance.visible = false
       invalidateInstance(instance)
     },
     unhideInstance(instance, props) {
       // Re-attach when the instance is unhidden
-      const { attach: type, parent } = instance?.__r3f ?? {}
+      const { attach: type, parent } = instance.__r3f ?? {}
       if (type && parent) attach(parent, instance, type)
       if ((instance.isObject3D && props.visible == null) || props.visible) instance.visible = true
       invalidateInstance(instance)

@@ -1,5 +1,228 @@
 # @react-three/fiber
 
+## 8.11.5
+
+### Patch Changes
+
+- c658f763: fix: update canvas prop types
+
+## 8.11.4
+
+### Patch Changes
+
+- 970aa58b: fix: play nice with offscreencanvas
+
+## 8.11.3
+
+### Patch Changes
+
+- 2bce569c: fix: progressively set colormanagement
+
+## 8.11.2
+
+### Patch Changes
+
+- 41d655cd: fix: hmr, srgb encode
+
+## 8.11.1
+
+### Patch Changes
+
+- 58cadeff: fix: skip circular onUpdate calls
+
+## 8.11.0
+
+### Minor Changes
+
+- 2917a47b: events.update, allow raycast w/o user interaction
+- 521bfb07: events.update, allow raycast w/o user interaction
+
+## 8.10.4
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
+## 8.10.3
+
+### Patch Changes
+
+- d06d2879: fix: align useLoader type, public fields from builds
+
+## 8.10.2
+
+### Patch Changes
+
+- 564edbbb: fix port inject layers, it should allow root props to overwrite indefined portal props"
+
+## 8.10.1
+
+### Patch Changes
+
+- bfa0298f: fix memoized identity
+
+## 8.10.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
+## 8.9.2
+
+### Patch Changes
+
+- 2aeb6500: fix: primitives are incorrectly swapped on key change in maps
+
+## 8.9.1
+
+### Patch Changes
+
+- 0cf11797: fix(events): type spread event props
+
+## 8.9.0
+
+### Minor Changes
+
+- a458b4dd: fix(loop): export flush methods and types
+
+## 8.8.11
+
+### Patch Changes
+
+- 2068f0cc: fix: events pointerlock, useLoader extension types
+
+## 8.8.10
+
+### Patch Changes
+
+- 00c24718: fix: invalidate pierced props
+
+## 8.8.9
+
+### Patch Changes
+
+- 4254400e: fix(createPortal): use correct JSX type
+
+## 8.8.8
+
+### Patch Changes
+
+- fcb183e3: fix: call onUpdate for attached children prop update
+
+## 8.8.7
+
+### Patch Changes
+
+- bedb16e7: fix: prefer named functions, for loops in hot paths
+
+## 8.8.6
+
+### Patch Changes
+
+- 02a558bb: fix: upgrade deps
+
+## 8.8.5
+
+### Patch Changes
+
+- 530a06d6: fix: upgrade deps to work-around CRA
+
+## 8.8.4
+
+### Patch Changes
+
+- 2f2dc9f9: chore: upgrade bridge to harden suspense behavior
+
+## 8.8.3
+
+### Patch Changes
+
+- 9f571239: fix #2506, events should fall back to rootstate"
+
+## 8.8.2
+
+### Patch Changes
+
+- dc389ed6: fix(Canvas): prevent remount on context update
+
+## 8.8.1
+
+### Patch Changes
+
+- 370d3ae5: refactor: pull context bridge from its-fine
+
+## 8.8.0
+
+### Minor Changes
+
+- 46d8b440: bridge cross-container context
+
+## 8.7.4
+
+### Patch Changes
+
+- 259c8895: fix: use self to get global context before window
+
+## 8.7.3
+
+### Patch Changes
+
+- eb5a3be4: fix: if there is an eventsource pointerevent will be set to none
+
+## 8.7.2
+
+### Patch Changes
+
+- 7f801e60: fix: events in portals carry the wrong raycaster, camera, etc
+
+## 8.7.1
+
+### Patch Changes
+
+- 962cc270: fix: allow canvas eventsource to be a ref
+
+## 8.7.0
+
+### Minor Changes
+
+- f5db1b78: feat: useInstanceHandle, flushGlobalEffects
+
+## 8.6.2
+
+### Patch Changes
+
+- 57c12e9c: fix(types): @react-three/drei declaration files
+
+## 8.6.1
+
+### Patch Changes
+
+- 7a0b5670: fix(core): don't append to unmounted containers
+
+## 8.6.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
+## 8.5.1
+
+### Patch Changes
+
+- 87821d9: fix: null-check instance.children on reconstruct
+
+## 8.5.0
+
+### Minor Changes
+
+- edc8252: feat: handle primitive children, auto-attach via instanceof
+
+## 8.3.1
+
+### Patch Changes
+
+- aaeb2b8: fix(types): accept readonly arrays for vector props
+
 ## 8.3.0
 
 ### Minor Changes

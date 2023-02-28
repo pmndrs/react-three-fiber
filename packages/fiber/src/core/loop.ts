@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { Root } from './renderer'
 import { RootState, Subscription } from './store'
 
-type GlobalRenderCallback = (timeStamp: number) => void
+export type GlobalRenderCallback = (timeStamp: number) => void
 type SubItem = { callback: GlobalRenderCallback }
 
 function createSubs(callback: GlobalRenderCallback, subs: Set<SubItem>): () => void {
@@ -35,7 +35,23 @@ export const addAfterEffect = (callback: GlobalRenderCallback) => createSubs(cal
 export const addTail = (callback: GlobalRenderCallback) => createSubs(callback, globalTailEffects)
 
 function run(effects: Set<SubItem>, timestamp: number) {
-  effects.forEach(({ callback }) => callback(timestamp))
+  if (!effects.size) return
+  for (const { callback } of effects.values()) {
+    callback(timestamp)
+  }
+}
+
+export type GlobalEffectType = 'before' | 'after' | 'tail'
+
+export function flushGlobalEffects(type: GlobalEffectType, timestamp: number): void {
+  switch (type) {
+    case 'before':
+      return run(globalEffects, timestamp)
+    case 'after':
+      return run(globalAfterEffects, timestamp)
+    case 'tail':
+      return run(globalTailEffects, timestamp)
+  }
 }
 
 let subscribers: Subscription[]
@@ -74,10 +90,10 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     repeat = 0
 
     // Run effects
-    if (globalEffects.size) run(globalEffects, timestamp)
+    flushGlobalEffects('before', timestamp)
 
     // Render all roots
-    roots.forEach((root) => {
+    for (const root of roots.values()) {
       state = root.store.getState()
       // If the frameloop is invalidated, do not run another frame
       if (
@@ -87,15 +103,15 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
       ) {
         repeat += render(timestamp, state)
       }
-    })
+    }
 
     // Run after-effects
-    if (globalAfterEffects.size) run(globalAfterEffects, timestamp)
+    flushGlobalEffects('after', timestamp)
 
     // Stop the loop if nothing invalidates it
     if (repeat === 0) {
       // Tail call effects, they are called when rendering stops
-      if (globalTailEffects.size) run(globalTailEffects, timestamp)
+      flushGlobalEffects('tail', timestamp)
 
       // Flag end of operation
       running = false
@@ -121,10 +137,10 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     state?: RootState,
     frame?: THREE.XRFrame,
   ): void {
-    if (runGlobalEffects) run(globalEffects, timestamp)
-    if (!state) roots.forEach((root) => render(timestamp, root.store.getState()))
+    if (runGlobalEffects) flushGlobalEffects('before', timestamp)
+    if (!state) for (const root of roots.values()) render(timestamp, root.store.getState())
     else render(timestamp, state, frame)
-    if (runGlobalEffects) run(globalAfterEffects, timestamp)
+    if (runGlobalEffects) flushGlobalEffects('after', timestamp)
   }
 
   return {

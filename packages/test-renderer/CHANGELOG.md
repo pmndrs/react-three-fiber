@@ -1,15 +1,28 @@
 # @react-three/test-renderer
 
-## 9.0.0
-
-### Minor Changes
-
-- 8d0f708c: Expose position information in state.size
+## 8.1.2
 
 ### Patch Changes
 
-- Updated dependencies [8d0f708c]
-  - @react-three/fiber@8.1.0
+- d9e6316d: fix: transpile class properties
+
+## 8.1.1
+
+### Patch Changes
+
+- 9a776b71: fix(RTTR): backport traverse, update fixes
+
+## 8.1.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
+## 8.0.17
+
+### Patch Changes
+
+- 786ccb46: fix: restore RTTR version
 
 ## 8.0.16
 

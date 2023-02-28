@@ -12,7 +12,6 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
-  Overwrite,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -49,16 +48,13 @@ class MyColor extends THREE.Color {
   }
 }
 
-class MyGroup extends THREE.Group {}
-
-extend({ HasObject3dMember, HasObject3dMethods, MyGroup })
+extend({ HasObject3dMember, HasObject3dMethods })
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
     hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
     hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
     myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
-    myGroup: Overwrite<ReactThreeFiber.Object3DNode<THREE.Group, typeof THREE.Group>, { args?: any }>
   }
 }
 
@@ -106,7 +102,7 @@ describe('renderer', () => {
     const Mesh = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -150,7 +146,7 @@ describe('renderer', () => {
     const Child = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -449,14 +445,17 @@ describe('renderer', () => {
     let state: RootState = null!
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
-    const Test = ({ n }: { n: number }) => (
-      <myGroup args={[n]} onPointerOver={() => null}>
+    const object1 = new THREE.Group()
+    const object2 = new THREE.Group()
+
+    const Test = ({ first }: { first?: boolean }) => (
+      <primitive object={first ? object1 : object2} onPointerOver={() => null}>
         <group />
-      </myGroup>
+      </primitive>
     )
 
     await act(async () => {
-      state = root.render(<Test n={1} />).getState()
+      state = root.render(<Test first />).getState()
     })
 
     instances.push({
@@ -464,9 +463,10 @@ describe('renderer', () => {
       parentUUID: state.scene.children[0].parent?.uuid,
       childUUID: state.scene.children[0].children[0]?.uuid,
     })
+    expect(state.scene.children[0]).toBe(object1)
 
     await act(async () => {
-      state = root.render(<Test n={2} />).getState()
+      state = root.render(<Test />).getState()
     })
 
     instances.push({
@@ -477,8 +477,8 @@ describe('renderer', () => {
 
     const [oldInstance, newInstance] = instances
 
-    // Created a new instance
-    expect(oldInstance.uuid).not.toBe(newInstance.uuid)
+    // Swapped to new instance
+    expect(state.scene.children[0]).toBe(object2)
 
     // Preserves scene hierarchy
     expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
@@ -518,6 +518,54 @@ describe('renderer', () => {
     expect(state.scene.children[0]).toBe(o2)
     expect(state.scene.children[0].children.length).toBe(0)
     expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+  })
+
+  it('can swap 4 array primitives', async () => {
+    let state: RootState = null!
+    const a = new THREE.Group()
+    const b = new THREE.Group()
+    const c = new THREE.Group()
+    const d = new THREE.Group()
+    const array = [a, b, c, d]
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} object={group} />
+        ))}
+      </>
+    )
+
+    await act(async () => {
+      state = root.render(<Test array={array} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(a)
+    expect(state.scene.children[1]).toBe(b)
+    expect(state.scene.children[2]).toBe(c)
+    expect(state.scene.children[3]).toBe(d)
+
+    const reversedArray = [...array.reverse()]
+
+    await act(async () => {
+      state = root.render(<Test array={reversedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(d)
+    expect(state.scene.children[1]).toBe(c)
+    expect(state.scene.children[2]).toBe(b)
+    expect(state.scene.children[3]).toBe(a)
+
+    const mixedArray = [b, a, d, c]
+
+    await act(async () => {
+      state = root.render(<Test array={mixedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(b)
+    expect(state.scene.children[1]).toBe(a)
+    expect(state.scene.children[2]).toBe(d)
+    expect(state.scene.children[3]).toBe(c)
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
@@ -686,6 +734,7 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
+    // r139 legacyMode
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
     })
@@ -695,6 +744,19 @@ describe('renderer', () => {
       root.configure({ legacy: false }).render(<group />)
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+
+    // r150 !enabled
+    ;(THREE as any).ColorManagement.enabled = true
+
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
+
+    await act(async () => {
+      root.configure({ legacy: false }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
   })
 
   it('can handle createPortal', async () => {
@@ -737,5 +799,80 @@ describe('renderer', () => {
     const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
     const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
     expect(respectedKeys).toStrictEqual(privateKeys)
+  })
+
+  it('can handle createPortal on unmounted container', async () => {
+    let groupHandle!: THREE.Group | null
+    function Test(props: any) {
+      const [group, setGroup] = React.useState(null)
+      groupHandle = group
+
+      return (
+        <group {...props} ref={setGroup}>
+          {group && createPortal(<mesh />, group)}
+        </group>
+      )
+    }
+
+    await act(async () => root.render(<Test key={0} />))
+
+    expect(groupHandle).toBeDefined()
+    const prevUUID = groupHandle!.uuid
+
+    await act(async () => root.render(<Test key={1} />))
+
+    expect(groupHandle).toBeDefined()
+    expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+
+  it('invalidates pierced props when root is changed', async () => {
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    const texture1 = { needsUpdate: false, name: '' } as THREE.Texture
+    const texture2 = { needsUpdate: false, name: '' } as THREE.Texture
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture1} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture1)
+    expect(texture1.needsUpdate).toBe(true)
+    expect(texture1.name).toBe('test')
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture2} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture2)
+    expect(texture2.needsUpdate).toBe(true)
+    expect(texture2.name).toBe('test')
+  })
+
+  // https://github.com/mrdoob/three.js/issues/21209
+  it("can handle HMR default where three.js isn't reliable", async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test() {
+      const [scale, setScale] = React.useState(true)
+      const props: any = {}
+      if (scale) props.scale = 0.5
+      React.useEffect(() => void setScale(false), [])
+      return <mesh ref={ref} {...props} />
+    }
+
+    await act(async () => root.render(<Test />))
+
+    expect(ref.current!.scale.toArray()).toStrictEqual(new THREE.Object3D().scale.toArray())
+  })
+
+  it("onUpdate shouldn't update itself", async () => {
+    const one = jest.fn()
+    const two = jest.fn()
+
+    const Test = (props: Partial<JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
+    await act(async () => root.render(<Test onUpdate={one} />))
+    await act(async () => root.render(<Test onUpdate={two} />))
+
+    expect(one).toBeCalledTimes(1)
+    expect(two).toBeCalledTimes(0)
   })
 })

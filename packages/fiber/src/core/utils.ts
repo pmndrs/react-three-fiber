@@ -5,9 +5,23 @@ import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
+/**
+ * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ */
+const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const ColorManagement: ColorManagementRepresentation | null =
+  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
+export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
 
 /**
  * An SSR-friendly useLayoutEffect.
@@ -55,6 +69,7 @@ export class ErrorBoundary extends React.Component<
 }
 
 export const DEFAULT = '__default'
+export const DEFAULTS = new Map()
 
 export type DiffSet = {
   memoized: { [key: string]: any }
@@ -70,7 +85,8 @@ export type ObjectMap = {
 }
 
 export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
 /**
@@ -231,6 +247,12 @@ export function diffProps(
     let entries: string[] = []
     if (key.includes('-')) entries = key.split('-')
     changes.push([key, value, false, entries])
+
+    // Reset pierced props
+    for (const prop in props) {
+      const value = props[prop]
+      if (prop.startsWith(`${key}-`)) changes.push([prop, value, false, prop.split('-')])
+    }
   })
 
   const memoized: { [key: string]: any } = { ...props }
@@ -252,7 +274,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-  changes.forEach(([key, value, isEvent, keys]) => {
+  for (let i = 0; i < changes.length; i++) {
+    let [key, value, isEvent, keys] = changes[i]
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -273,18 +296,17 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
-      if (targetProp && targetProp.constructor) {
-        // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(...(memoized.args ?? []))
-      } else if (currentInstance.constructor) {
+      if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[targetProp]
-        // destory the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
-        // instance does not have constructor, just set it to 0
+        let ctor = DEFAULTS.get(currentInstance.constructor)
+        if (!ctor) {
+          // @ts-ignore
+          ctor = new currentInstance.constructor()
+          DEFAULTS.set(currentInstance.constructor, ctor)
+        }
+        value = ctor[key]
       } else {
+        // instance does not have constructor, just set it to 0
         value = 0
       }
     }
@@ -307,7 +329,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        targetProp.constructor === (value as ClassConstructor).constructor
       ) {
         targetProp.copy(value)
       }
@@ -324,21 +346,26 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = 'ColorManagement' in THREE
-        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!ColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
       currentInstance[key] = value
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
+      if (
+        !rootState.linear &&
+        currentInstance[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        currentInstance[key].format === THREE.RGBAFormat &&
+        currentInstance[key].type === THREE.UnsignedByteType
+      ) {
         currentInstance[key].encoding = THREE.sRGBEncoding
       }
     }
 
     invalidateInstance(instance)
-  })
+  }
 
   if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
@@ -348,8 +375,10 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
+  // Call the update lifecycle when it is being updated, but only when it is part of the scene.
+  // Skip updates to the `onUpdate` prop itself
+  const isCircular = changes.length === 1 && changes[0][0] === 'onUpdate'
+  if (!isCircular && changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }
@@ -380,14 +409,4 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     // Update matrix world since the renderer is a frame late
     camera.updateMatrixWorld()
   }
-}
-
-/**
- * Safely sets a deeply-nested value on an object.
- */
-export function setDeep(obj: any, value: any, keys: string[]) {
-  const key = keys.pop()!
-  const target = keys.reduce((acc, key) => acc[key], obj)
-
-  return (target[key] = value)
 }

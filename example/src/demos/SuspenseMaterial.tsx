@@ -10,7 +10,7 @@ export default function App() {
       <ambientLight />
       <directionalLight />
       <mesh onClick={inc}>
-        <sphereBufferGeometry args={[1, 64, 32]} />
+        <sphereGeometry args={[1, 64, 32]} />
         <Suspense fallback={<FallbackMaterial />}>
           <SlowMaterial arg={arg} />
         </Suspense>
