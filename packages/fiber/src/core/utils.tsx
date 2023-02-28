@@ -221,7 +221,10 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       handlers: {},
       isHidden: false,
     }
-    if (object) object.__r3f = instance
+    if (object) {
+      object.__r3f = instance
+      if (type) applyProps(object, instance.props)
+    }
   }
 
   return instance

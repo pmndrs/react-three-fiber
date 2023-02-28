@@ -96,15 +96,13 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   if (!parent.parent && parent.object !== state.scene) return
 
   // Create & link object on first run
-  if (!child.object?.__r3f) {
-    if (!child.object) {
-      // Get target from catalogue
-      const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
-      const target = catalogue[name]
+  if (!child.object) {
+    // Get target from catalogue
+    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+    const target = catalogue[name]
 
-      // Create object
-      child.object = child.props.object ?? new target(...(child.props.args ?? []))
-    }
+    // Create object
+    child.object = child.props.object ?? new target(...(child.props.args ?? []))
     child.object.__r3f = child
 
     // Set initial props
