@@ -235,7 +235,7 @@ function switchInstance(
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
-    removeChild(parent, oldInstance, true, false)
+    removeChild(parent, oldInstance, false, false)
     insertBefore(parent, newInstance, oldInstance, true)
   }
 
