@@ -3,10 +3,8 @@ import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, act, extend, ThreeElement } from '../src/index'
 import { suspend } from 'suspend-react'
 
-class CustomElement extends THREE.Object3D {}
-
 class Mock extends THREE.Group {
-  static instances: string[] = []
+  static instances: string[]
   constructor(name: string) {
     super()
     this.name = name
@@ -16,12 +14,11 @@ class Mock extends THREE.Group {
 
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    customElement: ThreeElement<typeof CustomElement>
     mock: ThreeElement<typeof Mock>
   }
 }
 
-extend({ CustomElement, Mock })
+extend({ Mock })
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
@@ -44,7 +41,10 @@ const expectToThrow = async (callback: () => any) => {
 describe('renderer', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
-  beforeEach(() => (root = createRoot(document.createElement('canvas'))))
+  beforeEach(() => {
+    root = createRoot(document.createElement('canvas'))
+    Mock.instances = []
+  })
   afterEach(async () => act(async () => root.unmount()))
 
   it('should render empty JSX', async () => {
@@ -63,11 +63,11 @@ describe('renderer', () => {
   })
 
   it('should render extended elements', async () => {
-    const store = await act(async () => root.render(<customElement />))
+    const store = await act(async () => root.render(<mock />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(CustomElement)
+    expect(scene.children[0]).toBeInstanceOf(Mock)
   })
 
   it('should render primitives', async () => {
