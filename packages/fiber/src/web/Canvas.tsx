@@ -8,7 +8,7 @@ import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
+export interface Props extends Omit<RenderProps, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode

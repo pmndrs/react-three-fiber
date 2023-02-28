@@ -9,7 +9,7 @@ import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 import { polyfills } from './polyfills'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
+export interface Props extends Omit<RenderProps, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
 }
