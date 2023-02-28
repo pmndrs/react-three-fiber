@@ -95,28 +95,20 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   const state = child.root.getState()
   if (!parent.parent && parent.object !== state.scene) return
 
-  if (!child.object) {
-    // Get target from catalogue
-    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
-    const target = catalogue[name]
+  // Create & link object on first run
+  if (!child.object?.__r3f) {
+    if (!child.object) {
+      // Get target from catalogue
+      const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+      const target = catalogue[name]
 
-    // Create object
-    child.object = child.props.object ?? new target(...(child.props.args ?? []))
+      // Create object
+      child.object = child.props.object ?? new target(...(child.props.args ?? []))
+    }
     child.object.__r3f = child
-  }
 
-  // Auto-attach geometries and materials
-  if (child.props.attach === undefined) {
-    if (child.object instanceof THREE.BufferGeometry) child.props.attach = 'geometry'
-    else if (child.object instanceof THREE.Material) child.props.attach = 'material'
-  }
-
-  // Set initial props
-  applyProps(child.object, child.props)
-
-  // Handle interactivity
-  if (child.eventCount > 0 && child.object.raycast !== null && child.object instanceof THREE.Object3D) {
-    state.internal.interaction.push(child.object)
+    // Set initial props
+    applyProps(child.object, child.props)
   }
 
   // Append instance

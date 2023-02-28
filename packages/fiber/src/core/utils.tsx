@@ -427,6 +427,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
   }
 
+  // Auto-attach geometries and materials
+  if (instance && instance.props.attach === undefined) {
+    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
+    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
+  }
+
   if (instance) invalidateInstance(instance)
 
   return object
