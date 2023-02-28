@@ -5,13 +5,23 @@ import { suspend } from 'suspend-react'
 
 class CustomElement extends THREE.Object3D {}
 
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    customElement: ThreeElement<typeof CustomElement>
+class Mock extends THREE.Group {
+  static instances: string[] = []
+  constructor(name: string) {
+    super()
+    this.name = name
+    Mock.instances.push(name)
   }
 }
 
-extend({ CustomElement })
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    customElement: ThreeElement<typeof CustomElement>
+    mock: ThreeElement<typeof Mock>
+  }
+}
+
+extend({ CustomElement, Mock })
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
@@ -449,9 +459,9 @@ describe('renderer', () => {
       suspend(async (reconstruct) => reconstruct, [reconstruct])
 
       return (
-        <group key={reconstruct ? 0 : 1} name="parent">
-          <group
-            name="child"
+        <mock key={reconstruct ? 0 : 1} args={['parent']}>
+          <mock
+            args={['child']}
             ref={(self) => void (lastMounted = self?.uuid)}
             attach={(_, self) => {
               calls.push('attach')
@@ -459,7 +469,7 @@ describe('renderer', () => {
               return () => calls.push('detach')
             }}
           />
-        </group>
+        </mock>
       )
     }
 
@@ -467,9 +477,9 @@ describe('renderer', () => {
       React.useLayoutEffect(() => void calls.push('useLayoutEffect'), [])
 
       return (
-        <group name="suspense">
+        <mock args={['suspense']}>
           <SuspenseComponent {...props} />
-        </group>
+        </mock>
       )
     }
 
@@ -478,10 +488,14 @@ describe('renderer', () => {
     // Should complete tree before layout-effects fire
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect'])
     expect(lastAttached).toBe(lastMounted)
+    expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child'])
 
     await act(async () => root.render(<Test reconstruct />))
 
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
     expect(lastAttached).toBe(lastMounted)
+    expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
+
+    extend({ Group: THREE.Group })
   })
 })
