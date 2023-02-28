@@ -66,7 +66,7 @@ beforeAll(() => {
 })
 
 describe('renderer', () => {
-  let root: ReconcilerRoot = null!
+  let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
   beforeEach(() => {
     const canvas = createCanvas({
