@@ -1,25 +1,6 @@
+import * as ReactThreeFiber from './three-types'
+export { ReactThreeFiber }
 export * from './three-types'
-export type {
-  AttachFnType,
-  AttachType,
-  ConstructorRepresentation,
-  Catalogue,
-  Args,
-  InstanceProps,
-  Instance,
-} from './core/renderer'
-export type {
-  Intersection,
-  Subscription,
-  Dpr,
-  Size,
-  Viewport,
-  RenderCallback,
-  Performance,
-  RootState,
-} from './core/store'
-export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/events'
-export type { ObjectMap, Camera } from './core/utils'
+export * from './core'
 export * from './native/Canvas'
 export { createTouchEvents as events } from './native/events'
-export * from './core'

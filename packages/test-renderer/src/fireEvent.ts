@@ -1,5 +1,4 @@
-import type { UseBoundStore } from 'zustand'
-import type { RootState } from '@react-three/fiber'
+import type { RootStore } from '@react-three/fiber'
 
 import { toEventHandlerName } from './helpers/strings'
 
@@ -8,7 +7,7 @@ import { ReactThreeTestInstance } from './createTestInstance'
 import type { Act, MockSyntheticEvent } from './types/public'
 import type { MockEventData } from './types/internal'
 
-export const createEventFirer = (act: Act, store: UseBoundStore<RootState>) => {
+export const createEventFirer = (act: Act, store: RootStore) => {
   const findEventHandler = (
     element: ReactThreeTestInstance,
     eventName: string,

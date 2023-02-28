@@ -2,8 +2,16 @@ import * as React from 'react'
 import * as THREE from 'three'
 import useMeasure from 'react-use-measure'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import { useContextBridge, FiberProvider } from 'its-fine'
-import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
+import { FiberProvider } from 'its-fine'
+import {
+  isRef,
+  SetBlock,
+  Block,
+  ErrorBoundary,
+  useMutableCallback,
+  useIsomorphicLayoutEffect,
+  useBridge,
+} from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
@@ -57,7 +65,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE as any), [])
 
-  const Bridge = useContextBridge()
+  const Bridge = useBridge()
 
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
@@ -74,10 +82,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
   // Throw exception outwards if anything within canvas throws
   if (error) throw error
 
-  const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
+  const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
   if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-    if (!root.current) root.current = createRoot<HTMLElement>(canvas)
+    if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
     root.current.configure({
       gl,
       events,
@@ -137,7 +145,14 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
   return (
     <div
       ref={divRef}
-      style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', pointerEvents, ...style }}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        pointerEvents,
+        ...style,
+      }}
       {...props}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
         <canvas ref={canvasRef} style={{ display: 'block' }}>
