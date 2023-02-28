@@ -495,7 +495,5 @@ describe('renderer', () => {
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
     expect(lastAttached).toBe(lastMounted)
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
-
-    extend({ Group: THREE.Group })
   })
 })
