@@ -46,7 +46,7 @@ type GLProps =
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps = {
+export type RenderProps<TCanvas extends Canvas> = {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -116,7 +116,7 @@ const createRendererInstance = <TCanvas extends Canvas>(gl: GLProps, canvas: TCa
 }
 
 export type ReconcilerRoot<TCanvas extends Canvas> = {
-  configure: (config?: RenderProps) => ReconcilerRoot<TCanvas>
+  configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => UseBoundStore<RootState>
   unmount: () => void
 }
@@ -170,7 +170,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
   let configured = false
 
   return {
-    configure(props: RenderProps = {}) {
+    configure(props: RenderProps<TCanvas> = {}) {
       let {
         gl: glConfig,
         size: propsSize,
@@ -345,7 +345,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
 function render<TCanvas extends Canvas>(
   children: React.ReactNode,
   canvas: TCanvas,
-  config: RenderProps,
+  config: RenderProps<TCanvas>,
 ): UseBoundStore<RootState> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
