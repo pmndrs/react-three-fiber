@@ -65,11 +65,21 @@ interface HostConfig {
 
 const catalogue: Catalogue = {}
 
+let i = 0
+
 export const extend = <T extends Catalogue | ConstructorRepresentation>(
   objects: T,
 ): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
-  Object.assign(catalogue, typeof objects.name === 'string' ? { [objects.name]: objects } : objects)
-  return objects.name as any
+  if (typeof objects === 'function') {
+    const Component = `${i++}`
+    catalogue[Component] = objects
+
+    // Returns a component whose name will be inferred in devtools
+    // @ts-ignore
+    return React.forwardRef({ [objects.name]: (props, ref) => <Component {...props} ref={ref} /> }[objects.name])
+  } else {
+    return void Object.assign(catalogue, objects) as any
+  }
 }
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
