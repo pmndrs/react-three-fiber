@@ -68,9 +68,8 @@ const catalogue: Catalogue = {}
 export const extend = <T extends Catalogue | ConstructorRepresentation>(
   objects: T,
 ): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
-  const identifier = objects.name
   Object.assign(catalogue, typeof objects.name === 'string' ? { [objects.name]: objects } : objects)
-  return identifier as any
+  return objects.name as any
 }
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
