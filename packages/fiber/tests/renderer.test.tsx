@@ -58,6 +58,12 @@ describe('renderer', () => {
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBeInstanceOf(CustomElement)
+
+    const Component = extend(THREE.Mesh)
+    await act(async () => root.render(<Component />))
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
   })
 
   it('should render primitives', async () => {

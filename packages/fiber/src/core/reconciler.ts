@@ -65,18 +65,12 @@ interface HostConfig {
 
 const catalogue: Catalogue = {}
 
-const isClass = <T extends ConstructorRepresentation>(value: any): value is T =>
-  value && 'prototype' in value && value.prototype?.constructor === value
-
 export const extend = <T extends Catalogue | ConstructorRepresentation>(
   objects: T,
 ): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
-  if (isClass(objects)) {
-    Object.assign(catalogue, { [objects.name]: objects })
-    return catalogue[objects.name] as unknown as any
-  } else {
-    return void Object.assign(catalogue, objects) as unknown as any
-  }
+  const identifier = objects.name
+  Object.assign(catalogue, typeof objects.name === 'string' ? { [objects.name]: objects } : objects)
+  return identifier as any
 }
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
