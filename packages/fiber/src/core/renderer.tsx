@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create from 'zustand'
 
-import { Properties, ThreeElement } from '../three-types'
+import type { Properties, ThreeElement } from '../three-types'
 import {
   Renderer,
   createStore,

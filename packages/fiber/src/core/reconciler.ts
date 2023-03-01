@@ -6,7 +6,7 @@ import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as sch
 import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, now } from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
-import { ThreeElement } from '../three-types'
+import type { ThreeElement } from '../three-types'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
