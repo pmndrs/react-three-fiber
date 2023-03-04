@@ -389,13 +389,6 @@ Array [
           Object {
             "children": Array [],
             "props": Object {
-              "attach": "material",
-            },
-            "type": "meshBasicMaterial",
-          },
-          Object {
-            "children": Array [],
-            "props": Object {
               "args": Array [
                 2,
                 2,
@@ -403,6 +396,13 @@ Array [
               "attach": "geometry",
             },
             "type": "boxGeometry",
+          },
+          Object {
+            "children": Array [],
+            "props": Object {
+              "attach": "material",
+            },
+            "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
