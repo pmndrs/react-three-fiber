@@ -42,6 +42,7 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
+  autoRemovedBeforeAppend?: boolean
 }
 
 interface HostConfig {
@@ -151,10 +152,7 @@ function insertBefore(
   child.parent = parent
   const childIndex = parent.children.indexOf(beforeChild)
   if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
-  if (replace) {
-    beforeChild.parent = null
-    removeChild(parent, beforeChild)
-  }
+  if (replace) beforeChild.parent = null
 
   // Attach tree once complete
   handleContainerEffects(parent, child, beforeChild, replace)
@@ -236,7 +234,14 @@ function switchInstance(
 
   // Link up new instance
   const parent = oldInstance.parent
-  if (parent) insertBefore(parent, newInstance, oldInstance, true)
+  if (parent) {
+    // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
+    // insertBefore(parent, newInstance, oldInstance, true)
+
+    if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
+    if (newInstance.parent) newInstance.autoRemovedBeforeAppend = true
+    appendChild(parent, newInstance)
+  }
 
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
