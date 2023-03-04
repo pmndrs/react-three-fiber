@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.6
+
+### Patch Changes
+
+- 7d319c18: Fix is.equ obj:shallow, allow it to test arrays 1 level deep, fix canvas.camera prop being stale
+
 ## 8.11.5
 
 ### Patch Changes
