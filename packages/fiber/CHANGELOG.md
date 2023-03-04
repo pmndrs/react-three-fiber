@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.7
+
+### Patch Changes
+
+- 96af62d5: fix: don't overwrite public cameras
+
 ## 8.11.6
 
 ### Patch Changes
