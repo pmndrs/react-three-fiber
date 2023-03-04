@@ -168,6 +168,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
   let configured = false
+  let lastCamera: RenderProps<TCanvas>['camera']
 
   return {
     configure(props: RenderProps<TCanvas> = {}) {
@@ -205,8 +206,9 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
-      // Create default camera (one time only!)
-      if (!state.camera) {
+      // Create default camera
+      if (!is.equ(lastCamera, shallowLoose)) {
+        lastCamera = cameraOptions
         const isCamera = cameraOptions instanceof THREE.Camera
         const camera = isCamera
           ? (cameraOptions as Camera)
@@ -217,7 +219,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           camera.position.z = 5
           if (cameraOptions) applyProps(camera as any, cameraOptions as any)
           // Always look at center by default
-          if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
+          if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
       }

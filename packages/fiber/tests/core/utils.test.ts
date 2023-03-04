@@ -83,6 +83,13 @@ describe('is', () => {
     expect(is.equ({ a: 1, b: 1 }, { a: 1 }, { objects: 'shallow' })).toBe(false)
     expect(is.equ({ a: 1 }, { a: 1, b: 1 }, { objects: 'shallow' })).toBe(false)
     expect(is.equ({ a: 1 }, { a: 1, b: 1 }, { objects: 'shallow', strict: false })).toBe(true)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3] }, { arrays: 'reference', objects: 'reference' })).toBe(false)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3] }, { objects: 'reference' })).toBe(false)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3] }, { objects: 'shallow' })).toBe(true)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3, 4] }, { objects: 'shallow' })).toBe(false)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3, 4] }, { objects: 'shallow', strict: false })).toBe(true)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3], b: 1 }, { objects: 'shallow' })).toBe(false)
+    expect(is.equ({ a: [1, 2, 3] }, { a: [1, 2, 3], b: 1 }, { objects: 'shallow', strict: false })).toBe(true)
 
     const arr = [1, 2, 3]
     expect(is.equ(arr, arr)).toBe(true)

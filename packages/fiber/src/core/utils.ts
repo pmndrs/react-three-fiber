@@ -126,11 +126,21 @@ export const is = {
     if ((isArr || isObj) && a === b) return true
     // Last resort, go through keys
     let i
+    // Check if a has all the keys of b
     for (i in a) if (!(i in b)) return false
-    for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    // Check if values between keys match
+    if (isObj && arrays === 'shallow' && objects === 'shallow') {
+      for (i in strict ? b : a) if (!is.equ(a[i], b[i], { strict, objects: 'reference' })) return false
+    } else {
+      for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    }
+    // If i is undefined
     if (is.und(i)) {
+      // If both arrays are empty we consider them equal
       if (isArr && a.length === 0 && b.length === 0) return true
+      // If both objects are empty we consider them equal
       if (isObj && Object.keys(a).length === 0 && Object.keys(b).length === 0) return true
+      // Otherwise match them by value
       if (a !== b) return false
     }
     return true
