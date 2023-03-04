@@ -206,8 +206,8 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
-      // Create default camera
-      if (!is.equ(lastCamera, shallowLoose)) {
+      // Create default camera, don't overwrite any user-set state
+      if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
         const isCamera = cameraOptions instanceof THREE.Camera
         const camera = isCamera
