@@ -2,7 +2,7 @@
 
 This project uses [semantic commits](https://conventionalcommits.org) and [semver](https://semver.org).
 
-To get started, make sure you have [Node](https://nodejs.org) and [Yarn](https://yarnpkg.com) installed. Install dependencies with:
+To get started, make sure you have [Node](https://nodejs.org) and [Yarn](https://classic.yarnpkg.com) installed. Install dependencies with:
 
 ```bash
 yarn
