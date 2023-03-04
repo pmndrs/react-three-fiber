@@ -888,9 +888,10 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test />))
     expect(store.getState().camera).toBe(camera)
 
-    root.configure({ camera: {} })
+    root.configure({ camera: { name: 'test' } })
 
     await act(async () => root.render(<Test />))
     expect(store.getState().camera).toBe(camera)
+    expect(camera.name).not.toBe('test')
   })
 })
