@@ -8,13 +8,20 @@ nav: 8
 
 Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
-Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes.
+Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes. Similarly, `onDragOverMissed` and `onDropMissed` can handle actions that need to be taken when file drag & drop drag events are not hitting items in the scene.
 
 ```jsx
 <mesh
   onClick={(e) => console.log('click')}
   onContextMenu={(e) => console.log('context menu')}
   onDoubleClick={(e) => console.log('double click')}
+  onDragEnter={(e) => console.log('drag enter')}
+  onDragLeave={(e) => console.log('drag leave')}
+  onDragOverEnter={(e) => console.log('dragover enter')}
+  onDragOverLeave={(e) => console.log('dragover leave')}
+  onDragOverMissed={(e) => console.log('dragover missed')}
+  onDrop={(e) => console.log('dropped')}
+  onDropMissed={(e) => console.log('drop missed')}
   onWheel={(e) => console.log('wheel spins')}
   onPointerUp={(e) => console.log('up')}
   onPointerDown={(e) => console.log('down')}
