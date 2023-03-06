@@ -5,18 +5,12 @@ import { EventHandlers } from './events'
 import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
-/**
- * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
- */
-const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
-
 export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
 
 /**
  * The current THREE.ColorManagement instance, if present.
  */
-export const ColorManagement: ColorManagementRepresentation | null =
-  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+export const ColorManagement: ColorManagementRepresentation = (THREE as any).ColorManagement
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
