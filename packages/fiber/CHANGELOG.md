@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.9
+
+### Patch Changes
+
+- 6b5f572c: fix: treeshake THREE.ColorManagement
+
 ## 8.11.8
 
 ### Patch Changes
