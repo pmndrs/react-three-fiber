@@ -28,7 +28,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
-  ColorManagement,
+  getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -286,6 +286,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
 
       // Safely set color management if available.
       // Avoid accessing THREE.ColorManagement to play nice with older versions
+      const ColorManagement = getColorManagement()
       if (ColorManagement) {
         if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy

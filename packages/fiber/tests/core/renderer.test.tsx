@@ -734,6 +734,14 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
+    // <= r138 internal fallback
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    extend({ ColorManagement: null })
+    await act(async () => root.render(<meshBasicMaterial ref={material} color="#111111" />))
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+    expect(material.current!.color.toArray()).toStrictEqual(new THREE.Color('#111111').convertSRGBToLinear().toArray())
+    extend({ ColorManagement: (THREE as any).ColorManagement })
+
     // r139 legacyMode
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
