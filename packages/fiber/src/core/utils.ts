@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
-import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
+import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, RootState, Size } from './store'
 
 export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
@@ -10,7 +10,7 @@ export type ColorManagementRepresentation = { enabled: boolean | never } | { leg
 /**
  * The current THREE.ColorManagement instance, if present.
  */
-export const ColorManagement: ColorManagementRepresentation = (THREE as any).ColorManagement
+export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -350,7 +350,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        if (!ColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!getColorManagement() && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
