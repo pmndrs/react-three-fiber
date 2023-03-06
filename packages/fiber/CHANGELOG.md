@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.8
+
+### Patch Changes
+
+- 350cd3f3: fix(Canvas): inline render-effect
+
 ## 8.11.7
 
 ### Patch Changes
