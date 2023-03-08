@@ -734,6 +734,14 @@ describe('renderer', () => {
   })
 
   it('should respect legacy prop', async () => {
+    // <= r138 internal fallback
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    extend({ ColorManagement: null })
+    await act(async () => root.render(<meshBasicMaterial ref={material} color="#111111" />))
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+    expect(material.current!.color.toArray()).toStrictEqual(new THREE.Color('#111111').convertSRGBToLinear().toArray())
+    extend({ ColorManagement: (THREE as any).ColorManagement })
+
     // r139 legacyMode
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
@@ -874,5 +882,24 @@ describe('renderer', () => {
 
     expect(one).toBeCalledTimes(1)
     expect(two).toBeCalledTimes(0)
+  })
+
+  it("camera props shouldn't overwrite state", async () => {
+    const camera = new THREE.OrthographicCamera()
+
+    function Test() {
+      const set = useThree((state) => state.set)
+      React.useMemo(() => set({ camera }), [set])
+      return null
+    }
+
+    const store = await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+
+    root.configure({ camera: { name: 'test' } })
+
+    await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+    expect(camera.name).not.toBe('test')
   })
 })

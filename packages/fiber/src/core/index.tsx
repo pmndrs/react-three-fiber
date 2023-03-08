@@ -28,7 +28,7 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
-  ColorManagement,
+  getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -206,8 +206,8 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
-      // Create default camera
-      if (!is.equ(lastCamera, shallowLoose)) {
+      // Create default camera, don't overwrite any user-set state
+      if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
         const isCamera = cameraOptions instanceof THREE.Camera
         const camera = isCamera
@@ -286,6 +286,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
 
       // Safely set color management if available.
       // Avoid accessing THREE.ColorManagement to play nice with older versions
+      const ColorManagement = getColorManagement()
       if (ColorManagement) {
         if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
