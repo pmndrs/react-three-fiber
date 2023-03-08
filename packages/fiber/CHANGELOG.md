@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.10
+
+### Patch Changes
+
+- 12907836: fix onpointerlostcapture which fired before pointerup
+
 ## 8.11.9
 
 ### Patch Changes
