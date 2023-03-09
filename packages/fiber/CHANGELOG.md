@@ -1,5 +1,59 @@
 # @react-three/fiber
 
+## 8.11.10
+
+### Patch Changes
+
+- 12907836: fix onpointerlostcapture which fired before pointerup
+
+## 8.11.9
+
+### Patch Changes
+
+- 6b5f572c: fix: treeshake THREE.ColorManagement
+
+## 8.11.8
+
+### Patch Changes
+
+- 350cd3f3: fix(Canvas): inline render-effect
+
+## 8.11.7
+
+### Patch Changes
+
+- 96af62d5: fix: don't overwrite public cameras
+
+## 8.11.6
+
+### Patch Changes
+
+- 7d319c18: Fix is.equ obj:shallow, allow it to test arrays 1 level deep, fix canvas.camera prop being stale
+
+## 8.11.5
+
+### Patch Changes
+
+- c658f763: fix: update canvas prop types
+
+## 8.11.4
+
+### Patch Changes
+
+- 970aa58b: fix: play nice with offscreencanvas
+
+## 8.11.3
+
+### Patch Changes
+
+- 2bce569c: fix: progressively set colormanagement
+
+## 8.11.2
+
+### Patch Changes
+
+- 41d655cd: fix: hmr, srgb encode
+
 ## 8.11.1
 
 ### Patch Changes

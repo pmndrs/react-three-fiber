@@ -16,13 +16,17 @@ function Test() {
   }, [])
 
   useFrame((state) => {
-    console.log(state.pointer.x)
+    //console.log(state.pointer.x)
   })
 
   return <primitive object={which ? o1 : o2} />
 }
 
 export default function App() {
+  const [foo, bar] = useState(0)
+  useEffect(() => {
+    setTimeout(() => bar(1), 1000)
+  }, [])
   return (
     <Canvas>
       <Test />

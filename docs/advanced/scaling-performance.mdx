@@ -70,6 +70,18 @@ function Scene() {
       <mesh position={[1, 2, 3]} geometry={sphere} material={red} />
 ```
 
+If you create a material or color in global space - outside of React Three Fiber's `Canvas` context - you should enable [ColorManagement](https://threejs.org/docs/#manual/en/introduction/Color-management) in three.js. This will allow certain conversions (for hexadecimal and CSS colors in sRGB) to be made automatically, producing correct colors in all cases.
+
+```jsx
+import * as THREE from 'three'
+
+// r150
+THREE.ColorManagement.enabled = true
+
+// r139-r149
+THREE.ColorManagement.legacyMode = false
+```
+
 ### Caching with useLoader
 
 <Hint>Every resource that is loaded with useLoader is cached automatically!</Hint>
@@ -272,7 +284,7 @@ useEffect(() => {
 
 ### This is how you can respond to it
 
-<Hint>Mere calls to regress() will not change or affect anything!</Hint>
+<Hint>Mere calls to `regress()` will not change or affect anything!</Hint>
 
 Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
 
