@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.11.11
+
+### Patch Changes
+
+- f03c6ef8: feat: `scene` render prop for custom THREE.Scene
+
 ## 8.11.10
 
 ### Patch Changes
