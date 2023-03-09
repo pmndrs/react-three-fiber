@@ -697,6 +697,34 @@ describe('renderer', () => {
     expect(gl.physicallyCorrectLights).toBe(true)
   })
 
+  it('should update scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: { name: 'test' } })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(scene.name).toBe('test')
+  })
+
+  it('should set a custom scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    const prop = new THREE.Scene()
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: prop })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(prop).toBe(scene)
+  })
+
   it('should set a renderer via gl callback', async () => {
     class Renderer extends THREE.WebGLRenderer {}
 

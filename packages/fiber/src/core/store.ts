@@ -209,6 +209,7 @@ const createStore = (
       raycaster: null as unknown as THREE.Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
+      scene: null as unknown as THREE.Scene,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
@@ -216,7 +217,6 @@ const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: prepare<THREE.Scene>(new THREE.Scene()),
 
       controls: null,
       clock: new THREE.Clock(),

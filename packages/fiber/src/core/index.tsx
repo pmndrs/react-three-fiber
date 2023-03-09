@@ -16,7 +16,7 @@ import {
   PrivateKeys,
   privateKeys,
 } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { createRenderer, extend, prepare, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
@@ -82,6 +82,8 @@ export type RenderProps<TCanvas extends Canvas> = {
   dpr?: Dpr
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
+  /** A `THREE.Scene` instance or props that go into the default scene */
+  scene?: THREE.Scene | Partial<ReactThreeFiber.Object3DNode<THREE.Scene, typeof THREE.Scene>>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
@@ -175,6 +177,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       let {
         gl: glConfig,
         size: propsSize,
+        scene: sceneOptions,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -222,6 +225,20 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+      }
+
+      // Set up scene (one time only!)
+      if (!state.scene) {
+        let scene: THREE.Scene
+
+        if (sceneOptions instanceof THREE.Scene) {
+          scene = sceneOptions
+        } else {
+          scene = new THREE.Scene()
+          if (sceneOptions) applyProps(scene as any, sceneOptions as any)
+        }
+
+        state.set({ scene: prepare(scene) })
       }
 
       // Set up XR (one time only!)
