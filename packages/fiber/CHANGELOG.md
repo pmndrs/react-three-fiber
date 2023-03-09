@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.12.0
+
+### Minor Changes
+
+- 1928d095: feat: `scene` render prop for custom THREE.Scene
+
 ## 8.11.11
 
 ### Patch Changes
