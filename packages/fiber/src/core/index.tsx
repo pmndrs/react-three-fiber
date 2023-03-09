@@ -81,8 +81,8 @@ export type RenderProps<TCanvas extends Element> = {
   dpr?: Dpr
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
-  /** Allows you to render your components to a custom scene */
-  scene?: THREE.Scene
+  /** A `THREE.Scene` instance or props that go into the default scene */
+  scene?: THREE.Scene | Partial<ReactThreeFiber.Object3DNode<THREE.Scene, typeof THREE.Scene>>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
@@ -177,7 +177,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       let {
         gl: glConfig,
         size: propsSize,
-        scene,
+        scene: sceneOptions,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -228,7 +228,16 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Set up scene (one time only!)
       if (!state.scene) {
-        state.set({ scene: prepare(scene || new THREE.Scene()) })
+        let scene: THREE.Scene
+
+        if (sceneOptions instanceof THREE.Scene) {
+          scene = sceneOptions
+        } else {
+          scene = new THREE.Scene()
+          if (sceneOptions) applyProps(scene as any, sceneOptions as any)
+        }
+
+        state.set({ scene: prepare(scene) })
       }
 
       // Set up XR (one time only!)
