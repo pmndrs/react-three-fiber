@@ -32,6 +32,7 @@ import {
   updateCamera,
   applyProps,
   ColorManagement,
+  prepare,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -101,6 +102,8 @@ export interface RenderProps<TCanvas extends Canvas> {
   dpr?: Dpr
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
+  /** A `THREE.Scene` instance or props that go into the default scene */
+  scene?: THREE.Scene | Partial<ThreeElement<typeof THREE.Scene>>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: CameraProps
   /** An R3F event manager to manage elements' pointer events */
@@ -220,6 +223,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
       let {
         gl: glConfig,
         size: propsSize,
+        scene: sceneOptions,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -267,6 +271,22 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
           if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+      }
+
+      // Set up scene (one time only!)
+      if (!state.scene) {
+        let scene: THREE.Scene
+
+        if (sceneOptions instanceof THREE.Scene) {
+          scene = sceneOptions
+          prepare(scene, store, '', {})
+        } else {
+          scene = new THREE.Scene()
+          prepare(scene, store, '', {})
+          if (sceneOptions) applyProps(scene as any, sceneOptions as any)
+        }
+
+        state.set({ scene })
       }
 
       // Set up XR (one time only!)
