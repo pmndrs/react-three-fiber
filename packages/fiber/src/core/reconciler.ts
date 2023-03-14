@@ -2,7 +2,18 @@ import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, now } from './utils'
+import {
+  is,
+  diffProps,
+  applyProps,
+  invalidateInstance,
+  attach,
+  detach,
+  prepare,
+  globalScope,
+  now,
+  isObject3D,
+} from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
 
@@ -106,7 +117,7 @@ function handleContainerEffects(parent: Instance, child: Instance) {
   if (!parent.parent && parent.object !== state.scene) return
 
   // Handle interactivity
-  if (child.eventCount > 0 && child.object.raycast !== null && child.object instanceof THREE.Object3D) {
+  if (child.eventCount > 0 && child.object.raycast !== null && isObject3D(child.object)) {
     state.internal.interaction.push(child.object)
   }
 
@@ -123,7 +134,7 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   parent.children.push(child)
 
   // Add Object3Ds if able
-  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
+  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object)) {
     parent.object.add(child.object)
   }
 
@@ -149,12 +160,7 @@ function insertBefore(
   if (replace) beforeChild.parent = null
 
   // Manually splice Object3Ds
-  if (
-    !child.props.attach &&
-    parent.object instanceof THREE.Object3D &&
-    child.object instanceof THREE.Object3D &&
-    beforeChild.object instanceof THREE.Object3D
-  ) {
+  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object) && isObject3D(beforeChild.object)) {
     child.object.parent = parent.object
     parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
     child.object.dispatchEvent({ type: 'added' })
@@ -185,7 +191,7 @@ function removeChild(
   // Eagerly tear down tree
   if (child.props.attach) {
     detach(parent, child)
-  } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
+  } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     parent.object.remove(child.object)
     removeInteractivity(child.root, child.object)
   }
@@ -360,7 +366,7 @@ export const reconciler = Reconciler<
   hideInstance(instance) {
     if (instance.props.attach && instance.parent?.object) {
       detach(instance.parent, instance)
-    } else if (instance.object instanceof THREE.Object3D) {
+    } else if (isObject3D(instance.object)) {
       instance.object.visible = false
     }
 
@@ -371,7 +377,7 @@ export const reconciler = Reconciler<
     if (instance.isHidden) {
       if (instance.props.attach && instance.parent?.object) {
         attach(instance.parent, instance)
-      } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
+      } else if (isObject3D(instance.object) && instance.props.visible !== false) {
         instance.object.visible = true
       }
     }
