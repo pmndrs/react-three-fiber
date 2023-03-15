@@ -103,7 +103,7 @@ export interface RenderProps<TCanvas extends Canvas> {
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
   /** A `THREE.Scene` instance or props that go into the default scene */
-  scene?: THREE.Scene | Partial<ThreeElement<typeof THREE.Scene>>
+  scene?: THREE.Scene | Partial<THREE.Scene>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: CameraProps
   /** An R3F event manager to manage elements' pointer events */
