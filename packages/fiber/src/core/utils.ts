@@ -364,7 +364,10 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         currentInstance[key].format === THREE.RGBAFormat &&
         currentInstance[key].type === THREE.UnsignedByteType
       ) {
-        currentInstance[key].encoding = THREE.sRGBEncoding
+        const texture = currentInstance[key] as THREE.Texture
+        if ('colorSpace' in texture && 'outputColorSpace' in rootState.gl)
+          texture.colorSpace = rootState.gl.outputColorSpace
+        else texture.encoding = rootState.gl.outputEncoding
       }
     }
 

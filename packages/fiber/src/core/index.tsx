@@ -62,7 +62,7 @@ export type RenderProps<TCanvas extends Canvas> = {
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
    */
   legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
+  /** Switch off automatic sRGB color space and gamma correction */
   linear?: boolean
   /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
   flat?: boolean
@@ -310,15 +310,16 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       }
 
       if ('outputColorSpace' in gl) {
-        const outputColorSpace = linear ? 'srgb-linear' : 'srgb'
-        gl.outputColorSpace = outputColorSpace
+        const LinearSRGBColorSpace = 'srgb-linear'
+        const SRGBColorSpace = 'srgb'
+        gl.outputColorSpace = linear ? LinearSRGBColorSpace : SRGBColorSpace
       } else {
-        const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
-        gl.outputEncoding = outputEncoding
+        const LinearEncoding = 3000
+        const sRGBEncoding = 3001
+        gl.outputEncoding = linear ? LinearEncoding : sRGBEncoding
       }
 
-      const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-      gl.toneMapping = toneMapping
+      gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
