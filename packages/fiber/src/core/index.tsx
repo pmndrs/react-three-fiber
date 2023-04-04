@@ -29,6 +29,7 @@ import {
   Camera,
   updateCamera,
   getColorManagement,
+  hasColorSpace,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -309,11 +310,10 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
 
-      const _gl = gl as THREE.WebGLRenderer & { outputColorSpace?: string }
-      if ('outputColorSpace' in _gl) {
+      if (hasColorSpace(gl)) {
         const LinearSRGBColorSpace = 'srgb-linear'
         const SRGBColorSpace = 'srgb'
-        _gl.outputColorSpace = linear ? LinearSRGBColorSpace : SRGBColorSpace
+        gl.outputColorSpace = linear ? LinearSRGBColorSpace : SRGBColorSpace
       } else {
         const LinearEncoding = 3000
         const sRGBEncoding = 3001

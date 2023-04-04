@@ -3,7 +3,17 @@ import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
-import { Dpr, RootState, Size } from './store'
+import { Dpr, Renderer, RootState, Size } from './store'
+
+/**
+ * Returns `true` with correct TS type inference if an object has a configurable color-space (since r152).
+ */
+export const hasColorSpace = <
+  T extends Renderer | THREE.Texture,
+  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
+>(
+  object: T,
+): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
 
 export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
 
@@ -364,10 +374,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         currentInstance[key].format === THREE.RGBAFormat &&
         currentInstance[key].type === THREE.UnsignedByteType
       ) {
-        const texture = currentInstance[key] as THREE.Texture & { colorSpace?: string }
-        const gl = rootState.gl as THREE.WebGLRenderer & { outputColorSpace?: string }
-        if ('colorSpace' in texture) texture.colorSpace = gl.outputColorSpace
-        else texture.encoding = gl.outputEncoding
+        const texture = currentInstance[key] as THREE.Texture
+        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
+        else texture.encoding = rootState.gl.outputEncoding
       }
     }
 
