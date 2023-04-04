@@ -6,7 +6,7 @@ import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './re
 import { Dpr, Renderer, RootState, Size } from './store'
 
 /**
- * Returns `true` with correct TS type inference if an object has a configurable color-space (since r152).
+ * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
  */
 export const hasColorSpace = <
   T extends Renderer | THREE.Texture,
