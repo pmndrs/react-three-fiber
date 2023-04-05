@@ -9,7 +9,7 @@ import { Dpr, Renderer, RootState, Size } from './store'
  * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
  */
 export const hasColorSpace = <
-  T extends Renderer | THREE.Texture,
+  T extends Renderer | THREE.Texture | object,
   P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
 >(
   object: T,
@@ -325,6 +325,35 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       }
     }
 
+    // Alias (output)encoding => (output)colorSpace (since r152)
+    // https://github.com/pmndrs/react-three-fiber/pull/2829
+    if (hasColorSpace(currentInstance)) {
+      const sRGBEncoding = 3001
+      const SRGBColorSpace = 'srgb'
+      const LinearSRGBColorSpace = 'srgb-linear'
+
+      if (key === 'encoding') {
+        key = 'colorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      } else if (key === 'outputEncoding') {
+        key = 'outputColorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      }
+
+      // Auto-convert sRGB textures, for now ...
+      // https://github.com/pmndrs/react-three-fiber/issues/344
+    } else if (
+      !rootState.linear &&
+      currentInstance[key] instanceof THREE.Texture &&
+      // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+      currentInstance[key].format === THREE.RGBAFormat &&
+      currentInstance[key].type === THREE.UnsignedByteType
+    ) {
+      const texture = currentInstance[key] as THREE.Texture
+      if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
+      else texture.encoding = rootState.gl.outputEncoding
+    }
+
     // Deal with pointer events ...
     if (isEvent) {
       if (value) localState.handlers[key as keyof EventHandlers] = value as any
@@ -365,19 +394,6 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       // Else, just overwrite the value
     } else {
       currentInstance[key] = value
-      // Auto-convert sRGB textures, for now ...
-      // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (
-        !rootState.linear &&
-        currentInstance[key] instanceof THREE.Texture &&
-        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
-        currentInstance[key].format === THREE.RGBAFormat &&
-        currentInstance[key].type === THREE.UnsignedByteType
-      ) {
-        const texture = currentInstance[key] as THREE.Texture
-        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
-        else texture.encoding = rootState.gl.outputEncoding
-      }
     }
 
     invalidateInstance(instance)
