@@ -740,31 +740,40 @@ describe('renderer', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
+    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
+    let key = 0
+    function Test() {
+      return <meshBasicMaterial key={key++} map={texture} />
+    }
+
     const LinearEncoding = 3000
     const sRGBEncoding = 3001
 
     let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
-    await act(async () => (gl = root.render(<group />).getState().gl))
+    await act(async () => (gl = root.render(<Test />).getState().gl))
     expect(gl.outputEncoding).toBe(sRGBEncoding)
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(texture.encoding).toBe(sRGBEncoding)
 
-    await act(async () =>
-      root.configure({ gl: { outputEncoding: LinearEncoding, toneMapping: THREE.NoToneMapping } }).render(<group />),
-    )
+    await act(async () => root.configure({ linear: true, flat: true }).render(<Test />))
     expect(gl.outputEncoding).toBe(LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    expect(texture.encoding).toBe(LinearEncoding)
 
     // Sets outputColorSpace since r152
     const SRGBColorSpace = 'srgb'
     const LinearSRGBColorSpace = 'srgb-linear'
 
     gl.outputColorSpace ??= ''
+    texture.colorSpace ??= ''
 
-    await act(async () => root.configure({ linear: true }).render(<group />))
+    await act(async () => root.configure({ linear: true }).render(<Test />))
     expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
+    expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
 
-    await act(async () => root.configure({ linear: false }).render(<group />))
+    await act(async () => root.configure({ linear: false }).render(<Test />))
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
+    expect(texture.colorSpace).toBe(SRGBColorSpace)
   })
 
   it('should respect legacy prop', async () => {
