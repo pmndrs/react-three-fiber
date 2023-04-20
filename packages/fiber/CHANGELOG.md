@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.12.1
+
+### Patch Changes
+
+- 571f07ac: fix: safeguard window.devicePixelRatio
+
 ## 8.12.0
 
 ### Minor Changes
