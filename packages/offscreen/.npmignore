@@ -1,0 +1,9 @@
+examples/
+example/
+.codesandbox/
+.github/
+.husky/
+markdown/
+src/
+tests/
+__mocks__
