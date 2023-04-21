@@ -59,13 +59,23 @@ npm run dev
 
 ## Next.js
 
-It should work out of the box but you will encounter untranspiled add-ons in the three.js ecosystem, in that case you can install the `next-transpile-modules` module:
+It should work out of the box but you will encounter untranspiled add-ons in the three.js ecosystem, in that case,
+
+### Next.js 13.1 or latest version
+You need to add three to `transpilePackages` property in `next.config.js`:
+
+```js
+transpilePackages: ['three'],
+```
+
+### Next.js 13.0 or oldest version
+You can install the `next-transpile-modules` module:
 
 ```bash
 npm install next-transpile-modules --save-dev
 ```
 
-Then, add this to your `next.config.js`
+then, add this to your `next.config.js`
 
 ```js
 const withTM = require('next-transpile-modules')(['three'])
