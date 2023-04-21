@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 import React, { useEffect, useRef } from 'react'
 import mitt from 'mitt'
-
 import type { Options as ResizeOptions } from 'react-use-measure'
 import { UseBoundStore } from 'zustand'
 
 import {
+  Canvas as CanvasImpl,
   extend,
   createRoot,
   createEvents,
@@ -78,6 +78,7 @@ export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
     React.HTMLAttributes<HTMLDivElement> {
   worker: Worker
+  fallback?: React.ReactNode
   /**
    * Options to pass to useMeasure.
    * @see https://github.com/pmndrs/react-use-measure#api
@@ -89,14 +90,29 @@ export interface CanvasProps
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
-export function Canvas({ worker, ...props }: CanvasProps) {
+export function Canvas({ worker, fallback, ...props }: CanvasProps) {
+  const [shouldFallback, setFallback] = React.useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null!)
 
   useEffect(() => {
     if (!worker) return
 
     const canvas = canvasRef.current
-    const offscreen = canvasRef.current.transferControlToOffscreen()
+    let offscreen
+    try {
+      offscreen = canvasRef.current.transferControlToOffscreen()
+    } catch (e) {
+      // Browser doesn't support offscreen canvas at all
+      setFallback(true)
+      return
+    }
+
+    worker.onmessage = (e) => {
+      if (e.data.type === 'error') {
+        // Worker failed to initialize
+        setFallback(true)
+      }
+    }
 
     worker.postMessage(
       {
@@ -118,10 +134,23 @@ export function Canvas({ worker, ...props }: CanvasProps) {
       canvas.addEventListener(
         eventName,
         (event: any) => {
+          // Prevent default for all passive events
+          if (!passive) event.preventDefault()
+          // Capture pointer automatically on pointer down
+          if (eventName === 'pointerdown') {
+            event.target.setPointerCapture(event.pointerId)
+          } else if (eventName === 'pointerup') {
+            event.target.releasePointerCapture(event.pointerId)
+          }
+
           worker.postMessage({
             type: 'dom_events',
             payload: {
               eventName,
+              deltaX: event.deltaX,
+              deltaY: event.deltaY,
+              pointerId: event.pointerId,
+              pointerType: event.pointerType,
               button: event.button,
               buttons: event.buttons,
               altKey: event.altKey,
@@ -168,7 +197,7 @@ export function Canvas({ worker, ...props }: CanvasProps) {
     worker.postMessage({ type: 'props', payload: props })
   }, [worker, props])
 
-  return <canvas ref={canvasRef} />
+  return shouldFallback ? <CanvasImpl {...props}>{fallback}</CanvasImpl> : <canvas ref={canvasRef} />
 }
 
 export function render(children: React.ReactNode) {
@@ -180,15 +209,46 @@ export function render(children: React.ReactNode) {
   const emitter = mitt()
 
   const handleInit = (payload: any) => {
-    const { props, drawingSurface: canvas, width, height, top, left, pixelRatio } = payload
-    root = createRoot(canvas)
-    root.configure({
-      events: createPointerEvents,
-      size: (size = { width, height, top, left, updateStyle: false }),
-      dpr: (dpr = Math.min(Math.max(1, pixelRatio), 2)),
-      ...props,
-    })
-    root.render(children)
+    const { props, drawingSurface: canvas, width, top, left, height, pixelRatio } = payload
+    try {
+      Object.assign(canvas, {
+        pageXOffset: left,
+        pageYOffset: top,
+        clientLeft: left,
+        clientTop: top,
+        clientWidth: width,
+        clientHeight: height,
+        style: { touchAction: 'none' },
+        ownerDocument: canvas,
+        documentElement: canvas,
+        getBoundingClientRect() {
+          return size
+        },
+        setAttribute() {},
+        setPointerCapture() {},
+        releasePointerCapture() {},
+        addEventListener(event: string, callback: () => void) {
+          emitter.on(event, callback)
+        },
+        removeEventListener(event: string, callback: () => void) {
+          emitter.off(event, callback)
+        },
+      })
+
+      root = createRoot(canvas)
+      root.configure({
+        events: createPointerEvents,
+        size: (size = { width, height, top, left, updateStyle: false }),
+        dpr: (dpr = Math.min(Math.max(1, pixelRatio), 2)),
+        ...props,
+      })
+      root.render(children)
+    } catch (e: any) {
+      postMessage({ type: 'error', payload: e?.message })
+    }
+
+    // Shim window to the canvas from here on
+    self.window = canvas
   }
 
   const handleResize = ({ width, height, top, left }: Size) => {
@@ -197,8 +257,7 @@ export function render(children: React.ReactNode) {
   }
 
   const handleEvents = (payload: any) => {
-    emitter.emit(payload.eventName, payload)
-    emitter.on('disconnect', () => self.postMessage({ type: 'dom_events_disconnect' }))
+    emitter.emit(payload.eventName, { ...payload, preventDefault() {}, stopPropagation() {} })
   }
 
   const handleProps = (payload: any) => {
@@ -220,9 +279,11 @@ export function render(children: React.ReactNode) {
     if (handler) handler(payload)
   }
 
-  // Shim for web offscreen canvas
+  // Shims for web offscreen canvas
   // @ts-ignore
   self.window = {}
+  // @ts-ignore
+  self.document = {}
 
   /** R3F event manager for web offscreen canvas */
   function createPointerEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
@@ -259,7 +320,6 @@ export function render(children: React.ReactNode) {
             const [eventName] = DOM_EVENTS[name as keyof typeof DOM_EVENTS]
             emitter.off(eventName as any, event as any)
           })
-          emitter.emit('disconnect')
           set((state) => ({ events: { ...state.events, connected: undefined } }))
         }
       },

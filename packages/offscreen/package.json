@@ -39,12 +39,12 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@react-three/fiber": "latest",
     "mitt": "^3.0.0"
   },
   "peerDependencies": {
     "react": ">=18.0",
     "react-dom": ">=18.0",
+    "@react-three/fiber": ">=8.0.0",
     "three": ">=0.133"
   },
   "peerDependenciesMeta": {
