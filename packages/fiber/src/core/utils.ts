@@ -10,7 +10,7 @@ import { Dpr, Renderer, RootState, Size } from './store'
  */
 export const hasColorSpace = <
   T extends Renderer | THREE.Texture | object,
-  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
+  P = T extends Renderer ? { outputColorSpace: string | null } : { colorSpace: string | null },
 >(
   object: T,
 ): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
