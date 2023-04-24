@@ -290,6 +290,23 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
 
   for (let i = 0; i < changes.length; i++) {
     let [key, value, isEvent, keys] = changes[i]
+
+    // Alias (output)encoding => (output)colorSpace (since r152)
+    // https://github.com/pmndrs/react-three-fiber/pull/2829
+    if (hasColorSpace(instance)) {
+      const sRGBEncoding = 3001
+      const SRGBColorSpace = 'srgb'
+      const LinearSRGBColorSpace = 'srgb-linear'
+
+      if (key === 'encoding') {
+        key = 'colorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      } else if (key === 'outputEncoding') {
+        key = 'outputColorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      }
+    }
+
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -322,22 +339,6 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
       } else {
         // instance does not have constructor, just set it to 0
         value = 0
-      }
-    }
-
-    // Alias (output)encoding => (output)colorSpace (since r152)
-    // https://github.com/pmndrs/react-three-fiber/pull/2829
-    if (hasColorSpace(currentInstance)) {
-      const sRGBEncoding = 3001
-      const SRGBColorSpace = 'srgb'
-      const LinearSRGBColorSpace = 'srgb-linear'
-
-      if (key === 'encoding') {
-        key = 'colorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
-      } else if (key === 'outputEncoding') {
-        key = 'outputColorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
       }
     }
 
