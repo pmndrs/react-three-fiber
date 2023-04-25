@@ -740,7 +740,7 @@ describe('renderer', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
-    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string | null }
+    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
     let key = 0
     function Test() {
       return <meshBasicMaterial key={key++} map={texture} />
@@ -749,7 +749,7 @@ describe('renderer', () => {
     const LinearEncoding = 3000
     const sRGBEncoding = 3001
 
-    let gl: THREE.WebGLRenderer & { outputColorSpace?: string | null } = null!
+    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
     await act(async () => (gl = root.render(<Test />).getState().gl))
     expect(gl.outputEncoding).toBe(sRGBEncoding)
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -764,8 +764,8 @@ describe('renderer', () => {
     const SRGBColorSpace = 'srgb'
     const LinearSRGBColorSpace = 'srgb-linear'
 
-    gl.outputColorSpace ??= null
-    texture.colorSpace ??= null
+    gl.outputColorSpace ??= ''
+    texture.colorSpace ??= ''
 
     await act(async () => root.configure({ linear: true }).render(<Test />))
     expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
