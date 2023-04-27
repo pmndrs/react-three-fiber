@@ -114,9 +114,9 @@ export type RootState = {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement.legacyMode */
+  /* Whether to enable r139's THREE.ColorManagement */
   legacy: boolean
-  /** Shortcut to gl.outputEncoding = LinearEncoding */
+  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean

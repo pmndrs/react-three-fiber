@@ -35,8 +35,8 @@ const App = () => (
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`           |
 | orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                           |
 | dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                          |
-| legacy          | Enables THREE.ColorManagement.legacyMode in three r139 or later                                                                                   | `false`                                                           |
-| linear          | Switch off automatic sRGB encoding and gamma correction                                                                                           | `false`                                                           |
+| legacy          | Enables THREE.ColorManagement in three r139 or later                                                                                              | `false`                                                           |
+| linear          | Switch off automatic sRGB color space and gamma correction                                                                                        | `false`                                                           |
 | events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`                     |
 | eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.MutableRefObject<HTMLElement>`, `gl.domElement.parentNode` |
 | eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                          |
@@ -54,7 +54,7 @@ Canvas uses [createRoot](#createroot) which will create a translucent `THREE.Web
 
 and with the following properties:
 
-- outputEncoding = THREE.sRGBEncoding
+- outputColorSpace = THREE.SRGBColorSpace
 - toneMapping = THREE.ACESFilmicToneMapping
 
 It will also create the following scene internals:
@@ -64,7 +64,7 @@ It will also create the following scene internals:
 - A `THREE.PCFSoftShadowMap` if `shadows` is true
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
-In recent versions of threejs, `THREE.ColorManagement.legacy` will be set to false to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture encoding conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
+In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
 
 ## Custom Canvas
 

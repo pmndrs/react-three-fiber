@@ -29,6 +29,7 @@ import {
   Camera,
   updateCamera,
   getColorManagement,
+  hasColorSpace,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -62,7 +63,7 @@ export type RenderProps<TCanvas extends Canvas> = {
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
    */
   legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
+  /** Switch off automatic sRGB color space and gamma correction */
   linear?: boolean
   /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
   flat?: boolean
@@ -308,10 +309,17 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
-      const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
-      const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-      if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
-      if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
+
+      // Set color space and tonemapping preferences
+      const LinearEncoding = 3000
+      const sRGBEncoding = 3001
+      applyProps(
+        gl as any,
+        {
+          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+        } as Partial<Properties<THREE.WebGLRenderer>>,
+      )
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
