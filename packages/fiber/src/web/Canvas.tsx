@@ -8,7 +8,9 @@ import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
 
-export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
+export interface CanvasProps
+  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
+    React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
@@ -22,6 +24,8 @@ export interface Props extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, Rea
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
+
+export interface Props extends CanvasProps {}
 
 const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
   {
