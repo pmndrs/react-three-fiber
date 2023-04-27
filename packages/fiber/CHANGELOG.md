@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.0
+
+### Minor Changes
+
+- ecfc48b7: feat: CanvasProps alias, respect r152 color management
+
 ## 8.12.2
 
 ### Patch Changes
