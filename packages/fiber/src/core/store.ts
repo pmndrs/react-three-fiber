@@ -213,6 +213,7 @@ export const createStore = (
       camera: null as unknown as Camera,
       raycaster: null as unknown as THREE.Raycaster,
       events: { priority: 1, enabled: true, connected: false },
+      scene: null as unknown as THREE.Scene,
       xr: null as unknown as XRManager,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
@@ -221,7 +222,6 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: new THREE.Scene(),
 
       controls: null,
       clock: new THREE.Clock(),
@@ -354,8 +354,6 @@ export const createStore = (
   })
 
   const state = rootStore.getState()
-
-  prepare(state.scene, rootStore, '', {})
 
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
