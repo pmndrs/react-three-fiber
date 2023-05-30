@@ -219,7 +219,12 @@ useLoader(GLTFLoader, url, (loader) => {
 It can also make multiple requests in parallel:
 
 ```jsx
-const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2])
+import { TextureLoader } from 'three'
+
+function Texture() {
+  // The constructor is being used with an array of texture URLs. Make sure that the array contains valid URLs to the textures you want to load.
+  const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, ["/texture1.jpg","/texture1.jpg","/texture1.jpg"])  
+}
 ```
 
 ### Loading status
