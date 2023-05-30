@@ -227,9 +227,26 @@ const [bumpMap, specMap, normalMap] = useLoader(TextureLoader, [url1, url2, url2
 You can get the loading status from a callback you provide as the fourth argument. Though consider alternatives like THREE.DefaultLoadingManager or better yet, [Drei's](https://github.com/pmndrs/drei) loading helpers.
 
 ```jsx
-useLoader(loader, url, extensions, (xhr) => {
-  console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
-})
+import { useEffect } from 'react';
+import { TextureLoader } from 'three';
+iimport { useLoader } from "@react-three/fiber";
+
+const MyComponent = () => {
+  useEffect(() => {
+    const textureLoader = new TextureLoader();
+
+    useLoader(textureLoader, '/textures/myTexture.jpg', ['jpg'], (xhr) => {
+      console.log((xhr.loaded / xhr.total) * 100 + '% loaded');
+    });
+  }, []);
+
+  return (
+    <div>
+      {/* Your component JSX */}
+    </div>
+  );
+};
+
 ```
 
 ### Special treatment of GLTFLoaders and all loaders that return a scene prop
