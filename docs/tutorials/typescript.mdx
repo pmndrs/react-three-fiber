@@ -17,14 +17,14 @@ import { useRef, useEffect } from 'react'
 import { Mesh } from 'three'
 
 function Box(props) {
-  const ref = useRef<Mesh>(null!)
+  const meshRef = useRef<Mesh>(null!)
 
   useEffect(() => {
-    console.log(Boolean(ref.current))
+    console.log(Boolean(meshRef.current))
   }, [])
 
   return (
-    <mesh {...props} ref={ref}>
+    <mesh {...props} ref={meshRef}>
       <boxGeometry />
       <meshBasicMaterial />
     </mesh>
