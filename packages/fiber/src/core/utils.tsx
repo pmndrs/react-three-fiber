@@ -483,3 +483,5 @@ export const globalScope =
   (typeof global !== 'undefined' && global) ||
   (typeof self !== 'undefined' && self) ||
   (typeof window !== 'undefined' && window)
+
+export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
