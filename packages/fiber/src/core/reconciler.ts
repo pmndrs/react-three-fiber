@@ -215,7 +215,7 @@ function removeChild(
   //   - cannot be a <primitive object={...} />
   //   - cannot be a THREE.Scene, because three has broken its own API
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
-    const dispose = child.object.dispose
+    const dispose = child.object.dispose.bind(child.object)
     if (typeof dispose === 'function') {
       scheduleCallback(idlePriority, () => {
         try {
