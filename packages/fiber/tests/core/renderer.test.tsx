@@ -945,4 +945,43 @@ describe('renderer', () => {
     expect(store.getState().camera).toBe(camera)
     expect(camera.name).not.toBe('test')
   })
+
+  it('should safely handle updates to the object prop', async () => {
+    const ref = React.createRef<THREE.Object3D>()
+    const child = React.createRef<THREE.Object3D>()
+    const attachedChild = React.createRef<THREE.Object3D>()
+
+    const Test = (props: JSX.IntrinsicElements['primitive']) => (
+      <primitive {...props} ref={ref}>
+        <object3D ref={child} />
+        <object3D ref={attachedChild} attach="userData-attach" />
+      </primitive>
+    )
+
+    const object1 = new THREE.Object3D()
+    const child1 = new THREE.Object3D()
+    object1.add(child1)
+
+    const object2 = new THREE.Object3D()
+    const child2 = new THREE.Object3D()
+    object2.add(child2)
+
+    // Initial
+    await act(async () => root.render(<Test object={object1} />))
+    expect(ref.current).toBe(object1)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+
+    // Update
+    await act(async () => root.render(<Test object={object2} />))
+    expect(ref.current).toBe(object2)
+    expect(ref.current!.children).toStrictEqual([child2, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+
+    // Revert
+    await act(async () => root.render(<Test object={object1} />))
+    expect(ref.current).toBe(object1)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+  })
 })
