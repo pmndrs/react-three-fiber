@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.1
+
+### Patch Changes
+
+- c9fe03ba: fix: primitive swap and reactive portals
+
 ## 8.13.0
 
 ### Minor Changes
