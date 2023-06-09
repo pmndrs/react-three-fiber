@@ -26,11 +26,7 @@ With this we can create a Model component and place it in our scene like so:
 ```jsx
 function Scene() {
   const gltf = useLoader(GLTFLoader, '/Poimandres.gltf')
-  return (
-    <Suspense fallback={null}>
-      <primitive object={gltf.scene} />
-    </Suspense>
-  )
+  return <primitive object={gltf.scene} />
 }
 ```
 

@@ -87,6 +87,10 @@ export interface EventManager<TTarget> {
   connect?: (target: TTarget) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
+  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
+   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   */
+  update?: () => void
 }
 
 export interface PointerCaptureTarget {
@@ -267,6 +271,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
     const rootState = store.getState()
+
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const localState = { stopped: false }
@@ -406,9 +411,16 @@ export function createEvents(store: UseBoundStore<RootState>) {
           const { internal } = store.getState()
           if ('pointerId' in event && internal.capturedMap.has(event.pointerId)) {
             // If the object event interface had onLostPointerCapture, we'd call it here on every
-            // object that's getting removed.
-            internal.capturedMap.delete(event.pointerId)
-            cancelPointer([])
+            // object that's getting removed. We call it on the next frame because onLostPointerCapture
+            // fires before onPointerUp. Otherwise pointerUp would never be called if the event didn't
+            // happen in the object it originated from, leaving components in a in-between state.
+            requestAnimationFrame(() => {
+              // Only release if pointer-up didn't do it already
+              if (internal.capturedMap.has(event.pointerId)) {
+                internal.capturedMap.delete(event.pointerId)
+                cancelPointer([])
+              }
+            })
           }
         }
     }
@@ -424,7 +436,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       const isPointerMove = name === 'onPointerMove'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
-      // const hits = patchIntersects(intersect(filter), event)
+
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
@@ -449,8 +461,24 @@ export function createEvents(store: UseBoundStore<RootState>) {
         const eventObject = data.eventObject
         const instance = (eventObject as unknown as Instance).__r3f
         const handlers = instance?.handlers
+
         // Check presence of handlers
         if (!instance?.eventCount) return
+
+        /*
+        MAYBE TODO, DELETE IF NOT: 
+          Check if the object is captured, captured events should not have intersects running in parallel
+          But wouldn't it be better to just replace capturedMap with a single entry?
+          Also, are we OK with straight up making picking up multiple objects impossible?
+          
+        const pointerId = (data as ThreeEvent<PointerEvent>).pointerId        
+        if (pointerId !== undefined) {
+          const capturedMeshSet = internal.capturedMap.get(pointerId)
+          if (capturedMeshSet) {
+            const captured = capturedMeshSet.get(eventObject)
+            if (captured && captured.localState.stopped) return
+          }
+        }*/
 
         if (isPointerMove) {
           // Move event ...

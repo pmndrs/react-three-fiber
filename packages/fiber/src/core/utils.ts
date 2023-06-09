@@ -2,8 +2,25 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
-import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
-import { Dpr, RootState, Size } from './store'
+import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
+import { Dpr, Renderer, RootState, Size } from './store'
+
+/**
+ * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
+ */
+export const hasColorSpace = <
+  T extends Renderer | THREE.Texture | object,
+  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
+>(
+  object: T,
+): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -56,6 +73,7 @@ export class ErrorBoundary extends React.Component<
 }
 
 export const DEFAULT = '__default'
+export const DEFAULTS = new Map()
 
 export type DiffSet = {
   memoized: { [key: string]: any }
@@ -71,7 +89,9 @@ export type ObjectMap = {
 }
 
 export function calculateDpr(dpr: Dpr) {
-  const target = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+  // Err on the side of progress by assuming 2x dpr if we can't detect it
+  // This will happen in workers where window is defined but dpr isn't.
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio ?? 2 : 1
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
@@ -112,11 +132,21 @@ export const is = {
     if ((isArr || isObj) && a === b) return true
     // Last resort, go through keys
     let i
+    // Check if a has all the keys of b
     for (i in a) if (!(i in b)) return false
-    for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    // Check if values between keys match
+    if (isObj && arrays === 'shallow' && objects === 'shallow') {
+      for (i in strict ? b : a) if (!is.equ(a[i], b[i], { strict, objects: 'reference' })) return false
+    } else {
+      for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    }
+    // If i is undefined
     if (is.und(i)) {
+      // If both arrays are empty we consider them equal
       if (isArr && a.length === 0 && b.length === 0) return true
+      // If both objects are empty we consider them equal
       if (isObj && Object.keys(a).length === 0 && Object.keys(b).length === 0) return true
+      // Otherwise match them by value
       if (a !== b) return false
     }
     return true
@@ -262,6 +292,23 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
 
   for (let i = 0; i < changes.length; i++) {
     let [key, value, isEvent, keys] = changes[i]
+
+    // Alias (output)encoding => (output)colorSpace (since r152)
+    // https://github.com/pmndrs/react-three-fiber/pull/2829
+    if (hasColorSpace(instance)) {
+      const sRGBEncoding = 3001
+      const SRGBColorSpace = 'srgb'
+      const LinearSRGBColorSpace = 'srgb-linear'
+
+      if (key === 'encoding') {
+        key = 'colorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      } else if (key === 'outputEncoding') {
+        key = 'outputColorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      }
+    }
+
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -284,11 +331,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (value === DEFAULT + 'remove') {
       if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...(currentInstance.__r3f.memoizedProps.args ?? []))
-        value = defaultClassCall[key]
-        // destroy the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
+        let ctor = DEFAULTS.get(currentInstance.constructor)
+        if (!ctor) {
+          // @ts-ignore
+          ctor = new currentInstance.constructor()
+          DEFAULTS.set(currentInstance.constructor, ctor)
+        }
+        value = ctor[key]
       } else {
         // instance does not have constructor, just set it to 0
         value = 0
@@ -313,7 +362,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        targetProp.constructor === (value as ClassConstructor).constructor
       ) {
         targetProp.copy(value)
       }
@@ -330,16 +379,23 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = 'ColorManagement' in THREE
-        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!getColorManagement() && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
       currentInstance[key] = value
+
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
-        currentInstance[key].encoding = THREE.sRGBEncoding
+      if (
+        currentInstance[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        currentInstance[key].format === THREE.RGBAFormat &&
+        currentInstance[key].type === THREE.UnsignedByteType
+      ) {
+        const texture = currentInstance[key] as THREE.Texture
+        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
+        else texture.encoding = rootState.gl.outputEncoding
       }
     }
 
@@ -354,8 +410,10 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.__r3f?.parent) updateInstance(instance)
+  // Call the update lifecycle when it is being updated, but only when it is part of the scene.
+  // Skip updates to the `onUpdate` prop itself
+  const isCircular = changes.length === 1 && changes[0][0] === 'onUpdate'
+  if (!isCircular && changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }
@@ -386,14 +444,4 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
     // Update matrix world since the renderer is a frame late
     camera.updateMatrixWorld()
   }
-}
-
-/**
- * Safely sets a deeply-nested value on an object.
- */
-export function setDeep(obj: any, value: any, keys: string[]) {
-  const key = keys.pop()!
-  const target = keys.reduce((acc, key) => acc[key], obj)
-
-  return (target[key] = value)
 }

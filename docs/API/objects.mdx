@@ -87,13 +87,15 @@ The following attaches a material to the `material` property of a mesh and a geo
 
 ```jsx
 <mesh>
-  <meshBasicMaterial attach="material">
-  <boxGeometry attach="geometry">
+  <meshBasicMaterial attach="material" />
+  <boxGeometry attach="geometry" />
 ```
 
 <Hint>
-  All objects extending THREE.Material receive attach="material", and all objects extending THREE.BufferGeometry receive
-  attach="geometry". You do not have to type it out!
+
+All objects extending `THREE.Material` receive `attach="material"`, and all objects extending `THREE.BufferGeometry` receive
+`attach="geometry"`. You do not have to type it out!
+
 </Hint>
 
 ```jsx

@@ -1,5 +1,120 @@
 # @react-three/fiber
 
+## 8.13.0
+
+### Minor Changes
+
+- ecfc48b7: feat: CanvasProps alias, respect r152 color management
+
+## 8.12.2
+
+### Patch Changes
+
+- c5193468: fix: safeguard window.devicePixelRatio
+
+## 8.12.1
+
+### Patch Changes
+
+- 571f07ac: fix: safeguard window.devicePixelRatio
+
+## 8.12.0
+
+### Minor Changes
+
+- 1928d095: feat: `scene` render prop for custom THREE.Scene
+
+## 8.11.11
+
+### Patch Changes
+
+- f03c6ef8: feat: `scene` render prop for custom THREE.Scene
+
+## 8.11.10
+
+### Patch Changes
+
+- 12907836: fix onpointerlostcapture which fired before pointerup
+
+## 8.11.9
+
+### Patch Changes
+
+- 6b5f572c: fix: treeshake THREE.ColorManagement
+
+## 8.11.8
+
+### Patch Changes
+
+- 350cd3f3: fix(Canvas): inline render-effect
+
+## 8.11.7
+
+### Patch Changes
+
+- 96af62d5: fix: don't overwrite public cameras
+
+## 8.11.6
+
+### Patch Changes
+
+- 7d319c18: Fix is.equ obj:shallow, allow it to test arrays 1 level deep, fix canvas.camera prop being stale
+
+## 8.11.5
+
+### Patch Changes
+
+- c658f763: fix: update canvas prop types
+
+## 8.11.4
+
+### Patch Changes
+
+- 970aa58b: fix: play nice with offscreencanvas
+
+## 8.11.3
+
+### Patch Changes
+
+- 2bce569c: fix: progressively set colormanagement
+
+## 8.11.2
+
+### Patch Changes
+
+- 41d655cd: fix: hmr, srgb encode
+
+## 8.11.1
+
+### Patch Changes
+
+- 58cadeff: fix: skip circular onUpdate calls
+
+## 8.11.0
+
+### Minor Changes
+
+- 2917a47b: events.update, allow raycast w/o user interaction
+- 521bfb07: events.update, allow raycast w/o user interaction
+
+## 8.10.4
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
+## 8.10.3
+
+### Patch Changes
+
+- d06d2879: fix: align useLoader type, public fields from builds
+
+## 8.10.2
+
+### Patch Changes
+
+- 564edbbb: fix port inject layers, it should allow root props to overwrite indefined portal props"
+
 ## 8.10.1
 
 ### Patch Changes

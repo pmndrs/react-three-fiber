@@ -697,6 +697,34 @@ describe('renderer', () => {
     expect(gl.physicallyCorrectLights).toBe(true)
   })
 
+  it('should update scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: { name: 'test' } })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(scene.name).toBe('test')
+  })
+
+  it('should set a custom scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    const prop = new THREE.Scene()
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: prop })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(prop).toBe(scene)
+  })
+
   it('should set a renderer via gl callback', async () => {
     class Renderer extends THREE.WebGLRenderer {}
 
@@ -712,28 +740,52 @@ describe('renderer', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
-    let gl: THREE.WebGLRenderer = null!
-    await act(async () => {
-      gl = root
-        .configure({ gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping } })
-        .render(<group />)
-        .getState().gl
-    })
+    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
+    let key = 0
+    function Test() {
+      return <meshBasicMaterial key={key++} map={texture} />
+    }
 
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
-    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    const LinearEncoding = 3000
+    const sRGBEncoding = 3001
 
-    await act(async () => {
-      gl = root
-        .configure({ flat: true, linear: true })
-        .render(<group />)
-        .getState().gl
-    })
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
+    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
+    await act(async () => (gl = root.render(<Test />).getState().gl))
+    expect(gl.outputEncoding).toBe(sRGBEncoding)
+    expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(texture.encoding).toBe(sRGBEncoding)
+
+    await act(async () => root.configure({ linear: true, flat: true }).render(<Test />))
+    expect(gl.outputEncoding).toBe(LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    expect(texture.encoding).toBe(LinearEncoding)
+
+    // Sets outputColorSpace since r152
+    const SRGBColorSpace = 'srgb'
+    const LinearSRGBColorSpace = 'srgb-linear'
+
+    gl.outputColorSpace ??= ''
+    texture.colorSpace ??= ''
+
+    await act(async () => root.configure({ linear: true }).render(<Test />))
+    expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
+    expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
+
+    await act(async () => root.configure({ linear: false }).render(<Test />))
+    expect(gl.outputColorSpace).toBe(SRGBColorSpace)
+    expect(texture.colorSpace).toBe(SRGBColorSpace)
   })
 
   it('should respect legacy prop', async () => {
+    // <= r138 internal fallback
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    extend({ ColorManagement: null })
+    await act(async () => root.render(<meshBasicMaterial ref={material} color="#111111" />))
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+    expect(material.current!.color.toArray()).toStrictEqual(new THREE.Color('#111111').convertSRGBToLinear().toArray())
+    extend({ ColorManagement: (THREE as any).ColorManagement })
+
+    // r139 legacyMode
     await act(async () => {
       root.configure({ legacy: true }).render(<group />)
     })
@@ -743,6 +795,19 @@ describe('renderer', () => {
       root.configure({ legacy: false }).render(<group />)
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+
+    // r150 !enabled
+    ;(THREE as any).ColorManagement.enabled = true
+
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
+
+    await act(async () => {
+      root.configure({ legacy: false }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
   })
 
   it('can handle createPortal', async () => {
@@ -848,5 +913,36 @@ describe('renderer', () => {
     await act(async () => root.render(<Test />))
 
     expect(ref.current!.scale.toArray()).toStrictEqual(new THREE.Object3D().scale.toArray())
+  })
+
+  it("onUpdate shouldn't update itself", async () => {
+    const one = jest.fn()
+    const two = jest.fn()
+
+    const Test = (props: Partial<JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
+    await act(async () => root.render(<Test onUpdate={one} />))
+    await act(async () => root.render(<Test onUpdate={two} />))
+
+    expect(one).toBeCalledTimes(1)
+    expect(two).toBeCalledTimes(0)
+  })
+
+  it("camera props shouldn't overwrite state", async () => {
+    const camera = new THREE.OrthographicCamera()
+
+    function Test() {
+      const set = useThree((state) => state.set)
+      React.useMemo(() => set({ camera }), [set])
+      return null
+    }
+
+    const store = await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+
+    root.configure({ camera: { name: 'test' } })
+
+    await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+    expect(camera.name).not.toBe('test')
   })
 })

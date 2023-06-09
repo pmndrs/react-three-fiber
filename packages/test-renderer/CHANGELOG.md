@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.1.2
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
 ## 8.1.1
 
 ### Patch Changes

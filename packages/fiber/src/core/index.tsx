@@ -16,7 +16,7 @@ import {
   PrivateKeys,
   privateKeys,
 } from './store'
-import { createRenderer, extend, Root } from './renderer'
+import { createRenderer, extend, prepare, Root } from './renderer'
 import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
@@ -28,24 +28,26 @@ import {
   useIsomorphicLayoutEffect,
   Camera,
   updateCamera,
-  setDeep,
+  getColorManagement,
+  hasColorSpace,
 } from './utils'
 import { useStore } from './hooks'
-import { OffscreenCanvas } from 'three'
 import type { Properties } from '../three-types'
 
-const roots = new Map<Element, Root>()
+type Canvas = HTMLCanvasElement | OffscreenCanvas
+
+const roots = new Map<Canvas, Root>()
 const { invalidate, advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement) => Renderer)
+  | ((canvas: Canvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
   | undefined
 
-export type RenderProps<TCanvas extends Element> = {
+export type RenderProps<TCanvas extends Canvas> = {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -61,7 +63,7 @@ export type RenderProps<TCanvas extends Element> = {
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
    */
   legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
+  /** Switch off automatic sRGB color space and gamma correction */
   linear?: boolean
   /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
   flat?: boolean
@@ -81,6 +83,8 @@ export type RenderProps<TCanvas extends Element> = {
   dpr?: Dpr
   /** Props that go into the default raycaster */
   raycaster?: Partial<THREE.Raycaster>
+  /** A `THREE.Scene` instance or props that go into the default scene */
+  scene?: THREE.Scene | Partial<ReactThreeFiber.Object3DNode<THREE.Scene, typeof THREE.Scene>>
   /** A `THREE.Camera` instance or props that go into the default camera */
   camera?: (
     | Camera
@@ -101,10 +105,8 @@ export type RenderProps<TCanvas extends Element> = {
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: TElement): THREE.WebGLRenderer => {
-  const customRenderer = (
-    typeof gl === 'function' ? gl(canvas as unknown as HTMLCanvasElement) : gl
-  ) as THREE.WebGLRenderer
+const createRendererInstance = <TCanvas extends Canvas>(gl: GLProps, canvas: TCanvas): THREE.WebGLRenderer => {
+  const customRenderer = (typeof gl === 'function' ? gl(canvas as unknown as Canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
   else
     return new THREE.WebGLRenderer({
@@ -116,31 +118,31 @@ const createRendererInstance = <TElement extends Element>(gl: GLProps, canvas: T
     })
 }
 
-export type ReconcilerRoot<TCanvas extends Element> = {
+export type ReconcilerRoot<TCanvas extends Canvas> = {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => UseBoundStore<RootState>
   unmount: () => void
 }
 
-function isCanvas(maybeCanvas: unknown): maybeCanvas is HTMLCanvasElement {
-  return maybeCanvas instanceof HTMLCanvasElement
-}
+function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
+  if (defaultSize) return defaultSize
 
-function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, defaultSize?: Size): Size {
-  if (defaultSize) {
-    return defaultSize
-  }
-
-  if (isCanvas(canvas) && canvas.parentElement) {
+  if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-
     return { width, height, top, left }
+  } else if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
+    return {
+      width: canvas.width,
+      height: canvas.height,
+      top: 0,
+      left: 0,
+    }
   }
 
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -169,12 +171,14 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
   let configured = false
+  let lastCamera: RenderProps<TCanvas>['camera']
 
   return {
     configure(props: RenderProps<TCanvas> = {}) {
       let {
         gl: glConfig,
         size: propsSize,
+        scene: sceneOptions,
         events,
         onCreated: onCreatedCallback,
         shadows = false,
@@ -206,8 +210,9 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster as any, { params: { ...raycaster.params, ...params } })
 
-      // Create default camera (one time only!)
-      if (!state.camera) {
+      // Create default camera, don't overwrite any user-set state
+      if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
+        lastCamera = cameraOptions
         const isCamera = cameraOptions instanceof THREE.Camera
         const camera = isCamera
           ? (cameraOptions as Camera)
@@ -218,9 +223,23 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
           camera.position.z = 5
           if (cameraOptions) applyProps(camera as any, cameraOptions as any)
           // Always look at center by default
-          if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
+          if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+      }
+
+      // Set up scene (one time only!)
+      if (!state.scene) {
+        let scene: THREE.Scene
+
+        if (sceneOptions instanceof THREE.Scene) {
+          scene = sceneOptions
+        } else {
+          scene = new THREE.Scene()
+          if (sceneOptions) applyProps(scene as any, sceneOptions as any)
+        }
+
+        state.set({ scene: prepare(scene) })
       }
 
       // Set up XR (one time only!)
@@ -285,13 +304,22 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
 
       // Safely set color management if available.
       // Avoid accessing THREE.ColorManagement to play nice with older versions
-      if ('ColorManagement' in THREE) {
-        setDeep(THREE, legacy, ['ColorManagement', 'legacyMode'])
+      const ColorManagement = getColorManagement()
+      if (ColorManagement) {
+        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
+        else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
-      const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
-      const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-      if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
-      if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
+
+      // Set color space and tonemapping preferences
+      const LinearEncoding = 3000
+      const sRGBEncoding = 3001
+      applyProps(
+        gl as any,
+        {
+          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+        } as Partial<Properties<THREE.WebGLRenderer>>,
+      )
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
@@ -303,13 +331,13 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
         applyProps(gl as any, glConfig as any)
       // Store events internally
       if (events && !state.events.handlers) state.set({ events: events(store) })
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {
         state.setSize(size.width, size.height, size.updateStyle, size.top, size.left)
       }
+      // Check pixelratio
+      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -342,7 +370,7 @@ function createRoot<TCanvas extends Element>(canvas: TCanvas): ReconcilerRoot<TC
   }
 }
 
-function render<TCanvas extends Element>(
+function render<TCanvas extends Canvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
@@ -353,7 +381,7 @@ function render<TCanvas extends Element>(
   return root.render(children)
 }
 
-function Provider<TElement extends Element>({
+function Provider<TCanvas extends Canvas>({
   store,
   children,
   onCreated,
@@ -362,8 +390,7 @@ function Provider<TElement extends Element>({
   onCreated?: (state: RootState) => void
   store: UseBoundStore<RootState>
   children: React.ReactNode
-  rootElement: TElement
-  parent?: React.MutableRefObject<TElement | undefined>
+  rootElement: TCanvas
 }) {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
@@ -379,7 +406,7 @@ function Provider<TElement extends Element>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-function unmountComponentAtNode<TElement extends Element>(canvas: TElement, callback?: (canvas: TElement) => void) {
+function unmountComponentAtNode<TCanvas extends Canvas>(canvas: TCanvas, callback?: (canvas: TCanvas) => void) {
   const root = roots.get(canvas)
   const fiber = root?.fiber
   if (fiber) {
@@ -452,7 +479,9 @@ function Portal({
           // Some props should be off-limits
           privateKeys.includes(key as PrivateKeys) ||
           // Otherwise filter out the props that are different and let the inject layer take precedence
-          rootState[key as keyof RootState] !== injectState[key as keyof RootState]
+          // Unless the inject layer props is undefined, then we keep the root layer
+          (rootState[key as keyof RootState] !== injectState[key as keyof RootState] &&
+            injectState[key as keyof RootState])
         ) {
           delete intersect[key as keyof RootState]
         }

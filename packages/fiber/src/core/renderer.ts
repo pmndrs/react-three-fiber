@@ -81,8 +81,8 @@ interface Catalogue {
   }
 }
 
-let catalogue: Catalogue = {}
-let extend = (objects: object): void => void (catalogue = { ...catalogue, ...objects })
+export const catalogue: Catalogue = {}
+const extend = (objects: object): void => void Object.assign(catalogue, objects)
 
 function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?: () => any) {
   function createInstance(

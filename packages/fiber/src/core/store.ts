@@ -32,7 +32,14 @@ export type Subscription = {
 }
 
 export type Dpr = number | [min: number, max: number]
-export type Size = { width: number; height: number; top: number; left: number; updateStyle?: boolean }
+export type Size = {
+  width: number
+  height: number
+  top: number
+  left: number
+  /** @deprecated `updateStyle` is now disabled for OffscreenCanvas and will be removed in v9. */
+  updateStyle?: boolean
+}
 export type Viewport = Size & {
   /** The initial pixel ratio */
   initialDpr: number
@@ -107,9 +114,9 @@ export type RootState = {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement.legacyMode */
+  /* Whether to enable r139's THREE.ColorManagement */
   legacy: boolean
-  /** Shortcut to gl.outputEncoding = LinearEncoding */
+  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
@@ -135,10 +142,15 @@ export type RootState = {
   setEvents: (events: Partial<EventManager<any>>) => void
   /**
    * Shortcut to manual sizing
-   *
-   * @todo before releasing next major version (v9), re-order arguments here to width, height, top, left, updateStyle
    */
-  setSize: (width: number, height: number, updateStyle?: boolean, top?: number, left?: number) => void
+  setSize: (
+    width: number,
+    height: number,
+    /** @deprecated `updateStyle` is now disabled for OffscreenCanvas and will be removed in v9. */
+    updateStyle?: boolean,
+    top?: number,
+    left?: number,
+  ) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to frameloop flags */
@@ -197,6 +209,7 @@ const createStore = (
       raycaster: null as unknown as THREE.Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       xr: null as unknown as { connect: () => void; disconnect: () => void },
+      scene: null as unknown as THREE.Scene,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
@@ -204,7 +217,6 @@ const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: prepare<THREE.Scene>(new THREE.Scene()),
 
       controls: null,
       clock: new THREE.Clock(),
@@ -333,7 +345,10 @@ const createStore = (
       // Update camera & renderer
       updateCamera(camera, size)
       gl.setPixelRatio(viewport.dpr)
-      gl.setSize(size.width, size.height, size.updateStyle)
+
+      const updateStyle =
+        size.updateStyle ?? (typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement)
+      gl.setSize(size.width, size.height, updateStyle)
     }
 
     // Update viewport once the camera changes
