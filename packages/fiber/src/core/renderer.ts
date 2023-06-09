@@ -222,13 +222,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       }
 
       // Remove references
-      if (child.__r3f) {
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).root
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).objects
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).handlers
-        delete ((child as Partial<Instance>).__r3f as Partial<LocalState>).memoizedProps
-        if (!isPrimitive) delete (child as Partial<Instance>).__r3f
-      }
+      delete (child as Partial<Instance>).__r3f
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
