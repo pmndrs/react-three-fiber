@@ -430,7 +430,6 @@ export type InjectState = Partial<
       compute?: ComputeFunction
       connected?: any
     }
-    size?: Size
   }
 >
 
