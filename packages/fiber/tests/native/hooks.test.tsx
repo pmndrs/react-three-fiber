@@ -2,7 +2,6 @@ import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
 import { asyncUtils } from '../../../shared/asyncUtils'
 
@@ -21,28 +20,7 @@ describe('useLoader', () => {
   let canvas: HTMLCanvasElement = null!
 
   beforeEach(() => {
-    canvas = createCanvas({
-      beforeReturn: (canvas) => {
-        function getContext(
-          contextId: '2d',
-          options?: CanvasRenderingContext2DSettings,
-        ): CanvasRenderingContext2D | null
-        function getContext(
-          contextId: 'bitmaprenderer',
-          options?: ImageBitmapRenderingContextSettings,
-        ): ImageBitmapRenderingContext | null
-        function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
-        function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
-        function getContext(contextId: string): RenderingContext | null {
-          if (contextId === 'webgl' || contextId === 'webgl2') {
-            return createWebGLContext(canvas)
-          }
-          return null
-        }
-
-        canvas.getContext = getContext
-      },
-    })
+    canvas = createCanvas()
 
     // Emulate GLTFLoader
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
