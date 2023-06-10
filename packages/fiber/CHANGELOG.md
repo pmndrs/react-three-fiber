@@ -1,5 +1,71 @@
 # @react-three/fiber
 
+## 8.13.1
+
+### Patch Changes
+
+- c9fe03ba: fix: primitive swap and reactive portals
+
+## 8.13.0
+
+### Minor Changes
+
+- ecfc48b7: feat: CanvasProps alias, respect r152 color management
+
+## 8.12.2
+
+### Patch Changes
+
+- c5193468: fix: safeguard window.devicePixelRatio
+
+## 8.12.1
+
+### Patch Changes
+
+- 571f07ac: fix: safeguard window.devicePixelRatio
+
+## 8.12.0
+
+### Minor Changes
+
+- 1928d095: feat: `scene` render prop for custom THREE.Scene
+
+## 8.11.11
+
+### Patch Changes
+
+- f03c6ef8: feat: `scene` render prop for custom THREE.Scene
+
+## 8.11.10
+
+### Patch Changes
+
+- 12907836: fix onpointerlostcapture which fired before pointerup
+
+## 8.11.9
+
+### Patch Changes
+
+- 6b5f572c: fix: treeshake THREE.ColorManagement
+
+## 8.11.8
+
+### Patch Changes
+
+- 350cd3f3: fix(Canvas): inline render-effect
+
+## 8.11.7
+
+### Patch Changes
+
+- 96af62d5: fix: don't overwrite public cameras
+
+## 8.11.6
+
+### Patch Changes
+
+- 7d319c18: Fix is.equ obj:shallow, allow it to test arrays 1 level deep, fix canvas.camera prop being stale
+
 ## 8.11.5
 
 ### Patch Changes

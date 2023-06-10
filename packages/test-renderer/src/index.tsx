@@ -7,40 +7,16 @@ import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
 
 import { createCanvas } from './createTestCanvas'
-import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
 
 import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
 // Extend catalogue for render API in tests.
-extend(THREE as any)
+extend(THREE)
 
-type X =
-  | ((contextId: 'webgl', options?: WebGLContextAttributes) => WebGLRenderingContext | null)
-  | ((contextId: 'webgl2', options?: WebGLContextAttributes) => WebGL2RenderingContext | null)
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
-  const canvas = createCanvas({
-    width: options?.width,
-    height: options?.height,
-    beforeReturn: (canvas) => {
-      function getContext(contextId: '2d', options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D | null
-      function getContext(
-        contextId: 'bitmaprenderer',
-        options?: ImageBitmapRenderingContextSettings,
-      ): ImageBitmapRenderingContext | null
-      function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
-      function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
-      function getContext(contextId: string): RenderingContext | null {
-        if (contextId === 'webgl' || contextId === 'webgl2') {
-          return createWebGLContext(canvas)
-        }
-        return null
-      }
-
-      canvas.getContext = getContext
-    },
-  })
+  const canvas = createCanvas(options)
 
   const _root = createRoot(canvas).configure({ frameloop: 'never', ...options, events: undefined })
   const _store = mockRoots.get(canvas)!.store
@@ -105,3 +81,4 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
 export * as ReactThreeTest from './types'
 export default { create, act }
+export { create, act }

@@ -1,0 +1,123 @@
+{
+  "extensionsUsed": ["KHR_materials_unlit", "KHR_draco_mesh_compression"],
+  "asset": { "generator": "UniGLTF-1.27", "version": "2.0" },
+  "buffers": [
+    {
+      "name": "buffer",
+      "byteLength": 1004,
+      "uri": "data:application/octet-stream;base64,RFJBQ08CAgEBAAAAJDQCMwMCGQ8ZCwMQ79auW9NWVfEva0vXddGiAIACAHFkC4gpS5BuMmCDL1WAZAuIKUuQbjJggy9VgAP/AAEAAQABAQABAAkDAAACAQEJAwABAwEDCQIAAgIEAQEADAPJARPlCFUVHQeRE1UFDCNY15ilc8hSzX+8Xw48sQv+QBEc5E7EKhDg+xP/AYACUHwHAPgEAPgHADgKABwFAb5B8R8AngAOQQEoqgCQFRQAQBAAHFIAAPALsHPUBgQCYCUAELwBwMUCAIAbAAAAgDNtALBYAF1+ucTMJ4DFJwBGEgEAABcBNBEFAKgBwG0AAA63BNHgA4EaWQWKsQfEQgarA7/KggRAA0CIgAAAAAD/BwAA5dK4vQAAAADnD6C9uDkFPwsGAwEBBP8B4Sy5Cf///+9pCSHsJJGNFX1HBAI97/XOnNfjTSqhdGtLEH5V8IWKRsmHS4D/AAAAfwAAAP8CGEgIBQEBAAsDKQi9GUEBC+EBJQM5F6Ac4zcnvBmY1hE3kfWoH7ZVdyCtMA/1+1Uf6eVPgI6JnaMhYg6H8Bqi8K6h6DuH8BoiKQHAa4jCu4aigP+j6Ugk6pKmi9QCSJoOUQsgabpILYCk6SI8mo6oGXjhOhIYrl/ArpjyukrsIqSzxy6qdSXxYSOKe5EduyBeiJgSOyIRQErsiEQAKbGDDOB67CJK6nb0IiIUQEcvqnj0ggA0AAAAAQKCQwAAAAD/AwAAXsAvwPpQmcGLV7RBCgBEUkFDTwICAQEAAAAeKAIoAQEnCwEMX7tu7fK1bakWVS0t/wEiiAnoNmQvEM0Sa4CICeg2ZC8QzRJrgAP/AAEAAQABAQABAAkDAAACAQEJAwABAwEDCQIAAgIEAQEADAOJCA/NDEUEAzUTaQbNDAuvfqTVRnKEpXCJbjoGgLSQIGoADCfUlBoBPisAnj0CAJ8B8CwSQg0A4oQaACTQawXgAwkApGPUlgEAADxtAdgJ4DGAtQAA3AKwE7gA8LT1mCfwANgJ3AHAswPqHwA6wP4BAAqzA5uFTBxlBg5hgZ55gAAAAAAAAP8HAAAA1aq9mwUaPuPxk72E69E+CwYDAQEEAkE4wQcL0OIw5NWXSnUq+5b/AAAAfwAAAP8C3UQIBQEBAAsDhQ9VFekCA/gD+K0K8QG1CRbt1EYh/80XV9wKBm+OKvgrGjszv/+VFP3JQJIgRUpOlCQ6kZIUJYlyEABFSaIwUZLoREpSlCTKENIA2oD44ICKAmDin6IAoKIAkAioKAAm/ikKACoKvvkVEIguxiIrJgAAAAECf0IAAAAA/wMAAF0t0r/6gajBJXy6QQo="
+    }
+  ],
+  "bufferViews": [
+    { "buffer": 0, "byteOffset": 0, "byteLength": 571 },
+    { "buffer": 0, "byteOffset": 572, "byteLength": 432 }
+  ],
+  "accessors": [
+    { "type": "SCALAR", "componentType": 5125, "count": 156, "min": [0], "max": [101] },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 102,
+      "max": [0.09051262757649467, 0.5206661997740596, 0.07845129908718129],
+      "min": [-0.09050023093870575, -0.00025423154285842753, -0.07840956285646851]
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 102,
+      "min": [-0.8701851585332085, -1.0078100779477288, -1.0035950162831475],
+      "max": [0.8714622238103082, 0.38238379674799305, 1.0035950162831475]
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 102,
+      "min": [-2.768152080789456, -19.186575256601223],
+      "max": [2.762863699408687, 3.400242172494778]
+    },
+    { "type": "SCALAR", "componentType": 5125, "count": 120, "min": [0], "max": [65] },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 66,
+      "max": [0.0836303700134704, 0.5606122827917177, 0.07237291420137934],
+      "min": [-0.0836143708616335, 0.15021171506346873, -0.07243899915514775]
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 66,
+      "min": [-0.8738685851003609, -1.007843137254902, -1.007843137254902],
+      "max": [0.8751510227427763, 1.007843137254902, 1.007843137254902]
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 66,
+      "min": [-1.6647959047981256, -21.086251645726776],
+      "max": [1.6620370837134235, 2.2699388558097837]
+    }
+  ],
+  "materials": [
+    {
+      "name": "brownDark",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.6392157, 0.3882353, 0.2784314, 1],
+        "metallicFactor": 1,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "OPAQUE",
+      "emissiveFactor": [0, 0, 0]
+    },
+    {
+      "name": "red",
+      "pbrMetallicRoughness": {
+        "baseColorFactor": [0.9098039, 0.333333343, 0.3254902, 1],
+        "metallicFactor": 1,
+        "roughnessFactor": 1
+      },
+      "doubleSided": false,
+      "alphaMode": "OPAQUE",
+      "emissiveFactor": [0, 0, 0]
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Mesh sodaBottle",
+      "primitives": [
+        {
+          "mode": 4,
+          "indices": 0,
+          "attributes": { "POSITION": 1, "NORMAL": 2, "TEXCOORD_0": 3 },
+          "material": 0,
+          "extensions": {
+            "KHR_draco_mesh_compression": {
+              "bufferView": 0,
+              "attributes": { "POSITION": 0, "NORMAL": 1, "TEXCOORD_0": 2 }
+            }
+          }
+        },
+        {
+          "mode": 4,
+          "indices": 4,
+          "attributes": { "POSITION": 5, "NORMAL": 6, "TEXCOORD_0": 7 },
+          "material": 1,
+          "extensions": {
+            "KHR_draco_mesh_compression": {
+              "bufferView": 1,
+              "attributes": { "POSITION": 0, "NORMAL": 1, "TEXCOORD_0": 2 }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    { "children": [1], "name": "tmpParent", "translation": [0, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1] },
+    { "name": "sodaBottle", "translation": [0, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1], "mesh": 0 }
+  ],
+  "scenes": [{ "nodes": [1] }],
+  "scene": 0,
+  "extensionsRequired": ["KHR_draco_mesh_compression"]
+}

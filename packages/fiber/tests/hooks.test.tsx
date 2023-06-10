@@ -1,6 +1,8 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
+import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
+
 import {
   createRoot,
   advance,
@@ -17,6 +19,12 @@ import {
 const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {
+  let canvas: HTMLCanvasElement = null!
+
+  beforeEach(() => {
+    canvas = createCanvas()
+  })
+
   it('can handle useThree hook', async () => {
     let result = {} as {
       camera: THREE.Camera

@@ -167,7 +167,7 @@ function B() {
 
 ## useLoader
 
-This hook loads assets and suspends for easier fallback- and error-handling. It can take any three.js loader as its first argument: GLTFLoader, OBJLoader, TextureLoader, FontLoader, etc. It is based on [React.Suspense](https://reactjs.org/docs/concurrent-mode-suspense.html), so fallback-handling and [error-handling](https://reactjs.org/docs/error-boundaries.html) happen at the parental level.
+This hook loads assets and suspends for easier fallback- and error-handling. It can take any three.js loader as its first argument: GLTFLoader, OBJLoader, TextureLoader, FontLoader, etc. It is based on [React.Suspense](https://react.dev/reference/react/Suspense), so fallback-handling and [error-handling](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary) happen at the parental level.
 
 ```jsx
 import { Suspense } from 'react'

@@ -7,9 +7,9 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@react-spring/core": "^9.4.4",
-    "@react-spring/three": "^9.4.4",
-    "@react-three/drei": "^9.21.0",
+    "@react-spring/core": "^9.6.1",
+    "@react-spring/three": "^9.6.1",
+    "@react-three/drei": "^9.74.7",
     "@use-gesture/react": "latest",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

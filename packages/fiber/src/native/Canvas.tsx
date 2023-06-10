@@ -14,7 +14,13 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
   style?: ViewStyle
 }
 
-const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, CanvasProps>(
+export interface Props extends CanvasProps {}
+
+/**
+ * A native canvas which accepts threejs elements as children.
+ * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
+ */
+const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
   (
     {
       children,

@@ -11,7 +11,7 @@ This tutorial will assume some React knowledge.
 We'll start by importing the `<Canvas />` component from `@react-three/fiber` and putting it in our React tree.
 
 ```jsx
-import ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { Canvas } from '@react-three/fiber'
 
 function App() {
@@ -22,7 +22,7 @@ function App() {
   )
 }
 
-ReactDOM.render(<App />, document.getElementById('root'))
+createRoot(document.getElementById('root')).render(<App />)
 ```
 
 The Canvas component does some important setup work behind the scenes:
