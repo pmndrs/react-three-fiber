@@ -8,7 +8,6 @@ import { toGraph } from './helpers/graph'
 import { is } from './helpers/is'
 
 import { createCanvas } from './createTestCanvas'
-import { createWebGLContext } from './createWebGLContext'
 import { createEventFirer } from './fireEvent'
 
 import type { MockScene } from './types/internal'
@@ -18,33 +17,10 @@ import { wrapFiber } from './createTestInstance'
 // Extend catalogue for render API in tests.
 extend(THREE)
 
-const act = _act as unknown as Act
+export const act = _act as unknown as Act
 
-type X =
-  | ((contextId: 'webgl', options?: WebGLContextAttributes) => WebGLRenderingContext | null)
-  | ((contextId: 'webgl2', options?: WebGLContextAttributes) => WebGL2RenderingContext | null)
-const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
-  const canvas = createCanvas({
-    width: options?.width,
-    height: options?.height,
-    beforeReturn: (canvas) => {
-      function getContext(contextId: '2d', options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D | null
-      function getContext(
-        contextId: 'bitmaprenderer',
-        options?: ImageBitmapRenderingContextSettings,
-      ): ImageBitmapRenderingContext | null
-      function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
-      function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
-      function getContext(contextId: string): RenderingContext | null {
-        if (contextId === 'webgl' || contextId === 'webgl2') {
-          return createWebGLContext(canvas)
-        }
-        return null
-      }
-
-      canvas.getContext = getContext
-    },
-  })
+export const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
+  const canvas = createCanvas(options)
 
   const _root = createRoot(canvas).configure({ frameloop: 'never', ...options, events: undefined })
   const _store = mockRoots.get(canvas)!.store

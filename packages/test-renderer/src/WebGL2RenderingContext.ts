@@ -2,9 +2,14 @@ const functions = [
   'attachShader',
   'bindAttribLocation',
   'bindBuffer',
+  'bindBufferBase',
   'bindFramebuffer',
   'bindRenderbuffer',
+  'bindSampler',
   'bindTexture',
+  'bindTransformFeedback',
+  'bindVertexArray',
+  'beginTransformFeedback',
   'blendColor',
   'blendEquation',
   'blendEquationSeparate',
@@ -27,8 +32,11 @@ const functions = [
   'createFramebuffer',
   'createProgram',
   'createRenderbuffer',
+  'createSampler',
   'createShader',
   'createTexture',
+  'createTransformFeedback',
+  'createVertexArray',
   'cullFace',
   'deleteBuffer',
   'deleteFramebuffer',
@@ -36,6 +44,7 @@ const functions = [
   'deleteRenderbuffer',
   'deleteShader',
   'deleteTexture',
+  'deleteVertexArray',
   'depthFunc',
   'depthMask',
   'depthRange',
@@ -43,9 +52,12 @@ const functions = [
   'disable',
   'disableVertexAttribArray',
   'drawArrays',
+  'drawArraysInstanced',
   'drawElements',
+  'drawElementsInstanced',
   'enable',
   'enableVertexAttribArray',
+  'endTransformFeedback',
   'finish',
   'flush',
   'framebufferRenderbuffer',
@@ -100,6 +112,9 @@ const functions = [
   'texParameteri',
   'texImage2D',
   'texSubImage2D',
+  'texImage3D',
+  'texSubImage3D',
+  'transformFeedbackVaryings',
   'uniform1f',
   'uniform1fv',
   'uniform1i',
@@ -130,6 +145,7 @@ const functions = [
   'vertexAttrib4f',
   'vertexAttrib4fv',
   'vertexAttribPointer',
+  'vertexAttribIPointer',
   'viewport',
 ]
 
@@ -468,7 +484,7 @@ const extensions: { [key: string]: any } = {
   WEBGL_compressed_texture_etc1: null,
 }
 
-class WebGLRenderingContext {
+export class WebGL2RenderingContext {
   [key: string]: any
 
   constructor(canvas: HTMLCanvasElement) {
@@ -500,7 +516,7 @@ class WebGLRenderingContext {
   getParameter = (paramId: number) => {
     switch (paramId) {
       case this.GL_VERSION:
-        return ['WebGL1']
+        return ['WebGL2']
       case this.SCISSOR_BOX:
       case this.VIEWPORT:
         return [0, 0, 1, 1]
@@ -515,6 +531,3 @@ class WebGLRenderingContext {
 
   getShaderInfoLog = () => ''
 }
-
-export const createWebGLContext = (canvas: HTMLCanvasElement) =>
-  new WebGLRenderingContext(canvas) as unknown as RenderingContext
