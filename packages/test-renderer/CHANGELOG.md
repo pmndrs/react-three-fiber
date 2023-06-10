@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.1.3
+
+### Patch Changes
+
+- 2b0be267: fix: support WebGL2
+
 ## 8.1.2
 
 ### Patch Changes
