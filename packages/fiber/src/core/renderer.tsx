@@ -13,8 +13,6 @@ import {
   Size,
   Dpr,
   Performance,
-  PrivateKeys,
-  privateKeys,
   Subscription,
   Frameloop,
   RootStore,
@@ -31,8 +29,9 @@ import {
   Camera,
   updateCamera,
   applyProps,
-  ColorManagement,
   prepare,
+  useMutableCallback,
+  getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
@@ -217,6 +216,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
   let configured = false
+  let lastCamera: RenderProps<TCanvas>['camera']
 
   return {
     configure(props: RenderProps<TCanvas> = {}): ReconcilerRoot<TCanvas> {
@@ -256,8 +256,9 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
 
-      // Create default camera (one time only!)
-      if (!state.camera) {
+      // Create default camera, don't overwrite any user-set state
+      if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
+        lastCamera = cameraOptions
         const isCamera = cameraOptions instanceof THREE.Camera
         const camera = isCamera
           ? (cameraOptions as Camera)
@@ -268,7 +269,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
           camera.position.z = 5
           if (cameraOptions) applyProps(camera, cameraOptions as any)
           // Always look at center by default
-          if (!cameraOptions?.rotation) camera.lookAt(0, 0, 0)
+          if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
       }
@@ -349,15 +350,24 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
         if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
       }
 
-      // Set color management
+      // Safely set color management if available.
+      // Avoid accessing THREE.ColorManagement to play nice with older versions
+      const ColorManagement = getColorManagement()
       if (ColorManagement) {
         if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
-      const outputEncoding = linear ? THREE.LinearEncoding : THREE.sRGBEncoding
-      const toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-      if (gl.outputEncoding !== outputEncoding) gl.outputEncoding = outputEncoding
-      if (gl.toneMapping !== toneMapping) gl.toneMapping = toneMapping
+
+      // Set color space and tonemapping preferences
+      const LinearEncoding = 3000
+      const sRGBEncoding = 3001
+      applyProps(
+        gl as any,
+        {
+          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+        } as Partial<Properties<THREE.WebGLRenderer>>,
+      )
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
@@ -479,19 +489,18 @@ export function unmountComponentAtNode<TCanvas extends Canvas>(
 }
 
 export type InjectState = Partial<
-  Omit<RootState, PrivateKeys> & {
+  Omit<RootState, 'events'> & {
     events?: {
       enabled?: boolean
       priority?: number
       compute?: ComputeFunction
       connected?: any
     }
-    size?: Size
   }
 >
 
 export function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
-  return <Portal key={container.uuid} children={children} container={container} state={state} />
+  return <Portal children={children} container={container} state={state} />
 }
 
 interface PortalProps {
@@ -506,95 +515,57 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-
+  const { events, size, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = React.useState(() => new THREE.Raycaster())
   const [pointer] = React.useState(() => new THREE.Vector2())
 
-  const inject = React.useCallback(
-    (rootState: RootState, injectState: RootState) => {
-      const intersect: Partial<RootState> = { ...rootState } // all prev state props
+  const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
+    let viewport
+    if (injectState.camera && size) {
+      const camera = injectState.camera
+      // Calculate the override viewport, if present
+      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
+      // Update the portal camera, if it differs from the previous layer
+      if (camera !== rootState.camera) updateCamera(camera, size)
+    }
 
-      // Only the fields of "rootState" that do not differ from injectState
-      // Some props should be off-limits
-      // Otherwise filter out the props that are different and let the inject layer take precedence
-      Object.keys(rootState).forEach((key) => {
-        if (
-          // Some props should be off-limits
-          privateKeys.includes(key as PrivateKeys) ||
-          // Otherwise filter out the props that are different and let the inject layer take precedence
-          // Unless the inject layer props is undefined, then we keep the root layer
-          (rootState[key as keyof RootState] !== injectState[key as keyof RootState] &&
-            injectState[key as keyof RootState])
-        ) {
-          delete intersect[key as keyof RootState]
-        }
-      })
-
-      let viewport = undefined
-      if (injectState && state.size) {
-        const camera = injectState.camera
-        // Calculate the override viewport, if present
-        viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), state.size)
-        // Update the portal camera, if it differs from the previous layer
-        if (camera !== rootState.camera) updateCamera(camera, state.size)
-      }
-
-      return {
-        // The intersect consists of the previous root state
-        ...intersect,
-        // Portals have their own scene, which forms the root, a raycaster and a pointer
-        scene: container as THREE.Scene,
-        raycaster,
-        pointer,
-        mouse: pointer,
-        // Their previous root is the layer before it
-        previousRoot,
-        // Events, size and viewport can be overridden by the inject layer
-        events: { ...rootState.events, ...injectState?.events, ...state.events },
-        size: { ...rootState.size, ...state.size },
-        viewport: { ...rootState.viewport, ...viewport },
-        ...state,
-      } as RootState
-    },
-    [container, pointer, previousRoot, raycaster, state],
-  )
-
-  const [usePortalStore] = React.useState(() => {
-    // Create a mirrored store, based on the previous root with a few overrides ...
-    const previousState = previousRoot.getState()
-    const store = create<RootState>((set, get) => ({
-      ...previousState,
+    return {
+      // The intersect consists of the previous root state
+      ...rootState,
+      get: injectState.get,
+      set: injectState.set,
+      // Portals have their own scene, which forms the root, a raycaster and a pointer
       scene: container as THREE.Scene,
       raycaster,
       pointer,
       mouse: pointer,
+      // Their previous root is the layer before it
       previousRoot,
-      ...state,
-      events: { ...previousState.events, ...state.events },
-      size: { ...previousState.size, ...state.size },
-      // Set and get refer to this root-state
-      set,
-      get,
+      // Events, size and viewport can be overridden by the inject layer
+      events: { ...rootState.events, ...injectState.events, ...events },
+      size: { ...rootState.size, ...size },
+      viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
-        set((state) => ({ ...state, events: { ...state.events, ...events } })),
-    }))
-    return store
+        injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+    } as RootState
   })
 
-  React.useEffect(() => {
-    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
-    const unsub = previousRoot.subscribe((prev) => usePortalStore.setState((state) => inject(prev, state)))
-    return () => {
-      unsub()
-      usePortalStore.destroy()
-    }
-  }, [previousRoot, usePortalStore, inject])
+  const usePortalStore = React.useMemo(() => {
+    const store = create<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 
+    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+    const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
+    onMutate(previousRoot.getState())
+    previousRoot.subscribe(onMutate)
+
+    return store
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previousRoot, container])
   React.useEffect(() => {
-    usePortalStore.setState((injectState) => inject(previousRoot.getState(), injectState))
-  }, [usePortalStore, inject, previousRoot])
+    return () => usePortalStore.destroy()
+  }, [usePortalStore])
 
   return (
     <>

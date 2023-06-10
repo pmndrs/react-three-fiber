@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
+import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
 import { extend } from '@react-three/fiber'
 import 'regenerator-runtime/runtime'
 
@@ -55,22 +55,12 @@ if (!global.PointerEvent) {
   }
 }
 
-// Polyfills WebGL canvas
-function getContext(contextId: '2d', options?: CanvasRenderingContext2DSettings): CanvasRenderingContext2D | null
-function getContext(
-  contextId: 'bitmaprenderer',
-  options?: ImageBitmapRenderingContextSettings,
-): ImageBitmapRenderingContext | null
-function getContext(contextId: 'webgl', options?: WebGLContextAttributes): WebGLRenderingContext | null
-function getContext(contextId: 'webgl2', options?: WebGLContextAttributes): WebGL2RenderingContext | null
-function getContext(contextId: string): RenderingContext | null {
-  if (contextId === 'webgl' || contextId === 'webgl2') {
-    return createWebGLContext(this)
-  }
-  return null
-}
+globalThis.WebGL2RenderingContext = WebGL2RenderingContext as any
+globalThis.WebGLRenderingContext = class WebGLRenderingContext extends WebGL2RenderingContext {} as any
 
-HTMLCanvasElement.prototype.getContext = getContext
+HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
+  return new WebGL2RenderingContext(this) as any
+}
 
 // Extend catalogue for render API in tests
 extend(THREE as any)

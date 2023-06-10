@@ -3,7 +3,6 @@ import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
-  is,
   diffProps,
   applyProps,
   invalidateInstance,
@@ -72,7 +71,7 @@ interface HostConfig {
   noTimeout: -1
 }
 
-const catalogue: Catalogue = {}
+export const catalogue: Catalogue = {}
 export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
@@ -390,8 +389,8 @@ export const reconciler = Reconciler<
   unhideTextInstance: handleTextInstance,
   // SSR fallbacks
   now,
-  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
-  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+  scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
+  cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   // @ts-ignore Deprecated experimental APIs
   // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
   // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874

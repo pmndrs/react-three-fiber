@@ -13,7 +13,7 @@ import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
 
 // Extend catalogue for render API in tests.
-extend(THREE)
+extend(THREE as any)
 
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)

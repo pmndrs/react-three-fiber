@@ -5,6 +5,7 @@ import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2Ren
 export function GLView({ onContextCreate }: GLViewProps) {
   React.useLayoutEffect(() => {
     const gl = new WebGL2RenderingContext({ width: 1280, height: 800 } as HTMLCanvasElement)
+    gl.endFrameEXP = () => {}
     onContextCreate(gl as any)
   }, [])
 

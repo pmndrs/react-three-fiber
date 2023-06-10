@@ -47,6 +47,7 @@ Array [
   "ObjectMap",
   "Overwrite",
   "Performance",
+  "Props",
   "Quaternion",
   "ReactProps",
   "ReactThreeFiber",
