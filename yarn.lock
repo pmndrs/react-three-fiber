@@ -9543,6 +9543,11 @@ suspend-react@^0.0.8:
   resolved "https://registry.yarnpkg.com/suspend-react/-/suspend-react-0.0.8.tgz#b0740c1386b4eb652f17affe4339915ee268bd31"
   integrity sha512-ZC3r8Hu1y0dIThzsGw0RLZplnX9yXwfItcvaIzJc2VQVi8TGyGDlu92syMB5ulybfvGLHAI5Ghzlk23UBPF8xg==
 
+suspend-react@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/suspend-react/-/suspend-react-0.1.0.tgz#570595f315a68d50625387dcca8f502f32f499d8"
+  integrity sha512-J+dYBrK1myX+EpijscT4op5M4C7gMf+k1D38dLz4JivXzVX5T1HqRdAdrMalYVcnf4UWI6GfTMH1uoU3jGLu1g==
+
 symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.yarnpkg.com/symbol-tree/-/symbol-tree-3.2.4.tgz#430637d248ba77e078883951fb9aa0eed7c63fa2"
