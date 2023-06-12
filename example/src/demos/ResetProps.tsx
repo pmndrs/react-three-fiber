@@ -6,19 +6,21 @@ import { OrbitControls } from '@react-three/drei'
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
   const current = useThree((state) => state.performance.current)
-  const initialDpr = useThree((state) => state.viewport.initialDpr)
+  const initialDpr = useRef(1)
+  const dpr = useThree((state) => state.dpr)
+  initialDpr.current ??= dpr
   const setDpr = useThree((state) => state.setDpr)
   // Restore initial pixelratio on unmount
   useEffect(() => {
     const domElement = gl.domElement
     return () => {
-      setDpr(initialDpr)
+      setDpr(initialDpr.current)
       domElement.style.imageRendering = 'auto'
     }
   }, [])
   // Set adaptive pixelratio
   useEffect(() => {
-    setDpr(current * initialDpr)
+    setDpr(current * initialDpr.current)
     gl.domElement.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
   }, [current])
   return null

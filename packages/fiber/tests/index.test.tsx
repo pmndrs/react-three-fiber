@@ -41,7 +41,7 @@ describe('createRoot', () => {
       store = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
 
-    expect(store.getState().viewport.initialDpr).toEqual(window.devicePixelRatio)
+    expect(store.getState().dpr).toEqual(window.devicePixelRatio)
     expect(store.getState().performance.min).toEqual(0.2)
     expect(store.getState().performance.current).toEqual(1)
 
@@ -49,7 +49,7 @@ describe('createRoot', () => {
       store.getState().setDpr(0.1)
     })
 
-    expect(store.getState().viewport.dpr).toEqual(0.1)
+    expect(store.getState().dpr).toEqual(0.1)
 
     jest.useFakeTimers()
 
