@@ -493,16 +493,6 @@ export function updateCamera(camera: Camera, size: Size): void {
 }
 
 /**
- * Get a handle to the supported `now` function for react-internal performance profiling.
- */
-export const now =
-  typeof performance !== 'undefined' && is.fun(performance.now)
-    ? performance.now
-    : is.fun(Date.now)
-    ? Date.now
-    : () => 0
-
-/**
  * Get a handle to the current global scope in window and worker contexts if able
  * https://github.com/pmndrs/react-three-fiber/pull/2493
  */
