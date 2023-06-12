@@ -250,15 +250,15 @@ function switchInstance(
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021
-  ;[fiber, fiber.alternate].forEach((fiber) => {
-    if (fiber !== null) {
-      fiber.stateNode = newInstance
-      if (fiber.ref) {
-        if (typeof fiber.ref === 'function') fiber.ref(newInstance.object)
-        else fiber.ref.current = newInstance.object
+  for (const _fiber of [fiber, fiber.alternate]) {
+    if (_fiber !== null) {
+      _fiber.stateNode = newInstance
+      if (_fiber.ref) {
+        if (typeof _fiber.ref === 'function') _fiber.ref(newInstance.object)
+        else _fiber.ref.current = newInstance.object
       }
     }
-  })
+  }
 
   // Tree was updated, request a frame
   invalidateInstance(newInstance)
