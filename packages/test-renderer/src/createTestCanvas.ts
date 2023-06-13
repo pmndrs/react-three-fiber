@@ -1,10 +1,9 @@
-import { Canvas } from '@react-three/fiber'
 import { WebGL2RenderingContext } from './WebGL2RenderingContext'
 import type { CreateCanvasParameters } from './types/internal'
 
 export const createCanvas = ({ beforeReturn, width = 1280, height = 800 }: CreateCanvasParameters = {}) => {
   const canvas =
-    typeof document !== 'undefined'
+    typeof document !== 'undefined' && typeof document.createElement === 'function'
       ? document.createElement('canvas')
       : ({
           style: {},
