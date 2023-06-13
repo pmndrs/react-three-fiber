@@ -13,7 +13,7 @@ import {
   createPortal,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
-import { RootState } from '../../src/core/store'
+import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
@@ -823,6 +823,11 @@ describe('renderer', () => {
     // Creates an isolated state enclave
     expect(state.scene).not.toBe(scene)
     expect(portalState.scene).toBe(scene)
+
+    // Preserves internal keys
+    const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
+    const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
+    expect(respectedKeys).toStrictEqual(privateKeys)
   })
 
   it('can handle createPortal on unmounted container', async () => {
