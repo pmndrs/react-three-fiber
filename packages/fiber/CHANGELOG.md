@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.3
+
+### Patch Changes
+
+- ffdb5fc4: revert nested portals, up suspend-react
+
 ## 8.13.2
 
 ### Patch Changes
