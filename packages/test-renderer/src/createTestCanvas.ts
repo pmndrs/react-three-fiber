@@ -2,16 +2,19 @@ import { WebGL2RenderingContext } from './WebGL2RenderingContext'
 import type { CreateCanvasParameters } from './types/internal'
 
 export const createCanvas = ({ beforeReturn, width = 1280, height = 800 }: CreateCanvasParameters = {}) => {
-  const canvas = {
-    width,
-    height,
-    style: {},
-    addEventListener: (() => {}) as any,
-    removeEventListener: (() => {}) as any,
-    clientWidth: width,
-    clientHeight: height,
-    getContext: (() => new WebGL2RenderingContext(canvas)) as any,
-  } as HTMLCanvasElement
+  const canvas =
+    typeof document !== 'undefined' && typeof document.createElement === 'function'
+      ? document.createElement('canvas')
+      : ({
+          style: {},
+          addEventListener: (() => {}) as any,
+          removeEventListener: (() => {}) as any,
+          clientWidth: width,
+          clientHeight: height,
+          getContext: (() => new WebGL2RenderingContext(canvas)) as any,
+        } as HTMLCanvasElement)
+  canvas.width = width
+  canvas.height = height
 
   beforeReturn?.(canvas)
 
