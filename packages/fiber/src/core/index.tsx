@@ -142,7 +142,7 @@ function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+function createRoot<TCanvas extends Canvas>(canvas: TCanvas, thisInvalidate = invalidate): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -161,7 +161,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         console.error
 
   // Create store
-  const store = prevStore || createStore(invalidate, advance)
+  const store = prevStore || createStore(thisInvalidate, advance)
   // Create renderer
   const fiber =
     prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
@@ -257,7 +257,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           state.gl.xr.enabled = state.gl.xr.isPresenting
 
           state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
-          if (!state.gl.xr.isPresenting) invalidate(state)
+          if (!state.gl.xr.isPresenting) thisInvalidate(state)
         }
 
         // WebXR session manager
