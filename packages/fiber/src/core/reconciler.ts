@@ -10,8 +10,8 @@ import {
   detach,
   prepare,
   globalScope,
-  now,
   isObject3D,
+  now,
 } from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
