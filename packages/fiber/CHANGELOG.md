@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.2
+
+### Patch Changes
+
+- bbabdf07: update suspend-react
+
 ## 8.13.1
 
 ### Patch Changes
