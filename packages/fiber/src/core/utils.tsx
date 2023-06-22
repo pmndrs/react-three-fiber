@@ -225,7 +225,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor
-  let instance = object.__r3f
+  let instance = object?.__r3f
   if (!instance) {
     instance = {
       root,
@@ -238,7 +238,10 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       handlers: {},
       isHidden: false,
     }
-    object.__r3f = instance
+    if (object) {
+      object.__r3f = instance
+      if (type) applyProps(object, instance.props)
+    }
   }
 
   return instance
@@ -461,6 +464,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
       rootState.internal.interaction.push(instance.object)
     }
+  }
+
+  // Auto-attach geometries and materials
+  if (instance && instance.props.attach === undefined) {
+    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
+    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
   }
 
   if (instance) invalidateInstance(instance)

@@ -82,37 +82,51 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
   // Create instance
-  const object = props.object ?? new target(...(props.args ?? []))
-  const instance = prepare(object, root, type, props)
-
-  // Auto-attach geometries and materials
-  if (instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
-  }
-
-  // Set initial props
-  applyProps(instance.object, props)
+  const instance = prepare(props.object, root, type, props)
 
   return instance
 }
 
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
-function handleContainerEffects(parent: Instance, child: Instance) {
+function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance, replace: boolean = false) {
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
   if (!parent.parent && parent.object !== state.scene) return
 
-  // Handle interactivity
-  if (child.eventCount > 0 && child.object.raycast !== null && isObject3D(child.object)) {
-    state.internal.interaction.push(child.object)
+  // Create & link object on first run
+  if (!child.object) {
+    // Get target from catalogue
+    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+    const target = catalogue[name]
+
+    // Create object
+    child.object = child.props.object ?? new target(...(child.props.args ?? []))
+    child.object.__r3f = child
+
+    // Set initial props
+    applyProps(child.object, child.props)
   }
 
-  // Handle attach
-  if (child.props.attach) attach(parent, child)
+  // Append instance
+  if (child.props.attach) {
+    attach(parent, child)
+  } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
+    if (beforeChild) {
+      child.object.parent = parent.object
+      parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
+      child.object.dispatchEvent({ type: 'added' })
+    } else {
+      parent.object.add(child.object)
+    }
+  }
+
+  // Link subtree
   for (const childInstance of child.children) handleContainerEffects(child, childInstance)
+
+  // Tree was updated, request a frame
+  invalidateInstance(child)
 }
 
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
@@ -122,16 +136,8 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
-  // Add Object3Ds if able
-  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object)) {
-    parent.object.add(child.object)
-  }
-
   // Attach tree once complete
   handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
 }
 
 function insertBefore(
@@ -148,18 +154,8 @@ function insertBefore(
   if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
   if (replace) beforeChild.parent = null
 
-  // Manually splice Object3Ds
-  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object) && isObject3D(beforeChild.object)) {
-    child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
-    child.object.dispatchEvent({ type: 'added' })
-  }
-
   // Attach tree once complete
-  handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
+  handleContainerEffects(parent, child, beforeChild, replace)
 }
 
 function removeChild(
