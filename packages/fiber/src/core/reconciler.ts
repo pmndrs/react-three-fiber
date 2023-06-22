@@ -2,7 +2,17 @@ import * as THREE from 'three'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, isObject3D } from './utils'
+import {
+  diffProps,
+  applyProps,
+  invalidateInstance,
+  attach,
+  detach,
+  prepare,
+  globalScope,
+  isObject3D,
+  now,
+} from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
 
@@ -378,12 +388,7 @@ export const reconciler = Reconciler<
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
   // SSR fallbacks
-  now:
-    typeof performance !== 'undefined' && typeof performance.now === 'function'
-      ? performance.now
-      : typeof Date.now === 'function'
-      ? Date.now
-      : () => 0,
+  now: now,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   // @ts-ignore Deprecated experimental APIs
