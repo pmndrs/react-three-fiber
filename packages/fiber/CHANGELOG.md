@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.4
+
+### Patch Changes
+
+- 824ee0f7: fix: safely diff instances
+
 ## 8.13.3
 
 ### Patch Changes
