@@ -177,19 +177,18 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
 // Each object in the scene carries a small LocalState descriptor
 export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = object as unknown as Instance
-  if (state?.primitive || !instance.__r3f) {
-    instance.__r3f = {
-      type: '',
-      root: null as unknown as UseBoundStore<RootState>,
-      previousAttach: null,
-      memoizedProps: {},
-      eventCount: 0,
-      handlers: {},
-      objects: [],
-      parent: null,
-      ...state,
-    }
+  instance.__r3f = {
+    type: '',
+    root: null as unknown as UseBoundStore<RootState>,
+    previousAttach: null,
+    memoizedProps: {},
+    eventCount: 0,
+    handlers: {},
+    objects: [],
+    parent: null,
+    ...state,
   }
+
   return object
 }
 

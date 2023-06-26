@@ -353,8 +353,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       return Boolean(localState.handlers)
     },
     prepareUpdate(instance, _type, oldProps, newProps) {
+      const localState = instance?.__r3f ?? {}
+
       // Create diff-sets
-      if (instance.__r3f.primitive && newProps.object && newProps.object !== instance) {
+      if (localState.primitive && newProps.object && newProps.object !== instance) {
         return [true]
       } else {
         // This is a data object, let's extract critical information about it
