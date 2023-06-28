@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.1.5
+
+### Patch Changes
+
+- 673927f7: fix(RTTR): implement HTMLCanvasElement.getContext
+
 ## 8.1.4
 
 ### Patch Changes
