@@ -568,7 +568,7 @@ reconciler.injectIntoDevTools({
 })
 
 // @ts-ignore
-export { act } from 'react-nylon'
+export { act } from '../react-nylon'
 
 export * from './hooks'
 export {

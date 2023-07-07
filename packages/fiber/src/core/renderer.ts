@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 // @ts-ignore
-import _Reconciler from 'react-nylon'
+import _Reconciler from '../react-nylon'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   is,
