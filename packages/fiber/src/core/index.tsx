@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { ConcurrentRoot } from 'react-reconciler/constants'
 import create, { UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
@@ -163,8 +162,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
   // Create store
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
-  const fiber =
-    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
+  const fiber = prevFiber || reconciler.createContainer(store, 1, null, false, null, '', logRecoverableError, null)
   // Map it
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
@@ -569,7 +567,8 @@ reconciler.injectIntoDevTools({
   version: React.version,
 })
 
-const act = (React as any).unstable_act
+// @ts-ignore
+export { act } from 'react-nylon'
 
 export * from './hooks'
 export {
@@ -589,6 +588,5 @@ export {
   addTail,
   flushGlobalEffects,
   getRootState,
-  act,
   roots as _roots,
 }

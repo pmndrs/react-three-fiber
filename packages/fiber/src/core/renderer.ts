@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
+// @ts-ignore
+import _Reconciler from 'react-nylon'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { DefaultEventPriority } from 'react-reconciler/constants'
 import {
   is,
   prepare,
@@ -295,7 +296,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   const handleTextInstance = () =>
     console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
 
-  const reconciler = Reconciler<
+  const reconciler = (_Reconciler as typeof Reconciler)<
     HostConfig['type'],
     HostConfig['props'],
     HostConfig['container'],
@@ -415,7 +416,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     unhideTextInstance: handleTextInstance,
     // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
     // @ts-ignore
-    getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),
+    getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : 0b0000000000000000000000000100000),
     beforeActiveInstanceBlur: () => {},
     afterActiveInstanceBlur: () => {},
     detachDeletedInstance: () => {},

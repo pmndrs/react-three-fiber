@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "8.13.4",
+  "version": "0.0.0-nylon.2",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -47,6 +47,7 @@
     "its-fine": "^1.0.6",
     "react-reconciler": "^0.27.0",
     "react-use-measure": "^2.1.1",
+    "react-nylon": "./react-nylon-v0.0.0.tgz",
     "scheduler": "^0.21.0",
     "suspend-react": "^0.1.3",
     "zustand": "^3.7.1"

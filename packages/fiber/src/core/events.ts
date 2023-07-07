@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { getRootState } from './utils'
 import type { UseBoundStore } from 'zustand'
 import type { Instance } from './renderer'
@@ -108,7 +107,7 @@ export function getEventPriority() {
   // Get a handle to the current global scope in window and worker contexts if able
   // https://github.com/pmndrs/react-three-fiber/pull/2493
   const globalScope = (typeof self !== 'undefined' && self) || (typeof window !== 'undefined' && window)
-  if (!globalScope) return DefaultEventPriority
+  if (!globalScope) return 0b0000000000000000000000000100000
 
   const name = globalScope.event?.type
   switch (name) {
@@ -118,16 +117,16 @@ export function getEventPriority() {
     case 'pointercancel':
     case 'pointerdown':
     case 'pointerup':
-      return DiscreteEventPriority
+      return 0b0000000000000000000000000000010
     case 'pointermove':
     case 'pointerout':
     case 'pointerover':
     case 'pointerenter':
     case 'pointerleave':
     case 'wheel':
-      return ContinuousEventPriority
+      return 0b0000000000000000000000000001000
     default:
-      return DefaultEventPriority
+      return 0b0000000000000000000000000100000
   }
 }
 

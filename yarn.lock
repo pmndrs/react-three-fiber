@@ -8504,6 +8504,10 @@ react-native@0.67.4:
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
 
+react-nylon@./react-nylon-v0.0.0.tgz:
+  version "0.0.0"
+  resolved "./react-nylon-v0.0.0.tgz#323b8c6fef1a175130c784ac0a612b780f51625f"
+
 react-reconciler@^0.27.0:
   version "0.27.0"
   resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.27.0.tgz#360124fdf2d76447c7491ee5f0e04503ed9acf5b"
