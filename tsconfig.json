@@ -10,6 +10,8 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
+
+    "allowJs": true,
     "removeComments": true,
     "emitDeclarationOnly": true,
     "resolveJsonModule": true,
