@@ -80,7 +80,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   }
 }
 
-export { act, create, waitFor }
+export { create, act, waitFor }
 export type { WaitOptions }
 
 export * as ReactThreeTest from './types'

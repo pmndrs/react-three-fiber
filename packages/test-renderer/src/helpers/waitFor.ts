@@ -1,6 +1,5 @@
 import * as React from 'react'
 
-const resolveAfter = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms))
 const act: <T = any>(cb: () => Promise<T>) => Promise<T> = (React as any).unstable_act
 
 export interface WaitOptions {
@@ -12,23 +11,14 @@ export async function waitFor(
   callback: () => boolean | void,
   { interval = 50, timeout = 5000 }: WaitOptions = {},
 ): Promise<void> {
-  const waitForResult = async () => {
+  await act(async () => {
+    const start = performance.now()
+
     while (true) {
       const result = callback()
       if (result || result == null) break
-      if (interval) await resolveAfter(interval)
+      if (interval) new Promise((resolve) => setTimeout(resolve, interval))
+      if (timeout && performance.now() - start >= timeout) throw new Error(`Timed out after ${timeout}ms.`)
     }
-  }
-
-  await act(() =>
-    Promise.race(
-      [
-        waitForResult(),
-        timeout &&
-          resolveAfter(timeout).then(() => {
-            throw new Error(`Timed out after ${timeout}ms.`)
-          }),
-      ].filter(Boolean),
-    ),
-  )
+  })
 }
