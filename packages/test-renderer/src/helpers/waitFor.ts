@@ -17,7 +17,7 @@ export async function waitFor(
     while (true) {
       const result = callback()
       if (result || result == null) break
-      if (interval) new Promise((resolve) => setTimeout(resolve, interval))
+      if (interval) await new Promise((resolve) => setTimeout(resolve, interval))
       if (timeout && performance.now() - start >= timeout) throw new Error(`Timed out after ${timeout}ms.`)
     }
   })
