@@ -3,16 +3,9 @@ import * as Stdlib from 'three-stdlib'
 import * as THREE from 'three'
 
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
+import { waitFor } from '@react-three/test-renderer'
 
 import ReactThreeTestRenderer from '../index'
-
-const resolvers: (() => void)[] = []
-
-const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
 
 describe('ReactThreeTestRenderer Hooks', () => {
   it('can handle useThree hook', async () => {

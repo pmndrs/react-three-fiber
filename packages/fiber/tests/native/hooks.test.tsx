@@ -2,19 +2,12 @@ import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
+import { waitFor } from '@react-three/test-renderer'
 
 import { createRoot, useLoader, act } from '../../src/native'
 import { polyfills } from '../../src/native/polyfills'
 
 polyfills()
-
-const resolvers: (() => void)[] = []
-
-const { waitFor } = asyncUtils(act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
 
 describe('useLoader', () => {
   let canvas: HTMLCanvasElement = null!
