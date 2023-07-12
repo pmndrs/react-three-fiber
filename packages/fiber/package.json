@@ -48,7 +48,7 @@
     "react-reconciler": "^0.27.0",
     "react-use-measure": "^2.1.1",
     "scheduler": "^0.21.0",
-    "suspend-react": "^0.1.0",
+    "suspend-react": "^0.1.3",
     "zustand": "^4.1.2"
   },
   "peerDependencies": {

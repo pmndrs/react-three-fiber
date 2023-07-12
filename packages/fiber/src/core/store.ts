@@ -5,22 +5,6 @@ import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from '.
 import { calculateDpr, type Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'
 
-// Keys that shouldn't be copied between R3F stores
-export const privateKeys = [
-  'set',
-  'get',
-  'setSize',
-  'setFrameloop',
-  'setDpr',
-  'events',
-  'invalidate',
-  'advance',
-  'size',
-  'viewport',
-] as const
-
-export type PrivateKeys = typeof privateKeys[number]
-
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
 }
