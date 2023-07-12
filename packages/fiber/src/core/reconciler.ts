@@ -20,7 +20,14 @@ export interface Catalogue {
   [name: string]: ConstructorRepresentation
 }
 
-export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
+// TODO: handle constructor overloads
+// https://github.com/pmndrs/react-three-fiber/pull/2931
+// https://github.com/microsoft/TypeScript/issues/37079
+export type Args<T> = T extends ConstructorRepresentation
+  ? T extends typeof THREE.Color
+    ? [r: number, g: number, b: number] | [color: THREE.ColorRepresentation]
+    : ConstructorParameters<T>
+  : any[]
 
 export interface InstanceProps<T = any, P = any> {
   args?: Args<P>
