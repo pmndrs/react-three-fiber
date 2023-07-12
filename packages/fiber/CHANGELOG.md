@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.5
+
+### Patch Changes
+
+- 7a3b543b: fix: three type regressions
+
 ## 8.13.4
 
 ### Patch Changes
