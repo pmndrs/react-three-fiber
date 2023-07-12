@@ -29,7 +29,6 @@ export type Vector4 = VectorLike<THREE.Vector4>
 export type Color = ConstructorParameters<typeof THREE.Color> | THREE.Color | number | string // Parameters<T> will not work here because of multiple function signatures in three.js types
 // r153 compat, same issue as above
 // https://github.com/pmndrs/react-three-fiber/issues/2926
-// https://github.com/three-types/three-ts-types/pull/484
 export type ColorArray = typeof THREE.Color | [color: THREE.ColorRepresentation]
 export type Layers = THREE.Layers | Parameters<THREE.Layers['set']>[0]
 export type Quaternion = THREE.Quaternion | Parameters<THREE.Quaternion['set']>
