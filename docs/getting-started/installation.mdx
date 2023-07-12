@@ -111,13 +111,13 @@ import htm from 'https://esm.sh/htm'
 const html = htm.bind(React.createElement)
 
 function Box(props) {
-  const mesh = useRef()
+  const meshRef = useRef()
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
+  useFrame(() => (meshRef.current.rotation.x = meshRef.current.rotation.y += 0.01))
   return html` <mesh
     ...${props}
-    ref=${mesh}
+    ref=${meshRef}
     scale=${active ? 1.5 : 1}
     onClick=${() => setActive(!active)}
     onPointerOver=${() => setHover(true)}
@@ -191,14 +191,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber/native'
 
 function Box(props) {
-  const mesh = useRef(null)
+  const meshRef = useRef(null)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
+  useFrame((state, delta) => (meshRef.current.rotation.x += 0.01))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
