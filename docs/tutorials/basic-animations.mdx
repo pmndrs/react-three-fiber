@@ -66,6 +66,7 @@ function MyAnimatedBox() {
 
 ```jsx
 useFrame(({ clock }) => {
+  const a = clock.getElapsedTime()
   myMesh.current.rotation.x = clock.getElapsedTime()
 })
 ```
