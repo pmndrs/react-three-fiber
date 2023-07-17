@@ -2,8 +2,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
+import { waitFor } from '@react-three/test-renderer'
 
 import {
   createRoot,
@@ -18,12 +17,6 @@ import {
   LocalState,
 } from '../../src'
 import { Instance } from 'packages/fiber/src/core/renderer'
-
-const resolvers: (() => void)[] = []
-
-const { waitFor } = asyncUtils(act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
 
 describe('hooks', () => {
   let canvas: HTMLCanvasElement = null!
