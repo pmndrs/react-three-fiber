@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.2.0
+
+### Minor Changes
+
+- a5ffb08e: feat(RTTR): waitFor util
+
 ## 8.1.5
 
 ### Patch Changes
