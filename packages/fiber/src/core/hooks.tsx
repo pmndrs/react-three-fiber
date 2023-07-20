@@ -99,7 +99,7 @@ function loadingFn<L extends LoaderProto<any>>(
                 res(data)
               },
               onProgress,
-              (error) => reject(new Error(`Could not load ${input}: ${error.message})`)),
+              (error) => reject(new Error(`Could not load ${input}: ${error.message}`)),
             ),
           ),
       ),
