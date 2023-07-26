@@ -11,6 +11,7 @@ import { createEventFirer } from './fireEvent'
 
 import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
+import { waitFor, WaitOptions } from './helpers/waitFor'
 
 // Extend catalogue for render API in tests.
 extend(THREE as any)
@@ -79,6 +80,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   }
 }
 
+export { create, act, waitFor }
+export type { WaitOptions }
+
 export * as ReactThreeTest from './types'
-export default { create, act }
-export { create, act }
+export default { create, act, waitFor }

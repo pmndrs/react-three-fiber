@@ -2,6 +2,7 @@ import * as React from 'react'
 import * as Stdlib from 'three-stdlib'
 import * as THREE from 'three'
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
+
 import ReactThreeTestRenderer from '../index'
 
 describe('ReactThreeTestRenderer Hooks', () => {

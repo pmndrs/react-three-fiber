@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.6
+
+### Patch Changes
+
+- 0597495c: fix: harden XR init against Renderer shim
+
 ## 8.13.5
 
 ### Patch Changes
