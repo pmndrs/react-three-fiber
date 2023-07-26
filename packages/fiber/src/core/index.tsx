@@ -275,7 +275,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         }
 
         // Subscribe to WebXR session events
-        if (gl.xr) xr.connect()
+        if (typeof gl.xr?.addEventListener === 'function') xr.connect()
         state.set({ xr })
       }
 
