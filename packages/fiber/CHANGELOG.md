@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.7
+
+### Patch Changes
+
+- 37b9502a: fix(Canvas): pass scene prop
+
 ## 8.13.6
 
 ### Patch Changes
