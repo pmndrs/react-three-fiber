@@ -1,5 +1,5 @@
 import type * as THREE from 'three'
-import type { EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
+import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 import type { Mutable, Overwrite } from './core/utils'
 
 export { Overwrite }
@@ -12,7 +12,7 @@ interface VectorRepresentation extends MathRepresentation {
 }
 
 export type MathType<T extends MathRepresentation | THREE.Euler> = T extends THREE.Color
-  ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
+  ? Args<typeof THREE.Color> | THREE.ColorRepresentation
   : T extends VectorRepresentation | THREE.Layers | THREE.Euler
   ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>
