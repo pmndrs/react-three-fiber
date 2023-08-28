@@ -16,6 +16,7 @@ export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/e
 export { createEvents } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
 export * from './native/Canvas'
+export * from './native/polyfills'
 export { createTouchEvents as events } from './native/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'

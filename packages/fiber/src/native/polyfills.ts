@@ -1,10 +1,17 @@
 import * as THREE from 'three'
 import type { Asset } from 'expo-asset'
+import type { RelocationOptions } from 'expo-file-system'
 
 // Check if expo-asset is installed (available with expo modules)
 let expAsset: typeof Asset | undefined
+// expo-file-system will never be installed in case if expo is not here
+let copyAsync: null | ((...args: RelocationOptions) => Promise<void>) = null
+let cacheDirectory: string | null = null
 try {
   expAsset = require('expo-asset')?.Asset
+  const fs = require('expo-file-system')
+  copyAsync = fs.copyAsync
+  cacheDirectory = fs.cacheDirectory
 } catch (_) {}
 
 /**
@@ -38,22 +45,39 @@ export function polyfills() {
 
     // @ts-ignore
     texture.isDataTexture = true
+    const asset = getAsset(url)
 
-    getAsset(url)
-      .downloadAsync()
-      .then((asset: Asset) => {
-        texture.image = {
-          data: asset,
-          width: asset.width,
-          height: asset.height,
+    ;(async () => {
+      // this means it's android liniking
+      if (copyAsync && cacheDirectory && !asset.uri.includes('://')) {
+        const localUri = `${cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+        await copyAsync({
+          from: asset.uri,
+          to: localUri,
+        })
+        return {
+          data: { localUri },
+          asset,
         }
-        texture.flipY = true
-        texture.unpackAlignment = 1
-        texture.needsUpdate = true
+      }
 
-        onLoad?.(texture)
-      })
-      .catch(onError)
+      const data = await asset.downloadAsync()
+      return {
+        data,
+        asset: data,
+      }
+    })().then(({ data, asset }) => {
+      texture.image = {
+        data,
+        width: asset.width,
+        height: asset.height,
+      }
+      texture.flipY = true
+      texture.unpackAlignment = 1
+      texture.needsUpdate = true
+
+      onLoad?.(texture)
+    })
 
     return texture
   }
