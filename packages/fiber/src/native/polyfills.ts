@@ -1,11 +1,10 @@
-import * as THREE from 'three'
 import type { Asset } from 'expo-asset'
-import type { RelocationOptions } from 'expo-file-system'
+import * as THREE from 'three'
 
 // Check if expo-asset is installed (available with expo modules)
 let expAsset: typeof Asset | undefined
 // expo-file-system will never be installed in case if expo is not here
-let copyAsync: null | ((...args: RelocationOptions) => Promise<void>) = null
+let copyAsync: null | ((options: { from: string; to: string }) => Promise<void>) = null
 let cacheDirectory: string | null = null
 try {
   expAsset = require('expo-asset')?.Asset
