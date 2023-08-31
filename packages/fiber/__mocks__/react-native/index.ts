@@ -41,3 +41,7 @@ export const Image = {
     res(1, 1)
   },
 }
+
+export const Platform = {
+  OS: 'web',
+}
