@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { Image } from 'react-native'
 import type { Asset } from 'expo-asset'
 
 // Check if expo-asset is installed (available with expo modules)
@@ -10,12 +11,13 @@ try {
 /**
  * Generates an asset based on input type.
  */
-function getAsset(input: string | number) {
+async function getAsset(input: string | number): Promise<Asset> {
   switch (typeof input) {
     case 'string':
-      return expAsset!.fromURI(input)
+      if (input.startsWith('data:')) return { localUri: input } as Asset
+      return expAsset!.fromURI(input).downloadAsync()
     case 'number':
-      return expAsset!.fromModule(input)
+      return expAsset!.fromModule(input).downloadAsync()
     default:
       throw new Error('R3F: Invalid asset! Must be a URI or module.')
   }
@@ -36,20 +38,27 @@ export function polyfills() {
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     const texture = new THREE.Texture()
 
-    // @ts-ignore
-    texture.isDataTexture = true
-
     getAsset(url)
-      .downloadAsync()
-      .then((asset: Asset) => {
+      .then(async (asset: Asset) => {
+        if (!asset.width || !asset.height) {
+          const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
+            Image.getSize(asset.localUri!, (width, height) => res({ width, height }), rej),
+          )
+          asset.width = width
+          asset.height = height
+        }
+
         texture.image = {
           data: asset,
           width: asset.width,
           height: asset.height,
         }
-        texture.flipY = true
+        texture.flipY = false
         texture.unpackAlignment = 1
         texture.needsUpdate = true
+
+        // @ts-ignore
+        texture.isDataTexture = true
 
         onLoad?.(texture)
       })
@@ -66,7 +75,6 @@ export function polyfills() {
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .downloadAsync()
       .then((asset) => {
         request.open('GET', asset.uri, true)
 
@@ -128,6 +136,7 @@ export function polyfills() {
 
         this.manager.itemStart(url)
       })
+      .catch(onError)
 
     return request
   }
