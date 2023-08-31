@@ -35,3 +35,9 @@ export const StyleSheet = {
     bottom: 0,
   },
 }
+
+export const Image = {
+  getSize(_uri: string, res: Function, rej?: Function) {
+    res(1, 1)
+  },
+}
