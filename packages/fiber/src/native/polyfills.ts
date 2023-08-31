@@ -38,6 +38,9 @@ export function polyfills() {
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     const texture = new THREE.Texture()
 
+    // @ts-ignore
+    texture.isDataTexture = true
+
     getAsset(url)
       .then(async (asset: Asset) => {
         if (!asset.width || !asset.height) {
@@ -56,9 +59,6 @@ export function polyfills() {
         texture.flipY = true
         texture.unpackAlignment = 1
         texture.needsUpdate = true
-
-        // @ts-ignore
-        texture.isDataTexture = true
 
         onLoad?.(texture)
       })
