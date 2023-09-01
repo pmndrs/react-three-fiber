@@ -19,4 +19,6 @@ export * from './native/Canvas'
 export { createTouchEvents as events } from './native/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'
-import './native/polyfills'
+
+import { polyfills } from './native/polyfills'
+polyfills()
