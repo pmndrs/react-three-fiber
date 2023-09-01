@@ -26,7 +26,7 @@ describe('useLoader', () => {
     )
   })
 
-  it.skip('produces data textures for TextureLoader', async () => {
+  it('produces data textures for TextureLoader', async () => {
     let texture: any
 
     const Component = () => {

@@ -6,9 +6,9 @@ class Asset {
   localUri = 'test://null'
   width = 800
   height = 400
-  static fromURI = () => this
-  static fromModule = () => this
-  static downloadAsync = async () => new Promise((res) => res(this))
+  static fromURI = () => new Asset()
+  static fromModule = () => new Asset()
+  downloadAsync = async () => new Promise((res) => res(this))
 }
 
 export { Asset }
