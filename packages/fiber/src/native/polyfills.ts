@@ -4,7 +4,7 @@ import { Asset } from 'expo-asset'
 import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 
-export async function polyfills() {
+export function polyfills() {
   global.Blob = class extends Blob {
     constructor(parts?: any[], options?: any) {
       super(
