@@ -78,43 +78,52 @@ if (Platform.OS !== 'web') {
    * Generates an asset based on input type.
    */
   async function getAsset(input: string | number): Promise<Asset> {
-    switch (typeof input) {
-      case 'string':
-        if (input.startsWith('data:')) {
-          const [header, data] = input.split(',')
-          const [, type] = header.split('/')
+    if (typeof input === 'string') {
+      // Unpack Blobs from react-native BlobManager
+      if (input.startsWith('blob:')) {
+        const blob = await new Promise<Blob>((res, rej) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', input as string)
+          xhr.responseType = 'blob'
+          xhr.onload = () => res(xhr.response)
+          xhr.onerror = rej
+          xhr.send()
+        })
 
-          const localUri = fs.cacheDirectory + uuidv4() + `.${type}`
-          await fs.writeAsStringAsync(localUri, data, { encoding: fs.EncodingType.Base64 })
+        const data = await new Promise<string>((res, rej) => {
+          const reader = new FileReader()
+          reader.onload = () => res(reader.result as string)
+          reader.onerror = rej
+          reader.readAsText(blob)
+        })
 
-          return { localUri } as Asset
-        } else if (input.startsWith('blob:')) {
-          const blob = await new Promise<Blob>((res, rej) => {
-            const xhr = new XMLHttpRequest()
-            xhr.open('GET', input)
-            xhr.responseType = 'blob'
-            xhr.onload = () => res(xhr.response)
-            xhr.onerror = rej
-            xhr.send()
-          })
+        input = `data:${blob.type};base64,${data}`
+      }
 
-          const data = await new Promise<string>((res, rej) => {
-            const reader = new FileReader()
-            reader.onload = () => res(reader.result as string)
-            reader.onerror = rej
-            reader.readAsText(blob)
-          })
+      // Create safe URI for JSI
+      if (input.startsWith('data:')) {
+        const [header, data] = input.split(',')
+        const [, type] = header.split('/')
 
-          const localUri = `data:${blob.type};base64,${data}`
+        const localUri = fs.cacheDirectory + uuidv4() + `.${type}`
+        await fs.writeAsStringAsync(localUri, data, { encoding: fs.EncodingType.Base64 })
 
-          return getAsset(localUri)
-        }
-        return Asset.fromURI(input).downloadAsync()
-      case 'number':
-        return Asset.fromModule(input).downloadAsync()
-      default:
-        throw new Error('R3F: Invalid asset! Must be a URI or module.')
+        return { localUri } as Asset
+      }
     }
+
+    // Download bundler module or external URL
+    const asset = Asset.fromModule(input)
+
+    // Unpack assets in Android Release Mode
+    if (!asset.uri.includes(':')) {
+      const localUri = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+      await fs.copyAsync({ from: asset.uri, to: localUri })
+      return { localUri } as Asset
+    }
+
+    // Otherwise, resolve from registry
+    return asset.downloadAsync()
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
@@ -141,9 +150,10 @@ if (Platform.OS !== 'web') {
           height: asset.height,
         }
         texture.flipY = true
-        // texture.unpackAlignment = 1
+        texture.unpackAlignment = 1
         texture.needsUpdate = true
 
+        // Force non-DOM upload for EXGL fast paths
         // @ts-ignore
         texture.isDataTexture = true
 
