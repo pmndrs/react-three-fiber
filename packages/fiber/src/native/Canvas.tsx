@@ -7,6 +7,7 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/util
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
+import { polyfills } from './polyfills'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -65,6 +66,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
+
+    // Inject and cleanup RN polyfills if able
+    React.useMemo(() => polyfills(), [])
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height, x, y } = e.nativeEvent.layout
