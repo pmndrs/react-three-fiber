@@ -79,20 +79,13 @@ export function useGraph(object: THREE.Object3D) {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
-
 function loadingFn<L extends LoaderProto<any>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
   return function (Proto: L, ...input: string[]) {
     // Construct new loader and run extensions
-    let loader = memoizedLoaders.get(Proto)!
-    if (!loader) {
-      loader = new Proto()
-      memoizedLoaders.set(Proto, loader)
-    }
-
+    const loader = new Proto()
     if (extensions) extensions(loader)
     // Go through the urls and load them
     return Promise.all(
