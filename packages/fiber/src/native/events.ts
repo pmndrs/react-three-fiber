@@ -31,7 +31,7 @@ export function createTouchEvents(store: UseBoundStore<RootState>): EventManager
     onPanResponderMove: (e) => handleTouch(e, 'onPointerMove'),
     onPanResponderEnd: (e, state) => {
       handleTouch(e, 'onPointerUp')
-      if (Math.hypot(state.dx, state.dy) > 20) handleTouch(e, 'onClick')
+      if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'onClick')
     },
     onPanResponderRelease: (e) => handleTouch(e, 'onPointerLeave'),
     onPanResponderTerminate: (e) => handleTouch(e, 'onLostPointerCapture'),
