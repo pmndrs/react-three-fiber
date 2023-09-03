@@ -15,9 +15,9 @@ const Container = React.memo(
           },
         },
       } as LayoutChangeEvent)
+    }, [onLayout])
 
-      ref = { current: { props } }
-    }, [])
+    React.useImperativeHandle(ref, () => props)
 
     return null
   }),
