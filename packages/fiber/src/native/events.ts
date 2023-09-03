@@ -1,11 +1,7 @@
 import { UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
-import { GestureResponderEvent } from 'react-native'
-/* eslint-disable import/default, import/no-named-as-default, import/no-named-as-default-member */
-// @ts-ignore
-import Pressability from 'react-native/Libraries/Pressability/Pressability'
-/* eslint-enable import/default, import/no-named-as-default, import/no-named-as-default-member */
+import type { GestureResponderEvent } from 'react-native'
 
 const EVENTS = {
   PRESS: 'onPress',
@@ -71,19 +67,12 @@ export function createTouchEvents(store: UseBoundStore<RootState>): EventManager
       const { set, events } = store.getState()
       events.disconnect?.()
 
-      const connected = new Pressability(events.handlers)
-      set((state) => ({ events: { ...state.events, connected } }))
-
-      const handlers = connected.getEventHandlers()
-      return handlers
+      set((state) => ({ events: { ...state.events, connected: true } }))
     },
     disconnect: () => {
-      const { set, events } = store.getState()
+      const { set } = store.getState()
 
-      if (events.connected) {
-        events.connected.reset()
-        set((state) => ({ events: { ...state.events, connected: undefined } }))
-      }
+      set((state) => ({ events: { ...state.events, connected: false } }))
     },
   }
 }
