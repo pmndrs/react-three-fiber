@@ -115,8 +115,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind events after creation
-          const { onPressMove, ...handlers } = state.events.handlers as any
-          setBind({ ...handlers, android_rippleConfig: { onPressMove } })
+          if (state.events) setBind(state.events.handlers)
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext
