@@ -35,7 +35,7 @@ export function polyfills() {
   const prevTextureLoad = THREE.TextureLoader.prototype.load
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     if (this.path) url = this.path + url
-    
+
     const texture = new THREE.Texture()
 
     // @ts-ignore
