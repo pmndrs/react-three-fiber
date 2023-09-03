@@ -35,3 +35,7 @@ export const StyleSheet = {
     bottom: 0,
   },
 }
+
+export const PanResponder = {
+  create: () => ({ panHandlers: {} }),
+}

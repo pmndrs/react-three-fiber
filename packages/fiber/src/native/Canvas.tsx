@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { View, ViewProps, Pressable, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
+import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
@@ -144,9 +144,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <Pressable {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
-      </Pressable>
+      </View>
     )
   },
 )
