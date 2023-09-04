@@ -7,7 +7,6 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge } from '.
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
-import { polyfills } from './polyfills'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -36,6 +35,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       performance,
       raycaster,
       camera,
+      scene,
       onPointerMissed,
       onCreated,
       stages,
@@ -67,9 +67,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
-
-    // Inject and cleanup RN polyfills if able
-    React.useLayoutEffect(() => polyfills(), [])
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height, x, y } = e.nativeEvent.layout
@@ -117,8 +114,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind events after creation
-          const handlers = state.events.connect?.(viewRef.current)
-          setBind(handlers)
+          setBind(state.events.handlers)
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext

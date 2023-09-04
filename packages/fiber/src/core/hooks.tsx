@@ -89,10 +89,17 @@ export type LoaderProto<T> = new (...args: any[]) => Loader<T>
 export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMap : T
 export type Extensions<T> = (loader: Loader<T>) => void
 
+const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
+
 function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
   return function (Proto: LoaderProto<T>, ...input: string[]) {
     // Construct new loader and run extensions
-    const loader = new Proto()
+    let loader = memoizedLoaders.get(Proto)!
+    if (!loader) {
+      loader = new Proto()
+      memoizedLoaders.set(Proto, loader)
+    }
+
     if (extensions) extensions(loader)
     // Go through the urls and load them
     return Promise.all(
@@ -108,7 +115,7 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
             ),
           ),
       ),
-    )
+    ).finally(() => (loader as any).dispose?.())
   }
 }
 

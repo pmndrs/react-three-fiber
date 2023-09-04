@@ -295,7 +295,7 @@ Here is a small prototype component that scales the pixel ratio:
 ```jsx
 function AdaptivePixelRatio() {
   const current = useThree((state) => state.performance.current)
-  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  const setPixelRatio = useThree((state) => state.setDpr)
   useEffect(() => {
     setPixelRatio(window.devicePixelRatio * current)
   }, [current])

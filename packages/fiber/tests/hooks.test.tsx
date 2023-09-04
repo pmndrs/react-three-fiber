@@ -121,25 +121,21 @@ describe('hooks', () => {
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest
-            .fn()
-            .mockImplementationOnce((_url, onLoad) => {
-              onLoad(MockMesh)
-            })
-            .mockImplementationOnce((_url, onLoad) => {
-              onLoad({ scene: MockGroup })
-            }),
-          setPath: () => {},
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    class TestLoader extends THREE.Loader {
+      load = jest
+        .fn()
+        .mockImplementationOnce((_url, onLoad) => {
+          onLoad(MockMesh)
+        })
+        .mockImplementationOnce((_url, onLoad) => {
+          onLoad(MockGroup)
+        })
+    }
+
+    const extensions = jest.fn()
 
     const Component = () => {
-      const [mockMesh, mockScene] = useLoader(Stdlib.GLTFLoader, ['/suzanne.glb', '/myModels.glb'], (loader) => {
-        loader.setPath('/public/models')
-      })
+      const [mockMesh, mockScene] = useLoader(TestLoader, ['/suzanne.glb', '/myModels.glb'], extensions)
 
       return (
         <>
@@ -153,6 +149,8 @@ describe('hooks', () => {
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(scene.children[1]).toBe(MockGroup)
+    expect(extensions).toBeCalledTimes(1)
   })
 
   it('can handle useLoader with a loader extension', async () => {

@@ -1,5 +1,29 @@
 # @react-three/fiber
 
+## 8.14.0
+
+### Minor Changes
+
+- 89e96bf4: feat: react-native-web, native globals fixes
+
+## 8.13.9
+
+### Patch Changes
+
+- 44d57b3c: fix(native): TextureLoader should remain consistent with FileLoader
+
+## 8.13.8
+
+### Patch Changes
+
+- 5da26d52: fix(useLoader): dispose loaders
+
+## 8.13.7
+
+### Patch Changes
+
+- 37b9502a: fix(Canvas): pass scene prop
+
 ## 8.13.6
 
 ### Patch Changes
