@@ -30,6 +30,9 @@ export function polyfills() {
 
   async function getAsset(input: string | number): Promise<Asset> {
     if (typeof input === 'string') {
+      // Point to storage if preceded with fs path
+      if (input.startsWith('file:')) return { localUri: input } as Asset
+
       // Unpack Blobs from react-native BlobManager
       if (input.startsWith('blob:')) {
         const blob = await new Promise<Blob>((res, rej) => {
