@@ -142,7 +142,7 @@ export function polyfills() {
     return texture
   }
 
-  // Fetches assets via XMLHttpRequest
+  // Special handling for bundler assets
   const originalFileLoad = THREE.FileLoader.prototype.load.bind(THREE.FileLoader.prototype)
   THREE.FileLoader.prototype.load = async function load(url, onLoad, onProgress, onError) {
     const path = this.path
