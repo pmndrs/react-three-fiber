@@ -92,7 +92,7 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (asset: Asset) => {
-        let uri = asset.localUri || asset.uri
+        const uri = asset.localUri || asset.uri
 
         if (!asset.width || !asset.height) {
           const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
