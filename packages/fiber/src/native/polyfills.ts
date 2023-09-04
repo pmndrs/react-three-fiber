@@ -92,16 +92,18 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (asset: Asset) => {
+        let uri = asset.localUri || asset.uri
+
         if (!asset.width || !asset.height) {
           const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
-            Image.getSize(asset.localUri!, (width, height) => res({ width, height }), rej),
+            Image.getSize(uri, (width, height) => res({ width, height }), rej),
           )
           asset.width = width
           asset.height = height
         }
 
         texture.image = {
-          data: { localUri: asset.localUri },
+          data: { localUri: uri },
           width: asset.width,
           height: asset.height,
         }
@@ -128,7 +130,7 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (asset) => {
-        let uri = asset.uri
+        let uri = asset.localUri || asset.uri
 
         // Make FS paths web-safe
         if (asset.uri.startsWith('file://')) {
