@@ -2,10 +2,10 @@ import * as THREE from 'three'
 import { Image } from 'react-native'
 import { Asset } from 'expo-asset'
 import * as fs from 'expo-file-system'
-import { fromByteArray } from 'base64-js'
+import { fromByteArray, toByteArray } from 'base64-js'
 
 export function polyfills() {
-  // Patch Blob for ArrayBuffer if unsupported
+  // Implement Blob from ArrayBuffer if not implemented
   try {
     new Blob([new ArrayBuffer(4) as any])
   } catch (_) {
@@ -22,6 +22,21 @@ export function polyfills() {
           options,
         )
       }
+    }
+  }
+
+  // Implement FileReader.readAsArrayBuffer if not implemented
+  try {
+    new FileReader().readAsArrayBuffer(new Blob([new ArrayBuffer(4) as any]))
+  } catch (_) {
+    FileReader.prototype.readAsArrayBuffer = function (blob) {
+      const onloadend = this.onloadend
+      this.onloadend = () => {
+        this._result = toByteArray(this._result.split(',')[1]).buffer
+        onloadend?.()
+      }
+
+      return this.readAsDataURL(blob)
     }
   }
 
@@ -87,7 +102,7 @@ export function polyfills() {
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
   const extractUrlBase = THREE.LoaderUtils.extractUrlBase.bind(THREE.LoaderUtils)
-  THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
+  THREE.LoaderUtils.extractUrlBase = (url: unknown) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
   // There's no Image in native, so create a data texture instead
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
@@ -128,83 +143,22 @@ export function polyfills() {
   }
 
   // Fetches assets via XMLHttpRequest
-  THREE.FileLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
+  const originalFileLoad = THREE.FileLoader.prototype.load.bind(THREE.FileLoader.prototype)
+  THREE.FileLoader.prototype.load = async function load(url, onLoad, onProgress, onError) {
+    const path = this.path
     if (this.path) url = this.path + url
 
-    const request = new XMLHttpRequest()
+    const asset = await getAsset(url)
+    url = asset.localUri || asset.uri
 
-    getAsset(url)
-      .then(async (asset) => {
-        let uri = asset.localUri || asset.uri
+    // Make FS paths web-safe
+    if (url.startsWith('file://')) {
+      const data = await fs.readAsStringAsync(url, { encoding: fs.EncodingType.Base64 })
+      url = `data:application/octet-stream;base64,${data}`
+    }
 
-        // Make FS paths web-safe
-        if (asset.uri.startsWith('file://')) {
-          const data = await fs.readAsStringAsync(asset.uri, { encoding: fs.EncodingType.Base64 })
-          uri = `data:application/octet-stream;base64,${data}`
-        }
-
-        request.open('GET', uri, true)
-
-        request.addEventListener(
-          'load',
-          (event) => {
-            if (request.status === 200) {
-              onLoad?.(request.response)
-
-              this.manager.itemEnd(url)
-            } else {
-              onError?.(event as unknown as ErrorEvent)
-
-              this.manager.itemError(url)
-              this.manager.itemEnd(url)
-            }
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'progress',
-          (event) => {
-            onProgress?.(event)
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'error',
-          (event) => {
-            onError?.(event as unknown as ErrorEvent)
-
-            this.manager.itemError(url)
-            this.manager.itemEnd(url)
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'abort',
-          (event) => {
-            onError?.(event as unknown as ErrorEvent)
-
-            this.manager.itemError(url)
-            this.manager.itemEnd(url)
-          },
-          false,
-        )
-
-        if (this.responseType) request.responseType = this.responseType
-        if (this.withCredentials) request.withCredentials = this.withCredentials
-
-        for (const header in this.requestHeader) {
-          request.setRequestHeader(header, this.requestHeader[header])
-        }
-
-        request.send(null)
-
-        this.manager.itemStart(url)
-      })
-      .catch(onError)
-
-    return request
+    this.path = ''
+    originalFileLoad(url, onLoad, onProgress, onError)
+    this.path = path
   }
 }
