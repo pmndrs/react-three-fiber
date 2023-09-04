@@ -127,8 +127,16 @@ export function polyfills() {
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .then((asset) => {
-        request.open('GET', asset.uri, true)
+      .then(async (asset) => {
+        let uri = asset.uri
+
+        // Make FS paths web-safe
+        if (asset.uri.startsWith('file://')) {
+          const data = await fs.readAsStringAsync(asset.uri, { encoding: fs.EncodingType.Base64 })
+          uri = `data:application/octet-stream;base64,${data}`
+        }
+
+        request.open('GET', uri, true)
 
         request.addEventListener(
           'load',
