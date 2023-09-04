@@ -111,8 +111,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind events after creation
-          const handlers = state.events.connect?.(viewRef.current)
-          setBind(handlers)
+          setBind(state.events.handlers)
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext

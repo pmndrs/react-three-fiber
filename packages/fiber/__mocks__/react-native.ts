@@ -15,9 +15,9 @@ const Container = React.memo(
           },
         },
       } as LayoutChangeEvent)
+    }, [onLayout])
 
-      ref = { current: { props } }
-    }, [])
+    React.useImperativeHandle(ref, () => props)
 
     return null
   }),
@@ -34,6 +34,10 @@ export const StyleSheet = {
     top: 0,
     bottom: 0,
   },
+}
+
+export const PanResponder = {
+  create: () => ({ panHandlers: {} }),
 }
 
 export const Image = {
