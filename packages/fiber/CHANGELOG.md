@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.13.9
+
+### Patch Changes
+
+- 44d57b3c: fix(native): TextureLoader should remain consistent with FileLoader
+
 ## 8.13.8
 
 ### Patch Changes
