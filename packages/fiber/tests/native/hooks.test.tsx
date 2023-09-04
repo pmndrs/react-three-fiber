@@ -5,9 +5,6 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import { waitFor } from '@react-three/test-renderer'
 
 import { createRoot, useLoader, act } from '../../src/native'
-import { polyfills } from '../../src/native/polyfills'
-
-polyfills()
 
 describe('useLoader', () => {
   let canvas: HTMLCanvasElement = null!
