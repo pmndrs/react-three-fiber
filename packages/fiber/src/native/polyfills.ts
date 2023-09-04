@@ -143,7 +143,7 @@ export function polyfills() {
   }
 
   // Special handling for bundler assets
-  const originalFileLoad = THREE.FileLoader.prototype.load.bind(THREE.FileLoader.prototype)
+  const originalFileLoad = THREE.FileLoader.prototype.load
   THREE.FileLoader.prototype.load = async function load(url, onLoad, onProgress, onError) {
     const path = this.path
     if (this.path) url = this.path + url
@@ -158,7 +158,7 @@ export function polyfills() {
     }
 
     this.path = ''
-    originalFileLoad(url, onLoad, onProgress, onError)
+    originalFileLoad.apply(this, [url, onLoad, onProgress, onError])
     this.path = path
   }
 }
