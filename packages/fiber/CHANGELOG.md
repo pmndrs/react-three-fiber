@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.0
+
+### Minor Changes
+
+- 89e96bf4: feat: react-native-web, native globals fixes
+
 ## 8.13.9
 
 ### Patch Changes
