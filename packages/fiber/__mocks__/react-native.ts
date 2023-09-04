@@ -39,3 +39,13 @@ export const StyleSheet = {
 export const PanResponder = {
   create: () => ({ panHandlers: {} }),
 }
+
+export const Image = {
+  getSize(_uri: string, res: Function, rej?: Function) {
+    res(1, 1)
+  },
+}
+
+export const Platform = {
+  OS: 'web',
+}
