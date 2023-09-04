@@ -5,8 +5,9 @@ import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 
 export function polyfills() {
+  // Patch Blob for ArrayBuffer if unsupported
   try {
-    new Blob([new ArrayBuffer(4)])
+    new Blob([new ArrayBuffer(4) as any])
   } catch (_) {
     global.Blob = class extends Blob {
       constructor(parts?: any[], options?: any) {
