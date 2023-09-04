@@ -34,6 +34,8 @@ export function polyfills() {
   // There's no Image in native, so create a data texture instead
   const prevTextureLoad = THREE.TextureLoader.prototype.load
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
+    if (this.path) url = this.path + url
+
     const texture = new THREE.Texture()
 
     // @ts-ignore
