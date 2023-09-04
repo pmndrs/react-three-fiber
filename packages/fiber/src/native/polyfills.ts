@@ -138,8 +138,8 @@ export function polyfills() {
         let uri = asset.localUri || asset.uri
 
         // Make FS paths web-safe
-        if (asset.uri.startsWith('file://')) {
-          const data = await fs.readAsStringAsync(asset.uri, { encoding: fs.EncodingType.Base64 })
+        if (uri.startsWith('file://')) {
+          const data = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
           uri = `data:application/octet-stream;base64,${data}`
         }
 
