@@ -39,7 +39,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       onPointerMissed,
       onCreated,
       stages,
-      scene,
       ...props
     },
     forwardedRef,
