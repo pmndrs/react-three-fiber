@@ -5,18 +5,22 @@ import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 
 export function polyfills() {
-  global.Blob = class extends Blob {
-    constructor(parts?: any[], options?: any) {
-      super(
-        parts?.map((part) => {
-          if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-            part = fromByteArray(new Uint8Array(part as ArrayBuffer))
-          }
+  try {
+    new Blob([new ArrayBuffer(4)])
+  } catch (_) {
+    global.Blob = class extends Blob {
+      constructor(parts?: any[], options?: any) {
+        super(
+          parts?.map((part) => {
+            if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
+              part = fromByteArray(new Uint8Array(part as ArrayBuffer))
+            }
 
-          return part
-        }),
-        options,
-      )
+            return part
+          }),
+          options,
+        )
+      }
     }
   }
 
