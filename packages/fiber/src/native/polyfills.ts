@@ -33,10 +33,10 @@ export function polyfills() {
     })
   }
 
-  async function getAsset(input: string | number): Promise<Asset> {
+  async function getAsset(input: string | number): Promise<string> {
     if (typeof input === 'string') {
-      // Point to storage if preceded with fs path
-      if (input.startsWith('file:')) return { localUri: input } as Asset
+      // Don't process storage or data uris
+      if (input.startsWith('file:') || input.startsWith('data:')) return input
 
       // Unpack Blobs from react-native BlobManager
       if (input.startsWith('blob:')) {
@@ -56,18 +56,7 @@ export function polyfills() {
           reader.readAsText(blob)
         })
 
-        input = `data:${blob.type};base64,${data}`
-      }
-
-      // Create safe URI for JSI
-      if (input.startsWith('data:')) {
-        const [header, data] = input.split(',')
-        const [, type] = header.split('/')
-
-        const localUri = fs.cacheDirectory + uuidv4() + `.${type}`
-        await fs.writeAsStringAsync(localUri, data, { encoding: fs.EncodingType.Base64 })
-
-        return { localUri } as Asset
+        return `data:${blob.type};base64,${data}`
       }
     }
 
@@ -78,11 +67,13 @@ export function polyfills() {
     if (!asset.uri.includes(':')) {
       const localUri = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
       await fs.copyAsync({ from: asset.uri, to: localUri })
-      return { localUri } as Asset
+      return localUri
     }
 
     // Otherwise, resolve from registry
-    return asset.downloadAsync()
+    await asset.downloadAsync()
+
+    return asset.localUri || asset.uri
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
@@ -96,21 +87,24 @@ export function polyfills() {
     const texture = new THREE.Texture()
 
     getAsset(url)
-      .then(async (asset: Asset) => {
-        const uri = asset.localUri || asset.uri
+      .then(async (uri) => {
+        // Create safe URI for JSI
+        if (uri.startsWith('data:')) {
+          const [header, data] = uri.split(',')
+          const [, type] = header.split('/')
 
-        if (!asset.width || !asset.height) {
-          const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
-            Image.getSize(uri, (width, height) => res({ width, height }), rej),
-          )
-          asset.width = width
-          asset.height = height
+          uri = fs.cacheDirectory + uuidv4() + `.${type}`
+          await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
         }
+
+        const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
+          Image.getSize(uri, (width, height) => res({ width, height }), rej),
+        )
 
         texture.image = {
           data: { localUri: uri },
-          width: asset.width,
-          height: asset.height,
+          width,
+          height,
         }
         texture.flipY = true
         texture.unpackAlignment = 1
@@ -134,9 +128,7 @@ export function polyfills() {
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .then(async (asset) => {
-        let uri = asset.localUri || asset.uri
-
+      .then(async (uri) => {
         // Make FS paths web-safe
         if (uri.startsWith('file://')) {
           const data = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
