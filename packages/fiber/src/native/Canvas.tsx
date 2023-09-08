@@ -8,8 +8,13 @@ import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 
+interface ExpoGLProps {
+  ref?: React.Ref<GLView>
+}
+
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
+  expoGL?: ExpoGLProps
   style?: ViewStyle
 }
 
@@ -23,6 +28,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
   (
     {
       children,
+      expoGL,
       style,
       gl,
       events = createTouchEvents,
@@ -141,7 +147,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     return (
       <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+        {width > 0 && <GLView ref={expoGL?.ref} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
       </View>
     )
   },
