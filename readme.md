@@ -245,6 +245,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 - [`miniplex`](https://github.com/hmans/miniplex) &ndash; ECS (entity management system)
 - [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
+- [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library
 
 # How to contribute
 
