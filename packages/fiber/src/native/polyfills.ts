@@ -61,19 +61,18 @@ export function polyfills() {
     }
 
     // Download bundler module or external URL
-    const asset = Asset.fromModule(input)
+    const asset = await Asset.fromModule(input).downloadAsync()
+    let uri = asset.localUri || asset.uri
 
     // Unpack assets in Android Release Mode
-    if (!asset.uri.includes(':')) {
-      const localUri = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-      await fs.copyAsync({ from: asset.uri, to: localUri })
-      return localUri
+    if (!uri.includes(':')) {
+      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+      const stats = await fs.getInfoAsync(file, { size: false })
+      if (!stats.exists) await fs.copyAsync({ from: uri, to: file })
+      uri = file
     }
 
-    // Otherwise, resolve from registry
-    await asset.downloadAsync()
-
-    return asset.localUri || asset.uri
+    return uri
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
