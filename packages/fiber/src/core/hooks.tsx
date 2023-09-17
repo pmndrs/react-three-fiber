@@ -108,8 +108,7 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
           new Promise<LoaderResult<T>>((res, reject) =>
             loader.load(
               input,
-              (data) =>
-                res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
+              (data) => res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
               onProgress,
               (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
