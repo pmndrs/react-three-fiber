@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { extend, Instance, RootStore, ThreeElement } from '../src'
+import { Instance, RootStore } from '../src'
 import {
   is,
   dispose,
@@ -14,21 +14,6 @@ import {
   applyProps,
   updateCamera,
 } from '../src/core/utils'
-
-class TestElement {
-  public value: string
-  constructor() {
-    this.value = 'initial'
-  }
-}
-
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    testElement: ThreeElement<typeof TestElement>
-  }
-}
-
-extend({ TestElement })
 
 // Mocks a Zustand store
 const storeMock: RootStore = Object.assign(() => null!, {
@@ -412,7 +397,7 @@ describe('applyProps', () => {
   })
 
   it('should not apply a prop if it is undefined', async () => {
-    const target = new TestElement()
+    const target = { value: 'initial' }
     applyProps(target, { value: undefined })
 
     expect(target.value).toBe('initial')

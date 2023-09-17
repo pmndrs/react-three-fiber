@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import create from 'zustand'
 
-import { ThreeElement } from '../three-types'
+import type { Properties, ThreeElement } from '../three-types'
 import {
   Renderer,
   createStore,
@@ -45,8 +45,6 @@ type Canvas = HTMLCanvasElement | OffscreenCanvas
 export const _roots = new Map<Canvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
-
-type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
 
 export type GLProps =
   | Renderer

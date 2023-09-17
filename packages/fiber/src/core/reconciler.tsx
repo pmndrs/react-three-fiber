@@ -1,10 +1,12 @@
 import * as THREE from 'three'
+import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, isObject3D } from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
+import type { ThreeElement } from '../three-types'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -14,7 +16,7 @@ export interface Root {
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
 export type AttachType<O = any> = string | AttachFnType<O>
 
-export type ConstructorRepresentation = new (...args: any[]) => any
+export type ConstructorRepresentation<T = any> = new (...args: any[]) => T
 
 export interface Catalogue {
   [name: string]: ConstructorRepresentation
@@ -69,7 +71,23 @@ interface HostConfig {
 }
 
 export const catalogue: Catalogue = {}
-export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
+
+let i = 0
+
+export const extend = <T extends Catalogue | ConstructorRepresentation>(
+  objects: T,
+): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
+  if (typeof objects === 'function') {
+    const Component = `${i++}`
+    catalogue[Component] = objects
+
+    // Returns a component whose name will be inferred in devtools
+    // @ts-ignore
+    return React.forwardRef({ [objects.name]: (props, ref) => <Component {...props} ref={ref} /> }[objects.name])
+  } else {
+    return void Object.assign(catalogue, objects) as any
+  }
+}
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue

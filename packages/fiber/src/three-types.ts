@@ -1,13 +1,15 @@
 import type * as THREE from 'three'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
-import type { Mutable, Overwrite } from './core/utils'
 
-export { Overwrite }
+type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
+export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
+export type Properties<T> = Pick<T, NonFunctionKeys<T>>
+export type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
 
-interface MathRepresentation {
+export interface MathRepresentation {
   set(...args: number[]): any
 }
-interface VectorRepresentation extends MathRepresentation {
+export interface VectorRepresentation extends MathRepresentation {
   setScalar(s: number): any
 }
 
@@ -25,12 +27,12 @@ export type Layers = MathType<THREE.Layers>
 export type Quaternion = MathType<THREE.Quaternion>
 export type Euler = MathType<THREE.Euler>
 
-type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation | THREE.Euler ? MathType<P[K]> : P[K] }
+export type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation | THREE.Euler ? MathType<P[K]> : P[K] }
 
-interface RaycastableRepresentation {
+export interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
 }
-type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
+export type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
 
 export interface ReactProps<P> {
   children?: React.ReactNode
@@ -38,7 +40,7 @@ export interface ReactProps<P> {
   key?: React.Key
 }
 
-type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
+export type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
   Overwrite<WithMathProps<P>, ReactProps<P> & EventProps<P>>
 >
 
