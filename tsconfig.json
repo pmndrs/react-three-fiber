@@ -14,7 +14,8 @@
     "emitDeclarationOnly": true,
     "resolveJsonModule": true,
     "noImplicitThis": false,
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "types": ["jest", "node", "offscreencanvas"]
   },
   "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist"]

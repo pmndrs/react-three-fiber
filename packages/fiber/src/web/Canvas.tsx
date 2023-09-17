@@ -33,7 +33,9 @@ export interface CanvasProps
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
-const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps>(function Canvas(
+export interface Props extends CanvasProps {}
+
+const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
   {
     children,
     fallback,
@@ -53,6 +55,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
     performance,
     raycaster,
     camera,
+    scene,
     onPointerMissed,
     onCreated,
     stages,
@@ -70,7 +73,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
-  const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
   React.useImperativeHandle(forwardedRef, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
@@ -84,59 +86,61 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, CanvasProps
 
   const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
-  if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-    if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
-    root.current.configure({
-      gl,
-      events,
-      shadows,
-      linear,
-      flat,
-      legacy,
-      orthographic,
-      frameloop,
-      dpr,
-      performance,
-      raycaster,
-      camera,
-      stages,
-      size: containerRect,
-      // Pass mutable reference to onPointerMissed so it's free to update
-      onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
-      onCreated: (state) => {
-        // Connect to event source
-        state.events.connect?.(eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current)
-        // Set up compute function
-        if (eventPrefix) {
-          state.setEvents({
-            compute: (event, state) => {
-              const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
-              const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
-              state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
-              state.raycaster.setFromCamera(state.pointer, state.camera)
-            },
-          })
-        }
-        // Call onCreated callback
-        onCreated?.(state)
-      },
-    })
-    root.current.render(
-      <Bridge>
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>
-      </Bridge>,
-    )
-  }
-
   useIsomorphicLayoutEffect(() => {
-    setCanvas(canvasRef.current)
-  }, [])
+    const canvas = canvasRef.current
+    if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
+      if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
+      root.current.configure({
+        gl,
+        scene,
+        events,
+        shadows,
+        linear,
+        flat,
+        legacy,
+        orthographic,
+        frameloop,
+        dpr,
+        performance,
+        raycaster,
+        camera,
+        size: containerRect,
+        // Pass mutable reference to onPointerMissed so it's free to update
+        onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+        onCreated: (state) => {
+          // Connect to event source
+          state.events.connect?.(
+            eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current,
+          )
+          // Set up compute function
+          if (eventPrefix) {
+            state.setEvents({
+              compute: (event, state) => {
+                const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
+                const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+                state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+                state.raycaster.setFromCamera(state.pointer, state.camera)
+              },
+            })
+          }
+          // Call onCreated callback
+          onCreated?.(state)
+        },
+      })
+      root.current.render(
+        <Bridge>
+          <ErrorBoundary set={setError}>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+          </ErrorBoundary>
+        </Bridge>,
+      )
+    }
+  })
 
   React.useEffect(() => {
-    if (canvas) return () => unmountComponentAtNode(canvas!)
-  }, [canvas])
+    const canvas = canvasRef.current
+    if (canvas) return () => unmountComponentAtNode(canvas)
+  }, [])
 
   // When the event source is not this div, we need to set pointer-events to none
   // Or else the canvas will block events from reaching the event source

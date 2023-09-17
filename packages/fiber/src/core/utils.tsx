@@ -1,23 +1,28 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
+import { catalogue } from './reconciler'
 import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
-import type { Dpr, RootState, RootStore, Size } from './store'
+import type { Dpr, Renderer, RootState, RootStore, Size } from './store'
 import type { ConstructorRepresentation, Instance } from './reconciler'
 
 /**
- * Safely accesses a deeply-nested value on an object to get around static bundler analysis.
+ * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
  */
-const getDeep = (obj: any, ...keys: string[]): any => keys.reduce((acc, key) => acc?.[key], obj)
+export const hasColorSpace = <
+  T extends Renderer | THREE.Texture | object,
+  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
+>(
+  object: T,
+): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
 
 export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
 
 /**
  * The current THREE.ColorManagement instance, if present.
  */
-export const ColorManagement: ColorManagementRepresentation | null =
-  ('ColorManagement' in THREE && getDeep(THREE, 'ColorManagement')) || null
+export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
 
 export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 
@@ -107,7 +112,9 @@ export interface ObjectMap {
 }
 
 export function calculateDpr(dpr: Dpr): number {
-  const target = typeof window !== 'undefined' ? window.devicePixelRatio : 1
+  // Err on the side of progress by assuming 2x dpr if we can't detect it
+  // This will happen in workers where window is defined but dpr isn't.
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio ?? 2 : 1
   return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
@@ -148,11 +155,21 @@ export const is = {
     if ((isArr || isObj) && a === b) return true
     // Last resort, go through keys
     let i
+    // Check if a has all the keys of b
     for (i in a) if (!(i in b)) return false
-    for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    // Check if values between keys match
+    if (isObj && arrays === 'shallow' && objects === 'shallow') {
+      for (i in strict ? b : a) if (!is.equ(a[i], b[i], { strict, objects: 'reference' })) return false
+    } else {
+      for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    }
+    // If i is undefined
     if (is.und(i)) {
+      // If both arrays are empty we consider them equal
       if (isArr && a.length === 0 && b.length === 0) return true
+      // If both objects are empty we consider them equal
       if (isObj && Object.keys(a).length === 0 && Object.keys(b).length === 0) return true
+      // Otherwise match them by value
       if (a !== b) return false
     }
     return true
@@ -203,7 +220,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
   const object = target as unknown as Instance['object']
 
   // Create instance descriptor
-  let instance = object.__r3f
+  let instance = object?.__r3f
   if (!instance) {
     instance = {
       root,
@@ -216,7 +233,10 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       handlers: {},
       isHidden: false,
     }
-    object.__r3f = instance
+    if (object) {
+      object.__r3f = instance
+      if (type) applyProps(object, instance.props)
+    }
   }
 
   return instance
@@ -361,7 +381,23 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Ignore setting undefined props
     if (value === undefined) continue
 
-    const { root, key, target } = resolve(object, prop)
+    let { root, key, target } = resolve(object, prop)
+
+    // Alias (output)encoding => (output)colorSpace (since r152)
+    // https://github.com/pmndrs/react-three-fiber/pull/2829
+    if (hasColorSpace(root)) {
+      const sRGBEncoding = 3001
+      const SRGBColorSpace = 'srgb'
+      const LinearSRGBColorSpace = 'srgb-linear'
+
+      if (key === 'encoding') {
+        key = 'colorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      } else if (key === 'outputEncoding') {
+        key = 'outputColorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      }
+    }
 
     // Copy if properties match signatures
     if (target?.copy && target?.constructor === (value as ConstructorRepresentation)?.constructor) {
@@ -388,21 +424,24 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // For versions of three which don't support THREE.ColorManagement,
       // Auto-convert sRGB colors
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!ColorManagement && !rootState?.linear && isColor) target.convertSRGBToLinear()
+      if (!getColorManagement() && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {
       root[key] = value
+
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
       if (
-        !rootState?.linear &&
+        rootState &&
         root[key] instanceof THREE.Texture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
       ) {
-        root[key].encoding = THREE.sRGBEncoding
+        const texture = root[key] as THREE.Texture
+        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
+        else texture.encoding = rootState.gl.outputEncoding
       }
     }
   }
@@ -420,6 +459,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
       rootState.internal.interaction.push(instance.object)
     }
+  }
+
+  // Auto-attach geometries and materials
+  if (instance && instance.props.attach === undefined) {
+    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
+    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
   }
 
   if (instance) invalidateInstance(instance)
@@ -452,16 +497,6 @@ export function updateCamera(camera: Camera, size: Size): void {
 }
 
 /**
- * Get a handle to the supported `now` function for react-internal performance profiling.
- */
-export const now =
-  typeof performance !== 'undefined' && is.fun(performance.now)
-    ? performance.now
-    : is.fun(Date.now)
-    ? Date.now
-    : () => 0
-
-/**
  * Get a handle to the current global scope in window and worker contexts if able
  * https://github.com/pmndrs/react-three-fiber/pull/2493
  */
@@ -469,3 +504,5 @@ export const globalScope =
   (typeof global !== 'undefined' && global) ||
   (typeof self !== 'undefined' && self) ||
   (typeof window !== 'undefined' && window)
+
+export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D

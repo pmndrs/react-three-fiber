@@ -8,9 +8,7 @@ import useRefs from 'react-use-refs'
 function Soda(props: any) {
   const ref = useRef<THREE.Group>(null!)
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/soda-bottle/model.gltf',
-  ) as any
+  const { nodes, materials } = useGLTF('/bottle.gltf') as any
   useFrame((state, delta) => (ref.current.rotation.y += delta))
   return (
     <group ref={ref} {...props} {...spread} dispose={null}>
@@ -50,17 +48,13 @@ function Candy(props: any) {
 }
 
 function Flash(props: any) {
-  const { scene } = useGLTF(
-    'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/lightning/model.gltf',
-  )
+  const { scene } = useGLTF('/lightning.gltf')
   useFrame((state, delta) => (scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }
 
 function Apple(props: any) {
-  const { scene } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/apple-half/model.gltf',
-  )
+  const { scene } = useGLTF('/apple.gltf')
   useFrame((state, delta) => (scene.rotation.x = scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }

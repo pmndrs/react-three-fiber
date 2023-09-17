@@ -57,17 +57,17 @@ import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
   // This reference will give us direct access to the mesh
-  const mesh = useRef()
+  const meshRef = useRef()
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   // Subscribe this component to the render-loop, rotate the mesh every frame
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   // Return view, these are regular three.js elements expressed in JSX
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -102,14 +102,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 
 function Box(props: ThreeElements['mesh']) {
-  const mesh = useRef<THREE.Mesh>(null!)
+  const meshRef = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -144,14 +144,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber/native'
 
 function Box(props) {
-  const mesh = useRef(null)
+  const meshRef = useRef(null)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -178,7 +178,7 @@ export default function App() {
 
 ## First steps
 
-You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
+You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://react.dev/learn), especially [the section about hooks](https://react.dev/reference/react). As for Threejs, make sure you at least glance over the following links:
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).

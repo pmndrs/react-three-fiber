@@ -16,24 +16,18 @@ export function Lights() {
 }
 
 export function Farm(props: any) {
-  const { scene } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/low-poly-farm/model.gltf',
-  )
+  const { scene } = useGLTF('/farm.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Ramen(props: any) {
-  const { scene } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/bowl-broth/model.gltf',
-  )
+  const { scene } = useGLTF('/ramen.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Soda(props: any) {
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/soda-bottle/model.gltf',
-  ) as any
+  const { nodes, materials } = useGLTF('/bottle.gltf') as any
   return (
     <group {...(spread as any)} {...props} dispose={null}>
       <mesh geometry={nodes.Mesh_sodaBottle.geometry}>

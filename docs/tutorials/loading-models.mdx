@@ -36,7 +36,7 @@ You can play with the sandbox and see how it looks here after I added an HDRI ba
 
 ### Loading GLTF models as JSX Components
 
-Here comes the really fancy part, you can transform these models into React components and then use them as your would any React component.
+Here comes the really fancy part, you can transform these models into React components and then use them as you would any React component.
 
 To do this, grab your `GLTF` model and head over to [https://gltf.pmnd.rs/](https://gltf.pmnd.rs/) and drop your `GLTF`, after that you should see something like:
 
@@ -53,10 +53,10 @@ import React, { useRef } from 'react'
 import { useGLTF } from '@react-three/drei'
 
 export default function Model(props) {
-  const group = useRef()
+  const groupRef = useRef()
   const { nodes, materials } = useGLTF('/Poimandres.gltf')
   return (
-    <group ref={group} {...props} dispose={null}>
+    <group ref={groupRef} {...props} dispose={null}>
       <mesh castShadow receiveShadow geometry={nodes.Curve007_1.geometry} material={materials['Material.001']} />
       <mesh castShadow receiveShadow geometry={nodes.Curve007_2.geometry} material={materials['Material.002']} />
     </group>

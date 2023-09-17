@@ -3,7 +3,7 @@ import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { is, diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, now } from './utils'
+import { diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, isObject3D } from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
 import type { ThreeElement } from '../three-types'
@@ -22,7 +22,14 @@ export interface Catalogue {
   [name: string]: ConstructorRepresentation
 }
 
-export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
+// TODO: handle constructor overloads
+// https://github.com/pmndrs/react-three-fiber/pull/2931
+// https://github.com/microsoft/TypeScript/issues/37079
+export type Args<T> = T extends ConstructorRepresentation
+  ? T extends typeof THREE.Color
+    ? [r: number, g: number, b: number] | [color: THREE.ColorRepresentation]
+    : ConstructorParameters<T>
+  : any[]
 
 export interface InstanceProps<T = any, P = any> {
   args?: Args<P>
@@ -100,37 +107,51 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
   // Create instance
-  const object = props.object ?? new target(...(props.args ?? []))
-  const instance = prepare(object, root, type, props)
-
-  // Auto-attach geometries and materials
-  if (instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
-  }
-
-  // Set initial props
-  applyProps(instance.object, props)
+  const instance = prepare(props.object, root, type, props)
 
   return instance
 }
 
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
-function handleContainerEffects(parent: Instance, child: Instance) {
+function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance, replace: boolean = false) {
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
   if (!parent.parent && parent.object !== state.scene) return
 
-  // Handle interactivity
-  if (child.eventCount > 0 && child.object.raycast !== null && child.object instanceof THREE.Object3D) {
-    state.internal.interaction.push(child.object)
+  // Create & link object on first run
+  if (!child.object) {
+    // Get target from catalogue
+    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+    const target = catalogue[name]
+
+    // Create object
+    child.object = child.props.object ?? new target(...(child.props.args ?? []))
+    child.object.__r3f = child
+
+    // Set initial props
+    applyProps(child.object, child.props)
   }
 
-  // Handle attach
-  if (child.props.attach) attach(parent, child)
+  // Append instance
+  if (child.props.attach) {
+    attach(parent, child)
+  } else if (isObject3D(child.object) && isObject3D(parent.object)) {
+    if (beforeChild) {
+      child.object.parent = parent.object
+      parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
+      child.object.dispatchEvent({ type: 'added' })
+    } else {
+      parent.object.add(child.object)
+    }
+  }
+
+  // Link subtree
   for (const childInstance of child.children) handleContainerEffects(child, childInstance)
+
+  // Tree was updated, request a frame
+  invalidateInstance(child)
 }
 
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
@@ -140,16 +161,8 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
-  // Add Object3Ds if able
-  if (!child.props.attach && parent.object instanceof THREE.Object3D && child.object instanceof THREE.Object3D) {
-    parent.object.add(child.object)
-  }
-
   // Attach tree once complete
   handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
 }
 
 function insertBefore(
@@ -166,23 +179,8 @@ function insertBefore(
   if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
   if (replace) beforeChild.parent = null
 
-  // Manually splice Object3Ds
-  if (
-    !child.props.attach &&
-    parent.object instanceof THREE.Object3D &&
-    child.object instanceof THREE.Object3D &&
-    beforeChild.object instanceof THREE.Object3D
-  ) {
-    child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
-    child.object.dispatchEvent({ type: 'added' })
-  }
-
   // Attach tree once complete
-  handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
+  handleContainerEffects(parent, child, beforeChild, replace)
 }
 
 function removeChild(
@@ -203,7 +201,7 @@ function removeChild(
   // Eagerly tear down tree
   if (child.props.attach) {
     detach(parent, child)
-  } else if (child.object instanceof THREE.Object3D && parent.object instanceof THREE.Object3D) {
+  } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     parent.object.remove(child.object)
     removeInteractivity(child.root, child.object)
   }
@@ -227,8 +225,8 @@ function removeChild(
   //   - cannot be a <primitive object={...} />
   //   - cannot be a THREE.Scene, because three has broken its own API
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
-    const dispose = child.object.dispose
-    if (typeof dispose === 'function') {
+    if (typeof child.object.dispose === 'function') {
+      const dispose = child.object.dispose.bind(child.object)
       scheduleCallback(idlePriority, () => {
         try {
           dispose()
@@ -273,15 +271,15 @@ function switchInstance(
   // This evil hack switches the react-internal fiber node
   // https://github.com/facebook/react/issues/14983
   // https://github.com/facebook/react/pull/15021
-  ;[fiber, fiber.alternate].forEach((fiber) => {
-    if (fiber !== null) {
-      fiber.stateNode = newInstance
-      if (fiber.ref) {
-        if (typeof fiber.ref === 'function') fiber.ref(newInstance.object)
-        else fiber.ref.current = newInstance.object
+  for (const _fiber of [fiber, fiber.alternate]) {
+    if (_fiber !== null) {
+      _fiber.stateNode = newInstance
+      if (_fiber.ref) {
+        if (typeof _fiber.ref === 'function') _fiber.ref(newInstance.object)
+        else _fiber.ref.current = newInstance.object
       }
     }
-  })
+  }
 
   // Tree was updated, request a frame
   invalidateInstance(newInstance)
@@ -378,7 +376,7 @@ export const reconciler = Reconciler<
   hideInstance(instance) {
     if (instance.props.attach && instance.parent?.object) {
       detach(instance.parent, instance)
-    } else if (instance.object instanceof THREE.Object3D) {
+    } else if (isObject3D(instance.object)) {
       instance.object.visible = false
     }
 
@@ -389,7 +387,7 @@ export const reconciler = Reconciler<
     if (instance.isHidden) {
       if (instance.props.attach && instance.parent?.object) {
         attach(instance.parent, instance)
-      } else if (instance.object instanceof THREE.Object3D && instance.props.visible !== false) {
+      } else if (isObject3D(instance.object) && instance.props.visible !== false) {
         instance.object.visible = true
       }
     }
@@ -401,9 +399,14 @@ export const reconciler = Reconciler<
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
   // SSR fallbacks
-  now,
-  scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
-  cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+  now:
+    typeof performance !== 'undefined' && typeof performance.now === 'function'
+      ? performance.now
+      : typeof Date.now === 'function'
+      ? Date.now
+      : () => 0,
+  scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
+  cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   // @ts-ignore Deprecated experimental APIs
   // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
   // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874

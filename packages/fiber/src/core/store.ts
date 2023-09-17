@@ -5,23 +5,11 @@ import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from '.
 import { calculateDpr, type Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'
 
-// Keys that shouldn't be copied between R3F stores
-export const privateKeys = [
-  'set',
-  'get',
-  'setSize',
-  'setFrameloop',
-  'setDpr',
-  'events',
-  'invalidate',
-  'advance',
-  'size',
-  'viewport',
-] as const
+export interface Intersection extends THREE.Intersection {
+  eventObject: THREE.Object3D
+}
 
-export type PrivateKeys = typeof privateKeys[number]
-
-export interface Subscription {
+export type Subscription = {
   ref: React.MutableRefObject<RenderCallback>
   priority: number
   store: RootStore
@@ -126,9 +114,9 @@ export interface RootState {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement.legacyMode */
+  /* Whether to enable r139's THREE.ColorManagement */
   legacy: boolean
-  /** Shortcut to gl.outputEncoding = LinearEncoding */
+  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
@@ -213,6 +201,7 @@ export const createStore = (
       camera: null as unknown as Camera,
       raycaster: null as unknown as THREE.Raycaster,
       events: { priority: 1, enabled: true, connected: false },
+      scene: null as unknown as THREE.Scene,
       xr: null as unknown as XRManager,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
@@ -221,7 +210,6 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      scene: new THREE.Scene(),
 
       controls: null,
       clock: new THREE.Clock(),
@@ -354,8 +342,6 @@ export const createStore = (
   })
 
   const state = rootStore.getState()
-
-  prepare(state.scene, rootStore, '', {})
 
   let oldSize = state.size
   let oldDpr = state.viewport.dpr

@@ -10,21 +10,21 @@ This tutorial will assume some React and TypeScript knowledge. You can fork and 
 
 React's `useRef` won't automatically infer types despite pointing it to a typed ref.
 
-You can type the ref yourself by passing an type through `useRef`'s generics:
+You can type the ref yourself by passing a type through `useRef`'s generics:
 
 ```tsx
 import { useRef, useEffect } from 'react'
 import { Mesh } from 'three'
 
 function Box(props) {
-  const ref = useRef<Mesh>(null!)
+  const meshRef = useRef<Mesh>(null!)
 
   useEffect(() => {
-    console.log(Boolean(ref.current))
+    console.log(Boolean(meshRef.current))
   }, [])
 
   return (
-    <mesh {...props} ref={ref}>
+    <mesh {...props} ref={meshRef}>
       <boxGeometry />
       <meshBasicMaterial />
     </mesh>

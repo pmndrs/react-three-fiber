@@ -1,5 +1,5 @@
 import type * as THREE from 'three'
-import type { EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
+import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 
 type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
 export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
@@ -14,7 +14,7 @@ export interface VectorRepresentation extends MathRepresentation {
 }
 
 export type MathType<T extends MathRepresentation | THREE.Euler> = T extends THREE.Color
-  ? ConstructorParameters<typeof THREE.Color> | THREE.ColorRepresentation
+  ? Args<typeof THREE.Color> | THREE.ColorRepresentation
   : T extends VectorRepresentation | THREE.Layers | THREE.Euler
   ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>

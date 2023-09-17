@@ -1,55 +1,117 @@
 import * as THREE from 'three'
-import type { Asset } from 'expo-asset'
-
-// Check if expo-asset is installed (available with expo modules)
-let expAsset: typeof Asset | undefined
-try {
-  expAsset = require('expo-asset')?.Asset
-} catch (_) {}
-
-/**
- * Generates an asset based on input type.
- */
-function getAsset(input: string | number) {
-  switch (typeof input) {
-    case 'string':
-      return expAsset!.fromURI(input)
-    case 'number':
-      return expAsset!.fromModule(input)
-    default:
-      throw new Error('R3F: Invalid asset! Must be a URI or module.')
-  }
-}
-
-let injected = false
+import { Image } from 'react-native'
+import { Asset } from 'expo-asset'
+import * as fs from 'expo-file-system'
+import { fromByteArray } from 'base64-js'
 
 export function polyfills() {
-  if (!expAsset || injected) return
-  injected = true
+  // Patch Blob for ArrayBuffer if unsupported
+  try {
+    new Blob([new ArrayBuffer(4) as any])
+  } catch (_) {
+    global.Blob = class extends Blob {
+      constructor(parts?: any[], options?: any) {
+        super(
+          parts?.map((part) => {
+            if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
+              part = fromByteArray(new Uint8Array(part as ArrayBuffer))
+            }
+
+            return part
+          }),
+          options,
+        )
+      }
+    }
+  }
+
+  function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0,
+        v = c == 'x' ? r : (r & 0x3) | 0x8
+      return v.toString(16)
+    })
+  }
+
+  async function getAsset(input: string | number): Promise<string> {
+    if (typeof input === 'string') {
+      // Don't process storage or data uris
+      if (input.startsWith('file:') || input.startsWith('data:')) return input
+
+      // Unpack Blobs from react-native BlobManager
+      if (input.startsWith('blob:')) {
+        const blob = await new Promise<Blob>((res, rej) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', input as string)
+          xhr.responseType = 'blob'
+          xhr.onload = () => res(xhr.response)
+          xhr.onerror = rej
+          xhr.send()
+        })
+
+        const data = await new Promise<string>((res, rej) => {
+          const reader = new FileReader()
+          reader.onload = () => res(reader.result as string)
+          reader.onerror = rej
+          reader.readAsText(blob)
+        })
+
+        return `data:${blob.type};base64,${data}`
+      }
+    }
+
+    // Download bundler module or external URL
+    const asset = await Asset.fromModule(input).downloadAsync()
+    let uri = asset.localUri || asset.uri
+
+    // Unpack assets in Android Release Mode
+    if (!uri.includes(':')) {
+      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+      const stats = await fs.getInfoAsync(file, { size: false })
+      if (!stats.exists) await fs.copyAsync({ from: uri, to: file })
+      uri = file
+    }
+
+    return uri
+  }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
   const extractUrlBase = THREE.LoaderUtils.extractUrlBase.bind(THREE.LoaderUtils)
   THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
   // There's no Image in native, so create a data texture instead
-  const prevTextureLoad = THREE.TextureLoader.prototype.load
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
+    if (this.path) url = this.path + url
+
     const texture = new THREE.Texture()
 
-    // @ts-ignore
-    texture.isDataTexture = true
-
     getAsset(url)
-      .downloadAsync()
-      .then((asset: Asset) => {
+      .then(async (uri) => {
+        // Create safe URI for JSI
+        if (uri.startsWith('data:')) {
+          const [header, data] = uri.split(',')
+          const [, type] = header.split('/')
+
+          uri = fs.cacheDirectory + uuidv4() + `.${type}`
+          await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+        }
+
+        const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
+          Image.getSize(uri, (width, height) => res({ width, height }), rej),
+        )
+
         texture.image = {
-          data: asset,
-          width: asset.width,
-          height: asset.height,
+          data: { localUri: uri },
+          width,
+          height,
         }
         texture.flipY = true
         texture.unpackAlignment = 1
         texture.needsUpdate = true
+
+        // Force non-DOM upload for EXGL fast paths
+        // @ts-ignore
+        texture.isDataTexture = true
 
         onLoad?.(texture)
       })
@@ -59,16 +121,20 @@ export function polyfills() {
   }
 
   // Fetches assets via XMLHttpRequest
-  const prevFileLoad = THREE.FileLoader.prototype.load
-  THREE.FileLoader.prototype.load = function (url, onLoad, onProgress, onError) {
+  THREE.FileLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     if (this.path) url = this.path + url
 
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .downloadAsync()
-      .then((asset) => {
-        request.open('GET', asset.uri, true)
+      .then(async (uri) => {
+        // Make FS paths web-safe
+        if (uri.startsWith('file://')) {
+          const data = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
+          uri = `data:application/octet-stream;base64,${data}`
+        }
+
+        request.open('GET', uri, true)
 
         request.addEventListener(
           'load',
@@ -128,14 +194,8 @@ export function polyfills() {
 
         this.manager.itemStart(url)
       })
+      .catch(onError)
 
     return request
-  }
-
-  // Cleanup function
-  return () => {
-    THREE.LoaderUtils.extractUrlBase = extractUrlBase
-    THREE.TextureLoader.prototype.load = prevTextureLoad
-    THREE.FileLoader.prototype.load = prevFileLoad
   }
 }

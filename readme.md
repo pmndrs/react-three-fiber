@@ -1,7 +1,7 @@
 <h1>@react-three/fiber</h1>
 
 [![Version](https://img.shields.io/npm/v/@react-three/fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
-[![Downloads](https://img.shields.io/npm/dt/react-three-fiber.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
+[![Downloads](https://img.shields.io/npm/dt/@react-three/fiber.svg?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
 [![Twitter](https://img.shields.io/twitter/follow/pmndrs?label=%40pmndrs&style=flat&colorA=000000&colorB=000000&logo=twitter&logoColor=000000)](https://twitter.com/pmndrs)
 [![Discord](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=000000)](https://discord.gg/ZZjjNvJ)
 [![Open Collective](https://img.shields.io/opencollective/all/react-three-fiber?style=flat&colorA=000000&colorB=000000)](https://opencollective.com/react-three-fiber)
@@ -201,7 +201,7 @@ Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
 
 # First steps
 
-You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://reactjs.org/docs/getting-started.html), especially [the section about hooks](https://reactjs.org/docs/hooks-reference.html). As for Threejs, make sure you at least glance over the following links:
+You need to be versed in both React and Threejs before rushing into this. If you are unsure about React consult the official [React docs](https://react.dev/learn), especially [the section about hooks](https://react.dev/reference/react). As for Threejs, make sure you at least glance over the following links:
 
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
@@ -224,6 +224,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
 - [`@react-three/test-renderer`](https://github.com/pmndrs/react-three-fiber/tree/master/packages/test-renderer) &ndash; for unit tests in node
+- [`@react-three/offscreen`](https://github.com/pmndrs/react-three-offscreen) &ndash; offscreen/worker canvas for react-three-fiber
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
 - [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
 - [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; constructive solid geometry
@@ -244,6 +245,8 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 - [`miniplex`](https://github.com/hmans/miniplex) &ndash; ECS (entity management system)
 - [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
+- [`triplex`](https://triplex.dev/) &ndash; scene editor for react-three-fiber
+- [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
 
 # How to contribute
 
