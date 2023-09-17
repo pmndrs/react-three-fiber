@@ -70,7 +70,7 @@ interface HostConfig {
   noTimeout: -1
 }
 
-const catalogue: Catalogue = {}
+export const catalogue: Catalogue = {}
 
 let i = 0
 
