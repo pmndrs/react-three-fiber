@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.14.2
+
+### Patch Changes
+
+- 33e8baef: fix: native perf, loader types
+
+## 8.14.1
+
+### Patch Changes
+
+- c99907bf: fix(native): prefer local uri for fs
+
 ## 8.14.0
 
 ### Minor Changes

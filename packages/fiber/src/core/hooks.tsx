@@ -81,7 +81,7 @@ export interface Loader<T> extends THREE.Loader {
     url: string | string[] | string[][],
     onLoad?: (result: T, ...args: any[]) => void,
     onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void,
+    onError?: (event: unknown) => void,
   ): unknown
 }
 
@@ -108,10 +108,10 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
           new Promise<LoaderResult<T>>((res, reject) =>
             loader.load(
               input,
-              (data: any) =>
+              (data) =>
                 res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
               onProgress,
-              (error) => reject(new Error(`Could not load ${input}: ${error.message}`)),
+              (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
           ),
       ),
