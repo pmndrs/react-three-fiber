@@ -12,7 +12,7 @@ export interface Loader<T> extends THREE.Loader {
     url: string,
     onLoad?: (result: T) => void,
     onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: ErrorEvent) => void,
+    onError?: (event: unknown) => void,
   ): unknown
   loadAsync(url: string, onProgress?: (event: ProgressEvent) => void): Promise<T>
 }
@@ -101,12 +101,12 @@ function loadingFn<L extends LoaderProto<any>>(
           new Promise((res, reject) =>
             loader.load(
               input,
-              (data: any) => {
+              (data) => {
                 if (data.scene) Object.assign(data, buildGraph(data.scene))
                 res(data)
               },
               onProgress,
-              (error) => reject(new Error(`Could not load ${input}: ${error.message}`)),
+              (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
           ),
       ),
