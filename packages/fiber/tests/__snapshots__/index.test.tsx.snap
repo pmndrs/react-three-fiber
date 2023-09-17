@@ -67,7 +67,6 @@ Array [
   "Vector2",
   "Vector3",
   "Vector4",
-  "Viewport",
   "XRManager",
   "_roots",
   "act",
