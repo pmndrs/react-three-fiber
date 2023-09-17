@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.2
+
+### Patch Changes
+
+- 33e8baef: fix: native perf, loader types
+
 ## 8.14.1
 
 ### Patch Changes
