@@ -67,8 +67,7 @@ export function polyfills() {
     // Unpack assets in Android Release Mode
     if (!uri.includes(':')) {
       const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-      const stats = await fs.getInfoAsync(file, { size: false })
-      if (!stats.exists) await fs.copyAsync({ from: uri, to: file })
+      await fs.copyAsync({ from: uri, to: file })
       uri = file
     }
 
