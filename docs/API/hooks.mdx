@@ -237,7 +237,7 @@ useLoader(loader, url, extensions, (xhr) => {
 If a `result.scene` prop is found the hook will automatically create a object & material collection: `{ nodes, materials }`. This lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it. [GLTFJSX](https://github.com/pmndrs/gltfjsx) specifically relies on this data.
 
 ```jsx
-const { nodes, material } = useLoader(GLTFLoader, url)
+const { nodes, materials } = useLoader(GLTFLoader, url)
 ```
 
 ### Pre-loading assets
