@@ -277,6 +277,8 @@ export function diffProps(
   return { memoized, changes }
 }
 
+const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
+
 // This function applies a set of changes to the instance
 export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
@@ -361,7 +363,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor === (value as ClassConstructor).constructor
+        // Some environments may break strict identity checks by duplicating versions of three.js.
+        // Loosen to unminified names, ignoring descendents.
+        // https://github.com/pmndrs/react-three-fiber/issues/2856
+        // TODO: fix upstream and remove in v9
+        (__DEV__
+          ? targetProp.constructor.name === (value as ClassConstructor).constructor.name
+          : targetProp.constructor === (value as ClassConstructor).constructor)
       ) {
         targetProp.copy(value)
       }
