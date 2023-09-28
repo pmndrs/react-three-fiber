@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.3
+
+### Patch Changes
+
+- d77b0990: fix(native): drop fsstat for react-native-web
+
 ## 8.14.2
 
 ### Patch Changes
