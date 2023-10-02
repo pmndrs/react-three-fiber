@@ -1,36 +1,66 @@
 import * as THREE from 'three'
-import { Image } from 'react-native'
+import { Image, Platform, NativeModules } from 'react-native'
 import { Asset } from 'expo-asset'
 import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 
 export function polyfills() {
-  // Patch Blob for ArrayBuffer if unsupported
-  try {
-    new Blob([new ArrayBuffer(4) as any])
-  } catch (_) {
-    global.Blob = class extends Blob {
-      constructor(parts?: any[], options?: any) {
-        super(
-          parts?.map((part) => {
-            if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-              part = fromByteArray(new Uint8Array(part as ArrayBuffer))
-            }
-
-            return part
-          }),
-          options,
-        )
-      }
-    }
-  }
-
   function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0,
         v = c == 'x' ? r : (r & 0x3) | 0x8
       return v.toString(16)
     })
+  }
+
+  // Patch Blob for ArrayBuffer if unsupported
+  if (Platform.OS !== 'web') {
+    try {
+      new Blob([new ArrayBuffer(4) as any])
+    } catch (_) {
+      const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
+
+      BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
+        const blobId = uuidv4()
+
+        const items = parts.map((part) => {
+          if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
+            const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
+            return {
+              data,
+              type: 'string',
+            }
+          } else if (part instanceof Blob) {
+            return {
+              data: (part as any).data,
+              type: 'blob',
+            }
+          } else {
+            return {
+              data: String(part),
+              type: 'string',
+            }
+          }
+        })
+        const size = items.reduce((acc, curr) => {
+          if (curr.type === 'string') {
+            return acc + global.unescape(encodeURI(curr.data)).length
+          } else {
+            return acc + curr.data.size
+          }
+        }, 0)
+
+        NativeModules.BlobModule.createFromParts(items, blobId)
+
+        return BlobManager.createFromOptions({
+          blobId,
+          offset: 0,
+          size,
+          type: options ? options.type : '',
+          lastModified: options ? options.lastModified : Date.now(),
+        })
+      }
+    }
   }
 
   async function getAsset(input: string | number): Promise<string> {
