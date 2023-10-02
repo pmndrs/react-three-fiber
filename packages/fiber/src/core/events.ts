@@ -245,7 +245,17 @@ export function createEvents(store: RootStore) {
     if (intersections.length) {
       const localState = { stopped: false }
       for (const hit of intersections) {
-        const state = getRootState(hit.object)
+        let state = getRootState(hit.object)
+
+        if (!state)
+          hit.object.traverseAncestors((obj) => {
+            const _state = getRootState(obj)
+            if (_state) {
+              state = _state
+              return false
+            }
+          })
+
         if (state) {
           const { raycaster, pointer, camera, internal } = state
           const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
