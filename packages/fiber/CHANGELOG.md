@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.4
+
+### Patch Changes
+
+- dc7e5739: fix(native): amend BlobManager over globals
+
 ## 8.14.3
 
 ### Patch Changes
