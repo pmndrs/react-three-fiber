@@ -62,5 +62,6 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
         set((state) => ({ events: { ...state.events, connected: undefined } }))
       }
     },
+    clickThreshold: 7,
   }
 }

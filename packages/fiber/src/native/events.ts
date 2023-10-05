@@ -66,5 +66,6 @@ export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
 
       set((state) => ({ events: { ...state.events, connected: false } }))
     },
+    clickThreshold: 7,
   }
 }

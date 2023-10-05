@@ -200,7 +200,7 @@ export const createStore = (
       gl: null as unknown as THREE.WebGLRenderer,
       camera: null as unknown as Camera,
       raycaster: null as unknown as THREE.Raycaster,
-      events: { priority: 1, enabled: true, connected: false },
+      events: { priority: 1, enabled: true, connected: false, clickThreshold: 7 },
       scene: null as unknown as THREE.Scene,
       xr: null as unknown as XRManager,
 
