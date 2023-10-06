@@ -360,6 +360,9 @@ export function diffProps<T = any>(
   return changedProps
 }
 
+type ClassConstructor = { new (): void }
+const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
+
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
@@ -401,7 +404,16 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
 
     // Copy if properties match signatures
-    if (target?.copy && target?.constructor === (value as ConstructorRepresentation)?.constructor) {
+    if (
+      target?.copy &&
+      // Some environments may break strict identity checks by duplicating versions of three.js.
+      // Loosen to unminified names, ignoring descendents.
+      // https://github.com/pmndrs/react-three-fiber/issues/2856
+      // TODO: fix upstream and remove in v9
+      (__DEV__
+        ? target.constructor.name === (value as ClassConstructor).constructor.name
+        : target.constructor === (value as ClassConstructor).constructor)
+    ) {
       target.copy(value)
     }
     // Layers have no copy function, we must therefore copy the mask property
