@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.14.5
+
+### Patch Changes
+
+- f372a5b5: fix(applyProps): loosen copy identity in dev
+
+## 8.14.4
+
+### Patch Changes
+
+- dc7e5739: fix(native): amend BlobManager over globals
+
 ## 8.14.3
 
 ### Patch Changes
