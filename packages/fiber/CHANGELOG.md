@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.6
+
+### Patch Changes
+
+- 465fa0fb: fix(native): revert usage of networking stack
+
 ## 8.14.5
 
 ### Patch Changes
