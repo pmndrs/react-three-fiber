@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.14.7
+
+### Patch Changes
+
+- 0f63a287: fix(native): restore polyfill conversions, drop networking
+
 ## 8.14.6
 
 ### Patch Changes
