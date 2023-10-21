@@ -63,8 +63,8 @@ export function polyfills() {
 
   async function getAsset(input: string | number): Promise<string> {
     if (typeof input === 'string') {
-      // Don't process storage or data uris
-      if (input.startsWith('file:') || input.startsWith('data:')) return input
+      // Don't process storage
+      if (input.startsWith('file:')) return input
 
       // Unpack Blobs from react-native BlobManager
       if (input.startsWith('blob:')) {
@@ -84,7 +84,16 @@ export function polyfills() {
           reader.readAsText(blob)
         })
 
-        return `data:${blob.type};base64,${data}`
+        input = `data:${blob.type};base64,${data}`
+      }
+
+      // Create safe URI for JSI
+      if (input.startsWith('data:')) {
+        const [header, data] = input.split(',')
+        const [, type] = header.split('/')
+
+        const uri = fs.cacheDirectory + uuidv4() + `.${type}`
+        await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
       }
     }
 
@@ -108,7 +117,7 @@ export function polyfills() {
 
   // There's no Image in native, so create a data texture instead
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
-    if (this.path) url = this.path + url
+    if (this.path && typeof url === 'string') url = this.path + url
 
     const texture = new THREE.Texture()
 
@@ -149,80 +158,23 @@ export function polyfills() {
 
   // Fetches assets via XMLHttpRequest
   THREE.FileLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
-    if (this.path) url = this.path + url
-
-    const request = new XMLHttpRequest()
+    if (this.path && typeof url === 'string') url = this.path + url
 
     getAsset(url)
       .then(async (uri) => {
-        // Make FS paths web-safe
-        if (uri.startsWith('file://')) {
-          const data = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
-          uri = `data:application/octet-stream;base64,${data}`
-        }
-
-        request.open('GET', uri, true)
-
-        request.addEventListener(
-          'load',
-          (event) => {
-            if (request.status === 200) {
-              onLoad?.(request.response)
-
-              this.manager.itemEnd(url)
-            } else {
-              onError?.(event as unknown as ErrorEvent)
-
-              this.manager.itemError(url)
-              this.manager.itemEnd(url)
-            }
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'progress',
-          (event) => {
-            onProgress?.(event)
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'error',
-          (event) => {
-            onError?.(event as unknown as ErrorEvent)
-
-            this.manager.itemError(url)
-            this.manager.itemEnd(url)
-          },
-          false,
-        )
-
-        request.addEventListener(
-          'abort',
-          (event) => {
-            onError?.(event as unknown as ErrorEvent)
-
-            this.manager.itemError(url)
-            this.manager.itemEnd(url)
-          },
-          false,
-        )
-
-        if (this.responseType) request.responseType = this.responseType
-        if (this.withCredentials) request.withCredentials = this.withCredentials
-
-        for (const header in this.requestHeader) {
-          request.setRequestHeader(header, this.requestHeader[header])
-        }
-
-        request.send(null)
-
         this.manager.itemStart(url)
-      })
-      .catch(onError)
 
-    return request
+        const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
+        const data = Buffer.from(base64, 'base64')
+        onLoad?.(data.buffer)
+
+        this.manager.itemEnd(url)
+      })
+      .catch((error) => {
+        onError?.(error)
+
+        this.manager.itemError(url)
+        this.manager.itemEnd(url)
+      })
   }
 }
