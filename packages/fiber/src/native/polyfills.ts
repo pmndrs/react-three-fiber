@@ -1,33 +1,107 @@
-import { Image } from 'react-native'
-import { Asset } from 'expo-asset'
-import { cacheDirectory, copyAsync, writeAsStringAsync, readAsStringAsync, EncodingType } from 'expo-file-system'
 import * as THREE from 'three'
+import { Image, NativeModules } from 'react-native'
+import { Asset } from 'expo-asset'
+import * as fs from 'expo-file-system'
+import { fromByteArray } from 'base64-js'
 
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0,
-      v = c == 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
-
-async function getAsset(input: string | number): Promise<string> {
-  const asset = typeof input === 'string' ? Asset.fromURI(input) : Asset.fromModule(input)
-
-  await asset.downloadAsync()
-  let localUri = asset.localUri || asset.uri
-
-  // Unpack assets in Android Release Mode
-  if (!localUri.includes('://')) {
-    const targetUri = `${cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-    await copyAsync({ from: localUri, to: targetUri })
-    localUri = targetUri
+export function polyfills() {
+  function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0,
+        v = c == 'x' ? r : (r & 0x3) | 0x8
+      return v.toString(16)
+    })
   }
 
-  return localUri
-}
+  // Patch Blob for ArrayBuffer if unsupported
+  try {
+    new Blob([new ArrayBuffer(4) as any])
+  } catch (_) {
+    const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
 
-export function _polyfills() {
+    BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
+      const blobId = uuidv4()
+
+      const items = parts.map((part) => {
+        if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
+          const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
+          return {
+            data,
+            type: 'string',
+          }
+        } else if (part instanceof Blob) {
+          return {
+            data: (part as any).data,
+            type: 'blob',
+          }
+        } else {
+          return {
+            data: String(part),
+            type: 'string',
+          }
+        }
+      })
+      const size = items.reduce((acc, curr) => {
+        if (curr.type === 'string') {
+          return acc + global.unescape(encodeURI(curr.data)).length
+        } else {
+          return acc + curr.data.size
+        }
+      }, 0)
+
+      NativeModules.BlobModule.createFromParts(items, blobId)
+
+      return BlobManager.createFromOptions({
+        blobId,
+        offset: 0,
+        size,
+        type: options ? options.type : '',
+        lastModified: options ? options.lastModified : Date.now(),
+      })
+    }
+  }
+
+  async function getAsset(input: string | number): Promise<string> {
+    if (typeof input === 'string') {
+      // Don't process storage or data uris
+      if (input.startsWith('file:') || input.startsWith('data:')) return input
+
+      // Unpack Blobs from react-native BlobManager
+      if (input.startsWith('blob:')) {
+        const blob = await new Promise<Blob>((res, rej) => {
+          const xhr = new XMLHttpRequest()
+          xhr.open('GET', input as string)
+          xhr.responseType = 'blob'
+          xhr.onload = () => res(xhr.response)
+          xhr.onerror = rej
+          xhr.send()
+        })
+
+        const data = await new Promise<string>((res, rej) => {
+          const reader = new FileReader()
+          reader.onload = () => res(reader.result as string)
+          reader.onerror = rej
+          reader.readAsText(blob)
+        })
+
+        return `data:${blob.type};base64,${data}`
+      }
+    }
+
+    // Download bundler module or external URL
+    const asset = await Asset.fromModule(input).downloadAsync()
+    let uri = asset.localUri || asset.uri
+
+    // Unpack assets in Android Release Mode
+    if (!uri.includes(':')) {
+      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+      await fs.copyAsync({ from: uri, to: file })
+      uri = file
+    }
+
+    return uri
+  }
+
   // Don't pre-process urls, let expo-asset generate an absolute URL
   const extractUrlBase = THREE.LoaderUtils.extractUrlBase.bind(THREE.LoaderUtils)
   THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
@@ -39,22 +113,22 @@ export function _polyfills() {
     const texture = new THREE.Texture()
 
     getAsset(url)
-      .then(async (localUri) => {
+      .then(async (uri) => {
         // Create safe URI for JSI
-        if (localUri.startsWith('data:')) {
-          const [header, data] = localUri.split(',')
+        if (uri.startsWith('data:')) {
+          const [header, data] = uri.split(',')
           const [, type] = header.split('/')
 
-          localUri = cacheDirectory + uuidv4() + `.${type}`
-          await writeAsStringAsync(localUri, data, { encoding: EncodingType.Base64 })
+          uri = fs.cacheDirectory + uuidv4() + `.${type}`
+          await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
         }
 
         const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
-          Image.getSize(localUri, (width, height) => res({ width, height }), rej),
+          Image.getSize(uri, (width, height) => res({ width, height }), rej),
         )
 
         texture.image = {
-          data: { localUri },
+          data: { localUri: uri },
           width,
           height,
         }
@@ -80,14 +154,14 @@ export function _polyfills() {
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .then(async (localUri) => {
+      .then(async (uri) => {
         // Make FS paths web-safe
-        if (localUri.startsWith('file://')) {
-          const data = await readAsStringAsync(localUri, { encoding: EncodingType.Base64 })
-          localUri = `data:application/octet-stream;base64,${data}`
+        if (uri.startsWith('file://')) {
+          const data = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
+          uri = `data:application/octet-stream;base64,${data}`
         }
 
-        request.open('GET', localUri, true)
+        request.open('GET', uri, true)
 
         request.addEventListener(
           'load',
