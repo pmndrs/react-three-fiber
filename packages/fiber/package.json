@@ -45,6 +45,7 @@
     "@babel/runtime": "^7.17.8",
     "@types/react-reconciler": "^0.26.7",
     "base64-js": "^1.5.1",
+    "buffer": "^6.0.3",
     "its-fine": "^1.0.6",
     "react-reconciler": "^0.27.0",
     "react-use-measure": "^2.1.1",

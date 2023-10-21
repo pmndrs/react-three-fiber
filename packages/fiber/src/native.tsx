@@ -21,6 +21,6 @@ export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'
 
 import { Platform } from 'react-native'
-import { _polyfills } from './native/polyfills'
+import { polyfills } from './native/polyfills'
 
-if (Platform.OS !== 'web') _polyfills()
+if (Platform.OS !== 'web') polyfills()
