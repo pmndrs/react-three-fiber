@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.0
+
+### Minor Changes
+
+- cca8b6bb: feat: export buildGraph
+
 ## 8.14.7
 
 ### Patch Changes
