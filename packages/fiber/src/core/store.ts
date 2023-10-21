@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
-import { prepare } from './renderer'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
+import { _XRFrame, calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -53,7 +52,7 @@ export type Viewport = Size & {
   aspect: number
 }
 
-export type RenderCallback = (state: RootState, delta: number, frame?: THREE.XRFrame) => void
+export type RenderCallback = (state: RootState, delta: number, frame?: _XRFrame) => void
 
 export type Performance = {
   /** Current performance normal, between min and max */
@@ -167,7 +166,7 @@ const context = React.createContext<UseBoundStore<RootState>>(null!)
 
 const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
-  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: THREE.XRFrame) => void,
+  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: _XRFrame) => void,
 ): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()

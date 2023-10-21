@@ -2730,6 +2730,11 @@
   resolved "https://registry.yarnpkg.com/@types/three/-/three-0.139.0.tgz#69af1f0c52f8eea390f513e05478af1dd7f49e6f"
   integrity sha512-4V/jZhyq7Mv05coUzxL3bz8AuBOSi/1F0RY7ujisHTV0Amy/fnYJ+s7TSJ1/hXjZukSkpuFRgV+wvWUEMbsMbQ==
 
+"@types/webxr@*":
+  version "0.5.6"
+  resolved "https://registry.yarnpkg.com/@types/webxr/-/webxr-0.5.6.tgz#835c7ac9983a732e2e849d0d302bc735aa455126"
+  integrity sha512-/uWg82/WT+Pl18b2kkG6nlbiiaNIb8RN2mvvcGexGvwLvUrEhDhGBzYHiwa5nQPtin0hISyrXkKOKVScTK+kKg==
+
 "@types/webxr@^0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@types/webxr/-/webxr-0.5.2.tgz#5d9627b0ffe223aa3b166de7112ac8a9460dc54f"

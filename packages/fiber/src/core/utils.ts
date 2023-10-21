@@ -1,9 +1,15 @@
+/// <reference types="webxr" />
 import * as THREE from 'three'
 import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, Renderer, RootState, Size } from './store'
+
+// < r141 shipped vendored types https://github.com/pmndrs/react-three-fiber/issues/2501
+// @ts-ignore
+type _DeprecatedXRFrame = THREE.XRFrame
+export type _XRFrame = THREE.WebGLRenderTargetOptions extends { samples?: number } ? XRFrame : _DeprecatedXRFrame
 
 /**
  * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
