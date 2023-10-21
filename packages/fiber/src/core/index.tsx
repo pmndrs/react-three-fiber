@@ -30,6 +30,7 @@ import {
   updateCamera,
   getColorManagement,
   buildGraph,
+  _XRFrame,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -245,7 +246,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
-        const handleXRFrame: THREE.XRFrameRequestCallback = (timestamp: number, frame?: THREE.XRFrame) => {
+        const handleXRFrame = (timestamp: number, frame?: _XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
           advance(timestamp, true, state, frame)

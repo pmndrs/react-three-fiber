@@ -1,6 +1,6 @@
-import * as THREE from 'three'
 import { Root } from './renderer'
 import { RootState, Subscription } from './store'
+import { _XRFrame } from './utils'
 
 export type GlobalRenderCallback = (timeStamp: number) => void
 type SubItem = { callback: GlobalRenderCallback }
@@ -56,7 +56,7 @@ export function flushGlobalEffects(type: GlobalEffectType, timestamp: number): v
 
 let subscribers: Subscription[]
 let subscription: Subscription
-function render(timestamp: number, state: RootState, frame?: THREE.XRFrame) {
+function render(timestamp: number, state: RootState, frame?: _XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
   // In frameloop='never' mode, clock times are updated using the provided timestamp
@@ -131,12 +131,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     }
   }
 
-  function advance(
-    timestamp: number,
-    runGlobalEffects: boolean = true,
-    state?: RootState,
-    frame?: THREE.XRFrame,
-  ): void {
+  function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState, frame?: _XRFrame): void {
     if (runGlobalEffects) flushGlobalEffects('before', timestamp)
     if (!state) for (const root of roots.values()) render(timestamp, root.store.getState())
     else render(timestamp, state, frame)
