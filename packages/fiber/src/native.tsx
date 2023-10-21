@@ -20,7 +20,4 @@ export { createTouchEvents as events } from './native/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'
 
-import { Platform } from 'react-native'
-import { polyfills } from './native/polyfills'
-
-if (Platform.OS !== 'web') polyfills()
+export { polyfills } from './native/polyfills'

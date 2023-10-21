@@ -7,7 +7,6 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/util
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
-import { polyfills } from './polyfills'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -43,9 +42,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     },
     forwardedRef,
   ) => {
-    // Eagerly polyfill
-    React.useMemo(() => polyfills(), [])
-
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
