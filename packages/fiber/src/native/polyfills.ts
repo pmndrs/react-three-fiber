@@ -1,7 +1,15 @@
 import { Image } from 'react-native'
 import { Asset } from 'expo-asset'
-import { cacheDirectory, copyAsync } from 'expo-file-system'
+import { cacheDirectory, copyAsync, writeAsStringAsync, readAsStringAsync, EncodingType } from 'expo-file-system'
 import * as THREE from 'three'
+
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
 
 async function getAsset(input: string | number): Promise<string> {
   const asset = typeof input === 'string' ? Asset.fromURI(input) : Asset.fromModule(input)
@@ -11,8 +19,9 @@ async function getAsset(input: string | number): Promise<string> {
 
   // Unpack assets in Android Release Mode
   if (!localUri.includes('://')) {
-    localUri = `${cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-    await copyAsync({ from: localUri, to: localUri })
+    const targetUri = `${cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+    await copyAsync({ from: localUri, to: targetUri })
+    localUri = targetUri
   }
 
   return localUri
@@ -31,6 +40,15 @@ export function _polyfills() {
 
     getAsset(url)
       .then(async (localUri) => {
+        // Create safe URI for JSI
+        if (localUri.startsWith('data:')) {
+          const [header, data] = localUri.split(',')
+          const [, type] = header.split('/')
+
+          localUri = cacheDirectory + uuidv4() + `.${type}`
+          await writeAsStringAsync(localUri, data, { encoding: EncodingType.Base64 })
+        }
+
         const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
           Image.getSize(localUri, (width, height) => res({ width, height }), rej),
         )
@@ -62,7 +80,13 @@ export function _polyfills() {
     const request = new XMLHttpRequest()
 
     getAsset(url)
-      .then((localUri) => {
+      .then(async (localUri) => {
+        // Make FS paths web-safe
+        if (localUri.startsWith('file://')) {
+          const data = await readAsStringAsync(localUri, { encoding: EncodingType.Base64 })
+          localUri = `data:application/octet-stream;base64,${data}`
+        }
+
         request.open('GET', localUri, true)
 
         request.addEventListener(
