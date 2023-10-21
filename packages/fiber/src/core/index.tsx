@@ -29,7 +29,7 @@ import {
   Camera,
   updateCamera,
   getColorManagement,
-  hasColorSpace,
+  buildGraph,
 } from './utils'
 import { useStore } from './hooks'
 import type { Properties } from '../three-types'
@@ -590,5 +590,6 @@ export {
   flushGlobalEffects,
   getRootState,
   act,
+  buildGraph,
   roots as _roots,
 }

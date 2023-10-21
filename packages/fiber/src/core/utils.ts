@@ -153,7 +153,9 @@ export const is = {
   },
 }
 
-// Collects nodes and materials from a THREE.Object3D
+/**
+ * Collects nodes and materials from a THREE.Object3D.
+ */
 export function buildGraph(object: THREE.Object3D) {
   const data: ObjectMap = { nodes: {}, materials: {} }
   if (object) {
