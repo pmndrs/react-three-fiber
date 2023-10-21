@@ -95,6 +95,8 @@ export function polyfills() {
 
         const uri = fs.cacheDirectory + uuidv4() + `.${type}`
         await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+
+        return uri
       }
     }
 
@@ -124,15 +126,6 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (uri) => {
-        // Create safe URI for JSI
-        if (uri.startsWith('data:')) {
-          const [header, data] = uri.split(',')
-          const [, type] = header.split('/')
-
-          uri = fs.cacheDirectory + uuidv4() + `.${type}`
-          await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
-        }
-
         const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
           Image.getSize(uri, (width, height) => res({ width, height }), rej),
         )
