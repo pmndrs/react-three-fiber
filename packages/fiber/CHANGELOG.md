@@ -1,5 +1,23 @@
 # @react-three/fiber
 
+## 8.15.0
+
+### Minor Changes
+
+- cca8b6bb: feat: export buildGraph
+
+## 8.14.7
+
+### Patch Changes
+
+- 0f63a287: fix(native): restore polyfill conversions, drop networking
+
+## 8.14.6
+
+### Patch Changes
+
+- 465fa0fb: fix(native): revert usage of networking stack
+
 ## 8.14.5
 
 ### Patch Changes
