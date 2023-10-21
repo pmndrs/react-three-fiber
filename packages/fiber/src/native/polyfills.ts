@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { Image, NativeModules } from 'react-native'
 import { Asset } from 'expo-asset'
 import * as fs from 'expo-file-system'
+import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
 
 export function polyfills() {
