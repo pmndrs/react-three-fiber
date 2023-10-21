@@ -122,6 +122,8 @@ export function polyfills() {
   THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
+    this.manager.itemStart(url)
+
     const texture = new THREE.Texture()
 
     getAsset(url)
@@ -145,7 +147,13 @@ export function polyfills() {
 
         onLoad?.(texture)
       })
-      .catch(onError)
+      .catch((error) => {
+        onError?.(error)
+        this.manager.itemError(url)
+      })
+      .finally(() => {
+        this.manager.itemEnd(url)
+      })
 
     return texture
   }
@@ -154,20 +162,19 @@ export function polyfills() {
   THREE.FileLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
+    this.manager.itemStart(url)
+
     getAsset(url)
       .then(async (uri) => {
-        this.manager.itemStart(url)
-
         const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
         const data = Buffer.from(base64, 'base64')
         onLoad?.(data.buffer)
-
-        this.manager.itemEnd(url)
       })
       .catch((error) => {
         onError?.(error)
-
         this.manager.itemError(url)
+      })
+      .finally(() => {
         this.manager.itemEnd(url)
       })
   }
