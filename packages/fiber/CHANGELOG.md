@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.1
+
+### Patch Changes
+
+- 2d39676d: fix: ignore deprecated types, use correct XRFrame definition
+
 ## 8.15.0
 
 ### Minor Changes
