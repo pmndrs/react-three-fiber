@@ -84,6 +84,7 @@ Array [
   "addTail",
   "advance",
   "applyProps",
+  "buildGraph",
   "context",
   "createEvents",
   "createPortal",
