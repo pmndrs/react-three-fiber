@@ -41,7 +41,7 @@ async function getAsset(input: string | number): Promise<string> {
       input = `data:${blob.type};base64,${data}`
     }
 
-    // Create safe URI for JSI
+    // Create safe URI for JSI serialization
     if (input.startsWith('data:')) {
       const [header, data] = input.split(';base64,')
       const [, type] = header.split('/')
