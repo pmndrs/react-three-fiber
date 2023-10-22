@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.4
+
+### Patch Changes
+
+- 634e5db5: fix(native): harden Blob URI check for Android
+
 ## 8.15.3
 
 ### Patch Changes
