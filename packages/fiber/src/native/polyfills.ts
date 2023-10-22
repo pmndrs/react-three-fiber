@@ -22,6 +22,28 @@ export function polyfills() {
   } catch (_) {
     const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
 
+    let BLOB_URL_PREFIX: string | null = null
+
+    const { BlobModule } = NativeModules
+
+    if (BlobModule && typeof BlobModule.BLOB_URI_SCHEME === 'string') {
+      BLOB_URL_PREFIX = BlobModule.BLOB_URI_SCHEME + ':'
+      if (typeof BlobModule.BLOB_URI_HOST === 'string') {
+        BLOB_URL_PREFIX += `//${BlobModule.BLOB_URI_HOST}/`
+      }
+    }
+
+    URL.createObjectURL = function createObjectURL(blob: Blob): string {
+      const data = (blob as any).data
+
+      if (BLOB_URL_PREFIX === null) {
+        // throw new Error('Cannot create URL for blob!')
+        return `data:${blob.type};base64,${data._base64}`
+      }
+
+      return `${BLOB_URL_PREFIX}${data.blobId}?offset=${data.offset}&size=${blob.size}`
+    }
+
     BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
       const blobId = uuidv4()
 
@@ -54,13 +76,23 @@ export function polyfills() {
 
       NativeModules.BlobModule.createFromParts(items, blobId)
 
-      return BlobManager.createFromOptions({
+      const blob = BlobManager.createFromOptions({
         blobId,
         offset: 0,
         size,
         type: options ? options.type : '',
         lastModified: options ? options.lastModified : Date.now(),
       })
+
+      if (BLOB_URL_PREFIX === null) {
+        let data = ''
+        for (const item of items) {
+          data += item.data._base64 ?? item.data
+        }
+        blob.data._base64 = data
+      }
+
+      return blob
     }
   }
 
