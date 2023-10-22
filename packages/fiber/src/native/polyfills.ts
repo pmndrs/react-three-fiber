@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Image, NativeModules } from 'react-native'
+import { Image, NativeModules, Platform } from 'react-native'
 import { Asset } from 'expo-asset'
 import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
@@ -17,50 +17,87 @@ export function polyfills() {
 
   // Patch Blob for ArrayBuffer if unsupported
   // https://github.com/facebook/react-native/pull/39276
-  try {
-    new Blob([new ArrayBuffer(4) as any])
-  } catch (_) {
-    const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
+  if (Platform.OS !== 'web') {
+    try {
+      const blob = new Blob([new ArrayBuffer(4) as any])
+      const url = URL.createObjectURL(blob)
+      URL.revokeObjectURL(url)
+    } catch (_) {
+      const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
 
-    BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
-      const blobId = uuidv4()
+      let BLOB_URL_PREFIX: string | null = null
 
-      const items = parts.map((part) => {
-        if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-          const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
-          return {
-            data,
-            type: 'string',
-          }
-        } else if (part instanceof Blob) {
-          return {
-            data: (part as any).data,
-            type: 'blob',
-          }
-        } else {
-          return {
-            data: String(part),
-            type: 'string',
-          }
+      const { BlobModule } = NativeModules
+
+      if (BlobModule && typeof BlobModule.BLOB_URI_SCHEME === 'string') {
+        BLOB_URL_PREFIX = BlobModule.BLOB_URI_SCHEME + ':'
+        if (typeof BlobModule.BLOB_URI_HOST === 'string') {
+          BLOB_URL_PREFIX += `//${BlobModule.BLOB_URI_HOST}/`
         }
-      })
-      const size = items.reduce((acc, curr) => {
-        if (curr.type === 'string') {
-          return acc + global.unescape(encodeURI(curr.data)).length
-        } else {
-          return acc + curr.data.size
+      }
+
+      URL.createObjectURL = function createObjectURL(blob: Blob): string {
+        const data = (blob as any).data
+
+        if (BLOB_URL_PREFIX === null) {
+          // https://github.com/pmndrs/react-three-fiber/issues/3058
+          // throw new Error('Cannot create URL for blob!')
+          return `data:${blob.type};base64,${data._base64}`
         }
-      }, 0)
 
-      NativeModules.BlobModule.createFromParts(items, blobId)
+        return `${BLOB_URL_PREFIX}${data.blobId}?offset=${data.offset}&size=${blob.size}`
+      }
 
-      return BlobManager.createFromOptions({
-        blobId,
-        offset: 0,
-        size,
-        type: options ? options.type : '',
-        lastModified: options ? options.lastModified : Date.now(),
-      })
+      BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
+        const blobId = uuidv4()
+
+        const items = parts.map((part) => {
+          if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
+            const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
+            return {
+              data,
+              type: 'string',
+            }
+          } else if (part instanceof Blob) {
+            return {
+              data: (part as any).data,
+              type: 'blob',
+            }
+          } else {
+            return {
+              data: String(part),
+              type: 'string',
+            }
+          }
+        })
+        const size = items.reduce((acc, curr) => {
+          if (curr.type === 'string') {
+            return acc + global.unescape(encodeURI(curr.data)).length
+          } else {
+            return acc + curr.data.size
+          }
+        }, 0)
+
+        NativeModules.BlobModule.createFromParts(items, blobId)
+
+        const blob = BlobManager.createFromOptions({
+          blobId,
+          offset: 0,
+          size,
+          type: options ? options.type : '',
+          lastModified: options ? options.lastModified : Date.now(),
+        })
+
+        if (BLOB_URL_PREFIX === null) {
+          let data = ''
+          for (const item of items) {
+            data += item.data._base64 ?? item.data
+          }
+          blob.data._base64 = data
+        }
+
+        return blob
+      }
     }
   }
 
