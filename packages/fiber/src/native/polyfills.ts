@@ -5,18 +5,72 @@ import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
 
-export function polyfills() {
-  // http://stackoverflow.com/questions/105034
-  function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8
-      return v.toString(16)
-    })
+// http://stackoverflow.com/questions/105034
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+async function getAsset(input: string | number): Promise<string> {
+  if (typeof input === 'string') {
+    // Don't process storage
+    if (input.startsWith('file:')) return input
+
+    // Unpack Blobs from react-native BlobManager
+    // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
+    if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
+      const blob = await new Promise<Blob>((res, rej) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', input as string)
+        xhr.responseType = 'blob'
+        xhr.onload = () => res(xhr.response)
+        xhr.onerror = rej
+        xhr.send()
+      })
+
+      const data = await new Promise<string>((res, rej) => {
+        const reader = new FileReader()
+        reader.onload = () => res(reader.result as string)
+        reader.onerror = rej
+        reader.readAsText(blob)
+      })
+
+      input = `data:${blob.type};base64,${data}`
+    }
+
+    // Create safe URI for JSI
+    if (input.startsWith('data:')) {
+      const [header, data] = input.split(';base64,')
+      const [, type] = header.split('/')
+
+      const uri = fs.cacheDirectory + uuidv4() + `.${type}`
+      await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+
+      return uri
+    }
   }
 
-  // Patch Blob for ArrayBuffer if unsupported
-  // https://github.com/facebook/react-native/pull/39276
+  // Download bundler module or external URL
+  const asset = await Asset.fromModule(input).downloadAsync()
+  let uri = asset.localUri || asset.uri
+
+  // Unpack assets in Android Release Mode
+  if (!uri.includes(':')) {
+    const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+    await fs.copyAsync({ from: uri, to: file })
+    uri = file
+  }
+
+  return uri
+}
+
+export function polyfills() {
+  // Patch Blob for ArrayBuffer and URL if unsupported
+  // https://github.com/pmndrs/react-three-fiber/pull/3059
+  // https://github.com/pmndrs/react-three-fiber/issues/3058
   if (Platform.OS !== 'web') {
     try {
       const blob = new Blob([new ArrayBuffer(4) as any])
@@ -27,7 +81,7 @@ export function polyfills() {
 
       const createObjectURL = URL.createObjectURL
       URL.createObjectURL = function (blob: Blob): string {
-        if ((blob as any)._base64) {
+        if ((blob as any).data._base64) {
           return `data:${blob.type};base64,${(blob as any).data._base64}`
         }
 
@@ -36,79 +90,26 @@ export function polyfills() {
 
       const createFromParts = BlobManager.createFromParts
       BlobManager.createFromParts = function (parts: Array<Blob | BlobPart | string>, options: any) {
-        let base64 = ''
-
         parts = parts.map((part) => {
           if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
             part = fromByteArray(new Uint8Array(part as ArrayBuffer))
-          }
-
-          if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
-            base64 += (part as any).data._base64 ?? part
           }
 
           return part
         })
 
         const blob = createFromParts(parts, options)
-        blob.data._base64 = base64
+
+        if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
+          blob.data._base64 = ''
+          for (const part of parts) {
+            blob.data._base64 += (part as any).data._base64 ?? part
+          }
+        }
 
         return blob
       }
     }
-  }
-
-  async function getAsset(input: string | number): Promise<string> {
-    if (typeof input === 'string') {
-      // Don't process storage
-      if (input.startsWith('file:')) return input
-
-      // Unpack Blobs from react-native BlobManager
-      // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
-      if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
-        const blob = await new Promise<Blob>((res, rej) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', input as string)
-          xhr.responseType = 'blob'
-          xhr.onload = () => res(xhr.response)
-          xhr.onerror = rej
-          xhr.send()
-        })
-
-        const data = await new Promise<string>((res, rej) => {
-          const reader = new FileReader()
-          reader.onload = () => res(reader.result as string)
-          reader.onerror = rej
-          reader.readAsText(blob)
-        })
-
-        input = `data:${blob.type};base64,${data}`
-      }
-
-      // Create safe URI for JSI
-      if (input.startsWith('data:')) {
-        const [header, data] = input.split(';base64,')
-        const [, type] = header.split('/')
-
-        const uri = fs.cacheDirectory + uuidv4() + `.${type}`
-        await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
-
-        return uri
-      }
-    }
-
-    // Download bundler module or external URL
-    const asset = await Asset.fromModule(input).downloadAsync()
-    let uri = asset.localUri || asset.uri
-
-    // Unpack assets in Android Release Mode
-    if (!uri.includes(':')) {
-      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-      await fs.copyAsync({ from: uri, to: file })
-      uri = file
-    }
-
-    return uri
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
