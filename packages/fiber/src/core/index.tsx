@@ -231,6 +231,10 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+
+        // Configure raycaster
+        // https://github.com/pmndrs/react-xr/issues/300
+        raycaster.camera = camera
       }
 
       // Set up scene (one time only!)
