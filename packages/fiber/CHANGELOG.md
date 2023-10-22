@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.2
+
+### Patch Changes
+
+- 086d3932: fix: size check and raycaster camera
+
 ## 8.15.1
 
 ### Patch Changes

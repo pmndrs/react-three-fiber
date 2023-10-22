@@ -6,6 +6,7 @@ import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
 
 export function polyfills() {
+  // http://stackoverflow.com/questions/105034
   function uuidv4() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0,
@@ -15,6 +16,7 @@ export function polyfills() {
   }
 
   // Patch Blob for ArrayBuffer if unsupported
+  // https://github.com/facebook/react-native/pull/39276
   try {
     new Blob([new ArrayBuffer(4) as any])
   } catch (_) {
@@ -90,7 +92,7 @@ export function polyfills() {
 
       // Create safe URI for JSI
       if (input.startsWith('data:')) {
-        const [header, data] = input.split(',')
+        const [header, data] = input.split(';base64,')
         const [, type] = header.split('/')
 
         const uri = fs.cacheDirectory + uuidv4() + `.${type}`
@@ -119,7 +121,7 @@ export function polyfills() {
   THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
   // There's no Image in native, so create a data texture instead
-  THREE.TextureLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
+  THREE.TextureLoader.prototype.load = function load(this: THREE.TextureLoader, url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
     this.manager.itemStart(url)
@@ -128,20 +130,21 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (uri) => {
+        // https://github.com/expo/expo-three/pull/266
         const { width, height } = await new Promise<{ width: number; height: number }>((res, rej) =>
           Image.getSize(uri, (width, height) => res({ width, height }), rej),
         )
 
         texture.image = {
+          // Special case for EXGLImageUtils::loadImage
           data: { localUri: uri },
           width,
           height,
         }
-        texture.flipY = true
-        texture.unpackAlignment = 1
+        texture.flipY = true // Since expo-gl@12.4.0
         texture.needsUpdate = true
 
-        // Force non-DOM upload for EXGL fast paths
+        // Force non-DOM upload for EXGL texImage2D
         // @ts-ignore
         texture.isDataTexture = true
 
@@ -158,8 +161,8 @@ export function polyfills() {
     return texture
   }
 
-  // Fetches assets via XMLHttpRequest
-  THREE.FileLoader.prototype.load = function load(url, onLoad, onProgress, onError) {
+  // Fetches assets via FS
+  THREE.FileLoader.prototype.load = function load(this: THREE.FileLoader, url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
     this.manager.itemStart(url)
