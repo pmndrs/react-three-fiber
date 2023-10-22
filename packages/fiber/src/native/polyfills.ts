@@ -15,6 +15,8 @@ export function polyfills() {
     })
   }
 
+  let BLOB_URL_PREFIX: string | null = null
+
   // Patch Blob for ArrayBuffer if unsupported
   // https://github.com/facebook/react-native/pull/39276
   if (Platform.OS !== 'web') {
@@ -23,16 +25,10 @@ export function polyfills() {
       const url = URL.createObjectURL(blob)
       URL.revokeObjectURL(url)
     } catch (_) {
-      const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
-
-      let BLOB_URL_PREFIX: string | null = null
-
-      const { BlobModule } = NativeModules
-
-      if (BlobModule && typeof BlobModule.BLOB_URI_SCHEME === 'string') {
-        BLOB_URL_PREFIX = BlobModule.BLOB_URI_SCHEME + ':'
-        if (typeof BlobModule.BLOB_URI_HOST === 'string') {
-          BLOB_URL_PREFIX += `//${BlobModule.BLOB_URI_HOST}/`
+      if (NativeModules.BlobModule && typeof NativeModules.BlobModule.BLOB_URI_SCHEME === 'string') {
+        BLOB_URL_PREFIX = NativeModules.BlobModule.BLOB_URI_SCHEME + ':'
+        if (typeof NativeModules.BlobModule.BLOB_URI_HOST === 'string') {
+          BLOB_URL_PREFIX += `//${NativeModules.BlobModule.BLOB_URI_HOST}/`
         }
       }
 
@@ -48,50 +44,24 @@ export function polyfills() {
         return `${BLOB_URL_PREFIX}${data.blobId}?offset=${data.offset}&size=${blob.size}`
       }
 
-      BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
-        const blobId = uuidv4()
-
-        const items = parts.map((part) => {
+      const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
+      const createFromParts = BlobManager.createFromParts
+      BlobManager.createFromParts = function (parts: Array<Blob | BlobPart | string>, options: any) {
+        parts = parts.map((part) => {
           if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-            const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
-            return {
-              data,
-              type: 'string',
-            }
-          } else if (part instanceof Blob) {
-            return {
-              data: (part as any).data,
-              type: 'blob',
-            }
-          } else {
-            return {
-              data: String(part),
-              type: 'string',
-            }
+            part = fromByteArray(new Uint8Array(part as ArrayBuffer))
           }
-        })
-        const size = items.reduce((acc, curr) => {
-          if (curr.type === 'string') {
-            return acc + global.unescape(encodeURI(curr.data)).length
-          } else {
-            return acc + curr.data.size
-          }
-        }, 0)
 
-        NativeModules.BlobModule.createFromParts(items, blobId)
-
-        const blob = BlobManager.createFromOptions({
-          blobId,
-          offset: 0,
-          size,
-          type: options ? options.type : '',
-          lastModified: options ? options.lastModified : Date.now(),
+          return part
         })
+
+        const blob = createFromParts(parts)
 
         if (BLOB_URL_PREFIX === null) {
           let data = ''
-          for (const item of items) {
-            data += item.data._base64 ?? item.data
+          for (const part of parts) {
+            if (part instanceof Blob) data += (part as any).data._base64
+            else data += part
           }
           blob.data._base64 = data
         }
@@ -107,7 +77,7 @@ export function polyfills() {
       if (input.startsWith('file:')) return input
 
       // Unpack Blobs from react-native BlobManager
-      if (input.startsWith('blob:')) {
+      if (input.startsWith('blob:') || (typeof BLOB_URL_PREFIX === 'string' && input.startsWith(BLOB_URL_PREFIX))) {
         const blob = await new Promise<Blob>((res, rej) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', input as string)
