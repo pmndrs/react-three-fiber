@@ -15,8 +15,6 @@ export function polyfills() {
     })
   }
 
-  let BLOB_URL_PREFIX: string | null = null
-
   // Patch Blob for ArrayBuffer if unsupported
   // https://github.com/facebook/react-native/pull/39276
   if (Platform.OS !== 'web') {
@@ -25,46 +23,35 @@ export function polyfills() {
       const url = URL.createObjectURL(blob)
       URL.revokeObjectURL(url)
     } catch (_) {
-      if (NativeModules.BlobModule && typeof NativeModules.BlobModule.BLOB_URI_SCHEME === 'string') {
-        BLOB_URL_PREFIX = NativeModules.BlobModule.BLOB_URI_SCHEME + ':'
-        if (typeof NativeModules.BlobModule.BLOB_URI_HOST === 'string') {
-          BLOB_URL_PREFIX += `//${NativeModules.BlobModule.BLOB_URI_HOST}/`
-        }
-      }
-
-      URL.createObjectURL = function createObjectURL(blob: Blob): string {
-        const data = (blob as any).data
-
-        if (BLOB_URL_PREFIX === null) {
-          // https://github.com/pmndrs/react-three-fiber/issues/3058
-          // throw new Error('Cannot create URL for blob!')
-          return `data:${blob.type};base64,${data._base64}`
-        }
-
-        return `${BLOB_URL_PREFIX}${data.blobId}?offset=${data.offset}&size=${blob.size}`
-      }
-
       const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
+
+      const createObjectURL = URL.createObjectURL
+      URL.createObjectURL = function (blob: Blob): string {
+        if ((blob as any)._base64) {
+          return `data:${blob.type};base64,${(blob as any)._base64}`
+        }
+
+        return createObjectURL(blob)
+      }
+
       const createFromParts = BlobManager.createFromParts
       BlobManager.createFromParts = function (parts: Array<Blob | BlobPart | string>, options: any) {
+        let base64 = ''
+
         parts = parts.map((part) => {
           if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
             part = fromByteArray(new Uint8Array(part as ArrayBuffer))
           }
 
+          if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
+            base64 += (part as any)._base64 ?? part
+          }
+
           return part
         })
 
-        const blob = createFromParts(parts)
-
-        if (BLOB_URL_PREFIX === null) {
-          let data = ''
-          for (const part of parts) {
-            if (part instanceof Blob) data += (part as any).data._base64
-            else data += part
-          }
-          blob.data._base64 = data
-        }
+        const blob = createFromParts(parts, options)
+        blob._base64 = base64
 
         return blob
       }
@@ -77,7 +64,7 @@ export function polyfills() {
       if (input.startsWith('file:')) return input
 
       // Unpack Blobs from react-native BlobManager
-      if (input.startsWith('blob:') || (typeof BLOB_URL_PREFIX === 'string' && input.startsWith(BLOB_URL_PREFIX))) {
+      if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
         const blob = await new Promise<Blob>((res, rej) => {
           const xhr = new XMLHttpRequest()
           xhr.open('GET', input as string)
@@ -131,8 +118,6 @@ export function polyfills() {
   THREE.TextureLoader.prototype.load = function load(this: THREE.TextureLoader, url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
-    this.manager.itemStart(url)
-
     const texture = new THREE.Texture()
 
     getAsset(url)
@@ -148,7 +133,6 @@ export function polyfills() {
           width,
           height,
         }
-        texture.flipY = true // Since expo-gl@12.4.0
         texture.needsUpdate = true
 
         // Force non-DOM upload for EXGL texImage2D
@@ -157,13 +141,7 @@ export function polyfills() {
 
         onLoad?.(texture)
       })
-      .catch((error) => {
-        onError?.(error)
-        this.manager.itemError(url)
-      })
-      .finally(() => {
-        this.manager.itemEnd(url)
-      })
+      .catch(onError)
 
     return texture
   }
