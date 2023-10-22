@@ -5,18 +5,72 @@ import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
 
-export function polyfills() {
-  // http://stackoverflow.com/questions/105034
-  function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0,
-        v = c == 'x' ? r : (r & 0x3) | 0x8
-      return v.toString(16)
-    })
+// http://stackoverflow.com/questions/105034
+function uuidv4() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0,
+      v = c == 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+async function getAsset(input: string | number): Promise<string> {
+  if (typeof input === 'string') {
+    // Don't process storage
+    if (input.startsWith('file:')) return input
+
+    // Unpack Blobs from react-native BlobManager
+    // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
+    if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
+      const blob = await new Promise<Blob>((res, rej) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', input as string)
+        xhr.responseType = 'blob'
+        xhr.onload = () => res(xhr.response)
+        xhr.onerror = rej
+        xhr.send()
+      })
+
+      const data = await new Promise<string>((res, rej) => {
+        const reader = new FileReader()
+        reader.onload = () => res(reader.result as string)
+        reader.onerror = rej
+        reader.readAsText(blob)
+      })
+
+      input = `data:${blob.type};base64,${data}`
+    }
+
+    // Create safe URI for JSI serialization
+    if (input.startsWith('data:')) {
+      const [header, data] = input.split(';base64,')
+      const [, type] = header.split('/')
+
+      const uri = fs.cacheDirectory + uuidv4() + `.${type}`
+      await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+
+      return uri
+    }
   }
 
-  // Patch Blob for ArrayBuffer if unsupported
-  // https://github.com/facebook/react-native/pull/39276
+  // Download bundler module or external URL
+  const asset = await Asset.fromModule(input).downloadAsync()
+  let uri = asset.localUri || asset.uri
+
+  // Unpack assets in Android Release Mode
+  if (!uri.includes(':')) {
+    const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+    await fs.copyAsync({ from: uri, to: file })
+    uri = file
+  }
+
+  return uri
+}
+
+export function polyfills() {
+  // Patch Blob for ArrayBuffer and URL if unsupported
+  // https://github.com/pmndrs/react-three-fiber/pull/3059
+  // https://github.com/pmndrs/react-three-fiber/issues/3058
   if (Platform.OS !== 'web') {
     try {
       const blob = new Blob([new ArrayBuffer(4) as any])
@@ -25,132 +79,37 @@ export function polyfills() {
     } catch (_) {
       const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
 
-      let BLOB_URL_PREFIX: string | null = null
-
-      const { BlobModule } = NativeModules
-
-      if (BlobModule && typeof BlobModule.BLOB_URI_SCHEME === 'string') {
-        BLOB_URL_PREFIX = BlobModule.BLOB_URI_SCHEME + ':'
-        if (typeof BlobModule.BLOB_URI_HOST === 'string') {
-          BLOB_URL_PREFIX += `//${BlobModule.BLOB_URI_HOST}/`
-        }
-      }
-
-      URL.createObjectURL = function createObjectURL(blob: Blob): string {
-        const data = (blob as any).data
-
-        if (BLOB_URL_PREFIX === null) {
-          // https://github.com/pmndrs/react-three-fiber/issues/3058
-          // throw new Error('Cannot create URL for blob!')
-          return `data:${blob.type};base64,${data._base64}`
+      const createObjectURL = URL.createObjectURL
+      URL.createObjectURL = function (blob: Blob): string {
+        if ((blob as any).data._base64) {
+          return `data:${blob.type};base64,${(blob as any).data._base64}`
         }
 
-        return `${BLOB_URL_PREFIX}${data.blobId}?offset=${data.offset}&size=${blob.size}`
+        return createObjectURL(blob)
       }
 
-      BlobManager.createFromParts = function createFromParts(parts: Array<Blob | BlobPart | string>, options: any) {
-        const blobId = uuidv4()
-
-        const items = parts.map((part) => {
+      const createFromParts = BlobManager.createFromParts
+      BlobManager.createFromParts = function (parts: Array<Blob | BlobPart | string>, options: any) {
+        parts = parts.map((part) => {
           if (part instanceof ArrayBuffer || ArrayBuffer.isView(part)) {
-            const data = fromByteArray(new Uint8Array(part as ArrayBuffer))
-            return {
-              data,
-              type: 'string',
-            }
-          } else if (part instanceof Blob) {
-            return {
-              data: (part as any).data,
-              type: 'blob',
-            }
-          } else {
-            return {
-              data: String(part),
-              type: 'string',
-            }
+            part = fromByteArray(new Uint8Array(part as ArrayBuffer))
           }
-        })
-        const size = items.reduce((acc, curr) => {
-          if (curr.type === 'string') {
-            return acc + global.unescape(encodeURI(curr.data)).length
-          } else {
-            return acc + curr.data.size
-          }
-        }, 0)
 
-        NativeModules.BlobModule.createFromParts(items, blobId)
-
-        const blob = BlobManager.createFromOptions({
-          blobId,
-          offset: 0,
-          size,
-          type: options ? options.type : '',
-          lastModified: options ? options.lastModified : Date.now(),
+          return part
         })
 
-        if (BLOB_URL_PREFIX === null) {
-          let data = ''
-          for (const item of items) {
-            data += item.data._base64 ?? item.data
+        const blob = createFromParts(parts, options)
+
+        if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
+          blob.data._base64 = ''
+          for (const part of parts) {
+            blob.data._base64 += (part as any).data?._base64 ?? part
           }
-          blob.data._base64 = data
         }
 
         return blob
       }
     }
-  }
-
-  async function getAsset(input: string | number): Promise<string> {
-    if (typeof input === 'string') {
-      // Don't process storage
-      if (input.startsWith('file:')) return input
-
-      // Unpack Blobs from react-native BlobManager
-      if (input.startsWith('blob:')) {
-        const blob = await new Promise<Blob>((res, rej) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', input as string)
-          xhr.responseType = 'blob'
-          xhr.onload = () => res(xhr.response)
-          xhr.onerror = rej
-          xhr.send()
-        })
-
-        const data = await new Promise<string>((res, rej) => {
-          const reader = new FileReader()
-          reader.onload = () => res(reader.result as string)
-          reader.onerror = rej
-          reader.readAsText(blob)
-        })
-
-        input = `data:${blob.type};base64,${data}`
-      }
-
-      // Create safe URI for JSI
-      if (input.startsWith('data:')) {
-        const [header, data] = input.split(';base64,')
-        const [, type] = header.split('/')
-
-        const uri = fs.cacheDirectory + uuidv4() + `.${type}`
-        await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
-
-        return uri
-      }
-    }
-
-    // Download bundler module or external URL
-    const asset = await Asset.fromModule(input).downloadAsync()
-    let uri = asset.localUri || asset.uri
-
-    // Unpack assets in Android Release Mode
-    if (!uri.includes(':')) {
-      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-      await fs.copyAsync({ from: uri, to: file })
-      uri = file
-    }
-
-    return uri
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
@@ -160,8 +119,6 @@ export function polyfills() {
   // There's no Image in native, so create a data texture instead
   THREE.TextureLoader.prototype.load = function load(this: THREE.TextureLoader, url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
-
-    this.manager.itemStart(url)
 
     const texture = new THREE.Texture()
 
@@ -187,13 +144,7 @@ export function polyfills() {
 
         onLoad?.(texture)
       })
-      .catch((error) => {
-        onError?.(error)
-        this.manager.itemError(url)
-      })
-      .finally(() => {
-        this.manager.itemEnd(url)
-      })
+      .catch(onError)
 
     return texture
   }
