@@ -126,17 +126,21 @@ export type ReconcilerRoot<TCanvas extends Canvas> = {
 }
 
 function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
-  if (defaultSize) return defaultSize
+  const defaultStyle = typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement
 
-  if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
+  if (defaultSize) {
+    const { width, height, top, left, updateStyle = defaultStyle } = defaultSize
+    return { width, height, top, left, updateStyle }
+  } else if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
-    return { width, height, top, left }
+    return { width, height, top, left, updateStyle: defaultStyle }
   } else if (typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
     return {
       width: canvas.width,
       height: canvas.height,
       top: 0,
       left: 0,
+      updateStyle: defaultStyle,
     }
   }
 

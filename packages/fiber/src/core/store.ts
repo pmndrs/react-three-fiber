@@ -338,7 +338,7 @@ const createStore = (
     const { camera, size, viewport, gl, set } = rootState.getState()
 
     // Resize camera and renderer on changes to size and pixelratio
-    if (size !== oldSize || viewport.dpr !== oldDpr) {
+    if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
       // Update camera & renderer
