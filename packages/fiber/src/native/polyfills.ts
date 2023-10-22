@@ -28,7 +28,7 @@ export function polyfills() {
       const createObjectURL = URL.createObjectURL
       URL.createObjectURL = function (blob: Blob): string {
         if ((blob as any)._base64) {
-          return `data:${blob.type};base64,${(blob as any)._base64}`
+          return `data:${blob.type};base64,${(blob as any).data._base64}`
         }
 
         return createObjectURL(blob)
@@ -44,14 +44,14 @@ export function polyfills() {
           }
 
           if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
-            base64 += (part as any)._base64 ?? part
+            base64 += (part as any).data._base64 ?? part
           }
 
           return part
         })
 
         const blob = createFromParts(parts, options)
-        blob._base64 = base64
+        blob.data._base64 = base64
 
         return blob
       }
@@ -64,6 +64,7 @@ export function polyfills() {
       if (input.startsWith('file:')) return input
 
       // Unpack Blobs from react-native BlobManager
+      // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
       if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
         const blob = await new Promise<Blob>((res, rej) => {
           const xhr = new XMLHttpRequest()
