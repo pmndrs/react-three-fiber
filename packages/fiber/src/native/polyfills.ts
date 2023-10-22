@@ -18,7 +18,9 @@ export function polyfills() {
   // Patch Blob for ArrayBuffer if unsupported
   // https://github.com/facebook/react-native/pull/39276
   try {
-    new Blob([new ArrayBuffer(4) as any])
+    const blob = new Blob([new ArrayBuffer(4) as any])
+    const url = URL.createObjectURL(blob)
+    URL.revokeObjectURL(url)
   } catch (_) {
     const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
 
@@ -37,6 +39,7 @@ export function polyfills() {
       const data = (blob as any).data
 
       if (BLOB_URL_PREFIX === null) {
+        // https://github.com/pmndrs/react-three-fiber/issues/3058
         // throw new Error('Cannot create URL for blob!')
         return `data:${blob.type};base64,${data._base64}`
       }
