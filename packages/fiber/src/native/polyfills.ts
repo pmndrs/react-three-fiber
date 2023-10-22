@@ -103,7 +103,7 @@ export function polyfills() {
         if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
           blob.data._base64 = ''
           for (const part of parts) {
-            blob.data._base64 += (part as any).data._base64 ?? part
+            blob.data._base64 += (part as any).data?._base64 ?? part
           }
         }
 
@@ -135,6 +135,7 @@ export function polyfills() {
           width,
           height,
         }
+        texture.flipY = true // Since expo-gl@12.4.0
         texture.needsUpdate = true
 
         // Force non-DOM upload for EXGL texImage2D
