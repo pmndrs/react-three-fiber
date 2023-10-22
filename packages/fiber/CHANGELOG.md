@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.3
+
+### Patch Changes
+
+- beab4344: fix(native): workaround Android content policy for Blob URI
+
 ## 8.15.2
 
 ### Patch Changes
