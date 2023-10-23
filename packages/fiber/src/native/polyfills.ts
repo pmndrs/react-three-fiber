@@ -69,7 +69,7 @@ async function getAsset(input: string | number): Promise<string> {
 
 export function polyfills() {
   // Patch Blob for ArrayBuffer and URL if unsupported
-  // https://github.com/pmndrs/react-three-fiber/pull/3059
+  // https://github.com/facebook/react-native/pull/39276
   // https://github.com/pmndrs/react-three-fiber/issues/3058
   if (Platform.OS !== 'web') {
     try {
