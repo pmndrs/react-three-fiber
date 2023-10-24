@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.5
+
+### Patch Changes
+
+- 0e44fd8b: fix(types): preserve deprecated JSX annotations
+
 ## 8.15.4
 
 ### Patch Changes
