@@ -98,81 +98,81 @@ export type InstancedBufferGeometryProps = BufferGeometryNode<
   typeof THREE.InstancedBufferGeometry
 >
 export type BufferGeometryProps = BufferGeometryNode<THREE.BufferGeometry, typeof THREE.BufferGeometry>
-// @ts-ignore
+/** @ts-ignore */
 export type BoxBufferGeometryProps = BufferGeometryNode<THREE.BoxBufferGeometry, typeof THREE.BoxBufferGeometry>
 export type CircleBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.CircleBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.CircleBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type ConeBufferGeometryProps = BufferGeometryNode<THREE.ConeBufferGeometry, typeof THREE.ConeBufferGeometry>
 export type CylinderBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.CylinderBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.CylinderBufferGeometry
 >
 export type DodecahedronBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.DodecahedronBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.DodecahedronBufferGeometry
 >
 export type ExtrudeBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.ExtrudeBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.ExtrudeBufferGeometry
 >
 export type IcosahedronBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.IcosahedronBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.IcosahedronBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type LatheBufferGeometryProps = BufferGeometryNode<THREE.LatheBufferGeometry, typeof THREE.LatheBufferGeometry>
 export type OctahedronBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.OctahedronBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.OctahedronBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type PlaneBufferGeometryProps = BufferGeometryNode<THREE.PlaneBufferGeometry, typeof THREE.PlaneBufferGeometry>
 export type PolyhedronBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.PolyhedronBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.PolyhedronBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type RingBufferGeometryProps = BufferGeometryNode<THREE.RingBufferGeometry, typeof THREE.RingBufferGeometry>
-// @ts-ignore
+/** @ts-ignore */
 export type ShapeBufferGeometryProps = BufferGeometryNode<THREE.ShapeBufferGeometry, typeof THREE.ShapeBufferGeometry>
 export type SphereBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.SphereBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.SphereBufferGeometry
 >
 export type TetrahedronBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.TetrahedronBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.TetrahedronBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type TorusBufferGeometryProps = BufferGeometryNode<THREE.TorusBufferGeometry, typeof THREE.TorusBufferGeometry>
 export type TorusKnotBufferGeometryProps = BufferGeometryNode<
-  // @ts-ignore
+  /** @ts-ignore */
   THREE.TorusKnotBufferGeometry,
-  // @ts-ignore
+  /** @ts-ignore */
   typeof THREE.TorusKnotBufferGeometry
 >
-// @ts-ignore
+/** @ts-ignore */
 export type TubeBufferGeometryProps = BufferGeometryNode<THREE.TubeBufferGeometry, typeof THREE.TubeBufferGeometry>
 export type WireframeGeometryProps = BufferGeometryNode<THREE.WireframeGeometry, typeof THREE.WireframeGeometry>
 export type TetrahedronGeometryProps = BufferGeometryNode<THREE.TetrahedronGeometry, typeof THREE.TetrahedronGeometry>
@@ -230,9 +230,9 @@ export type DirectionalLightShadowProps = Node<THREE.DirectionalLightShadow, typ
 export type DirectionalLightProps = LightNode<THREE.DirectionalLight, typeof THREE.DirectionalLight>
 export type AmbientLightProps = LightNode<THREE.AmbientLight, typeof THREE.AmbientLight>
 export type LightShadowProps = Node<THREE.LightShadow, typeof THREE.LightShadow>
-// @ts-ignore
+/** @ts-ignore */
 export type AmbientLightProbeProps = LightNode<THREE.AmbientLightProbe, typeof THREE.AmbientLightProbe>
-// @ts-ignore
+/** @ts-ignore */
 export type HemisphereLightProbeProps = LightNode<THREE.HemisphereLightProbe, typeof THREE.HemisphereLightProbe>
 export type LightProbeProps = LightNode<THREE.LightProbe, typeof THREE.LightProbe>
 
@@ -256,7 +256,7 @@ export type AxesHelperProps = Object3DNode<THREE.AxesHelper, typeof THREE.AxesHe
 export type TextureProps = Node<THREE.Texture, typeof THREE.Texture>
 export type VideoTextureProps = Node<THREE.VideoTexture, typeof THREE.VideoTexture>
 export type DataTextureProps = Node<THREE.DataTexture, typeof THREE.DataTexture>
-// @ts-ignore
+/** @ts-ignore */
 export type DataTexture3DProps = Node<THREE.DataTexture3D, typeof THREE.DataTexture3D>
 export type CompressedTextureProps = Node<THREE.CompressedTexture, typeof THREE.CompressedTexture>
 export type CubeTextureProps = Node<THREE.CubeTexture, typeof THREE.CubeTexture>
