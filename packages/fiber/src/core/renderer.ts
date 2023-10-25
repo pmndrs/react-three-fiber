@@ -172,7 +172,13 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         added = true
       }
 
-      if (!added) parentInstance.__r3f?.objects.push(child)
+      const objects = parentInstance.__r3f?.objects
+      if (!added && objects) {
+        const index = objects.indexOf(beforeChild)
+        if (index !== -1) objects.splice(index, 0, child)
+        else objects.push(child)
+      }
+
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
       updateInstance(child)
@@ -189,8 +195,11 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       // Clear the parent reference
       if (child.__r3f) child.__r3f.parent = null
       // Remove child from the parents objects
-      if (parentInstance.__r3f?.objects)
-        parentInstance.__r3f.objects = parentInstance.__r3f.objects.filter((x) => x !== child)
+      const objects = parentInstance.__r3f?.objects
+      if (objects) {
+        const index = objects.indexOf(child)
+        if (index !== -1) objects.splice(index, 1)
+      }
       // Remove attachment
       if (child.__r3f?.attach) {
         detach(parentInstance, child, child.__r3f.attach)
@@ -263,13 +272,16 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
+    const autoRemovedBeforeAppend = !!newInstance.parent
+
     if (!instance.__r3f.autoRemovedBeforeAppend) {
+      insertBefore(parent, newInstance, instance)
       removeChild(parent, instance)
+    } else {
+      appendChild(parent, newInstance)
     }
-    if (newInstance.parent) {
-      newInstance.__r3f.autoRemovedBeforeAppend = true
-    }
-    appendChild(parent, newInstance)
+
+    newInstance.__r3f.autoRemovedBeforeAppend = autoRemovedBeforeAppend
 
     // Re-bind event handlers
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
