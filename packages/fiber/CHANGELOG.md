@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.6
+
+### Patch Changes
+
+- 7bb2950b: experiment: stable object sort
+
 ## 8.15.5
 
 ### Patch Changes
