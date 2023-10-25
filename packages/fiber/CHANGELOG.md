@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.7
+
+### Patch Changes
+
+- 07e39e2e: fix(types): remove use of Object3D generic
+
 ## 8.15.6
 
 ### Patch Changes
