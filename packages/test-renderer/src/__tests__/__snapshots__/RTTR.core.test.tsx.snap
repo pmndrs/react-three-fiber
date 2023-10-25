@@ -296,19 +296,19 @@ Array [
           Object {
             "children": Array [],
             "props": Object {
-              "args": Array [],
-            },
-            "type": "meshBasicMaterial",
-          },
-          Object {
-            "children": Array [],
-            "props": Object {
               "args": Array [
                 2,
                 2,
               ],
             },
             "type": "boxGeometry",
+          },
+          Object {
+            "children": Array [],
+            "props": Object {
+              "args": Array [],
+            },
+            "type": "meshBasicMaterial",
           },
         ],
         "props": Object {
