@@ -49,3 +49,5 @@ export const Image = {
 export const Platform = {
   OS: 'web',
 }
+
+export const NativeModules = {}

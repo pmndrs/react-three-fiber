@@ -1,5 +1,29 @@
 # @react-three/fiber
 
+## 8.15.6
+
+### Patch Changes
+
+- 7bb2950b: experiment: stable object sort
+
+## 8.15.5
+
+### Patch Changes
+
+- 0e44fd8b: fix(types): preserve deprecated JSX annotations
+
+## 8.15.4
+
+### Patch Changes
+
+- 634e5db5: fix(native): harden Blob URI check for Android
+
+## 8.15.3
+
+### Patch Changes
+
+- beab4344: fix(native): workaround Android content policy for Blob URI
+
 ## 8.15.2
 
 ### Patch Changes
