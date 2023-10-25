@@ -500,16 +500,16 @@ describe('renderer', () => {
 
   it('can swap 4 array primitives', async () => {
     let state: RootState = null!
-    const a = new THREE.Group()
-    const b = new THREE.Group()
-    const c = new THREE.Group()
-    const d = new THREE.Group()
+    const a = Object.assign(new THREE.Group(), { name: 'a' })
+    const b = Object.assign(new THREE.Group(), { name: 'b' })
+    const c = Object.assign(new THREE.Group(), { name: 'c' })
+    const d = Object.assign(new THREE.Group(), { name: 'd' })
     const array = [a, b, c, d]
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
       <>
-        {array.map((group, i) => (
-          <primitive key={i} object={group} />
+        {array.map((group) => (
+          <primitive key={group.name} object={group} />
         ))}
       </>
     )
