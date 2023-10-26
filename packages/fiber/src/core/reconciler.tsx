@@ -114,7 +114,7 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
 
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
-function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance, replace: boolean = false) {
+function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance) {
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
@@ -138,9 +138,10 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   if (child.props.attach) {
     attach(parent, child)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
-    if (beforeChild) {
+    const childIndex = parent.object.children.indexOf(beforeChild?.object)
+    if (beforeChild && childIndex !== -1) {
       child.object.parent = parent.object
-      parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
+      parent.object.children.splice(childIndex, 0, child.object)
       child.object.dispatchEvent({ type: 'added' })
     } else {
       parent.object.add(child.object)
@@ -169,18 +170,17 @@ function insertBefore(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
   beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
-  replace: boolean = false,
 ) {
   if (!child || !beforeChild) return
 
   // Link instances
   child.parent = parent
   const childIndex = parent.children.indexOf(beforeChild)
-  if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
-  if (replace) beforeChild.parent = null
+  if (childIndex !== -1) parent.children.splice(childIndex, 0, child)
+  else parent.children.push(child)
 
   // Attach tree once complete
-  handleContainerEffects(parent, child, beforeChild, replace)
+  handleContainerEffects(parent, child, beforeChild)
 }
 
 function removeChild(
@@ -261,11 +261,18 @@ function switchInstance(
   const parent = oldInstance.parent
   if (parent) {
     // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
-    // insertBefore(parent, newInstance, oldInstance, true)
+
+    newInstance.autoRemovedBeforeAppend = !!newInstance.parent
 
     if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
-    if (newInstance.parent) newInstance.autoRemovedBeforeAppend = true
     appendChild(parent, newInstance)
+
+    // if (!oldInstance.autoRemovedBeforeAppend) {
+    //   insertBefore(parent, newInstance, oldInstance)
+    //   removeChild(parent, oldInstance)
+    // } else {
+    //   appendChild(parent, newInstance)
+    // }
   }
 
   // This evil hack switches the react-internal fiber node
