@@ -272,16 +272,13 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     instance.__r3f.objects.forEach((child) => appendChild(newInstance, child))
     instance.__r3f.objects = []
 
-    const autoRemovedBeforeAppend = !!newInstance.parent
+    newInstance.__r3f.autoRemovedBeforeAppend = !!newInstance.__r3f.parent
 
     if (!instance.__r3f.autoRemovedBeforeAppend) {
-      insertBefore(parent, newInstance, instance)
+      // insertBefore(parent, newInstance, instance)
       removeChild(parent, instance)
-    } else {
-      appendChild(parent, newInstance)
     }
-
-    newInstance.__r3f.autoRemovedBeforeAppend = autoRemovedBeforeAppend
+    appendChild(parent, newInstance)
 
     // Re-bind event handlers
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
