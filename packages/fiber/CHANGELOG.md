@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.8
+
+### Patch Changes
+
+- 70680832: fix: revert stable sort
+
 ## 8.15.7
 
 ### Patch Changes
