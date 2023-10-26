@@ -175,7 +175,7 @@ export function createEvents(store: RootStore) {
       state.events.compute?.(event, state)
     }
 
-    function handleRaycast(obj: THREE.Object3D<THREE.Event>) {
+    function handleRaycast(obj: THREE.Object3D) {
       const state = getRootState(obj)
       // Skip event handling when noEvents is set, or when the raycasters camera is null
       if (!state || !state.events.enabled || state.raycaster.camera === null) return []
@@ -192,7 +192,7 @@ export function createEvents(store: RootStore) {
     }
 
     // Collect events
-    let hits: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = eventsObjects
+    let hits: THREE.Intersection<THREE.Object3D>[] = eventsObjects
       // Intersect objects
       .flatMap(handleRaycast)
       // Sort by event priority and distance
