@@ -500,10 +500,10 @@ describe('renderer', () => {
 
   it('can swap 4 array primitives', async () => {
     let state: RootState = null!
-    const a = new THREE.Group()
-    const b = new THREE.Group()
-    const c = new THREE.Group()
-    const d = new THREE.Group()
+    const a = Object.assign(new THREE.Group(), { name: 'a' })
+    const b = Object.assign(new THREE.Group(), { name: 'b' })
+    const c = Object.assign(new THREE.Group(), { name: 'c' })
+    const d = Object.assign(new THREE.Group(), { name: 'd' })
     const array = [a, b, c, d]
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
@@ -548,10 +548,10 @@ describe('renderer', () => {
 
   it('can swap 4 array primitives via attach', async () => {
     let state: RootState = null!
-    const a = new THREE.Group()
-    const b = new THREE.Group()
-    const c = new THREE.Group()
-    const d = new THREE.Group()
+    const a = Object.assign(new THREE.Group(), { name: 'a' })
+    const b = Object.assign(new THREE.Group(), { name: 'b' })
+    const c = Object.assign(new THREE.Group(), { name: 'c' })
+    const d = Object.assign(new THREE.Group(), { name: 'd' })
     const array = [a, b, c, d]
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
@@ -567,6 +567,7 @@ describe('renderer', () => {
     })
 
     expect(state.scene.children.length).toBe(0)
+    console.log(state.scene.userData.objects.map((o: any) => o.name))
     expect(state.scene.userData.objects[0]).toBe(a)
     expect(state.scene.userData.objects[1]).toBe(b)
     expect(state.scene.userData.objects[2]).toBe(c)
