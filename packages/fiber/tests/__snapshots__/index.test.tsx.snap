@@ -44,6 +44,8 @@ Array [
   "LoaderResult",
   "MathRepresentation",
   "MathType",
+  "Matrix3",
+  "Matrix4",
   "Mutable",
   "ObjectMap",
   "Overwrite",
