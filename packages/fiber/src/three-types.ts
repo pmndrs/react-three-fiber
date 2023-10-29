@@ -26,6 +26,8 @@ export type Color = MathType<THREE.Color>
 export type Layers = MathType<THREE.Layers>
 export type Quaternion = MathType<THREE.Quaternion>
 export type Euler = MathType<THREE.Euler>
+export type Matrix3 = MathType<THREE.Matrix3>
+export type Matrix4 = MathType<THREE.Matrix4>
 
 export type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation | THREE.Euler ? MathType<P[K]> : P[K] }
 
