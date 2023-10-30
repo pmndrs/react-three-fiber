@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.9
+
+### Patch Changes
+
+- 4cbc5530: fix(native): deopt iOS blob URI path
+
 ## 8.15.8
 
 ### Patch Changes
