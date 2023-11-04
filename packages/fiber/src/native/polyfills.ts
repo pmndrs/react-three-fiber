@@ -166,7 +166,8 @@ export function polyfills() {
           case 'arrayBuffer':
             return onLoad?.(data.buffer)
           case 'blob':
-            return onLoad?.(new Blob([data.buffer]) as any)
+            // @ts-ignore
+            return onLoad?.(new Blob([data.buffer]))
           // case 'document':
           case 'json':
             return onLoad?.(JSON.parse(THREE.LoaderUtils.decodeText(data)))
