@@ -522,6 +522,7 @@ function Portal({
         ...rest,
       } as RootState
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [state],
   )
 
@@ -555,10 +556,12 @@ function Portal({
       unsub()
       usePortalStore.destroy()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   React.useEffect(() => {
     usePortalStore.setState((injectState) => inject(previousRoot.getState(), injectState))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inject])
 
   return (
