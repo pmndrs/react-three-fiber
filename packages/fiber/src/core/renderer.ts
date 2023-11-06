@@ -212,7 +212,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
       // when the reconciler calls it, but then carry our own check recursively
       const isPrimitive = child.__r3f?.primitive
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !isPrimitive : dispose
+      const shouldDispose = !isPrimitive && (dispose === undefined ? child.dispose !== null : dispose)
 
       // Remove nested child objects. Primitives should not have objects and children that are
       // attached to them declaratively ...

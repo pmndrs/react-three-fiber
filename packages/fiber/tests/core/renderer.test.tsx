@@ -962,4 +962,22 @@ describe('renderer', () => {
     expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
   })
+
+  // TODO: scheduler isn't flushed during testing which prevents disposal
+  it.skip('should not recursively dispose of attached primitives', async () => {
+    const meshDispose = jest.fn()
+    const primitiveDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={meshDispose}>
+          <primitive dispose={primitiveDispose} object={new THREE.BufferGeometry()} attach="geometry" />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(meshDispose).toBeCalledTimes(1)
+    expect(primitiveDispose).not.toBeCalled()
+  })
 })
