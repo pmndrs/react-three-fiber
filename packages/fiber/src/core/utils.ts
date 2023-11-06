@@ -176,9 +176,10 @@ export function buildGraph(object: THREE.Object3D) {
 // Disposes an object and all its properties
 export function dispose<TObj extends { dispose?: () => void; type?: string; [key: string]: any }>(obj: TObj) {
   if (obj.dispose && obj.type !== 'Scene') obj.dispose()
-  for (const p in obj) {
-    ;(p as any).dispose?.()
-    delete obj[p]
+  for (const key in obj) {
+    const value = obj[key]
+    if (value?.dispose && value.type !== 'Scene') value.dispose?.()
+    // delete obj[key]
   }
 }
 
