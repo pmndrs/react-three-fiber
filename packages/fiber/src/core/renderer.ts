@@ -229,7 +229,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (shouldDispose) {
         scheduleCallback(idlePriority, () => {
           try {
-            recursiveDispose(child)
+            if (child.type !== 'Scene') child.dispose?.()
+
+            for (const key in child.__r3f.memoizedProps) {
+              const value = child.__r3f.memoizedProps[key]
+              if (value?.dispose && value.type !== 'Scene') value.dispose()
+            }
           } catch (e) {
             /* ... */
           }
