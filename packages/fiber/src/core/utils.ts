@@ -178,7 +178,7 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
   if (obj.dispose && obj.type !== 'Scene') obj.dispose()
   for (const key in obj) {
     const value = obj[key]
-    if (value.type === 'Scene') continue
+    if (!value?.dispose || value.type === 'Scene') continue
     value.dispose?.()
   }
 }
