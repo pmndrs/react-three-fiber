@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.10
+
+### Patch Changes
+
+- 49158164: fix: don't recursively dispose primitives
+
 ## 8.15.9
 
 ### Patch Changes
