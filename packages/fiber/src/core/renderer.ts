@@ -222,24 +222,27 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         removeRecursive(child.children, child, shouldDispose)
       }
 
-      // Remove references
-      delete (child as Partial<Instance>).__r3f
-
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose) {
+        const props = child.__r3f.memoizedProps
         scheduleCallback(idlePriority, () => {
           try {
             if (child.type !== 'Scene') child.dispose?.()
 
-            for (const key in child.__r3f.memoizedProps) {
-              const value = child.__r3f.memoizedProps[key]
-              if (value?.dispose && value.type !== 'Scene') value.dispose()
+            for (const key in props) {
+              const value = props[key]
+              if (!value?.dispose || value.type === 'Scene') continue
+
+              value.dispose()
             }
           } catch (e) {
             /* ... */
           }
         })
       }
+
+      // Remove references
+      delete (child as Partial<Instance>).__r3f
 
       invalidateInstance(parentInstance)
     }
