@@ -13,7 +13,6 @@ import {
   invalidateInstance,
   attach,
   detach,
-  dispose as recursiveDispose,
 } from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
