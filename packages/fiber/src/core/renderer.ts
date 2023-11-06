@@ -13,6 +13,7 @@ import {
   invalidateInstance,
   attach,
   detach,
+  dispose as recursiveDispose,
 } from './utils'
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
@@ -225,10 +226,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       delete (child as Partial<Instance>).__r3f
 
       // Dispose item whenever the reconciler feels like it
-      if (shouldDispose && child.dispose && child.type !== 'Scene') {
+      if (shouldDispose) {
         scheduleCallback(idlePriority, () => {
           try {
-            child.dispose()
+            recursiveDispose(child)
           } catch (e) {
             /* ... */
           }
