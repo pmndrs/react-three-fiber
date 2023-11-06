@@ -963,6 +963,42 @@ describe('renderer', () => {
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
   })
 
+  it('should recursively dispose of declarative children', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={parentDispose}>
+          <mesh dispose={childDispose} />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).toBeCalledTimes(1)
+    expect(childDispose).toBeCalledTimes(1)
+  })
+
+  it('should not recursively dispose of flagged parent', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <group dispose={null}>
+          <mesh dispose={parentDispose}>
+            <mesh dispose={childDispose} />
+          </mesh>
+        </group>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).not.toBeCalled()
+    expect(childDispose).not.toBeCalled()
+  })
+
   it('should not recursively dispose of attached primitives', async () => {
     const meshDispose = jest.fn()
     const primitiveDispose = jest.fn()
