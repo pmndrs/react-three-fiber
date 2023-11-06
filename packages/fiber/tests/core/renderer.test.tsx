@@ -963,8 +963,7 @@ describe('renderer', () => {
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
   })
 
-  // TODO: scheduler isn't flushed during testing which prevents disposal
-  it.skip('should not recursively dispose of attached primitives', async () => {
+  it('should not recursively dispose of attached primitives', async () => {
     const meshDispose = jest.fn()
     const primitiveDispose = jest.fn()
 

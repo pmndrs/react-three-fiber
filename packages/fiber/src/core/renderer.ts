@@ -226,13 +226,20 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        scheduleCallback(idlePriority, () => {
+        const callback = () => {
           try {
             child.dispose()
           } catch (e) {
             /* ... */
           }
-        })
+        }
+
+        // Schedule async at runtime, flush sync in testing
+        if (typeof IS_REACT_ACT_ENVIRONMENT === 'undefined') {
+          scheduleCallback(idlePriority, callback)
+        } else {
+          callback()
+        }
       }
 
       invalidateInstance(parentInstance)
