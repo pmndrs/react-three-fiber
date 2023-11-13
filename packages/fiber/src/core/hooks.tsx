@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
