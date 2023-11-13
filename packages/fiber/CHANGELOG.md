@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.11
+
+### Patch Changes
+
+- 3d9af04d: fix: update import from three examples
+
 ## 8.15.10
 
 ### Patch Changes
