@@ -342,7 +342,7 @@ export function diffProps<T = any>(
       // has no means to do this. Hence we curate a small collection of value-classes
       // with their respective constructor/set arguments
       // For removed props, try to set default values, if possible
-      if (root.constructor) {
+      if (root.constructor && root.constructor.length === 0) {
         // create a blank slate of the instance and copy the particular parameter.
         let ctor = DEFAULTS.get(root.constructor)
         if (!ctor) {
