@@ -98,14 +98,14 @@ describe('hooks', () => {
       () =>
         ({
           load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad(MockMesh)
+            onLoad({ scene: MockMesh, nodes: { Scene: MockMesh } })
           }),
         } as unknown as Stdlib.GLTFLoader),
     )
 
     const Component = () => {
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-      return <primitive object={model} />
+      const { scene, nodes } = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      return <primitive object={scene} />
     }
 
     let scene: THREE.Scene = null!
