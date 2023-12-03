@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.12
+
+### Patch Changes
+
+- 496d6f0d: fix: useLoader and XRFrame type fixes
+
 ## 8.15.11
 
 ### Patch Changes
