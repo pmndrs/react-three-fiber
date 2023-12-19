@@ -86,5 +86,9 @@
     "ts-jest": "^27.1.4",
     "typescript": "^4.6.3"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react": "^18.0.0",
+    "three": "^0.139.0",
+    "three-stdlib": "^2.8.11"
+  }
 }
