@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootStore } from './store'
-import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
 import { Stages } from './stages'
 import type { Instance } from './reconciler'
 
@@ -91,16 +91,27 @@ export type Extensions<T> = (loader: Loader<T>) => void
 
 const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
 
+const isConstructor = <T,>(value: unknown): value is LoaderProto<T> =>
+  typeof value === 'function' && value?.prototype?.constructor === value
+
 function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
-  return function (Proto: LoaderProto<T>, ...input: string[]) {
-    // Construct new loader and run extensions
-    let loader = memoizedLoaders.get(Proto)!
-    if (!loader) {
-      loader = new Proto()
-      memoizedLoaders.set(Proto, loader)
+  return async function (Proto: Loader<T> | LoaderProto<T>, ...input: string[]) {
+    let loader: Loader<any>
+
+    // Construct and cache loader if constructor was passed
+    if (isConstructor(Proto)) {
+      loader = memoizedLoaders.get(Proto)!
+      if (!loader) {
+        loader = new Proto()
+        memoizedLoaders.set(Proto, loader)
+      }
+    } else {
+      loader = Proto
     }
 
+    // Apply loader extensions
     if (extensions) extensions(loader)
+
     // Go through the urls and load them
     return Promise.all(
       input.map(
@@ -108,7 +119,7 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
           new Promise<LoaderResult<T>>((res, reject) =>
             loader.load(
               input,
-              (data) => res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
+              (data) => res(isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data),
               onProgress,
               (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
@@ -125,14 +136,14 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
 export function useLoader<T, U extends string | string[] | string[][]>(
-  Proto: LoaderProto<T>,
+  loader: Loader<T> | LoaderProto<T>,
   input: U,
   extensions?: Extensions<T>,
   onProgress?: (event: ProgressEvent) => void,
 ) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
+  const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
   // Return the object(s)
   return (Array.isArray(input) ? results : results[0]) as unknown as U extends any[]
     ? LoaderResult<T>[]
@@ -143,18 +154,21 @@ export function useLoader<T, U extends string | string[] | string[][]>(
  * Preloads an asset into cache as a side-effect.
  */
 useLoader.preload = function <T, U extends string | string[] | string[][]>(
-  Proto: LoaderProto<T>,
+  loader: Loader<T> | LoaderProto<T>,
   input: U,
   extensions?: Extensions<T>,
 ): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(loadingFn(extensions), [Proto, ...keys])
+  return preload(loadingFn(extensions), [loader, ...keys])
 }
 
 /**
  * Removes a loaded asset from cache.
  */
-useLoader.clear = function <T, U extends string | string[] | string[][]>(Proto: LoaderProto<T>, input: U): void {
+useLoader.clear = function <T, U extends string | string[] | string[][]>(
+  loader: Loader<T> | LoaderProto<T>,
+  input: U,
+): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return clear([Proto, ...keys])
+  return clear([loader, ...keys])
 }
