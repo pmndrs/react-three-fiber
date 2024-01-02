@@ -23,16 +23,17 @@ const act = _act as unknown as Act
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)
 
-  let size
-
-  if (typeof options !== 'undefined' && typeof options.width !== 'undefined' && typeof options.height !== 'undefined') {
-    size = { width: options.width, height: options.height, top: 0, left: 0 }
-  }
-
   const _root = createRoot(canvas).configure({
     frameloop: 'never',
+    // TODO: remove and use default behavior
+    size: {
+      width: options?.width ?? 1280,
+      height: options?.height ?? 800,
+      top: 0,
+      left: 0,
+      updateStyle: typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement,
+    },
     ...options,
-    size,
     events: undefined,
   })
   const _store = mockRoots.get(canvas)!.store
