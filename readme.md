@@ -18,6 +18,10 @@ Build your scene declaratively with re-usable, self-contained components that re
 npm install three @types/three @react-three/fiber
 ```
 
+> <a href="https://triplex.dev"><img width="200" src="/docs/triplex-app.png" /></a>
+>
+> Looking for a Unity like editing experience? [Triplex](https://triplex.dev) is a visual editor where your code is the source of truth.
+
 #### Does it have limitations?
 
 None. Everything that works in Threejs will work here without exception.
