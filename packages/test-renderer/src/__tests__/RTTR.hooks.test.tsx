@@ -27,12 +27,12 @@ describe('ReactThreeTestRenderer Hooks', () => {
       return <group />
     }
 
-    await ReactThreeTestRenderer.create(<Component />)
+    await ReactThreeTestRenderer.create(<Component />, { width: 1280, height: 800 })
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
     expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
-    expect(result.size).toEqual({ height: 0, width: 0, top: 0, left: 0 })
+    expect(result.size).toEqual({ height: 800, width: 1280, top: 0, left: 0 })
   })
 
   it('can handle useLoader hook', async () => {
