@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.13
+
+### Patch Changes
+
+- 0a399f6d: fix(native): use MSAA for antialias on iOS
+
 ## 8.15.12
 
 ### Patch Changes
