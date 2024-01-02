@@ -23,7 +23,7 @@ npm install three @types/three @react-three/fiber
 <div align="center">
 <a href="https://triplex.dev"><img height="150" src="docs/triplex-app.png" /></a>
 
-<small align="center"><a href="https://triplex.dev">Finding it difficult building exclusively in code?<br/><strong>Triplex</strong> is a visual editor where <i>your code</i> is the source of truth</a>.</small>
+<div align="center"><a href="https://triplex.dev">Finding it difficult building exclusively in code?<br/><strong>Triplex</strong> is a visual editor where <i>your code</i> is the source of truth</a>.</div>
 
 </div>
 
