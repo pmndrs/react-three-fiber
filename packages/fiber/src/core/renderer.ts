@@ -32,6 +32,7 @@ export type LocalState = {
   previousAttach: any
   memoizedProps: { [key: string]: any }
   autoRemovedBeforeAppend?: boolean
+  isCreatedBeforeAttach?: boolean
 }
 
 export type AttachFnType = (parent: Instance, self: Instance) => () => void
@@ -96,7 +97,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     if (type === 'primitive') {
       if (props.object === undefined) throw new Error("R3F: Primitives without 'object' are invalid!")
       const object = props.object as Instance
-      instance = prepare<Instance>(object, { type, root, attach, primitive: true })
+      instance = prepare<Instance>(object, { type, root, attach, primitive: true, isCreatedBeforeAttach: true })
     } else {
       const target = catalogue[name]
       if (!target) {
@@ -149,6 +150,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
+      child.__r3f.isCreatedBeforeAttach = false
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -175,6 +177,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       if (!added) parentInstance.__r3f?.objects.push(child)
       if (!child.__r3f) prepare(child, {})
       child.__r3f.parent = parentInstance
+      child.__r3f.isCreatedBeforeAttach = false
       updateInstance(child)
       invalidateInstance(child)
     }
@@ -222,7 +225,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       }
 
       // Remove references
-      delete (child as Partial<Instance>).__r3f
+      // only remove primitive reference if it is not freshly created
+      if (!(child as Partial<Instance>).__r3f?.isCreatedBeforeAttach) {
+        delete (child as Partial<Instance>).__r3f
+      }
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {

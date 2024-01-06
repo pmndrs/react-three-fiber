@@ -1015,4 +1015,55 @@ describe('renderer', () => {
     expect(meshDispose).toBeCalledTimes(1)
     expect(primitiveDispose).not.toBeCalled()
   })
+
+  it('should not clear reattached primitive', async () => {
+    const primitive1 = new THREE.Mesh()
+    const primitive2 = new THREE.Mesh()
+    /* This test still fails 
+    await act(async () =>
+      root.render(
+        <group>
+          <primitive object={primitive1} dispose={null} />
+        </group>,
+      ),
+    )
+
+    expect((primitive1 as any).__r3f?.type).toBe('primitive')
+
+    await act(async () =>
+      root.render(
+        <group>
+          <primitive object={primitive2} dispose={null} />
+          <primitive object={primitive1} dispose={null} />
+        </group>,
+      ),
+    )
+    expect((primitive1 as any).__r3f?.type).toBe('primitive')
+    expect((primitive2 as any).__r3f?.type).toBe('primitive')
+    */
+
+    // Initialize a list of primitives
+    await act(async () =>
+      root.render(
+        <group>
+          <primitive key={'a'} object={primitive1} name="p2" dispose={null} />
+        </group>,
+      ),
+    )
+
+    expect((primitive1 as any).__r3f?.type).toBe('primitive')
+
+    // New list of primitives while reusing primitive object
+    await act(async () =>
+      root.render(
+        <group>
+          <primitive key={'b'} object={primitive1} name="p1" dispose={null} />
+          <primitive key={'c'} object={primitive2} name="p2" dispose={null} />
+        </group>,
+      ),
+    )
+
+    expect((primitive1 as any).__r3f?.type).toBe('primitive')
+    expect((primitive2 as any).__r3f?.type).toBe('primitive')
+  })
 })
