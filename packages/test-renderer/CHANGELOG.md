@@ -1,5 +1,131 @@
 # @react-three/test-renderer
 
+## 8.2.1
+
+### Patch Changes
+
+- 020bb194: fix(RTTR): set initial size for NaN in viewport
+
+## 8.2.0
+
+### Minor Changes
+
+- a5ffb08e: feat(RTTR): waitFor util
+
+## 8.1.5
+
+### Patch Changes
+
+- 673927f7: fix(RTTR): implement HTMLCanvasElement.getContext
+
+## 8.1.4
+
+### Patch Changes
+
+- 53ba22d3: fix(RTTR): fallback to canvas shim
+
+## 8.1.3
+
+### Patch Changes
+
+- 2b0be267: fix: support WebGL2
+
+## 8.1.2
+
+### Patch Changes
+
+- d9e6316d: fix: transpile class properties
+
+## 8.1.1
+
+### Patch Changes
+
+- 9a776b71: fix(RTTR): backport traverse, update fixes
+
+## 8.1.0
+
+### Minor Changes
+
+- 24c4dba4: shortcut for shadow type
+
+## 8.0.17
+
+### Patch Changes
+
+- 786ccb46: fix: restore RTTR version
+
+## 8.0.16
+
+### Patch Changes
+
+- 7b6df9df: fix: infinite loop updating cam viewport
+- Updated dependencies [7b6df9df]
+  - @react-three/fiber@8.0.26
+
+## 8.0.15
+
+### Patch Changes
+
+- b7cd0f42: update viewport on camera changes
+- Updated dependencies [b7cd0f42]
+  - @react-three/fiber@8.0.25
+
+## 8.0.14
+
+### Patch Changes
+
+- 29d03c64: revert multi attach
+- Updated dependencies [29d03c64]
+  - @react-three/fiber@8.0.23
+
+## 8.0.13
+
+### Patch Changes
+
+- 4c87bce: fix: attach, devtools, and perf fixes
+- Updated dependencies [4c87bce]
+  - @react-three/fiber@8.0.20
+
+## 8.0.12
+
+### Patch Changes
+
+- c4715d5f: allow invalidate to preempt more than 1 frame
+- Updated dependencies [c4715d5f]
+  - @react-three/fiber@8.0.15
+
+## 8.0.11
+
+### Patch Changes
+
+- 5559a119: Add support for recoverable errors
+- Updated dependencies [5559a119]
+  - @react-three/fiber@8.0.14
+
+## 8.0.10
+
+### Patch Changes
+
+- 9d77d8e2: fix: detach attribute removal
+- Updated dependencies [9d77d8e2]
+  - @react-three/fiber@8.0.13
+
+## 8.0.9
+
+### Patch Changes
+
+- 3d10413f: fix portal layers
+- Updated dependencies [3d10413f]
+  - @react-three/fiber@8.0.12
+
+## 8.0.8
+
+### Patch Changes
+
+- 5167b1e4: memoized.args can be undefined
+- Updated dependencies [5167b1e4]
+  - @react-three/fiber@8.0.11
+
 ## 8.0.7
 
 ### Patch Changes

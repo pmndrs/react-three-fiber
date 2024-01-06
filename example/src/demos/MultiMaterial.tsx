@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
 
 const redMaterial = new THREE.MeshBasicMaterial({ color: 'aquamarine', toneMapped: false })
@@ -15,7 +15,10 @@ function ReuseMaterial(props: any) {
 
 function TestReuse() {
   const [i, set] = useState(true)
-  useEffect(() => void setInterval(() => set((s) => !s), 1000), [])
+  useEffect(() => {
+    const interval = setInterval(() => set((s) => !s), 1000)
+    return () => clearInterval(interval)
+  }, [])
   return (
     <>
       {i && <ReuseMaterial position={[-1.5, 0, 0]} />}

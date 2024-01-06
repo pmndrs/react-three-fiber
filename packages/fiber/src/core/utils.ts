@@ -1,20 +1,51 @@
+/// <reference types="webxr" />
 import * as THREE from 'three'
 import * as React from 'react'
 import { UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
-import { AttachType, Instance, InstanceProps, LocalState } from './renderer'
-import { Dpr, RootState, Size } from './store'
+import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
+import { Dpr, Renderer, RootState, Size } from './store'
+
+// < r141 shipped vendored types https://github.com/pmndrs/react-three-fiber/issues/2501
+/** @ts-ignore */
+type _DeprecatedXRFrame = THREE.XRFrame
+export type _XRFrame = THREE.WebGLRenderTargetOptions extends { samples?: number } ? XRFrame : _DeprecatedXRFrame
+
+/**
+ * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
+ */
+export const hasColorSpace = <
+  T extends Renderer | THREE.Texture | object,
+  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
+>(
+  object: T,
+): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
+
+export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
+
+/**
+ * The current THREE.ColorManagement instance, if present.
+ */
+export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
 
 export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
+export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
 
-// React currently throws a warning when using useLayoutEffect on the server.
-// To get around it, we can conditionally useEffect on the server (no-op) and
-// useLayoutEffect on the client.
-const isSSR =
-  typeof window === 'undefined' || !window.navigator || /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-export const useIsomorphicLayoutEffect = isSSR ? React.useEffect : React.useLayoutEffect
+/**
+ * An SSR-friendly useLayoutEffect.
+ *
+ * React currently throws a warning when using useLayoutEffect on the server.
+ * To get around it, we can conditionally useEffect on the server (no-op) and
+ * useLayoutEffect elsewhere.
+ *
+ * @see https://github.com/facebook/react/issues/14927
+ */
+export const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
+    ? React.useLayoutEffect
+    : React.useEffect
 
 export function useMutableCallback<T>(fn: T) {
   const ref = React.useRef<T>(fn)
@@ -33,11 +64,14 @@ export function Block({ set }: Omit<UnblockProps, 'children'>) {
   return null
 }
 
-export class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> }, { error: boolean }> {
+export class ErrorBoundary extends React.Component<
+  { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
+  { error: boolean }
+> {
   state = { error: false }
   static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(error: any) {
-    this.props.set(error)
+  componentDidCatch(err: Error) {
+    this.props.set(err)
   }
   render() {
     return this.state.error ? null : this.props.children
@@ -45,6 +79,7 @@ export class ErrorBoundary extends React.Component<{ set: React.Dispatch<any> },
 }
 
 export const DEFAULT = '__default'
+export const DEFAULTS = new Map()
 
 export type DiffSet = {
   memoized: { [key: string]: any }
@@ -60,7 +95,10 @@ export type ObjectMap = {
 }
 
 export function calculateDpr(dpr: Dpr) {
-  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], window.devicePixelRatio), dpr[1]) : dpr
+  // Err on the side of progress by assuming 2x dpr if we can't detect it
+  // This will happen in workers where window is defined but dpr isn't.
+  const target = typeof window !== 'undefined' ? window.devicePixelRatio ?? 2 : 1
+  return Array.isArray(dpr) ? Math.min(Math.max(dpr[0], target), dpr[1]) : dpr
 }
 
 /**
@@ -68,35 +106,6 @@ export function calculateDpr(dpr: Dpr) {
  */
 export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
   (obj as unknown as Instance).__r3f?.root.getState()
-
-/**
- * Picks or omits keys from an object
- * `omit` will filter out keys, and otherwise cherry-pick them.
- */
-export function filterKeys<TObj extends { [key: string]: any }, TOmit extends boolean, TKey extends keyof TObj>(
-  obj: TObj,
-  omit: TOmit,
-  ...keys: TKey[]
-): TOmit extends true ? Omit<TObj, TKey> : Pick<TObj, TKey> {
-  const keysToSelect = new Set(keys)
-  return Object.entries(obj).reduce((acc, [key, value]) => {
-    const shouldInclude = !omit
-    if (keysToSelect.has(key as TKey) === shouldInclude) acc[key] = value
-    return acc
-  }, {} as any)
-}
-
-/**
- * Clones an object and cherry-picks keys.
- */
-export const pick = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
-  filterKeys<Partial<TObj>, false, keyof TObj>(obj, false, ...keys)
-
-/**
- * Clones an object and prunes or omits keys.
- */
-export const omit = <TObj>(obj: Partial<TObj>, keys: Array<keyof TObj>) =>
-  filterKeys<Partial<TObj>, true, keyof TObj>(obj, true, ...keys)
 
 export type EquConfig = {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
@@ -129,18 +138,30 @@ export const is = {
     if ((isArr || isObj) && a === b) return true
     // Last resort, go through keys
     let i
+    // Check if a has all the keys of b
     for (i in a) if (!(i in b)) return false
-    for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    // Check if values between keys match
+    if (isObj && arrays === 'shallow' && objects === 'shallow') {
+      for (i in strict ? b : a) if (!is.equ(a[i], b[i], { strict, objects: 'reference' })) return false
+    } else {
+      for (i in strict ? b : a) if (a[i] !== b[i]) return false
+    }
+    // If i is undefined
     if (is.und(i)) {
+      // If both arrays are empty we consider them equal
       if (isArr && a.length === 0 && b.length === 0) return true
+      // If both objects are empty we consider them equal
       if (isObj && Object.keys(a).length === 0 && Object.keys(b).length === 0) return true
+      // Otherwise match them by value
       if (a !== b) return false
     }
     return true
   },
 }
 
-// Collects nodes and materials from a THREE.Object3D
+/**
+ * Collects nodes and materials from a THREE.Object3D.
+ */
 export function buildGraph(object: THREE.Object3D) {
   const data: ObjectMap = { nodes: {}, materials: {} }
   if (object) {
@@ -164,19 +185,18 @@ export function dispose<TObj extends { dispose?: () => void; type?: string; [key
 // Each object in the scene carries a small LocalState descriptor
 export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalState>) {
   const instance = object as unknown as Instance
-  if (state?.primitive || !instance.__r3f) {
-    instance.__r3f = {
-      type: '',
-      root: null as unknown as UseBoundStore<RootState>,
-      previousAttach: null,
-      memoizedProps: {},
-      eventCount: 0,
-      handlers: {},
-      objects: [],
-      parent: null,
-      ...state,
-    }
+  instance.__r3f = {
+    type: '',
+    root: null as unknown as UseBoundStore<RootState>,
+    previousAttach: null,
+    memoizedProps: {},
+    eventCount: 0,
+    handlers: {},
+    objects: [],
+    parent: null,
+    ...state,
   }
+
   return object
 }
 
@@ -211,7 +231,11 @@ export function attach(parent: Instance, child: Instance, type: AttachType) {
 export function detach(parent: Instance, child: Instance, type: AttachType) {
   if (is.str(type)) {
     const { target, key } = resolve(parent, type)
-    target[key] = child.__r3f.previousAttach
+    const previous = child.__r3f.previousAttach
+    // When the previous value was undefined, it means the value was never set to begin with
+    if (previous === undefined) delete target[key]
+    // Otherwise set the previous value
+    else target[key] = previous
   } else child.__r3f?.previousAttach?.(parent, child)
   delete child.__r3f?.previousAttach
 }
@@ -246,6 +270,12 @@ export function diffProps(
     let entries: string[] = []
     if (key.includes('-')) entries = key.split('-')
     changes.push([key, value, false, entries])
+
+    // Reset pierced props
+    for (const prop in props) {
+      const value = props[prop]
+      if (prop.startsWith(`${key}-`)) changes.push([prop, value, false, prop.split('-')])
+    }
   })
 
   const memoized: { [key: string]: any } = { ...props }
@@ -255,10 +285,12 @@ export function diffProps(
   return { memoized, changes }
 }
 
+const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
+
 // This function applies a set of changes to the instance
 export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
-  const localState = (instance?.__r3f ?? {}) as LocalState
+  const localState = (instance.__r3f ?? {}) as LocalState
   const root = localState.root
   const rootState = root?.getState?.() ?? {}
   const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
@@ -267,7 +299,25 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
 
-  changes.forEach(([key, value, isEvent, keys]) => {
+  for (let i = 0; i < changes.length; i++) {
+    let [key, value, isEvent, keys] = changes[i]
+
+    // Alias (output)encoding => (output)colorSpace (since r152)
+    // https://github.com/pmndrs/react-three-fiber/pull/2829
+    if (hasColorSpace(instance)) {
+      const sRGBEncoding = 3001
+      const SRGBColorSpace = 'srgb'
+      const LinearSRGBColorSpace = 'srgb-linear'
+
+      if (key === 'encoding') {
+        key = 'colorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      } else if (key === 'outputEncoding') {
+        key = 'outputColorSpace'
+        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
+      }
+    }
+
     let currentInstance = instance
     let targetProp = currentInstance[key]
 
@@ -288,18 +338,17 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
     if (value === DEFAULT + 'remove') {
-      if (targetProp && targetProp.constructor) {
-        // use the prop constructor to find the default it should be
-        value = new targetProp.constructor(...memoized.args)
-      } else if (currentInstance.constructor) {
+      if (currentInstance.constructor) {
         // create a blank slate of the instance and copy the particular parameter.
-        // @ts-ignore
-        const defaultClassCall = new currentInstance.constructor(...currentInstance.__r3f.memoizedProps.args)
-        value = defaultClassCall[targetProp]
-        // destory the instance
-        if (defaultClassCall.dispose) defaultClassCall.dispose()
-        // instance does not have constructor, just set it to 0
+        let ctor = DEFAULTS.get(currentInstance.constructor)
+        if (!ctor) {
+          // @ts-ignore
+          ctor = new currentInstance.constructor()
+          DEFAULTS.set(currentInstance.constructor, ctor)
+        }
+        value = ctor[key]
       } else {
+        // instance does not have constructor, just set it to 0
         value = 0
       }
     }
@@ -322,7 +371,13 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         targetProp.copy &&
         value &&
         (value as ClassConstructor).constructor &&
-        targetProp.constructor.name === (value as ClassConstructor).constructor.name
+        // Some environments may break strict identity checks by duplicating versions of three.js.
+        // Loosen to unminified names, ignoring descendents.
+        // https://github.com/pmndrs/react-three-fiber/issues/2856
+        // TODO: fix upstream and remove in v9
+        (__DEV__
+          ? targetProp.constructor.name === (value as ClassConstructor).constructor.name
+          : targetProp.constructor === (value as ClassConstructor).constructor)
       ) {
         targetProp.copy(value)
       }
@@ -339,21 +394,28 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        const supportsColorManagement = (THREE as any).ColorManagement
-        if (!supportsColorManagement && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!getColorManagement() && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
       currentInstance[key] = value
+
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!rootState.linear && currentInstance[key] instanceof THREE.Texture) {
-        currentInstance[key].encoding = THREE.sRGBEncoding
+      if (
+        currentInstance[key] instanceof THREE.Texture &&
+        // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
+        currentInstance[key].format === THREE.RGBAFormat &&
+        currentInstance[key].type === THREE.UnsignedByteType
+      ) {
+        const texture = currentInstance[key] as THREE.Texture
+        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
+        else texture.encoding = rootState.gl.outputEncoding
       }
     }
 
     invalidateInstance(instance)
-  })
+  }
 
   if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
@@ -363,8 +425,10 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
-  // Call the update lifecycle when it is being updated, but only when it is part of the scene
-  if (changes.length && instance.parent) updateInstance(instance)
+  // Call the update lifecycle when it is being updated, but only when it is part of the scene.
+  // Skip updates to the `onUpdate` prop itself
+  const isCircular = changes.length === 1 && changes[0][0] === 'onUpdate'
+  if (!isCircular && changes.length && instance.__r3f?.parent) updateInstance(instance)
 
   return instance
 }

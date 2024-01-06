@@ -2,32 +2,27 @@ import * as React from 'react'
 import * as THREE from 'three'
 import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
+import { waitFor } from '@react-three/test-renderer'
 
-import { asyncUtils } from '../../../shared/asyncUtils'
-
-import { createRoot, advance, useLoader, act, useThree, useGraph, useFrame, ObjectMap } from '../../src'
-
-const resolvers = []
-
-const { waitFor } = asyncUtils(act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
+import {
+  createRoot,
+  advance,
+  useLoader,
+  act,
+  useThree,
+  useGraph,
+  useFrame,
+  ObjectMap,
+  useInstanceHandle,
+  LocalState,
+} from '../../src'
+import { Instance } from 'packages/fiber/src/core/renderer'
 
 describe('hooks', () => {
   let canvas: HTMLCanvasElement = null!
 
   beforeEach(() => {
-    canvas = createCanvas({
-      beforeReturn: (canvas) => {
-        //@ts-ignore
-        canvas.getContext = (type: string) => {
-          if (type === 'webgl' || type === 'webgl2') {
-            return createWebGLContext(canvas)
-          }
-        }
-      },
-    })
+    canvas = createCanvas()
   })
 
   it('can handle useThree hook', async () => {
@@ -63,11 +58,11 @@ describe('hooks', () => {
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
     expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
-    expect(result.size).toEqual({ height: 0, width: 0 })
+    expect(result.size).toEqual({ height: 0, width: 0, top: 0, left: 0, updateStyle: false })
   })
 
   it('can handle useFrame hook', async () => {
-    const frameCalls = []
+    const frameCalls: number[] = []
 
     const Component = () => {
       const ref = React.useRef<THREE.Mesh>(null!)
@@ -98,18 +93,23 @@ describe('hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
+    let gltf!: Stdlib.GLTF & ObjectMap
+
     const MockMesh = new THREE.Mesh()
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest.fn().mockImplementation((url, onLoad) => {
-        onLoad(MockMesh)
-      }),
-    }))
+    MockMesh.name = 'Scene'
+
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest.fn().mockImplementation((_url, onLoad) => {
+            onLoad({ scene: MockMesh })
+          }),
+        } as unknown as Stdlib.GLTFLoader),
+    )
 
     const Component = () => {
-      // @ts-ignore
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-      return <primitive object={model} />
+      gltf = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      return <primitive object={gltf.scene} />
     }
 
     let scene: THREE.Scene = null!
@@ -126,6 +126,8 @@ describe('hooks', () => {
     await waitFor(() => expect(scene.children[0]).toBeDefined())
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
   })
 
   it('can handle useLoader hook with an array of strings', async () => {
@@ -134,33 +136,29 @@ describe('hooks', () => {
     const MockGroup = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
     const mat2 = new THREE.MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest
+    class TestLoader extends THREE.Loader {
+      load = jest
         .fn()
-        .mockImplementationOnce((url, onLoad) => {
+        .mockImplementationOnce((_url, onLoad) => {
           onLoad(MockMesh)
         })
-        .mockImplementationOnce((url, onLoad) => {
-          onLoad({ scene: MockGroup })
-        }),
-      // @ts-ignore
-      setPath: () => {},
-    }))
+        .mockImplementationOnce((_url, onLoad) => {
+          onLoad(MockGroup)
+        })
+    }
+
+    const extensions = jest.fn()
 
     const Component = () => {
-      // @ts-ignore
-      const [mockMesh, mockScene] = useLoader(Stdlib.GLTFLoader, ['/suzanne.glb', '/myModels.glb'], (loader) => {
-        loader.setPath('/public/models')
-      })
+      const [mockMesh, mockScene] = useLoader(TestLoader, ['/suzanne.glb', '/myModels.glb'], extensions)
 
       return (
         <>
@@ -184,26 +182,43 @@ describe('hooks', () => {
     await waitFor(() => expect(scene.children[0]).toBeDefined())
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(scene.children[1]).toBe(MockGroup)
+    expect(extensions).toBeCalledTimes(1)
+  })
+
+  it('can handle useLoader with a loader extension', async () => {
+    class Loader extends THREE.Loader {
+      load = (_url: string) => null
+    }
+
+    let proto!: Loader
+
+    function Test() {
+      return useLoader(Loader, '', (loader) => (proto = loader))
+    }
+    await act(async () => createRoot(canvas).render(<Test />))
+
+    expect(proto).toBeInstanceOf(Loader)
   })
 
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
     mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat1)
+    const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat1)
     mesh1.name = 'Mesh 1'
     const mat2 = new THREE.MeshBasicMaterial()
     mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat2)
+    const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat2)
     mesh2.name = 'Mesh 2'
     const subGroup = new THREE.Group()
     const mat3 = new THREE.MeshBasicMaterial()
     mat3.name = 'Mat 3'
-    const mesh3 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat3)
+    const mesh3 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat3)
     mesh3.name = 'Mesh 3'
     const mat4 = new THREE.MeshBasicMaterial()
     mat4.name = 'Mat 4'
-    const mesh4 = new THREE.Mesh(new THREE.BoxBufferGeometry(2, 2), mat4)
+    const mesh4 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat4)
     mesh4.name = 'Mesh 4'
 
     subGroup.add(mesh3, mesh4)
@@ -235,5 +250,18 @@ describe('hooks', () => {
         [mat4.name]: mat4,
       },
     })
+  })
+
+  it('can handle useInstanceHandle hook', async () => {
+    const ref = React.createRef<THREE.Group>()
+    let instance!: React.MutableRefObject<LocalState>
+
+    const Component = () => {
+      instance = useInstanceHandle(ref)
+      return <group ref={ref} />
+    }
+    await act(async () => createRoot(canvas).render(<Component />))
+
+    expect(instance.current).toBe((ref.current as unknown as Instance).__r3f)
   })
 })

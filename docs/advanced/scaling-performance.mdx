@@ -28,13 +28,13 @@ One major caveat is that if anything in the tree _mutates_ props, then React can
 
 ```jsx
 function Controls() {
-  const ref = useRef()
+  const orbitControlsRef = useRef()
   const { invalidate, camera, gl } = useThree()
   useEffect(() => {
-    ref.current.addEventListener('change', invalidate)
-    return () => ref.current.removeEventListener('change', invalidate)
+    orbitControlsRef.current.addEventListener('change', invalidate)
+    return () => orbitControlsRef.current.removeEventListener('change', invalidate)
   }, [])
-  return <orbitControls ref={ref} args={[camera, gl.domElement]} />
+  return <orbitControls ref={orbitControlsRef} args={[camera, gl.domElement]} />
 ```
 
 <Hint>Drei's controls do this automatically for you.</Hint>
@@ -70,6 +70,18 @@ function Scene() {
       <mesh position={[1, 2, 3]} geometry={sphere} material={red} />
 ```
 
+If you create a material or color in global space - outside of React Three Fiber's `Canvas` context - you should enable [ColorManagement](https://threejs.org/docs/#manual/en/introduction/Color-management) in three.js. This will allow certain conversions (for hexadecimal and CSS colors in sRGB) to be made automatically, producing correct colors in all cases.
+
+```jsx
+import * as THREE from 'three'
+
+// r150
+THREE.ColorManagement.enabled = true
+
+// r139-r149
+THREE.ColorManagement.legacyMode = false
+```
+
 ### Caching with useLoader
 
 <Hint>Every resource that is loaded with useLoader is cached automatically!</Hint>
@@ -102,19 +114,19 @@ Setting up instancing is not so hard, consult [the three.js docs](https://threej
 
 ```jsx
 function Instances({ count = 100000, temp = new THREE.Object3D() }) {
-  const ref = useRef()
+  const instancedMeshRef = useRef()
   useEffect(() => {
     // Set positions
     for (let i = 0; i < count; i++) {
       temp.position.set(Math.random(), Math.random(), Math.random())
       temp.updateMatrix()
-      ref.current.setMatrixAt(id, temp.matrix)
+      instancedMeshRef.current.setMatrixAt(i, temp.matrix)
     }
     // Update the instance
-    ref.current.instanceMatrix.needsUpdate = true
+    instancedMeshRef.current.instanceMatrix.needsUpdate = true
   }, [])
   return (
-    <instancedMesh ref={ref} args={[null, null, count]}>
+    <instancedMesh ref={instancedMeshRef} args={[null, null, count]}>
       <boxGeometry />
       <meshPhongMaterial />
     </instancedMesh>
@@ -180,6 +192,52 @@ function Model({ url }) {
 }
 ```
 
+## Performance monitoring
+
+Drei has a new component [PerformanceMonitor](https://github.com/pmndrs/drei#performancemonitor) that allows you to monitor, and adapt to, device performance. This component will collect the average fps (frames per second) over time. If after a couple of iterations the averages are below or above a threshold it will trigger onIncline and onDecline callbacks that allow you to respond. Typically you would reduce the quality of your scene, the resolution, effects, the amount of stuff to render, or, increase it if you have enough framerate to fill.
+
+Since this would normally cause ping-ponging between the two callbacks you define upper and lower framerate bounds, as long as you stay within that margin nothing will trigger. Ideally your app should find its way into that margin by gradually altering quality.
+
+A simple example for regulating the resolution. It starts out with 1.5, if the system falls below the bounds it goes to 1, if it's fast enough it goes to 2.
+
+```jsx
+function App() {
+  const [dpr, setDpr] = useState(1.5)
+  return (
+    <Canvas dpr={dpr}>
+      <PerformanceMonitor onIncline={() => setDpr(2)} onDecline={() => setDpr(1)} >
+```
+
+You can also use the onChange callback to get notified when the average changes in whichever direction. This allows you to make gradual changes. It gives you a factor between 0 and 1, which is increased by incline and decreased by decline. The factor is initially 0.5 by default.
+
+```jsx
+import round from 'lodash/round'
+
+const [dpr, set] = useState(1)
+return (
+ <Canvas dpr={dpr}>
+  <PerformanceMonitor onChange={({ factor }) => setDpr(round(0.5 + 1.5 * factor, 1))}>
+```
+
+If you still experience flip flops despite the bounds you can define a limit of flipflops. If it is met onFallback will be triggered which typically sets a lowest possible baseline for the app. After the fallback has been called PerformanceMonitor will shut down.
+
+```jsx
+<PerformanceMonitor flipflops={3} onFallback={() => setDpr(1)}>
+```
+
+PerformanceMonitor can also have children, if you wrap your app in it you get to use usePerformanceMonitor which allows individual components down the nested tree to respond to performance changes on their own.
+
+```jsx
+<PerformanceMonitor>
+  <Effects />
+</PerformanceMonitor>
+
+function Effects() {
+  usePerformanceMonitor({ onIncline, onDecline, onFallback, onChange })
+  // ...
+}
+```
+
 ## Movement regression
 
 Websites like Sketchfab make sure the scene is always fluid, running at 60 fps, and responsive, no matter which device is being used or how expensive a loaded model is. They do this by regressing movement, where effects, textures, shadows will slightly reduce quality until still-stand
@@ -214,7 +272,7 @@ You can define defaults like so:
 
 ### This is how you can put the system into regression
 
-The only thing you have to do is call `regress()`. When exactly you do that, that is up to you, but it could be when when the mouse moves, or the scene is moving, for instance when controls fire their change-event.
+The only thing you have to do is call `regress()`. When exactly you do that, that is up to you, but it could be when the mouse moves, or the scene is moving, for instance when controls fire their change-event.
 
 Say you are using controls, then the following code puts the system in regress when they are active:
 
@@ -226,7 +284,7 @@ useEffect(() => {
 
 ### This is how you can respond to it
 
-<Hint>Mere calls to regress() will not change or affect anything!</Hint>
+<Hint>Mere calls to `regress()` will not change or affect anything!</Hint>
 
 Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
 
@@ -237,7 +295,7 @@ Here is a small prototype component that scales the pixel ratio:
 ```jsx
 function AdaptivePixelRatio() {
   const current = useThree((state) => state.performance.current)
-  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  const setPixelRatio = useThree((state) => state.setDpr)
   useEffect(() => {
     setPixelRatio(window.devicePixelRatio * current)
   }, [current])

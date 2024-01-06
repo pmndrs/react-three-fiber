@@ -1,7 +1,7 @@
 ---
 title: Using with TypeScript
 description: This guide will help through common scenarios and how to approach them with TypeScript.
-nav: 19
+nav: 18
 ---
 
 This tutorial will assume some React and TypeScript knowledge. You can fork and follow along from [this starter codesandbox](https://codesandbox.io/s/brnsm).
@@ -10,21 +10,21 @@ This tutorial will assume some React and TypeScript knowledge. You can fork and 
 
 React's `useRef` won't automatically infer types despite pointing it to a typed ref.
 
-You can type the ref yourself by passing an type through `useRef`'s generics:
+You can type the ref yourself by passing a type through `useRef`'s generics:
 
 ```tsx
 import { useRef, useEffect } from 'react'
 import { Mesh } from 'three'
 
 function Box(props) {
-  const ref = useRef<Mesh>(null!)
+  const meshRef = useRef<Mesh>(null!)
 
   useEffect(() => {
-    console.log(Boolean(ref.current))
+    console.log(Boolean(meshRef.current))
   }, [])
 
   return (
-    <mesh {...props} ref={props}>
+    <mesh {...props} ref={meshRef}>
       <boxGeometry />
       <meshBasicMaterial />
     </mesh>
@@ -101,7 +101,7 @@ MaterialNode
 LightNode
 ```
 
-### Extending JSX.IntrinsicElements
+### Extending ThreeElements
 
 Since our custom element is an object, we'll use `Object3DNode` to define it.
 
@@ -116,17 +116,15 @@ class CustomElement extends GridHelper {}
 // Extend so the reconciler will learn about it
 extend({ CustomElement })
 
-// Add types to JSX.Intrinsic elements so primitives pick up on it
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      customElement: Object3DNode<CustomElement, typeof CustomElement>
-    }
+// Add types to ThreeElements elements so primitives pick up on it
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    customElement: Object3DNode<CustomElement, typeof CustomElement>
   }
 }
 
 // react-three-fiber will create your custom component and TypeScript will understand it
-;<customComponent />
+<customComponent />
 ```
 
 ## Exported types

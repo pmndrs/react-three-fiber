@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import React, { useState, useEffect, useRef, useReducer } from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 
 function Test() {
@@ -16,13 +16,17 @@ function Test() {
   }, [])
 
   useFrame((state) => {
-    console.log(state.pointer.x)
+    //console.log(state.pointer.x)
   })
 
   return <primitive object={which ? o1 : o2} />
 }
 
 export default function App() {
+  const [foo, bar] = useState(0)
+  useEffect(() => {
+    setTimeout(() => bar(1), 1000)
+  }, [])
   return (
     <Canvas>
       <Test />

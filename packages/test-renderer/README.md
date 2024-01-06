@@ -38,7 +38,7 @@ import ReactThreeTestRenderer from '@react-three/test-renderer'
 
 const renderer = await ReactThreeTestRenderer.create(
   <mesh>
-    <boxBufferGeometry args={[2, 2]} />
+    <boxGeometry args={[2, 2]} />
     <meshStandardMaterial
       args={[
         {

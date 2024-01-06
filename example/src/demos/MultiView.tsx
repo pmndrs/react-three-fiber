@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useCallback, useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import {
   useGLTF,
@@ -16,9 +16,7 @@ import {
 
 export function Soda(props: any) {
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/soda-bottle/model.gltf',
-  ) as any
+  const { nodes, materials } = useGLTF('/bottle.gltf') as any
   return (
     <group {...props} {...spread} dispose={null}>
       <mesh geometry={nodes.Mesh_sodaBottle.geometry}>

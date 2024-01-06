@@ -15,9 +15,9 @@ const Container = React.memo(
           },
         },
       } as LayoutChangeEvent)
+    }, [onLayout])
 
-      ref = { current: { props } }
-    }, [])
+    React.useImperativeHandle(ref, () => props)
 
     return null
   }),
@@ -35,3 +35,19 @@ export const StyleSheet = {
     bottom: 0,
   },
 }
+
+export const PanResponder = {
+  create: () => ({ panHandlers: {} }),
+}
+
+export const Image = {
+  getSize(_uri: string, res: Function, rej?: Function) {
+    res(1, 1)
+  },
+}
+
+export const Platform = {
+  OS: 'web',
+}
+
+export const NativeModules = {}

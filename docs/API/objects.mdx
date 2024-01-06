@@ -87,13 +87,15 @@ The following attaches a material to the `material` property of a mesh and a geo
 
 ```jsx
 <mesh>
-  <meshBasicMaterial attach="material">
-  <boxGeometry attach="geometry">
+  <meshBasicMaterial attach="material" />
+  <boxGeometry attach="geometry" />
 ```
 
 <Hint>
-  All native elements ending with "Material" receive attach="material", and all elements ending with "Geometry" receive
-  attach="geometry". So you do not have to type it out any longer.
+
+All objects extending `THREE.Material` receive `attach="material"`, and all objects extending `THREE.BufferGeometry` receive
+`attach="geometry"`. You do not have to type it out!
+
 </Hint>
 
 ```jsx
@@ -102,42 +104,69 @@ The following attaches a material to the `material` property of a mesh and a geo
   <boxGeometry />
 ```
 
-You can also deeply nest attach through piercing. The following adds a buffer-attribute to `parent.attributes.position`.
-
-```jsx
-<bufferGeometry attach="geometry">
-  <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
-```
-
-Some objects have special add/remove function, you can't easily attach objects. In that case `attach` gives you full control.
-
-The following uses the effect composer from the [vanruesc/postprocessing](https://github.com/vanruesc/postprocessing) library, which works differently than three/examples/jsm. You need to call `Composer.addPass` to add an effect and `Composer.removePass` to remove it.
-
-```jsx
-<effectComposer>
-  <renderPass args={[scene, camera]} attach={["addPass", "removePass"]} />
-```
-
-And in the case the add/remove functions are more complex:
-
-```jsx
-<effectComposer>
-  <renderPass
-    args={[scene, camera]}
-    attach={[
-      (parent, self) => parent.addPass(self),
-      (parent, self) => parent.removePass(self)
-    ]} />
-```
-
-### Nesting
-
-You can nest primitive objects, too:
+You can also deeply nest attach through piercing. The following adds a buffer-attribute to `geometry.attributes.position` and then adds the buffer geometry to `mesh.geometry`.
 
 ```jsx
 <mesh>
-  <meshBasicMaterial attach="material">
-    <texture attach="map" image={img} onUpdate={self => (self.needsUpdate = true)} />
+  <bufferGeometry>
+    <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
+```
+
+#### More examples
+
+```jsx
+// Attach bar to foo.a
+<foo>
+  <bar attach="a" />
+
+// Attach bar to foo.a.b and foo.a.b.c (nested object attach)
+<foo>
+  <bar attach="a-b" />
+  <bar attach="a-b-c" />
+
+// Attach bar to foo.a[0] and foo.a[1] (array attach is just object attach)
+<foo>
+  <bar attach="a-0" />
+  <bar attach="a-1" />
+
+// Attach bar to foo via explicit add/remove functions
+<foo>
+  <bar attach={(parent, self) => {
+    parent.add(self)
+    return () => parent.remove(self)
+  }} />
+
+// The same as a one liner
+<foo>
+  <bar attach={(parent, self) => (parent.add(self), () => parent.remove(self))} />
+```
+
+#### Real-world use-cases:
+
+Attaching to nested objects, for instance a shadow-camera:
+
+```diff
+- <directionalLight
+-   castShadow
+-   position={[2.5, 8, 5]}
+-   shadow-mapSize={[1024, 1024]}
+-   shadow-camera-far={50}
+-   shadow-camera-left={-10}
+-   shadow-camera-right={10}
+-   shadow-camera-top={10}
+-   shadow-camera-bottom={-10}
+- />
++ <directionalLight castShadow position={[2.5, 8, 5]} shadow-mapSize={[1024, 1024]}>
++   <orthographicCamera attach="shadow-camera" args={[-10, 10, 10, -10]} />
++ </directionalLight>
+```
+
+Arrays must have explicit order, for instance multi-materials:
+
+```jsx
+<mesh>
+  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+</mesh>
 ```
 
 ## Putting already existing objects into the scene-graph

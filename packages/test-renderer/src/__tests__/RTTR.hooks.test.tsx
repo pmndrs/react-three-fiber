@@ -3,16 +3,9 @@ import * as Stdlib from 'three-stdlib'
 import * as THREE from 'three'
 
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
-
-import { asyncUtils } from '../../../shared/asyncUtils'
+import { waitFor } from '@react-three/test-renderer'
 
 import ReactThreeTestRenderer from '../index'
-
-const resolvers = []
-
-const { waitFor } = asyncUtils(ReactThreeTestRenderer.act, (resolver: () => void) => {
-  resolvers.push(resolver)
-})
 
 describe('ReactThreeTestRenderer Hooks', () => {
   it('can handle useThree hook', async () => {
@@ -36,25 +29,26 @@ describe('ReactThreeTestRenderer Hooks', () => {
       return <group />
     }
 
-    await ReactThreeTestRenderer.create(<Component />)
+    await ReactThreeTestRenderer.create(<Component />, { width: 1280, height: 800 })
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
     expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
-    expect(result.size).toEqual({ height: 0, width: 0 })
+    expect(result.size).toEqual({ height: 800, width: 1280, top: 0, left: 0, updateStyle: true })
   })
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    // @ts-ignore
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(() => ({
-      load: jest.fn().mockImplementation((url, onLoad) => {
-        onLoad(MockMesh)
-      }),
-    }))
+    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
+      () =>
+        ({
+          load: jest.fn().mockImplementation((_url, onLoad) => {
+            onLoad(MockMesh)
+          }),
+        } as unknown as Stdlib.GLTFLoader),
+    )
 
     const Component = () => {
-      // @ts-ignore i only need to provide an onLoad function
       const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
 
       return <primitive object={model} />

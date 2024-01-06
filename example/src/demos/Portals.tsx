@@ -16,26 +16,20 @@ export function Lights() {
 }
 
 export function Farm(props: any) {
-  const { scene } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/low-poly-farm/model.gltf',
-  )
+  const { scene } = useGLTF('/farm.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Ramen(props: any) {
-  const { scene } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/bowl-broth/model.gltf',
-  )
+  const { scene } = useGLTF('/ramen.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Soda(props: any) {
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF(
-    'https://market-assets.fra1.cdn.digitaloceanspaces.com/market-assets/models/soda-bottle/model.gltf',
-  ) as any
+  const { nodes, materials } = useGLTF('/bottle.gltf') as any
   return (
-    <group {...props} {...spread} dispose={null}>
+    <group {...(spread as any)} {...props} dispose={null}>
       <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} />
       </mesh>
@@ -113,6 +107,7 @@ const App = () => (
         <Farm scale={10} rotation={[0, 0, 0]} position={[-1, -2, -10]} />
         <Soda scale={5} position={[2, -2, -1.5]} />
         <Portal scale={[4, 5, 1]} position={[2, 0, -5]} rotation={[0, 0, 0]}>
+          <Test />
           <Lights />
           <Soda scale={8} position={[0, -2, -1.5]} />
           <Environment preset="city" background="only" />
@@ -121,8 +116,16 @@ const App = () => (
       <Ramen scale={4} position={[-2, 0, 2]} />
       <Soda scale={5} position={[1.5, 0, 3]} />
     </group>
-    <OrbitControls />
+    <OrbitControls makeDefault />
   </Canvas>
 )
+
+function Test() {
+  const controls = useThree((state) => state.controls)
+  console.log(controls)
+  useFrame((state) => {
+    //console.log(state.pointer.x)
+  })
+}
 
 export default App

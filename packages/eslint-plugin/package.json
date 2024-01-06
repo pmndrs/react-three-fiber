@@ -1,0 +1,50 @@
+{
+  "name": "@react-three/eslint-plugin",
+  "version": "0.1.1",
+  "description": "An ESLint plugin which provides lint rules for @react-three/fiber.",
+  "keywords": [
+    "react",
+    "renderer",
+    "fiber",
+    "three",
+    "threejs",
+    "eslint"
+  ],
+  "author": "Michael Dougall (https://github.com/itsdouges)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-fiber/packages/eslint-plugin#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
+  },
+  "collective": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/react-three-fiber"
+  },
+  "main": "dist/react-three-eslint-plugin.cjs.js",
+  "module": "dist/react-three-eslint-plugin.esm.js",
+  "types": "dist/react-three-eslint-plugin.cjs.d.ts",
+  "sideEffects": false,
+  "preconstruct": {
+    "entrypoints": [
+      "index.ts"
+    ]
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.17.8",
+    "eslint": "^8.12.0"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.4.10",
+    "@types/lodash": "^4.14.191",
+    "lodash": "^4.17.19",
+    "prettier": "^2.6.1",
+    "ts-node": "^10.9.1"
+  },
+  "scripts": {
+    "codegen": "ts-node scripts/codegen.ts"
+  }
+}

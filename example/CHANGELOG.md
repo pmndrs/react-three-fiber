@@ -1,5 +1,11 @@
 # example
 
+## 1.1.0
+
+### Minor Changes
+
+- 85c80e70: eventsource and eventprefix on the canvas component
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,14 +1,26 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-import { createWebGLContext } from '@react-three/test-renderer/src/createWebGLContext'
 
-import { createRoot, act, unmountComponentAtNode, useFrame, extend, ReactThreeFiber } from '../../src/index'
+import {
+  ReconcilerRoot,
+  createRoot,
+  act,
+  useFrame,
+  extend,
+  ReactThreeFiber,
+  useThree,
+  createPortal,
+} from '../../src/index'
 import { UseBoundStore } from 'zustand'
-import { RootState } from '../../src/core/store'
+import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
+
+interface ObjectWithBackground extends THREE.Object3D {
+  background: THREE.Color
+}
 
 /* This class is used for one of the tests */
 class HasObject3dMember extends THREE.Object3D {
@@ -29,14 +41,19 @@ class HasObject3dMethods extends THREE.Object3D {
   }
 }
 
+class MyColor extends THREE.Color {
+  constructor(col: number) {
+    super(col)
+  }
+}
+
 extend({ HasObject3dMember, HasObject3dMethods })
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
-      hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
-    }
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    hasObject3dMember: ReactThreeFiber.Node<HasObject3dMember, typeof HasObject3dMember>
+    hasObject3dMethods: ReactThreeFiber.Node<HasObject3dMethods, typeof HasObject3dMethods>
+    myColor: ReactThreeFiber.Node<MyColor, typeof MyColor>
   }
 }
 
@@ -48,35 +65,29 @@ beforeAll(() => {
 })
 
 describe('renderer', () => {
-  let canvas: HTMLCanvasElement = null!
+  let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
   beforeEach(() => {
-    canvas = createCanvas({
-      beforeReturn: (canvas) => {
-        //@ts-ignore
-        canvas.getContext = (type: string) => {
-          if (type === 'webgl' || type === 'webgl2') {
-            return createWebGLContext(canvas)
-          }
-        }
-      },
-    })
+    const canvas = createCanvas()
+    root = createRoot(canvas)
+  })
+
+  afterEach(() => {
+    root.unmount()
   })
 
   it('renders a simple component', async () => {
     const Mesh = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
     }
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Mesh />)
-        .getState().scene
+      scene = root.render(<Mesh />).getState().scene
     })
 
     expect(scene.children[0].type).toEqual('Mesh')
@@ -91,9 +102,7 @@ describe('renderer', () => {
     const Empty = () => null
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Empty />)
-        .getState().scene
+      scene = root.render(<Empty />).getState().scene
     })
 
     expect(scene.type).toEqual('Scene')
@@ -115,7 +124,7 @@ describe('renderer', () => {
     const Child = () => {
       return (
         <mesh>
-          <boxBufferGeometry args={[2, 2]} />
+          <boxGeometry args={[2, 2]} />
           <meshBasicMaterial />
         </mesh>
       )
@@ -123,14 +132,11 @@ describe('renderer', () => {
 
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Parent />)
-        .getState().scene
+      scene = root.render(<Parent />).getState().scene
     })
 
     expect(scene.children[0].type).toEqual('Group')
-    // @ts-ignore we do append background to group, but it's not wrong because it won't do anything.
-    expect((scene.children[0] as Group).background.getStyle()).toEqual('rgb(0,0,0)')
+    expect((scene.children[0] as ObjectWithBackground).background.getStyle()).toEqual('rgb(0,0,0)')
     expect(scene.children[0].children[0].type).toEqual('Mesh')
     expect((scene.children[0].children[0] as ComponentMesh).geometry.type).toEqual('BoxGeometry')
     expect((scene.children[0].children[0] as ComponentMesh).material.type).toEqual('MeshBasicMaterial')
@@ -172,9 +178,7 @@ describe('renderer', () => {
 
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
-        .render(<Component />)
-        .getState().scene
+      scene = root.render(<Component />).getState().scene
     })
 
     expect(scene.children[0].position.x).toEqual(7)
@@ -184,7 +188,7 @@ describe('renderer', () => {
   it('updates types & names', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <mesh>
             <meshBasicMaterial name="basicMat">
@@ -203,7 +207,7 @@ describe('renderer', () => {
     )
 
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <mesh>
             <meshStandardMaterial name="standardMat">
@@ -225,12 +229,12 @@ describe('renderer', () => {
   it('should forward ref three object', async () => {
     // Note: Passing directly should be less strict, and assigning current should be more strict
     let immutableRef!: React.RefObject<THREE.Mesh>
-    let mutableRef!: React.MutableRefObject<THREE.Object3D | undefined>
+    let mutableRef!: React.MutableRefObject<THREE.Mesh | null>
     let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
 
     const RefTest = () => {
       immutableRef = React.createRef()
-      mutableRef = React.useRef()
+      mutableRef = React.useRef(null)
       mutableRefSpecific = React.useRef(null)
 
       return (
@@ -243,7 +247,7 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      createRoot(canvas).render(<RefTest />)
+      root.render(<RefTest />)
     })
 
     expect(immutableRef.current).toBeTruthy()
@@ -254,7 +258,7 @@ describe('renderer', () => {
   it('attaches Object3D children that use attach', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <hasObject3dMember>
             <mesh attach="attachment" />
@@ -273,7 +277,7 @@ describe('renderer', () => {
   it('can attach a Scene', async () => {
     let scene: THREE.Scene = null!
     await act(async () => {
-      scene = createRoot(canvas)
+      scene = root
         .render(
           <hasObject3dMember>
             <scene attach="attachment" />
@@ -293,7 +297,7 @@ describe('renderer', () => {
     it('attachFns with cleanup', async () => {
       let scene: THREE.Scene = null!
       await act(async () => {
-        scene = createRoot(canvas)
+        scene = root
           .render(
             <hasObject3dMethods>
               <mesh attach={(parent, self) => (parent.customAttach(self), () => parent.detach(self))} />
@@ -312,7 +316,7 @@ describe('renderer', () => {
       expect((scene.children[0] as HasObject3dMethods).detachedObj3d).toBeUndefined()
 
       await act(async () => {
-        createRoot(canvas).render(<hasObject3dMethods />)
+        root.render(<hasObject3dMethods />)
       })
 
       const detachedMesh = (scene.children[0] as HasObject3dMethods).detachedObj3d
@@ -325,7 +329,7 @@ describe('renderer', () => {
       let detachedMesh: Instance = null!
 
       await act(async () => {
-        scene = createRoot(canvas)
+        scene = root
           .render(
             <hasObject3dMethods>
               <mesh attach={(parent) => ((attachedMesh = parent), () => (detachedMesh = parent))} />
@@ -340,7 +344,7 @@ describe('renderer', () => {
       expect(scene.children[0].children.length).toBe(0)
 
       await act(async () => {
-        createRoot(canvas).render(<hasObject3dMethods />)
+        root.render(<hasObject3dMethods />)
       })
 
       expect(detachedMesh).toBe(attachedMesh)
@@ -363,11 +367,11 @@ describe('renderer', () => {
     }
 
     await act(async () => {
-      createRoot(canvas).render(<Log key="foo" name="Foo" />)
+      root.render(<Log key="foo" name="Foo" />)
     })
 
     await act(async () => {
-      unmountComponentAtNode(canvas)
+      root.unmount()
     })
 
     expect(log).toEqual(['render Foo', 'mount Foo', 'unmount Foo'])
@@ -383,44 +387,34 @@ describe('renderer', () => {
     // Test initial mount without events
     mounted = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
 
     // Test initial mount with events
     attachEvents = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).not.toBe(0)
 
     // Test events update
     attachEvents = false
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
 
     attachEvents = true
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).not.toBe(0)
 
     // Test unmount with events
     mounted = false
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<EventfulComponent />)
-        .getState()
+      state = root.render(<EventfulComponent />).getState()
     })
     expect(state.internal.interaction.length).toBe(0)
   })
@@ -429,17 +423,17 @@ describe('renderer', () => {
     let state: RootState = null!
     const instances: { uuid: string; parentUUID?: string; childUUID?: string }[] = []
 
-    const Test = ({ n }: { n: number }) => (
-      // @ts-ignore args isn't a valid prop but changing it will swap
-      <group args={[n]} onPointerOver={() => null}>
+    const object1 = new THREE.Group()
+    const object2 = new THREE.Group()
+
+    const Test = ({ first }: { first?: boolean }) => (
+      <primitive object={first ? object1 : object2} onPointerOver={() => null}>
         <group />
-      </group>
+      </primitive>
     )
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<Test n={1} />)
-        .getState()
+      state = root.render(<Test first />).getState()
     })
 
     instances.push({
@@ -447,11 +441,10 @@ describe('renderer', () => {
       parentUUID: state.scene.children[0].parent?.uuid,
       childUUID: state.scene.children[0].children[0]?.uuid,
     })
+    expect(state.scene.children[0]).toBe(object1)
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<Test n={2} />)
-        .getState()
+      state = root.render(<Test />).getState()
     })
 
     instances.push({
@@ -462,8 +455,8 @@ describe('renderer', () => {
 
     const [oldInstance, newInstance] = instances
 
-    // Created a new instance
-    expect(oldInstance.uuid).not.toBe(newInstance.uuid)
+    // Swapped to new instance
+    expect(state.scene.children[0]).toBe(object2)
 
     // Preserves scene hierarchy
     expect(oldInstance.parentUUID).toBe(newInstance.parentUUID)
@@ -473,11 +466,91 @@ describe('renderer', () => {
     expect(state.internal.interaction.length).not.toBe(0)
   })
 
+  it('can swap primitives', async () => {
+    let state: RootState = null!
+
+    const o1 = new THREE.Group()
+    o1.add(new THREE.Group())
+    const o2 = new THREE.Group()
+
+    const Test = ({ n }: { n: number }) => (
+      <primitive object={n === 1 ? o1 : o2}>
+        <group attach="test" />
+      </primitive>
+    )
+
+    await act(async () => {
+      state = root.render(<Test n={1} />).getState()
+    })
+
+    // Initial object is added with children and attachments
+    expect(state.scene.children[0]).toBe(o1)
+    expect(state.scene.children[0].children.length).toBe(1)
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+
+    await act(async () => {
+      state = root.render(<Test n={2} />).getState()
+    })
+
+    // Swapped to object 2, does not copy old children, copies attachments
+    expect(state.scene.children[0]).toBe(o2)
+    expect(state.scene.children[0].children.length).toBe(0)
+    expect((state.scene.children[0] as any).test).toBeInstanceOf(THREE.Group)
+  })
+
+  it('can swap 4 array primitives', async () => {
+    let state: RootState = null!
+    const a = new THREE.Group()
+    const b = new THREE.Group()
+    const c = new THREE.Group()
+    const d = new THREE.Group()
+    const array = [a, b, c, d]
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} object={group} />
+        ))}
+      </>
+    )
+
+    await act(async () => {
+      state = root.render(<Test array={array} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(a)
+    expect(state.scene.children[1]).toBe(b)
+    expect(state.scene.children[2]).toBe(c)
+    expect(state.scene.children[3]).toBe(d)
+
+    const reversedArray = [...array.reverse()]
+
+    await act(async () => {
+      state = root.render(<Test array={reversedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(d)
+    expect(state.scene.children[1]).toBe(c)
+    expect(state.scene.children[2]).toBe(b)
+    expect(state.scene.children[3]).toBe(a)
+
+    const mixedArray = [b, a, d, c]
+
+    await act(async () => {
+      state = root.render(<Test array={mixedArray} />).getState()
+    })
+
+    expect(state.scene.children[0]).toBe(b)
+    expect(state.scene.children[1]).toBe(a)
+    expect(state.scene.children[2]).toBe(d)
+    expect(state.scene.children[3]).toBe(c)
+  })
+
   it('will make an Orthographic Camera & set the position', async () => {
     let camera: THREE.Camera = null!
 
     await act(async () => {
-      camera = createRoot(canvas)
+      camera = root
         .configure({ orthographic: true, camera: { position: [0, 0, 5] } })
         .render(<group />)
         .getState().camera
@@ -490,9 +563,7 @@ describe('renderer', () => {
   it('should handle an performance changing functions', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ dpr: [1, 2], performance: { min: 0.2 } })
-        .render(<group />)
+      state = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
 
     expect(state.getState().viewport.initialDpr).toEqual(2)
@@ -526,9 +597,7 @@ describe('renderer', () => {
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ shadows: true })
-        .render(<group />)
+      state = root.configure({ shadows: true }).render(<group />)
     })
 
     expect(state.getState().gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
@@ -537,9 +606,7 @@ describe('renderer', () => {
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
     let state: UseBoundStore<RootState> = null!
     await act(async () => {
-      state = createRoot(canvas)
-        .configure({ linear: false })
-        .render(<group />)
+      state = root.configure({ linear: false }).render(<group />)
     })
 
     expect(state.getState().gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -550,9 +617,7 @@ describe('renderer', () => {
     let state: RootState = null!
 
     await act(async () => {
-      state = createRoot(canvas)
-        .render(<group />)
-        .getState()
+      state = root.render(<group />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
@@ -575,7 +640,7 @@ describe('renderer', () => {
         useFrame(() => (respected = false))
         return <group />
       }
-      const state = createRoot(canvas)
+      const state = root
         .configure({ frameloop: 'never' })
         .render(<TestGroup />)
         .getState()
@@ -587,18 +652,11 @@ describe('renderer', () => {
   })
 
   it('will render components that are extended', async () => {
-    class MyColor extends THREE.Color {
-      constructor(col: number) {
-        super(col)
-      }
-    }
-
     const testExtend = async () => {
       await act(async () => {
         extend({ MyColor })
 
-        // @ts-ignore we're testing the extend feature, i'm not adding it to the namespace
-        createRoot(canvas).render(<myColor args={[0x0000ff]} />)
+        root.render(<myColor args={[0x0000ff]} />)
       })
     }
 
@@ -608,7 +666,7 @@ describe('renderer', () => {
   it('should set renderer props via gl prop', async () => {
     let gl: THREE.WebGLRenderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ gl: { physicallyCorrectLights: true } })
         .render(<group />)
         .getState().gl
@@ -617,12 +675,40 @@ describe('renderer', () => {
     expect(gl.physicallyCorrectLights).toBe(true)
   })
 
+  it('should update scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: { name: 'test' } })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(scene.name).toBe('test')
+  })
+
+  it('should set a custom scene via scene prop', async () => {
+    let scene: THREE.Scene = null!
+
+    const prop = new THREE.Scene()
+
+    await act(async () => {
+      scene = root
+        .configure({ scene: prop })
+        .render(<group />)
+        .getState().scene
+    })
+
+    expect(prop).toBe(scene)
+  })
+
   it('should set a renderer via gl callback', async () => {
     class Renderer extends THREE.WebGLRenderer {}
 
     let gl: Renderer = null!
     await act(async () => {
-      gl = createRoot(canvas)
+      gl = root
         .configure({ gl: (canvas) => new Renderer({ canvas }) })
         .render(<group />)
         .getState().gl
@@ -632,44 +718,301 @@ describe('renderer', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
-    let gl: THREE.WebGLRenderer = null!
-    await act(async () => {
-      gl = createRoot(canvas)
-        .configure({ gl: { outputEncoding: THREE.LinearEncoding, toneMapping: THREE.NoToneMapping } })
-        .render(<group />)
-        .getState().gl
-    })
+    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
+    let key = 0
+    function Test() {
+      return <meshBasicMaterial key={key++} map={texture} />
+    }
 
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
-    expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    const LinearEncoding = 3000
+    const sRGBEncoding = 3001
 
-    await act(async () => {
-      gl = createRoot(canvas)
-        .configure({ flat: true, linear: true })
-        .render(<group />)
-        .getState().gl
-    })
-    expect(gl.outputEncoding).toBe(THREE.LinearEncoding)
+    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
+    await act(async () => (gl = root.render(<Test />).getState().gl))
+    expect(gl.outputEncoding).toBe(sRGBEncoding)
+    expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
+    expect(texture.encoding).toBe(sRGBEncoding)
+
+    await act(async () => root.configure({ linear: true, flat: true }).render(<Test />))
+    expect(gl.outputEncoding).toBe(LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
+    expect(texture.encoding).toBe(LinearEncoding)
+
+    // Sets outputColorSpace since r152
+    const SRGBColorSpace = 'srgb'
+    const LinearSRGBColorSpace = 'srgb-linear'
+
+    gl.outputColorSpace ??= ''
+    texture.colorSpace ??= ''
+
+    await act(async () => root.configure({ linear: true }).render(<Test />))
+    expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
+    expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
+
+    await act(async () => root.configure({ linear: false }).render(<Test />))
+    expect(gl.outputColorSpace).toBe(SRGBColorSpace)
+    expect(texture.colorSpace).toBe(SRGBColorSpace)
   })
 
   it('should respect legacy prop', async () => {
-    let gl: THREE.WebGLRenderer = null!
-    await act(async () => {
-      gl = createRoot(canvas)
-        .configure({ legacy: true })
-        .render(<group />)
-        .getState().gl
-    })
+    // <= r138 internal fallback
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    extend({ ColorManagement: null })
+    await act(async () => root.render(<meshBasicMaterial ref={material} color="#111111" />))
+    expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+    expect(material.current!.color.toArray()).toStrictEqual(new THREE.Color('#111111').convertSRGBToLinear().toArray())
+    extend({ ColorManagement: (THREE as any).ColorManagement })
 
+    // r139 legacyMode
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
     expect((THREE as any).ColorManagement.legacyMode).toBe(true)
 
     await act(async () => {
-      gl = createRoot(canvas)
-        .configure({ legacy: false })
-        .render(<group />)
-        .getState().gl
+      root.configure({ legacy: false }).render(<group />)
     })
     expect((THREE as any).ColorManagement.legacyMode).toBe(false)
+
+    // r150 !enabled
+    ;(THREE as any).ColorManagement.enabled = true
+
+    await act(async () => {
+      root.configure({ legacy: true }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(false)
+
+    await act(async () => {
+      root.configure({ legacy: false }).render(<group />)
+    })
+    expect((THREE as any).ColorManagement.enabled).toBe(true)
+  })
+
+  it('can handle createPortal', async () => {
+    const scene = new THREE.Scene()
+
+    let state: RootState = null!
+    let portalState: RootState = null!
+
+    const Normal = () => {
+      const three = useThree()
+      state = three
+
+      return <group />
+    }
+
+    const Portal = () => {
+      const three = useThree()
+      portalState = three
+
+      return <group />
+    }
+
+    await act(async () => {
+      root.render(
+        <>
+          <Normal />
+          {createPortal(<Portal />, scene, { scene })}
+        </>,
+      )
+    })
+
+    // Renders into portal target
+    expect(scene.children.length).not.toBe(0)
+
+    // Creates an isolated state enclave
+    expect(state.scene).not.toBe(scene)
+    expect(portalState.scene).toBe(scene)
+
+    // Preserves internal keys
+    const overwrittenKeys = ['get', 'set', 'events', 'size', 'viewport']
+    const respectedKeys = privateKeys.filter((key) => overwrittenKeys.includes(key) || state[key] === portalState[key])
+    expect(respectedKeys).toStrictEqual(privateKeys)
+  })
+
+  it('can handle createPortal on unmounted container', async () => {
+    let groupHandle!: THREE.Group | null
+    function Test(props: any) {
+      const [group, setGroup] = React.useState(null)
+      groupHandle = group
+
+      return (
+        <group {...props} ref={setGroup}>
+          {group && createPortal(<mesh />, group)}
+        </group>
+      )
+    }
+
+    await act(async () => root.render(<Test key={0} />))
+
+    expect(groupHandle).toBeDefined()
+    const prevUUID = groupHandle!.uuid
+
+    await act(async () => root.render(<Test key={1} />))
+
+    expect(groupHandle).toBeDefined()
+    expect(prevUUID).not.toBe(groupHandle!.uuid)
+  })
+
+  it('invalidates pierced props when root is changed', async () => {
+    const material = React.createRef<THREE.MeshBasicMaterial>()
+    const texture1 = { needsUpdate: false, name: '' } as THREE.Texture
+    const texture2 = { needsUpdate: false, name: '' } as THREE.Texture
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture1} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture1)
+    expect(texture1.needsUpdate).toBe(true)
+    expect(texture1.name).toBe('test')
+
+    await act(async () =>
+      root.render(<meshBasicMaterial ref={material} map={texture2} map-needsUpdate={true} map-name="test" />),
+    )
+
+    expect(material.current!.map).toBe(texture2)
+    expect(texture2.needsUpdate).toBe(true)
+    expect(texture2.name).toBe('test')
+  })
+
+  // https://github.com/mrdoob/three.js/issues/21209
+  it("can handle HMR default where three.js isn't reliable", async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test() {
+      const [scale, setScale] = React.useState(true)
+      const props: any = {}
+      if (scale) props.scale = 0.5
+      React.useEffect(() => void setScale(false), [])
+      return <mesh ref={ref} {...props} />
+    }
+
+    await act(async () => root.render(<Test />))
+
+    expect(ref.current!.scale.toArray()).toStrictEqual(new THREE.Object3D().scale.toArray())
+  })
+
+  it("onUpdate shouldn't update itself", async () => {
+    const one = jest.fn()
+    const two = jest.fn()
+
+    const Test = (props: Partial<JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
+    await act(async () => root.render(<Test onUpdate={one} />))
+    await act(async () => root.render(<Test onUpdate={two} />))
+
+    expect(one).toBeCalledTimes(1)
+    expect(two).toBeCalledTimes(0)
+  })
+
+  it("camera props shouldn't overwrite state", async () => {
+    const camera = new THREE.OrthographicCamera()
+
+    function Test() {
+      const set = useThree((state) => state.set)
+      React.useMemo(() => set({ camera }), [set])
+      return null
+    }
+
+    const store = await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+
+    root.configure({ camera: { name: 'test' } })
+
+    await act(async () => root.render(<Test />))
+    expect(store.getState().camera).toBe(camera)
+    expect(camera.name).not.toBe('test')
+  })
+
+  it('should safely handle updates to the object prop', async () => {
+    const ref = React.createRef<THREE.Object3D>()
+    const child = React.createRef<THREE.Object3D>()
+    const attachedChild = React.createRef<THREE.Object3D>()
+
+    const Test = (props: JSX.IntrinsicElements['primitive']) => (
+      <primitive {...props} ref={ref}>
+        <object3D ref={child} />
+        <object3D ref={attachedChild} attach="userData-attach" />
+      </primitive>
+    )
+
+    const object1 = new THREE.Object3D()
+    const child1 = new THREE.Object3D()
+    object1.add(child1)
+
+    const object2 = new THREE.Object3D()
+    const child2 = new THREE.Object3D()
+    object2.add(child2)
+
+    // Initial
+    await act(async () => root.render(<Test object={object1} />))
+    expect(ref.current).toBe(object1)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+
+    // Update
+    await act(async () => root.render(<Test object={object2} />))
+    expect(ref.current).toBe(object2)
+    expect(ref.current!.children).toStrictEqual([child2, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+
+    // Revert
+    await act(async () => root.render(<Test object={object1} />))
+    expect(ref.current).toBe(object1)
+    expect(ref.current!.children).toStrictEqual([child1, child.current])
+    expect(ref.current!.userData.attach).toBe(attachedChild.current)
+  })
+
+  it('should recursively dispose of declarative children', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={parentDispose}>
+          <mesh dispose={childDispose} />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).toBeCalledTimes(1)
+    expect(childDispose).toBeCalledTimes(1)
+  })
+
+  it('should not recursively dispose of flagged parent', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <group dispose={null}>
+          <mesh dispose={parentDispose}>
+            <mesh dispose={childDispose} />
+          </mesh>
+        </group>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).not.toBeCalled()
+    expect(childDispose).not.toBeCalled()
+  })
+
+  it('should not recursively dispose of attached primitives', async () => {
+    const meshDispose = jest.fn()
+    const primitiveDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={meshDispose}>
+          <primitive dispose={primitiveDispose} object={new THREE.BufferGeometry()} attach="geometry" />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(meshDispose).toBeCalledTimes(1)
+    expect(primitiveDispose).not.toBeCalled()
   })
 })

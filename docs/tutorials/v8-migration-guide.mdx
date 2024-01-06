@@ -1,7 +1,7 @@
 ---
 title: 'v8 Migration Guide'
 description: Changes and new features with v8 and react 18
-nav: 13
+nav: 12
 ---
 
 Work on version 8 has begun 3 Sep 2021 and is perhaps the biggest update to Fiber yet. We've tried our best to keep breaking-changes to a minimum, they mostly affect rarely used api's like `attach`. This release brings a ton of performance related fixes, but also includes some new and ground breaking features.
@@ -82,12 +82,12 @@ This was the most common setting in the wild, so it was brought in as a better d
 
 ## Color management
 
-Color management is now being handled by Three R139. Therefore we set `THREE.ColorManagement.legacyMode` to `false` and cede to touch colors and textures since everything will now be converted from sRGB to linear space by Three itself.
+Color management is now being handled by Three R139. Therefore we set `THREE.ColorManagement.enabled` to `true` and cede to touch colors and textures since everything will now be converted from sRGB to linear color space by Three itself.
 
 You can manipulate this yourself with the `legacy` prop:
 
 ```jsx
-// sets THREE.ColorManagement.legacyMode = true
+// sets THREE.ColorManagement.enabled = false
 <Canvas legacy={true}>
 ```
 
@@ -217,7 +217,7 @@ This is also supported by all cameras that you create, be it a THREE.Perspective
 
 ```jsx
 import { PerspectiveCamera } from '@react-three/drei'
-;<Canvas>
+<Canvas>
   <PerspectiveCamera makeDefault manual />
 </Canvas>
 ```
@@ -287,8 +287,8 @@ Arrays must be explcit now:
 
 ```diff
 <mesh>
--  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />}
-+  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />}
+-  {colors.map((color, index) => <meshBasicMaterial key={index} attachArray="material" color={color} />)}
++  {colors.map((color, index) => <meshBasicMaterial key={index} attach={`material-${index}`} color={color} />)}
 </mesh>
 ```
 
@@ -331,8 +331,8 @@ const root = createRoot(document.querySelector('#root'))
 window.addEventListener('resize', () => {
   root.configure({
     events,
-    camera: { position: [0, 0, 50]., fov: 50 },
-    size: { width: window.innerWidth, height: window.innerHeight }
+    camera: { position: [0, 0, 50], fov: 50 },
+    size: { width: window.innerWidth, height: window.innerHeight },
   })
   root.render(<App />)
 })
