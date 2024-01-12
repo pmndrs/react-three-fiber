@@ -50,9 +50,9 @@ function Scene() {
 
   return (
     <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={2} />
-      <pointLight position={[-10, -10, -10]} color="red" intensity={4} />
+      <ambientLight intensity={0.5 * Math.PI} />
+      <pointLight decay={0} position={[10, 10, 10]} intensity={2} />
+      <pointLight decay={0} position={[-10, -10, -10]} color="red" intensity={4} />
 
       <mesh
         scale={hovered ? 1.25 : 1}
