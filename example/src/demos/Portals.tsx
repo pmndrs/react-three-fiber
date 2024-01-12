@@ -8,9 +8,9 @@ export function Lights() {
   return (
     <>
       <color attach="background" args={['#f0f0f0']} />
-      <ambientLight intensity={1} />
-      <pointLight position={[20, 30, 10]} />
-      <pointLight position={[-10, -10, -10]} color="blue" />
+      <ambientLight intensity={Math.PI} />
+      <pointLight decay={0} position={[20, 30, 10]} />
+      <pointLight decay={0} position={[-10, -10, -10]} color="blue" />
     </>
   )
 }

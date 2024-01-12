@@ -9,8 +9,8 @@ export default function App() {
       orthographic
       camera={{ zoom: 150, fov: 75, position: [0, 0, 25] }}
       onPointerMissed={() => console.log('canvas.missed')}>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={Math.PI} />
+      <pointLight decay={0} position={[10, 10, 10]} />
       <mesh
         scale={[2, 2, 2]}
         position={[1, 0, 0]}
@@ -19,7 +19,7 @@ export default function App() {
           set((value) => !value)
         }}
         onPointerMissed={() => console.log('mesh.missed')}>
-        <boxBufferGeometry args={[1, 1, 1]} />
+        <boxGeometry args={[1, 1, 1]} />
         <meshPhysicalMaterial color={state ? 'hotpink' : 'blue'} />
       </mesh>
     </Canvas>

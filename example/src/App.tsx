@@ -20,7 +20,7 @@ function Demo() {
   const { Component } = visibleComponents[compName]
 
   return (
-    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e}</Error>}>
+    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e.message}</Error>}>
       <Component />
     </ErrorBoundary>
   )

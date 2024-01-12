@@ -6,6 +6,7 @@ import { DefaultEventPriority } from 'react-reconciler/constants'
 import {
   is,
   prepare,
+  findInitialRoot,
   diffProps,
   DiffSet,
   applyProps,
@@ -196,9 +197,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         detach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
-        // Remove interactivity
+        // @ts-ignore
+        // Remove interactivity on the initial root
         if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
+          removeInteractivity(findInitialRoot(child), child as unknown as THREE.Object3D)
         }
       }
 
@@ -278,9 +280,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
     appendChild(parent, newInstance)
 
-    // Re-bind event handlers
+    // Re-bind event handlers on the initial root
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
-      const rootState = newInstance.__r3f.root.getState()
+      const rootState = findInitialRoot(newInstance).getState()
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
     }
 
@@ -391,10 +393,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     commitMount(instance, _type, _props, _int) {
       // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
+      // This will make sure events are only added once to the central container on the initial root
       const localState = (instance.__r3f ?? {}) as LocalState
       if (instance.raycast && localState.handlers && localState.eventCount) {
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+        findInitialRoot(instance)
+          .getState()
+          .internal.interaction.push(instance as unknown as THREE.Object3D)
       }
     },
     getPublicInstance: (instance) => instance!,

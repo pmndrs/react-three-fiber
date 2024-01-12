@@ -1,35 +1,46 @@
 import * as THREE from 'three'
-import React, { useState, useEffect, useReducer } from 'react'
+import * as React from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { OrbitControls, Hud } from '@react-three/drei'
 
-function Test() {
-  const [o1] = useState(
-    () => new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'hotpink' })),
+function Box({ color = 'orange', ...props }) {
+  const ref = React.useRef<THREE.Mesh>(null!)
+  const [hovered, hover] = React.useState(false)
+  const [clicked, click] = React.useState(false)
+  useFrame((state, delta) => (ref.current.rotation.x += delta))
+  return (
+    <mesh
+      {...props}
+      ref={ref}
+      scale={clicked ? 1.5 : 1}
+      onClick={() => click(!clicked)}
+      onPointerOver={(event) => (event.stopPropagation(), hover(true))}
+      onPointerOut={() => hover(false)}>
+      <boxGeometry />
+      <meshStandardMaterial color={hovered ? 'hotpink' : color} />
+    </mesh>
   )
-  const [o2] = useState(
-    () => new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({ color: 'aquamarine' })),
-  )
-  const [which, toggle] = useReducer((state) => !state, true)
-  useEffect(() => {
-    const interval = setInterval(toggle, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  useFrame((state) => {
-    //console.log(state.pointer.x)
-  })
-
-  return <primitive object={which ? o1 : o2} />
 }
 
 export default function App() {
-  const [foo, bar] = useState(0)
-  useEffect(() => {
-    setTimeout(() => bar(1), 1000)
+  const [visible, set] = React.useState(true)
+  React.useEffect(() => {
+    setTimeout(() => set(false), 2000)
+    setTimeout(() => set(true), 4000)
   }, [])
   return (
     <Canvas>
-      <Test />
+      <ambientLight intensity={Math.PI / 2} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+      <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+      <Box position={[-1.2, 0, 0]} />
+      <Hud>
+        <ambientLight intensity={Math.PI / 2} />
+        <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+        <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
+        {visible && <Box color="skyblue" position={[1.2, 0, 0]} />}
+      </Hud>
+      <OrbitControls />
     </Canvas>
   )
 }

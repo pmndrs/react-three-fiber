@@ -7,7 +7,7 @@ export default function App() {
   const [arg, inc] = useReducer((x) => x + 1, 0)
   return (
     <Canvas>
-      <ambientLight />
+      <ambientLight intensity={Math.PI} />
       <directionalLight />
       <mesh onClick={inc}>
         <sphereGeometry args={[1, 64, 32]} />

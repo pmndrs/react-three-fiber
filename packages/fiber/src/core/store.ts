@@ -156,7 +156,7 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
-  /** If this state model is layerd (via createPortal) then this contains the previous layer */
+  /** If this state model is layered (via createPortal) then this contains the previous layer */
   previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   /** Internals */
   internal: InternalState

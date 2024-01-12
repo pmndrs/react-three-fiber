@@ -24,8 +24,8 @@ export default function App() {
   }, [])
   return (
     <Canvas orthographic camera={{ position: [10, 10, 10], zoom: 100 }}>
-      <ambientLight />
-      <pointLight position={[10, 10, 5]} intensity={2} />
+      <ambientLight intensity={Math.PI} />
+      <pointLight decay={0} position={[10, 10, 5]} intensity={2} />
       <mesh>
         <boxGeometry />
         <meshStandardMaterial color="orange" />
