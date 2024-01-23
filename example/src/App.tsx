@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useErrorBoundary } from 'use-error-boundary'
 import { Route, useRoute, Redirect } from 'wouter'
 
-import { Loading, Page, DemoPanel, Dot, Error } from './styles'
+import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
 
 import * as demos from './demos'
 
@@ -47,14 +47,17 @@ export default function App() {
   const dev = new URLSearchParams(location.search).get('dev')
 
   return (
-    <Page>
-      <React.Suspense fallback={<Loading />}>
-        <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
-        <Route path="/demo/:name">
-          <Demo />
-        </Route>
-      </React.Suspense>
-      {dev === null && <Dots />}
-    </Page>
+    <>
+      <Global />
+      <Page>
+        <React.Suspense fallback={<Loading />}>
+          <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
+          <Route path="/demo/:name">
+            <Demo />
+          </Route>
+        </React.Suspense>
+        {dev === null && <Dots />}
+      </Page>
+    </>
   )
 }
