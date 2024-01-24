@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.15
+
+### Patch Changes
+
+- 71cd8f96: fix: tonemapping config overwrites userland
+
 ## 8.15.14
 
 ### Patch Changes
