@@ -319,16 +319,18 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
 
-      // Set color space and tonemapping preferences
-      const LinearEncoding = 3000
-      const sRGBEncoding = 3001
-      applyProps(
-        gl as any,
-        {
-          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
-          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
-        } as Partial<Properties<THREE.WebGLRenderer>>,
-      )
+      if (!configured) {
+        // Set color space and tonemapping preferences, once
+        const LinearEncoding = 3000
+        const sRGBEncoding = 3001
+        applyProps(
+          gl as any,
+          {
+            outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+            toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+          } as Partial<Properties<THREE.WebGLRenderer>>,
+        )
+      }
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
