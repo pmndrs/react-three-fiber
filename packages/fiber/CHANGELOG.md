@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.16
+
+### Patch Changes
+
+- 0bb12fd1: fix(types): remove usage of THREE.Vector
+
 ## 8.15.14
 
 ### Patch Changes
