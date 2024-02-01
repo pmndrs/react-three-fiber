@@ -1,10 +1,11 @@
 # @react-three/fiber
 
-## 8.15.15
+## 8.15.16
 
 ### Patch Changes
 
 - 71cd8f96: fix: tonemapping config overwrites userland
+- 0bb12fd1: fix(types): remove usage of THREE.Vector
 
 ## 8.15.14
 
