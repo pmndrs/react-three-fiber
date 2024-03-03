@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.17
+
+### Patch Changes
+
+- 16c2ee97: fix(types): support @types/three@0.162.0
+
 ## 8.15.16
 
 ### Patch Changes
