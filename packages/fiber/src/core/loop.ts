@@ -120,7 +120,7 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
   }
 
   function invalidate(state?: RootState, frames = 1): void {
-    if (!state) return roots.forEach((root) => invalidate(root.store.getState()), frames)
+    if (!state) return roots.forEach((root) => invalidate(root.store.getState(), frames))
     if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
     // Increase frames, do not go higher than 60
     state.internal.frames = Math.min(60, state.internal.frames + frames)
