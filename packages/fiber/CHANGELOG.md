@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.19
+
+### Patch Changes
+
+- 74926b94: fix(types): avoid emitting THREE.XRFrame
+
 ## 8.15.18
 
 ### Patch Changes
