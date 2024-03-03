@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.15.18
+
+### Patch Changes
+
+- 8c01939a: fix: correctly pass frames in invalidate
+
 ## 8.15.17
 
 ### Patch Changes
