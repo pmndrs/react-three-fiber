@@ -17,7 +17,7 @@ import {
   privateKeys,
 } from './store'
 import { createRenderer, extend, prepare, Root } from './renderer'
-import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
+import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects, Invalidate, Advance } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
   is,
@@ -38,7 +38,7 @@ import type { Properties } from '../three-types'
 type Canvas = HTMLCanvasElement | OffscreenCanvas
 
 const roots = new Map<Canvas, Root>()
-const { invalidate, advance } = createLoop(roots)
+const { invalidate, advance }: { invalidate: Invalidate; advance: Advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 

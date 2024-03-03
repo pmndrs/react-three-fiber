@@ -78,7 +78,24 @@ function render(timestamp: number, state: RootState, frame?: _XRFrame) {
   return state.frameloop === 'always' ? 1 : state.internal.frames
 }
 
-export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
+export type Invalidate = (state?: RootState, frames?: number) => void
+export type Advance = (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: _XRFrame) => void
+
+interface Loop {
+  loop: (timestamp: number) => void
+  /**
+   * Invalidates the view, requesting a frame to be rendered. Will globally invalidate unless passed a root's state.
+   * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
+   */
+  invalidate: Invalidate
+  /**
+   * Advances the frameloop and runs render effects, useful for when manually rendering via `frameloop="never"`.
+   * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
+   */
+  advance: Advance
+}
+
+export function createLoop<TCanvas>(roots: Map<TCanvas, Root>): Loop {
   let running = false
   let repeat: number
   let frame: number
@@ -138,17 +155,5 @@ export function createLoop<TCanvas>(roots: Map<TCanvas, Root>) {
     if (runGlobalEffects) flushGlobalEffects('after', timestamp)
   }
 
-  return {
-    loop,
-    /**
-     * Invalidates the view, requesting a frame to be rendered. Will globally invalidate unless passed a root's state.
-     * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
-     */
-    invalidate,
-    /**
-     * Advances the frameloop and runs render effects, useful for when manually rendering via `frameloop="never"`.
-     * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
-     */
-    advance,
-  }
+  return { loop, invalidate, advance }
 }
