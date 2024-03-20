@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as ts from 'typescript'
+import ts from 'typescript'
 import * as path from 'path'
 import {
   ReconcilerRoot,
@@ -14,6 +14,7 @@ import {
   extend,
 } from '../src/index'
 
+extend(THREE as any)
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
 beforeEach(() => (root = createRoot(document.createElement('canvas'))))

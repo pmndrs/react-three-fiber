@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, act, extend, ThreeElement } from '../src/index'
 import { suspend } from 'suspend-react'
 
+extend(THREE as any)
+
 class Mock extends THREE.Group {
   static instances: string[]
   constructor(name: string = '') {

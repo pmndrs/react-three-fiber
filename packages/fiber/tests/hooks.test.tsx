@@ -14,8 +14,10 @@ import {
   ObjectMap,
   useInstanceHandle,
   Instance,
+  extend,
 } from '../src'
 
+extend(THREE as any)
 const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {

@@ -1,6 +1,9 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act } from '../src'
+import { Canvas, act, extend } from '../src'
+import THREE from 'three'
+
+extend(THREE as any)
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
@@ -274,11 +277,16 @@ describe('events', () => {
     const handlePointerLeave = jest.fn()
 
     /* This component lets us unmount the event-handling object */
-    function PointerCaptureTest(props: { hasMesh: boolean, manualRelease?: boolean }) {
+    function PointerCaptureTest(props: { hasMesh: boolean; manualRelease?: boolean }) {
       return (
         <Canvas>
           {props.hasMesh && (
-            <mesh onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={props.manualRelease ? handlePointerUp : undefined} onPointerLeave={handlePointerLeave} onPointerEnter={handlePointerEnter}>
+            <mesh
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={props.manualRelease ? handlePointerUp : undefined}
+              onPointerLeave={handlePointerLeave}
+              onPointerEnter={handlePointerEnter}>
               <boxGeometry args={[2, 2]} />
               <meshBasicMaterial />
             </mesh>
@@ -349,9 +357,9 @@ describe('events', () => {
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
       await act(async () => canvas.dispatchEvent(moveIn))
-      expect(handlePointerEnter).toHaveBeenCalledTimes(1);
-      expect(handlePointerMove).toHaveBeenCalledTimes(1);
-  
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+      expect(handlePointerMove).toHaveBeenCalledTimes(1)
+
       const down = new PointerEvent('pointerdown', { pointerId })
       Object.defineProperty(down, 'offsetX', { get: () => 577 })
       Object.defineProperty(down, 'offsetY', { get: () => 480 })
@@ -361,11 +369,11 @@ describe('events', () => {
       // If we move the pointer now, when it is captured, it should raise the onPointerMove event even though the pointer is not over the element,
       // and NOT raise the onPointerLeave event.
       await act(async () => canvas.dispatchEvent(moveOut))
-      expect(handlePointerMove).toHaveBeenCalledTimes(2);
-      expect(handlePointerLeave).not.toHaveBeenCalled();
+      expect(handlePointerMove).toHaveBeenCalledTimes(2)
+      expect(handlePointerLeave).not.toHaveBeenCalled()
 
       await act(async () => canvas.dispatchEvent(moveIn))
-      expect(handlePointerMove).toHaveBeenCalledTimes(3);
+      expect(handlePointerMove).toHaveBeenCalledTimes(3)
 
       const up = new PointerEvent('pointerup', { pointerId })
       Object.defineProperty(up, 'offsetX', { get: () => 577 })
@@ -376,11 +384,11 @@ describe('events', () => {
       await act(async () => canvas.dispatchEvent(lostpointercapture))
 
       // The pointer is still over the element, so onPointerLeave should not have been called.
-      expect(handlePointerLeave).not.toHaveBeenCalled();
+      expect(handlePointerLeave).not.toHaveBeenCalled()
 
       // The element pointer should no longer be captured, so moving it away should call onPointerLeave.
-      await act(async () => canvas.dispatchEvent(moveOut));
-      expect(handlePointerEnter).toHaveBeenCalledTimes(1);
+      await act(async () => canvas.dispatchEvent(moveOut))
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
     })
   })
