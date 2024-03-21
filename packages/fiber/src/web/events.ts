@@ -1,4 +1,4 @@
-import { UseBoundStore } from 'zustand'
+import { StoreApi, UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { EventManager, Events, createEvents, DomEvent } from '../core/events'
 
@@ -16,7 +16,7 @@ const DOM_EVENTS = {
 } as const
 
 /** Default R3F event manager for web */
-export function createPointerEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
+export function createPointerEvents(store: UseBoundStore<StoreApi<RootState>>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
   return {

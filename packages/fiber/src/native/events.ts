@@ -1,10 +1,10 @@
-import { UseBoundStore } from 'zustand'
+import { StoreApi, UseBoundStore } from 'zustand'
 import { RootState } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
 import { type GestureResponderEvent, PanResponder } from 'react-native'
 
 /** Default R3F event manager for react-native */
-export function createTouchEvents(store: UseBoundStore<RootState>): EventManager<HTMLElement> {
+export function createTouchEvents(store: UseBoundStore<StoreApi<RootState>>): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
   const handleTouch = (event: GestureResponderEvent, name: string): true => {

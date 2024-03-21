@@ -1,12 +1,13 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create, { UseBoundStore } from 'zustand'
+import create, { StoreApi, UseBoundStore } from 'zustand'
 
 import * as ReactThreeFiber from '../three-types'
 import {
   Renderer,
   createStore,
+  three,
   isRenderer,
   context,
   RootState,
@@ -99,7 +100,7 @@ export type RenderProps<TCanvas extends Canvas> = {
     manual?: boolean
   }
   /** An R3F event manager to manage elements' pointer events */
-  events?: (store: UseBoundStore<RootState>) => EventManager<HTMLElement>
+  events?: (store: UseBoundStore<StoreApi<RootState>>) => EventManager<HTMLElement>
   /** Callback after the canvas has rendered (but not yet committed) */
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
@@ -121,7 +122,7 @@ const createRendererInstance = <TCanvas extends Canvas>(gl: GLProps, canvas: TCa
 
 export type ReconcilerRoot<TCanvas extends Canvas> = {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
-  render: (element: React.ReactNode) => UseBoundStore<RootState>
+  render: (element: React.ReactNode) => UseBoundStore<StoreApi<RootState>>
   unmount: () => void
 }
 
@@ -147,7 +148,10 @@ function computeInitialSize(canvas: Canvas, defaultSize?: Size): Size {
   return { width: 0, height: 0, top: 0, left: 0 }
 }
 
-function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+function createRoot<TCanvas extends Canvas>(
+  canvas: TCanvas,
+  store?: UseBoundStore<StoreApi<RootState>>,
+): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -166,12 +170,13 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         console.error
 
   // Create store
-  const store = prevStore || createStore(invalidate, advance)
+  const actualStore = store || prevStore || createStore(invalidate, advance)
   // Create renderer
   const fiber =
-    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
+    prevFiber ||
+    reconciler.createContainer(actualStore, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
   // Map it
-  if (!prevRoot) roots.set(canvas, { fiber, store })
+  if (!prevRoot) roots.set(canvas, { fiber, store: actualStore })
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
@@ -199,7 +204,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         onPointerMissed,
       } = props
 
-      let state = store.getState()
+      let state = actualStore.getState()
 
       // Set up renderer (one time only!)
       let gl = state.gl
@@ -255,14 +260,14 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!state.xr) {
         // Handle frame behavior in WebXR
         const handleXRFrame = (timestamp: number, frame?: _XRFrame) => {
-          const state = store.getState()
+          const state = actualStore.getState()
           if (state.frameloop === 'never') return
           advance(timestamp, true, state, frame)
         }
 
         // Toggle render switching on session
         const handleSessionChange = () => {
-          const state = store.getState()
+          const state = actualStore.getState()
           state.gl.xr.enabled = state.gl.xr.isPresenting
 
           state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
@@ -272,12 +277,12 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         // WebXR session manager
         const xr = {
           connect() {
-            const gl = store.getState().gl
+            const gl = actualStore.getState().gl
             gl.xr.addEventListener('sessionstart', handleSessionChange)
             gl.xr.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
-            const gl = store.getState().gl
+            const gl = actualStore.getState().gl
             gl.xr.removeEventListener('sessionstart', handleSessionChange)
             gl.xr.removeEventListener('sessionend', handleSessionChange)
           },
@@ -341,7 +346,7 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
         applyProps(gl as any, glConfig as any)
       // Store events internally
-      if (events && !state.events.handlers) state.set({ events: events(store) })
+      if (events && !state.events.handlers) state.set({ events: events(actualStore) })
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {
@@ -368,12 +373,12 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!configured) this.configure()
 
       reconciler.updateContainer(
-        <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
+        <Provider store={actualStore} children={children} onCreated={onCreated} rootElement={canvas} />,
         fiber,
         null,
         () => undefined,
       )
-      return store
+      return actualStore
     },
     unmount() {
       unmountComponentAtNode(canvas)
@@ -385,7 +390,7 @@ function render<TCanvas extends Canvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
-): UseBoundStore<RootState> {
+): UseBoundStore<StoreApi<RootState>> {
   console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
   const root = createRoot(canvas)
   root.configure(config)
@@ -399,7 +404,7 @@ function Provider<TCanvas extends Canvas>({
   rootElement,
 }: {
   onCreated?: (state: RootState) => void
-  store: UseBoundStore<RootState>
+  store: UseBoundStore<StoreApi<RootState>>
   children: React.ReactNode
   rootElement: TCanvas
 }) {
@@ -414,6 +419,7 @@ function Provider<TCanvas extends Canvas>({
     if (!store.getState().events.connected) state.events.connect?.(rootElement)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
@@ -603,6 +609,8 @@ export {
   addTail,
   flushGlobalEffects,
   getRootState,
+  createStore,
+  three,
   act,
   buildGraph,
   roots as _roots,
