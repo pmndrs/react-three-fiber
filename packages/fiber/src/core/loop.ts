@@ -120,7 +120,7 @@ export function loop(timestamp: number): void {
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
  */
 export function invalidate(state?: RootState, frames = 1): void {
-  if (!state) return _roots.forEach((root) => invalidate(root.store.getState()), frames)
+  if (!state) return _roots.forEach((root) => invalidate(root.store.getState(), frames))
   if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
   // Increase frames, do not go higher than 60
   state.internal.frames = Math.min(60, state.internal.frames + frames)
