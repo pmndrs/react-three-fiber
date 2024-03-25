@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.0
+
+### Minor Changes
+
+- 6b0ea6eb: feat: add childadded event dispatch
+
 ## 8.15.19
 
 ### Patch Changes
