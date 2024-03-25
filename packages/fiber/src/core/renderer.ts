@@ -167,6 +167,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
+        parentInstance.dispatchEvent({ type: 'childadded', child })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
         parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
