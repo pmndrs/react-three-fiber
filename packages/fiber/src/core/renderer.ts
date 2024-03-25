@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { UseBoundStore } from 'zustand'
+import { StoreApi, UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import { DefaultEventPriority } from 'react-reconciler/constants'
@@ -18,11 +18,11 @@ import {
 import { RootState } from './store'
 import { EventHandlers, removeInteractivity } from './events'
 
-export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<RootState> }
+export type Root = { fiber: Reconciler.FiberRoot; store: UseBoundStore<StoreApi<RootState>> }
 
 export type LocalState = {
   type: string
-  root: UseBoundStore<RootState>
+  root: UseBoundStore<StoreApi<RootState>>
   // objects and parent are used when children are added with `attach` instead of being added to the Object3D scene graph
   objects: Instance[]
   parent: Instance | null
@@ -41,7 +41,7 @@ export type AttachType = string | AttachFnType
 interface HostConfig {
   type: string
   props: InstanceProps
-  container: UseBoundStore<RootState>
+  container: UseBoundStore<StoreApi<RootState>>
   instance: Instance
   textInstance: void
   suspenseInstance: Instance
@@ -89,7 +89,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   function createInstance(
     type: string,
     { args = [], attach, ...props }: InstanceProps,
-    root: UseBoundStore<RootState>,
+    root: UseBoundStore<StoreApi<RootState>>,
   ) {
     let name = `${type[0].toUpperCase()}${type.slice(1)}`
     let instance: Instance

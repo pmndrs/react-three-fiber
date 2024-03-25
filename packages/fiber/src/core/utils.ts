@@ -1,7 +1,7 @@
 /// <reference types="webxr" />
 import * as THREE from 'three'
 import * as React from 'react'
-import { UseBoundStore } from 'zustand'
+import { StoreApi, UseBoundStore } from 'zustand'
 import { EventHandlers } from './events'
 import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './renderer'
 import { Dpr, Renderer, RootState, Size } from './store'
@@ -197,7 +197,7 @@ export function prepare<T = THREE.Object3D>(object: T, state?: Partial<LocalStat
   const instance = object as unknown as Instance
   instance.__r3f = {
     type: '',
-    root: null as unknown as UseBoundStore<RootState>,
+    root: null as unknown as UseBoundStore<StoreApi<RootState>>,
     previousAttach: null,
     memoizedProps: {},
     eventCount: 0,
