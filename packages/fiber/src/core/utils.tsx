@@ -121,9 +121,8 @@ export function calculateDpr(dpr: Dpr): number {
 /**
  * Returns instance root state
  */
-export function getRootState<T extends THREE.Object3D = THREE.Object3D>(obj: T) {
-  return (obj as Instance<T>['object']).__r3f?.root.getState()
-}
+export const getRootState = <T = THREE.Object3D,>(obj: T): RootState | undefined =>
+  (obj as Instance<T>['object']).__r3f?.root.getState()
 
 export interface EquConfig {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
@@ -375,8 +374,10 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue
 
+    const isEvent = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)
+
     // Deal with pointer events, including removing them if undefined
-    if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
+    if (instance && isEvent) {
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
@@ -441,7 +442,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Else, just overwrite the value
     else {
-      root[key] = value
+      // Don't write events to the object
+      if (!isEvent) root[key] = value
 
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
@@ -459,17 +461,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
   }
 
-  if (
-    instance?.parent &&
-    rootState?.internal &&
-    instance.object instanceof THREE.Object3D &&
-    prevHandlers !== instance.eventCount
-  ) {
+  if (instance && rootState?.internal && isObject3D(instance.object) && prevHandlers !== instance.eventCount) {
     // Pre-emptively remove the instance from the interaction manager
     const index = rootState.internal.interaction.indexOf(instance.object)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
+    if (instance.eventCount && instance.object.raycast !== null && isObject3D(instance.object)) {
       rootState.internal.interaction.push(instance.object)
     }
   }
