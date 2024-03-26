@@ -89,6 +89,8 @@ export interface EventManager<TTarget> {
    *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
    */
   update?: () => void
+  /** Threshold for the amont the pointer can move before a click is canceled. */
+  clickThreshold: number
 }
 
 export interface PointerCaptureTarget {
@@ -399,7 +401,7 @@ export function createEvents(store: RootStore) {
 
     // Any other pointer goes here ...
     return function handleEvent(event: DomEvent) {
-      const { onPointerMissed, internal } = store.getState()
+      const { onPointerMissed, internal, events } = store.getState()
 
       // prepareRay(event)
       internal.lastEvent.current = event
@@ -411,6 +413,9 @@ export function createEvents(store: RootStore) {
 
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
+
+      // If the delta is greater than our threshold, cancel the click
+      if (isClickEvent && delta > events.clickThreshold) return
 
       // Save initial coordinates on pointer-down
       if (name === 'onPointerDown') {
