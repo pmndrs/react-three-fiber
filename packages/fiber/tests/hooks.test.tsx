@@ -88,25 +88,31 @@ describe('hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
+    let gltf!: Stdlib.GLTF & ObjectMap
+
     const MockMesh = new THREE.Mesh()
+    MockMesh.name = 'Scene'
+
     jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
       () =>
         ({
           load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad(MockMesh)
+            onLoad({ scene: MockMesh })
           }),
         } as unknown as Stdlib.GLTFLoader),
     )
 
     const Component = () => {
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-      return <primitive object={model} />
+      gltf = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      return <primitive object={gltf.scene} />
     }
 
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
   })
 
   it('can handle useLoader hook with an array of strings', async () => {

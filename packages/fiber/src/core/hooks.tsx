@@ -118,6 +118,8 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
   }
 }
 
+type GLTFLike = { scene: THREE.Object3D }
+
 /**
  * Synchronously loads and caches assets with a three loader.
  *
