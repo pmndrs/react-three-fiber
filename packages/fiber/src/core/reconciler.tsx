@@ -325,6 +325,7 @@ export const reconciler = Reconciler<
   HostConfig['noTimeout']
 >({
   isPrimaryRenderer: false,
+  warnsIfNotActing: false,
   supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
@@ -422,11 +423,12 @@ export const reconciler = Reconciler<
   // @ts-ignore untyped react-experimental options inspired by react-art
   // TODO: add shell types for these and upstream to DefinitelyTyped
   // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
-  warnsIfNotActing: false,
   shouldAttemptEagerTransition() {
     return false
   },
-  getInstanceFromNode() {},
+  getInstanceFromNode() {
+    throw new Error('Not implemented.')
+  },
   beforeActiveInstanceBlur() {},
   afterActiveInstanceBlur() {},
   detachDeletedInstance() {},
