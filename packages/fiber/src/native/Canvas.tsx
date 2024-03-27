@@ -2,8 +2,7 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
-import { FiberProvider } from 'its-fine'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
@@ -47,8 +46,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
     React.useMemo(() => extend(THREE as any), [])
-
-    const Bridge = useBridge()
 
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
@@ -132,11 +129,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         },
       })
       root.current.render(
-        <Bridge>
-          <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-          </ErrorBoundary>
-        </Bridge>,
+        <ErrorBoundary set={setError}>
+          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+        </ErrorBoundary>,
       )
     }
 
@@ -161,9 +156,5 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = React.forwardRef<View, CanvasProps>(function CanvasWrapper(props, ref) {
-  return (
-    <FiberProvider>
-      <CanvasImpl {...props} ref={ref} />
-    </FiberProvider>
-  )
+  return <CanvasImpl {...props} ref={ref} />
 })

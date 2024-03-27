@@ -1,6 +1,5 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
 import { Instance, catalogue } from './reconciler'
 import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
@@ -63,31 +62,6 @@ export function useMutableCallback<T>(fn: T): React.MutableRefObject<T> {
   const ref = React.useRef<T>(fn)
   useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
   return ref
-}
-
-export type Bridge = React.FC<{ children?: React.ReactNode }>
-
-/**
- * Bridges renderer Context and StrictMode from a primary renderer.
- */
-export function useBridge(): Bridge {
-  const fiber = useFiber()
-  const ContextBridge = useContextBridge()
-
-  return React.useMemo(
-    () =>
-      ({ children }) => {
-        const strict = !!traverseFiber(fiber, true, (node) => node.type === React.StrictMode)
-        const Root = strict ? React.StrictMode : React.Fragment
-
-        return (
-          <Root>
-            <ContextBridge>{children}</ContextBridge>
-          </Root>
-        )
-      },
-    [fiber, ContextBridge],
-  )
 }
 
 export type SetBlock = false | Promise<null> | null
