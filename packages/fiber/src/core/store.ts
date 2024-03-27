@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import create, { type StoreApi, type UseBoundStore } from 'zustand'
+import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, prepare, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'

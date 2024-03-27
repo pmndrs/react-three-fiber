@@ -35,7 +35,8 @@ export function useThree<T = RootState>(
   selector: (state: RootState) => T = (state) => state as unknown as T,
   equalityFn?: <T>(state: T, newState: T) => boolean,
 ): T {
-  return useStore()(selector, equalityFn)
+  // TODO: fix this type
+  return useStore()(selector, equalityFn as any)
 }
 
 /**

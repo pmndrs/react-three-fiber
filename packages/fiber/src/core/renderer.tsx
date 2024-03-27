@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create from 'zustand'
+import { create } from 'zustand'
 
 import type { Properties, ThreeElement } from '../three-types'
 import {
@@ -567,9 +567,6 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
     return store
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousRoot, container])
-  React.useEffect(() => {
-    return () => usePortalStore.destroy()
-  }, [usePortalStore])
 
   return (
     <>

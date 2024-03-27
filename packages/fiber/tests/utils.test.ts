@@ -16,12 +16,11 @@ import {
 } from '../src/core/utils'
 
 // Mocks a Zustand store
-const storeMock: RootStore = Object.assign(() => null!, {
+const storeMock = Object.assign(() => null!, {
   getState: () => null!,
   setState() {},
   subscribe: () => () => {},
-  destroy() {},
-})
+}) as unknown as RootStore
 
 describe('is', () => {
   const myFunc = () => null

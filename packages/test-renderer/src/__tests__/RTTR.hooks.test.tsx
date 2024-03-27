@@ -1,5 +1,4 @@
 import * as React from 'react'
-import * as Stdlib from 'three-stdlib'
 import * as THREE from 'three'
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
@@ -37,17 +36,14 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad(MockMesh)
-          }),
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    class Loader extends THREE.Loader {
+      load(url: string, onLoad: (mesh: THREE.Mesh) => void): void {
+        onLoad(MockMesh)
+      }
+    }
 
     const Component = () => {
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      const model = useLoader(Loader, '/suzanne.glb')
 
       return <primitive object={model} />
     }

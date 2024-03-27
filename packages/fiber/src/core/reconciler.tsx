@@ -3,7 +3,17 @@ import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, isObject3D } from './utils'
+import {
+  diffProps,
+  applyProps,
+  invalidateInstance,
+  attach,
+  detach,
+  prepare,
+  globalScope,
+  isObject3D,
+  findInitialRoot,
+} from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
 import type { ThreeElement } from '../three-types'
@@ -143,6 +153,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
       child.object.parent = parent.object
       parent.object.children.splice(childIndex, 0, child.object)
       child.object.dispatchEvent({ type: 'added' })
+      parent.object.dispatchEvent({ type: 'childadded', child: child.object })
     } else {
       parent.object.add(child.object)
     }
@@ -203,7 +214,7 @@ function removeChild(
     detach(parent, child)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     parent.object.remove(child.object)
-    removeInteractivity(child.root, child.object)
+    removeInteractivity(findInitialRoot(child), child.object)
   }
 
   // Allow objects to bail out of unmount disposal with dispose={null}

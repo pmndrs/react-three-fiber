@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 
 import {
@@ -88,22 +87,21 @@ describe('hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
-    let gltf!: Stdlib.GLTF & ObjectMap
-
     const MockMesh = new THREE.Mesh()
     MockMesh.name = 'Scene'
 
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad({ scene: MockMesh })
-          }),
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    interface GLTF {
+      scene: THREE.Object3D
+    }
+    class GLTFLoader extends THREE.Loader {
+      load(url: string, onLoad: (gltf: GLTF) => void): void {
+        onLoad({ scene: MockMesh })
+      }
+    }
 
+    let gltf!: GLTF & ObjectMap
     const Component = () => {
-      gltf = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      gltf = useLoader(GLTFLoader, '/suzanne.glb')
       return <primitive object={gltf.scene} />
     }
 
@@ -147,8 +145,8 @@ describe('hooks', () => {
 
       return (
         <>
-          <primitive object={mockMesh} />
-          <primitive object={mockScene} />
+          <primitive object={mockMesh as THREE.Mesh} />
+          <primitive object={mockScene as THREE.Scene} />
         </>
       )
     }
