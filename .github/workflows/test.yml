@@ -33,7 +33,7 @@ jobs:
         run: yarn run build
 
       - name: Jest run
-        run: yarn run test
+        run: yarn run dev && yarn run test
 
       - name: Report Fiber size
         run: yarn run analyze-fiber
