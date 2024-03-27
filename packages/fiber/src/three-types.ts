@@ -38,7 +38,7 @@ export type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventH
 
 export interface ReactProps<P> {
   children?: React.ReactNode
-  ref?: React.Ref<P>
+  ref?: React.Ref<P | undefined>
   key?: React.Key
 }
 
