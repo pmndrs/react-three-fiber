@@ -1,3 +1,4 @@
+/// <reference types="react/experimental" />
 import * as ReactThreeFiber from './three-types'
 export { ReactThreeFiber }
 export * from './three-types'

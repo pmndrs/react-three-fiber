@@ -1,6 +1,4 @@
-import * as React from 'react'
-
-const act: <T = any>(cb: () => Promise<T>) => Promise<T> = (React as any).unstable_act
+import { act } from '@react-three/fiber'
 
 export interface WaitOptions {
   interval?: number

@@ -324,11 +324,10 @@ export const reconciler = Reconciler<
   HostConfig['timeoutHandle'],
   HostConfig['noTimeout']
 >({
-  supportsMutation: true,
   isPrimaryRenderer: false,
+  supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  noTimeout: -1,
   createInstance,
   removeChild,
   appendChild,
@@ -417,22 +416,31 @@ export const reconciler = Reconciler<
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
   // SSR fallbacks
-  now:
-    typeof performance !== 'undefined' && typeof performance.now === 'function'
-      ? performance.now
-      : typeof Date.now === 'function'
-      ? Date.now
-      : () => 0,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
-  // @ts-ignore Deprecated experimental APIs
-  // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
-  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-  beforeActiveInstanceBlur: () => {},
-  afterActiveInstanceBlur: () => {},
-  detachDeletedInstance: () => {},
-  // Gives React a clue as to how import the current interaction is
-  // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
+  noTimeout: -1,
+  // @ts-ignore untyped react-experimental options inspired by react-art
+  // TODO: add shell types for these and upstream to DefinitelyTyped
+  // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
+  warnsIfNotActing: false,
+  shouldAttemptEagerTransition() {
+    return false
+  },
+  getInstanceFromNode() {},
+  beforeActiveInstanceBlur() {},
+  afterActiveInstanceBlur() {},
+  detachDeletedInstance() {},
+  requestPostPaintCallback() {},
+  maySuspendCommit() {
+    return false
+  },
+  preloadInstance() {
+    return true // true indicates already loaded
+  },
+  startSuspendingCommit() {},
+  suspendInstance() {},
+  waitForCommitToBeReady() {},
+  NotPendingTransition: null,
   getCurrentEventPriority() {
     if (!globalScope) return DefaultEventPriority
 
