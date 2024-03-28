@@ -38,7 +38,7 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  */
-export const act: Act = (React as any).unstable_act
+export const act: Act = (React as any).act
 
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
