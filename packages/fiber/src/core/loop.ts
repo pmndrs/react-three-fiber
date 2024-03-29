@@ -75,6 +75,7 @@ function update(timestamp: number, state: RootState, frame?: XRFrame) {
 }
 
 let running = false
+let useFrameInProgress = false
 let repeat: number
 let frame: number
 let state: RootState
@@ -88,6 +89,7 @@ export function loop(timestamp: number): void {
   flushGlobalEffects('before', timestamp)
 
   // Render all roots
+  useFrameInProgress = true
   for (const root of _roots.values()) {
     state = root.store.getState()
 
@@ -100,6 +102,7 @@ export function loop(timestamp: number): void {
       repeat += update(timestamp, state)
     }
   }
+  useFrameInProgress = true
 
   // Run after-effects
   flushGlobalEffects('after', timestamp)
@@ -122,8 +125,21 @@ export function loop(timestamp: number): void {
 export function invalidate(state?: RootState, frames = 1): void {
   if (!state) return _roots.forEach((root) => invalidate(root.store.getState(), frames))
   if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
-  // Increase frames, do not go higher than 60
-  state.internal.frames = Math.min(60, state.internal.frames + frames)
+
+  if (frames > 1) {
+    // legacy support for people using frames parameters
+    // Increase frames, do not go higher than 60
+    state.internal.frames = Math.min(60, state.internal.frames + frames)
+  } else {
+    if (useFrameInProgress) {
+      //called from within a useFrame, it means the user wants an additional frame
+      state.internal.frames = 2
+    } else {
+      //the user need a new frame, no need to increment further than 1
+      state.internal.frames = 1
+    }
+  }
+
   // If the render-loop isn't active, start it
   if (!running) {
     running = true
