@@ -374,6 +374,8 @@ export const reconciler = Reconciler<
     return null
   },
   commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
+    if (!diff) return
+
     const [reconstruct, changedProps] = diff!
 
     // Reconstruct when args or <primitive object={...} have changes
