@@ -47,9 +47,9 @@
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
     "its-fine": "^1.1.3",
-    "react-reconciler": "0.31.0-canary-a73c3450e-20240329",
+    "react-reconciler": "0.31.0-canary-e3ebcd54b-20240405",
     "react-use-measure": "^2.1.1",
-    "scheduler": "0.25.0-canary-a73c3450e-20240329",
+    "scheduler": "0.25.0-canary-e3ebcd54b-20240405",
     "suspend-react": "^0.1.3",
     "zustand": "^4.1.2"
   },

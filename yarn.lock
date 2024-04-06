@@ -9055,12 +9055,12 @@ react-devtools-core@4.24.0:
     shell-quote "^1.6.1"
     ws "^7"
 
-react-dom@19.0.0-canary-a73c3450e-20240329:
-  version "19.0.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0-canary-a73c3450e-20240329.tgz#f4662b926443757e09d5ba9244c324f26725f7be"
-  integrity sha512-q2faOx36WhjxluDgp0KL6lskQaMCHudI6Rui50wWdSIJnPGGin25SnGSugPWg//bUFRtIkqWDS8/+twfvydwRw==
+react-dom@19.0.0-canary-e3ebcd54b-20240405:
+  version "19.0.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0-canary-e3ebcd54b-20240405.tgz#81715e2bff9b80e8b0224d0275af68e87ecc7288"
+  integrity sha512-rLmRhyj0CiO0H5lWTIeP1izYsjjp03Dt36dufxjlPWVVpbHdKoIHUU/cDNin7Le2H+hNQfDQk7VcOb6Z7Z+W0g==
   dependencies:
-    scheduler "0.25.0-canary-a73c3450e-20240329"
+    scheduler "0.25.0-canary-e3ebcd54b-20240405"
 
 react-dom@^18.2.0:
   version "18.2.0"
@@ -9070,10 +9070,10 @@ react-dom@^18.2.0:
     loose-envify "^1.1.0"
     scheduler "^0.23.0"
 
-react-is@19.0.0-canary-a73c3450e-20240329:
-  version "19.0.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.0.0-canary-a73c3450e-20240329.tgz#123f6639081892cd072e7d5bd5104ea3437312c4"
-  integrity sha512-Y0jHbORMyh5A3DDfInyiH1hbNqH/lBj1bMVEGqCtei5ajDqGSmMayG7nFKDmXVu7Or99QxhmfSmIn5FAAhpI8g==
+react-is@19.0.0-canary-e3ebcd54b-20240405:
+  version "19.0.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.0.0-canary-e3ebcd54b-20240405.tgz#2643674cf24d3860b420fc2fb7163dd47437b92c"
+  integrity sha512-45qdOGNH1SJRM9eIqWOz4OLU/96euF/s/7kwlcthLnQkJpIIG4zfyljM5g2jh9QcoAxG9jCLTEJJWEGvZhiHEA==
 
 "react-is@^16.12.0 || ^17.0.0 || ^18.0.0", react-is@^18.0.0:
   version "18.2.0"
@@ -9149,12 +9149,12 @@ react-native@0.69.3:
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
 
-react-reconciler@0.31.0-canary-a73c3450e-20240329:
-  version "0.31.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.31.0-canary-a73c3450e-20240329.tgz#a6a42ec70cbbdce8027c65449ead741aac0e9dbb"
-  integrity sha512-ztIqc3Wbk0UNgLebHOmC6u7XMjEXWporBy2KZr0HumMTlpz6RMuDA2mKXh6X7z32AWL+Kfjsr/IrGK8FRoHPHw==
+react-reconciler@0.31.0-canary-e3ebcd54b-20240405:
+  version "0.31.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.31.0-canary-e3ebcd54b-20240405.tgz#f6817c3af7df4f74a8ffcb1bd7483b14e490146d"
+  integrity sha512-WyopqukXMIawX/tEYD6BVjzp+yeNK6mnR1qjQfxqqegrDmkOCrl8abqie1oDQa8cZMViZ1qeYJkDSnOgbyCZtA==
   dependencies:
-    scheduler "0.25.0-canary-a73c3450e-20240329"
+    scheduler "0.25.0-canary-e3ebcd54b-20240405"
 
 react-refresh@^0.10.0:
   version "0.10.0"
@@ -9179,13 +9179,13 @@ react-shallow-renderer@16.15.0:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0 || ^18.0.0"
 
-react-test-renderer@19.0.0-canary-a73c3450e-20240329:
-  version "19.0.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.0.0-canary-a73c3450e-20240329.tgz#4ca608f4dd3139bebffa1165f07207f3af86e88b"
-  integrity sha512-rdAwuYKECX/dxE7Stky5iWXFDTkFB58Urck6hHiTDgk2MSs6v8ugzdcua9n49p19OwGQx5zjNshs7FypTm1m5Q==
+react-test-renderer@19.0.0-canary-e3ebcd54b-20240405:
+  version "19.0.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.0.0-canary-e3ebcd54b-20240405.tgz#be67b62390dd2dfb3b16f652c0a1190caa37ce01"
+  integrity sha512-BncVgOLQ7DcOQ/u+2IXuYmiBQM3Q0SH7esZ9xnQNBAHIVlZVlhOXTuOVrXekxeMbPmLyborCErvOmMKY4cl3ng==
   dependencies:
-    react-is "19.0.0-canary-a73c3450e-20240329"
-    scheduler "0.25.0-canary-a73c3450e-20240329"
+    react-is "19.0.0-canary-e3ebcd54b-20240405"
+    scheduler "0.25.0-canary-e3ebcd54b-20240405"
 
 react-use-measure@^2.1.1:
   version "2.1.1"
@@ -9199,10 +9199,10 @@ react-use-refs@^1.0.1:
   resolved "https://registry.yarnpkg.com/react-use-refs/-/react-use-refs-1.0.1.tgz#44cab5f4764b3fa4a112189c0058fc8752d1eb2c"
   integrity sha512-zVmPRY5DJhzjGgmlIWw9pkdCNlIdrfsEXgdzcSau3MSpKPVuwRQU6DoviwH5f9n5Hc+M2HWW7mkRWbX+4eyC8w==
 
-react@19.0.0-canary-a73c3450e-20240329:
-  version "19.0.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-canary-a73c3450e-20240329.tgz#8c1eda3dd97ac19c9d0b69810b7ce464d897cd46"
-  integrity sha512-4EaLxQPKVx5PlXbywHqJLZw+xga63s4+C5f8ZV9X69OegxQSM4xc8F5ilZJsmphMN6CYWH591Lz2wjgSSVFW/A==
+react@19.0.0-canary-e3ebcd54b-20240405:
+  version "19.0.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-canary-e3ebcd54b-20240405.tgz#f0eac09c91af3d7c3af8ecea09681ec232b75bc1"
+  integrity sha512-cJE4hNNSAZSkMGplceUigybvn9cnUrvgFuljOahB2LStTLGVK4bZcszJ0sppwPbr9XVelEvyNmKj/0HRQPc53w==
 
 react@^18.2.0:
   version "18.2.0"
@@ -9595,10 +9595,10 @@ saxes@^5.0.1:
   dependencies:
     xmlchars "^2.2.0"
 
-scheduler@0.25.0-canary-a73c3450e-20240329:
-  version "0.25.0-canary-a73c3450e-20240329"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-canary-a73c3450e-20240329.tgz#7d256d16f0efb53a25f91eb7fcba2894b9fcdf8c"
-  integrity sha512-WwRs7XOrOHnINNyRClVgzRsZk1+Lzc7Jc3dcmLx7cUeK+LvVy9y95QqYzWOYcjH9JHs0jIcfjMOsddKJE7ttXw==
+scheduler@0.25.0-canary-e3ebcd54b-20240405:
+  version "0.25.0-canary-e3ebcd54b-20240405"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-canary-e3ebcd54b-20240405.tgz#053706da115c7877955c516ed9807f3f591e8ba2"
+  integrity sha512-xI+jJ4zTJfULtwgO1GgoT3I3MiEV1OisswVdS9LdoQr0QwKpH0Al7IlW68R5ceIXE/a8RfuYZc7Aq34DwBqr7A==
 
 scheduler@^0.21.0:
   version "0.21.0"
