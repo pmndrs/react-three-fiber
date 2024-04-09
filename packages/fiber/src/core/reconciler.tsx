@@ -1,7 +1,13 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
+import {
+  // @ts-ignore
+  NoEventPriority,
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   diffProps,
@@ -309,6 +315,8 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
+let currentUpdatePriority: number = NoEventPriority
+
 export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -422,18 +430,16 @@ export const reconciler = Reconciler<
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   noTimeout: -1,
+  getInstanceFromNode: () => null,
+  beforeActiveInstanceBlur() {},
+  afterActiveInstanceBlur() {},
+  detachDeletedInstance() {},
   // @ts-ignore untyped react-experimental options inspired by react-art
   // TODO: add shell types for these and upstream to DefinitelyTyped
   // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
   shouldAttemptEagerTransition() {
     return false
   },
-  getInstanceFromNode() {
-    throw new Error('Not implemented.')
-  },
-  beforeActiveInstanceBlur() {},
-  afterActiveInstanceBlur() {},
-  detachDeletedInstance() {},
   requestPostPaintCallback() {},
   maySuspendCommit() {
     return false
@@ -445,7 +451,14 @@ export const reconciler = Reconciler<
   suspendInstance() {},
   waitForCommitToBeReady() {},
   NotPendingTransition: null,
-  getCurrentEventPriority() {
+  setCurrentUpdatePriority(newPriority: number) {
+    currentUpdatePriority = newPriority
+  },
+  getCurrentUpdatePriority() {
+    return currentUpdatePriority
+  },
+  resolveUpdatePriority() {
+    if (currentUpdatePriority) return currentUpdatePriority
     if (!globalScope) return DefaultEventPriority
 
     const name = globalScope.event?.type
