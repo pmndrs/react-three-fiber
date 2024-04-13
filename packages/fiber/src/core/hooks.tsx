@@ -109,7 +109,7 @@ function loadingFn<L extends LoaderProto<any>>(
             ),
           ),
       ),
-    ).finally(() => (loader as any).dispose?.())
+    )
   }
 }
 
