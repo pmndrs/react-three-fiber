@@ -3,6 +3,14 @@ import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2Ren
 import { extend } from '@react-three/fiber'
 import 'regenerator-runtime/runtime'
 
+const error = console.error
+console.error = function () {
+  const message = Array.from(arguments).join('')
+  if (message.includes('Expected host context to exist')) return
+
+  return error.apply(this, arguments as any)
+}
+
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
 }
