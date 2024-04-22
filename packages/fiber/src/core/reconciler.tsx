@@ -79,7 +79,7 @@ interface HostConfig {
   suspenseInstance: Instance
   hydratableInstance: never
   publicInstance: Instance['object']
-  hostContext: never
+  hostContext: {}
   updatePayload: null | [true] | [false, Instance['props']]
   childSet: never
   timeoutHandle: number | undefined
@@ -315,6 +315,8 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
+const NO_CONTEXT: HostConfig['hostContext'] = {}
+
 let currentUpdatePriority: number = NoEventPriority
 
 export const reconciler = Reconciler<
@@ -360,8 +362,8 @@ export const reconciler = Reconciler<
 
     insertBefore(scene, child, beforeChild)
   },
-  getRootHostContext: () => null,
-  getChildHostContext: (parentHostContext) => parentHostContext,
+  getRootHostContext: () => NO_CONTEXT,
+  getChildHostContext: () => NO_CONTEXT,
   prepareUpdate(instance, _type, oldProps, newProps) {
     // Reconstruct primitives if object prop changes
     if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
