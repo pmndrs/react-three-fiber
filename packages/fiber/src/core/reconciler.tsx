@@ -451,7 +451,9 @@ export const reconciler = Reconciler<
   },
   startSuspendingCommit() {},
   suspendInstance() {},
-  waitForCommitToBeReady() {},
+  waitForCommitToBeReady() {
+    return null
+  },
   NotPendingTransition: null,
   setCurrentUpdatePriority(newPriority: number) {
     currentUpdatePriority = newPriority
