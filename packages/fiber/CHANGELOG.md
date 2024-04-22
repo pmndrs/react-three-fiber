@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.1
+
+### Patch Changes
+
+- 503efc2e: fix: prevent invalidate from piling up frames
+
 ## 8.16.0
 
 ### Minor Changes
