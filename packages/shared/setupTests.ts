@@ -10,6 +10,12 @@ declare global {
 // Let React know that we'll be testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
 
+// Mock scheduler to test React features
+jest.mock('scheduler', () => ({
+  ...jest.requireActual('scheduler/unstable_mock'),
+  unstable_scheduleCallback: (_: any, callback: () => void) => callback(),
+}))
+
 // ESLint is broken atm -- TypeError: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received 'http://localhost/eslintrc.cjs'
 jest.mock('eslint', () => ({
   RuleTester: class {
