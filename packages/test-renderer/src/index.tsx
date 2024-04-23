@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
 
-import { extend, _roots as mockRoots, createRoot, reconciler, act as _act } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
@@ -11,14 +11,12 @@ import { createCanvas } from './createTestCanvas'
 import { createEventFirer } from './fireEvent'
 
 import type { MockScene } from './types/internal'
-import type { CreateOptions, Renderer, Act } from './types/public'
+import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
 import { waitFor, WaitOptions } from './helpers/waitFor'
 
 // Extend catalogue for render API in tests.
 extend(THREE)
-
-const act = _act as unknown as Act
 
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)
@@ -68,7 +66,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     toGraph() {
       return toGraph(scene)
     },
-    fireEvent: createEventFirer(act, _store),
+    fireEvent: createEventFirer(_store),
     async advanceFrames(frames: number, delta: number | number[] = 1) {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers

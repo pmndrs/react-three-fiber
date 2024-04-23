@@ -169,7 +169,19 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
   const fiber =
-    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
+    prevFiber ||
+    (reconciler as any).createContainer(
+      store, // container
+      ConcurrentRoot, // tag
+      null, // hydration callbacks
+      false, // isStrictMode
+      null, // concurrentUpdatesByDefaultOverride
+      '', // identifierPrefix
+      logRecoverableError, // onUncaughtError
+      logRecoverableError, // onCaughtError
+      logRecoverableError, // onRecoverableError
+      null, // transitionCallbacks
+    )
   // Map it
   if (!prevRoot) roots.set(canvas, { fiber, store })
 
@@ -583,7 +595,7 @@ reconciler.injectIntoDevTools({
   version: React.version,
 })
 
-const act = (React as any).unstable_act
+const act: <T = any>(cb: () => Promise<T>) => Promise<T> = (React as any).act
 
 export * from './hooks'
 export {

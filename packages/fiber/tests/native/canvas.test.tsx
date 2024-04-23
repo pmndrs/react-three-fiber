@@ -44,6 +44,6 @@ describe('native Canvas', () => {
       )
     })
 
-    expect(() => renderer.unmount()).not.toThrow()
+    expect(async () => await act(async () => renderer.unmount())).not.toThrow()
   })
 })

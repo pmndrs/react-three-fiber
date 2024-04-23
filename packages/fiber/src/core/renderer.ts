@@ -2,7 +2,13 @@ import * as THREE from 'three'
 import { UseBoundStore } from 'zustand'
 import Reconciler from 'react-reconciler'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { DefaultEventPriority } from 'react-reconciler/constants'
+import {
+  // @ts-ignore
+  NoEventPriority,
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from 'react-reconciler/constants'
 import {
   is,
   prepare,
@@ -47,7 +53,7 @@ interface HostConfig {
   suspenseInstance: Instance
   hydratableInstance: Instance
   publicInstance: Instance
-  hostContext: never
+  hostContext: {}
   updatePayload: Array<boolean | number | DiffSet>
   childSet: never
   timeoutHandle: number | undefined
@@ -305,6 +311,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   const handleTextInstance = () =>
     console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
 
+  const NO_CONTEXT: HostConfig['hostContext'] = {}
+
+  let currentUpdatePriority: number = NoEventPriority
+
   const reconciler = Reconciler<
     HostConfig['type'],
     HostConfig['props'],
@@ -329,7 +339,6 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     isPrimaryRenderer: false,
     supportsPersistence: false,
     supportsHydration: false,
-    noTimeout: -1,
     appendChildToContainer: (container, child) => {
       if (!child) return
 
@@ -354,8 +363,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
       insertBefore(scene, child, beforeChild)
     },
-    getRootHostContext: () => null,
-    getChildHostContext: (parentHostContext) => parentHostContext,
+    getRootHostContext: () => NO_CONTEXT,
+    getChildHostContext: () => NO_CONTEXT,
     finalizeInitialChildren(instance) {
       const localState = instance?.__r3f ?? {}
       // https://github.com/facebook/react/issues/20271
@@ -386,11 +395,15 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         return null
       }
     },
-    commitUpdate(instance, [reconstruct, diff]: [boolean, DiffSet], type, _oldProps, newProps, fiber) {
+    commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
+      if (!diff) return
+
+      const [reconstruct, changedProps] = diff as [boolean, DiffSet]
+
       // Reconstruct when args or <primitive object={...} have changes
       if (reconstruct) switchInstance(instance, type, newProps, fiber)
       // Otherwise just overwrite props
-      else applyProps(instance, diff)
+      else applyProps(instance, changedProps)
     },
     commitMount(instance, _type, _props, _int) {
       // https://github.com/facebook/react/issues/20271
@@ -425,21 +438,42 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     createTextInstance: handleTextInstance,
     hideTextInstance: handleTextInstance,
     unhideTextInstance: handleTextInstance,
-    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-    // @ts-ignore
-    getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),
-    beforeActiveInstanceBlur: () => {},
-    afterActiveInstanceBlur: () => {},
-    detachDeletedInstance: () => {},
-    now:
-      typeof performance !== 'undefined' && is.fun(performance.now)
-        ? performance.now
-        : is.fun(Date.now)
-        ? Date.now
-        : () => 0,
-    // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r920883503
     scheduleTimeout: (is.fun(setTimeout) ? setTimeout : undefined) as any,
     cancelTimeout: (is.fun(clearTimeout) ? clearTimeout : undefined) as any,
+    noTimeout: -1,
+    getInstanceFromNode: () => null,
+    beforeActiveInstanceBlur() {},
+    afterActiveInstanceBlur() {},
+    detachDeletedInstance() {},
+    // @ts-ignore untyped react-experimental options inspired by react-art
+    // TODO: add shell types for these and upstream to DefinitelyTyped
+    // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
+    shouldAttemptEagerTransition() {
+      return false
+    },
+    requestPostPaintCallback() {},
+    maySuspendCommit() {
+      return false
+    },
+    preloadInstance() {
+      return true // true indicates already loaded
+    },
+    startSuspendingCommit() {},
+    suspendInstance() {},
+    waitForCommitToBeReady() {
+      return null
+    },
+    NotPendingTransition: null,
+    setCurrentUpdatePriority(newPriority: number) {
+      currentUpdatePriority = newPriority
+    },
+    getCurrentUpdatePriority() {
+      return currentUpdatePriority
+    },
+    resolveUpdatePriority() {
+      if (currentUpdatePriority) return currentUpdatePriority
+      return _getEventPriority ? _getEventPriority() : DefaultEventPriority
+    },
   })
 
   return { reconciler, applyProps }
