@@ -8,6 +8,7 @@ import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 
+// @ts-ignore
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
   style?: ViewStyle
@@ -130,6 +131,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         },
       })
       root.current.render(
+        // @ts-ignore
         <Bridge>
           <ErrorBoundary set={setError}>
             <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
@@ -145,6 +147,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
+      // @ts-ignore
       <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && (
           <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
@@ -160,6 +163,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
  */
 export const Canvas = React.forwardRef<View, Props>(function CanvasWrapper(props, ref) {
   return (
+    // @ts-ignore
     <FiberProvider>
       <CanvasImpl {...props} ref={ref} />
     </FiberProvider>

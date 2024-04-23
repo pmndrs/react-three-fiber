@@ -119,6 +119,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
         },
       })
       root.current.render(
+        // @ts-ignore
         <Bridge>
           <ErrorBoundary set={setError}>
             <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
@@ -164,6 +165,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
  */
 export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function CanvasWrapper(props, ref) {
   return (
+    // @ts-ignore
     <FiberProvider>
       <CanvasImpl {...props} ref={ref} />
     </FiberProvider>
