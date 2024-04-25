@@ -401,7 +401,14 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       // Returning true will trigger commitMount
       return Boolean(localState.handlers)
     },
-    commitUpdate(instance, _diff, type, oldProps, newProps, fiber) {
+    // @ts-ignore prepareUpdate and updatePayload removed with React 19
+    commitUpdate(
+      instance: HostConfig['instance'],
+      type: HostConfig['type'],
+      oldProps: HostConfig['props'],
+      newProps: HostConfig['props'],
+      fiber: any,
+    ) {
       const diff = prepareUpdate(instance, type, oldProps, newProps)
       if (!diff) return
 
