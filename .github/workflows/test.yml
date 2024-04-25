@@ -33,7 +33,7 @@ jobs:
         run: yarn run build
 
       - name: Jest run
-        run: yarn run dev && yarn run test --verbose
+        run: yarn run dev && yarn run test --verbose --detectOpenHandles
 
       - name: Report Fiber size
         run: yarn run analyze-fiber
