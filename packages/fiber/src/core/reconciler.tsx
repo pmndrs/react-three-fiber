@@ -396,7 +396,14 @@ export const reconciler = Reconciler<
   },
   getRootHostContext: () => NO_CONTEXT,
   getChildHostContext: () => NO_CONTEXT,
-  commitUpdate(instance, _diff, type, oldProps, newProps, fiber) {
+  // @ts-ignore prepareUpdate and updatePayload removed with React 19
+  commitUpdate(
+    instance: HostConfig['instance'],
+    type: HostConfig['type'],
+    oldProps: HostConfig['props'],
+    newProps: HostConfig['props'],
+    fiber: any,
+  ) {
     const diff = prepareUpdate(instance, type, oldProps, newProps)
     if (diff === null) return
 
