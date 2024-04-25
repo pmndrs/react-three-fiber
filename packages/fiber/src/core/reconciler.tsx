@@ -244,13 +244,21 @@ function removeChild(
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
     if (typeof child.object.dispose === 'function') {
       const dispose = child.object.dispose.bind(child.object)
-      scheduleCallback(idlePriority, () => {
+      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') {
         try {
           dispose()
         } catch (e) {
           /* ... */
         }
-      })
+      } else {
+        scheduleCallback(idlePriority, () => {
+          try {
+            dispose()
+          } catch (e) {
+            /* ... */
+          }
+        })
+      }
     }
   }
 
