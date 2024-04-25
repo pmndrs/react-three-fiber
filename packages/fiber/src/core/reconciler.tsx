@@ -244,21 +244,18 @@ function removeChild(
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
     if (typeof child.object.dispose === 'function') {
       const dispose = child.object.dispose.bind(child.object)
-      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') {
+      const handleDispose = () => {
         try {
           dispose()
         } catch (e) {
-          /* ... */
+          // no-op
         }
-      } else {
-        scheduleCallback(idlePriority, () => {
-          try {
-            dispose()
-          } catch (e) {
-            /* ... */
-          }
-        })
       }
+
+      // In a testing environment, cleanup immediately
+      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
+      // Otherwise, using a real GPU so schedule cleanup to prevent stalls
+      else scheduleCallback(idlePriority, handleDispose)
     }
   }
 
