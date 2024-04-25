@@ -24,20 +24,14 @@ extend({ Mock })
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
-const expectToThrow = async (callback: () => any) => {
-  const error = console.error
-  console.error = jest.fn()
-
-  let thrown = false
+const expectToThrow = async (callback: () => any, message: string) => {
+  let error: Error | undefined
   try {
     await callback()
-  } catch (_) {
-    thrown = true
+  } catch (e) {
+    error = e as Error
   }
-
-  expect(thrown).toBe(true)
-  expect(console.error).toHaveBeenCalled()
-  console.error = error
+  expect(error?.message).toBe(message)
 }
 
 describe('renderer', () => {
@@ -256,8 +250,8 @@ describe('renderer', () => {
 
     // Throw on non-array value
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test args={{}} />)),
+      async () => await act(async () => root.render(<Test args={{} as any} />)),
+      'R3F: The args prop must be an array!',
     )
 
     // Set
@@ -316,8 +310,8 @@ describe('renderer', () => {
 
     // Throw on undefined
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test object={undefined} />)),
+      async () => await act(async () => root.render(<Test object={undefined as any} />)),
+      "R3F: Primitives without 'object' are invalid!",
     )
 
     // Update
