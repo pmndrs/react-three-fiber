@@ -36,7 +36,7 @@ const expectToThrow = async (callback: () => any) => {
   }
 
   expect(thrown).toBe(true)
-  expect(console.error).toBeCalled()
+  expect(console.error).toHaveBeenCalled()
   console.error = error
 }
 
@@ -397,21 +397,21 @@ describe('renderer', () => {
     // Removes events
     expect(internal.interaction.length).toBe(0)
     // Calls dispose on top-level instance
-    expect(dispose).toBeCalled()
+    expect(dispose).toHaveBeenCalled()
     // Also disposes of children
-    expect(childDispose).toBeCalled()
+    expect(childDispose).toHaveBeenCalled()
     // Disposes of attached children
-    expect(attachDispose).toBeCalled()
+    expect(attachDispose).toHaveBeenCalled()
     // Properly detaches attached children
-    expect(attach).toBeCalledTimes(1)
-    expect(detach).toBeCalledTimes(1)
+    expect(attach).toHaveBeenCalledTimes(1)
+    expect(detach).toHaveBeenCalledTimes(1)
     // Respects dispose={null}
-    expect(flagDispose).not.toBeCalled()
+    expect(flagDispose).not.toHaveBeenCalled()
     // Does not dispose of primitives
-    expect(object.dispose).not.toBeCalled()
+    expect(object.dispose).not.toHaveBeenCalled()
     // Only disposes of declarative primitive children
-    expect(objectExternal.dispose).not.toBeCalled()
-    expect(disposeDeclarativePrimitive).toBeCalled()
+    expect(objectExternal.dispose).not.toHaveBeenCalled()
+    expect(disposeDeclarativePrimitive).toHaveBeenCalled()
   })
 
   it('can swap 4 array primitives', async () => {
