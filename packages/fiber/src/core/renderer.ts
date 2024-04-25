@@ -54,7 +54,7 @@ interface HostConfig {
   hydratableInstance: Instance
   publicInstance: Instance
   hostContext: {}
-  updatePayload: Array<boolean | number | DiffSet>
+  updatePayload: null | [true] | [false, Instance['props']]
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
@@ -311,6 +311,36 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
   const handleTextInstance = () =>
     console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
 
+  function prepareUpdate(
+    instance: HostConfig['instance'],
+    _type: HostConfig['type'],
+    oldProps: HostConfig['props'],
+    newProps: HostConfig['props'],
+  ): HostConfig['updatePayload'] {
+    const localState = instance?.__r3f ?? {}
+
+    // Create diff-sets
+    if (localState.primitive && newProps.object && newProps.object !== instance) {
+      return [true]
+    } else {
+      // This is a data object, let's extract critical information about it
+      const { args: argsNew = [], children: cN, ...restNew } = newProps
+      const { args: argsOld = [], children: cO, ...restOld } = oldProps
+
+      // Throw if an object or literal was passed for args
+      if (!Array.isArray(argsNew)) throw new Error('R3F: the args prop must be an array!')
+
+      // If it has new props or arguments, then it needs to be re-instantiated
+      if (argsNew.some((value, index) => value !== argsOld[index])) return [true]
+      // Create a diff-set, flag if there are any changes
+      const diff = diffProps(instance, restNew, restOld, true)
+      if (diff.changes.length) return [false, diff]
+
+      // Otherwise do not touch the instance
+      return null
+    }
+  }
+
   const NO_CONTEXT: HostConfig['hostContext'] = {}
 
   let currentUpdatePriority: number = NoEventPriority
@@ -371,31 +401,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       // Returning true will trigger commitMount
       return Boolean(localState.handlers)
     },
-    prepareUpdate(instance, _type, oldProps, newProps) {
-      const localState = instance?.__r3f ?? {}
-
-      // Create diff-sets
-      if (localState.primitive && newProps.object && newProps.object !== instance) {
-        return [true]
-      } else {
-        // This is a data object, let's extract critical information about it
-        const { args: argsNew = [], children: cN, ...restNew } = newProps
-        const { args: argsOld = [], children: cO, ...restOld } = oldProps
-
-        // Throw if an object or literal was passed for args
-        if (!Array.isArray(argsNew)) throw new Error('R3F: the args prop must be an array!')
-
-        // If it has new props or arguments, then it needs to be re-instantiated
-        if (argsNew.some((value, index) => value !== argsOld[index])) return [true]
-        // Create a diff-set, flag if there are any changes
-        const diff = diffProps(instance, restNew, restOld, true)
-        if (diff.changes.length) return [false, diff]
-
-        // Otherwise do not touch the instance
-        return null
-      }
-    },
-    commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
+    commitUpdate(instance, _diff, type, oldProps, newProps, fiber) {
+      const diff = prepareUpdate(instance, type, oldProps, newProps)
       if (!diff) return
 
       const [reconstruct, changedProps] = diff as [boolean, DiffSet]
