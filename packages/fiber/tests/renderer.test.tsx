@@ -3,38 +3,44 @@ import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, act, extend, ThreeElement } from '../src/index'
 import { suspend } from 'suspend-react'
 
-class CustomElement extends THREE.Object3D {}
+extend(THREE as any)
 
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    customElement: ThreeElement<typeof CustomElement>
+class Mock extends THREE.Group {
+  static instances: string[]
+  constructor(name: string = '') {
+    super()
+    this.name = name
+    Mock.instances.push(name)
   }
 }
 
-extend({ CustomElement })
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    mock: ThreeElement<typeof Mock>
+  }
+}
+
+extend({ Mock })
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
-const expectToThrow = async (callback: () => any) => {
-  const error = console.error
-  console.error = jest.fn()
-
-  let thrown = false
+const expectToThrow = async (callback: () => any, message: string) => {
+  let error: Error | undefined
   try {
     await callback()
-  } catch (_) {
-    thrown = true
+  } catch (e) {
+    error = e as Error
   }
-
-  expect(thrown).toBe(true)
-  expect(console.error).toBeCalled()
-  console.error = error
+  expect(error?.message).toBe(message)
 }
 
 describe('renderer', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
-  beforeEach(() => (root = createRoot(document.createElement('canvas'))))
+  beforeEach(() => {
+    root = createRoot(document.createElement('canvas'))
+    Mock.instances = []
+  })
   afterEach(async () => act(async () => root.unmount()))
 
   it('should render empty JSX', async () => {
@@ -45,29 +51,38 @@ describe('renderer', () => {
   })
 
   it('should render native elements', async () => {
-    const store = await act(async () => root.render(<group />))
+    const store = await act(async () => root.render(<group name="native" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[0].name).toBe('native')
   })
 
   it('should render extended elements', async () => {
-    const store = await act(async () => root.render(<customElement />))
+    const store = await act(async () => root.render(<mock name="mock" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(CustomElement)
+    expect(scene.children[0]).toBeInstanceOf(Mock)
+    expect(scene.children[0].name).toBe('mock')
+
+    const Component = extend(THREE.Mesh)
+    await act(async () => root.render(<Component />))
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
   })
 
   it('should render primitives', async () => {
     const object = new THREE.Object3D()
 
-    const store = await act(async () => root.render(<primitive object={object} />))
+    const store = await act(async () => root.render(<primitive name="primitive" object={object} />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBe(object)
+    expect(object.name).toBe('primitive')
   })
 
   it('should go through lifecycle', async () => {
@@ -235,8 +250,8 @@ describe('renderer', () => {
 
     // Throw on non-array value
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test args={{}} />)),
+      async () => await act(async () => root.render(<Test args={{} as any} />)),
+      'R3F: The args prop must be an array!',
     )
 
     // Set
@@ -295,8 +310,8 @@ describe('renderer', () => {
 
     // Throw on undefined
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test object={undefined} />)),
+      async () => await act(async () => root.render(<Test object={undefined as any} />)),
+      "R3F: Primitives without 'object' are invalid!",
     )
 
     // Update
@@ -376,28 +391,32 @@ describe('renderer', () => {
     // Removes events
     expect(internal.interaction.length).toBe(0)
     // Calls dispose on top-level instance
-    expect(dispose).toBeCalled()
+    expect(dispose).toHaveBeenCalled()
     // Also disposes of children
-    expect(childDispose).toBeCalled()
+    expect(childDispose).toHaveBeenCalled()
     // Disposes of attached children
-    expect(attachDispose).toBeCalled()
+    expect(attachDispose).toHaveBeenCalled()
     // Properly detaches attached children
-    expect(attach).toBeCalledTimes(1)
-    expect(detach).toBeCalledTimes(1)
+    expect(attach).toHaveBeenCalledTimes(1)
+    expect(detach).toHaveBeenCalledTimes(1)
     // Respects dispose={null}
-    expect(flagDispose).not.toBeCalled()
+    expect(flagDispose).not.toHaveBeenCalled()
     // Does not dispose of primitives
-    expect(object.dispose).not.toBeCalled()
+    expect(object.dispose).not.toHaveBeenCalled()
     // Only disposes of declarative primitive children
-    expect(objectExternal.dispose).not.toBeCalled()
-    expect(disposeDeclarativePrimitive).toBeCalled()
+    expect(objectExternal.dispose).not.toHaveBeenCalled()
+    expect(disposeDeclarativePrimitive).toHaveBeenCalled()
   })
 
   it('can swap 4 array primitives', async () => {
     const a = new THREE.Group()
+    a.name = 'a'
     const b = new THREE.Group()
+    b.name = 'b'
     const c = new THREE.Group()
+    c.name = 'c'
     const d = new THREE.Group()
+    d.name = 'd'
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
       <>
@@ -411,15 +430,55 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test array={array} />))
     const { scene } = store.getState()
 
-    expect(scene.children).toStrictEqual(array)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
     await act(async () => root.render(<Test array={reversedArray} />))
-    expect(scene.children).toStrictEqual(reversedArray)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
     await act(async () => root.render(<Test array={mixedArray} />))
-    expect(scene.children).toStrictEqual(mixedArray)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
+  })
+
+  // TODO: fix this case, also see:
+  // https://github.com/pmndrs/react-three-fiber/issues/1892
+  // https://github.com/pmndrs/react-three-fiber/issues/3125
+  // https://github.com/pmndrs/react-three-fiber/issues/3143
+  it.skip('can swap 4 array primitives via attach', async () => {
+    const a = new THREE.Group()
+    a.name = 'a'
+    const b = new THREE.Group()
+    b.name = 'b'
+    const c = new THREE.Group()
+    c.name = 'c'
+    const d = new THREE.Group()
+    d.name = 'c'
+    const array = [a, b, c, d]
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} attach={`userData-objects-${i}`} object={group} />
+        ))}
+      </>
+    )
+
+    const store = await act(async () => root.render(<Test array={array} />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(array.map((o) => o.name))
+
+    const reversedArray = [d, c, b, a]
+    await act(async () => root.render(<Test array={reversedArray} />))
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
+
+    const mixedArray = [b, a, d, c]
+    await act(async () => root.render(<Test array={mixedArray} />))
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
   it('should gracefully handle text', async () => {
@@ -449,9 +508,9 @@ describe('renderer', () => {
       suspend(async (reconstruct) => reconstruct, [reconstruct])
 
       return (
-        <group key={reconstruct ? 0 : 1} name="parent">
-          <group
-            name="child"
+        <mock key={reconstruct ? 0 : 1} args={['parent']}>
+          <mock
+            args={['child']}
             ref={(self) => void (lastMounted = self?.uuid)}
             attach={(_, self) => {
               calls.push('attach')
@@ -459,7 +518,7 @@ describe('renderer', () => {
               return () => calls.push('detach')
             }}
           />
-        </group>
+        </mock>
       )
     }
 
@@ -467,9 +526,9 @@ describe('renderer', () => {
       React.useLayoutEffect(() => void calls.push('useLayoutEffect'), [])
 
       return (
-        <group name="suspense">
+        <mock args={['suspense']}>
           <SuspenseComponent {...props} />
-        </group>
+        </mock>
       )
     }
 
@@ -478,10 +537,12 @@ describe('renderer', () => {
     // Should complete tree before layout-effects fire
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect'])
     expect(lastAttached).toBe(lastMounted)
+    expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child'])
 
     await act(async () => root.render(<Test reconstruct />))
 
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
     expect(lastAttached).toBe(lastMounted)
+    expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
   })
 })

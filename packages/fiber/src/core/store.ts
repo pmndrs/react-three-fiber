@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import create, { type StoreApi, type UseBoundStore } from 'zustand'
+import { create, type StoreApi, type UseBoundStore } from 'zustand'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'
@@ -130,7 +130,7 @@ export interface RootState {
   setFrameloop: (frameloop: Frameloop) => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
-  /** If this state model is layerd (via createPortal) then this contains the previous layer */
+  /** If this state model is layered (via createPortal) then this contains the previous layer */
   previousRoot?: RootStore
   /** Internals */
   internal: InternalState

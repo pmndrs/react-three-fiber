@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 
 import {
@@ -14,8 +13,10 @@ import {
   ObjectMap,
   useInstanceHandle,
   Instance,
+  extend,
 } from '../src'
 
+extend(THREE as any)
 const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {
@@ -87,24 +88,29 @@ describe('hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad(MockMesh)
-          }),
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    MockMesh.name = 'Scene'
 
+    interface GLTF {
+      scene: THREE.Object3D
+    }
+    class GLTFLoader extends THREE.Loader {
+      load(url: string, onLoad: (gltf: GLTF) => void): void {
+        onLoad({ scene: MockMesh })
+      }
+    }
+
+    let gltf!: GLTF & ObjectMap
     const Component = () => {
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-      return <primitive object={model} />
+      gltf = useLoader(GLTFLoader, '/suzanne.glb')
+      return <primitive object={gltf.scene} />
     }
 
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
   })
 
   it('can handle useLoader hook with an array of strings', async () => {
@@ -121,30 +127,26 @@ describe('hooks', () => {
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest
-            .fn()
-            .mockImplementationOnce((_url, onLoad) => {
-              onLoad(MockMesh)
-            })
-            .mockImplementationOnce((_url, onLoad) => {
-              onLoad({ scene: MockGroup })
-            }),
-          setPath: () => {},
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    class TestLoader extends THREE.Loader {
+      load = jest
+        .fn()
+        .mockImplementationOnce((_url, onLoad) => {
+          onLoad(MockMesh)
+        })
+        .mockImplementationOnce((_url, onLoad) => {
+          onLoad(MockGroup)
+        })
+    }
+
+    const extensions = jest.fn()
 
     const Component = () => {
-      const [mockMesh, mockScene] = useLoader(Stdlib.GLTFLoader, ['/suzanne.glb', '/myModels.glb'], (loader) => {
-        loader.setPath('/public/models')
-      })
+      const [mockMesh, mockScene] = useLoader(TestLoader, ['/suzanne.glb', '/myModels.glb'], extensions)
 
       return (
         <>
-          <primitive object={mockMesh} />
-          <primitive object={mockScene} />
+          <primitive object={mockMesh as THREE.Mesh} />
+          <primitive object={mockScene as THREE.Scene} />
         </>
       )
     }
@@ -153,16 +155,38 @@ describe('hooks', () => {
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(scene.children[1]).toBe(MockGroup)
+    expect(extensions).toBeCalledTimes(1)
+  })
+
+  it('can handle useLoader with an existing loader instance', async () => {
+    class Loader extends THREE.Loader {
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
+    }
+
+    const loader = new Loader()
+    let proto!: Loader
+
+    function Test(): null {
+      return useLoader(loader, '', (loader) => (proto = loader))
+    }
+    await act(async () => root.render(<Test />))
+
+    expect(proto).toBe(loader)
   })
 
   it('can handle useLoader with a loader extension', async () => {
     class Loader extends THREE.Loader {
-      load = (_url: string) => null
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
     }
 
     let proto!: Loader
 
-    function Test() {
+    function Test(): null {
       return useLoader(Loader, '', (loader) => (proto = loader))
     }
     await act(async () => root.render(<Test />))

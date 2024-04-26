@@ -6,19 +6,19 @@ nav: 17
 
 This tutorial will assume some React knowledge, and will be based on [this starter codesandbox](https://codesandbox.io/s/interaction-98ppy?file=/src/App.js), so just fork it and follow along!
 
-We learned out to create small animations and also how to react to user interaction but we did not learn yet how to change these props in a way it creates an animation.
+We learned how to create small animations and also how to react to user interactions, but we haven't yet learned how to change these props in a way to create animations.
 
-For that we are gonna use `react-spring`, `react-spring` is spring physics based animation library and it works perfectly with React Three Fiber as it comes from the same maintainers and it also has exports created specifically for use with React Three Fiber.
+For that, we are gonna use `react-spring`. `react-spring` is a spring physics based animation library and it works perfectly with React Three Fiber as it comes from the same maintainers, and it also has exports specifically created for use with React Three Fiber.
 
 ## Spring Animations
 
-Let's start by defining some concepts about `react-spring` as it works with animations in a way you may not be used to, usually when defining an animation or even a transition in CSS you tell the code how much time you want the transition to last.
+Let's start by defining some concepts about `react-spring` as it works with animations in a way you may not be used to. Usually when defining an animation or even a transition in CSS, you tell the code how much time you want the transition to last.
 
 ```css
 transition: opacity 200ms ease;
 ```
 
-This is not how `react-spring` works, it instead works with `springs` and what that means is that how the animations flows depends on things like the mass, tension and friction of what you want to animate and this is exactly what makes it so perfect to use with 3D.
+This is not how `react-spring` works, it instead works with `springs` and what that means is, the animation's flow depends on things like the mass, tension and friction of what you want to animate, and this is exactly what makes it so perfect to use with 3D.
 
 ## Using `react-spring`
 
@@ -28,9 +28,9 @@ Let's start by installing it:
 npm install three @react-spring/three
 ```
 
-After that we will importing everything from `@react-spring/three` as it contains the components that were created specifically for use with React Three Fiber.
+After that, we import everything from `@react-spring/three` as it contains the components that were created specifically for use with React Three Fiber.
 
-We will need to import two things from `react-spring`:
+We need to import two things from `react-spring`:
 
 ```js
 import { useSpring, animated } from '@react-spring/three'
@@ -39,7 +39,7 @@ import { useSpring, animated } from '@react-spring/three'
 Let's go over them, shall we?
 
 - `useSpring` - A hook to transform values into animated-values
-- `animated` - A component that is used instead of your DOM or mesh, so instead of using `mesh` you will `animated.mesh` if you want it to be affected by `react-spring`
+- `animated` - A component that is used instead of your DOM or mesh, so instead of using `mesh` you will be using `animated.mesh` if you want it to be affected by `react-spring`
 
 Let's create our first spring and attach it to our mesh when the user clicks.
 
@@ -47,7 +47,7 @@ Let's create our first spring and attach it to our mesh when the user clicks.
 const springs = useSpring({ scale: active ? 1.5 : 1 })
 ```
 
-What we did here is create a constant called `springs` and this constant will hold the animated values.
+What we did here is create a constant called `springs`, this constant will hold the animated values.
 
 `useSpring` itself takes one argument, and that is an object with all the things you want to animate. In this case, we just want to animate the scale and to hop between the value of 1 and the value of 1.5 depending on the active state.
 
@@ -57,7 +57,7 @@ We can also deconstruct the return value of `useSpring` and just get the value w
 const { scale } = useSpring({ scale: active ? 1.5 : 1 })
 ```
 
-Now that we have this animated value let's place it in our mesh:
+Now that we have this animated value, let's place it in our mesh:
 
 ```jsx
 <animated.mesh scale={scale} onClick={() => setActive(!active)} ref={myMesh}>
@@ -66,15 +66,15 @@ Now that we have this animated value let's place it in our mesh:
 </animated.mesh>
 ```
 
-If you now click on the cube you can see that it doesn't just jump from one value to the other but instead it animates smoothly between the two values.
+If you now click on the cube, you can see that it doesn't just jump from one value to the other, but instead it animates smoothly between the two values.
 
-One last touch I want to add is the wobblier effect to the animation. For that we can import the `config` object from `react-spring`:
+One last touch we might want to add is the wobblier effect to the animation. For that we can import the `config` object from `react-spring`:
 
 ```js
 import { useSpring, animated, config } from '@react-spring/three'
 ```
 
-Lastly when we call the hook we can pass a value for config and lets pass the `wobbly` configuration:
+Lastly when we call the hook, we can pass a value for config and pass the `wobbly` configuration:
 
 ```js
 const { scale } = useSpring({
@@ -83,7 +83,7 @@ const { scale } = useSpring({
 })
 ```
 
-If this configuration is not your favorite you can check out all of them at the [`react-spring` documentation](https://react-spring.io).
+You can check the other configuration options at the [`react-spring` documentation](https://react-spring.io).
 
 What we did in this chapter was:
 

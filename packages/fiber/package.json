@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "9.0.0-alpha.2",
+  "version": "9.0.0-alpha.3",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -43,20 +43,23 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@types/react-reconciler": "^0.26.7",
-    "its-fine": "^1.0.6",
-    "react-reconciler": "^0.27.0",
+    "@types/react-reconciler": "^0.28.8",
+    "base64-js": "^1.5.1",
+    "buffer": "^6.0.3",
+    "its-fine": "^1.2.5",
+    "react-reconciler": "0.31.0-beta-94eed63c49-20240425",
     "react-use-measure": "^2.1.1",
-    "scheduler": "^0.21.0",
-    "suspend-react": "^0.1.0",
+    "scheduler": "0.25.0-beta-94eed63c49-20240425",
+    "suspend-react": "^0.1.3",
     "zustand": "^4.1.2"
   },
   "peerDependencies": {
-    "expo": ">=46.0",
-    "expo-asset": ">=8.6",
-    "expo-gl": ">=11.4",
-    "react": ">=18.0",
-    "react-dom": ">=18.0",
+    "expo": ">=43.0",
+    "expo-asset": ">=8.4",
+    "expo-gl": ">=11.0",
+    "expo-file-system": ">=11.0",
+    "react": ">=19.0",
+    "react-dom": ">=19.0",
     "react-native": ">=0.69",
     "three": ">=0.141"
   },
@@ -71,6 +74,9 @@
       "optional": true
     },
     "expo-asset": {
+      "optional": true
+    },
+    "expo-file-system": {
       "optional": true
     },
     "expo-gl": {

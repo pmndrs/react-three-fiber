@@ -57,17 +57,17 @@ import { Canvas, useFrame } from '@react-three/fiber'
 
 function Box(props) {
   // This reference will give us direct access to the mesh
-  const mesh = useRef()
+  const meshRef = useRef()
   // Set up state for the hovered and active state
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
   // Subscribe this component to the render-loop, rotate the mesh every frame
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   // Return view, these are regular three.js elements expressed in JSX
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -80,8 +80,9 @@ function Box(props) {
 
 createRoot(document.getElementById('root')).render(
   <Canvas>
-    <ambientLight />
-    <pointLight position={[10, 10, 10]} />
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
@@ -102,14 +103,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
 
 function Box(props: ThreeElements['mesh']) {
-  const mesh = useRef<THREE.Mesh>(null!)
+  const meshRef = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -122,8 +123,9 @@ function Box(props: ThreeElements['mesh']) {
 
 createRoot(document.getElementById('root')).render(
   <Canvas>
-    <ambientLight />
-    <pointLight position={[10, 10, 10]} />
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
@@ -144,14 +146,14 @@ import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber/native'
 
 function Box(props) {
-  const mesh = useRef(null)
+  const meshRef = useRef(null)
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += delta))
+  useFrame((state, delta) => (meshRef.current.rotation.x += delta))
   return (
     <mesh
       {...props}
-      ref={mesh}
+      ref={meshRef}
       scale={active ? 1.5 : 1}
       onClick={(event) => setActive(!active)}
       onPointerOver={(event) => setHover(true)}
@@ -165,8 +167,9 @@ function Box(props) {
 export default function App() {
   return (
     <Canvas>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={Math.PI / 2} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+      <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
       <Box position={[-1.2, 0, 0]} />
       <Box position={[1.2, 0, 0]} />
     </Canvas>

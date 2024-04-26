@@ -33,53 +33,11 @@ Array [
   0,
   0,
   0,
-  1,
-  0,
-  0,
-  0,
-  0,
-  1,
-]
-`;
-
-exports[`updateCamera updates camera matrices 3`] = `
-Array [
-  1,
-  0,
-  0,
-  0,
-  0,
-  1,
-  0,
-  0,
-  0,
-  0,
   -0.001000050002500125,
   0,
   -0,
   -0,
   -1.00010000500025,
-  1,
-]
-`;
-
-exports[`updateCamera updates camera matrices 4`] = `
-Array [
-  1,
-  0,
-  0,
-  0,
-  0,
-  1,
-  0,
-  0,
-  0,
-  0,
-  1,
-  0,
-  0,
-  0,
-  0,
   1,
 ]
 `;

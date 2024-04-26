@@ -111,13 +111,13 @@ import htm from 'https://esm.sh/htm'
 const html = htm.bind(React.createElement)
 
 function Box(props) {
-  const mesh = useRef()
+  const meshRef = useRef()
   const [hovered, setHover] = useState(false)
   const [active, setActive] = useState(false)
-  useFrame(() => (mesh.current.rotation.x = mesh.current.rotation.y += 0.01))
+  useFrame(() => (meshRef.current.rotation.x = meshRef.current.rotation.y += 0.01))
   return html` <mesh
     ...${props}
-    ref=${mesh}
+    ref=${meshRef}
     scale=${active ? 1.5 : 1}
     onClick=${() => setActive(!active)}
     onPointerOver=${() => setHover(true)}
@@ -143,7 +143,7 @@ ReactDOM.render(
 
 ## React Native
 
-R3F v8 adds support for react-native and can be imported from `@react-three/fiber/native`. We use `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and threejs loaders.
+R3F v8 adds support for react-native and can be imported from `@react-three/fiber/native`. We use `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and three.js loaders.
 
 To get started, create an app via `expo` or `react-native`:
 
@@ -176,7 +176,7 @@ Some configuration may be required to tell the Metro bundler about your assets i
 // metro.config.js
 module.exports = {
   resolver: {
-    sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'],
+    sourceExts: ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs', 'mjs'],
     assetExts: ['glb', 'gltf', 'png', 'jpg'],
   },
 }
@@ -184,38 +184,29 @@ module.exports = {
 
 R3F's API is completely x-platform, so you can use [events](https://docs.pmnd.rs/react-three-fiber/api/events) and [hooks](https://docs.pmnd.rs/react-three-fiber/api/hooks) just as you would on the web.
 
-Just make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` to use their native targets.
+<Hint>
+  Make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` for correct IntelliSense and
+  platform-specific abstractions.
+</Hint>
 
 ```jsx
-import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber/native'
+import { Suspense } from 'react'
+import { Canvas } from '@react-three/fiber/native'
+import { useGLTF } from '@react-three/drei/native'
+import modelPath from './path/to/model.glb'
 
-function Box(props) {
-  const mesh = useRef(null)
-  const [hovered, setHover] = useState(false)
-  const [active, setActive] = useState(false)
-  useFrame((state, delta) => (mesh.current.rotation.x += 0.01))
-  return (
-    <mesh
-      {...props}
-      ref={mesh}
-      scale={active ? 1.5 : 1}
-      onClick={(event) => setActive(!active)}
-      onPointerOver={(event) => setHover(true)}
-      onPointerOut={(event) => setHover(false)}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-    </mesh>
-  )
+function Model(props) {
+  const gltf = useGLTF(modelPath)
+  return <primitive {...props} object={gltf.scene} />
 }
 
 export default function App() {
   return (
     <Canvas>
       <ambientLight />
-      <pointLight position={[10, 10, 10]} />
-      <Box position={[-1.2, 0, 0]} />
-      <Box position={[1.2, 0, 0]} />
+      <Suspense>
+        <Model />
+      </Suspense>
     </Canvas>
   )
 }

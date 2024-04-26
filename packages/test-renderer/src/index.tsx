@@ -11,6 +11,7 @@ import { createEventFirer } from './fireEvent'
 
 import type { CreateOptions, Renderer } from './types/public'
 import { wrapFiber } from './createTestInstance'
+import { waitFor, WaitOptions } from './helpers/waitFor'
 
 // Extend catalogue for render API in tests.
 extend(THREE as any)
@@ -18,7 +19,18 @@ extend(THREE as any)
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)
 
-  const _root = createRoot(canvas).configure({ frameloop: 'never', ...options, events: undefined })
+  const _root = createRoot(canvas).configure({
+    frameloop: 'never',
+    // TODO: remove and use default behavior
+    size: {
+      width: options?.width ?? 1280,
+      height: options?.height ?? 800,
+      top: 0,
+      left: 0,
+    },
+    ...options,
+    events: undefined,
+  })
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
@@ -79,6 +91,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
   }
 }
 
+export { create, act, waitFor }
+export type { WaitOptions }
+
 export * as ReactThreeTest from './types'
-export default { create, act }
-export { create, act }
+export default { create, act, waitFor }

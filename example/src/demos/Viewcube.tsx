@@ -49,8 +49,8 @@ function Viewcube() {
             ))}
             <boxGeometry args={[80, 80, 80]} />
           </mesh>
-          <ambientLight intensity={0.5} />
-          <pointLight position={[10, 10, 10]} intensity={0.5} />
+          <ambientLight intensity={0.5 * Math.PI} />
+          <pointLight decay={0} position={[10, 10, 10]} intensity={0.5} />
         </group>,
         scene,
         { camera, events: { priority: events.priority + 1 } },

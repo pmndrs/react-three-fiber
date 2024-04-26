@@ -1,5 +1,29 @@
 # @react-three/test-renderer
 
+## 8.2.1
+
+### Patch Changes
+
+- 020bb194: fix(RTTR): set initial size for NaN in viewport
+
+## 8.2.0
+
+### Minor Changes
+
+- a5ffb08e: feat(RTTR): waitFor util
+
+## 8.1.5
+
+### Patch Changes
+
+- 673927f7: fix(RTTR): implement HTMLCanvasElement.getContext
+
+## 8.1.4
+
+### Patch Changes
+
+- 53ba22d3: fix(RTTR): fallback to canvas shim
+
 ## 8.1.3
 
 ### Patch Changes

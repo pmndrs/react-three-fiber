@@ -28,13 +28,13 @@ One major caveat is that if anything in the tree _mutates_ props, then React can
 
 ```jsx
 function Controls() {
-  const ref = useRef()
+  const orbitControlsRef = useRef()
   const { invalidate, camera, gl } = useThree()
   useEffect(() => {
-    ref.current.addEventListener('change', invalidate)
-    return () => ref.current.removeEventListener('change', invalidate)
+    orbitControlsRef.current.addEventListener('change', invalidate)
+    return () => orbitControlsRef.current.removeEventListener('change', invalidate)
   }, [])
-  return <orbitControls ref={ref} args={[camera, gl.domElement]} />
+  return <orbitControls ref={orbitControlsRef} args={[camera, gl.domElement]} />
 ```
 
 <Hint>Drei's controls do this automatically for you.</Hint>
@@ -114,19 +114,19 @@ Setting up instancing is not so hard, consult [the three.js docs](https://threej
 
 ```jsx
 function Instances({ count = 100000, temp = new THREE.Object3D() }) {
-  const ref = useRef()
+  const instancedMeshRef = useRef()
   useEffect(() => {
     // Set positions
     for (let i = 0; i < count; i++) {
       temp.position.set(Math.random(), Math.random(), Math.random())
       temp.updateMatrix()
-      ref.current.setMatrixAt(i, temp.matrix)
+      instancedMeshRef.current.setMatrixAt(i, temp.matrix)
     }
     // Update the instance
-    ref.current.instanceMatrix.needsUpdate = true
+    instancedMeshRef.current.instanceMatrix.needsUpdate = true
   }, [])
   return (
-    <instancedMesh ref={ref} args={[null, null, count]}>
+    <instancedMesh ref={instancedMeshRef} args={[null, null, count]}>
       <boxGeometry />
       <meshPhongMaterial />
     </instancedMesh>
@@ -272,7 +272,7 @@ You can define defaults like so:
 
 ### This is how you can put the system into regression
 
-The only thing you have to do is call `regress()`. When exactly you do that, that is up to you, but it could be when when the mouse moves, or the scene is moving, for instance when controls fire their change-event.
+The only thing you have to do is call `regress()`. When exactly you do that, that is up to you, but it could be when the mouse moves, or the scene is moving, for instance when controls fire their change-event.
 
 Say you are using controls, then the following code puts the system in regress when they are active:
 
@@ -295,7 +295,7 @@ Here is a small prototype component that scales the pixel ratio:
 ```jsx
 function AdaptivePixelRatio() {
   const current = useThree((state) => state.performance.current)
-  const setPixelRatio = useThree((state) => state.setPixelRatio)
+  const setPixelRatio = useThree((state) => state.setDpr)
   useEffect(() => {
     setPixelRatio(window.devicePixelRatio * current)
   }, [current])

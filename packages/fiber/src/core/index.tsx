@@ -46,4 +46,4 @@ export type {
 } from './store'
 export { context } from './store'
 export type { ObjectMap, Camera, Disposable, Act } from './utils'
-export { applyProps, getRootState, dispose, act } from './utils'
+export { applyProps, getRootState, dispose, act, buildGraph } from './utils'

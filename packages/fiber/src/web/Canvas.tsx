@@ -55,10 +55,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
     performance,
     raycaster,
     camera,
+    scene,
     onPointerMissed,
     onCreated,
     stages,
-    scene,
     ...props
   },
   forwardedRef,
@@ -92,6 +92,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
       if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
       root.current.configure({
         gl,
+        scene,
         events,
         shadows,
         linear,

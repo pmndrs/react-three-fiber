@@ -1,39 +1,12 @@
 import { RootState, RootStore } from '../core/store'
 import { createEvents, DomEvent, EventManager, Events } from '../core/events'
-import { GestureResponderEvent } from 'react-native'
-/* eslint-disable import/default, import/no-named-as-default, import/no-named-as-default-member */
-// @ts-ignore
-// eslint-disable-next-line
-import Pressability from 'react-native/Libraries/Pressability/Pressability'
-/* eslint-enable import/default, import/no-named-as-default, import/no-named-as-default-member */
-
-const EVENTS = {
-  PRESS: 'onPress',
-  PRESSIN: 'onPressIn',
-  PRESSOUT: 'onPressOut',
-  LONGPRESS: 'onLongPress',
-
-  HOVERIN: 'onHoverIn',
-  HOVEROUT: 'onHoverOut',
-  PRESSMOVE: 'onPressMove',
-}
-
-const DOM_EVENTS = {
-  [EVENTS.PRESS]: 'onClick',
-  [EVENTS.PRESSIN]: 'onPointerDown',
-  [EVENTS.PRESSOUT]: 'onPointerUp',
-  [EVENTS.LONGPRESS]: 'onDoubleClick',
-
-  [EVENTS.HOVERIN]: 'onPointerOver',
-  [EVENTS.HOVEROUT]: 'onPointerOut',
-  [EVENTS.PRESSMOVE]: 'onPointerMove',
-}
+import { type GestureResponderEvent, PanResponder } from 'react-native'
 
 /** Default R3F event manager for react-native */
 export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
-  const handleTouch = (event: GestureResponderEvent, name: keyof typeof EVENTS) => {
+  const handleTouch = (event: GestureResponderEvent, name: string): true => {
     event.persist()
 
     // Apply offset
@@ -41,9 +14,28 @@ export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
     ;(event as any).nativeEvent.offsetY = event.nativeEvent.locationY
 
     // Emulate DOM event
-    const callback = handlePointer(DOM_EVENTS[name])
-    return callback(event.nativeEvent as any)
+    const callback = handlePointer(name)
+    callback(event.nativeEvent as any)
+
+    return true
   }
+
+  const responder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponderCapture: () => true,
+    onPanResponderTerminationRequest: () => true,
+    onStartShouldSetPanResponderCapture: (e) => handleTouch(e, 'onPointerCapture'),
+    onPanResponderStart: (e) => handleTouch(e, 'onPointerDown'),
+    onPanResponderMove: (e) => handleTouch(e, 'onPointerMove'),
+    onPanResponderEnd: (e, state) => {
+      handleTouch(e, 'onPointerUp')
+      if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'onClick')
+    },
+    onPanResponderRelease: (e) => handleTouch(e, 'onPointerLeave'),
+    onPanResponderTerminate: (e) => handleTouch(e, 'onLostPointerCapture'),
+    onPanResponderReject: (e) => handleTouch(e, 'onLostPointerCapture'),
+  })
 
   return {
     priority: 1,
@@ -56,34 +48,23 @@ export function createTouchEvents(store: RootStore): EventManager<HTMLElement> {
     },
 
     connected: undefined,
-    handlers: Object.values(EVENTS).reduce(
-      (acc, name) => ({
-        ...acc,
-        [name]: (event: GestureResponderEvent) => handleTouch(event, name as keyof typeof EVENTS),
-      }),
-      {},
-    ) as unknown as Events,
+    handlers: responder.panHandlers as unknown as Events,
     update: () => {
       const { events, internal } = store.getState()
-      if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
+      if (internal.lastEvent?.current && events.handlers) {
+        handlePointer('onPointerMove')(internal.lastEvent.current)
+      }
     },
     connect: () => {
       const { set, events } = store.getState()
       events.disconnect?.()
 
-      const connected = new Pressability(events.handlers)
-      set((state) => ({ events: { ...state.events, connected } }))
-
-      const handlers = connected.getEventHandlers()
-      return handlers
+      set((state) => ({ events: { ...state.events, connected: true } }))
     },
     disconnect: () => {
-      const { set, events } = store.getState()
+      const { set } = store.getState()
 
-      if (events.connected) {
-        events.connected.reset()
-        set((state) => ({ events: { ...state.events, connected: undefined } }))
-      }
+      set((state) => ({ events: { ...state.events, connected: false } }))
     },
   }
 }

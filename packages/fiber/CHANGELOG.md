@@ -1,5 +1,228 @@
 # @react-three/fiber
 
+## 8.16.2
+
+### Patch Changes
+
+- e0900489: fix(useLoader): don't dispose of memoized loader
+
+## 8.16.1
+
+### Patch Changes
+
+- 503efc2e: fix: prevent invalidate from piling up frames
+
+## 8.16.0
+
+### Minor Changes
+
+- 6b0ea6eb: feat: add childadded event dispatch
+
+## 8.15.19
+
+### Patch Changes
+
+- 74926b94: fix(types): avoid emitting THREE.XRFrame
+
+## 8.15.18
+
+### Patch Changes
+
+- 8c01939a: fix: correctly pass frames in invalidate
+
+## 8.15.17
+
+### Patch Changes
+
+- 16c2ee97: fix(types): support @types/three@0.162.0
+
+## 8.15.16
+
+### Patch Changes
+
+- 71cd8f96: fix: tonemapping config overwrites userland
+- 0bb12fd1: fix(types): remove usage of THREE.Vector
+
+## 8.15.14
+
+### Patch Changes
+
+- 0afc9c12: fix: portal events, update examples
+
+## 8.15.13
+
+### Patch Changes
+
+- 0a399f6d: fix(native): use MSAA for antialias on iOS
+
+## 8.15.12
+
+### Patch Changes
+
+- 496d6f0d: fix: useLoader and XRFrame type fixes
+
+## 8.15.11
+
+### Patch Changes
+
+- 3d9af04d: fix: update import from three examples
+
+## 8.15.10
+
+### Patch Changes
+
+- 49158164: fix: don't recursively dispose primitives
+
+## 8.15.9
+
+### Patch Changes
+
+- 4cbc5530: fix(native): deopt iOS blob URI path
+
+## 8.15.8
+
+### Patch Changes
+
+- 70680832: fix: revert stable sort
+
+## 8.15.7
+
+### Patch Changes
+
+- 07e39e2e: fix(types): remove use of Object3D generic
+
+## 8.15.6
+
+### Patch Changes
+
+- 7bb2950b: experiment: stable object sort
+
+## 8.15.5
+
+### Patch Changes
+
+- 0e44fd8b: fix(types): preserve deprecated JSX annotations
+
+## 8.15.4
+
+### Patch Changes
+
+- 634e5db5: fix(native): harden Blob URI check for Android
+
+## 8.15.3
+
+### Patch Changes
+
+- beab4344: fix(native): workaround Android content policy for Blob URI
+
+## 8.15.2
+
+### Patch Changes
+
+- 086d3932: fix: size check and raycaster camera
+
+## 8.15.1
+
+### Patch Changes
+
+- 2d39676d: fix: ignore deprecated types, use correct XRFrame definition
+
+## 8.15.0
+
+### Minor Changes
+
+- cca8b6bb: feat: export buildGraph
+
+## 8.14.7
+
+### Patch Changes
+
+- 0f63a287: fix(native): restore polyfill conversions, drop networking
+
+## 8.14.6
+
+### Patch Changes
+
+- 465fa0fb: fix(native): revert usage of networking stack
+
+## 8.14.5
+
+### Patch Changes
+
+- f372a5b5: fix(applyProps): loosen copy identity in dev
+
+## 8.14.4
+
+### Patch Changes
+
+- dc7e5739: fix(native): amend BlobManager over globals
+
+## 8.14.3
+
+### Patch Changes
+
+- d77b0990: fix(native): drop fsstat for react-native-web
+
+## 8.14.2
+
+### Patch Changes
+
+- 33e8baef: fix: native perf, loader types
+
+## 8.14.1
+
+### Patch Changes
+
+- c99907bf: fix(native): prefer local uri for fs
+
+## 8.14.0
+
+### Minor Changes
+
+- 89e96bf4: feat: react-native-web, native globals fixes
+
+## 8.13.9
+
+### Patch Changes
+
+- 44d57b3c: fix(native): TextureLoader should remain consistent with FileLoader
+
+## 8.13.8
+
+### Patch Changes
+
+- 5da26d52: fix(useLoader): dispose loaders
+
+## 8.13.7
+
+### Patch Changes
+
+- 37b9502a: fix(Canvas): pass scene prop
+
+## 8.13.6
+
+### Patch Changes
+
+- 0597495c: fix: harden XR init against Renderer shim
+
+## 8.13.5
+
+### Patch Changes
+
+- 7a3b543b: fix: three type regressions
+
+## 8.13.4
+
+### Patch Changes
+
+- 824ee0f7: fix: safely diff instances
+
+## 8.13.3
+
+### Patch Changes
+
+- ffdb5fc4: revert nested portals, up suspend-react
+
 ## 8.13.2
 
 ### Patch Changes

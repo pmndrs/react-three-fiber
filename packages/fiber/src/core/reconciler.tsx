@@ -1,10 +1,27 @@
 import * as THREE from 'three'
+import * as React from 'react'
 import Reconciler from 'react-reconciler'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
+import {
+  // @ts-ignore
+  NoEventPriority,
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
-import { diffProps, applyProps, invalidateInstance, attach, detach, prepare, globalScope, isObject3D } from './utils'
+import {
+  diffProps,
+  applyProps,
+  invalidateInstance,
+  attach,
+  detach,
+  prepare,
+  isObject3D,
+  findInitialRoot,
+} from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
+import type { ThreeElement } from '../three-types'
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -14,13 +31,20 @@ export interface Root {
 export type AttachFnType<O = any> = (parent: any, self: O) => () => void
 export type AttachType<O = any> = string | AttachFnType<O>
 
-export type ConstructorRepresentation = new (...args: any[]) => any
+export type ConstructorRepresentation<T = any> = new (...args: any[]) => T
 
 export interface Catalogue {
   [name: string]: ConstructorRepresentation
 }
 
-export type Args<T> = T extends ConstructorRepresentation ? ConstructorParameters<T> : any[]
+// TODO: handle constructor overloads
+// https://github.com/pmndrs/react-three-fiber/pull/2931
+// https://github.com/microsoft/TypeScript/issues/37079
+export type Args<T> = T extends ConstructorRepresentation
+  ? T extends typeof THREE.Color
+    ? [r: number, g: number, b: number] | [color: THREE.ColorRepresentation]
+    : ConstructorParameters<T>
+  : any[]
 
 export interface InstanceProps<T = any, P = any> {
   args?: Args<P>
@@ -54,15 +78,31 @@ interface HostConfig {
   suspenseInstance: Instance
   hydratableInstance: never
   publicInstance: Instance['object']
-  hostContext: never
-  updatePayload: null | [true] | [false, Instance['props']]
+  hostContext: {}
+  updatePayload: null | [true] | [false, Instance['props']] // NOTE: removed with React 19
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
 }
 
 export const catalogue: Catalogue = {}
-export const extend = (objects: Partial<Catalogue>): void => void Object.assign(catalogue, objects)
+
+let i = 0
+
+export const extend = <T extends Catalogue | ConstructorRepresentation>(
+  objects: T,
+): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
+  if (typeof objects === 'function') {
+    const Component = `${i++}`
+    catalogue[Component] = objects
+
+    // Returns a component whose name will be inferred in devtools
+    // @ts-ignore
+    return React.forwardRef({ [objects.name]: (props, ref) => <Component {...props} ref={ref} /> }[objects.name])
+  } else {
+    return void Object.assign(catalogue, objects) as any
+  }
+}
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   // Get target from catalogue
@@ -82,37 +122,53 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
   // Create instance
-  const object = props.object ?? new target(...(props.args ?? []))
-  const instance = prepare(object, root, type, props)
-
-  // Auto-attach geometries and materials
-  if (instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
-  }
-
-  // Set initial props
-  applyProps(instance.object, props)
+  const instance = prepare(props.object, root, type, props)
 
   return instance
 }
 
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
-function handleContainerEffects(parent: Instance, child: Instance) {
+function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance) {
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
   if (!parent.parent && parent.object !== state.scene) return
 
-  // Handle interactivity
-  if (child.eventCount > 0 && child.object.raycast !== null && isObject3D(child.object)) {
-    state.internal.interaction.push(child.object)
+  // Create & link object on first run
+  if (!child.object) {
+    // Get target from catalogue
+    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
+    const target = catalogue[name]
+
+    // Create object
+    child.object = child.props.object ?? new target(...(child.props.args ?? []))
+    child.object.__r3f = child
+
+    // Set initial props
+    applyProps(child.object, child.props)
   }
 
-  // Handle attach
-  if (child.props.attach) attach(parent, child)
+  // Append instance
+  if (child.props.attach) {
+    attach(parent, child)
+  } else if (isObject3D(child.object) && isObject3D(parent.object)) {
+    const childIndex = parent.object.children.indexOf(beforeChild?.object)
+    if (beforeChild && childIndex !== -1) {
+      child.object.parent = parent.object
+      parent.object.children.splice(childIndex, 0, child.object)
+      child.object.dispatchEvent({ type: 'added' })
+      parent.object.dispatchEvent({ type: 'childadded', child: child.object })
+    } else {
+      parent.object.add(child.object)
+    }
+  }
+
+  // Link subtree
   for (const childInstance of child.children) handleContainerEffects(child, childInstance)
+
+  // Tree was updated, request a frame
+  invalidateInstance(child)
 }
 
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
@@ -122,44 +178,25 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
   child.parent = parent
   parent.children.push(child)
 
-  // Add Object3Ds if able
-  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object)) {
-    parent.object.add(child.object)
-  }
-
   // Attach tree once complete
   handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
 }
 
 function insertBefore(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
   beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
-  replace: boolean = false,
 ) {
   if (!child || !beforeChild) return
 
   // Link instances
   child.parent = parent
   const childIndex = parent.children.indexOf(beforeChild)
-  if (childIndex !== -1) parent.children.splice(childIndex, replace ? 1 : 0, child)
-  if (replace) beforeChild.parent = null
-
-  // Manually splice Object3Ds
-  if (!child.props.attach && isObject3D(parent.object) && isObject3D(child.object) && isObject3D(beforeChild.object)) {
-    child.object.parent = parent.object
-    parent.object.children.splice(parent.object.children.indexOf(beforeChild.object), replace ? 1 : 0, child.object)
-    child.object.dispatchEvent({ type: 'added' })
-  }
+  if (childIndex !== -1) parent.children.splice(childIndex, 0, child)
+  else parent.children.push(child)
 
   // Attach tree once complete
-  handleContainerEffects(parent, child)
-
-  // Tree was updated, request a frame
-  invalidateInstance(child)
+  handleContainerEffects(parent, child, beforeChild)
 }
 
 function removeChild(
@@ -182,7 +219,7 @@ function removeChild(
     detach(parent, child)
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     parent.object.remove(child.object)
-    removeInteractivity(child.root, child.object)
+    removeInteractivity(findInitialRoot(child), child.object)
   }
 
   // Allow objects to bail out of unmount disposal with dispose={null}
@@ -191,7 +228,7 @@ function removeChild(
   // Recursively remove instance children
   if (recursive !== false) {
     for (const node of child.children) removeChild(child, node, shouldDispose, true)
-    child.children = []
+    child.children.length = 0
   }
 
   // Unlink instance object
@@ -206,18 +243,31 @@ function removeChild(
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
     if (typeof child.object.dispose === 'function') {
       const dispose = child.object.dispose.bind(child.object)
-      scheduleCallback(idlePriority, () => {
+      const handleDispose = () => {
         try {
           dispose()
         } catch (e) {
-          /* ... */
+          // no-op
         }
-      })
+      }
+
+      // In a testing environment, cleanup immediately
+      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
+      // Otherwise, using a real GPU so schedule cleanup to prevent stalls
+      else scheduleCallback(idlePriority, handleDispose)
     }
   }
 
   // Tree was updated, request a frame for top-level instance
   if (dispose === undefined) invalidateInstance(child)
+}
+
+function setFiberInstance(fiber: Reconciler.Fiber | null, instance: HostConfig['instance']): void {
+  if (fiber !== null) {
+    fiber.stateNode = instance
+    if (typeof fiber.ref === 'function') fiber.ref(instance.object)
+    else if (fiber.ref) fiber.ref.current = instance.object
+  }
 }
 
 function switchInstance(
@@ -234,31 +284,32 @@ function switchInstance(
     removeChild(oldInstance, child, false, false)
     appendChild(newInstance, child)
   }
-  oldInstance.children = []
+  oldInstance.children.length = 0
 
   // Link up new instance
   const parent = oldInstance.parent
   if (parent) {
     // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
-    // insertBefore(parent, newInstance, oldInstance, true)
+
+    newInstance.autoRemovedBeforeAppend = !!newInstance.parent
 
     if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
-    if (newInstance.parent) newInstance.autoRemovedBeforeAppend = true
     appendChild(parent, newInstance)
+
+    // if (!oldInstance.autoRemovedBeforeAppend) {
+    //   insertBefore(parent, newInstance, oldInstance)
+    //   removeChild(parent, oldInstance)
+    // } else {
+    //   appendChild(parent, newInstance)
+    // }
   }
 
-  // This evil hack switches the react-internal fiber node
+  // This evil hack switches the react-internal fiber instance
   // https://github.com/facebook/react/issues/14983
-  // https://github.com/facebook/react/pull/15021
-  for (const _fiber of [fiber, fiber.alternate]) {
-    if (_fiber !== null) {
-      _fiber.stateNode = newInstance
-      if (_fiber.ref) {
-        if (typeof _fiber.ref === 'function') _fiber.ref(newInstance.object)
-        else _fiber.ref.current = newInstance.object
-      }
-    }
-  }
+  // TODO: investigate scheduling key prop change instead of switchInstance entirely
+  // https://github.com/facebook/react/pull/15021#issuecomment-480185369
+  setFiberInstance(fiber, newInstance)
+  setFiberInstance(fiber.alternate, newInstance)
 
   // Tree was updated, request a frame
   invalidateInstance(newInstance)
@@ -269,6 +320,37 @@ function switchInstance(
 // Don't handle text instances, warn on undefined behavior
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
+
+const NO_CONTEXT: HostConfig['hostContext'] = {}
+
+let currentUpdatePriority: number = NoEventPriority
+
+// Effectively removed to diff in commit phase
+// https://github.com/facebook/react/pull/27409
+function prepareUpdate(
+  instance: HostConfig['instance'],
+  _type: string,
+  oldProps: HostConfig['props'],
+  newProps: HostConfig['props'],
+): HostConfig['updatePayload'] {
+  // Reconstruct primitives if object prop changes
+  if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
+
+  // Throw if an object or literal was passed for args
+  if (newProps.args !== undefined && !Array.isArray(newProps.args))
+    throw new Error('R3F: The args prop must be an array!')
+
+  // Reconstruct instance if args change
+  if (newProps.args?.length !== oldProps.args?.length) return [true]
+  if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
+
+  // Create a diff-set, flag if there are any changes
+  const changedProps = diffProps(instance, newProps, true)
+  if (Object.keys(changedProps).length) return [false, changedProps]
+
+  // Otherwise do not touch the instance
+  return null
+}
 
 export const reconciler = Reconciler<
   HostConfig['type'],
@@ -285,11 +367,11 @@ export const reconciler = Reconciler<
   HostConfig['timeoutHandle'],
   HostConfig['noTimeout']
 >({
-  supportsMutation: true,
   isPrimaryRenderer: false,
+  warnsIfNotActing: false,
+  supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  noTimeout: -1,
   createInstance,
   removeChild,
   appendChild,
@@ -313,29 +395,20 @@ export const reconciler = Reconciler<
 
     insertBefore(scene, child, beforeChild)
   },
-  getRootHostContext: () => null,
-  getChildHostContext: (parentHostContext) => parentHostContext,
-  prepareUpdate(instance, _type, oldProps, newProps) {
-    // Reconstruct primitives if object prop changes
-    if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
+  getRootHostContext: () => NO_CONTEXT,
+  getChildHostContext: () => NO_CONTEXT,
+  // @ts-ignore prepareUpdate and updatePayload removed with React 19
+  commitUpdate(
+    instance: HostConfig['instance'],
+    type: HostConfig['type'],
+    oldProps: HostConfig['props'],
+    newProps: HostConfig['props'],
+    fiber: any,
+  ) {
+    const diff = prepareUpdate(instance, type, oldProps, newProps)
+    if (diff === null) return
 
-    // Throw if an object or literal was passed for args
-    if (newProps.args !== undefined && !Array.isArray(newProps.args))
-      throw new Error('R3F: The args prop must be an array!')
-
-    // Reconstruct instance if args change
-    if (newProps.args?.length !== oldProps.args?.length) return [true]
-    if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
-
-    // Create a diff-set, flag if there are any changes
-    const changedProps = diffProps(instance, newProps, true)
-    if (Object.keys(changedProps).length) return [false, changedProps]
-
-    // Otherwise do not touch the instance
-    return null
-  },
-  commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
-    const [reconstruct, changedProps] = diff!
+    const [reconstruct, changedProps] = diff
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) return switchInstance(instance, type, newProps, fiber)
@@ -377,28 +450,42 @@ export const reconciler = Reconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
-  // SSR fallbacks
-  now:
-    typeof performance !== 'undefined' && typeof performance.now === 'function'
-      ? performance.now
-      : typeof Date.now === 'function'
-      ? Date.now
-      : () => 0,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
-  // @ts-ignore Deprecated experimental APIs
-  // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
-  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-  beforeActiveInstanceBlur: () => {},
-  afterActiveInstanceBlur: () => {},
-  detachDeletedInstance: () => {},
-  // Gives React a clue as to how import the current interaction is
-  // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-  getCurrentEventPriority() {
-    if (!globalScope) return DefaultEventPriority
+  noTimeout: -1,
+  getInstanceFromNode: () => null,
+  beforeActiveInstanceBlur() {},
+  afterActiveInstanceBlur() {},
+  detachDeletedInstance() {},
+  // @ts-ignore untyped react-experimental options inspired by react-art
+  // TODO: add shell types for these and upstream to DefinitelyTyped
+  // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
+  shouldAttemptEagerTransition() {
+    return false
+  },
+  requestPostPaintCallback() {},
+  maySuspendCommit() {
+    return false
+  },
+  preloadInstance() {
+    return true // true indicates already loaded
+  },
+  startSuspendingCommit() {},
+  suspendInstance() {},
+  waitForCommitToBeReady() {
+    return null
+  },
+  NotPendingTransition: null,
+  setCurrentUpdatePriority(newPriority: number) {
+    currentUpdatePriority = newPriority
+  },
+  getCurrentUpdatePriority() {
+    return currentUpdatePriority
+  },
+  resolveUpdatePriority() {
+    if (currentUpdatePriority !== NoEventPriority) return currentUpdatePriority
 
-    const name = globalScope.event?.type
-    switch (name) {
+    switch (typeof window !== 'undefined' && window.event?.type) {
       case 'click':
       case 'contextmenu':
       case 'dblclick':

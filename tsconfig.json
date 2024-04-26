@@ -10,11 +10,12 @@
     "strict": true,
     "skipLibCheck": true,
     "declaration": true,
-    "removeComments": true,
+    "removeComments": false,
     "emitDeclarationOnly": true,
     "resolveJsonModule": true,
     "noImplicitThis": false,
-    "baseUrl": "./"
+    "baseUrl": "./",
+    "types": ["jest", "node", "offscreencanvas"]
   },
   "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist"]

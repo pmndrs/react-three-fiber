@@ -56,9 +56,9 @@ return <mesh position-x={x} />
 In general you should prefer useFrame. Consider mutating props safe as long as the component is the only entity that mutates. Use deltas instead of fixed values so that your app is refresh-rate independent and runs at the same speed everywhere!
 
 ```jsx
-const ref = useRef()
-useFrame((state, delta) => (ref.current.position.x += delta))
-return <mesh ref={ref} />
+const meshRef = useRef()
+useFrame((state, delta) => (meshRef.current.position.x += delta))
+return <mesh ref={meshRef} />
 ```
 
 Same goes for events, use references.
@@ -71,7 +71,7 @@ If you must use intervals, use references as well, but keep in mind that this is
 
 ```jsx
 useEffect(() => {
-  const interval = setInterval(() => ref.current.position.x += 0.1), 1)
+  const interval = setInterval(() => ref.current.position.x += 0.1, 1)
   return () => clearInterval(interval)
 }, [])
 ```
@@ -84,11 +84,11 @@ The frame loop is where you should place your animations. For instance using ler
 
 ```jsx
 function Signal({ active }) {
-  const ref = useRef()
+  const meshRef = useRef()
   useFrame((state, delta) => {
-    ref.current.position.x = THREE.MathUtils.lerp(ref.current.position.x, active ? 100 : 0, 0.1)
+    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, active ? 100 : 0, 0.1)
   })
-  return <mesh ref={ref} />
+  return <mesh ref={meshRef} />
 ```
 
 ### ✅ Or react-spring

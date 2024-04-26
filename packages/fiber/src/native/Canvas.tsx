@@ -7,7 +7,6 @@ import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge } from '.
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
-import { polyfills } from './polyfills'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
   children: React.ReactNode
@@ -36,10 +35,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       performance,
       raycaster,
       camera,
+      scene,
       onPointerMissed,
       onCreated,
       stages,
-      scene,
       ...props
     },
     forwardedRef,
@@ -68,8 +67,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
-    // Inject and cleanup RN polyfills if able
-    React.useLayoutEffect(() => polyfills(), [])
+    const [antialias, setAntialias] = React.useState<boolean>(true)
 
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height, x, y } = e.nativeEvent.layout
@@ -86,7 +84,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         addEventListener: (() => {}) as any,
         removeEventListener: (() => {}) as any,
         clientHeight: context.drawingBufferHeight,
-        getContext: (() => context) as any,
+        getContext: ((_: any, { antialias = false }) => {
+          setAntialias(antialias)
+          return context
+        }) as any,
       } as HTMLCanvasElement
 
       root.current = createRoot<HTMLCanvasElement>(canvasShim)
@@ -117,8 +118,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind events after creation
-          const handlers = state.events.connect?.(viewRef.current)
-          setBind(handlers)
+          setBind(state.events.handlers)
 
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext
@@ -148,7 +148,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     return (
       <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && <GLView onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+        {width > 0 && (
+          <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
+        )}
       </View>
     )
   },
