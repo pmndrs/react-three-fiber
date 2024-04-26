@@ -534,13 +534,4 @@ export function updateCamera(camera: Camera, size: Size): void {
   }
 }
 
-/**
- * Get a handle to the current global scope in window and worker contexts if able
- * https://github.com/pmndrs/react-three-fiber/pull/2493
- */
-export const globalScope =
-  (typeof global !== 'undefined' && global) ||
-  (typeof self !== 'undefined' && self) ||
-  (typeof window !== 'undefined' && window)
-
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D

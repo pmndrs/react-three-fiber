@@ -16,7 +16,6 @@ import {
   attach,
   detach,
   prepare,
-  globalScope,
   isObject3D,
   findInitialRoot,
 } from './utils'
@@ -483,11 +482,9 @@ export const reconciler = Reconciler<
     return currentUpdatePriority
   },
   resolveUpdatePriority() {
-    if (currentUpdatePriority) return currentUpdatePriority
-    if (!globalScope) return DefaultEventPriority
+    if (currentUpdatePriority !== NoEventPriority) return currentUpdatePriority
 
-    const name = globalScope.event?.type
-    switch (name) {
+    switch (typeof window !== 'undefined' && window.event?.type) {
       case 'click':
       case 'contextmenu':
       case 'dblclick':
