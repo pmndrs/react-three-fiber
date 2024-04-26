@@ -115,7 +115,7 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
             ),
           ),
       ),
-    ).finally(() => (loader as any).dispose?.())
+    )
   }
 }
 

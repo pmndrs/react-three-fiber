@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.2
+
+### Patch Changes
+
+- e0900489: fix(useLoader): don't dispose of memoized loader
+
 ## 8.16.1
 
 ### Patch Changes
