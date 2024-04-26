@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import create from 'zustand'
+import { create } from 'zustand'
 
 import type { Properties, ThreeElement } from '../three-types'
 import {
@@ -207,7 +207,19 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
   const store = prevStore || createStore(invalidate, advance)
   // Create renderer
   const fiber =
-    prevFiber || reconciler.createContainer(store, ConcurrentRoot, null, false, null, '', logRecoverableError, null)
+    prevFiber ||
+    (reconciler as any).createContainer(
+      store, // container
+      ConcurrentRoot, // tag
+      null, // hydration callbacks
+      false, // isStrictMode
+      null, // concurrentUpdatesByDefaultOverride
+      '', // identifierPrefix
+      logRecoverableError, // onUncaughtError
+      logRecoverableError, // onCaughtError
+      logRecoverableError, // onRecoverableError
+      null, // transitionCallbacks
+    )
   // Map it
   if (!prevRoot) _roots.set(canvas, { fiber, store })
 
@@ -361,15 +373,17 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
       }
 
       // Set color space and tonemapping preferences
-      const LinearEncoding = 3000
-      const sRGBEncoding = 3001
-      applyProps(
-        gl as any,
-        {
-          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
-          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
-        } as Partial<Properties<THREE.WebGLRenderer>>,
-      )
+      if (!configured) {
+        const LinearEncoding = 3000
+        const sRGBEncoding = 3001
+        applyProps(
+          gl as any,
+          {
+            outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+            toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+          } as Partial<Properties<THREE.WebGLRenderer>>,
+        )
+      }
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))
@@ -565,9 +579,6 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
     return store
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousRoot, container])
-  React.useEffect(() => {
-    return () => usePortalStore.destroy()
-  }, [usePortalStore])
 
   return (
     <>

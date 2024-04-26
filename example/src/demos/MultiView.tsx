@@ -149,9 +149,9 @@ const App = () => (
 function Scene({ children, controls = true, preset }: any) {
   return (
     <Bounds fit clip observe>
-      <ambientLight intensity={1} />
-      <pointLight position={[20, 30, 10]} />
-      <pointLight position={[-10, -10, -10]} color="blue" />
+      <ambientLight intensity={Math.PI} />
+      <pointLight decay={0} position={[20, 30, 10]} />
+      <pointLight decay={0} position={[-10, -10, -10]} color="blue" />
       <Soda scale={3} position={[-1, -0.75, 1]} />
       <Soda scale={3} position={[1, -0.75, 1]} />
       <Soda scale={3} position={[0, -0.75, 0]} />

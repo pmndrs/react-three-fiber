@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 
 import {
@@ -14,8 +13,10 @@ import {
   ObjectMap,
   useInstanceHandle,
   Instance,
+  extend,
 } from '../src'
 
+extend(THREE as any)
 const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {
@@ -87,24 +88,29 @@ describe('hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad(MockMesh)
-          }),
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    MockMesh.name = 'Scene'
 
+    interface GLTF {
+      scene: THREE.Object3D
+    }
+    class GLTFLoader extends THREE.Loader {
+      load(url: string, onLoad: (gltf: GLTF) => void): void {
+        onLoad({ scene: MockMesh })
+      }
+    }
+
+    let gltf!: GLTF & ObjectMap
     const Component = () => {
-      const model = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
-      return <primitive object={model} />
+      gltf = useLoader(GLTFLoader, '/suzanne.glb')
+      return <primitive object={gltf.scene} />
     }
 
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
   })
 
   it('can handle useLoader hook with an array of strings', async () => {
@@ -139,8 +145,8 @@ describe('hooks', () => {
 
       return (
         <>
-          <primitive object={mockMesh} />
-          <primitive object={mockScene} />
+          <primitive object={mockMesh as THREE.Mesh} />
+          <primitive object={mockScene as THREE.Scene} />
         </>
       )
     }

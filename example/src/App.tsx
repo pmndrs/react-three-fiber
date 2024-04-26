@@ -2,7 +2,8 @@ import * as React from 'react'
 import { useErrorBoundary } from 'use-error-boundary'
 import { Route, useRoute, Redirect } from 'wouter'
 
-import { Global, Loading, Page, DemoPanel, Dot, Error } from './styles'
+import { Loading, Page, DemoPanel, Dot, Error } from './components'
+import './styles.css'
 
 import * as demos from './demos'
 
@@ -20,7 +21,7 @@ function Demo() {
   const { Component } = visibleComponents[compName]
 
   return (
-    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e}</Error>}>
+    <ErrorBoundary key={compName} fallback={(e: any) => <Error>{e.message}</Error>}>
       <Component />
     </ErrorBoundary>
   )
@@ -47,17 +48,14 @@ export default function App() {
   const dev = new URLSearchParams(location.search).get('dev')
 
   return (
-    <>
-      <Global />
-      <Page>
-        <React.Suspense fallback={<Loading />}>
-          <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
-          <Route path="/demo/:name">
-            <Demo />
-          </Route>
-        </React.Suspense>
-        {dev === null && <Dots />}
-      </Page>
-    </>
+    <Page>
+      <React.Suspense fallback={<Loading />}>
+        <Route path="/" children={<Redirect to={`/demo/${DEFAULT_COMPONENT_NAME}`} />} />
+        <Route path="/demo/:name">
+          <Demo />
+        </Route>
+      </React.Suspense>
+      {dev === null && <Dots />}
+    </Page>
   )
 }

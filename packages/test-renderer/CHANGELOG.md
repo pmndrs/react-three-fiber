@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.2.1
+
+### Patch Changes
+
+- 020bb194: fix(RTTR): set initial size for NaN in viewport
+
 ## 8.2.0
 
 ### Minor Changes

@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootStore } from './store'
-import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
+import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
 import { Stages } from './stages'
 import type { Instance } from './reconciler'
 
@@ -35,7 +35,8 @@ export function useThree<T = RootState>(
   selector: (state: RootState) => T = (state) => state as unknown as T,
   equalityFn?: <T>(state: T, newState: T) => boolean,
 ): T {
-  return useStore()(selector, equalityFn)
+  // TODO: fix this type
+  return useStore()(selector, equalityFn as any)
 }
 
 /**
@@ -108,15 +109,17 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
           new Promise<LoaderResult<T>>((res, reject) =>
             loader.load(
               input,
-              (data) => res(data?.scene instanceof THREE.Object3D ? Object.assign(data, buildGraph(data.scene)) : data),
+              (data) => res(isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data),
               onProgress,
               (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
           ),
       ),
-    ).finally(() => (loader as any).dispose?.())
+    )
   }
 }
+
+type GLTFLike = { scene: THREE.Object3D }
 
 /**
  * Synchronously loads and caches assets with a three loader.

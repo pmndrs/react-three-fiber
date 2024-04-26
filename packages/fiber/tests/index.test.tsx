@@ -1,10 +1,11 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as ts from 'typescript'
+import ts from 'typescript'
 import * as path from 'path'
+import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import {
   ReconcilerRoot,
-  createRoot,
+  createRoot as createRootImpl,
   act,
   useFrame,
   useThree,
@@ -14,10 +15,25 @@ import {
   extend,
 } from '../src/index'
 
+extend(THREE as any)
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
+const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
 
-beforeEach(() => (root = createRoot(document.createElement('canvas'))))
-afterEach(async () => act(async () => root.unmount()))
+function createRoot() {
+  const canvas = createCanvas()
+  const root = createRootImpl(canvas)
+  roots.push(root)
+  return root
+}
+
+beforeEach(() => (root = createRoot()))
+
+afterEach(async () => {
+  for (const root of roots) {
+    await act(async () => root.unmount())
+  }
+  roots.length = 0
+})
 
 describe('createRoot', () => {
   it('should return a Zustand store', async () => {
@@ -170,22 +186,34 @@ describe('createRoot', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
-    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
+    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
+    let texture: THREE.Texture & { colorSpace?: string } = null!
+
     let key = 0
-    function Test() {
+    function Test({ colorSpace = false }) {
+      gl = useThree((state) => state.gl)
+      texture = new THREE.Texture()
       return <meshBasicMaterial key={key++} map={texture} />
     }
 
     const LinearEncoding = 3000
     const sRGBEncoding = 3001
 
-    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
-    await act(async () => (gl = root.render(<Test />).getState().gl))
+    await act(async () => createRoot().render(<Test />))
     expect(gl.outputEncoding).toBe(sRGBEncoding)
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
     expect(texture.encoding).toBe(sRGBEncoding)
 
-    await act(async () => root.configure({ linear: true, flat: true }).render(<Test />))
+    // @ts-ignore
+    THREE.WebGLRenderer.prototype.outputColorSpace ??= ''
+    // @ts-ignore
+    THREE.Texture.prototype.colorSpace ??= ''
+
+    await act(async () =>
+      createRoot()
+        .configure({ linear: true, flat: true })
+        .render(<Test />),
+    )
     expect(gl.outputEncoding).toBe(LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
     expect(texture.encoding).toBe(LinearEncoding)
@@ -194,16 +222,26 @@ describe('createRoot', () => {
     const SRGBColorSpace = 'srgb'
     const LinearSRGBColorSpace = 'srgb-linear'
 
-    gl.outputColorSpace ??= ''
-    texture.colorSpace ??= ''
-
-    await act(async () => root.configure({ linear: true }).render(<Test />))
+    await act(async () =>
+      createRoot()
+        .configure({ linear: true })
+        .render(<Test colorSpace />),
+    )
     expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
     expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
 
-    await act(async () => root.configure({ linear: false }).render(<Test />))
+    await act(async () =>
+      createRoot()
+        .configure({ linear: false })
+        .render(<Test colorSpace />),
+    )
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
     expect(texture.colorSpace).toBe(SRGBColorSpace)
+
+    // @ts-ignore
+    delete THREE.WebGLRenderer.prototype.outputColorSpace
+    // @ts-ignore
+    delete THREE.Texture.prototype.colorSpace
   })
 
   it('should respect legacy prop', async () => {

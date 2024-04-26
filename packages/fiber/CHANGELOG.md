@@ -1,5 +1,90 @@
 # @react-three/fiber
 
+## 8.16.2
+
+### Patch Changes
+
+- e0900489: fix(useLoader): don't dispose of memoized loader
+
+## 8.16.1
+
+### Patch Changes
+
+- 503efc2e: fix: prevent invalidate from piling up frames
+
+## 8.16.0
+
+### Minor Changes
+
+- 6b0ea6eb: feat: add childadded event dispatch
+
+## 8.15.19
+
+### Patch Changes
+
+- 74926b94: fix(types): avoid emitting THREE.XRFrame
+
+## 8.15.18
+
+### Patch Changes
+
+- 8c01939a: fix: correctly pass frames in invalidate
+
+## 8.15.17
+
+### Patch Changes
+
+- 16c2ee97: fix(types): support @types/three@0.162.0
+
+## 8.15.16
+
+### Patch Changes
+
+- 71cd8f96: fix: tonemapping config overwrites userland
+- 0bb12fd1: fix(types): remove usage of THREE.Vector
+
+## 8.15.14
+
+### Patch Changes
+
+- 0afc9c12: fix: portal events, update examples
+
+## 8.15.13
+
+### Patch Changes
+
+- 0a399f6d: fix(native): use MSAA for antialias on iOS
+
+## 8.15.12
+
+### Patch Changes
+
+- 496d6f0d: fix: useLoader and XRFrame type fixes
+
+## 8.15.11
+
+### Patch Changes
+
+- 3d9af04d: fix: update import from three examples
+
+## 8.15.10
+
+### Patch Changes
+
+- 49158164: fix: don't recursively dispose primitives
+
+## 8.15.9
+
+### Patch Changes
+
+- 4cbc5530: fix(native): deopt iOS blob URI path
+
+## 8.15.8
+
+### Patch Changes
+
+- 70680832: fix: revert stable sort
+
 ## 8.15.7
 
 ### Patch Changes

@@ -1,11 +1,20 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
-import { catalogue } from './reconciler'
+import { Instance, catalogue } from './reconciler'
 import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
-import type { Dpr, Renderer, RootState, RootStore, Size } from './store'
-import type { ConstructorRepresentation, Instance } from './reconciler'
+import type { Dpr, Renderer, RootStore, Size } from './store'
+
+/**
+ * Returns the instance's initial (outmost) root.
+ */
+export function findInitialRoot<T>(instance: Instance<T>): RootStore {
+  let root = instance.root
+  // TODO: this needs testing https://github.com/pmndrs/react-three-fiber/commit/a4a31ed93c48d1e6dac91329bb5f2ca6a25e5f9c
+  // while (root.getState().previousRoot) root = root.getState().previousRoot!
+  return root
+}
 
 /**
  * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
@@ -29,7 +38,7 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  */
-export const act: Act = (React as any).unstable_act
+export const act: Act = (React as any).act
 
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
@@ -383,7 +392,7 @@ const colorMaps = [
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
-  const rootState = instance?.root.getState()
+  const rootState = instance && findInitialRoot(instance).getState()
   const prevHandlers = instance?.eventCount
 
   for (const prop in props) {

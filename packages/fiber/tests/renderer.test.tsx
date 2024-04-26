@@ -3,6 +3,8 @@ import * as THREE from 'three'
 import { ReconcilerRoot, createRoot, act, extend, ThreeElement } from '../src/index'
 import { suspend } from 'suspend-react'
 
+extend(THREE as any)
+
 class Mock extends THREE.Group {
   static instances: string[]
   constructor(name: string = '') {
@@ -22,20 +24,14 @@ extend({ Mock })
 
 type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
 
-const expectToThrow = async (callback: () => any) => {
-  const error = console.error
-  console.error = jest.fn()
-
-  let thrown = false
+const expectToThrow = async (callback: () => any, message: string) => {
+  let error: Error | undefined
   try {
     await callback()
-  } catch (_) {
-    thrown = true
+  } catch (e) {
+    error = e as Error
   }
-
-  expect(thrown).toBe(true)
-  expect(console.error).toBeCalled()
-  console.error = error
+  expect(error?.message).toBe(message)
 }
 
 describe('renderer', () => {
@@ -254,8 +250,8 @@ describe('renderer', () => {
 
     // Throw on non-array value
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test args={{}} />)),
+      async () => await act(async () => root.render(<Test args={{} as any} />)),
+      'R3F: The args prop must be an array!',
     )
 
     // Set
@@ -314,8 +310,8 @@ describe('renderer', () => {
 
     // Throw on undefined
     await expectToThrow(
-      // @ts-expect-error
-      async () => await act(async () => root.render(<Test object={undefined} />)),
+      async () => await act(async () => root.render(<Test object={undefined as any} />)),
+      "R3F: Primitives without 'object' are invalid!",
     )
 
     // Update
@@ -395,21 +391,21 @@ describe('renderer', () => {
     // Removes events
     expect(internal.interaction.length).toBe(0)
     // Calls dispose on top-level instance
-    expect(dispose).toBeCalled()
+    expect(dispose).toHaveBeenCalled()
     // Also disposes of children
-    expect(childDispose).toBeCalled()
+    expect(childDispose).toHaveBeenCalled()
     // Disposes of attached children
-    expect(attachDispose).toBeCalled()
+    expect(attachDispose).toHaveBeenCalled()
     // Properly detaches attached children
-    expect(attach).toBeCalledTimes(1)
-    expect(detach).toBeCalledTimes(1)
+    expect(attach).toHaveBeenCalledTimes(1)
+    expect(detach).toHaveBeenCalledTimes(1)
     // Respects dispose={null}
-    expect(flagDispose).not.toBeCalled()
+    expect(flagDispose).not.toHaveBeenCalled()
     // Does not dispose of primitives
-    expect(object.dispose).not.toBeCalled()
+    expect(object.dispose).not.toHaveBeenCalled()
     // Only disposes of declarative primitive children
-    expect(objectExternal.dispose).not.toBeCalled()
-    expect(disposeDeclarativePrimitive).toBeCalled()
+    expect(objectExternal.dispose).not.toHaveBeenCalled()
+    expect(disposeDeclarativePrimitive).toHaveBeenCalled()
   })
 
   it('can swap 4 array primitives', async () => {

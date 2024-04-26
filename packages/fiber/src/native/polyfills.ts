@@ -100,12 +100,14 @@ export function polyfills() {
 
         const blob = createFromParts(parts, options)
 
-        if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
-          blob.data._base64 = ''
-          for (const part of parts) {
-            blob.data._base64 += (part as any).data?._base64 ?? part
-          }
+        // Always enable slow but safe path for iOS (previously for Android unauth)
+        // https://github.com/pmndrs/react-three-fiber/issues/3075
+        // if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
+        blob.data._base64 = ''
+        for (const part of parts) {
+          blob.data._base64 += (part as any).data?._base64 ?? part
         }
+        // }
 
         return blob
       }
