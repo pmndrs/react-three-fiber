@@ -8928,13 +8928,6 @@ react-dom@19.0.0-beta-94eed63c49-20240425:
   dependencies:
     scheduler "0.25.0-beta-94eed63c49-20240425"
 
-react-dom@19.0.0-canary-db913d8e17-20240422:
-  version "19.0.0-canary-db913d8e17-20240422"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0-canary-db913d8e17-20240422.tgz#606831aa157749c4f556a7d40645a3fae9245440"
-  integrity sha512-+LmfcPoEv38BcToZ76NWbPgyAqFzZb9ONYVn1F7p6cZmtJerNjmwTBOGZ06h/tugQwg0+dU2igpS3veF5l9E3g==
-  dependencies:
-    scheduler "0.25.0-canary-db913d8e17-20240422"
-
 react-is@19.0.0-beta-94eed63c49-20240425:
   version "19.0.0-beta-94eed63c49-20240425"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.0.0-beta-94eed63c49-20240425.tgz#e636ae331655ced5616a9ce252e827ed1b917eda"
@@ -9068,11 +9061,6 @@ react@19.0.0-beta-94eed63c49-20240425:
   version "19.0.0-beta-94eed63c49-20240425"
   resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-beta-94eed63c49-20240425.tgz#7b30b64c9b3517240d47ac00184ae2d59554bb9b"
   integrity sha512-BPPKh5bZwcpw/Dgfh3A0MoU1GSl2edR2JggCq3QPdghQsrFg1aBuMkul5YB4rpII400RYq9VC5eF5Nm3spx0gA==
-
-react@19.0.0-canary-db913d8e17-20240422:
-  version "19.0.0-canary-db913d8e17-20240422"
-  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-canary-db913d8e17-20240422.tgz#cbf02302e5c082da6c4deefce59525a92972d3ee"
-  integrity sha512-6D1y1MWw586E1LRbKTZWTGUk8ONtdwu1zPN7EGMiJb0XDcXrLDjvA9dCmXWyRfivV6z+PRJh9YpS3DZjpq24Bg==
 
 read-pkg-up@^7.0.1:
   version "7.0.1"
@@ -9462,11 +9450,6 @@ scheduler@0.25.0-beta-94eed63c49-20240425:
   version "0.25.0-beta-94eed63c49-20240425"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-beta-94eed63c49-20240425.tgz#db261000b28fa56d65fff2e9c17eb7bd094a669a"
   integrity sha512-U8hoOV7uut5E8cMvRSMikEBBqLXfv2BpdxUsG45euaOfnqEgFrCdLLh6ydM+YBJ36+28olXMNmK2PFFzeg4UdQ==
-
-scheduler@0.25.0-canary-db913d8e17-20240422:
-  version "0.25.0-canary-db913d8e17-20240422"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-canary-db913d8e17-20240422.tgz#93e0c376902c1faeb461c4777348873945f8d036"
-  integrity sha512-UOxM9t/xYfVfbM4zT4QmAMSBqP9/D9pUGPkrB4F0q3vTkIAGfTEE9qvRpAetAD+3zU0s9Ow30fG57VgvscNZYw==
 
 scheduler@^0.21.0:
   version "0.21.0"
