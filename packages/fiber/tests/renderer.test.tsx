@@ -410,9 +410,13 @@ describe('renderer', () => {
 
   it('can swap 4 array primitives', async () => {
     const a = new THREE.Group()
+    a.name = 'a'
     const b = new THREE.Group()
+    b.name = 'b'
     const c = new THREE.Group()
+    c.name = 'c'
     const d = new THREE.Group()
+    d.name = 'd'
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
       <>
@@ -426,15 +430,15 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test array={array} />))
     const { scene } = store.getState()
 
-    expect(scene.children).toStrictEqual(array)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
     await act(async () => root.render(<Test array={reversedArray} />))
-    expect(scene.children).toStrictEqual(reversedArray)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
     await act(async () => root.render(<Test array={mixedArray} />))
-    expect(scene.children).toStrictEqual(mixedArray)
+    expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
   // TODO: fix this case, also see:
@@ -443,9 +447,13 @@ describe('renderer', () => {
   // https://github.com/pmndrs/react-three-fiber/issues/3143
   it.skip('can swap 4 array primitives via attach', async () => {
     const a = new THREE.Group()
+    a.name = 'a'
     const b = new THREE.Group()
+    b.name = 'b'
     const c = new THREE.Group()
+    c.name = 'c'
     const d = new THREE.Group()
+    d.name = 'c'
     const array = [a, b, c, d]
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
@@ -457,33 +465,20 @@ describe('renderer', () => {
     )
 
     const store = await act(async () => root.render(<Test array={array} />))
-    const state = store.getState()
+    const { scene } = store.getState()
 
-    expect(state.scene.children.length).toBe(0)
-    expect(state.scene.userData.objects[0]).toBe(a)
-    expect(state.scene.userData.objects[1]).toBe(b)
-    expect(state.scene.userData.objects[2]).toBe(c)
-    expect(state.scene.userData.objects[3]).toBe(d)
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [...array.reverse()]
-
     await act(async () => root.render(<Test array={reversedArray} />))
-
-    expect(state.scene.children.length).toBe(0)
-    expect(state.scene.userData.objects[0]).toBe(d)
-    expect(state.scene.userData.objects[1]).toBe(c)
-    expect(state.scene.userData.objects[2]).toBe(b)
-    expect(state.scene.userData.objects[3]).toBe(a)
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
-
     await act(async () => root.render(<Test array={mixedArray} />))
-
-    expect(state.scene.children.length).toBe(0)
-    expect(state.scene.userData.objects[0]).toBe(b)
-    expect(state.scene.userData.objects[1]).toBe(a)
-    expect(state.scene.userData.objects[2]).toBe(d)
-    expect(state.scene.userData.objects[3]).toBe(c)
+    expect(scene.children.length).toBe(0)
+    expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
   it('should gracefully handle text', async () => {
