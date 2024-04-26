@@ -159,6 +159,24 @@ describe('hooks', () => {
     expect(extensions).toBeCalledTimes(1)
   })
 
+  it('can handle useLoader with an existing loader instance', async () => {
+    class Loader extends THREE.Loader {
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
+    }
+
+    const loader = new Loader()
+    let proto!: Loader
+
+    function Test(): null {
+      return useLoader(loader, '', (loader) => (proto = loader))
+    }
+    await act(async () => root.render(<Test />))
+
+    expect(proto).toBe(loader)
+  })
+
   it('can handle useLoader with a loader extension', async () => {
     class Loader extends THREE.Loader {
       load(_url: string, onLoad: (result: null) => void): void {
