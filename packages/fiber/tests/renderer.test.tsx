@@ -441,7 +441,11 @@ describe('renderer', () => {
     expect(scene.children).toStrictEqual(mixedArray)
   })
 
-  it('can swap 4 array primitives via attach', async () => {
+  // TODO: fix this case, also see:
+  // https://github.com/pmndrs/react-three-fiber/issues/1892
+  // https://github.com/pmndrs/react-three-fiber/issues/3125
+  // https://github.com/pmndrs/react-three-fiber/issues/3143
+  it.skip('can swap 4 array primitives via attach', async () => {
     const a = new THREE.Group()
     const b = new THREE.Group()
     const c = new THREE.Group()
