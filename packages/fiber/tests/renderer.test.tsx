@@ -437,6 +437,55 @@ describe('renderer', () => {
     expect(scene.children).toStrictEqual(mixedArray)
   })
 
+  // TODO: fix this case, also see:
+  // https://github.com/pmndrs/react-three-fiber/issues/1892
+  // https://github.com/pmndrs/react-three-fiber/issues/3125
+  // https://github.com/pmndrs/react-three-fiber/issues/3143
+  it.skip('can swap 4 array primitives via attach', async () => {
+    const a = new THREE.Group()
+    const b = new THREE.Group()
+    const c = new THREE.Group()
+    const d = new THREE.Group()
+    const array = [a, b, c, d]
+
+    const Test = ({ array }: { array: THREE.Group[] }) => (
+      <>
+        {array.map((group, i) => (
+          <primitive key={i} attach={`userData-objects-${i}`} object={group} />
+        ))}
+      </>
+    )
+
+    const store = await act(async () => root.render(<Test array={array} />))
+    const state = store.getState()
+
+    expect(state.scene.children.length).toBe(0)
+    expect(state.scene.userData.objects[0]).toBe(a)
+    expect(state.scene.userData.objects[1]).toBe(b)
+    expect(state.scene.userData.objects[2]).toBe(c)
+    expect(state.scene.userData.objects[3]).toBe(d)
+
+    const reversedArray = [...array.reverse()]
+
+    await act(async () => root.render(<Test array={reversedArray} />))
+
+    expect(state.scene.children.length).toBe(0)
+    expect(state.scene.userData.objects[0]).toBe(d)
+    expect(state.scene.userData.objects[1]).toBe(c)
+    expect(state.scene.userData.objects[2]).toBe(b)
+    expect(state.scene.userData.objects[3]).toBe(a)
+
+    const mixedArray = [b, a, d, c]
+
+    await act(async () => root.render(<Test array={mixedArray} />))
+
+    expect(state.scene.children.length).toBe(0)
+    expect(state.scene.userData.objects[0]).toBe(b)
+    expect(state.scene.userData.objects[1]).toBe(a)
+    expect(state.scene.userData.objects[2]).toBe(d)
+    expect(state.scene.userData.objects[3]).toBe(c)
+  })
+
   it('should gracefully handle text', async () => {
     const warn = console.warn
     console.warn = jest.fn()
