@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
 import { extend } from '@react-three/fiber'
-import 'regenerator-runtime/runtime'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
@@ -11,19 +10,6 @@ declare global {
 // Let React know that we'll be testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
 global.IS_REACT_NATIVE_TEST_ENVIRONMENT = true // hide react-test-renderer warnings
-
-// ESLint is broken atm -- TypeError: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received 'http://localhost/eslintrc.cjs'
-jest.mock('eslint', () => ({
-  RuleTester: class {
-    run() {
-      it.skip('RuleTester.run', () => {})
-    }
-    static only() {
-      it.skip('RuleTester.only', () => {})
-      return {}
-    }
-  },
-}))
 
 // PointerEvent is not in JSDOM
 // https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178

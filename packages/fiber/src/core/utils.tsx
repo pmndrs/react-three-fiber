@@ -313,7 +313,7 @@ export const RESERVED_PROPS = [
   'dispose',
 ]
 
-export const DEFAULTS = new Map()
+const MEMOIZED_PROTOTYPES = new Map()
 
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(
@@ -353,10 +353,10 @@ export function diffProps<T = any>(
       // For removed props, try to set default values, if possible
       if (root.constructor && root.constructor.length === 0) {
         // create a blank slate of the instance and copy the particular parameter.
-        let ctor = DEFAULTS.get(root.constructor)
+        let ctor = MEMOIZED_PROTOTYPES.get(root.constructor)
         if (!ctor) {
           ctor = new root.constructor()
-          DEFAULTS.set(root.constructor, ctor)
+          MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
         }
         changedProps[key] = ctor[key]
       } else {
@@ -389,6 +389,8 @@ const colorMaps = [
   'envMap',
 ]
 
+const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
+
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
@@ -402,13 +404,14 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (RESERVED_PROPS.includes(prop)) continue
 
     // Deal with pointer events, including removing them if undefined
-    if (instance && /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/.test(prop)) {
+    if (instance && EVENT_REGEX.test(prop)) {
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
     }
 
     // Ignore setting undefined props
+    // https://github.com/pmndrs/react-three-fiber/issues/274
     if (value === undefined) continue
 
     let { root, key, target } = resolve(object, prop)
@@ -447,17 +450,15 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (target.fromArray) target.fromArray(value)
       else target.set(...value)
     }
-    // Set literal types, ignore undefined
-    // https://github.com/pmndrs/react-three-fiber/issues/274
+    // Set literal types
     else if (target?.set && typeof value !== 'object') {
       const isColor = target instanceof THREE.Color
       // Allow setting array scalars
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
-      // Otherwise just set ...
-      else if (value !== undefined) target.set(value) // TODO: unreachable
+      // Otherwise just set single value
+      else target.set(value)
 
-      // For versions of three which don't support THREE.ColorManagement,
-      // Auto-convert sRGB colors
+      // Emulate THREE.ColorManagement for older three.js versions
       // https://github.com/pmndrs/react-three-fiber/issues/344
       if (!getColorManagement() && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
@@ -484,6 +485,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
   }
 
+  // Register event handlers
   if (
     instance?.parent &&
     rootState?.internal &&
@@ -505,6 +507,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
   }
 
+  // Instance was updated, request a frame
   if (instance) invalidateInstance(instance)
 
   return object
