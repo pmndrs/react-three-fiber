@@ -372,6 +372,23 @@ export function diffProps<T = any>(
 type ClassConstructor = { new (): void }
 const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
 
+// const LinearEncoding = 3000
+const sRGBEncoding = 3001
+const SRGBColorSpace = 'srgb'
+const LinearSRGBColorSpace = 'srgb-linear'
+
+// https://github.com/mrdoob/three.js/pull/27042
+// https://github.com/mrdoob/three.js/pull/22748
+const colorMaps = [
+  'map',
+  'emissiveMap',
+  'sheenTintMap', // <r134
+  'sheenColorMap',
+  'specularTintMap', // <r134
+  'specularColorMap',
+  'envMap',
+]
+
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
@@ -399,10 +416,6 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Alias (output)encoding => (output)colorSpace (since r152)
     // https://github.com/pmndrs/react-three-fiber/pull/2829
     if (hasColorSpace(root)) {
-      const sRGBEncoding = 3001
-      const SRGBColorSpace = 'srgb'
-      const LinearSRGBColorSpace = 'srgb-linear'
-
       if (key === 'encoding') {
         key = 'colorSpace'
         value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
@@ -441,7 +454,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // Allow setting array scalars
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set ...
-      else if (value !== undefined) target.set(value)
+      else if (value !== undefined) target.set(value) // TODO: unreachable
 
       // For versions of three which don't support THREE.ColorManagement,
       // Auto-convert sRGB colors
@@ -452,18 +465,21 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else {
       root[key] = value
 
-      // Auto-convert sRGB textures, for now ...
+      // Auto-convert sRGB texture parameters for built-in materials
       // https://github.com/pmndrs/react-three-fiber/issues/344
+      // https://github.com/mrdoob/three.js/pull/25857
       if (
         rootState &&
+        !rootState.linear &&
+        colorMaps.includes(key) &&
         root[key] instanceof THREE.Texture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
       ) {
-        const texture = root[key] as THREE.Texture
-        if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
-        else texture.encoding = rootState.gl.outputEncoding
+        // NOTE: this cannot be set from the renderer (e.g. sRGB source textures rendered to P3)
+        if (hasColorSpace(root[key])) root[key].colorSpace = 'srgb'
+        else root[key].encoding = sRGBEncoding
       }
     }
   }
