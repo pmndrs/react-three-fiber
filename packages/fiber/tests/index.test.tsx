@@ -190,7 +190,7 @@ describe('createRoot', () => {
     let texture: THREE.Texture & { colorSpace?: string } = null!
 
     let key = 0
-    function Test({ colorSpace = false }) {
+    function Test() {
       gl = useThree((state) => state.gl)
       texture = new THREE.Texture()
       return <meshBasicMaterial key={key++} map={texture} />
@@ -221,19 +221,20 @@ describe('createRoot', () => {
     // Sets outputColorSpace since r152
     const SRGBColorSpace = 'srgb'
     const LinearSRGBColorSpace = 'srgb-linear'
+    const NoColorSpace = ''
 
     await act(async () =>
       createRoot()
         .configure({ linear: true })
-        .render(<Test colorSpace />),
+        .render(<Test />),
     )
     expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
-    expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
+    expect(texture.colorSpace).toBe(NoColorSpace)
 
     await act(async () =>
       createRoot()
         .configure({ linear: false })
-        .render(<Test colorSpace />),
+        .render(<Test />),
     )
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
     expect(texture.colorSpace).toBe(SRGBColorSpace)
