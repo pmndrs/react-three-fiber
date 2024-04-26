@@ -79,7 +79,7 @@ interface HostConfig {
   hydratableInstance: never
   publicInstance: Instance['object']
   hostContext: {}
-  updatePayload: null | [true] | [false, Instance['props']]
+  updatePayload: null | [true] | [false, Instance['props']] // NOTE: removed with React 19
   childSet: never
   timeoutHandle: number | undefined
   noTimeout: -1
@@ -228,7 +228,7 @@ function removeChild(
   // Recursively remove instance children
   if (recursive !== false) {
     for (const node of child.children) removeChild(child, node, shouldDispose, true)
-    child.children = []
+    child.children.length = 0
   }
 
   // Unlink instance object
@@ -262,6 +262,14 @@ function removeChild(
   if (dispose === undefined) invalidateInstance(child)
 }
 
+function setFiberInstance(fiber: Reconciler.Fiber | null, instance: HostConfig['instance']): void {
+  if (fiber !== null) {
+    fiber.stateNode = instance
+    if (typeof fiber.ref === 'function') fiber.ref(instance.object)
+    else if (fiber.ref) fiber.ref.current = instance.object
+  }
+}
+
 function switchInstance(
   oldInstance: HostConfig['instance'],
   type: HostConfig['type'],
@@ -276,7 +284,7 @@ function switchInstance(
     removeChild(oldInstance, child, false, false)
     appendChild(newInstance, child)
   }
-  oldInstance.children = []
+  oldInstance.children.length = 0
 
   // Link up new instance
   const parent = oldInstance.parent
@@ -296,18 +304,12 @@ function switchInstance(
     // }
   }
 
-  // This evil hack switches the react-internal fiber node
+  // This evil hack switches the react-internal fiber instance
   // https://github.com/facebook/react/issues/14983
-  // https://github.com/facebook/react/pull/15021
-  for (const _fiber of [fiber, fiber.alternate]) {
-    if (_fiber !== null) {
-      _fiber.stateNode = newInstance
-      if (_fiber.ref) {
-        if (typeof _fiber.ref === 'function') _fiber.ref(newInstance.object)
-        else _fiber.ref.current = newInstance.object
-      }
-    }
-  }
+  // TODO: investigate scheduling key prop change instead of switchInstance entirely
+  // https://github.com/facebook/react/pull/15021#issuecomment-480185369
+  setFiberInstance(fiber, newInstance)
+  setFiberInstance(fiber.alternate, newInstance)
 
   // Tree was updated, request a frame
   invalidateInstance(newInstance)
@@ -448,7 +450,6 @@ export const reconciler = Reconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
-  // SSR fallbacks
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   noTimeout: -1,
