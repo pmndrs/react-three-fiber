@@ -470,7 +470,7 @@ describe('renderer', () => {
     expect(scene.children.length).toBe(0)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(array.map((o) => o.name))
 
-    const reversedArray = [...array.reverse()]
+    const reversedArray = [d, c, b, a]
     await act(async () => root.render(<Test array={reversedArray} />))
     expect(scene.children.length).toBe(0)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
