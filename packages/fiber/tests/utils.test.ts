@@ -134,21 +134,21 @@ describe('dispose', () => {
     mesh.geometry.dispose = jest.fn()
 
     dispose(mesh)
-    expect(mesh.dispose).toBeCalled()
-    expect(mesh.material.dispose).toBeCalled()
-    expect(mesh.geometry.dispose).toBeCalled()
+    expect(mesh.dispose).toHaveBeenCalled()
+    expect(mesh.material.dispose).toHaveBeenCalled()
+    expect(mesh.geometry.dispose).toHaveBeenCalled()
   })
 
   it('should not dispose of a THREE.Scene', () => {
     const scene = Object.assign(new THREE.Scene(), { dispose: jest.fn() })
 
     dispose(scene)
-    expect(scene.dispose).not.toBeCalled()
+    expect(scene.dispose).not.toHaveBeenCalled()
 
     const disposable = { dispose: jest.fn(), scene }
     dispose(disposable)
-    expect(disposable.dispose).toBeCalled()
-    expect(disposable.scene.dispose).not.toBeCalled()
+    expect(disposable.dispose).toHaveBeenCalled()
+    expect(disposable.scene.dispose).not.toHaveBeenCalled()
   })
 })
 
@@ -163,8 +163,8 @@ describe('getInstanceProps', () => {
     )
 
     expect(filtered).toStrictEqual(props)
-    expect(get).not.toBeCalled()
-    expect(set).not.toBeCalled()
+    expect(get).not.toHaveBeenCalled()
+    expect(set).not.toHaveBeenCalled()
   })
 })
 
@@ -304,8 +304,8 @@ describe('diffProps', () => {
     )
 
     expect(filtered).toStrictEqual(props)
-    expect(get).not.toBeCalled()
-    expect(set).not.toBeCalled()
+    expect(get).not.toHaveBeenCalled()
+    expect(set).not.toHaveBeenCalled()
   })
 })
 
@@ -327,8 +327,8 @@ describe('applyProps', () => {
     )
 
     expect(target).toStrictEqual(props)
-    expect(get).not.toBeCalled()
-    expect(set).not.toBeCalled()
+    expect(get).not.toHaveBeenCalled()
+    expect(set).not.toHaveBeenCalled()
   })
 
   it('should overwrite non-atomic properties', () => {
@@ -409,21 +409,15 @@ describe('updateCamera', () => {
 
     const perspective = new THREE.PerspectiveCamera()
     perspective.updateProjectionMatrix = jest.fn()
-    perspective.updateMatrixWorld = jest.fn()
     updateCamera(perspective, size)
-    expect(perspective.updateProjectionMatrix).toBeCalled()
-    expect(perspective.updateMatrixWorld).toBeCalled()
+    expect(perspective.updateProjectionMatrix).toHaveBeenCalled()
     expect(perspective.projectionMatrix.toArray()).toMatchSnapshot()
-    expect(perspective.matrixWorld.toArray()).toMatchSnapshot()
 
     const orthographic = new THREE.OrthographicCamera()
     orthographic.updateProjectionMatrix = jest.fn()
-    orthographic.updateMatrixWorld = jest.fn()
     updateCamera(orthographic, size)
-    expect(orthographic.updateProjectionMatrix).toBeCalled()
-    expect(orthographic.updateMatrixWorld).toBeCalled()
+    expect(orthographic.updateProjectionMatrix).toHaveBeenCalled()
     expect(orthographic.projectionMatrix.toArray()).toMatchSnapshot()
-    expect(orthographic.matrixWorld.toArray()).toMatchSnapshot()
   })
 
   it('respects camera.manual', () => {
@@ -431,16 +425,12 @@ describe('updateCamera', () => {
 
     const perspective = Object.assign(new THREE.PerspectiveCamera(), { manual: true })
     perspective.updateProjectionMatrix = jest.fn()
-    perspective.updateMatrixWorld = jest.fn()
     updateCamera(perspective, size)
-    expect(perspective.updateProjectionMatrix).not.toBeCalled()
-    expect(perspective.updateMatrixWorld).not.toBeCalled()
+    expect(perspective.updateProjectionMatrix).not.toHaveBeenCalled()
 
     const orthographic = Object.assign(new THREE.OrthographicCamera(), { manual: true })
     orthographic.updateProjectionMatrix = jest.fn()
-    orthographic.updateMatrixWorld = jest.fn()
     updateCamera(orthographic, size)
-    expect(orthographic.updateProjectionMatrix).not.toBeCalled()
-    expect(orthographic.updateMatrixWorld).not.toBeCalled()
+    expect(orthographic.updateProjectionMatrix).not.toHaveBeenCalled()
   })
 })

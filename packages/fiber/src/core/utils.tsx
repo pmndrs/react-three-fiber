@@ -519,22 +519,20 @@ export function invalidateInstance(instance: Instance): void {
 }
 
 export function updateCamera(camera: Camera, size: Size): void {
-  // https://github.com/pmndrs/react-three-fiber/issues/92
   // Do not mess with the camera if it belongs to the user
-  if (!camera.manual) {
-    if (isOrthographicCamera(camera)) {
-      camera.left = size.width / -2
-      camera.right = size.width / 2
-      camera.top = size.height / 2
-      camera.bottom = size.height / -2
-    } else {
-      camera.aspect = size.width / size.height
-    }
-    camera.updateProjectionMatrix()
-    // https://github.com/pmndrs/react-three-fiber/issues/178
-    // Update matrix world since the renderer is a frame late
-    camera.updateMatrixWorld()
+  // https://github.com/pmndrs/react-three-fiber/issues/92
+  if (camera.manual) return
+
+  if (isOrthographicCamera(camera)) {
+    camera.left = size.width / -2
+    camera.right = size.width / 2
+    camera.top = size.height / 2
+    camera.bottom = size.height / -2
+  } else {
+    camera.aspect = size.width / size.height
   }
+
+  camera.updateProjectionMatrix()
 }
 
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
