@@ -1,7 +1,13 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
+import {
+  // @ts-ignore
+  NoEventPriority,
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from 'react-reconciler/constants'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   diffProps,
@@ -73,7 +79,7 @@ interface HostConfig {
   suspenseInstance: Instance
   hydratableInstance: never
   publicInstance: Instance['object']
-  hostContext: never
+  hostContext: {}
   updatePayload: null | [true] | [false, Instance['props']]
   childSet: never
   timeoutHandle: number | undefined
@@ -238,13 +244,18 @@ function removeChild(
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
     if (typeof child.object.dispose === 'function') {
       const dispose = child.object.dispose.bind(child.object)
-      scheduleCallback(idlePriority, () => {
+      const handleDispose = () => {
         try {
           dispose()
         } catch (e) {
-          /* ... */
+          // no-op
         }
-      })
+      }
+
+      // In a testing environment, cleanup immediately
+      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
+      // Otherwise, using a real GPU so schedule cleanup to prevent stalls
+      else scheduleCallback(idlePriority, handleDispose)
     }
   }
 
@@ -309,6 +320,37 @@ function switchInstance(
 const handleTextInstance = () =>
   console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
 
+const NO_CONTEXT: HostConfig['hostContext'] = {}
+
+let currentUpdatePriority: number = NoEventPriority
+
+// Effectively removed to diff in commit phase
+// https://github.com/facebook/react/pull/27409
+function prepareUpdate(
+  instance: HostConfig['instance'],
+  _type: string,
+  oldProps: HostConfig['props'],
+  newProps: HostConfig['props'],
+): HostConfig['updatePayload'] {
+  // Reconstruct primitives if object prop changes
+  if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
+
+  // Throw if an object or literal was passed for args
+  if (newProps.args !== undefined && !Array.isArray(newProps.args))
+    throw new Error('R3F: The args prop must be an array!')
+
+  // Reconstruct instance if args change
+  if (newProps.args?.length !== oldProps.args?.length) return [true]
+  if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
+
+  // Create a diff-set, flag if there are any changes
+  const changedProps = diffProps(instance, newProps, true)
+  if (Object.keys(changedProps).length) return [false, changedProps]
+
+  // Otherwise do not touch the instance
+  return null
+}
+
 export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -324,11 +366,11 @@ export const reconciler = Reconciler<
   HostConfig['timeoutHandle'],
   HostConfig['noTimeout']
 >({
-  supportsMutation: true,
   isPrimaryRenderer: false,
+  warnsIfNotActing: false,
+  supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  noTimeout: -1,
   createInstance,
   removeChild,
   appendChild,
@@ -352,29 +394,20 @@ export const reconciler = Reconciler<
 
     insertBefore(scene, child, beforeChild)
   },
-  getRootHostContext: () => null,
-  getChildHostContext: (parentHostContext) => parentHostContext,
-  prepareUpdate(instance, _type, oldProps, newProps) {
-    // Reconstruct primitives if object prop changes
-    if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
+  getRootHostContext: () => NO_CONTEXT,
+  getChildHostContext: () => NO_CONTEXT,
+  // @ts-ignore prepareUpdate and updatePayload removed with React 19
+  commitUpdate(
+    instance: HostConfig['instance'],
+    type: HostConfig['type'],
+    oldProps: HostConfig['props'],
+    newProps: HostConfig['props'],
+    fiber: any,
+  ) {
+    const diff = prepareUpdate(instance, type, oldProps, newProps)
+    if (diff === null) return
 
-    // Throw if an object or literal was passed for args
-    if (newProps.args !== undefined && !Array.isArray(newProps.args))
-      throw new Error('R3F: The args prop must be an array!')
-
-    // Reconstruct instance if args change
-    if (newProps.args?.length !== oldProps.args?.length) return [true]
-    if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
-
-    // Create a diff-set, flag if there are any changes
-    const changedProps = diffProps(instance, newProps, true)
-    if (Object.keys(changedProps).length) return [false, changedProps]
-
-    // Otherwise do not touch the instance
-    return null
-  },
-  commitUpdate(instance, diff, type, _oldProps, newProps, fiber) {
-    const [reconstruct, changedProps] = diff!
+    const [reconstruct, changedProps] = diff
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) return switchInstance(instance, type, newProps, fiber)
@@ -417,23 +450,40 @@ export const reconciler = Reconciler<
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
   // SSR fallbacks
-  now:
-    typeof performance !== 'undefined' && typeof performance.now === 'function'
-      ? performance.now
-      : typeof Date.now === 'function'
-      ? Date.now
-      : () => 0,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
-  // @ts-ignore Deprecated experimental APIs
-  // https://github.com/facebook/react/blob/main/packages/shared/ReactFeatureFlags.js
-  // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-  beforeActiveInstanceBlur: () => {},
-  afterActiveInstanceBlur: () => {},
-  detachDeletedInstance: () => {},
-  // Gives React a clue as to how import the current interaction is
-  // https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-  getCurrentEventPriority() {
+  noTimeout: -1,
+  getInstanceFromNode: () => null,
+  beforeActiveInstanceBlur() {},
+  afterActiveInstanceBlur() {},
+  detachDeletedInstance() {},
+  // @ts-ignore untyped react-experimental options inspired by react-art
+  // TODO: add shell types for these and upstream to DefinitelyTyped
+  // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
+  shouldAttemptEagerTransition() {
+    return false
+  },
+  requestPostPaintCallback() {},
+  maySuspendCommit() {
+    return false
+  },
+  preloadInstance() {
+    return true // true indicates already loaded
+  },
+  startSuspendingCommit() {},
+  suspendInstance() {},
+  waitForCommitToBeReady() {
+    return null
+  },
+  NotPendingTransition: null,
+  setCurrentUpdatePriority(newPriority: number) {
+    currentUpdatePriority = newPriority
+  },
+  getCurrentUpdatePriority() {
+    return currentUpdatePriority
+  },
+  resolveUpdatePriority() {
+    if (currentUpdatePriority) return currentUpdatePriority
     if (!globalScope) return DefaultEventPriority
 
     const name = globalScope.event?.type

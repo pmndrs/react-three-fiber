@@ -5,16 +5,12 @@ import 'regenerator-runtime/runtime'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
+  var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
 }
 
 // Let React know that we'll be testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
-
-// Mock scheduler to test React features
-jest.mock('scheduler', () => ({
-  ...jest.requireActual('scheduler/unstable_mock'),
-  unstable_scheduleCallback: (_: any, callback: () => void) => callback(),
-}))
+global.IS_REACT_NATIVE_TEST_ENVIRONMENT = true // hide react-test-renderer warnings
 
 // ESLint is broken atm -- TypeError: The argument 'filename' must be a file URL object, file URL string, or absolute path string. Received 'http://localhost/eslintrc.cjs'
 jest.mock('eslint', () => ({
