@@ -39,6 +39,8 @@ describe('ReactThreeTestRenderer Events', () => {
   it('should not throw if the handle name is incorrect', async () => {
     const handlePointerDown = jest.fn()
 
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(jest.fn())
+
     const Component = () => {
       return (
         <mesh onPointerDown={handlePointerDown}>
@@ -50,13 +52,13 @@ describe('ReactThreeTestRenderer Events', () => {
 
     const { scene, fireEvent } = await ReactThreeTestRenderer.create(<Component />)
 
-    const warn = console.warn.bind(console)
-    console.warn = jest.fn()
-
     expect(async () => await fireEvent(scene.children[0], 'onPointerUp')).not.toThrow()
-    expect(console.warn).toBeCalled()
+
     expect(handlePointerDown).not.toHaveBeenCalled()
 
-    console.warn = warn
+    expect(consoleWarnSpy).toHaveBeenCalledTimes(1)
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Handler for onPointerUp was not found. You must pass event names in camelCase or name of the handler https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/rttr.md#create-fireevent',
+    )
   })
 })
