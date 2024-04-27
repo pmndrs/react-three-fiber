@@ -36,19 +36,17 @@ import {
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
 
-// TODO: fix type resolve
-declare var OffscreenCanvas: any
-type OffscreenCanvas = any
+// Shim for OffscreenCanvas since it was removed from DOM types
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
+interface OffscreenCanvas extends EventTarget {}
 
-type Canvas = HTMLCanvasElement | OffscreenCanvas
-
-export const _roots = new Map<Canvas, Root>()
+export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 export type GLProps =
   | Renderer
-  | ((canvas: Canvas) => Renderer)
+  | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
 export type CameraProps = (
@@ -63,7 +61,7 @@ export type CameraProps = (
   manual?: boolean
 }
 
-export interface RenderProps<TCanvas extends Canvas> {
+export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -114,7 +112,7 @@ export interface RenderProps<TCanvas extends Canvas> {
   render?: 'auto' | 'manual'
 }
 
-const createRendererInstance = <TCanvas extends Canvas>(
+const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   gl: GLProps | undefined,
   canvas: TCanvas,
 ): THREE.WebGLRenderer => {
@@ -163,13 +161,13 @@ const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   Stages.Render.add(renderCallback, store)
 }
 
-export interface ReconcilerRoot<TCanvas extends Canvas> {
+export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
 
-function computeInitialSize(canvas: Canvas, size?: Size): Size {
+function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
   if (!size && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
     return { width, height, top, left }
@@ -185,7 +183,9 @@ function computeInitialSize(canvas: Canvas, size?: Size): Size {
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
-export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
+  canvas: TCanvas,
+): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = _roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -437,7 +437,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
   }
 }
 
-export function render<TCanvas extends Canvas>(
+export function render<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
@@ -448,14 +448,14 @@ export function render<TCanvas extends Canvas>(
   return root.render(children)
 }
 
-interface ProviderProps<TCanvas extends Canvas> {
+interface ProviderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   onCreated?: (state: RootState) => void
   store: RootStore
   children: React.ReactNode
   rootElement: TCanvas
 }
 
-function Provider<TCanvas extends Canvas>({
+function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   store,
   children,
   onCreated,
@@ -475,7 +475,7 @@ function Provider<TCanvas extends Canvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-export function unmountComponentAtNode<TCanvas extends Canvas>(
+export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
   callback?: (canvas: TCanvas) => void,
 ): void {
