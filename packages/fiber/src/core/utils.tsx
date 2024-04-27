@@ -11,8 +11,7 @@ import type { Dpr, Renderer, RootStore, Size } from './store'
  */
 export function findInitialRoot<T>(instance: Instance<T>): RootStore {
   let root = instance.root
-  // TODO: this needs testing https://github.com/pmndrs/react-three-fiber/commit/a4a31ed93c48d1e6dac91329bb5f2ca6a25e5f9c
-  // while (root.getState().previousRoot) root = root.getState().previousRoot!
+  while (root.getState().previousRoot) root = root.getState().previousRoot!
   return root
 }
 
