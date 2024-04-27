@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { Instance, RootStore } from '../src'
+import { createWithEqualityFn } from 'zustand/traditional'
+import { type RootStore, type Instance } from '../src'
 import {
   is,
   dispose,
@@ -16,11 +17,7 @@ import {
 } from '../src/core/utils'
 
 // Mocks a Zustand store
-const storeMock = Object.assign(() => null!, {
-  getState: () => null!,
-  setState() {},
-  subscribe: () => () => {},
-}) as unknown as RootStore
+const storeMock = createWithEqualityFn(() => null!) satisfies RootStore
 
 describe('is', () => {
   const myFunc = () => null

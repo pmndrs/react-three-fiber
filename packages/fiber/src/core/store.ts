@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { create, type StoreApi, type UseBoundStore } from 'zustand'
+import { type StoreApi } from 'zustand'
+import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'
@@ -154,7 +155,7 @@ export interface RootState {
   internal: InternalState
 }
 
-export type RootStore = UseBoundStore<StoreApi<RootState>>
+export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
 
 export const context = React.createContext<RootStore>(null!)
 
@@ -162,7 +163,7 @@ export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
-  const rootStore = create<RootState>((set, get) => {
+  const rootStore = createWithEqualityFn<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()
     const tempTarget = new THREE.Vector3()

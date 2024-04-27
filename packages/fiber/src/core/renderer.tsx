@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import { create } from 'zustand'
+import { createWithEqualityFn } from 'zustand/traditional'
 
 import type { Properties, ThreeElement } from '../three-types'
 import {
@@ -569,7 +569,7 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   })
 
   const usePortalStore = React.useMemo(() => {
-    const store = create<RootState>((set, get) => ({ ...rest, set, get } as RootState))
+    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 
     // Subscribe to previous root-state and copy changes over to the mirrored portal-state
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
