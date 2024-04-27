@@ -283,13 +283,13 @@ describe('diffProps', () => {
     const instance = prepare(new THREE.Object3D(), storeMock, '', { position: [0, 0, 1] })
     const newProps = {}
 
-    const filtered = diffProps(instance, newProps, true)
+    const filtered = diffProps(instance, newProps)
     expect(filtered).toStrictEqual({ position: new THREE.Object3D().position })
   })
 
   it('should reset removed props for HMR', () => {
     const instance = prepare(new THREE.Object3D(), storeMock, '', { scale: 10 })
-    const filtered = diffProps(instance, {}, true)
+    const filtered = diffProps(instance, {})
     expect((filtered.scale as THREE.Vector3).toArray()).toStrictEqual([1, 1, 1])
   })
 
