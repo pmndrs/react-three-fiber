@@ -11,8 +11,7 @@ import type { Dpr, Renderer, RootStore, Size } from './store'
  */
 export function findInitialRoot<T>(instance: Instance<T>): RootStore {
   let root = instance.root
-  // TODO: this needs testing https://github.com/pmndrs/react-three-fiber/commit/a4a31ed93c48d1e6dac91329bb5f2ca6a25e5f9c
-  // while (root.getState().previousRoot) root = root.getState().previousRoot!
+  while (root.getState().previousRoot) root = root.getState().previousRoot!
   return root
 }
 
@@ -316,11 +315,7 @@ export const RESERVED_PROPS = [
 const MEMOIZED_PROTOTYPES = new Map()
 
 // This function prepares a set of changes to be applied to the instance
-export function diffProps<T = any>(
-  instance: Instance<T>,
-  newProps: Instance<T>['props'],
-  resetRemoved = false,
-): Instance<T>['props'] {
+export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>['props']): Instance<T>['props'] {
   const changedProps: Instance<T>['props'] = {}
 
   // Sort through props
@@ -340,29 +335,27 @@ export function diffProps<T = any>(
   }
 
   // Reset removed props for HMR
-  if (resetRemoved) {
-    for (const prop in instance.props) {
-      if (RESERVED_PROPS.includes(prop) || newProps.hasOwnProperty(prop)) continue
+  for (const prop in instance.props) {
+    if (RESERVED_PROPS.includes(prop) || newProps.hasOwnProperty(prop)) continue
 
-      const { root, key } = resolve(instance.object, prop)
+    const { root, key } = resolve(instance.object, prop)
 
-      // https://github.com/mrdoob/three.js/issues/21209
-      // HMR/fast-refresh relies on the ability to cancel out props, but threejs
-      // has no means to do this. Hence we curate a small collection of value-classes
-      // with their respective constructor/set arguments
-      // For removed props, try to set default values, if possible
-      if (root.constructor && root.constructor.length === 0) {
-        // create a blank slate of the instance and copy the particular parameter.
-        let ctor = MEMOIZED_PROTOTYPES.get(root.constructor)
-        if (!ctor) {
-          ctor = new root.constructor()
-          MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
-        }
-        changedProps[key] = ctor[key]
-      } else {
-        // instance does not have constructor, just set it to 0
-        changedProps[key] = 0
+    // https://github.com/mrdoob/three.js/issues/21209
+    // HMR/fast-refresh relies on the ability to cancel out props, but threejs
+    // has no means to do this. Hence we curate a small collection of value-classes
+    // with their respective constructor/set arguments
+    // For removed props, try to set default values, if possible
+    if (root.constructor && root.constructor.length === 0) {
+      // create a blank slate of the instance and copy the particular parameter.
+      let ctor = MEMOIZED_PROTOTYPES.get(root.constructor)
+      if (!ctor) {
+        ctor = new root.constructor()
+        MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
       }
+      changedProps[key] = ctor[key]
+    } else {
+      // instance does not have constructor, just set it to 0
+      changedProps[key] = 0
     }
   }
 

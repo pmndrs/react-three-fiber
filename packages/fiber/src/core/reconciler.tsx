@@ -325,33 +325,6 @@ const NO_CONTEXT: HostConfig['hostContext'] = {}
 
 let currentUpdatePriority: number = NoEventPriority
 
-// Effectively removed to diff in commit phase
-// https://github.com/facebook/react/pull/27409
-function prepareUpdate(
-  instance: HostConfig['instance'],
-  _type: string,
-  oldProps: HostConfig['props'],
-  newProps: HostConfig['props'],
-): HostConfig['updatePayload'] {
-  // Reconstruct primitives if object prop changes
-  if (instance.type === 'primitive' && oldProps.object !== newProps.object) return [true]
-
-  // Throw if an object or literal was passed for args
-  if (newProps.args !== undefined && !Array.isArray(newProps.args))
-    throw new Error('R3F: The args prop must be an array!')
-
-  // Reconstruct instance if args change
-  if (newProps.args?.length !== oldProps.args?.length) return [true]
-  if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) return [true]
-
-  // Create a diff-set, flag if there are any changes
-  const changedProps = diffProps(instance, newProps, true)
-  if (Object.keys(changedProps).length) return [false, changedProps]
-
-  // Otherwise do not touch the instance
-  return null
-}
-
 export const reconciler = Reconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -405,17 +378,26 @@ export const reconciler = Reconciler<
     newProps: HostConfig['props'],
     fiber: any,
   ) {
-    const diff = prepareUpdate(instance, type, oldProps, newProps)
-    if (diff === null) return
+    let reconstruct = false
 
-    const [reconstruct, changedProps] = diff
+    // Reconstruct primitives if object prop changes
+    if (instance.type === 'primitive' && oldProps.object !== newProps.object) reconstruct = true
+    // Reconstruct instance if args was changed to an invalid value
+    else if (newProps.args !== undefined && !Array.isArray(newProps.args)) reconstruct = true
+    // Reconstruct instance if args were added or removed
+    else if (newProps.args?.length !== oldProps.args?.length) reconstruct = true
+    // Reconstruct instance if args were changed
+    else if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) reconstruct = true
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) return switchInstance(instance, type, newProps, fiber)
 
-    // Otherwise just overwrite props
-    Object.assign(instance.props, changedProps)
-    applyProps(instance.object, changedProps)
+    // Create a diff-set, flag if there are any changes
+    const changedProps = diffProps(instance, newProps)
+    if (Object.keys(changedProps).length) {
+      Object.assign(instance.props, changedProps)
+      applyProps(instance.object, changedProps)
+    }
   },
   finalizeInitialChildren: () => false,
   commitMount() {},
