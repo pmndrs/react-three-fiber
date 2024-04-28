@@ -91,15 +91,15 @@ export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMa
 export type Extensions<T> = (loader: Loader<T>) => void
 
 const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
+const memoizedResults = new WeakMap<Loader<unknown>, Map<string, Promise<unknown>>>()
 
 const isConstructor = <T,>(value: unknown): value is LoaderProto<T> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
 function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
-  return async function (Proto: Loader<T> | LoaderProto<T>, ...input: string[]) {
-    let loader: Loader<any>
-
+  return async function (Proto: Loader<T> | LoaderProto<T>, ...urls: string[]) {
     // Construct and cache loader if constructor was passed
+    let loader!: Loader<T>
     if (isConstructor(Proto)) {
       loader = memoizedLoaders.get(Proto)!
       if (!loader) {
@@ -110,22 +110,37 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
       loader = Proto
     }
 
+    // Prime per-loader cache
+    let results: Map<string, Promise<unknown>> = memoizedResults.get(loader)!
+    if (!results) {
+      results = new Map()
+      memoizedResults.set(loader, results)
+    }
+
     // Apply loader extensions
     if (extensions) extensions(loader)
 
     // Go through the urls and load them
     return Promise.all(
-      input.map(
-        (input) =>
-          new Promise<LoaderResult<T>>((res, reject) =>
-            loader.load(
-              input,
-              (data) => res(isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data),
-              onProgress,
-              (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
-            ),
-          ),
-      ),
+      urls.map((url) => {
+        // Load url and cache the result on first try
+        if (!results.has(url)) {
+          try {
+            results.set(
+              url,
+              loader
+                .loadAsync(url, onProgress)
+                .then((data) => (isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data)),
+            )
+          } catch (error) {
+            // TODO: merge errors for multiple urls
+            throw new Error(`Could not load ${url}: ${(error as ErrorEvent)?.message}`)
+          }
+        }
+
+        // Return cached pending or completed result
+        return results.get(url)
+      }),
     )
   }
 }
