@@ -61,7 +61,7 @@ export interface ThreeElements extends ThreeElementsImpl {
   primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
 }
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
   }
