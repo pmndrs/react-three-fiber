@@ -548,4 +548,26 @@ describe('renderer', () => {
     expect(lastAttached).toBe(lastMounted)
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child', 'parent', 'child'])
   })
+
+  it('should toggle visibility during Suspense non-destructively', async () => {
+    const a = Promise.resolve(new THREE.Object3D())
+    const b = Promise.resolve(new THREE.Object3D())
+
+    function AsyncPrimitive({ object }: { object: Promise<THREE.Object3D> }) {
+      return <primitive object={React.use(object)} />
+    }
+
+    for (let i = 0; i < 3; i++) {
+      await act(async () =>
+        root.render(
+          <React.Suspense fallback={null}>
+            <AsyncPrimitive object={i % 2 === 0 ? a : b} />
+          </React.Suspense>,
+        ),
+      )
+    }
+
+    expect((await a).visible).toBe(true)
+    expect((await b).visible).toBe(true)
+  })
 })
