@@ -8,7 +8,10 @@ import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot
 import { createTouchEvents } from './events'
 import { RootState, Size } from '../core/store'
 
-export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
+// TODO: React 19 needs support from react-native
+const _View = View as any
+
+export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, Omit<ViewProps, 'children'> {
   children: React.ReactNode
   style?: ViewStyle
 }
@@ -147,11 +150,11 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <_View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
         {width > 0 && (
           <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
         )}
-      </View>
+      </_View>
     )
   },
 )

@@ -25,7 +25,7 @@ describe('ReactThreeTestRenderer Core', () => {
 
   it('renders a simple component with hooks', async () => {
     const Mesh = () => {
-      const meshRef = React.useRef<THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>>()
+      const meshRef = React.useRef<THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>>(null)
       useFrame(() => void (meshRef.current!.position.x += 0.01))
       return (
         <mesh>
