@@ -59,7 +59,6 @@ const createReconciler = Reconciler as unknown as <
     >,
     'getCurrentEventPriority' | 'prepareUpdate' | 'commitUpdate'
   > & {
-    // Changed
     /**
      * This method should mutate the `instance` and perform prop diffing if needed.
      *
@@ -74,12 +73,17 @@ const createReconciler = Reconciler as unknown as <
     ): void
 
     // Undocumented
+    // https://github.com/facebook/react/pull/26722
     NotPendingTransition: TransitionStatus | null
+    // https://github.com/facebook/react/pull/28751
     setCurrentUpdatePriority(newPriority: EventPriority): void
     getCurrentUpdatePriority(): EventPriority
     resolveUpdatePriority(): EventPriority
+    // https://github.com/facebook/react/pull/28804
     resetFormInstance(form: FormInstance): void
+    // https://github.com/facebook/react/pull/25105
     requestPostPaintCallback(callback: (time: number) => void): void
+    // https://github.com/facebook/react/pull/26025
     shouldAttemptEagerTransition(): boolean
 
     /**
@@ -556,5 +560,5 @@ export const reconciler = createReconciler<
         return DefaultEventPriority
     }
   },
-  resetFormInstance(): void {},
+  resetFormInstance() {},
 })
