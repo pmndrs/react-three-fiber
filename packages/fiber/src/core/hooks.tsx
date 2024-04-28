@@ -8,19 +8,20 @@ import type { Instance } from './reconciler'
 
 /**
  * Exposes an object's {@link Instance}.
- * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useInstanceHandle
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useinstancehandle
  *
  * **Note**: this is an escape hatch to react-internal fields. Expect this to change significantly between versions.
  */
-export function useInstanceHandle<O>(ref: React.RefObject<O>): React.RefObject<Instance> {
+export function useInstanceHandle<T>(ref: React.RefObject<T>): React.RefObject<Instance<T>> {
   const instance = React.useRef<Instance>(null!)
-  useIsomorphicLayoutEffect(
-    () => void (instance.current = (ref.current as unknown as Instance<O>['object']).__r3f!),
-    [ref],
-  )
+  React.useImperativeHandle(instance, () => (ref.current as unknown as Instance<T>['object']).__r3f!, [ref])
   return instance
 }
 
+/**
+ * Returns the R3F Canvas' Zustand store. Useful for [transient updates](https://github.com/pmndrs/zustand#transient-updates-for-often-occurring-state-changes).
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#usestore
+ */
 export function useStore(): RootStore {
   const store = React.useContext(context)
   if (!store) throw new Error('R3F: Hooks can only be used within the Canvas component!')
@@ -55,7 +56,7 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
 
 /**
  * Executes a callback in a given update stage.
- * Uses the stage instance to indetify which stage to target in the lifecycle.
+ * Uses the stage instance to identify which stage to target in the lifecycle.
  */
 export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update): void {
   const store = useStore()
@@ -128,8 +129,6 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
     )
   }
 }
-
-type GLTFLike = { scene: THREE.Object3D }
 
 /**
  * Synchronously loads and caches assets with a three loader.
