@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import {
-  // @ts-ignore
+  // @ts-expect-error
   NoEventPriority,
   ContinuousEventPriority,
   DiscreteEventPriority,
@@ -97,7 +97,7 @@ export const extend = <T extends Catalogue | ConstructorRepresentation>(
     catalogue[Component] = objects
 
     // Returns a component whose name will be inferred in devtools
-    // @ts-ignore
+    // @ts-expect-error
     return React.forwardRef({ [objects.name]: (props, ref) => <Component {...props} ref={ref} /> }[objects.name])
   } else {
     return void Object.assign(catalogue, objects) as any
@@ -370,7 +370,7 @@ export const reconciler = Reconciler<
   },
   getRootHostContext: () => NO_CONTEXT,
   getChildHostContext: () => NO_CONTEXT,
-  // @ts-ignore prepareUpdate and updatePayload removed with React 19
+  // @ts-expect-error prepareUpdate and updatePayload removed with React 19
   commitUpdate(
     instance: HostConfig['instance'],
     type: HostConfig['type'],
@@ -439,7 +439,6 @@ export const reconciler = Reconciler<
   beforeActiveInstanceBlur() {},
   afterActiveInstanceBlur() {},
   detachDeletedInstance() {},
-  // @ts-ignore untyped react-experimental options inspired by react-art
   // TODO: add shell types for these and upstream to DefinitelyTyped
   // https://github.com/facebook/react/blob/main/packages/react-art/src/ReactFiberConfigART.js
   shouldAttemptEagerTransition() {
