@@ -20,17 +20,17 @@ function TorusKnot() {
 
 const gl = new SVGRenderer()
 gl.domElement.style.position = 'absolute'
-gl.domElement.style.top = 0
-gl.domElement.style.left = 0
+gl.domElement.style.top = '0'
+gl.domElement.style.left = '0'
 
 export default function () {
   useEffect(() => {
     document.body.appendChild(gl.domElement)
-    return () => document.body.removeChild(gl.domElement)
+    return () => void document.body.removeChild(gl.domElement)
   }, [])
 
   return (
-    <Canvas gl={gl} camera={{ position: [0, 0, 50] }} eventSource={gl.domElement}>
+    <Canvas gl={gl} camera={{ position: [0, 0, 50] }} eventSource={gl.domElement as unknown as HTMLElement}>
       <color attach="background" args={['#dedddf']} />
       <TorusKnot />
     </Canvas>
