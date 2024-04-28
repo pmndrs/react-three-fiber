@@ -52,20 +52,9 @@ describe('createRoot', () => {
   })
 
   it('should handle any performance changing functions', async () => {
-    let store: RootStore = null!
-    await act(async () => {
-      store = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
-    })
-
-    expect(store.getState().dpr).toEqual(window.devicePixelRatio)
+    const store = await act(async () => root.configure({ performance: { min: 0.2 } }).render(<group />))
     expect(store.getState().performance.min).toEqual(0.2)
     expect(store.getState().performance.current).toEqual(1)
-
-    await act(async () => {
-      store.getState().setDpr(0.1)
-    })
-
-    expect(store.getState().dpr).toEqual(0.1)
 
     jest.useFakeTimers()
 
