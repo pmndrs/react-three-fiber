@@ -65,7 +65,6 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
-  isHidden: boolean
   autoRemovedBeforeAppend?: boolean
 }
 
@@ -407,28 +406,8 @@ export const reconciler = Reconciler<
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
-  hideInstance(instance) {
-    if (instance.props.attach && instance.parent?.object) {
-      detach(instance.parent, instance)
-    } else if (isObject3D(instance.object)) {
-      instance.object.visible = false
-    }
-
-    instance.isHidden = true
-    invalidateInstance(instance)
-  },
-  unhideInstance(instance) {
-    if (instance.isHidden) {
-      if (instance.props.attach && instance.parent?.object) {
-        attach(instance.parent, instance)
-      } else if (isObject3D(instance.object) && instance.props.visible !== false) {
-        instance.object.visible = true
-      }
-    }
-
-    instance.isHidden = false
-    invalidateInstance(instance)
-  },
+  hideInstance() {},
+  unhideInstance() {},
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
