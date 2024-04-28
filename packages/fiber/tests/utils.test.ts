@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Instance, RootStore } from '../src'
+import { type RootStore, type Instance, act, createRoot } from '../src'
 import {
   is,
   dispose,
@@ -13,14 +13,22 @@ import {
   diffProps,
   applyProps,
   updateCamera,
+  findInitialRoot,
 } from '../src/core/utils'
 
-// Mocks a Zustand store
-const storeMock = Object.assign(() => null!, {
-  getState: () => null!,
-  setState() {},
-  subscribe: () => () => {},
-}) as unknown as RootStore
+function createMockStore(): RootStore {
+  let store!: RootStore
+
+  try {
+    act(async () => (store = createRoot(document.createElement('canvas')).render(null))).then(() => null)
+  } catch (e) {
+    console.error(e)
+  }
+
+  return store
+}
+
+const store = createMockStore()
 
 describe('is', () => {
   const myFunc = () => null
@@ -171,9 +179,9 @@ describe('getInstanceProps', () => {
 describe('prepare', () => {
   it('should create an instance descriptor', () => {
     const object = new THREE.Object3D()
-    const instance = prepare(object, storeMock, 'object3D', { name: 'object' })
+    const instance = prepare(object, store, 'object3D', { name: 'object' })
 
-    expect(instance.root).toBe(storeMock)
+    expect(instance.root).toBe(store)
     expect(instance.type).toBe('object3D')
     expect(instance.props.name).toBe('object')
     expect(instance.object).toBe(object)
@@ -184,7 +192,7 @@ describe('prepare', () => {
     const containerDesc = {}
     const container = { __r3f: containerDesc }
 
-    const instance = prepare(container, storeMock, 'container', {})
+    const instance = prepare(container, store, 'container', {})
     expect(container.__r3f).toBe(containerDesc)
     expect(instance).toBe(containerDesc)
   })
@@ -213,8 +221,8 @@ describe('resolve', () => {
 
 describe('attach / detach', () => {
   it('should attach & detach using string values', () => {
-    const parent = prepare({ prop: null }, storeMock, '', {})
-    const child = prepare({}, storeMock, '', { attach: 'prop' })
+    const parent = prepare({ prop: null }, store, '', {})
+    const child = prepare({}, store, '', { attach: 'prop' })
 
     attach(parent, child)
     expect(parent.object.prop).toBe(child.object)
@@ -229,8 +237,8 @@ describe('attach / detach', () => {
     const mount = jest.fn()
     const unmount = jest.fn()
 
-    const parent = prepare({}, storeMock, '', {})
-    const child = prepare({}, storeMock, '', { attach: () => (mount(), unmount) })
+    const parent = prepare({}, store, '', {})
+    const child = prepare({}, store, '', { attach: () => (mount(), unmount) })
 
     attach(parent, child)
     expect(mount).toBeCalledTimes(1)
@@ -244,8 +252,8 @@ describe('attach / detach', () => {
   })
 
   it('should create array when using array-index syntax', () => {
-    const parent = prepare({ prop: null }, storeMock, '', {})
-    const child = prepare({}, storeMock, '', { attach: 'prop-0' })
+    const parent = prepare({ prop: null }, store, '', {})
+    const child = prepare({}, store, '', { attach: 'prop-0' })
 
     attach(parent, child)
     expect(parent.object.prop).toStrictEqual([child.object])
@@ -260,7 +268,7 @@ describe('attach / detach', () => {
 
 describe('diffProps', () => {
   it('should filter changed props', () => {
-    const instance = prepare({}, storeMock, '', { foo: true })
+    const instance = prepare({}, store, '', { foo: true })
     const newProps = { foo: true, bar: false }
 
     const filtered = diffProps(instance, newProps)
@@ -274,13 +282,13 @@ describe('diffProps', () => {
     const oldProps = { map: texture1, 'map-needsUpdate': true, 'map-name': 'test' }
     const newProps = { map: texture2, 'map-needsUpdate': true, 'map-name': 'test' }
 
-    const instance = prepare({}, storeMock, '', oldProps)
+    const instance = prepare({}, store, '', oldProps)
     const filtered = diffProps(instance, newProps)
     expect(filtered).toStrictEqual(newProps)
   })
 
   it('should pick removed props for HMR', () => {
-    const instance = prepare(new THREE.Object3D(), storeMock, '', { position: [0, 0, 1] })
+    const instance = prepare(new THREE.Object3D(), store, '', { position: [0, 0, 1] })
     const newProps = {}
 
     const filtered = diffProps(instance, newProps)
@@ -288,7 +296,7 @@ describe('diffProps', () => {
   })
 
   it('should reset removed props for HMR', () => {
-    const instance = prepare(new THREE.Object3D(), storeMock, '', { scale: 10 })
+    const instance = prepare(new THREE.Object3D(), store, '', { scale: 10 })
     const filtered = diffProps(instance, {})
     expect((filtered.scale as THREE.Vector3).toArray()).toStrictEqual([1, 1, 1])
   })
@@ -299,7 +307,7 @@ describe('diffProps', () => {
 
     const props = { foo: true }
     const filtered = diffProps(
-      prepare({}, storeMock, '', {}),
+      prepare({}, store, '', {}),
       RESERVED_PROPS.reduce((acc, key) => ({ ...acc, [key]: { get, set } }), props),
     )
 
@@ -432,5 +440,24 @@ describe('updateCamera', () => {
     orthographic.updateProjectionMatrix = jest.fn()
     updateCamera(orthographic, size)
     expect(orthographic.updateProjectionMatrix).not.toHaveBeenCalled()
+  })
+})
+
+describe('findInitialRoot', () => {
+  it('finds the nearest root for portals', () => {
+    const portalStore = createMockStore()
+    portalStore.getState().previousRoot = store
+
+    const instance = prepare(new THREE.Object3D(), portalStore, '', {})
+    const root = findInitialRoot(instance)
+
+    expect(root).toBe(store)
+  })
+
+  it('falls back to the local root', () => {
+    const instance = prepare(new THREE.Object3D(), store, '', {})
+    const root = findInitialRoot(instance)
+
+    expect(root).toBe(store)
   })
 })

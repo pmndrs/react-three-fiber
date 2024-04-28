@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import { create } from 'zustand'
+import { createWithEqualityFn } from 'zustand/traditional'
 
 import type { Properties, ThreeElement } from '../three-types'
 import {
@@ -36,19 +36,17 @@ import {
 import { useStore } from './hooks'
 import { Stage, Lifecycle, Stages } from './stages'
 
-// TODO: fix type resolve
-declare var OffscreenCanvas: any
-type OffscreenCanvas = any
+// Shim for OffscreenCanvas since it was removed from DOM types
+// https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
+interface OffscreenCanvas extends EventTarget {}
 
-type Canvas = HTMLCanvasElement | OffscreenCanvas
-
-export const _roots = new Map<Canvas, Root>()
+export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
 export type GLProps =
   | Renderer
-  | ((canvas: Canvas) => Renderer)
+  | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Renderer)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
 export type CameraProps = (
@@ -63,7 +61,7 @@ export type CameraProps = (
   manual?: boolean
 }
 
-export interface RenderProps<TCanvas extends Canvas> {
+export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
@@ -114,7 +112,7 @@ export interface RenderProps<TCanvas extends Canvas> {
   render?: 'auto' | 'manual'
 }
 
-const createRendererInstance = <TCanvas extends Canvas>(
+const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   gl: GLProps | undefined,
   canvas: TCanvas,
 ): THREE.WebGLRenderer => {
@@ -163,13 +161,13 @@ const createStages = (stages: Stage[] | undefined, store: RootStore) => {
   Stages.Render.add(renderCallback, store)
 }
 
-export interface ReconcilerRoot<TCanvas extends Canvas> {
+export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
   render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
 
-function computeInitialSize(canvas: Canvas, size?: Size): Size {
+function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
   if (!size && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
     return { width, height, top, left }
@@ -185,7 +183,9 @@ function computeInitialSize(canvas: Canvas, size?: Size): Size {
   return { width: 0, height: 0, top: 0, left: 0, ...size }
 }
 
-export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCanvas> {
+export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
+  canvas: TCanvas,
+): ReconcilerRoot<TCanvas> {
   // Check against mistaken use of createRoot
   const prevRoot = _roots.get(canvas)
   const prevFiber = prevRoot?.fiber
@@ -401,7 +401,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
         state.setSize(size.width, size.height, size.top, size.left)
       }
       // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+      if (dpr && state.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -437,7 +437,7 @@ export function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerR
   }
 }
 
-export function render<TCanvas extends Canvas>(
+export function render<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   children: React.ReactNode,
   canvas: TCanvas,
   config: RenderProps<TCanvas>,
@@ -448,14 +448,14 @@ export function render<TCanvas extends Canvas>(
   return root.render(children)
 }
 
-interface ProviderProps<TCanvas extends Canvas> {
+interface ProviderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   onCreated?: (state: RootState) => void
   store: RootStore
   children: React.ReactNode
   rootElement: TCanvas
 }
 
-function Provider<TCanvas extends Canvas>({
+function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   store,
   children,
   onCreated,
@@ -475,7 +475,7 @@ function Provider<TCanvas extends Canvas>({
   return <context.Provider value={store}>{children}</context.Provider>
 }
 
-export function unmountComponentAtNode<TCanvas extends Canvas>(
+export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   canvas: TCanvas,
   callback?: (canvas: TCanvas) => void,
 ): void {
@@ -537,11 +537,8 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
-    let viewport
     if (injectState.camera && size) {
       const camera = injectState.camera
-      // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
       // Update the portal camera, if it differs from the previous layer
       if (camera !== rootState.camera) updateCamera(camera, size)
     }
@@ -558,10 +555,9 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       mouse: pointer,
       // Their previous root is the layer before it
       previousRoot,
-      // Events, size and viewport can be overridden by the inject layer
+      // Events and size can be overridden by the inject layer
       events: { ...rootState.events, ...injectState.events, ...events },
       size: { ...rootState.size, ...size },
-      viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
         injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
@@ -569,7 +565,7 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   })
 
   const usePortalStore = React.useMemo(() => {
-    const store = create<RootState>((set, get) => ({ ...rest, set, get } as RootState))
+    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 
     // Subscribe to previous root-state and copy changes over to the mirrored portal-state
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))

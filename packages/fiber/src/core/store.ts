@@ -1,8 +1,9 @@
 import * as THREE from 'three'
 import * as React from 'react'
-import { create, type StoreApi, type UseBoundStore } from 'zustand'
+import { type StoreApi } from 'zustand'
+import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
+import { calculateDpr, type Camera, updateCamera } from './utils'
 import type { FixedStage, Stage } from './stages'
 
 export interface Intersection extends THREE.Intersection {
@@ -21,18 +22,6 @@ export interface Size {
   height: number
   top: number
   left: number
-}
-export interface Viewport extends Size {
-  /** The initial pixel ratio */
-  initialDpr: number
-  /** Current pixel ratio */
-  dpr: number
-  /** size.width / viewport.width */
-  factor: number
-  /** Camera distance */
-  distance: number
-  /** Camera aspect ratio: width / height */
-  aspect: number
 }
 
 export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
@@ -124,16 +113,10 @@ export interface RootState {
   frameloop: FrameloopLegacy
   /** Adaptive performance interface */
   performance: Performance
+  /** The current pixel ratio */
+  dpr: number
   /** Reactive pixel-size of the canvas */
   size: Size
-  /** Reactive size of the viewport in threejs units */
-  viewport: Viewport & {
-    getCurrentViewport: (
-      camera?: Camera,
-      target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
-      size?: Size,
-    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
-  }
   /** Flags the canvas for render, but doesn't render in itself */
   invalidate: (frames?: number) => void
   /** Advance (render) one step */
@@ -154,7 +137,7 @@ export interface RootState {
   internal: InternalState
 }
 
-export type RootStore = UseBoundStore<StoreApi<RootState>>
+export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
 
 export const context = React.createContext<RootStore>(null!)
 
@@ -162,30 +145,7 @@ export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
-  const rootStore = create<RootState>((set, get) => {
-    const position = new THREE.Vector3()
-    const defaultTarget = new THREE.Vector3()
-    const tempTarget = new THREE.Vector3()
-    function getCurrentViewport(
-      camera: Camera = get().camera,
-      target: THREE.Vector3 | Parameters<THREE.Vector3['set']> = defaultTarget,
-      size: Size = get().size,
-    ): Omit<Viewport, 'dpr' | 'initialDpr'> {
-      const { width, height, top, left } = size
-      const aspect = width / height
-      if (target instanceof THREE.Vector3) tempTarget.copy(target)
-      else tempTarget.set(...target)
-      const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
-      if (isOrthographicCamera(camera)) {
-        return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
-      } else {
-        const fov = (camera.fov * Math.PI) / 180 // convert vertical fov to radians
-        const h = 2 * Math.tan(fov / 2) * distance // visible height
-        const w = h * (width / height)
-        return { width: w, height: h, top, left, factor: width / w, distance, aspect }
-      }
-    }
-
+  const rootStore = createWithEqualityFn<RootState>((set, get) => {
     let performanceTimeout: ReturnType<typeof setTimeout> | undefined = undefined
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
@@ -238,32 +198,15 @@ export const createStore = (
         },
       },
 
+      dpr: 1,
       size: { width: 0, height: 0, top: 0, left: 0 },
-      viewport: {
-        initialDpr: 0,
-        dpr: 0,
-        width: 0,
-        height: 0,
-        top: 0,
-        left: 0,
-        aspect: 0,
-        distance: 0,
-        factor: 0,
-        getCurrentViewport,
-      },
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
       setSize: (width: number, height: number, top: number = 0, left: number = 0) => {
-        const camera = get().camera
-        const size = { width, height, top, left }
-        set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
+        set({ size: { width, height, top, left } })
       },
-      setDpr: (dpr: Dpr) =>
-        set((state) => {
-          const resolved = calculateDpr(dpr)
-          return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
-        }),
+      setDpr: (dpr: Dpr) => set({ dpr: calculateDpr(dpr) }),
       setFrameloop: (frameloop: Frameloop) => {
         const state = get()
         const mode: FrameloopLegacy =
@@ -344,28 +287,18 @@ export const createStore = (
   const state = rootStore.getState()
 
   let oldSize = state.size
-  let oldDpr = state.viewport.dpr
-  let oldCamera = state.camera
-  rootStore.subscribe(() => {
-    const { camera, size, viewport, gl, set } = rootStore.getState()
-
+  let oldDpr = state.dpr
+  rootStore.subscribe(({ camera, size, dpr, gl }) => {
     // Resize camera and renderer on changes to size and pixelratio
-    if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
+    if (size !== oldSize || dpr !== oldDpr) {
       oldSize = size
-      oldDpr = viewport.dpr
+      oldDpr = dpr
       // Update camera & renderer
       updateCamera(camera, size)
-      gl.setPixelRatio(viewport.dpr)
+      gl.setPixelRatio(dpr)
 
       const updateStyle = typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement
       gl.setSize(size.width, size.height, updateStyle)
-    }
-
-    // Update viewport once the camera changes
-    if (camera !== oldCamera) {
-      oldCamera = camera
-      // Update viewport
-      set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
     }
   })
 
