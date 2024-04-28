@@ -51,8 +51,8 @@
     "@preconstruct/cli": "^2.1.5",
     "@testing-library/react": "^15.0.2",
     "@types/jest": "^29.2.5",
-    "@types/react": "18.2.73",
-    "@types/react-dom": "18.2.22",
+    "@types/react": "npm:types-react@beta",
+    "@types/react-dom": "npm:types-react-dom@beta",
     "@types/react-native": "0.69.5",
     "@types/react-test-renderer": "18.0.7",
     "@types/scheduler": "0.23.0",
@@ -85,5 +85,8 @@
     "ts-jest": "^29.1.2",
     "typescript": "^4.6.3"
   },
-  "dependencies": {}
+  "overrides": {
+    "@types/react": "npm:types-react@beta",
+    "@types/react-dom": "npm:types-react-dom@beta"
+  }
 }
