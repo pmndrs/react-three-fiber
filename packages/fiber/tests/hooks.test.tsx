@@ -245,7 +245,7 @@ describe('hooks', () => {
 
   it('can handle useInstanceHandle hook', async () => {
     const ref = React.createRef<THREE.Group>()
-    let instance!: React.MutableRefObject<Instance>
+    let instance!: React.RefObject<Instance>
 
     const Component = () => {
       instance = useInstanceHandle(ref)

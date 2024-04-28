@@ -12,7 +12,7 @@ import type { Instance } from './reconciler'
  *
  * **Note**: this is an escape hatch to react-internal fields. Expect this to change significantly between versions.
  */
-export function useInstanceHandle<O>(ref: React.MutableRefObject<O>): React.MutableRefObject<Instance> {
+export function useInstanceHandle<O>(ref: React.RefObject<O>): React.RefObject<Instance> {
   const instance = React.useRef<Instance>(null!)
   useIsomorphicLayoutEffect(
     () => void (instance.current = (ref.current as unknown as Instance<O>['object']).__r3f!),

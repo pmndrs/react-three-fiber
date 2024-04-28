@@ -42,7 +42,7 @@ export const act: Act = (React as any).act
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
-export const isRef = (obj: any): obj is React.MutableRefObject<unknown> => obj && obj.hasOwnProperty('current')
+export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')
 
 /**
  * An SSR-friendly useLayoutEffect.
@@ -58,7 +58,7 @@ export const useIsomorphicLayoutEffect =
     ? React.useLayoutEffect
     : React.useEffect
 
-export function useMutableCallback<T>(fn: T): React.MutableRefObject<T> {
+export function useMutableCallback<T>(fn: T): React.RefObject<T> {
   const ref = React.useRef<T>(fn)
   useIsomorphicLayoutEffect(() => void (ref.current = fn), [fn])
   return ref

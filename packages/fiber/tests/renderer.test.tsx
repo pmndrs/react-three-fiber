@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement } from '../src/index'
+import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements } from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -90,7 +90,10 @@ describe('renderer', () => {
 
     function Test() {
       React.useInsertionEffect(() => void lifecycle.push('useInsertionEffect'), [])
-      React.useImperativeHandle(React.useRef(), () => void lifecycle.push('refCallback'))
+      React.useImperativeHandle(React.useRef(null), () => {
+        lifecycle.push('refCallback')
+        return null
+      })
       React.useLayoutEffect(() => void lifecycle.push('useLayoutEffect'), [])
       React.useEffect(() => void lifecycle.push('useEffect'), [])
       lifecycle.push('render')
@@ -110,9 +113,9 @@ describe('renderer', () => {
 
   it('should forward ref three object', async () => {
     // Note: Passing directly should be less strict, and assigning current should be more strict
-    let immutableRef!: React.RefObject<THREE.Mesh>
-    let mutableRef!: React.MutableRefObject<THREE.Mesh | null>
-    let mutableRefSpecific!: React.MutableRefObject<THREE.Mesh | null>
+    let immutableRef!: React.RefObject<THREE.Mesh | null>
+    let mutableRef!: React.RefObject<THREE.Mesh | null>
+    let mutableRefSpecific!: React.RefObject<THREE.Mesh | null>
 
     const RefTest = () => {
       immutableRef = React.createRef()
@@ -232,7 +235,7 @@ describe('renderer', () => {
     const child = React.createRef<THREE.Object3D>()
     const attachedChild = React.createRef<THREE.Object3D>()
 
-    const Test = (props: JSX.IntrinsicElements['mesh']) => (
+    const Test = (props: ThreeElements['mesh']) => (
       <mesh {...props} ref={ref}>
         <object3D ref={child} />
         <object3D ref={attachedChild} attach="userData-attach" />
@@ -287,7 +290,7 @@ describe('renderer', () => {
     const child = React.createRef<THREE.Object3D>()
     const attachedChild = React.createRef<THREE.Object3D>()
 
-    const Test = (props: JSX.IntrinsicElements['primitive']) => (
+    const Test = (props: ThreeElements['primitive']) => (
       <primitive {...props} ref={ref}>
         <object3D ref={child} />
         <object3D ref={attachedChild} attach="userData-attach" />
@@ -342,7 +345,7 @@ describe('renderer', () => {
 
     const disposeDeclarativePrimitive = jest.fn()
 
-    const Test = (props: JSX.IntrinsicElements['mesh']) => (
+    const Test = (props: ThreeElements['mesh']) => (
       <mesh
         {...props}
         ref={(self: any) => {

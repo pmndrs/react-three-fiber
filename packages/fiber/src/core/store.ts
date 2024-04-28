@@ -11,7 +11,7 @@ export interface Intersection extends THREE.Intersection {
 }
 
 export type Subscription = {
-  ref: React.MutableRefObject<RenderCallback>
+  ref: React.RefObject<RenderCallback>
   priority: number
   store: RootStore
 }
@@ -60,7 +60,7 @@ export interface InternalState {
   capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
-  lastEvent: React.MutableRefObject<DomEvent | null>
+  lastEvent: React.RefObject<DomEvent | null>
   active: boolean
   priority: number
   frames: number
@@ -70,7 +70,7 @@ export interface InternalState {
   render: 'auto' | 'manual'
   /** The max delta time between two frames. */
   maxDelta: number
-  subscribe: (callback: React.MutableRefObject<RenderCallback>, priority: number, store: RootStore) => () => void
+  subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
 }
 
 export interface XRManager {
@@ -249,7 +249,7 @@ export const createStore = (
         render: 'auto',
         maxDelta: 1 / 10,
         priority: 0,
-        subscribe: (ref: React.MutableRefObject<RenderCallback>, priority: number, store: RootStore) => {
+        subscribe: (ref: React.RefObject<RenderCallback>, priority: number, store: RootStore) => {
           const state = get()
           const internal = state.internal
           // If this subscription was given a priority, it takes rendering into its own hands
