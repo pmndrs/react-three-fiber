@@ -401,7 +401,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         state.setSize(size.width, size.height, size.top, size.left)
       }
       // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+      if (dpr && state.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
       // Check frameloop
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
@@ -537,11 +537,8 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
-    let viewport
     if (injectState.camera && size) {
       const camera = injectState.camera
-      // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
       // Update the portal camera, if it differs from the previous layer
       if (camera !== rootState.camera) updateCamera(camera, size)
     }
@@ -558,10 +555,9 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       mouse: pointer,
       // Their previous root is the layer before it
       previousRoot,
-      // Events, size and viewport can be overridden by the inject layer
+      // Events and size can be overridden by the inject layer
       events: { ...rootState.events, ...injectState.events, ...events },
       size: { ...rootState.size, ...size },
-      viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
         injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
