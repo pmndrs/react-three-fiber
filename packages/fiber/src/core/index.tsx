@@ -226,7 +226,21 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
-          if (cameraOptions) applyProps(camera as any, cameraOptions as any)
+          if (cameraOptions) {
+            applyProps(camera as any, cameraOptions as any)
+            // Preserve user-defined frustum if possible
+            // https://github.com/pmndrs/react-three-fiber/issues/3160
+            if (
+              'aspect' in cameraOptions ||
+              'left' in cameraOptions ||
+              'right' in cameraOptions ||
+              'bottom' in cameraOptions ||
+              'top' in cameraOptions
+            ) {
+              ;(camera as any).manual = true
+              camera.updateProjectionMatrix()
+            }
+          }
           // Always look at center by default
           if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
