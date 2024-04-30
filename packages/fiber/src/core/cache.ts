@@ -29,6 +29,12 @@ export class PromiseCache {
         reject(error)
       } finally {
         URL.revokeObjectURL(blobUrl)
+
+        // This hack is to simulate having processed the the promise with `React.use` already.
+        promise.then((result) => {
+          ;(promise as any).status = 'fulfilled'
+          ;(promise as any).value = result
+        })
       }
     })
 

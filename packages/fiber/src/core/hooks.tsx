@@ -169,13 +169,6 @@ useLoader.preload = function <T, U extends string | string[] | string[][]>(
 
   for (const url of urls) {
     if (!cache.has(url)) cache.run(url, async (cacheUrl) => loadAsset(cacheUrl, loaderInstance))
-
-    // We do this hack to simulate having processed the the promise with `use` already.
-    const promise = cache.get(url)! as Promise<any> & { status: 'pending' | 'fulfilled'; value: any }
-    promise.then((result) => {
-      promise.status = 'fulfilled'
-      promise.value = result
-    })
   }
 }
 
