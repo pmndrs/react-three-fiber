@@ -570,4 +570,21 @@ describe('renderer', () => {
     expect((await a).visible).toBe(true)
     expect((await b).visible).toBe(true)
   })
+
+  it('preserves camera frustum props for perspective', async () => {
+    const store = await act(async () => root.configure({ camera: { aspect: 0 } }).render(null))
+    const camera = store.getState().camera as THREE.PerspectiveCamera
+    expect(camera.aspect).toBe(0)
+  })
+
+  it('preserves camera frustum props for orthographic', async () => {
+    const store = await act(async () =>
+      root.configure({ orthographic: true, camera: { left: 0, right: 0, top: 0, bottom: 0 } }).render(null),
+    )
+    const camera = store.getState().camera as THREE.OrthographicCamera
+    expect(camera.left).toBe(0)
+    expect(camera.right).toBe(0)
+    expect(camera.top).toBe(0)
+    expect(camera.bottom).toBe(0)
+  })
 })
