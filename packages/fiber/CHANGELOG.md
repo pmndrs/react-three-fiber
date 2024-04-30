@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.3
+
+### Patch Changes
+
+- 9c83502c: fix(Canvas): don't override camera frustum props
+
 ## 8.16.2
 
 ### Patch Changes
