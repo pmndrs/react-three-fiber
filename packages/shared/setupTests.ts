@@ -46,3 +46,45 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
 
 // Extend catalogue for render API in tests
 extend(THREE as any)
+
+// Mock caches API
+class MockCache {
+  store: Map<string, Response>
+
+  constructor() {
+    this.store = new Map()
+  }
+
+  async match(url: string) {
+    return this.store.get(url)
+  }
+
+  async put(url: string, response: Response) {
+    this.store.set(url, response)
+  }
+
+  async delete(url: string) {
+    return this.store.delete(url)
+  }
+}
+
+class MockCacheStorage {
+  caches: Map<string, MockCache>
+
+  constructor() {
+    this.caches = new Map()
+  }
+
+  async open(cacheName: string) {
+    if (!this.caches.has(cacheName)) {
+      this.caches.set(cacheName, new MockCache())
+    }
+    return this.caches.get(cacheName)
+  }
+
+  async delete(cacheName: string) {
+    return this.caches.delete(cacheName)
+  }
+}
+
+globalThis.caches = new MockCacheStorage() as any

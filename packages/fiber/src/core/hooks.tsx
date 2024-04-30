@@ -5,6 +5,7 @@ import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootSto
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
 import { Stages } from './stages'
 import type { Instance } from './reconciler'
+import { PromiseCache, cacheName } from './cache'
 
 /**
  * Exposes an object's {@link Instance}.
@@ -91,43 +92,39 @@ export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMa
 export type Extensions<T> = (loader: Loader<T>) => void
 
 const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
+const loaderCaches = new Map<Loader<any>, PromiseCache>()
 
 const isConstructor = <T,>(value: unknown): value is LoaderProto<T> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
-function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
-  return async function (Proto: Loader<T> | LoaderProto<T>, ...input: string[]) {
-    let loader: Loader<any>
+function prepareLoaderInstance(loader: Loader<any> | LoaderProto<any>, extensions?: Extensions<any>): Loader<any> {
+  let loaderInstance: Loader<any>
 
-    // Construct and cache loader if constructor was passed
-    if (isConstructor(Proto)) {
-      loader = memoizedLoaders.get(Proto)!
-      if (!loader) {
-        loader = new Proto()
-        memoizedLoaders.set(Proto, loader)
-      }
-    } else {
-      loader = Proto
+  // Construct and cache loader if constructor was passed
+  if (isConstructor(loader)) {
+    loaderInstance = memoizedLoaders.get(loader)!
+    if (!loaderInstance) {
+      loaderInstance = new loader()
+      memoizedLoaders.set(loader, loaderInstance)
     }
-
-    // Apply loader extensions
-    if (extensions) extensions(loader)
-
-    // Go through the urls and load them
-    return Promise.all(
-      input.map(
-        (input) =>
-          new Promise<LoaderResult<T>>((res, reject) =>
-            loader.load(
-              input,
-              (data) => res(isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data),
-              onProgress,
-              (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
-            ),
-          ),
-      ),
-    )
+  } else {
+    loaderInstance = loader as Loader<any>
   }
+
+  // Apply loader extensions
+  if (extensions) extensions(loaderInstance)
+
+  if (!loaderCaches.has(loaderInstance)) {
+    loaderCaches.set(loaderInstance, new PromiseCache(cacheName))
+  }
+
+  return loaderInstance
+}
+
+async function loadAsset(url: string, loaderInstance: Loader<any>, onProgress?: (event: ProgressEvent) => void) {
+  const result = await loaderInstance.loadAsync(url, onProgress)
+  const graph = isObject3D(result?.scene) ? Object.assign(result, buildGraph(result.scene)) : result
+  return graph
 }
 
 /**
@@ -141,14 +138,21 @@ export function useLoader<T, U extends string | string[] | string[][]>(
   input: U,
   extensions?: Extensions<T>,
   onProgress?: (event: ProgressEvent) => void,
-) {
-  // Use suspense to load async assets
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
+): U extends any[] ? LoaderResult<T>[] : LoaderResult<T> {
+  const urls = (Array.isArray(input) ? input : [input]) as string[]
+  const loaderInstance = prepareLoaderInstance(loader, extensions)
+  const cache = loaderCaches.get(loaderInstance)!
+
+  let results: any[] = []
+
+  for (const url of urls) {
+    if (!cache.has(url)) cache.run(url, async (cacheUrl) => loadAsset(cacheUrl, loaderInstance, onProgress))
+    const result = React.use(cache.get(url)!)
+    results.push(result)
+  }
+
   // Return the object(s)
-  return (Array.isArray(input) ? results : results[0]) as unknown as U extends any[]
-    ? LoaderResult<T>[]
-    : LoaderResult<T>
+  return (Array.isArray(input) ? results : results[0]) as any
 }
 
 /**
@@ -159,8 +163,20 @@ useLoader.preload = function <T, U extends string | string[] | string[][]>(
   input: U,
   extensions?: Extensions<T>,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(loadingFn(extensions), [loader, ...keys])
+  const urls = (Array.isArray(input) ? input : [input]) as string[]
+  const loaderInstance = prepareLoaderInstance(loader, extensions)
+  const cache = loaderCaches.get(loaderInstance)!
+
+  for (const url of urls) {
+    if (!cache.has(url)) cache.run(url, async (cacheUrl) => loadAsset(cacheUrl, loaderInstance))
+
+    // We do this hack to simulate having processed the the promise with `use` already.
+    const promise = cache.get(url)! as Promise<any> & { status: 'pending' | 'fulfilled'; value: any }
+    promise.then((result) => {
+      promise.status = 'fulfilled'
+      promise.value = result
+    })
+  }
 }
 
 /**
@@ -170,6 +186,11 @@ useLoader.clear = function <T, U extends string | string[] | string[][]>(
   loader: Loader<T> | LoaderProto<T>,
   input: U,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return clear([loader, ...keys])
+  const urls = (Array.isArray(input) ? input : [input]) as string[]
+  const loaderInstance = prepareLoaderInstance(loader)
+  const cache = loaderCaches.get(loaderInstance)!
+
+  for (const url of urls) {
+    cache.delete(url)
+  }
 }
