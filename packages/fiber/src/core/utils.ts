@@ -458,19 +458,14 @@ export function updateCamera(camera: Camera & { manual?: boolean }, size: Size) 
   // https://github.com/pmndrs/react-three-fiber/issues/92
   // Do not mess with the camera if it belongs to the user
   if (!camera.manual) {
-    // Preserve user-defined props if possible
-    // https://github.com/pmndrs/react-three-fiber/issues/3160
-    const props = (camera as unknown as Instance).__r3f?.memoizedProps
-
     if (isOrthographicCamera(camera)) {
-      camera.left = props?.left ?? size.width / -2
-      camera.right = props?.right ?? size.width / 2
-      camera.top = props?.top ?? size.height / 2
-      camera.bottom = props?.bottom ?? size.height / -2
+      camera.left = size.width / -2
+      camera.right = size.width / 2
+      camera.top = size.height / 2
+      camera.bottom = size.height / -2
     } else {
-      camera.aspect = props?.aspect ?? size.width / size.height
+      camera.aspect = size.width / size.height
     }
-
     camera.updateProjectionMatrix()
     // https://github.com/pmndrs/react-three-fiber/issues/178
     // Update matrix world since the renderer is a frame late
