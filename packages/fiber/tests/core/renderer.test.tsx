@@ -1047,4 +1047,15 @@ describe('renderer', () => {
     expect(meshDispose).toBeCalledTimes(1)
     expect(primitiveDispose).not.toBeCalled()
   })
+
+  it('preserves camera frustum props', async () => {
+    const store = await act(async () => root.configure({ camera: { aspect: 0 } }).render(null))
+    expect(store.getState().camera.aspect).toBe(0)
+
+    await act(async () => root.configure({ camera: { left: 0, right: 0, top: 0, bottom: 0 } }).render(null))
+    expect(store.getState().camera.left).toBe(0)
+    expect(store.getState().camera.right).toBe(0)
+    expect(store.getState().camera.top).toBe(0)
+    expect(store.getState().camera.bottom).toBe(0)
+  })
 })
