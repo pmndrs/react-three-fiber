@@ -65,6 +65,7 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
+  isHidden: boolean
   autoRemovedBeforeAppend?: boolean
 }
 
@@ -275,6 +276,16 @@ function switchInstance(
   props: HostConfig['props'],
   fiber: Reconciler.Fiber,
 ) {
+  // If the old instance is hidden, we need to unhide it.
+  // This only possible because an instance be hidden but not unhidden with the React reconciler for reasons I don't understand.
+  // We manualy check if it was hidden and unhide it.
+  if (oldInstance.isHidden) {
+    oldInstance.isHidden = false
+    if (isObject3D(oldInstance.object) && oldInstance.props.visible !== false) {
+      oldInstance.object.visible = true
+    }
+  }
+
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
 
@@ -406,8 +417,22 @@ export const reconciler = Reconciler<
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
-  hideInstance() {},
-  unhideInstance() {},
+  hideInstance(instance) {
+    if (isObject3D(instance.object)) {
+      instance.object.visible = false
+    }
+
+    instance.isHidden = true
+    invalidateInstance(instance)
+  },
+  unhideInstance(instance) {
+    if (isObject3D(instance.object) && instance.props.visible !== false && instance.isHidden) {
+      instance.object.visible = true
+    }
+
+    instance.isHidden = false
+    invalidateInstance(instance)
+  },
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,

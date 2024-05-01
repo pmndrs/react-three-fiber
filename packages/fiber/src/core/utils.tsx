@@ -240,6 +240,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       object,
       eventCount: 0,
       handlers: {},
+      isHidden: false,
     }
     if (object) {
       object.__r3f = instance
