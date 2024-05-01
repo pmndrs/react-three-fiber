@@ -277,8 +277,9 @@ function switchInstance(
   fiber: Reconciler.Fiber,
 ) {
   // If the old instance is hidden, we need to unhide it.
-  // This only possible because an instance be hidden but not unhidden with the React reconciler for reasons I don't understand.
-  // We manualy check if it was hidden and unhide it.
+  // React assumes it can discard instances since they're pure for DOM.
+  // This isn't true for us since our lifetimes are impure and longliving.
+  // So, we manually check if an instance was hidden and unhide it.
   if (oldInstance.isHidden) {
     oldInstance.isHidden = false
     if (isObject3D(oldInstance.object) && oldInstance.props.visible !== false) {
