@@ -315,7 +315,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
         }
 
-        state.set({ scene })
+        state.set((state) => ({ scene, internal: { ...state.internal, container: scene } }))
       }
 
       // Set up XR (one time only!)
@@ -563,7 +563,11 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       get: injectState.get,
       set: injectState.set,
       // Portals have their own scene, which forms the root, a raycaster and a pointer
-      scene: container as THREE.Scene,
+      scene: container instanceof THREE.Scene ? container : new THREE.Scene(),
+      internal: {
+        ...rootState.internal,
+        container,
+      },
       raycaster,
       pointer,
       mouse: pointer,

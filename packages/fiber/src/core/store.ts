@@ -54,6 +54,7 @@ export const isRenderer = (def: any) => !!def?.render
 export type StageTypes = Stage | FixedStage
 
 export interface InternalState {
+  container: THREE.Object3D
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
@@ -233,6 +234,8 @@ export const createStore = (
       },
       previousRoot: undefined,
       internal: {
+        container: null as unknown as THREE.Object3D,
+
         // Events
         interaction: [],
         hovered: new Map<string, ThreeEvent<DomEvent>>(),

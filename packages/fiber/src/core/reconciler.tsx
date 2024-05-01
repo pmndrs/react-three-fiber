@@ -159,7 +159,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Bail if tree isn't mounted or parent is not a container.
   // This ensures that the tree is finalized and React won't discard results to Suspense
   const state = child.root.getState()
-  if (!parent.parent && parent.object !== state.scene) return
+  if (!parent.parent && parent.object !== state.internal.container) return
 
   // Create & link object on first run
   if (!child.object) {
@@ -383,19 +383,19 @@ export const reconciler = Reconciler<
   appendInitialChild: appendChild,
   insertBefore,
   appendChildToContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().internal.container as unknown as Instance<THREE.Object3D>['object']).__r3f
     if (!child || !scene) return
 
     appendChild(scene, child)
   },
   removeChildFromContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().internal.container as unknown as Instance<THREE.Object3D>['object']).__r3f
     if (!child || !scene) return
 
     removeChild(scene, child)
   },
   insertInContainerBefore(container, child, beforeChild) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().internal.container as unknown as Instance<THREE.Object3D>['object']).__r3f
     if (!child || !beforeChild || !scene) return
 
     insertBefore(scene, child, beforeChild)
@@ -435,7 +435,7 @@ export const reconciler = Reconciler<
   commitMount() {},
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
-  preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
+  preparePortalMount: (container) => prepare(container.getState().internal.container, container, '', {}),
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
