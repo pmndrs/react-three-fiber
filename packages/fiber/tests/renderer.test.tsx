@@ -571,6 +571,112 @@ describe('renderer', () => {
     expect((await b).visible).toBe(true)
   })
 
+  it('should hide suspended objects when displaying fallback', async () => {
+    const a = new THREE.Object3D()
+    const b = new THREE.Object3D()
+    const fallback = new THREE.Object3D()
+
+    let resolveA: () => void
+    const aPromise = new Promise<THREE.Object3D>((res) => {
+      resolveA = () => res(a)
+    })
+
+    let resolveB: () => void
+    const bPromise = new Promise<THREE.Object3D>((res) => {
+      resolveB = () => res(b)
+    })
+
+    function Fallback() {
+      return <primitive object={fallback} />
+    }
+
+    function AsyncPrimitive({ object }: { object: Promise<THREE.Object3D> }) {
+      return <primitive object={React.use(object)} />
+    }
+
+    // Mount unresolved A promise.
+    // Fallback should be mounted and nothing else.
+    const store = await act(async () =>
+      root.render(
+        <React.Suspense fallback={<Fallback />}>
+          <AsyncPrimitive object={aPromise} />
+        </React.Suspense>,
+      ),
+    )
+
+    const scene = store.getState().scene as THREE.Scene
+
+    expect(a.visible).toBe(true)
+    expect(b.visible).toBe(true)
+    expect(scene.children.includes(fallback)).toBe(true)
+    expect(scene.children.includes(a)).toBe(false)
+
+    // Resolve A promise.
+    // A should be mounted and visible and fallback should be unmounted.
+    await act(async () => resolveA())
+    await act(async () =>
+      root.render(
+        <React.Suspense fallback={<Fallback />}>
+          <AsyncPrimitive object={aPromise} />
+        </React.Suspense>,
+      ),
+    )
+
+    expect(a.visible).toBe(true)
+    expect(b.visible).toBe(true)
+    expect(scene.children.includes(fallback)).toBe(false)
+    expect(scene.children.includes(a)).toBe(true)
+
+    // Mount unresolved B promise.
+    // A should remain mounted but be invisible, Fallback is mounted, B is unmounted.
+    await act(async () =>
+      root.render(
+        <React.Suspense fallback={<Fallback />}>
+          <AsyncPrimitive object={bPromise} />
+        </React.Suspense>,
+      ),
+    )
+
+    expect(a.visible).toBe(false)
+    expect(b.visible).toBe(true)
+    expect(scene.children.includes(fallback)).toBe(true)
+    expect(scene.children.includes(a)).toBe(true)
+    expect(scene.children.includes(b)).toBe(false)
+
+    // Resolve B promise.
+    // B should be mounted and visible, fallback should be unmounted, A also unmounted and unhidden.
+    await act(async () => resolveB())
+    await act(async () =>
+      root.render(
+        <React.Suspense fallback={<Fallback />}>
+          <AsyncPrimitive object={bPromise} />
+        </React.Suspense>,
+      ),
+    )
+
+    expect(a.visible).toBe(true)
+    expect(b.visible).toBe(true)
+    expect(scene.children.includes(fallback)).toBe(false)
+    expect(scene.children.includes(a)).toBe(false)
+    expect(scene.children.includes(b)).toBe(true)
+
+    // Remount resolved A promise.
+    // A should be mounted and visible, B should be unmounted and visible (not hidden), fallback should be unmounted.
+    await act(async () =>
+      root.render(
+        <React.Suspense fallback={<Fallback />}>
+          <AsyncPrimitive object={aPromise} />
+        </React.Suspense>,
+      ),
+    )
+
+    expect(a.visible).toBe(true)
+    expect(b.visible).toBe(true)
+    expect(scene.children.includes(fallback)).toBe(false)
+    expect(scene.children.includes(a)).toBe(true)
+    expect(scene.children.includes(b)).toBe(false)
+  })
+
   it('preserves camera frustum props for perspective', async () => {
     const store = await act(async () => root.configure({ camera: { aspect: 0 } }).render(null))
     const camera = store.getState().camera as THREE.PerspectiveCamera
