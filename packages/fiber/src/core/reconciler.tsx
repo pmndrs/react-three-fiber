@@ -128,24 +128,29 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
 }
 
 function hideInstance(instance: HostConfig['instance']): void {
-  if (instance.props.attach && instance.parent?.object) {
-    attach(instance.parent, instance)
-  } else if (isObject3D(instance.object) && instance.props.visible !== false) {
-    instance.object.visible = true
-  }
+  if (!instance.isHidden) {
+    if (instance.props.attach && instance.parent?.object) {
+      detach(instance.parent, instance)
+    } else if (isObject3D(instance.object)) {
+      instance.object.visible = false
+    }
 
-  instance.isHidden = true
-  invalidateInstance(instance)
+    instance.isHidden = true
+    invalidateInstance(instance)
+  }
 }
-function unhideInstance(instance: HostConfig['instance']): void {
-  if (instance.props.attach && instance.parent?.object) {
-    detach(instance.parent, instance)
-  } else if (isObject3D(instance.object)) {
-    instance.object.visible = false
-  }
 
-  instance.isHidden = false
-  invalidateInstance(instance)
+function unhideInstance(instance: HostConfig['instance']): void {
+  if (instance.isHidden) {
+    if (instance.props.attach && instance.parent?.object) {
+      attach(instance.parent, instance)
+    } else if (isObject3D(instance.object) && instance.props.visible !== false) {
+      instance.object.visible = true
+    }
+
+    instance.isHidden = false
+    invalidateInstance(instance)
+  }
 }
 
 // https://github.com/facebook/react/issues/20271
