@@ -127,6 +127,27 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   return instance
 }
 
+function hideInstance(instance: HostConfig['instance']): void {
+  if (instance.props.attach && instance.parent?.object) {
+    attach(instance.parent, instance)
+  } else if (isObject3D(instance.object) && instance.props.visible !== false) {
+    instance.object.visible = true
+  }
+
+  instance.isHidden = true
+  invalidateInstance(instance)
+}
+function unhideInstance(instance: HostConfig['instance']): void {
+  if (instance.props.attach && instance.parent?.object) {
+    detach(instance.parent, instance)
+  } else if (isObject3D(instance.object)) {
+    instance.object.visible = false
+  }
+
+  instance.isHidden = false
+  invalidateInstance(instance)
+}
+
 // https://github.com/facebook/react/issues/20271
 // This will make sure events and attach are only handled once when trees are complete
 function handleContainerEffects(parent: Instance, child: Instance, beforeChild?: Instance) {
@@ -280,12 +301,7 @@ function switchInstance(
   // React assumes it can discard instances since they're pure for DOM.
   // This isn't true for us since our lifetimes are impure and longliving.
   // So, we manually check if an instance was hidden and unhide it.
-  if (oldInstance.isHidden) {
-    oldInstance.isHidden = false
-    if (isObject3D(oldInstance.object) && oldInstance.props.visible !== false) {
-      oldInstance.object.visible = true
-    }
-  }
+  if (oldInstance.isHidden) unhideInstance(oldInstance)
 
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
@@ -418,22 +434,8 @@ export const reconciler = Reconciler<
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
-  hideInstance(instance) {
-    if (isObject3D(instance.object)) {
-      instance.object.visible = false
-    }
-
-    instance.isHidden = true
-    invalidateInstance(instance)
-  },
-  unhideInstance(instance) {
-    if (isObject3D(instance.object) && instance.props.visible !== false && instance.isHidden) {
-      instance.object.visible = true
-    }
-
-    instance.isHidden = false
-    invalidateInstance(instance)
-  },
+  hideInstance,
+  unhideInstance,
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
