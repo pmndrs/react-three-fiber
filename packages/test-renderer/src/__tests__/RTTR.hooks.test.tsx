@@ -1,7 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
-
 import ReactThreeTestRenderer from '../index'
 
 describe('ReactThreeTestRenderer Hooks', () => {
@@ -36,14 +35,14 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    class Loader extends THREE.Loader {
+    class MockLoader extends THREE.Loader {
       load(url: string, onLoad: (mesh: THREE.Mesh) => void): void {
         onLoad(MockMesh)
       }
     }
 
     const Component = () => {
-      const model = useLoader(Loader, '/suzanne.glb')
+      const model = useLoader(MockLoader, gltfUri)
 
       return <primitive object={model} />
     }

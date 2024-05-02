@@ -1,10 +1,14 @@
 import * as THREE from 'three'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
 import { extend } from '@react-three/fiber'
+// import 'whatwg-fetch'
+import { createDataUriFromGltf } from './utils/createDataUriFromGltf'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
   var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
+  var gltfUri: string
+  var altGltfUri: string
 }
 
 // Let React know that we'll be testing effectful components
@@ -66,6 +70,10 @@ class MockCache {
   async delete(url: string) {
     return this.store.delete(url)
   }
+
+  async keys() {
+    return Array.from(this.store.keys())
+  }
 }
 
 class MockCacheStorage {
@@ -88,3 +96,7 @@ class MockCacheStorage {
 }
 
 globalThis.caches = new MockCacheStorage() as any
+
+// Add gltf data URI to global scope
+globalThis.gltfUri = createDataUriFromGltf(__dirname + '/assets/diamond.gltf')
+globalThis.altGltfUri = createDataUriFromGltf(__dirname + '/assets/lightning.gltf')

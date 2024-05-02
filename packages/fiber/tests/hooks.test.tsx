@@ -15,6 +15,11 @@ import {
   Instance,
   extend,
 } from '../src'
+import { promiseCaches } from '../src/core/cache'
+
+interface GLTF {
+  scene: THREE.Object3D
+}
 
 extend(THREE as any)
 const root = createRoot(document.createElement('canvas'))
@@ -24,6 +29,8 @@ describe('hooks', () => {
 
   beforeEach(() => {
     canvas = createCanvas()
+    // Clear all caches before each test
+    promiseCaches.forEach(async (cache) => await cache.clear())
   })
 
   it('can handle useThree hook', async () => {
@@ -90,10 +97,7 @@ describe('hooks', () => {
     const MockMesh = new THREE.Mesh()
     MockMesh.name = 'Scene'
 
-    interface GLTF {
-      scene: THREE.Object3D
-    }
-    class GLTFLoader extends THREE.Loader {
+    class MockGLTFLoader extends THREE.Loader {
       load(url: string, onLoad: (gltf: GLTF) => void): void {
         onLoad({ scene: MockMesh })
       }
@@ -101,7 +105,33 @@ describe('hooks', () => {
 
     let gltf!: GLTF & ObjectMap
     const Component = () => {
-      gltf = useLoader(GLTFLoader, '/suzanne.glb')
+      gltf = useLoader(MockGLTFLoader, gltfUri)
+      return <primitive object={gltf.scene} />
+    }
+
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
+
+    expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
+  })
+
+  it('can handle useLoader with an existing loader instance', async () => {
+    const MockMesh = new THREE.Mesh()
+    MockMesh.name = 'Scene'
+
+    class MockGLTFLoader extends THREE.Loader {
+      load(url: string, onLoad: (gltf: GLTF) => void): void {
+        onLoad({ scene: MockMesh })
+      }
+    }
+
+    const loader = new MockGLTFLoader()
+
+    let gltf!: GLTF & ObjectMap
+    const Component = () => {
+      gltf = useLoader(loader, gltfUri)
       return <primitive object={gltf.scene} />
     }
 
@@ -127,6 +157,7 @@ describe('hooks', () => {
     mesh2.name = 'Mesh 2'
     MockGroup.add(mesh1, mesh2)
 
+    // Note: This will fail if loader gets two of the same urls since it will only call once instead of twice due to caching.
     class TestLoader extends THREE.Loader {
       load = jest
         .fn()
@@ -138,10 +169,8 @@ describe('hooks', () => {
         })
     }
 
-    const extensions = jest.fn()
-
     const Component = () => {
-      const [mockMesh, mockScene] = useLoader(TestLoader, ['/suzanne.glb', '/myModels.glb'], extensions)
+      const [mockMesh, mockScene] = useLoader(TestLoader, [gltfUri, altGltfUri])
 
       return (
         <>
@@ -156,42 +185,6 @@ describe('hooks', () => {
 
     expect(scene.children[0]).toBe(MockMesh)
     expect(scene.children[1]).toBe(MockGroup)
-    expect(extensions).toBeCalledTimes(1)
-  })
-
-  it('can handle useLoader with an existing loader instance', async () => {
-    class Loader extends THREE.Loader {
-      load(_url: string, onLoad: (result: null) => void): void {
-        onLoad(null)
-      }
-    }
-
-    const loader = new Loader()
-    let proto!: Loader
-
-    function Test(): null {
-      return useLoader(loader, '', (loader) => (proto = loader))
-    }
-    await act(async () => root.render(<Test />))
-
-    expect(proto).toBe(loader)
-  })
-
-  it('can handle useLoader with a loader extension', async () => {
-    class Loader extends THREE.Loader {
-      load(_url: string, onLoad: (result: null) => void): void {
-        onLoad(null)
-      }
-    }
-
-    let proto!: Loader
-
-    function Test(): null {
-      return useLoader(Loader, '', (loader) => (proto = loader))
-    }
-    await act(async () => root.render(<Test />))
-
-    expect(proto).toBeInstanceOf(Loader)
   })
 
   it('can handle useGraph hook', async () => {
