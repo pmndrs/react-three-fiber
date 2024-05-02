@@ -97,7 +97,7 @@ const loaderCaches = new Map<Loader<any>, PromiseCache>()
 const isConstructor = <T,>(value: unknown): value is LoaderProto<T> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
-function prepareLoaderInstance(loader: Loader<any> | LoaderProto<any>, extensions?: Extensions<any>): Loader<any> {
+function prepareLoaderInstance(loader: Loader<any> | LoaderProto<any>): Loader<any> {
   let loaderInstance: Loader<any>
 
   // Construct and cache loader if constructor was passed
@@ -110,9 +110,6 @@ function prepareLoaderInstance(loader: Loader<any> | LoaderProto<any>, extension
   } else {
     loaderInstance = loader as Loader<any>
   }
-
-  // Apply loader extensions
-  if (extensions) extensions(loaderInstance)
 
   if (!loaderCaches.has(loaderInstance)) {
     loaderCaches.set(loaderInstance, new PromiseCache(cacheName))
@@ -136,11 +133,10 @@ async function loadAsset(url: string, loaderInstance: Loader<any>, onProgress?: 
 export function useLoader<T, U extends string | string[] | string[][]>(
   loader: Loader<T> | LoaderProto<T>,
   input: U,
-  extensions?: Extensions<T>,
   onProgress?: (event: ProgressEvent) => void,
 ): U extends any[] ? LoaderResult<T>[] : LoaderResult<T> {
   const urls = (Array.isArray(input) ? input : [input]) as string[]
-  const loaderInstance = prepareLoaderInstance(loader, extensions)
+  const loaderInstance = prepareLoaderInstance(loader)
   const cache = loaderCaches.get(loaderInstance)!
 
   let results: any[] = []
@@ -161,10 +157,9 @@ export function useLoader<T, U extends string | string[] | string[][]>(
 useLoader.preload = function <T, U extends string | string[] | string[][]>(
   loader: Loader<T> | LoaderProto<T>,
   input: U,
-  extensions?: Extensions<T>,
 ): void {
   const urls = (Array.isArray(input) ? input : [input]) as string[]
-  const loaderInstance = prepareLoaderInstance(loader, extensions)
+  const loaderInstance = prepareLoaderInstance(loader)
   const cache = loaderCaches.get(loaderInstance)!
 
   for (const url of urls) {
