@@ -34,21 +34,19 @@ describe('ReactThreeTestRenderer Hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
-    const MockMesh = new THREE.Mesh()
-    class MockLoader extends THREE.Loader {
-      load(url: string, onLoad: (mesh: THREE.Mesh) => void): void {
-        onLoad(MockMesh)
-      }
-    }
+    let json: Record<string, any> = {}
 
     const Component = () => {
-      const model = useLoader(MockLoader, gltfUri)
+      const gltf = useLoader(MockLoader, gltfs.diamond)
+      json = gltf.json
 
-      return <primitive object={model} />
+      return <primitive object={gltf.scene} />
     }
 
     const renderer = await ReactThreeTestRenderer.create(<Component />)
+
     expect(renderer.scene.children[0].instance).toBe(MockMesh)
+    expect(json.nodes[0].name).toEqual('Diamond')
   })
 
   it('can handle useFrame hook using test renderers advanceFrames function', async () => {

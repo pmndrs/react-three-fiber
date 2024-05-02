@@ -1,14 +1,17 @@
 import * as THREE from 'three'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
 import { extend } from '@react-three/fiber'
-// import 'whatwg-fetch'
 import { createDataUriFromGltf } from './utils/createDataUriFromGltf'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
   var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
-  var gltfUri: string
-  var altGltfUri: string
+  var gltfs: {
+    diamond: string
+    lightning: string
+  }
+  var MockLoader: typeof _MockLoader
+  var MockMesh: THREE.Mesh
 }
 
 // Let React know that we'll be testing effectful components
@@ -97,6 +100,22 @@ class MockCacheStorage {
 
 globalThis.caches = new MockCacheStorage() as any
 
-// Add gltf data URI to global scope
-globalThis.gltfUri = createDataUriFromGltf(__dirname + '/assets/diamond.gltf')
-globalThis.altGltfUri = createDataUriFromGltf(__dirname + '/assets/lightning.gltf')
+// Add gltf data URIs to the global scope
+globalThis.gltfs = {
+  diamond: createDataUriFromGltf(__dirname + '/assets/diamond.gltf'),
+  lightning: createDataUriFromGltf(__dirname + '/assets/lightning.gltf'),
+}
+
+// Add mock gltf loader to the global scope
+globalThis.MockMesh = new THREE.Mesh()
+globalThis.MockMesh.name = 'Scene'
+
+class _MockLoader extends THREE.Loader {
+  load(url: string, onLoad: (result: { scene: THREE.Mesh; json: Record<string, any> }) => void): void {
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => onLoad({ scene: globalThis.MockMesh, json: data }))
+  }
+}
+
+globalThis.MockLoader = _MockLoader
