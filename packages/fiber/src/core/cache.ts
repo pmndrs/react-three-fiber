@@ -75,6 +75,13 @@ export class PromiseCache {
     this.promises.delete(url)
     return this.cachePromise.then((cache) => cache.delete(url))
   }
+
+  async clear() {
+    this.promises.clear()
+    return this.cachePromise.then((cache) =>
+      cache.keys().then((keys) => Promise.all(keys.map((key) => cache.delete(key)))),
+    )
+  }
 }
 
 export const cacheName = 'assets'
