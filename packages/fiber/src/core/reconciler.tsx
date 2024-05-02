@@ -65,6 +65,7 @@ export interface Instance<O = any> {
   handlers: Partial<EventHandlers>
   attach?: AttachType<O>
   previousAttach?: any
+  isHidden: boolean
   autoRemovedBeforeAppend?: boolean
 }
 
@@ -124,6 +125,32 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   const instance = prepare(props.object, root, type, props)
 
   return instance
+}
+
+function hideInstance(instance: HostConfig['instance']): void {
+  if (!instance.isHidden) {
+    if (instance.props.attach && instance.parent?.object) {
+      detach(instance.parent, instance)
+    } else if (isObject3D(instance.object)) {
+      instance.object.visible = false
+    }
+
+    instance.isHidden = true
+    invalidateInstance(instance)
+  }
+}
+
+function unhideInstance(instance: HostConfig['instance']): void {
+  if (instance.isHidden) {
+    if (instance.props.attach && instance.parent?.object) {
+      attach(instance.parent, instance)
+    } else if (isObject3D(instance.object) && instance.props.visible !== false) {
+      instance.object.visible = true
+    }
+
+    instance.isHidden = false
+    invalidateInstance(instance)
+  }
 }
 
 // https://github.com/facebook/react/issues/20271
@@ -275,6 +302,12 @@ function switchInstance(
   props: HostConfig['props'],
   fiber: Reconciler.Fiber,
 ) {
+  // If the old instance is hidden, we need to unhide it.
+  // React assumes it can discard instances since they're pure for DOM.
+  // This isn't true for us since our lifetimes are impure and longliving.
+  // So, we manually check if an instance was hidden and unhide it.
+  if (oldInstance.isHidden) unhideInstance(oldInstance)
+
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root)
 
@@ -406,8 +439,8 @@ export const reconciler = Reconciler<
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
-  hideInstance() {},
-  unhideInstance() {},
+  hideInstance,
+  unhideInstance,
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
