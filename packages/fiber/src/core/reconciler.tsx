@@ -104,7 +104,12 @@ export const extend = <T extends Catalogue | ConstructorRepresentation>(
   }
 }
 
-function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
+function createInstance(
+  type: string,
+  props: HostConfig['props'],
+  root: RootStore,
+  flushPrimitive = true,
+): HostConfig['instance'] {
   // Get target from catalogue
   const name = `${type[0].toUpperCase()}${type.slice(1)}`
   const target = catalogue[name]
@@ -120,6 +125,9 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
 
   // Throw if an object or literal was passed for args
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
+
+  // Regenerate the R3F instance for primitives to simulate a new object
+  if (flushPrimitive && type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
 
   // Create instance
   const instance = prepare(props.object, root, type, props)
@@ -309,7 +317,12 @@ function switchInstance(
   if (oldInstance.isHidden) unhideInstance(oldInstance)
 
   // Create a new instance
-  const newInstance = createInstance(type, props, oldInstance.root)
+  const newInstance = createInstance(type, props, oldInstance.root, false)
+
+  // Update attach props for primitives since we don't flush them
+  if (type === 'primitive') {
+    newInstance.props.attach = props.attach
+  }
 
   // Move children to new instance
   for (const child of oldInstance.children) {
@@ -377,7 +390,9 @@ export const reconciler = Reconciler<
   supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  createInstance,
+  createInstance(type, props, root) {
+    return createInstance(type, props, root)
+  },
   removeChild,
   appendChild,
   appendInitialChild: appendChild,
