@@ -85,6 +85,69 @@ describe('renderer', () => {
     expect(object.name).toBe('primitive')
   })
 
+  it('should remove children from primitive when unmounted', async () => {
+    const object = new THREE.Group()
+
+    function Parent({ children, show }: { children: React.ReactNode; show: boolean }) {
+      return show ? <primitive object={object}>{children}</primitive> : null
+    }
+
+    function Component({ show }: { show: boolean }) {
+      return (
+        <Parent show={show}>
+          <group name="A" />
+          <group name="B" />
+        </Parent>
+      )
+    }
+
+    const store = await act(async () => root.render(<Component show={true} />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBe(object)
+    expect(object.children.length).toBe(2)
+
+    await act(async () => root.render(<Component show={false} />))
+
+    expect(scene.children.length).toBe(0)
+    expect(object.children.length).toBe(0)
+  })
+
+  it('should remove then add children from primitive when key changes', async () => {
+    const object = new THREE.Group()
+
+    function Parent({ children, primitiveKey }: { children: React.ReactNode; primitiveKey: string }) {
+      return (
+        <primitive key={primitiveKey} object={object}>
+          {children}
+        </primitive>
+      )
+    }
+
+    function Component({ primitiveKey }: { primitiveKey: string }) {
+      return (
+        <Parent primitiveKey={primitiveKey}>
+          <group name="A" />
+          <group name="B" />
+        </Parent>
+      )
+    }
+
+    const store = await act(async () => root.render(<Component primitiveKey="A" />))
+    const { scene } = store.getState()
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBe(object)
+    expect(object.children.length).toBe(2)
+
+    await act(async () => root.render(<Component primitiveKey="B" />))
+
+    expect(scene.children.length).toBe(1)
+    expect(scene.children[0]).toBe(object)
+    expect(object.children.length).toBe(2)
+  })
+
   it('should go through lifecycle', async () => {
     const lifecycle: string[] = []
 
@@ -423,8 +486,8 @@ describe('renderer', () => {
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
       <>
-        {array.map((group, i) => (
-          <primitive key={i} object={group} />
+        {array.map((group) => (
+          <primitive key={group.name} object={group} />
         ))}
       </>
     )

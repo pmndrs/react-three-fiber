@@ -121,6 +121,9 @@ function createInstance(type: string, props: HostConfig['props'], root: RootStor
   // Throw if an object or literal was passed for args
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
 
+  // Regenerate the R3F instance for primitives to simulate a new object
+  if (type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
+
   // Create instance
   const instance = prepare(props.object, root, type, props)
 
