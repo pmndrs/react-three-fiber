@@ -519,7 +519,7 @@ describe('renderer', () => {
     const c = new THREE.Group()
     c.name = 'c'
     const d = new THREE.Group()
-    d.name = 'c'
+    d.name = 'd'
     const array = [a, b, c, d]
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
