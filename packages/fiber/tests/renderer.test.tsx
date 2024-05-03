@@ -486,8 +486,8 @@ describe('renderer', () => {
 
     const Test = ({ array }: { array: THREE.Group[] }) => (
       <>
-        {array.map((group) => (
-          <primitive key={group.name} object={group} />
+        {array.map((group, i) => (
+          <primitive key={i} object={group} />
         ))}
       </>
     )
