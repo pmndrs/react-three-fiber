@@ -507,8 +507,6 @@ describe('renderer', () => {
     expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
-  // TODO: fix this case, also see:
-  // https://github.com/pmndrs/react-three-fiber/issues/1892
   // https://github.com/pmndrs/react-three-fiber/issues/3125
   // https://github.com/pmndrs/react-three-fiber/issues/3143
   it('can swap 4 array primitives via attach', async () => {
