@@ -560,10 +560,9 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
     return {
       // The intersect consists of the previous root state
       ...rootState,
+      ...injectState,
       get: injectState.get,
       set: injectState.set,
-      // Portals have their own scene, which forms the root, a raycaster and a pointer
-      scene: container instanceof THREE.Scene ? container : new THREE.Scene(),
       internal: {
         ...rootState.internal,
         container,
