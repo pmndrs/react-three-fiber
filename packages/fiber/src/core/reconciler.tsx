@@ -319,6 +319,11 @@ function switchInstance(
   // Create a new instance
   const newInstance = createInstance(type, props, oldInstance.root, false)
 
+  // Update attach props for primitives since we don't flush them
+  if (type === 'primitive') {
+    newInstance.props.attach = props.attach
+  }
+
   // Move children to new instance
   for (const child of oldInstance.children) {
     removeChild(oldInstance, child, false, false)

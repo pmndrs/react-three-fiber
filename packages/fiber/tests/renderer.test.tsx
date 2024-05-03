@@ -511,7 +511,7 @@ describe('renderer', () => {
   // https://github.com/pmndrs/react-three-fiber/issues/1892
   // https://github.com/pmndrs/react-three-fiber/issues/3125
   // https://github.com/pmndrs/react-three-fiber/issues/3143
-  it.skip('can swap 4 array primitives via attach', async () => {
+  it('can swap 4 array primitives via attach', async () => {
     const a = new THREE.Group()
     a.name = 'a'
     const b = new THREE.Group()
