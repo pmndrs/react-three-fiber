@@ -51,6 +51,7 @@ describe('createRoot', () => {
     expect(camera.position.z).toEqual(5)
   })
 
+  // TODO: deprecate
   it('should handle an performance changing functions', async () => {
     let store: RootStore = null!
     await act(async () => {
@@ -83,6 +84,20 @@ describe('createRoot', () => {
     expect(store.getState().performance.current).toEqual(1)
 
     jest.useRealTimers()
+  })
+
+  it('should handle the DPR prop reactively', async () => {
+    // Initial clamp
+    const store = await act(async () => root.configure({ dpr: [1, 2] }).render(<group />))
+    expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
+
+    // Reactive update
+    await act(async () => store.getState().setDpr(0.1))
+    expect(store.getState().viewport.dpr).toEqual(0.1)
+
+    // Reactive clamp
+    await act(async () => store.getState().setDpr([1, 2]))
+    expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
