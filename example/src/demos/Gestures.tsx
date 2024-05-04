@@ -3,12 +3,12 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useDrag } from '@use-gesture/react'
 
 function Obj({ scale = 1, z = 0, opacity = 1 }) {
-  const { size } = useThree()
+  const { viewport } = useThree()
   const [hovered, hover] = useState(false)
   const [position, set] = useState<[number, number, number]>([0, 0, z])
   const bind = useDrag(({ event, offset: [x, y] }) => {
     event.stopPropagation()
-    const aspect = size.width / size.height
+    const aspect = viewport.getCurrentViewport().factor
     set([x / aspect, -y / aspect, z])
   })
 

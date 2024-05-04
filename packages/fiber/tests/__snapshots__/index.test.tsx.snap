@@ -76,6 +76,7 @@ Array [
   "Vector3",
   "Vector4",
   "VectorRepresentation",
+  "Viewport",
   "WithMathProps",
   "XRManager",
   "_roots",

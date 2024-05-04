@@ -30,6 +30,7 @@ export type {
   Subscription,
   Dpr,
   Size,
+  Viewport,
   RenderCallback,
   UpdateCallback,
   LegacyAlways,
