@@ -66,6 +66,8 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     const viewRef = React.useRef<View>(null!)
     const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
 
+    const [antialias, setAntialias] = React.useState<boolean>(true)
+
     const onLayout = React.useCallback((e: LayoutChangeEvent) => {
       const { width, height, x, y } = e.nativeEvent.layout
       setSize({ width, height, top: y, left: x })
@@ -81,7 +83,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         addEventListener: (() => {}) as any,
         removeEventListener: (() => {}) as any,
         clientHeight: context.drawingBufferHeight,
-        getContext: (() => context) as any,
+        getContext: ((_: any, { antialias = false }) => {
+          setAntialias(antialias)
+          return context
+        }) as any,
       } as HTMLCanvasElement
 
       root.current = createRoot<HTMLCanvasElement>(canvasShim)
@@ -141,7 +146,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     return (
       <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
-        {width > 0 && <GLView msaaSamples={0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />}
+        {width > 0 && (
+          <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
+        )}
       </View>
     )
   },

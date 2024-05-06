@@ -7,8 +7,9 @@ import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './re
 import { Dpr, Renderer, RootState, Size } from './store'
 
 // < r141 shipped vendored types https://github.com/pmndrs/react-three-fiber/issues/2501
-// @ts-ignore
+/** @ts-ignore */
 type _DeprecatedXRFrame = THREE.XRFrame
+/** @ts-ignore */
 export type _XRFrame = THREE.WebGLRenderTargetOptions extends { samples?: number } ? XRFrame : _DeprecatedXRFrame
 
 /**
@@ -106,6 +107,15 @@ export function calculateDpr(dpr: Dpr) {
  */
 export const getRootState = (obj: THREE.Object3D): RootState | undefined =>
   (obj as unknown as Instance).__r3f?.root.getState()
+
+/**
+ * Returns the instances initial (outmost) root
+ */
+export function findInitialRoot(child: Instance) {
+  let root = child.__r3f.root
+  while (root.getState().previousRoot) root = root.getState().previousRoot!
+  return root
+}
 
 export type EquConfig = {
   /** Compare arrays by reference equality a === b (default), or by shallow equality */
@@ -417,12 +427,14 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     invalidateInstance(instance)
   }
 
-  if (localState.parent && rootState.internal && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (localState.parent && instance.raycast && prevHandlers !== localState.eventCount) {
+    // Get the initial root state's internals
+    const internal = findInitialRoot(instance).getState().internal
     // Pre-emptively remove the instance from the interaction manager
-    const index = rootState.internal.interaction.indexOf(instance as unknown as THREE.Object3D)
-    if (index > -1) rootState.internal.interaction.splice(index, 1)
+    const index = internal.interaction.indexOf(instance as unknown as THREE.Object3D)
+    if (index > -1) internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (localState.eventCount) rootState.internal.interaction.push(instance as unknown as THREE.Object3D)
+    if (localState.eventCount) internal.interaction.push(instance as unknown as THREE.Object3D)
   }
 
   // Call the update lifecycle when it is being updated, but only when it is part of the scene.

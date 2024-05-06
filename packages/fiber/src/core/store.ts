@@ -3,6 +3,7 @@ import * as React from 'react'
 import create, { GetState, SetState, StoreApi, UseBoundStore } from 'zustand'
 import { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { _XRFrame, calculateDpr, Camera, isOrthographicCamera, updateCamera } from './utils'
+import { Advance, Invalidate } from './loop'
 
 // Keys that shouldn't be copied between R3F stores
 export const privateKeys = [
@@ -156,7 +157,7 @@ export type RootState = {
   setFrameloop: (frameloop?: 'always' | 'demand' | 'never') => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
-  /** If this state model is layerd (via createPortal) then this contains the previous layer */
+  /** If this state model is layered (via createPortal) then this contains the previous layer */
   previousRoot?: UseBoundStore<RootState, StoreApi<RootState>>
   /** Internals */
   internal: InternalState
@@ -164,10 +165,7 @@ export type RootState = {
 
 const context = React.createContext<UseBoundStore<RootState>>(null!)
 
-const createStore = (
-  invalidate: (state?: RootState, frames?: number) => void,
-  advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: _XRFrame) => void,
-): UseBoundStore<RootState> => {
+const createStore = (invalidate: Invalidate, advance: Advance): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
     const defaultTarget = new THREE.Vector3()

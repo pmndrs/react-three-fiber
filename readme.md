@@ -75,8 +75,9 @@ function Box(props) {
 
 createRoot(document.getElementById('root')).render(
   <Canvas>
-    <ambientLight />
-    <pointLight position={[10, 10, 10]} />
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
@@ -117,8 +118,9 @@ function Box(props: ThreeElements['mesh']) {
 
 createRoot(document.getElementById('root') as HTMLElement).render(
   <Canvas>
-    <ambientLight />
-    <pointLight position={[10, 10, 10]} />
+    <ambientLight intensity={Math.PI / 2} />
+    <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+    <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
@@ -182,8 +184,9 @@ function Box(props) {
 export default function App() {
   return (
     <Canvas>
-      <ambientLight />
-      <pointLight position={[10, 10, 10]} />
+      <ambientLight intensity={Math.PI / 2} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} decay={0} intensity={Math.PI} />
+      <pointLight position={[-10, -10, -10]} decay={0} intensity={Math.PI} />
       <Box position={[-1.2, 0, 0]} />
       <Box position={[1.2, 0, 0]} />
     </Canvas>
@@ -223,6 +226,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers, this is an eco system in itself
 - [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
 - [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
+- [`@react-three/uikit`](https://github.com/pmndrs/uikit) &ndash; WebGL rendered UI components for three-fiber
 - [`@react-three/test-renderer`](https://github.com/pmndrs/react-three-fiber/tree/master/packages/test-renderer) &ndash; for unit tests in node
 - [`@react-three/offscreen`](https://github.com/pmndrs/react-three-offscreen) &ndash; offscreen/worker canvas for react-three-fiber
 - [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
@@ -247,6 +251,29 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
 - [`triplex`](https://triplex.dev/) &ndash; scene editor for react-three-fiber
 - [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
+
+# Who is using Three-fiber
+
+A small selection of companies and projects relying on three-fiber.
+
+- [`vercel`](https://www.vercel.com) (design agency)
+- [`basement`](https://basement.studio) (design agency)
+- [`studio freight`](https://studiofreight.com) (design agency)
+- [`14 islands`](https://www.14islands.com) (design agency)
+- [`ueno`](https://dribbble.com/ueno) (design agency) — [video](https://twitter.com/0xca0a/status/1204373807408013312)
+- [`flux.ai`](https://www.flux.ai) (PCB builder)
+- [`colorful.app`](https://www.colorful.app) (modeller)
+- [`bezi`](https://www.bezi.com) (modeller)
+- [`readyplayer.me`](https://readyplayer.me) (avatar configurator)
+- [`zillow`](https://www.zillow.com) (real estate)
+- [`lumalabs.ai/genie`](https://lumalabs.ai/genie) (AI models)
+- [`skybox.blockadelabs`](https://skybox.blockadelabs.com) (AI envmaps)
+- [`3dconfig`](https://3dconfig.com) (floor planer)
+- [`buerli.io`](https://buerli.io) (CAD)
+- [`getencube`](https://www.getencube.com) (CAD)
+- [`glowbuzzer`](https://www.glowbuzzer.com) (CAD) — [video](https://twitter.com/glowbuzzer/status/1678396014644940800)
+- [`triplex`](https://triplex.dev) (editor) — [video](https://twitter.com/_douges/status/1708859381369221539)
+- [`theatrejs`](https://www.theatrejs.com) (editor) — [video](https://twitter.com/0xca0a/status/1566838823170068480)
 
 # How to contribute
 

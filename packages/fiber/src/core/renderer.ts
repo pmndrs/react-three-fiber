@@ -6,6 +6,7 @@ import { DefaultEventPriority } from 'react-reconciler/constants'
 import {
   is,
   prepare,
+  findInitialRoot,
   diffProps,
   DiffSet,
   applyProps,
@@ -166,6 +167,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       } else if (child.isObject3D && parentInstance.isObject3D) {
         child.parent = parentInstance as unknown as THREE.Object3D
         child.dispatchEvent({ type: 'added' })
+        parentInstance.dispatchEvent({ type: 'childadded', child })
         const restSiblings = parentInstance.children.filter((sibling) => sibling !== child)
         const index = restSiblings.indexOf(beforeChild)
         parentInstance.children = [...restSiblings.slice(0, index), child, ...restSiblings.slice(index)]
@@ -196,9 +198,10 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         detach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
-        // Remove interactivity
+        // @ts-ignore
+        // Remove interactivity on the initial root
         if (child.__r3f?.root) {
-          removeInteractivity(child.__r3f.root, child as unknown as THREE.Object3D)
+          removeInteractivity(findInitialRoot(child), child as unknown as THREE.Object3D)
         }
       }
 
@@ -212,7 +215,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
       // Since disposal is recursive, we can check the optional dispose arg, which will be undefined
       // when the reconciler calls it, but then carry our own check recursively
       const isPrimitive = child.__r3f?.primitive
-      const shouldDispose = dispose === undefined ? child.dispose !== null && !isPrimitive : dispose
+      const shouldDispose = !isPrimitive && (dispose === undefined ? child.dispose !== null : dispose)
 
       // Remove nested child objects. Primitives should not have objects and children that are
       // attached to them declaratively ...
@@ -226,13 +229,20 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
 
       // Dispose item whenever the reconciler feels like it
       if (shouldDispose && child.dispose && child.type !== 'Scene') {
-        scheduleCallback(idlePriority, () => {
+        const callback = () => {
           try {
             child.dispose()
           } catch (e) {
             /* ... */
           }
-        })
+        }
+
+        // Schedule async at runtime, flush sync in testing
+        if (typeof IS_REACT_ACT_ENVIRONMENT === 'undefined') {
+          scheduleCallback(idlePriority, callback)
+        } else {
+          callback()
+        }
       }
 
       invalidateInstance(parentInstance)
@@ -271,9 +281,9 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     }
     appendChild(parent, newInstance)
 
-    // Re-bind event handlers
+    // Re-bind event handlers on the initial root
     if (newInstance.raycast && newInstance.__r3f.eventCount) {
-      const rootState = newInstance.__r3f.root.getState()
+      const rootState = findInitialRoot(newInstance).getState()
       rootState.internal.interaction.push(newInstance as unknown as THREE.Object3D)
     }
 
@@ -384,10 +394,12 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     },
     commitMount(instance, _type, _props, _int) {
       // https://github.com/facebook/react/issues/20271
-      // This will make sure events are only added once to the central container
+      // This will make sure events are only added once to the central container on the initial root
       const localState = (instance.__r3f ?? {}) as LocalState
       if (instance.raycast && localState.handlers && localState.eventCount) {
-        instance.__r3f.root.getState().internal.interaction.push(instance as unknown as THREE.Object3D)
+        findInitialRoot(instance)
+          .getState()
+          .internal.interaction.push(instance as unknown as THREE.Object3D)
       }
     },
     getPublicInstance: (instance) => instance!,

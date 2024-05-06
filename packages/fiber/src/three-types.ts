@@ -17,7 +17,7 @@ export type Matrix4 = THREE.Matrix4 | Parameters<THREE.Matrix4['set']> | Readonl
 /**
  * Turn an implementation of THREE.Vector in to the type that an r3f component would accept as a prop.
  */
-type VectorLike<VectorClass extends THREE.Vector> =
+type VectorLike<VectorClass extends THREE.Vector2 | THREE.Vector3 | THREE.Vector4> =
   | VectorClass
   | Parameters<VectorClass['set']>
   | Readonly<Parameters<VectorClass['set']>>
@@ -274,6 +274,7 @@ export type QuaternionProps = Node<THREE.Quaternion, typeof THREE.Quaternion>
 export type BufferAttributeProps = Node<THREE.BufferAttribute, typeof THREE.BufferAttribute>
 export type Float16BufferAttributeProps = Node<THREE.Float16BufferAttribute, typeof THREE.Float16BufferAttribute>
 export type Float32BufferAttributeProps = Node<THREE.Float32BufferAttribute, typeof THREE.Float32BufferAttribute>
+/** @ts-ignore */
 export type Float64BufferAttributeProps = Node<THREE.Float64BufferAttribute, typeof THREE.Float64BufferAttribute>
 export type Int8BufferAttributeProps = Node<THREE.Int8BufferAttribute, typeof THREE.Int8BufferAttribute>
 export type Int16BufferAttributeProps = Node<THREE.Int16BufferAttribute, typeof THREE.Int16BufferAttribute>

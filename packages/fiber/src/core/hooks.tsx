@@ -1,7 +1,6 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { StateSelector, EqualityChecker } from 'zustand'
-import { GLTF } from 'three/examples/jsm/loaders/GLTFLoader'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect } from './utils'
@@ -110,9 +109,11 @@ function loadingFn<L extends LoaderProto<any>>(
             ),
           ),
       ),
-    ).finally(() => (loader as any).dispose?.())
+    )
   }
 }
+
+type GLTFLike = { scene: THREE.Object3D }
 
 /**
  * Synchronously loads and caches assets with a three loader.
@@ -125,14 +126,14 @@ export function useLoader<T, U extends string | string[], L extends LoaderProto<
   input: U,
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
-): U extends any[] ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[] : BranchingReturn<R, GLTF, GLTF & ObjectMap> {
+): U extends any[] ? BranchingReturn<R, GLTFLike, R & ObjectMap>[] : BranchingReturn<R, GLTFLike, R & ObjectMap> {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn<L>(extensions, onProgress), [Proto, ...keys], { equal: is.equ })
   // Return the object/s
   return (Array.isArray(input) ? results : results[0]) as U extends any[]
-    ? BranchingReturn<R, GLTF, GLTF & ObjectMap>[]
-    : BranchingReturn<R, GLTF, GLTF & ObjectMap>
+    ? BranchingReturn<R, GLTFLike, R & ObjectMap>[]
+    : BranchingReturn<R, GLTFLike, R & ObjectMap>
 }
 
 /**

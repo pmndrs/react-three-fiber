@@ -17,7 +17,7 @@ import {
   privateKeys,
 } from './store'
 import { createRenderer, extend, prepare, Root } from './renderer'
-import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects } from './loop'
+import { createLoop, addEffect, addAfterEffect, addTail, flushGlobalEffects, Invalidate, Advance } from './loop'
 import { getEventPriority, EventManager, ComputeFunction } from './events'
 import {
   is,
@@ -38,7 +38,7 @@ import type { Properties } from '../three-types'
 type Canvas = HTMLCanvasElement | OffscreenCanvas
 
 const roots = new Map<Canvas, Root>()
-const { invalidate, advance } = createLoop(roots)
+const { invalidate, advance }: { invalidate: Invalidate; advance: Advance } = createLoop(roots)
 const { reconciler, applyProps } = createRenderer(roots, getEventPriority)
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
@@ -226,7 +226,21 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
           : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
-          if (cameraOptions) applyProps(camera as any, cameraOptions as any)
+          if (cameraOptions) {
+            applyProps(camera as any, cameraOptions as any)
+            // Preserve user-defined frustum if possible
+            // https://github.com/pmndrs/react-three-fiber/issues/3160
+            if (
+              'aspect' in cameraOptions ||
+              'left' in cameraOptions ||
+              'right' in cameraOptions ||
+              'bottom' in cameraOptions ||
+              'top' in cameraOptions
+            ) {
+              ;(camera as any).manual = true
+              camera.updateProjectionMatrix()
+            }
+          }
           // Always look at center by default
           if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
@@ -319,16 +333,18 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
         else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
       }
 
-      // Set color space and tonemapping preferences
-      const LinearEncoding = 3000
-      const sRGBEncoding = 3001
-      applyProps(
-        gl as any,
-        {
-          outputEncoding: linear ? LinearEncoding : sRGBEncoding,
-          toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
-        } as Partial<Properties<THREE.WebGLRenderer>>,
-      )
+      if (!configured) {
+        // Set color space and tonemapping preferences, once
+        const LinearEncoding = 3000
+        const sRGBEncoding = 3001
+        applyProps(
+          gl as any,
+          {
+            outputEncoding: linear ? LinearEncoding : sRGBEncoding,
+            toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
+          } as Partial<Properties<THREE.WebGLRenderer>>,
+        )
+      }
 
       // Update color management state
       if (state.legacy !== legacy) state.set(() => ({ legacy }))

@@ -4,7 +4,7 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 
 import {
   ReconcilerRoot,
-  createRoot,
+  createRoot as createRootImpl,
   act,
   useFrame,
   extend,
@@ -64,16 +64,26 @@ beforeAll(() => {
   })
 })
 
+const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
+
+function createRoot() {
+  const canvas = createCanvas()
+  const root = createRootImpl(canvas)
+  roots.push(root)
+  return root
+}
+
 describe('renderer', () => {
   let root: ReconcilerRoot<HTMLCanvasElement> = null!
 
   beforeEach(() => {
-    const canvas = createCanvas()
-    root = createRoot(canvas)
+    root = createRoot()
   })
 
   afterEach(() => {
-    root.unmount()
+    while (roots.length) {
+      roots.shift()!.unmount()
+    }
   })
 
   it('renders a simple component', async () => {
@@ -718,22 +728,34 @@ describe('renderer', () => {
   })
 
   it('should respect color management preferences via gl', async () => {
-    const texture = new THREE.Texture() as THREE.Texture & { colorSpace?: string }
+    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
+    let texture: THREE.Texture & { colorSpace?: string } = null!
+
     let key = 0
-    function Test() {
+    function Test({ colorSpace = false }) {
+      gl = useThree((state) => state.gl)
+      texture = new THREE.Texture()
       return <meshBasicMaterial key={key++} map={texture} />
     }
 
     const LinearEncoding = 3000
     const sRGBEncoding = 3001
 
-    let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
-    await act(async () => (gl = root.render(<Test />).getState().gl))
+    await act(async () => createRoot().render(<Test />))
     expect(gl.outputEncoding).toBe(sRGBEncoding)
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
     expect(texture.encoding).toBe(sRGBEncoding)
 
-    await act(async () => root.configure({ linear: true, flat: true }).render(<Test />))
+    // @ts-ignore
+    THREE.WebGLRenderer.prototype.outputColorSpace ??= ''
+    // @ts-ignore
+    THREE.Texture.prototype.colorSpace ??= ''
+
+    await act(async () =>
+      createRoot()
+        .configure({ linear: true, flat: true })
+        .render(<Test />),
+    )
     expect(gl.outputEncoding).toBe(LinearEncoding)
     expect(gl.toneMapping).toBe(THREE.NoToneMapping)
     expect(texture.encoding).toBe(LinearEncoding)
@@ -742,16 +764,26 @@ describe('renderer', () => {
     const SRGBColorSpace = 'srgb'
     const LinearSRGBColorSpace = 'srgb-linear'
 
-    gl.outputColorSpace ??= ''
-    texture.colorSpace ??= ''
-
-    await act(async () => root.configure({ linear: true }).render(<Test />))
+    await act(async () =>
+      createRoot()
+        .configure({ linear: true })
+        .render(<Test colorSpace />),
+    )
     expect(gl.outputColorSpace).toBe(LinearSRGBColorSpace)
     expect(texture.colorSpace).toBe(LinearSRGBColorSpace)
 
-    await act(async () => root.configure({ linear: false }).render(<Test />))
+    await act(async () =>
+      createRoot()
+        .configure({ linear: false })
+        .render(<Test colorSpace />),
+    )
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
     expect(texture.colorSpace).toBe(SRGBColorSpace)
+
+    // @ts-ignore
+    delete THREE.WebGLRenderer.prototype.outputColorSpace
+    // @ts-ignore
+    delete THREE.Texture.prototype.colorSpace
   })
 
   it('should respect legacy prop', async () => {
@@ -961,5 +993,73 @@ describe('renderer', () => {
     expect(ref.current).toBe(object1)
     expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
+  })
+
+  it('should recursively dispose of declarative children', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={parentDispose}>
+          <mesh dispose={childDispose} />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).toBeCalledTimes(1)
+    expect(childDispose).toBeCalledTimes(1)
+  })
+
+  it('should not recursively dispose of flagged parent', async () => {
+    const parentDispose = jest.fn()
+    const childDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <group dispose={null}>
+          <mesh dispose={parentDispose}>
+            <mesh dispose={childDispose} />
+          </mesh>
+        </group>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(parentDispose).not.toBeCalled()
+    expect(childDispose).not.toBeCalled()
+  })
+
+  it('should not recursively dispose of attached primitives', async () => {
+    const meshDispose = jest.fn()
+    const primitiveDispose = jest.fn()
+
+    await act(async () =>
+      root.render(
+        <mesh dispose={meshDispose}>
+          <primitive dispose={primitiveDispose} object={new THREE.BufferGeometry()} attach="geometry" />
+        </mesh>,
+      ),
+    )
+    await act(async () => root.render(null))
+
+    expect(meshDispose).toBeCalledTimes(1)
+    expect(primitiveDispose).not.toBeCalled()
+  })
+
+  it('preserves camera frustum props for perspective', async () => {
+    const store = await act(async () => root.configure({ camera: { aspect: 0 } }).render(null))
+    expect(store.getState().camera.aspect).toBe(0)
+  })
+
+  it('preserves camera frustum props for orthographic', async () => {
+    const store = await act(async () =>
+      root.configure({ orthographic: true, camera: { left: 0, right: 0, top: 0, bottom: 0 } }).render(null),
+    )
+    expect(store.getState().camera.left).toBe(0)
+    expect(store.getState().camera.right).toBe(0)
+    expect(store.getState().camera.top).toBe(0)
+    expect(store.getState().camera.bottom).toBe(0)
   })
 })
