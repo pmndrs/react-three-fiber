@@ -570,15 +570,21 @@ function Portal({
     const unsub = previousRoot.subscribe((prev) => usePortalStore.setState((state) => inject(prev, state)))
     return () => {
       unsub()
-      usePortalStore.destroy()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [inject])
 
   React.useEffect(() => {
     usePortalStore.setState((injectState) => inject(previousRoot.getState(), injectState))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inject])
+
+  React.useEffect(() => {
+    return () => {
+      usePortalStore.destroy()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
