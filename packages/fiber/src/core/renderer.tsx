@@ -529,7 +529,11 @@ export type InjectState = Partial<
   }
 >
 
-export function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.JSX.Element {
+export function createPortal(
+  children: React.ReactNode,
+  container: THREE.Object3D,
+  state?: InjectState,
+): React.JSX.Element {
   return <Portal children={children} container={container} state={state} />
 }
 
