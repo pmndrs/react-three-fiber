@@ -141,7 +141,7 @@ export function polyfills() {
         texture.needsUpdate = true
 
         // Force non-DOM upload for EXGL texImage2D
-        // @ts-ignore
+        // @ts-expect-error
         texture.isDataTexture = true
 
         onLoad?.(texture)

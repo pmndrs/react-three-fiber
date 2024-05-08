@@ -7,9 +7,7 @@ import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './re
 import { Dpr, Renderer, RootState, Size } from './store'
 
 // < r141 shipped vendored types https://github.com/pmndrs/react-three-fiber/issues/2501
-/** @ts-ignore */
 type _DeprecatedXRFrame = THREE.XRFrame
-/** @ts-ignore */
 export type _XRFrame = THREE.WebGLRenderTargetOptions extends { samples?: number } ? XRFrame : _DeprecatedXRFrame
 
 /**
@@ -352,7 +350,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // create a blank slate of the instance and copy the particular parameter.
         let ctor = DEFAULTS.get(currentInstance.constructor)
         if (!ctor) {
-          // @ts-ignore
+          // @ts-expect-error
           ctor = new currentInstance.constructor()
           DEFAULTS.set(currentInstance.constructor, ctor)
         }
