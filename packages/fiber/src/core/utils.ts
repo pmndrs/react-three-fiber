@@ -7,6 +7,7 @@ import { AttachType, catalogue, Instance, InstanceProps, LocalState } from './re
 import { Dpr, Renderer, RootState, Size } from './store'
 
 // < r141 shipped vendored types https://github.com/pmndrs/react-three-fiber/issues/2501
+/** @ts-expect-error */
 type _DeprecatedXRFrame = THREE.XRFrame
 export type _XRFrame = THREE.WebGLRenderTargetOptions extends { samples?: number } ? XRFrame : _DeprecatedXRFrame
 
