@@ -22,7 +22,7 @@ None. Everything that works in Threejs will work here without exception.
 
 #### Is it slower than plain Threejs?
 
-No. There is no overhead. Components render outside of React. It outperforms Threejs in scale due to Reacts scheduling abilities.
+No. There is no overhead. Components render outside of React. It outperforms Threejs in scale due to React's scheduling abilities.
 
 #### Can it keep up with frequent feature updates to Threejs?
 

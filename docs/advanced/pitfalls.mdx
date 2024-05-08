@@ -26,7 +26,7 @@ TLDR, don't, mutate inside `useFrame`!
 
 - It is not enough to set values in succession, _you need frame deltas_. Instead of `position.x += 0.1` consider `position.x += delta` or your project will run at different speeds depending on the end-users system. Many updates in threejs need to be paired with update flags (`.needsUpdate = true`), or imperative functions (`.updateProjectionMatrix()`).
 
-- You might be tempted to setState inside `useFrame` but there is no reason to. You would only complicate something as simple as an update by routing it through Reacts scheduler, triggering component render etc.
+- You might be tempted to setState inside `useFrame` but there is no reason to. You would only complicate something as simple as an update by routing it through React's scheduler, triggering component render etc.
 
 ### ❌ setState in loops is bad
 
