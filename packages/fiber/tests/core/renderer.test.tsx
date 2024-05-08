@@ -929,7 +929,7 @@ describe('renderer', () => {
     const one = jest.fn()
     const two = jest.fn()
 
-    const Test = (props: Partial<JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
+    const Test = (props: Partial<React.JSX.IntrinsicElements['mesh']>) => <mesh {...props} />
     await act(async () => root.render(<Test onUpdate={one} />))
     await act(async () => root.render(<Test onUpdate={two} />))
 
@@ -961,7 +961,7 @@ describe('renderer', () => {
     const child = React.createRef<THREE.Object3D>()
     const attachedChild = React.createRef<THREE.Object3D>()
 
-    const Test = (props: JSX.IntrinsicElements['primitive']) => (
+    const Test = (props: React.JSX.IntrinsicElements['primitive']) => (
       <primitive {...props} ref={ref}>
         <object3D ref={child} />
         <object3D ref={attachedChild} attach="userData-attach" />

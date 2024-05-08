@@ -1,4 +1,7 @@
 import * as THREE from 'three'
+import type {} from 'react'
+import type {} from 'react/jsx-runtime'
+import type {} from 'react/jsx-dev-runtime'
 import { EventHandlers } from './core/events'
 import { AttachType } from './core/renderer'
 
@@ -450,7 +453,26 @@ export interface ThreeElements {
   shape: ShapeProps
 }
 
+// NOTE: removed in v9 for React 19
 declare global {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+declare module 'react/jsx-runtime' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+declare module 'react/jsx-dev-runtime' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
   }
