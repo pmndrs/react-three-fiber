@@ -1,4 +1,7 @@
 import type * as THREE from 'three'
+import type {} from 'react'
+import type {} from 'react/jsx-runtime'
+import type {} from 'react/jsx-dev-runtime'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 
 type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
@@ -62,6 +65,18 @@ export interface ThreeElements extends ThreeElementsImpl {
 }
 
 declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+declare module 'react/jsx-runtime' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
+declare module 'react/jsx-dev-runtime' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
   }

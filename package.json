@@ -33,7 +33,7 @@
     "eslint:fix": "yarn run eslint --fix",
     "test": "jest --coverage",
     "test:watch": "jest --watchAll",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict --jsx react",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
     "validate": "preconstruct validate",
     "release": "yarn build && yarn changeset publish",
     "vers": "yarn changeset version",

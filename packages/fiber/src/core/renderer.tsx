@@ -474,7 +474,7 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   children,
   onCreated,
   rootElement,
-}: ProviderProps<TCanvas>): JSX.Element {
+}: ProviderProps<TCanvas>): React.JSX.Element {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
@@ -529,7 +529,7 @@ export type InjectState = Partial<
   }
 >
 
-export function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
+export function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.JSX.Element {
   return <Portal children={children} container={container} state={state} />
 }
 
@@ -539,7 +539,7 @@ interface PortalProps {
   container: THREE.Object3D
 }
 
-function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
+function Portal({ state = {}, children, container }: PortalProps): React.JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
