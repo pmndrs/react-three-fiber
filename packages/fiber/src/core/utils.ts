@@ -352,7 +352,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // create a blank slate of the instance and copy the particular parameter.
         let ctor = DEFAULTS.get(currentInstance.constructor)
         if (!ctor) {
-          // @ts-ignore
+          // @ts-expect-error
           ctor = new currentInstance.constructor()
           DEFAULTS.set(currentInstance.constructor, ctor)
         }
