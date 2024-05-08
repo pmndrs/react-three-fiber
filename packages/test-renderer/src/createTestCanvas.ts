@@ -30,9 +30,9 @@ export const createCanvas = ({ beforeReturn, width = 1280, height = 800 }: Creat
   beforeReturn?.(canvas)
 
   class WebGLRenderingContext extends WebGL2RenderingContext {}
-  // @ts-expect-error
+  // @ts-ignore
   globalThis.WebGLRenderingContext ??= WebGLRenderingContext
-  // @ts-expect-error
+  // @ts-ignore
   globalThis.WebGL2RenderingContext ??= WebGL2RenderingContext
 
   return canvas

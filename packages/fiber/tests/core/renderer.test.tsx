@@ -746,9 +746,9 @@ describe('renderer', () => {
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
     expect(texture.encoding).toBe(sRGBEncoding)
 
-    // @ts-expect-error
+    // @ts-ignore
     THREE.WebGLRenderer.prototype.outputColorSpace ??= ''
-    // @ts-expect-error
+    // @ts-ignore
     THREE.Texture.prototype.colorSpace ??= ''
 
     await act(async () =>
@@ -780,9 +780,9 @@ describe('renderer', () => {
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
     expect(texture.colorSpace).toBe(SRGBColorSpace)
 
-    // @ts-expect-error
+    // @ts-ignore
     delete THREE.WebGLRenderer.prototype.outputColorSpace
-    // @ts-expect-error
+    // @ts-ignore
     delete THREE.Texture.prototype.colorSpace
   })
 
