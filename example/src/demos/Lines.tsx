@@ -33,7 +33,7 @@ function useDrag(onDrag: any, onEnd: any) {
     toggle(false)
     event.stopPropagation()
     // @ts-expect-error
-    event.target?.setPointerCapture(event.pointerId)
+    event.target.setPointerCapture(event.pointerId)
   }
 
   const up = (event: ThreeEvent<PointerEvent>) => {
@@ -42,7 +42,7 @@ function useDrag(onDrag: any, onEnd: any) {
     toggle(true)
     event.stopPropagation()
     // @ts-expect-error
-    event.target?.releasePointerCapture(event.pointerId)
+    event.target.releasePointerCapture(event.pointerId)
     if (onEnd) onEnd()
   }
 
