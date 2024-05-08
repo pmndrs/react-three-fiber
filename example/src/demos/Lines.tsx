@@ -32,7 +32,7 @@ function useDrag(onDrag: any, onEnd: any) {
     setActive(true)
     toggle(false)
     event.stopPropagation()
-    // @ts-ignore
+    // @ts-expect-error
     event.target.setPointerCapture(event.pointerId)
   }
 
@@ -41,7 +41,7 @@ function useDrag(onDrag: any, onEnd: any) {
     setActive(false)
     toggle(true)
     event.stopPropagation()
-    // @ts-ignore
+    // @ts-expect-error
     event.target.releasePointerCapture(event.pointerId)
     if (onEnd) onEnd()
   }
