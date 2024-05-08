@@ -17,7 +17,7 @@ module.exports = {
         targets: '> 1%, not dead, not ie 11, not op_mini all',
       },
     ],
-    '@babel/preset-react',
+    ['@babel/preset-react', { runtime: 'automatic' }],
     '@babel/preset-typescript',
   ],
 }
