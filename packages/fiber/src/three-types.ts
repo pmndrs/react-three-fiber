@@ -453,6 +453,13 @@ export interface ThreeElements {
   shape: ShapeProps
 }
 
+// NOTE: removed in v9 for React 19
+declare global {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
