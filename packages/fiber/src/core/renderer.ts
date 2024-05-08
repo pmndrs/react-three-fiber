@@ -198,7 +198,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
         detach(parentInstance, child, child.__r3f.attach)
       } else if (child.isObject3D && parentInstance.isObject3D) {
         parentInstance.remove(child)
-        // @ts-ignore
+        // @ts-expect-error
         // Remove interactivity on the initial root
         if (child.__r3f?.root) {
           removeInteractivity(findInitialRoot(child), child as unknown as THREE.Object3D)
@@ -426,7 +426,7 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     hideTextInstance: handleTextInstance,
     unhideTextInstance: handleTextInstance,
     // https://github.com/pmndrs/react-three-fiber/pull/2360#discussion_r916356874
-    // @ts-ignore
+    // @ts-expect-error
     getCurrentEventPriority: () => (_getEventPriority ? _getEventPriority() : DefaultEventPriority),
     beforeActiveInstanceBlur: () => {},
     afterActiveInstanceBlur: () => {},
