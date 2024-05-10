@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.6
+
+### Patch Changes
+
+- 03ab82fe: fix(applyProps): null check indeterminate instances
+
 ## 8.16.5
 
 ### Patch Changes
