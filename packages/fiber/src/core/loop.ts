@@ -1,5 +1,5 @@
 import { _roots } from './renderer'
-import type { RootState } from './store'
+import type { RootState, Subscription } from './store'
 
 export type GlobalRenderCallback = (timestamp: number) => void
 interface SubItem {
@@ -54,22 +54,31 @@ export function flushGlobalEffects(type: GlobalEffectType, timestamp: number): v
   }
 }
 
+let subscribers: Subscription[]
+let subscription: Subscription
+
 function update(timestamp: number, state: RootState, frame?: XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
+
   // In frameloop='never' mode, clock times are updated using the provided timestamp
   if (state.frameloop === 'never' && typeof timestamp === 'number') {
     delta = timestamp - state.clock.elapsedTime
     state.clock.oldTime = state.clock.elapsedTime
     state.clock.elapsedTime = timestamp
-  } else {
-    delta = Math.max(Math.min(delta, state.internal.maxDelta), 0)
-  }
-  // Call subscribers (useUpdate)
-  for (const stage of state.internal.stages) {
-    stage.frame(delta, frame)
   }
 
+  // Call subscribers (useFrame)
+  subscribers = state.internal.subscribers
+  for (let i = 0; i < subscribers.length; i++) {
+    subscription = subscribers[i]
+    subscription.ref.current(subscription.store.getState(), delta, frame)
+  }
+
+  // Render content
+  if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
+
+  // Decrease frame count
   state.internal.frames = Math.max(0, state.internal.frames - 1)
   return state.frameloop === 'always' ? 1 : state.internal.frames
 }
@@ -157,3 +166,5 @@ export function advance(timestamp: number, runGlobalEffects: boolean = true, sta
   else update(timestamp, state, frame)
   if (runGlobalEffects) flushGlobalEffects('after', timestamp)
 }
+
+console.log(globalEffects)

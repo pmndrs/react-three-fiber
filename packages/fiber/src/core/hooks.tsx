@@ -1,9 +1,8 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { suspend, preload, clear } from 'suspend-react'
-import { context, RootState, RenderCallback, UpdateCallback, StageTypes, RootStore } from './store'
+import { context, RootState, RenderCallback, RootStore } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
-import { Stages } from './stages'
 import type { Instance } from './reconciler'
 
 /**
@@ -52,21 +51,6 @@ export function useFrame(callback: RenderCallback, renderPriority: number = 0): 
   // Subscribe on mount, unsubscribe on unmount
   useIsomorphicLayoutEffect(() => subscribe(ref, renderPriority, store), [renderPriority, subscribe, store])
   return null
-}
-
-/**
- * Executes a callback in a given update stage.
- * Uses the stage instance to identify which stage to target in the lifecycle.
- */
-export function useUpdate(callback: UpdateCallback, stage: StageTypes = Stages.Update): void {
-  const store = useStore()
-  const stages = store.getState().internal.stages
-  // Memoize ref
-  const ref = useMutableCallback(callback)
-  // Throw an error if a stage does not exist in the lifecycle
-  if (!stages.includes(stage)) throw new Error(`An invoked stage does not exist in the lifecycle.`)
-  // Subscribe on mount, unsubscribe on unmount
-  useIsomorphicLayoutEffect(() => stage.add(ref, store), [stage])
 }
 
 /**

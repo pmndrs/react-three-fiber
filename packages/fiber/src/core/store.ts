@@ -4,7 +4,6 @@ import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
-import type { FixedStage, Stage } from './stages'
 
 export interface Intersection extends THREE.Intersection {
   eventObject: THREE.Object3D
@@ -23,6 +22,7 @@ export interface Size {
   top: number
   left: number
 }
+export type Frameloop = 'always' | 'demand' | 'never'
 export interface Viewport extends Size {
   /** The initial pixel ratio */
   initialDpr: number
@@ -37,13 +37,6 @@ export interface Viewport extends Size {
 }
 
 export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
-export type UpdateCallback = RenderCallback
-
-export type LegacyAlways = 'always'
-export type FrameloopMode = LegacyAlways | 'auto' | 'demand' | 'never'
-export type FrameloopRender = 'auto' | 'manual'
-export type FrameloopLegacy = 'always' | 'demand' | 'never'
-export type Frameloop = FrameloopLegacy | { mode?: FrameloopMode; render?: FrameloopRender; maxDelta?: number }
 
 export interface Performance {
   /** Current performance normal, between min and max */
@@ -63,8 +56,6 @@ export interface Renderer {
 }
 export const isRenderer = (def: any) => !!def?.render
 
-export type StageTypes = Stage | FixedStage
-
 export interface InternalState {
   interaction: THREE.Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
@@ -76,12 +67,6 @@ export interface InternalState {
   active: boolean
   priority: number
   frames: number
-  /** The ordered stages defining the lifecycle. */
-  stages: StageTypes[]
-  /** Render function flags */
-  render: 'auto' | 'manual'
-  /** The max delta time between two frames. */
-  maxDelta: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
 }
 
@@ -121,9 +106,8 @@ export interface RootState {
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
-  /** Update frame loop flags */
-  frameloop: FrameloopLegacy
-  /** Adaptive performance interface */
+  /** Render loop flags */
+  frameloop: 'always' | 'demand' | 'never'
   performance: Performance
   /** Reactive pixel-size of the canvas */
   size: Size
@@ -265,20 +249,9 @@ export const createStore = (
           const resolved = calculateDpr(dpr)
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
-      setFrameloop: (frameloop: Frameloop) => {
-        const state = get()
-        const mode: FrameloopLegacy =
-          typeof frameloop === 'string'
-            ? frameloop
-            : frameloop?.mode === 'auto'
-            ? 'always'
-            : frameloop?.mode ?? state.frameloop
-        const render =
-          typeof frameloop === 'string' ? state.internal.render : frameloop?.render ?? state.internal.render
-        const maxDelta =
-          typeof frameloop === 'string' ? state.internal.maxDelta : frameloop?.maxDelta ?? state.internal.maxDelta
+      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => {
+        const clock = get().clock
 
-        const clock = state.clock
         // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
         clock.stop()
         clock.elapsedTime = 0
@@ -287,7 +260,7 @@ export const createStore = (
           clock.start()
           clock.elapsedTime = 0
         }
-        set(() => ({ frameloop: mode, internal: { ...state.internal, render, maxDelta } }))
+        set(() => ({ frameloop }))
       },
       previousRoot: undefined,
       internal: {
@@ -303,34 +276,23 @@ export const createStore = (
         // Updates
         active: false,
         frames: 0,
-        stages: [],
-        render: 'auto',
-        maxDelta: 1 / 10,
         priority: 0,
         subscribe: (ref: React.RefObject<RenderCallback>, priority: number, store: RootStore) => {
-          const state = get()
-          const internal = state.internal
+          const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands
           // For that reason we switch off automatic rendering and increase the manual flag
           // As long as this flag is positive there can be no internal rendering at all
           // because there could be multiple render subscriptions
           internal.priority = internal.priority + (priority > 0 ? 1 : 0)
-          // We use the render flag and deprecate priority
-          if (internal.priority && state.internal.render === 'auto')
-            set(() => ({ internal: { ...state.internal, render: 'manual' } }))
           internal.subscribers.push({ ref, priority, store })
           // Register subscriber and sort layers from lowest to highest, meaning,
           // highest priority renders last (on top of the other frames)
           internal.subscribers = internal.subscribers.sort((a, b) => a.priority - b.priority)
           return () => {
-            const state = get()
-            const internal = state.internal
+            const internal = get().internal
             if (internal?.subscribers) {
               // Decrease manual flag if this subscription had a priority
               internal.priority = internal.priority - (priority > 0 ? 1 : 0)
-              // We use the render flag and deprecate priority
-              if (!internal.priority && state.internal.render === 'manual')
-                set(() => ({ internal: { ...state.internal, render: 'auto' } }))
               // Remove subscriber from list
               internal.subscribers = internal.subscribers.filter((s) => s.ref !== ref)
             }
