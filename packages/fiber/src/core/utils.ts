@@ -250,14 +250,16 @@ export function detach(parent: Instance, child: Instance, type: AttachType) {
   delete child.__r3f?.previousAttach
 }
 
+type MaybeInstance = Omit<Instance, '__r3f'> & { __r3f?: LocalState }
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps(
-  instance: Instance,
+  instance: MaybeInstance,
   { children: cN, key: kN, ref: rN, ...props }: InstanceProps,
   { children: cP, key: kP, ref: rP, ...previous }: InstanceProps = {},
   remove = false,
 ): DiffSet {
-  const localState = (instance?.__r3f ?? {}) as LocalState
+  const localState = instance.__r3f
   const entries = Object.entries(props)
   const changes: [key: string, value: unknown, isEvent: boolean, keys: string[]][] = []
 
@@ -289,8 +291,8 @@ export function diffProps(
   })
 
   const memoized: { [key: string]: any } = { ...props }
-  if (localState.memoizedProps && localState.memoizedProps.args) memoized.args = localState.memoizedProps.args
-  if (localState.memoizedProps && localState.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
+  if (localState?.memoizedProps && localState?.memoizedProps.args) memoized.args = localState.memoizedProps.args
+  if (localState?.memoizedProps && localState?.memoizedProps.attach) memoized.attach = localState.memoizedProps.attach
 
   return { memoized, changes }
 }
@@ -298,13 +300,13 @@ export function diffProps(
 const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
 
 // This function applies a set of changes to the instance
-export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
+export function applyProps(instance: MaybeInstance, data: InstanceProps | DiffSet) {
   // Filter equals, events and reserved props
-  const localState = (instance.__r3f ?? {}) as LocalState
-  const root = localState.root
-  const rootState = root?.getState?.() ?? {}
+  const localState = instance.__r3f as LocalState | undefined
+  const root = localState?.root
+  const rootState = root?.getState?.()
   const { memoized, changes } = isDiffSet(data) ? data : diffProps(instance, data)
-  const prevHandlers = localState.eventCount
+  const prevHandlers = localState?.eventCount
 
   // Prepare memoized props
   if (instance.__r3f) instance.__r3f.memoizedProps = memoized
@@ -364,7 +366,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     }
 
     // Deal with pointer events ...
-    if (isEvent) {
+    if (isEvent && localState) {
       if (value) localState.handlers[key as keyof EventHandlers] = value as any
       else delete localState.handlers[key as keyof EventHandlers]
       localState.eventCount = Object.keys(localState.handlers).length
@@ -404,7 +406,7 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         // For versions of three which don't support THREE.ColorManagement,
         // Auto-convert sRGB colors
         // https://github.com/pmndrs/react-three-fiber/issues/344
-        if (!getColorManagement() && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
+        if (!getColorManagement() && rootState && !rootState.linear && isColor) targetProp.convertSRGBToLinear()
       }
       // Else, just overwrite the value
     } else {
@@ -416,7 +418,8 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
         currentInstance[key] instanceof THREE.Texture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         currentInstance[key].format === THREE.RGBAFormat &&
-        currentInstance[key].type === THREE.UnsignedByteType
+        currentInstance[key].type === THREE.UnsignedByteType &&
+        rootState
       ) {
         const texture = currentInstance[key] as THREE.Texture
         if (hasColorSpace(texture) && hasColorSpace(rootState.gl)) texture.colorSpace = rootState.gl.outputColorSpace
@@ -427,9 +430,9 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
     invalidateInstance(instance)
   }
 
-  if (localState.parent && instance.raycast && prevHandlers !== localState.eventCount) {
+  if (localState && localState.parent && instance.raycast && prevHandlers !== localState.eventCount) {
     // Get the initial root state's internals
-    const internal = findInitialRoot(instance).getState().internal
+    const internal = findInitialRoot(instance as Instance).getState().internal
     // Pre-emptively remove the instance from the interaction manager
     const index = internal.interaction.indexOf(instance as unknown as THREE.Object3D)
     if (index > -1) internal.interaction.splice(index, 1)
@@ -445,12 +448,12 @@ export function applyProps(instance: Instance, data: InstanceProps | DiffSet) {
   return instance
 }
 
-export function invalidateInstance(instance: Instance) {
+export function invalidateInstance(instance: MaybeInstance) {
   const state = instance.__r3f?.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()
 }
 
-export function updateInstance(instance: Instance) {
+export function updateInstance(instance: MaybeInstance) {
   instance.onUpdate?.(instance)
 }
 

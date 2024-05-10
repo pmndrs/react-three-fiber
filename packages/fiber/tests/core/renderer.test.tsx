@@ -11,6 +11,7 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
+  applyProps,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -1061,5 +1062,10 @@ describe('renderer', () => {
     expect(store.getState().camera.right).toBe(0)
     expect(store.getState().camera.top).toBe(0)
     expect(store.getState().camera.bottom).toBe(0)
+  })
+
+  it('applyProps can handle non-instances', async () => {
+    const object = new THREE.Object3D() as any
+    expect(() => applyProps(object, { onClick: () => {} })).not.toThrow()
   })
 })
