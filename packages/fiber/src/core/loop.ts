@@ -166,5 +166,3 @@ export function advance(timestamp: number, runGlobalEffects: boolean = true, sta
   else update(timestamp, state, frame)
   if (runGlobalEffects) flushGlobalEffects('after', timestamp)
 }
-
-console.log(globalEffects)
