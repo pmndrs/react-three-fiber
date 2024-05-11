@@ -249,7 +249,7 @@ export const createStore = (
           const resolved = calculateDpr(dpr)
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
-      setFrameloop: (frameloop: 'always' | 'demand' | 'never' = 'always') => {
+      setFrameloop: (frameloop: Frameloop = 'always') => {
         const clock = get().clock
 
         // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
