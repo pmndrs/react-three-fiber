@@ -107,7 +107,7 @@ export interface RootState {
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
   /** Render loop flags */
-  frameloop: 'always' | 'demand' | 'never'
+  frameloop: Frameloop
   performance: Performance
   /** Reactive pixel-size of the canvas */
   size: Size
