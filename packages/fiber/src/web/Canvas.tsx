@@ -11,7 +11,7 @@ import { DomEvent } from '../core/events'
 export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
     React.HTMLAttributes<HTMLDivElement> {
-  children: React.ReactNode
+  children?: React.ReactNode
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
   /**
@@ -121,7 +121,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
       root.current.render(
         <Bridge>
           <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
           </ErrorBoundary>
         </Bridge>,
       )
