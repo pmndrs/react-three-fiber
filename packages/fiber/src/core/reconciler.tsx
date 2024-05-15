@@ -23,6 +23,7 @@ import { removeInteractivity, type EventHandlers } from './events'
 import type { ThreeElement } from '../three-types'
 
 // TODO: upstream to DefinitelyTyped for React 19
+// https://github.com/facebook/react/issues/28956
 type EventPriority = number
 
 const createReconciler = Reconciler as unknown as <
