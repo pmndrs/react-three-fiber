@@ -281,15 +281,17 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             applyProps(camera, cameraOptions as any)
             // Preserve user-defined frustum if possible
             // https://github.com/pmndrs/react-three-fiber/issues/3160
-            if (
-              'aspect' in cameraOptions ||
-              'left' in cameraOptions ||
-              'right' in cameraOptions ||
-              'bottom' in cameraOptions ||
-              'top' in cameraOptions
-            ) {
-              ;(camera as any).manual = true
-              camera.updateProjectionMatrix()
+            if (!(camera as any).manual) {
+              if (
+                'aspect' in cameraOptions ||
+                'left' in cameraOptions ||
+                'right' in cameraOptions ||
+                'bottom' in cameraOptions ||
+                'top' in cameraOptions
+              ) {
+                ;(camera as any).manual = true
+                camera.updateProjectionMatrix()
+              }
             }
           }
           // Always look at center by default
