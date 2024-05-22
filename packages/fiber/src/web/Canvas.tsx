@@ -58,7 +58,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
     scene,
     onPointerMissed,
     onCreated,
-    stages,
     ...props
   },
   forwardedRef,

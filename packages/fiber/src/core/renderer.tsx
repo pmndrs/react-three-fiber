@@ -13,7 +13,6 @@ import {
   Size,
   Dpr,
   Performance,
-  Subscription,
   Frameloop,
   RootStore,
 } from './store'
@@ -34,7 +33,6 @@ import {
   getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
-import { Stage, Lifecycle, Stages } from './stages'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -107,9 +105,6 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
-  /** Create a custom lifecycle of stages */
-  stages?: Stage[]
-  render?: 'auto' | 'manual'
 }
 
 const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
@@ -126,39 +121,6 @@ const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCan
     alpha: true,
     ...gl,
   })
-}
-
-const createStages = (stages: Stage[] | undefined, store: RootStore) => {
-  const state = store.getState()
-  let subscribers: Subscription[]
-  let subscription: Subscription
-
-  const _stages = stages ?? Lifecycle
-
-  if (!_stages.includes(Stages.Update)) throw 'The Stages.Update stage is required for R3F.'
-  if (!_stages.includes(Stages.Render)) throw 'The Stages.Render stage is required for R3F.'
-
-  state.set(({ internal }) => ({ internal: { ...internal, stages: _stages } }))
-
-  // Add useFrame loop to update stage
-  const frameCallback = {
-    current(state: RootState, delta: number, frame?: XRFrame | undefined) {
-      subscribers = state.internal.subscribers
-      for (let i = 0; i < subscribers.length; i++) {
-        subscription = subscribers[i]
-        subscription.ref.current(subscription.store.getState(), delta, frame)
-      }
-    },
-  }
-  Stages.Update.add(frameCallback, store)
-
-  // Add render callback to render stage
-  const renderCallback = {
-    current(state: RootState) {
-      if (state.internal.render === 'auto' && state.gl.render) state.gl.render(state.scene, state.camera)
-    },
-  }
-  Stages.Render.add(renderCallback, store)
 }
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
@@ -247,7 +209,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
-        stages,
       } = props
 
       let state = store.getState()
@@ -425,9 +386,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
-
-      // Create update stages. Only do this once on init
-      if (state.internal.stages.length === 0) createStages(stages, store)
 
       // Set locals
       onCreated = onCreatedCallback
