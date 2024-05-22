@@ -557,7 +557,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
   const [pointer] = React.useState(() => new THREE.Vector2())
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
-    let viewport
+    let viewport = undefined
     if (injectState.camera && size) {
       const camera = injectState.camera
       // Calculate the override viewport, if present
@@ -569,8 +569,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
     return {
       // The intersect consists of the previous root state
       ...rootState,
-      get: injectState.get,
-      set: injectState.set,
+      ...injectState,
       // Portals have their own scene, which forms the root, a raycaster and a pointer
       scene: container as THREE.Scene,
       raycaster,
@@ -589,6 +588,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
   })
 
   const usePortalStore = React.useMemo(() => {
+    // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 
     // Subscribe to previous root-state and copy changes over to the mirrored portal-state
