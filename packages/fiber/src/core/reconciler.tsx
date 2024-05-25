@@ -396,8 +396,14 @@ function removeChild(
 function setFiberInstance(fiber: Reconciler.Fiber | null, instance: HostConfig['instance']): void {
   if (fiber !== null) {
     fiber.stateNode = instance
-    if (typeof fiber.ref === 'function') fiber.ref(instance.object)
-    else if (fiber.ref) fiber.ref.current = instance.object
+    if (typeof fiber.ref === 'function') {
+      // @ts-expect-error
+      fiber.refCleanup?.()
+      // @ts-expect-error
+      fiber.refCleanup = fiber.ref(instance.object)
+    } else if (fiber.ref) {
+      fiber.ref.current = instance.object
+    }
   }
 }
 
