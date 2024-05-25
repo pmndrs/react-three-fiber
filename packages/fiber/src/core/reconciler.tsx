@@ -7,11 +7,7 @@ import {
   DiscreteEventPriority,
   DefaultEventPriority,
 } from 'react-reconciler/constants'
-import {
-  // unstable_NormalPriority as normalPriority,
-  unstable_IdlePriority as idlePriority,
-  unstable_scheduleCallback as scheduleCallback,
-} from 'scheduler'
+import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   diffProps,
   applyProps,
@@ -401,7 +397,7 @@ function setFiberRef(fiber: Reconciler.Fiber, publicInstance: HostConfig['public
   }
 }
 
-const pendingSwaps: [
+const reconstructed: [
   oldInstance: HostConfig['instance'],
   type: HostConfig['type'],
   props: HostConfig['props'],
@@ -409,8 +405,8 @@ const pendingSwaps: [
 ][] = []
 
 function swapInstances(): void {
-  // Cleanup old instance
-  for (const [instance] of pendingSwaps) {
+  // Detach instance
+  for (const [instance] of reconstructed) {
     const parent = instance.parent
     if (parent) {
       if (instance.props.attach) {
@@ -429,8 +425,8 @@ function swapInstances(): void {
     }
   }
 
-  // Update parent instance
-  for (const [instance, type, props, fiber] of pendingSwaps) {
+  // Update instance
+  for (const [instance, type, props, fiber] of reconstructed) {
     // If the old instance is hidden, we need to unhide it.
     // React assumes it can discard instances since they're pure for DOM.
     // This isn't true for us since our lifetimes are impure and longliving.
@@ -473,7 +469,7 @@ function swapInstances(): void {
     }
   }
 
-  pendingSwaps.length = 0
+  reconstructed.length = 0
 }
 
 // Don't handle text instances, warn on undefined behavior
@@ -550,8 +546,7 @@ export const reconciler = createReconciler<
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) {
-      // if (pendingSwaps.length === 0) scheduleCallback(normalPriority, swapInstances)
-      pendingSwaps.push([instance, type, { ...newProps }, fiber])
+      reconstructed.push([instance, type, { ...newProps }, fiber])
     } else {
       // Create a diff-set, flag if there are any changes
       const changedProps = diffProps(instance, newProps)
