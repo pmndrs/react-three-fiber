@@ -7,7 +7,11 @@ import {
   DiscreteEventPriority,
   DefaultEventPriority,
 } from 'react-reconciler/constants'
-import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
+import {
+  // unstable_NormalPriority as normalPriority,
+  unstable_IdlePriority as idlePriority,
+  unstable_scheduleCallback as scheduleCallback,
+} from 'scheduler'
 import {
   diffProps,
   applyProps,
@@ -162,7 +166,6 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
-  autoRemovedBeforeAppend?: boolean
 }
 
 interface HostConfig {
@@ -201,12 +204,7 @@ export const extend = <T extends Catalogue | ConstructorRepresentation>(
   }
 }
 
-function createInstance(
-  type: string,
-  props: HostConfig['props'],
-  root: RootStore,
-  flushPrimitive = true,
-): HostConfig['instance'] {
+function validateInstance(type: string, props: HostConfig['props']): void {
   // Get target from catalogue
   const name = `${type[0].toUpperCase()}${type.slice(1)}`
   const target = catalogue[name]
@@ -222,14 +220,11 @@ function createInstance(
 
   // Throw if an object or literal was passed for args
   if (props.args !== undefined && !Array.isArray(props.args)) throw new Error('R3F: The args prop must be an array!')
+}
 
-  // Regenerate the R3F instance for primitives to simulate a new object
-  if (flushPrimitive && type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
-
-  // Create instance
-  const instance = prepare(props.object, root, type, props)
-
-  return instance
+function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
+  validateInstance(type, props)
+  return prepare(props.object, root, type, props)
 }
 
 function hideInstance(instance: HostConfig['instance']): void {
@@ -334,16 +329,13 @@ function removeChild(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
   dispose?: boolean,
-  recursive?: boolean,
 ) {
   if (!child) return
 
   // Unlink instances
   child.parent = null
-  if (recursive === undefined) {
-    const childIndex = parent.children.indexOf(child)
-    if (childIndex !== -1) parent.children.splice(childIndex, 1)
-  }
+  const childIndex = parent.children.indexOf(child)
+  if (childIndex !== -1) parent.children.splice(childIndex, 1)
 
   // Eagerly tear down tree
   if (child.props.attach) {
@@ -357,10 +349,11 @@ function removeChild(
   const shouldDispose = child.props.dispose !== null && dispose !== false
 
   // Recursively remove instance children
-  if (recursive !== false) {
-    for (const node of child.children) removeChild(child, node, shouldDispose, true)
-    child.children.length = 0
+  for (let i = child.children.length - 1; i >= 0; i--) {
+    const node = child.children[i]
+    removeChild(child, node, shouldDispose)
   }
+  child.children.length = 0
 
   // Unlink instance object
   delete child.object.__r3f
@@ -393,76 +386,94 @@ function removeChild(
   if (dispose === undefined) invalidateInstance(child)
 }
 
-function setFiberInstance(fiber: Reconciler.Fiber | null, instance: HostConfig['instance']): void {
-  if (fiber !== null) {
-    fiber.stateNode = instance
-    if (typeof fiber.ref === 'function') {
-      // @ts-expect-error
-      fiber.refCleanup?.()
-      // @ts-expect-error
-      fiber.refCleanup = fiber.ref(instance.object)
-    } else if (fiber.ref) {
-      fiber.ref.current = instance.object
+function setFiberRef(fiber: Reconciler.Fiber, publicInstance: HostConfig['publicInstance']): void {
+  for (const _fiber of [fiber, fiber.alternate]) {
+    if (_fiber !== null) {
+      if (typeof _fiber.ref === 'function') {
+        // @ts-expect-error
+        _fiber.refCleanup?.()
+        // @ts-expect-error
+        _fiber.refCleanup = _fiber.ref(publicInstance)
+      } else if (_fiber.ref) {
+        _fiber.ref.current = publicInstance
+      }
     }
   }
 }
 
-function switchInstance(
+const pendingSwaps: [
   oldInstance: HostConfig['instance'],
   type: HostConfig['type'],
   props: HostConfig['props'],
   fiber: Reconciler.Fiber,
-) {
-  // If the old instance is hidden, we need to unhide it.
-  // React assumes it can discard instances since they're pure for DOM.
-  // This isn't true for us since our lifetimes are impure and longliving.
-  // So, we manually check if an instance was hidden and unhide it.
-  if (oldInstance.isHidden) unhideInstance(oldInstance)
+][] = []
 
-  // Create a new instance
-  const newInstance = createInstance(type, props, oldInstance.root, false)
+function swapInstances(): void {
+  // Cleanup old instance
+  for (const [instance] of pendingSwaps) {
+    const parent = instance.parent
+    if (parent) {
+      if (instance.props.attach) {
+        detach(parent, instance)
+      } else if (isObject3D(instance.object) && isObject3D(parent.object)) {
+        parent.object.remove(instance.object)
+      }
 
-  // Update attach props for primitives since we don't flush them
-  if (type === 'primitive') {
-    newInstance.props.attach = props.attach
+      for (const child of instance.children) {
+        if (child.props.attach) {
+          detach(instance, child)
+        } else if (isObject3D(child.object) && isObject3D(instance.object)) {
+          instance.object.remove(child.object)
+        }
+      }
+    }
   }
 
-  // Move children to new instance
-  for (const child of oldInstance.children) {
-    removeChild(oldInstance, child, false, false)
-    appendChild(newInstance, child)
+  // Update parent instance
+  for (const [instance, type, props, fiber] of pendingSwaps) {
+    // If the old instance is hidden, we need to unhide it.
+    // React assumes it can discard instances since they're pure for DOM.
+    // This isn't true for us since our lifetimes are impure and longliving.
+    // So, we manually check if an instance was hidden and unhide it.
+    if (instance.isHidden) unhideInstance(instance)
+
+    instance.type = type
+    instance.props = props
+
+    const parent = instance.parent
+    if (parent) {
+      // Get target from catalogue
+      const name = `${instance.type[0].toUpperCase()}${instance.type.slice(1)}`
+      const target = catalogue[name]
+
+      // Create object
+      instance.object = instance.props.object ?? new target(...(instance.props.args ?? []))
+      instance.object.__r3f = instance
+      setFiberRef(fiber, instance.object)
+
+      // Set initial props
+      applyProps(instance.object, instance.props)
+
+      if (instance.props.attach) {
+        attach(parent, instance)
+      } else if (isObject3D(instance.object) && isObject3D(parent.object)) {
+        parent.object.add(instance.object)
+      }
+
+      for (const child of instance.children) {
+        if (child.props.attach) {
+          attach(instance, child)
+        } else if (isObject3D(child.object) && isObject3D(instance.object)) {
+          instance.object.add(child.object)
+        }
+      }
+
+      // Tree was updated, request a frame
+      invalidateInstance(instance)
+    }
   }
-  oldInstance.children.length = 0
 
-  // Link up new instance
-  const parent = oldInstance.parent
-  if (parent) {
-    // Manually handle replace https://github.com/pmndrs/react-three-fiber/pull/2680
-
-    newInstance.autoRemovedBeforeAppend = !!newInstance.parent
-
-    if (!oldInstance.autoRemovedBeforeAppend) removeChild(parent, oldInstance)
-    appendChild(parent, newInstance)
-
-    // if (!oldInstance.autoRemovedBeforeAppend) {
-    //   insertBefore(parent, newInstance, oldInstance)
-    //   removeChild(parent, oldInstance)
-    // } else {
-    //   appendChild(parent, newInstance)
-    // }
-  }
-
-  // This evil hack switches the react-internal fiber instance
-  // https://github.com/facebook/react/issues/14983
-  // TODO: investigate scheduling key prop change instead of switchInstance entirely
-  // https://github.com/facebook/react/pull/15021#issuecomment-480185369
-  setFiberInstance(fiber, newInstance)
-  setFiberInstance(fiber.alternate, newInstance)
-
-  // Tree was updated, request a frame
-  invalidateInstance(newInstance)
-
-  return newInstance
+  pendingSwaps.length = 0
 }
 
 // Don't handle text instances, warn on undefined behavior
@@ -494,9 +505,7 @@ export const reconciler = createReconciler<
   supportsMutation: true,
   supportsPersistence: false,
   supportsHydration: false,
-  createInstance(type, props, root) {
-    return createInstance(type, props, root)
-  },
+  createInstance,
   removeChild,
   appendChild,
   appendInitialChild: appendChild,
@@ -526,28 +535,35 @@ export const reconciler = createReconciler<
     type: HostConfig['type'],
     oldProps: HostConfig['props'],
     newProps: HostConfig['props'],
-    fiber: any,
+    fiber: Reconciler.Fiber,
   ) {
+    validateInstance(type, newProps)
+
     let reconstruct = false
 
     // Reconstruct primitives if object prop changes
     if (instance.type === 'primitive' && oldProps.object !== newProps.object) reconstruct = true
-    // Reconstruct instance if args was changed to an invalid value
-    else if (newProps.args !== undefined && !Array.isArray(newProps.args)) reconstruct = true
     // Reconstruct instance if args were added or removed
     else if (newProps.args?.length !== oldProps.args?.length) reconstruct = true
     // Reconstruct instance if args were changed
     else if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) reconstruct = true
 
     // Reconstruct when args or <primitive object={...} have changes
-    if (reconstruct) return switchInstance(instance, type, newProps, fiber)
-
-    // Create a diff-set, flag if there are any changes
-    const changedProps = diffProps(instance, newProps)
-    if (Object.keys(changedProps).length) {
-      Object.assign(instance.props, changedProps)
-      applyProps(instance.object, changedProps)
+    if (reconstruct) {
+      // if (pendingSwaps.length === 0) scheduleCallback(normalPriority, swapInstances)
+      pendingSwaps.push([instance, type, { ...newProps }, fiber])
+    } else {
+      // Create a diff-set, flag if there are any changes
+      const changedProps = diffProps(instance, newProps)
+      if (Object.keys(changedProps).length) {
+        Object.assign(instance.props, changedProps)
+        applyProps(instance.object, changedProps)
+      }
     }
+
+    // Flush reconstructed siblings when we hit the last updated child in a sequence
+    const isTailSibling = fiber.sibling === null || !(fiber.flags & 4)
+    if (isTailSibling) swapInstances()
   },
   finalizeInitialChildren: () => false,
   commitMount() {},
