@@ -18,7 +18,7 @@ export type MathType<T extends MathRepresentation> = T extends THREE.Color
   ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>
 
-type MathProps<P> = {
+export type MathProps<P> = {
   [K in keyof P as P[K] extends MathRepresentation ? K : never]: P[K] extends MathRepresentation
     ? MathType<P[K]>
     : never
@@ -37,15 +37,15 @@ export type Matrix4 = MathType<THREE.Matrix4>
 export interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
 }
-type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
+export type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
 
-interface ReactProps<P> {
+export interface ReactProps<P> {
   children?: React.ReactNode
   ref?: React.Ref<P>
   key?: React.Key
 }
 
-type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
+export type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
   Overwrite<P, MathProps<P> & ReactProps<P> & EventProps<P>>
 >
 
