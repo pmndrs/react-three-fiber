@@ -220,6 +220,10 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
   validateInstance(type, props)
+
+  // Regenerate the R3F instance for primitives to simulate a new object
+  if (type === 'primitive' && props.object?.__r3f) delete props.object.__r3f
+
   return prepare(props.object, root, type, props)
 }
 
@@ -397,12 +401,7 @@ function setFiberRef(fiber: Reconciler.Fiber, publicInstance: HostConfig['public
   }
 }
 
-const reconstructed: [
-  oldInstance: HostConfig['instance'],
-  type: HostConfig['type'],
-  props: HostConfig['props'],
-  fiber: Reconciler.Fiber,
-][] = []
+const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Reconciler.Fiber][] = []
 
 function swapInstances(): void {
   // Detach instance
@@ -423,17 +422,19 @@ function swapInstances(): void {
         }
       }
     }
-  }
 
-  // Update instance
-  for (const [instance, type, props, fiber] of reconstructed) {
     // If the old instance is hidden, we need to unhide it.
     // React assumes it can discard instances since they're pure for DOM.
     // This isn't true for us since our lifetimes are impure and longliving.
     // So, we manually check if an instance was hidden and unhide it.
     if (instance.isHidden) unhideInstance(instance)
 
-    instance.type = type
+    // Regenerate the R3F instance for primitives to simulate a new object
+    if (instance.type === 'primitive' && instance.object?.__r3f) delete instance.object.__r3f
+  }
+
+  // Update instance
+  for (const [instance, props, fiber] of reconstructed) {
     instance.props = props
 
     const parent = instance.parent
@@ -567,7 +568,7 @@ export const reconciler = createReconciler<
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) {
-      reconstructed.push([instance, type, { ...newProps }, fiber])
+      reconstructed.push([instance, { ...newProps }, fiber])
     } else {
       // Create a diff-set, flag if there are any changes
       const changedProps = diffProps(instance, newProps)
