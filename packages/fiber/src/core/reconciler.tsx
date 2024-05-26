@@ -26,6 +26,8 @@ import type { ThreeElement } from '../three-types'
 // https://github.com/facebook/react/issues/28956
 type EventPriority = number
 
+type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
+
 const createReconciler = Reconciler as unknown as <
   Type,
   Props,
@@ -325,6 +327,23 @@ function insertBefore(
   handleContainerEffects(parent, child, beforeChild)
 }
 
+function disposeOnIdle(object: any) {
+  if (typeof object.dispose === 'function') {
+    const handleDispose = () => {
+      try {
+        object.dispose()
+      } catch {
+        // no-op
+      }
+    }
+
+    // In a testing environment, cleanup immediately
+    if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
+    // Otherwise, using a real GPU so schedule cleanup to prevent stalls
+    else scheduleCallback(idlePriority, handleDispose)
+  }
+}
+
 function removeChild(
   parent: HostConfig['instance'],
   child: HostConfig['instance'] | HostConfig['textInstance'],
@@ -365,35 +384,20 @@ function removeChild(
   //   - cannot be a <primitive object={...} />
   //   - cannot be a THREE.Scene, because three has broken its own API
   if (shouldDispose && child.type !== 'primitive' && child.object.type !== 'Scene') {
-    if (typeof child.object.dispose === 'function') {
-      const dispose = child.object.dispose.bind(child.object)
-      const handleDispose = () => {
-        try {
-          dispose()
-        } catch (e) {
-          // no-op
-        }
-      }
-
-      // In a testing environment, cleanup immediately
-      if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
-      // Otherwise, using a real GPU so schedule cleanup to prevent stalls
-      else scheduleCallback(idlePriority, handleDispose)
-    }
+    disposeOnIdle(child.object)
   }
 
   // Tree was updated, request a frame for top-level instance
   if (dispose === undefined) invalidateInstance(child)
 }
 
-function setFiberRef(fiber: Reconciler.Fiber, publicInstance: HostConfig['publicInstance']): void {
+function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance']): void {
   for (const _fiber of [fiber, fiber.alternate]) {
     if (_fiber !== null) {
       if (typeof _fiber.ref === 'function') {
-        // @ts-expect-error
         _fiber.refCleanup?.()
-        // @ts-expect-error
-        _fiber.refCleanup = _fiber.ref(publicInstance)
+        const cleanup = _fiber.ref(publicInstance)
+        if (typeof cleanup === 'function') _fiber.refCleanup = cleanup
       } else if (_fiber.ref) {
         _fiber.ref.current = publicInstance
       }
@@ -401,7 +405,7 @@ function setFiberRef(fiber: Reconciler.Fiber, publicInstance: HostConfig['public
   }
 }
 
-const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Reconciler.Fiber][] = []
+const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Fiber][] = []
 
 function swapInstances(): void {
   // Detach instance
@@ -429,8 +433,9 @@ function swapInstances(): void {
     // So, we manually check if an instance was hidden and unhide it.
     if (instance.isHidden) unhideInstance(instance)
 
-    // Regenerate the R3F instance for primitives to simulate a new object
-    if (instance.type === 'primitive' && instance.object?.__r3f) delete instance.object.__r3f
+    // Dispose of old object if able
+    if (instance.object.__r3f) delete instance.object.__r3f
+    if (instance.type !== 'primitive') disposeOnIdle(instance.object)
   }
 
   // Update instance
@@ -439,23 +444,6 @@ function swapInstances(): void {
 
     const parent = instance.parent
     if (parent) {
-      // Dispose of old object if able
-      if (instance.type !== 'primitive' && typeof instance.object.dispose === 'function') {
-        const object = instance.object
-        const handleDispose = () => {
-          try {
-            object.dispose()
-          } catch (e) {
-            // no-op
-          }
-        }
-
-        // In a testing environment, cleanup immediately
-        if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
-        // Otherwise, using a real GPU so schedule cleanup to prevent stalls
-        else scheduleCallback(idlePriority, handleDispose)
-      }
-
       // Get target from catalogue
       const name = `${instance.type[0].toUpperCase()}${instance.type.slice(1)}`
       const target = catalogue[name]
@@ -553,7 +541,7 @@ export const reconciler = createReconciler<
     type: HostConfig['type'],
     oldProps: HostConfig['props'],
     newProps: HostConfig['props'],
-    fiber: Reconciler.Fiber,
+    fiber: Fiber,
   ) {
     validateInstance(type, newProps)
 
