@@ -438,6 +438,23 @@ function swapInstances(): void {
 
     const parent = instance.parent
     if (parent) {
+      // Dispose of old object if able
+      if (instance.type !== 'primitive' && typeof instance.object.dispose === 'function') {
+        const object = instance.object
+        const handleDispose = () => {
+          try {
+            object.dispose()
+          } catch (e) {
+            // no-op
+          }
+        }
+
+        // In a testing environment, cleanup immediately
+        if (typeof IS_REACT_ACT_ENVIRONMENT !== 'undefined') handleDispose()
+        // Otherwise, using a real GPU so schedule cleanup to prevent stalls
+        else scheduleCallback(idlePriority, handleDispose)
+      }
+
       // Get target from catalogue
       const name = `${instance.type[0].toUpperCase()}${instance.type.slice(1)}`
       const target = catalogue[name]
