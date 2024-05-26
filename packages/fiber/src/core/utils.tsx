@@ -313,6 +313,7 @@ export const RESERVED_PROPS = [
   'dispose',
   'attach',
   'object',
+  'onUpdate',
   // Behavior flags
   'dispose',
 ]
