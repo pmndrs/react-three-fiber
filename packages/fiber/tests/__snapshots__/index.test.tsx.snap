@@ -39,6 +39,7 @@ Array [
   "LoaderResult",
   "MathRepresentation",
   "MathType",
+  "MathTypes",
   "Matrix3",
   "Matrix4",
   "Mutable",
