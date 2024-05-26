@@ -481,8 +481,8 @@ const NO_CONTEXT: HostConfig['hostContext'] = {}
 let currentUpdatePriority: number = NoEventPriority
 
 // https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberFlags.js
-const Update = 4
 const NoFlags = 0
+const Update = 4
 
 export const reconciler = createReconciler<
   HostConfig['type'],
