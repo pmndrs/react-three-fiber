@@ -150,6 +150,7 @@ export interface InstanceProps<T = any, P = any> {
   visible?: boolean
   dispose?: null
   attach?: AttachType<T>
+  onUpdate?: (self: T) => void
 }
 
 export interface Instance<O = any> {

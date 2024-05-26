@@ -512,6 +512,10 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 }
 
 export function invalidateInstance(instance: Instance): void {
+  if (!instance.parent) return
+
+  instance.props.onUpdate?.(instance.object)
+
   const state = instance.root?.getState?.()
   if (state && state.internal.frames === 0) state.invalidate()
 }

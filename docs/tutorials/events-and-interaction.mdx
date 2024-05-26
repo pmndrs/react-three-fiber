@@ -26,6 +26,7 @@ Any Object3D that has a raycast method can receive a large number of events, for
   onPointerLeave={(e) => console.log('leave')}
   onPointerMove={(e) => console.log('move')}
   onPointerMissed={() => console.log('missed')}
+  onUpdate={(self) => console.log('props have been updated')}
 />
 ```
 

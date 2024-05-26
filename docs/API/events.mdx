@@ -6,6 +6,8 @@ nav: 8
 
 `three.js` objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the `three.js` event data (object, point, distance, etc). You may want to [polyfill](https://github.com/jquery/PEP) them, if that's a concern.
 
+Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
+
 Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes.
 
 ```jsx
@@ -22,6 +24,7 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
   onPointerMissed={() => console.log('missed')}
+  onUpdate={(self) => console.log('props have been updated')}
 />
 ```
 
