@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { createWithEqualityFn } from 'zustand/traditional'
 
-import type { Properties, ThreeElement } from '../three-types'
+import type { ThreeElement } from '../three-types'
 import {
   Renderer,
   createStore,
@@ -20,6 +20,7 @@ import { reconciler, Root } from './reconciler'
 import { invalidate, advance } from './loop'
 import { EventManager, ComputeFunction } from './events'
 import {
+  type Properties,
   is,
   dispose,
   calculateDpr,

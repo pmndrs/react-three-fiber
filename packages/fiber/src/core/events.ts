@@ -1,8 +1,7 @@
 import * as THREE from 'three'
-import { getRootState } from './utils'
+import { type Properties, getRootState } from './utils'
 import type { Instance } from './reconciler'
 import type { RootState, RootStore } from './store'
-import type { Properties } from '../three-types'
 
 export interface Intersection extends THREE.Intersection {
   /** The event source (the object which registered the handler) */
