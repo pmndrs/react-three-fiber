@@ -1,0 +1,187 @@
+---
+title: 'v9 Migration Guide'
+description: Changes and new features with v9 and react 19
+nav: 12
+---
+
+This release is a compatability release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
+
+We would like to express our gratitude to the community for their continued support, as well as to all our contributors, including the React team at Meta and Vercel, for ensuring this upgrade went smoothly. 🎉
+
+## Performance
+
+// TODO: JSX, React Compiler (if not explicitly clear), react-native Hermes profile
+// Also, PoC for improvements with OffscreenCanvas support
+
+## Features
+
+### useLoader Accepts Loader Instance
+
+`useLoader` now supports re-use of external loader instances for more controlled pooling and setup.
+
+```jsx
+import { GLTFLoader } from 'three/addons'
+import { useLoader } from '@react-three/fiber'
+
+function Model() {
+  const gltf = useLoader(GLTFLoader, '/path/to/model.glb')
+}
+
+// or,
+
+const loader = new GLTFLoader()
+function Model() {
+  const gltf = useLoader(loader, '/path/to/model.glb')
+}
+```
+
+### Factory extend Signature
+
+`extend` can now produce a component when a three.js class is passed to it individually instead of a catalog of named classes. This is backwards compatible and reduces TypeScript boilerplate and JSX collisions. We recommend libraries migrate to this signature so internal components don't clash with user-land declarations.
+
+```tsx
+import { OrbitControls } from 'three/addons'
+import { type ThreeElement, type ThreeElements } from '@react-three/fiber'
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    orbitControls: ThreeElement<typeof OrbitControls>
+  }
+}
+
+extend({ OrbitControls })
+
+<orbitControls args={[camera, gl.domElement]}>
+
+// or,
+
+const Controls = extend(OrbitControls)
+<Controls args={[camera, gl.domElement]} />
+```
+
+## Fixes
+
+### Color Management of Textures
+
+Automatic sRGB conversion of all textures was removed, and color textures are handled explicitly for built-in materials. This fixes hard-to-debug errors where data textures like normals or displacement are corrupted or made non-linear and aligns with vanilla three behavior. For custom materials or shaders, make sure to annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace`.
+
+For more details, see https://threejs.org/docs/#manual/en/introduction/Color-management.
+
+### Suspense and Side-Effects
+
+The correctness and handling of `Suspense` and fallback content have improved between both React and R3F. Side-effects like `attach` and constructor side-effects (e.g., controls, which may add event listeners) will no longer fire repeatedly without cleanup while a tree is suspending. This required a major rearchitecture over the last 2 years to mend React philosophical incompatibilities from the pure document model.
+
+```jsx
+import { OrbitControls } from 'three/addons'
+
+extend({ OrbitControls })
+
+function Controls() {
+  const camera = useThree((state) => state.camera)
+  const gl = useThree((state) => state.gl)
+
+  // Will only initialize when tree is connected to screen
+  return <orbitControls args={[camera, gl.domElement]}>
+}
+
+<Suspense>
+  <Controls />
+  <AsyncComponent />
+</Suspense>
+```
+
+### Swapping with args and primitives
+
+Internal handling of swapping elements when changing the `args` or primitive `object` prop has improved for structured children like an array or iterator (yes, React supports iterators and async iterators). Previously, primitives who shared an `object` could be updated out-of-order or removed from the scene along with their children.
+
+```jsx
+// ✅ Mounts a,b,c,d
+[a, b, c, d].map((object, i) => <primitive key={i} object={object}>)
+
+// ❌ Updates undefined,undefined,c,d
+[d, c, b, a].map((object, i) => <primitive key={i} object={object}>)
+```
+
+## TypeScript Changes
+
+### Props renamed to CanvasProps
+
+### Hardcoded Element Props
+
+// TODO: Removed, dynamically mapped
+
+### Node Helpers
+
+Specialized `Node` type helpers for extending JSX (`Node`, `Object3DNode`, `BufferGeometryNode`, `MaterialNode`, `LightNode`) were removed and combined into 'ThreeElement', which accepts a single type representing the extended element.
+
+```tsx
+import { type ThreeElement } from '@react-three/fiber'
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    customElement: ThreeElement<typeof CustomElement>
+  }
+}
+```
+
+### ThreeElements
+
+`ThreeElements` was added as an interface since v8.1.0 and is the current way of declaring or accessing JSX within R3F since the depreciation of `global` JSX (see https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript). All JSX types belonging to R3F will be accessible within `ThreeElements`.
+
+```diff
+-import { type Node } from '@react-three/fiber'
+-declare global {
+-  namespace JSX {
+-    interface IntrinsicElements {
+-      customElement: Node<CustomElement, typeof CustomElement>
+-    }
+-  }
+-}
+
+-import { type Node } from '@react-three/fiber'
+-declare module '@react-three/fiber' {
+-  interface ThreeElements {
+-    customElement: Node<CustomElement, typeof CustomElement>
+-  }
+-}
+
++import { type ThreeElement } from '@react-three/fiber'
++declare module '@react-three/fiber' {
++  interface ThreeElements {
++    customElement: ThreeElement<typeof CustomElement>
++  }
++}
+```
+
+## Testing
+
+### StrictMode
+
+`StrictMode` is now correctly inherited from a parent renderer like react-dom. Previously, `<StrictMode />` mounted outside of the R3F Canvas would not affect its children, so it had to be redeclared within as well.
+
+```diff
+<StrictMode>
+  <Canvas>
+-    <StrictMode>
+-      // ...
+-    </StrictMode>
++    // ...
+  </Canvas>
+</StrictMode>
+```
+
+### Act
+
+`act` is now exported from React itself and can be used for all renderers. It will return the contents of a passed async callback like before and recursively flush async effects to synchronously test React output.
+
+```tsx
+import { act } from 'react'
+import { createRoot } from '@react-three/fiber'
+
+const store = await act(async () => createRoot(canvas).render(<App />))
+console.log(store.getState())
+```
+
+## Deprecated
+
+// TODO: onUpdate?
