@@ -187,18 +187,19 @@ export const catalogue: Catalogue = {}
 
 let i = 0
 
-export const extend = <T extends Catalogue | ConstructorRepresentation>(
+const isConstructor = (object: unknown): object is ConstructorRepresentation => typeof object === 'function'
+
+export function extend<T extends ConstructorRepresentation>(objects: T): React.ExoticComponent<ThreeElement<T>>
+export function extend<T extends Catalogue>(objects: T): void
+export function extend<T extends Catalogue | ConstructorRepresentation>(
   objects: T,
-): T extends ConstructorRepresentation ? React.ExoticComponent<ThreeElement<T>> : void => {
-  if (typeof objects === 'function') {
+): React.ExoticComponent<ThreeElement<any>> | void {
+  if (isConstructor(objects)) {
     const Component = `${i++}`
     catalogue[Component] = objects
-
-    // Returns a component whose name will be inferred in devtools
-    // @ts-expect-error
-    return React.forwardRef({ [objects.name]: (props, ref) => <Component {...props} ref={ref} /> }[objects.name])
+    return Component as any
   } else {
-    return void Object.assign(catalogue, objects) as any
+    Object.assign(catalogue, objects)
   }
 }
 
