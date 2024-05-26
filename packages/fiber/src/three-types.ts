@@ -5,10 +5,10 @@ import type {} from 'react/jsx-dev-runtime'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 import type { Overwrite, Mutable } from './core/utils'
 
-interface MathRepresentation {
+export interface MathRepresentation {
   set(...args: any[]): any
 }
-interface VectorRepresentation extends MathRepresentation {
+export interface VectorRepresentation extends MathRepresentation {
   setScalar(value: number): any
 }
 
@@ -34,7 +34,7 @@ export type Euler = MathType<THREE.Euler>
 export type Matrix3 = MathType<THREE.Matrix3>
 export type Matrix4 = MathType<THREE.Matrix4>
 
-interface RaycastableRepresentation {
+export interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
 }
 type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
