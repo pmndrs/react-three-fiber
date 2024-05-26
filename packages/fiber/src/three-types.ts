@@ -15,8 +15,9 @@ export interface MathRepresentation {
 export interface VectorRepresentation extends MathRepresentation {
   setScalar(s: number): any
 }
+export type MathTypes = MathRepresentation | THREE.Euler | THREE.Color
 
-export type MathType<T extends MathRepresentation | THREE.Euler> = T extends THREE.Color
+export type MathType<T extends MathTypes> = T extends THREE.Color
   ? Args<typeof THREE.Color> | THREE.ColorRepresentation
   : T extends VectorRepresentation | THREE.Layers | THREE.Euler
   ? T | Parameters<T['set']> | number
@@ -32,7 +33,9 @@ export type Euler = MathType<THREE.Euler>
 export type Matrix3 = MathType<THREE.Matrix3>
 export type Matrix4 = MathType<THREE.Matrix4>
 
-export type WithMathProps<P> = { [K in keyof P]: P[K] extends MathRepresentation | THREE.Euler ? MathType<P[K]> : P[K] }
+export type WithMathProps<P> = {
+  [K in keyof P]: P[K] extends MathTypes ? MathType<P[K]> : P[K]
+}
 
 export interface RaycastableRepresentation {
   raycast(raycaster: THREE.Raycaster, intersects: THREE.Intersection[]): void
