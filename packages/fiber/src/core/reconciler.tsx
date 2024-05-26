@@ -480,6 +480,10 @@ const NO_CONTEXT: HostConfig['hostContext'] = {}
 
 let currentUpdatePriority: number = NoEventPriority
 
+// https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberFlags.js
+const Update = 4
+const NoFlags = 0
+
 export const reconciler = createReconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -557,7 +561,7 @@ export const reconciler = createReconciler<
     }
 
     // Flush reconstructed siblings when we hit the last updated child in a sequence
-    const isTailSibling = fiber.sibling === null || !(fiber.flags & 4)
+    const isTailSibling = fiber.sibling === null || (fiber.flags & Update) === NoFlags
     if (isTailSibling) swapInstances()
   },
   finalizeInitialChildren: () => false,
