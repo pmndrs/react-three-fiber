@@ -17,6 +17,7 @@ import {
   prepare,
   isObject3D,
   findInitialRoot,
+  IsAllOptional,
 } from './utils'
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
@@ -144,8 +145,13 @@ export type Args<T> = T extends ConstructorRepresentation
     : ConstructorParameters<T>
   : any[]
 
-export interface InstanceProps<T = any, P = any> {
-  args?: Args<P>
+type ArgsProp<P> = P extends ConstructorRepresentation
+  ? IsAllOptional<ConstructorParameters<P>> extends true
+    ? { args?: Args<P> }
+    : { args: Args<P> }
+  : { args: unknown[] }
+
+export type InstanceProps<T = any, P = any> = ArgsProp<P> & {
   object?: T
   visible?: boolean
   dispose?: null
