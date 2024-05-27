@@ -82,7 +82,7 @@ function Line({ defaultStart, defaultEnd }: any) {
     <>
       <line ref={lineRef as any}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         </bufferGeometry>
         <lineBasicMaterial color="black" />
       </line>
