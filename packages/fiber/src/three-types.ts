@@ -6,22 +6,21 @@ import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } fr
 import type { Overwrite, Mutable } from './core/utils'
 
 export interface MathRepresentation {
-  set(...args: any[]): any
+  set(...args: number[]): any
 }
 export interface VectorRepresentation extends MathRepresentation {
   setScalar(value: number): any
 }
+export type MathTypes = MathRepresentation | THREE.Euler | THREE.Color
 
-export type MathType<T extends MathRepresentation> = T extends THREE.Color
+export type MathType<T extends MathTypes> = T extends THREE.Color
   ? Args<typeof THREE.Color> | THREE.ColorRepresentation
   : T extends VectorRepresentation | THREE.Layers | THREE.Euler
   ? T | Parameters<T['set']> | number
   : T | Parameters<T['set']>
 
 export type MathProps<P> = {
-  [K in keyof P as P[K] extends MathRepresentation ? K : never]: P[K] extends MathRepresentation
-    ? MathType<P[K]>
-    : never
+  [K in keyof P as P[K] extends MathTypes ? K : never]: P[K] extends MathTypes ? MathType<P[K]> : never
 }
 
 export type Vector2 = MathType<THREE.Vector2>
