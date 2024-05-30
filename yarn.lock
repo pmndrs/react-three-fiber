@@ -8974,17 +8974,17 @@ react-devtools-core@4.24.0:
     shell-quote "^1.6.1"
     ws "^7"
 
-react-dom@19.0.0-rc-935180c7e0-20240524:
-  version "19.0.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0-rc-935180c7e0-20240524.tgz#47e1a2f87fc9e27de50a72840e0b71f42effabf6"
-  integrity sha512-17SL+9qxiLUZnaBWr+mO3hpz5ncP5NbJp6jnbA6cFbsWNdV3p4s8iMVALIcfZF1zPIiWQeYrZQK/Z8GY3xjihg==
+react-dom@19.0.0-rc-38e3b23483-20240529:
+  version "19.0.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-19.0.0-rc-38e3b23483-20240529.tgz#b0a34e32f4b81b0067adaa67f923f1871e4be56c"
+  integrity sha512-vP90YBhTjAZhY17JiYmY82NnTOjYLEcw1JB12jcaee3YRg8yRtOaq7fNgD+xc7nFJhKhyV/BI7sHeN0SelVB+Q==
   dependencies:
-    scheduler "0.25.0-rc-935180c7e0-20240524"
+    scheduler "0.25.0-rc-38e3b23483-20240529"
 
-react-is@19.0.0-rc-935180c7e0-20240524:
-  version "19.0.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.0.0-rc-935180c7e0-20240524.tgz#be584496b91087fde1b3144192a3bf869a85e2bb"
-  integrity sha512-qXK31jhhFSbr1NqdflxXgp90oJzjwefw5XOCRkoT2dY9ny8vMkWegyVfgloFTJtzgYgs0dFzPz1MSVMAwia7GA==
+react-is@19.0.0-rc-38e3b23483-20240529:
+  version "19.0.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.0.0-rc-38e3b23483-20240529.tgz#50d4ebcf735f166701f1c466031fab63bb534f78"
+  integrity sha512-lbE0KBiS81mr3nIozqDEWqIXcBOKfdaLFoi76Fyj1Dp5WLhzD4Vd7xQpmlsU1iFPSQ70zU5Frz5Gf3z3WB6fAg==
 
 "react-is@^16.12.0 || ^17.0.0 || ^18.0.0", react-is@^18.0.0:
   version "18.2.0"
@@ -9055,12 +9055,12 @@ react-native@0.69.3:
     whatwg-fetch "^3.0.0"
     ws "^6.1.4"
 
-react-reconciler@0.31.0-rc-935180c7e0-20240524:
-  version "0.31.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.31.0-rc-935180c7e0-20240524.tgz#2ceed9744e9a7e0119155993f5672e0914e211ce"
-  integrity sha512-qM2ilapJ/g050GdXEzy3SzbkGhw7Odda6Js6w/3sVBYcdbFYyfsJp5b/Y/o6v7hISAa2e1HNQ7sus/p4u8XD0Q==
+react-reconciler@0.31.0-rc-38e3b23483-20240529:
+  version "0.31.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.31.0-rc-38e3b23483-20240529.tgz#d8da6f86a74d31d638460b9673d9b1beaae22327"
+  integrity sha512-ch2q5azrRDyJXxfW5vCH1ddtPkI/ZtkCZwsxvpydbI6fMGKEw+W+2APxxSOWiqXQBAqbeu1/3tHz6aAAC3DUgw==
   dependencies:
-    scheduler "0.25.0-rc-935180c7e0-20240524"
+    scheduler "0.25.0-rc-38e3b23483-20240529"
 
 react-refresh@^0.10.0:
   version "0.10.0"
@@ -9085,13 +9085,13 @@ react-shallow-renderer@16.15.0:
     object-assign "^4.1.1"
     react-is "^16.12.0 || ^17.0.0 || ^18.0.0"
 
-react-test-renderer@19.0.0-rc-935180c7e0-20240524:
-  version "19.0.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.0.0-rc-935180c7e0-20240524.tgz#cb227ebf0ff40bfa7d177a138bf70ca827f9c974"
-  integrity sha512-lBhhLO5viTRkh1AgWbCsaLLqn5L8c0ssCe7EzdE3BbuqzGxgFkuJM4RyDqgByfw7S7+TvhOcnXtsNKn6ykh/ag==
+react-test-renderer@19.0.0-rc-38e3b23483-20240529:
+  version "19.0.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/react-test-renderer/-/react-test-renderer-19.0.0-rc-38e3b23483-20240529.tgz#3eb6adec2380ff9ca0760a9eb9766da09adc28ef"
+  integrity sha512-SHhro7rKQiyYu8paj8WBsNshUK4e7oA2QWIHMtMBuSi6N86a3z62/BQwlW7KGKcnFBAhV+yEq4NV2ONDCUjCFw==
   dependencies:
-    react-is "19.0.0-rc-935180c7e0-20240524"
-    scheduler "0.25.0-rc-935180c7e0-20240524"
+    react-is "19.0.0-rc-38e3b23483-20240529"
+    scheduler "0.25.0-rc-38e3b23483-20240529"
 
 react-use-measure@^2.1.1:
   version "2.1.1"
@@ -9105,10 +9105,10 @@ react-use-refs@^1.0.1:
   resolved "https://registry.yarnpkg.com/react-use-refs/-/react-use-refs-1.0.1.tgz#44cab5f4764b3fa4a112189c0058fc8752d1eb2c"
   integrity sha512-zVmPRY5DJhzjGgmlIWw9pkdCNlIdrfsEXgdzcSau3MSpKPVuwRQU6DoviwH5f9n5Hc+M2HWW7mkRWbX+4eyC8w==
 
-react@19.0.0-rc-935180c7e0-20240524:
-  version "19.0.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-rc-935180c7e0-20240524.tgz#6403d07b38f0cb8cdb7eadbe0e8226a13a4e0730"
-  integrity sha512-UDaKY7FXO4A2tg4srdLTlkdj5WQCKS9JSrqs21qQvyD4s4qwm3sah5zhfnDHBumzZ3f+PVTcF9PrfDnmu/qKpA==
+react@19.0.0-rc-38e3b23483-20240529:
+  version "19.0.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/react/-/react-19.0.0-rc-38e3b23483-20240529.tgz#e0a77b1fe8225046393cf8c393e2f1d0f7528ce4"
+  integrity sha512-dXOzxTGDUB29TnvoX53MwD9q0Zpn2Dc7nTKwn1uMYu//O2H4ogQTEG2wO4XCDozRDBsxLmIY51GGx078BJXrVg==
 
 read-pkg-up@^7.0.1:
   version "7.0.1"
@@ -9494,10 +9494,10 @@ saxes@^5.0.1:
   dependencies:
     xmlchars "^2.2.0"
 
-scheduler@0.25.0-rc-935180c7e0-20240524:
-  version "0.25.0-rc-935180c7e0-20240524"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-rc-935180c7e0-20240524.tgz#f07f6d7a18effbbde008da638380507f2037e964"
-  integrity sha512-YfkorLQDTfVArSlFsSmTFMWW2CoUtNhkveeEzfbyqi5bShsEyQxAPLBGOUoBxaXEcQSJ2bXhkz3ZSTJCO/Th8A==
+scheduler@0.25.0-rc-38e3b23483-20240529:
+  version "0.25.0-rc-38e3b23483-20240529"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0-rc-38e3b23483-20240529.tgz#aca0e1ab860d95261d7d8f5641b07199c35e3119"
+  integrity sha512-TSK1B30lsjPOWwibVSv4Ep58DPReIX4JSx1/fevNuGmMDM94n9/fdKVj4K26IETei3j+vJxRCdtddlM/rY0dIg==
 
 scheduler@^0.21.0:
   version "0.21.0"
