@@ -213,7 +213,7 @@ You can also use the onChange callback to get notified when the average changes 
 ```jsx
 import round from 'lodash/round'
 
-const [dpr, set] = useState(1)
+const [dpr, setDpr] = useState(1)
 return (
  <Canvas dpr={dpr}>
   <PerformanceMonitor onChange={({ factor }) => setDpr(round(0.5 + 1.5 * factor, 1))}>
