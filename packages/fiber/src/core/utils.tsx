@@ -434,16 +434,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
 
     // Copy if properties match signatures
-    if (
-      target?.copy &&
-      // Some environments may break strict identity checks by duplicating versions of three.js.
-      // Loosen to unminified names, ignoring descendents.
-      // https://github.com/pmndrs/react-three-fiber/issues/2856
-      // TODO: fix upstream and remove in v9
-      (__DEV__
-        ? target.constructor.name === (value as ClassConstructor).constructor.name
-        : target.constructor === (value as ClassConstructor).constructor)
-    ) {
+    if (typeof target?.copy === 'function' && target.copy === (value as any).copy) {
       target.copy(value)
     }
     // Layers have no copy function, we must therefore copy the mask property

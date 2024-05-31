@@ -349,15 +349,23 @@ describe('applyProps', () => {
   })
 
   it('should prefer to copy from external props', async () => {
-    const color = new THREE.Color()
-    color.copy = jest.fn()
+    const copyMock = jest.fn()
+
+    class MockedColor extends THREE.Color {
+      override copy(other: MockedColor) {
+        copyMock()
+        return super.copy(other)
+      }
+    }
+
+    const color = new MockedColor()
 
     const target = { color, layer: new THREE.Layers() }
 
     // Same constructor, copy
-    applyProps(target, { color: new THREE.Color() })
-    expect(target.color).toBeInstanceOf(THREE.Color)
-    expect(color.copy).toHaveBeenCalledTimes(1)
+    applyProps(target, { color: new MockedColor() })
+    expect(target.color).toBeInstanceOf(MockedColor)
+    expect(copyMock).toHaveBeenCalledTimes(1)
 
     // Same constructor, Layers
     const layer = new THREE.Layers()
@@ -369,7 +377,7 @@ describe('applyProps', () => {
     // Different constructor, overwrite
     applyProps(target, { color: new THREE.Vector3() })
     expect(target.color).toBeInstanceOf(THREE.Vector3)
-    expect(color.copy).toHaveBeenCalledTimes(1)
+    expect(copyMock).toHaveBeenCalledTimes(1)
   })
 
   it('should prefer to set when props are an array', async () => {
