@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.7
+
+### Patch Changes
+
+- 4d6408c7: fix(types): revert usage of future module JSX
+
 ## 8.16.6
 
 ### Patch Changes
