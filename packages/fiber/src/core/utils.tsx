@@ -166,7 +166,7 @@ export const is = {
     // Wrong type or one of the two undefined, doesn't match
     if (typeof a !== typeof b || !!a !== !!b) return false
     // Atomic, just compare a against b
-    if (is.str(a) || is.num(a)) return a === b
+    if (is.str(a) || is.num(a) || is.boo(a)) return a === b
     const isObj = is.obj(a)
     if (isObj && objects === 'reference') return a === b
     const isArr = is.arr(a)
