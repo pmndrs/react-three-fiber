@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.16.8
+
+### Patch Changes
+
+- 4748b365: fix: update is.equ to compare booleans
+
 ## 8.16.7
 
 ### Patch Changes
