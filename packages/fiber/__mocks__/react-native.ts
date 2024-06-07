@@ -1,27 +1,25 @@
 import * as React from 'react'
-import { ViewProps, LayoutChangeEvent } from 'react-native'
+import { ViewProps, LayoutChangeEvent, View as RNView } from 'react-native'
 
 // Mocks a View or container as React sees it
-const Container = React.memo(
-  React.forwardRef(({ onLayout, ...props }: ViewProps, ref) => {
-    React.useLayoutEffect(() => {
-      onLayout?.({
-        nativeEvent: {
-          layout: {
-            x: 0,
-            y: 0,
-            width: 1280,
-            height: 800,
-          },
+const Container = React.memo(({ onLayout, ...props }: ViewProps) => {
+  React.useLayoutEffect(() => {
+    onLayout?.({
+      nativeEvent: {
+        layout: {
+          x: 0,
+          y: 0,
+          width: 1280,
+          height: 800,
         },
-      } as LayoutChangeEvent)
-    }, [onLayout])
+      },
+    } as LayoutChangeEvent)
+  }, [onLayout])
 
-    React.useImperativeHandle(ref, () => props)
+  // React.useImperativeHandle(ref, () => props)
 
-    return null
-  }),
-)
+  return null
+})
 
 export const View = Container
 export const Pressable = Container
