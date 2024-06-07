@@ -7,6 +7,8 @@ import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphi
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
+import { StoreApi, UseBoundStore } from 'zustand'
+import { RootState } from '../native'
 
 export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
@@ -23,6 +25,8 @@ export interface CanvasProps
   eventSource?: HTMLElement | React.MutableRefObject<HTMLElement>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
+  /** Custom store for passing state to the canvas */
+  store?: UseBoundStore<StoreApi<RootState>>
 }
 
 export interface Props extends CanvasProps {}
@@ -48,6 +52,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
     raycaster,
     camera,
     scene,
+    store,
     onPointerMissed,
     onCreated,
     ...props
@@ -80,7 +85,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
   useIsomorphicLayoutEffect(() => {
     const canvas = canvasRef.current
     if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-      if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
+      if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas, store)
       root.current.configure({
         gl,
         events,
