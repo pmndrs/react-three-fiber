@@ -1,6 +1,16 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { View, ViewProps, ViewStyle, LayoutChangeEvent, StyleSheet, PixelRatio } from 'react-native'
+import {
+  View,
+  type ViewProps,
+  type ViewStyle,
+  type GestureResponderHandlers,
+  type GestureResponderEvent,
+  PanResponder,
+  type LayoutChangeEvent,
+  StyleSheet,
+  PixelRatio,
+} from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
@@ -51,7 +61,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     const [{ width, height, top, left }, setSize] = React.useState<Size>({ width: 0, height: 0, top: 0, left: 0 })
     const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null)
-    const [bind, setBind] = React.useState<any>()
+    const [bind, setBind] = React.useState<GestureResponderHandlers>()
     React.useImperativeHandle(forwardedRef, () => viewRef.current)
 
     const handlePointerMissed = useMutableCallback(onPointerMissed)
@@ -76,21 +86,79 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     // Called on context create or swap
     // https://github.com/pmndrs/react-three-fiber/pull/2297
     const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
-      const canvasShim = {
+      const listeners = new Map<string, EventListener[]>()
+
+      const canvas = {
         width: context.drawingBufferWidth,
         height: context.drawingBufferHeight,
-        style: {},
-        addEventListener: (() => {}) as any,
-        removeEventListener: (() => {}) as any,
+        clientWidth: context.drawingBufferWidth,
         clientHeight: context.drawingBufferHeight,
-        getContext: ((_: any, { antialias = false }) => {
+        getContext: (_: any, { antialias = false }) => {
           setAntialias(antialias)
           return context
-        }) as any,
-      } as HTMLCanvasElement
+        },
+        addEventListener(type: string, listener: EventListener) {
+          let callbacks = listeners.get(type)
+          if (!callbacks) {
+            callbacks = []
+            listeners.set(type, callbacks)
+          }
 
-      root.current = createRoot<HTMLCanvasElement>(canvasShim)
-      setCanvas(canvasShim)
+          callbacks.push(listener)
+        },
+        removeEventListener(type: string, listener: EventListener) {
+          const callbacks = listeners.get(type)
+          if (callbacks) {
+            const index = callbacks.indexOf(listener)
+            if (index !== -1) callbacks.splice(index, 1)
+          }
+        },
+        dispatchEvent(event: Event) {
+          Object.assign(event, { target: this })
+
+          const callbacks = listeners.get(event.type)
+          if (callbacks) {
+            for (const callback of callbacks) {
+              callback(event)
+            }
+          }
+        },
+      } as unknown as HTMLCanvasElement
+
+      root.current = createRoot<HTMLCanvasElement>(canvas)
+      setCanvas(canvas)
+
+      function handleTouch(gestureEvent: GestureResponderEvent, type: string): true {
+        gestureEvent.persist()
+
+        canvas.dispatchEvent(
+          Object.assign(gestureEvent.nativeEvent, {
+            type,
+            offsetX: gestureEvent.nativeEvent.locationX,
+            offsetY: gestureEvent.nativeEvent.locationY,
+          }) as unknown as Event,
+        )
+
+        return true
+      }
+
+      const responder = PanResponder.create({
+        onStartShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        onPanResponderTerminationRequest: () => true,
+        onStartShouldSetPanResponderCapture: (e) => handleTouch(e, 'onPointerCapture'),
+        onPanResponderStart: (e) => handleTouch(e, 'onPointerDown'),
+        onPanResponderMove: (e) => handleTouch(e, 'onPointerMove'),
+        onPanResponderEnd: (e, state) => {
+          handleTouch(e, 'onPointerUp')
+          if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'onClick')
+        },
+        onPanResponderRelease: (e) => handleTouch(e, 'onPointerLeave'),
+        onPanResponderTerminate: (e) => handleTouch(e, 'onLostPointerCapture'),
+        onPanResponderReject: (e) => handleTouch(e, 'onLostPointerCapture'),
+      })
+      setBind(responder.panHandlers)
     }, [])
 
     if (root.current && width > 0 && height > 0) {
@@ -115,9 +183,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
-          // Bind events after creation
-          setBind(state.events.handlers)
-
           // Bind render to RN bridge
           const context = state.gl.getContext() as ExpoWebGLRenderingContext
           const renderFrame = state.gl.render.bind(state.gl)
@@ -145,9 +210,14 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }}>
         {width > 0 && (
-          <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
+          <GLView
+            {...bind}
+            msaaSamples={antialias ? 4 : 0}
+            onContextCreate={onContextCreate}
+            style={StyleSheet.absoluteFill}
+          />
         )}
       </View>
     )
