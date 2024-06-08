@@ -39,7 +39,9 @@
     "vers": "yarn changeset version",
     "codegen:eslint": "cd packages/eslint-plugin && yarn codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
-    "analyze-test": "cd packages/test-renderer && npm publish --dry-run"
+    "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write ."
   },
   "devDependencies": {
     "@babel/core": "7.17.8",
