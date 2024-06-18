@@ -1,6 +1,6 @@
 module.exports = {
   preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  testEnvironment: '<rootDir>/packages/shared/ExtendedJSDOMEnvironment.ts',
   testPathIgnorePatterns: ['/node_modules/'],
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
