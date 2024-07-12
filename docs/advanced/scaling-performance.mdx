@@ -53,6 +53,20 @@ Think of it as a flag to tell the system that something has changed.
 
 </Hint>
 
+### Sync animations with on-demand-rendering and invalidate
+
+Since `invalidate()` is only a flag that schedules render, you might bump into syncing issues when you run animations that are synchronous (as in, they start immediately). By the time fiber renders the first frame the animation has already progressed which leads to a visible jump. In such cases you should pre-emptively schedule a render and then start the animation in the next frame.
+
+```jsx
+<mesh
+  onClick={() => {
+    // Pre-emptively schedule a render
+    invalidate()
+    // Wait for the next frame to start the animation
+    requestAnimationFrame(() => controls.dolly(1, true))
+  }}
+```
+
 ## Re-using geometries and materials
 
 Each geometry and material means additional overhead for the GPU. You should try to re-use resources if you know they will repeat.
@@ -228,7 +242,7 @@ If you still experience flip flops despite the bounds you can define a limit of 
 PerformanceMonitor can also have children, if you wrap your app in it you get to use usePerformanceMonitor which allows individual components down the nested tree to respond to performance changes on their own.
 
 ```jsx
-<PerformanceMonitor>
+;<PerformanceMonitor>
   <Effects />
 </PerformanceMonitor>
 
