@@ -85,13 +85,13 @@ import { useErrorBoundary } from 'use-error-boundary'
 function App() {
   const { ErrorBoundary, didCatch, error } = useErrorBoundary()
   return didCatch ? (
+    <div>{error.message}</div>
+  ) : (
     <ErrorBoundary>
       <Canvas>
         <mesh />
       </Canvas>
     </ErrorBoundary>
-  ) : (
-    <div>{error.message}</div>
   )
 }
 ```
