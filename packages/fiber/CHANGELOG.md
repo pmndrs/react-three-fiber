@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.5
+
+### Patch Changes
+
+- 162dbbdd: fix: npmignore ignored types"
+
 ## 8.17.4
 
 ### Patch Changes
