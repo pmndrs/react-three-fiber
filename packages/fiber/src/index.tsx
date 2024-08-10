@@ -13,8 +13,9 @@ export type {
   RootState,
 } from './core/store'
 export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/events'
-export { createEvents, createPointerEvents as events } from './core/events'
+export { createEvents } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
 export * from './web/Canvas'
+export { createPointerEvents as events, createPointerEvents } from './web/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'

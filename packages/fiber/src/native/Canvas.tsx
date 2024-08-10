@@ -15,7 +15,7 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
-import { createPointerEvents } from '../core/events'
+import { createPointerEvents } from '../web/events'
 import { RootState, Size } from '../core/store'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
