@@ -5,7 +5,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "jsx": "react",
+    "jsx": "react-jsx",
     "pretty": true,
     "strict": true,
     "skipLibCheck": true,

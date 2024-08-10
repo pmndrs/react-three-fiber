@@ -1,5 +1,35 @@
 # @react-three/fiber
 
+## 8.16.8
+
+### Patch Changes
+
+- 4748b365: fix: update is.equ to compare booleans
+
+## 8.16.7
+
+### Patch Changes
+
+- 4d6408c7: fix(types): revert usage of future module JSX
+
+## 8.16.6
+
+### Patch Changes
+
+- 03ab82fe: fix(applyProps): null check indeterminate instances
+
+## 8.16.5
+
+### Patch Changes
+
+- cb913e01: fix: use fast JSX, future JSX types
+
+## 8.16.4
+
+### Patch Changes
+
+- 1270d24c: fix: missing dependency on inject function
+
 ## 8.16.3
 
 ### Patch Changes

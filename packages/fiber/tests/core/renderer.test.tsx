@@ -11,6 +11,7 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
+  applyProps,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -746,9 +747,9 @@ describe('renderer', () => {
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
     expect(texture.encoding).toBe(sRGBEncoding)
 
-    // @ts-ignore
+    // @ts-expect-error
     THREE.WebGLRenderer.prototype.outputColorSpace ??= ''
-    // @ts-ignore
+    // @ts-expect-error
     THREE.Texture.prototype.colorSpace ??= ''
 
     await act(async () =>
@@ -780,9 +781,9 @@ describe('renderer', () => {
     expect(gl.outputColorSpace).toBe(SRGBColorSpace)
     expect(texture.colorSpace).toBe(SRGBColorSpace)
 
-    // @ts-ignore
+    // @ts-expect-error
     delete THREE.WebGLRenderer.prototype.outputColorSpace
-    // @ts-ignore
+    // @ts-expect-error
     delete THREE.Texture.prototype.colorSpace
   })
 
@@ -1061,5 +1062,10 @@ describe('renderer', () => {
     expect(store.getState().camera.right).toBe(0)
     expect(store.getState().camera.top).toBe(0)
     expect(store.getState().camera.bottom).toBe(0)
+  })
+
+  it('applyProps can handle non-instances', async () => {
+    const object = new THREE.Object3D() as any
+    expect(() => applyProps(object, { onClick: () => {} })).not.toThrow()
   })
 })

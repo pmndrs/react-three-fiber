@@ -180,6 +180,12 @@ function Component() {
   return <primitive object={mesh} position={[10, 0, 0]} />
 ```
 
+<Hint>
+
+Scene objects can only ever be added once in Threejs. If you attempt to add one and the same object in two places Threejs will remove the first instance automatically. This will also happen with primitive! If you want to re-use an existing object, you must clone it first.
+
+</Hint>
+
 ## Using 3rd-party objects declaratively
 
 The `extend` function extends React Three Fiber's catalogue of JSX elements. Components added this way can then be referenced in the scene-graph using camel casing similar to other primitives.
