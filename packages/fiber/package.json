@@ -43,13 +43,14 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
+    "@types/debounce": "^1.2.1",
     "@types/react-reconciler": "^0.26.7",
     "@types/webxr": "*",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
+    "debounce": "^1.2.1",
     "its-fine": "^1.0.6",
     "react-reconciler": "^0.27.0",
-    "react-use-measure": "^2.1.1",
     "scheduler": "^0.21.0",
     "suspend-react": "^0.1.3",
     "zustand": "^3.7.1"
