@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.4
+
+### Patch Changes
+
+- 43866f4e: fix: rebuild with types
+
 ## 8.17.3
 
 ### Patch Changes
