@@ -15,7 +15,7 @@ import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
-import { createTouchEvents } from './events'
+import { createPointerEvents } from '../core/events'
 import { RootState, Size } from '../core/store'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
@@ -35,7 +35,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       children,
       style,
       gl,
-      events = createTouchEvents,
+      events = createPointerEvents,
       shadows,
       linear,
       flat,
@@ -147,16 +147,16 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         onMoveShouldSetPanResponder: () => true,
         onMoveShouldSetPanResponderCapture: () => true,
         onPanResponderTerminationRequest: () => true,
-        onStartShouldSetPanResponderCapture: (e) => handleTouch(e, 'onPointerCapture'),
-        onPanResponderStart: (e) => handleTouch(e, 'onPointerDown'),
-        onPanResponderMove: (e) => handleTouch(e, 'onPointerMove'),
+        onStartShouldSetPanResponderCapture: (e) => handleTouch(e, 'pointercapture'),
+        onPanResponderStart: (e) => handleTouch(e, 'pointerdown'),
+        onPanResponderMove: (e) => handleTouch(e, 'pointermove'),
         onPanResponderEnd: (e, state) => {
-          handleTouch(e, 'onPointerUp')
-          if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'onClick')
+          handleTouch(e, 'pointerup')
+          if (Math.hypot(state.dx, state.dy) < 20) handleTouch(e, 'click')
         },
-        onPanResponderRelease: (e) => handleTouch(e, 'onPointerLeave'),
-        onPanResponderTerminate: (e) => handleTouch(e, 'onLostPointerCapture'),
-        onPanResponderReject: (e) => handleTouch(e, 'onLostPointerCapture'),
+        onPanResponderRelease: (e) => handleTouch(e, 'pointerleave'),
+        onPanResponderTerminate: (e) => handleTouch(e, 'lostpointercapture'),
+        onPanResponderReject: (e) => handleTouch(e, 'lostpointercapture'),
       })
       setBind(responder.panHandlers)
     }, [])
