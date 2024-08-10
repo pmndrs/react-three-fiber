@@ -89,6 +89,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       const listeners = new Map<string, EventListener[]>()
 
       const canvas = {
+        style: {},
         width: context.drawingBufferWidth,
         height: context.drawingBufferHeight,
         clientWidth: context.drawingBufferWidth,
@@ -123,7 +124,14 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
             }
           }
         },
+        releasePointerCapture() {
+          // TODO
+        },
       } as unknown as HTMLCanvasElement
+
+      // TODO: this is wrong but necessary to trick controls
+      // @ts-ignore
+      canvas.ownerDocument = canvas
 
       root.current = createRoot<HTMLCanvasElement>(canvas)
       setCanvas(canvas)
