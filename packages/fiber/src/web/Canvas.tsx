@@ -5,7 +5,8 @@ import type { Options as ResizeOptions } from 'react-use-measure'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
-import { createPointerEvents, DomEvent } from '../core/events'
+import { createPointerEvents } from './events'
+import { DomEvent } from '../core/events'
 
 export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
