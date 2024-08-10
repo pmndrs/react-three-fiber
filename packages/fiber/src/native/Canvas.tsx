@@ -124,6 +124,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
             }
           }
         },
+        setPointerCapture() {
+          // TODO
+        },
         releasePointerCapture() {
           // TODO
         },
@@ -132,6 +135,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       // TODO: this is wrong but necessary to trick controls
       // @ts-ignore
       canvas.ownerDocument = canvas
+      canvas.getRootNode = () => canvas
 
       root.current = createRoot<HTMLCanvasElement>(canvas)
       setCanvas(canvas)
@@ -144,6 +148,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
             type,
             offsetX: gestureEvent.nativeEvent.locationX,
             offsetY: gestureEvent.nativeEvent.locationY,
+            pointerType: 'touch',
           }) as unknown as Event,
         )
 
