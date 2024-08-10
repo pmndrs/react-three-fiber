@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.0
+
+### Minor Changes
+
+- 3c22194d: feat: flushSync, native EventTarget
+
 ## 8.16.8
 
 ### Patch Changes
