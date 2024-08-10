@@ -16,6 +16,6 @@ export type { ThreeEvent, Events, EventManager, ComputeFunction } from './core/e
 export { createEvents } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
 export * from './web/Canvas'
-export { createPointerEvents as events } from './web/events'
+export { createPointerEvents as events, createPointerEvents } from './web/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'
