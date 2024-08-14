@@ -74,6 +74,8 @@ export type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof TH
 
 export type MeshProps = Object3DNode<THREE.Mesh, typeof THREE.Mesh>
 export type InstancedMeshProps = Object3DNode<THREE.InstancedMesh, typeof THREE.InstancedMesh>
+/** @ts-ignore */
+export type BatchedMeshProps = Object3DNode<THREE.BatchedMesh, typeof THREE.BatchedMesh>
 export type SceneProps = Object3DNode<THREE.Scene, typeof THREE.Scene>
 export type SpriteProps = Object3DNode<THREE.Sprite, typeof THREE.Sprite>
 export type LODProps = Object3DNode<THREE.LOD, typeof THREE.LOD>
@@ -297,6 +299,7 @@ export interface ThreeElements {
   positionalAudio: PositionalAudioProps
 
   mesh: MeshProps
+  batchedMesh: BatchedMeshProps
   instancedMesh: InstancedMeshProps
   scene: SceneProps
   sprite: SpriteProps
