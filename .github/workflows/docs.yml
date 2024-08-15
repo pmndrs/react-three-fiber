@@ -17,6 +17,7 @@ jobs:
       libname: 'React Three Fiber'
       home_redirect: '/getting-started/introduction'
       icon: '🇨🇭'
+      logo: '/logo.jpg'
 
   deploy:
     needs: build
