@@ -15,6 +15,7 @@ jobs:
     with:
       mdx: './docs'
       libname: 'React Three Fiber'
+      libname_short: 'r3f'
       home_redirect: '/getting-started/introduction'
       icon: '🇨🇭'
       logo: '/logo.jpg'
