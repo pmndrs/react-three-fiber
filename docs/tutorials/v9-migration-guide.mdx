@@ -63,13 +63,13 @@ const Controls = extend(OrbitControls)
 
 ### Color Management of Textures
 
-Automatic sRGB conversion of all textures was removed, and color textures are handled explicitly for built-in materials. This fixes hard-to-debug errors where data textures like normals or displacement are corrupted or made non-linear and aligns with vanilla three behavior. For custom materials or shaders, make sure to annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace`.
+Automatic sRGB conversion of texture props is removed, and color textures are handled automatically for known built-in materials. This aligns with vanilla three behavior and fixes hard-to-debug errors where data textures like normals or displacement are corrupted or made non-linear (math and interpolation must be done linearly). For custom materials or shaders, make sure to annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace` or `texture-colorSpace={THREE.SRGBColorSpace}` with JSX.
 
 For more details, see https://threejs.org/docs/#manual/en/introduction/Color-management.
 
 ### Suspense and Side-Effects
 
-The correctness and handling of `Suspense` and fallback content have improved between both React and R3F. Side-effects like `attach` and constructor side-effects (e.g., controls, which may add event listeners) will no longer fire repeatedly without cleanup while a tree is suspending. This required a major rearchitecture over the last 2 years to mend React philosophical incompatibilities from the pure document model.
+Correctness and handling of `Suspense` and fallback content have improved between both React and R3F. Side-effects like `attach` and constructor side-effects (e.g., controls, which may add event listeners) will no longer fire repeatedly without cleanup while a tree is suspending. This required a major rearchitecture over the last 2 years and collaboration upstream to iterate towards a robust solution.
 
 ```jsx
 import { OrbitControls } from 'three/addons'
@@ -106,13 +106,30 @@ Internal handling of swapping elements when changing the `args` or primitive `ob
 
 ### Props renamed to CanvasProps
 
-### Hardcoded Element Props
+Canvas `Props` is now called `CanvasProps` for clarity. These were aliased in v8 for forward compatibility, but `Props` is removed with v9.
 
-// TODO: Removed, dynamically mapped
+```diff
+-function Canvas(props: Props)
++function Canvas(props: CanvasProps)
+```
+
+### Dynamic JSX Types
+
+Since R3F's creation, JSX types had to be maintained in accordance with additions to three core API. Although missing or future types could be ignored or resilient for forward and backwards compatibility, this was a major maintenance burden for us and those extending three. Furthermore, libraries which wrap or bind to the known catalog of elements (e.g. React Spring `<animated.mesh />`) had no way of knowing which elements belonged to a renderer.
+
+Since v8, we've added a catalog of known elements to a `ThreeElements` interface, and with v9 automatically map three API to JSX types. As types are now dynamically mapped, hardcoded exports like `MeshProps` have been removed, and can be accessed as `ThreeElements['mesh']`. Helper types like `Color` or `Vector3` remain to reflect the JSX `MathType` API for shorthand expression.
+
+```diff
+-import { MeshProps } from '@react-three/fiber'
+-type Props = MeshProps
+
++import { ThreeElements } from '@react-three/fiber'
++type Props = ThreeElements['mesh']
+```
 
 ### Node Helpers
 
-Specialized `Node` type helpers for extending JSX (`Node`, `Object3DNode`, `BufferGeometryNode`, `MaterialNode`, `LightNode`) were removed and combined into 'ThreeElement', which accepts a single type representing the extended element.
+Specialized `Node` type helpers for extending JSX (`Node`, `Object3DNode`, `BufferGeometryNode`, `MaterialNode`, `LightNode`) are removed and combined into 'ThreeElement', which accepts a single type representing the extended element instance.
 
 ```tsx
 import { type ThreeElement } from '@react-three/fiber'
@@ -126,7 +143,7 @@ declare module '@react-three/fiber' {
 
 ### ThreeElements
 
-`ThreeElements` was added as an interface since v8.1.0 and is the current way of declaring or accessing JSX within R3F since the depreciation of `global` JSX (see https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript). All JSX types belonging to R3F will be accessible within `ThreeElements`.
+`ThreeElements` was added as an interface since v8.1.0 and is the current way of declaring or accessing JSX within R3F since React's depreciation of `global` JSX (see https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript). All JSX types belonging to R3F are accessible from `ThreeElements`.
 
 ```diff
 -import { type Node } from '@react-three/fiber'
@@ -157,7 +174,7 @@ declare module '@react-three/fiber' {
 
 ### StrictMode
 
-`StrictMode` is now correctly inherited from a parent renderer like react-dom. Previously, `<StrictMode />` mounted outside of the R3F Canvas would not affect its children, so it had to be redeclared within as well.
+`StrictMode` is now correctly inherited from a parent renderer like react-dom. Previously, `<StrictMode />` mounted in another root such as react-dom would not affect the R3F canvas, so it had to be redeclared within the canvas as well.
 
 ```diff
 <StrictMode>
@@ -181,7 +198,3 @@ import { createRoot } from '@react-three/fiber'
 const store = await act(async () => createRoot(canvas).render(<App />))
 console.log(store.getState())
 ```
-
-## Deprecated
-
-// TODO: onUpdate?
