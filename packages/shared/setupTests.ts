@@ -1,10 +1,17 @@
 import * as THREE from 'three'
 import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
 import { extend } from '@react-three/fiber'
+import { createDataUriFromGltf } from './utils/createDataUriFromGltf'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
   var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
+  var gltfs: {
+    diamond: string
+    lightning: string
+  }
+  var MockLoader: typeof _MockLoader
+  var MockMesh: THREE.Mesh
 }
 
 // Let React know that we'll be testing effectful components
@@ -46,3 +53,69 @@ HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
 
 // Extend catalogue for render API in tests
 extend(THREE as any)
+
+// Mock caches API
+class MockCache {
+  store: Map<string, Response>
+
+  constructor() {
+    this.store = new Map()
+  }
+
+  async match(url: string) {
+    return this.store.get(url)
+  }
+
+  async put(url: string, response: Response) {
+    this.store.set(url, response)
+  }
+
+  async delete(url: string) {
+    return this.store.delete(url)
+  }
+
+  async keys() {
+    return Array.from(this.store.keys())
+  }
+}
+
+class MockCacheStorage {
+  caches: Map<string, MockCache>
+
+  constructor() {
+    this.caches = new Map()
+  }
+
+  async open(cacheName: string) {
+    if (!this.caches.has(cacheName)) {
+      this.caches.set(cacheName, new MockCache())
+    }
+    return this.caches.get(cacheName)
+  }
+
+  async delete(cacheName: string) {
+    return this.caches.delete(cacheName)
+  }
+}
+
+globalThis.caches = new MockCacheStorage() as any
+
+// Add gltf data URIs to the global scope
+globalThis.gltfs = {
+  diamond: createDataUriFromGltf(__dirname + '/assets/diamond.gltf'),
+  lightning: createDataUriFromGltf(__dirname + '/assets/lightning.gltf'),
+}
+
+// Add mock gltf loader to the global scope
+globalThis.MockMesh = new THREE.Mesh()
+globalThis.MockMesh.name = 'Scene'
+
+class _MockLoader extends THREE.Loader {
+  load(url: string, onLoad: (result: { scene: THREE.Mesh; json: Record<string, any> }) => void): void {
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => onLoad({ scene: globalThis.MockMesh, json: data }))
+  }
+}
+
+globalThis.MockLoader = _MockLoader
