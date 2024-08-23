@@ -30,10 +30,8 @@ The Canvas component does some important setup work behind the scenes:
 - It sets up a **Scene** and a **Camera**, the basic building blocks necessary for rendering
 - It renders our scene every frame, you do not need a traditional render-loop
 
-<Hint>
-  Canvas is responsive to fit the parent node, so you can control how big it is by changing the parents width and
-  height, in this case #canvas-container.
-</Hint>
+> [!NOTE]
+> Canvas is responsive to fit the parent node, so you can control how big it is by changing the parents width and height, in this case #canvas-container.
 
 ## Adding a Mesh Component
 
@@ -44,11 +42,8 @@ To actually see something in our scene, we'll add a lowercase `<mesh />` native 
   <mesh />
 ```
 
-<Hint>
-  Note that we don't need to import anything, All three.js objects will be treated as native JSX elements, just like you
-  can just write &lt;div /&gt; or &lt;span /&gt; in regular ReactDOM. The general rule is that Fiber components are
-  available under the camel-case version of their name in three.js.
-</Hint>
+> [!NOTE]
+> Note that we don't need to import anything, All three.js objects will be treated as native JSX elements, just like you can just write &lt;div /&gt; or &lt;span /&gt; in regular ReactDOM. The general rule is that Fiber components are available under the camel-case version of their name in three.js.
 
 A [`Mesh`](https://threejs.org/docs/#api/en/objects/Mesh) is a basic scene object in three.js, and it's used to hold the geometry and the material needed to represent a shape in 3D space.
 We'll create a new mesh using a **BoxGeometry** and a **MeshStandardMaterial** which [automatically attach](https://docs.pmnd.rs/react-three-fiber/api/objects#attach) to their parent.
@@ -100,7 +95,8 @@ In order to do this in Fiber we use the `args` prop, which _always_ takes an arr
 <boxGeometry args={[2, 2, 2]} />
 ```
 
-<Hint>Note that every time you change args, the object must be re-constructed!</Hint>
+> [!NOTE]
+> Note that every time you change args, the object must be re-constructed!
 
 ## Adding lights
 

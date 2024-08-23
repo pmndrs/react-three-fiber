@@ -6,7 +6,8 @@ nav: 7
 
 Hooks allow you to tie or request specific information to your component. For instance, components that want to participate in the renderloop can use `useFrame`, components that need to be informed of three.js specifics can use `useThree` and so on. All hooks clean up after themselves once the component unmounts.
 
-<Hint>Hooks can only be used inside the Canvas element because they rely on context!</Hint>
+> [!NOTE]
+> Hooks can only be used inside the Canvas element because they rely on context!
 
 ❌ You cannot expect something like this to work:
 
@@ -123,10 +124,9 @@ function Foo() {
   })
 ```
 
-<Hint>
-  Be careful about what you do inside useFrame! You should never setState in there! Your calculations should be slim and
+> [!CAUTION]
+> Be careful about what you do inside useFrame! You should never setState in there! Your calculations should be slim and
   you should mind all the commonly known pitfalls when dealing with loops in general, like re-use of variables, etc.
-</Hint>
 
 ### Taking over the render-loop
 
@@ -146,10 +146,8 @@ function RenderOnTop() {
   }, 2)
 ```
 
-<Hint>
-  Callbacks will be executed in order of ascending priority values (lowest first, highest last.), similar to the DOM's
-  z-order.
-</Hint>
+> [!NOTE]
+> Callbacks will be executed in order of ascending priority values (lowest first, highest last.), similar to the DOM's z-order.
 
 ### Negative indices
 
@@ -190,15 +188,11 @@ function App() {
 }
 ```
 
-<Hint>
-  Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use
-  loaded data everywhere in the component tree.
-</Hint>
+> [!NOTE]
+> Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use loaded data everywhere in the component tree.
 
-<Hint>
-  Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the
-  automatic disposal section in the API.
-</Hint>
+> [!NOTE]
+> Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the automatic disposal section in the API.
 
 ### Loader extensions
 

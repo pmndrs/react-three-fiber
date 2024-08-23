@@ -37,7 +37,8 @@ function Controls() {
   return <orbitControls ref={orbitControlsRef} args={[camera, gl.domElement]} />
 ```
 
-<Hint>Drei's controls do this automatically for you.</Hint>
+> [!NOTE]
+> Drei's controls do this automatically for you.
 
 Generally you can call invalidate whenever you need to render:
 
@@ -45,13 +46,10 @@ Generally you can call invalidate whenever you need to render:
 invalidate()
 ```
 
-<Hint>
-
-Calling `invalidate()` will not render immediately, it merely requests a
+> [!IMPORTANT]
+> Calling `invalidate()` will not render immediately, it merely requests a
 new frame to be rendered out. Calling invalidate multiple times will not render multiple times.
 Think of it as a flag to tell the system that something has changed.
-
-</Hint>
 
 ### Sync animations with on-demand-rendering and invalidate
 
@@ -98,7 +96,8 @@ THREE.ColorManagement.legacyMode = false
 
 ### Caching with useLoader
 
-<Hint>Every resource that is loaded with useLoader is cached automatically!</Hint>
+> [!NOTE]
+> Every resource that is loaded with useLoader is cached automatically!
 
 If you access a resource via useLoader with the same URL, throughout the component tree, then you will always refer to the same asset and thereby re-use it. This is especially useful if you run your GLTF assets through [GLTFJSX](https://github.com/pmndrs/gltfjsx) because it links up geometries and materials and thereby creates re-usable models.
 
@@ -298,7 +297,8 @@ useEffect(() => {
 
 ### This is how you can respond to it
 
-<Hint>Mere calls to `regress()` will not change or affect anything!</Hint>
+> [!NOTE]
+> Mere calls to `regress()` will not change or affect anything!
 
 Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
 
