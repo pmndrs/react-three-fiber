@@ -5,7 +5,7 @@ nav: 0
 ---
 
 <a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples">
-  <img src="https://github.com/pmndrs/react-three-fiber/raw/master/docs/banner-r3f.jpg" />
+  <img src="https://github.com/pmndrs/react-three-fiber/raw/master/docs/banner-r3f.jpg" width="1750" height="500" />
 </a>
 <br />
 
@@ -29,31 +29,25 @@ Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new 
 
 ## What does it look like?
 
-<table>
-  <tbody>
-    <tr>
-      <td>
-        Let's make a re-usable component that has its own state, reacts to user-input and participates in the
-        render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).
-      </td>
-      <td>
-        <a href="https://codesandbox.io/s/rrppl0y8l4">
-          <img
-            src="https://github.com/pmndrs/react-three-fiber/raw/master/docs/basic-app.gif"
-            alt="Two spinning orange cubes that turn purple on mouse over"
-            width="252px"
-            height="60px"
-          />
-        </a>
-      </td>
-    </tr>
-  </tbody>
-</table>
+Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop:
 
-```jsx
-import { createRoot } from 'react-dom/client'
+<Sandpack
+  customSetup={{
+    dependencies: {
+      'react': 'latest',
+      'react-dom': 'latest',
+      'three': 'latest',
+      '@react-three/fiber': 'latest'
+    },
+    entry: '/index.jsx',
+    main: '/index.jsx',
+  }}
+  files={{
+    '/styles.css': `html,body,#root {height:100%;margin:unset;}`,
+    '/index.jsx': `import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import './styles.css'
 
 function Box(props) {
   // This reference will give us direct access to the mesh
@@ -86,8 +80,9 @@ createRoot(document.getElementById('root')).render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-)
-```
+)`,
+  }}
+/>
 
 <details>
   <summary>Show TypeScript example</summary>
@@ -96,11 +91,25 @@ createRoot(document.getElementById('root')).render(
 npm install @types/three
 ```
 
-```tsx
-import * as THREE from 'three'
+<Sandpack
+  customSetup={{
+    dependencies: {
+      'react': 'latest',
+      'react-dom': 'latest',
+      'three': 'latest',
+      '@types/three': 'latest',
+      '@react-three/fiber': 'latest'
+    },
+    entry: '/index.tsx',
+    main: '/index.tsx',
+  }}
+  files={{
+    '/styles.css': `html,body,#root {height:100%;margin:unset;}`,
+    '/index.tsx': `import * as THREE from 'three'
 import { createRoot } from 'react-dom/client'
 import React, { useRef, useState } from 'react'
 import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
+import './styles.css'
 
 function Box(props: ThreeElements['mesh']) {
   const meshRef = useRef<THREE.Mesh>(null!)
@@ -116,7 +125,7 @@ function Box(props: ThreeElements['mesh']) {
       onPointerOver={(event) => setHover(true)}
       onPointerOut={(event) => setHover(false)}>
       <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : '#2f74c0'} />
     </mesh>
   )
 }
@@ -129,10 +138,9 @@ createRoot(document.getElementById('root')).render(
     <Box position={[-1.2, 0, 0]} />
     <Box position={[1.2, 0, 0]} />
   </Canvas>,
-)
-```
-
-Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
+)`,
+  }}
+/>
 
 </details>
 
@@ -195,7 +203,7 @@ Some helpful material:
 - [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
 
 <a href="https://threejs-journey.com">
-  <img src="https://github.com/pmndrs/react-three-fiber/raw/master/docs/banner-journey.jpg" />
+  <img src="https://github.com/pmndrs/react-three-fiber/raw/master/docs/banner-journey.jpg" width="1750" height="500" />
 </a>
 
 ## Eco system
@@ -236,7 +244,7 @@ If you like this project, please consider helping out. All contributions are wel
 Thank you to all our backers! 🙏
 
 <a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890" />
+  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890" width="890" height="207" />
 </a>
 
 ## Contributors
@@ -244,5 +252,5 @@ Thank you to all our backers! 🙏
 This project exists thanks to all the people who contribute.
 
 <a href="https://github.com/pmndrs/react-three-fiber/graphs/contributors">
-  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" />
+  <img src="https://opencollective.com/react-three-fiber/contributors.svg?width=890" width="890" height="411" />
 </a>
