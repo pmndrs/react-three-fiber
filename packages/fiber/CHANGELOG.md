@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.6
+
+### Patch Changes
+
+- 66c3e9fe: fix(native): don't bind events to GLView
+
 ## 8.17.5
 
 ### Patch Changes

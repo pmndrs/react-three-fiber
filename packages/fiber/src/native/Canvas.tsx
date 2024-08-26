@@ -223,17 +223,10 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     }, [canvas])
 
     return (
-      <View ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }}>
-        <View {...props} style={{ flex: 1 }}>
-          {width > 0 && (
-            <GLView
-              {...bind}
-              msaaSamples={antialias ? 4 : 0}
-              onContextCreate={onContextCreate}
-              style={StyleSheet.absoluteFill}
-            />
-          )}
-        </View>
+      <View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+        {width > 0 && (
+          <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
+        )}
       </View>
     )
   },
