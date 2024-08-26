@@ -145,18 +145,32 @@ Please refer to the API for [a deeper explanation](/api/objects).
 
 ## The result
 
-```jsx
-<Canvas>
-  <ambientLight intensity={0.1} />
-  <directionalLight color="red" position={[0, 0, 5]} />
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>
-</Canvas>
-```
+<Sandpack
+  template="react"
+  customSetup={{
+    dependencies: {
+      'three': 'latest',
+      '@react-three/fiber': 'latest'
+    },
+  }}
+  files={{
+    '/styles.css': `html,body,#root {height:100%;margin:unset;}`,
+    '/App.js': `import { Canvas } from "@react-three/fiber";
 
-<Codesandbox id="12q81" />
+export default function App() {
+  return (
+      <Canvas>
+        <mesh>
+          <boxGeometry args={[2, 2, 2]} />
+          <meshPhongMaterial />
+        </mesh>
+        <ambientLight intensity={0.1} />
+        <directionalLight position={[0, 0, 5]} color="red" />
+      </Canvas>
+  );
+}`,
+  }}
+/>
 
 ## Exercise
 
