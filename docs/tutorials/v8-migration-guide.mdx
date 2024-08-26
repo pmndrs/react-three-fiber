@@ -14,7 +14,7 @@ With React 18 and Expo 43, you can now ship threejs goodness across web and nati
 
 Now expo-gl, which does the hard lifting, has existed for a while, but we've addressed some of the common concerns related to interop and making the three eco system readily work in the native space. For instance, you handle assets the same exact way you'd treat them in a web app.
 
-See [installation](/react-three-fiber/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
+See [installation](/getting-started/installation#react-native) to get started with managed Expo or bare React Native apps.
 
 ```diff
 - import { Canvas, useLoader } from '@react-three/fiber'
@@ -24,7 +24,7 @@ See [installation](/react-three-fiber/getting-started/installation#react-native)
 + import { useGLTF } from '@react-three/drei/native'
 ```
 
-This is complete with support for Pressability events and native threejs loaders. See [events](/react-three-fiber/api/events) for a complete list of events.
+This is complete with support for Pressability events and native threejs loaders. See [events](/api/events) for a complete list of events.
 
 ```jsx
 <mesh
