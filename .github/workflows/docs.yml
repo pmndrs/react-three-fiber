@@ -19,6 +19,8 @@ jobs:
       home_redirect: '/getting-started/introduction'
       icon: '🇨🇭'
       logo: '/logo.jpg'
+      github: 'https://github.com/pmndrs/react-three-fiber'
+      discord: 'https://discord.com/channels/740090768164651008/740093168770613279'
 
   deploy:
     needs: build
