@@ -149,6 +149,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
             offsetX: gestureEvent.nativeEvent.locationX,
             offsetY: gestureEvent.nativeEvent.locationY,
             pointerType: 'touch',
+            pointerId: gestureEvent.nativeEvent.identifier,
           }) as unknown as Event,
         )
 
