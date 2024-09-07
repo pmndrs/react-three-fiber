@@ -4,10 +4,9 @@ description: React-three-fiber is a React renderer for three.js.
 nav: 0
 ---
 
-<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples">
+<a href="/getting-started/examples">
   <img src="../banner-r3f.jpg" />
 </a>
-<br />
 
 Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
 
@@ -15,15 +14,15 @@ Build your scene declaratively with re-usable, self-contained components that re
 npm install three @types/three @react-three/fiber
 ```
 
-#### Does it have limitations?
+## Does it have limitations?
 
 None. Everything that works in Threejs will work here without exception.
 
-#### Is it slower than plain Threejs?
+## Is it slower than plain Threejs?
 
 No. There is no overhead. Components render outside of React. It outperforms Threejs in scale due to React's scheduling abilities.
 
-#### Can it keep up with frequent feature updates to Threejs?
+## Can it keep up with frequent feature updates to Threejs?
 
 Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new THREE.Mesh()`. If a new Threejs version adds, removes or changes features, it will be available to you instantly without depending on updates to this library.
 
@@ -147,7 +146,7 @@ createRoot(document.getElementById('root')).render(
 <details>
   <summary>Show React Native example</summary>
 
-For installation instructions see [react native installation instructions](https://docs.pmnd.rs/react-three-fiber/getting-started/installation#react-native).
+For installation instructions see [react native installation instructions](/getting-started/installation#react-native).
 
 ```jsx
 import React, { useRef, useState } from 'react'
@@ -194,7 +193,7 @@ You need to be versed in both React and Threejs before rushing into this. If you
 1. Make sure you have a [basic grasp of Threejs](https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene). Keep that site open.
 2. When you know what a scene is, a camera, mesh, geometry, material, fork the [demo above](https://github.com/pmndrs/react-three-fiber#what-does-it-look-like).
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
-4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber) to see what the various settings and hooks do.
+4. Try changing some values, scroll through our [API](/api/canvas) to see what the various settings and hooks do.
 
 Some helpful material:
 

@@ -94,7 +94,7 @@ THREE.ColorManagement.enabled = true
 THREE.ColorManagement.legacyMode = false
 ```
 
-### Caching with useLoader
+### Caching with `useLoader`
 
 > [!NOTE]
 > Every resource that is loaded with useLoader is cached automatically!
@@ -271,11 +271,11 @@ performance: {
 },
 ```
 
-- current: Performance factor alternates between min and max
-- min: Performance lower bound (should be less than 1)
-- max: Performance upper bound (no higher than 1)
-- debounce: Debounce timeout until it goes to upper bound (1) again
-- regress(): Function that temporarily regresses performance
+- `current`: Performance factor alternates between min and max
+- `min`: Performance lower bound (should be less than 1)
+- `max`: Performance upper bound (no higher than 1)
+- `debounce`: Debounce timeout until it goes to upper bound (1) again
+- `regress()`: Function that temporarily regresses performance
 
 You can define defaults like so:
 

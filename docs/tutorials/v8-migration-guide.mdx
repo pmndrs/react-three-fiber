@@ -135,7 +135,7 @@ Please be careful, this is an extreme stress test. It creates so much load that 
   </a>
 </p>
 
-## Conditional rendering with frameloop
+## Conditional rendering with `frameloop`
 
 `frameloop` can now be toggled to render conditionally. This is useful to toggle on user interaction or while in frame.
 
@@ -166,7 +166,7 @@ useEffect(() => {
 <Canvas ref={canvasRef} frameloop={frameloop} />
 ```
 
-## Expanded gl prop
+## Expanded `gl` prop
 
 The `gl` prop can now accept both constructor args and renderer properties like the `camera` prop.
 
@@ -193,7 +193,7 @@ The `vr` prop was removed in favor of automatic WebXR switching. Whenever a sess
 + <Canvas />
 ```
 
-### Extended useFrame
+### Extended `useFrame`
 
 In addition to the automatic rendering, useFrame will expose the current [`XRFrame`](https://developer.mozilla.org/en-US/docs/Web/API/XRFrame) obtained via [XRSession#requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/requestAnimationFrame).
 
@@ -203,7 +203,7 @@ useFrame((state: RootState, delta: number, frame?: THREE.XRFrame) => { ... })
 
 This removes the need for custom rendering loops when using WebXR pose data and abstractions like `useXRFrame` of [@react-three/xr](https://github.com/pmndrs/react-xr).
 
-## Manual camera manipulation
+## Manual `camera` manipulation
 
 By default Fiber is responsive and will set up cameras properly on resize (aspect ratio etc).
 
@@ -222,7 +222,7 @@ import { PerspectiveCamera } from '@react-three/drei'
 </Canvas>
 ```
 
-## Unified attach API
+## Unified `attach` API
 
 Previously, attach had multiple signatures:
 
@@ -292,7 +292,7 @@ Arrays must be explcit now:
 </mesh>
 ```
 
-## Spread Canvas props
+## Spread `Canvas` props
 
 The `<Canvas />` can now accept non-render props to spread as native props: styles, classes, events, a11y, ...
 
@@ -303,7 +303,7 @@ The `<Canvas />` can now accept non-render props to spread as native props: styl
 + <Canvas aria-describedby={...} />
 ```
 
-## New createRoot API
+## New `createRoot` API
 
 `render` is depreciated in v8 for the new `createRoot` signature.
 
@@ -352,7 +352,7 @@ This is a custom-renderer example using the createRoot api:
   </a>
 </p>
 
-## Tree-shaking via extend
+## Tree-shaking via `extend`
 
 The underlying reconciler no longer pulls in the THREE namespace automatically.
 
@@ -407,7 +407,7 @@ createRoot(canvasNode).render(
 
 No changes are necessary for `@react-three/test-renderer` as THREE is extended automatically.
 
-## createPortal creates a state enclave
+## `createPortal` creates a state enclave
 
 `createPortal` allows you to write a declarative JSX scene into a pre-existing, foreign object. This has been very useful for portals, heads-up displays, view-cubes, view splitting, etc.
 

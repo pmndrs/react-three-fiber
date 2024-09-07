@@ -46,7 +46,7 @@ To actually see something in our scene, we'll add a lowercase `<mesh />` native 
 > Note that we don't need to import anything, All three.js objects will be treated as native JSX elements, just like you can just write &lt;div /&gt; or &lt;span /&gt; in regular ReactDOM. The general rule is that Fiber components are available under the camel-case version of their name in three.js.
 
 A [`Mesh`](https://threejs.org/docs/#api/en/objects/Mesh) is a basic scene object in three.js, and it's used to hold the geometry and the material needed to represent a shape in 3D space.
-We'll create a new mesh using a **BoxGeometry** and a **MeshStandardMaterial** which [automatically attach](https://docs.pmnd.rs/react-three-fiber/api/objects#attach) to their parent.
+We'll create a new mesh using a **BoxGeometry** and a **MeshStandardMaterial** which [automatically attach](/api/objects#attach) to their parent.
 
 ```jsx
 <Canvas>
