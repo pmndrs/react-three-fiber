@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.7
+
+### Patch Changes
+
+- c20a7d73: fix(native): missing pointerId in pointer events
+
 ## 8.17.6
 
 ### Patch Changes
