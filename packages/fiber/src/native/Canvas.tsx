@@ -11,7 +11,6 @@ import {
   StyleSheet,
   PixelRatio,
 } from 'react-native'
-import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
@@ -24,6 +23,8 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
 }
 
 export interface Props extends CanvasProps {}
+
+let GLView: any | null = null // TODO: type reflection without importing
 
 /**
  * A native canvas which accepts threejs elements as children.
@@ -52,6 +53,9 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     },
     forwardedRef,
   ) => {
+    // Lazily load expo-gl, so it's only required when Canvas is used
+    GLView ??= require('expo-gl').GLView
+
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
@@ -85,7 +89,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     // Called on context create or swap
     // https://github.com/pmndrs/react-three-fiber/pull/2297
-    const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
+    const onContextCreate = React.useCallback((context: WebGL2RenderingContext) => {
       const listeners = new Map<string, EventListener[]>()
 
       const canvas = {
@@ -198,10 +202,11 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind render to RN bridge
-          const context = state.gl.getContext() as ExpoWebGLRenderingContext
+          const context = state.gl.getContext()
           const renderFrame = state.gl.render.bind(state.gl)
           state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
             renderFrame(scene, camera)
+            // @ts-ignore
             context.endFrameEXP()
           }
 
