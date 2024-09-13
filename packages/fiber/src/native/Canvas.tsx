@@ -24,7 +24,12 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
 
 export interface Props extends CanvasProps {}
 
-let GLView: any | null = null // TODO: type reflection without importing
+// Lazily load expo-gl, so it's only required when Canvas is used
+try {
+  var GLView = require('expo-gl').GLView
+} catch (_) {
+  //
+}
 
 /**
  * A native canvas which accepts threejs elements as children.
@@ -53,9 +58,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
     },
     forwardedRef,
   ) => {
-    // Lazily load expo-gl, so it's only required when Canvas is used
-    GLView ??= require('expo-gl').GLView
-
     // Create a known catalogue of Threejs-native elements
     // This will include the entire THREE namespace by default, users can extend
     // their own elements by using the createRoot API instead
@@ -243,6 +245,8 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = React.forwardRef<View, Props>(function CanvasWrapper(props, ref) {
+  if (!GLView) throw new Error('expo-gl must be installed to use Canvas!')
+
   return (
     <FiberProvider>
       <CanvasImpl {...props} ref={ref} />

@@ -3,6 +3,14 @@ import { Image, NativeModules, Platform } from 'react-native'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
 
+// Polyfill asset loading if expo modules are available
+try {
+  var Asset = require('expo-asset').Asset
+  var fs = require('expo-file-system')
+} catch (_) {
+  //
+}
+
 // http://stackoverflow.com/questions/105034
 function uuidv4() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
@@ -10,6 +18,59 @@ function uuidv4() {
       v = c == 'x' ? r : (r & 0x3) | 0x8
     return v.toString(16)
   })
+}
+
+async function getAsset(input: string | number): Promise<string> {
+  if (typeof input === 'string') {
+    // Don't process storage
+    if (input.startsWith('file:')) return input
+
+    // Unpack Blobs from react-native BlobManager
+    // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
+    if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
+      const blob = await new Promise<Blob>((res, rej) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('GET', input as string)
+        xhr.responseType = 'blob'
+        xhr.onload = () => res(xhr.response)
+        xhr.onerror = rej
+        xhr.send()
+      })
+
+      const data = await new Promise<string>((res, rej) => {
+        const reader = new FileReader()
+        reader.onload = () => res(reader.result as string)
+        reader.onerror = rej
+        reader.readAsText(blob)
+      })
+
+      input = `data:${blob.type};base64,${data}`
+    }
+
+    // Create safe URI for JSI serialization
+    if (input.startsWith('data:')) {
+      const [header, data] = input.split(';base64,')
+      const [, type] = header.split('/')
+
+      const uri = fs.cacheDirectory + uuidv4() + `.${type}`
+      await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+
+      return uri
+    }
+  }
+
+  // Download bundler module or external URL
+  const asset = await Asset.fromModule(input).downloadAsync()
+  let uri = asset.localUri || asset.uri
+
+  // Unpack assets in Android Release Mode
+  if (!uri.includes(':')) {
+    const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
+    await fs.copyAsync({ from: uri, to: file })
+    uri = file
+  }
+
+  return uri
 }
 
 export function polyfills() {
@@ -57,67 +118,6 @@ export function polyfills() {
         return blob
       }
     }
-  }
-
-  // Polyfill asset loading if expo modules are available
-  try {
-    var Asset = require('expo-asset').Asset
-    var fs = require('expo-file-system')
-  } catch (_) {
-    return
-  }
-
-  async function getAsset(input: string | number): Promise<string> {
-    if (typeof input === 'string') {
-      // Don't process storage
-      if (input.startsWith('file:')) return input
-
-      // Unpack Blobs from react-native BlobManager
-      // https://github.com/facebook/react-native/issues/22681#issuecomment-523258955
-      if (input.startsWith('blob:') || input.startsWith(NativeModules.BlobModule?.BLOB_URI_SCHEME)) {
-        const blob = await new Promise<Blob>((res, rej) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('GET', input as string)
-          xhr.responseType = 'blob'
-          xhr.onload = () => res(xhr.response)
-          xhr.onerror = rej
-          xhr.send()
-        })
-
-        const data = await new Promise<string>((res, rej) => {
-          const reader = new FileReader()
-          reader.onload = () => res(reader.result as string)
-          reader.onerror = rej
-          reader.readAsText(blob)
-        })
-
-        input = `data:${blob.type};base64,${data}`
-      }
-
-      // Create safe URI for JSI serialization
-      if (input.startsWith('data:')) {
-        const [header, data] = input.split(';base64,')
-        const [, type] = header.split('/')
-
-        const uri = fs.cacheDirectory + uuidv4() + `.${type}`
-        await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
-
-        return uri
-      }
-    }
-
-    // Download bundler module or external URL
-    const asset = await Asset.fromModule(input).downloadAsync()
-    let uri = asset.localUri || asset.uri
-
-    // Unpack assets in Android Release Mode
-    if (!uri.includes(':')) {
-      const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-      await fs.copyAsync({ from: uri, to: file })
-      uri = file
-    }
-
-    return uri
   }
 
   // Don't pre-process urls, let expo-asset generate an absolute URL
