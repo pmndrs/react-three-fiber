@@ -46,7 +46,9 @@ export interface NodeProps<T, P> {
 }
 
 export type ExtendedColors<T> = { [K in keyof T]: T[K] extends THREE.Color | undefined ? Color : T[K] }
-export type Node<T, P> = ExtendedColors<Overwrite<Partial<T>, NodeProps<T, P>>>
+export type Node<T, P> = [T] extends [{ thisShouldNeverHappen: 'unless the object is of type any' }]
+  ? ExtendedColors<Overwrite<Partial<{}>, NodeProps<{}, {}>>>
+  : ExtendedColors<Overwrite<Partial<T>, NodeProps<T, P>>>
 
 export type Object3DNode<T, P> = Overwrite<
   Node<T, P>,
