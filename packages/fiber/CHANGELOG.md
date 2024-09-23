@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.8
+
+### Patch Changes
+
+- 3c885807: fix(types): fix React typings, fault tolerant Node type
+
 ## 8.17.7
 
 ### Patch Changes
