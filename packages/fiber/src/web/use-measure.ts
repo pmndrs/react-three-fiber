@@ -32,7 +32,7 @@ type State = {
   scrollContainers: HTMLOrSVGElement[] | null
   resizeObserver: ResizeObserver | null
   lastBounds: RectReadOnly,
-  orientationHandler: () => void
+  orientationHandler: () => void | null
 }
 
 export type Options = {
