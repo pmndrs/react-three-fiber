@@ -31,13 +31,14 @@ type State = {
   element: HTMLOrSVGElement | null
   scrollContainers: HTMLOrSVGElement[] | null
   resizeObserver: ResizeObserver | null
-  lastBounds: RectReadOnly
+  lastBounds: RectReadOnly,
+  orientationHandler: () => void
 }
 
 export type Options = {
   debounce?: number | { scroll: number; resize: number }
   scroll?: boolean
-  polyfill?: { new (cb: ResizeObserverCallback): ResizeObserver }
+  polyfill?: { new(cb: ResizeObserverCallback): ResizeObserver }
   offsetSize?: boolean
 }
 
@@ -63,11 +64,11 @@ export function useMeasure(
     bounds.width = 1280
     // @ts-ignore
     bounds.height = 800
-    return [() => {}, bounds, () => {}]
+    return [() => { }, bounds, () => { }]
   }
 
   // keep all state in a ref
-  const state = useRef<State>({ element: null, scrollContainers: null, resizeObserver: null, lastBounds: bounds })
+  const state = useRef<State>({ element: null, scrollContainers: null, resizeObserver: null, lastBounds: bounds, orientationHandler: null })
 
   // set actual debounce values early, so effects know if they should react accordingly
   const scrollDebounce = debounce ? (typeof debounce === 'number' ? debounce : debounce.scroll) : null
@@ -124,6 +125,9 @@ export function useMeasure(
       state.current.resizeObserver.disconnect()
       state.current.resizeObserver = null
     }
+    if (state.orientationHandler.current) {
+      screen.orientation.removeEventListener('orientationchange', state.current.orientationHandler);
+    }
   }
 
   // add scroll-listeners / observers
@@ -135,6 +139,9 @@ export function useMeasure(
       state.current.scrollContainers.forEach((scrollContainer) =>
         scrollContainer.addEventListener('scroll', scrollChange, { capture: true, passive: true }),
       )
+    }
+    state.current.orientationHandler = () => {
+      scrollChange()
     }
   }
 
