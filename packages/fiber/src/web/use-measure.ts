@@ -125,7 +125,7 @@ export function useMeasure(
       state.current.resizeObserver.disconnect()
       state.current.resizeObserver = null
     }
-    if (state.orientationHandler.current) {
+    if (state.current.orientationHandler) {
       screen.orientation.removeEventListener('orientationchange', state.current.orientationHandler);
     }
   }
