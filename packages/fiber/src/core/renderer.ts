@@ -301,9 +301,8 @@ function createRenderer<TCanvas>(_roots: Map<TCanvas, Root>, _getEventPriority?:
     })
   }
 
-  // Don't handle text instances, warn on undefined behavior
-  const handleTextInstance = () =>
-    console.warn('Text is not allowed in the R3F tree! This could be stray whitespace or characters.')
+  // Don't handle text instances, make it no-op
+  const handleTextInstance = () => {}
 
   const reconciler = Reconciler<
     HostConfig['type'],
