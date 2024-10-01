@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.9
+
+### Patch Changes
+
+- f34de655: fix: add orientation handling
+
 ## 8.17.8
 
 ### Patch Changes
