@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { EventHandlers } from './core/events'
 import { AttachType } from './core/renderer'
 
-export type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+export type Properties<T> = { [K in keyof T as T[K] extends (...args: Array<any>) => any ? never : K]: T[K] }
 export type NonFunctionKeys<T> = { [K in keyof T]-?: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
 
