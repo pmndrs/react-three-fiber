@@ -11,7 +11,6 @@ import {
   StyleSheet,
   PixelRatio,
 } from 'react-native'
-import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { useContextBridge, FiberProvider } from 'its-fine'
 import { SetBlock, Block, ErrorBoundary, useMutableCallback } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
@@ -24,6 +23,13 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
 }
 
 export interface Props extends CanvasProps {}
+
+// Lazily load expo-gl, so it's only required when Canvas is used
+try {
+  var GLView = require('expo-gl').GLView
+} catch (_) {
+  //
+}
 
 /**
  * A native canvas which accepts threejs elements as children.
@@ -85,7 +91,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
 
     // Called on context create or swap
     // https://github.com/pmndrs/react-three-fiber/pull/2297
-    const onContextCreate = React.useCallback((context: ExpoWebGLRenderingContext) => {
+    const onContextCreate = React.useCallback((context: WebGL2RenderingContext) => {
       const listeners = new Map<string, EventListener[]>()
 
       const canvas = {
@@ -198,10 +204,11 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
         // Overwrite onCreated to apply RN bindings
         onCreated: (state: RootState) => {
           // Bind render to RN bridge
-          const context = state.gl.getContext() as ExpoWebGLRenderingContext
+          const context = state.gl.getContext()
           const renderFrame = state.gl.render.bind(state.gl)
           state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
             renderFrame(scene, camera)
+            // @ts-ignore
             context.endFrameEXP()
           }
 
@@ -238,6 +245,8 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
 export const Canvas = React.forwardRef<View, Props>(function CanvasWrapper(props, ref) {
+  if (!GLView) throw new Error('expo-gl must be installed to use Canvas!')
+
   return (
     <FiberProvider>
       <CanvasImpl {...props} ref={ref} />
