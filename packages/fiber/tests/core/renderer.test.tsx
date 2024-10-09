@@ -13,7 +13,7 @@ import {
   createPortal,
   applyProps,
 } from '../../src/index'
-import { UseBoundStore } from 'zustand'
+import { StoreApi, UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
 import { Instance } from '../../src/core/renderer'
 
@@ -572,7 +572,7 @@ describe('renderer', () => {
   })
 
   it('should handle an performance changing functions', async () => {
-    let state: UseBoundStore<RootState> = null!
+    let state: UseBoundStore<StoreApi<RootState>> = null!
     await act(async () => {
       state = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
     })
@@ -606,7 +606,7 @@ describe('renderer', () => {
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
-    let state: UseBoundStore<RootState> = null!
+    let state: UseBoundStore<StoreApi<RootState>> = null!
     await act(async () => {
       state = root.configure({ shadows: true }).render(<group />)
     })
@@ -615,7 +615,7 @@ describe('renderer', () => {
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputEncoding to sRGBEncoding if linear is false', async () => {
-    let state: UseBoundStore<RootState> = null!
+    let state: UseBoundStore<StoreApi<RootState>> = null!
     await act(async () => {
       state = root.configure({ linear: false }).render(<group />)
     })
