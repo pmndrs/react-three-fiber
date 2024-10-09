@@ -131,23 +131,38 @@ export function useMeasure(
       state.current.resizeObserver.disconnect()
       state.current.resizeObserver = null
     }
+
     if (state.current.orientationHandler) {
-      screen.orientation.removeEventListener('orientationchange', state.current.orientationHandler)
+      if ('orientation' in screen && 'removeEventListener' in screen.orientation) {
+        screen.orientation.removeEventListener('change', state.current.orientationHandler)
+      } else if ('onorientationchange' in window) {
+        window.removeEventListener('orientationchange', state.current.orientationHandler)
+      }
     }
   }
 
   // add scroll-listeners / observers
   function addListeners() {
     if (!state.current.element) return
-    state.current.resizeObserver = new ResizeObserver(scrollChange)
-    state.current.resizeObserver!.observe(state.current.element)
+    state.current.resizeObserver = new ResizeObserver(resizeChange)
+    state.current.resizeObserver?.observe(state.current.element)
     if (scroll && state.current.scrollContainers) {
       state.current.scrollContainers.forEach((scrollContainer) =>
         scrollContainer.addEventListener('scroll', scrollChange, { capture: true, passive: true }),
       )
     }
+
+    // Handle orientation changes
     state.current.orientationHandler = () => {
       scrollChange()
+    }
+
+    // Use screen.orientation if available
+    if ('orientation' in screen && 'addEventListener' in screen.orientation) {
+      screen.orientation.addEventListener('change', state.current.orientationHandler)
+    } else if ('onorientationchange' in window) {
+      // Fallback to orientationchange event
+      window.addEventListener('orientationchange', state.current.orientationHandler)
     }
   }
 
