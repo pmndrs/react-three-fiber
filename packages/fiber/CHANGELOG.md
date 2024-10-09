@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.10
+
+### Patch Changes
+
+- d1a072ac: fix: ThreeEvent should not include initMouseEvent
+
 ## 8.17.9
 
 ### Patch Changes
