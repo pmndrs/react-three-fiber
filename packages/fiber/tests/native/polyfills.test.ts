@@ -26,12 +26,16 @@ describe('polyfills', () => {
 
   it('loads files via the file system', async () => {
     const asset = 1
-    const file = await new THREE.FileLoader().loadAsync(asset as any)
+    const loader = new THREE.FileLoader()
+    loader.setResponseType('arrayBuffer')
+    const file = await loader.loadAsync(asset as any)
     expect(typeof (file as ArrayBuffer).byteLength).toBe('number') // TODO: ArrayBuffer instanceof
   })
 
   it('loads files via http', async () => {
-    const file = await new THREE.FileLoader().loadAsync('https://example.com/test.png')
+    const loader = new THREE.FileLoader()
+    loader.setResponseType('arrayBuffer')
+    const file = await loader.loadAsync('https://example.com/test.png')
     expect(typeof (file as ArrayBuffer).byteLength).toBe('number') // TODO: ArrayBuffer instanceof
   })
 })
