@@ -52,7 +52,7 @@ const [active, setActive] = useState(false)
 After we have this we can set the scale with a ternary operator like so:
 
 ```jsx
-<mesh scale={active ? 1.5 : 1} onClick={() => setActive(!active)} ref={myMesh}>
+<mesh scale={active ? [1.5,1.5] : [1,1]} onClick={() => setActive(!active)} ref={myMesh}>
   <boxGeometry />
   <meshPhongMaterial color="royalblue" />
 </mesh>
