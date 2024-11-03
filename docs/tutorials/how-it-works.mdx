@@ -75,7 +75,8 @@ Object creation is handled transparently by the Fiber renderer, the name of the 
 <boxGeometry args={[1, 2, 3]} />
 ```
 
-<Hint>Note that the object will be created only when first adding the component to the React tree!</Hint>
+> [!NOTE]
+> Note that the object will be created only when first adding the component to the React tree!
 
 ## The `attach` props
 
@@ -155,7 +156,7 @@ mesh.scale.set(3, 4, 5)
 
 ## Pointer Events
 
-[Pointer Events](/react-three-fiber/api/events) are transparently handled by Fiber. On startup, it will create a [raycaster](https://threejs.org/docs/#api/en/core/Raycaster) for mouse picking.
+[Pointer Events](/api/events) are transparently handled by Fiber. On startup, it will create a [raycaster](https://threejs.org/docs/#api/en/core/Raycaster) for mouse picking.
 
 Every object with `onPointer` props will be added to the array of objects checked every frame by the raycaster:
 

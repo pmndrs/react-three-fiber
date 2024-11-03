@@ -49,12 +49,8 @@ All properties whose underlying object has a `.set()` method can directly receiv
   <meshStandardMaterial color="hotpink" />
 ```
 
-<Hint>
-  If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this
-  will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that
-  expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the
-  other hand, it will overwrite, because more these objects do not have a .set() method.
-</Hint>
+> [!NOTE]
+> If you do link up an existing object to a property, for instance a THREE.Vector3() to a position, be aware that this will end up copying the object in most cases as it calls .copy() on the target. This only applies to objects that expose both .set() and .copy() (Vectors, Eulers, Matrix, ...). If you link up an existing material or geometry on the other hand, it will overwrite, because more these objects do not have a .set() method.
 
 ### SetScalar
 
@@ -91,12 +87,8 @@ The following attaches a material to the `material` property of a mesh and a geo
   <boxGeometry attach="geometry" />
 ```
 
-<Hint>
-
-All objects extending `THREE.Material` receive `attach="material"`, and all objects extending `THREE.BufferGeometry` receive
-`attach="geometry"`. You do not have to type it out!
-
-</Hint>
+> [!NOTE]
+> All objects extending `THREE.Material` receive `attach="material"`, and all objects extending `THREE.BufferGeometry` receive `attach="geometry"`. You do not have to type it out!
 
 ```jsx
 <mesh>
@@ -180,6 +172,9 @@ function Component() {
   return <primitive object={mesh} position={[10, 0, 0]} />
 ```
 
+> [!NOTE]
+> Scene objects can only ever be added once in Threejs. If you attempt to add one and the same object in two places Threejs will remove the first instance automatically. This will also happen with primitive! If you want to re-use an existing object, you must clone it first.
+
 ## Using 3rd-party objects declaratively
 
 The `extend` function extends React Three Fiber's catalogue of JSX elements. Components added this way can then be referenced in the scene-graph using camel casing similar to other primitives.
@@ -196,7 +191,7 @@ return (
     <transformControls />
 ```
 
-If you're using TypeScript, you'll also need to [extend the JSX namespace](/react-three-fiber/tutorials/typescript#extending-jsx-intrinsic-elements).
+If you're using TypeScript, you'll also need to [extend the JSX namespace](/tutorials/typescript#extending-jsx-intrinsic-elements).
 
 ## Disposal
 

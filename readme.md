@@ -263,6 +263,8 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`triplex`](https://triplex.dev/) &ndash; visual editor for react-three-fiber
 - [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
 
+[Usage Trend of the @react-three Family](https://npm-compare.com/@react-three/a11y,@react-three/cannon,@react-three/csg,@react-three/drei,@react-three/flex,@react-three/gltfjsx,@react-three/gpu-pathtracer,@react-three/offscreen,@react-three/p2,@react-three/postprocessing,@react-three/rapier,@react-three/test-renderer,@react-three/uikit,@react-three/xr)
+
 # Who is using Three-fiber
 
 A small selection of companies and projects relying on three-fiber.

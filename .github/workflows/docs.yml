@@ -1,0 +1,41 @@
+name: Build documentation and deploy to GitHub Pages
+on:
+  push:
+    branches: ['master']
+  workflow_dispatch:
+
+# Cancel previous run (see: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: pmndrs/docs/.github/workflows/build.yml@v2
+    with:
+      mdx: 'docs'
+      libname: 'React Three Fiber'
+      libname_short: 'r3f'
+      home_redirect: '/getting-started/introduction'
+      icon: '🇨🇭'
+      logo: '/logo.jpg'
+      github: 'https://github.com/pmndrs/react-three-fiber'
+      discord: 'https://discord.com/channels/740090768164651008/740093168770613279'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write # to deploy to Pages
+      id-token: write # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,5 +1,71 @@
 # @react-three/fiber
 
+## 8.17.10
+
+### Patch Changes
+
+- d1a072ac: fix: ThreeEvent should not include initMouseEvent
+
+## 8.17.9
+
+### Patch Changes
+
+- f34de655: fix: add orientation handling
+
+## 8.17.8
+
+### Patch Changes
+
+- 3c885807: fix(types): fix React typings, fault tolerant Node type
+
+## 8.17.7
+
+### Patch Changes
+
+- c20a7d73: fix(native): missing pointerId in pointer events
+
+## 8.17.6
+
+### Patch Changes
+
+- 66c3e9fe: fix(native): don't bind events to GLView
+
+## 8.17.5
+
+### Patch Changes
+
+- 162dbbdd: fix: npmignore ignored types"
+
+## 8.17.4
+
+### Patch Changes
+
+- 43866f4e: fix: rebuild with types
+
+## 8.17.3
+
+### Patch Changes
+
+- 8363eb7a: fix: rebuild with types
+
+## 8.17.2
+
+### Patch Changes
+
+- 6aa4eb28: fix: rebuild with types
+
+## 8.17.1
+
+### Patch Changes
+
+- e5f3f4f9: fix: rebuild with types
+
+## 8.17.0
+
+### Minor Changes
+
+- 3c22194d: feat: flushSync, native EventTarget
+
 ## 8.16.8
 
 ### Patch Changes

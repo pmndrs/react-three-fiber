@@ -37,7 +37,8 @@ function Controls() {
   return <orbitControls ref={orbitControlsRef} args={[camera, gl.domElement]} />
 ```
 
-<Hint>Drei's controls do this automatically for you.</Hint>
+> [!NOTE]
+> Drei's controls do this automatically for you.
 
 Generally you can call invalidate whenever you need to render:
 
@@ -45,13 +46,24 @@ Generally you can call invalidate whenever you need to render:
 invalidate()
 ```
 
-<Hint>
-
-Calling `invalidate()` will not render immediately, it merely requests a
+> [!IMPORTANT]
+> Calling `invalidate()` will not render immediately, it merely requests a
 new frame to be rendered out. Calling invalidate multiple times will not render multiple times.
 Think of it as a flag to tell the system that something has changed.
 
-</Hint>
+### Sync animations with on-demand-rendering and invalidate
+
+Since `invalidate()` is only a flag that schedules render, you might bump into syncing issues when you run animations that are synchronous (as in, they start immediately). By the time fiber renders the first frame the animation has already progressed which leads to a visible jump. In such cases you should pre-emptively schedule a render and then start the animation in the next frame.
+
+```jsx
+<mesh
+  onClick={() => {
+    // Pre-emptively schedule a render
+    invalidate()
+    // Wait for the next frame to start the animation
+    requestAnimationFrame(() => controls.dolly(1, true))
+  }}
+```
 
 ## Re-using geometries and materials
 
@@ -82,9 +94,10 @@ THREE.ColorManagement.enabled = true
 THREE.ColorManagement.legacyMode = false
 ```
 
-### Caching with useLoader
+### Caching with `useLoader`
 
-<Hint>Every resource that is loaded with useLoader is cached automatically!</Hint>
+> [!NOTE]
+> Every resource that is loaded with useLoader is cached automatically!
 
 If you access a resource via useLoader with the same URL, throughout the component tree, then you will always refer to the same asset and thereby re-use it. This is especially useful if you run your GLTF assets through [GLTFJSX](https://github.com/pmndrs/gltfjsx) because it links up geometries and materials and thereby creates re-usable models.
 
@@ -213,7 +226,7 @@ You can also use the onChange callback to get notified when the average changes 
 ```jsx
 import round from 'lodash/round'
 
-const [dpr, set] = useState(1)
+const [dpr, setDpr] = useState(1)
 return (
  <Canvas dpr={dpr}>
   <PerformanceMonitor onChange={({ factor }) => setDpr(round(0.5 + 1.5 * factor, 1))}>
@@ -258,11 +271,11 @@ performance: {
 },
 ```
 
-- current: Performance factor alternates between min and max
-- min: Performance lower bound (should be less than 1)
-- max: Performance upper bound (no higher than 1)
-- debounce: Debounce timeout until it goes to upper bound (1) again
-- regress(): Function that temporarily regresses performance
+- `current`: Performance factor alternates between min and max
+- `min`: Performance lower bound (should be less than 1)
+- `max`: Performance upper bound (no higher than 1)
+- `debounce`: Debounce timeout until it goes to upper bound (1) again
+- `regress()`: Function that temporarily regresses performance
 
 You can define defaults like so:
 
@@ -284,7 +297,8 @@ useEffect(() => {
 
 ### This is how you can respond to it
 
-<Hint>Mere calls to `regress()` will not change or affect anything!</Hint>
+> [!NOTE]
+> Mere calls to `regress()` will not change or affect anything!
 
 Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
 
@@ -349,4 +363,4 @@ It simulates heavy load by creating hundreds of THREE.TextGeometry instances (51
   />
 </p>
 
-For more on how to use this API, see [use startTransition for expensive ops](/react-three-fiber/advanced/pitfalls#use-starttransition-for-expensive-ops).
+For more on how to use this API, see [use startTransition for expensive ops](/advanced/pitfalls#use-starttransition-for-expensive-ops).

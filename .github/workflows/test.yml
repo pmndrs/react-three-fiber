@@ -40,3 +40,6 @@ jobs:
 
       - name: Report Test Renderer size
         run: yarn run analyze-test
+
+      - name: Check formatting
+        run: yarn run format
