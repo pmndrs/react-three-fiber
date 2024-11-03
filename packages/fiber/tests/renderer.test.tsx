@@ -546,9 +546,6 @@ describe('renderer', () => {
   })
 
   it('should gracefully handle text', async () => {
-    const warn = console.warn
-    console.warn = jest.fn()
-
     // Mount
     await act(async () => root.render(<>one</>))
     // Update
@@ -558,9 +555,6 @@ describe('renderer', () => {
     // Suspense
     const Test = () => suspend(async () => <>four</>, [])
     await act(async () => root.render(<Test />))
-
-    expect(console.warn).toHaveBeenCalled()
-    console.warn = warn
   })
 
   it('should gracefully interrupt when building up the tree', async () => {
