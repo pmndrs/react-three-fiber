@@ -570,6 +570,17 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
   )
 }
 
+/**
+ * Force React to flush any updates inside the provided callback synchronously and immediately.
+ * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
+ * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
+ * having to revert to a non-React solution.
+ */
+export function flushSync<R>(fn: () => R): R {
+  // `flushSync` implementation only takes one argument. I don't know what's up with the type declaration for it.
+  return reconciler.flushSync(fn)
+}
+
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',

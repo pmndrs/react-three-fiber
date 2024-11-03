@@ -486,9 +486,8 @@ function swapInstances(): void {
   reconstructed.length = 0
 }
 
-// Don't handle text instances, warn on undefined behavior
-const handleTextInstance = () =>
-  console.warn('R3F: Text is not allowed in JSX! This could be stray whitespace or characters.')
+// Don't handle text instances, make it no-op
+const handleTextInstance = () => {}
 
 const NO_CONTEXT: HostConfig['hostContext'] = {}
 
