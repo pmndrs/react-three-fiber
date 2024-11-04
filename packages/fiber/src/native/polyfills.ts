@@ -1,9 +1,15 @@
 import * as THREE from 'three'
 import { Image, NativeModules, Platform } from 'react-native'
-import { Asset } from 'expo-asset'
-import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
+
+// Polyfill asset loading if expo modules are available
+try {
+  var Asset = require('expo-asset').Asset
+  var fs = require('expo-file-system')
+} catch (_) {
+  //
+}
 
 // http://stackoverflow.com/questions/105034
 function uuidv4() {
