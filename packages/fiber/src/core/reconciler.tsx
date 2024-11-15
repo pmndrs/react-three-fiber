@@ -89,6 +89,11 @@ const createReconciler = Reconciler as unknown as <
     requestPostPaintCallback(callback: (time: number) => void): void
     // https://github.com/facebook/react/pull/26025
     shouldAttemptEagerTransition(): boolean
+    // https://github.com/facebook/react/pull/31528
+    trackSchedulerEvent(): void
+    // https://github.com/facebook/react/pull/31008
+    resolveEventType(): null | string
+    resolveEventTimeStamp(): number
 
     /**
      * This method is called during render to determine if the Host Component type and props require some kind of loading process to complete before committing an update.
@@ -599,21 +604,16 @@ export const reconciler = createReconciler<
   detachDeletedInstance() {},
   prepareScopeUpdate() {},
   getInstanceFromScope: () => null,
-  shouldAttemptEagerTransition() {
-    return false
-  },
+  shouldAttemptEagerTransition: () => false,
+  trackSchedulerEvent: () => {},
+  resolveEventType: () => null,
+  resolveEventTimeStamp: () => -1.1,
   requestPostPaintCallback() {},
-  maySuspendCommit() {
-    return false
-  },
-  preloadInstance() {
-    return true // true indicates already loaded
-  },
+  maySuspendCommit: () => false,
+  preloadInstance: () => true, // true indicates already loaded
   startSuspendingCommit() {},
   suspendInstance() {},
-  waitForCommitToBeReady() {
-    return null
-  },
+  waitForCommitToBeReady: () => null,
   NotPendingTransition: null,
   setCurrentUpdatePriority(newPriority: number) {
     currentUpdatePriority = newPriority
