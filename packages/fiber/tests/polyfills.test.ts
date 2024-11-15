@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { polyfills } from '../../src/native/polyfills'
+import { polyfills } from '../src/native/polyfills'
 
 polyfills()
 

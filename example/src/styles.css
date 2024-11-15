@@ -1,0 +1,189 @@
+/* @import url('@pmndrs/branding/styles.css'); */
+@import url('https://rsms.me/inter/inter.css');
+
+.pmndrs-menu {
+  font-family: 'Inter var', sans-serif;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  color: #808080;
+  padding: 40px;
+  pointer-events: none;
+  justify-content: flex-start;
+  align-items: flex-end;
+  flex-direction: row;
+  font-size: 10px;
+  line-height: 1.5em;
+}
+
+.pmndrs-menu > div {
+  word-wrap: none;
+  word-break: none;
+  white-space: pre;
+  padding-left: 25px;
+  padding-right: 25px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-direction: column;
+}
+
+.pmndrs-menu > div b {
+  font-weight: 600;
+  color: #b0b0b0;
+}
+
+.pmndrs-menu a {
+  pointer-events: all;
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+.pmndrs-menu a:hover {
+  text-decoration: underline;
+  color: inherit;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  overflow: hidden;
+}
+
+#root {
+  overflow: auto;
+}
+
+body {
+  position: fixed;
+  overflow: hidden;
+  overscroll-behavior-y: none;
+  font-family: 'Inter var', sans-serif;
+  color: black;
+  background: #dedddf !important;
+}
+
+canvas {
+  touch-action: none;
+}
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.text {
+  line-height: 1em;
+  text-align: left;
+  font-size: 8em;
+  word-break: break-word;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.Page {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+
+  & > h1 {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 900;
+    font-size: 8em;
+    margin: 0;
+    color: white;
+    line-height: 0.59em;
+    letter-spacing: -2px;
+  }
+
+  & > h1 {
+    position: absolute;
+    top: 70px;
+    left: 60px;
+  }
+
+  & > span {
+    position: absolute;
+    bottom: 60px;
+    right: 60px;
+  }
+
+  @media only screen and (max-width: 1000px) {
+    & > h1 {
+      font-size: 5em;
+      letter-spacing: -1px;
+    }
+  }
+
+  & > a {
+    margin: 0;
+    color: white;
+    text-decoration: none;
+  }
+}
+
+.DemoPanel {
+  z-index: 1000;
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+  max-width: 250px;
+}
+
+.Dot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin: 8px;
+}
+
+.LoadingContainer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #dedddf;
+  color: white;
+}
+
+.LoadingMessage {
+  font-family: 'Inter', Helvetica, sans-serif;
+}
+
+.Error {
+  position: absolute;
+  padding: 10px 20px;
+  bottom: unset;
+  right: unset;
+  top: 60px;
+  left: 60px;
+  max-width: 380px;
+  border: 2px solid #ff5050;
+  color: #ff5050;
+}

@@ -1,0 +1,43 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`updateCamera updates camera matrices 1`] = `
+Array [
+  2.1445069205095586,
+  0,
+  0,
+  0,
+  0,
+  2.1445069205095586,
+  0,
+  0,
+  0,
+  0,
+  -1.00010000500025,
+  -1,
+  0,
+  0,
+  -0.200010000500025,
+  0,
+]
+`;
+
+exports[`updateCamera updates camera matrices 2`] = `
+Array [
+  1,
+  0,
+  0,
+  0,
+  0,
+  1,
+  0,
+  0,
+  0,
+  0,
+  -0.001000050002500125,
+  0,
+  -0,
+  -0,
+  -1.00010000500025,
+  1,
+]
+`;
