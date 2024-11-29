@@ -2879,6 +2879,13 @@
   dependencies:
     "@types/react" "*"
 
+"@types/react-dom@npm:types-react-dom@19.0.0-rc.1":
+  version "19.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/types-react-dom/-/types-react-dom-19.0.0-rc.1.tgz#1d544d02c5df2a82d87c2eff979afa2e21a8317a"
+  integrity sha512-VSLZJl8VXCD0fAWp7DUTFUDCcZ8DVXOQmjhJMD03odgeFmu14ZQJHCXeETm3BEAhJqfgJaFkLnGkQv88sRx0fQ==
+  dependencies:
+    "@types/react" "*"
+
 "@types/react-dom@npm:types-react-dom@beta":
   version "19.0.0-beta.1"
   resolved "https://registry.yarnpkg.com/types-react-dom/-/types-react-dom-19.0.0-beta.1.tgz#393901da15ad756f0ce101f12a1e3256d2ce1256"
@@ -2913,6 +2920,13 @@
   integrity sha512-XcGdod0Jjv84HOC7N5ziY3x+qL0AfmubvKOZ9hJjJ2yd5EE+KYjWhdOjt387e9HPheHkdggF9atTifMRtyAaRA==
   dependencies:
     "@types/prop-types" "*"
+    csstype "^3.0.2"
+
+"@types/react@npm:types-react@19.0.0-rc.1":
+  version "19.0.0-rc.1"
+  resolved "https://registry.yarnpkg.com/types-react/-/types-react-19.0.0-rc.1.tgz#576d1a702f6d0cc5b24813a293913e5cbfeaa647"
+  integrity sha512-RshndUfqTW6K3STLPis8BtAYCGOkMbtvYsi90gmVNDZBXUyUc5juf2PE9LfS/JmOlUIRO8cWTS/1MTnmhjDqyQ==
+  dependencies:
     csstype "^3.0.2"
 
 "@types/react@npm:types-react@beta":
