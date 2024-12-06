@@ -10,6 +10,12 @@
 
 <a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg" /></a>
 
+> [!WARNING]  
+> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
+
+> [!NOTE]  
+> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
+
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
 Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
