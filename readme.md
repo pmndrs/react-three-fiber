@@ -1,3 +1,9 @@
+> [!WARNING]  
+> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
+
+> [!NOTE]  
+> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
+
 <h1>@react-three/fiber</h1>
 
 [![Version](https://img.shields.io/npm/v/@react-three/fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
@@ -9,12 +15,6 @@
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
 <a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg" /></a>
-
-> [!WARNING]  
-> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
-
-> [!NOTE]  
-> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
 
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
