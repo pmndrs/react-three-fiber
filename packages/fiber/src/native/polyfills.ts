@@ -161,7 +161,19 @@ export function polyfills() {
       .then(async (uri) => {
         const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
         const data = Buffer.from(base64, 'base64')
-        onLoad?.(data.buffer)
+
+        switch (this.responseType) {
+          case 'arrayBuffer':
+            return onLoad?.(data.buffer)
+          case 'blob':
+            // @ts-ignore
+            return onLoad?.(new Blob([data.buffer]))
+          // case 'document':
+          case 'json':
+            return onLoad?.(JSON.parse(THREE.LoaderUtils.decodeText(data)))
+          default:
+            return onLoad?.(THREE.LoaderUtils.decodeText(data))
+        }
       })
       .catch((error) => {
         onError?.(error)
