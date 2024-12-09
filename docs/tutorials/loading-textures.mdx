@@ -21,7 +21,7 @@ Let's then with this information create a small scene where we can use this text
 ```jsx
 import { Suspense } from 'react'
 import { Canvas, useLoader } from '@react-three/fiber'
-import { TextureLoader } from 'three/src/loaders/TextureLoader'
+import { TextureLoader } from 'three'
 
 function Scene() {
   const colorMap = useLoader(TextureLoader, 'PavingStones092_1K_Color.jpg')
