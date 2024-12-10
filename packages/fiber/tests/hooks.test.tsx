@@ -15,6 +15,11 @@ import {
   Instance,
   extend,
 } from '../src'
+import { promiseCaches } from '../src/core/cache'
+
+interface GLTF {
+  scene: THREE.Object3D
+}
 
 extend(THREE as any)
 const root = createRoot(document.createElement('canvas'))
@@ -24,6 +29,8 @@ describe('hooks', () => {
 
   beforeEach(() => {
     canvas = createCanvas()
+    // Clear all caches before each test
+    promiseCaches.forEach(async (cache) => await cache.clear())
   })
 
   it('can handle useThree hook', async () => {
@@ -87,21 +94,10 @@ describe('hooks', () => {
   })
 
   it('can handle useLoader hook', async () => {
-    const MockMesh = new THREE.Mesh()
-    MockMesh.name = 'Scene'
+    let gltf: Record<string, any> = {}
 
-    interface GLTF {
-      scene: THREE.Object3D
-    }
-    class GLTFLoader extends THREE.Loader {
-      load(url: string, onLoad: (gltf: GLTF) => void): void {
-        onLoad({ scene: MockMesh })
-      }
-    }
-
-    let gltf!: GLTF & ObjectMap
     const Component = () => {
-      gltf = useLoader(GLTFLoader, '/suzanne.glb')
+      gltf = useLoader(MockLoader, gltfs.diamond)
       return <primitive object={gltf.scene} />
     }
 
@@ -111,42 +107,39 @@ describe('hooks', () => {
     expect(scene.children[0]).toBe(MockMesh)
     expect(gltf.scene).toBe(MockMesh)
     expect(gltf.nodes.Scene).toBe(MockMesh)
+    expect(gltf.json.nodes[0].name).toEqual('Diamond')
+  })
+
+  it('can handle useLoader with an existing loader instance', async () => {
+    let gltf: Record<string, any> = {}
+    const loader = new MockLoader()
+
+    const Component = () => {
+      gltf = useLoader(loader, gltfs.diamond)
+      return <primitive object={gltf.scene} />
+    }
+
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
+
+    expect(scene.children[0]).toBe(MockMesh)
+    expect(gltf.scene).toBe(MockMesh)
+    expect(gltf.nodes.Scene).toBe(MockMesh)
+    expect(gltf.json.nodes[0].name).toEqual('Diamond')
   })
 
   it('can handle useLoader hook with an array of strings', async () => {
-    const MockMesh = new THREE.Mesh()
+    let results: Record<string, any>[] = []
 
-    const MockGroup = new THREE.Group()
-    const mat1 = new THREE.MeshBasicMaterial()
-    mat1.name = 'Mat 1'
-    const mesh1 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat1)
-    mesh1.name = 'Mesh 1'
-    const mat2 = new THREE.MeshBasicMaterial()
-    mat2.name = 'Mat 2'
-    const mesh2 = new THREE.Mesh(new THREE.BoxGeometry(2, 2), mat2)
-    mesh2.name = 'Mesh 2'
-    MockGroup.add(mesh1, mesh2)
-
-    class TestLoader extends THREE.Loader {
-      load = jest
-        .fn()
-        .mockImplementationOnce((_url, onLoad) => {
-          onLoad(MockMesh)
-        })
-        .mockImplementationOnce((_url, onLoad) => {
-          onLoad(MockGroup)
-        })
-    }
-
-    const extensions = jest.fn()
-
+    // The same MockMesh gets returned for each url, but the json is different.
+    // Because of this we clone for the test.
     const Component = () => {
-      const [mockMesh, mockScene] = useLoader(TestLoader, ['/suzanne.glb', '/myModels.glb'], extensions)
+      results = useLoader(MockLoader, [gltfs.diamond, gltfs.lightning])
 
       return (
         <>
-          <primitive object={mockMesh as THREE.Mesh} />
-          <primitive object={mockScene as THREE.Scene} />
+          <primitive object={results[0].scene.clone()} />
+          <primitive object={results[1].scene.clone()} />
         </>
       )
     }
@@ -154,44 +147,9 @@ describe('hooks', () => {
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
-    expect(scene.children[0]).toBe(MockMesh)
-    expect(scene.children[1]).toBe(MockGroup)
-    expect(extensions).toBeCalledTimes(1)
-  })
-
-  it('can handle useLoader with an existing loader instance', async () => {
-    class Loader extends THREE.Loader {
-      load(_url: string, onLoad: (result: null) => void): void {
-        onLoad(null)
-      }
-    }
-
-    const loader = new Loader()
-    let proto!: Loader
-
-    function Test(): null {
-      return useLoader(loader, '', (loader) => (proto = loader))
-    }
-    await act(async () => root.render(<Test />))
-
-    expect(proto).toBe(loader)
-  })
-
-  it('can handle useLoader with a loader extension', async () => {
-    class Loader extends THREE.Loader {
-      load(_url: string, onLoad: (result: null) => void): void {
-        onLoad(null)
-      }
-    }
-
-    let proto!: Loader
-
-    function Test(): null {
-      return useLoader(Loader, '', (loader) => (proto = loader))
-    }
-    await act(async () => root.render(<Test />))
-
-    expect(proto).toBeInstanceOf(Loader)
+    expect(scene.children).toHaveLength(2)
+    expect(results[0].json.nodes[0].name).toEqual('Diamond')
+    expect(results[1].json.nodes[0].name).toEqual('lightning')
   })
 
   it('can handle useGraph hook', async () => {
