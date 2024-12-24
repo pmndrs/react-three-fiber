@@ -437,7 +437,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
       const filter = isPointerMove ? filterPointerEvents : undefined
 
-      const hits = intersect(event, filter)
+      const hits = isPointerMove ? [] : intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
 
       // Save initial coordinates on pointer-down
