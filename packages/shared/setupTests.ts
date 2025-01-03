@@ -1,21 +1,48 @@
-import 'regenerator-runtime/runtime'
-import { pointerEventPolyfill } from './pointerEventPolyfill'
+import * as THREE from 'three'
+import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
+import { extend } from '@react-three/fiber'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
+  var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
 }
 
 // Let React know that we'll be testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
+global.IS_REACT_NATIVE_TEST_ENVIRONMENT = true // hide react-test-renderer warnings
 
-pointerEventPolyfill()
+// PointerEvent is not in JSDOM
+// https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
+// https://w3c.github.io/pointerevents/#pointerevent-interface
+if (!global.PointerEvent) {
+  global.PointerEvent = class extends MouseEvent implements PointerEvent {
+    readonly pointerId: number = 0
+    readonly width: number = 1
+    readonly height: number = 1
+    readonly pressure: number = 0
+    readonly tangentialPressure: number = 0
+    readonly tiltX: number = 0
+    readonly tiltY: number = 0
+    readonly twist: number = 0
+    readonly pointerType: string = ''
+    readonly isPrimary: boolean = false
 
-// Mock scheduler to test React features
-jest.mock('scheduler', () => require('scheduler/unstable_mock'))
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params)
+      Object.assign(this, params)
+    }
 
-// Silence react-dom & react-dom/client mismatch in RTL
-const logError = global.console.error
-global.console.error = (...args: any[]) => {
-  if (args.join('').startsWith('Warning')) return
-  return logError(...args)
+    getCoalescedEvents = () => []
+    getPredictedEvents = () => []
+  }
 }
+
+globalThis.WebGL2RenderingContext = WebGL2RenderingContext as any
+globalThis.WebGLRenderingContext = class WebGLRenderingContext extends WebGL2RenderingContext {} as any
+
+HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement) {
+  return new WebGL2RenderingContext(this) as any
+}
+
+// Extend catalogue for render API in tests
+extend(THREE as any)

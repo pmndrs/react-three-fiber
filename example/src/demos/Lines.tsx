@@ -1,6 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { extend, Canvas, useThree, ReactThreeFiber, ThreeEvent } from '@react-three/fiber'
+import { ThreeElement, extend, Canvas, useThree, ThreeEvent } from '@react-three/fiber'
 import { OrbitControls } from 'three-stdlib'
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    orbitControls: ThreeElement<typeof OrbitControls>
+  }
+}
+
 extend({ OrbitControls })
 
 function useHover(stopPropagation = true) {
@@ -82,7 +89,7 @@ function Line({ defaultStart, defaultEnd }: any) {
     <>
       <line ref={lineRef as any}>
         <bufferGeometry>
-          <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         </bufferGeometry>
         <lineBasicMaterial color="black" />
       </line>
