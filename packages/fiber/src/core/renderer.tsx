@@ -131,7 +131,12 @@ export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCan
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
-  if (!size && canvas instanceof HTMLCanvasElement && canvas.parentElement) {
+  if (
+    !size &&
+    typeof HTMLCanvasElement !== 'undefined' &&
+    canvas instanceof HTMLCanvasElement &&
+    canvas.parentElement
+  ) {
     const { width, height, top, left } = canvas.parentElement.getBoundingClientRect()
     return { width, height, top, left }
   } else if (!size && typeof OffscreenCanvas !== 'undefined' && canvas instanceof OffscreenCanvas) {
