@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.2.2
+
+### Patch Changes
+
+- ff1a16f1: fix: narrow React peer dep range
+
 ## 8.2.1
 
 ### Patch Changes

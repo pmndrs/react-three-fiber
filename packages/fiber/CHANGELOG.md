@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.12
+
+### Patch Changes
+
+- ff1a16f1: fix: narrow React peer dep range
+
 ## 8.17.11
 
 ### Patch Changes
