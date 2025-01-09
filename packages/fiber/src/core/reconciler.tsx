@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import {
-  NoEventPriority,
+  // NoEventPriority,
   ContinuousEventPriority,
   DiscreteEventPriority,
   DefaultEventPriority,
@@ -29,7 +29,7 @@ type EventPriority = number
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
-const createReconciler = Reconciler as unknown as <
+function createReconciler<
   Type,
   Props,
   Container,
@@ -122,11 +122,19 @@ const createReconciler = Reconciler as unknown as <
      */
     waitForCommitToBeReady(): ((initiateCommit: Function) => Function) | null
   },
-) => Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, PublicInstance>
+): Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, PublicInstance> {
+  const reconciler = Reconciler(config as any)
 
-declare module 'react-reconciler/constants' {
-  const NoEventPriority = 0
+  reconciler.injectIntoDevTools({
+    bundleType: typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' ? 1 : 0,
+    rendererPackageName: '@react-three/fiber',
+    version: React.version,
+  })
+
+  return reconciler as any
 }
+
+const NoEventPriority = 0
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -504,7 +512,7 @@ let currentUpdatePriority: number = NoEventPriority
 const NoFlags = 0
 const Update = 4
 
-export const reconciler = createReconciler<
+export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],
   HostConfig['container'],

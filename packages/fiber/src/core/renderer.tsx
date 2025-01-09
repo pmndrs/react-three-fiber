@@ -568,12 +568,5 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
  * having to revert to a non-React solution.
  */
 export function flushSync<R>(fn: () => R): R {
-  // `flushSync` implementation only takes one argument. I don't know what's up with the type declaration for it.
   return reconciler.flushSync(fn)
 }
-
-reconciler.injectIntoDevTools({
-  bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName: '@react-three/fiber',
-  version: React.version,
-})

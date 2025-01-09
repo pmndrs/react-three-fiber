@@ -47,10 +47,10 @@ export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.h
  *
  * @see https://github.com/facebook/react/issues/14927
  */
-export const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
-    ? React.useLayoutEffect
-    : React.useEffect
+export const useIsomorphicLayoutEffect = /* @__PURE__ */ (() =>
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative'))()
+  ? React.useLayoutEffect
+  : React.useEffect
 
 export function useMutableCallback<T>(fn: T): React.RefObject<T> {
   const ref = React.useRef<T>(fn)
@@ -94,19 +94,21 @@ export function Block({ set }: Omit<UnblockProps, 'children'>) {
   return null
 }
 
-export class ErrorBoundary extends React.Component<
-  { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
-  { error: boolean }
-> {
-  state = { error: false }
-  static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(err: Error) {
-    this.props.set(err)
-  }
-  render() {
-    return this.state.error ? null : this.props.children
-  }
-}
+// NOTE: static members get down-level transpiled to mutations which break tree-shaking
+export const ErrorBoundary = /* @__PURE__ */ (() =>
+  class ErrorBoundary extends React.Component<
+    { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
+    { error: boolean }
+  > {
+    state = { error: false }
+    static getDerivedStateFromError = () => ({ error: true })
+    componentDidCatch(err: Error) {
+      this.props.set(err)
+    }
+    render() {
+      return this.state.error ? null : this.props.children
+    }
+  })()
 
 export interface ObjectMap {
   nodes: { [name: string]: THREE.Object3D }

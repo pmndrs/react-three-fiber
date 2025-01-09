@@ -141,7 +141,7 @@ export interface RootState {
 
 export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
 
-export const context = React.createContext<RootStore>(null!)
+export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
 
 export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
