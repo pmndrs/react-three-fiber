@@ -34,8 +34,6 @@ Array [
   "InstanceProps",
   "Intersection",
   "Layers",
-  "Loader",
-  "LoaderProto",
   "LoaderResult",
   "MathProps",
   "MathRepresentation",

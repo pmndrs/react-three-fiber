@@ -3,11 +3,11 @@ import * as React from 'react'
 import { suspend, preload, clear } from 'suspend-react'
 import { context, RootState, RenderCallback, RootStore } from './store'
 import { buildGraph, ObjectMap, is, useMutableCallback, useIsomorphicLayoutEffect, isObject3D } from './utils'
-import type { Instance } from './reconciler'
+import type { Instance, ConstructorRepresentation } from './reconciler'
 
 /**
  * Exposes an object's {@link Instance}.
- * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useinstancehandle
+ * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#useInstanceHandle
  *
  * **Note**: this is an escape hatch to react-internal fields. Expect this to change significantly between versions.
  */
@@ -61,27 +61,32 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-export interface Loader<T> extends THREE.Loader {
-  load(
-    url: string | string[] | string[][],
-    onLoad?: (result: T, ...args: any[]) => void,
-    onProgress?: (event: ProgressEvent) => void,
-    onError?: (event: unknown) => void,
-  ): unknown
-}
+type LoaderInstance<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> =
+  T extends ConstructorRepresentation<THREE.Loader<any>> ? InstanceType<T> : T
 
-export type LoaderProto<T> = new (...args: any[]) => Loader<T>
-export type LoaderResult<T> = T extends { scene: THREE.Object3D } ? T & ObjectMap : T
-export type Extensions<T> = (loader: Loader<T>) => void
+export type LoaderResult<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> = Awaited<
+  ReturnType<LoaderInstance<T>['loadAsync']>
+> extends infer R
+  ? R extends { scene: THREE.Object3D }
+    ? R & ObjectMap
+    : R
+  : never
 
-const memoizedLoaders = new WeakMap<LoaderProto<any>, Loader<any>>()
+export type Extensions<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> = (
+  loader: LoaderInstance<T>,
+) => void
 
-const isConstructor = <T,>(value: unknown): value is LoaderProto<T> =>
+const memoizedLoaders = new WeakMap<ConstructorRepresentation<THREE.Loader<any>>, THREE.Loader<any>>()
+
+const isConstructor = <T,>(value: unknown): value is ConstructorRepresentation<THREE.Loader<T>> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
-function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressEvent) => void) {
-  return async function (Proto: Loader<T> | LoaderProto<T>, ...input: string[]) {
-    let loader: Loader<any>
+function loadingFn<L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>>(
+  extensions?: Extensions<L>,
+  onProgress?: (event: ProgressEvent<EventTarget>) => void,
+) {
+  return function (Proto: L, ...input: string[]) {
+    let loader: THREE.Loader<any>
 
     // Construct and cache loader if constructor was passed
     if (isConstructor(Proto)) {
@@ -91,20 +96,23 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
         memoizedLoaders.set(Proto, loader)
       }
     } else {
-      loader = Proto
+      loader = Proto as any
     }
 
     // Apply loader extensions
-    if (extensions) extensions(loader)
+    if (extensions) extensions(loader as any)
 
     // Go through the urls and load them
     return Promise.all(
       input.map(
         (input) =>
-          new Promise<LoaderResult<T>>((res, reject) =>
+          new Promise<LoaderResult<L>>((res, reject) =>
             loader.load(
               input,
-              (data) => res(isObject3D(data?.scene) ? Object.assign(data, buildGraph(data.scene)) : data),
+              (data) => {
+                if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
+                res(data)
+              },
               onProgress,
               (error) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
             ),
@@ -120,29 +128,26 @@ function loadingFn<T>(extensions?: Extensions<T>, onProgress?: (event: ProgressE
  * Note: this hook's caller must be wrapped with `React.Suspense`
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
-export function useLoader<T, U extends string | string[] | string[][]>(
-  loader: Loader<T> | LoaderProto<T>,
-  input: U,
-  extensions?: Extensions<T>,
-  onProgress?: (event: ProgressEvent) => void,
-) {
+export function useLoader<
+  T,
+  U extends string | string[] | string[][],
+  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+>(loader: L, input: U, extensions?: Extensions<L>, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
   // Return the object(s)
-  return (Array.isArray(input) ? results : results[0]) as unknown as U extends any[]
-    ? LoaderResult<T>[]
-    : LoaderResult<T>
+  return (Array.isArray(input) ? results : results[0]) as U extends any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
 
 /**
  * Preloads an asset into cache as a side-effect.
  */
-useLoader.preload = function <T, U extends string | string[] | string[][]>(
-  loader: Loader<T> | LoaderProto<T>,
-  input: U,
-  extensions?: Extensions<T>,
-): void {
+useLoader.preload = function <
+  T,
+  U extends string | string[] | string[][],
+  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+>(loader: L, input: U, extensions?: Extensions<L>): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return preload(loadingFn(extensions), [loader, ...keys])
 }
@@ -150,10 +155,11 @@ useLoader.preload = function <T, U extends string | string[] | string[][]>(
 /**
  * Removes a loaded asset from cache.
  */
-useLoader.clear = function <T, U extends string | string[] | string[][]>(
-  loader: Loader<T> | LoaderProto<T>,
-  input: U,
-): void {
+useLoader.clear = function <
+  T,
+  U extends string | string[] | string[][],
+  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+>(loader: L, input: U): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([loader, ...keys])
 }

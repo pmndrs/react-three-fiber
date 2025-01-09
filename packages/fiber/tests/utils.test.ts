@@ -241,13 +241,13 @@ describe('attach / detach', () => {
     const child = prepare({}, store, '', { attach: () => (mount(), unmount) })
 
     attach(parent, child)
-    expect(mount).toBeCalledTimes(1)
-    expect(unmount).toBeCalledTimes(0)
+    expect(mount).toHaveBeenCalledTimes(1)
+    expect(unmount).toHaveBeenCalledTimes(0)
     expect(child.previousAttach).toBe(unmount)
 
     detach(parent, child)
-    expect(mount).toBeCalledTimes(1)
-    expect(unmount).toBeCalledTimes(1)
+    expect(mount).toHaveBeenCalledTimes(1)
+    expect(unmount).toHaveBeenCalledTimes(1)
     expect(child.previousAttach).toBe(undefined)
   })
 
