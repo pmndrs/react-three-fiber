@@ -1,5 +1,11 @@
 # @react-three/eslint-plugin
 
+## 0.1.2
+
+### Patch Changes
+
+- 6c907263: fix(eslint-plugin): include type declare files
+
 ## 0.1.0
 
 ### Minor Changes
