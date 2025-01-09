@@ -79,6 +79,7 @@ const createReconciler = Reconciler as unknown as <
     // Undocumented
     // https://github.com/facebook/react/pull/26722
     NotPendingTransition: TransitionStatus | null
+    HostTransitionContext: React.Context<TransitionStatus>
     // https://github.com/facebook/react/pull/28751
     setCurrentUpdatePriority(newPriority: EventPriority): void
     getCurrentUpdatePriority(): EventPriority
@@ -616,6 +617,7 @@ export const reconciler = createReconciler<
   suspendInstance() {},
   waitForCommitToBeReady: () => null,
   NotPendingTransition: null,
+  HostTransitionContext: /* @__PURE__ */ React.createContext<HostConfig['TransitionStatus']>(null),
   setCurrentUpdatePriority(newPriority: number) {
     currentUpdatePriority = newPriority
   },
