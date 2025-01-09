@@ -255,8 +255,8 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!state.scene) {
         let scene: THREE.Scene
 
-        if (sceneOptions instanceof THREE.Scene) {
-          scene = sceneOptions
+        if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
+          scene = sceneOptions as THREE.Scene
         } else {
           scene = new THREE.Scene()
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
