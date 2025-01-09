@@ -448,7 +448,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Set literal types
     else if (target?.set && typeof value !== 'object') {
-      const isColor = target instanceof THREE.Color
+      const isColor = (target as unknown as THREE.Color | undefined)?.isColor
       // Allow setting array scalars
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set single value
@@ -469,7 +469,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         rootState &&
         !rootState.linear &&
         colorMaps.includes(key) &&
-        root[key] instanceof THREE.Texture &&
+        (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
@@ -485,22 +485,23 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
   if (
     instance?.parent &&
     rootState?.internal &&
-    instance.object instanceof THREE.Object3D &&
+    (instance.object as unknown as THREE.Object3D | undefined)?.isObject3D &&
     prevHandlers !== instance.eventCount
   ) {
+    const object = instance.object as unknown as THREE.Object3D
     // Pre-emptively remove the instance from the interaction manager
-    const index = rootState.internal.interaction.indexOf(instance.object)
+    const index = rootState.internal.interaction.indexOf(object)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
-      rootState.internal.interaction.push(instance.object)
+    if (instance.eventCount && object.raycast !== null) {
+      rootState.internal.interaction.push(object)
     }
   }
 
   // Auto-attach geometries and materials
   if (instance && instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
+    if ((instance.object as unknown as THREE.BufferGeometry).isBufferGeometry) instance.props.attach = 'geometry'
+    else if ((instance.object as unknown as THREE.Material).isMaterial) instance.props.attach = 'material'
   }
 
   // Instance was updated, request a frame

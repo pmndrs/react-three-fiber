@@ -236,7 +236,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
-        const isCamera = cameraOptions instanceof THREE.Camera
+        const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
         const camera = isCamera
           ? (cameraOptions as Camera)
           : orthographic
@@ -275,8 +275,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.scene) {
         let scene: THREE.Scene
 
-        if (sceneOptions instanceof THREE.Scene) {
-          scene = sceneOptions
+        if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
+          scene = sceneOptions as THREE.Scene
           prepare(scene, store, '', {})
         } else {
           scene = new THREE.Scene()
