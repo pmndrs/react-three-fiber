@@ -31,7 +31,6 @@ import {
   applyProps,
   prepare,
   useMutableCallback,
-  getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 
@@ -347,25 +346,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
       }
 
-      // Safely set color management if available.
-      // Avoid accessing THREE.ColorManagement to play nice with older versions
-      const ColorManagement = getColorManagement()
-      if (ColorManagement) {
-        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
-        else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
-      }
+      THREE.ColorManagement.enabled = !legacy
 
       // Set color space and tonemapping preferences
       if (!configured) {
-        const LinearEncoding = 3000
-        const sRGBEncoding = 3001
-        applyProps(
-          gl as any,
-          {
-            outputEncoding: linear ? LinearEncoding : sRGBEncoding,
-            toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
-          } as Partial<Properties<THREE.WebGLRenderer>>,
-        )
+        gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+        gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       }
 
       // Update color management state

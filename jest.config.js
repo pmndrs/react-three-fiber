@@ -2,6 +2,9 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testPathIgnorePatterns: ['/node_modules/'],
+  moduleNameMapper: {
+    '^three$': '<rootDir>/node_modules/three/build/three.cjs',
+  },
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/packages/fiber/dist',

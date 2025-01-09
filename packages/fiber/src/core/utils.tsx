@@ -26,23 +26,6 @@ export function findInitialRoot<T>(instance: Instance<T>): RootStore {
   return root
 }
 
-/**
- * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
- */
-export const hasColorSpace = <
-  T extends Renderer | THREE.Texture | object,
-  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
->(
-  object: T,
-): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
-
-export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
-
-/**
- * The current THREE.ColorManagement instance, if present.
- */
-export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
-
 export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 
 /**
@@ -374,25 +357,9 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
   return changedProps
 }
 
-type ClassConstructor = { new (): void }
-const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
-
-// const LinearEncoding = 3000
-const sRGBEncoding = 3001
-const SRGBColorSpace = 'srgb'
-const LinearSRGBColorSpace = 'srgb-linear'
-
 // https://github.com/mrdoob/three.js/pull/27042
 // https://github.com/mrdoob/three.js/pull/22748
-const colorMaps = [
-  'map',
-  'emissiveMap',
-  'sheenTintMap', // <r134
-  'sheenColorMap',
-  'specularTintMap', // <r134
-  'specularColorMap',
-  'envMap',
-]
+const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'envMap']
 
 const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
 
@@ -421,18 +388,6 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     let { root, key, target } = resolve(object, prop)
 
-    // Alias (output)encoding => (output)colorSpace (since r152)
-    // https://github.com/pmndrs/react-three-fiber/pull/2829
-    if (hasColorSpace(root)) {
-      if (key === 'encoding') {
-        key = 'colorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
-      } else if (key === 'outputEncoding') {
-        key = 'outputColorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
-      }
-    }
-
     // Copy if properties match signatures
     if (typeof target?.copy === 'function' && target.copy === (value as any).copy) {
       target.copy(value)
@@ -453,10 +408,6 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
-
-      // Emulate THREE.ColorManagement for older three.js versions
-      // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!getColorManagement() && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {
@@ -475,8 +426,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         root[key].type === THREE.UnsignedByteType
       ) {
         // NOTE: this cannot be set from the renderer (e.g. sRGB source textures rendered to P3)
-        if (hasColorSpace(root[key])) root[key].colorSpace = 'srgb'
-        else root[key].encoding = sRGBEncoding
+        root[key].colorSpace = THREE.SRGBColorSpace
       }
     }
   }

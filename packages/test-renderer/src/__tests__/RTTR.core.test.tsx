@@ -4,7 +4,7 @@ import * as THREE from 'three'
 
 import ReactThreeTestRenderer from '../index'
 
-type ExampleComp = THREE.Mesh<THREE.BoxBufferGeometry, THREE.Material>
+type ExampleComp = THREE.Mesh<THREE.BoxGeometry, THREE.Material>
 
 describe('ReactThreeTestRenderer Core', () => {
   it('renders JSX', async () => {

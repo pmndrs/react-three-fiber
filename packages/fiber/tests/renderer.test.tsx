@@ -22,7 +22,7 @@ declare module '@react-three/fiber' {
 
 extend({ Mock })
 
-type ComponentMesh = THREE.Mesh<THREE.BoxBufferGeometry, THREE.MeshBasicMaterial>
+type ComponentMesh = THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>
 
 const expectToThrow = async (callback: () => any, message: string) => {
   let error: Error | undefined

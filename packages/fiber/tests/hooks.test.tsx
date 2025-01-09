@@ -93,7 +93,7 @@ describe('hooks', () => {
     interface GLTF {
       scene: THREE.Object3D
     }
-    class GLTFLoader extends THREE.Loader {
+    class GLTFLoader extends THREE.Loader<GLTF, string> {
       load(url: string, onLoad: (gltf: GLTF) => void): void {
         onLoad({ scene: MockMesh })
       }
@@ -156,11 +156,11 @@ describe('hooks', () => {
 
     expect(scene.children[0]).toBe(MockMesh)
     expect(scene.children[1]).toBe(MockGroup)
-    expect(extensions).toBeCalledTimes(1)
+    expect(extensions).toHaveBeenCalledTimes(1)
   })
 
   it('can handle useLoader with an existing loader instance', async () => {
-    class Loader extends THREE.Loader {
+    class Loader extends THREE.Loader<null, string> {
       load(_url: string, onLoad: (result: null) => void): void {
         onLoad(null)
       }
@@ -178,7 +178,7 @@ describe('hooks', () => {
   })
 
   it('can handle useLoader with a loader extension', async () => {
-    class Loader extends THREE.Loader {
+    class Loader extends THREE.Loader<null, string> {
       load(_url: string, onLoad: (result: null) => void): void {
         onLoad(null)
       }
