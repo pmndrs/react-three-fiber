@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "9.0.0-rc.1",
+  "version": "9.0.0-rc.2",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -60,10 +60,10 @@
     "expo-asset": ">=8.4",
     "expo-gl": ">=11.0",
     "expo-file-system": ">=11.0",
-    "react": ">=19.0",
-    "react-dom": ">=19.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-native": ">=0.69",
-    "three": ">=0.141"
+    "three": ">=0.156"
   },
   "peerDependenciesMeta": {
     "react-dom": {

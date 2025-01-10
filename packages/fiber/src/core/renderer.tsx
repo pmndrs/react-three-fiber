@@ -31,7 +31,6 @@ import {
   applyProps,
   prepare,
   useMutableCallback,
-  getColorManagement,
 } from './utils'
 import { useStore } from './hooks'
 
@@ -236,7 +235,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
-        const isCamera = cameraOptions instanceof THREE.Camera
+        const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
         const camera = isCamera
           ? (cameraOptions as Camera)
           : orthographic
@@ -275,8 +274,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.scene) {
         let scene: THREE.Scene
 
-        if (sceneOptions instanceof THREE.Scene) {
-          scene = sceneOptions
+        if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
+          scene = sceneOptions as THREE.Scene
           prepare(scene, store, '', {})
         } else {
           scene = new THREE.Scene()
@@ -320,7 +319,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
 
         // Subscribe to WebXR session events
-        if (gl.xr) xr.connect()
+        if (typeof gl.xr?.addEventListener === 'function') xr.connect()
         state.set({ xr })
       }
 
@@ -347,25 +346,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
       }
 
-      // Safely set color management if available.
-      // Avoid accessing THREE.ColorManagement to play nice with older versions
-      const ColorManagement = getColorManagement()
-      if (ColorManagement) {
-        if ('enabled' in ColorManagement) ColorManagement.enabled = !legacy
-        else if ('legacyMode' in ColorManagement) ColorManagement.legacyMode = legacy
-      }
+      THREE.ColorManagement.enabled = !legacy
 
       // Set color space and tonemapping preferences
       if (!configured) {
-        const LinearEncoding = 3000
-        const sRGBEncoding = 3001
-        applyProps(
-          gl as any,
-          {
-            outputEncoding: linear ? LinearEncoding : sRGBEncoding,
-            toneMapping: flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping,
-          } as Partial<Properties<THREE.WebGLRenderer>>,
-        )
+        gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+        gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       }
 
       // Update color management state
@@ -582,12 +568,5 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
  * having to revert to a non-React solution.
  */
 export function flushSync<R>(fn: () => R): R {
-  // `flushSync` implementation only takes one argument. I don't know what's up with the type declaration for it.
   return reconciler.flushSync(fn)
 }
-
-reconciler.injectIntoDevTools({
-  bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
-  rendererPackageName: '@react-three/fiber',
-  version: React.version,
-})

@@ -26,23 +26,6 @@ export function findInitialRoot<T>(instance: Instance<T>): RootStore {
   return root
 }
 
-/**
- * Returns `true` with correct TS type inference if an object has a configurable color space (since r152).
- */
-export const hasColorSpace = <
-  T extends Renderer | THREE.Texture | object,
-  P = T extends Renderer ? { outputColorSpace: string } : { colorSpace: string },
->(
-  object: T,
-): object is T & P => 'colorSpace' in object || 'outputColorSpace' in object
-
-export type ColorManagementRepresentation = { enabled: boolean | never } | { legacyMode: boolean | never }
-
-/**
- * The current THREE.ColorManagement instance, if present.
- */
-export const getColorManagement = (): ColorManagementRepresentation | null => (catalogue as any).ColorManagement ?? null
-
 export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 
 /**
@@ -64,10 +47,10 @@ export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.h
  *
  * @see https://github.com/facebook/react/issues/14927
  */
-export const useIsomorphicLayoutEffect =
-  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative')
-    ? React.useLayoutEffect
-    : React.useEffect
+export const useIsomorphicLayoutEffect = /* @__PURE__ */ (() =>
+  typeof window !== 'undefined' && (window.document?.createElement || window.navigator?.product === 'ReactNative'))()
+  ? React.useLayoutEffect
+  : React.useEffect
 
 export function useMutableCallback<T>(fn: T): React.RefObject<T> {
   const ref = React.useRef<T>(fn)
@@ -111,19 +94,21 @@ export function Block({ set }: Omit<UnblockProps, 'children'>) {
   return null
 }
 
-export class ErrorBoundary extends React.Component<
-  { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
-  { error: boolean }
-> {
-  state = { error: false }
-  static getDerivedStateFromError = () => ({ error: true })
-  componentDidCatch(err: Error) {
-    this.props.set(err)
-  }
-  render() {
-    return this.state.error ? null : this.props.children
-  }
-}
+// NOTE: static members get down-level transpiled to mutations which break tree-shaking
+export const ErrorBoundary = /* @__PURE__ */ (() =>
+  class ErrorBoundary extends React.Component<
+    { set: React.Dispatch<Error | undefined>; children: React.ReactNode },
+    { error: boolean }
+  > {
+    state = { error: false }
+    static getDerivedStateFromError = () => ({ error: true })
+    componentDidCatch(err: Error) {
+      this.props.set(err)
+    }
+    render() {
+      return this.state.error ? null : this.props.children
+    }
+  })()
 
 export interface ObjectMap {
   nodes: { [name: string]: THREE.Object3D }
@@ -374,25 +359,9 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
   return changedProps
 }
 
-type ClassConstructor = { new (): void }
-const __DEV__ = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
-
-// const LinearEncoding = 3000
-const sRGBEncoding = 3001
-const SRGBColorSpace = 'srgb'
-const LinearSRGBColorSpace = 'srgb-linear'
-
 // https://github.com/mrdoob/three.js/pull/27042
 // https://github.com/mrdoob/three.js/pull/22748
-const colorMaps = [
-  'map',
-  'emissiveMap',
-  'sheenTintMap', // <r134
-  'sheenColorMap',
-  'specularTintMap', // <r134
-  'specularColorMap',
-  'envMap',
-]
+const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'envMap']
 
 const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
 
@@ -421,18 +390,6 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     let { root, key, target } = resolve(object, prop)
 
-    // Alias (output)encoding => (output)colorSpace (since r152)
-    // https://github.com/pmndrs/react-three-fiber/pull/2829
-    if (hasColorSpace(root)) {
-      if (key === 'encoding') {
-        key = 'colorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
-      } else if (key === 'outputEncoding') {
-        key = 'outputColorSpace'
-        value = value === sRGBEncoding ? SRGBColorSpace : LinearSRGBColorSpace
-      }
-    }
-
     // Copy if properties match signatures
     if (typeof target?.copy === 'function' && target.copy === (value as any).copy) {
       target.copy(value)
@@ -448,15 +405,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Set literal types
     else if (target?.set && typeof value !== 'object') {
-      const isColor = target instanceof THREE.Color
+      const isColor = (target as unknown as THREE.Color | undefined)?.isColor
       // Allow setting array scalars
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
-
-      // Emulate THREE.ColorManagement for older three.js versions
-      // https://github.com/pmndrs/react-three-fiber/issues/344
-      if (!getColorManagement() && !rootState?.linear && isColor) target.convertSRGBToLinear()
     }
     // Else, just overwrite the value
     else {
@@ -469,14 +422,13 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         rootState &&
         !rootState.linear &&
         colorMaps.includes(key) &&
-        root[key] instanceof THREE.Texture &&
+        (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
       ) {
         // NOTE: this cannot be set from the renderer (e.g. sRGB source textures rendered to P3)
-        if (hasColorSpace(root[key])) root[key].colorSpace = 'srgb'
-        else root[key].encoding = sRGBEncoding
+        root[key].colorSpace = THREE.SRGBColorSpace
       }
     }
   }
@@ -485,22 +437,23 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
   if (
     instance?.parent &&
     rootState?.internal &&
-    instance.object instanceof THREE.Object3D &&
+    (instance.object as unknown as THREE.Object3D | undefined)?.isObject3D &&
     prevHandlers !== instance.eventCount
   ) {
+    const object = instance.object as unknown as THREE.Object3D
     // Pre-emptively remove the instance from the interaction manager
-    const index = rootState.internal.interaction.indexOf(instance.object)
+    const index = rootState.internal.interaction.indexOf(object)
     if (index > -1) rootState.internal.interaction.splice(index, 1)
     // Add the instance to the interaction manager only when it has handlers
-    if (instance.eventCount && instance.object.raycast !== null && instance.object instanceof THREE.Object3D) {
-      rootState.internal.interaction.push(instance.object)
+    if (instance.eventCount && object.raycast !== null) {
+      rootState.internal.interaction.push(object)
     }
   }
 
   // Auto-attach geometries and materials
   if (instance && instance.props.attach === undefined) {
-    if (instance.object instanceof THREE.BufferGeometry) instance.props.attach = 'geometry'
-    else if (instance.object instanceof THREE.Material) instance.props.attach = 'material'
+    if ((instance.object as unknown as THREE.BufferGeometry).isBufferGeometry) instance.props.attach = 'geometry'
+    else if ((instance.object as unknown as THREE.Material).isMaterial) instance.props.attach = 'material'
   }
 
   // Instance was updated, request a frame

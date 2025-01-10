@@ -36,7 +36,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
   it('can handle useLoader hook', async () => {
     const MockMesh = new THREE.Mesh()
-    class Loader extends THREE.Loader {
+    class Loader extends THREE.Loader<THREE.Mesh, string> {
       load(url: string, onLoad: (mesh: THREE.Mesh) => void): void {
         onLoad(MockMesh)
       }

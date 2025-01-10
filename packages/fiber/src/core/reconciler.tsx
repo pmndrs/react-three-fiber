@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import {
-  NoEventPriority,
+  // NoEventPriority,
   ContinuousEventPriority,
   DiscreteEventPriority,
   DefaultEventPriority,
@@ -29,7 +29,7 @@ type EventPriority = number
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
-const createReconciler = Reconciler as unknown as <
+function createReconciler<
   Type,
   Props,
   Container,
@@ -79,6 +79,7 @@ const createReconciler = Reconciler as unknown as <
     // Undocumented
     // https://github.com/facebook/react/pull/26722
     NotPendingTransition: TransitionStatus | null
+    HostTransitionContext: React.Context<TransitionStatus>
     // https://github.com/facebook/react/pull/28751
     setCurrentUpdatePriority(newPriority: EventPriority): void
     getCurrentUpdatePriority(): EventPriority
@@ -121,11 +122,19 @@ const createReconciler = Reconciler as unknown as <
      */
     waitForCommitToBeReady(): ((initiateCommit: Function) => Function) | null
   },
-) => Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, PublicInstance>
+): Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, PublicInstance> {
+  const reconciler = Reconciler(config as any)
 
-declare module 'react-reconciler/constants' {
-  const NoEventPriority = 0
+  reconciler.injectIntoDevTools({
+    bundleType: typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' ? 1 : 0,
+    rendererPackageName: '@react-three/fiber',
+    version: React.version,
+  })
+
+  return reconciler as any
 }
+
+const NoEventPriority = 0
 
 export interface Root {
   fiber: Reconciler.FiberRoot
@@ -299,6 +308,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
       child.object.parent = parent.object
       parent.object.children.splice(childIndex, 0, child.object)
       child.object.dispatchEvent({ type: 'added' })
+      // @ts-expect-error https://github.com/mrdoob/three.js/pull/16934
       parent.object.dispatchEvent({ type: 'childadded', child: child.object })
     } else {
       parent.object.add(child.object)
@@ -502,7 +512,7 @@ let currentUpdatePriority: number = NoEventPriority
 const NoFlags = 0
 const Update = 4
 
-export const reconciler = createReconciler<
+export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],
   HostConfig['container'],
@@ -615,6 +625,7 @@ export const reconciler = createReconciler<
   suspendInstance() {},
   waitForCommitToBeReady: () => null,
   NotPendingTransition: null,
+  HostTransitionContext: /* @__PURE__ */ React.createContext<HostConfig['TransitionStatus']>(null),
   setCurrentUpdatePriority(newPriority: number) {
     currentUpdatePriority = newPriority
   },

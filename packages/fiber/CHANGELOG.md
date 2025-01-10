@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 8.17.12
+
+### Patch Changes
+
+- ff1a16f1: fix: narrow React peer dep range
+
+## 8.17.11
+
+### Patch Changes
+
+- 7461bf0c: fix: loosen instanceof checks for CSB issue
+
 ## 8.17.10
 
 ### Patch Changes
