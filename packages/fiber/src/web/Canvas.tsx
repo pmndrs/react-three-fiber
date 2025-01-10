@@ -1,8 +1,16 @@
 import * as React from 'react'
 import * as THREE from 'three'
 import { useMeasure, Options as ResizeOptions } from './use-measure'
-import { useContextBridge, FiberProvider } from 'its-fine'
-import { isRef, SetBlock, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect } from '../core/utils'
+import { FiberProvider } from 'its-fine'
+import {
+  isRef,
+  SetBlock,
+  Block,
+  ErrorBoundary,
+  useMutableCallback,
+  useIsomorphicLayoutEffect,
+  useBridge,
+} from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
@@ -11,6 +19,7 @@ export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
     React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode
+  ref?: React.Ref<HTMLCanvasElement>
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
   /**
@@ -19,51 +28,47 @@ export interface CanvasProps
    */
   resize?: ResizeOptions
   /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventSource?: HTMLElement | React.MutableRefObject<HTMLElement>
+  eventSource?: HTMLElement | React.RefObject<HTMLElement>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
-export interface Props extends CanvasProps {}
-
-const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(function Canvas(
-  {
-    children,
-    fallback,
-    resize,
-    style,
-    gl,
-    events = createPointerEvents,
-    eventSource,
-    eventPrefix,
-    shadows,
-    linear,
-    flat,
-    legacy,
-    orthographic,
-    frameloop,
-    dpr,
-    performance,
-    raycaster,
-    camera,
-    scene,
-    onPointerMissed,
-    onCreated,
-    ...props
-  },
-  forwardedRef,
-) {
+function CanvasImpl({
+  ref,
+  children,
+  fallback,
+  resize,
+  style,
+  gl,
+  events = createPointerEvents,
+  eventSource,
+  eventPrefix,
+  shadows,
+  linear,
+  flat,
+  legacy,
+  orthographic,
+  frameloop,
+  dpr,
+  performance,
+  raycaster,
+  camera,
+  scene,
+  onPointerMissed,
+  onCreated,
+  ...props
+}: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
-  React.useMemo(() => extend(THREE), [])
+  React.useMemo(() => extend(THREE as any), [])
 
-  const Bridge = useContextBridge()
+  const Bridge = useBridge()
 
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
-  React.useImperativeHandle(forwardedRef, () => canvasRef.current)
+  React.useImperativeHandle(ref, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
@@ -82,6 +87,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
       if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
       root.current.configure({
         gl,
+        scene,
         events,
         shadows,
         linear,
@@ -93,7 +99,6 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
         performance,
         raycaster,
         camera,
-        scene,
         size: containerRect,
         // Pass mutable reference to onPointerMissed so it's free to update
         onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
@@ -155,16 +160,16 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<HTMLCanvasElement, Props>(func
       </div>
     </div>
   )
-})
+}
 
 /**
  * A DOM canvas which accepts threejs elements as children.
  * @see https://docs.pmnd.rs/react-three-fiber/api/canvas
  */
-export const Canvas = React.forwardRef<HTMLCanvasElement, Props>(function CanvasWrapper(props, ref) {
+export function Canvas(props: CanvasProps) {
   return (
     <FiberProvider>
-      <CanvasImpl {...props} ref={ref} />
+      <CanvasImpl {...props} />
     </FiberProvider>
   )
-})
+}
