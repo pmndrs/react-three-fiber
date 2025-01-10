@@ -33,8 +33,6 @@ export interface CanvasProps
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
 }
 
-export interface Props extends CanvasProps {}
-
 function CanvasImpl({
   ref,
   children,
@@ -59,7 +57,7 @@ function CanvasImpl({
   onPointerMissed,
   onCreated,
   ...props
-}: Props) {
+}: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead

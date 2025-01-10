@@ -27,8 +27,6 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
   ref?: React.Ref<View>
 }
 
-export interface Props extends CanvasProps {}
-
 function CanvasImpl({
   children,
   style,
@@ -48,7 +46,7 @@ function CanvasImpl({
   onCreated,
   ref,
   ...props
-}: Props) {
+}: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
