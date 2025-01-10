@@ -29,7 +29,7 @@ export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size'
 
 export interface Props extends CanvasProps {}
 
-/*#__PURE__*/ function CanvasImpl({
+function CanvasImpl({
   children,
   style,
   gl,

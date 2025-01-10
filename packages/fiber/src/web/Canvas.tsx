@@ -35,7 +35,7 @@ export interface CanvasProps
 
 export interface Props extends CanvasProps {}
 
-/*#__PURE__*/ function CanvasImpl({
+function CanvasImpl({
   ref,
   children,
   fallback,
