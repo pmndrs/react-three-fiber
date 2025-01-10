@@ -417,6 +417,27 @@ describe('applyProps', () => {
 
     expect(target.value).toBe('initial')
   })
+
+  it('should not copy if props are supersets of another', async () => {
+    const copy = jest.fn()
+
+    class Material {
+      copy = copy
+    }
+    class SuperMaterial extends Material {
+      copy = copy
+    }
+
+    const one = new Material()
+    const two = new SuperMaterial()
+
+    const target = { material: one }
+    applyProps(target, { material: two })
+
+    expect(one.copy).not.toHaveBeenCalled()
+    expect(two.copy).not.toHaveBeenCalled()
+    expect(target.material).toBe(two)
+  })
 })
 
 describe('updateCamera', () => {
