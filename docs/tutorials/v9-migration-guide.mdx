@@ -4,14 +4,9 @@ description: Changes and new features with v9 and react 19
 nav: 12
 ---
 
-This release is a compatability release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
+This is a compatability release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
 
 We would like to express our gratitude to the community for their continued support, as well as to all our contributors, including the React team at Meta and Vercel, for ensuring this upgrade went smoothly. 🎉
-
-## Performance
-
-// TODO: JSX, React Compiler (if not explicitly clear), react-native Hermes profile
-// Also, PoC for improvements with OffscreenCanvas support
 
 ## Features
 
@@ -72,7 +67,14 @@ For more details, see https://threejs.org/docs/#manual/en/introduction/Color-man
 Correctness and handling of `Suspense` and fallback content have improved between both React and R3F. Side-effects like `attach` and constructor side-effects (e.g., controls, which may add event listeners) will no longer fire repeatedly without cleanup while a tree is suspending. This required a major rearchitecture over the last 2 years and collaboration upstream to iterate towards a robust solution.
 
 ```jsx
+import { ThreeElement, useThree } from '@react-three/fiber'
 import { OrbitControls } from 'three/addons'
+
+declare module '@react-three/fiber' {
+  interface ThreeElements {
+    OrbitControls: ThreeElement<typeof OrbitControls>
+  }
+}
 
 extend({ OrbitControls })
 
@@ -139,6 +141,8 @@ declare module '@react-three/fiber' {
     customElement: ThreeElement<typeof CustomElement>
   }
 }
+
+extend({ CustomElement })
 ```
 
 ### ThreeElements
@@ -147,6 +151,7 @@ declare module '@react-three/fiber' {
 
 ```diff
 -import { type Node } from '@react-three/fiber'
+-
 -declare global {
 -  namespace JSX {
 -    interface IntrinsicElements {
@@ -154,20 +159,18 @@ declare module '@react-three/fiber' {
 -    }
 -  }
 -}
-
--import { type Node } from '@react-three/fiber'
--declare module '@react-three/fiber' {
--  interface ThreeElements {
--    customElement: Node<CustomElement, typeof CustomElement>
--  }
--}
+-
+-extend({ CustomElement })
 
 +import { type ThreeElement } from '@react-three/fiber'
++
 +declare module '@react-three/fiber' {
 +  interface ThreeElements {
 +    customElement: ThreeElement<typeof CustomElement>
 +  }
 +}
++
++extend({ CustomElement })
 ```
 
 ## Testing
