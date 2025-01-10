@@ -365,6 +365,8 @@ const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'e
 
 const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
 
+type ClassConstructor = { new (): void }
+
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
@@ -391,7 +393,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     let { root, key, target } = resolve(object, prop)
 
     // Copy if properties match signatures
-    if (typeof target?.copy === 'function' && target.copy === (value as any).copy) {
+    if (
+      target?.copy &&
+      (value as ClassConstructor | undefined)?.constructor &&
+      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
+    ) {
       target.copy(value)
     }
     // Layers have no copy function, we must therefore copy the mask property
