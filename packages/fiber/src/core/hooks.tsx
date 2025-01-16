@@ -61,10 +61,12 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-type LoaderInstance<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> =
-  T extends ConstructorRepresentation<THREE.Loader<any>> ? InstanceType<T> : T
+type LoaderLike = THREE.Loader<any, string | string[] | string[][] | Readonly<string | string[] | string[][]>>
 
-export type LoaderResult<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> = Awaited<
+type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =
+  T extends ConstructorRepresentation<LoaderLike> ? InstanceType<T> : T
+
+export type LoaderResult<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = Awaited<
   ReturnType<LoaderInstance<T>['loadAsync']>
 > extends infer R
   ? R extends { scene: THREE.Object3D }
@@ -72,21 +74,23 @@ export type LoaderResult<T extends THREE.Loader<any> | ConstructorRepresentation
     : R
   : never
 
-export type Extensions<T extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>> = (
+export type Extensions<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = (
   loader: LoaderInstance<T>,
 ) => void
 
-const memoizedLoaders = new WeakMap<ConstructorRepresentation<THREE.Loader<any>>, THREE.Loader<any>>()
+const memoizedLoaders = new WeakMap<ConstructorRepresentation<LoaderLike>, LoaderLike>()
 
-const isConstructor = <T,>(value: unknown): value is ConstructorRepresentation<THREE.Loader<T>> =>
+const isConstructor = <T,>(
+  value: unknown,
+): value is ConstructorRepresentation<THREE.Loader<T, string | string[] | string[][]>> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
-function loadingFn<L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>>(
+function loadingFn<L extends LoaderLike | ConstructorRepresentation<THREE.Loader<any>>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
   return function (Proto: L, ...input: string[]) {
-    let loader: THREE.Loader<any>
+    let loader: LoaderLike
 
     // Construct and cache loader if constructor was passed
     if (isConstructor(Proto)) {
@@ -131,7 +135,7 @@ function loadingFn<L extends THREE.Loader<any> | ConstructorRepresentation<THREE
 export function useLoader<
   T,
   U extends string | string[] | string[][],
-  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
 >(loader: L, input: U, extensions?: Extensions<L>, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
@@ -146,7 +150,7 @@ export function useLoader<
 useLoader.preload = function <
   T,
   U extends string | string[] | string[][],
-  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
 >(loader: L, input: U, extensions?: Extensions<L>): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return preload(loadingFn(extensions), [loader, ...keys])
@@ -158,7 +162,7 @@ useLoader.preload = function <
 useLoader.clear = function <
   T,
   U extends string | string[] | string[][],
-  L extends THREE.Loader<any> | ConstructorRepresentation<THREE.Loader<any>>,
+  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
 >(loader: L, input: U): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([loader, ...keys])
