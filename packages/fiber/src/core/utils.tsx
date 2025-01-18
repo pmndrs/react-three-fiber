@@ -397,7 +397,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       target?.copy &&
       (value as ClassConstructor | undefined)?.constructor &&
       (target as ClassConstructor).constructor === (value as ClassConstructor).constructor &&
-      target?.uuid == value?.uuid
+      !target?.uuid
     ) {
       target.copy(value)
     }
