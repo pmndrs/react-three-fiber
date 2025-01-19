@@ -44,14 +44,14 @@ describe('renderer', () => {
   afterEach(async () => act(async () => root.unmount()))
 
   it('should render empty JSX', async () => {
-    const store = await act(async () => root.render(null))
+    const store = await act(async () => (await root.configure()).render(null))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(0)
   })
 
   it('should render native elements', async () => {
-    const store = await act(async () => root.render(<group name="native" />))
+    const store = await act(async () => (await root.configure()).render(<group name="native" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
@@ -60,7 +60,7 @@ describe('renderer', () => {
   })
 
   it('should render extended elements', async () => {
-    const store = await act(async () => root.render(<mock name="mock" />))
+    const store = await act(async () => (await root.configure()).render(<mock name="mock" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
@@ -68,7 +68,7 @@ describe('renderer', () => {
     expect(scene.children[0].name).toBe('mock')
 
     const Component = extend(THREE.Mesh)
-    await act(async () => root.render(<Component />))
+    await act(async () => (await root.configure()).render(<Component />))
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
@@ -77,7 +77,7 @@ describe('renderer', () => {
   it('should render primitives', async () => {
     const object = new THREE.Object3D()
 
-    const store = await act(async () => root.render(<primitive name="primitive" object={object} />))
+    const store = await act(async () => (await root.configure()).render(<primitive name="primitive" object={object} />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
@@ -101,14 +101,14 @@ describe('renderer', () => {
       )
     }
 
-    const store = await act(async () => root.render(<Component show={true} />))
+    const store = await act(async () => (await root.configure()).render(<Component show={true} />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBe(object)
     expect(object.children.length).toBe(2)
 
-    await act(async () => root.render(<Component show={false} />))
+    await act(async () => (await root.configure()).render(<Component show={false} />))
 
     expect(scene.children.length).toBe(0)
     expect(object.children.length).toBe(0)
@@ -134,14 +134,14 @@ describe('renderer', () => {
       )
     }
 
-    const store = await act(async () => root.render(<Component primitiveKey="A" />))
+    const store = await act(async () => (await root.configure()).render(<Component primitiveKey="A" />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBe(object)
     expect(object.children.length).toBe(2)
 
-    await act(async () => root.render(<Component primitiveKey="B" />))
+    await act(async () => (await root.configure()).render(<Component primitiveKey="B" />))
 
     expect(scene.children.length).toBe(1)
     expect(scene.children[0]).toBe(object)
@@ -162,7 +162,7 @@ describe('renderer', () => {
       lifecycle.push('render')
       return <group ref={() => void lifecycle.push('ref')} />
     }
-    await act(async () => root.render(<Test />))
+    await act(async () => (await root.configure()).render(<Test />))
 
     expect(lifecycle).toStrictEqual([
       'render',
@@ -194,7 +194,7 @@ describe('renderer', () => {
       )
     }
 
-    await act(async () => root.render(<RefTest />))
+    await act(async () => (await root.configure()).render(<RefTest />))
 
     expect(immutableRef.current).toBeInstanceOf(THREE.Mesh)
     expect(mutableRef.current).toBeInstanceOf(THREE.Mesh)
@@ -207,7 +207,7 @@ describe('renderer', () => {
         <mesh />
       </group>
     )
-    const store = await act(async () => root.render(<Test />))
+    const store = await act(async () => (await root.configure()).render(<Test />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
@@ -232,7 +232,7 @@ describe('renderer', () => {
         </mesh>
       )
     }
-    const store = await act(async () => root.render(<Test />))
+    const store = await act(async () => (await root.configure()).render(<Test />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(1)
@@ -249,7 +249,7 @@ describe('renderer', () => {
   })
 
   it('should update props reactively', async () => {
-    const store = await act(async () => root.render(<group />))
+    const store = await act(async () => (await root.configure()).render(<group />))
     const { scene } = store.getState()
     const group = scene.children[0] as THREE.Group
 
@@ -257,20 +257,20 @@ describe('renderer', () => {
     expect(group.name).toBe(new THREE.Group().name)
 
     // Set
-    await act(async () => root.render(<group name="one" />))
+    await act(async () => (await root.configure()).render(<group name="one" />))
     expect(group.name).toBe('one')
 
     // Update
-    await act(async () => root.render(<group name="two" />))
+    await act(async () => (await root.configure()).render(<group name="two" />))
     expect(group.name).toBe('two')
 
     // Unset
-    await act(async () => root.render(<group />))
+    await act(async () => (await root.configure()).render(<group />))
     expect(group.name).toBe(new THREE.Group().name)
   })
 
   it('should handle event props reactively', async () => {
-    const store = await act(async () => root.render(<mesh />))
+    const store = await act(async () => (await root.configure()).render(<mesh />))
     const { scene, internal } = store.getState()
     const mesh = scene.children[0] as ComponentMesh
     mesh.name = 'current'
@@ -279,17 +279,17 @@ describe('renderer', () => {
     expect(internal.interaction.length).toBe(0)
 
     // Set
-    await act(async () => root.render(<mesh onClick={() => void 0} />))
+    await act(async () => (await root.configure()).render(<mesh onClick={() => void 0} />))
     expect(internal.interaction.length).toBe(1)
     expect(internal.interaction).toStrictEqual([mesh])
 
     // Update
-    await act(async () => root.render(<mesh onPointerOver={() => void 0} />))
+    await act(async () => (await root.configure()).render(<mesh onPointerOver={() => void 0} />))
     expect(internal.interaction.length).toBe(1)
     expect(internal.interaction).toStrictEqual([mesh])
 
     // Unset
-    await act(async () => root.render(<mesh />))
+    await act(async () => (await root.configure()).render(<mesh />))
     expect(internal.interaction.length).toBe(0)
   })
 
@@ -306,7 +306,7 @@ describe('renderer', () => {
     )
 
     // Initial
-    await act(async () => root.render(<Test />))
+    await act(async () => (await root.configure()).render(<Test />))
     expect(ref.current!.geometry).toBeInstanceOf(THREE.BufferGeometry)
     expect(ref.current!.geometry).not.toBeInstanceOf(THREE.BoxGeometry)
     expect(ref.current!.material).toBeInstanceOf(THREE.Material)
@@ -316,14 +316,14 @@ describe('renderer', () => {
 
     // Throw on non-array value
     await expectToThrow(
-      async () => await act(async () => root.render(<Test args={{} as any} />)),
+      async () => await act(async () => (await root.configure()).render(<Test args={{} as any} />)),
       'R3F: The args prop must be an array!',
     )
 
     // Set
     const geometry1 = new THREE.BoxGeometry()
     const material1 = new THREE.MeshStandardMaterial()
-    await act(async () => root.render(<Test args={[geometry1, material1]} />))
+    await act(async () => (await root.configure()).render(<Test args={[geometry1, material1]} />))
     expect(ref.current!.geometry).toBe(geometry1)
     expect(ref.current!.material).toBe(material1)
     expect(ref.current!.children[0]).toBe(child.current)
@@ -332,14 +332,14 @@ describe('renderer', () => {
     // Update
     const geometry2 = new THREE.BoxGeometry()
     const material2 = new THREE.MeshStandardMaterial()
-    await act(async () => root.render(<Test args={[geometry2, material2]} />))
+    await act(async () => (await root.configure()).render(<Test args={[geometry2, material2]} />))
     expect(ref.current!.geometry).toBe(geometry2)
     expect(ref.current!.material).toBe(material2)
     expect(ref.current!.children[0]).toBe(child.current)
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
 
     // Unset
-    await act(async () => root.render(<Test />))
+    await act(async () => (await root.configure()).render(<Test />))
     expect(ref.current!.geometry).toBeInstanceOf(THREE.BufferGeometry)
     expect(ref.current!.geometry).not.toBeInstanceOf(THREE.BoxGeometry)
     expect(ref.current!.material).toBeInstanceOf(THREE.Material)
@@ -369,25 +369,25 @@ describe('renderer', () => {
     object2.add(child2)
 
     // Initial
-    await act(async () => root.render(<Test object={object1} />))
+    await act(async () => (await root.configure()).render(<Test object={object1} />))
     expect(ref.current).toBe(object1)
     expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
 
     // Throw on undefined
     await expectToThrow(
-      async () => await act(async () => root.render(<Test object={undefined as any} />)),
+      async () => await act(async () => (await root.configure()).render(<Test object={undefined as any} />)),
       "R3F: Primitives without 'object' are invalid!",
     )
 
     // Update
-    await act(async () => root.render(<Test object={object2} />))
+    await act(async () => (await root.configure()).render(<Test object={object2} />))
     expect(ref.current).toBe(object2)
     expect(ref.current!.children).toStrictEqual([child2, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
 
     // Revert
-    await act(async () => root.render(<Test object={object1} />))
+    await act(async () => (await root.configure()).render(<Test object={object1} />))
     expect(ref.current).toBe(object1)
     expect(ref.current!.children).toStrictEqual([child1, child.current])
     expect(ref.current!.userData.attach).toBe(attachedChild.current)
@@ -447,8 +447,8 @@ describe('renderer', () => {
       </mesh>
     )
 
-    const store = await act(async () => root.render(<Test />))
-    await act(async () => root.render(null))
+    const store = await act(async () => (await root.configure()).render(<Test />))
+    await act(async () => (await root.configure()).render(null))
 
     const { scene, internal } = store.getState()
 
@@ -493,17 +493,17 @@ describe('renderer', () => {
     )
 
     const array = [a, b, c, d]
-    const store = await act(async () => root.render(<Test array={array} />))
+    const store = await act(async () => (await root.configure()).render(<Test array={array} />))
     const { scene } = store.getState()
 
     expect(scene.children.map((o) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
-    await act(async () => root.render(<Test array={reversedArray} />))
+    await act(async () => (await root.configure()).render(<Test array={reversedArray} />))
     expect(scene.children.map((o) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
-    await act(async () => root.render(<Test array={mixedArray} />))
+    await act(async () => (await root.configure()).render(<Test array={mixedArray} />))
     expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
@@ -528,33 +528,33 @@ describe('renderer', () => {
       </>
     )
 
-    const store = await act(async () => root.render(<Test array={array} />))
+    const store = await act(async () => (await root.configure()).render(<Test array={array} />))
     const { scene } = store.getState()
 
     expect(scene.children.length).toBe(0)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
-    await act(async () => root.render(<Test array={reversedArray} />))
+    await act(async () => (await root.configure()).render(<Test array={reversedArray} />))
     expect(scene.children.length).toBe(0)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
-    await act(async () => root.render(<Test array={mixedArray} />))
+    await act(async () => (await root.configure()).render(<Test array={mixedArray} />))
     expect(scene.children.length).toBe(0)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
   it('should gracefully handle text', async () => {
     // Mount
-    await act(async () => root.render(<>one</>))
+    await act(async () => (await root.configure()).render(<>one</>))
     // Update
-    await act(async () => root.render(<>two</>))
+    await act(async () => (await root.configure()).render(<>two</>))
     // Unmount
-    await act(async () => root.render(<></>))
+    await act(async () => (await root.configure()).render(<></>))
     // Suspense
     const Test = () => suspend(async () => <>four</>, [])
-    await act(async () => root.render(<Test />))
+    await act(async () => (await root.configure()).render(<Test />))
   })
 
   it('should gracefully interrupt when building up the tree', async () => {
@@ -590,14 +590,14 @@ describe('renderer', () => {
       )
     }
 
-    await act(async () => root.render(<Test />))
+    await act(async () => (await root.configure()).render(<Test />))
 
     // Should complete tree before layout-effects fire
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect'])
     expect(lastAttached).toBe(lastMounted)
     expect(Mock.instances).toStrictEqual(['suspense', 'parent', 'child'])
 
-    await act(async () => root.render(<Test reconstruct />))
+    await act(async () => (await root.configure()).render(<Test reconstruct />))
 
     expect(calls).toStrictEqual(['attach', 'useLayoutEffect', 'detach', 'attach'])
     expect(lastAttached).toBe(lastMounted)
@@ -614,7 +614,9 @@ describe('renderer', () => {
 
     for (let i = 0; i < 3; i++) {
       await act(async () =>
-        root.render(
+        (
+          await root.configure()
+        ).render(
           <React.Suspense fallback={null}>
             <AsyncPrimitive object={i % 2 === 0 ? a : b} />
           </React.Suspense>,
@@ -652,7 +654,9 @@ describe('renderer', () => {
     // Mount unresolved A promise.
     // Fallback should be mounted and nothing else.
     const store = await act(async () =>
-      root.render(
+      (
+        await root.configure()
+      ).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,
@@ -670,7 +674,9 @@ describe('renderer', () => {
     // A should be mounted and visible and fallback should be unmounted.
     await act(async () => resolveA())
     await act(async () =>
-      root.render(
+      (
+        await root.configure()
+      ).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,
@@ -685,7 +691,9 @@ describe('renderer', () => {
     // Mount unresolved B promise.
     // A should remain mounted but be invisible, Fallback is mounted, B is unmounted.
     await act(async () =>
-      root.render(
+      (
+        await root.configure()
+      ).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={bPromise} />
         </React.Suspense>,
@@ -702,7 +710,9 @@ describe('renderer', () => {
     // B should be mounted and visible, fallback should be unmounted, A also unmounted and unhidden.
     await act(async () => resolveB())
     await act(async () =>
-      root.render(
+      (
+        await root.configure()
+      ).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={bPromise} />
         </React.Suspense>,
@@ -718,7 +728,9 @@ describe('renderer', () => {
     // Remount resolved A promise.
     // A should be mounted and visible, B should be unmounted and visible (not hidden), fallback should be unmounted.
     await act(async () =>
-      root.render(
+      (
+        await root.configure()
+      ).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,

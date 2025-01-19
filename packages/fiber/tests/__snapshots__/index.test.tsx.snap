@@ -83,7 +83,6 @@ Array [
   "getRootState",
   "invalidate",
   "reconciler",
-  "render",
   "unmountComponentAtNode",
   "useFrame",
   "useGraph",

@@ -381,13 +381,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set locals
       onCreated = onCreatedCallback
       configured = true
-
       return this
     },
     render(children: React.ReactNode): RootStore {
       // The root has to be configured before it can be rendered
-      if (!configured) this.configure()
-
+      if (!configured) throw "The root has to be configured before it can be rendered, call 'configure' first!"
       reconciler.updateContainer(
         <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
         fiber,
@@ -400,17 +398,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       unmountComponentAtNode(canvas)
     },
   }
-}
-
-export function render<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
-  children: React.ReactNode,
-  canvas: TCanvas,
-  config: RenderProps<TCanvas>,
-): RootStore {
-  console.warn('R3F.render is no longer supported in React 18. Use createRoot instead!')
-  const root = createRoot(canvas)
-  root.configure(config)
-  return root.render(children)
 }
 
 interface ProviderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {

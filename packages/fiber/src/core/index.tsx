@@ -23,7 +23,7 @@ export type {
 } from './reconciler'
 export { extend, reconciler } from './reconciler'
 export type { ReconcilerRoot, GLProps, CameraProps, RenderProps, InjectState } from './renderer'
-export { _roots, render, createRoot, unmountComponentAtNode, createPortal } from './renderer'
+export { _roots, createRoot, unmountComponentAtNode, createPortal } from './renderer'
 export type {
   Subscription,
   Dpr,
