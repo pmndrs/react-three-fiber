@@ -146,6 +146,7 @@ export const is = {
   num: (a: any): a is number => typeof a === 'number',
   boo: (a: any): a is boolean => typeof a === 'boolean',
   und: (a: any) => a === void 0,
+  nul: (a: any) => a === null,
   arr: (a: any) => Array.isArray(a),
   equ(a: any, b: any, { arrays = 'shallow', objects = 'reference', strict = true }: EquConfig = {}) {
     // Wrong type or one of the two undefined, doesn't match
@@ -311,6 +312,19 @@ export const RESERVED_PROPS = [
 
 const MEMOIZED_PROTOTYPES = new Map()
 
+function getMemoizedPrototype(root: any) {
+  let ctor = MEMOIZED_PROTOTYPES.get(root.constructor)
+  try {
+    if (!ctor) {
+      ctor = new root.constructor()
+      MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
+    }
+  } catch (e) {
+    // ...
+  }
+  return ctor
+}
+
 // This function prepares a set of changes to be applied to the instance
 export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>['props']): Instance<T>['props'] {
   const changedProps: Instance<T>['props'] = {}
@@ -344,12 +358,8 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
     // For removed props, try to set default values, if possible
     if (root.constructor && root.constructor.length === 0) {
       // create a blank slate of the instance and copy the particular parameter.
-      let ctor = MEMOIZED_PROTOTYPES.get(root.constructor)
-      if (!ctor) {
-        ctor = new root.constructor()
-        MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
-      }
-      changedProps[key] = ctor[key]
+      const ctor = getMemoizedPrototype(root)
+      if (!is.und(ctor)) changedProps[key] = ctor[key]
     } else {
       // instance does not have constructor, just set it to 0
       changedProps[key] = 0
@@ -398,7 +408,13 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       (value as ClassConstructor | undefined)?.constructor &&
       (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
     ) {
-      target.copy(value)
+      // fetch the default state of the target
+      const ctor = getMemoizedPrototype(root)
+      // The target key was originally null or undefined, which indicates that the object which
+      // is now present was externally set by the user, we should therefore assign the value directly
+      if (!is.und(ctor) && (is.und(ctor[key]) || is.nul(ctor[key]))) root[key] = value
+      // Otherwise copy is correct
+      else target.copy(value)
     }
     // Layers have no copy function, we must therefore copy the mask property
     else if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
