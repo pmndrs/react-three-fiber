@@ -45,6 +45,7 @@ const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 export type GLProps =
   | Renderer
   | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Renderer)
+  | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Promise<Renderer>)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
 export type CameraProps = (

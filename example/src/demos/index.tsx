@@ -1,6 +1,5 @@
 import { lazy } from 'react'
 
-const Animation = { Component: lazy(() => import('./Animation')) }
 const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
 const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
@@ -25,9 +24,9 @@ const Viewcube = { Component: lazy(() => import('./Viewcube')) }
 const Portals = { Component: lazy(() => import('./Portals')) }
 const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
+const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 
 export {
-  Animation,
   AutoDispose,
   ClickAndHover,
   ContextMenuOverride,
@@ -52,4 +51,5 @@ export {
   Portals,
   ViewTracking,
   ChangeTexture,
+  WebGPU,
 }

@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
 import { ThreeElement, extend, Canvas, useThree, ThreeEvent } from '@react-three/fiber'
 import { OrbitControls } from 'three-stdlib'
@@ -13,14 +14,14 @@ extend({ OrbitControls })
 function useHover(stopPropagation = true) {
   const [hovered, setHover] = useState(false)
   const hover = useCallback(
-    (e) => {
+    (e: any) => {
       if (stopPropagation) e.stopPropagation()
       setHover(true)
     },
     [stopPropagation],
   )
   const unhover = useCallback(
-    (e) => {
+    (e: any) => {
       if (stopPropagation) e.stopPropagation()
       setHover(false)
     },
@@ -67,7 +68,7 @@ function EndPoint({ position, onDrag, onEnd }: any) {
   let [bindHover, hovered] = useHover(false)
   let bindDrag = useDrag(onDrag, onEnd)
   return (
-    <mesh position={position} {...bindDrag} {...bindHover}>
+    <mesh position={position} {...bindDrag} {...(bindHover as any)}>
       <sphereGeometry args={[7.5, 16, 16]} />
       <meshBasicMaterial color={hovered ? 'hotpink' : [0.1, 0.2, 0.9]} />
     </mesh>
@@ -108,7 +109,9 @@ function Controls({ children }: any) {
     const current = ref.current
     const onChange = () => invalidate()
 
+    // @ts-expect-error
     current.addEventListener('change', onChange)
+    // @ts-expect-error
     return () => current.removeEventListener('change', onChange)
   }, [invalidate])
 
@@ -125,7 +128,7 @@ export default function App() {
     <Canvas
       frameloop="demand"
       orthographic
-      raycaster={{ params: { Line: { threshold: 5 } } }}
+      raycaster={{ params: { Line: { threshold: 5 } } as any }}
       camera={{ position: [0, 0, 500], zoom: 1 }}>
       <Controls>
         <Line defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
