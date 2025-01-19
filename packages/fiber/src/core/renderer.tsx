@@ -107,13 +107,12 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
+async function createRendererInstance<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   gl: GLProps | undefined,
   canvas: TCanvas,
-): THREE.WebGLRenderer => {
-  const customRenderer = (typeof gl === 'function' ? gl(canvas) : gl) as THREE.WebGLRenderer
+): Promise<THREE.WebGLRenderer> {
+  const customRenderer = (typeof gl === 'function' ? await gl(canvas) : gl) as THREE.WebGLRenderer
   if (isRenderer(customRenderer)) return customRenderer
-
   return new THREE.WebGLRenderer({
     powerPreference: 'high-performance',
     canvas: canvas as HTMLCanvasElement,
@@ -124,7 +123,7 @@ const createRendererInstance = <TCanvas extends HTMLCanvasElement | OffscreenCan
 }
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  configure: (config?: RenderProps<TCanvas>) => ReconcilerRoot<TCanvas>
+  configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
   render: (element: React.ReactNode) => RootStore
   unmount: () => void
 }
@@ -196,7 +195,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   let lastCamera: RenderProps<TCanvas>['camera']
 
   return {
-    configure(props: RenderProps<TCanvas> = {}): ReconcilerRoot<TCanvas> {
+    async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
       let {
         gl: glConfig,
         size: propsSize,
@@ -220,7 +219,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       // Set up renderer (one time only!)
       let gl = state.gl
-      if (!state.gl) state.set({ gl: (gl = createRendererInstance(glConfig, canvas)) })
+      if (!state.gl) state.set({ gl: (gl = await createRendererInstance(glConfig, canvas)) })
 
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
@@ -551,6 +550,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
   }, [previousRoot, container])
 
   return (
+    // @ts-ignore, reconciler types are not maintained
     <>
       {reconciler.createPortal(
         <context.Provider value={usePortalStore}>{children}</context.Provider>,
