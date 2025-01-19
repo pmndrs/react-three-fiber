@@ -383,6 +383,39 @@ describe('applyProps', () => {
     expect(copyMock).toHaveBeenCalledTimes(1)
   })
 
+  it('should prefer to assign if origin null', async () => {
+    const copyMock = jest.fn()
+
+    class MockedTexture extends THREE.Texture {
+      override copy(other: MockedTexture) {
+        copyMock()
+        return super.copy(other)
+      }
+    }
+
+    class MockedClass {
+      map1 = null
+      map2 = new MockedTexture()
+    }
+
+    const target = new MockedClass()
+
+    // Original null, should assign
+    applyProps(target, { map1: new MockedTexture() })
+    expect(target.map1).toBeInstanceOf(MockedTexture)
+    expect(copyMock).toHaveBeenCalledTimes(0)
+
+    // Set again, original null, should assign
+    applyProps(target, { map1: new MockedTexture() })
+    expect(target.map1).toBeInstanceOf(MockedTexture)
+    expect(copyMock).toHaveBeenCalledTimes(0)
+
+    // Original not null, should copy
+    applyProps(target, { map2: new MockedTexture() })
+    expect(target.map2).toBeInstanceOf(MockedTexture)
+    expect(copyMock).toHaveBeenCalledTimes(1)
+  })
+
   it('should prefer to set when props are an array', async () => {
     const target = new THREE.Object3D()
     applyProps(target, { position: [1, 2, 3] })
