@@ -78,7 +78,7 @@ describe('hooks', () => {
       )
     }
 
-    const store = await act(async () => root.configure({ frameloop: 'never' }).render(<Component />))
+    const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<Component />))
     const { scene } = store.getState()
 
     advance(Date.now())

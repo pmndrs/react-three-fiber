@@ -43,7 +43,7 @@ describe('createRoot', () => {
 
   it('will make an Orthographic Camera & set the position', async () => {
     const store = await act(async () =>
-      root.configure({ orthographic: true, camera: { position: [0, 0, 5] } }).render(<group />),
+      (await root.configure({ orthographic: true, camera: { position: [0, 0, 5] } })).render(<group />),
     )
     const { camera } = store.getState()
 
@@ -55,7 +55,7 @@ describe('createRoot', () => {
   it('should handle an performance changing functions', async () => {
     let store: RootStore = null!
     await act(async () => {
-      store = root.configure({ dpr: [1, 2], performance: { min: 0.2 } }).render(<group />)
+      store = (await root.configure({ dpr: [1, 2], performance: { min: 0.2 } })).render(<group />)
     })
 
     expect(store.getState().viewport.initialDpr).toEqual(window.devicePixelRatio)
@@ -88,7 +88,7 @@ describe('createRoot', () => {
 
   it('should handle the DPR prop reactively', async () => {
     // Initial clamp
-    const store = await act(async () => root.configure({ dpr: [1, 2] }).render(<group />))
+    const store = await act(async () => (await root.configure({ dpr: [1, 2] })).render(<group />))
     expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
 
     // Reactive update
@@ -101,14 +101,14 @@ describe('createRoot', () => {
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
-    const store = await act(async () => root.configure({ shadows: true }).render(<group />))
+    const store = await act(async () => (await root.configure({ shadows: true })).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace if linear is false', async () => {
-    const store = await act(async () => root.configure({ linear: false }).render(<group />))
+    const store = await act(async () => (await root.configure({ linear: false })).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -119,7 +119,7 @@ describe('createRoot', () => {
     let state: RootState = null!
 
     await act(async () => {
-      state = root.render(<group />).getState()
+      state = (await root.configure({})).render(<group />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
@@ -140,10 +140,7 @@ describe('createRoot', () => {
     const Test = () => useFrame(() => (respected = false))
 
     await act(async () => {
-      const state = root
-        .configure({ frameloop: 'never' })
-        .render(<Test />)
-        .getState()
+      const state = (await root.configure({ frameloop: 'never' })).render(<Test />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
@@ -152,7 +149,9 @@ describe('createRoot', () => {
   })
 
   it('should set renderer props via gl prop', async () => {
-    const store = await act(async () => root.configure({ gl: { logarithmicDepthBuffer: true } }).render(<group />))
+    const store = await act(async () =>
+      (await root.configure({ gl: { logarithmicDepthBuffer: true } })).render(<group />),
+    )
     const { gl } = store.getState()
 
     expect(gl.capabilities.logarithmicDepthBuffer).toBe(true)
@@ -162,10 +161,7 @@ describe('createRoot', () => {
     let scene: THREE.Scene = null!
 
     await act(async () => {
-      scene = root
-        .configure({ scene: { name: 'test' } })
-        .render(<group />)
-        .getState().scene
+      scene = (await root.configure({ scene: { name: 'test' } })).render(<group />).getState().scene
     })
 
     expect(scene.name).toBe('test')
@@ -177,10 +173,7 @@ describe('createRoot', () => {
     const prop = new THREE.Scene()
 
     await act(async () => {
-      scene = root
-        .configure({ scene: prop })
-        .render(<group />)
-        .getState().scene
+      scene = (await root.configure({ scene: prop })).render(<group />).getState().scene
     })
 
     expect(prop).toBe(scene)
@@ -191,10 +184,7 @@ describe('createRoot', () => {
 
     let gl: Renderer = null!
     await act(async () => {
-      gl = root
-        .configure({ gl: (canvas) => new Renderer({ canvas }) })
-        .render(<group />)
-        .getState().gl
+      gl = (await root.configure({ gl: (canvas) => new Renderer({ canvas }) })).render(<group />).getState().gl
     })
 
     expect(gl instanceof Renderer).toBe(true)
@@ -211,19 +201,11 @@ describe('createRoot', () => {
       return <meshBasicMaterial key={key++} map={texture} />
     }
 
-    await act(async () =>
-      createRoot()
-        .configure({ linear: true })
-        .render(<Test />),
-    )
+    await act(async () => (await createRoot().configure({ linear: true })).render(<Test />))
     expect(gl.outputColorSpace).toBe(THREE.LinearSRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.NoColorSpace)
 
-    await act(async () =>
-      createRoot()
-        .configure({ linear: false })
-        .render(<Test />),
-    )
+    await act(async () => (await createRoot().configure({ linear: false })).render(<Test />))
     expect(gl.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.SRGBColorSpace)
   })
@@ -232,12 +214,12 @@ describe('createRoot', () => {
     THREE.ColorManagement.enabled = true
 
     await act(async () => {
-      root.configure({ legacy: true }).render(<group />)
+      ;(await root.configure({ legacy: true })).render(<group />)
     })
     expect(THREE.ColorManagement.enabled).toBe(false)
 
     await act(async () => {
-      root.configure({ legacy: false }).render(<group />)
+      ;(await root.configure({ legacy: false })).render(<group />)
     })
     expect(THREE.ColorManagement.enabled).toBe(true)
   })

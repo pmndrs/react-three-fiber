@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl'
 import { FiberProvider } from 'its-fine'
-import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge } from '../core/utils'
+import { SetBlock, Block, ErrorBoundary, useMutableCallback, useBridge, useIsomorphicLayoutEffect } from '../core/utils'
 import { extend, createRoot, unmountComponentAtNode, RenderProps, ReconcilerRoot } from '../core'
 import { createPointerEvents } from '../web/events'
 import { RootState, Size } from '../core/store'
@@ -170,47 +170,52 @@ function CanvasImpl({
     setBind(responder.panHandlers)
   }, [])
 
-  if (root.current && width > 0 && height > 0) {
-    root.current.configure({
-      gl,
-      events,
-      shadows,
-      linear,
-      flat,
-      legacy,
-      orthographic,
-      frameloop,
-      performance,
-      raycaster,
-      camera,
-      scene,
-      // expo-gl can only render at native dpr/resolution
-      // https://github.com/expo/expo-three/issues/39
-      dpr: PixelRatio.get(),
-      size: { width, height, top, left },
-      // Pass mutable reference to onPointerMissed so it's free to update
-      onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
-      // Overwrite onCreated to apply RN bindings
-      onCreated: (state: RootState) => {
-        // Bind render to RN bridge
-        const context = state.gl.getContext() as ExpoWebGLRenderingContext
-        const renderFrame = state.gl.render.bind(state.gl)
-        state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
-          renderFrame(scene, camera)
-          context.endFrameEXP()
-        }
+  useIsomorphicLayoutEffect(() => {
+    if (root.current && width > 0 && height > 0) {
+      async function run() {
+        await root.current.configure({
+          gl,
+          events,
+          shadows,
+          linear,
+          flat,
+          legacy,
+          orthographic,
+          frameloop,
+          performance,
+          raycaster,
+          camera,
+          scene,
+          // expo-gl can only render at native dpr/resolution
+          // https://github.com/expo/expo-three/issues/39
+          dpr: PixelRatio.get(),
+          size: { width, height, top, left },
+          // Pass mutable reference to onPointerMissed so it's free to update
+          onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+          // Overwrite onCreated to apply RN bindings
+          onCreated: (state: RootState) => {
+            // Bind render to RN bridge
+            const context = state.gl.getContext() as ExpoWebGLRenderingContext
+            const renderFrame = state.gl.render.bind(state.gl)
+            state.gl.render = (scene: THREE.Scene, camera: THREE.Camera) => {
+              renderFrame(scene, camera)
+              context.endFrameEXP()
+            }
 
-        return onCreated?.(state)
-      },
-    })
-    root.current.render(
-      <Bridge>
-        <ErrorBoundary set={setError}>
-          <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
-        </ErrorBoundary>
-      </Bridge>,
-    )
-  }
+            return onCreated?.(state)
+          },
+        })
+        root.current.render(
+          <Bridge>
+            <ErrorBoundary set={setError}>
+              <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+            </ErrorBoundary>
+          </Bridge>,
+        )
+      }
+      run()
+    }
+  })
 
   React.useEffect(() => {
     if (canvas) {

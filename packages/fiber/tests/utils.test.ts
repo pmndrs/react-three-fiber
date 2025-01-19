@@ -358,9 +358,12 @@ describe('applyProps', () => {
       }
     }
 
-    const color = new MockedColor()
+    class MockedClass {
+      color = new MockedColor()
+      layer = new THREE.Layers()
+    }
 
-    const target = { color, layer: new THREE.Layers() }
+    const target = new MockedClass()
 
     // Same constructor, copy
     applyProps(target, { color: new MockedColor() })
