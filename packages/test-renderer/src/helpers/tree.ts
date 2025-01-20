@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import type { Instance } from '@react-three/fiber'
 import type { TreeNode, Tree } from '../types/public'
 import { lowerCaseFirstLetter } from './strings'

@@ -184,7 +184,7 @@ describe('createRoot', () => {
 
     let gl: Renderer = null!
     await act(async () => {
-      gl = (await root.configure({ gl: (canvas) => new Renderer({ canvas }) })).render(<group />).getState().gl
+      gl = (await root.configure({ gl: (props) => new Renderer(props) })).render(<group />).getState().gl
     })
 
     expect(gl instanceof Renderer).toBe(true)
