@@ -1,17 +1,26 @@
 import { useState, useMemo } from 'react'
-// @ts-ignore
 import * as THREE from 'three/webgpu'
-// @ts-ignore
 import { mix, positionLocal, sin, time, vec3, uniform, color } from 'three/tsl'
-import { Canvas, extend, useFrame } from '@react-three/fiber'
+import { ThreeElement, Canvas, extend, useFrame, ConstructorRepresentation } from '@react-three/fiber'
 import { easing } from 'maath'
+
+type ThreeExports = typeof THREE
+type ThreeElementsImpl = {
+  [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
+    ? ThreeElement<ThreeExports[K]>
+    : never
+}
+
+declare module '@react-three/fiber' {
+  interface ThreeElements extends ThreeElementsImpl {}
+}
 
 export default function App() {
   return (
     <Canvas
       gl={(props) => {
-        extend(THREE)
-        const renderer = new THREE.WebGPURenderer(props)
+        extend(THREE as any)
+        const renderer = new THREE.WebGPURenderer(props as any)
         return renderer.init().then(() => renderer)
       }}>
       <ambientLight intensity={Math.PI} />
