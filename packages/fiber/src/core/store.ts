@@ -318,7 +318,7 @@ export const createStore = (
       oldDpr = viewport.dpr
       // Update camera & renderer
       updateCamera(camera, size)
-      gl.setPixelRatio(viewport.dpr)
+      if (viewport.dpr > 0) gl.setPixelRatio(viewport.dpr)
 
       const updateStyle = typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement
       gl.setSize(size.width, size.height, updateStyle)

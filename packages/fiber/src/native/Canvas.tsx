@@ -205,7 +205,7 @@ function CanvasImpl({
             return onCreated?.(state)
           },
         })
-        await root.current.render(
+        root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
               <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>

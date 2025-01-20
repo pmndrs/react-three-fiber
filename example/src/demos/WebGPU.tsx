@@ -1,34 +1,48 @@
+import { useState, useMemo } from 'react'
+// @ts-ignore
 import * as THREE from 'three/webgpu'
-import { mix, positionLocal, sin, time, vec3 } from 'three/tsl'
-import { Canvas, extend } from '@react-three/fiber'
-import { PerspectiveCamera } from '@react-three/drei'
-
-const red = vec3(1, 0, 0)
-const blue = vec3(0, 0, 1)
-const currentTime = time.mul(0.5)
-const colorNode = mix(red, blue, sin(currentTime))
-const positionNode = positionLocal.add(vec3(0, sin(currentTime).mul(0.2), 0))
+// @ts-ignore
+import { mix, positionLocal, sin, time, vec3, uniform, color } from 'three/tsl'
+import { Canvas, extend, useFrame } from '@react-three/fiber'
+import { easing } from 'maath'
 
 export default function App() {
   return (
     <Canvas
-      gl={async (canvas) => {
+      gl={(props) => {
         extend(THREE)
-        const renderer = new THREE.WebGPURenderer({
-          canvas,
-          powerPreference: 'high-performance',
-          antialias: true,
-          alpha: true,
-        })
-        await renderer.init()
-        return renderer
+        const renderer = new THREE.WebGPURenderer(props)
+        return renderer.init().then(() => renderer)
       }}>
-      <PerspectiveCamera makeDefault position={[2, 0, 10]} />
       <ambientLight intensity={Math.PI} />
-      <mesh scale={5}>
-        <planeGeometry />
-        <meshBasicNodeMaterial colorNode={colorNode} positionNode={positionNode} />
-      </mesh>
+      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
+      <Plane scale={1.5} position={[-1.3, 0, 0]} />
+      <Plane scale={1.5} position={[0.6, 0, 2]} />
     </Canvas>
+  )
+}
+
+function Plane(props: any) {
+  const [hovered, hover] = useState(false)
+  const { key, uHovered, colorNode, positionNode } = useMemo(() => {
+    const uHovered = uniform(0.0)
+    const col1 = color('orange')
+    const col2 = color('hotpink')
+    const col3 = color('aquamarine')
+    const currentTime = time.mul(2)
+    const colorNode = mix(mix(col1, col2, sin(currentTime).add(1).div(2)), col3, uHovered)
+    const positionNode = positionLocal.add(vec3(0, sin(currentTime).mul(0.05), 0))
+    return { key: uHovered.uuid, uHovered, colorNode, positionNode }
+  }, [])
+
+  useFrame((state, delta) => {
+    easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
+  })
+
+  return (
+    <mesh onPointerOver={() => hover(true)} onPointerOut={() => hover(false)} {...props}>
+      <planeGeometry />
+      <meshBasicNodeMaterial key={key} colorNode={colorNode} positionNode={positionNode} />
+    </mesh>
   )
 }

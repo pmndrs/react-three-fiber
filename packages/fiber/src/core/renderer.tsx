@@ -42,10 +42,14 @@ export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
+export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
+  canvas: HTMLCanvasElement | OffscreenCanvas
+}
+
 export type GLProps =
   | Renderer
-  | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Renderer)
-  | ((canvas: HTMLCanvasElement | OffscreenCanvas) => Promise<Renderer>)
+  | ((defaultProps: DefaultGLProps) => Renderer)
+  | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
 export type CameraProps = (
@@ -112,13 +116,16 @@ async function createRendererInstance<TCanvas extends HTMLCanvasElement | Offscr
   gl: GLProps | undefined,
   canvas: TCanvas,
 ): Promise<THREE.WebGLRenderer> {
-  const customRenderer = (typeof gl === 'function' ? await gl(canvas) : gl) as THREE.WebGLRenderer
-  if (isRenderer(customRenderer)) return customRenderer
-  return new THREE.WebGLRenderer({
-    powerPreference: 'high-performance',
+  const defaultProps: DefaultGLProps = {
     canvas: canvas as HTMLCanvasElement,
+    powerPreference: 'high-performance',
     antialias: true,
     alpha: true,
+  }
+  const customRenderer = (typeof gl === 'function' ? await gl(defaultProps) : gl) as THREE.WebGLRenderer
+  if (isRenderer(customRenderer)) return customRenderer
+  return new THREE.WebGLRenderer({
+    ...defaultProps,
     ...gl,
   })
 }
@@ -286,6 +293,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         state.set({ scene })
       }
 
+      // Store events internally
+      if (events && !state.events.handlers) state.set({ events: events(store) })
+      // Check size, allow it to take on container bounds initially
+      const size = computeInitialSize(canvas, propsSize)
+      if (!is.equ(size, state.size, shallowLoose)) {
+        state.setSize(size.width, size.height, size.top, size.left)
+      }
+      // Check pixelratio
+      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
+      // Check frameloop
+      if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
+      // Check pointer missed
+      if (!state.onPointerMissed) state.set({ onPointerMissed })
+      // Check performance
+      if (performance && !is.equ(performance, state.performance, shallowLoose))
+        state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
@@ -362,22 +386,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
         applyProps(gl, glConfig as any)
-      // Store events internally
-      if (events && !state.events.handlers) state.set({ events: events(store) })
-      // Check size, allow it to take on container bounds initially
-      const size = computeInitialSize(canvas, propsSize)
-      if (!is.equ(size, state.size, shallowLoose)) {
-        state.setSize(size.width, size.height, size.top, size.left)
-      }
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
-      // Check frameloop
-      if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
-      // Check pointer missed
-      if (!state.onPointerMissed) state.set({ onPointerMissed })
-      // Check performance
-      if (performance && !is.equ(performance, state.performance, shallowLoose))
-        state.set((state) => ({ performance: { ...state.performance, ...performance } }))
 
       // Set locals
       onCreated = onCreatedCallback
