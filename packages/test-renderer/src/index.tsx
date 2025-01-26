@@ -19,7 +19,8 @@ extend(THREE as any)
 const create = async (element: React.ReactNode, options?: Partial<CreateOptions>): Promise<Renderer> => {
   const canvas = createCanvas(options)
 
-  const _root = await createRoot(canvas).configure({
+  const _root = createRoot(canvas)
+  await _root.configure({
     frameloop: 'never',
     // TODO: remove and use default behavior
     size: {
@@ -31,6 +32,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     ...options,
     events: undefined,
   })
+
   const _store = mockRoots.get(canvas)!.store
 
   await act(async () => _root.render(element))
