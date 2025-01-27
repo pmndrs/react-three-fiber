@@ -115,7 +115,10 @@ function CanvasImpl({
                 compute: (event, state) => {
                   const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
                   const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
-                  state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+                  state.pointer.set(
+                    ((x - state.size.left) / state.size.width) * 2 - 1,
+                    -((y - state.size.top) / state.size.height) * 2 + 1,
+                  )
                   state.raycaster.setFromCamera(state.pointer, state.camera)
                 },
               })
