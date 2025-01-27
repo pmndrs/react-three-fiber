@@ -1,7 +1,7 @@
 ---
 title: 'v9 Migration Guide'
-description: Changes and new features with v9 and react 19
-nav: 12
+description: Changes and new features with v9 and React 19
+nav: 13
 ---
 
 This is a compatability release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
@@ -20,6 +20,7 @@ import { useLoader } from '@react-three/fiber'
 
 function Model() {
   const gltf = useLoader(GLTFLoader, '/path/to/model.glb')
+  // ...
 }
 
 // or,
@@ -27,6 +28,7 @@ function Model() {
 const loader = new GLTFLoader()
 function Model() {
   const gltf = useLoader(loader, '/path/to/model.glb')
+  // ...
 }
 ```
 
@@ -54,17 +56,40 @@ const Controls = extend(OrbitControls)
 <Controls args={[camera, gl.domElement]} />
 ```
 
+## WebGPU
+
+Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
+
+```jsx
+import * as THREE from 'three/webgpu'
+import * as TSL from 'three/tsl'
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+
+export default () => (
+  <Canvas
+    gl={(props) => {
+      extend(THREE)
+      const renderer = new THREE.WebGPURenderer(props)
+      return renderer.init().then(() => renderer)
+    }}>
+      <mesh>
+        <meshBasicNodeMaterial />
+        <boxGeometry />
+      </mesh>
+  </Canvas>
+```
+
 ## Fixes
 
 ### Color Management of Textures
 
-Automatic sRGB conversion of texture props is removed, and color textures are handled automatically for known built-in materials. This aligns with vanilla three behavior and fixes hard-to-debug errors where data textures like normals or displacement are corrupted or made non-linear (math and interpolation must be done linearly). For custom materials or shaders, make sure to annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace` or `texture-colorSpace={THREE.SRGBColorSpace}` with JSX.
+Automatic sRGB conversion of texture props has been removed. Color textures are now handled automatically for built-in materials, aligning with vanilla Three.js behavior. This prevents issues where data textures (e.g., normals or displacement) become corrupted or non-linear. For custom materials or shaders, annotate color textures with texture.colorSpace = THREE.SRGBColorSpace or texture-colorSpace={THREE.SRGBColorSpace} in JSX.
 
 For more details, see https://threejs.org/docs/#manual/en/introduction/Color-management.
 
 ### Suspense and Side-Effects
 
-Correctness and handling of `Suspense` and fallback content have improved between both React and R3F. Side-effects like `attach` and constructor side-effects (e.g., controls, which may add event listeners) will no longer fire repeatedly without cleanup while a tree is suspending. This required a major rearchitecture over the last 2 years and collaboration upstream to iterate towards a robust solution.
+The handling of Suspense and fallback content has improved in React and R3F. Side-effects like attach and constructor effects (e.g., controls adding event listeners) no longer fire repeatedly without proper cleanup during suspension.
 
 ```jsx
 import { ThreeElement, useThree } from '@react-three/fiber'
@@ -94,15 +119,9 @@ function Controls() {
 
 ### Swapping with args and primitives
 
-Internal handling of swapping elements when changing the `args` or primitive `object` prop has improved for structured children like an array or iterator (yes, React supports iterators and async iterators). Previously, primitives who shared an `object` could be updated out-of-order or removed from the scene along with their children.
+Swapping elements when changing the `args` or primitive `object` prop has been improved for structured children like arrays or iterators (React supports both, including async iterators). Previously, primitives sharing an object could update out of order or be removed from the scene along with their children.
 
-```jsx
-// ✅ Mounts a,b,c,d
-[a, b, c, d].map((object, i) => <primitive key={i} object={object}>)
-
-// ❌ Updates undefined,undefined,c,d
-[d, c, b, a].map((object, i) => <primitive key={i} object={object}>)
-```
+See: https://github.com/pmndrs/react-three-fiber/pull/3272
 
 ## TypeScript Changes
 

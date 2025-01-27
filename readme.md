@@ -1,9 +1,3 @@
-> [!WARNING]  
-> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
-
-> [!NOTE]  
-> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
-
 <h1>@react-three/fiber</h1>
 
 [![Version](https://img.shields.io/npm/v/@react-three/fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
@@ -23,15 +17,6 @@ Build your scene declaratively with re-usable, self-contained components that re
 ```bash
 npm install three @types/three @react-three/fiber
 ```
-
----
-
-<div align="center">
-<a href="https://triplex.dev"><img height="150" src="docs/triplex-app.png" /></a>
-
-<div align="center"><a href="https://triplex.dev">Finding it difficult building exclusively in code?<br/><strong>Triplex</strong> is a visual editor where <i>your code</i> is the source of truth</a>.</div>
-
-</div>
 
 ---
 
