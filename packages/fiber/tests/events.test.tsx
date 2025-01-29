@@ -392,4 +392,26 @@ describe('events', () => {
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
     })
   })
+
+  it('can handle primitives', async () => {
+    const handlePointerDown = jest.fn()
+
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial())
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <primitive name="test" object={mesh} onPointerDown={handlePointerDown} />
+        </Canvas>,
+      )
+    })
+
+    const evt = new PointerEvent('pointerdown')
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+
+    fireEvent(getContainer(), evt)
+
+    expect(handlePointerDown).toHaveBeenCalled()
+  })
 })
