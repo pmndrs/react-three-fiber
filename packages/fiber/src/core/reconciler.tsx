@@ -294,10 +294,10 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
     // Create object
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
     child.object.__r3f = child
-
-    // Set initial props
-    applyProps(child.object, child.props)
   }
+
+  // Set initial props
+  applyProps(child.object, child.props)
 
   // Append instance
   if (child.props.attach) {
