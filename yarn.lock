@@ -8906,10 +8906,10 @@ react-test-renderer@^18.0.0:
     react-shallow-renderer "^16.13.1"
     scheduler "^0.21.0"
 
-react-use-measure@^2.1.5:
-  version "2.1.5"
-  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.1.5.tgz#fe81eb66e0c3bcfef5ea170cf3d52144b12f48dc"
-  integrity sha512-o/OJti/d964e4l/wpFTO7lcFVvnt79XAEsuglEd+OsdiE3DKfYLzV/txC/mm8KyX6Ec24w/3Lzx3mHRcWGWTaQ==
+react-use-measure@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/react-use-measure/-/react-use-measure-2.1.6.tgz#d0dc826b2020361da8323adcd39f72a8191f7a19"
+  integrity sha512-IobUVRLFrtrpUX2RMDrdAfRTaEftVRXFlTEuTdJFgtrnbxAMhueimO7nFix4/X40KI8LnJFV7LHxPnMi9Tc1Cw==
 
 react-use-refs@^1.0.1:
   version "1.0.1"
