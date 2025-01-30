@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.13
+
+### Patch Changes
+
+- 0a0f2acd: fix: upstream use-measure
+
 ## 8.17.12
 
 ### Patch Changes
