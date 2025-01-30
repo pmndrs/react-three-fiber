@@ -9,7 +9,7 @@ import {
   events,
   ReconcilerRoot,
 } from '@react-three/fiber'
-import { useMeasure, Options as ResizeOptions } from '../../../packages/fiber/src/web/use-measure'
+import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
 import { SVGRenderer } from 'three-stdlib'
 
 function TorusKnot() {
