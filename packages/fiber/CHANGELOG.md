@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.17.14
+
+### Patch Changes
+
+- eeeed16b: fix: update use-measure
+
 ## 8.17.13
 
 ### Patch Changes
