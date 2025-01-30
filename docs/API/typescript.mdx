@@ -34,14 +34,14 @@ The exclamation mark is a non-null assertion that will let TS know that `ref.cur
 
 ## Accessing typed three-elements
 
-Whenever you want to spread props or type components that rely on three elements, you can use the `ThreeElement` type to extract the mesh, group, or any other three element, including custom elements.
+Whenever you want to spread props or type components that rely on three elements, you can use the `ThreeElements` interface to extract the mesh, group, or any other three element, including custom elements.
 
 ```tsx
-import { ThreeElement } from '@react-three/fiber'
+import { ThreeElements } from '@react-three/fiber'
 
-type Props = ThreeElement['mesh'] & { bar: boolean }
+type FooProps = ThreeElements['mesh'] & { bar: boolean }
 
-function Foo({ bar, ...props}: Props) {
+function Foo({ bar, ...props}: FooProps) {
   useEffect(() => {
     console.log(bar)
   }, [bar])
