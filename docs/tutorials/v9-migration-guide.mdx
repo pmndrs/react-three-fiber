@@ -209,6 +209,8 @@ extend({ CustomElement })
 </StrictMode>
 ```
 
+Keep in mind, this change may affect the behavior of your application. If you encounter anything that worked before and fails now, profile it first in dev and then production. If it works in prod then strict mode has flushed out a side-effect in your code.
+
 ### Act
 
 `act` is now exported from React itself and can be used for all renderers. It will return the contents of a passed async callback like before and recursively flush async effects to synchronously test React output.
