@@ -111,7 +111,7 @@ export function loop(timestamp: number): void {
       repeat += update(timestamp, state)
     }
   }
-  useFrameInProgress = true
+  useFrameInProgress = false
 
   // Run after-effects
   flushGlobalEffects('after', timestamp)
