@@ -24,6 +24,7 @@ const Test = { Component: lazy(() => import('./Test')) }
 const Viewcube = { Component: lazy(() => import('./Viewcube')) }
 const Portals = { Component: lazy(() => import('./Portals')) }
 const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
+const TesseractBouncingBallDemo = { Component: lazy(() => import('./TesseractBouncingBallDemo')) }
 
 export {
   Animation,
@@ -50,4 +51,5 @@ export {
   MultiView,
   Portals,
   ViewTracking,
+  TesseractBouncingBallDemo,
 }
