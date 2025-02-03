@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.2.3
+
+### Patch Changes
+
+- 2007c19b: fix: republish with types
+
 ## 8.2.2
 
 ### Patch Changes
