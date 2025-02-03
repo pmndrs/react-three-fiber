@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 8.2.4
+
+### Patch Changes
+
+- dec2cb28: fix(test-renderer): include types in output
+
 ## 8.2.3
 
 ### Patch Changes
