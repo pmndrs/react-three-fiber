@@ -167,7 +167,6 @@ type ArgsProp<P> = P extends ConstructorRepresentation
 
 export type InstanceProps<T = any, P = any> = ArgsProp<P> & {
   object?: T
-  visible?: boolean
   dispose?: null
   attach?: AttachType<T>
   onUpdate?: (self: T) => void
