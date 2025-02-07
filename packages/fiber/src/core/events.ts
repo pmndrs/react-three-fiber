@@ -244,7 +244,20 @@ export function createEvents(store: RootStore) {
     if (intersections.length) {
       const localState = { stopped: false }
       for (const hit of intersections) {
-        const state = getRootState(hit.object)
+        let state = getRootState(hit.object)
+
+        // If the object is not managed by R3F, it might be parented to an element which is.
+        // Traverse upwards until we find a managed parent and use its state instead.
+        if (!state) {
+          hit.object.traverseAncestors((obj) => {
+            const parentState = getRootState(obj)
+            if (parentState) {
+              state = parentState
+              return false
+            }
+          })
+        }
+
         if (state) {
           const { raycaster, pointer, camera, internal } = state
           const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)

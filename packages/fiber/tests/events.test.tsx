@@ -394,14 +394,18 @@ describe('events', () => {
   })
 
   it('can handle primitives', async () => {
-    const handlePointerDown = jest.fn()
+    const handlePointerDownOuter = jest.fn()
+    const handlePointerDownInner = jest.fn()
 
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial())
+    const object = new THREE.Group()
+    object.add(new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial()))
 
     await act(async () => {
       render(
         <Canvas>
-          <primitive name="test" object={mesh} onPointerDown={handlePointerDown} />
+          <group onPointerDown={handlePointerDownOuter}>
+            <primitive name="test" object={object} onPointerDown={handlePointerDownInner} />
+          </group>
         </Canvas>,
       )
     })
@@ -412,6 +416,7 @@ describe('events', () => {
 
     fireEvent(getContainer(), evt)
 
-    expect(handlePointerDown).toHaveBeenCalled()
+    expect(handlePointerDownOuter).toHaveBeenCalled()
+    expect(handlePointerDownInner).toHaveBeenCalled()
   })
 })
