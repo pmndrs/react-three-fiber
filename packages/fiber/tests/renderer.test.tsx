@@ -762,8 +762,6 @@ describe('renderer', () => {
   })
 
   it('resolves conflicting and prefixed elements', async () => {
-    await root.configure()
-
     const store = await act(async () => root.render(<line />))
     expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
 
