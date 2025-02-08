@@ -112,24 +112,6 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onPointerMissed?: (event: MouseEvent) => void
 }
 
-async function createRendererInstance<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
-  gl: GLProps | undefined,
-  canvas: TCanvas,
-): Promise<THREE.WebGLRenderer> {
-  const defaultProps: DefaultGLProps = {
-    canvas: canvas as HTMLCanvasElement,
-    powerPreference: 'high-performance',
-    antialias: true,
-    alpha: true,
-  }
-  const customRenderer = (typeof gl === 'function' ? await gl(defaultProps) : gl) as THREE.WebGLRenderer
-  if (isRenderer(customRenderer)) return customRenderer
-  return new THREE.WebGLRenderer({
-    ...defaultProps,
-    ...gl,
-  })
-}
-
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
   render: (element: React.ReactNode) => RootStore
@@ -232,7 +214,29 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       // Set up renderer (one time only!)
       let gl = state.gl
-      if (!state.gl) state.set({ gl: (gl = await createRendererInstance(glConfig, canvas)) })
+      if (!state.gl) {
+        const defaultProps: DefaultGLProps = {
+          canvas: canvas as HTMLCanvasElement,
+          powerPreference: 'high-performance',
+          antialias: true,
+          alpha: true,
+        }
+
+        const customRenderer = (
+          typeof glConfig === 'function' ? await glConfig(defaultProps) : glConfig
+        ) as THREE.WebGLRenderer
+
+        if (isRenderer(customRenderer)) {
+          gl = customRenderer
+        } else {
+          gl = new THREE.WebGLRenderer({
+            ...defaultProps,
+            ...glConfig,
+          })
+        }
+
+        state.set({ gl })
+      }
 
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
