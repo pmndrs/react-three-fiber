@@ -60,11 +60,9 @@ type Conflicts = DuplicateKeys<JSX.IntrinsicElements, { [K in keyof ThreeExports
 
 // Create a new type that maps Three.js exports to JSX tags, with conflicts prefixed with 'three'.
 type ThreeElementsImpl = {
-  [K in keyof ThreeExports as K extends string
-    ? Uncapitalize<K> extends Conflicts
-      ? `three${Capitalize<K>}`
-      : Uncapitalize<K>
-    : never]: ThreeExports[K] extends ConstructorRepresentation ? ThreeElement<ThreeExports[K]> : never
+  [K in keyof ThreeExports as Uncapitalize<K> extends Conflicts
+    ? `three${Capitalize<K>}`
+    : Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation ? ThreeElement<ThreeExports[K]> : never
 }
 
 export interface ThreeElements extends ThreeElementsImpl {
