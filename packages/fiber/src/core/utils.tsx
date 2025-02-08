@@ -392,6 +392,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
       else delete instance.handlers[prop as keyof EventHandlers]
       instance.eventCount = Object.keys(instance.handlers).length
+      continue
     }
 
     // Ignore setting undefined props

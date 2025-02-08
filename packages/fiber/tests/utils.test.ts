@@ -455,6 +455,13 @@ describe('applyProps', () => {
     expect(target.value).toBe('initial')
   })
 
+  it('should not apply a prop to an instance if it is a reserved event', async () => {
+    const target = prepare(new THREE.Object3D(), await store, '', {})
+    applyProps(target.object, { onClick: () => null })
+
+    expect('onClick' in target).toBe(false)
+  })
+
   it('should not copy if props are supersets of another', async () => {
     const copy = jest.fn()
 
