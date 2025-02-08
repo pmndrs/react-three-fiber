@@ -116,6 +116,21 @@ const Element = extend(CustomElement)
 <Element />
 ```
 
+## Extending three default elements
+
+If you open your own root instead of using `<Canvas>`, you can extend the default elements with `extend`. But keep in mind that the `* as THREE` namespace contains classes, functions, numbers, strings. At the moment we suggest you use `any` or `@ts-ignore` unless you extract the exact classes you need (`extend({ Mesh, Group, ... })`).
+
+```tsx
+import * as THREE from 'three'
+import { extend, createRoot, events } from '@react-three/fiber'
+
+// Register the THREE namespace as native JSX elements.
+extend(THREE as any)
+
+// Create a react root
+const root = createRoot(document.querySelector('canvas'))
+```
+
 ## Exported types
 
 react-three-fiber is extensible and exports types for its internals, such as render props, canvas props, and events:

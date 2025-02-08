@@ -37,7 +37,7 @@ afterEach(async () => {
 
 describe('createRoot', () => {
   it('should return a Zustand store', async () => {
-    const store = await act(async () => (await root.configure()).render(null))
+    const store = await act(async () => root.render(null))
     expect(() => store.getState()).not.toThrow()
   })
 
@@ -119,7 +119,7 @@ describe('createRoot', () => {
     let state: RootState = null!
 
     await act(async () => {
-      state = (await root.configure()).render(<group />).getState()
+      state = root.render(<group />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
     })
@@ -247,7 +247,7 @@ describe('createPortal', () => {
     }
 
     await act(async () => {
-      ;(await root.configure()).render(
+      root.render(
         <>
           <Normal />
           {createPortal(<Portal />, scene, { scene })}
@@ -276,12 +276,12 @@ describe('createPortal', () => {
       )
     }
 
-    await act(async () => (await root.configure()).render(<Test key={0} />))
+    await act(async () => root.render(<Test key={0} />))
 
     expect(groupHandle).toBeDefined()
     const prevUUID = groupHandle!.uuid
 
-    await act(async () => (await root.configure()).render(<Test key={1} />))
+    await act(async () => root.render(<Test key={1} />))
 
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
