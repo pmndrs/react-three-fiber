@@ -199,11 +199,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   // Locals
   let onCreated: ((state: RootState) => void) | undefined
-  let configured = false
   let lastCamera: RenderProps<TCanvas>['camera']
+
+  let configured = false
+  let pending: Promise<void> | null = null
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
+      let resolve!: () => void
+      pending = new Promise<void>((_resolve) => (resolve = _resolve))
+
       let {
         gl: glConfig,
         size: propsSize,
@@ -390,17 +395,22 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set locals
       onCreated = onCreatedCallback
       configured = true
+      resolve()
       return this
     },
     render(children: React.ReactNode): RootStore {
       // The root has to be configured before it can be rendered
-      if (!configured) throw "The root has to be configured before it can be rendered, call 'configure' first!"
-      reconciler.updateContainer(
-        <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
-        fiber,
-        null,
-        () => undefined,
-      )
+      if (!configured && !pending) this.configure()
+
+      pending!.then(() => {
+        reconciler.updateContainer(
+          <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
+          fiber,
+          null,
+          () => undefined,
+        )
+      })
+
       return store
     },
     unmount(): void {

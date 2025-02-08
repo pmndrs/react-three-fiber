@@ -52,7 +52,7 @@ describe('hooks', () => {
       return <group />
     }
 
-    await act(async () => (await root.configure()).render(<Component />))
+    await act(async () => root.render(<Component />))
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
