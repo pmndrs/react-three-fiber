@@ -178,20 +178,14 @@ import { Mesh, BoxGeometry, MeshStandardMaterial } from 'three'
 
 extend({ Mesh, BoxGeometry, MeshStandardMaterial })
 
-async function app() {
-  const root = createRoot(document.querySelector('canvas'))
-  await root.configure()
-  root.render(
-    <>
-      <mesh>
-        <boxGeometry />
-        <meshStandardMaterial />
-      </mesh>
-    </>,
-  )
-}
-
-app()
+createRoot(canvas).render(
+  <>
+    <mesh>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  </>,
+)
 ```
 
 There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) which will do this for you automatically:
@@ -201,18 +195,12 @@ There's an [official babel plugin](https://github.com/pmndrs/react-three-babel) 
 
 import { createRoot } from '@react-three/fiber'
 
-async function app() {
-  const root = createRoot(document.querySelector('canvas'))
-  await root.configure()
-  root.render(
-    <mesh>
-      <boxGeometry />
-      <meshStandardMaterial />
-    </mesh>,
-  )
-}
-
-app()
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
 
 // Out:
 
@@ -225,16 +213,10 @@ extend({
   MeshStandardMaterial: _MeshStandardMaterial,
 })
 
-async function app() {
-  const root = createRoot(document.querySelector('canvas'))
-  await root.configure()
-  root.render(
-    <mesh>
-      <boxGeometry />
-      <meshStandardMaterial />
-    </mesh>,
-  )
-}
-
-app()
+createRoot(canvasNode).render(
+  <mesh>
+    <boxGeometry />
+    <meshStandardMaterial />
+  </mesh>,
+)
 ```
