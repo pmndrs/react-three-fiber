@@ -760,4 +760,17 @@ describe('renderer', () => {
     expect(camera.top).toBe(0)
     expect(camera.bottom).toBe(0)
   })
+
+  it('resolves conflicting and prefixed elements', async () => {
+    await root.configure()
+
+    const store = await act(async () => root.render(<line />))
+    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
+
+    await act(async () => root.render(null))
+    expect(store.getState().scene.children.length).toBe(0)
+
+    await act(async () => root.render(<threeLine />))
+    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
+  })
 })

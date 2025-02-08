@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
-import { Instance, catalogue } from './reconciler'
+import { Instance } from './reconciler'
 import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
 import type { Dpr, Renderer, RootStore, Size } from './store'
