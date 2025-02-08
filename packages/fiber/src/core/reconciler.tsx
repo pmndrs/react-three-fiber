@@ -203,7 +203,11 @@ interface HostConfig {
   TransitionStatus: null
 }
 
-export const catalogue: Catalogue = {}
+const catalogue: Catalogue = {}
+
+const PREFIX_REGEX = /^three(?=[A-Z])/
+
+const toPascalCase = (type: string): string => `${type[0].toUpperCase()}${type.slice(1)}`
 
 let i = 0
 
@@ -242,6 +246,9 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 }
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
+  // Remove three* prefix from elements
+  type = type.replace(PREFIX_REGEX, '')
+
   validateInstance(type, props)
 
   // Regenerate the R3F instance for primitives to simulate a new object
@@ -287,8 +294,7 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   // Create & link object on first run
   if (!child.object) {
     // Get target from catalogue
-    const name = `${child.type[0].toUpperCase()}${child.type.slice(1)}`
-    const target = catalogue[name]
+    const target = catalogue[toPascalCase(child.type)]
 
     // Create object
     child.object = child.props.object ?? new target(...(child.props.args ?? []))
@@ -466,8 +472,7 @@ function swapInstances(): void {
     const parent = instance.parent
     if (parent) {
       // Get target from catalogue
-      const name = `${instance.type[0].toUpperCase()}${instance.type.slice(1)}`
-      const target = catalogue[name]
+      const target = catalogue[toPascalCase(instance.type)]
 
       // Create object
       instance.object = instance.props.object ?? new target(...(instance.props.args ?? []))
