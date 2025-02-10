@@ -169,7 +169,7 @@ const context = React.createContext<UseBoundStore<RootState>>(null!)
 class R3FMainClock extends THREE.Clock {
   getElapsedTime(): number {
     console.warn(
-      'Warning: do not call getElapsedTime on the r3f state clock, it will mess up the delta. Read .elapsedTime instead'
+      'Warning: do not call getElapsedTime on the r3f state clock, it will mess up the delta. Read .elapsedTime instead',
     )
     return super.getElapsedTime()
   }
