@@ -165,11 +165,11 @@ export type RootState = {
 
 const context = React.createContext<UseBoundStore<RootState>>(null!)
 
-// Custom clock to prevent user from messing the delta 
+// Custom clock to prevent user from messing the delta
 class R3FMainClock extends THREE.Clock {
   getElapsedTime(): number {
-    console.warn('Warning: do not call getElapsedTime on the r3f state clock, it will mess up the delta. Read .elapsedTime instead');
-    return super.getElapsedTime();
+    console.warn('Warning: do not call getElapsedTime on the r3f state clock, it will mess up the delta. Read .elapsedTime instead')
+    return super.getElapsedTime()
   }
 }
 
