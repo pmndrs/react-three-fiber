@@ -165,6 +165,14 @@ export type RootState = {
 
 const context = React.createContext<UseBoundStore<RootState>>(null!)
 
+// Custom clock to prevent user from messing the delta 
+class R3FMainClock extends THREE.Clock {
+  getElapsedTime(): number {
+    console.warn('Warning: do not call getElapsedTime on the r3f state clock, it will mess up the delta. Read .elapsedTime instead');
+    return super.getElapsedTime();
+  }
+}
+
 const createStore = (invalidate: Invalidate, advance: Advance): UseBoundStore<RootState> => {
   const rootState = create<RootState>((set, get) => {
     const position = new THREE.Vector3()
@@ -216,7 +224,7 @@ const createStore = (invalidate: Invalidate, advance: Advance): UseBoundStore<Ro
       flat: false,
 
       controls: null,
-      clock: new THREE.Clock(),
+      clock: new R3FMainClock(),
       pointer,
       mouse: pointer,
 
