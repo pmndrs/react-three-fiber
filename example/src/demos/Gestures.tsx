@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { useDrag } from '@use-gesture/react'
+import type * as THREE from 'three'
 
 function Obj({ scale = 1, z = 0, opacity = 1 }) {
   const { viewport } = useThree()
@@ -12,7 +13,7 @@ function Obj({ scale = 1, z = 0, opacity = 1 }) {
     set([x / aspect, -y / aspect, z])
   })
 
-  const mesh = useRef<THREE.Mesh>()
+  const mesh = useRef<THREE.Mesh>(null!)
 
   useFrame(() => {
     mesh.current!.rotation.x = mesh.current!.rotation.y += 0.01
