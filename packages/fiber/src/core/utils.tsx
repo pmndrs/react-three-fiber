@@ -425,7 +425,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       else target.set(...value)
     }
     // Set literal types
-    else if (target?.set && typeof value !== 'object') {
+    else if (target?.set && typeof value !== 'object' && typeof target === 'object') {
       const isColor = (target as unknown as THREE.Color | undefined)?.isColor
       // Allow setting array scalars
       if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
