@@ -420,11 +420,14 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       target.mask = value.mask
     }
     // Set array types
-    else if (target?.set && Array.isArray(value)) {
+    // Target is narrowed to an object to guard against prototype patching
+    else if (target?.set && Array.isArray(value) && typeof target === 'object') {
       if (target.fromArray) target.fromArray(value)
       else target.set(...value)
     }
+
     // Set literal types
+    // Target is narrowed to an object to guard against prototype patching
     else if (target?.set && typeof value !== 'object' && typeof target === 'object') {
       const isColor = (target as unknown as THREE.Color | undefined)?.isColor
       // Allow setting array scalars
