@@ -401,34 +401,30 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     let { root, key, target } = resolve(object, prop)
 
-    // Copy if properties match signatures
-    if (
-      target?.copy &&
-      (value as ClassConstructor | undefined)?.constructor &&
-      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
-    ) {
-      // fetch the default state of the target
-      const ctor = getMemoizedPrototype(root)
-      // The target key was originally null or undefined, which indicates that the object which
-      // is now present was externally set by the user, we should therefore assign the value directly
-      if (!is.und(ctor) && (is.und(ctor[key]) || is.nul(ctor[key]))) root[key] = value
-      // Otherwise copy is correct
-      else target.copy(value)
-    }
-    // Layers have no copy function, we must therefore copy the mask property
-    else if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
+    // Layers must be written to the mask property
+    if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
       target.mask = value.mask
     }
+    // Copy if properties match signatures and implement math interface (likely read-only)
+    else if (
+      target &&
+      typeof target.set === 'function' &&
+      typeof target.copy === 'function' &&
+      (value as ClassConstructor | null)?.constructor &&
+      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
+    ) {
+      target.copy(value)
+    }
     // Set array types
-    else if (target?.set && Array.isArray(value)) {
-      if (target.fromArray) target.fromArray(value)
+    else if (target && typeof target.set === 'function' && Array.isArray(value)) {
+      if (typeof target.fromArray === 'function') target.fromArray(value)
       else target.set(...value)
     }
     // Set literal types
-    else if (target?.set && typeof value !== 'object') {
-      const isColor = (target as unknown as THREE.Color | undefined)?.isColor
-      // Allow setting array scalars
-      if (!isColor && target.setScalar && typeof value === 'number') target.setScalar(value)
+    else if (target && typeof target.set === 'function' && typeof value === 'number') {
+      // Allow setting array scalars (don't call setScalar for Color since it skips conversions)
+      const isColor = (target as unknown as THREE.Color).isColor
+      if (!isColor && typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
     }

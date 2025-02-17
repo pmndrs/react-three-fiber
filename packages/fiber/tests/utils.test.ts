@@ -346,72 +346,41 @@ describe('applyProps', () => {
     expect(target.foo.value).toBe(false)
   })
 
-  it('should prefer to copy from external props', () => {
-    const copyMock = jest.fn()
+  it('should prefer to copy potentially read-only math classes', () => {
+    const one = new THREE.Vector3(1, 1, 1)
+    const two = new THREE.Vector3(2, 2, 2)
 
-    class MockedColor extends THREE.Color {
-      override copy(other: MockedColor) {
-        copyMock()
-        return super.copy(other)
-      }
-    }
+    const target = { test: one }
+    applyProps(target, { test: two })
 
-    class MockedClass {
-      color = new MockedColor()
-      layer = new THREE.Layers()
-    }
-
-    const target = new MockedClass()
-
-    // Same constructor, copy
-    applyProps(target, { color: new MockedColor() })
-    expect(target.color).toBeInstanceOf(MockedColor)
-    expect(copyMock).toHaveBeenCalledTimes(1)
-
-    // Same constructor, Layers
-    const layer = new THREE.Layers()
-    layer.mask = 5
-    applyProps(target, { layer })
-    expect(target.layer).toBeInstanceOf(THREE.Layers)
-    expect(target.layer.mask).toBe(layer.mask)
-
-    // Different constructor, overwrite
-    applyProps(target, { color: new THREE.Vector3() })
-    expect(target.color).toBeInstanceOf(THREE.Vector3)
-    expect(copyMock).toHaveBeenCalledTimes(1)
+    expect(target.test).toBe(one)
+    expect(target.test.toArray()).toStrictEqual([2, 2, 2])
   })
 
-  it('should prefer to assign if origin null', () => {
-    const copyMock = jest.fn()
+  it('should not copy if props are supersets of another', () => {
+    const copy = jest.fn()
+    const set = jest.fn()
 
-    class MockedTexture extends THREE.Texture {
-      override copy(other: MockedTexture) {
-        copyMock()
-        return super.copy(other)
-      }
+    class Test {
+      copy = copy
+      set = set
+    }
+    class SuperTest extends Test {
+      copy = copy
+      set = set
     }
 
-    class MockedClass {
-      map1 = null
-      map2 = new MockedTexture()
-    }
+    const one = new Test()
+    const two = new SuperTest()
 
-    const target = new MockedClass()
+    const target = { test: one }
+    applyProps(target, { test: two })
 
-    // Original null, should assign
-    applyProps(target, { map1: new MockedTexture() })
-    expect(target.map1).toBeInstanceOf(MockedTexture)
-    expect(copyMock).toHaveBeenCalledTimes(0)
-
-    // Set again, original null, should assign
-    applyProps(target, { map1: new MockedTexture() })
-    expect(target.map1).toBeInstanceOf(MockedTexture)
-    expect(copyMock).toHaveBeenCalledTimes(0)
-
-    // Original not null, should copy
-    applyProps(target, { map2: new MockedTexture() })
-    expect(target.map2).toBeInstanceOf(MockedTexture)
-    expect(copyMock).toHaveBeenCalledTimes(1)
+    expect(one.copy).not.toHaveBeenCalled()
+    expect(two.copy).not.toHaveBeenCalled()
+    expect(one.set).not.toHaveBeenCalled()
+    expect(two.set).not.toHaveBeenCalled()
+    expect(target.test).toBe(two)
   })
 
   it('should prefer to set when props are an array', () => {
@@ -457,27 +426,6 @@ describe('applyProps', () => {
     applyProps(target.object, { onClick: () => null })
 
     expect('onClick' in target).toBe(false)
-  })
-
-  it('should not copy if props are supersets of another', () => {
-    const copy = jest.fn()
-
-    class Material {
-      copy = copy
-    }
-    class SuperMaterial extends Material {
-      copy = copy
-    }
-
-    const one = new Material()
-    const two = new SuperMaterial()
-
-    const target = { material: one }
-    applyProps(target, { material: two })
-
-    expect(one.copy).not.toHaveBeenCalled()
-    expect(two.copy).not.toHaveBeenCalled()
-    expect(target.material).toBe(two)
   })
 })
 
