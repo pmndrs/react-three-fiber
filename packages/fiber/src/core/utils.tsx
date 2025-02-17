@@ -421,10 +421,10 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       else target.set(...value)
     }
     // Set literal types
-    else if (target && typeof value === 'number') {
-      const isColor = (target as unknown as THREE.Color)?.isColor
-      // Allow setting array scalars
-      if (!isColor && typeof target.setScalar === 'function' && typeof value === 'number') target.setScalar(value)
+    else if (target && typeof target.set === 'function' && typeof value === 'number') {
+      // Allow setting array scalars (don't call setScalar for Color since it skips conversions)
+      const isColor = (target as unknown as THREE.Color).isColor
+      if (!isColor && typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
     }
