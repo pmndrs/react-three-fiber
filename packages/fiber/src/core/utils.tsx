@@ -407,12 +407,15 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Layers must be written to the mask property
     if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
       target.mask = value.mask
-    } else if (target instanceof THREE.Color && isColorRepresentation(value)) {
+    }
+    // Set colors if valid color representation for automatic conversion (copy)
+    else if (target instanceof THREE.Color && isColorRepresentation(value)) {
       target.set(value)
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
     else if (
-      target &&
+      target !== null &&
+      typeof target === 'object' &&
       typeof target.set === 'function' &&
       typeof target.copy === 'function' &&
       (value as ClassConstructor | null)?.constructor &&
@@ -421,12 +424,22 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       target.copy(value)
     }
     // Set array types
-    else if (target && typeof target.set === 'function' && Array.isArray(value)) {
+    else if (
+      target !== null &&
+      typeof target === 'object' &&
+      typeof target.set === 'function' &&
+      Array.isArray(value)
+    ) {
       if (typeof target.fromArray === 'function') target.fromArray(value)
       else target.set(...value)
     }
     // Set literal types
-    else if (target && typeof target.set === 'function' && typeof value === 'number') {
+    else if (
+      target !== null &&
+      typeof target === 'object' &&
+      typeof target.set === 'function' &&
+      typeof value === 'number'
+    ) {
       // Allow setting array scalars
       if (typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
