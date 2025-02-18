@@ -38,6 +38,9 @@ export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCame
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')
 
+export const isColorRepresentation = (value: unknown): value is THREE.ColorRepresentation =>
+  value != null && (typeof value === 'string' || typeof value === 'number' || (value as THREE.Color).isColor)
+
 /**
  * An SSR-friendly useLayoutEffect.
  *
@@ -404,6 +407,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Layers must be written to the mask property
     if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
       target.mask = value.mask
+    } else if (target instanceof THREE.Color && isColorRepresentation(value)) {
+      target.set(value)
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
     else if (
@@ -422,9 +427,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Set literal types
     else if (target && typeof target.set === 'function' && typeof value === 'number') {
-      // Allow setting array scalars (don't call setScalar for Color since it skips conversions)
-      const isColor = (target as unknown as THREE.Color).isColor
-      if (!isColor && typeof target.setScalar === 'function') target.setScalar(value)
+      // Allow setting array scalars
+      if (typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
     }
