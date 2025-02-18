@@ -1,12 +1,12 @@
-import * as THREE from 'three'
-import React, { useRef, useLayoutEffect, useState } from 'react'
-import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
+import { Canvas, createPortal, useFrame, useThree } from '@react-three/fiber'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import * as THREE from 'three'
 
 function Viewcube() {
   const { gl, scene: defaultScene, camera: defaultCamera, size, events } = useThree()
-  const [scene] = useState(() => new THREE.Scene())
-  const [camera] = useState(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000))
+  const scene = useMemo(() => new THREE.Scene(), [])
+  const camera = useMemo(() => new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 1000), [])
 
   useLayoutEffect(() => {
     camera.left = -size.width / 2
@@ -18,7 +18,7 @@ function Viewcube() {
   }, [size])
 
   const ref = useRef<THREE.Mesh>(null!)
-  const [hover, set] = useState<number | null>(null)
+  const [hover, setHover] = useState<number | null>(null)
   const matrix = new THREE.Matrix4()
 
   useFrame(() => {
@@ -38,8 +38,8 @@ function Viewcube() {
           <mesh
             ref={ref}
             position={[size.width / 2 - 120, size.height / 2 - 120, 0]}
-            onPointerOut={(e) => set(null)}
-            onPointerMove={(e) => set(Math.floor((e.faceIndex || 0) / 2))}>
+            onPointerOut={(e) => setHover(null)}
+            onPointerMove={(e) => setHover(Math.floor((e.faceIndex || 0) / 2))}>
             {[...Array(6)].map((_, index) => (
               <meshLambertMaterial
                 attach={`material-${index}`}

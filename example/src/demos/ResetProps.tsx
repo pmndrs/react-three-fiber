@@ -1,13 +1,14 @@
-import * as THREE from 'three'
-import React, { useEffect, useState, useRef } from 'react'
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
 
 function AdaptivePixelRatio() {
   const gl = useThree((state) => state.gl)
   const current = useThree((state) => state.performance.current)
   const initialDpr = useThree((state) => state.viewport.initialDpr)
   const setDpr = useThree((state) => state.setDpr)
+
   // Restore initial pixelratio on unmount
   useEffect(() => {
     const domElement = gl.domElement
@@ -16,22 +17,27 @@ function AdaptivePixelRatio() {
       domElement.style.imageRendering = 'auto'
     }
   }, [])
+
   // Set adaptive pixelratio
   useEffect(() => {
     setDpr(current * initialDpr)
     gl.domElement.style.imageRendering = current === 1 ? 'auto' : 'pixelated'
   }, [current])
+
   return null
 }
 
 function AdaptiveEvents() {
   const get = useThree((state) => state.get)
   const current = useThree((state) => state.performance.current)
+
   useEffect(() => {
     const enabled = get().events.enabled
     return () => void (get().events.enabled = enabled)
   }, [])
+
   useEffect(() => void (get().events.enabled = current === 1), [current])
+
   return null
 }
 
@@ -39,7 +45,6 @@ function Scene() {
   const group = useRef<THREE.Group>(null!)
   const [showCube, setShowCube] = useState(false)
   const [hovered, setHovered] = useState(false)
-  const [color, setColor] = useState('pink')
 
   useEffect(() => {
     const interval = setInterval(() => setShowCube((showCube) => !showCube), 1000)
@@ -53,12 +58,7 @@ function Scene() {
       <ambientLight intensity={0.5 * Math.PI} />
       <pointLight decay={0} position={[10, 10, 10]} intensity={2} />
       <pointLight decay={0} position={[-10, -10, -10]} color="red" intensity={4} />
-
-      <mesh
-        scale={hovered ? 1.25 : 1}
-        onPointerOver={() => setHovered(true)}
-        onPointerOut={() => setHovered(false)}
-        onClick={() => setColor(color === 'pink' ? 'peachpuff' : 'pink')}>
+      <mesh scale={hovered ? 1.25 : 1} onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
         <sphereGeometry args={[0.5, 32, 32]} />
         <meshStandardMaterial color={showCube ? 'white' : 'red'} />
       </mesh>
