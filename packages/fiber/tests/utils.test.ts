@@ -400,6 +400,10 @@ describe('applyProps', () => {
     const material = new THREE.MeshBasicMaterial()
     applyProps(material, { color: 0x000000 })
     expect(material.color.getHex()).toBe(0x000000)
+    applyProps(material, { color: 'white' })
+    expect(material.color.getHex()).toBe(0xffffff)
+    applyProps(material, { color: new THREE.Color('red') })
+    expect(material.color.getHex()).toBe(0xff0000)
 
     // No-op on undefined
     const mesh = new THREE.Mesh()
