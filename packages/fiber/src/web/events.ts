@@ -24,10 +24,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
     compute(event: DomEvent, state: RootState, previous?: RootState) {
       // https://github.com/pmndrs/react-three-fiber/pull/782
       // Events trigger outside of canvas when moved, use offsetX/Y by default and allow overrides
-      state.pointer.set(
-        ((event.offsetX - state.size.left) / state.size.width) * 2 - 1,
-        -((event.offsetY - state.size.top) / state.size.height) * 2 + 1,
-      )
+      state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)
       state.raycaster.setFromCamera(state.pointer, state.camera)
     },
 

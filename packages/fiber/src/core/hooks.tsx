@@ -61,7 +61,9 @@ export function useGraph(object: THREE.Object3D): ObjectMap {
   return React.useMemo(() => buildGraph(object), [object])
 }
 
-type LoaderLike = THREE.Loader<any, string | string[] | string[][] | Readonly<string | string[] | string[][]>>
+type InputLike = string | string[] | string[][] | Readonly<string | string[] | string[][]>
+type LoaderLike = THREE.Loader<any, InputLike>
+type GLTFLike = { scene: THREE.Object3D }
 
 type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =
   T extends ConstructorRepresentation<LoaderLike> ? InstanceType<T> : T
@@ -69,7 +71,7 @@ type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>
 export type LoaderResult<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = Awaited<
   ReturnType<LoaderInstance<T>['loadAsync']>
 > extends infer R
-  ? R extends { scene: THREE.Object3D }
+  ? R extends GLTFLike
     ? R & ObjectMap
     : R
   : never
@@ -132,26 +134,27 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<THREE.Loader
  * Note: this hook's caller must be wrapped with `React.Suspense`
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useloader
  */
-export function useLoader<
-  T,
-  U extends string | string[] | string[][],
-  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
->(loader: L, input: U, extensions?: Extensions<L>, onProgress?: (event: ProgressEvent<EventTarget>) => void) {
+export function useLoader<I extends InputLike, L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
+  loader: L,
+  input: I,
+  extensions?: Extensions<L>,
+  onProgress?: (event: ProgressEvent<EventTarget>) => void,
+) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
   // Return the object(s)
-  return (Array.isArray(input) ? results : results[0]) as U extends any[] ? LoaderResult<L>[] : LoaderResult<L>
+  return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
 
 /**
  * Preloads an asset into cache as a side-effect.
  */
-useLoader.preload = function <
-  T,
-  U extends string | string[] | string[][],
-  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
->(loader: L, input: U, extensions?: Extensions<L>): void {
+useLoader.preload = function <I extends InputLike, L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
+  loader: L,
+  input: I,
+  extensions?: Extensions<L>,
+): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return preload(loadingFn(extensions), [loader, ...keys])
 }
@@ -159,11 +162,10 @@ useLoader.preload = function <
 /**
  * Removes a loaded asset from cache.
  */
-useLoader.clear = function <
-  T,
-  U extends string | string[] | string[][],
-  L extends LoaderLike | ConstructorRepresentation<LoaderLike>,
->(loader: L, input: U): void {
+useLoader.clear = function <I extends InputLike, L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
+  loader: L,
+  input: I,
+): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   return clear([loader, ...keys])
 }
