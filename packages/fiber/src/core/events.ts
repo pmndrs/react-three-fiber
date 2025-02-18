@@ -62,6 +62,7 @@ export interface EventHandlers {
   onPointerMissed?: (event: MouseEvent) => void
   onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
+  onLostPointerCapture?: (event: ThreeEvent<PointerEvent>) => void
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
