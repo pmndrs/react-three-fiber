@@ -419,4 +419,32 @@ describe('events', () => {
     expect(handlePointerDownOuter).toHaveBeenCalled()
     expect(handlePointerDownInner).toHaveBeenCalled()
   })
+
+  it('can handle a DOM offset canvas', async () => {
+    const handlePointerDown = jest.fn()
+    await act(async () => {
+      render(
+        <Canvas
+          onCreated={(state) => {
+            state.size.left = 100
+            state.size.top = 100
+          }}>
+          <mesh onPointerDown={handlePointerDown}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = new PointerEvent('pointerdown')
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+
+    fireEvent(getContainer(), evt)
+
+    expect(handlePointerDown).toHaveBeenCalled()
+  })
+
+  it.todo('can handle different event prefixes')
 })
