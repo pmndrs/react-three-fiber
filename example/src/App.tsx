@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useErrorBoundary } from 'use-error-boundary'
-import { Route, useRoute, Redirect } from 'wouter'
+import { Redirect, Route, useRoute } from 'wouter'
 
-import { Loading, Page, DemoPanel, Dot, Error } from './components'
+import { DemoPanel, Dot, Error, Loading, Page } from './components'
 import './styles.css'
 
 import * as demos from './demos'

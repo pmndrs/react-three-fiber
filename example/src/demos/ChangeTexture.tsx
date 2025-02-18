@@ -1,6 +1,6 @@
-import * as React from 'react'
-import { Canvas } from '@react-three/fiber'
 import { useTexture } from '@react-three/drei'
+import { Canvas } from '@react-three/fiber'
+import { useDeferredValue, useEffect, useState } from 'react'
 
 export default function App() {
   return (
@@ -12,13 +12,15 @@ export default function App() {
 
 function Plane() {
   const textures = ['/pmndrs.png', '/react.png', '/three.png']
-  const [index, set] = React.useState(0)
-  const deferred = React.useDeferredValue(index)
-  React.useEffect(() => {
-    const interval = setInterval(() => set((i) => (i + 1) % textures.length), 1000)
+  const [index, setIndex] = useState(0)
+  const deferred = useDeferredValue(index)
+  const texture = useTexture(textures[deferred])
+
+  useEffect(() => {
+    const interval = setInterval(() => setIndex((i) => (i + 1) % textures.length), 1000)
     return () => clearInterval(interval)
   }, [])
-  const texture = useTexture(textures[deferred])
+
   return (
     <mesh scale={2}>
       <planeGeometry />

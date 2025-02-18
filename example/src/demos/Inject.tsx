@@ -1,6 +1,8 @@
+import { Canvas, createPortal, getRootState, type ThreeElements, useThree } from '@react-three/fiber'
+import { useEffect, useReducer, useRef, useState } from 'react'
 import * as THREE from 'three'
-import React, { useState, useEffect } from 'react'
-import { Canvas, createPortal, useThree, getRootState } from '@react-three/fiber'
+
+type CubeProps = ThreeElements['mesh'] & { color: string }
 
 const customCamera1 = new THREE.PerspectiveCamera()
 const customCamera2 = new THREE.PerspectiveCamera()
@@ -8,11 +10,13 @@ const customCamera2 = new THREE.PerspectiveCamera()
 export default function App() {
   const [scene1] = useState(() => new THREE.Scene())
   const [scene2] = useState(() => new THREE.Scene())
-  const [mounted, mount] = React.useReducer(() => true, false)
-  React.useEffect(() => {
+  const [mounted, mount] = useReducer(() => true, false)
+
+  useEffect(() => {
     const timeout = setTimeout(mount, 1000)
     return () => clearTimeout(timeout)
   }, [])
+
   return (
     <Canvas>
       <Cube position={[-0.5, 0, 0]} color="hotpink" />
@@ -30,12 +34,14 @@ export default function App() {
   )
 }
 
-function Cube({ color, ...props }: any) {
+function Cube({ color, ...props }: CubeProps) {
   const camera = useThree((state) => state.camera)
-  const ref = React.useRef<THREE.Mesh>(null!)
+  const ref = useRef<THREE.Mesh>(null!)
+
   useEffect(() => {
     console.log(`from within ${color}.useEffect`, getRootState(ref.current)?.camera, 'camera', camera.uuid)
   }, [])
+
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry />
