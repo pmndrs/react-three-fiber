@@ -1,25 +1,11 @@
-import { useState, useMemo } from 'react'
-import * as THREE from 'three/webgpu'
-import { mix, positionLocal, sin, time, vec3, uniform, color } from 'three/tsl'
-import {
-  ThreeElement,
-  Canvas,
-  extend,
-  useFrame,
-  type ConstructorRepresentation,
-  type ThreeElements,
-} from '@react-three/fiber'
+import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
 import { easing } from 'maath'
-
-type ThreeExports = typeof THREE
-type ThreeElementsImpl = {
-  [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
-    ? ThreeElement<ThreeExports[K]>
-    : never
-}
+import { useMemo, useState } from 'react'
+import { color, mix, positionLocal, sin, time, uniform, vec3 } from 'three/tsl'
+import * as THREE from 'three/webgpu'
 
 declare module '@react-three/fiber' {
-  interface ThreeElements extends ThreeElementsImpl {}
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
 function Plane(props: ThreeElements['mesh']) {
