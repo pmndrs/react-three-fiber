@@ -1,8 +1,8 @@
-import React, { useRef, useCallback, useMemo } from 'react'
-import { type ThreeElement, extend, Canvas, ThreeEvent } from '@react-three/fiber'
+import { Canvas, ThreeEvent, extend } from '@react-three/fiber'
+import { useCallback, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
-export class DotMaterial extends THREE.ShaderMaterial {
+class DotMaterialImpl extends THREE.ShaderMaterial {
   constructor() {
     super({
       transparent: true,
@@ -17,17 +17,12 @@ export class DotMaterial extends THREE.ShaderMaterial {
   }
 }
 
-declare module '@react-three/fiber' {
-  interface ThreeElements {
-    dotMaterial: ThreeElement<typeof DotMaterial>
-  }
-}
-
-extend({ DotMaterial })
+const DotMaterial = extend(DotMaterialImpl)
 
 const white = new THREE.Color('white')
 const hotpink = new THREE.Color('hotpink')
-function Particles({ pointCount }: any) {
+
+function Particles({ pointCount }: { pointCount: number }) {
   const [positions, colors] = useMemo(() => {
     const positions = [...new Array(pointCount * 3)].map(() => 5 - Math.random() * 10)
     const colors = [...new Array(pointCount)].flatMap(() => hotpink.toArray())
@@ -35,6 +30,7 @@ function Particles({ pointCount }: any) {
   }, [pointCount])
 
   const points = useRef<THREE.Points>(null!)
+
   const hover = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
     white.toArray(points.current.geometry.attributes.color.array, e.index! * 3)
@@ -52,7 +48,7 @@ function Particles({ pointCount }: any) {
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <dotMaterial vertexColors depthWrite={false} />
+      <DotMaterial vertexColors depthWrite={false} />
     </points>
   )
 }

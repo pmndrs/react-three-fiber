@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useState } from 'react'
 
 export default function App() {
-  const [state, set] = useState(false)
+  const [state, setState] = useState(false)
 
   return (
     <Canvas
@@ -16,7 +16,7 @@ export default function App() {
         position={[1, 0, 0]}
         onContextMenu={(ev) => {
           ev.nativeEvent.preventDefault()
-          set((value) => !value)
+          setState((value) => !value)
         }}
         onPointerMissed={() => console.log('mesh.missed')}>
         <boxGeometry args={[1, 1, 1]} />

@@ -1,18 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { useEffect, useRef, useState } from 'react'
+import * as THREE from 'three'
 
 const CanvasStyle = {
   width: '100%',
   height: '50%',
 }
 
-const Obj = () => {
+const Object = () => {
   const meshRef = useRef<THREE.Mesh>(null!)
+
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.03
     }
   })
+
   return (
     <mesh ref={meshRef}>
       <boxGeometry args={[1, 1, 1]} />
@@ -20,10 +23,11 @@ const Obj = () => {
     </mesh>
   )
 }
+
 const SpinningScene = () => (
   <div style={CanvasStyle}>
     <Canvas>
-      <Obj />
+      <Object />
     </Canvas>
   </div>
 )
@@ -38,8 +42,8 @@ const StaticScene = () => (
     </Canvas>
   </div>
 )
-/** Main component */
-function App() {
+
+export default function App() {
   const [secondScene, setSecondScene] = useState(false)
 
   useEffect(() => {
@@ -53,5 +57,3 @@ function App() {
     </div>
   )
 }
-
-export default App

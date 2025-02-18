@@ -1,24 +1,44 @@
-import * as THREE from 'three'
-import * as React from 'react'
-import { useCallback, useEffect, useState } from 'react'
-import { Canvas, useFrame, useThree, createPortal } from '@react-three/fiber'
 import {
-  useGLTF,
-  PerspectiveCamera,
-  OrthographicCamera,
+  ArcballControls,
+  Bounds,
+  CameraShake,
   Environment,
   OrbitControls,
-  ArcballControls,
+  OrthographicCamera,
+  PerspectiveCamera,
   TransformControls,
-  CameraShake,
-  Bounds,
+  useGLTF,
 } from '@react-three/drei'
+import {
+  Canvas,
+  type ComputeFunction,
+  createPortal,
+  type ThreeElements,
+  type ThreeEvent,
+  useFrame,
+  useThree,
+} from '@react-three/fiber'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
+import * as THREE from 'three'
 
-export function Soda(props: any) {
-  const [hovered, spread] = useHover()
+function useHover() {
+  const [hovered, setHovered] = useState(false)
+  const props = {
+    onPointerOver: (e: ThreeEvent<PointerEvent>) => {
+      e.stopPropagation()
+      setHovered(true)
+    },
+    onPointerOut: () => setHovered(false),
+  }
+  return [hovered, props] as const
+}
+
+export function Soda(props: ThreeElements['group']) {
+  const [hovered, hoverProps] = useHover()
   const { nodes, materials } = useGLTF('/bottle.gltf') as any
+
   return (
-    <group {...props} {...spread} dispose={null}>
+    <group {...props} {...hoverProps} dispose={null}>
       <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} roughness={0} metalness={0.8} envMapIntensity={2} />
       </mesh>
@@ -27,18 +47,23 @@ export function Soda(props: any) {
   )
 }
 
-function useHover() {
-  const [hovered, hover] = useState(false)
-  return [hovered, { onPointerOver: (e: any) => (e.stopPropagation(), hover(true)), onPointerOut: () => hover(false) }]
-}
-
-function View({ index = 1, children, clearColor, placement }: any) {
+function View({
+  index = 1,
+  children,
+  clearColor,
+  placement,
+}: {
+  index: number
+  children: React.ReactNode
+  clearColor: THREE.Color
+  placement: string
+}) {
   const { events, size } = useThree()
   const [scene] = useState(() => new THREE.Scene())
   const [position] = useState(() => new THREE.Vector2())
   const [el] = useState(() => {
     const div = document.createElement('div')
-    div.style.zIndex = index
+    div.style.zIndex = index.toString()
     div.style.position = 'absolute'
     div.style.width = div.style.height = '50%'
     return div
@@ -74,7 +99,7 @@ function View({ index = 1, children, clearColor, placement }: any) {
     }
   }, [events, el])
 
-  const compute = useCallback((event, state) => {
+  const compute = useCallback<ComputeFunction>((event, state) => {
     if (event.target === el) {
       const width = state.size.width
       const height = state.size.height
@@ -92,14 +117,24 @@ function View({ index = 1, children, clearColor, placement }: any) {
         scene,
         {
           events: { compute, priority: events.priority + index, connected: el },
-          size: { width: size.width / 2, height: size.height / 2 },
+          size: { width: size.width / 2, height: size.height / 2, top: 0, left: 0 },
         },
       )}
     </>
   )
 }
 
-function Container({ children, index, clearColor, position }: any) {
+function Container({
+  children,
+  index,
+  clearColor,
+  position,
+}: {
+  children: React.ReactNode
+  index: number
+  clearColor: THREE.Color
+  position: THREE.Vector2
+}) {
   const { size, camera, scene } = useThree()
 
   useFrame((state) => {
@@ -146,7 +181,13 @@ const App = () => (
   </Canvas>
 )
 
-function Scene({ children, controls = true, preset }: any) {
+function Scene({
+  children,
+  preset,
+}: {
+  children?: React.ReactNode
+  preset: ComponentProps<typeof Environment>['preset']
+}) {
   return (
     <Bounds fit clip observe>
       <ambientLight intensity={Math.PI} />

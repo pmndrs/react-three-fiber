@@ -1,22 +1,17 @@
-import { useState } from 'react'
-import { Canvas } from '@react-three/fiber'
 import { Line } from '@react-three/drei'
+import { Canvas, type ThreeElements, type ThreeEvent, type Vector3 } from '@react-three/fiber'
+import { useState } from 'react'
 
-export default function App() {
-  return (
-    <Canvas
-      orthographic
-      raycaster={{ params: { Line: { threshold: 5 } } as any }}
-      camera={{ position: [0, 0, 500], zoom: 1 }}>
-      <PolyLine defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
-      <PolyLine defaultStart={[0, 100, 0]} defaultEnd={[100, -100, 0]} />
-    </Canvas>
-  )
-}
-
-function PolyLine({ defaultStart, defaultEnd }: any) {
+function PolyLine({
+  defaultStart,
+  defaultEnd,
+}: {
+  defaultStart: [number, number, number]
+  defaultEnd: [number, number, number]
+}) {
   const [start, setStart] = useState(defaultStart)
   const [end, setEnd] = useState(defaultEnd)
+
   return (
     <>
       <Line points={[...start, ...end]} lineWidth={3} color="lightgray" />
@@ -26,20 +21,27 @@ function PolyLine({ defaultStart, defaultEnd }: any) {
   )
 }
 
-function EndPoint({ position, onDrag }: any) {
+function EndPoint({
+  position,
+  onDrag,
+}: ThreeElements['mesh'] & { onDrag: (position: [number, number, number]) => void }) {
   const [active, setActive] = useState(false)
   const [hovered, setHover] = useState(false)
-  const down = (event) => {
+
+  const down = (event: ThreeEvent<PointerEvent>) => {
     event.stopPropagation()
-    event.target.setPointerCapture(event.pointerId)
+    ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
     setActive(true)
   }
-  const up = (event: any) => {
+
+  const up = (event: ThreeEvent<PointerEvent>) => {
     setActive(false)
   }
-  const move = (event: any) => {
+
+  const move = (event: ThreeEvent<PointerEvent>) => {
     if (active && onDrag) onDrag(event.unprojectedPoint.toArray())
   }
+
   return (
     <mesh
       position={position}
@@ -52,5 +54,17 @@ function EndPoint({ position, onDrag }: any) {
       <sphereGeometry args={[10, 16, 16]} />
       <meshBasicMaterial color={hovered ? 'hotpink' : 'orange'} />
     </mesh>
+  )
+}
+
+export default function App() {
+  return (
+    <Canvas
+      orthographic
+      raycaster={{ params: { Line: { threshold: 5 } } as any }}
+      camera={{ position: [0, 0, 500], zoom: 1 }}>
+      <PolyLine defaultStart={[-100, -100, 0]} defaultEnd={[0, 100, 0]} />
+      <PolyLine defaultStart={[0, 100, 0]} defaultEnd={[100, -100, 0]} />
+    </Canvas>
   )
 }

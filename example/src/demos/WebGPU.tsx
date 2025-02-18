@@ -1,37 +1,14 @@
-import { useState, useMemo } from 'react'
-import * as THREE from 'three/webgpu'
-import { mix, positionLocal, sin, time, vec3, uniform, color } from 'three/tsl'
-import { ThreeElement, Canvas, extend, useFrame, ConstructorRepresentation } from '@react-three/fiber'
+import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
 import { easing } from 'maath'
-
-type ThreeExports = typeof THREE
-type ThreeElementsImpl = {
-  [K in keyof ThreeExports as Uncapitalize<K>]: ThreeExports[K] extends ConstructorRepresentation
-    ? ThreeElement<ThreeExports[K]>
-    : never
-}
+import { useMemo, useState } from 'react'
+import { color, mix, positionLocal, sin, time, uniform, vec3 } from 'three/tsl'
+import * as THREE from 'three/webgpu'
 
 declare module '@react-three/fiber' {
-  interface ThreeElements extends ThreeElementsImpl {}
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
-export default function App() {
-  return (
-    <Canvas
-      gl={(props) => {
-        extend(THREE as any)
-        const renderer = new THREE.WebGPURenderer(props as any)
-        return renderer.init().then(() => renderer)
-      }}>
-      <ambientLight intensity={Math.PI} />
-      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
-      <Plane scale={1.5} position={[-1.3, 0, 0]} />
-      <Plane scale={1.5} position={[0.6, 0, 2]} />
-    </Canvas>
-  )
-}
-
-function Plane(props: any) {
+function Plane(props: ThreeElements['mesh']) {
   const [hovered, hover] = useState(false)
   const { key, uHovered, colorNode, positionNode } = useMemo(() => {
     const uHovered = uniform(0.0)
@@ -53,5 +30,21 @@ function Plane(props: any) {
       <planeGeometry />
       <meshBasicNodeMaterial key={key} colorNode={colorNode} positionNode={positionNode} />
     </mesh>
+  )
+}
+
+export default function App() {
+  return (
+    <Canvas
+      gl={async (props) => {
+        extend(THREE as any)
+        const renderer = new THREE.WebGPURenderer(props as any)
+        return renderer.init().then(() => renderer)
+      }}>
+      <ambientLight intensity={Math.PI} />
+      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
+      <Plane scale={1.5} position={[-1.3, 0, 0]} />
+      <Plane scale={1.5} position={[0.6, 0, 2]} />
+    </Canvas>
   )
 }

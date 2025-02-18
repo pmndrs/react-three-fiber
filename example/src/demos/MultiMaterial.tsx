@@ -1,10 +1,10 @@
+import { Canvas, type ThreeElements } from '@react-three/fiber'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { Canvas } from '@react-three/fiber'
 
 const redMaterial = new THREE.MeshBasicMaterial({ color: 'aquamarine', toneMapped: false })
 
-function ReuseMaterial(props: any) {
+function ReuseMaterial(props: ThreeElements['mesh']) {
   return (
     <mesh {...props}>
       <sphereGeometry args={[0.25, 64, 64]} />
@@ -14,35 +14,40 @@ function ReuseMaterial(props: any) {
 }
 
 function TestReuse() {
-  const [i, set] = useState(true)
+  const [okay, setOkay] = useState(true)
+
   useEffect(() => {
-    const interval = setInterval(() => set((s) => !s), 1000)
+    const interval = setInterval(() => setOkay((okay) => !okay), 1000)
     return () => clearInterval(interval)
   }, [])
+
   return (
     <>
-      {i && <ReuseMaterial position={[-1.5, 0, 0]} />}
+      {okay && <ReuseMaterial position={[-1.5, 0, 0]} />}
       <ReuseMaterial position={[1.5, 0, 0]} />
     </>
   )
 }
 
-function TestMultiMaterial(props: any) {
+function TestMultiMaterial(props: ThreeElements['mesh']) {
   const ref = useRef<THREE.Mesh>(null!)
-  const [ok, set] = useState(true)
+  const [okay, setOkay] = useState(true)
+
   useEffect(() => {
-    const interval = setInterval(() => set((ok) => !ok), 1000)
+    const interval = setInterval(() => setOkay((okay) => !okay), 1000)
     return () => clearInterval(interval)
   }, [])
+
   useEffect(() => {
     console.log(ref.current.material)
-  }, [ok])
+  }, [okay])
+
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry args={[0.75, 0.75, 0.75]} />
       <meshBasicMaterial attach="material-0" color="hotpink" toneMapped={false} />
       <meshBasicMaterial attach="material-1" color="lightgreen" toneMapped={false} />
-      {ok ? (
+      {okay ? (
         <meshBasicMaterial attach="material-2" color="lightblue" toneMapped={false} />
       ) : (
         <meshNormalMaterial attach="material-2" />
@@ -54,22 +59,25 @@ function TestMultiMaterial(props: any) {
   )
 }
 
-function TestMultiDelete(props: any) {
+function TestMultiDelete(props: ThreeElements['mesh']) {
   const ref = useRef<THREE.Mesh>(null!)
-  const [ok, set] = useState(true)
+  const [okay, setOkay] = useState(true)
+
   useEffect(() => {
-    const interval = setInterval(() => set((ok) => !ok), 1000)
+    const interval = setInterval(() => setOkay((okay) => !okay), 1000)
     return () => clearInterval(interval)
   }, [])
+
   useEffect(() => {
     console.log(ref.current.material)
-  }, [ok])
+  }, [okay])
+
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry args={[0.75, 0.75, 0.75]} />
       <meshBasicMaterial attach="material-0" color="hotpink" side={THREE.DoubleSide} toneMapped={false} />
       <meshBasicMaterial attach="material-1" color="lightgreen" side={THREE.DoubleSide} toneMapped={false} />
-      {ok && <meshBasicMaterial attach="material-2" color="lightblue" side={THREE.DoubleSide} toneMapped={false} />}
+      {okay && <meshBasicMaterial attach="material-2" color="lightblue" side={THREE.DoubleSide} toneMapped={false} />}
       <meshBasicMaterial attach="material-3" color="pink" side={THREE.DoubleSide} toneMapped={false} />
       <meshBasicMaterial attach="material-4" color="orange" side={THREE.DoubleSide} toneMapped={false} />
       <meshBasicMaterial attach="material-5" color="lavender" side={THREE.DoubleSide} toneMapped={false} />
@@ -77,21 +85,23 @@ function TestMultiDelete(props: any) {
   )
 }
 
-function TestMix(props: any) {
-  const [size, set] = useState(0.1)
+function TestMix(props: ThreeElements['mesh']) {
+  const [size, setSize] = useState(0.1)
+  const geometry = useMemo(() => new THREE.SphereGeometry(size, 64, 64), [size])
+
   useEffect(() => {
     const timeout = setInterval(
       () =>
-        set((s) => {
+        setSize((s) => {
           return s < 0.4 ? s + 0.025 : 0
         }),
       1000,
     )
     return () => clearTimeout(timeout)
   }, [])
-  let g = useMemo(() => new THREE.SphereGeometry(size, 64, 64), [size])
+
   return (
-    <mesh args={[g]} {...props}>
+    <mesh args={[geometry]} {...props}>
       <meshBasicMaterial color="hotpink" toneMapped={false} />
     </mesh>
   )

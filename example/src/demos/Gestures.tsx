@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react'
-import { Canvas, useThree, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useDrag } from '@use-gesture/react'
+import { useRef, useState } from 'react'
+import type * as THREE from 'three'
 
-function Obj({ scale = 1, z = 0, opacity = 1 }) {
+function Object({ scale = 1, z = 0, opacity = 1 }) {
   const { viewport } = useThree()
   const [hovered, hover] = useState(false)
   const [position, set] = useState<[number, number, number]>([0, 0, z])
@@ -12,7 +13,7 @@ function Obj({ scale = 1, z = 0, opacity = 1 }) {
     set([x / aspect, -y / aspect, z])
   })
 
-  const mesh = useRef<THREE.Mesh>()
+  const mesh = useRef<THREE.Mesh>(null!)
 
   useFrame(() => {
     mesh.current!.rotation.x = mesh.current!.rotation.y += 0.01
@@ -49,8 +50,8 @@ export default function App() {
       <ambientLight intensity={0.5 * Math.PI} />
       <spotLight decay={0} position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <pointLight decay={0} position={[-10, -10, -10]} />
-      <Obj z={-1} scale={0.5} />
-      <Obj opacity={0.8} />
+      <Object z={-1} scale={0.5} />
+      <Object opacity={0.8} />
     </Canvas>
   )
 }
