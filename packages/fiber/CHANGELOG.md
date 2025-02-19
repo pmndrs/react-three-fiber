@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.0.1
+
+### Patch Changes
+
+- 5d711d103b8d3833b93c3ab74707b2b6db5d274a: fix: add use-sync-external-store dep
+
 ## 9.0.0
 
 ### Major Changes
