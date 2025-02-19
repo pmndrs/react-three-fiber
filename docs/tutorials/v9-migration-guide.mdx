@@ -58,15 +58,26 @@ const Controls = extend(OrbitControls)
 
 ### Async GL prop
 
-The R3F GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
+The GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
 
 ```diff
-gl={{ reverseDepthBuffer: true }}
--gl={(canvas) => new WebGLRenderer({ canvas })}
-+gl={(props) => new WebGLRenderer(props)}
+<Canvas
+  gl={{ reverseDepthBuffer: true }}
+-  gl={(canvas) => new WebGLRenderer({ canvas })}
++  gl={(props) => new WebGLRenderer(props)}
+>
 ```
 
 Further, a callback passed to GL can now return a promise for async constructors like `WebGPURenderer` (see [WebGPU](#webgpu)).
+
+```tsx
+<Canvas
+  gl={async (props) => {
+    // ...
+    return renderer
+  }}
+>
+````
 
 ## WebGPU
 
