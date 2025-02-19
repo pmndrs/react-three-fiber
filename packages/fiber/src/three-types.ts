@@ -1,11 +1,8 @@
 import * as THREE from 'three'
-import type {} from 'react'
-import type {} from 'react/jsx-runtime'
-import type {} from 'react/jsx-dev-runtime'
 import { EventHandlers } from './core/events'
 import { AttachType } from './core/renderer'
 
-export type Properties<T> = Pick<T, { [K in keyof T]: T[K] extends (_: any) => any ? never : K }[keyof T]>
+export type Properties<T> = { [K in keyof T as T[K] extends (...args: Array<any>) => any ? never : K]: T[K] }
 export type NonFunctionKeys<T> = { [K in keyof T]-?: T[K] extends Function ? never : K }[keyof T]
 export type Overwrite<T, O> = Omit<T, NonFunctionKeys<O>> & O
 
@@ -49,7 +46,9 @@ export interface NodeProps<T, P> {
 }
 
 export type ExtendedColors<T> = { [K in keyof T]: T[K] extends THREE.Color | undefined ? Color : T[K] }
-export type Node<T, P> = ExtendedColors<Overwrite<Partial<T>, NodeProps<T, P>>>
+export type Node<T, P> = [T] extends [{ thisShouldNeverHappen: 'unless the object is of type any' }]
+  ? ExtendedColors<Overwrite<Partial<{}>, NodeProps<{}, {}>>>
+  : ExtendedColors<Overwrite<Partial<T>, NodeProps<T, P>>>
 
 export type Object3DNode<T, P> = Overwrite<
   Node<T, P>,
@@ -77,6 +76,8 @@ export type PositionalAudioProps = Object3DNode<THREE.PositionalAudio, typeof TH
 
 export type MeshProps = Object3DNode<THREE.Mesh, typeof THREE.Mesh>
 export type InstancedMeshProps = Object3DNode<THREE.InstancedMesh, typeof THREE.InstancedMesh>
+/** @ts-ignore */
+export type BatchedMeshProps = Object3DNode<THREE.BatchedMesh, typeof THREE.BatchedMesh>
 export type SceneProps = Object3DNode<THREE.Scene, typeof THREE.Scene>
 export type SpriteProps = Object3DNode<THREE.Sprite, typeof THREE.Sprite>
 export type LODProps = Object3DNode<THREE.LOD, typeof THREE.LOD>
@@ -300,6 +301,7 @@ export interface ThreeElements {
   positionalAudio: PositionalAudioProps
 
   mesh: MeshProps
+  batchedMesh: BatchedMeshProps
   instancedMesh: InstancedMeshProps
   scene: SceneProps
   sprite: SpriteProps
@@ -453,26 +455,7 @@ export interface ThreeElements {
   shape: ShapeProps
 }
 
-// NOTE: removed in v9 for React 19
 declare global {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-runtime' {
-  namespace JSX {
-    interface IntrinsicElements extends ThreeElements {}
-  }
-}
-
-declare module 'react/jsx-dev-runtime' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
   }

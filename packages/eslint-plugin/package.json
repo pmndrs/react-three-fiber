@@ -1,6 +1,6 @@
 {
   "name": "@react-three/eslint-plugin",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "An ESLint plugin which provides lint rules for @react-three/fiber.",
   "keywords": [
     "react",
@@ -27,6 +27,9 @@
   "main": "dist/react-three-eslint-plugin.cjs.js",
   "module": "dist/react-three-eslint-plugin.esm.js",
   "types": "dist/react-three-eslint-plugin.cjs.d.ts",
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [

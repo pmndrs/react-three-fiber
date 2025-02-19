@@ -139,7 +139,7 @@ export const is = {
     // Wrong type or one of the two undefined, doesn't match
     if (typeof a !== typeof b || !!a !== !!b) return false
     // Atomic, just compare a against b
-    if (is.str(a) || is.num(a)) return a === b
+    if (is.str(a) || is.num(a) || is.boo(a)) return a === b
     const isObj = is.obj(a)
     if (isObj && objects === 'reference') return a === b
     const isArr = is.arr(a)
@@ -396,7 +396,7 @@ export function applyProps(instance: MaybeInstance, data: InstanceProps | DiffSe
       // If nothing else fits, just set the single value, ignore undefined
       // https://github.com/pmndrs/react-three-fiber/issues/274
       else if (value !== undefined) {
-        const isColor = targetProp instanceof THREE.Color
+        const isColor = (targetProp as unknown as THREE.Color | undefined)?.isColor
         // Allow setting array scalars
         if (!isColor && targetProp.setScalar) targetProp.setScalar(value)
         // Layers have no copy function, we must therefore copy the mask property
@@ -415,7 +415,7 @@ export function applyProps(instance: MaybeInstance, data: InstanceProps | DiffSe
       // Auto-convert sRGB textures, for now ...
       // https://github.com/pmndrs/react-three-fiber/issues/344
       if (
-        currentInstance[key] instanceof THREE.Texture &&
+        (currentInstance[key] as unknown as THREE.Texture | undefined)?.isTexture &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         currentInstance[key].format === THREE.RGBAFormat &&
         currentInstance[key].type === THREE.UnsignedByteType &&

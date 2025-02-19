@@ -4,6 +4,6 @@ example/
 .github/
 .husky/
 markdown/
-src/
+/src/
 tests/
 __mocks__

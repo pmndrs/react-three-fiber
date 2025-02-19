@@ -17,6 +17,7 @@ export { createEvents } from './core/events'
 export type { ObjectMap, Camera } from './core/utils'
 export * from './native/Canvas'
 export { createTouchEvents as events } from './native/events'
+export { createPointerEvents } from './web/events'
 export type { GlobalRenderCallback, GlobalEffectType } from './core/loop'
 export * from './core'
 

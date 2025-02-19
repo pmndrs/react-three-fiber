@@ -10,7 +10,6 @@ import {
   ReconcilerRoot,
 } from '@react-three/fiber'
 import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
-import mergeRefs from 'react-merge-refs'
 import { SVGRenderer } from 'three-stdlib'
 
 function TorusKnot() {
@@ -47,6 +46,7 @@ function Canvas({ children, resize, style, className, ...props }: Props) {
 
   const [bind, size] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const ref = React.useRef<HTMLDivElement>(null!)
+  React.useImperativeHandle(bind, () => ref.current, [])
   const [gl] = useState(() => new SVGRenderer() as unknown as THREE.WebGLRenderer)
   const root = React.useRef<ReconcilerRoot<HTMLElement>>(null!)
 
@@ -67,7 +67,7 @@ function Canvas({ children, resize, style, className, ...props }: Props) {
 
   return (
     <div
-      ref={mergeRefs([ref, bind])}
+      ref={ref}
       className={className}
       style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...style }}
     />

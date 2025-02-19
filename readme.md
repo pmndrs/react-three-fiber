@@ -1,3 +1,9 @@
+> [!WARNING]  
+> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
+
+> [!NOTE]  
+> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
+
 <h1>@react-three/fiber</h1>
 
 [![Version](https://img.shields.io/npm/v/@react-three/fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
@@ -251,6 +257,8 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
 - [`triplex`](https://triplex.dev/) &ndash; scene editor for react-three-fiber
 - [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
+
+[Usage Trend of the @react-three Family](https://npm-compare.com/@react-three/a11y,@react-three/cannon,@react-three/csg,@react-three/drei,@react-three/flex,@react-three/gltfjsx,@react-three/gpu-pathtracer,@react-three/offscreen,@react-three/p2,@react-three/postprocessing,@react-three/rapier,@react-three/test-renderer,@react-three/uikit,@react-three/xr)
 
 # Who is using Three-fiber
 

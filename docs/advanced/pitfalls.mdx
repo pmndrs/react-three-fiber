@@ -28,7 +28,7 @@ TLDR, don't, mutate inside `useFrame`!
 
 - You might be tempted to setState inside `useFrame` but there is no reason to. You would only complicate something as simple as an update by routing it through React's scheduler, triggering component render etc.
 
-### ❌ setState in loops is bad
+### ❌ `setState` in loops is bad
 
 ```jsx
 useEffect(() => {
@@ -37,7 +37,7 @@ useEffect(() => {
 }, [])
 ```
 
-### ❌ setState in useFrame is bad
+### ❌ `setState` in useFrame is bad
 
 ```jsx
 const [x, setX] = useState(0)
@@ -45,7 +45,7 @@ useFrame(() => setX((x) => x + 0.1))
 return <mesh position-x={x} />
 ```
 
-### ❌ setState in fast events is bad
+### ❌ `setState` in fast events is bad
 
 ```jsx
 <mesh onPointerMove={(e) => setX((x) => e.point.x)} />
@@ -80,7 +80,7 @@ useEffect(() => {
 
 The frame loop is where you should place your animations. For instance using lerp, or damp.
 
-### ✅ Use lerp + useFrame
+### ✅ Use `lerp` + `useFrame`
 
 ```jsx
 function Signal({ active }) {
@@ -157,7 +157,7 @@ function Stage1(props) {
       ...
 ```
 
-### ✅ Use startTransition for expensive ops
+### ✅ Use `startTransition` for expensive ops
 
 React 18 introduces the `startTransition` and `useTransition` APIs to defer and schedule work and state updates. Use these to de-prioritize expensive operations.
 
@@ -213,7 +213,7 @@ function Foo(props)
   })
 ```
 
-## useLoader instead of plain loaders
+## `useLoader` instead of plain loaders
 
 Threejs loaders give you the ability to load async assets (models, textures, etc), but if you do not re-use assets it can quickly become problematic.
 

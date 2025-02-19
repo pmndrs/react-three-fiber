@@ -8,7 +8,7 @@ This tutorial will assume some React knowledge, and will be based on [this start
 
 We will build a really small, continuous animation loop, that will be the basic building block of more advanced animations later on.
 
-## useFrame
+## `useFrame`
 
 `useFrame` is a Fiber hook that lets you execute code on every frame of Fiber's render loop. This can have a lot of uses, but we will focus on building an animation with it.
 
@@ -36,7 +36,7 @@ For example, we can extract time information from the `clock` parameter, to know
 
 ```jsx
 useFrame(({ clock }) => {
-  const a = clock.getElapsedTime()
+  const a = clock.elapsedTime
   console.log(a) // the value will be 0 at scene initialization and grow each frame
 })
 ```
@@ -66,7 +66,7 @@ function MyAnimatedBox() {
 
 ```jsx
 useFrame(({ clock }) => {
-  myMesh.current.rotation.x = clock.getElapsedTime()
+  myMesh.current.rotation.x = clock.elapsedTime
 })
 ```
 
@@ -80,12 +80,12 @@ Let's have a closer look:
 
 **Exercises**
 
-- Try `Math.sin(clock.getElapsedTime())` and see how your animation changes
+- Try `Math.sin(clock.elapsedTime)` and see how your animation changes
 
 ## Next steps
 
-Now that you understand the basic technique for animating in Fiber, [learn how event works](/react-three-fiber/tutorials/events-and-interaction)!
+Now that you understand the basic technique for animating in Fiber, [learn how event works](/tutorials/events-and-interaction)!
 
 If you want to go deeper into animations, check these out:
 
-- [Animating with React Spring](/react-three-fiber/tutorials/using-with-react-spring)
+- [Animating with React Spring](/tutorials/using-with-react-spring)

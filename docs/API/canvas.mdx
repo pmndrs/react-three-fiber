@@ -21,11 +21,12 @@ const App = () => (
 )
 ```
 
-## Render Props
+## Properties
 
 | Prop            | Description                                                                                                                                       | Default                                                           |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | children        | three.js JSX elements or regular components                                                                                                       |                                                                   |
+| fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                                   |
 | gl              | Props that go into the default renderer, or your own renderer. Also accepts a synchronous callback like `gl={canvas => new Renderer({ canvas })}` | `{}`                                                              |
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`          |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                              |
@@ -44,7 +45,7 @@ const App = () => (
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                                   |
 | onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                                   |
 
-## Render defaults
+## Defaults
 
 Canvas uses [createRoot](#createroot) which will create a translucent `THREE.WebGLRenderer` with the following constructor args:
 
@@ -65,6 +66,38 @@ It will also create the following scene internals:
 - A `THREE.Scene` (into which all the JSX is rendered) and a `THREE.Raycaster`
 
 In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
+
+## Errors and fallbacks
+
+On some systems WebGL may not be supported, you can provide a fallback component that will be rendered instead of the canvas:
+
+```jsx
+<Canvas fallback={<div>Sorry no WebGL supported!</div>}>
+  <mesh />
+</Canvas>
+```
+
+You should also safeguard the canvas against WebGL context crashes, for instance if users have the GPU disabled or GPU drivers are faulty.
+
+```jsx
+import { useErrorBoundary } from 'use-error-boundary'
+
+function App() {
+  const { ErrorBoundary, didCatch, error } = useErrorBoundary()
+  return didCatch ? (
+    <div>{error.message}</div>
+  ) : (
+    <ErrorBoundary>
+      <Canvas>
+        <mesh />
+      </Canvas>
+    </ErrorBoundary>
+  )
+}
+```
+
+> [!NOTE]
+> Ideally, and if possible, your fallback is a seamless, visual replacement for what the canvas would have otherwise rendered.
 
 ## Custom Canvas
 

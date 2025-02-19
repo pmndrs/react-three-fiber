@@ -1,5 +1,23 @@
 # @react-three/test-renderer
 
+## 8.2.4
+
+### Patch Changes
+
+- dec2cb28: fix(test-renderer): include types in output
+
+## 8.2.3
+
+### Patch Changes
+
+- 2007c19b: fix: republish with types
+
+## 8.2.2
+
+### Patch Changes
+
+- ff1a16f1: fix: narrow React peer dep range
+
 ## 8.2.1
 
 ### Patch Changes

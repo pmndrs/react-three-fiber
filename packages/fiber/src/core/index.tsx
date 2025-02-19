@@ -255,8 +255,8 @@ function createRoot<TCanvas extends Canvas>(canvas: TCanvas): ReconcilerRoot<TCa
       if (!state.scene) {
         let scene: THREE.Scene
 
-        if (sceneOptions instanceof THREE.Scene) {
-          scene = sceneOptions
+        if ((sceneOptions as unknown as THREE.Scene | undefined)?.isScene) {
+          scene = sceneOptions as THREE.Scene
         } else {
           scene = new THREE.Scene()
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
@@ -469,7 +469,7 @@ export type InjectState = Partial<
   }
 >
 
-function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): React.JSX.Element {
+function createPortal(children: React.ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal key={container.uuid} children={children} container={container} state={state} />
 }
 
@@ -481,7 +481,7 @@ function Portal({
   children: React.ReactNode
   state?: InjectState
   container: THREE.Object3D
-}): React.JSX.Element {
+}): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
@@ -597,6 +597,17 @@ function Portal({
   )
 }
 
+/**
+ * Force React to flush any updates inside the provided callback synchronously and immediately.
+ * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
+ * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
+ * having to revert to a non-React solution.
+ */
+function flushSync<R>(fn: () => R): R {
+  // `flushSync` implementation only takes one argument. I don't know what's up with the type declaration for it.
+  return reconciler.flushSync(fn, undefined)
+}
+
 reconciler.injectIntoDevTools({
   bundleType: process.env.NODE_ENV === 'production' ? 0 : 1,
   rendererPackageName: '@react-three/fiber',
@@ -622,6 +633,7 @@ export {
   addAfterEffect,
   addTail,
   flushGlobalEffects,
+  flushSync,
   getRootState,
   act,
   buildGraph,

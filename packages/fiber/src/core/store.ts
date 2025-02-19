@@ -177,8 +177,8 @@ const createStore = (invalidate: Invalidate, advance: Advance): UseBoundStore<Ro
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
       const { width, height, top, left } = size
       const aspect = width / height
-      if (target instanceof THREE.Vector3) tempTarget.copy(target)
-      else tempTarget.set(...target)
+      if ((target as THREE.Vector3).isVector3) tempTarget.copy(target as THREE.Vector3)
+      else tempTarget.set(...(target as Parameters<THREE.Vector3['set']>))
       const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
       if (isOrthographicCamera(camera)) {
         return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
