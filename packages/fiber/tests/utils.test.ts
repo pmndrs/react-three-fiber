@@ -431,6 +431,29 @@ describe('applyProps', () => {
 
     expect('onClick' in target).toBe(false)
   })
+
+  // https://github.com/pmndrs/koota/issues/47
+  it('should not fallthrough to set/copy for primitive types', () => {
+    const set = jest.fn()
+    const copy = jest.fn()
+
+    // @ts-ignore
+    Number.prototype.set = set
+    // @ts-ignore
+    Number.prototype.copy = copy
+
+    const target = { scale: 1 }
+    applyProps(target, { scale: 10 })
+
+    // @ts-ignore
+    delete Number.prototype.set
+    // @ts-ignore
+    delete Number.prototype.copy
+
+    expect(set).not.toHaveBeenCalled()
+    expect(copy).not.toHaveBeenCalled()
+    expect(target.scale).toBe(10)
+  })
 })
 
 describe('updateCamera', () => {
