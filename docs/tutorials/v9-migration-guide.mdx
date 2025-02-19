@@ -56,27 +56,46 @@ const Controls = extend(OrbitControls)
 <Controls args={[camera, gl.domElement]} />
 ```
 
+### Async GL prop
+
+The R3F GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
+
+```diff
+gl={{ reverseDepthBuffer: true }}
+-gl={(canvas) => new WebGLRenderer({ canvas })}
++gl={(props) => new WebGLRenderer(props)}
+```
+
+Further, a callback passed to GL can now return a promise for async constructors like `WebGPURenderer` (see [WebGPU](#webgpu)).
+
 ## WebGPU
 
 Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
 
-```jsx
+```tsx
 import * as THREE from 'three/webgpu'
 import * as TSL from 'three/tsl'
 import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
 
+declare module '@react-three/fiber' {
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
+}
+
+extend(THREE as any)
+
 export default () => (
   <Canvas
-    gl={(props) => {
-      extend(THREE)
-      const renderer = new THREE.WebGPURenderer(props)
-      return renderer.init().then(() => renderer)
+    gl={async (props) => {
+      const renderer = new THREE.WebGPURenderer(props as any)
+      await renderer.init()
+      return renderer
     }}>
       <mesh>
         <meshBasicNodeMaterial />
         <boxGeometry />
       </mesh>
   </Canvas>
+)
 ```
 
 ## Fixes

@@ -8,6 +8,8 @@ declare module '@react-three/fiber' {
   interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
 }
 
+extend(THREE as any)
+
 function Plane(props: ThreeElements['mesh']) {
   const [hovered, hover] = useState(false)
   const { key, uHovered, colorNode, positionNode } = useMemo(() => {
@@ -37,9 +39,9 @@ export default function App() {
   return (
     <Canvas
       gl={async (props) => {
-        extend(THREE as any)
         const renderer = new THREE.WebGPURenderer(props as any)
-        return renderer.init().then(() => renderer)
+        await renderer.init()
+        return renderer
       }}>
       <ambientLight intensity={Math.PI} />
       <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
