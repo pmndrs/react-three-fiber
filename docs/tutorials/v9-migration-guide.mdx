@@ -58,13 +58,13 @@ const Controls = extend(OrbitControls)
 
 ### Async GL prop
 
-The GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
+The Canvas GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
 
 ```diff
 <Canvas
   gl={{ reverseDepthBuffer: true }}
--  gl={(canvas) => new WebGLRenderer({ canvas })}
-+  gl={(props) => new WebGLRenderer(props)}
+- gl={(canvas) => new WebGLRenderer({ canvas })}
++ gl={(props) => new WebGLRenderer(props)}
 >
 ```
 
