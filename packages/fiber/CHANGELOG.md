@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.0.2
+
+### Patch Changes
+
+- 14e133278c3cf1550a3b9aeaaadb624a2aae4781: fix(reconciler): prefer to resolve unprefixed instance types
+
 ## 9.0.1
 
 ### Patch Changes
