@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 9.0.1
+
+### Patch Changes
+
+- 754861f16ac7ee93844d52057d2b8515b145fdb2: Republish as latest
+
 ## 9.0.0
 
 ### Major Changes
