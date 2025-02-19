@@ -22,7 +22,7 @@ import { RootState, Size } from '../core/store'
 const _View = View as any
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, Omit<ViewProps, 'children'> {
-  children: React.ReactNode
+  children?: React.ReactNode
   style?: ViewStyle
   ref?: React.Ref<View>
 }
@@ -208,7 +208,7 @@ function CanvasImpl({
         root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
-              <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+              <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
             </ErrorBoundary>
           </Bridge>,
         )
