@@ -139,7 +139,7 @@ npm install expo-cli -g
 expo init my-app
 cd my-app
 # Install dependencies
-npm install three @react-three/fiber@beta react@rc
+npm install three @react-three/fiber react
 # Start
 expo start
 ```
