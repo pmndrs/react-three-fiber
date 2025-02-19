@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 8.18.0
+
+### Minor Changes
+
+- 54a3330f: feat: make children optional in Canvas
+
 ## 8.17.14
 
 ### Patch Changes
