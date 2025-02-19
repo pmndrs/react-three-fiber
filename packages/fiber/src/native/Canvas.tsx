@@ -19,7 +19,7 @@ import { createPointerEvents } from '../web/events'
 import { RootState, Size } from '../core/store'
 
 export interface CanvasProps extends Omit<RenderProps<HTMLCanvasElement>, 'size' | 'dpr'>, ViewProps {
-  children: React.ReactNode
+  children?: React.ReactNode
   style?: ViewStyle
 }
 
@@ -211,7 +211,7 @@ const CanvasImpl = /*#__PURE__*/ React.forwardRef<View, Props>(
       root.current.render(
         <Bridge>
           <ErrorBoundary set={setError}>
-            <React.Suspense fallback={<Block set={setBlock} />}>{children}</React.Suspense>
+            <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
           </ErrorBoundary>
         </Bridge>,
       )
