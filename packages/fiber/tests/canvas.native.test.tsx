@@ -1,26 +1,27 @@
 import * as React from 'react'
 import { View } from 'react-native'
-import { create } from 'react-test-renderer'
+// @ts-ignore TS2305 remove with modern TS config
+import { render } from 'react-nil'
 import { Canvas, act } from '../src/native'
 
 describe('native Canvas', () => {
   it('should correctly mount', async () => {
-    const renderer = await act(async () =>
-      create(
+    const container = await act(async () =>
+      render(
         <Canvas>
           <group />
         </Canvas>,
       ),
     )
 
-    expect(renderer.toJSON()).toMatchSnapshot()
+    expect(JSON.stringify(container.head)).toMatchSnapshot()
   })
 
-  it.skip('should forward ref', async () => {
+  it('should forward ref', async () => {
     const ref = React.createRef<View>()
 
     await act(async () =>
-      create(
+      render(
         <Canvas ref={ref}>
           <group />
         </Canvas>,
@@ -30,7 +31,7 @@ describe('native Canvas', () => {
     expect(ref.current).toBeInstanceOf(View)
   })
 
-  it.skip('should forward context', async () => {
+  it('should forward context', async () => {
     const ParentContext = React.createContext<boolean>(null!)
     let receivedValue!: boolean
 
@@ -40,7 +41,7 @@ describe('native Canvas', () => {
     }
 
     await act(async () => {
-      create(
+      render(
         <ParentContext.Provider value={true}>
           <Canvas>
             <Test />
@@ -53,14 +54,14 @@ describe('native Canvas', () => {
   })
 
   it('should correctly unmount', async () => {
-    const renderer = await act(async () =>
-      create(
+    await act(async () =>
+      render(
         <Canvas>
           <group />
         </Canvas>,
       ),
     )
 
-    expect(async () => await act(async () => renderer.unmount())).not.toThrow()
+    expect(async () => await act(async () => render(null))).not.toThrow()
   })
 })

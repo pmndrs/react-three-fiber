@@ -4,12 +4,10 @@ import { extend } from '@react-three/fiber'
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean
-  var IS_REACT_NATIVE_TEST_ENVIRONMENT: boolean // https://github.com/facebook/react/pull/28419
 }
 
 // Let React know that we'll be testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
-global.IS_REACT_NATIVE_TEST_ENVIRONMENT = true // hide react-test-renderer warnings
 
 // PointerEvent is not in JSDOM
 // https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
@@ -26,6 +24,8 @@ if (!global.PointerEvent) {
     readonly twist: number = 0
     readonly pointerType: string = ''
     readonly isPrimary: boolean = false
+    readonly altitudeAngle: number = 0
+    readonly azimuthAngle: number = 0
 
     constructor(type: string, params: PointerEventInit = {}) {
       super(type, params)
