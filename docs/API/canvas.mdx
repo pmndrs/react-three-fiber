@@ -1,6 +1,6 @@
 ---
 title: Canvas
-description: 'The Canvas object is your portal into three.js.'
+description: The Canvas object is your portal into three.js
 nav: 4
 ---
 
@@ -23,27 +23,27 @@ const App = () => (
 
 ## Properties
 
-| Prop            | Description                                                                                                                                       | Default                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| children        | three.js JSX elements or regular components                                                                                                       |                                                                   |
-| fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                                   |
-| gl              | Props that go into the default renderer, or your own renderer. Also accepts a synchronous callback like `gl={canvas => new Renderer({ canvas })}` | `{}`                                                              |
-| camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`          |
-| scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                              |
-| shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                           |
-| raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                              |
-| frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                          |
-| resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`           |
-| orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                           |
-| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                          |
-| legacy          | Enables THREE.ColorManagement in three r139 or later                                                                                              | `false`                                                           |
-| linear          | Switch off automatic sRGB color space and gamma correction                                                                                        | `false`                                                           |
-| events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`                     |
-| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.MutableRefObject<HTMLElement>`, `gl.domElement.parentNode` |
-| eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                          |
-| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                           |
-| onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                                   |
-| onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                                   |
+| Prop            | Description                                                                                                                                       | Default                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| children        | three.js JSX elements or regular components                                                                                                       |                                                            |
+| fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                            |
+| gl              | Props that go into the default renderer. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`          | `{}`                                                       |
+| camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
+| scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
+| shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                    |
+| raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                       |
+| frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
+| resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
+| orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                    |
+| dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                   |
+| legacy          | Enables THREE.ColorManagement in three r139 or later                                                                                              | `false`                                                    |
+| linear          | Switch off automatic sRGB color space and gamma correction                                                                                        | `false`                                                    |
+| events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`              |
+| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.RefObject<HTMLElement>`, `gl.domElement.parentNode` |
+| eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                   |
+| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                    |
+| onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                            |
+| onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                            |
 
 ## Defaults
 
@@ -99,6 +99,36 @@ function App() {
 > [!NOTE]
 > Ideally, and if possible, your fallback is a seamless, visual replacement for what the canvas would have otherwise rendered.
 
+## WebGPU
+
+Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
+
+```tsx
+import * as THREE from 'three/webgpu'
+import * as TSL from 'three/tsl'
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+
+declare module '@react-three/fiber' {
+  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
+}
+
+extend(THREE as any)
+
+export default () => (
+  <Canvas
+    gl={async (props) => {
+      const renderer = new THREE.WebGPURenderer(props as any)
+      await renderer.init()
+      return renderer
+    }}>
+      <mesh>
+        <meshBasicNodeMaterial />
+        <boxGeometry />
+      </mesh>
+  </Canvas>
+)
+```
+
 ## Custom Canvas
 
 R3F can render to a root, similar to how `react-dom` and all the other React renderers work. This allows you to shave off `react-dom` (~40kb), `react-use-measure` (~3kb) and, if you don't need them, `pointer-events` (~7kb) (you need to explicitly import `events` and add them to the config otherwise).
@@ -120,22 +150,27 @@ extend(THREE)
 // Create a react root
 const root = createRoot(document.querySelector('canvas'))
 
-// Configure the root, inject events optionally, set camera, etc
-root.configure({ events, camera: { position: [0, 0, 50] } })
+async function app() {
+  // Configure the root, inject events optionally, set camera, etc
+  // This *must* be called before render, and it must be awaited
+  await root.configure({ events, camera: { position: [0, 0, 50] } })
 
-// createRoot by design is not responsive, you have to take care of resize yourself
-window.addEventListener('resize', () => {
-  root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
-})
+  // createRoot by design is not responsive, you have to take care of resize yourself
+  window.addEventListener('resize', () => {
+    root.configure({ size: { width: window.innerWidth, height: window.innerHeight } })
+  })
 
-// Trigger resize
-window.dispatchEvent(new Event('resize'))
+  // Trigger resize
+  window.dispatchEvent(new Event('resize'))
 
-// Render entry point
-root.render(<App />)
+  // Render entry point
+  root.render(<App />)
 
-// Unmount and dispose of memory
-// root.unmount()
+  // Unmount and dispose of memory
+  // root.unmount()
+}
+
+app()
 ```
 
 ## Tree-shaking

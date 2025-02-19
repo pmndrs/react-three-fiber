@@ -1,7 +1,7 @@
 ---
 title: Objects, properties and constructor arguments
-description: 'All the effective ways of using React Three Fiber'
-nav: 6
+description: All the effective ways of using React Three Fiber
+nav: 5
 ---
 
 ## Declaring objects
@@ -101,7 +101,7 @@ You can also deeply nest attach through piercing. The following adds a buffer-at
 ```jsx
 <mesh>
   <bufferGeometry>
-    <bufferAttribute attach="attributes-position" count={v.length / 3} array={v} itemSize={3} />
+    <bufferAttribute attach="attributes-position" args={[v, 3]} />
 ```
 
 #### More examples

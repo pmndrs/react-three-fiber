@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react'
 import { Canvas, createPortal } from '@react-three/fiber'
-import { useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
+import * as THREE from 'three'
 
 function Icosahedron() {
-  const [active, set] = useState(false)
-  const handleClick = useCallback((e) => set((state) => !state), [])
+  const [active, setActive] = useState(false)
+  const handleClick = useCallback(() => setActive((state) => !state), [])
   return (
     <mesh scale={active ? [2, 2, 2] : [1, 1, 1]} onClick={handleClick}>
       <icosahedronGeometry args={[1, 0]} />
@@ -13,18 +13,21 @@ function Icosahedron() {
   )
 }
 
-function RenderToPortal({ targets }: any) {
+function RenderToPortal({ targets }: { targets: THREE.Group[] }) {
   const [target, toggle] = useReducer((state) => (state + 1) % targets.length, 0)
+
   useEffect(() => {
     const interval = setInterval(toggle, 1000)
     return () => clearInterval(interval)
   }, [targets])
+
   return <>{createPortal(<Icosahedron />, targets[target])}</>
 }
 
 export default function Group() {
   const [ref1, set1] = useState<THREE.Group>(null!)
   const [ref2, set2] = useState<THREE.Group>(null!)
+
   return (
     <Canvas onCreated={() => console.log('onCreated')}>
       <group>

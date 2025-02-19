@@ -1,4 +1,4 @@
-import { ReactThreeTestInstance } from '../createTestInstance'
+import type { ReactThreeTestInstance } from '../createTestInstance'
 import type { Obj } from '../types/internal'
 
 export const expectOne = <TItem>(items: TItem[], msg: string) => {

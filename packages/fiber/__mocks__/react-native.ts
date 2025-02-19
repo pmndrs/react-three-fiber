@@ -1,30 +1,25 @@
 import * as React from 'react'
 import { ViewProps, LayoutChangeEvent } from 'react-native'
 
-// Mocks a View or container as React sees it
-const Container = React.memo(
-  React.forwardRef(({ onLayout, ...props }: ViewProps, ref) => {
-    React.useLayoutEffect(() => {
-      onLayout?.({
-        nativeEvent: {
-          layout: {
-            x: 0,
-            y: 0,
-            width: 1280,
-            height: 800,
-          },
+export class View extends React.Component<Omit<ViewProps, 'children'> & { children: React.ReactNode }> {
+  componentDidMount() {
+    this.props.onLayout?.({
+      nativeEvent: {
+        layout: {
+          x: 0,
+          y: 0,
+          width: 1280,
+          height: 800,
         },
-      } as LayoutChangeEvent)
-    }, [onLayout])
+      },
+    } as LayoutChangeEvent)
+  }
 
-    React.useImperativeHandle(ref, () => props)
-
-    return null
-  }),
-)
-
-export const View = Container
-export const Pressable = Container
+  render() {
+    const { onLayout, ...props } = this.props
+    return React.createElement('view', props)
+  }
+}
 
 export const StyleSheet = {
   absoluteFill: {
@@ -51,3 +46,9 @@ export const Platform = {
 }
 
 export const NativeModules = {}
+
+export const PixelRatio = {
+  get() {
+    return 1
+  },
+}

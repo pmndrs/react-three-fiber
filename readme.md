@@ -1,9 +1,3 @@
-> [!WARNING]  
-> R3F v8 is not compatible with React 19 or Next 15, which uses React 19. Use the R3F v9 RC instead which can be installed with `@react-three/fiber@rc`.
-
-> [!NOTE]  
-> While we work on R3F v9 you can track compatibility of different libraries and common workarounds [here](https://github.com/verekia/three-gpu-ecosystem-tests).
-
 <h1>@react-three/fiber</h1>
 
 [![Version](https://img.shields.io/npm/v/@react-three/fiber?style=flat&colorA=000000&colorB=000000)](https://npmjs.com/package/@react-three/fiber)
@@ -14,7 +8,7 @@
 [![ETH](https://img.shields.io/badge/ETH-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/eth/address/0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682)
 [![BTC](https://img.shields.io/badge/BTC-f5f5f5?style=flat&colorA=000000&colorB=000000)](https://blockchain.com/btc/address/36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH)
 
-<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="/docs/banner-r3f.jpg" /></a>
+<a href="https://docs.pmnd.rs/react-three-fiber/getting-started/examples"><img src="docs/banner-r3f.jpg" /></a>
 
 react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#renderers">React renderer</a> for threejs.
 
@@ -23,6 +17,8 @@ Build your scene declaratively with re-usable, self-contained components that re
 ```bash
 npm install three @types/three @react-three/fiber
 ```
+
+---
 
 #### Does it have limitations?
 
@@ -223,7 +219,7 @@ Some helpful material:
 - [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
 - [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
 
-<a href="https://threejs-journey.com"><img src="/docs/banner-journey.jpg" /></a>
+<a href="https://threejs-journey.com"><img src="docs/banner-journey.jpg" /></a>
 
 # Ecosystem
 
@@ -255,7 +251,7 @@ There is a vibrant and extensive eco system around three-fiber, full of librarie
 - [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
 - [`miniplex`](https://github.com/hmans/miniplex) &ndash; ECS (entity management system)
 - [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
-- [`triplex`](https://triplex.dev/) &ndash; scene editor for react-three-fiber
+- [`triplex`](https://triplex.dev/) &ndash; visual editor for react-three-fiber
 - [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
 
 [Usage Trend of the @react-three Family](https://npm-compare.com/@react-three/a11y,@react-three/cannon,@react-three/csg,@react-three/drei,@react-three/flex,@react-three/gltfjsx,@react-three/gpu-pathtracer,@react-three/offscreen,@react-three/p2,@react-three/postprocessing,@react-three/rapier,@react-three/test-renderer,@react-three/uikit,@react-three/xr)

@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "8.18.0",
+  "version": "9.0.0-rc.10",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -43,26 +43,26 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@types/react-reconciler": "^0.26.7",
+    "@types/react-reconciler": "^0.28.9",
     "@types/webxr": "*",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
-    "its-fine": "^1.0.6",
-    "react-reconciler": "^0.27.0",
+    "its-fine": "^2.0.0",
+    "react-reconciler": "^0.31.0",
     "react-use-measure": "^2.1.7",
-    "scheduler": "^0.21.0",
+    "scheduler": "^0.25.0",
     "suspend-react": "^0.1.3",
-    "zustand": "^3.7.1"
+    "zustand": "^5.0.3"
   },
   "peerDependencies": {
     "expo": ">=43.0",
     "expo-asset": ">=8.4",
     "expo-gl": ">=11.0",
     "expo-file-system": ">=11.0",
-    "react": ">=18 <19",
-    "react-dom": ">=18 <19",
-    "react-native": ">=0.64",
-    "three": ">=0.133"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-native": ">=0.78",
+    "three": ">=0.156"
   },
   "peerDependenciesMeta": {
     "react-dom": {

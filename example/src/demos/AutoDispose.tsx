@@ -1,11 +1,17 @@
+import { Canvas, type ThreeElements, useFrame } from '@react-three/fiber'
+import { useRef, useState } from 'react'
 import * as THREE from 'three'
-import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
 
-function Box1(props: any) {
+type BoxProps = ThreeElements['object3D'] & {
+  setActive: (active: boolean) => void
+  active: boolean
+}
+
+function Box1(props: BoxProps) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   useFrame((state) => (mesh.current.position.y = Math.sin(state.clock.elapsedTime)))
+
   return (
     <mesh
       {...props}
@@ -19,10 +25,11 @@ function Box1(props: any) {
   )
 }
 
-function Box2(props: any) {
+function Box2(props: BoxProps) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
   useFrame((state) => (mesh.current.position.y = Math.sin(state.clock.elapsedTime)))
+
   return (
     <group {...props}>
       <mesh
@@ -40,6 +47,7 @@ function Box2(props: any) {
 
 function Switcher() {
   const [active, setActive] = useState(false)
+
   return (
     <>
       {active && <Box1 active={active} setActive={setActive} position={[-0.5, 0, 0]} />}

@@ -1,10 +1,8 @@
-import React, { useRef, useEffect, useState, useCallback, useContext, useMemo } from 'react'
-import { extend, Canvas, useThree, ReactThreeFiber } from '@react-three/fiber'
+import { Canvas, ThreeEvent, extend } from '@react-three/fiber'
+import { useCallback, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { OrbitControls } from 'three-stdlib'
-extend({ OrbitControls })
 
-export class DotMaterial extends THREE.ShaderMaterial {
+class DotMaterialImpl extends THREE.ShaderMaterial {
   constructor() {
     super({
       transparent: true,
@@ -19,11 +17,12 @@ export class DotMaterial extends THREE.ShaderMaterial {
   }
 }
 
-extend({ DotMaterial })
+const DotMaterial = extend(DotMaterialImpl)
 
 const white = new THREE.Color('white')
 const hotpink = new THREE.Color('hotpink')
-function Particles({ pointCount }: any) {
+
+function Particles({ pointCount }: { pointCount: number }) {
   const [positions, colors] = useMemo(() => {
     const positions = [...new Array(pointCount * 3)].map(() => 5 - Math.random() * 10)
     const colors = [...new Array(pointCount)].flatMap(() => hotpink.toArray())
@@ -31,24 +30,25 @@ function Particles({ pointCount }: any) {
   }, [pointCount])
 
   const points = useRef<THREE.Points>(null!)
-  const hover = useCallback((e) => {
+
+  const hover = useCallback((e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation()
-    white.toArray(points.current.geometry.attributes.color.array, e.index * 3)
+    white.toArray(points.current.geometry.attributes.color.array, e.index! * 3)
     points.current.geometry.attributes.color.needsUpdate = true
   }, [])
 
-  const unhover = useCallback((e) => {
-    hotpink.toArray(points.current.geometry.attributes.color.array, e.index * 3)
+  const unhover = useCallback((e: ThreeEvent<PointerEvent>) => {
+    hotpink.toArray(points.current.geometry.attributes.color.array, e.index! * 3)
     points.current.geometry.attributes.color.needsUpdate = true
   }, [])
 
   return (
     <points ref={points} onPointerOver={hover} onPointerOut={unhover}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={positions.length / 3} array={positions} itemSize={3} />
-        <bufferAttribute attach="attributes-color" count={colors.length / 3} array={colors} itemSize={3} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
       </bufferGeometry>
-      <dotMaterial vertexColors depthWrite={false} />
+      <DotMaterial vertexColors depthWrite={false} />
     </points>
   )
 }
@@ -58,7 +58,7 @@ export default function App() {
     <Canvas
       orthographic
       camera={{ zoom: 40, position: [0, 0, 100] }}
-      raycaster={{ params: { Points: { threshold: 0.2 } } }}>
+      raycaster={{ params: { Points: { threshold: 0.2 } } as any }}>
       <Particles pointCount={1000} />
     </Canvas>
   )

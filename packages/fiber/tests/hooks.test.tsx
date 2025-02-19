@@ -1,8 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import * as Stdlib from 'three-stdlib'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
-import { waitFor } from '@react-three/test-renderer'
 
 import {
   createRoot,
@@ -14,9 +12,12 @@ import {
   useFrame,
   ObjectMap,
   useInstanceHandle,
-  LocalState,
-} from '../../src'
-import { Instance } from 'packages/fiber/src/core/renderer'
+  Instance,
+  extend,
+} from '../src'
+
+extend(THREE as any)
+const root = createRoot(document.createElement('canvas'))
 
 describe('hooks', () => {
   let canvas: HTMLCanvasElement = null!
@@ -51,14 +52,12 @@ describe('hooks', () => {
       return <group />
     }
 
-    await act(async () => {
-      createRoot(canvas).render(<Component />)
-    })
+    await act(async () => root.render(<Component />))
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
     expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
-    expect(result.size).toEqual({ height: 0, width: 0, top: 0, left: 0, updateStyle: false })
+    expect(result.size).toEqual({ height: 0, width: 0, top: 0, left: 0 })
   })
 
   it('can handle useFrame hook', async () => {
@@ -79,51 +78,35 @@ describe('hooks', () => {
       )
     }
 
-    let scene: THREE.Scene = null!
-    await act(
-      async () =>
-        (scene = createRoot(canvas)
-          .configure({ frameloop: 'never' })
-          .render(<Component />)
-          .getState().scene),
-    )
+    const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<Component />))
+    const { scene } = store.getState()
+
     advance(Date.now())
     expect(scene.children[0].position.x).toEqual(1)
     expect(frameCalls.length).toBeGreaterThan(0)
   })
 
   it('can handle useLoader hook', async () => {
-    let gltf!: Stdlib.GLTF & ObjectMap
-
     const MockMesh = new THREE.Mesh()
     MockMesh.name = 'Scene'
 
-    jest.spyOn(Stdlib, 'GLTFLoader').mockImplementation(
-      () =>
-        ({
-          load: jest.fn().mockImplementation((_url, onLoad) => {
-            onLoad({ scene: MockMesh })
-          }),
-        } as unknown as Stdlib.GLTFLoader),
-    )
+    interface GLTF {
+      scene: THREE.Object3D
+    }
+    class GLTFLoader extends THREE.Loader<GLTF, string> {
+      load(url: string, onLoad: (gltf: GLTF) => void): void {
+        onLoad({ scene: MockMesh })
+      }
+    }
 
+    let gltf!: GLTF & ObjectMap
     const Component = () => {
-      gltf = useLoader(Stdlib.GLTFLoader, '/suzanne.glb')
+      gltf = useLoader(GLTFLoader, '/suzanne.glb')
       return <primitive object={gltf.scene} />
     }
 
-    let scene: THREE.Scene = null!
-    await act(async () => {
-      scene = createRoot(canvas)
-        .render(
-          <React.Suspense fallback={null}>
-            <Component />
-          </React.Suspense>,
-        )
-        .getState().scene
-    })
-
-    await waitFor(() => expect(scene.children[0]).toBeDefined())
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
     expect(gltf.scene).toBe(MockMesh)
@@ -162,41 +145,51 @@ describe('hooks', () => {
 
       return (
         <>
-          <primitive object={mockMesh} />
-          <primitive object={mockScene} />
+          <primitive object={mockMesh as THREE.Mesh} />
+          <primitive object={mockScene as THREE.Scene} />
         </>
       )
     }
 
-    let scene: THREE.Scene = null!
-    await act(async () => {
-      scene = createRoot(canvas)
-        .render(
-          <React.Suspense fallback={null}>
-            <Component />
-          </React.Suspense>,
-        )
-        .getState().scene
-    })
-
-    await waitFor(() => expect(scene.children[0]).toBeDefined())
+    const store = await act(async () => root.render(<Component />))
+    const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
     expect(scene.children[1]).toBe(MockGroup)
-    expect(extensions).toBeCalledTimes(1)
+    expect(extensions).toHaveBeenCalledTimes(1)
+  })
+
+  it('can handle useLoader with an existing loader instance', async () => {
+    class Loader extends THREE.Loader<null, string> {
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
+    }
+
+    const loader = new Loader()
+    let proto!: Loader
+
+    function Test(): null {
+      return useLoader(loader, '', (loader) => (proto = loader))
+    }
+    await act(async () => root.render(<Test />))
+
+    expect(proto).toBe(loader)
   })
 
   it('can handle useLoader with a loader extension', async () => {
-    class Loader extends THREE.Loader {
-      load = (_url: string) => null
+    class Loader extends THREE.Loader<null, string> {
+      load(_url: string, onLoad: (result: null) => void): void {
+        onLoad(null)
+      }
     }
 
     let proto!: Loader
 
-    function Test() {
+    function Test(): null {
       return useLoader(Loader, '', (loader) => (proto = loader))
     }
-    await act(async () => createRoot(canvas).render(<Test />))
+    await act(async () => root.render(<Test />))
 
     expect(proto).toBeInstanceOf(Loader)
   })
@@ -232,9 +225,7 @@ describe('hooks', () => {
       return <mesh />
     }
 
-    await act(async () => {
-      createRoot(canvas).render(<Component />)
-    })
+    await act(async () => root.render(<Component />))
 
     expect(result).toEqual({
       nodes: {
@@ -254,14 +245,14 @@ describe('hooks', () => {
 
   it('can handle useInstanceHandle hook', async () => {
     const ref = React.createRef<THREE.Group>()
-    let instance!: React.MutableRefObject<LocalState>
+    let instance!: React.RefObject<Instance>
 
     const Component = () => {
       instance = useInstanceHandle(ref)
       return <group ref={ref} />
     }
-    await act(async () => createRoot(canvas).render(<Component />))
+    await act(async () => root.render(<Component />))
 
-    expect(instance.current).toBe((ref.current as unknown as Instance).__r3f)
+    expect(instance.current).toBe((ref.current as unknown as Instance<THREE.Group>['object']).__r3f)
   })
 })

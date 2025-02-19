@@ -1,7 +1,9 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
+import { Canvas, act, extend } from '../src'
+import THREE from 'three'
 
-import { Canvas, act } from '../../src'
+extend(THREE as any)
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
@@ -390,4 +392,59 @@ describe('events', () => {
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
     })
   })
+
+  it('can handle primitives', async () => {
+    const handlePointerDownOuter = jest.fn()
+    const handlePointerDownInner = jest.fn()
+
+    const object = new THREE.Group()
+    object.add(new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial()))
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <group onPointerDown={handlePointerDownOuter}>
+            <primitive name="test" object={object} onPointerDown={handlePointerDownInner} />
+          </group>
+        </Canvas>,
+      )
+    })
+
+    const evt = new PointerEvent('pointerdown')
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+
+    fireEvent(getContainer(), evt)
+
+    expect(handlePointerDownOuter).toHaveBeenCalled()
+    expect(handlePointerDownInner).toHaveBeenCalled()
+  })
+
+  it('can handle a DOM offset canvas', async () => {
+    const handlePointerDown = jest.fn()
+    await act(async () => {
+      render(
+        <Canvas
+          onCreated={(state) => {
+            state.size.left = 100
+            state.size.top = 100
+          }}>
+          <mesh onPointerDown={handlePointerDown}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = new PointerEvent('pointerdown')
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+
+    fireEvent(getContainer(), evt)
+
+    expect(handlePointerDown).toHaveBeenCalled()
+  })
+
+  it.todo('can handle different event prefixes')
 })

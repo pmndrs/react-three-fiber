@@ -1,10 +1,7 @@
 import * as THREE from 'three'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
-import { getRootState } from './utils'
-import type { UseBoundStore } from 'zustand'
-import type { Instance } from './renderer'
-import type { RootState } from './store'
-import type { Properties } from '../three-types'
+import { type Properties, getRootState } from './utils'
+import type { Instance } from './reconciler'
+import type { RootState, RootStore } from './store'
 
 export interface Intersection extends THREE.Intersection {
   /** The event source (the object which registered the handler) */
@@ -38,7 +35,7 @@ export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
 export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
-export type Events = {
+export interface Events {
   onClick: EventListener
   onContextMenu: EventListener
   onDoubleClick: EventListener
@@ -51,7 +48,7 @@ export type Events = {
   onLostPointerCapture: EventListener
 }
 
-export type EventHandlers = {
+export interface EventHandlers {
   onClick?: (event: ThreeEvent<MouseEvent>) => void
   onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
   onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
@@ -65,6 +62,7 @@ export type EventHandlers = {
   onPointerMissed?: (event: MouseEvent) => void
   onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
+  onLostPointerCapture?: (event: ThreeEvent<PointerEvent>) => void
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
@@ -102,35 +100,6 @@ function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
 }
 
-// https://github.com/facebook/react/tree/main/packages/react-reconciler#getcurrenteventpriority
-// Gives React a clue as to how import the current interaction is
-export function getEventPriority() {
-  // Get a handle to the current global scope in window and worker contexts if able
-  // https://github.com/pmndrs/react-three-fiber/pull/2493
-  const globalScope = (typeof self !== 'undefined' && self) || (typeof window !== 'undefined' && window)
-  if (!globalScope) return DefaultEventPriority
-
-  const name = globalScope.event?.type
-  switch (name) {
-    case 'click':
-    case 'contextmenu':
-    case 'dblclick':
-    case 'pointercancel':
-    case 'pointerdown':
-    case 'pointerup':
-      return DiscreteEventPriority
-    case 'pointermove':
-    case 'pointerout':
-    case 'pointerover':
-    case 'pointerenter':
-    case 'pointerleave':
-    case 'wheel':
-      return ContinuousEventPriority
-    default:
-      return DefaultEventPriority
-  }
-}
-
 /**
  * Release pointer captures.
  * This is called by releasePointerCapture in the API, and when an object is removed.
@@ -152,7 +121,7 @@ function releaseInternalPointerCapture(
   }
 }
 
-export function removeInteractivity(store: UseBoundStore<RootState>, object: THREE.Object3D) {
+export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store
   internal.interaction = internal.interaction.filter((o) => o !== object)
@@ -168,7 +137,7 @@ export function removeInteractivity(store: UseBoundStore<RootState>, object: THR
   })
 }
 
-export function createEvents(store: UseBoundStore<RootState>) {
+export function createEvents(store: RootStore) {
   /** Calculates delta */
   function calculateDistance(event: DomEvent) {
     const { internal } = store.getState()
@@ -181,7 +150,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
   function filterPointerEvents(objects: THREE.Object3D[]) {
     return objects.filter((obj) =>
       ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) => (obj as unknown as Instance).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
+        (name) =>
+          (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
       ),
     )
   }
@@ -249,7 +219,8 @@ export function createEvents(store: UseBoundStore<RootState>) {
       let eventObject: THREE.Object3D | null = hit.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as unknown as Instance).__r3f?.eventCount) intersections.push({ ...hit, eventObject })
+        if ((eventObject as Instance<THREE.Object3D>['object']).__r3f?.eventCount)
+          intersections.push({ ...hit, eventObject })
         eventObject = eventObject.parent
       }
     }
@@ -270,96 +241,110 @@ export function createEvents(store: UseBoundStore<RootState>) {
     delta: number,
     callback: (event: ThreeEvent<DomEvent>) => void,
   ) {
-    const rootState = store.getState()
-
     // If anything has been found, forward it to the event listeners
     if (intersections.length) {
       const localState = { stopped: false }
       for (const hit of intersections) {
-        const state = getRootState(hit.object) || rootState
-        const { raycaster, pointer, camera, internal } = state
-        const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
-        const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
+        let state = getRootState(hit.object)
 
-        const setPointerCapture = (id: number) => {
-          const captureData = { intersection: hit, target: event.target as Element }
-          if (internal.capturedMap.has(id)) {
-            // if the pointerId was previously captured, we add the hit to the
-            // event capturedMap.
-            internal.capturedMap.get(id)!.set(hit.eventObject, captureData)
-          } else {
-            // if the pointerId was not previously captured, we create a map
-            // containing the hitObject, and the hit. hitObject is used for
-            // faster access.
-            internal.capturedMap.set(id, new Map([[hit.eventObject, captureData]]))
-          }
-          // Call the original event now
-          ;(event.target as Element).setPointerCapture(id)
-        }
-
-        const releasePointerCapture = (id: number) => {
-          const captures = internal.capturedMap.get(id)
-          if (captures) {
-            releaseInternalPointerCapture(internal.capturedMap, hit.eventObject, captures, id)
-          }
-        }
-
-        // Add native event props
-        let extractEventProps: any = {}
-        // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
-        for (let prop in event) {
-          let property = event[prop as keyof DomEvent]
-          // Only copy over atomics, leave functions alone as these should be
-          // called as event.nativeEvent.fn()
-          if (typeof property !== 'function') extractEventProps[prop] = property
-        }
-
-        let raycastEvent: ThreeEvent<DomEvent> = {
-          ...hit,
-          ...extractEventProps,
-          pointer,
-          intersections,
-          stopped: localState.stopped,
-          delta,
-          unprojectedPoint,
-          ray: raycaster.ray,
-          camera: camera,
-          // Hijack stopPropagation, which just sets a flag
-          stopPropagation() {
-            // https://github.com/pmndrs/react-three-fiber/issues/596
-            // Events are not allowed to stop propagation if the pointer has been captured
-            const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
-
-            // We only authorize stopPropagation...
-            if (
-              // ...if this pointer hasn't been captured
-              !capturesForPointer ||
-              // ... or if the hit object is capturing the pointer
-              capturesForPointer.has(hit.eventObject)
-            ) {
-              raycastEvent.stopped = localState.stopped = true
-              // Propagation is stopped, remove all other hover records
-              // An event handler is only allowed to flush other handlers if it is hovered itself
-              if (
-                internal.hovered.size &&
-                Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
-              ) {
-                // Objects cannot flush out higher up objects that have already caught the event
-                const higher = intersections.slice(0, intersections.indexOf(hit))
-                cancelPointer([...higher, hit])
-              }
+        // If the object is not managed by R3F, it might be parented to an element which is.
+        // Traverse upwards until we find a managed parent and use its state instead.
+        if (!state) {
+          hit.object.traverseAncestors((obj) => {
+            const parentState = getRootState(obj)
+            if (parentState) {
+              state = parentState
+              return false
             }
-          },
-          // there should be a distinction between target and currentTarget
-          target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
-          nativeEvent: event,
+          })
         }
 
-        // Call subscribers
-        callback(raycastEvent)
-        // Event bubbling may be interrupted by stopPropagation
-        if (localState.stopped === true) break
+        if (state) {
+          const { raycaster, pointer, camera, internal } = state
+          const unprojectedPoint = new THREE.Vector3(pointer.x, pointer.y, 0).unproject(camera)
+
+          const hasPointerCapture = (id: number) => internal.capturedMap.get(id)?.has(hit.eventObject) ?? false
+
+          const setPointerCapture = (id: number) => {
+            const captureData = { intersection: hit, target: event.target as Element }
+            if (internal.capturedMap.has(id)) {
+              // if the pointerId was previously captured, we add the hit to the
+              // event capturedMap.
+              internal.capturedMap.get(id)!.set(hit.eventObject, captureData)
+            } else {
+              // if the pointerId was not previously captured, we create a map
+              // containing the hitObject, and the hit. hitObject is used for
+              // faster access.
+              internal.capturedMap.set(id, new Map([[hit.eventObject, captureData]]))
+            }
+            // Call the original event now
+            ;(event.target as Element).setPointerCapture(id)
+          }
+
+          const releasePointerCapture = (id: number) => {
+            const captures = internal.capturedMap.get(id)
+            if (captures) {
+              releaseInternalPointerCapture(internal.capturedMap, hit.eventObject, captures, id)
+            }
+          }
+
+          // Add native event props
+          let extractEventProps: any = {}
+          // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
+          for (let prop in event) {
+            let property = event[prop as keyof DomEvent]
+            // Only copy over atomics, leave functions alone as these should be
+            // called as event.nativeEvent.fn()
+            if (typeof property !== 'function') extractEventProps[prop] = property
+          }
+
+          let raycastEvent: ThreeEvent<DomEvent> = {
+            ...hit,
+            ...extractEventProps,
+            pointer,
+            intersections,
+            stopped: localState.stopped,
+            delta,
+            unprojectedPoint,
+            ray: raycaster.ray,
+            camera: camera,
+            // Hijack stopPropagation, which just sets a flag
+            stopPropagation() {
+              // https://github.com/pmndrs/react-three-fiber/issues/596
+              // Events are not allowed to stop propagation if the pointer has been captured
+              const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
+
+              // We only authorize stopPropagation...
+              if (
+                // ...if this pointer hasn't been captured
+                !capturesForPointer ||
+                // ... or if the hit object is capturing the pointer
+                capturesForPointer.has(hit.eventObject)
+              ) {
+                raycastEvent.stopped = localState.stopped = true
+                // Propagation is stopped, remove all other hover records
+                // An event handler is only allowed to flush other handlers if it is hovered itself
+                if (
+                  internal.hovered.size &&
+                  Array.from(internal.hovered.values()).find((i) => i.eventObject === hit.eventObject)
+                ) {
+                  // Objects cannot flush out higher up objects that have already caught the event
+                  const higher = intersections.slice(0, intersections.indexOf(hit))
+                  cancelPointer([...higher, hit])
+                }
+              }
+            },
+            // there should be a distinction between target and currentTarget
+            target: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+            currentTarget: { hasPointerCapture, setPointerCapture, releasePointerCapture },
+            nativeEvent: event,
+          }
+
+          // Call subscribers
+          callback(raycastEvent)
+          // Event bubbling may be interrupted by stopPropagation
+          if (localState.stopped === true) break
+        }
       }
     }
     return intersections
@@ -380,10 +365,10 @@ export function createEvents(store: UseBoundStore<RootState>) {
         )
       ) {
         const eventObject = hoveredObj.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
+        const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
         internal.hovered.delete(makeId(hoveredObj))
         if (instance?.eventCount) {
+          const handlers = instance.handlers
           // Clear out intersects, they are outdated by now
           const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
@@ -395,7 +380,7 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
   function pointerMissed(event: MouseEvent, objects: THREE.Object3D[]) {
     for (let i = 0; i < objects.length; i++) {
-      const instance = (objects[i] as unknown as Instance).__r3f
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
       instance?.handlers.onPointerMissed?.(event)
     }
   }
@@ -459,11 +444,11 @@ export function createEvents(store: UseBoundStore<RootState>) {
 
       function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
-        const instance = (eventObject as unknown as Instance).__r3f
-        const handlers = instance?.handlers
+        const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
 
         // Check presence of handlers
         if (!instance?.eventCount) return
+        const handlers = instance.handlers
 
         /*
         MAYBE TODO, DELETE IF NOT: 

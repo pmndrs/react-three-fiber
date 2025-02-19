@@ -1,10 +1,8 @@
 ---
-title: Using with TypeScript
-description: This guide will help through common scenarios and how to approach them with TypeScript.
-nav: 18
+title: TypeScript
+description: Common scenarios and how to approach them with TypeScript
+nav: 9
 ---
-
-This tutorial will assume some React and TypeScript knowledge. You can fork and follow along from [this starter codesandbox](https://codesandbox.io/s/brnsm).
 
 ## Typing with `useRef`
 
@@ -32,38 +30,26 @@ function Box(props) {
 }
 ```
 
-The exclamation mark is a non-null assertion that will let TS know that `ref.current` is defined when we access it in effects.
+The exclamation mark is a non-null assertion that will let TS know that `ref.current` is defined when we access it in effects, useFrame et al. You do not need to check against null, the element is assumed to exist.
 
-## Typing shorthand props
+## Accessing typed three-elements
 
-react-three-fiber accepts short-hand props like scalars, strings, and arrays so you can declaratively set properties without side effects.
-
-Here are the different variations of props:
+Whenever you want to spread props or type components that rely on three elements, you can use the `ThreeElements` interface to extract the mesh, group, or any other three element, including custom elements.
 
 ```tsx
-import { Euler, Vector3, Color } from 'three'
+import { ThreeElements } from '@react-three/fiber'
 
-rotation: Euler || [x, y, z]
-position: Vector3 || [x, y, z] || scalar
-color: Color || 'hotpink' || 0xffffff
+type FooProps = ThreeElements['mesh'] & { bar: boolean }
+
+function Foo({ bar, ...props}: FooProps) {
+  useEffect(() => {
+    console.log(bar)
+  }, [bar])
+  return <mesh {...props} />
+}
 ```
 
-Each property has extended types which you can pull from to type these properties.
-
-```tsx
-import { Euler, Vector3, Color } from '@react-three/fiber'
-// or
-// import { ReactThreeFiber } from '@react-three/fiber'
-// ReactThreeFiber.Euler, ReactThreeFiber.Vector3, etc.
-
-rotation: Euler
-position: Vector3
-color: Color
-```
-
-This is particularly useful if you are typing properties outside of components, such as a store or a hook.
-
-## `extend` usage
+## Extend usage
 
 react-three-fiber can also accept third-party elements and extend them into its internal catalogue.
 
@@ -77,6 +63,8 @@ class CustomElement extends GridHelper {}
 
 // Extend so the reconciler will learn about it
 extend({ CustomElement })
+
+<customElement />
 ```
 
 The catalogue teaches the underlying reconciler how to create fibers for these elements and treat them within the scene.
@@ -89,26 +77,14 @@ You can then declaratively create custom elements with primitives, but TypeScrip
 <customElement />
 ```
 
-### Node Helpers
+### Extending ThreeElements
 
-react-three-fiber exports helpers that you can use to define different types of nodes. These nodes will type an element that we'll attach to the global JSX namespace.
-
-```tsx
-Node
-Object3DNode
-BufferGeometryNode
-MaterialNode
-LightNode
-```
-
-### Extending `ThreeElements`
-
-Since our custom element is an object, we'll use `Object3DNode` to define it.
+To define our element in JSX, we'll use the `ThreeElement` interface to extend `ThreeElements`. This interface describes three.js classes that are available in the R3F catalog and can be used as native elements.
 
 ```tsx
 import { useRef, useEffect } from 'react'
 import { GridHelper } from 'three'
-import { extend, Object3DNode } from '@react-three/fiber'
+import { extend, ThreeElement } from '@react-three/fiber'
 
 // Create our custom element
 class CustomElement extends GridHelper {}
@@ -119,12 +95,40 @@ extend({ CustomElement })
 // Add types to ThreeElements elements so primitives pick up on it
 declare module '@react-three/fiber' {
   interface ThreeElements {
-    customElement: Object3DNode<CustomElement, typeof CustomElement>
+    customElement: ThreeElement<typeof CustomElement>
   }
 }
 
 // react-three-fiber will create your custom component and TypeScript will understand it
 <customComponent />
+```
+
+You can shorten element definition by using the `extend` factory signature, which will automatically extend the element locally. This will also prevent namespace bleeding.
+
+```tsx
+// Create our custom element
+class CustomElement extends GridHelper {}
+
+// Extend so the reconciler will learn about it, types will be inferred
+const Element = extend(CustomElement)
+
+// react-three-fiber will create your custom component and TypeScript will understand it
+<Element />
+```
+
+## Extending three default elements
+
+If you open your own root instead of using `<Canvas>`, you can extend the default elements with `extend`. But keep in mind that the `* as THREE` namespace contains classes, functions, numbers, strings. At the moment we suggest you use `any` or `@ts-ignore` unless you extract the exact classes you need (`extend({ Mesh, Group, ... })`).
+
+```tsx
+import * as THREE from 'three'
+import { extend, createRoot, events } from '@react-three/fiber'
+
+// Register the THREE namespace as native JSX elements.
+extend(THREE as any)
+
+// Create a react root
+const root = createRoot(document.querySelector('canvas'))
 ```
 
 ## Exported types
@@ -148,7 +152,7 @@ Viewport
 Camera
 
 // Canvas props
-Props
+CanvasProps
 
 // Supported events
 Events

@@ -1,6 +1,6 @@
 {
   "name": "@react-three/test-renderer",
-  "version": "8.2.4",
+  "version": "9.0.0-rc.10",
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
@@ -22,8 +22,8 @@
     ]
   },
   "peerDependencies": {
-    "react": ">=18 <19",
-    "@react-three/fiber": ">=8 < 9",
-    "three": ">=0.133"
+    "react": "^19.0.0",
+    "@react-three/fiber": ">=9.0.0",
+    "three": ">=0.156"
   }
 }
