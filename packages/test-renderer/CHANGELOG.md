@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 9.0.0
+
+### Major Changes
+
+- 226d2ec: feat: React 19 support
+
 ## 8.2.4
 
 ### Patch Changes

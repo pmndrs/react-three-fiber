@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.0.0
+
+### Major Changes
+
+- 226d2ec: feat: React 19 support
+
 ## 8.18.0
 
 ### Minor Changes
