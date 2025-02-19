@@ -17,6 +17,7 @@ class Mock extends THREE.Group {
 declare module '@react-three/fiber' {
   interface ThreeElements {
     mock: ThreeElement<typeof Mock>
+    threeRandom: ThreeElement<typeof THREE.Group>
   }
 }
 
@@ -762,6 +763,8 @@ describe('renderer', () => {
   })
 
   it('resolves conflicting and prefixed elements', async () => {
+    extend({ ThreeRandom: THREE.Group })
+
     const store = await act(async () => root.render(<line />))
     expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
 
@@ -770,5 +773,11 @@ describe('renderer', () => {
 
     await act(async () => root.render(<threeLine />))
     expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
+
+    await act(async () => root.render(null))
+    expect(store.getState().scene.children.length).toBe(0)
+
+    await act(async () => root.render(<threeRandom />))
+    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Group)
   })
 })

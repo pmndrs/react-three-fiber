@@ -229,7 +229,7 @@ export function extend<T extends Catalogue | ConstructorRepresentation>(
 
 function validateInstance(type: string, props: HostConfig['props']): void {
   // Get target from catalogue
-  const name = `${type[0].toUpperCase()}${type.slice(1)}`
+  const name = toPascalCase(type)
   const target = catalogue[name]
 
   // Validate element target
@@ -246,8 +246,8 @@ function validateInstance(type: string, props: HostConfig['props']): void {
 }
 
 function createInstance(type: string, props: HostConfig['props'], root: RootStore): HostConfig['instance'] {
-  // Remove three* prefix from elements
-  type = type.replace(PREFIX_REGEX, '')
+  // Remove three* prefix from elements if native element not present
+  type = toPascalCase(type) in catalogue ? type : type.replace(PREFIX_REGEX, '')
 
   validateInstance(type, props)
 
