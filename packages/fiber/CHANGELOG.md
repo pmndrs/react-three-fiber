@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.0.3
+
+### Patch Changes
+
+- 01f0f1c8855325aae1c337d5443c846cc46007b0: fix(types): remove recursive references in JSX types
+
 ## 9.0.2
 
 ### Patch Changes
