@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.0.4
+
+### Patch Changes
+
+- 28ebfbf3e7f9e69dc62f5481965b7fd6a3e3a038: fix(types): exclude type conflicts in React runtime types
+
 ## 9.0.3
 
 ### Patch Changes
