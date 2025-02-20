@@ -52,23 +52,20 @@ export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
   Overwrite<ElementProps<T>, Omit<InstanceProps<InstanceType<T>, T>, 'object'>>
 >
 
-type ThreeExports = typeof THREE
-
-// Detect conflicts between Three.js and React types.
-type DuplicateKeys<T, U> = Extract<keyof T, keyof U>
-type Conflicts = DuplicateKeys<JSX.IntrinsicElements, { [K in keyof ThreeExports as Uncapitalize<K>]: any }>
-
 export type ThreeToJSXElements<T extends Record<string, any>> = {
-  [K in keyof T & string as Uncapitalize<K> extends Conflicts
-    ? `three${Capitalize<K>}`
-    : Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
+  [K in keyof T & string as Uncapitalize<K>]: T[K] extends ConstructorRepresentation ? ThreeElement<T[K]> : never
 }
 
-// Create a new type that maps Three.js exports to JSX tags, with conflicts prefixed with 'three'.
+type ThreeExports = typeof THREE
 type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
 
 export interface ThreeElements extends ThreeElementsImpl {
   primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
+  // Conflicts with DOM types can be accessed through a three* prefix
+  threeAudio: ThreeElementsImpl['audio']
+  threeSource: ThreeElementsImpl['source']
+  threeLine: ThreeElementsImpl['line']
+  threePath: ThreeElementsImpl['path']
 }
 
 declare module 'react' {
