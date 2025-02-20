@@ -4,9 +4,12 @@ description: Changes and new features with v9 and React 19
 nav: 13
 ---
 
-This is a compatability release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
+This is a compatibility release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
 
 We would like to express our gratitude to the community for their continued support, as well as to all our contributors, including the React team at Meta and Vercel, for ensuring this upgrade went smoothly. 🎉
+
+> [!WARNING]  
+> This release contains breaking changes when using Strict Mode, which can highlight bugs during development. See [StrictMode](#strictmode).
 
 ## Features
 
@@ -58,7 +61,7 @@ const Controls = extend(OrbitControls)
 
 ### Async GL prop
 
-The Canvas GL prop accepts contructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
+The Canvas GL prop accepts constructor parameters, properties, or a renderer instance via a callback. The callback now passes constructor parameters instead of just a canvas reference.
 
 ```diff
 <Canvas
@@ -113,7 +116,7 @@ export default () => (
 
 ### Color Management of Textures
 
-Automatic sRGB conversion of texture props has been removed. Color textures are now handled automatically for built-in materials, aligning with vanilla Three.js behavior. This prevents issues where data textures (e.g., normals or displacement) become corrupted or non-linear. For custom materials or shaders, annotate color textures with texture.colorSpace = THREE.SRGBColorSpace or texture-colorSpace={THREE.SRGBColorSpace} in JSX.
+Automatic sRGB conversion of texture props has been removed. Color textures are now handled automatically for built-in materials, aligning with vanilla Three.js behavior. This prevents issues where data textures (e.g., normals or displacement) become corrupted or non-linear. For custom materials or shaders, annotate color textures with `texture.colorSpace = THREE.SRGBColorSpace` or `texture-colorSpace={THREE.SRGBColorSpace}` in JSX.
 
 For more details, see https://threejs.org/docs/#manual/en/introduction/Color-management.
 
