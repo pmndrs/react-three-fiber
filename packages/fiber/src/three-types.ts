@@ -59,7 +59,7 @@ export type ThreeToJSXElements<T extends Record<string, any>> = {
 type ThreeExports = typeof THREE
 type ThreeElementsImpl = ThreeToJSXElements<ThreeExports>
 
-export interface ThreeElements extends ThreeElementsImpl {
+export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source' | 'line' | 'path'> {
   primitive: Omit<ThreeElement<any>, 'args'> & { object: object }
   // Conflicts with DOM types can be accessed through a three* prefix
   threeAudio: ThreeElementsImpl['audio']
