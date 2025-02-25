@@ -27,24 +27,22 @@ function useHover() {
 function Soda(props: ThreeElements['group']) {
   const ref = useRef<THREE.Group>(null!)
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF('/bottle.gltf') as any
+  const { meshes, materials } = useGLTF('/bottle.gltf')
 
   useFrame((state, delta) => (ref.current.rotation.y += delta))
 
   return (
     <group ref={ref} {...props} {...spread} dispose={null}>
-      <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
+      <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} roughness={0} metalness={0.8} envMapIntensity={2} />
       </mesh>
-      <mesh geometry={nodes.Mesh_sodaBottle_1.geometry} material={materials.red} material-envMapIntensity={0} />
+      <mesh geometry={meshes.Mesh_sodaBottle_1.geometry} material={materials.red} material-envMapIntensity={0} />
     </group>
   )
 }
 
 function Duck(props: ThreeElements['group']) {
-  const { scene } = useGLTF(
-    'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf',
-  ) as any
+  const { scene } = useGLTF('https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf')
   useFrame((state, delta) => (scene.rotation.x = scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }
@@ -52,7 +50,7 @@ function Duck(props: ThreeElements['group']) {
 function Candy(props: ThreeElements['group']) {
   const { scene } = useGLTF(
     'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/candy-bucket/model.gltf',
-  ) as any
+  )
   useFrame((state, delta) => (scene.rotation.z = scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }

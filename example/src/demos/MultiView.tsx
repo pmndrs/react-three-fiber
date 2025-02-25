@@ -35,14 +35,14 @@ function useHover() {
 
 export function Soda(props: ThreeElements['group']) {
   const [hovered, hoverProps] = useHover()
-  const { nodes, materials } = useGLTF('/bottle.gltf') as any
+  const { meshes, materials } = useGLTF('/bottle.gltf')
 
   return (
     <group {...props} {...hoverProps} dispose={null}>
-      <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
+      <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} roughness={0} metalness={0.8} envMapIntensity={2} />
       </mesh>
-      <mesh geometry={nodes.Mesh_sodaBottle_1.geometry} material={materials.red} material-envMapIntensity={0} />
+      <mesh geometry={meshes.Mesh_sodaBottle_1.geometry} material={materials.red} material-envMapIntensity={0} />
     </group>
   )
 }
