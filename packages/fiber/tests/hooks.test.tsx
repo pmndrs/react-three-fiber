@@ -240,6 +240,12 @@ describe('hooks', () => {
         [mat3.name]: mat3,
         [mat4.name]: mat4,
       },
+      meshes: {
+        [mesh1.name]: mesh1,
+        [mesh2.name]: mesh2,
+        [mesh3.name]: mesh3,
+        [mesh4.name]: mesh4,
+      },
     })
   })
 
