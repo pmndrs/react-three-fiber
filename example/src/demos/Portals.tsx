@@ -26,13 +26,13 @@ export function Ramen(props: ThreeElements['group']) {
 
 export function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF('/bottle.gltf') as any
+  const { meshes, materials } = useGLTF('/bottle.gltf')
   return (
     <group {...(spread as any)} {...props} dispose={null}>
-      <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
+      <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} />
       </mesh>
-      <mesh geometry={nodes.Mesh_sodaBottle_1.geometry} material={materials.red} />
+      <mesh geometry={meshes.Mesh_sodaBottle_1.geometry} material={materials.red} />
     </group>
   )
 }

@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 function Test() {
   const [flag, toggle] = useReducer((state) => !state, true)
-  const { scene } = useLoader(GLTFLoader, flag ? '/Stork.glb' : '/Parrot.glb') as any
+  const { scene } = useLoader(GLTFLoader, flag ? '/Stork.glb' : '/Parrot.glb')
 
   useEffect(() => {
     const interval = setInterval(toggle, 1000)

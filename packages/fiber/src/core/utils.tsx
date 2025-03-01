@@ -116,6 +116,7 @@ export const ErrorBoundary = /* @__PURE__ */ (() =>
 export interface ObjectMap {
   nodes: { [name: string]: THREE.Object3D }
   materials: { [name: string]: THREE.Material }
+  meshes: { [name: string]: THREE.Mesh }
 }
 
 export function calculateDpr(dpr: Dpr): number {
@@ -187,11 +188,12 @@ export const is = {
 
 // Collects nodes and materials from a THREE.Object3D
 export function buildGraph(object: THREE.Object3D): ObjectMap {
-  const data: ObjectMap = { nodes: {}, materials: {} }
+  const data: ObjectMap = { nodes: {}, materials: {}, meshes: {} }
   if (object) {
     object.traverse((obj: any) => {
       if (obj.name) data.nodes[obj.name] = obj
       if (obj.material && !data.materials[obj.material.name]) data.materials[obj.material.name] = obj.material
+      if (obj.isMesh && !data.meshes[obj.name]) data.meshes[obj.name] = obj
     })
   }
   return data

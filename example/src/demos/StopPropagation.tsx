@@ -17,19 +17,19 @@ function useHover() {
 
 function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
-  const { nodes, materials } = useGLTF('/bottle.gltf') as any
+  const { meshes, materials } = useGLTF('/bottle.gltf')
 
   return (
     <group {...props} {...spread} dispose={null}>
-      <mesh geometry={nodes.Mesh_sodaBottle.geometry}>
+      <mesh geometry={meshes.Mesh_sodaBottle.geometry}>
         <meshStandardMaterial color={hovered ? 'red' : 'green'} metalness={0.6} roughness={0} />
       </mesh>
-      <mesh geometry={nodes.Mesh_sodaBottle_1.geometry} material={materials.red} />
+      <mesh geometry={meshes.Mesh_sodaBottle_1.geometry} material={materials.red} />
     </group>
   )
 }
 
-function Hud({ priority = 1, children }: any) {
+function Hud({ priority = 1, children }: { priority?: number; children: React.ReactNode }) {
   const { gl, scene: defaultScene, camera: defaultCamera } = useThree()
   const [scene] = useState(() => new THREE.Scene())
 
