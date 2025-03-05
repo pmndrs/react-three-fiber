@@ -18,7 +18,7 @@ Let's start by importing the two things we need:
 
 ```js
 import { useLoader } from '@react-three/fiber'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 ```
 
 With this we can create a Model component and place it in our scene like so:
@@ -98,7 +98,7 @@ You can play with the sandbox here:
 In this case, we will use the trusted `useLoader` hook but in combination with `three.js` `OBJLoader`.
 
 ```js
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 import { useLoader } from '@react-three/fiber'
 ```
 
@@ -123,7 +123,7 @@ Let's again use the trusted `useLoader` but this time with the `FBXLoader` that 
 
 ```js
 import { useLoader } from '@react-three/fiber'
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
 ```
 
 To create our scene we can get the FBX as a return value of the useLoader by passing the `FBXloader` and the location of our file like so:
