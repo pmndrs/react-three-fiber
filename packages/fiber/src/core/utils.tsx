@@ -261,7 +261,9 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   key = chain.pop()!
 
   // Switch root if atomic
-  if (!target?.set) root = chain.reduce((acc, key) => acc[key], root)
+  if (!(target?.set && typeof target === 'object' && typeof target.set === 'function')) {
+    root = chain.reduce((acc, key) => acc[key], root)
+  }
 
   return { root, key, target }
 }
