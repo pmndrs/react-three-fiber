@@ -780,4 +780,62 @@ describe('renderer', () => {
     await act(async () => root.render(<threeRandom />))
     expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Group)
   })
+
+  it('should properly handle array of components with changing keys and order', async () => {
+    // Component that renders a mesh with a specific ID
+    const MeshComponent = ({ id }: { id: number }) => {
+      return <mesh name={`mesh-${id}`} />
+    }
+
+    // Component that maps over an array of values to render MeshComponents
+    const Test = ({ values }: { values: number[] }) => (
+      <>
+        {values.map((value) => (
+          <MeshComponent key={value} id={value} />
+        ))}
+      </>
+    )
+
+    // Initial render with 4 values
+    const initialValues = [1, 2, 3, 4]
+    const store = await act(async () => root.render(<Test values={initialValues} />))
+    const { scene } = store.getState()
+
+    // Check initial state
+    expect(scene.children.length).toBe(4)
+    const initialNames = scene.children.map((child) => child.name).sort()
+    expect(initialNames).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
+
+    // Update with one less value and different order
+    const updatedValues = [3, 1, 4]
+    await act(async () => root.render(<Test values={updatedValues} />))
+
+    // Check that the scene has exactly the meshes we expect
+    expect(scene.children.length).toBe(3)
+    const updatedNames = scene.children.map((child) => child.name).sort()
+    expect(updatedNames).toEqual(['mesh-1', 'mesh-3', 'mesh-4'])
+
+    // Verify mesh-2 was removed
+    expect(scene.children.find((child) => child.name === 'mesh-2')).toBeUndefined()
+
+    // Verify no duplicates by checking unique names
+    const uniqueNames = new Set(scene.children.map((child) => child.name))
+    expect(uniqueNames.size).toBe(scene.children.length)
+
+    // Update with different order again
+    const reorderedValues = [4, 1]
+    await act(async () => root.render(<Test values={reorderedValues} />))
+
+    // Check final state
+    expect(scene.children.length).toBe(2)
+    const finalNames = scene.children.map((child) => child.name).sort()
+    expect(finalNames).toEqual(['mesh-1', 'mesh-4'])
+
+    // Verify mesh-3 was removed
+    expect(scene.children.find((child) => child.name === 'mesh-3')).toBeUndefined()
+
+    // Verify no duplicates in final state
+    const finalUniqueNames = new Set(scene.children.map((child) => child.name))
+    expect(finalUniqueNames.size).toBe(scene.children.length)
+  })
 })
