@@ -310,10 +310,19 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
   } else if (isObject3D(child.object) && isObject3D(parent.object)) {
     const childIndex = parent.object.children.indexOf(beforeChild?.object)
     if (beforeChild && childIndex !== -1) {
-      child.object.parent = parent.object
-      parent.object.children.splice(childIndex, 0, child.object)
-      child.object.dispatchEvent({ type: 'added' })
-      parent.object.dispatchEvent({ type: 'childadded', child: child.object })
+      // If the child is already in the parent's children array, move it to the new position
+      // Otherwise, just insert it at the target position
+      const existingIndex = parent.object.children.indexOf(child.object)
+      if (existingIndex !== -1) {
+        parent.object.children.splice(existingIndex, 1)
+        const adjustedIndex = existingIndex < childIndex ? childIndex - 1 : childIndex
+        parent.object.children.splice(adjustedIndex, 0, child.object)
+      } else {
+        child.object.parent = parent.object
+        parent.object.children.splice(childIndex, 0, child.object)
+        child.object.dispatchEvent({ type: 'added' })
+        parent.object.dispatchEvent({ type: 'childadded', child: child.object })
+      }
     } else {
       parent.object.add(child.object)
     }
