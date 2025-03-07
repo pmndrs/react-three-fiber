@@ -430,12 +430,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       else target.set(...value)
     }
     // Set literal types
-    else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      typeof value === 'number'
-    ) {
+    else if (isVectorLike(target) && typeof value === 'number') {
       // Allow setting array scalars
       if (typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
