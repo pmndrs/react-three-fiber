@@ -252,7 +252,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 }
 
 export function resolve(root: any, key: string): { root: any; key: string; target: any } {
-  let target = root[key]
+  let target: unknown = root[key]
   if (!key.includes('-')) return { root, key, target }
 
   // Resolve pierced target
@@ -260,8 +260,10 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   target = chain.reduce((acc, key) => acc[key], root)
   key = chain.pop()!
 
-  // Switch root if atomic
-  if (!(target?.set && typeof target === 'object' && typeof target.set === 'function')) {
+  // Switch root if implementing a math class since we want to use its properties instead of mutation
+  const isVectorLike =
+    target !== null && typeof target === 'object' && 'set' in target && typeof target.set === 'function'
+  if (!isVectorLike) {
     root = chain.reduce((acc, key) => acc[key], root)
   }
 
