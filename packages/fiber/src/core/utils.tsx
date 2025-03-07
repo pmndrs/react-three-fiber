@@ -256,14 +256,14 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   if (!key.includes('-')) return { root, key, target }
 
   // Resolve pierced target
-  const chain = key.split('-')
-  target = chain.reduce((acc, key) => acc[key], root)
-  key = chain.pop()!
-
-  // Switch root if implementing a math class since we want to use its properties instead of mutation
-  if (!isVectorLike(target)) {
-    root = chain.reduce((acc, key) => acc[key], root)
+  target = root
+  for (const part of key.split('-')) {
+    key = part
+    root = target
+    target = (target as any)?.[key]
   }
+
+  // TODO: change key to 'foo-bar' if target is undefined?
 
   return { root, key, target }
 }

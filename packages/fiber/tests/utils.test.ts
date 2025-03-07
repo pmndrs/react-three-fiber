@@ -205,16 +205,6 @@ describe('resolve', () => {
     expect(key).toBe('bar')
     expect(target).toBe(root[key])
   })
-
-  it('should switch roots for atomic targets', () => {
-    const bar = new THREE.Vector3()
-    const object = { foo: { bar } }
-    const { root, key, target } = resolve(object, 'foo-bar')
-
-    expect(root).toBe(object)
-    expect(key).toBe('bar')
-    expect(target).toBe(bar)
-  })
 })
 
 describe('attach / detach', () => {
