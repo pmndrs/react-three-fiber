@@ -261,7 +261,7 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   key = chain.pop()!
 
   // Switch root if atomic
-  if (!(target?.set && typeof target === 'object' && typeof target.set === 'function')) {
+  if (!isObjectWithSet(target)) {
     root = chain.reduce((acc, key) => acc[key], root)
   }
 
@@ -418,22 +418,14 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
     else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      typeof target.copy === 'function' &&
+      isObjectWithCopy(target) &&
       (value as ClassConstructor | null)?.constructor &&
-      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
+      target.constructor === (value as ClassConstructor).constructor
     ) {
       target.copy(value)
     }
     // Set array types
-    else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      Array.isArray(value)
-    ) {
+    else if (isObjectWithSet(target) && Array.isArray(value)) {
       if (typeof target.fromArray === 'function') target.fromArray(value)
       else target.set(...value)
     }
@@ -527,3 +519,21 @@ export function updateCamera(camera: Camera, size: Size): void {
 }
 
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
+
+export const isObjectWithSet = (
+  object: any,
+): object is Record<string, any> & { set: (...args: any[]) => void; constructor?: Function } => {
+  return object !== null && typeof object === 'object' && typeof object.set === 'function'
+}
+
+export const isObjectWithCopy = (
+  object: any,
+): object is Record<string, any> & { copy: (...args: any[]) => void; constructor?: Function } => {
+  return (
+    object !== null &&
+    typeof object === 'object' &&
+    // We test for set first to avoid false positives
+    typeof object.set === 'function' &&
+    typeof object.copy === 'function'
+  )
+}
