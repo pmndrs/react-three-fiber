@@ -252,16 +252,18 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 }
 
 export function resolve(root: any, key: string): { root: any; key: string; target: any } {
-  let target = root[key]
+  let target: unknown = root[key]
   if (!key.includes('-')) return { root, key, target }
 
   // Resolve pierced target
-  const chain = key.split('-')
-  target = chain.reduce((acc, key) => acc[key], root)
-  key = chain.pop()!
+  target = root
+  for (const part of key.split('-')) {
+    key = part
+    root = target
+    target = (target as any)?.[key]
+  }
 
-  // Switch root if atomic
-  if (!target?.set) root = chain.reduce((acc, key) => acc[key], root)
+  // TODO: change key to 'foo-bar' if target is undefined?
 
   return { root, key, target }
 }

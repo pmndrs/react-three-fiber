@@ -205,16 +205,6 @@ describe('resolve', () => {
     expect(key).toBe('bar')
     expect(target).toBe(root[key])
   })
-
-  it('should switch roots for atomic targets', () => {
-    const bar = new THREE.Vector3()
-    const object = { foo: { bar } }
-    const { root, key, target } = resolve(object, 'foo-bar')
-
-    expect(root).toBe(object)
-    expect(key).toBe('bar')
-    expect(target).toBe(bar)
-  })
 })
 
 describe('attach / detach', () => {
@@ -442,8 +432,8 @@ describe('applyProps', () => {
     // @ts-ignore
     Number.prototype.copy = copy
 
-    const target = { scale: 1 }
-    applyProps(target, { scale: 10 })
+    const target = { scale: 1, rotation: new THREE.Vector3(1, 2, 3) }
+    applyProps(target, { scale: 10, 'rotation-z': 4 })
 
     // @ts-ignore
     delete Number.prototype.set
@@ -453,6 +443,7 @@ describe('applyProps', () => {
     expect(set).not.toHaveBeenCalled()
     expect(copy).not.toHaveBeenCalled()
     expect(target.scale).toBe(10)
+    expect(target.rotation.z).toBe(4)
   })
 })
 
