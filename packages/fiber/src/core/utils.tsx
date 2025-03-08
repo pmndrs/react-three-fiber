@@ -418,19 +418,32 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
     else if (
-      isCopyable(target) &&
+      target !== null &&
+      typeof target === 'object' &&
+      typeof target.set === 'function' &&
+      typeof target.copy === 'function' &&
       (value as ClassConstructor | null)?.constructor &&
-      target.constructor === (value as ClassConstructor).constructor
+      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
     ) {
       target.copy(value)
     }
     // Set array types
-    else if (isVectorLike(target) && Array.isArray(value)) {
+    else if (
+      target !== null &&
+      typeof target === 'object' &&
+      typeof target.set === 'function' &&
+      Array.isArray(value)
+    ) {
       if (typeof target.fromArray === 'function') target.fromArray(value)
       else target.set(...value)
     }
     // Set literal types
-    else if (isVectorLike(target) && typeof value === 'number') {
+    else if (
+      target !== null &&
+      typeof target === 'object' &&
+      typeof target.set === 'function' &&
+      typeof value === 'number'
+    ) {
       // Allow setting array scalars
       if (typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
@@ -514,21 +527,3 @@ export function updateCamera(camera: Camera, size: Size): void {
 }
 
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
-
-export const isVectorLike = (
-  object: any,
-): object is Record<string, any> & { set: (...args: any[]) => void; constructor?: Function } => {
-  return object !== null && typeof object === 'object' && typeof object.set === 'function'
-}
-
-export const isCopyable = (
-  object: any,
-): object is Record<string, any> & { copy: (...args: any[]) => void; constructor?: Function } => {
-  return (
-    object !== null &&
-    typeof object === 'object' &&
-    // We test for set first to avoid false positives
-    typeof object.set === 'function' &&
-    typeof object.copy === 'function'
-  )
-}
