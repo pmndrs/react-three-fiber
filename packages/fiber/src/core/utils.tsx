@@ -31,15 +31,18 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  */
-export const act: Act = (React as any).act
+export const act: Act = React.act
 
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
-  def && (def as THREE.OrthographicCamera).isOrthographicCamera
-export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')
+  !!(def as THREE.OrthographicCamera | undefined)?.isOrthographicCamera
+export const isRef = (obj: unknown): obj is React.RefObject<unknown> =>
+  obj !== null && typeof obj === 'object' && obj.hasOwnProperty('current')
 
 export const isColorRepresentation = (value: unknown): value is THREE.ColorRepresentation =>
   value != null && (typeof value === 'string' || typeof value === 'number' || (value as THREE.Color).isColor)
+
+export const isTexture = (value: unknown): value is THREE.Texture => !!(value as THREE.Texture | undefined)?.isTexture
 
 /**
  * An SSR-friendly useLayoutEffect.
@@ -251,8 +254,11 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
   return instance
 }
 
-export function resolve(root: any, key: string): { root: any; key: string; target: any } {
-  let target: unknown = root[key]
+export function resolve(
+  root: Record<string, unknown>,
+  key: string,
+): { root: Record<string, unknown>; key: string; target: unknown } {
+  let target = root?.[key] as Record<string, unknown>
   if (!key.includes('-')) return { root, key, target }
 
   // Resolve pierced target
@@ -260,10 +266,10 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   for (const part of key.split('-')) {
     key = part
     root = target
-    target = (target as any)?.[key]
+    target = target?.[key] as Record<string, unknown>
   }
 
-  // TODO: change key to 'foo-bar' if target is undefined?
+  // TODO: change key to 'foo-bar' if target.foo is undefined?
 
   return { root, key, target }
 }
@@ -380,8 +386,6 @@ const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'e
 
 const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
 
-type ClassConstructor = { new (): void }
-
 // This function applies a set of changes to the instance
 export function applyProps<T = any>(object: Instance<T>['object'], props: Instance<T>['props']): Instance<T>['object'] {
   const instance = object.__r3f
@@ -417,35 +421,18 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       target.set(value)
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
-    else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      typeof target.copy === 'function' &&
-      (value as ClassConstructor | null)?.constructor &&
-      (target as ClassConstructor).constructor === (value as ClassConstructor).constructor
-    ) {
+    else if (isCopyable(target) && hasConstructor(value) && target.constructor === value.constructor) {
       target.copy(value)
     }
     // Set array types
-    else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      Array.isArray(value)
-    ) {
-      if (typeof target.fromArray === 'function') target.fromArray(value)
+    else if (isVectorLike(target) && Array.isArray(value)) {
+      if ('fromArray' in target && typeof target.fromArray === 'function') target.fromArray(value)
       else target.set(...value)
     }
     // Set literal types
-    else if (
-      target !== null &&
-      typeof target === 'object' &&
-      typeof target.set === 'function' &&
-      typeof value === 'number'
-    ) {
+    else if (isVectorLike(target) && typeof value === 'number') {
       // Allow setting array scalars
-      if (typeof target.setScalar === 'function') target.setScalar(value)
+      if ('setScalar' in target && typeof target.setScalar === 'function') target.setScalar(value)
       // Otherwise just set single value
       else target.set(value)
     }
@@ -460,7 +447,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         rootState &&
         !rootState.linear &&
         colorMaps.includes(key) &&
-        (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&
+        isTexture(root[key]) &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
@@ -527,3 +514,13 @@ export function updateCamera(camera: Camera, size: Size): void {
 }
 
 export const isObject3D = (object: any): object is THREE.Object3D => object?.isObject3D
+
+type VectorLike = { set: (...args: any[]) => void; constructor?: Function }
+export const isVectorLike = (object: unknown): object is VectorLike =>
+  object !== null && typeof object === 'object' && 'set' in object && typeof object.set === 'function'
+
+type Copyable = { copy: (...args: any[]) => void; constructor?: Function }
+export const isCopyable = (object: unknown): object is Copyable =>
+  isVectorLike(object) && 'copy' in object && typeof object.copy === 'function'
+
+export const hasConstructor = (object: unknown): object is { constructor?: Function } => !!(object as any)?.constructor
