@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.1.0
+
+### Minor Changes
+
+- cbc79507600b81f6a39de9f3f0ecb3aaf811233f: feat: add meshes to loader graph, misc internal fixes
+
 ## 9.0.4
 
 ### Patch Changes
