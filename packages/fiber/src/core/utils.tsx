@@ -447,13 +447,13 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         rootState &&
         !rootState.linear &&
         colorMaps.includes(key) &&
-        isTexture(root[key]) &&
+        isTexture(value) &&
         // sRGB textures must be RGBA8 since r137 https://github.com/mrdoob/three.js/pull/23129
-        root[key].format === THREE.RGBAFormat &&
-        root[key].type === THREE.UnsignedByteType
+        value.format === THREE.RGBAFormat &&
+        value.type === THREE.UnsignedByteType
       ) {
         // NOTE: this cannot be set from the renderer (e.g. sRGB source textures rendered to P3)
-        root[key].colorSpace = THREE.SRGBColorSpace
+        value.colorSpace = THREE.SRGBColorSpace
       }
     }
   }
