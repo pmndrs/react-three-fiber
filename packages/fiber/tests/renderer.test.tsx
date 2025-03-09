@@ -782,12 +782,10 @@ describe('renderer', () => {
   })
 
   it('should properly handle array of components with changing keys and order', async () => {
-    // Component that renders a mesh with a specific ID
     const MeshComponent = ({ id }: { id: number }) => {
       return <mesh name={`mesh-${id}`} />
     }
 
-    // Component that maps over an array of values to render MeshComponents
     const Test = ({ values }: { values: number[] }) => (
       <>
         {values.map((value) => (
@@ -796,24 +794,26 @@ describe('renderer', () => {
       </>
     )
 
-    // Initial render with 4 values
+    // Initial render with 4 values in ascending order
     const initialValues = [1, 2, 3, 4]
     const store = await act(async () => root.render(<Test values={initialValues} />))
     const { scene } = store.getState()
 
-    // Check initial state
     expect(scene.children.length).toBe(4)
-    const initialNames = scene.children.map((child) => child.name).sort()
+    const initialNames = scene.children.map((child) => child.name)
     expect(initialNames).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
+    expect((scene as any).__r3f.children.length).toBe(4)
 
     // Update with one less value and different order
     const updatedValues = [3, 1, 4]
+    console.log('rendering', updatedValues)
     await act(async () => root.render(<Test values={updatedValues} />))
 
     // Check that the scene has exactly the meshes we expect
     expect(scene.children.length).toBe(3)
-    const updatedNames = scene.children.map((child) => child.name).sort()
-    expect(updatedNames).toEqual(['mesh-1', 'mesh-3', 'mesh-4'])
+    const updatedNames = scene.children.map((child) => child.name)
+    expect(updatedNames).toEqual(['mesh-3', 'mesh-1', 'mesh-4'])
+    expect((scene as any).__r3f.children.length).toBe(3)
 
     // Verify mesh-2 was removed
     expect(scene.children.find((child) => child.name === 'mesh-2')).toBeUndefined()
@@ -824,12 +824,14 @@ describe('renderer', () => {
 
     // Update with different order again
     const reorderedValues = [4, 1]
+    console.log('rendering', reorderedValues)
     await act(async () => root.render(<Test values={reorderedValues} />))
 
     // Check final state
     expect(scene.children.length).toBe(2)
-    const finalNames = scene.children.map((child) => child.name).sort()
-    expect(finalNames).toEqual(['mesh-1', 'mesh-4'])
+    const finalNames = scene.children.map((child) => child.name)
+    expect(finalNames).toEqual(['mesh-4', 'mesh-1'])
+    expect((scene as any).__r3f.children.length).toBe(2)
 
     // Verify mesh-3 was removed
     expect(scene.children.find((child) => child.name === 'mesh-3')).toBeUndefined()
