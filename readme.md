@@ -38,11 +38,11 @@ Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new 
   <tbody>
     <tr>
       <td>Let's make a re-usable component that has its own state, reacts to user-input and participates in the render-loop. (<a href="https://codesandbox.io/s/rrppl0y8l4?file=/src/App.js">live demo</a>).</td>
-      <td>
+<!--       <td>
         <a href="https://codesandbox.io/s/rrppl0y8l4">
           <img src="/docs/basic-app.gif" />
         </a>
-      </td>
+      </td> -->
     </tr>
   </tbody>
 </table>
