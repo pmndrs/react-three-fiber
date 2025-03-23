@@ -18,6 +18,9 @@ Build your scene declaratively with re-usable, self-contained components that re
 npm install three @types/three @react-three/fiber
 ```
 
+> [!PLEASE NOTE]  
+> Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 pairs with react@19.
+
 ---
 
 #### Does it have limitations?
