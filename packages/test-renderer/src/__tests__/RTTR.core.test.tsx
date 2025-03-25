@@ -351,10 +351,100 @@ describe('ReactThreeTestRenderer Core', () => {
     expect(renderer.toTree()).toMatchSnapshot()
   })
 
+  it('correctly searches through multiple levels in regular objects', async () => {
+    // Create a deep tree: group -> mesh -> mesh -> mesh
+    const renderer = await ReactThreeTestRenderer.create(
+      <group name="root-group">
+        <mesh name="level1-mesh">
+          <boxGeometry />
+          <meshBasicMaterial color="red" />
+          <mesh name="level2-mesh">
+            <boxGeometry />
+            <meshBasicMaterial color="green" />
+            <mesh name="level3-mesh">
+              <boxGeometry />
+              <meshBasicMaterial color="blue" />
+            </mesh>
+          </mesh>
+        </mesh>
+      </group>,
+    )
+
+    // Test from the root
+    const allMeshes = renderer.scene.findAllByType('Mesh')
+    expect(allMeshes.length).toBe(3) // Should find all three meshes
+
+    // Test from an intermediate node
+    const topMesh = renderer.scene.find((node) => node.props.name === 'level1-mesh')
+    const nestedMeshes = topMesh.findAllByType('Mesh')
+    expect(nestedMeshes.length).toBe(2) // Should find the two nested meshes
+
+    // Find a deeply nested mesh from an intermediate node by property
+    const level3 = topMesh.find((node) => node.props.name === 'level3-mesh')
+    expect(level3).toBeDefined()
+    expect(level3.type).toBe('Mesh')
+  })
+
+  it('Can search from retrieved primitive Instance', async () => {
+    const group = new THREE.Group()
+    group.name = 'PrimitiveGroup'
+
+    const childMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 'red' }))
+    childMesh.name = 'PrimitiveChildMesh'
+    group.add(childMesh)
+
+    const nestedMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 'red' }))
+    nestedMesh.name = 'PrimitiveNestedChildMesh'
+    childMesh.add(nestedMesh)
+
+    const renderer = await ReactThreeTestRenderer.create(<primitive object={group} />)
+
+    const foundGroup = renderer.scene.findByType('Group')
+    const foundMesh = foundGroup.children[0]
+    const foundNestedMesh = foundMesh.findByType('Mesh')
+    expect(foundNestedMesh).toBeDefined()
+  })
+
   it('root instance and refs return the same value', async () => {
     let refInst = null
     const renderer = await ReactThreeTestRenderer.create(<mesh ref={(ref) => (refInst = ref)} />)
     const root = renderer.getInstance() // this will be Mesh
     expect(root).toEqual(refInst)
+  })
+
+  it('handles primitive objects and their children correctly in toGraph', async () => {
+    // Create a component with both regular objects and primitives with children
+    const PrimitiveTestComponent = () => {
+      // Create a THREE.js group with mesh children
+      const group = new THREE.Group()
+      group.name = 'PrimitiveGroup'
+
+      const childMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 'red' }))
+      childMesh.name = 'PrimitiveChildMesh'
+      group.add(childMesh)
+
+      // Add a nested group to test deeper hierarchies
+      const nestedGroup = new THREE.Group()
+      nestedGroup.name = 'NestedGroup'
+      const nestedMesh = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshBasicMaterial({ color: 'blue' }))
+      nestedMesh.name = 'NestedMesh'
+      nestedGroup.add(nestedMesh)
+      group.add(nestedGroup)
+
+      return (
+        <>
+          <mesh name="RegularMesh">
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+
+          <primitive object={group} />
+        </>
+      )
+    }
+
+    const renderer = await ReactThreeTestRenderer.create(<PrimitiveTestComponent />)
+
+    expect(renderer.toGraph()).toMatchSnapshot()
   })
 })
