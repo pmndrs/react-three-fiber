@@ -31,7 +31,15 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  */
-export const act: Act = (React as any).act
+export const act: Act = async (cb) => {
+  const React = await import('react')
+
+  if ('act' in React) {
+    return React.act(cb)
+  }
+
+  throw new Error('R3F: React.act is unavailable in this environment.')
+}
 
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
