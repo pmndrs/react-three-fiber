@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.1.1
+
+### Patch Changes
+
+- 0deae3fb12b6d62ff083891e388ab09de51330d0: Fix failing builds for production when React.act is unavailable. This fixes issues found in React@19.1.0 and up.
+
 ## 9.1.0
 
 ### Minor Changes
