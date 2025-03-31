@@ -13,7 +13,8 @@
   "license": "MIT",
   "maintainers": [
     "Josh Ellis (https://github.com/joshuaellis)",
-    "Cody Bennett (https://github.com/codyjasonbennett)"
+    "Cody Bennett (https://github.com/codyjasonbennett)",
+    "Kris Baumgarnter (https://github.com/krispya)"
   ],
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
