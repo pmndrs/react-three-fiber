@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: yarn run build
 
+      - name: Rsbuild (strict)
+        run: yarn add @rsbuild/core -D -W && yarn rsbuild build --root ./packages/fiber
+
       - name: Jest run
         run: yarn run dev && yarn run test
 
