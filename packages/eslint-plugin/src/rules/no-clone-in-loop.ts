@@ -1,5 +1,5 @@
 import type { Rule } from 'eslint'
-import * as ESTree from 'estree'
+import type { NewExpression } from 'estree'
 import { gitHubUrl } from '../lib/url'
 
 const rule: Rule.RuleModule = {
@@ -17,7 +17,7 @@ const rule: Rule.RuleModule = {
   create(ctx) {
     return {
       ['CallExpression[callee.name=useFrame] CallExpression MemberExpression Identifier[name=clone]'](
-        node: ESTree.NewExpression,
+        node: NewExpression,
       ) {
         ctx.report({
           messageId: 'noClone',
