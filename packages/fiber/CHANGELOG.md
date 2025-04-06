@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.1.2
+
+### Patch Changes
+
+- 053757f45d2411f2929975add76a4c979713e616: fix: reference dev-only act with computed key for Webpack
+
 ## 9.1.1
 
 ### Patch Changes
