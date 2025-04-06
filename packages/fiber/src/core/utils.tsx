@@ -30,14 +30,11 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 
 /**
  * Safely flush async effects when testing, simulating a legacy root.
+ * @deprecated Import from React instead. import { act } from 'react'
  */
-export const act: Act = (cb) => {
-  if ('act' in React) {
-    return React.act(cb)
-  }
-
-  throw new Error('act(...) is not supported in production builds of React')
-}
+// Reference with computed key to break Webpack static analysis
+// https://github.com/webpack/webpack/issues/14814
+export const act: Act = React[('act' + '') as 'act']
 
 export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
