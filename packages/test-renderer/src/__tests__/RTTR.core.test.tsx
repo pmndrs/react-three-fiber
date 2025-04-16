@@ -195,7 +195,7 @@ describe('ReactThreeTestRenderer Core', () => {
 
     const instance = renderer.getInstance() as Instance
 
-    await ReactThreeTestRenderer.act(async () => {
+    await React.act(async () => {
       instance.handleStandard()
     })
 

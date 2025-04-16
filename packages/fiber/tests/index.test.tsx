@@ -6,7 +6,6 @@ import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 import {
   ReconcilerRoot,
   createRoot as createRootImpl,
-  act,
   useFrame,
   useThree,
   createPortal,
@@ -30,19 +29,19 @@ beforeEach(() => (root = createRoot()))
 
 afterEach(async () => {
   for (const root of roots) {
-    await act(async () => root.unmount())
+    await React.act(async () => root.unmount())
   }
   roots.length = 0
 })
 
 describe('createRoot', () => {
   it('should return a Zustand store', async () => {
-    const store = await act(async () => root.render(null))
+    const store = await React.act(async () => root.render(null))
     expect(() => store.getState()).not.toThrow()
   })
 
   it('will make an Orthographic Camera & set the position', async () => {
-    const store = await act(async () =>
+    const store = await React.act(async () =>
       (await root.configure({ orthographic: true, camera: { position: [0, 0, 5] } })).render(<group />),
     )
     const { camera } = store.getState()
@@ -54,7 +53,7 @@ describe('createRoot', () => {
   // TODO: deprecate
   it('should handle an performance changing functions', async () => {
     let store: RootStore = null!
-    await act(async () => {
+    await React.act(async () => {
       store = (await root.configure({ dpr: [1, 2], performance: { min: 0.2 } })).render(<group />)
     })
 
@@ -62,7 +61,7 @@ describe('createRoot', () => {
     expect(store.getState().performance.min).toEqual(0.2)
     expect(store.getState().performance.current).toEqual(1)
 
-    await act(async () => {
+    await React.act(async () => {
       store.getState().setDpr(0.1)
     })
 
@@ -70,14 +69,14 @@ describe('createRoot', () => {
 
     jest.useFakeTimers()
 
-    await act(async () => {
+    await React.act(async () => {
       store.getState().performance.regress()
       jest.advanceTimersByTime(100)
     })
 
     expect(store.getState().performance.current).toEqual(0.2)
 
-    await act(async () => {
+    await React.act(async () => {
       jest.advanceTimersByTime(200)
     })
 
@@ -88,27 +87,27 @@ describe('createRoot', () => {
 
   it('should handle the DPR prop reactively', async () => {
     // Initial clamp
-    const store = await act(async () => (await root.configure({ dpr: [1, 2] })).render(<group />))
+    const store = await React.act(async () => (await root.configure({ dpr: [1, 2] })).render(<group />))
     expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
 
     // Reactive update
-    await act(async () => store.getState().setDpr(0.1))
+    await React.act(async () => store.getState().setDpr(0.1))
     expect(store.getState().viewport.dpr).toEqual(0.1)
 
     // Reactive clamp
-    await act(async () => store.getState().setDpr([1, 2]))
+    await React.act(async () => store.getState().setDpr([1, 2]))
     expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
   })
 
   it('should set PCFSoftShadowMap as the default shadow map', async () => {
-    const store = await act(async () => (await root.configure({ shadows: true })).render(<group />))
+    const store = await React.act(async () => (await root.configure({ shadows: true })).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace if linear is false', async () => {
-    const store = await act(async () => (await root.configure({ linear: false })).render(<group />))
+    const store = await React.act(async () => (await root.configure({ linear: false })).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -118,7 +117,7 @@ describe('createRoot', () => {
   it('should toggle render mode in xr', async () => {
     let state: RootState = null!
 
-    await act(async () => {
+    await React.act(async () => {
       state = root.render(<group />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
@@ -126,7 +125,7 @@ describe('createRoot', () => {
 
     expect(state.gl.xr.enabled).toEqual(true)
 
-    await act(async () => {
+    await React.act(async () => {
       state.gl.xr.isPresenting = false
       state.gl.xr.dispatchEvent({ type: 'sessionend' })
     })
@@ -139,7 +138,7 @@ describe('createRoot', () => {
 
     const Test = () => useFrame(() => (respected = false))
 
-    await act(async () => {
+    await React.act(async () => {
       const state = (await root.configure({ frameloop: 'never' })).render(<Test />).getState()
       state.gl.xr.isPresenting = true
       state.gl.xr.dispatchEvent({ type: 'sessionstart' })
@@ -149,7 +148,7 @@ describe('createRoot', () => {
   })
 
   it('should set renderer props via gl prop', async () => {
-    const store = await act(async () =>
+    const store = await React.act(async () =>
       (await root.configure({ gl: { logarithmicDepthBuffer: true } })).render(<group />),
     )
     const { gl } = store.getState()
@@ -160,7 +159,7 @@ describe('createRoot', () => {
   it('should update scene via scene prop', async () => {
     let scene: THREE.Scene = null!
 
-    await act(async () => {
+    await React.act(async () => {
       scene = (await root.configure({ scene: { name: 'test' } })).render(<group />).getState().scene
     })
 
@@ -172,7 +171,7 @@ describe('createRoot', () => {
 
     const prop = new THREE.Scene()
 
-    await act(async () => {
+    await React.act(async () => {
       scene = (await root.configure({ scene: prop })).render(<group />).getState().scene
     })
 
@@ -183,7 +182,7 @@ describe('createRoot', () => {
     class Renderer extends THREE.WebGLRenderer {}
 
     let gl: Renderer = null!
-    await act(async () => {
+    await React.act(async () => {
       gl = (await root.configure({ gl: (props) => new Renderer(props) })).render(<group />).getState().gl
     })
 
@@ -201,11 +200,11 @@ describe('createRoot', () => {
       return <meshBasicMaterial key={key++} map={texture} />
     }
 
-    await act(async () => (await createRoot().configure({ linear: true })).render(<Test />))
+    await React.act(async () => (await createRoot().configure({ linear: true })).render(<Test />))
     expect(gl.outputColorSpace).toBe(THREE.LinearSRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.NoColorSpace)
 
-    await act(async () => (await createRoot().configure({ linear: false })).render(<Test />))
+    await React.act(async () => (await createRoot().configure({ linear: false })).render(<Test />))
     expect(gl.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.SRGBColorSpace)
   })
@@ -213,12 +212,12 @@ describe('createRoot', () => {
   it('should respect legacy prop', async () => {
     THREE.ColorManagement.enabled = true
 
-    await act(async () => {
+    await React.act(async () => {
       ;(await root.configure({ legacy: true })).render(<group />)
     })
     expect(THREE.ColorManagement.enabled).toBe(false)
 
-    await act(async () => {
+    await React.act(async () => {
       ;(await root.configure({ legacy: false })).render(<group />)
     })
     expect(THREE.ColorManagement.enabled).toBe(true)
@@ -246,7 +245,7 @@ describe('createPortal', () => {
       return <group />
     }
 
-    await act(async () => {
+    await React.act(async () => {
       root.render(
         <>
           <Normal />
@@ -276,12 +275,12 @@ describe('createPortal', () => {
       )
     }
 
-    await act(async () => root.render(<Test key={0} />))
+    await React.act(async () => root.render(<Test key={0} />))
 
     expect(groupHandle).toBeDefined()
     const prevUUID = groupHandle!.uuid
 
-    await act(async () => root.render(<Test key={1} />))
+    await React.act(async () => root.render(<Test key={1} />))
 
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)

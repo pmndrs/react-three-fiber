@@ -1,4 +1,4 @@
-import { act } from '@react-three/fiber'
+import { act } from 'react'
 
 export interface WaitOptions {
   interval?: number

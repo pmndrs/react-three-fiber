@@ -2,11 +2,11 @@ import * as React from 'react'
 import { View } from 'react-native'
 // @ts-ignore TS2305 remove with modern TS config
 import { render } from 'react-nil'
-import { Canvas, act } from '../src/native'
+import { Canvas } from '../src/native'
 
 describe('native Canvas', () => {
   it('should correctly mount', async () => {
-    const container = await act(async () =>
+    const container = await React.act(async () =>
       render(
         <Canvas>
           <group />
@@ -20,7 +20,7 @@ describe('native Canvas', () => {
   it('should forward ref', async () => {
     const ref = React.createRef<View>()
 
-    await act(async () =>
+    await React.act(async () =>
       render(
         <Canvas ref={ref}>
           <group />
@@ -40,7 +40,7 @@ describe('native Canvas', () => {
       return null
     }
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <ParentContext.Provider value={true}>
           <Canvas>
@@ -54,7 +54,7 @@ describe('native Canvas', () => {
   })
 
   it('should correctly unmount', async () => {
-    await act(async () =>
+    await React.act(async () =>
       render(
         <Canvas>
           <group />
@@ -62,6 +62,6 @@ describe('native Canvas', () => {
       ),
     )
 
-    expect(async () => await act(async () => render(null))).not.toThrow()
+    expect(async () => await React.act(async () => render(null))).not.toThrow()
   })
 })

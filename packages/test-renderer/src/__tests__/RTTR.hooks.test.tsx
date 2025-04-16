@@ -71,7 +71,7 @@ describe('ReactThreeTestRenderer Hooks', () => {
 
     expect(renderer.scene.children[0].instance.rotation.x).toEqual(0)
 
-    await ReactThreeTestRenderer.act(async () => {
+    await React.act(async () => {
       await renderer.advanceFrames(2, 1)
     })
 

@@ -1,10 +1,10 @@
 import React from 'react'
 import { render } from '@testing-library/react'
-import { Canvas, act } from '../src'
+import { Canvas } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
-    const renderer = await act(async () =>
+    const renderer = await React.act(async () =>
       render(
         <Canvas>
           <group />
@@ -18,7 +18,7 @@ describe('web Canvas', () => {
   it('should forward ref', async () => {
     const ref = React.createRef<HTMLCanvasElement>()
 
-    await act(async () =>
+    await React.act(async () =>
       render(
         <Canvas ref={ref}>
           <group />
@@ -38,7 +38,7 @@ describe('web Canvas', () => {
       return null
     }
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <ParentContext.Provider value={true}>
           <Canvas>
@@ -52,7 +52,7 @@ describe('web Canvas', () => {
   })
 
   it('should correctly unmount', async () => {
-    const renderer = await act(async () =>
+    const renderer = await React.act(async () =>
       render(
         <Canvas>
           <group />
@@ -66,7 +66,7 @@ describe('web Canvas', () => {
   it('plays nice with react SSR', async () => {
     const useLayoutEffect = jest.spyOn(React, 'useLayoutEffect')
 
-    await act(async () =>
+    await React.act(async () =>
       render(
         <Canvas>
           <group />
