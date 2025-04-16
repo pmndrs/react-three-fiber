@@ -68,6 +68,12 @@ export interface ThreeElements extends Omit<ThreeElementsImpl, 'audio' | 'source
   threePath: ThreeElementsImpl['path']
 }
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+
 declare module 'react' {
   namespace JSX {
     interface IntrinsicElements extends ThreeElements {}
