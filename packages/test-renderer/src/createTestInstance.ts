@@ -5,6 +5,31 @@ import type { Obj, TestInstanceChildOpts } from './types/internal'
 
 import { expectOne, matchProps, findAll } from './helpers/testInstance'
 
+// Helper to create a minimal wrapper for THREE.Object3D children of primitives
+const createVirtualInstance = (object: THREE.Object3D, parent: Instance<any>): Instance<THREE.Object3D> => {
+  // Create the virtual instance for this object
+  // we can't import the prepare method from packages/fiber/src/core/utils.tsx so we do what we can
+  const instance: Instance<THREE.Object3D> = {
+    root: parent.root,
+    type: object.type.toLowerCase(), // Convert to lowercase to match R3F convention
+    parent,
+    children: [],
+    props: { object },
+    object,
+    eventCount: 0,
+    handlers: {},
+    isHidden: false,
+  }
+
+  // Recursively process children if they exist
+  if (object.children && object.children.length > 0) {
+    const objectChildren = object.children as THREE.Object3D[]
+    instance.children = Array.from(objectChildren).map((child) => createVirtualInstance(child, instance))
+  }
+
+  return instance
+}
+
 export class ReactThreeTestInstance<TObject extends THREE.Object3D = THREE.Object3D> {
   _fiber: Instance<TObject>
 
@@ -47,11 +72,30 @@ export class ReactThreeTestInstance<TObject extends THREE.Object3D = THREE.Objec
   private getChildren = (
     fiber: Instance,
     opts: TestInstanceChildOpts = { exhaustive: false },
-  ): ReactThreeTestInstance[] =>
-    fiber.children.filter((child) => !child.props.attach || opts.exhaustive).map((fib) => wrapFiber(fib as Instance))
+  ): ReactThreeTestInstance[] => {
+    // Get standard R3F children
+    const r3fChildren = fiber.children
+      .filter((child) => !child.props.attach || opts.exhaustive)
+      .map((fib) => wrapFiber(fib as Instance))
+
+    // For primitives, also add THREE.js object children
+    if (fiber.type === 'primitive' && fiber.object.children?.length) {
+      const threeChildren = fiber.object.children.map((child: THREE.Object3D) => {
+        // Create a virtual instance that wraps the THREE.js child
+        const virtualInstance = createVirtualInstance(child, fiber)
+        return wrapFiber(virtualInstance)
+      })
+
+      r3fChildren.push(...threeChildren)
+
+      return r3fChildren
+    }
+
+    return r3fChildren
+  }
 
   public findAll = (decider: (node: ReactThreeTestInstance) => boolean): ReactThreeTestInstance[] =>
-    findAll(this as unknown as ReactThreeTestInstance, decider)
+    findAll(this as unknown as ReactThreeTestInstance, decider, { includeRoot: false })
 
   public find = (decider: (node: ReactThreeTestInstance) => boolean): ReactThreeTestInstance =>
     expectOne(this.findAll(decider), `matching custom checker: ${decider.toString()}`)

@@ -125,7 +125,7 @@ Similar to the [`act()` in `react-test-renderer`](https://reactjs.org/docs/test-
 #### Act example (using jest)
 
 ```tsx
-import ReactThreeTestRenderer from 'react-three-test-renderer'
+import ReactThreeTestRenderer from '@react-three/test-renderer'
 
 const Mesh = () => {
   const meshRef = React.useRef()

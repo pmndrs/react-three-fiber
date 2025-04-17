@@ -28,15 +28,31 @@ export const matchProps = (props: Obj, filter: Obj) => {
   return true
 }
 
-export const findAll = (root: ReactThreeTestInstance, decider: (node: ReactThreeTestInstance) => boolean) => {
+interface FindAllOptions {
+  /**
+   * Whether to include the root node in search results.
+   * When false, only searches within children.
+   * @default true
+   */
+  includeRoot?: boolean
+}
+
+export const findAll = (
+  root: ReactThreeTestInstance,
+  decider: (node: ReactThreeTestInstance) => boolean,
+  options: FindAllOptions = { includeRoot: true },
+) => {
   const results = []
 
-  if (decider(root)) {
+  // Only include the root node if the option is enabled
+  if (options.includeRoot !== false && decider(root)) {
     results.push(root)
   }
 
+  // Always search through children
   root.allChildren.forEach((child) => {
-    results.push(...findAll(child, decider))
+    // When recursively searching children, we always want to include their roots
+    results.push(...findAll(child, decider, { includeRoot: true }))
   })
 
   return results
