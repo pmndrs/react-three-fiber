@@ -440,7 +440,7 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
     state.set((state) => ({ internal: { ...state.internal, active: true } }))
-    // Notifiy that init is completed, the scene graph exists, but nothing has yet rendered
+    // Notify that init is completed, the scene graph exists, but nothing has yet rendered
     if (onCreated) onCreated(state)
     // Connect events to the targets parent, this is done to ensure events are registered on
     // a shared target, and not on the canvas itself

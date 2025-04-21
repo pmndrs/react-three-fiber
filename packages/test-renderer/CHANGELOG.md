@@ -298,7 +298,7 @@
 
 ### Patch Changes
 
-- 7aa2eab: fix: remove zustand subcribe selector
+- 7aa2eab: fix: remove zustand subscribe selector
 - Updated dependencies [7aa2eab]
   - @react-three/fiber@7.0.19
 
@@ -330,7 +330,7 @@
 
 ### Patch Changes
 
-- c5645e8: fix primitve leftovers on switch
+- c5645e8: fix primitive leftovers on switch
 - Updated dependencies [c5645e8]
   - @react-three/fiber@7.0.15
 

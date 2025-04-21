@@ -528,7 +528,7 @@
 
 ### Patch Changes
 
-- 564edbbb: fix port inject layers, it should allow root props to overwrite indefined portal props"
+- 564edbbb: fix port inject layers, it should allow root props to overwrite undefined portal props"
 
 ## 8.10.1
 
@@ -959,7 +959,7 @@
 
 ### Patch Changes
 
-- 7aa2eab: fix: remove zustand subcribe selector
+- 7aa2eab: fix: remove zustand subscribe selector
 
 ## 7.0.18
 
@@ -983,7 +983,7 @@
 
 ### Patch Changes
 
-- c5645e8: fix primitve leftovers on switch
+- c5645e8: fix primitive leftovers on switch
 
 ## 7.0.14
 
@@ -1065,7 +1065,7 @@
 
 - 96ae1ad: fix javascript interpreting negative renderpriority as positive
 
-This is a major breaking change that will fix an edge-case. It will only affect you if you used negative useFrame indicies, for instance
+This is a major breaking change that will fix an edge-case. It will only affect you if you used negative useFrame indices, for instance
 
 ```jsx
 useFrame(..., -1)
