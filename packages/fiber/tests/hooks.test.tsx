@@ -6,7 +6,6 @@ import {
   createRoot,
   advance,
   useLoader,
-  act,
   useThree,
   useGraph,
   useFrame,
@@ -52,7 +51,7 @@ describe('hooks', () => {
       return <group />
     }
 
-    await act(async () => root.render(<Component />))
+    await React.act(async () => root.render(<Component />))
 
     expect(result.camera instanceof THREE.Camera).toBeTruthy()
     expect(result.scene instanceof THREE.Scene).toBeTruthy()
@@ -78,7 +77,7 @@ describe('hooks', () => {
       )
     }
 
-    const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<Component />))
+    const store = await React.act(async () => (await root.configure({ frameloop: 'never' })).render(<Component />))
     const { scene } = store.getState()
 
     advance(Date.now())
@@ -105,7 +104,7 @@ describe('hooks', () => {
       return <primitive object={gltf.scene} />
     }
 
-    const store = await act(async () => root.render(<Component />))
+    const store = await React.act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
@@ -151,7 +150,7 @@ describe('hooks', () => {
       )
     }
 
-    const store = await act(async () => root.render(<Component />))
+    const store = await React.act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
     expect(scene.children[0]).toBe(MockMesh)
@@ -172,7 +171,7 @@ describe('hooks', () => {
     function Test(): null {
       return useLoader(loader, '', (loader) => (proto = loader))
     }
-    await act(async () => root.render(<Test />))
+    await React.act(async () => root.render(<Test />))
 
     expect(proto).toBe(loader)
   })
@@ -189,7 +188,7 @@ describe('hooks', () => {
     function Test(): null {
       return useLoader(Loader, '', (loader) => (proto = loader))
     }
-    await act(async () => root.render(<Test />))
+    await React.act(async () => root.render(<Test />))
 
     expect(proto).toBeInstanceOf(Loader)
   })
@@ -225,7 +224,7 @@ describe('hooks', () => {
       return <mesh />
     }
 
-    await act(async () => root.render(<Component />))
+    await React.act(async () => root.render(<Component />))
 
     expect(result).toEqual({
       nodes: {
@@ -257,7 +256,7 @@ describe('hooks', () => {
       instance = useInstanceHandle(ref)
       return <group ref={ref} />
     }
-    await act(async () => root.render(<Component />))
+    await React.act(async () => root.render(<Component />))
 
     expect(instance.current).toBe((ref.current as unknown as Instance<THREE.Group>['object']).__r3f)
   })
