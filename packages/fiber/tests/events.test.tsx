@@ -190,7 +190,7 @@ describe('events', () => {
     expect(handlePointerOut).toHaveBeenCalled()
   })
 
-  it('should handle stopPropogation', async () => {
+  it('should handle stopPropagation', async () => {
     const handlePointerEnter = jest.fn().mockImplementation((e) => {
       expect(() => e.stopPropagation()).not.toThrow()
     })

@@ -65,7 +65,7 @@ function Portal({
   }, [scale])
 
   useFrame((state) => {
-    // Copy the default cameras whereabous
+    // Copy the default cameras whereabouts
     camera.position.copy(state.camera.position)
     camera.rotation.copy(state.camera.rotation)
     camera.scale.copy(state.camera.scale)
@@ -97,8 +97,8 @@ function Portal({
         <meshBasicMaterial map={fbo.texture} map-encoding={THREE.SRGBColorSpace} />
       </mesh>
       {/* A portal by default now has its own state, separate from the root state.
-          The third argument to createPortal allows you to override parts of it, in here for example 
-          we place our own camera and override the events definition with a lower proprity than
+          The third argument to createPortal allows you to override parts of it, in here for example
+          we place our own camera and override the events definition with a lower priority than
           the previous layer, and our custom compute function. */}
       {createPortal(children, scene, { camera, events: { compute, priority: events.priority - 1 } })}
     </>

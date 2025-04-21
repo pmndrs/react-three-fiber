@@ -91,7 +91,7 @@ createRoot(document.getElementById('root')).render(
 
 <details>
   <summary>Show TypeScript example</summary>
-  
+
 ```bash
 npm install @types/three
 ```
@@ -220,7 +220,7 @@ Some helpful material:
 
 - [Threejs-docs](https://threejs.org/docs) and [examples](https://threejs.org/examples)
 - [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
-- [Bruno Simons Threejs Jouney](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
+- [Bruno Simons Threejs Journey](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
 
 <a href="https://threejs-journey.com"><img src="docs/banner-journey.jpg" /></a>
 
