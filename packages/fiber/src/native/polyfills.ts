@@ -77,7 +77,8 @@ export function polyfills() {
       const url = URL.createObjectURL(blob)
       URL.revokeObjectURL(url)
     } catch (_) {
-      const BlobManager = require('react-native/Libraries/Blob/BlobManager.js')
+      const BlobManagerModule = require('react-native/Libraries/Blob/BlobManager.js')
+      const BlobManager = BlobManagerModule.default ?? BlobManagerModule
 
       const createObjectURL = URL.createObjectURL
       URL.createObjectURL = function (blob: Blob): string {
