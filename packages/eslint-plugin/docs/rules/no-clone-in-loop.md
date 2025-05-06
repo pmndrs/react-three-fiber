@@ -36,7 +36,7 @@ function Direction({ targetPosition }) {
 }
 ```
 
-This creates a vector once outside of the frame loop inside a `useMemo` to be reused each frame.
+This creates a vector outside of the frame loop using `useMemo` to be reused each frame.
 
 ```js
 function Direction({ targetPosition }) {
