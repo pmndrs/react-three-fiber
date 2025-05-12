@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 9.1.0
+
+### Minor Changes
+
+- 31781e5a1fdc464cb67617cc3d7bc5d8690cd4cd: feat(RTTR): handle primitives in test-renderer and fix queries in TestInstances
+
 ## 9.0.1
 
 ### Patch Changes
