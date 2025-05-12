@@ -10,7 +10,6 @@ module.exports = {
     '<rootDir>/packages/fiber/dist',
     '<rootDir>/packages/fiber/src/index',
     '<rootDir>/packages/test-renderer/dist',
-    '<rootDir>/test-utils',
   ],
   coverageDirectory: './coverage/',
   collectCoverage: false,

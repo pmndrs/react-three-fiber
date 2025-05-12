@@ -171,6 +171,49 @@ Array [
 ]
 `;
 
+exports[`ReactThreeTestRenderer Core handles primitive objects and their children correctly in toGraph 1`] = `
+Array [
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [],
+        "name": "",
+        "type": "BoxGeometry",
+      },
+      Object {
+        "children": Array [],
+        "name": "",
+        "type": "MeshBasicMaterial",
+      },
+    ],
+    "name": "RegularMesh",
+    "type": "Mesh",
+  },
+  Object {
+    "children": Array [
+      Object {
+        "children": Array [],
+        "name": "PrimitiveChildMesh",
+        "type": "Mesh",
+      },
+      Object {
+        "children": Array [
+          Object {
+            "children": Array [],
+            "name": "NestedMesh",
+            "type": "Mesh",
+          },
+        ],
+        "name": "NestedGroup",
+        "type": "Group",
+      },
+    ],
+    "name": "PrimitiveGroup",
+    "type": "Group",
+  },
+]
+`;
+
 exports[`ReactThreeTestRenderer Core toTree() handles complicated tree of fragments 1`] = `
 Array [
   Object {
