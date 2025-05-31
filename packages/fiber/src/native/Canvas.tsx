@@ -45,6 +45,7 @@ function CanvasImpl({
   onPointerMissed,
   onCreated,
   ref,
+  pointerEvents,
   ...props
 }: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
@@ -224,10 +225,11 @@ function CanvasImpl({
   }, [canvas])
 
   return (
-    <_View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }} {...bind}>
+    <_View {...props} ref={viewRef} onLayout={onLayout} style={{ flex: 1, ...style }}>
       {width > 0 && (
         <GLView msaaSamples={antialias ? 4 : 0} onContextCreate={onContextCreate} style={StyleSheet.absoluteFill} />
       )}
+      <_View style={StyleSheet.absoluteFill} pointerEvents={pointerEvents} {...bind} />
     </_View>
   )
 }
