@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
+import { Canvas, extend } from '../src'
 import THREE from 'three'
 
 extend(THREE as any)
@@ -11,7 +11,7 @@ describe('events', () => {
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh onPointerDown={handlePointerDown}>
@@ -35,7 +35,7 @@ describe('events', () => {
     const handleClick = jest.fn()
     const handleMissed = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh onPointerMissed={handleMissed} onClick={handleClick}>
@@ -60,7 +60,7 @@ describe('events', () => {
     const handleClick = jest.fn()
     const handleMissed = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh onPointerMissed={handleMissed} onClick={handleClick}>
@@ -95,7 +95,7 @@ describe('events', () => {
     const handleClick = jest.fn()
     const handleMissed = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <group onPointerMissed={handleMissed}>
@@ -131,7 +131,7 @@ describe('events', () => {
   it('can handle onPointerMissed on Canvas', async () => {
     const handleMissed = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas onPointerMissed={handleMissed}>
           <mesh>
@@ -156,7 +156,7 @@ describe('events', () => {
     const handlePointerEnter = jest.fn()
     const handlePointerOut = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh
@@ -196,7 +196,7 @@ describe('events', () => {
     })
     const handlePointerLeave = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh onPointerLeave={handlePointerLeave} onPointerEnter={handlePointerEnter}>
@@ -232,7 +232,7 @@ describe('events', () => {
     const handleClickFront = jest.fn((e) => e.stopPropagation())
     const handleClickRear = jest.fn()
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <mesh onClick={handleClickFront}>
@@ -299,7 +299,7 @@ describe('events', () => {
 
     it('should release when the capture target is unmounted', async () => {
       let renderResult: RenderResult = undefined!
-      await act(async () => {
+      await React.act(async () => {
         renderResult = render(<PointerCaptureTest hasMesh={true} />)
         return renderResult
       })
@@ -314,7 +314,7 @@ describe('events', () => {
       Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
-      await act(async () => canvas.dispatchEvent(down))
+      await React.act(async () => canvas.dispatchEvent(down))
 
       /* This should have captured the DOM pointer */
       expect(handlePointerDown).toHaveBeenCalledTimes(1)
@@ -322,7 +322,7 @@ describe('events', () => {
       expect(canvas.releasePointerCapture).not.toHaveBeenCalled()
 
       /* Now remove the mesh */
-      await act(async () => renderResult.rerender(<PointerCaptureTest hasMesh={false} />))
+      await React.act(async () => renderResult.rerender(<PointerCaptureTest hasMesh={false} />))
 
       expect(canvas.releasePointerCapture).toHaveBeenCalledWith(pointerId)
 
@@ -330,7 +330,7 @@ describe('events', () => {
       Object.defineProperty(move, 'offsetX', { get: () => 577 })
       Object.defineProperty(move, 'offsetY', { get: () => 480 })
 
-      await act(async () => canvas.dispatchEvent(move))
+      await React.act(async () => canvas.dispatchEvent(move))
 
       /* There should now be no pointer capture */
       expect(handlePointerMove).not.toHaveBeenCalled()
@@ -338,7 +338,7 @@ describe('events', () => {
 
     it('should not leave when captured', async () => {
       let renderResult: RenderResult = undefined!
-      await act(async () => {
+      await React.act(async () => {
         renderResult = render(<PointerCaptureTest hasMesh manualRelease />)
         return renderResult
       })
@@ -356,7 +356,7 @@ describe('events', () => {
       Object.defineProperty(moveOut, 'offsetY', { get: () => -10000 })
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
-      await act(async () => canvas.dispatchEvent(moveIn))
+      await React.act(async () => canvas.dispatchEvent(moveIn))
       expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerMove).toHaveBeenCalledTimes(1)
 
@@ -364,15 +364,15 @@ describe('events', () => {
       Object.defineProperty(down, 'offsetX', { get: () => 577 })
       Object.defineProperty(down, 'offsetY', { get: () => 480 })
 
-      await act(async () => canvas.dispatchEvent(down))
+      await React.act(async () => canvas.dispatchEvent(down))
 
       // If we move the pointer now, when it is captured, it should raise the onPointerMove event even though the pointer is not over the element,
       // and NOT raise the onPointerLeave event.
-      await act(async () => canvas.dispatchEvent(moveOut))
+      await React.act(async () => canvas.dispatchEvent(moveOut))
       expect(handlePointerMove).toHaveBeenCalledTimes(2)
       expect(handlePointerLeave).not.toHaveBeenCalled()
 
-      await act(async () => canvas.dispatchEvent(moveIn))
+      await React.act(async () => canvas.dispatchEvent(moveIn))
       expect(handlePointerMove).toHaveBeenCalledTimes(3)
 
       const up = new PointerEvent('pointerup', { pointerId })
@@ -380,14 +380,14 @@ describe('events', () => {
       Object.defineProperty(up, 'offsetY', { get: () => 480 })
       const lostpointercapture = new PointerEvent('lostpointercapture', { pointerId })
 
-      await act(async () => canvas.dispatchEvent(up))
-      await act(async () => canvas.dispatchEvent(lostpointercapture))
+      await React.act(async () => canvas.dispatchEvent(up))
+      await React.act(async () => canvas.dispatchEvent(lostpointercapture))
 
       // The pointer is still over the element, so onPointerLeave should not have been called.
       expect(handlePointerLeave).not.toHaveBeenCalled()
 
       // The element pointer should no longer be captured, so moving it away should call onPointerLeave.
-      await act(async () => canvas.dispatchEvent(moveOut))
+      await React.act(async () => canvas.dispatchEvent(moveOut))
       expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
     })
@@ -400,7 +400,7 @@ describe('events', () => {
     const object = new THREE.Group()
     object.add(new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial()))
 
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas>
           <group onPointerDown={handlePointerDownOuter}>
@@ -422,7 +422,7 @@ describe('events', () => {
 
   it('can handle a DOM offset canvas', async () => {
     const handlePointerDown = jest.fn()
-    await act(async () => {
+    await React.act(async () => {
       render(
         <Canvas
           onCreated={(state) => {
