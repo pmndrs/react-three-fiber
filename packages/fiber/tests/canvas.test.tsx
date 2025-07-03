@@ -1,7 +1,6 @@
 import React from 'react'
 import { render } from '@testing-library/react'
 import { Canvas, act } from '../src'
-import { MOCKED_WIDTH, MOCKED_HEIGHT } from '../__mocks__/react-use-measure'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -102,9 +101,9 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions
-    expect(canvas?.getAttribute('width')).toBe(MOCKED_WIDTH.toString())
-    expect(canvas?.getAttribute('height')).toBe(MOCKED_HEIGHT.toString())
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
   })
 
   it('should fallback to useMeasure when only height is provided', async () => {
@@ -117,9 +116,9 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions
-    expect(canvas?.getAttribute('width')).toBe(MOCKED_WIDTH.toString())
-    expect(canvas?.getAttribute('height')).toBe(MOCKED_HEIGHT.toString())
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
   })
 
   it('should fallback to useMeasure when neither width nor height is provided', async () => {
@@ -132,8 +131,8 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions
-    expect(canvas?.getAttribute('width')).toBe(MOCKED_WIDTH.toString())
-    expect(canvas?.getAttribute('height')).toBe(MOCKED_HEIGHT.toString())
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
   })
 })
