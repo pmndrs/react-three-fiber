@@ -22,6 +22,10 @@ export interface CanvasProps
   ref?: React.Ref<HTMLCanvasElement>
   /** Canvas fallback content, similar to img's alt prop */
   fallback?: React.ReactNode
+  /**  */
+  width?: number
+  /** */
+  height?: number
   /**
    * Options to pass to useMeasure.
    * @see https://github.com/pmndrs/react-use-measure#api
@@ -37,6 +41,8 @@ function CanvasImpl({
   ref,
   children,
   fallback,
+  width,
+  height,
   resize,
   style,
   gl,
@@ -83,7 +89,11 @@ function CanvasImpl({
 
   useIsomorphicLayoutEffect(() => {
     const canvas = canvasRef.current
-    if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
+
+    const manualSize = width && height ? { width, height, left: 0, top: 0 } : undefined
+    const size = manualSize ?? containerRect
+
+    if (size.width > 0 && size.height > 0 && canvas) {
       if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
 
       async function run() {
@@ -101,7 +111,7 @@ function CanvasImpl({
           performance,
           raycaster,
           camera,
-          size: containerRect,
+          size,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onCreated: (state) => {
