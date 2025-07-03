@@ -81,6 +81,7 @@ Array [
   "events",
   "extend",
   "flushGlobalEffects",
+  "flushSync",
   "getRootState",
   "invalidate",
   "reconciler",
