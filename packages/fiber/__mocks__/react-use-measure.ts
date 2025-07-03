@@ -1,8 +1,9 @@
 import * as React from 'react'
+import { DEFAULT_TEST_CANVAS_WIDTH, DEFAULT_TEST_CANVAS_HEIGHT } from '../../test-renderer/src/createTestCanvas'
 
 // Export the mocked dimensions so tests can reference them
-export const MOCKED_WIDTH = 1280
-export const MOCKED_HEIGHT = 800
+export const MOCKED_WIDTH = DEFAULT_TEST_CANVAS_WIDTH
+export const MOCKED_HEIGHT = DEFAULT_TEST_CANVAS_HEIGHT
 
 export default function useMeasure() {
   const element = React.useRef<HTMLElement | null>(null)

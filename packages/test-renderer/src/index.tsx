@@ -6,7 +6,7 @@ import { extend, _roots as mockRoots, createRoot, reconciler, act, Instance } fr
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
 
-import { createCanvas } from './createTestCanvas'
+import { createCanvas, DEFAULT_TEST_CANVAS_WIDTH, DEFAULT_TEST_CANVAS_HEIGHT } from './createTestCanvas'
 import { createEventFirer } from './fireEvent'
 
 import type { CreateOptions, Renderer } from './types/public'
@@ -24,8 +24,8 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     frameloop: 'never',
     // TODO: remove and use default behavior
     size: {
-      width: options?.width ?? 1280,
-      height: options?.height ?? 800,
+      width: options?.width ?? DEFAULT_TEST_CANVAS_WIDTH,
+      height: options?.height ?? DEFAULT_TEST_CANVAS_HEIGHT,
       top: 0,
       left: 0,
     },

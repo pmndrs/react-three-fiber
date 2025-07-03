@@ -1,7 +1,15 @@
 import { WebGL2RenderingContext } from './WebGL2RenderingContext'
 import type { CreateCanvasParameters } from './types/internal'
 
-export const createCanvas = ({ beforeReturn, width = 1280, height = 800 }: CreateCanvasParameters = {}) => {
+// Default test canvas dimensions
+export const DEFAULT_TEST_CANVAS_WIDTH = 1280
+export const DEFAULT_TEST_CANVAS_HEIGHT = 800
+
+export const createCanvas = ({
+  beforeReturn,
+  width = DEFAULT_TEST_CANVAS_WIDTH,
+  height = DEFAULT_TEST_CANVAS_HEIGHT,
+}: CreateCanvasParameters = {}) => {
   let canvas: HTMLCanvasElement
 
   if (typeof document !== 'undefined' && typeof document.createElement === 'function') {
