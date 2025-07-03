@@ -2,6 +2,10 @@ import React from 'react'
 import { render } from '@testing-library/react'
 import { Canvas, act } from '../src'
 
+// Expected dimensions from the mocked react-use-measure hook
+const MOCKED_MEASURE_WIDTH = 1280
+const MOCKED_MEASURE_HEIGHT = 800
+
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
     const renderer = await act(async () =>
@@ -101,9 +105,9 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions (1280x800)
-    expect(canvas?.getAttribute('width')).toBe('1280')
-    expect(canvas?.getAttribute('height')).toBe('800')
+    // Should use mocked useMeasure dimensions
+    expect(canvas?.getAttribute('width')).toBe(MOCKED_MEASURE_WIDTH.toString())
+    expect(canvas?.getAttribute('height')).toBe(MOCKED_MEASURE_HEIGHT.toString())
   })
 
   it('should fallback to useMeasure when only height is provided', async () => {
@@ -116,9 +120,9 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions (1280x800)
-    expect(canvas?.getAttribute('width')).toBe('1280')
-    expect(canvas?.getAttribute('height')).toBe('800')
+    // Should use mocked useMeasure dimensions
+    expect(canvas?.getAttribute('width')).toBe(MOCKED_MEASURE_WIDTH.toString())
+    expect(canvas?.getAttribute('height')).toBe(MOCKED_MEASURE_HEIGHT.toString())
   })
 
   it('should fallback to useMeasure when neither width nor height is provided', async () => {
@@ -131,8 +135,8 @@ describe('web Canvas', () => {
     )
 
     const canvas = renderer.container.querySelector('canvas')
-    // Should use mocked useMeasure dimensions (1280x800)
-    expect(canvas?.getAttribute('width')).toBe('1280')
-    expect(canvas?.getAttribute('height')).toBe('800')
+    // Should use mocked useMeasure dimensions
+    expect(canvas?.getAttribute('width')).toBe(MOCKED_MEASURE_WIDTH.toString())
+    expect(canvas?.getAttribute('height')).toBe(MOCKED_MEASURE_HEIGHT.toString())
   })
 })
