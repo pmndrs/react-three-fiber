@@ -1,38 +1,38 @@
-import * as THREE from 'three'
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
+import * as THREE from 'three'
 import { createWithEqualityFn } from 'zustand/traditional'
 
 import type { ThreeElement } from '../three-types'
-import {
-  Renderer,
-  createStore,
-  isRenderer,
-  context,
-  RootState,
-  Size,
-  Dpr,
-  Performance,
-  Frameloop,
-  RootStore,
-} from './store'
+import { ComputeFunction, EventManager } from './events'
+import { useStore } from './hooks'
+import { advance, invalidate } from './loop'
 import { reconciler, Root } from './reconciler'
-import { invalidate, advance } from './loop'
-import { EventManager, ComputeFunction } from './events'
+import {
+  context,
+  createStore,
+  Dpr,
+  Frameloop,
+  isRenderer,
+  Performance,
+  Renderer,
+  RootState,
+  RootStore,
+  Size,
+} from './store'
 import {
   type Properties,
-  is,
-  dispose,
-  calculateDpr,
-  EquConfig,
-  useIsomorphicLayoutEffect,
-  Camera,
-  updateCamera,
   applyProps,
+  calculateDpr,
+  Camera,
+  dispose,
+  EquConfig,
+  is,
   prepare,
+  updateCamera,
+  useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { useStore } from './hooks'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -578,5 +578,6 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
  * having to revert to a non-React solution.
  */
 export function flushSync<R>(fn: () => R): R {
-  return reconciler.flushSync(fn)
+  // @ts-ignore - reconciler types are not maintained
+  return reconciler.flushSyncFromReconciler(fn)
 }
