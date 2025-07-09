@@ -5,6 +5,8 @@ import type {} from 'react/jsx-dev-runtime'
 import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
 import type { Overwrite, Mutable } from './core/utils'
 
+type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
+
 export interface MathRepresentation {
   set(...args: number[]): any
 }
@@ -16,8 +18,8 @@ export type MathTypes = MathRepresentation | THREE.Euler | THREE.Color
 export type MathType<T extends MathTypes> = T extends THREE.Color
   ? Args<typeof THREE.Color> | THREE.ColorRepresentation
   : T extends VectorRepresentation | THREE.Layers | THREE.Euler
-  ? T | Parameters<T['set']> | number
-  : T | Parameters<T['set']>
+  ? T | MutableOrReadonlyParameters<T['set']> | number
+  : T | MutableOrReadonlyParameters<T['set']>
 
 export type MathProps<P> = {
   [K in keyof P as P[K] extends MathTypes ? K : never]: P[K] extends MathTypes ? MathType<P[K]> : never

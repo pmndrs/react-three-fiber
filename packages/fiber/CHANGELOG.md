@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 9.1.4
+
+### Patch Changes
+
+- d491e46087508dff50c48768a99f87bd486b6910: Accept readonly arrays for vector props
+
+## 9.1.3
+
+### Patch Changes
+
+- efd28328f5e612b0592be7da316fad990fdf4675: fix(native) fix crash on rerendering GLView with new arch
+
 ## 9.1.2
 
 ### Patch Changes
