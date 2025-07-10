@@ -35,13 +35,13 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
 
   const _store = mockRoots.get(canvas)!.store
 
-  await act(async () => _root.render(element))
+  await React.act(async () => _root.render(element))
   const _scene = (_store.getState().scene as Instance<THREE.Scene>['object']).__r3f!
 
   return {
     scene: wrapFiber(_scene),
     async unmount() {
-      await act(async () => {
+      await React.act(async () => {
         _root.unmount()
       })
     },
@@ -59,7 +59,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     async update(newElement: React.ReactNode) {
       if (!mockRoots.has(canvas)) return console.warn('RTTR: attempted to update an unmounted root!')
 
-      await act(async () => {
+      await React.act(async () => {
         _root.render(newElement)
       })
     },
@@ -69,7 +69,7 @@ const create = async (element: React.ReactNode, options?: Partial<CreateOptions>
     toGraph() {
       return toGraph(_scene)
     },
-    fireEvent: createEventFirer(act, _store),
+    fireEvent: createEventFirer(React.act, _store),
     async advanceFrames(frames: number, delta: number | number[] = 1) {
       const state = _store.getState()
       const storeSubscribers = state.internal.subscribers
