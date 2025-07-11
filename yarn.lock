@@ -10210,10 +10210,10 @@ three-mesh-bvh@^0.7.0:
   resolved "https://registry.yarnpkg.com/three-mesh-bvh/-/three-mesh-bvh-0.7.3.tgz#91f2d7e26f230288b5b0a6bdf41bdd9620348945"
   integrity sha512-3W6KjzmupjfE89GuHPT31kxKWZ4YGZPEZJNysJpiOZfQRsBQQgmK7v/VJPpjG6syhAvTnY+5Fr77EvIkTLpGSw==
 
-three-stdlib@^2.13.0:
-  version "2.29.6"
-  resolved "https://registry.yarnpkg.com/three-stdlib/-/three-stdlib-2.29.6.tgz#d1d17a7e5d48921ebb3aed9f5131bb85968e4d29"
-  integrity sha512-nj9bHkzhhwfmqQcM/keC2RDb0bHhbw6bRXTy81ehzi8F1rtp6pJ5eS0/vl1Eg5RMFqXOMyxJ6sDHPoLU+IrVZg==
+three-stdlib@^2.29.9:
+  version "2.29.9"
+  resolved "https://registry.yarnpkg.com/three-stdlib/-/three-stdlib-2.29.9.tgz#ee8fe2ce01f08817c15bb7f00c52b6558c981ff8"
+  integrity sha512-O6HRkJXX5A3DGXdvMwi8XqYlTV1wXdhKhxWmTuDoXFN4aZj96GW7gKj8FQ4bWFV2L8SmXuYSpkvJoG/1GCc9Ug==
   dependencies:
     "@types/draco3d" "^1.4.0"
     "@types/offscreencanvas" "^2019.6.4"
@@ -10222,10 +10222,10 @@ three-stdlib@^2.13.0:
     fflate "^0.6.9"
     potpack "^1.0.1"
 
-three-stdlib@^2.29.9:
-  version "2.29.9"
-  resolved "https://registry.yarnpkg.com/three-stdlib/-/three-stdlib-2.29.9.tgz#ee8fe2ce01f08817c15bb7f00c52b6558c981ff8"
-  integrity sha512-O6HRkJXX5A3DGXdvMwi8XqYlTV1wXdhKhxWmTuDoXFN4aZj96GW7gKj8FQ4bWFV2L8SmXuYSpkvJoG/1GCc9Ug==
+three-stdlib@^2.35.16:
+  version "2.35.16"
+  resolved "https://registry.yarnpkg.com/three-stdlib/-/three-stdlib-2.35.16.tgz#c7e9938005a8029299ec7a47b039f0de3ddd190c"
+  integrity sha512-TgXRLSC3rcsiYNgHaz4zVBvgwTxA+u2wdueXAZeNL5UxXbzgadx03JxSaGisutwY1Fkm9349IizFsxNtOwJVcg==
   dependencies:
     "@types/draco3d" "^1.4.0"
     "@types/offscreencanvas" "^2019.6.4"
