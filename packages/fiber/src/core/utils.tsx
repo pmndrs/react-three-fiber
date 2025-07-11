@@ -116,10 +116,16 @@ export const ErrorBoundary = /* @__PURE__ */ (() =>
     }
   })()
 
-export interface ObjectMap {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
-  meshes: { [name: string]: THREE.Mesh }
+export interface ObjectMap<
+  T extends { nodes?: string; materials?: string; meshes?: string } = {
+    nodes: string
+    materials: string
+    meshes: string
+  },
+> {
+  nodes: Record<T['nodes'] extends string ? T['nodes'] : string, THREE.Object3D>
+  materials: Record<T['materials'] extends string ? T['materials'] : string, THREE.Material>
+  meshes: Record<T['meshes'] extends string ? T['meshes'] : string, THREE.Mesh>
 }
 
 export function calculateDpr(dpr: Dpr): number {
