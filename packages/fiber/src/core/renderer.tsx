@@ -575,7 +575,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
  * Force React to flush any updates inside the provided callback synchronously and immediately.
  * All the same caveats documented for react-dom's `flushSync` apply here (see https://react.dev/reference/react-dom/flushSync).
  * Nevertheless, sometimes one needs to render synchronously, for example to keep DOM and 3D changes in lock-step without
- * having to revert to a non-React solution.
+ * having to revert to a non-React solution. Note: this will only flush updates within the `Canvas` root.
  */
 export function flushSync<R>(fn: () => R): R {
   // @ts-ignore - reconciler types are not maintained
