@@ -1,6 +1,6 @@
 {
   "name": "@react-three/fiber",
-  "version": "9.1.4",
+  "version": "9.2.0",
   "description": "A React renderer for Threejs",
   "keywords": [
     "react",
@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@types/react-reconciler": "^0.28.9",
+    "@types/react-reconciler": "^0.32.0",
     "@types/webxr": "*",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",

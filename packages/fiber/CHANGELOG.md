@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.2.0
+
+### Minor Changes
+
+- 94ece53e17a586465b10ec627cf4799cefa72b3a: Export flushSync
+
 ## 9.1.4
 
 ### Patch Changes
