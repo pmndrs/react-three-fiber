@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements } from '../src/index'
+import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -837,5 +837,31 @@ describe('renderer', () => {
     // Verify no duplicates in final state
     const finalUniqueNames = new Set(scene.children.map((child) => child.name))
     expect(finalUniqueNames.size).toBe(scene.children.length)
+  })
+
+  it('should update scene synchronously with flushSync', async () => {
+    let updateSynchronously: (value: number) => void
+
+    function TestComponent() {
+      const [positionX, setPositionX] = React.useState(0)
+      const scene = useThree((state) => state.scene)
+
+      updateSynchronously = React.useCallback(
+        (value: number) => {
+          flushSync(() => {
+            setPositionX(value)
+          })
+
+          expect(scene.children.length).toBe(1)
+          expect(scene.children[0].position.x).toBe(value)
+        },
+        [scene, setPositionX],
+      )
+
+      return <mesh position-x={positionX} />
+    }
+
+    await act(async () => root.render(<TestComponent />))
+    await act(async () => updateSynchronously(1))
   })
 })
