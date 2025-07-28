@@ -1,5 +1,13 @@
 # @react-three/fiber
 
+## 9.3.0
+
+### Minor Changes
+
+- 7579c2d79ed60e5c93a259637b65c01971f39d82: feat: add flushSync example
+- 26e5d6e8b8b00b817ebb5242432000abe38bfc2c: fix: update flushSync for new reconciler
+- 0281b6bc4fcf041ed801e64f1876f70c214aa117: fix(native): update react-native deep imports for 0.79 compatibility
+
 ## 9.2.0
 
 ### Minor Changes
