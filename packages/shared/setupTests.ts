@@ -19,3 +19,8 @@ global.console.error = (...args: any[]) => {
   if (args.join('').startsWith('Warning')) return
   return logError(...args)
 }
+
+const { default: fetch, Request, Response } = require('node-fetch')
+global.fetch = fetch
+global.Request = Request
+global.Response = Response
