@@ -1,5 +1,7 @@
 import * as React from 'react'
 import * as THREE from 'three'
+import * as Stdlib from 'three-stdlib'
+import { TextEncoder } from 'util'
 import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
 
 import {
@@ -11,6 +13,7 @@ import {
   ReactThreeFiber,
   useThree,
   createPortal,
+  useLoader,
 } from '../../src/index'
 import { UseBoundStore } from 'zustand'
 import { privateKeys, RootState } from '../../src/core/store'
@@ -1061,5 +1064,50 @@ describe('renderer', () => {
     expect(store.getState().camera.right).toBe(0)
     expect(store.getState().camera.top).toBe(0)
     expect(store.getState().camera.bottom).toBe(0)
+  })
+
+  it('should load a model with GLTFLoader', async () => {
+    // 1. Create minimal GLB buffer
+    const jsonString = '{"asset":{"version":"2.0"},"scenes":[{"nodes":[0]}],"nodes":[{}]}'
+    const jsonBuffer = new TextEncoder().encode(jsonString)
+    const jsonChunkLength = jsonBuffer.length
+    const totalLength = 12 + 8 + jsonChunkLength
+    const glbBuffer = new ArrayBuffer(totalLength)
+    const dataView = new DataView(glbBuffer)
+    dataView.setUint32(0, 0x46546c67, true) // 'glTF'
+    dataView.setUint32(4, 2, true) // version
+    dataView.setUint32(8, totalLength, true) // total length
+    dataView.setUint32(12, jsonChunkLength, true) // chunk length
+    dataView.setUint32(16, 0x4e4f534a, true) // 'JSON'
+    new Uint8Array(glbBuffer).set(jsonBuffer, 20)
+
+    // 2. Mock fetch
+    const mockFetch = jest.spyOn(global, 'fetch').mockImplementation(async () => {
+      return new Response(glbBuffer)
+    })
+
+    // 3. The component that uses the loader
+    const Component = () => {
+      const gltf = useLoader(Stdlib.GLTFLoader, '/model.glb')
+      return <primitive object={gltf.scene} />
+    }
+
+    // 4. Render and assert
+    let scene: THREE.Scene = null!
+    await act(async () => {
+      scene = root
+        .render(
+          <React.Suspense fallback={null}>
+            <Component />
+          </React.Suspense>,
+        )
+        .getState().scene
+    })
+
+    expect(scene.children[0]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[0].name).toBe('')
+
+    // 5. Restore fetch
+    mockFetch.mockRestore()
   })
 })
