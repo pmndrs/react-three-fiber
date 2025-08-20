@@ -302,7 +302,7 @@ useEffect(() => {
 
 Your app has to opt into performance scaling by listening to the performance `current`! The number itself will tell you what to do. 1 (max) means everything is ok, the default. Less than 1 (min) means a regression is requested and the number itself tells you how far you should go when scaling down.
 
-For instance, you could simply multiply `current` with the pixelratio to cut down on resolution. If you have defined `min: 0.5` that would mean it will half the resolution for at least 200ms (delay) when regress is called. It can be used for anything else, too: switching off lights when `current < 1`, using lower-res textures, skip post-processing effects, etc. You could of course also animate/lerp these changes.
+For instance, you could simply multiply `current` with the pixel ratio to cut down on resolution. If you have defined `min: 0.5` that would mean it will half the resolution for at least 200ms (delay) when regress is called. It can be used for anything else, too: switching off lights when `current < 1`, using lower-res textures, skip post-processing effects, etc. You could of course also animate/lerp these changes.
 
 Here is a small prototype component that scales the pixel ratio:
 
@@ -363,4 +363,4 @@ It simulates heavy load by creating hundreds of THREE.TextGeometry instances (51
   />
 </p>
 
-For more on how to use this API, see [use startTransition for expensive ops](/advanced/pitfalls#use-starttransition-for-expensive-ops).
+For more on how to use this API, see [use startTransition for expensive ops](/docs/advanced/pitfalls#use-starttransition-for-expensive-ops).
