@@ -205,6 +205,15 @@ describe('resolve', () => {
     expect(key).toBe('bar')
     expect(target).toBe(root[key])
   })
+
+  it ('should return the original root and key when the first part of the chain is not a property of the root', () => {
+    const object = { foo: { bar: 1 } }
+    const { root, key, target } = resolve(object, 'foo2-bar')
+
+    expect(root).toBe(object)
+    expect(key).toBe('foo2-bar')
+    expect(target).toBe(undefined)
+  })
 })
 
 describe('attach / detach', () => {
