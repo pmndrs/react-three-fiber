@@ -258,9 +258,16 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   let target: unknown = root[key]
   if (!key.includes('-')) return { root, key, target }
 
+  const chain = key.split('-')
+
+  // If the first part of the chain is not a property of the root, there is no need to continue processing the remaining chained queries.
+  if (!root.hasOwnProperty(chain[0])) {
+    return { root, key, target }
+  }
+
   // Resolve pierced target
   target = root
-  for (const part of key.split('-')) {
+  for (const part of chain) {
     key = part
     root = target
     target = (target as any)?.[key]
