@@ -311,6 +311,12 @@ describe('applyProps', () => {
     expect(() => applyProps(target, {})).not.toThrow()
   })
 
+  it('should not throw when applying unknown props', () => {
+    const target = new THREE.Object3D()
+    applyProps(target, {})
+    expect(() => applyProps(target, { ['foo-bar']: 1 })).not.toThrow()
+  })
+
   it('should filter reserved props without accessing them', () => {
     const get = jest.fn()
     const set = jest.fn()

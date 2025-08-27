@@ -261,12 +261,14 @@ export function resolve(root: any, key: string): { root: any; key: string; targe
   // Resolve pierced target
   target = root
   for (const part of key.split('-')) {
+    if (!target) {
+      break
+    }
+
     key = part
     root = target
     target = (target as any)?.[key]
   }
-
-  // TODO: change key to 'foo-bar' if target is undefined?
 
   return { root, key, target }
 }
