@@ -255,19 +255,21 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 }
 
 export function resolve(root: any, key: string): { root: any; key: string; target: any } {
-  let target: unknown = root[key]
-  if (!key.includes('-')) return { root, key, target }
+  if (!key.includes('-')) return { root, key, target: root[key] }
 
   // Resolve pierced target
-  target = root
-  for (const part of key.split('-')) {
-    if (!target) {
-      break
-    }
+  let target = root
 
+  const parts = key.split('-')
+
+  if (!target[parts[0]]) {
+    return { root, key, target }
+  }
+
+  for (const part of parts) {
     key = part
     root = target
-    target = (target as any)?.[key]
+    target = target?.[key]
   }
 
   return { root, key, target }
