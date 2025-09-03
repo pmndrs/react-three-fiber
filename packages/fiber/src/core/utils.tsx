@@ -257,19 +257,28 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 export function resolve(root: any, key: string): { root: any; key: string; target: any } {
   if (!key.includes('-')) return { root, key, target: root[key] }
 
-  // Resolve pierced target
-  let target = root
-
-  const parts = key.split('-')
-
-  if (!target[parts[0]]) {
-    return { root, key, target }
+  // First try the entire key as a single property (e.g., 'foo-bar')
+  if (key in root) {
+    return { root, key, target: root[key] }
   }
 
+  // Try piercing (e.g., 'material-color' -> material.color)
+  let target = root
+  const parts = key.split('-')
+
   for (const part of parts) {
+    if (typeof target !== 'object' || target === null) {
+      if (target !== undefined) {
+        // Property exists but has unexpected shape
+        const remaining = parts.slice(parts.indexOf(part)).join('-')
+        return { root: target, key: remaining, target: undefined }
+      }
+      // Property doesn't exist - fallback to original key
+      return { root, key, target: undefined }
+    }
     key = part
     root = target
-    target = target?.[key]
+    target = target[key]
   }
 
   return { root, key, target }

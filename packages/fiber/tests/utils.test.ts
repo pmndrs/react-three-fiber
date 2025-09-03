@@ -205,6 +205,63 @@ describe('resolve', () => {
     expect(key).toBe('bar')
     expect(target).toBe(root[key])
   })
+
+  it('should prioritize direct property over piercing', () => {
+    const object = {
+      'foo-bar': 'direct',
+      foo: { bar: 'pierced' },
+    }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(object)
+    expect(key).toBe('foo-bar')
+    expect(target).toBe('direct')
+  })
+
+  it('should handle undefined direct property values', () => {
+    const object = { 'foo-bar': undefined }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(object)
+    expect(key).toBe('foo-bar')
+    expect(target).toBe(undefined)
+  })
+
+  it('should handle null direct property values', () => {
+    const object = { 'foo-bar': null }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(object)
+    expect(key).toBe('foo-bar')
+    expect(target).toBe(null)
+  })
+
+  it('should return non-object as root when piercing fails due to non-object intermediate', () => {
+    const object = { foo: 'not-an-object' }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe('not-an-object')
+    expect(key).toBe('bar')
+    expect(target).toBe(undefined)
+  })
+
+  it('should return null as root when piercing fails due to null intermediate', () => {
+    const object = { foo: null }
+    const { root, key, target } = resolve(object, 'foo-bar')
+
+    expect(root).toBe(null)
+    expect(key).toBe('bar')
+    expect(target).toBe(undefined)
+  })
+
+  it('should handle non-dashed keys normally', () => {
+    const object = { foo: 'value' }
+    const { root, key, target } = resolve(object, 'foo')
+
+    expect(root).toBe(object)
+    expect(key).toBe('foo')
+    expect(target).toBe('value')
+  })
 })
 
 describe('attach / detach', () => {
@@ -315,6 +372,12 @@ describe('applyProps', () => {
     const target = new THREE.Object3D()
     applyProps(target, {})
     expect(() => applyProps(target, { ['foo-bar']: 1 })).not.toThrow()
+  })
+
+  it('should throw when applying unknown props due to non-object intermediate', () => {
+    const target = new THREE.Object3D()
+    applyProps(target, { foo: 1 })
+    expect(() => applyProps(target, { ['foo-bar']: 1 })).toThrow()
   })
 
   it('should filter reserved props without accessing them', () => {
