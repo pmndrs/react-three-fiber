@@ -188,10 +188,13 @@ function App() {
 }
 ```
 
+> [!TIP]
+> Internally, `useLoader` relies on [`suspend-react`](https://github.com/pmndrs/suspend-react).
+
 > [!NOTE]
 > Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use loaded data everywhere in the component tree.
 
-> [!NOTE]
+> [!WARNING]
 > Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the automatic disposal section in the API.
 
 ### Loader extensions
