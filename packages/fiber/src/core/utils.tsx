@@ -255,18 +255,31 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
 }
 
 export function resolve(root: any, key: string): { root: any; key: string; target: any } {
-  let target: unknown = root[key]
-  if (!key.includes('-')) return { root, key, target }
+  if (!key.includes('-')) return { root, key, target: root[key] }
 
-  // Resolve pierced target
-  target = root
-  for (const part of key.split('-')) {
-    key = part
-    root = target
-    target = (target as any)?.[key]
+  // First try the entire key as a single property (e.g., 'foo-bar')
+  if (key in root) {
+    return { root, key, target: root[key] }
   }
 
-  // TODO: change key to 'foo-bar' if target is undefined?
+  // Try piercing (e.g., 'material-color' -> material.color)
+  let target = root
+  const parts = key.split('-')
+
+  for (const part of parts) {
+    if (typeof target !== 'object' || target === null) {
+      if (target !== undefined) {
+        // Property exists but has unexpected shape
+        const remaining = parts.slice(parts.indexOf(part)).join('-')
+        return { root: target, key: remaining, target: undefined }
+      }
+      // Property doesn't exist - fallback to original key
+      return { root, key, target: undefined }
+    }
+    key = part
+    root = target
+    target = target[key]
+  }
 
   return { root, key, target }
 }
@@ -410,6 +423,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (value === undefined) continue
 
     let { root, key, target } = resolve(object, prop)
+
+    // Throw an error if we attempted to set a pierced prop to a non-object
+    if (target === undefined && (typeof root !== 'object' || root === null)) {
+      throw Error(`R3F: Cannot set "${prop}". Ensure it is an object before setting "${key}".`)
+    }
 
     // Layers must be written to the mask property
     if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
