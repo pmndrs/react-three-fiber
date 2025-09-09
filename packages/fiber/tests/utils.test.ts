@@ -372,6 +372,7 @@ describe('applyProps', () => {
     const target = new THREE.Object3D()
     applyProps(target, {})
     expect(() => applyProps(target, { ['foo-bar']: 1 })).not.toThrow()
+    expect((target as any)['foo-bar']).toBe(undefined)
   })
 
   it('should throw when applying unknown props due to non-object intermediate', () => {

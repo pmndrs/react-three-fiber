@@ -424,6 +424,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
     let { root, key, target } = resolve(object, prop)
 
+    // Throw an error if we attempted to set a pierced prop to a non-object
+    if (target === undefined && (typeof root !== 'object' || root === null)) {
+      throw Error(`R3F: Cannot set "${prop}". Ensure it is an object before setting "${key}".`)
+    }
+
     // Layers must be written to the mask property
     if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
       target.mask = value.mask
