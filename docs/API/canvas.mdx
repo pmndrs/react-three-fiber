@@ -67,6 +67,70 @@ It will also create the following scene internals:
 
 In recent versions of threejs, `THREE.ColorManagement.enabled` will be set to `true` to enable automatic conversion of colors according to the renderer's configured color space. R3F will handle texture color space conversion. For more on this topic, see [https://threejs.org/docs/#manual/en/introduction/Color-management](https://threejs.org/docs/#manual/en/introduction/Color-management).
 
+### Size
+
+By default, the Canvas will be responsive (it uses [`useMeasure`](https://www.npmjs.com/package/react-use-measure) internally).
+
+Eg: inside a 1280x800 container, on a dpr=2 device:
+
+```html
+<div style="width:1280px; height:800px;">
+
+  <!-- <Canvas> -->
+  <div style="width:100%; height:100%;">
+    <div style="width:100%; height:100%;"> <!-- container-div -->
+      <canvas width="2560" height="1600" style="display:block; width:1280px; height:800px;"></canvas>
+    </div>
+  </div>
+
+</div>
+```
+
+It:
+0. gets the computed size of the container-div
+1. sets the `<canvas>` width/height attributes accordingly to 0. and the dpr
+2. sets the `<canvas>` CSS width/height accordingly to 0.
+
+> [!NOTE]
+> You can also override outer-div's `style` directly:
+> ```html
+> <!-- <Canvas style={{width:1280, height:800}}> -->
+> <div style="width:1280px; height:800px;"> <!-- outer-div -->
+>   <div style="width:100%; height:100%;">
+>     <canvas width="2560" height="1600" style="display:block; width:1280px; height:800px;"></canvas>
+>   </div>
+> </div>
+> ```
+
+<details>
+<summary>Fixed size</summary>
+
+It is also possible to fix `<canvas>`'s width/height attributes, independently from the container-div's size:
+
+```html
+<!-- <Canvas width={800} height={600} dpr={1}> -->
+<div style="position:relative; width:100%; height:100%; overflow:hidden; pointer-events:auto;">
+  <div style="width:100%; height:100%;">
+    <canvas width="800" height="600" style="display:block; width:800px; height:600px;"></canvas>
+  </div>
+</div>
+```
+
+> [!TIP]
+> Using tailwindcss, you can override nested structure styles:
+> ```tsx
+> <Canvas
+>   width={800} height={600}
+>.  className={cn(
+>     "!w-full !h-dvh" // outer-div
+>.    "[&>*]:!w-full [&>*]:!h-full" // container-div
+>     "[&>*>*]:!max-w-full [&>*>*]:!max-h-full [&>*>*]:object-contain" // <canvas>
+>    )}
+> />
+> ```
+
+</details>
+
 ## Errors and fallbacks
 
 On some systems WebGL may not be supported, you can provide a fallback component that will be rendered instead of the canvas:

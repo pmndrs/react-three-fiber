@@ -76,4 +76,63 @@ describe('web Canvas', () => {
 
     expect(useLayoutEffect).not.toHaveBeenCalled()
   })
+
+  it('should use manual width and height when provided', async () => {
+    const renderer = await act(async () =>
+      render(
+        <Canvas width={640} height={480}>
+          <group />
+        </Canvas>,
+      ),
+    )
+
+    const canvas = renderer.container.querySelector('canvas')
+    expect(canvas?.getAttribute('width')).toBe('640')
+    expect(canvas?.getAttribute('height')).toBe('480')
+  })
+
+  it('should fallback to useMeasure when only width is provided', async () => {
+    const renderer = await act(async () =>
+      render(
+        <Canvas width={640}>
+          <group />
+        </Canvas>,
+      ),
+    )
+
+    const canvas = renderer.container.querySelector('canvas')
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
+  })
+
+  it('should fallback to useMeasure when only height is provided', async () => {
+    const renderer = await act(async () =>
+      render(
+        <Canvas height={480}>
+          <group />
+        </Canvas>,
+      ),
+    )
+
+    const canvas = renderer.container.querySelector('canvas')
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
+  })
+
+  it('should fallback to useMeasure when neither width nor height is provided', async () => {
+    const renderer = await act(async () =>
+      render(
+        <Canvas>
+          <group />
+        </Canvas>,
+      ),
+    )
+
+    const canvas = renderer.container.querySelector('canvas')
+    // Should use mocked useMeasure dimensions (1280x800)
+    expect(canvas?.getAttribute('width')).toBe('1280')
+    expect(canvas?.getAttribute('height')).toBe('800')
+  })
 })
