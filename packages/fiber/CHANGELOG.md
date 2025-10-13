@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.4.0
+
+### Minor Changes
+
+- f0976dc14a2d3203af267d0e3524d45a07f3248a: feat: improve applyProps errors, harden pierced props setting
+
 ## 9.3.0
 
 ### Minor Changes
