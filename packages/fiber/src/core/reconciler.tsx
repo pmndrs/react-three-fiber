@@ -1,3 +1,4 @@
+import packageData from '../../package.json'
 import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
@@ -55,11 +56,7 @@ function createReconciler<
 ): Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, FormInstance, PublicInstance> {
   const reconciler = Reconciler(config as any)
 
-  reconciler.injectIntoDevTools({
-    bundleType: typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' ? 1 : 0,
-    rendererPackageName: '@react-three/fiber',
-    version: React.version,
-  })
+  reconciler.injectIntoDevTools()
 
   return reconciler as any
 }
@@ -470,6 +467,8 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['noTimeout'],
   HostConfig['TransitionStatus']
 >({
+  rendererPackageName: '@react-three/fiber',
+  rendererVersion: packageData.version,
   isPrimaryRenderer: false,
   warnsIfNotActing: false,
   supportsMutation: true,
