@@ -56,6 +56,7 @@ function createReconciler<
 ): Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, FormInstance, PublicInstance> {
   const reconciler = Reconciler(config as any)
 
+  // @ts-ignore DefinitelyTyped is not up to date
   reconciler.injectIntoDevTools()
 
   return reconciler as any
@@ -467,8 +468,6 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['noTimeout'],
   HostConfig['TransitionStatus']
 >({
-  rendererPackageName: '@react-three/fiber',
-  rendererVersion: packageData.version,
   isPrimaryRenderer: false,
   warnsIfNotActing: false,
   supportsMutation: true,
@@ -600,4 +599,7 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     }
   },
   resetFormInstance() {},
+  // @ts-ignore DefinitelyTyped is not up to date
+  rendererPackageName: '@react-three/fiber',
+  rendererVersion: packageData.version,
 })
