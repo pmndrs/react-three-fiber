@@ -1,9 +1,18 @@
 import * as THREE from 'three'
 import { Image, NativeModules, Platform } from 'react-native'
 import { Asset } from 'expo-asset'
-import * as fs from 'expo-file-system'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
+
+// Conditionally import expo-file-system/legacy to support Expo 54
+const getFileSystem = () => {
+  try {
+    return require('expo-file-system/legacy')
+  } catch {
+    return require('expo-file-system')
+  }
+}
+const fs = getFileSystem()
 
 // http://stackoverflow.com/questions/105034
 function uuidv4() {
