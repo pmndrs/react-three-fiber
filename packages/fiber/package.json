@@ -57,13 +57,13 @@
     "zustand": "^5.0.3"
   },
   "peerDependencies": {
-    "expo": ">=43.0",
-    "expo-asset": ">=8.4",
-    "expo-file-system": ">=11.0",
-    "expo-gl": ">=11.0",
+    "expo": ">=54.0",
+    "expo-asset": ">=12.0",
+    "expo-file-system": ">=19.0",
+    "expo-gl": ">=16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-native": ">=0.78",
+    "react-native": ">=0.81",
     "three": ">=0.156"
   },
   "peerDependenciesMeta": {

@@ -46,8 +46,8 @@ async function getAsset(input: string | number): Promise<string> {
       const [header, data] = input.split(';base64,')
       const [, type] = header.split('/')
 
-      const uri = fs.cacheDirectory + uuidv4() + `.${type}`
-      await fs.writeAsStringAsync(uri, data, { encoding: fs.EncodingType.Base64 })
+      const uri = fs.Paths.cache.uri + uuidv4() + `.${type}`
+      await new fs.File(uri).write(data, { encoding: 'base64' })
 
       return uri
     }
@@ -59,8 +59,8 @@ async function getAsset(input: string | number): Promise<string> {
 
   // Unpack assets in Android Release Mode
   if (!uri.includes(':')) {
-    const file = `${fs.cacheDirectory}ExponentAsset-${asset.hash}.${asset.type}`
-    await fs.copyAsync({ from: uri, to: file })
+    const file = `${fs.Paths.cache.uri}ExponentAsset-${asset.hash}.${asset.type}`
+    await new fs.File(uri).copy(new fs.File(file))
     uri = file
   }
 
@@ -160,7 +160,7 @@ export function polyfills() {
 
     getAsset(url)
       .then(async (uri) => {
-        const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
+        const base64 = await new fs.File(uri).base64()
         const data = Buffer.from(base64, 'base64')
         onLoad?.(data.buffer)
       })
