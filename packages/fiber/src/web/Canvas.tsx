@@ -12,6 +12,7 @@ import {
   useBridge,
 } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { RootStore } from '../core/store'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
 
@@ -68,6 +69,7 @@ function CanvasImpl({
   const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
+  const containerElementRef = React.useRef<HTMLElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
@@ -80,6 +82,7 @@ function CanvasImpl({
   if (error) throw error
 
   const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
+  const store = React.useRef<RootStore>(null!)
 
   useIsomorphicLayoutEffect(() => {
     const canvas = canvasRef.current
@@ -124,7 +127,7 @@ function CanvasImpl({
             onCreated?.(state)
           },
         })
-        root.current.render(
+        store.current = root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
               <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
@@ -134,6 +137,36 @@ function CanvasImpl({
       }
       run()
     }
+  })
+
+  // Continuously check container size on each frame to handle smooth CSS transitions
+  // ResizeObserver may not fire frequently enough during transitions, causing rendering to snap
+  React.useEffect(() => {
+    if (!store.current) return
+
+    let frameId: number
+    const checkSize = () => {
+      const container = containerElementRef.current
+      if (container && store.current) {
+        const rect = container.getBoundingClientRect()
+        const state = store.current.getState()
+        // Only update if size actually changed to avoid unnecessary renders
+        if (
+          rect.width > 0 &&
+          rect.height > 0 &&
+          (Math.abs(state.size.width - rect.width) > 0.5 ||
+            Math.abs(state.size.height - rect.height) > 0.5 ||
+            Math.abs(state.size.top - rect.top) > 0.5 ||
+            Math.abs(state.size.left - rect.left) > 0.5)
+        ) {
+          state.setSize(rect.width, rect.height, rect.top, rect.left)
+        }
+      }
+      frameId = requestAnimationFrame(checkSize)
+    }
+
+    frameId = requestAnimationFrame(checkSize)
+    return () => cancelAnimationFrame(frameId)
   })
 
   React.useEffect(() => {
@@ -157,7 +190,12 @@ function CanvasImpl({
         ...style,
       }}
       {...props}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      <div
+        ref={(el) => {
+          containerRef(el)
+          if (el) containerElementRef.current = el
+        }}
+        style={{ width: '100%', height: '100%' }}>
         <canvas ref={canvasRef} style={{ display: 'block' }}>
           {fallback}
         </canvas>
