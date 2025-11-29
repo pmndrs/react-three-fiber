@@ -43,11 +43,11 @@
     "prebuild": "cp ../../readme.md readme.md"
   },
   "devDependencies": {
+    "@types/react-reconciler": "^0.32.3",
     "react-reconciler": "^0.33.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@types/react-reconciler": "0.32.3",
     "@types/webxr": "*",
     "base64-js": "^1.5.1",
     "buffer": "^6.0.3",
