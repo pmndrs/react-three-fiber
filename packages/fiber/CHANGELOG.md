@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.4.1
+
+### Patch Changes
+
+- 4f8cec0d79003a9ef6d1ca1e56de94aec4158714: fix: pass DevTools config through createReconciler to fix React DevTools
+
 ## 9.4.0
 
 ### Minor Changes
