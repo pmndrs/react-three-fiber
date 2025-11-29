@@ -15,8 +15,7 @@
     "resolveJsonModule": true,
     "noImplicitThis": false,
     "baseUrl": "./",
-    "types": ["jest", "node", "offscreencanvas"],
-    "allowJs": true
+    "types": ["jest", "node", "offscreencanvas"]
   },
   "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist"]

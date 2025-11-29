@@ -3,6 +3,13 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testPathIgnorePatterns: ['/node_modules/'],
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        allowJs: true,
+      },
+    },
+  },
   transform: {
     '^.+\\.jsx?$': ['ts-jest', { useESM: true }],
   },
