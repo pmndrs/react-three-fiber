@@ -1,10 +1,9 @@
-import { defineConfig } from 'vite'
+import { defineConfig, transformWithEsbuild } from 'vite'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 
 export default defineConfig({
   build: {
-    minify: false,
     outDir: 'packages/fiber/react-reconciler',
     target: 'esnext',
     lib: {
@@ -49,6 +48,15 @@ export default defineConfig({
           const source = fs.readFileSync(`packages/fiber/node_modules/@types/react-reconciler/${name}.d.ts`, 'utf-8')
           this.emitFile({ type: 'asset', fileName: `${name}.d.ts`, source })
         }
+      },
+    },
+    {
+      name: 'vite-minify',
+      renderChunk: {
+        order: 'post',
+        handler(code, { fileName }) {
+          return transformWithEsbuild(code, fileName, { minify: true })
+        },
       },
     },
   ],
