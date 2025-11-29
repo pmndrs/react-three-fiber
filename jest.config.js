@@ -3,10 +3,11 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   testPathIgnorePatterns: ['/node_modules/'],
+  transform: {
+    '^.+\\.jsx?$': ['ts-jest', { useESM: true }],
+  },
   moduleNameMapper: {
     '^three$': '<rootDir>/node_modules/three/build/three.cjs',
-    // TODO: instead have Jest parse the JS bundle as ESM
-    '^[^\\w]+react-reconciler(.*)$': 'react-reconciler$1',
   },
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
