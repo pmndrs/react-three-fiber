@@ -1,4 +1,4 @@
 {
   "sandboxes": ["/example"],
-  "node": "21"
+  "node": "18"
 }
