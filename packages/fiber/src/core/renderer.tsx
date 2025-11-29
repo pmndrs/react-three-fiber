@@ -1,5 +1,5 @@
 import * as React from 'react'
-// import { ConcurrentRoot } from 'react-reconciler/constants.js'
+import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import * as THREE from 'three'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -33,8 +33,6 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-
-const ConcurrentRoot = 1
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988

@@ -2,7 +2,11 @@ import packageData from '../../package.json'
 import * as THREE from 'three'
 import * as React from 'react'
 import Reconciler from '../../react-reconciler/index.js'
-// import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from '../../react-reconciler/constants.js'
+import {
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from '../../react-reconciler/constants.js'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   diffProps,
@@ -18,10 +22,6 @@ import {
 import type { RootStore } from './store'
 import { removeInteractivity, type EventHandlers } from './events'
 import type { ThreeElement } from '../three-types'
-
-const DiscreteEventPriority = 2
-const ContinuousEventPriority = 8
-const DefaultEventPriority = 32
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
@@ -540,7 +540,7 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   commitMount() {},
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
-  preparePortalMount: (container: HostConfig['container']) => prepare(container.getState().scene, container, '', {}),
+  preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
