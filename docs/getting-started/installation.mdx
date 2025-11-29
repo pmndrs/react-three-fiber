@@ -171,6 +171,9 @@ R3F's API is completely x-platform, so you can use [events](/api/events) and [ho
 > [!NOTE]
 > Make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` for correct IntelliSense and platform-specific abstractions.
 
+> [!NOTE]
+> iOS simulators often have incomplete or unreliable OpenGL ES support, which can cause EXC_BAD_ACCESS crashes when rendering 3D content. Always test on a physical iOS device (iPhone/iPad running iOS 16 or later) to ensure stable WebGL rendering.
+
 ```jsx
 import { Suspense } from 'react'
 import { Canvas } from '@react-three/fiber/native'
