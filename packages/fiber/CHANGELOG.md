@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.4.2
+
+### Patch Changes
+
+- 3d445fd158b25eb380cd27bd2e01304016aa23e3: fix: Expo SDK 54 compatibility through workaround
+
 ## 9.4.1
 
 ### Patch Changes
