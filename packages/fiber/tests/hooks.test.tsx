@@ -264,6 +264,7 @@ describe('hooks', () => {
 
   it('can handle future (19.x) hooks without crashing', async () => {
     function Component() {
+      // @ts-ignore
       React.useEffectEvent(() => {})
       return null
     }
