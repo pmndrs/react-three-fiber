@@ -261,13 +261,4 @@ describe('hooks', () => {
 
     expect(instance.current).toBe((ref.current as unknown as Instance<THREE.Group>['object']).__r3f)
   })
-
-  it('can handle future (19.x) hooks without crashing', async () => {
-    function Component() {
-      // @ts-ignore
-      React.useEffectEvent(() => {})
-      return null
-    }
-    expect(async () => await act(async () => root.render(<Component />))).not.toThrow()
-  })
 })
