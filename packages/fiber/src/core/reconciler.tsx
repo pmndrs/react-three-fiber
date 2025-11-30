@@ -1,8 +1,12 @@
 import packageData from '../../package.json'
 import * as THREE from 'three'
 import * as React from 'react'
-import Reconciler from 'react-reconciler'
-import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
+import Reconciler from '../../react-reconciler/index.js'
+import {
+  ContinuousEventPriority,
+  DiscreteEventPriority,
+  DefaultEventPriority,
+} from '../../react-reconciler/constants.js'
 import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
 import {
   diffProps,
@@ -561,7 +565,6 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   requestPostPaintCallback() {},
   maySuspendCommit: () => false,
   preloadInstance: () => true, // true indicates already loaded
-  startSuspendingCommit() {},
   suspendInstance() {},
   waitForCommitToBeReady: () => null,
   NotPendingTransition: null,
@@ -602,4 +605,69 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   // @ts-ignore DefinitelyTyped is not up to date
   rendererPackageName: '@react-three/fiber',
   rendererVersion: packageData.version,
+
+  // https://github.com/facebook/react/pull/31975
+  // https://github.com/facebook/react/pull/31999
+  applyViewTransitionName(_instance: any, _name: any, _className: any) {},
+  restoreViewTransitionName(_instance: any, _props: any) {},
+  cancelViewTransitionName(_instance: any, _name: any, _props: any) {},
+  cancelRootViewTransitionName(_rootContainer: any) {},
+  restoreRootViewTransitionName(_rootContainer: any) {},
+  InstanceMeasurement: null,
+  measureInstance: (_instance: any) => null,
+  wasInstanceInViewport: (_measurement: any): boolean => true,
+  hasInstanceChanged: (_oldMeasurement: any, _newMeasurement: any): boolean => false,
+  hasInstanceAffectedParent: (_oldMeasurement: any, _newMeasurement: any): boolean => false,
+
+  // https://github.com/facebook/react/pull/32002
+  // https://github.com/facebook/react/pull/34486
+  suspendOnActiveViewTransition(_state: any, _container: any) {},
+
+  // https://github.com/facebook/react/pull/32451
+  // https://github.com/facebook/react/pull/32760
+  startGestureTransition: () => null,
+  startViewTransition: () => null,
+  stopViewTransition(_transition: null) {},
+
+  // https://github.com/facebook/react/pull/32038
+  createViewTransitionInstance: (_name: string): null => null,
+
+  // https://github.com/facebook/react/pull/32379
+  // https://github.com/facebook/react/pull/32786
+  getCurrentGestureOffset(_provider: null): number {
+    throw new Error('startGestureTransition is not yet supported in react-three-fiber.')
+  },
+
+  // https://github.com/facebook/react/pull/32500
+  cloneMutableInstance(instance: any, _keepChildren: any) {
+    return instance
+  },
+  cloneMutableTextInstance(textInstance: any) {
+    return textInstance
+  },
+  cloneRootViewTransitionContainer(_rootContainer: any) {
+    throw new Error('Not implemented.')
+  },
+  removeRootViewTransitionClone(_rootContainer: any, _clone: any) {
+    throw new Error('Not implemented.')
+  },
+
+  // https://github.com/facebook/react/pull/32465
+  createFragmentInstance: (_fiber: any): null => null,
+  updateFragmentInstanceFiber(_fiber: any, _instance: any): void {},
+  commitNewChildToFragmentInstance(_child: any, _fragmentInstance: any): void {},
+  deleteChildFromFragmentInstance(_child: any, _fragmentInstance: any): void {},
+
+  // https://github.com/facebook/react/pull/32653
+  measureClonedInstance: (_instance: any) => null,
+
+  // https://github.com/facebook/react/pull/32819
+  maySuspendCommitOnUpdate: (_type: any, _oldProps: any, _newProps: any) => false,
+  maySuspendCommitInSyncRender: (_type: any, _props: any) => false,
+
+  // https://github.com/facebook/react/pull/34486
+  startSuspendingCommit: () => null,
+
+  // https://github.com/facebook/react/pull/34522
+  getSuspendedCommitReason: (_state: any, _rootContainer: any) => null,
 })

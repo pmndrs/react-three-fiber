@@ -3,6 +3,7 @@ coverage/
 dist/
 build/
 types/
+packages/fiber/react-reconciler/
 # commit types in src
 !packages/*/src/types/
 Thumbs.db

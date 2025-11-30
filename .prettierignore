@@ -1,6 +1,7 @@
 dist/
 coverage/
 node_modules/
+packages/fiber/react-reconciler/
 .yarn/
 *.gltf
 *.mdx

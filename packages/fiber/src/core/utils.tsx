@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
 import { Instance } from './reconciler'
-import type { Fiber } from 'react-reconciler'
 import type { EventHandlers } from './events'
 import type { Dpr, Renderer, RootStore, Size } from './store'
 
@@ -219,11 +218,11 @@ export function dispose<T extends Disposable>(obj: T): void {
 export const REACT_INTERNAL_PROPS = ['children', 'key', 'ref']
 
 // Gets only instance props from reconciler fibers
-export function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instance<T>['props'] {
+export function getInstanceProps<T = any>(pendingProps: Record<string, unknown>): Instance<T>['props'] {
   const props: Instance<T>['props'] = {}
 
-  for (const key in queue) {
-    if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = queue[key]
+  for (const key in pendingProps) {
+    if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = pendingProps[key]
   }
 
   return props

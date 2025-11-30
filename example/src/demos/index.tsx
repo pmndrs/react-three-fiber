@@ -1,5 +1,6 @@
 import { lazy } from 'react'
 
+const Activity = { Component: lazy(() => import('./Activity')) }
 const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
 const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
@@ -28,6 +29,7 @@ const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
 
 export {
+  Activity,
   AutoDispose,
   ClickAndHover,
   ContextMenuOverride,
