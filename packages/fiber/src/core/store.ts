@@ -1,12 +1,27 @@
-import * as THREE from 'three'
+import { WebGLRenderer } from 'three'
+// @ts-ignore - three/webgpu is ESM but bundlers handle this correctly
+import {
+  WebGPURenderer,
+  type Intersection as ThreeIntersection,
+  Object3D,
+  Scene,
+  Camera as ThreeCamera,
+  Raycaster,
+  Clock,
+  EventDispatcher,
+  Vector2,
+  Vector3,
+  Texture,
+} from 'three/webgpu'
+import { Inspector } from 'three/addons/inspector/Inspector.js'
 import * as React from 'react'
 import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
 
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
+export interface Intersection extends ThreeIntersection {
+  eventObject: Object3D
 }
 
 export type Subscription = {
@@ -52,17 +67,17 @@ export interface Performance {
 }
 
 export interface Renderer {
-  render: (scene: THREE.Scene, camera: THREE.Camera) => any
+  render: (scene: Scene, camera: ThreeCamera) => any
 }
 export const isRenderer = (def: any) => !!def?.render
 
 export interface InternalState {
-  interaction: THREE.Object3D[]
+  interaction: Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
+  capturedMap: Map<number, Map<Object3D, PointerCaptureTarget>>
   initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
+  initialHits: Object3D[]
   lastEvent: React.RefObject<DomEvent | null>
   active: boolean
   priority: number
@@ -80,26 +95,31 @@ export interface RootState {
   set: StoreApi<RootState>['setState']
   /** Get current state */
   get: StoreApi<RootState>['getState']
-  /** The instance of the renderer */
-  gl: THREE.WebGLRenderer
+  /** (deprecated) The instance of the WebGLrenderer */
+  gl: WebGLRenderer
+  /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
+  renderer: WebGPURenderer // This will be conditionally typed based on build target
+  /** Inspector of the webGPU REnderer. Init in the canvas */
+  inspector: WebGPUInspector
+
   /** Default camera */
   camera: Camera
   /** Default scene */
-  scene: THREE.Scene
+  scene: Scene
   /** Default raycaster */
-  raycaster: THREE.Raycaster
+  raycaster: Raycaster
   /** Default clock */
-  clock: THREE.Clock
+  clock: Clock
   /** Event layer interface, contains the event handler and the node they're connected to */
   events: EventManager<any>
   /** XR interface */
   xr: XRManager
   /** Currently used controls */
-  controls: THREE.EventDispatcher | null
+  controls: EventDispatcher | null
   /** Normalized event coordinates */
-  pointer: THREE.Vector2
+  pointer: Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
-  mouse: THREE.Vector2
+  mouse: Vector2
   /* Whether to enable r139's THREE.ColorManagement */
   legacy: boolean
   /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
@@ -115,7 +135,7 @@ export interface RootState {
   viewport: Viewport & {
     getCurrentViewport: (
       camera?: Camera,
-      target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
+      target?: Vector3 | Parameters<Vector3['set']>,
       size?: Size,
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
@@ -131,6 +151,36 @@ export interface RootState {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
+  /** Global uniforms object */
+  uniforms: Record<string, { value: any }>
+  /** Add one or more uniforms to the global uniforms object */
+  addUniform: (name: string, value: any) => void
+  /** Add multiple uniforms at once */
+  addUniforms: (uniforms: Record<string, { value: any }> | Record<string, any>) => void
+  /** Remove a uniform by name */
+  removeUniform: (name: string) => void
+  /** Remove multiple uniforms by name */
+  removeUniforms: (names: string[]) => void
+  /** Global nodes object */
+  nodes: Record<string, Object3D>
+  /** Add a node to the global nodes object */
+  addNode: (name: string, node: Object3D) => void
+  /** Add multiple nodes at once */
+  addNodes: (nodes: Record<string, Object3D>) => void
+  /** Remove a node by name */
+  removeNode: (name: string) => void
+  /** Remove multiple nodes by name */
+  removeNodes: (names: string[]) => void
+  /** Global textures object */
+  textures: Record<string, Texture>
+  /** Add a texture to the global textures object */
+  addTexture: (name: string, texture: Texture) => void
+  /** Add multiple textures at once */
+  addTextures: (textures: Record<string, Texture>) => void
+  /** Remove a texture by name */
+  removeTexture: (name: string) => void
+  /** Remove multiple textures by name */
+  removeTextures: (names: string[]) => void
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layered (via createPortal) then this contains the previous layer */
@@ -148,18 +198,18 @@ export const createStore = (
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
-    const position = new THREE.Vector3()
-    const defaultTarget = new THREE.Vector3()
-    const tempTarget = new THREE.Vector3()
+    const position = new Vector3()
+    const defaultTarget = new Vector3()
+    const tempTarget = new Vector3()
     function getCurrentViewport(
       camera: Camera = get().camera,
-      target: THREE.Vector3 | Parameters<THREE.Vector3['set']> = defaultTarget,
+      target: Vector3 | Parameters<Vector3['set']> = defaultTarget,
       size: Size = get().size,
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
       const { width, height, top, left } = size
       const aspect = width / height
-      if ((target as THREE.Vector3).isVector3) tempTarget.copy(target as THREE.Vector3)
-      else tempTarget.set(...(target as Parameters<THREE.Vector3['set']>))
+      if ((target as Vector3).isVector3) tempTarget.copy(target as Vector3)
+      else tempTarget.set(...(target as Parameters<Vector3['set']>))
       const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
       if (isOrthographicCamera(camera)) {
         return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
@@ -175,18 +225,19 @@ export const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
-    const pointer = new THREE.Vector2()
+    const pointer = new Vector2()
 
     const rootState: RootState = {
       set,
       get,
 
       // Mock objects that have to be configured
-      gl: null as unknown as THREE.WebGLRenderer,
+      gl: null as unknown as WebGLRenderer,
+      renderer: null as unknown as WebGLRenderer | WebGPURenderer,
       camera: null as unknown as Camera,
-      raycaster: null as unknown as THREE.Raycaster,
+      raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
-      scene: null as unknown as THREE.Scene,
+      scene: null as unknown as Scene,
       xr: null as unknown as XRManager,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
@@ -197,7 +248,7 @@ export const createStore = (
       flat: false,
 
       controls: null,
-      clock: new THREE.Clock(),
+      clock: new Clock(),
       pointer,
       mouse: pointer,
 
@@ -262,6 +313,115 @@ export const createStore = (
         }
         set(() => ({ frameloop }))
       },
+
+      //* Uniforms ==============================
+      uniforms: {},
+
+      addUniform: (name: string, value: any) =>
+        set((state) => ({
+          uniforms: {
+            ...state.uniforms,
+            [name]: typeof value === 'object' && value !== null && 'value' in value ? value : { value },
+          },
+        })),
+
+      addUniforms: (uniforms: Record<string, { value: any }> | Record<string, any>) =>
+        set((state) => {
+          const normalized = Object.entries(uniforms).reduce((acc, [name, val]) => {
+            acc[name] = typeof val === 'object' && val !== null && 'value' in val ? val : { value: val }
+            return acc
+          }, {} as Record<string, { value: any }>)
+          return {
+            uniforms: {
+              ...state.uniforms,
+              ...normalized,
+            },
+          }
+        }),
+
+      removeUniform: (name: string) =>
+        set((state) => {
+          const { [name]: _, ...rest } = state.uniforms
+          return { uniforms: rest }
+        }),
+
+      removeUniforms: (names: string[]) =>
+        set((state) => {
+          const rest = { ...state.uniforms }
+          for (const name of names) {
+            delete rest[name]
+          }
+          return { uniforms: rest }
+        }),
+
+      //* Nodes ==============================
+      nodes: {},
+
+      addNode: (name: string, node: Object3D) =>
+        set((state) => ({
+          nodes: {
+            ...state.nodes,
+            [name]: node,
+          },
+        })),
+
+      addNodes: (nodes: Record<string, Object3D>) =>
+        set((state) => ({
+          nodes: {
+            ...state.nodes,
+            ...nodes,
+          },
+        })),
+
+      removeNode: (name: string) =>
+        set((state) => {
+          const { [name]: _, ...rest } = state.nodes
+          return { nodes: rest }
+        }),
+
+      removeNodes: (names: string[]) =>
+        set((state) => {
+          const rest = { ...state.nodes }
+          for (const name of names) {
+            delete rest[name]
+          }
+          return { nodes: rest }
+        }),
+
+      //* Textures ==============================
+      textures: {},
+
+      addTexture: (name: string, texture: Texture) =>
+        set((state) => ({
+          textures: {
+            ...state.textures,
+            [name]: texture,
+          },
+        })),
+
+      addTextures: (textures: Record<string, Texture>) =>
+        set((state) => ({
+          textures: {
+            ...state.textures,
+            ...textures,
+          },
+        })),
+
+      removeTexture: (name: string) =>
+        set((state) => {
+          const { [name]: _, ...rest } = state.textures
+          return { textures: rest }
+        }),
+
+      removeTextures: (names: string[]) =>
+        set((state) => {
+          const rest = { ...state.textures }
+          for (const name of names) {
+            delete rest[name]
+          }
+          return { textures: rest }
+        }),
+
       previousRoot: undefined,
       internal: {
         // Events
