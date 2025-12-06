@@ -3,46 +3,7 @@ import { suspend, preload, clear } from 'suspend-react'
 import type { ConstructorRepresentation } from '../reconciler'
 import { buildGraph, ObjectMap, is, isObject3D } from '../utils'
 
-type InputLike = string | string[] | string[][] | Readonly<string | string[] | string[][]>
-// Define a loader-like interface that matches THREE.Loader's load signature
-// This works for both generic and non-generic THREE.Loader instances
-interface LoaderLike {
-  load(
-    url: InputLike,
-    onLoad?: (result: any) => void,
-    onProgress?: (event: ProgressEvent<EventTarget>) => void,
-    onError?: (error: unknown) => void,
-  ): any
-}
-type GLTFLike = { scene: THREE.Object3D }
-
-type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =
-  T extends ConstructorRepresentation<LoaderLike> ? InstanceType<T> : T
-
-// Infer result type from the load method's callback parameter
-type InferLoadResult<T> = T extends {
-  load(url: any, onLoad?: (result: infer R) => void, ...args: any[]): any
-}
-  ? R
-  : T extends ConstructorRepresentation<any>
-  ? InstanceType<T> extends {
-      load(url: any, onLoad?: (result: infer R) => void, ...args: any[]): any
-    }
-    ? R
-    : any
-  : any
-
-export type LoaderResult<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = InferLoadResult<
-  LoaderInstance<T>
-> extends infer R
-  ? R extends GLTFLike
-    ? R & ObjectMap
-    : R
-  : never
-
-export type Extensions<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = (
-  loader: LoaderInstance<T>,
-) => void
+import type { LoaderLike, InputLike, LoaderResult, Extensions } from '../../../types/loader'
 
 const memoizedLoaders = new WeakMap<ConstructorRepresentation<LoaderLike>, LoaderLike>()
 
@@ -54,7 +15,7 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
   return function (Proto: L, ...input: string[]) {
-    let loader: LoaderLike
+    let loader: LoaderLike = Proto as any
 
     // Construct and cache loader if constructor was passed
     if (isConstructor(Proto)) {
@@ -63,8 +24,6 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
         loader = new Proto()
         memoizedLoaders.set(Proto, loader)
       }
-    } else {
-      loader = Proto as any
     }
 
     // Apply loader extensions
