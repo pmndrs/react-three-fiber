@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import useMeasure, { Options as ResizeOptions } from 'react-use-measure'
+import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import {
   isRef,
@@ -11,27 +11,10 @@ import {
   useIsomorphicLayoutEffect,
   useBridge,
 } from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode } from '../core'
 import { createPointerEvents } from './events'
 import { DomEvent } from '../core/events'
-
-export interface CanvasProps
-  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
-    React.HTMLAttributes<HTMLDivElement> {
-  children?: React.ReactNode
-  ref?: React.Ref<HTMLCanvasElement>
-  /** Canvas fallback content, similar to img's alt prop */
-  fallback?: React.ReactNode
-  /**
-   * Options to pass to useMeasure.
-   * @see https://github.com/pmndrs/react-use-measure#api
-   */
-  resize?: ResizeOptions
-  /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventSource?: HTMLElement | React.RefObject<HTMLElement>
-  /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
-  eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
-}
+import type { CanvasProps } from '../types/canvas'
 
 function CanvasImpl({
   ref,
@@ -90,6 +73,7 @@ function CanvasImpl({
       async function run() {
         await root.current.configure({
           gl,
+          renderer,
           scene,
           events,
           shadows,

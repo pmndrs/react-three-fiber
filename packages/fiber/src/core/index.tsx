@@ -22,7 +22,16 @@ export type {
   Instance,
 } from './reconciler'
 export { extend, reconciler } from './reconciler'
-export type { ReconcilerRoot, GLProps, CameraProps, RenderProps, InjectState } from './renderer'
+export type {
+  ReconcilerRoot,
+  GLProps,
+  DefaultGLProps,
+  RendererProps,
+  DefaultRendererProps,
+  CameraProps,
+  RenderProps,
+  InjectState,
+} from './renderer'
 export { _roots, createRoot, unmountComponentAtNode, createPortal, flushSync } from './renderer'
 export type {
   Subscription,

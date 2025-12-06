@@ -33,6 +33,7 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
+import { WebGPURenderer } from 'three/webgpu'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -52,6 +53,19 @@ export type GLProps =
   | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
   | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
 
+//* WebGPU Renderer Props ==============================
+
+export type DefaultRendererProps = {
+  canvas: HTMLCanvasElement | OffscreenCanvas
+  [key: string]: any
+}
+
+export type RendererProps =
+  | WebGPURenderer
+  | ((defaultProps: DefaultRendererProps) => WebGPURenderer)
+  | ((defaultProps: DefaultRendererProps) => Promise<WebGPURenderer>)
+  | Partial<Properties<WebGPURenderer> | Record<string, any>>
+
 export type CameraProps = (
   | Camera
   | Partial<
@@ -67,6 +81,8 @@ export type CameraProps = (
 export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
+  /** A WebGPU renderer instance or props that go into the default renderer */
+  renderer?: RendererProps
   /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
   size?: Size
   /**
@@ -193,6 +209,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let {
         gl: glConfig,
+        renderer: rendererConfig,
         size: propsSize,
         scene: sceneOptions,
         events,
@@ -236,6 +253,28 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
 
         state.set({ gl })
+      }
+
+      // Set up renderer (WebGPU) if provided
+      if (rendererConfig && !state.renderer) {
+        const defaultRendererProps: DefaultRendererProps = {
+          canvas: canvas as HTMLCanvasElement,
+        }
+
+        const customRenderer = (
+          typeof rendererConfig === 'function' ? await rendererConfig(defaultRendererProps) : rendererConfig
+        ) as WebGPURenderer
+
+        if (isRenderer(customRenderer)) {
+          state.set({ renderer: customRenderer })
+        } else {
+          // If it's partial props, create a new WebGPURenderer
+          const renderer = new WebGPURenderer({
+            ...defaultRendererProps,
+            ...rendererConfig,
+          } as any)
+          state.set({ renderer })
+        }
       }
 
       // Set up raycaster (one time only!)
@@ -395,6 +434,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
         applyProps(gl, glConfig as any)
+
+      // Set renderer props (WebGPU)
+      if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
+        const currentRenderer = state.renderer
+        if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
+          applyProps(currentRenderer, rendererConfig as any)
+        }
+      }
 
       // Set locals
       onCreated = onCreatedCallback

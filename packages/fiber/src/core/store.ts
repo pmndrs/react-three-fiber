@@ -1,5 +1,4 @@
 import { WebGLRenderer } from 'three'
-// @ts-ignore - three/webgpu is ESM but bundlers handle this correctly
 import {
   WebGPURenderer,
   type Intersection as ThreeIntersection,
@@ -98,9 +97,9 @@ export interface RootState {
   /** (deprecated) The instance of the WebGLrenderer */
   gl: WebGLRenderer
   /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
-  renderer: WebGPURenderer // This will be conditionally typed based on build target
+  renderer: WebGLRenderer | WebGPURenderer // This will be conditionally typed based on build target
   /** Inspector of the webGPU REnderer. Init in the canvas */
-  inspector: WebGPUInspector
+  inspector: Inspector
 
   /** Default camera */
   camera: Camera
@@ -233,12 +232,13 @@ export const createStore = (
 
       // Mock objects that have to be configured
       gl: null as unknown as WebGLRenderer,
-      renderer: null as unknown as WebGLRenderer | WebGPURenderer,
+      renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as Camera,
       raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       scene: null as unknown as Scene,
       xr: null as unknown as XRManager,
+      inspector: null as unknown as Inspector,
 
       invalidate: (frames = 1) => invalidate(get(), frames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),

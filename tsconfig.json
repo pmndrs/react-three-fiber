@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "es6",
     "lib": ["es2019", "dom"],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "pretty": true,
