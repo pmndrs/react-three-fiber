@@ -1,6 +1,14 @@
+//* SwapBlock ===
+import * as THREE from 'three'
+//* End SwapBlock ===
+//* DropBlock ===
+import { WebGLRenderer } from 'three'
+//* End DropBlock ===
+import { WebGPURenderer } from 'three/webgpu'
+
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import * as THREE from 'three'
+
 import { createWithEqualityFn } from 'zustand/traditional'
 
 import type { ThreeElement } from '../three-types'
@@ -33,7 +41,6 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { WebGPURenderer } from 'three/webgpu'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988

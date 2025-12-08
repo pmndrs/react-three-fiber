@@ -1,5 +1,8 @@
+//* SwapBlock ===
+import type { Scene, Color, ColorRepresentation } from 'three'
+//* End SwapBlock ===
 import packageData from '../../package.json'
-import * as THREE from 'three'
+
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
@@ -82,8 +85,8 @@ export interface Catalogue {
 // https://github.com/pmndrs/react-three-fiber/pull/2931
 // https://github.com/microsoft/TypeScript/issues/37079
 export type Args<T> = T extends ConstructorRepresentation
-  ? T extends typeof THREE.Color
-    ? [r: number, g: number, b: number] | [color: THREE.ColorRepresentation]
+  ? T extends typeof Color
+    ? [r: number, g: number, b: number] | [color: ColorRepresentation]
     : ConstructorParameters<T>
   : any[]
 
@@ -479,19 +482,19 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   appendInitialChild: appendChild,
   insertBefore,
   appendChildToContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
     if (!child || !scene) return
 
     appendChild(scene, child)
   },
   removeChildFromContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
     if (!child || !scene) return
 
     removeChild(scene, child)
   },
   insertInContainerBefore(container, child, beforeChild) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
+    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
     if (!child || !beforeChild || !scene) return
 
     insertBefore(scene, child, beforeChild)

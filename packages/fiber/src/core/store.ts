@@ -150,36 +150,12 @@ export interface RootState {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
-  /** Global uniforms object */
-  uniforms: Record<string, { value: any }>
-  /** Add one or more uniforms to the global uniforms object */
-  addUniform: (name: string, value: any) => void
-  /** Add multiple uniforms at once */
-  addUniforms: (uniforms: Record<string, { value: any }> | Record<string, any>) => void
-  /** Remove a uniform by name */
-  removeUniform: (name: string) => void
-  /** Remove multiple uniforms by name */
-  removeUniforms: (names: string[]) => void
-  /** Global nodes object */
-  nodes: Record<string, Object3D>
-  /** Add a node to the global nodes object */
-  addNode: (name: string, node: Object3D) => void
-  /** Add multiple nodes at once */
-  addNodes: (nodes: Record<string, Object3D>) => void
-  /** Remove a node by name */
-  removeNode: (name: string) => void
-  /** Remove multiple nodes by name */
-  removeNodes: (names: string[]) => void
-  /** Global textures object */
-  textures: Record<string, Texture>
-  /** Add a texture to the global textures object */
-  addTexture: (name: string, texture: Texture) => void
-  /** Add multiple textures at once */
-  addTextures: (textures: Record<string, Texture>) => void
-  /** Remove a texture by name */
-  removeTexture: (name: string) => void
-  /** Remove multiple textures by name */
-  removeTextures: (names: string[]) => void
+  /** Global TSL uniform nodes - nested by scope, use useUniform() hook for operations */
+  uniforms: Record<string, Record<string, { value: any }>>
+  /** Global TSL nodes - nested by scope, use useNodes() hook for operations */
+  nodes: Record<string, Record<string, any>>
+  /** Global TSL texture nodes - use useTextures() hook for operations */
+  textures: Map<string, any>
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layered (via createPortal) then this contains the previous layer */
@@ -314,113 +290,10 @@ export const createStore = (
         set(() => ({ frameloop }))
       },
 
-      //* Uniforms ==============================
+      //* TSL State (managed via hooks: useUniform, useNodes, useTextures) ==============================
       uniforms: {},
-
-      addUniform: (name: string, value: any) =>
-        set((state) => ({
-          uniforms: {
-            ...state.uniforms,
-            [name]: typeof value === 'object' && value !== null && 'value' in value ? value : { value },
-          },
-        })),
-
-      addUniforms: (uniforms: Record<string, { value: any }> | Record<string, any>) =>
-        set((state) => {
-          const normalized = Object.entries(uniforms).reduce((acc, [name, val]) => {
-            acc[name] = typeof val === 'object' && val !== null && 'value' in val ? val : { value: val }
-            return acc
-          }, {} as Record<string, { value: any }>)
-          return {
-            uniforms: {
-              ...state.uniforms,
-              ...normalized,
-            },
-          }
-        }),
-
-      removeUniform: (name: string) =>
-        set((state) => {
-          const { [name]: _, ...rest } = state.uniforms
-          return { uniforms: rest }
-        }),
-
-      removeUniforms: (names: string[]) =>
-        set((state) => {
-          const rest = { ...state.uniforms }
-          for (const name of names) {
-            delete rest[name]
-          }
-          return { uniforms: rest }
-        }),
-
-      //* Nodes ==============================
       nodes: {},
-
-      addNode: (name: string, node: Object3D) =>
-        set((state) => ({
-          nodes: {
-            ...state.nodes,
-            [name]: node,
-          },
-        })),
-
-      addNodes: (nodes: Record<string, Object3D>) =>
-        set((state) => ({
-          nodes: {
-            ...state.nodes,
-            ...nodes,
-          },
-        })),
-
-      removeNode: (name: string) =>
-        set((state) => {
-          const { [name]: _, ...rest } = state.nodes
-          return { nodes: rest }
-        }),
-
-      removeNodes: (names: string[]) =>
-        set((state) => {
-          const rest = { ...state.nodes }
-          for (const name of names) {
-            delete rest[name]
-          }
-          return { nodes: rest }
-        }),
-
-      //* Textures ==============================
-      textures: {},
-
-      addTexture: (name: string, texture: Texture) =>
-        set((state) => ({
-          textures: {
-            ...state.textures,
-            [name]: texture,
-          },
-        })),
-
-      addTextures: (textures: Record<string, Texture>) =>
-        set((state) => ({
-          textures: {
-            ...state.textures,
-            ...textures,
-          },
-        })),
-
-      removeTexture: (name: string) =>
-        set((state) => {
-          const { [name]: _, ...rest } = state.textures
-          return { textures: rest }
-        }),
-
-      removeTextures: (names: string[]) =>
-        set((state) => {
-          const rest = { ...state.textures }
-          for (const name of names) {
-            delete rest[name]
-          }
-          return { textures: rest }
-        }),
+      textures: new Map(),
 
       previousRoot: undefined,
       internal: {
