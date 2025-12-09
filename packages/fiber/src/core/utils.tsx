@@ -36,7 +36,7 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 // https://github.com/webpack/webpack/issues/14814
 export const act: Act = React[('act' + '') as 'act']
 
-export type Camera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
+export type ThreeCamera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')

@@ -162,6 +162,13 @@ export interface RootState {
   previousRoot?: RootStore
   /** Internals */
   internal: InternalState
+  // flags for triggers
+  // if we are using the webGl renderer, this will be true
+  isLegacy: boolean
+  // regardless of renderer, if the system supports webGpu, this will be true
+  webGPUSupported: boolean
+  //if we are on native
+  isNative: boolean
 }
 
 export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
@@ -222,6 +229,9 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
+      isLegacy: false,
+      webGPUSupported: false,
+      isNative: false,
 
       controls: null,
       clock: new Clock(),

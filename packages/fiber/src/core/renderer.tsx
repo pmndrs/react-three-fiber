@@ -1,10 +1,13 @@
-//* SwapBlock ===
-import * as THREE from 'three'
-//* End SwapBlock ===
-//* DropBlock ===
-import { WebGLRenderer } from 'three'
-//* End DropBlock ===
+//* WebGLBlock ===
+import { WebGLRenderer, WebGLRendererParameters, type WebGLShadowMap } from 'three'
+//* End WebGLBlock ===
+//* WebGPUBlock ===
 import { WebGPURenderer } from 'three/webgpu'
+import { Inspector } from 'three/addons/inspector/Inspector.js'
+//* End WebGPUBlock ===
+//* SwapBlock ===
+import * as THREE from 'three/webgpu'
+//* End SwapBlock ===
 
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
@@ -32,7 +35,7 @@ import {
   type Properties,
   applyProps,
   calculateDpr,
-  Camera,
+  type ThreeCamera,
   dispose,
   EquConfig,
   is,
@@ -41,6 +44,7 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
+import { notifyDepreciated } from './notices'
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -50,7 +54,18 @@ export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
-export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
+// Helper to resolve renderer config (handles: function | instance | props)
+async function resolveRenderer<T>(
+  config: any,
+  defaultProps: Record<string, any>,
+  RendererClass: new (props: any) => T,
+): Promise<T> {
+  if (typeof config === 'function') return await config(defaultProps)
+  if (isRenderer(config)) return config as T
+  return new RendererClass({ ...defaultProps, ...config })
+}
+
+export type DefaultGLProps = Omit<WebGLRendererParameters, 'canvas'> & {
   canvas: HTMLCanvasElement | OffscreenCanvas
 }
 
@@ -58,7 +73,7 @@ export type GLProps =
   | Renderer
   | ((defaultProps: DefaultGLProps) => Renderer)
   | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+  | Partial<Properties<WebGLRenderer> | WebGLRendererParameters>
 
 //* WebGPU Renderer Props ==============================
 
@@ -74,7 +89,7 @@ export type RendererProps =
   | Partial<Properties<WebGPURenderer> | Record<string, any>>
 
 export type CameraProps = (
-  | Camera
+  | THREE.Camera
   | Partial<
       ThreeElement<typeof THREE.Camera> &
         ThreeElement<typeof THREE.PerspectiveCamera> &
@@ -97,7 +112,7 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
-  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
+  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<WebGLShadowMap>
   /**
    * Disables three r139 color management.
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
@@ -236,52 +251,57 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let state = store.getState()
 
-      // Set up renderer (one time only!)
-      let gl = state.gl
-      if (!state.gl) {
-        const defaultProps: DefaultGLProps = {
-          canvas: canvas as HTMLCanvasElement,
-          powerPreference: 'high-performance',
-          antialias: true,
-          alpha: true,
-        }
+      //* Renderer Initialization ==============================
 
-        const customRenderer = (
-          typeof glConfig === 'function' ? await glConfig(defaultProps) : glConfig
-        ) as THREE.WebGLRenderer
-
-        if (isRenderer(customRenderer)) {
-          gl = customRenderer
-        } else {
-          gl = new THREE.WebGLRenderer({
-            ...defaultProps,
-            ...glConfig,
-          })
-        }
-
-        state.set({ gl })
+      const defaultGLProps = {
+        canvas: canvas as HTMLCanvasElement,
+        powerPreference: 'high-performance' as const,
+        antialias: true,
+        alpha: true,
       }
 
-      // Set up renderer (WebGPU) if provided
-      if (rendererConfig && !state.renderer) {
-        const defaultRendererProps: DefaultRendererProps = {
-          canvas: canvas as HTMLCanvasElement,
+      const defaultGPUProps = {
+        canvas: canvas as HTMLCanvasElement,
+      }
+
+      const wantsGL = state.isLegacy || glConfig || !rendererConfig
+
+      if (glConfig && rendererConfig) {
+        throw new Error('Cannot use both gl and renderer props at the same time')
+      }
+
+      if (!state.isLegacy && wantsGL) {
+        notifyDepreciated({
+          heading: 'WebGlRenderer Usage',
+          body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
+          link: 'https://docs.pmnd.rs/react-three-fiber/api/renderer',
+        })
+      }
+
+      let renderer: WebGPURenderer | WebGLRenderer
+
+      //* Create Renderer (one time only) ----
+      if (wantsGL && !state.gl) {
+        renderer = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
+        state.set({ gl: renderer as WebGLRenderer })
+      } else if (!wantsGL && !state.renderer) {
+        renderer = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
+
+        // Do Extra WebGPU Setup Here
+        await renderer.init()
+
+        renderer.inspector = new Inspector()
+
+        const backend = renderer.backend
+        if (backend && 'isWebGPUBackend' in backend) {
+          console.log('WebGPU is supported')
+          state.set({ webGPUSupported: true })
         }
 
-        const customRenderer = (
-          typeof rendererConfig === 'function' ? await rendererConfig(defaultRendererProps) : rendererConfig
-        ) as WebGPURenderer
-
-        if (isRenderer(customRenderer)) {
-          state.set({ renderer: customRenderer })
-        } else {
-          // If it's partial props, create a new WebGPURenderer
-          const renderer = new WebGPURenderer({
-            ...defaultRendererProps,
-            ...rendererConfig,
-          } as any)
-          state.set({ renderer })
-        }
+        state.set({ renderer: renderer as WebGPURenderer })
+      } else {
+        // Renderer already exists in state
+        renderer = (wantsGL ? state.gl : state.renderer) as WebGPURenderer | WebGLRenderer
       }
 
       // Set up raycaster (one time only!)
@@ -297,9 +317,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
-        const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
+        const isCamera = (cameraOptions as unknown as ThreeCamera | undefined)?.isCamera
         const camera = isCamera
-          ? (cameraOptions as Camera)
+          ? (cameraOptions as ThreeCamera)
           : orthographic
           ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
           : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
@@ -398,18 +418,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
 
         // Subscribe to WebXR session events
-        if (typeof gl.xr?.addEventListener === 'function') xr.connect()
+        if (typeof renderer.xr?.addEventListener === 'function') xr.connect()
         state.set({ xr })
       }
 
       // Set shadowmap
-      if (gl.shadowMap) {
-        const oldEnabled = gl.shadowMap.enabled
-        const oldType = gl.shadowMap.type
-        gl.shadowMap.enabled = !!shadows
+      if (renderer.shadowMap) {
+        const oldEnabled = renderer.shadowMap.enabled
+        const oldType = renderer.shadowMap.type
+        renderer.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          gl.shadowMap.type = THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap
         } else if (is.str(shadows)) {
           const types = {
             basic: THREE.BasicShadowMap,
@@ -417,20 +437,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             soft: THREE.PCFSoftShadowMap,
             variance: THREE.VSMShadowMap,
           }
-          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFSoftShadowMap
         } else if (is.obj(shadows)) {
-          Object.assign(gl.shadowMap, shadows)
+          Object.assign(renderer.shadowMap as any, shadows)
         }
 
-        if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
+        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type)
+          (renderer.shadowMap as any).needsUpdate = true
       }
 
       THREE.ColorManagement.enabled = !legacy
 
       // Set color space and tonemapping preferences
       if (!configured) {
-        gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-        gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+        renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
       }
 
       // Update color management state
@@ -439,8 +460,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (state.flat !== flat) state.set(() => ({ flat }))
 
       // Set gl props
-      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-        applyProps(gl, glConfig as any)
+      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
+        applyProps(renderer, glConfig as any)
 
       // Set renderer props (WebGPU)
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
