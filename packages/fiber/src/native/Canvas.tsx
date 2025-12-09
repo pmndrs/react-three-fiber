@@ -1,5 +1,5 @@
 import * as React from 'react'
-import * as THREE from 'three'
+import * as THREE from '#three'
 import {
   View,
   type ViewProps,

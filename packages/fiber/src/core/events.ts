@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from '#three'
 import { type Properties, getRootState } from './utils'
 import type { Instance } from './reconciler'
 import type { RootState, RootStore } from './store'

@@ -1,13 +1,13 @@
-//* WebGLBlock ===
-import { WebGLRenderer, WebGLRendererParameters, type WebGLShadowMap } from 'three'
-//* End WebGLBlock ===
-//* WebGPUBlock ===
-import { WebGPURenderer } from 'three/webgpu'
-import { Inspector } from 'three/addons/inspector/Inspector.js'
-//* End WebGPUBlock ===
-//* SwapBlock ===
-import * as THREE from 'three/webgpu'
-//* End SwapBlock ===
+import * as THREE from '#three'
+import {
+  R3F_BUILD_LEGACY,
+  R3F_BUILD_WEBGPU,
+  WebGLRenderer,
+  WebGPURenderer,
+  Inspector,
+  type WebGLRendererParameters,
+  type WebGLShadowMap,
+} from '#three'
 
 import * as React from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
@@ -264,13 +264,30 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         canvas: canvas as HTMLCanvasElement,
       }
 
-      const wantsGL = state.isLegacy || glConfig || !rendererConfig
+      //* Build Flag Validation ==============================
+      // Check if the requested renderer is available in this build
+      if (glConfig && !R3F_BUILD_LEGACY) {
+        throw new Error(
+          'WebGLRenderer (gl prop) is not available in this build. ' +
+            'Use @react-three/fiber or @react-three/fiber/legacy instead.',
+        )
+      }
+      if (rendererConfig && !R3F_BUILD_WEBGPU) {
+        throw new Error(
+          'WebGPURenderer (renderer prop) is not available in this build. ' +
+            'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
+        )
+      }
+
+      // Determine which renderer to use based on props and build flags
+      const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
 
       if (glConfig && rendererConfig) {
         throw new Error('Cannot use both gl and renderer props at the same time')
       }
 
-      if (!state.isLegacy && wantsGL) {
+      // Deprecation warning for WebGL usage (only in builds that support both)
+      if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU && !state.isLegacy && wantsGL) {
         notifyDepreciated({
           heading: 'WebGlRenderer Usage',
           body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
@@ -280,16 +297,17 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let renderer: WebGPURenderer | WebGLRenderer
 
-      //* Create Renderer (one time only) ----
-      if (wantsGL && !state.gl) {
+      //* Create Renderer (one time only) ==============================
+      if (R3F_BUILD_LEGACY && wantsGL && !state.gl) {
+        // WebGL path
         renderer = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
-        state.set({ gl: renderer as WebGLRenderer })
-      } else if (!wantsGL && !state.renderer) {
+        state.set({ gl: renderer as WebGLRenderer, isLegacy: true })
+      } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.renderer) {
+        // WebGPU path
         renderer = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
 
-        // Do Extra WebGPU Setup Here
+        // WebGPU-specific setup
         await renderer.init()
-
         renderer.inspector = new Inspector()
 
         const backend = renderer.backend

@@ -1,5 +1,17 @@
 module.exports = {
-  plugins: [],
+  plugins: [
+    [
+      'module-resolver',
+      {
+        alias: {
+          '#three': './packages/fiber/src/three/index.ts',
+          '#three/legacy': './packages/fiber/src/three/legacy.ts',
+          '#three/webgpu': './packages/fiber/src/three/webgpu.ts',
+          '#three/tsl': './packages/fiber/src/three/tsl.ts',
+        },
+      },
+    ],
+  ],
   presets: [
     [
       '@babel/preset-env',

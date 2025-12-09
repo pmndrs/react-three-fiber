@@ -36,7 +36,9 @@
   "preconstruct": {
     "entrypoints": [
       "index.tsx",
-      "native.tsx"
+      "native.tsx",
+      "legacy.tsx",
+      "webgpu/index.tsx"
     ]
   },
   "scripts": {

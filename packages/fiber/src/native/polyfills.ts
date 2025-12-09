@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from '#three'
 import { Image, NativeModules, Platform } from 'react-native'
 import { Asset } from 'expo-asset'
 import { fromByteArray } from 'base64-js'

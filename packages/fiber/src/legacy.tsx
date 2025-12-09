@@ -1,3 +1,13 @@
+/**
+ * @fileoverview Legacy entry point - WebGL only
+ *
+ * This entry point is for apps that want to use the legacy WebGLRenderer.
+ * No WebGPU features are available from this import path.
+ *
+ * Usage:
+ *   import { Canvas, useFrame } from '@react-three/fiber/legacy'
+ */
+
 import * as ReactThreeFiber from './three-types'
 export { ReactThreeFiber }
 export * from './three-types'

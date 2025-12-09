@@ -1,5 +1,5 @@
-import { WebGLRenderer } from 'three'
 import {
+  WebGLRenderer,
   WebGPURenderer,
   type Intersection as ThreeIntersection,
   Object3D,
@@ -11,8 +11,8 @@ import {
   Vector2,
   Vector3,
   Texture,
-} from 'three/webgpu'
-import { Inspector } from 'three/addons/inspector/Inspector.js'
+  Inspector,
+} from '#three'
 import * as React from 'react'
 import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'

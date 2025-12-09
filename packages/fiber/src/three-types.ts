@@ -1,6 +1,4 @@
-//* SwapBlock ===
-import type * as THREE from 'three/webgpu'
-//* End SwapBlock ===
+import type * as THREE from '#three'
 import type {} from 'react'
 import type {} from 'react/jsx-runtime'
 import type {} from 'react/jsx-dev-runtime'

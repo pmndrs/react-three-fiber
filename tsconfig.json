@@ -15,7 +15,11 @@
     "resolveJsonModule": true,
     "noImplicitThis": false,
     "baseUrl": "./",
-    "types": ["jest", "node", "offscreencanvas"]
+    "types": ["jest", "node", "offscreencanvas"],
+    "paths": {
+      "#three": ["packages/fiber/src/three/index.ts"],
+      "#three/*": ["packages/fiber/src/three/*"]
+    }
   },
   "include": ["packages/**/*"],
   "exclude": ["node_modules", "dist"]

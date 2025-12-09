@@ -1,5 +1,5 @@
 import * as React from 'react'
-import * as THREE from 'three'
+import * as THREE from '#three'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import {

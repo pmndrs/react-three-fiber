@@ -3,9 +3,7 @@ import { RootState, context, RootStore } from '../store'
 import type { Instance } from '../reconciler'
 import { buildGraph, ObjectMap } from '../utils'
 
-//* SwapBlock ==============================
-import { Object3D } from 'three'
-//* End SwapBlock ==========================
+import { Object3D } from '#three'
 
 // export other hooks
 export * from './useLoader'

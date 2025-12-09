@@ -1,6 +1,4 @@
-//* SwapBlock ===
-import type { Scene, Color, ColorRepresentation } from 'three'
-//* End SwapBlock ===
+import type { Scene, Color, ColorRepresentation } from '#three'
 import packageData from '../../package.json'
 
 import * as React from 'react'

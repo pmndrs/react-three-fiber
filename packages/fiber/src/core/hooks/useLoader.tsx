@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import * as THREE from '#three'
 import { suspend, preload, clear } from 'suspend-react'
 import type { ConstructorRepresentation } from '../reconciler'
 import { buildGraph, ObjectMap, is, isObject3D } from '../utils'
