@@ -1,0 +1,69 @@
+{
+  "name": "@react-three/native",
+  "version": "10.0.0",
+  "description": "React Native bindings for @react-three/fiber",
+  "keywords": [
+    "react",
+    "react-native",
+    "expo",
+    "three",
+    "threejs",
+    "fiber"
+  ],
+  "author": "Paul Henschel (https://github.com/drcmda)",
+  "license": "MIT",
+  "maintainers": [
+    "Josh Ellis (https://github.com/joshuaellis)",
+    "Cody Bennett (https://github.com/codyjasonbennett)",
+    "Kris Baumgarter (https://github.com/krispya)"
+  ],
+  "bugs": {
+    "url": "https://github.com/pmndrs/react-three-fiber/issues"
+  },
+  "homepage": "https://github.com/pmndrs/react-three-fiber#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/react-three-fiber.git"
+  },
+  "main": "dist/react-three-native.cjs.js",
+  "module": "dist/react-three-native.esm.js",
+  "types": "dist/react-three-native.cjs.d.ts",
+  "sideEffects": false,
+  "preconstruct": {
+    "entrypoints": [
+      "index.tsx"
+    ]
+  },
+  "scripts": {
+    "prebuild": "cp ../../readme.md readme.md"
+  },
+  "dependencies": {
+    "base64-js": "^1.5.1",
+    "buffer": "^6.0.3",
+    "its-fine": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@react-three/fiber": "^10.0.0",
+    "expo": ">=43.0",
+    "expo-asset": ">=8.4",
+    "expo-file-system": ">=11.0",
+    "expo-gl": ">=11.0",
+    "react": "^19.0.0",
+    "react-native": ">=0.78",
+    "three": ">=0.156"
+  },
+  "peerDependenciesMeta": {
+    "expo": {
+      "optional": true
+    },
+    "expo-asset": {
+      "optional": true
+    },
+    "expo-file-system": {
+      "optional": true
+    },
+    "expo-gl": {
+      "optional": true
+    }
+  }
+}

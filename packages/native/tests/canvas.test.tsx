@@ -2,7 +2,7 @@ import * as React from 'react'
 import { View } from 'react-native'
 // @ts-ignore TS2305 remove with modern TS config
 import { render } from 'react-nil'
-import { Canvas, act } from '../src/native'
+import { Canvas, act } from '../src'
 
 describe('native Canvas', () => {
   it('should correctly mount', async () => {

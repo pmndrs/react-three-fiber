@@ -47,5 +47,17 @@ export type {
   RootStore,
 } from './store'
 export { context } from './store'
-export type { ObjectMap, Camera, Disposable, Act } from './utils'
-export { applyProps, getRootState, dispose, act, buildGraph } from './utils'
+export type { ObjectMap, Camera, Disposable, Act, SetBlock } from './utils'
+export {
+  applyProps,
+  getRootState,
+  dispose,
+  act,
+  buildGraph,
+  // Utilities needed by @react-three/native
+  Block,
+  ErrorBoundary,
+  useMutableCallback,
+  useBridge,
+  useIsomorphicLayoutEffect,
+} from './utils'

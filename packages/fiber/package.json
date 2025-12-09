@@ -31,12 +31,10 @@
   "main": "dist/react-three-fiber.cjs.js",
   "module": "dist/react-three-fiber.esm.js",
   "types": "dist/react-three-fiber.cjs.d.ts",
-  "react-native": "native/dist/react-three-fiber-native.cjs.js",
   "sideEffects": false,
   "preconstruct": {
     "entrypoints": [
       "index.tsx",
-      "native.tsx",
       "legacy.tsx",
       "webgpu/index.tsx"
     ]
@@ -46,47 +44,26 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
-    "@types/react-reconciler": "^0.32.0",
-    "@types/three": "^0.181.0",
-    "@types/webxr": "*",
-    "base64-js": "^1.5.1",
-    "buffer": "^6.0.3",
     "its-fine": "^2.0.0",
     "react-reconciler": "^0.31.0",
     "react-use-measure": "^2.1.7",
     "scheduler": "^0.25.0",
     "suspend-react": "^0.1.3",
-    "three": "^0.181.2",
     "use-sync-external-store": "^1.4.0",
     "zustand": "^5.0.3"
   },
+  "devDependencies": {
+    "@types/react-reconciler": "^0.32.0",
+    "@types/three": "^0.181.0",
+    "@types/webxr": "*"
+  },
   "peerDependencies": {
-    "expo": ">=43.0",
-    "expo-asset": ">=8.4",
-    "expo-file-system": ">=11.0",
-    "expo-gl": ">=11.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-native": ">=0.78",
-    "three": ">=0.156"
+    "three": ">=0.181.2"
   },
   "peerDependenciesMeta": {
     "react-dom": {
-      "optional": true
-    },
-    "react-native": {
-      "optional": true
-    },
-    "expo": {
-      "optional": true
-    },
-    "expo-asset": {
-      "optional": true
-    },
-    "expo-file-system": {
-      "optional": true
-    },
-    "expo-gl": {
       "optional": true
     }
   }

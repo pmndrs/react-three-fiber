@@ -1,4 +1,4 @@
-import { useStore } from './useStore'
+import { useStore } from '.'
 import type { RenderCallback } from '../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../utils'
 

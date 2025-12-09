@@ -1,18 +1,37 @@
-import * as THREE from '#three'
+/**
+ * @fileoverview React Native polyfills for Three.js
+ *
+ * These polyfills patch Three.js loaders and React Native APIs
+ * to work correctly in the React Native environment.
+ */
+
+import * as THREE from 'three'
 import { Image, NativeModules, Platform } from 'react-native'
-import { Asset } from 'expo-asset'
 import { fromByteArray } from 'base64-js'
 import { Buffer } from 'buffer'
+
+//* Asset Loading ==============================
 
 // Conditionally import expo-file-system/legacy to support Expo 54
 const getFileSystem = () => {
   try {
     return require('expo-file-system/legacy')
   } catch {
-    return require('expo-file-system')
+    try {
+      return require('expo-file-system')
+    } catch {
+      return null
+    }
   }
 }
-const fs = getFileSystem()
+
+const getExpoAsset = () => {
+  try {
+    return require('expo-asset').Asset
+  } catch {
+    return null
+  }
+}
 
 // http://stackoverflow.com/questions/105034
 function uuidv4() {
@@ -24,6 +43,16 @@ function uuidv4() {
 }
 
 async function getAsset(input: string | number): Promise<string> {
+  const fs = getFileSystem()
+  const Asset = getExpoAsset()
+
+  if (!fs || !Asset) {
+    throw new Error(
+      '[@react-three/native] expo-file-system and expo-asset are required for asset loading. ' +
+        'Install them with: npx expo install expo-file-system expo-asset',
+    )
+  }
+
   if (typeof input === 'string') {
     // Don't process storage
     if (input.startsWith('file:')) return input
@@ -76,7 +105,11 @@ async function getAsset(input: string | number): Promise<string> {
   return uri
 }
 
+//* Polyfills ==============================
+
 export function polyfills() {
+  const fs = getFileSystem()
+
   // Patch Blob for ArrayBuffer and URL if unsupported
   // https://github.com/facebook/react-native/pull/39276
   // https://github.com/pmndrs/react-three-fiber/issues/3058
@@ -112,12 +145,10 @@ export function polyfills() {
 
         // Always enable slow but safe path for iOS (previously for Android unauth)
         // https://github.com/pmndrs/react-three-fiber/issues/3075
-        // if (!NativeModules.BlobModule?.BLOB_URI_SCHEME) {
         blob.data._base64 = ''
         for (const part of parts) {
           blob.data._base64 += (part as any).data?._base64 ?? part
         }
-        // }
 
         return blob
       }
@@ -162,23 +193,25 @@ export function polyfills() {
   }
 
   // Fetches assets via FS
-  THREE.FileLoader.prototype.load = function load(this: THREE.FileLoader, url, onLoad, onProgress, onError) {
-    if (this.path && typeof url === 'string') url = this.path + url
+  if (fs) {
+    THREE.FileLoader.prototype.load = function load(this: THREE.FileLoader, url, onLoad, onProgress, onError) {
+      if (this.path && typeof url === 'string') url = this.path + url
 
-    this.manager.itemStart(url)
+      this.manager.itemStart(url)
 
-    getAsset(url)
-      .then(async (uri) => {
-        const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
-        const data = Buffer.from(base64, 'base64')
-        onLoad?.(data.buffer)
-      })
-      .catch((error) => {
-        onError?.(error)
-        this.manager.itemError(url)
-      })
-      .finally(() => {
-        this.manager.itemEnd(url)
-      })
+      getAsset(url)
+        .then(async (uri) => {
+          const base64 = await fs.readAsStringAsync(uri, { encoding: fs.EncodingType.Base64 })
+          const data = Buffer.from(base64, 'base64')
+          onLoad?.(data.buffer)
+        })
+        .catch((error) => {
+          onError?.(error)
+          this.manager.itemError(url)
+        })
+        .finally(() => {
+          this.manager.itemEnd(url)
+        })
+    }
   }
 }

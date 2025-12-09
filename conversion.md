@@ -177,3 +177,10 @@ For true per-build bundle optimization (completely separate code paths):
 3. Or create separate source trees per build target
 
 Current approach relies on tree-shaking based on constant boolean flags, which should eliminate dead code in production builds.
+
+---
+
+## Related: Native Package Split
+
+React Native support has been moved to a separate `@react-three/native` package.
+See `NATIVE-MIGRATION.md` for details.
