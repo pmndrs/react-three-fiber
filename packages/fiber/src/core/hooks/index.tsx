@@ -9,6 +9,8 @@ import type { RootState, RootStore, Instance, ObjectMap } from '#types'
 // export other hooks
 export * from './useLoader'
 export * from './useFrame'
+export * from './useTexture'
+export * from './useTextures'
 
 /**
  * Returns the R3F Canvas' Zustand store. Useful for [transient updates](https://github.com/pmndrs/zustand#transient-updates-for-often-occurring-state-changes).

@@ -20,8 +20,13 @@ export {
   type NodeCreator,
 } from './useNodes'
 
-// Textures - Map with URL keys, CRUD operations
-export { useTextures, type TextureNode, type UseTexturesReturn } from './useTextures'
+// Textures - Re-exported from core (useTextures is now a core R3F hook)
+export {
+  useTextures,
+  type TextureEntry,
+  type TextureNode, // Backwards compat alias
+  type UseTexturesReturn,
+} from './useTextures'
 
-// Texture utilities
+// Low-level texture utilities (prefer useTextures hook instead)
 export { createTextureOperations, type TextureOperations } from './utils'
