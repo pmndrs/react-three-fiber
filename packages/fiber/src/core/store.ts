@@ -4,7 +4,6 @@ import {
   type Intersection as ThreeIntersection,
   Object3D,
   Scene,
-  Camera as ThreeCamera,
   Raycaster,
   Clock,
   EventDispatcher,
@@ -17,7 +16,7 @@ import * as React from 'react'
 import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
+import { calculateDpr, type ThreeCamera, isOrthographicCamera, updateCamera } from './utils'
 
 export interface Intersection extends ThreeIntersection {
   eventObject: Object3D
@@ -65,11 +64,6 @@ export interface Performance {
   regress: () => void
 }
 
-export interface Renderer {
-  render: (scene: Scene, camera: ThreeCamera) => any
-}
-export const isRenderer = (def: any) => !!def?.render
-
 export interface InternalState {
   interaction: Object3D[]
   hovered: Map<string, ThreeEvent<DomEvent>>
@@ -102,7 +96,7 @@ export interface RootState {
   inspector: Inspector
 
   /** Default camera */
-  camera: Camera
+  camera: ThreeCamera
   /** Default scene */
   scene: Scene
   /** Default raycaster */
@@ -133,7 +127,7 @@ export interface RootState {
   /** Reactive size of the viewport in threejs units */
   viewport: Viewport & {
     getCurrentViewport: (
-      camera?: Camera,
+      camera?: ThreeCamera,
       target?: Vector3 | Parameters<Vector3['set']>,
       size?: Size,
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
@@ -184,7 +178,7 @@ export const createStore = (
     const defaultTarget = new Vector3()
     const tempTarget = new Vector3()
     function getCurrentViewport(
-      camera: Camera = get().camera,
+      camera: ThreeCamera = get().camera,
       target: Vector3 | Parameters<Vector3['set']> = defaultTarget,
       size: Size = get().size,
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
@@ -216,7 +210,7 @@ export const createStore = (
       // Mock objects that have to be configured
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
-      camera: null as unknown as Camera,
+      camera: null as unknown as ThreeCamera,
       raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       scene: null as unknown as Scene,

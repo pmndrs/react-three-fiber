@@ -12,7 +12,7 @@ import * as ReactThreeFiber from '../three-types'
 export { ReactThreeFiber }
 export * from '../three-types'
 export * from '../core'
-export * from '../web/Canvas'
+export * from '../core/Canvas'
 export { createPointerEvents as events } from '../core/events'
 
 // Re-export build flags for consumers to check

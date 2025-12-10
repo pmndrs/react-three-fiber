@@ -10,11 +10,10 @@ import {
   useMutableCallback,
   useIsomorphicLayoutEffect,
   useBridge,
-} from '../core/utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode } from '../core'
-import { createPointerEvents } from './events'
-import { DomEvent } from '../core/events'
-import type { CanvasProps } from '../types/canvas'
+} from './utils'
+import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode } from './index'
+import { createPointerEvents, DomEvent } from './events'
+import type { CanvasProps } from '../../types/canvas'
 
 function CanvasImpl({
   ref,

@@ -1,15 +1,10 @@
 import * as THREE from '#three'
-import {
-  R3F_BUILD_LEGACY,
-  R3F_BUILD_WEBGPU,
-  WebGLRenderer,
-  WebGPURenderer,
-  Inspector,
-  type WebGLRendererParameters,
-  type WebGLShadowMap,
-} from '#three'
+import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector } from '#three'
 
-import * as React from 'react'
+import type { Scene, WebGLRendererParameters, WebGLShadowMap, Object3D } from '#three'
+
+import type { JSX, ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 
 import { createWithEqualityFn } from 'zustand/traditional'
@@ -19,18 +14,7 @@ import { ComputeFunction, EventManager } from './events'
 import { useStore } from './hooks'
 import { advance, invalidate } from './loop'
 import { reconciler, Root } from './reconciler'
-import {
-  context,
-  createStore,
-  Dpr,
-  Frameloop,
-  isRenderer,
-  Performance,
-  Renderer,
-  RootState,
-  RootStore,
-  Size,
-} from './store'
+import { context, createStore, Dpr, Frameloop, Performance, RootState, RootStore, Size } from './store'
 import {
   type Properties,
   applyProps,
@@ -45,6 +29,11 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './notices'
+
+export interface Renderer {
+  render: (scene: Scene, camera: ThreeCamera) => any
+}
+export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -152,7 +141,7 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
 
 export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
-  render: (element: React.ReactNode) => RootStore
+  render: (element: ReactNode) => RootStore
   unmount: () => void
 }
 
@@ -495,7 +484,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       resolve()
       return this
     },
-    render(children: React.ReactNode): RootStore {
+    render(children: ReactNode): RootStore {
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
@@ -519,7 +508,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 interface ProviderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   onCreated?: (state: RootState) => void
   store: RootStore
-  children: React.ReactNode
+  children: ReactNode
   rootElement: TCanvas
 }
 
@@ -528,7 +517,7 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   children,
   onCreated,
   rootElement,
-}: ProviderProps<TCanvas>): React.JSX.Element {
+}: ProviderProps<TCanvas>): JSX.Element {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
@@ -583,21 +572,17 @@ export type InjectState = Partial<
   }
 >
 
-export function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  state?: InjectState,
-): React.JSX.Element {
+export function createPortal(children: ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal children={children} container={container} state={state} />
 }
 
 interface PortalProps {
-  children: React.ReactNode
+  children: ReactNode
   state?: InjectState
-  container: THREE.Object3D
+  container: Object3D
 }
 
-function Portal({ state = {}, children, container }: PortalProps): React.JSX.Element {
+function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
@@ -605,8 +590,8 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
    *    {createPortal(...)} */
   const { events, size, ...rest } = state
   const previousRoot = useStore()
-  const [raycaster] = React.useState(() => new THREE.Raycaster())
-  const [pointer] = React.useState(() => new THREE.Vector2())
+  const [raycaster] = useState(() => new THREE.Raycaster())
+  const [pointer] = useState(() => new THREE.Vector2())
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
     let viewport = undefined
@@ -639,7 +624,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
     } as RootState
   })
 
-  const usePortalStore = React.useMemo(() => {
+  const usePortalStore = useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 

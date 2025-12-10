@@ -31,6 +31,7 @@ export type {
   CameraProps,
   RenderProps,
   InjectState,
+  Renderer,
 } from './renderer'
 export { _roots, createRoot, unmountComponentAtNode, createPortal, flushSync } from './renderer'
 export type {
@@ -41,7 +42,6 @@ export type {
   RenderCallback,
   Frameloop,
   Performance,
-  Renderer,
   XRManager,
   RootState,
   RootStore,
