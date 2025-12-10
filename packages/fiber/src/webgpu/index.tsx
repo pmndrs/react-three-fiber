@@ -2,10 +2,10 @@
  * @fileoverview WebGPU entry point - WebGPU only, no legacy WebGL
  *
  * This entry point is for apps that want to use ONLY WebGPURenderer.
- * Includes WebGPU-specific hooks (useUniform, useNodes, useTextures).
+ * Includes WebGPU-specific hooks (useUniforms, useNodes, useTextures).
  *
  * Usage:
- *   import { Canvas, useFrame, useUniform } from '@react-three/fiber/webgpu'
+ *   import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
  */
 
 import * as ReactThreeFiber from '../three-types'

@@ -1,128 +1,153 @@
 import { useMemo } from 'react'
 import { useStore } from '../../core/hooks'
 import type { RootState } from '#types'
+import type { Node } from 'three/webgpu'
 
 //* Types ==============================
 
-export interface UniformNode<T = any> {
+/** Uniform node type - a Node with a value property (matches Three.js UniformNode) */
+export interface UniformNode<T = unknown> extends Node {
   value: T
-  label?: (name: string) => UniformNode<T>
-  // TSL nodes have more properties but these are what we care about
-  [key: string]: any
 }
 
-export type UniformRecord = Record<string, UniformNode>
+export type UniformRecord<T extends UniformNode = UniformNode> = Record<string, T>
 export type UniformCreator<T extends UniformRecord> = (state: RootState) => T
 
-/** Default scope for uniforms without explicit scope */
-export const DEFAULT_SCOPE = '_'
+/** Type guard to check if a value is a UniformNode vs a scope object */
+const isUniformNode = (value: unknown): value is UniformNode =>
+  value !== null && typeof value === 'object' && 'value' in value && 'uuid' in value
 
 //* Hook Overloads ==============================
 
-// Get all uniforms (returns full scoped structure)
-export function useUniform(): Record<string, UniformRecord>
+// Get all uniforms (returns full structure with root uniforms and scopes)
+export function useUniforms(): UniformRecord
 
 // Get uniforms from a specific scope
-export function useUniform(scope: string): UniformRecord
+export function useUniforms(scope: string): UniformRecord
 
-// Create/get uniforms with optional scope
-export function useUniform<T extends UniformRecord>(creator: UniformCreator<T>, scope?: string): T
+// Create/get uniforms at root level (no scope)
+export function useUniforms<T extends UniformRecord>(creator: UniformCreator<T>): T
+
+// Create/get uniforms within a scope
+export function useUniforms<T extends UniformRecord>(creator: UniformCreator<T>, scope: string): T
 
 //* Hook Implementation ==============================
 
 /**
  * Hook for managing global TSL uniform nodes with create-if-not-exists pattern.
  *
- * Uniforms are organized by scope for namespacing. Default scope is '_'.
- * When a creator function is provided, uniforms are created if they don't exist.
+ * Uniforms at root level are stored directly on state.uniforms.
+ * Scoped uniforms are stored under state.uniforms[scope].
  *
  * @example
  * ```tsx
  * import { uniform, float, vec3, color } from 'three/tsl'
  *
- * // Create uniforms (only created once, retrieved on subsequent calls)
- * const { uTime, uColor } = useUniform(() => ({
+ * // Create root-level uniforms (stored at state.uniforms.uTime, etc.)
+ * const { uTime, uColor } = useUniforms(() => ({
  *   uTime: uniform(float(0)),
  *   uColor: uniform(color('#ff0000')),
  * }))
  *
- * // Create scoped uniforms
- * const { uPlayerHealth } = useUniform(() => ({
+ * // Create scoped uniforms (stored at state.uniforms.player.uPlayerHealth)
+ * const { uPlayerHealth } = useUniforms(() => ({
  *   uPlayerHealth: uniform(float(100)),
  * }), 'player')
  *
- * // Access existing uniforms from default scope
- * const { uTime } = useUniform('_')
- *
  * // Access existing uniforms from a specific scope
- * const playerUniforms = useUniform('player')
+ * const playerUniforms = useUniforms('player')
  *
- * // Get all uniforms (all scopes)
- * const allUniforms = useUniform()
- * // allUniforms = { _: { uTime, uColor }, player: { uPlayerHealth } }
+ * // Get all uniforms (root + scopes)
+ * const allUniforms = useUniforms()
+ * // allUniforms = { uTime, uColor, player: { uPlayerHealth } }
  *
  * // Update uniform value (GPU sees it, no React re-render)
  * uTime.value = performance.now() * 0.001
  * ```
  */
-export function useUniform<T extends UniformRecord>(
+export function useUniforms<T extends UniformRecord>(
   creatorOrScope?: UniformCreator<T> | string,
   scope?: string,
-): T | UniformRecord | Record<string, UniformRecord> {
+): T | UniformRecord | (UniformRecord & Record<string, UniformRecord>) {
   const store = useStore()
 
   return useMemo(() => {
     const state = store.getState()
     const set = store.setState
 
-    // Case 1: No arguments - return all uniforms
+    // Case 1: No arguments - return all uniforms (root + scopes)
     if (creatorOrScope === undefined) {
-      return state.uniforms
+      return state.uniforms as UniformRecord & Record<string, UniformRecord>
     }
 
     // Case 2: String argument - return uniforms from that scope
     if (typeof creatorOrScope === 'string') {
-      return state.uniforms[creatorOrScope] ?? {}
+      const scopeData = state.uniforms[creatorOrScope]
+      // Make sure we're returning a scope object, not a uniform node
+      if (scopeData && !isUniformNode(scopeData)) {
+        return scopeData as UniformRecord
+      }
+      return {}
     }
 
     // Case 3: Creator function - create if not exists
     const creator = creatorOrScope
-    const targetScope = scope ?? DEFAULT_SCOPE
-
-    // Run the creator to get the uniform definitions
     const created = creator(state)
     const result: Record<string, UniformNode> = {}
-
-    // Ensure scope exists
-    const currentScope = state.uniforms[targetScope] ?? {}
     let hasNewUniforms = false
 
+    // Scoped uniforms ---------------------------------
+    if (scope) {
+      const currentScope = (state.uniforms[scope] as UniformRecord) ?? {}
+
+      for (const [name, node] of Object.entries(created)) {
+        if (currentScope[name]) {
+          result[name] = currentScope[name]
+        } else {
+          // Apply label for debugging
+          if (typeof node.label === 'function') {
+            node.setName(`${scope}.${name}`)
+          }
+          result[name] = node
+          hasNewUniforms = true
+        }
+      }
+
+      if (hasNewUniforms) {
+        set((s) => ({
+          uniforms: {
+            ...s.uniforms,
+            [scope]: {
+              ...(s.uniforms[scope] as UniformRecord),
+              ...result,
+            },
+          },
+        }))
+      }
+
+      return result as T
+    }
+
+    // Root-level uniforms ---------------------------------
     for (const [name, node] of Object.entries(created)) {
-      // Check if uniform already exists in this scope
-      if (currentScope[name]) {
-        // Already exists - use existing
-        result[name] = currentScope[name]
+      const existing = state.uniforms[name]
+      if (existing && isUniformNode(existing)) {
+        result[name] = existing as UniformNode
       } else {
-        // Doesn't exist - add it
-        // Apply label if the node supports it (for TSL debugging)
+        // Apply label for debugging
         if (typeof node.label === 'function') {
-          const labelName = targetScope === DEFAULT_SCOPE ? name : `${targetScope}.${name}`
-          node.label(labelName)
+          node.setName(name)
         }
         result[name] = node
         hasNewUniforms = true
       }
     }
 
-    // Update store if we created new uniforms
     if (hasNewUniforms) {
       set((s) => ({
         uniforms: {
           ...s.uniforms,
-          [targetScope]: {
-            ...s.uniforms[targetScope],
-            ...result,
-          },
+          ...result,
         },
       }))
     }
@@ -134,35 +159,60 @@ export function useUniform<T extends UniformRecord>(
 //* Utility Functions ==============================
 
 /**
- * Remove uniforms by name from a scope
+ * Remove uniforms by name from root level or a scope
+ * @param scope - If provided, removes from that scope. Otherwise removes from root.
  */
-export function removeUniforms(
-  set: ReturnType<typeof useStore>['setState'],
-  names: string[],
-  scope: string = DEFAULT_SCOPE,
-) {
+export function removeUniforms(set: ReturnType<typeof useStore>['setState'], names: string[], scope?: string) {
   set((state) => {
-    const currentScope = { ...state.uniforms[scope] }
+    if (scope) {
+      // Remove from scoped uniforms
+      const currentScope = { ...(state.uniforms[scope] as UniformRecord) }
+      for (const name of names) {
+        delete currentScope[name]
+      }
+      return {
+        uniforms: {
+          ...state.uniforms,
+          [scope]: currentScope,
+        },
+      }
+    }
+
+    // Remove from root level
+    const uniforms = { ...state.uniforms }
     for (const name of names) {
-      delete currentScope[name]
+      if (isUniformNode(uniforms[name])) {
+        delete uniforms[name]
+      }
     }
-    return {
-      uniforms: {
-        ...state.uniforms,
-        [scope]: currentScope,
-      },
-    }
+    return { uniforms }
   })
 }
 
 /**
- * Clear all uniforms from a scope
+ * Clear all uniforms from a scope (removes the entire scope object)
  */
-export function clearScope(set: ReturnType<typeof useStore>['setState'], scope: string = DEFAULT_SCOPE) {
+export function clearScope(set: ReturnType<typeof useStore>['setState'], scope: string) {
   set((state) => {
     const { [scope]: _, ...rest } = state.uniforms
     return { uniforms: rest }
   })
 }
 
-export default useUniform
+/**
+ * Clear all root-level uniforms (preserves scopes)
+ */
+export function clearRootUniforms(set: ReturnType<typeof useStore>['setState']) {
+  set((state) => {
+    const uniforms: typeof state.uniforms = {}
+    // Keep only scope objects, remove root-level uniforms
+    for (const [key, value] of Object.entries(state.uniforms)) {
+      if (!isUniformNode(value)) {
+        uniforms[key] = value
+      }
+    }
+    return { uniforms }
+  })
+}
+
+export default useUniforms

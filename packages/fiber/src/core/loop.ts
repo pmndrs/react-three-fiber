@@ -59,6 +59,7 @@ let subscription: Subscription
 function update(timestamp: number, state: RootState, frame?: XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
+  const renderer = state.gl || state.renderer
 
   // In frameloop='never' mode, clock times are updated using the provided timestamp
   if (state.frameloop === 'never' && typeof timestamp === 'number') {
@@ -75,7 +76,7 @@ function update(timestamp: number, state: RootState, frame?: XRFrame) {
   }
 
   // Render content
-  if (!state.internal.priority && state.gl.render) state.gl.render(state.scene, state.camera)
+  if (!state.internal.priority && renderer.render) renderer.render(state.scene, state.camera)
 
   // Decrease frame count
   state.internal.frames = Math.max(0, state.internal.frames - 1)
@@ -100,12 +101,13 @@ export function loop(timestamp: number): void {
   useFrameInProgress = true
   for (const root of _roots.values()) {
     state = root.store.getState()
+    const actualRenderer = state.renderer || state.gl
 
     // If the frameloop is invalidated, do not run another frame
     if (
       state.internal.active &&
       (state.frameloop === 'always' || state.internal.frames > 0) &&
-      !state.gl.xr?.isPresenting
+      !actualRenderer.xr?.isPresenting
     ) {
       repeat += update(timestamp, state)
     }
@@ -132,7 +134,11 @@ export function loop(timestamp: number): void {
  */
 export function invalidate(state?: RootState, frames = 1): void {
   if (!state) return _roots.forEach((root) => invalidate(root.store.getState(), frames))
-  if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
+  const renderer = state.gl || state.renderer
+  if (!renderer) {
+    console.error('No renderer found', state)
+  }
+  if (renderer.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
 
   if (frames > 1) {
     // legacy support for people using frames parameters

@@ -1,7 +1,8 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
 import { Canvas, act, extend } from '../src'
-import THREE from 'three'
+import * as THREE from '#three'
+import type { RootState } from '#types'
 
 extend(THREE as any)
 
@@ -425,7 +426,7 @@ describe('events', () => {
     await act(async () => {
       render(
         <Canvas
-          onCreated={(state) => {
+          onCreated={(state: RootState) => {
             state.size.left = 100
             state.size.top = 100
           }}>

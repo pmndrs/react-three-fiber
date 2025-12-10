@@ -71,9 +71,9 @@ Uniforms in materials and shared uniforms is one of the most confusing parts of 
 
 The base concept is to simply include a collection on the state like `const { uniforms } = useThree()` however Im not sure if there will be a manager or simply expose the object. The other way is with a hook
 
-useUniform()
+useUniforms()
 
-`const { colorA, colorB, scale }  = useUniform(['colorA', 'colorB', {name: 'scale', type: 'int'});`
+`const { colorA, colorB, scale }  = useUniforms(['colorA', 'colorB', {name: 'scale', type: 'int'});`
 The idea being we can access and read/update unforms from anywhere. If they dont exist we create them. Im still thinking through the API, I think we could local scope them too. And maybe provide reactivity.
 
 ### Nodes

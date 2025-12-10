@@ -1,23 +1,28 @@
-// Uniforms - scoped objects with create-if-not-exists pattern
+// Uniforms - root-level + scoped with create-if-not-exists pattern
 export {
-  useUniform,
+  useUniforms,
   removeUniforms,
   clearScope,
-  DEFAULT_SCOPE,
+  clearRootUniforms,
   type UniformNode,
   type UniformRecord,
   type UniformCreator,
 } from './useUniforms'
 
-// Nodes - scoped objects with create-if-not-exists pattern
+// Single uniform - simple create/get/update API
+export { useUniform, type UniformValue } from './useUniform'
+
+// Nodes - root-level + scoped with create-if-not-exists pattern
 export {
   useNodes,
+  useLocalNodes,
   removeNodes,
   clearNodeScope,
-  DEFAULT_NODE_SCOPE,
+  clearRootNodes,
   type TSLNode,
   type NodeRecord,
   type NodeCreator,
+  type LocalNodeCreator,
 } from './useNodes'
 
 // Textures - Re-exported from core (useTextures is now a core R3F hook)

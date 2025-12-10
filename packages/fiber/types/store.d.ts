@@ -134,10 +134,10 @@ export interface RootState {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
-  /** Global TSL uniform nodes - nested by scope, use useUniform() hook for operations */
-  uniforms: Record<string, Record<string, { value: any }>>
-  /** Global TSL nodes - nested by scope, use useNodes() hook for operations */
-  nodes: Record<string, Record<string, any>>
+  /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
+  uniforms: Record<string, { value: any } | Record<string, { value: any }>>
+  /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
+  nodes: Record<string, any>
   /** Global TSL texture nodes - use useTextures() hook for operations */
   textures: Map<string, any>
   /** When the canvas was clicked but nothing was hit */

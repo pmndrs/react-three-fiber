@@ -19,42 +19,16 @@ const shownNotices = new Set<string>()
 export function notifyDepreciated({ heading, body, link }: DeprecationNotice): void {
   // Skip if we've already shown this notice in this session
   if (shownNotices.has(heading)) return
-
-  // Mark this notice as shown
   shownNotices.add(heading)
-  const styles = {
-    header: 'background: #ff6b35; color: #fff; font-weight: bold; padding: 8px 12px; border-radius: 4px 4px 0 0;',
-    body: 'background: #fff3cd; color: #856404; padding: 8px 12px;',
-    link: 'background: #e7f3ff; color: #0066cc; padding: 8px 12px; border-radius: 0 0 4px 4px; text-decoration: underline;',
-    separator: 'background: transparent; color: transparent; padding: 2px;',
-  }
 
-  // Build the console message
-  const parts: string[] = []
-  const styleParts: string[] = []
+  // Unified styling for the entire notice block
+  const boxStyle = 'background: #ff9800; color: #1a1a1a; padding: 8px 12px; border-radius: 4px; font-weight: 500;'
+  const linkStyle = 'color: #0044aa; text-decoration: underline;'
 
-  // Header section
-  parts.push(`%c⚠️ ${heading}`)
-  styleParts.push(styles.header)
+  // Build the message content
+  let message = `⚠️ ${heading}`
+  if (body) message += `\n\n${body}`
+  if (link) message += `\n\nMore info: ${link}`
 
-  // Body section (if provided)
-  if (body) {
-    parts.push(`%c\n${body}`)
-    styleParts.push(styles.body)
-  }
-
-  // Link section (if provided)
-  if (link) {
-    parts.push(`%c\n📖 More info: ${link}`)
-    styleParts.push(styles.link)
-  }
-
-  // Log with all styles applied
-  console.warn(parts.join(''), ...styleParts)
-
-  // Also log a clean version for better readability in some console environments
-  console.groupCollapsed(`⚠️ Deprecation: ${heading}`)
-  if (body) console.log(body)
-  if (link) console.log(`📖 More info: %c${link}`, 'color: #0066cc; text-decoration: underline;')
-  console.groupEnd()
+  console.warn(`%c${message}`, boxStyle)
 }

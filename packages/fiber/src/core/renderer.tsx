@@ -224,15 +224,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         // WebGPU-specific setup
         await renderer.init()
+
         renderer.inspector = new Inspector()
 
         const backend = renderer.backend
-        if (backend && 'isWebGPUBackend' in backend) {
-          console.log('WebGPU is supported')
-          state.set({ webGPUSupported: true })
-        }
+        const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
-        state.set({ renderer: renderer as WebGPURenderer })
+        console.log('setting renderer', renderer)
+        state.set({ renderer: renderer as WebGPURenderer, webGPUSupported: isWebGPUBackend })
       } else {
         // Renderer already exists in state
         renderer = (wantsGL ? state.gl : state.renderer) as WebGPURenderer | WebGLRenderer
@@ -328,10 +327,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           advance(timestamp, true, state, frame)
         }
 
+        const actualRenderer = state.renderer || state.gl
+
         // Toggle render switching on session
         const handleSessionChange = () => {
           const state = store.getState()
-          state.gl.xr.enabled = state.gl.xr.isPresenting
+          actualRenderer.xr.enabled = actualRenderer.xr.isPresenting
 
           state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
           if (!state.gl.xr.isPresenting) invalidate(state)
@@ -340,14 +341,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // WebXR session manager
         const xr = {
           connect() {
-            const gl = store.getState().gl
-            gl.xr.addEventListener('sessionstart', handleSessionChange)
-            gl.xr.addEventListener('sessionend', handleSessionChange)
+            const { gl, renderer, isLegacy } = store.getState()
+            const actualRenderer = renderer || gl
+            actualRenderer.xr.addEventListener('sessionstart', handleSessionChange)
+            actualRenderer.xr.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
-            const gl = store.getState().gl
-            gl.xr.removeEventListener('sessionstart', handleSessionChange)
-            gl.xr.removeEventListener('sessionend', handleSessionChange)
+            const { gl, renderer, isLegacy } = store.getState()
+            const actualRenderer = renderer || gl
+            actualRenderer.xr.removeEventListener('sessionstart', handleSessionChange)
+            actualRenderer.xr.removeEventListener('sessionend', handleSessionChange)
           },
         }
 

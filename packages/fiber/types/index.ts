@@ -11,3 +11,6 @@ export * from './canvas'
 export * from './loader'
 export * from './webgl'
 export * from './webgpu'
+
+// TSL module augmentations (side-effect import for type augmentation)
+import './tsl'

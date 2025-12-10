@@ -106,22 +106,22 @@ plugins: [
 
 ## Converted Files
 
-| File                          | Status | Notes                       |
-| ----------------------------- | ------ | --------------------------- |
-| `core/index.tsx`              | ✅     | Simplified barrel exports   |
-| `core/renderer.tsx`           | ✅     | Build flag validation added |
-| `core/utils.tsx`              | ✅     | Types moved to #types       |
-| `core/store.ts`               | ✅     | Types moved to #types       |
-| `core/events.ts`              | ✅     | Types moved to #types       |
-| `core/reconciler.tsx`         | ✅     | Types moved to #types       |
-| `core/loop.ts`                | ✅     | Types moved to #types       |
-| `core/Canvas.tsx`             | ✅     | Types moved to #types       |
-| `core/hooks/index.tsx`        | ✅     | Types moved to #types       |
-| `core/hooks/useFrame.tsx`     | ✅     | Types moved to #types       |
-| `core/hooks/useLoader.tsx`    | ✅     | Types moved to #types       |
-| `webgpu/hooks/useUniform.tsx` | ✅     | Types moved to #types       |
-| `webgpu/hooks/useNodes.tsx`   | ✅     | Types moved to #types       |
-| `three-types.ts`              | ✅     | Types moved to #types       |
+| File                           | Status | Notes                       |
+| ------------------------------ | ------ | --------------------------- |
+| `core/index.tsx`               | ✅     | Simplified barrel exports   |
+| `core/renderer.tsx`            | ✅     | Build flag validation added |
+| `core/utils.tsx`               | ✅     | Types moved to #types       |
+| `core/store.ts`                | ✅     | Types moved to #types       |
+| `core/events.ts`               | ✅     | Types moved to #types       |
+| `core/reconciler.tsx`          | ✅     | Types moved to #types       |
+| `core/loop.ts`                 | ✅     | Types moved to #types       |
+| `core/Canvas.tsx`              | ✅     | Types moved to #types       |
+| `core/hooks/index.tsx`         | ✅     | Types moved to #types       |
+| `core/hooks/useFrame.tsx`      | ✅     | Types moved to #types       |
+| `core/hooks/useLoader.tsx`     | ✅     | Types moved to #types       |
+| `webgpu/hooks/useUniforms.tsx` | ✅     | Types moved to #types       |
+| `webgpu/hooks/useNodes.tsx`    | ✅     | Types moved to #types       |
+| `three-types.ts`               | ✅     | Types moved to #types       |
 
 ---
 

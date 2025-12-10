@@ -8,6 +8,7 @@ module.exports = {
           '#three/legacy': './packages/fiber/src/three/legacy.ts',
           '#three/webgpu': './packages/fiber/src/three/webgpu.ts',
           '#three/tsl': './packages/fiber/src/three/tsl.ts',
+          '#types': './packages/fiber/types/index.ts',
         },
       },
     ],

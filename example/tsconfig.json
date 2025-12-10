@@ -13,7 +13,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": "../",
+    "paths": {
+      "#three": ["packages/fiber/src/three/index.ts"],
+      "#three/*": ["packages/fiber/src/three/*"],
+      "#types": ["packages/fiber/types/index.ts"],
+      "#types/*": ["packages/fiber/types/*"]
+    }
   },
   "include": ["./src", "./typings/*.d.ts", "../packages/*"]
 }

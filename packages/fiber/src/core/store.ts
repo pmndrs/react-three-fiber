@@ -165,7 +165,7 @@ export const createStore = (
         set(() => ({ frameloop }))
       },
 
-      //* TSL State (managed via hooks: useUniform, useNodes, useTextures) ==============================
+      //* TSL State (managed via hooks: useUniforms, useNodes, useTextures) ==============================
       uniforms: {},
       nodes: {},
       textures: new Map(),
@@ -218,18 +218,20 @@ export const createStore = (
   let oldDpr = state.viewport.dpr
   let oldCamera = state.camera
   rootStore.subscribe(() => {
-    const { camera, size, viewport, gl, set } = rootStore.getState()
+    const { camera, size, viewport, gl, set, renderer, isLegacy } = rootStore.getState()
 
+    const actualRenderer = isLegacy ? gl : renderer
     // Resize camera and renderer on changes to size and pixelratio
     if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
       // Update camera & renderer
       updateCamera(camera, size)
-      if (viewport.dpr > 0) gl.setPixelRatio(viewport.dpr)
+      if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
 
-      const updateStyle = typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement
-      gl.setSize(size.width, size.height, updateStyle)
+      const updateStyle =
+        typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
+      actualRenderer.setSize(size.width, size.height, updateStyle)
     }
 
     // Update viewport once the camera changes
