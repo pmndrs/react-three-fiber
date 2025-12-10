@@ -37,7 +37,7 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 export const act: Act = React[('act' + '') as 'act']
 
 export type ThreeCamera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
-export const isOrthographicCamera = (def: Camera): def is THREE.OrthographicCamera =>
+export const isOrthographicCamera = (def: ThreeCamera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')
 
@@ -530,7 +530,7 @@ export function invalidateInstance(instance: Instance): void {
   if (state && state.internal.frames === 0) state.invalidate()
 }
 
-export function updateCamera(camera: Camera, size: Size): void {
+export function updateCamera(camera: ThreeCamera, size: Size): void {
   // Do not mess with the camera if it belongs to the user
   // https://github.com/pmndrs/react-three-fiber/issues/92
   if (camera.manual) return

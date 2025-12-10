@@ -8,7 +8,7 @@ export type {
   ComputeFunction,
   EventManager,
 } from './events'
-export { createEvents } from './events'
+export { createEvents, createPointerEvents } from './events'
 export * from './hooks'
 export type { GlobalRenderCallback, GlobalEffectType } from './loop'
 export { flushGlobalEffects, addEffect, addAfterEffect, addTail, invalidate, advance } from './loop'
@@ -47,7 +47,7 @@ export type {
   RootStore,
 } from './store'
 export { context } from './store'
-export type { ObjectMap, Camera, Disposable, Act, SetBlock } from './utils'
+export type { ObjectMap, ThreeCamera, Disposable, Act, SetBlock } from './utils'
 export {
   applyProps,
   getRootState,

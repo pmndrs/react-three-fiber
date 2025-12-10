@@ -12,8 +12,7 @@ import {
   useBridge,
 } from '../core/utils'
 import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode, RenderProps } from '../core'
-import { createPointerEvents } from './events'
-import { DomEvent } from '../core/events'
+import { createPointerEvents, DomEvent } from '../core/events'
 
 export interface CanvasProps
   extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
