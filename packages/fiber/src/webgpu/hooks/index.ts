@@ -7,7 +7,7 @@ export {
   type UniformNode,
   type UniformRecord,
   type UniformCreator,
-} from './useUniform'
+} from './useUniforms'
 
 // Nodes - scoped objects with create-if-not-exists pattern
 export {

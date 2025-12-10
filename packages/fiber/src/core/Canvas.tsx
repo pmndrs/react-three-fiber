@@ -2,18 +2,12 @@ import * as React from 'react'
 import * as THREE from '#three'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
-import {
-  isRef,
-  SetBlock,
-  Block,
-  ErrorBoundary,
-  useMutableCallback,
-  useIsomorphicLayoutEffect,
-  useBridge,
-} from './utils'
-import { ReconcilerRoot, extend, createRoot, unmountComponentAtNode } from './index'
-import { createPointerEvents, DomEvent } from './events'
-import type { CanvasProps } from '../../types/canvas'
+import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
+import { extend, createRoot, unmountComponentAtNode } from './index'
+import { createPointerEvents } from './events'
+
+//* Type Imports ==============================
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
 
 function CanvasImpl({
   ref,

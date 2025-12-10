@@ -10,18 +10,14 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { createWithEqualityFn } from 'zustand/traditional'
 
 import type { ThreeElement } from '../three-types'
-import { ComputeFunction, EventManager } from './events'
 import { useStore } from './hooks'
 import { advance, invalidate } from './loop'
-import { reconciler, Root } from './reconciler'
-import { context, createStore, Dpr, Frameloop, Performance, RootState, RootStore, Size } from './store'
+import { reconciler } from './reconciler'
+import { context, createStore } from './store'
 import {
-  type Properties,
   applyProps,
   calculateDpr,
-  type ThreeCamera,
   dispose,
-  EquConfig,
   is,
   prepare,
   updateCamera,
@@ -30,9 +26,31 @@ import {
 } from './utils'
 import { notifyDepreciated } from './notices'
 
-export interface Renderer {
-  render: (scene: Scene, camera: ThreeCamera) => any
-}
+//* Type Imports ==============================
+import type {
+  Dpr,
+  Frameloop,
+  Performance,
+  RootState,
+  RootStore,
+  Size,
+  ComputeFunction,
+  EventManager,
+  Properties,
+  ThreeCamera,
+  EquConfig,
+  Root,
+  Renderer,
+  DefaultGLProps,
+  GLProps,
+  DefaultRendererProps,
+  RendererProps,
+  CameraProps,
+  RenderProps,
+  ReconcilerRoot,
+  InjectState,
+} from '#types'
+
 export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
@@ -52,97 +70,6 @@ async function resolveRenderer<T>(
   if (typeof config === 'function') return await config(defaultProps)
   if (isRenderer(config)) return config as T
   return new RendererClass({ ...defaultProps, ...config })
-}
-
-export type DefaultGLProps = Omit<WebGLRendererParameters, 'canvas'> & {
-  canvas: HTMLCanvasElement | OffscreenCanvas
-}
-
-export type GLProps =
-  | Renderer
-  | ((defaultProps: DefaultGLProps) => Renderer)
-  | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | Partial<Properties<WebGLRenderer> | WebGLRendererParameters>
-
-//* WebGPU Renderer Props ==============================
-
-export type DefaultRendererProps = {
-  canvas: HTMLCanvasElement | OffscreenCanvas
-  [key: string]: any
-}
-
-export type RendererProps =
-  | WebGPURenderer
-  | ((defaultProps: DefaultRendererProps) => WebGPURenderer)
-  | ((defaultProps: DefaultRendererProps) => Promise<WebGPURenderer>)
-  | Partial<Properties<WebGPURenderer> | Record<string, any>>
-
-export type CameraProps = (
-  | THREE.Camera
-  | Partial<
-      ThreeElement<typeof THREE.Camera> &
-        ThreeElement<typeof THREE.PerspectiveCamera> &
-        ThreeElement<typeof THREE.OrthographicCamera>
-    >
-) & {
-  /** Flags the camera as manual, putting projection into your own hands */
-  manual?: boolean
-}
-
-export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  /** A threejs renderer instance or props that go into the default renderer */
-  gl?: GLProps
-  /** A WebGPU renderer instance or props that go into the default renderer */
-  renderer?: RendererProps
-  /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
-  size?: Size
-  /**
-   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
-   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
-   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
-   */
-  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<WebGLShadowMap>
-  /**
-   * Disables three r139 color management.
-   * @see https://threejs.org/docs/#manual/en/introduction/Color-management
-   */
-  legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
-  linear?: boolean
-  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
-  flat?: boolean
-  /** Creates an orthographic camera */
-  orthographic?: boolean
-  /**
-   * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
-   */
-  frameloop?: Frameloop
-  /**
-   * R3F performance options for adaptive performance.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
-   */
-  performance?: Partial<Omit<Performance, 'regress'>>
-  /** Target pixel ratio. Can clamp between a range: `[min, max]` */
-  dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
-  /** A `THREE.Scene` instance or props that go into the default scene */
-  scene?: THREE.Scene | Partial<THREE.Scene>
-  /** A `THREE.Camera` instance or props that go into the default camera */
-  camera?: CameraProps
-  /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
-  /** Callback after the canvas has rendered (but not yet committed) */
-  onCreated?: (state: RootState) => void
-  /** Response for pointer clicks that have missed any target */
-  onPointerMissed?: (event: MouseEvent) => void
-}
-
-export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
-  render: (element: ReactNode) => RootStore
-  unmount: () => void
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -560,17 +487,6 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     })
   }
 }
-
-export type InjectState = Partial<
-  Omit<RootState, 'events'> & {
-    events?: {
-      enabled?: boolean
-      priority?: number
-      compute?: ComputeFunction
-      connected?: any
-    }
-  }
->
 
 export function createPortal(children: ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal children={children} container={container} state={state} />

@@ -2,8 +2,7 @@ import type * as THREE from '#three'
 import type {} from 'react'
 import type {} from 'react/jsx-runtime'
 import type {} from 'react/jsx-dev-runtime'
-import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation } from './core'
-import type { Overwrite, Mutable } from './core/utils'
+import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
 
 type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
 

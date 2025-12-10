@@ -17,7 +17,25 @@ All files have been converted from scattered `three` / `three/webgpu` imports to
 | `webgpu.ts` | WebGPU only                         | `LEGACY=false, WEBGPU=true` |
 | `tsl.ts`    | TSL re-exports                      | -                           |
 
-### 2. Build Flags
+### 2. Created `types/` Type Definitions
+
+All types have been migrated from inline definitions in source files to centralized `.d.ts` files:
+
+| File                    | Types                                                                 |
+| ----------------------- | --------------------------------------------------------------------- |
+| `types/index.ts`        | Barrel export for all types                                           |
+| `types/store.d.ts`      | RootState, RootStore, Size, Viewport, Performance, Subscription, etc. |
+| `types/events.d.ts`     | Intersection, ThreeEvent, DomEvent, EventHandlers, EventManager, etc. |
+| `types/renderer.d.ts`   | Renderer, GLProps, RendererProps, RenderProps, ReconcilerRoot, etc.   |
+| `types/reconciler.d.ts` | Instance, Catalogue, Args, InstanceProps, HostConfig, etc.            |
+| `types/loop.d.ts`       | GlobalRenderCallback, GlobalEffectType                                |
+| `types/utils.d.ts`      | Properties, ThreeCamera, ObjectMap, EquConfig, Disposable, etc.       |
+| `types/canvas.d.ts`     | CanvasProps                                                           |
+| `types/loader.d.ts`     | LoaderLike, LoaderResult, Extensions, InputLike                       |
+| `types/webgl.d.ts`      | WebGL-specific types                                                  |
+| `types/webgpu.d.ts`     | WebGPU-specific types                                                 |
+
+### 3. Build Flags
 
 Each build variant exports:
 
@@ -32,7 +50,7 @@ These flags:
 - Allow tree-shaking of dead code branches
 - Are re-exported from entry points for consumer use
 
-### 3. Updated TypeScript Config
+### 4. Updated TypeScript Config
 
 ```json
 // tsconfig.json
@@ -40,13 +58,15 @@ These flags:
   "compilerOptions": {
     "paths": {
       "#three": ["packages/fiber/src/three/index.ts"],
-      "#three/*": ["packages/fiber/src/three/*"]
+      "#three/*": ["packages/fiber/src/three/*"],
+      "#types": ["packages/fiber/types/index.ts"],
+      "#types/*": ["packages/fiber/types/*"]
     }
   }
 }
 ```
 
-### 4. Updated Babel Config
+### 5. Updated Babel Config
 
 ```javascript
 // babel.config.js
@@ -62,7 +82,7 @@ plugins: [
 ],
 ```
 
-### 5. New Entry Points
+### 6. New Entry Points
 
 | Entry              | Import Path                 | Description              |
 | ------------------ | --------------------------- | ------------------------ |
@@ -71,7 +91,7 @@ plugins: [
 | `legacy.tsx`       | `@react-three/fiber/legacy` | WebGL only               |
 | `webgpu/index.tsx` | `@react-three/fiber/webgpu` | WebGPU only + TSL hooks  |
 
-### 6. Updated Preconstruct Config
+### 7. Updated Preconstruct Config
 
 ```json
 // packages/fiber/package.json
@@ -86,44 +106,64 @@ plugins: [
 
 ## Converted Files
 
-| File                       | Status | Notes                       |
-| -------------------------- | ------ | --------------------------- |
-| `core/renderer.tsx`        | ✅     | Build flag validation added |
-| `core/utils.tsx`           | ✅     |                             |
-| `core/store.ts`            | ✅     | Mixed imports consolidated  |
-| `core/events.ts`           | ✅     |                             |
-| `core/reconciler.tsx`      | ✅     | SwapBlock removed           |
-| `core/hooks/useLoader.tsx` | ✅     |                             |
-| `core/hooks/index.tsx`     | ✅     | SwapBlock removed           |
-| `core/Canvas.tsx`          | ✅     |                             |
-| `web/Canvas.tsx`           | ✅     |                             |
-| `native/Canvas.tsx`        | ✅     |                             |
-| `native/polyfills.ts`      | ✅     |                             |
-| `three-types.ts`           | ✅     | SwapBlock removed           |
+| File                          | Status | Notes                       |
+| ----------------------------- | ------ | --------------------------- |
+| `core/index.tsx`              | ✅     | Simplified barrel exports   |
+| `core/renderer.tsx`           | ✅     | Build flag validation added |
+| `core/utils.tsx`              | ✅     | Types moved to #types       |
+| `core/store.ts`               | ✅     | Types moved to #types       |
+| `core/events.ts`              | ✅     | Types moved to #types       |
+| `core/reconciler.tsx`         | ✅     | Types moved to #types       |
+| `core/loop.ts`                | ✅     | Types moved to #types       |
+| `core/Canvas.tsx`             | ✅     | Types moved to #types       |
+| `core/hooks/index.tsx`        | ✅     | Types moved to #types       |
+| `core/hooks/useFrame.tsx`     | ✅     | Types moved to #types       |
+| `core/hooks/useLoader.tsx`    | ✅     | Types moved to #types       |
+| `webgpu/hooks/useUniform.tsx` | ✅     | Types moved to #types       |
+| `webgpu/hooks/useNodes.tsx`   | ✅     | Types moved to #types       |
+| `three-types.ts`              | ✅     | Types moved to #types       |
 
 ---
 
 ## How It Works
 
-### Import Pattern (Before)
+### Three.js Import Pattern
 
 ```typescript
-//* WebGLBlock ===
+// Before (scattered imports)
 import { WebGLRenderer } from 'three'
-//* End WebGLBlock ===
-//* WebGPUBlock ===
 import { WebGPURenderer } from 'three/webgpu'
-//* End WebGPUBlock ===
-//* SwapBlock ===
 import * as THREE from 'three/webgpu'
-//* End SwapBlock ===
-```
 
-### Import Pattern (After)
-
-```typescript
+// After (centralized)
 import * as THREE from '#three'
 import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer } from '#three'
+```
+
+### Type Import Pattern
+
+```typescript
+// Before (relative paths that vary by depth)
+import type { RootState } from '../../types'
+import type { RootState } from '../../../types'
+
+// After (consistent alias)
+import type { RootState, RootStore, Instance } from '#types'
+```
+
+### Core Index Exports
+
+```typescript
+// core/index.tsx - Clean barrel exports
+export type * from '#types'
+
+export * from './events'
+export * from './hooks'
+export * from './loop'
+export * from './reconciler'
+export * from './renderer'
+export * from './store'
+export * from './utils'
 ```
 
 ### Runtime Behavior
@@ -152,6 +192,9 @@ import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '@react-three/fiber'
 if (R3F_BUILD_WEBGPU) {
   // WebGPU features available
 }
+
+// All types available from main import
+import type { RootState, Instance, ThreeEvent } from '@react-three/fiber'
 ```
 
 ---

@@ -1,100 +1,23 @@
 import * as THREE from '#three'
-import { type Properties, getRootState } from './utils'
-import type { Instance } from './reconciler'
-import type { RootState, RootStore } from './store'
+import { getRootState } from './utils'
 
-export interface Intersection extends THREE.Intersection {
-  /** The event source (the object which registered the handler) */
-  eventObject: THREE.Object3D
-}
-
-export interface IntersectionEvent<TSourceEvent> extends Intersection {
-  /** The event source (the object which registered the handler) */
-  eventObject: THREE.Object3D
-  /** An array of intersections */
-  intersections: Intersection[]
-  /** vec3.set(pointer.x, pointer.y, 0).unproject(camera) */
-  unprojectedPoint: THREE.Vector3
-  /** Normalized event coordinates */
-  pointer: THREE.Vector2
-  /** Delta between first click and this event */
-  delta: number
-  /** The ray that pierced it */
-  ray: THREE.Ray
-  /** The camera that was used by the raycaster */
-  camera: Camera
-  /** stopPropagation will stop underlying handlers from firing */
-  stopPropagation: () => void
-  /** The original host event */
-  nativeEvent: TSourceEvent
-  /** If the event was stopped by calling stopPropagation */
-  stopped: boolean
-}
-
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
-export type DomEvent = PointerEvent | MouseEvent | WheelEvent
-
-export interface Events {
-  onClick: EventListener
-  onContextMenu: EventListener
-  onDoubleClick: EventListener
-  onWheel: EventListener
-  onPointerDown: EventListener
-  onPointerUp: EventListener
-  onPointerLeave: EventListener
-  onPointerMove: EventListener
-  onPointerCancel: EventListener
-  onLostPointerCapture: EventListener
-}
-
-export interface EventHandlers {
-  onClick?: (event: ThreeEvent<MouseEvent>) => void
-  onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
-  onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
-  onPointerUp?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerOver?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerOut?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerMove?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerMissed?: (event: MouseEvent) => void
-  onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
-  onWheel?: (event: ThreeEvent<WheelEvent>) => void
-  onLostPointerCapture?: (event: ThreeEvent<PointerEvent>) => void
-}
-
-export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeFunction = (event: DomEvent, root: RootState, previous?: RootState) => void
-
-export interface EventManager<TTarget> {
-  /** Determines if the event layer is active */
-  enabled: boolean
-  /** Event layer priority, higher prioritized layers come first and may stop(-propagate) lower layer  */
-  priority: number
-  /** The compute function needs to set up the raycaster and an xy- pointer  */
-  compute?: ComputeFunction
-  /** The filter can re-order or re-structure the intersections  */
-  filter?: FilterFunction
-  /** The target node the event layer is tied to */
-  connected?: TTarget
-  /** All the pointer event handlers through which the host forwards native events */
-  handlers?: Events
-  /** Allows re-connecting to another target */
-  connect?: (target: TTarget) => void
-  /** Removes all existing events handlers from the target */
-  disconnect?: () => void
-  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
-   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
-   */
-  update?: () => void
-}
-
-export interface PointerCaptureTarget {
-  intersection: Intersection
-  target: Element
-}
+//* Type Imports ==============================
+import type {
+  Properties,
+  Instance,
+  RootState,
+  RootStore,
+  Intersection,
+  Camera,
+  ThreeEvent,
+  DomEvent,
+  Events,
+  EventHandlers,
+  FilterFunction,
+  ComputeFunction,
+  EventManager,
+  PointerCaptureTarget,
+} from '#types'
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId

@@ -15,157 +15,28 @@ import {
 import * as React from 'react'
 import { type StoreApi } from 'zustand'
 import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
-import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, type ThreeCamera, isOrthographicCamera, updateCamera } from './utils'
 
-export interface Intersection extends ThreeIntersection {
-  eventObject: Object3D
-}
+//* Type Imports ==============================
+import type {
+  Subscription,
+  Dpr,
+  Size,
+  Frameloop,
+  Viewport,
+  RenderCallback,
+  Performance,
+  InternalState,
+  XRManager,
+  RootState,
+  RootStore,
+  DomEvent,
+  EventManager,
+  PointerCaptureTarget,
+  ThreeEvent,
+  ThreeCamera,
+} from '#types'
 
-export type Subscription = {
-  ref: React.RefObject<RenderCallback>
-  priority: number
-  store: RootStore
-}
-
-export type Dpr = number | [min: number, max: number]
-export interface Size {
-  width: number
-  height: number
-  top: number
-  left: number
-}
-export type Frameloop = 'always' | 'demand' | 'never'
-export interface Viewport extends Size {
-  /** The initial pixel ratio */
-  initialDpr: number
-  /** Current pixel ratio */
-  dpr: number
-  /** size.width / viewport.width */
-  factor: number
-  /** Camera distance */
-  distance: number
-  /** Camera aspect ratio: width / height */
-  aspect: number
-}
-
-export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
-
-export interface Performance {
-  /** Current performance normal, between min and max */
-  current: number
-  /** How low the performance can go, between 0 and max */
-  min: number
-  /** How high the performance can go, between min and max */
-  max: number
-  /** Time until current returns to max in ms */
-  debounce: number
-  /** Sets current to min, puts the system in regression */
-  regress: () => void
-}
-
-export interface InternalState {
-  interaction: Object3D[]
-  hovered: Map<string, ThreeEvent<DomEvent>>
-  subscribers: Subscription[]
-  capturedMap: Map<number, Map<Object3D, PointerCaptureTarget>>
-  initialClick: [x: number, y: number]
-  initialHits: Object3D[]
-  lastEvent: React.RefObject<DomEvent | null>
-  active: boolean
-  priority: number
-  frames: number
-  subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
-}
-
-export interface XRManager {
-  connect: () => void
-  disconnect: () => void
-}
-
-export interface RootState {
-  /** Set current state */
-  set: StoreApi<RootState>['setState']
-  /** Get current state */
-  get: StoreApi<RootState>['getState']
-  /** (deprecated) The instance of the WebGLrenderer */
-  gl: WebGLRenderer
-  /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
-  renderer: WebGLRenderer | WebGPURenderer // This will be conditionally typed based on build target
-  /** Inspector of the webGPU REnderer. Init in the canvas */
-  inspector: Inspector
-
-  /** Default camera */
-  camera: ThreeCamera
-  /** Default scene */
-  scene: Scene
-  /** Default raycaster */
-  raycaster: Raycaster
-  /** Default clock */
-  clock: Clock
-  /** Event layer interface, contains the event handler and the node they're connected to */
-  events: EventManager<any>
-  /** XR interface */
-  xr: XRManager
-  /** Currently used controls */
-  controls: EventDispatcher | null
-  /** Normalized event coordinates */
-  pointer: Vector2
-  /** @deprecated Normalized event coordinates, use "pointer" instead! */
-  mouse: Vector2
-  /* Whether to enable r139's THREE.ColorManagement */
-  legacy: boolean
-  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
-  linear: boolean
-  /** Shortcut to gl.toneMapping = NoTonemapping */
-  flat: boolean
-  /** Render loop flags */
-  frameloop: Frameloop
-  performance: Performance
-  /** Reactive pixel-size of the canvas */
-  size: Size
-  /** Reactive size of the viewport in threejs units */
-  viewport: Viewport & {
-    getCurrentViewport: (
-      camera?: ThreeCamera,
-      target?: Vector3 | Parameters<Vector3['set']>,
-      size?: Size,
-    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
-  }
-  /** Flags the canvas for render, but doesn't render in itself */
-  invalidate: (frames?: number) => void
-  /** Advance (render) one step */
-  advance: (timestamp: number, runGlobalEffects?: boolean) => void
-  /** Shortcut to setting the event layer */
-  setEvents: (events: Partial<EventManager<any>>) => void
-  /** Shortcut to manual sizing */
-  setSize: (width: number, height: number, top?: number, left?: number) => void
-  /** Shortcut to manual setting the pixel ratio */
-  setDpr: (dpr: Dpr) => void
-  /** Shortcut to setting frameloop flags */
-  setFrameloop: (frameloop: Frameloop) => void
-  /** Global TSL uniform nodes - nested by scope, use useUniform() hook for operations */
-  uniforms: Record<string, Record<string, { value: any }>>
-  /** Global TSL nodes - nested by scope, use useNodes() hook for operations */
-  nodes: Record<string, Record<string, any>>
-  /** Global TSL texture nodes - use useTextures() hook for operations */
-  textures: Map<string, any>
-  /** When the canvas was clicked but nothing was hit */
-  onPointerMissed?: (event: MouseEvent) => void
-  /** If this state model is layered (via createPortal) then this contains the previous layer */
-  previousRoot?: RootStore
-  /** Internals */
-  internal: InternalState
-  // flags for triggers
-  // if we are using the webGl renderer, this will be true
-  isLegacy: boolean
-  // regardless of renderer, if the system supports webGpu, this will be true
-  webGPUSupported: boolean
-  //if we are on native
-  isNative: boolean
-}
-
-export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
+import { calculateDpr, isOrthographicCamera, updateCamera } from './utils'
 
 export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
 

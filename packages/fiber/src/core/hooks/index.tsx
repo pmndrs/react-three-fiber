@@ -1,9 +1,10 @@
 import { useContext, useRef, useImperativeHandle, useMemo } from 'react'
-import { RootState, context, RootStore } from '../store'
-import type { Instance } from '../reconciler'
-import { buildGraph, ObjectMap } from '../utils'
-
+import { context } from '../store'
+import { buildGraph } from '../utils'
 import { Object3D } from '#three'
+
+//* Type Imports ==============================
+import type { RootState, RootStore, Instance, ObjectMap } from '#types'
 
 // export other hooks
 export * from './useLoader'

@@ -1,7 +1,14 @@
-type InputLike = string | string[] | string[][] | Readonly<string | string[] | string[][]>
+import type * as THREE from 'three'
+import type { ObjectMap } from './utils'
+import type { ConstructorRepresentation } from './reconciler'
+
+//* Loader Types ==============================
+
+export type InputLike = string | string[] | string[][] | Readonly<string | string[] | string[][]>
+
 // Define a loader-like interface that matches THREE.Loader's load signature
 // This works for both generic and non-generic THREE.Loader instances
-interface LoaderLike {
+export interface LoaderLike {
   load(
     url: InputLike,
     onLoad?: (result: any) => void,
@@ -9,6 +16,7 @@ interface LoaderLike {
     onError?: (error: unknown) => void,
   ): any
 }
+
 type GLTFLike = { scene: THREE.Object3D }
 
 type LoaderInstance<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =

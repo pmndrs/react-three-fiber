@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useStore } from '../../core/hooks'
-import type { RootState } from '../../core/store'
+import type { RootState } from '#types'
 
 //* Types ==============================
 

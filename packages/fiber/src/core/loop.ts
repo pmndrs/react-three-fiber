@@ -1,7 +1,8 @@
 import { _roots } from './renderer'
-import type { RootState, Subscription } from './store'
 
-export type GlobalRenderCallback = (timestamp: number) => void
+//* Type Imports ==============================
+import type { RootState, Subscription, GlobalRenderCallback, GlobalEffectType } from '#types'
+
 interface SubItem {
   callback: GlobalRenderCallback
 }
@@ -40,8 +41,6 @@ function run(effects: Set<SubItem>, timestamp: number) {
     callback(timestamp)
   }
 }
-
-export type GlobalEffectType = 'before' | 'after' | 'tail'
 
 export function flushGlobalEffects(type: GlobalEffectType, timestamp: number): void {
   switch (type) {

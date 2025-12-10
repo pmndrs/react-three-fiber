@@ -3,8 +3,7 @@ import type * as THREE from 'three'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import type { Camera } from '../src/core/utils'
-import type { Renderer } from './renderer'
+import type { ThreeCamera } from './utils'
 
 //* Core Store Types ========================================
 
@@ -79,12 +78,15 @@ export interface RootState {
   set: StoreApi<RootState>['setState']
   /** Get current state */
   get: StoreApi<RootState>['getState']
-  /** The instance of the renderer */
+  /** (deprecated) The instance of the WebGLrenderer */
   gl: THREE.WebGLRenderer
   /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
-  renderer: any // This will be conditionally typed based on build target
+  renderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  /** Inspector of the webGPU Renderer. Init in the canvas */
+  inspector: any // Inspector type from three/webgpu
+
   /** Default camera */
-  camera: Camera
+  camera: ThreeCamera
   /** Default scene */
   scene: THREE.Scene
   /** Default raycaster */
@@ -115,7 +117,7 @@ export interface RootState {
   /** Reactive size of the viewport in threejs units */
   viewport: Viewport & {
     getCurrentViewport: (
-      camera?: Camera,
+      camera?: ThreeCamera,
       target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
       size?: Size,
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
@@ -132,12 +134,25 @@ export interface RootState {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
+  /** Global TSL uniform nodes - nested by scope, use useUniform() hook for operations */
+  uniforms: Record<string, Record<string, { value: any }>>
+  /** Global TSL nodes - nested by scope, use useNodes() hook for operations */
+  nodes: Record<string, Record<string, any>>
+  /** Global TSL texture nodes - use useTextures() hook for operations */
+  textures: Map<string, any>
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layered (via createPortal) then this contains the previous layer */
   previousRoot?: RootStore
   /** Internals */
   internal: InternalState
+  // flags for triggers
+  // if we are using the webGl renderer, this will be true
+  isLegacy: boolean
+  // regardless of renderer, if the system supports webGpu, this will be true
+  webGPUSupported: boolean
+  //if we are on native
+  isNative: boolean
 }
 
 export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>

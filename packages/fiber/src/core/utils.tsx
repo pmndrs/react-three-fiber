@@ -1,21 +1,30 @@
 import * as THREE from '#three'
 import * as React from 'react'
 import { useFiber, traverseFiber, useContextBridge } from 'its-fine'
-import { Instance } from './reconciler'
 import type { Fiber } from 'react-reconciler'
-import type { EventHandlers } from './events'
-import type { Dpr, RootStore, Size } from './store'
 
-export type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
-export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
-export type Properties<T> = Pick<T, NonFunctionKeys<T>>
-export type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
-export type IsOptional<T> = undefined extends T ? true : false
-export type IsAllOptional<T extends any[]> = T extends [infer First, ...infer Rest]
-  ? IsOptional<First> extends true
-    ? IsAllOptional<Rest>
-    : false
-  : true
+//* Type Imports ==============================
+import type {
+  Dpr,
+  RootStore,
+  Size,
+  EventHandlers,
+  Instance,
+  NonFunctionKeys,
+  Overwrite,
+  Properties,
+  Mutable,
+  IsOptional,
+  IsAllOptional,
+  Act,
+  ThreeCamera,
+  Bridge,
+  SetBlock,
+  UnblockProps,
+  ObjectMap,
+  EquConfig,
+  Disposable,
+} from '#types'
 
 /**
  * Returns the instance's initial (outmost) root.
@@ -26,8 +35,6 @@ export function findInitialRoot<T>(instance: Instance<T>): RootStore {
   return root
 }
 
-export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
-
 /**
  * Safely flush async effects when testing, simulating a legacy root.
  * @deprecated Import from React instead. import { act } from 'react'
@@ -36,7 +43,6 @@ export type Act = <T = any>(cb: () => Promise<T>) => Promise<T>
 // https://github.com/webpack/webpack/issues/14814
 export const act: Act = React[('act' + '') as 'act']
 
-export type ThreeCamera = (THREE.OrthographicCamera | THREE.PerspectiveCamera) & { manual?: boolean }
 export const isOrthographicCamera = (def: ThreeCamera): def is THREE.OrthographicCamera =>
   def && (def as THREE.OrthographicCamera).isOrthographicCamera
 export const isRef = (obj: any): obj is React.RefObject<unknown> => obj && obj.hasOwnProperty('current')
@@ -64,8 +70,6 @@ export function useMutableCallback<T>(fn: T): React.RefObject<T> {
   return ref
 }
 
-export type Bridge = React.FC<{ children?: React.ReactNode }>
-
 /**
  * Bridges renderer Context and StrictMode from a primary renderer.
  */
@@ -88,9 +92,6 @@ export function useBridge(): Bridge {
     [fiber, ContextBridge],
   )
 }
-
-export type SetBlock = false | Promise<null> | null
-export type UnblockProps = { set: React.Dispatch<React.SetStateAction<SetBlock>>; children: React.ReactNode }
 
 export function Block({ set }: Omit<UnblockProps, 'children'>) {
   useIsomorphicLayoutEffect(() => {
@@ -116,12 +117,6 @@ export const ErrorBoundary = /* @__PURE__ */ (() =>
     }
   })()
 
-export interface ObjectMap {
-  nodes: { [name: string]: THREE.Object3D }
-  materials: { [name: string]: THREE.Material }
-  meshes: { [name: string]: THREE.Mesh }
-}
-
 export function calculateDpr(dpr: Dpr): number {
   // Err on the side of progress by assuming 2x dpr if we can't detect it
   // This will happen in workers where window is defined but dpr isn't.
@@ -134,15 +129,6 @@ export function calculateDpr(dpr: Dpr): number {
  */
 export function getRootState<T extends THREE.Object3D = THREE.Object3D>(obj: T) {
   return (obj as Instance<T>['object']).__r3f?.root.getState()
-}
-
-export interface EquConfig {
-  /** Compare arrays by reference equality a === b (default), or by shallow equality */
-  arrays?: 'reference' | 'shallow'
-  /** Compare objects by reference equality a === b (default), or by shallow equality */
-  objects?: 'reference' | 'shallow'
-  /** If true the keys in both a and b must match 1:1 (default), if false a's keys must intersect b's */
-  strict?: boolean
 }
 
 // A collection of compare functions
@@ -200,11 +186,6 @@ export function buildGraph(object: THREE.Object3D): ObjectMap {
     })
   }
   return data
-}
-
-export interface Disposable {
-  type?: string
-  dispose?: () => void
 }
 
 // Disposes an object and all its properties

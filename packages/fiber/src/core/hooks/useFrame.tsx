@@ -1,6 +1,8 @@
 import { useStore } from '.'
-import type { RenderCallback } from '../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../utils'
+
+//* Type Imports ==============================
+import type { RenderCallback } from '#types'
 
 /**
  * Executes a callback before render in a shared frame loop.

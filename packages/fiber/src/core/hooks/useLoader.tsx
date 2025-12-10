@@ -1,9 +1,9 @@
 import * as THREE from '#three'
 import { suspend, preload, clear } from 'suspend-react'
-import type { ConstructorRepresentation } from '../reconciler'
-import { buildGraph, ObjectMap, is, isObject3D } from '../utils'
+import { buildGraph, is, isObject3D } from '../utils'
 
-import type { LoaderLike, InputLike, LoaderResult, Extensions } from '../../../types/loader'
+//* Type Imports ==============================
+import type { ConstructorRepresentation, LoaderLike, InputLike, LoaderResult, Extensions } from '#types'
 
 const memoizedLoaders = new WeakMap<ConstructorRepresentation<LoaderLike>, LoaderLike>()
 
