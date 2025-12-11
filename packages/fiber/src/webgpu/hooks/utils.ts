@@ -1,5 +1,6 @@
 import type { StoreApi } from 'zustand'
-import type { RootState } from '../../core/store'
+import * as THREE from '#three'
+import { RootState } from '../../../types/store'
 
 //* Map Utilities for Textures ==============================
 // Textures use Map<string, T> since URLs work better as Map keys
@@ -67,4 +68,57 @@ export function createTextureOperations(set: StoreApi<RootState>['setState']): T
     remove: (key) => removeTexture(set, key),
     removeMultiple: (keys) => removeTextures(set, keys),
   }
+}
+
+//* Vectorization Utilities ==============================
+// Converts plain objects from Leva (e.g., {x: 1, y: 2}) to Three.js vectors
+
+/**
+ * Converts plain objects with x/y/z/w properties to Three.js Vector types.
+ * Handles Leva's output format while preserving existing Three.js types.
+ *
+ * @param inObject - Input value (can be number, vector, matrix, plain object, etc.)
+ * @returns Three.js Vector if convertible, otherwise returns original value
+ *
+ * @example
+ * vectorize({x: 1, y: 2}) // => Vector2(1, 2)
+ * vectorize({x: 1, y: 2, z: 3}) // => Vector3(1, 2, 3)
+ * vectorize({x: 1, y: 2, z: 3, w: 4}) // => Vector4(1, 2, 3, 4)
+ * vectorize(new THREE.Vector3(1, 2, 3)) // => Vector3(1, 2, 3) (unchanged)
+ * vectorize(5) // => 5 (unchanged)
+ */
+export function vectorize(inObject: unknown): unknown {
+  // Early exit for primitives
+  if (inObject === null || inObject === undefined) return inObject
+  if (typeof inObject !== 'object') return inObject
+
+  const obj = inObject as any
+
+  // If already a Three.js vector, return as-is
+  if (obj.isVector2 || obj.isVector3 || obj.isVector4) return inObject
+
+  // If it's a matrix, return as-is
+  if (obj.isMatrix3 || obj.isMatrix4) return inObject
+
+  // If it's a Color, Euler, Quaternion, or other Three.js types, return as-is
+  if (obj.isColor || obj.isEuler || obj.isQuaternion || obj.isSpherical) return inObject
+
+  // Check if it's a plain object with numeric x/y properties
+  if ('x' in obj && 'y' in obj && typeof obj.x === 'number' && typeof obj.y === 'number') {
+    // Check for Vector4 (x, y, z, w)
+    if ('w' in obj && typeof obj.w === 'number' && 'z' in obj && typeof obj.z === 'number') {
+      return new THREE.Vector4(obj.x, obj.y, obj.z, obj.w)
+    }
+
+    // Check for Vector3 (x, y, z)
+    if ('z' in obj && typeof obj.z === 'number') {
+      return new THREE.Vector3(obj.x, obj.y, obj.z)
+    }
+
+    // Vector2 (x, y)
+    return new THREE.Vector2(obj.x, obj.y)
+  }
+
+  // Return original value if no conversion needed
+  return inObject
 }

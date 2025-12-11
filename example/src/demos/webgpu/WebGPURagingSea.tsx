@@ -9,14 +9,20 @@ import type { UniformNode } from '@react-three/fiber/webgpu'
 import { useLocalNodes } from '@react-three/fiber/src/webgpu/hooks/useNodes'
 
 // single setup of nodes for the app
-const Builder = () => {
+const Experience = () => {
   useUniform('uRotationSpeed', 1.0)
-  useUniforms(() => {
-    return {
-      uBaseColor: uniform(new THREE.Color('red')),
-      uRipplePoint: uniform(new THREE.Vector3(0, 0, 0)),
-    }
-  })
+  useUniform('emissiveColor', new THREE.Color('#ff0a81'))
+  useUniform('emissiveLow', -0.25)
+  useUniform('emissiveHigh', 0.2)
+  useUniform('emissivePower', 7)
+  useUniform('largeWavesFrequency', new THREE.Vector2(3, 1))
+  useUniform('largeWavesSpeed', 1.25)
+  useUniform('largeWavesMultiplier', 0.15)
+  useUniform('smallWavesIterations', 3)
+  useUniform('smallWavesFrequency', 2)
+  useUniform('smallWavesSpeed', 0.3)
+  useUniform('smallWavesMultiplier', 0.18)
+  useUniform('normalComputeShift', 0.01)
 
   useNodes(({ uniforms }) => {
     // temp casting until I fix types

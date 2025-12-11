@@ -9,6 +9,18 @@
 
 import type { Node, ShaderNodeObject } from 'three/webgpu'
 
+//* Global Types ==============================
+
+declare global {
+  /** Uniform node type - a Node with a value property (matches Three.js UniformNode) */
+  interface UniformNode<T = unknown> extends Node {
+    value: T
+  }
+
+  /** Record of uniform nodes */
+  type UniformRecord<T extends UniformNode = UniformNode> = Record<string, T>
+}
+
 //* Fn Return Type ==============================
 
 /** The return type of Fn() - a callable shader function node */

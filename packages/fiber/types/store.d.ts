@@ -135,7 +135,7 @@ export interface RootState {
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
   /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
-  uniforms: Record<string, { value: any } | Record<string, { value: any }>>
+  uniforms: Record<string, UniformNode | UniformRecord>
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
   nodes: Record<string, any>
   /** Global TSL texture nodes - use useTextures() hook for operations */
