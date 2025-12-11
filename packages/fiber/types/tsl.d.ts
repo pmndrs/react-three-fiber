@@ -17,8 +17,37 @@ declare global {
     value: T
   }
 
-  /** Record of uniform nodes */
+  /** Flat record of uniform nodes (no nested scopes) */
   type UniformRecord<T extends UniformNode = UniformNode> = Record<string, T>
+
+  /**
+   * Uniform store that can contain both root-level uniforms and scoped uniform objects
+   * Used by state.uniforms which has structure like:
+   * { uTime: UniformNode, player: { uHealth: UniformNode }, enemy: { uHealth: UniformNode } }
+   */
+  type UniformStore = Record<string, UniformNode | UniformRecord>
+
+  /**
+   * Acceptable input values for useUniforms - raw values that get converted to UniformNodes
+   * Supports: primitives, Three.js types, plain objects (converted to vectors), and UniformNodes
+   */
+  type UniformValue =
+    | number
+    | string
+    | boolean
+    | import('three/webgpu').Color
+    | import('three/webgpu').Vector2
+    | import('three/webgpu').Vector3
+    | import('three/webgpu').Vector4
+    | import('three/webgpu').Matrix3
+    | import('three/webgpu').Matrix4
+    | import('three/webgpu').Euler
+    | import('three/webgpu').Quaternion
+    | { x: number; y?: number; z?: number; w?: number } // Plain objects converted to vectors
+    | UniformNode
+
+  /** Input record for useUniforms - accepts raw values or UniformNodes */
+  type UniformInputRecord = Record<string, UniformValue>
 }
 
 //* Fn Return Type ==============================

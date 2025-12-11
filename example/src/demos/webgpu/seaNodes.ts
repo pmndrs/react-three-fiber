@@ -17,6 +17,25 @@ import {
 } from 'three/tsl'
 // Standard uniforms
 
+// leva config object
+export function getLevaSeaConfig() {
+  return {
+    uRotationSpeed: { value: 1.0, min: 0, max: 5, step: 0.01 },
+    emissiveColor: '#ff0a81',
+    emissiveLow: { value: -0.25, min: -1, max: 0, step: 0.01 },
+    emissiveHigh: { value: 0.2, min: 0, max: 1, step: 0.01 },
+    emissivePower: { value: 7, min: 0, max: 20, step: 0.1 },
+    largeWavesFrequency: { value: { x: 3, y: 1 }, step: 0.1 },
+    largeWavesSpeed: { value: 1.25, min: 0, max: 5, step: 0.01 },
+    largeWavesMultiplier: { value: 0.15, min: 0, max: 1, step: 0.01 },
+    smallWavesIterations: { value: 3, min: 0, max: 10, step: 1 },
+    smallWavesFrequency: { value: 2, min: 0, max: 10, step: 0.1 },
+    smallWavesSpeed: { value: 0.3, min: 0, max: 5, step: 0.01 },
+    smallWavesMultiplier: { value: 0.18, min: 0, max: 1, step: 0.01 },
+    normalComputeShift: { value: 0.01, min: 0, max: 0.1, step: 0.001 },
+  }
+}
+
 function makeSeaUniforms() {
   return {
     emissiveColor: uniform(color('#ff0a81')),
@@ -34,8 +53,9 @@ function makeSeaUniforms() {
   }
 }
 
-export function makeSeaNodes(inUniforms?: Record<string, InputNode<any>>) {
-  const uniforms = inUniforms ? inUniforms : makeSeaUniforms()
+export function makeSeaNodes(inUniforms?: UniformStore | UniformRecord) {
+  // Cast to UniformRecord since we only access root-level uniforms by specific names
+  const uniforms = (inUniforms ? inUniforms : makeSeaUniforms()) as UniformRecord
 
   const wavesElevation = Fn(([position]) => {
     const {

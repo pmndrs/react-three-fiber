@@ -64,6 +64,8 @@ export interface InternalState {
   priority: number
   frames: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
+  /** Internal renderer storage - use state.renderer or state.gl to access */
+  actualRenderer: THREE.WebGLRenderer | any // WebGPURenderer when available
 }
 
 export interface XRManager {
@@ -135,7 +137,7 @@ export interface RootState {
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
   /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
-  uniforms: Record<string, UniformNode | UniformRecord>
+  uniforms: UniformStore
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
   nodes: Record<string, any>
   /** Global TSL texture nodes - use useTextures() hook for operations */

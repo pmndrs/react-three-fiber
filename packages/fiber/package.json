@@ -44,6 +44,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
+    "dequal": "^2.0.3",
     "its-fine": "^2.0.0",
     "react-reconciler": "^0.31.0",
     "react-use-measure": "^2.1.7",

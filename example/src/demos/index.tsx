@@ -26,7 +26,9 @@ const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
 const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
+// WebGPU
 const WebGPUSharedUniforms = { Component: lazy(() => import('./WebGPUSharedUniforms')) }
+const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
 
 export {
   AutoDispose,
@@ -56,4 +58,5 @@ export {
   WebGPU,
   FlushSync,
   WebGPUSharedUniforms,
+  WebGPURagingSea,
 }

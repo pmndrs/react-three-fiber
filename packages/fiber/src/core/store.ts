@@ -44,6 +44,9 @@ export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
+  //* Deprecation Warning State ==============================
+  let hasWarnedAboutGLAccess = false
+
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
     const position = new Vector3()
     const defaultTarget = new Vector3()
@@ -206,6 +209,9 @@ export const createStore = (
             }
           }
         },
+
+        // Renderer Storage (single source of truth)
+        actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
       },
     }
 
@@ -213,6 +219,52 @@ export const createStore = (
   })
 
   const state = rootStore.getState()
+
+  //* Setup Renderer Accessors ==============================
+  // Both state.gl and state.renderer map to internal.actualRenderer
+  // state.gl shows deprecation warning in WebGPU mode for backwards compatibility
+
+  // state.gl - backwards compatibility with deprecation warning
+  Object.defineProperty(state, 'gl', {
+    get() {
+      const currentState = rootStore.getState()
+
+      // Warn if accessing gl in WebGPU mode (not legacy)
+      if (!currentState.isLegacy && currentState.internal.actualRenderer && !hasWarnedAboutGLAccess) {
+        hasWarnedAboutGLAccess = true
+
+        // Capture stack trace to show where gl was accessed
+        const stack = new Error().stack?.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
+
+        console.warn(
+          '[R3F] Deprecation Warning: Accessing state.gl in WebGPU mode.\n' +
+            'Please use state.renderer instead. state.gl is deprecated and will be removed in future versions.\n' +
+            'For backwards compatibility, state.gl currently maps to state.renderer, but this may cause issues with libraries expecting WebGLRenderer.\n\n' +
+            'Accessed from:\n' +
+            stack,
+        )
+      }
+
+      return currentState.internal.actualRenderer as WebGLRenderer
+    },
+    set(value: WebGLRenderer) {
+      rootStore.getState().internal.actualRenderer = value
+    },
+    enumerable: true,
+    configurable: true,
+  })
+
+  // state.renderer - modern accessor (no warning)
+  Object.defineProperty(state, 'renderer', {
+    get() {
+      return rootStore.getState().internal.actualRenderer
+    },
+    set(value: WebGPURenderer | WebGLRenderer) {
+      rootStore.getState().internal.actualRenderer = value
+    },
+    enumerable: true,
+    configurable: true,
+  })
 
   let oldSize = state.size
   let oldDpr = state.viewport.dpr

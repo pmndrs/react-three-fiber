@@ -7,76 +7,53 @@ import { useUniforms, useNodes, useUniform } from '@react-three/fiber/webgpu'
 import { Fn } from 'three/tsl'
 import type { UniformNode } from '@react-three/fiber/webgpu'
 import { useLocalNodes } from '@react-three/fiber/src/webgpu/hooks/useNodes'
+import { useControls } from 'leva'
+import { getLevaSeaConfig, makeSeaNodes } from './seaNodes'
+import { CameraControls, OrbitControls } from '@react-three/drei'
 
 // single setup of nodes for the app
 const Experience = () => {
-  useUniform('uRotationSpeed', 1.0)
-  useUniform('emissiveColor', new THREE.Color('#ff0a81'))
-  useUniform('emissiveLow', -0.25)
-  useUniform('emissiveHigh', 0.2)
-  useUniform('emissivePower', 7)
-  useUniform('largeWavesFrequency', new THREE.Vector2(3, 1))
-  useUniform('largeWavesSpeed', 1.25)
-  useUniform('largeWavesMultiplier', 0.15)
-  useUniform('smallWavesIterations', 3)
-  useUniform('smallWavesFrequency', 2)
-  useUniform('smallWavesSpeed', 0.3)
-  useUniform('smallWavesMultiplier', 0.18)
-  useUniform('normalComputeShift', 0.01)
+  //* Leva Controls ==============================
+  const levaUniforms = useControls('Raging Sea', getLevaSeaConfig())
+  console.log('levaUniforms', levaUniforms)
 
+  //* Apply Uniforms ==============================
+  useUniforms(levaUniforms)
+
+  //* Nodes Setup ==============================
   useNodes(({ uniforms }) => {
-    // temp casting until I fix types
-    const baseColor = uniforms.uBaseColor as UniformNode<THREE.Color>
+    console.log('uniforms in useNodes', uniforms)
+    // make the sea nodes
+    return makeSeaNodes(uniforms)
+  }, 'sea')
 
-    // Local only unshared nodes.
-    const col1 = color('orange')
-    const currentTime = time.mul(2)
-
-    const blendColorFn = Fn(([color2, isHovered]) => {
-      // this node is private to this FN
-      const rootColor = mix(col1, color2, sin(currentTime).add(1).div(2))
-      return mix(rootColor, baseColor, isHovered)
-    })
-    return {
-      positionNode: positionLocal.add(vec3(0, sin(currentTime).mul(0.05), 0)),
-      blendColorFn: blendColorFn,
-    }
-  })
-
-  return null
-}
-
-function Box(props: ThreeElements['mesh']) {
-  const { colorNode } = useNodes()
-  console.log('colorNode', colorNode)
   return (
-    <mesh {...props} rotation-x={Math.PI / 2}>
-      <boxGeometry />
-      <meshBasicNodeMaterial colorNode={colorNode} />
-    </mesh>
+    <>
+      <Lights />
+      <SeaSurface />
+      <OrbitControls />
+    </>
   )
 }
 
-function Plane(props: ThreeElements['mesh']) {
+function Lights() {
+  return (
+    <>
+      <ambientLight intensity={Math.PI} />
+      <directionalLight position={[-4, 2, 0]} intensity={Math.PI} />
+    </>
+  )
+}
+
+function SeaSurface(props: ThreeElements['mesh']) {
   const [hovered, hover] = useState(false)
 
-  useFrame((state, delta) => {
-    easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
-  })
-
-  const { uHovered, ...matNodes } = useLocalNodes(({ uniforms, nodes }) => {
-    const uHovered = uniform(0.0)
-    const { blendColorFn } = nodes
-
-    const col3 = color('aquamarine')
-
-    return { colorNode: blendColorFn(col3, uHovered), positionNode: nodes.positionNode, uHovered }
-  })
+  const matNodes = useNodes('sea')
 
   return (
     <mesh onPointerOver={() => hover(true)} onPointerOut={() => hover(false)} {...props}>
-      <planeGeometry />
-      <meshBasicNodeMaterial key={uHovered.uuid} {...matNodes} />
+      <planeGeometry rotateX={Math.PI / 2} />
+      <meshStandardMaterial {...matNodes} />
     </mesh>
   )
 }
@@ -84,11 +61,7 @@ function Plane(props: ThreeElements['mesh']) {
 export default function App() {
   return (
     <Canvas renderer>
-      <ambientLight intensity={Math.PI} />
-      <Builder />
-      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
-      <Plane scale={1.5} position={[-1.3, 0, 0]} />
-      <Plane scale={1.5} position={[0.6, 0, 2]} />
+      <Experience />
     </Canvas>
   )
 }

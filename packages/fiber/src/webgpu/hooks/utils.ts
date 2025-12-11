@@ -75,21 +75,42 @@ export function createTextureOperations(set: StoreApi<RootState>['setState']): T
 
 /**
  * Converts plain objects with x/y/z/w properties to Three.js Vector types.
+ * Also converts color strings (hex, named, rgb) to Three.js Color.
  * Handles Leva's output format while preserving existing Three.js types.
  *
- * @param inObject - Input value (can be number, vector, matrix, plain object, etc.)
- * @returns Three.js Vector if convertible, otherwise returns original value
+ * @param inObject - Input value (can be number, vector, matrix, color string, plain object, etc.)
+ * @returns Three.js Vector/Color if convertible, otherwise returns original value
  *
  * @example
  * vectorize({x: 1, y: 2}) // => Vector2(1, 2)
  * vectorize({x: 1, y: 2, z: 3}) // => Vector3(1, 2, 3)
  * vectorize({x: 1, y: 2, z: 3, w: 4}) // => Vector4(1, 2, 3, 4)
+ * vectorize('#ff0a81') // => Color(0xff0a81)
+ * vectorize('red') // => Color('red')
  * vectorize(new THREE.Vector3(1, 2, 3)) // => Vector3(1, 2, 3) (unchanged)
  * vectorize(5) // => 5 (unchanged)
  */
 export function vectorize(inObject: unknown): unknown {
-  // Early exit for primitives
+  // Early exit for null/undefined
   if (inObject === null || inObject === undefined) return inObject
+
+  // Handle color strings (from Leva color picker or manual input)
+  if (typeof inObject === 'string') {
+    // Check if it looks like a color (hex format or named color)
+    // Hex: #rgb, #rrggbb, #rrggbbaa, 0xffffff
+    // Named: 'red', 'blue', etc. (Three.js Color supports these)
+    const isHexColor = /^(#|0x)[0-9a-f]{3,8}$/i.test(inObject)
+    const isNamedColor = /^[a-z]+$/i.test(inObject) // Basic check for named colors
+
+    if (isHexColor || isNamedColor) {
+      return new THREE.Color(inObject)
+    }
+
+    // Not a color, return as-is
+    return inObject
+  }
+
+  // Early exit for non-objects
   if (typeof inObject !== 'object') return inObject
 
   const obj = inObject as any
