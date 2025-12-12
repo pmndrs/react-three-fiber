@@ -329,15 +329,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           advance(timestamp, true, state, frame)
         }
 
-        const actualRenderer = state.renderer || state.gl
+        const actualRenderer = state.internal.actualRenderer
 
         // Toggle render switching on session
         const handleSessionChange = () => {
           const state = store.getState()
+          const renderer = state.internal.actualRenderer
           actualRenderer.xr.enabled = actualRenderer.xr.isPresenting
 
-          state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
-          if (!state.gl.xr.isPresenting) invalidate(state)
+          renderer.xr.setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
+          if (!renderer.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager
@@ -477,10 +478,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
       if (state) {
         setTimeout(() => {
           try {
+            const renderer = state.internal.actualRenderer
             state.events.disconnect?.()
-            state.gl?.renderLists?.dispose?.()
-            state.gl?.forceContextLoss?.()
-            if (state.gl?.xr) state.xr.disconnect()
+            renderer?.renderLists?.dispose?.()
+            renderer?.forceContextLoss?.()
+            if (renderer?.xr) state.xr.disconnect()
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)

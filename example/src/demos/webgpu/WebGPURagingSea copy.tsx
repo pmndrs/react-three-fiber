@@ -1,16 +1,27 @@
-import { Canvas, useUniforms, useNodes, type ThreeElements } from '@react-three/fiber/webgpu'
+import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
+import { useMemo, useState } from 'react'
+import * as THREE from 'three/webgpu'
+import { useUniforms, useNodes, useThree } from '@react-three/fiber/webgpu'
 import { useControls } from 'leva'
-import { getLevaSeaConfig, makeSeaNodes, TerrainGeometry } from './seaNodes'
+import { getLevaSeaConfig, makeSeaNodes } from './seaNodes'
 import { CameraControls, Environment } from '@react-three/drei'
+import { Fog } from './Fog'
 
 // single setup of nodes for the app
 const Experience = () => {
   //* Leva Controls ==============================
   const levaUniforms = useControls('Raging Sea', getLevaSeaConfig())
+  console.log('levaUniforms', levaUniforms)
+
+  //* Apply Uniforms ==============================
   useUniforms(levaUniforms)
 
   //* Nodes Setup ==============================
-  useNodes(({ uniforms }) => makeSeaNodes(uniforms), 'sea')
+  useNodes(({ uniforms }) => {
+    console.log('uniforms in useNodes', uniforms)
+    // make the sea nodes
+    return makeSeaNodes(uniforms)
+  }, 'sea')
 
   return (
     <>
@@ -22,23 +33,28 @@ const Experience = () => {
 }
 
 function Lights() {
-  const { envIntensity } = useControls('Environment', {
-    envIntensity: { value: 0.5, min: 0, max: 1, step: 0.01 },
-  })
   return (
     <>
       <ambientLight intensity={Math.PI} />
       <directionalLight position={[-4, 2, 0]} intensity={Math.PI} />
-      <Environment preset="city" environmentIntensity={envIntensity} />
+
+      <Environment preset="city" />
+      <Fog />
     </>
   )
 }
 
 function SeaSurface(props: ThreeElements['mesh']) {
   const matNodes = useNodes('sea')
+
+  const planeGeo = useMemo(() => {
+    const geometry = new THREE.PlaneGeometry(2, 2, 256, 256)
+    geometry.rotateX(-Math.PI / 2)
+    return geometry
+  }, [])
+
   return (
-    <mesh {...props}>
-      <TerrainGeometry />
+    <mesh geometry={planeGeo} {...props} scale={100}>
       <meshStandardMaterial {...matNodes} color={'#271442'} roughness={0.15} />
     </mesh>
   )
@@ -46,7 +62,7 @@ function SeaSurface(props: ThreeElements['mesh']) {
 
 export default function App() {
   return (
-    <Canvas renderer camera={{ fov: 50, position: [1.5, 1.5, 1.5] }}>
+    <Canvas renderer camera={{ fov: 50, position: [30, 15, 30] }}>
       <color attach="background" args={['#271442']} />
       <Experience />
     </Canvas>

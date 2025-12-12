@@ -288,8 +288,9 @@ function createUniform(inName: string, node: any, scope?: string): UniformNode {
   const newUniform = uniform(inValue) as UniformNode
 
   // Set debug name for easier identification in GPU tools
+  // Use underscore instead of dot to ensure WGSL compatibility
   if (typeof newUniform.setName === 'function') {
-    const name = scope ? `${scope}.${inName}` : inName
+    const name = scope ? `${scope}_${inName}` : inName
     newUniform.setName(name)
   }
 

@@ -59,7 +59,7 @@ let subscription: Subscription
 function update(timestamp: number, state: RootState, frame?: XRFrame) {
   // Run local effects
   let delta = state.clock.getDelta()
-  const renderer = state.gl || state.renderer
+  const renderer = state.internal.actualRenderer
 
   // In frameloop='never' mode, clock times are updated using the provided timestamp
   if (state.frameloop === 'never' && typeof timestamp === 'number') {
@@ -101,7 +101,7 @@ export function loop(timestamp: number): void {
   useFrameInProgress = true
   for (const root of _roots.values()) {
     state = root.store.getState()
-    const actualRenderer = state.renderer || state.gl
+    const actualRenderer = state.internal.actualRenderer
 
     // If the frameloop is invalidated, do not run another frame
     if (
@@ -134,7 +134,7 @@ export function loop(timestamp: number): void {
  */
 export function invalidate(state?: RootState, frames = 1): void {
   if (!state) return _roots.forEach((root) => invalidate(root.store.getState(), frames))
-  const renderer = state.gl || state.renderer
+  const renderer = state.internal.actualRenderer
   if (!renderer) {
     console.error('No renderer found', state)
   }

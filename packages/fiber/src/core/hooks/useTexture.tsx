@@ -104,7 +104,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
   input: Url,
   optionsOrOnLoad?: UseTextureOptions<Url> | ((texture: MappedTextureType<Url>) => void),
 ): MappedTextureType<Url> {
-  const gl = useThree((state) => state.gl)
+  const renderer = useThree((state) => state.internal.actualRenderer)
   const store = useStore()
 
   // Subscribe to texture cache changes (for reactivity when cache updates)
@@ -145,7 +145,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
     // Skip if using cached textures (already initialized)
     if (cachedResult) return
 
-    if ('initTexture' in gl) {
+    if ('initTexture' in renderer) {
       let textureArray: _Texture[] = []
       if (Array.isArray(loadedTextures)) {
         textureArray = loadedTextures
@@ -157,11 +157,11 @@ export function useTexture<Url extends string[] | string | Record<string, string
 
       textureArray.forEach((texture) => {
         if (texture instanceof _Texture) {
-          gl.initTexture(texture)
+          renderer.initTexture(texture)
         }
       })
     }
-  }, [gl, loadedTextures, cachedResult])
+  }, [renderer, loadedTextures, cachedResult])
 
   // Map textures to keys if object input was provided
   const mappedTextures = useMemo(() => {

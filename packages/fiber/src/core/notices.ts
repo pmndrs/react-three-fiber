@@ -21,14 +21,15 @@ export function notifyDepreciated({ heading, body, link }: DeprecationNotice): v
   if (shownNotices.has(heading)) return
   shownNotices.add(heading)
 
-  // Unified styling for the entire notice block
+  // Styled heading with orange box
   const boxStyle = 'background: #ff9800; color: #1a1a1a; padding: 8px 12px; border-radius: 4px; font-weight: 500;'
-  const linkStyle = 'color: #0044aa; text-decoration: underline;'
+  console.log(`%c⚠️ ${heading}`, boxStyle)
 
-  // Build the message content
-  let message = `⚠️ ${heading}`
-  if (body) message += `\n\n${body}`
-  if (link) message += `\n\nMore info: ${link}`
-
-  console.warn(`%c${message}`, boxStyle)
+  // Plain warn for body details (uses browser's default warn styling)
+  if (body || link) {
+    let message = ''
+    if (body) message += body
+    if (link) message += (body ? '\n\n' : '') + `More info: ${link}`
+    console.warn(`%c${message}`, 'font-weight: bold;')
+  }
 }

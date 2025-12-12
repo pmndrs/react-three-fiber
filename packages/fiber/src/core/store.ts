@@ -37,6 +37,7 @@ import type {
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera } from './utils'
+import { notifyDepreciated } from './notices'
 
 export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
 
@@ -44,9 +45,6 @@ export const createStore = (
   invalidate: (state?: RootState, frames?: number) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
-  //* Deprecation Warning State ==============================
-  let hasWarnedAboutGLAccess = false
-
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
     const position = new Vector3()
     const defaultTarget = new Vector3()
@@ -230,19 +228,29 @@ export const createStore = (
       const currentState = rootStore.getState()
 
       // Warn if accessing gl in WebGPU mode (not legacy)
-      if (!currentState.isLegacy && currentState.internal.actualRenderer && !hasWarnedAboutGLAccess) {
-        hasWarnedAboutGLAccess = true
-
+      if (!currentState.isLegacy && currentState.internal.actualRenderer) {
         // Capture stack trace to show where gl was accessed
-        const stack = new Error().stack?.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
+        const stack = new Error().stack || ''
 
-        console.warn(
-          '[R3F] Deprecation Warning: Accessing state.gl in WebGPU mode.\n' +
-            'Please use state.renderer instead. state.gl is deprecated and will be removed in future versions.\n' +
-            'For backwards compatibility, state.gl currently maps to state.renderer, but this may cause issues with libraries expecting WebGLRenderer.\n\n' +
-            'Accessed from:\n' +
-            stack,
-        )
+        // Skip warning if access is from internal operations (zustand setState, Object.assign, etc.)
+        const isInternalAccess =
+          stack.includes('zustand') ||
+          stack.includes('setState') ||
+          stack.includes('Object.assign') ||
+          stack.includes('react-three-fiber/packages/fiber/src/core')
+
+        if (!isInternalAccess) {
+          const cleanedStack = stack.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
+
+          notifyDepreciated({
+            heading: 'Accessing state.gl in WebGPU mode',
+            body:
+              'Please use state.renderer instead. state.gl is deprecated and will be removed in future versions.\n\n' +
+              'For backwards compatibility, state.gl currently maps to state.renderer, but this may cause issues with libraries expecting WebGLRenderer.\n\n' +
+              'Accessed from:\n' +
+              cleanedStack,
+          })
+        }
       }
 
       return currentState.internal.actualRenderer as WebGLRenderer
@@ -270,9 +278,9 @@ export const createStore = (
   let oldDpr = state.viewport.dpr
   let oldCamera = state.camera
   rootStore.subscribe(() => {
-    const { camera, size, viewport, gl, set, renderer, isLegacy } = rootStore.getState()
+    const { camera, size, viewport, set, internal } = rootStore.getState()
 
-    const actualRenderer = isLegacy ? gl : renderer
+    const actualRenderer = internal.actualRenderer
     // Resize camera and renderer on changes to size and pixelratio
     if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
