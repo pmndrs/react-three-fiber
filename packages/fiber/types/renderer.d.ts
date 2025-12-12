@@ -1,6 +1,6 @@
 import type * as THREE from 'three'
 import type { ReactNode } from 'react'
-import type { ThreeElement } from '../src/three-types'
+import type { ThreeElement } from './three'
 import type { ComputeFunction, EventManager } from './events'
 import type { Dpr, Frameloop, Performance, RootState, RootStore, Size } from './store'
 import type { Properties, ThreeCamera } from './utils'

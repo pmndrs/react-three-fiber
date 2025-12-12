@@ -1,6 +1,6 @@
-import * as ReactThreeFiber from './three-types'
+import * as ReactThreeFiber from '../types/three'
 export { ReactThreeFiber }
-export * from './three-types'
+export * from '../types/three'
 export * from './core'
 export * from './core/Canvas'
 export { createPointerEvents as events, createPointerEvents } from './core/events'

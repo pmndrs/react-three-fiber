@@ -16,7 +16,7 @@ import {
   findInitialRoot,
 } from './utils'
 import { removeInteractivity } from './events'
-import type { ThreeElement } from '../three-types'
+import type { ThreeElement } from '../../types/three'
 
 //* Type Imports ==============================
 import type {

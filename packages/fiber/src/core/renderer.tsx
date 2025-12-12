@@ -9,7 +9,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 
 import { createWithEqualityFn } from 'zustand/traditional'
 
-import type { ThreeElement } from '../three-types'
+import type { ThreeElement } from '../../types/three'
 import { useStore } from './hooks'
 import { advance, invalidate } from './loop'
 import { reconciler } from './reconciler'
