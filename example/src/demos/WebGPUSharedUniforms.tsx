@@ -3,10 +3,9 @@ import { easing } from 'maath'
 import { useMemo, useState } from 'react'
 import { color, mix, positionLocal, sin, time, uniform, vec2, vec3 } from 'three/tsl'
 import * as THREE from 'three/webgpu'
-import { useUniforms, useNodes, useUniform } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes, useUniform, useLocalNodes } from '@react-three/fiber/webgpu'
 import { Fn } from 'three/tsl'
 import type { UniformNode } from '@react-three/fiber/webgpu'
-import { useLocalNodes } from '@react-three/fiber/src/webgpu/hooks/useNodes'
 
 // single setup of nodes for the app
 const Builder = () => {
