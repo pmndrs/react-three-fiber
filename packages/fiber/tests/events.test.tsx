@@ -4,6 +4,34 @@ import { Canvas, act, extend } from '../src'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
+//* PointerEvent Polyfill ==============================
+// JSDOM doesn't include PointerEvent
+// https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
+if (!global.PointerEvent) {
+  global.PointerEvent = class extends MouseEvent implements PointerEvent {
+    readonly pointerId: number = 0
+    readonly width: number = 1
+    readonly height: number = 1
+    readonly pressure: number = 0
+    readonly tangentialPressure: number = 0
+    readonly tiltX: number = 0
+    readonly tiltY: number = 0
+    readonly twist: number = 0
+    readonly pointerType: string = ''
+    readonly isPrimary: boolean = false
+    readonly altitudeAngle: number = 0
+    readonly azimuthAngle: number = 0
+
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params)
+      Object.assign(this, params)
+    }
+
+    getCoalescedEvents = () => []
+    getPredictedEvents = () => []
+  }
+}
+
 extend(THREE as any)
 
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement

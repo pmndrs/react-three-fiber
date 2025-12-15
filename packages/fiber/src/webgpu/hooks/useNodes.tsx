@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
-import type { Node } from 'three/webgpu'
+import type { Node } from '#three'
 
 //* Types ==============================
 

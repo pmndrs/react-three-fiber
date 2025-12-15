@@ -39,8 +39,8 @@ import { shallow } from 'zustand/shallow'
  *   }, [memoizedConfig])
  * }
  */
-export function useCompareMemoize(value: any, deep: boolean) {
-  const ref = useRef()
+export function useCompareMemoize<T>(value: T, deep: boolean): T {
+  const ref = useRef<T>(value)
   const compare = deep ? dequal : shallow
 
   if (!compare(value, ref.current)) {
@@ -72,7 +72,7 @@ export function useCompareMemoize(value: any, deep: boolean) {
 export function useShallowMemo<T>(fn: () => T, deps: React.DependencyList | undefined) {
   // NOTE: useMemo implementation allows undefined, but types do not
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(fn, useCompareMemoize(deps, false) ?? [])
+  return useMemo(fn, (useCompareMemoize(deps, false) ?? []) as React.DependencyList)
 }
 
 /**
@@ -97,5 +97,5 @@ export function useShallowMemo<T>(fn: () => T, deps: React.DependencyList | unde
 export function useDeepMemo<T>(fn: () => T, deps: React.DependencyList | undefined) {
   // NOTE: useMemo implementation allows undefined, but types do not
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  return useMemo(fn, useCompareMemoize(deps, true) ?? [])
+  return useMemo(fn, (useCompareMemoize(deps, true) ?? []) as React.DependencyList)
 }

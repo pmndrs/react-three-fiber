@@ -218,7 +218,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // WebGL path
         renderer = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
         state.internal.actualRenderer = renderer as WebGLRenderer
-        state.set({ isLegacy: true })
+        // Set both gl and renderer to the WebGLRenderer for backwards compatibility
+        state.set({ isLegacy: true, gl: renderer as WebGLRenderer, renderer: renderer })
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
         // WebGPU path
         renderer = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
@@ -231,9 +232,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const backend = renderer.backend
         const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
-        console.log('setting renderer', renderer)
         state.internal.actualRenderer = renderer as WebGPURenderer
-        state.set({ webGPUSupported: isWebGPUBackend })
+        // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
+        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
       } else {
         // Renderer already exists in state
         renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer

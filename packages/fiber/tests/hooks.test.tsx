@@ -54,9 +54,10 @@ describe('hooks', () => {
 
     await act(async () => root.render(<Component />))
 
-    expect(result.camera instanceof THREE.Camera).toBeTruthy()
-    expect(result.scene instanceof THREE.Scene).toBeTruthy()
-    expect(result.raycaster instanceof THREE.Raycaster).toBeTruthy()
+    // Use duck-typing instead of instanceof (fails with multiple THREE instances)
+    expect((result.camera as THREE.Camera).isCamera).toBe(true)
+    expect((result.scene as THREE.Scene).isScene).toBe(true)
+    expect((result.raycaster as THREE.Raycaster).ray).toBeDefined()
     expect(result.size).toEqual({ height: 0, width: 0, top: 0, left: 0 })
   })
 

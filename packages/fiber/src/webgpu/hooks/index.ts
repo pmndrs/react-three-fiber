@@ -1,13 +1,6 @@
 // Uniforms - root-level + scoped with create-if-not-exists pattern
-export {
-  useUniforms,
-  removeUniforms,
-  clearScope,
-  clearRootUniforms,
-  type UniformNode,
-  type UniformRecord,
-  type UniformCreator,
-} from './useUniforms'
+// Note: UniformNode and UniformRecord are global types from types/tsl.d.ts
+export { useUniforms, removeUniforms, clearScope, clearRootUniforms, type UniformCreator } from './useUniforms'
 
 // Single uniform - simple create/get/update API
 export { useUniform, type UniformValue } from './useUniform'

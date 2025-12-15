@@ -4,6 +4,8 @@ module.exports = {
       'module-resolver',
       {
         alias: {
+          // Note: #three is handled by the rollup plugin in preconstruct.config.js during build
+          // This fallback is for preconstruct dev mode and Jest testing
           '#three': './packages/fiber/src/three/index.ts',
           '#three/legacy': './packages/fiber/src/three/legacy.ts',
           '#three/webgpu': './packages/fiber/src/three/webgpu.ts',

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
-import { uniform } from 'three/tsl'
+import { uniform } from '#three/tsl'
 import { useStore } from '../../core/hooks'
-import type { UniformNode } from './useUniforms'
+// Note: UniformNode is a global type from types/tsl.d.ts
 import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
 
 //* Types ==============================

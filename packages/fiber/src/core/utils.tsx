@@ -415,8 +415,9 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       target.mask = value.mask
     }
     // Set colors if valid color representation for automatic conversion (copy)
-    else if (target instanceof THREE.Color && isColorRepresentation(value)) {
-      target.set(value)
+    // Use duck-typing (.isColor) instead of instanceof to handle multiple THREE instances
+    else if ((target as THREE.Color)?.isColor && isColorRepresentation(value)) {
+      ;(target as THREE.Color).set(value)
     }
     // Copy if properties match signatures and implement math interface (likely read-only)
     else if (

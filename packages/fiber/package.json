@@ -28,19 +28,31 @@
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
   },
-  "main": "dist/react-three-fiber.cjs.js",
-  "module": "dist/react-three-fiber.esm.js",
-  "types": "dist/react-three-fiber.cjs.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./src/index.tsx",
   "sideEffects": false,
-  "preconstruct": {
-    "entrypoints": [
-      "index.tsx",
-      "legacy.tsx",
-      "webgpu/index.tsx"
-    ]
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./legacy": {
+      "types": "./src/legacy.tsx",
+      "import": "./dist/legacy.mjs",
+      "require": "./dist/legacy.cjs"
+    },
+    "./webgpu": {
+      "types": "./src/webgpu/index.tsx",
+      "import": "./dist/webgpu/index.mjs",
+      "require": "./dist/webgpu/index.cjs"
+    }
   },
   "scripts": {
-    "prebuild": "cp ../../readme.md readme.md"
+    "prebuild": "node -e \"require('fs').copyFileSync('../../readme.md', 'readme.md')\"",
+    "build": "unbuild",
+    "stub": "unbuild --stub"
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",

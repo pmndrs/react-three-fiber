@@ -12,11 +12,6 @@
       "pre-commit": "lint-staged"
     }
   },
-  "preconstruct": {
-    "packages": [
-      "packages/*"
-    ]
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix"
@@ -24,33 +19,34 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "preconstruct dev",
-    "build": "preconstruct build",
+    "postinstall": "yarn stub",
+    "build": "yarn workspace @react-three/fiber build",
     "examples": "yarn workspace example dev",
-    "dev": "preconstruct dev",
+    "stub": "yarn workspace @react-three/fiber stub",
+    "dev": "yarn stub",
     "prepare": "husky install",
     "eslint": "eslint packages/**/src/**/*.{ts,tsx}",
     "eslint:fix": "yarn run eslint --fix",
     "test": "jest --coverage",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
-    "validate": "preconstruct validate",
     "release": "yarn build && yarn changeset publish",
     "vers": "yarn changeset version",
     "codegen:eslint": "cd packages/eslint-plugin && yarn codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
     "format": "prettier --check .",
-    "format:fix": "prettier --write ."
+    "format:fix": "prettier --write .",
+    "verify-bundles": "node scripts/verify-bundles.js"
   },
   "devDependencies": {
-    "@babel/core": "7.17.8",
+    "@babel/core": "^7.22.0",
     "@babel/preset-env": "7.16.11",
     "@babel/preset-react": "7.16.7",
     "@babel/preset-typescript": "^7.16.7",
     "@changesets/changelog-git": "^0.1.11",
     "@changesets/cli": "^2.22.0",
-    "@preconstruct/cli": "^2.1.5",
+    "@rollup/plugin-alias": "^6.0.0",
     "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.0",
     "@types/jest": "^29.2.5",
@@ -62,6 +58,7 @@
     "@types/three": "^0.181.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",
+    "babel-jest": "^30.2.0",
     "babel-plugin-module-resolver": "^5.0.0",
     "eslint": "^8.12.0",
     "eslint-config-prettier": "^8.5.0",
@@ -87,7 +84,8 @@
     "three": "^0.181.0",
     "three-stdlib": "^2.35.16",
     "ts-jest": "^29.1.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "unbuild": "^3.6.1"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

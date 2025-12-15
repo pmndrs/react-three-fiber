@@ -1,3 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`native Canvas should correctly mount 1`] = `"{\\"type\\":\\"view\\",\\"props\\":{\\"style\\":{\\"flex\\":1}},\\"children\\":[{\\"type\\":\\"glview\\",\\"props\\":{\\"msaaSamples\\":4,\\"style\\":{\\"position\\":\\"absolute\\",\\"left\\":0,\\"right\\":0,\\"top\\":0,\\"bottom\\":0}},\\"children\\":[]},{\\"type\\":\\"view\\",\\"props\\":{\\"style\\":{\\"position\\":\\"absolute\\",\\"left\\":0,\\"right\\":0,\\"top\\":0,\\"bottom\\":0}},\\"children\\":[]}]}"`;
