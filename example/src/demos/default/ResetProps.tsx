@@ -90,7 +90,7 @@ function Scene() {
 
 export default function App() {
   return (
-    <Canvas dpr={[1, 2]} frameloop="always" performance={{ min: 0.1 }}>
+    <Canvas renderer dpr={[1, 2]} frameloop="always" performance={{ min: 0.1 }}>
       <Scene />
     </Canvas>
   )

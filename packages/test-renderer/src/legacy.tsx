@@ -1,19 +1,17 @@
 /**
- * @fileoverview Default Entry Point - WebGL/WebGPU Auto-Detection
+ * @fileoverview Legacy Entry Point - WebGL Renderer
  *
  * Use this entry point when testing applications that use:
- *   import { Canvas } from '@react-three/fiber'
+ *   import { Canvas } from '@react-three/fiber/legacy'
  *
- * This is the default entry that works with the standard fiber import.
- * For WebGPU-specific hook testing, use '@react-three/test-renderer/webgpu'.
- * For legacy WebGL-only testing, use '@react-three/test-renderer/legacy'.
+ * This entry uses WebGLRenderer only, no WebGPU support.
  *
  * Usage:
- *   import ReactThreeTestRenderer from '@react-three/test-renderer'
+ *   import ReactThreeTestRenderer from '@react-three/test-renderer/legacy'
  */
 
 import * as THREE from 'three'
-import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber/legacy'
 
 import { createTestRenderer } from './createRenderer'
 import type { WaitOptions } from './helpers/waitFor'
@@ -28,7 +26,7 @@ const renderer = createTestRenderer({
   reconciler,
   act,
   extend,
-  mode: 'webgl', // Default uses WebGL context
+  mode: 'webgl',
 })
 
 //* Exports ==============================

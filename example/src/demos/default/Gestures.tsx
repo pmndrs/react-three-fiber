@@ -46,7 +46,7 @@ function Object({ scale = 1, z = 0, opacity = 1 }) {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <ambientLight intensity={0.5 * Math.PI} />
       <spotLight decay={0} position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <pointLight decay={0} position={[-10, -10, -10]} />

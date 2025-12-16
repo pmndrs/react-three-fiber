@@ -14,7 +14,7 @@ function FallbackMaterial() {
 export default function App() {
   const [arg, inc] = useReducer((x) => x + 1, 0)
   return (
-    <Canvas>
+    <Canvas renderer>
       <ambientLight intensity={Math.PI} />
       <directionalLight />
       <mesh onClick={inc}>

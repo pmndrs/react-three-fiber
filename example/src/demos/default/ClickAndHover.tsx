@@ -35,7 +35,7 @@ function Box2(props: ThreeElements['group']) {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <group>
         <Box position={[-0.5, 0, 0]} />
       </group>

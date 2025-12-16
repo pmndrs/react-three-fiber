@@ -25,7 +25,7 @@ function Circle() {
 
 export default function App() {
   return (
-    <Canvas orthographic camera={{ position: [0, 0, 20], zoom: 150 }} style={{ background: '#272730' }}>
+    <Canvas renderer orthographic camera={{ position: [0, 0, 20], zoom: 150 }} style={{ background: '#272730' }}>
       <group
         position={[-1.25, 0, 0]}
         onPointerOver={(e) => console.log('group1 over')}

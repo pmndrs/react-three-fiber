@@ -1,5 +1,12 @@
 import { Environment, OrbitControls, useFBO, useGLTF } from '@react-three/drei'
-import { Canvas, ComputeFunction, createPortal, type ThreeElements, useFrame, useThree } from '@react-three/fiber'
+import {
+  Canvas,
+  ComputeFunction,
+  createPortal,
+  type ThreeElements,
+  useFrame,
+  useThree,
+} from '@react-three/fiber/legacy'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 

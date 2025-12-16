@@ -77,7 +77,7 @@ function Plane({
 
 export default function App() {
   return (
-    <Canvas camera={{ fov: 75, position: [0, 0, -2.25] }}>
+    <Canvas renderer camera={{ fov: 75, position: [0, 0, -2.25] }}>
       <Suspense fallback={null}>
         <ambientLight intensity={Math.PI} />
         <pointLight decay={0} position={[10, 10, 10]} />

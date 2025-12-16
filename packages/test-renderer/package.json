@@ -8,6 +8,24 @@
   "main": "dist/react-three-test-renderer.cjs.js",
   "module": "dist/react-three-test-renderer.esm.js",
   "types": "dist/react-three-test-renderer.cjs.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.tsx",
+      "import": "./dist/react-three-test-renderer.esm.js",
+      "require": "./dist/react-three-test-renderer.cjs.js"
+    },
+    "./legacy": {
+      "types": "./src/legacy.tsx",
+      "import": "./dist/legacy.esm.js",
+      "require": "./dist/legacy.cjs.js"
+    },
+    "./webgpu": {
+      "types": "./src/webgpu/index.tsx",
+      "import": "./dist/webgpu.esm.js",
+      "require": "./dist/webgpu.cjs.js"
+    }
+  },
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
   },
@@ -18,12 +36,19 @@
   },
   "preconstruct": {
     "entrypoints": [
-      "index.tsx"
+      "index.tsx",
+      "legacy.tsx",
+      "webgpu/index.tsx"
     ]
   },
   "peerDependencies": {
     "react": "^19.0.0",
     "@react-three/fiber": ">=9.0.0",
-    "three": ">=0.156"
+    "three": ">=0.181"
+  },
+  "peerDependenciesMeta": {
+    "three": {
+      "optional": false
+    }
   }
 }

@@ -16,7 +16,7 @@ function Test() {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <ambientLight intensity={Math.PI} />
       <Suspense fallback={null}>
         <Test />

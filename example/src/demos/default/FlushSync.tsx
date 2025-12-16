@@ -36,7 +36,7 @@ function Capture() {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <ambientLight intensity={Math.PI * 0.5} />
       <spotLight decay={0} position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <Capture />

@@ -61,7 +61,7 @@ function Viewcube() {
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <mesh>
         <torusGeometry args={[1, 0.5, 32, 100]} />
         <meshNormalMaterial />

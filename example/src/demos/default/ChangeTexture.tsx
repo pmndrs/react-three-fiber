@@ -4,7 +4,7 @@ import { useDeferredValue, useEffect, useState } from 'react'
 
 export default function App() {
   return (
-    <Canvas>
+    <Canvas renderer>
       <Plane />
     </Canvas>
   )

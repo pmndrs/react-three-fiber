@@ -109,7 +109,7 @@ function TestMix(props: ThreeElements['mesh']) {
 
 export default function Test() {
   return (
-    <Canvas camera={{ position: [2, 2, 2] }}>
+    <Canvas renderer camera={{ position: [2, 2, 2] }}>
       <TestMultiMaterial position={[0, 0, 0.5]} />
       <TestMultiDelete position={[0, 0, -0.5]} />
       <TestReuse />

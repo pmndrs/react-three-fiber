@@ -6,6 +6,7 @@ export default function App() {
 
   return (
     <Canvas
+      renderer
       orthographic
       camera={{ zoom: 150, fov: 75, position: [0, 0, 25] }}
       onPointerMissed={() => console.log('canvas.missed')}>

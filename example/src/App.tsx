@@ -7,7 +7,35 @@ import './styles.css'
 
 import * as demos from './demos'
 
-const DEFAULT_COMPONENT_NAME = 'Portals'
+const DEFAULT_COMPONENT_NAME = 'ClickAndHover'
+
+//* Component Categories ==============================
+const defaultExamples = [
+  'AutoDispose',
+  'ChangeTexture',
+  'ClickAndHover',
+  'ContextMenuOverride',
+  'FlushSync',
+  'Gestures',
+  'Gltf',
+  'Inject',
+  'Layers',
+  'MultiMaterial',
+  'MultiRender',
+  'ResetProps',
+  'Selection',
+  'StopPropagation',
+  'SuspenseAndErrors',
+  'SuspenseMaterial',
+  'Test',
+  'Viewcube',
+  'ViewTracking',
+]
+
+const legacyExamples = ['Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
+
+const webgpuExamples = ['WebGPU', 'WebGPUSharedUniforms', 'WebGPURagingSea']
+
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 function ErrorBoundary({ children, fallback, name }: any) {
@@ -31,11 +59,18 @@ function Dots() {
   const [match, params] = useRoute('/demo/:name')
   if (!match) return null
 
+  const getBackground = (name: string) => {
+    if (params.name === name) return 'salmon'
+    if (legacyExamples.includes(name)) return '#ffcc00' // Yellow for legacy
+    if (webgpuExamples.includes(name)) return '#00ccff' // Cyan for WebGPU
+    return '#fff' // White for default
+  }
+
   return (
     <>
       <DemoPanel>
         {Object.entries(visibleComponents).map(function mapper([name, item]) {
-          const background = params.name === name ? 'salmon' : '#fff'
+          const background = getBackground(name)
           return <Dot key={name} to={`/demo/${name}`} style={{ background }} />
         })}
       </DemoPanel>

@@ -36,7 +36,7 @@ export default function App() {
   })
 
   return (
-    <Canvas camera={{ layers: visibleLayers }}>
+    <Canvas renderer camera={{ layers: visibleLayers }}>
       <Box position={[-0.5, 0, 0]} layers={!visible ? invisibleLayer : visibleLayers} />
       <Sphere position={[0.5, 0, 0]} layers={visible ? invisibleLayer : visibleLayers} />
     </Canvas>

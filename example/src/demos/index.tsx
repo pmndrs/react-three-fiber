@@ -1,62 +1,72 @@
 import { lazy } from 'react'
 
-const AutoDispose = { Component: lazy(() => import('./AutoDispose')) }
-const ClickAndHover = { Component: lazy(() => import('./ClickAndHover')) }
-const ContextMenuOverride = { Component: lazy(() => import('./ContextMenuOverride')) }
-const Gestures = { Component: lazy(() => import('./Gestures')) }
-const Gltf = { Component: lazy(() => import('./Gltf')) }
-const Inject = { Component: lazy(() => import('./Inject')) }
-const Layers = { Component: lazy(() => import('./Layers')) }
-const Lines = { Component: lazy(() => import('./Lines')) }
-const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
-const MultiRender = { Component: lazy(() => import('./MultiRender')) }
-const MultiView = { Component: lazy(() => import('./MultiView')) }
-const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
-const Reparenting = { Component: lazy(() => import('./Reparenting')) }
-const ResetProps = { Component: lazy(() => import('./ResetProps')) }
-const Selection = { Component: lazy(() => import('./Selection')) }
-const StopPropagation = { Component: lazy(() => import('./StopPropagation')) }
-const SuspenseAndErrors = { Component: lazy(() => import('./SuspenseAndErrors')) }
-const SuspenseMaterial = { Component: lazy(() => import('./SuspenseMaterial')) }
-const SVGRenderer = { Component: lazy(() => import('./SVGRenderer')) }
-const Test = { Component: lazy(() => import('./Test')) }
-const Viewcube = { Component: lazy(() => import('./Viewcube')) }
-const Portals = { Component: lazy(() => import('./Portals')) }
-const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
-const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
-const WebGPU = { Component: lazy(() => import('./WebGPU')) }
-const FlushSync = { Component: lazy(() => import('./FlushSync')) }
-// WebGPU
-const WebGPUSharedUniforms = { Component: lazy(() => import('./WebGPUSharedUniforms')) }
+//* Default Examples ==============================
+// Examples that work with both WebGL and WebGPU renderers
+const AutoDispose = { Component: lazy(() => import('./default/AutoDispose')) }
+const ChangeTexture = { Component: lazy(() => import('./default/ChangeTexture')) }
+const ClickAndHover = { Component: lazy(() => import('./default/ClickAndHover')) }
+const ContextMenuOverride = { Component: lazy(() => import('./default/ContextMenuOverride')) }
+const FlushSync = { Component: lazy(() => import('./default/FlushSync')) }
+const Gestures = { Component: lazy(() => import('./default/Gestures')) }
+const Gltf = { Component: lazy(() => import('./default/Gltf')) }
+const Inject = { Component: lazy(() => import('./default/Inject')) }
+const Layers = { Component: lazy(() => import('./default/Layers')) }
+const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
+const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
+const ResetProps = { Component: lazy(() => import('./default/ResetProps')) }
+const Selection = { Component: lazy(() => import('./default/Selection')) }
+const StopPropagation = { Component: lazy(() => import('./default/StopPropagation')) }
+const SuspenseAndErrors = { Component: lazy(() => import('./default/SuspenseAndErrors')) }
+const SuspenseMaterial = { Component: lazy(() => import('./default/SuspenseMaterial')) }
+const Test = { Component: lazy(() => import('./default/Test')) }
+const Viewcube = { Component: lazy(() => import('./default/Viewcube')) }
+const ViewTracking = { Component: lazy(() => import('./default/ViewTracking')) }
+
+//* Legacy Examples ==============================
+// WebGL-only examples using features not yet supported in WebGPU
+const Lines = { Component: lazy(() => import('./legacy/Lines')) }
+const MultiView = { Component: lazy(() => import('./legacy/MultiView')) }
+const Pointcloud = { Component: lazy(() => import('./legacy/Pointcloud')) }
+const Portals = { Component: lazy(() => import('./legacy/Portals')) }
+const Reparenting = { Component: lazy(() => import('./legacy/Reparenting')) }
+const SVGRenderer = { Component: lazy(() => import('./legacy/SVGRenderer')) }
+
+//* WebGPU Examples ==============================
+// Examples showcasing WebGPU renderer with TSL
+const WebGPU = { Component: lazy(() => import('./webgpu/WebGPU')) }
+const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUSharedUniforms')) }
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
 
 export {
+  // Default
   AutoDispose,
+  ChangeTexture,
   ClickAndHover,
   ContextMenuOverride,
+  FlushSync,
   Gestures,
   Gltf,
   Inject,
   Layers,
-  Lines,
   MultiMaterial,
   MultiRender,
-  Pointcloud,
-  Reparenting,
   ResetProps,
   Selection,
   StopPropagation,
   SuspenseAndErrors,
   SuspenseMaterial,
-  SVGRenderer,
   Test,
   Viewcube,
-  MultiView,
-  Portals,
   ViewTracking,
-  ChangeTexture,
+  // Legacy
+  Lines,
+  MultiView,
+  Pointcloud,
+  Portals,
+  Reparenting,
+  SVGRenderer,
+  // WebGPU
   WebGPU,
-  FlushSync,
   WebGPUSharedUniforms,
   WebGPURagingSea,
 }

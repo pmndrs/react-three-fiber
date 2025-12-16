@@ -26,7 +26,7 @@ const Object = () => {
 
 const SpinningScene = () => (
   <div style={CanvasStyle}>
-    <Canvas>
+    <Canvas renderer>
       <Object />
     </Canvas>
   </div>
@@ -34,7 +34,7 @@ const SpinningScene = () => (
 
 const StaticScene = () => (
   <div style={CanvasStyle}>
-    <Canvas>
+    <Canvas renderer>
       <mesh>
         <boxGeometry args={[1, 1, 1]} />
         <meshNormalMaterial />
