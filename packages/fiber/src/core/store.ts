@@ -210,6 +210,9 @@ export const createStore = (
 
         // Renderer Storage (single source of truth)
         actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
+
+        // Scheduler for useFrameNext (initialized in renderer.tsx)
+        scheduler: null,
       },
     }
 

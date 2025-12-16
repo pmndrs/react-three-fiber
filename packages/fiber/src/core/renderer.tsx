@@ -25,6 +25,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './notices'
+import { createScheduler } from './hooks/useFrameNext/scheduler'
 
 //* Type Imports ==============================
 import type {
@@ -412,6 +413,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
+      //* Scheduler Initialization (useFrameNext) ==============================
+      // Create scheduler if it doesn't exist
+      if (!state.internal.scheduler) {
+        const scheduler = createScheduler()
+        scheduler.connect(() => store.getState())
+        scheduler.setFrameloop(frameloop)
+        state.set((state) => ({
+          internal: { ...state.internal, scheduler },
+        }))
+      } else {
+        // Update scheduler frameloop mode if it changed
+        const scheduler = state.internal.scheduler as ReturnType<typeof createScheduler>
+        if (scheduler.getFrameloop() !== frameloop) {
+          scheduler.setFrameloop(frameloop)
+        }
+      }
+
       // Set locals
       onCreated = onCreatedCallback
       configured = true
@@ -480,6 +498,14 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
         setTimeout(() => {
           try {
             const renderer = state.internal.actualRenderer
+
+            // Stop and disconnect the scheduler (useFrameNext)
+            const scheduler = state.internal.scheduler as ReturnType<typeof createScheduler> | null
+            if (scheduler) {
+              scheduler.stop()
+              scheduler.disconnect()
+            }
+
             state.events.disconnect?.()
             renderer?.renderLists?.dispose?.()
             renderer?.forceContextLoss?.()

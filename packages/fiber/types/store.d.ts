@@ -4,6 +4,7 @@ import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
 import type { ThreeCamera } from './utils'
+import type { SchedulerApi } from './scheduler'
 
 //* Core Store Types ========================================
 
@@ -66,6 +67,8 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  /** Scheduler for useFrameNext hook (next-gen frame loop) */
+  scheduler: SchedulerApi | null
 }
 
 export interface XRManager {

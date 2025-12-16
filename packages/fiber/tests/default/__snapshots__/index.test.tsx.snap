@@ -2,6 +2,7 @@
 
 exports[`exports matches public API 1`] = `
 Array [
+  "AddPhaseOptions",
   "Block",
   "Canvas",
   "Color",
@@ -9,6 +10,8 @@ Array [
   "ErrorBoundary",
   "Euler",
   "EventProps",
+  "FrameNextCallback",
+  "FrameNextState",
   "IsObject",
   "Layers",
   "MappedTextureType",
@@ -27,6 +30,7 @@ Array [
   "RaycastableRepresentation",
   "ReactProps",
   "ReactThreeFiber",
+  "SchedulerApi",
   "Texture",
   "TextureEntry",
   "ThreeElement",
@@ -34,6 +38,7 @@ Array [
   "ThreeElementsImpl",
   "ThreeExports",
   "ThreeToJSXElements",
+  "UseFrameNextOptions",
   "UseTextureOptions",
   "UseTexturesReturn",
   "Vector2",
@@ -83,6 +88,7 @@ Array [
   "updateCamera",
   "useBridge",
   "useFrame",
+  "useFrameNext",
   "useGraph",
   "useInstanceHandle",
   "useIsomorphicLayoutEffect",
