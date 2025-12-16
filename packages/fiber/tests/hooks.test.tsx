@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { createCanvas } from '@react-three/test-renderer/src/createTestCanvas'
+import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import {
   createRoot,

@@ -8,7 +8,7 @@
  * NOTE: THREE auto-extend is handled by entry points (index, legacy, webgpu)
  * NOTE: PointerEvent polyfill is in events.test.tsx (only test that needs it)
  */
-import { WebGL2RenderingContext } from '@react-three/test-renderer/src/WebGL2RenderingContext'
+import { WebGL2RenderingContext } from '../../test-renderer/src/WebGL2RenderingContext'
 
 // Export to make this a module (required for declare global)
 export {}
