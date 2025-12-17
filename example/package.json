@@ -15,7 +15,6 @@
     "react-dom": "19.0.0",
     "react-use-refs": "^1.0.1",
     "three": "^0.181.0",
-    "three-stdlib": "^2.35.16",
     "use-error-boundary": "^2.0.6",
     "wouter": "^2.12.1",
     "zustand": "^4.4.7"

@@ -181,7 +181,8 @@ The `extend` function extends React Three Fiber's catalogue of JSX elements. Com
 
 ```jsx
 import { extend } from '@react-three/fiber'
-import { OrbitControls, TransformControls } from 'three-stdlib'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
+import { TransformControls } from 'three/addons/controls/TransformControls.js'
 extend({ OrbitControls, TransformControls })
 
 // ...

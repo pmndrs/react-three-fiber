@@ -82,7 +82,6 @@
     "react-native": "0.69.3",
     "react-nil": "^2.0.0",
     "three": "^0.181.0",
-    "three-stdlib": "^2.35.16",
     "ts-jest": "^29.1.2",
     "typescript": "^5.9.3",
     "unbuild": "^3.6.1"
