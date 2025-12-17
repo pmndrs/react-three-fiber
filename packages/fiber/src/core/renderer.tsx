@@ -1,15 +1,12 @@
 import * as THREE from '#three'
 import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector } from '#three'
 
-import type { Scene, WebGLRendererParameters, WebGLShadowMap, Object3D } from '#three'
-
+import type { Object3D } from '#three'
 import type { JSX, ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-
 import { createWithEqualityFn } from 'zustand/traditional'
 
-import type { ThreeElement } from '../../types/three'
 import { useStore } from './hooks'
 import { advance, invalidate } from './loop'
 import { reconciler } from './reconciler'
@@ -25,28 +22,16 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './notices'
-import { createScheduler } from './hooks/useFrameNext/scheduler'
+import { Scheduler } from './hooks/useFrameNext/scheduler'
 
-//* Type Imports ==============================
 import type {
-  Dpr,
-  Frameloop,
-  Performance,
   RootState,
   RootStore,
   Size,
-  ComputeFunction,
   EventManager,
-  Properties,
   ThreeCamera,
   EquConfig,
   Root,
-  Renderer,
-  DefaultGLProps,
-  GLProps,
-  DefaultRendererProps,
-  RendererProps,
-  CameraProps,
   RenderProps,
   ReconcilerRoot,
   InjectState,
@@ -212,18 +197,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         })
       }
 
-      let renderer: WebGPURenderer | WebGLRenderer
+      let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
 
       //* Create Renderer (one time only) ==============================
       if (R3F_BUILD_LEGACY && wantsGL && !state.internal.actualRenderer) {
-        // WebGL path
-        renderer = await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)
-        state.internal.actualRenderer = renderer as WebGLRenderer
+        //* WebGL path ---
+        renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+        state.internal.actualRenderer = renderer
         // Set both gl and renderer to the WebGLRenderer for backwards compatibility
-        state.set({ isLegacy: true, gl: renderer as WebGLRenderer, renderer: renderer })
+        state.set({ isLegacy: true, gl: renderer, renderer: renderer })
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
-        // WebGPU path
-        renderer = await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)
+        //* WebGPU path ---
+        renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
         // WebGPU-specific setup
         await renderer.init()
@@ -233,14 +218,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const backend = renderer.backend
         const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
 
-        state.internal.actualRenderer = renderer as WebGPURenderer
+        state.internal.actualRenderer = renderer
         // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
         state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
-      } else {
-        // Renderer already exists in state
-        renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
       }
 
+      //* Default Raycaster Initialization ==============================
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
       if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
@@ -251,6 +234,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
 
+      //* Default Camera Initialization ==============================
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
@@ -267,13 +251,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             // Preserve user-defined frustum if possible
             // https://github.com/pmndrs/react-three-fiber/issues/3160
             if (!(camera as any).manual) {
-              if (
-                'aspect' in cameraOptions ||
-                'left' in cameraOptions ||
-                'right' in cameraOptions ||
-                'bottom' in cameraOptions ||
-                'top' in cameraOptions
-              ) {
+              const projectionProps = ['aspect', 'left', 'right', 'bottom', 'top']
+              if (projectionProps.some((prop) => prop in cameraOptions)) {
                 ;(camera as any).manual = true
                 camera.updateProjectionMatrix()
               }
@@ -416,18 +395,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       //* Scheduler Initialization (useFrameNext) ==============================
       // Create scheduler if it doesn't exist
       if (!state.internal.scheduler) {
-        const scheduler = createScheduler()
-        scheduler.connect(() => store.getState())
-        scheduler.setFrameloop(frameloop)
+        const scheduler = Scheduler.create(() => store.getState())
+        scheduler.frameloop = frameloop
+        // Start scheduler if frameloop is 'always' (setter won't start since default is 'always')
+        if (frameloop === 'always') scheduler.start()
         state.set((state) => ({
           internal: { ...state.internal, scheduler },
         }))
       } else {
         // Update scheduler frameloop mode if it changed
-        const scheduler = state.internal.scheduler as ReturnType<typeof createScheduler>
-        if (scheduler.getFrameloop() !== frameloop) {
-          scheduler.setFrameloop(frameloop)
-        }
+        state.internal.scheduler.frameloop = frameloop
       }
 
       // Set locals
@@ -500,7 +477,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             const renderer = state.internal.actualRenderer
 
             // Stop and disconnect the scheduler (useFrameNext)
-            const scheduler = state.internal.scheduler as ReturnType<typeof createScheduler> | null
+            const scheduler = state.internal.scheduler as Scheduler | null
             if (scheduler) {
               scheduler.stop()
               scheduler.disconnect()

@@ -4,11 +4,10 @@ import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, act, useThree, extend } from '../src'
 import { useFrameNext } from '../src/core/hooks/useFrameNext'
-import { Scheduler, createScheduler } from '../src/core/hooks/useFrameNext/scheduler'
+import { Scheduler } from '../src/core/hooks/useFrameNext/scheduler'
 import { PhaseGraph } from '../src/core/hooks/useFrameNext/phaseGraph'
 import { rebuildSortedJobs } from '../src/core/hooks/useFrameNext/sorter'
 import { shouldRun } from '../src/core/hooks/useFrameNext/rateLimiter'
-import type { Job } from '../src/core/hooks/useFrameNext/types'
 import type { FrameNextCallback } from '../src'
 
 extend(THREE as any)
@@ -262,9 +261,8 @@ describe('Scheduler', () => {
   } as any
 
   beforeEach(() => {
-    scheduler = createScheduler()
-    // Connect a mock state getter so step() works
-    scheduler.connect(() => mockState)
+    // Create scheduler with automatic connection to mock state
+    scheduler = Scheduler.create(() => mockState)
   })
 
   afterEach(() => {
@@ -296,17 +294,17 @@ describe('Scheduler', () => {
     scheduler.addPhase('custom', { before: 'render' })
 
     expect(scheduler.hasPhase('custom')).toBe(true)
-    expect(scheduler.getPhases()).toContain('custom')
+    expect(scheduler.phases).toContain('custom')
   })
 
   it('starts and stops the loop', () => {
-    expect(scheduler.isRunning()).toBe(false)
+    expect(scheduler.isRunning).toBe(false)
 
     scheduler.start()
-    expect(scheduler.isRunning()).toBe(true)
+    expect(scheduler.isRunning).toBe(true)
 
     scheduler.stop()
-    expect(scheduler.isRunning()).toBe(false)
+    expect(scheduler.isRunning).toBe(false)
   })
 
   it('updates job options', () => {
@@ -338,7 +336,7 @@ describe('Scheduler', () => {
     scheduler.register(() => calls.push('job2'), { id: 'job2' })
 
     // No automatic loop started
-    expect(scheduler.isRunning()).toBe(false)
+    expect(scheduler.isRunning).toBe(false)
     expect(calls.length).toBe(0)
 
     // Manual step
@@ -386,41 +384,41 @@ describe('Scheduler', () => {
     expect(calls).toEqual(['job1'])
   })
 
-  it('supports setFrameloop() and getFrameloop()', () => {
-    expect(scheduler.getFrameloop()).toBe('always')
+  it('supports frameloop getter/setter', () => {
+    expect(scheduler.frameloop).toBe('always')
 
-    scheduler.setFrameloop('never')
-    expect(scheduler.getFrameloop()).toBe('never')
-    expect(scheduler.isRunning()).toBe(false)
+    scheduler.frameloop = 'never'
+    expect(scheduler.frameloop).toBe('never')
+    expect(scheduler.isRunning).toBe(false)
 
-    scheduler.setFrameloop('always')
-    expect(scheduler.getFrameloop()).toBe('always')
-    expect(scheduler.isRunning()).toBe(true)
+    scheduler.frameloop = 'always'
+    expect(scheduler.frameloop).toBe('always')
+    expect(scheduler.isRunning).toBe(true)
 
-    scheduler.setFrameloop('demand')
-    expect(scheduler.getFrameloop()).toBe('demand')
-    expect(scheduler.isRunning()).toBe(false)
+    scheduler.frameloop = 'demand'
+    expect(scheduler.frameloop).toBe('demand')
+    expect(scheduler.isRunning).toBe(false)
   })
 
   it('supports invalidate() for demand mode', async () => {
     const calls: string[] = []
 
-    scheduler.setFrameloop('demand')
+    scheduler.frameloop = 'demand'
     scheduler.register(() => calls.push('frame'), { id: 'job' })
 
     expect(calls.length).toBe(0)
-    expect(scheduler.isRunning()).toBe(false)
+    expect(scheduler.isRunning).toBe(false)
 
     // Invalidate should start the loop
     scheduler.invalidate()
-    expect(scheduler.isRunning()).toBe(true)
+    expect(scheduler.isRunning).toBe(true)
 
     // Wait for frame to execute
     await new Promise((resolve) => setTimeout(resolve, 50))
 
     expect(calls.length).toBeGreaterThan(0)
     // Should have stopped after running the requested frame(s)
-    expect(scheduler.isRunning()).toBe(false)
+    expect(scheduler.isRunning).toBe(false)
   })
 })
 
@@ -587,7 +585,7 @@ describe('useFrameNext hook', () => {
 
     expect(scheduler).toBeDefined()
     expect(typeof scheduler.addPhase).toBe('function')
-    expect(typeof scheduler.getPhases).toBe('function')
+    expect(Array.isArray(scheduler.phases)).toBe(true)
   })
 
   it('orders callbacks by phase', async () => {

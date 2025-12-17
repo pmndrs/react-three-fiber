@@ -43,6 +43,35 @@ This is run automatically after `yarn install` via the `postinstall` script.
 - Creates `dist/legacy.mjs` → points to `src/legacy.tsx`
 - Creates `dist/webgpu/index.mjs` → points to `src/webgpu/index.tsx`
 
+**Stub file example:**
+
+```javascript
+// dist/index.mjs (stub)
+import * as module from '../src/index.tsx'
+export * from '../src/index.tsx'
+export default module.default
+```
+
+This means:
+
+- Your code changes are reflected immediately (no rebuild needed)
+- TypeScript types come from source files
+- Hot reload works in consuming apps
+
+### When to Rebuild
+
+You need to run `yarn build` when:
+
+- Preparing for release/publish
+- Testing actual bundle output
+- Verifying THREE.js import resolution
+
+You do NOT need to rebuild for:
+
+- Normal development
+- Testing source code changes
+- Running Jest tests
+
 ### `yarn build` (Production Build)
 
 Creates optimized production bundles with per-entry THREE.js resolution:
@@ -218,6 +247,28 @@ moduleNameMapper: {
 }
 ```
 
+## Adding New Features
+
+### Adding to all entry points
+
+1. Add code to `src/core/`
+2. Export from `src/core/index.tsx`
+3. It will be available in all entry points automatically
+
+### Adding WebGPU-specific features
+
+1. Add code to `src/webgpu/`
+2. Export from `src/webgpu/index.tsx`
+3. It will only be in the `@react-three/fiber/webgpu` entry
+
+### Adding a new THREE.js import
+
+If you need a new THREE.js export:
+
+1. Add to `src/three/index.ts` (for default/both)
+2. Add to `src/three/legacy.ts` (if WebGL-compatible)
+3. Add to `src/three/webgpu.ts` (if WebGPU-compatible)
+
 ## Adding a New Entry Point
 
 1. Create entry file in `src/`:
@@ -292,3 +343,31 @@ Check that `#three` and `#types` aliases are correctly configured in `build.conf
 ### Jest tests fail with module errors
 
 Ensure babel config has the aliases and Jest config maps packages to source.
+
+## CI/CD
+
+For CI pipelines:
+
+```yaml
+steps:
+  - run: yarn install
+  - run: yarn build
+  - run: yarn verify-bundles
+  - run: yarn test
+```
+
+## Release Process
+
+```bash
+# 1. Make sure everything passes
+yarn build && yarn verify-bundles && yarn test
+
+# 2. Create changeset
+yarn changeset:add
+
+# 3. Version packages
+yarn vers
+
+# 4. Release
+yarn release
+```

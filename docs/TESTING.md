@@ -102,12 +102,46 @@ yarn test
 yarn build && yarn verify-bundles
 ```
 
+### Full Verification (Single Command)
+
+```bash
+yarn build && yarn verify-bundles && yarn test packages/fiber/tests/bundles.test.ts
+```
+
 ### CI/CD
 
 For continuous integration, run both:
 
 ```bash
 yarn test && yarn build && yarn verify-bundles
+```
+
+## Test Files
+
+### `packages/fiber/tests/bundles.test.ts`
+
+Tests entry point exports and functionality:
+
+```typescript
+// Default entry
+import('@react-three/fiber')
+// Expects: R3F_BUILD_LEGACY=true, R3F_BUILD_WEBGPU=true
+
+// Legacy entry
+import('@react-three/fiber/legacy')
+// Expects: R3F_BUILD_LEGACY=true, R3F_BUILD_WEBGPU=false (in built bundle)
+
+// WebGPU entry
+import('@react-three/fiber/webgpu')
+// Expects: R3F_BUILD_LEGACY=false, R3F_BUILD_WEBGPU=true (in built bundle)
+```
+
+### `scripts/verify-bundles.js`
+
+Analyzes built output files. Run directly:
+
+```bash
+node scripts/verify-bundles.js
 ```
 
 ## Adding New Tests
@@ -142,6 +176,10 @@ const checks = [
 ```
 
 ## Troubleshooting
+
+### "Multiple instances of Three.js" warning
+
+This warning appears in Jest tests because both `three` and `three/webgpu` are loaded. It's expected in tests and doesn't affect functionality.
 
 ### Tests fail with "Cannot find module"
 

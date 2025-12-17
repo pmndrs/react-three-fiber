@@ -1,6 +1,5 @@
 //* Job Sorter - Phase Bucket Sorting + Topological Sort ==============================
 
-import type { Job } from './types'
 import type { PhaseGraph } from './phaseGraph'
 
 /**
@@ -51,11 +50,7 @@ export function rebuildSortedJobs(jobs: Map<string, Job>, phaseGraph: PhaseGraph
     })
 
     // Check for cross-job constraints within bucket
-    if (hasCrossJobConstraints(bucket)) {
-      sortedBuckets.push(topologicalSort(bucket))
-    } else {
-      sortedBuckets.push(bucket)
-    }
+    sortedBuckets.push(hasCrossJobConstraints(bucket) ? topologicalSort(bucket) : bucket)
   }
 
   // Handle any unknown phases (jobs in phases not in the graph)
@@ -73,7 +68,7 @@ export function rebuildSortedJobs(jobs: Map<string, Job>, phaseGraph: PhaseGraph
   return sortedBuckets.flat()
 }
 
-// Cross-Job Constraint Detection --------------------------------
+//* Cross-Job Constraint Detection --------------------------------
 
 /**
  * Check if any jobs in the bucket have before/after constraints

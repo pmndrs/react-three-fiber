@@ -42,17 +42,32 @@ export function useFrameNext(
 ): FrameNextControls {
   const store = useStore()
 
-  // Normalize options - if number, treat as { priority: number }
+  // Compute stable key from option VALUES (not reference)
+  // This runs every render but is cheap - avoids inline object reference issues
+  const optionsKey =
+    typeof priorityOrOptions === 'number'
+      ? `p:${priorityOrOptions}`
+      : priorityOrOptions
+      ? JSON.stringify({
+          id: priorityOrOptions.id,
+          phase: priorityOrOptions.phase,
+          priority: priorityOrOptions.priority,
+          fps: priorityOrOptions.fps,
+          drop: priorityOrOptions.drop,
+          enabled: priorityOrOptions.enabled,
+          before: priorityOrOptions.before,
+          after: priorityOrOptions.after,
+        })
+      : ''
+
+  // Memoize options object using the stable key
   const options: UseFrameNextOptions = React.useMemo(() => {
-    if (typeof priorityOrOptions === 'number') {
-      return { priority: priorityOrOptions }
-    }
-    return priorityOrOptions ?? {}
-  }, [priorityOrOptions])
+    return typeof priorityOrOptions === 'number' ? { priority: priorityOrOptions } : priorityOrOptions ?? {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionsKey])
 
   // Generate stable ID if not provided
-  const generatedId = React.useId()
-  const id = options.id ?? generatedId
+  const id = options.id ?? React.useId()
 
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
@@ -73,30 +88,12 @@ export function useFrameNext(
     }
 
     // Register with scheduler
-    const unsubscribe = scheduler.register(wrappedCallback, {
+    return scheduler.register(wrappedCallback, {
       id,
-      phase: options.phase,
-      before: options.before,
-      after: options.after,
-      priority: options.priority,
-      fps: options.fps,
-      drop: options.drop,
-      enabled: options.enabled,
+      ...options,
     })
-
-    return unsubscribe
-  }, [
-    store,
-    id,
-    options.phase,
-    options.before,
-    options.after,
-    options.priority,
-    options.fps,
-    options.drop,
-    options.enabled,
-    callbackRef,
-  ])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, id, optionsKey])
 
   // Build controls object (memoized to maintain stable reference)
   const controls = React.useMemo<FrameNextControls>(() => {

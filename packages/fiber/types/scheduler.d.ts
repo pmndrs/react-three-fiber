@@ -46,6 +46,8 @@ export interface FrameNextState extends RootState {
   time: number
   /** Time since last frame (ms) */
   delta: number
+  /** Elapsed time since first frame (ms) */
+  elapsed: number
   /** Incrementing frame counter */
   frame: number
 }
@@ -86,7 +88,7 @@ export interface SchedulerApi {
   /** Add a named phase to the scheduler */
   addPhase(name: string, options?: AddPhaseOptions): void
   /** Get the ordered list of phase names */
-  getPhases(): string[]
+  readonly phases: string[]
   /** Check if a phase exists */
   hasPhase(name: string): boolean
   /** Register a job with the scheduler (returns unsubscribe function) */
@@ -123,7 +125,7 @@ export interface SchedulerApi {
   /** Stop the scheduler loop */
   stop(): void
   /** Check if the scheduler is running */
-  isRunning(): boolean
+  readonly isRunning: boolean
   /** Get the number of registered jobs */
   getJobCount(): number
   /** Get all job IDs */
@@ -149,8 +151,6 @@ export interface SchedulerApi {
 
   // Frameloop mode --------------------------------
 
-  /** Set the frameloop mode ('always', 'demand', 'never') */
-  setFrameloop(mode: Frameloop): void
-  /** Get current frameloop mode */
-  getFrameloop(): Frameloop
+  /** Get/set the frameloop mode ('always', 'demand', 'never') */
+  frameloop: Frameloop
 }

@@ -1,7 +1,6 @@
 //* Scheduler - Core Job Scheduling System ==============================
 
 import type { RootState, AddPhaseOptions, FrameNextState, FrameNextCallback, Frameloop } from '#types'
-import type { Job, JobOptions, FrameLoopState } from './types'
 import { PhaseGraph } from './phaseGraph'
 import { rebuildSortedJobs } from './sorter'
 import { shouldRun, resetJobTiming } from './rateLimiter'
@@ -22,75 +21,86 @@ export class Scheduler {
   // Phase Management --------------------------------
   private phaseGraph: PhaseGraph
 
-  // Job Registry --------------------------------
+  //* Job Registry --------------------------------
   private jobsById: Map<string, Job> = new Map()
   private sortedJobs: Job[] = []
   private needsRebuild: boolean = false
   private rebuildRequested: boolean = false
   private nextIndex: number = 0
 
-  // Frame Loop --------------------------------
+  //* Frame Loop --------------------------------
   private loopState: FrameLoopState = {
     running: false,
     rafHandle: null,
     lastTime: 0,
     frameCount: 0,
+    elapsedTime: 0,
+    createdAt: performance.now(),
   }
 
-  // Demand Mode --------------------------------
+  //* Demand Mode --------------------------------
   private pendingFrames: number = 0
-  private frameloop: Frameloop = 'always'
+  private _frameloop: Frameloop = 'always'
 
   // R3F State Reference --------------------------------
   private getState: (() => RootState) | null = null
+
+  //* Getters & Setters --------------------------------
+  get state(): RootState | null {
+    return this.getState?.() ?? null
+  }
+  set state(state: RootState | null) {
+    this.getState = state ? () => state : null
+  }
+
+  get frameloop(): Frameloop {
+    return this._frameloop
+  }
+
+  /**
+   * Set the frameloop mode.
+   * - 'always': Run continuously
+   * - 'demand': Run only when invalidate() is called
+   * - 'never': Only run via manual step() calls
+   * @param {Frameloop} mode - The frameloop mode to set
+   */
+  set frameloop(mode: Frameloop) {
+    // check if we already are this value.
+    if (this._frameloop === mode) return
+    const wasAlways = this._frameloop === 'always'
+    this._frameloop = mode
+
+    if (mode === 'always' && !this.loopState.running) this.start()
+    else if (mode !== 'always' && wasAlways) this.stop()
+  }
+
+  get phases(): string[] {
+    return this.phaseGraph.getOrderedPhases()
+  }
+
+  get isRunning(): boolean {
+    return this.loopState.running
+  }
 
   constructor() {
     this.phaseGraph = new PhaseGraph()
     this.loop = this.loop.bind(this)
   }
 
-  // Initialization --------------------------------
+  //* Initialization --------------------------------
 
   /**
-   * Connect the scheduler to the R3F store
+   * Connect & disconnect the scheduler to the R3F store
    */
   connect(getState: () => RootState): void {
     this.getState = getState
   }
-
-  /**
-   * Disconnect from the R3F store
-   */
   disconnect(): void {
     this.stop()
     this.getState = null
   }
 
-  /**
-   * Set the frameloop mode
-   * - 'always': Run continuously
-   * - 'demand': Run only when invalidate() is called
-   * - 'never': Only run via manual step() calls
-   */
-  setFrameloop(mode: Frameloop): void {
-    const wasAlways = this.frameloop === 'always'
-    this.frameloop = mode
-
-    if (mode === 'always' && !this.loopState.running) {
-      this.start()
-    } else if (mode !== 'always' && wasAlways) {
-      this.stop()
-    }
-  }
-
-  /**
-   * Get current frameloop mode
-   */
-  getFrameloop(): Frameloop {
-    return this.frameloop
-  }
-
-  // Phase API --------------------------------
+  //* Phase API --------------------------------
 
   /**
    * Add a named phase to the scheduler
@@ -101,20 +111,13 @@ export class Scheduler {
   }
 
   /**
-   * Get ordered list of phase names
-   */
-  getPhases(): string[] {
-    return this.phaseGraph.getOrderedPhases()
-  }
-
-  /**
    * Check if a phase exists
    */
   hasPhase(name: string): boolean {
     return this.phaseGraph.hasPhase(name)
   }
 
-  // Job Registration --------------------------------
+  //* Job Registration --------------------------------
 
   /**
    * Register a job with the scheduler
@@ -164,9 +167,7 @@ export class Scheduler {
    * Unregister a job by ID
    */
   unregister(id: string): void {
-    if (this.jobsById.delete(id)) {
-      this.requestRebuild()
-    }
+    if (this.jobsById.delete(id)) this.requestRebuild()
   }
 
   /**
@@ -185,13 +186,10 @@ export class Scheduler {
       const wasEnabled = job.enabled
       job.enabled = options.enabled
       // Reset timing when re-enabled
-      if (!wasEnabled && job.enabled) {
-        resetJobTiming(job)
-      }
+      if (!wasEnabled && job.enabled) resetJobTiming(job)
+
       // Enabled state affects sortedJobs, so trigger rebuild
-      if (wasEnabled !== job.enabled) {
-        this.requestRebuild()
-      }
+      if (wasEnabled !== job.enabled) this.requestRebuild()
     }
 
     // Phase changes require rebuild
@@ -203,7 +201,7 @@ export class Scheduler {
     }
   }
 
-  // Frame Loop Control --------------------------------
+  //* Frame Loop Control --------------------------------
 
   /**
    * Start the RAF loop
@@ -211,9 +209,15 @@ export class Scheduler {
   start(): void {
     if (this.loopState.running) return
 
-    this.loopState.running = true
-    this.loopState.lastTime = performance.now()
-    this.loopState.rafHandle = requestAnimationFrame(this.loop)
+    const newConfig = {
+      running: true,
+      elapsedTime: 0,
+      lastTime: performance.now(),
+      createdAt: performance.now(),
+      frameCount: 0,
+      rafHandle: requestAnimationFrame(this.loop),
+    }
+    Object.assign(this.loopState, newConfig)
   }
 
   /**
@@ -227,13 +231,6 @@ export class Scheduler {
       cancelAnimationFrame(this.loopState.rafHandle)
       this.loopState.rafHandle = null
     }
-  }
-
-  /**
-   * Check if the loop is running
-   */
-  isRunning(): boolean {
-    return this.loopState.running
   }
 
   /**
@@ -263,14 +260,13 @@ export class Scheduler {
     const now = timestamp ?? performance.now()
 
     // Rebuild if needed
-    if (this.needsRebuild) {
-      this.rebuild()
-    }
+    if (this.needsRebuild) this.rebuild()
 
-    // Calculate delta
+    // Calculate delta & update loop state
     const delta = now - (this.loopState.lastTime || now)
     this.loopState.lastTime = now
     this.loopState.frameCount++
+    this.loopState.elapsedTime += delta
 
     // Get R3F state
     const rootState = this.getState?.()
@@ -281,6 +277,7 @@ export class Scheduler {
       ...rootState,
       time: now,
       delta,
+      elapsed: this.loopState.elapsedTime,
       frame: this.loopState.frameCount,
     }
 
@@ -296,13 +293,11 @@ export class Scheduler {
    */
   stepJob(id: string, timestamp?: number): void {
     const job = this.jobsById.get(id)
-    if (!job) {
-      console.warn(`[useFrameNext] Job "${id}" not found`)
-      return
-    }
+    if (!job) return console.warn(`[useFrameNext] Job "${id}" not found`)
 
     const now = timestamp ?? performance.now()
     const delta = now - (this.loopState.lastTime || now)
+    const elapsed = now - this.loopState.createdAt
 
     // Get R3F state
     const rootState = this.getState?.()
@@ -313,6 +308,7 @@ export class Scheduler {
       ...rootState,
       time: now,
       delta,
+      elapsed,
       frame: this.loopState.frameCount,
     }
 
@@ -326,10 +322,11 @@ export class Scheduler {
 
   /**
    * Check if a job is paused (enabled=false)
+   * Returns false if job doesn't exist (jobs register as enabled by default)
    */
   isJobPaused(id: string): boolean {
     const job = this.jobsById.get(id)
-    return job ? !job.enabled : true
+    return job ? !job.enabled : false
   }
 
   /**
@@ -346,20 +343,19 @@ export class Scheduler {
     this.updateJob(id, { enabled: true })
   }
 
-  // Core Loop --------------------------------
+  //* Core Loop --------------------------------
 
   private loop(timestamp: number): void {
     if (!this.loopState.running) return
 
     // Rebuild if needed
-    if (this.needsRebuild) {
-      this.rebuild()
-    }
+    if (this.needsRebuild) this.rebuild()
 
-    // Calculate delta
+    // Calculate delta & elapsed time
     const delta = timestamp - this.loopState.lastTime
     this.loopState.lastTime = timestamp
     this.loopState.frameCount++
+    this.loopState.elapsedTime += delta
 
     // Get R3F state
     const rootState = this.getState?.()
@@ -370,6 +366,7 @@ export class Scheduler {
       ...rootState,
       time: timestamp,
       delta,
+      elapsed: this.loopState.elapsedTime,
       frame: this.loopState.frameCount,
     }
 
@@ -379,10 +376,7 @@ export class Scheduler {
     // Handle demand mode - decrement pending frames
     if (this.frameloop === 'demand') {
       this.pendingFrames = Math.max(0, this.pendingFrames - 1)
-      if (this.pendingFrames === 0) {
-        this.stop()
-        return
-      }
+      if (this.pendingFrames === 0) return this.stop()
     }
 
     // Schedule next frame
@@ -460,11 +454,16 @@ export class Scheduler {
   getJobIds(): string[] {
     return Array.from(this.jobsById.keys())
   }
-}
 
-/**
- * Create a new Scheduler instance
- */
-export function createScheduler(): Scheduler {
-  return new Scheduler()
+  //* Static Factory --------------------------------
+
+  /**
+   * Create a new Scheduler instance
+   * @param getState - Optional state getter to automatically connect the scheduler
+   */
+  static create(getState?: () => RootState): Scheduler {
+    const scheduler = new Scheduler()
+    if (getState) scheduler.connect(getState)
+    return scheduler
+  }
 }

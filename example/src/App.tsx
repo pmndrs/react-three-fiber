@@ -34,7 +34,14 @@ const defaultExamples = [
 
 const legacyExamples = ['Lines', 'MultiView', 'Pointcloud', 'Portals', 'Reparenting', 'SVGRenderer']
 
-const webgpuExamples = ['WebGPU', 'WebGPUSharedUniforms', 'WebGPURagingSea']
+const webgpuExamples = [
+  'WebGPU',
+  'WebGPUSharedUniforms',
+  'WebGPURagingSea',
+  'UseFrameNextFPS',
+  'UseFrameNextPhases',
+  'UseFrameNextControls',
+]
 
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 

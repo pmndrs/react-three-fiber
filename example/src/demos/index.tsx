@@ -37,6 +37,12 @@ const WebGPU = { Component: lazy(() => import('./webgpu/WebGPU')) }
 const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUSharedUniforms')) }
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
 
+//* useFrameNext Examples ==============================
+// Showcasing the new useFrameNext hook features
+const UseFrameNextFPS = { Component: lazy(() => import('./webgpu/UseFrameNextFPS')) }
+const UseFrameNextPhases = { Component: lazy(() => import('./webgpu/UseFrameNextPhases')) }
+const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNextControls')) }
+
 export {
   // Default
   AutoDispose,
@@ -69,4 +75,8 @@ export {
   WebGPU,
   WebGPUSharedUniforms,
   WebGPURagingSea,
+  // useFrameNext
+  UseFrameNextFPS,
+  UseFrameNextPhases,
+  UseFrameNextControls,
 }

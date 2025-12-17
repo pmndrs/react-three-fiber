@@ -1,7 +1,5 @@
 //* Rate Limiter - FPS Throttling with Drop/Catch-up ==============================
 
-import type { Job } from './types'
-
 /**
  * Determine if a job should run this frame based on FPS limiting.
  *
