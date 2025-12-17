@@ -14,7 +14,8 @@
   "maintainers": [
     "Josh Ellis (https://github.com/joshuaellis)",
     "Cody Bennett (https://github.com/codyjasonbennett)",
-    "Kris Baumgarter (https://github.com/krispya)"
+    "Kris Baumgarter (https://github.com/krispya)",
+    "Dennis Smolek (https://github.com/dennissmolek)"
   ],
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import * as THREE from 'three'
+import * as THREE from 'three/webgpu'
 import { useFrame, useLoader, useThree } from '@react-three/fiber'
 
 import ReactThreeTestRenderer from '../index'

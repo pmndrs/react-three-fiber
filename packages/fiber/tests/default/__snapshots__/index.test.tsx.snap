@@ -11,6 +11,7 @@ Array [
   "Euler",
   "EventProps",
   "FrameNextCallback",
+  "FrameNextControls",
   "FrameNextState",
   "IsObject",
   "Layers",

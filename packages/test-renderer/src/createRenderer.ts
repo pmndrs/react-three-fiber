@@ -97,7 +97,10 @@ export function createTestRenderer(deps: RendererDependencies) {
 
         // Traverse fiber nodes for R3F root
         const root = { current: mockRoots.get(canvas)!.fiber.current }
-        while (!root.current.child?.stateNode) root.current = root.current.child
+        while (root.current.child && !root.current.child.stateNode) root.current = root.current.child
+
+        // Return null if no child (e.g., after unmount cleared the tree)
+        if (!root.current.child) return null
 
         // Return R3F instance from root
         return reconciler.getPublicRootInstance(root)

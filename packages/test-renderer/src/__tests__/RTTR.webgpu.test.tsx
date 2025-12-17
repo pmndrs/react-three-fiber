@@ -233,8 +233,8 @@ describe('ReactThreeTestRenderer WebGPU Entry', () => {
       function TestComponent() {
         useUniforms({ uIntensity: 0.5 })
 
-        nodes = useNodes(({ uniforms }) => {
-          const intensity = uniforms.uIntensity as any
+        nodes = useNodes((state) => {
+          const intensity = state.uniforms.uIntensity as any
           return {
             mixedColor: mix(color('#000000'), color('#ffffff'), intensity),
           }
