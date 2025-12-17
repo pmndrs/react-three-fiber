@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useStore } from '../'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
+import type { Scheduler } from './scheduler'
 
 //* Type Imports ==============================
 import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
@@ -12,9 +13,9 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
  *
  * Returns a controls object for manual stepping, pausing, and resuming.
  *
- * @param callback - Function called each frame with (state, delta)
+ * @param callback - Function called each frame with (state, delta). Optional if you only need scheduler access.
  * @param priorityOrOptions - Either a priority number (backwards compat) or options object
- * @returns Controls object with step(), stepAll(), pause(), resume(), isPaused, id
+ * @returns Controls object with step(), stepAll(), pause(), resume(), isPaused, id, scheduler
  *
  * @example
  * // Simple priority (backwards compat with useFrame)
@@ -34,10 +35,15 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
  * // In your animation controller:
  * stepAll()  // Advance all useFrameNext jobs
  *
+ * @example
+ * // Scheduler-only access (no callback)
+ * const { scheduler } = useFrameNext()
+ * scheduler.pauseJob('some-job-id')
+ *
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useframenext
  */
 export function useFrameNext(
-  callback: FrameNextCallback,
+  callback?: FrameNextCallback,
   priorityOrOptions?: number | UseFrameNextOptions,
 ): FrameNextControls {
   const store = useStore()
@@ -72,10 +78,15 @@ export function useFrameNext(
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
 
-  // Subscribe on mount, unsubscribe on unmount
+  // Get scheduler reference (stable across renders)
+  const getScheduler = React.useCallback(() => store.getState().internal.scheduler, [store])
+
+  // Subscribe on mount, unsubscribe on unmount (only if callback provided)
   useIsomorphicLayoutEffect(() => {
-    const state = store.getState()
-    const scheduler = state.internal.scheduler
+    // Skip registration if no callback - user just wants scheduler access
+    if (!callback) return
+
+    const scheduler = getScheduler()
 
     if (!scheduler) {
       console.warn('[useFrameNext] Scheduler not initialized. Is this inside a Canvas?')
@@ -92,16 +103,41 @@ export function useFrameNext(
       id,
       ...options,
     })
+    // Note: `callback` intentionally excluded - useMutableCallback handles updates
+    // Including it would cause re-registration every render, resetting pause state
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, id, optionsKey])
 
+  // Reactive isPaused via useSyncExternalStore --------------------------------
+  const isPaused = React.useSyncExternalStore(
+    // Subscribe function
+    React.useCallback(
+      (onStoreChange: () => void) => {
+        const scheduler = getScheduler()
+        if (!scheduler) return () => {}
+        return scheduler.subscribeJobState(id, onStoreChange)
+      },
+      [getScheduler, id],
+    ),
+    // getSnapshot function
+    React.useCallback(() => getScheduler()?.isJobPaused(id) ?? false, [getScheduler, id]),
+    // getServerSnapshot function (SSR)
+    React.useCallback(() => false, []),
+  )
+
   // Build controls object (memoized to maintain stable reference)
   const controls = React.useMemo<FrameNextControls>(() => {
-    const getScheduler = () => store.getState().internal.scheduler
+    const scheduler = getScheduler()
 
     return {
       /** The job's unique ID */
       id,
+
+      /**
+       * Access to the root scheduler for global control.
+       * Use for controlling the entire frame loop, adding phases, etc.
+       */
+      scheduler: scheduler as Scheduler,
 
       /**
        * Manually step this job only.
@@ -137,13 +173,12 @@ export function useFrameNext(
       },
 
       /**
-       * Check if this job is currently paused.
+       * Reactive paused state - automatically updates when pause/resume is called.
+       * No need for forceUpdate() in your components.
        */
-      get isPaused(): boolean {
-        return getScheduler()?.isJobPaused(id) ?? true
-      },
+      isPaused,
     }
-  }, [store, id])
+  }, [getScheduler, id, isPaused])
 
   return controls
 }

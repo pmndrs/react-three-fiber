@@ -28,6 +28,9 @@ export class Scheduler {
   private rebuildRequested: boolean = false
   private nextIndex: number = 0
 
+  //* Job State Subscriptions (for reactive isPaused) --------------------------------
+  private jobStateListeners: Map<string, Set<() => void>> = new Map()
+
   //* Frame Loop --------------------------------
   private loopState: FrameLoopState = {
     running: false,
@@ -330,10 +333,38 @@ export class Scheduler {
   }
 
   /**
+   * Subscribe to job state changes (enabled/paused state).
+   * Used by useSyncExternalStore for reactive isPaused.
+   * @returns Unsubscribe function
+   */
+  subscribeJobState(id: string, listener: () => void): () => void {
+    if (!this.jobStateListeners.has(id)) {
+      this.jobStateListeners.set(id, new Set())
+    }
+    this.jobStateListeners.get(id)!.add(listener)
+
+    return () => {
+      this.jobStateListeners.get(id)?.delete(listener)
+      // Clean up empty listener sets
+      if (this.jobStateListeners.get(id)?.size === 0) {
+        this.jobStateListeners.delete(id)
+      }
+    }
+  }
+
+  /**
+   * Notify listeners that a job's state has changed
+   */
+  private notifyJobStateChange(id: string): void {
+    this.jobStateListeners.get(id)?.forEach((listener) => listener())
+  }
+
+  /**
    * Pause a job (set enabled=false)
    */
   pauseJob(id: string): void {
     this.updateJob(id, { enabled: false })
+    this.notifyJobStateChange(id)
   }
 
   /**
@@ -341,6 +372,7 @@ export class Scheduler {
    */
   resumeJob(id: string): void {
     this.updateJob(id, { enabled: true })
+    this.notifyJobStateChange(id)
   }
 
   //* Core Loop --------------------------------

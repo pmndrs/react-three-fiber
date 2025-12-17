@@ -100,3 +100,6 @@ export default function UseFrameNextFPS() {
     </Canvas>
   )
 }
+
+// calculate fps from delta
+function fpsFromDelta(deltaTime: number) {}

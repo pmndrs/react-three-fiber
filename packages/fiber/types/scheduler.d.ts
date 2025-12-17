@@ -67,6 +67,8 @@ export type FrameNextCallback = (state: FrameNextState, delta: number) => void
 export interface FrameNextControls {
   /** The job's unique ID */
   id: string
+  /** Access to the root scheduler for global frame loop control */
+  scheduler: SchedulerApi
   /** Manually step this job only (bypasses FPS limiting) */
   step(timestamp?: number): void
   /** Manually step ALL jobs in the scheduler */
@@ -75,8 +77,8 @@ export interface FrameNextControls {
   pause(): void
   /** Resume this job (set enabled=true) */
   resume(): void
-  /** Check if this job is currently paused */
-  readonly isPaused: boolean
+  /** Reactive paused state - automatically triggers re-render when changed */
+  isPaused: boolean
 }
 
 // Scheduler Interface --------------------------------
@@ -148,6 +150,8 @@ export interface SchedulerApi {
   pauseJob(id: string): void
   /** Resume a job */
   resumeJob(id: string): void
+  /** Subscribe to job state changes (for reactive isPaused). Returns unsubscribe function. */
+  subscribeJobState(id: string, listener: () => void): () => void
 
   // Frameloop mode --------------------------------
 
