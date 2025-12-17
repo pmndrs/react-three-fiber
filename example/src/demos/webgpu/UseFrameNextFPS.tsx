@@ -101,5 +101,7 @@ export default function UseFrameNextFPS() {
   )
 }
 
-// calculate fps from delta
-function fpsFromDelta(deltaTime: number) {}
+// calculate fps from delta (deltaTime is in milliseconds)
+function fpsFromDelta(deltaTime: number) {
+  return 1000 / deltaTime
+}

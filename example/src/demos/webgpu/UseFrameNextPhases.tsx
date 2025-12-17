@@ -13,6 +13,7 @@ import { useRef, useMemo } from 'react'
 import { Canvas, useFrameNext } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three'
+import { CameraControls } from '@react-three/drei'
 
 //* Bouncing Ball (Physics Phase) ==============================
 
@@ -27,8 +28,6 @@ function BouncingBall() {
     const t = sin(time.mul(2)).mul(0.5).add(0.5)
     return mix(pink, coral, t)
   }, [])
-
-  const shadowColorNode = useMemo(() => color('#333'), [])
 
   // Physics phase - calculate ball position (runs FIRST)
   useFrameNext(
@@ -51,10 +50,13 @@ function BouncingBall() {
   useFrameNext(
     (state, delta) => {
       // Lerp shadow X toward ball X (with lag)
+      // delta is in ms, convert to seconds and use as lerp factor
+      const lerpFactor = (delta / 1000) * 4 // 4 units per second
+
       shadowRef.current.position.x = THREE.MathUtils.lerp(
         shadowRef.current.position.x,
         ballRef.current.position.x,
-        delta * 4,
+        lerpFactor,
       )
 
       // Shadow stays on ground, scales based on ball height
@@ -67,7 +69,7 @@ function BouncingBall() {
       const material = shadowRef.current.material as THREE.MeshBasicMaterial
       material.opacity = opacity
     },
-    { phase: 'update', id: 'shadow-follow' },
+    { id: 'shadow-follow' },
   )
 
   return (
@@ -90,7 +92,7 @@ function BouncingBall() {
 //* Ground Plane ==============================
 
 function Ground() {
-  const colorNode = useMemo(() => color('#4a4a5e'), [])
+  const colorNode = useMemo(() => color('#4343FF'), [])
 
   return (
     <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -111,6 +113,7 @@ function Scene() {
 
       <BouncingBall />
       <Ground />
+      <CameraControls />
     </>
   )
 }
