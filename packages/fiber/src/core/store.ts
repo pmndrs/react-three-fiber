@@ -86,6 +86,7 @@ export const createStore = (
       raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       scene: null as unknown as Scene,
+      rootScene: null as unknown as Scene,
       xr: null as unknown as XRManager,
       inspector: null as unknown as Inspector,
 
@@ -275,6 +276,24 @@ export const createStore = (
     },
     enumerable: true,
     configurable: true,
+  })
+
+  //* Scene Sync Subscription ==============================
+  // If someone sets scene to an actual THREE.Scene (not a portal container),
+  // automatically sync rootScene to match
+  let oldScene = state.scene
+  rootStore.subscribe(() => {
+    const currentState = rootStore.getState()
+    const { scene, rootScene, set } = currentState
+
+    // Only sync if scene changed and it's an actual Scene (has isScene property)
+    if (scene !== oldScene) {
+      oldScene = scene
+      // If the new scene is a real THREE.Scene and different from rootScene, update rootScene
+      if ((scene as any)?.isScene && scene !== rootScene) {
+        set({ rootScene: scene })
+      }
+    }
   })
 
   let oldSize = state.size

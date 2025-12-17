@@ -92,8 +92,10 @@ export interface RootState {
 
   /** Default camera */
   camera: ThreeCamera
-  /** Default scene */
+  /** Default scene (may be overridden in portals to point to the portal container) */
   scene: THREE.Scene
+  /** The actual root THREE.Scene - always points to the true scene, even inside portals */
+  rootScene: THREE.Scene
   /** Default raycaster */
   raycaster: THREE.Raycaster
   /** Default clock */

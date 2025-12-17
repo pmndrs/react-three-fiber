@@ -281,7 +281,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
         }
 
-        state.set({ scene })
+        // Set both scene and rootScene - rootScene always points to the actual THREE.Scene
+        // even when scene is overridden in portals
+        state.set({ scene, rootScene: scene })
       }
 
       // Store events internally
@@ -536,6 +538,8 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       ...injectState,
       // Portals have their own scene, which forms the root, a raycaster and a pointer
       scene: container as THREE.Scene,
+      // rootScene always points to the actual THREE.Scene, even inside portals
+      rootScene: rootState.rootScene,
       raycaster,
       pointer,
       mouse: pointer,
