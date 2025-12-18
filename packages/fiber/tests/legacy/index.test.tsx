@@ -60,7 +60,10 @@ describe('Legacy WebGL Renderer', () => {
   it('should respect frameloop="never" in xr', async () => {
     let respected = true
 
-    const Test = () => useFrame(() => (respected = false))
+    const Test = () => {
+      useFrame(() => (respected = false))
+      return null
+    }
 
     await act(async () => {
       const state = (await root.configure({ frameloop: 'never' })).render(<Test />).getState()

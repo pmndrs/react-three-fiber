@@ -160,6 +160,7 @@ export function polyfills() {
   THREE.LoaderUtils.extractUrlBase = (url: string) => (typeof url === 'string' ? extractUrlBase(url) : './')
 
   // There's no Image in native, so create a data texture instead
+  // Cast to any to bypass generic Texture<HTMLImageElement> typing since native uses custom image format
   THREE.TextureLoader.prototype.load = function load(this: THREE.TextureLoader, url, onLoad, onProgress, onError) {
     if (this.path && typeof url === 'string') url = this.path + url
 
@@ -185,12 +186,12 @@ export function polyfills() {
         // @ts-expect-error
         texture.isDataTexture = true
 
-        onLoad?.(texture)
+        onLoad?.(texture as any)
       })
       .catch(onError)
 
-    return texture
-  }
+    return texture as any
+  } as typeof THREE.TextureLoader.prototype.load
 
   // Fetches assets via FS
   if (fs) {

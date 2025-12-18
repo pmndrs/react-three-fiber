@@ -169,7 +169,7 @@ function topologicalSort(jobs: Job[]): Job[] {
 
   // Check for cycles
   if (result.length !== n) {
-    console.warn('[useFrameNext] Circular dependency detected in job constraints')
+    console.warn('[useFrame] Circular dependency detected in job constraints')
     // Return original order for jobs not in result
     const resultIds = new Set(result.map((j) => j.id))
     for (const job of jobs) {

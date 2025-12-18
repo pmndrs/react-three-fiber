@@ -8,7 +8,7 @@ import { ConcurrentRoot } from 'react-reconciler/constants'
 import { createWithEqualityFn } from 'zustand/traditional'
 
 import { useStore } from './hooks'
-import { advance, invalidate } from './loop'
+import { advance, invalidate } from './hooks/useFrame/legacy'
 import { reconciler } from './reconciler'
 import { context, createStore } from './store'
 import {
@@ -22,7 +22,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './notices'
-import { Scheduler } from './hooks/useFrameNext/scheduler'
+import { getScheduler, Scheduler } from './hooks/useFrame/scheduler'
 
 import type {
   RootState,
@@ -394,20 +394,29 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
-      //* Scheduler Initialization (useFrameNext) ==============================
-      // Create scheduler if it doesn't exist
-      if (!state.internal.scheduler) {
-        const scheduler = Scheduler.create(() => store.getState())
-        scheduler.frameloop = frameloop
-        // Start scheduler if frameloop is 'always' (setter won't start since default is 'always')
-        if (frameloop === 'always') scheduler.start()
+      //* Scheduler Integration ==============================
+      // Register this root with the global scheduler
+      const scheduler = getScheduler()
+      const rootId = (state.internal as any).rootId as string | undefined
+
+      if (!rootId) {
+        // Generate a unique root ID and register with global scheduler
+        const newRootId = scheduler.generateRootId()
+        const unregisterRoot = scheduler.registerRoot(newRootId, () => store.getState())
+
+        // Store the rootId and unregister function in internal state
         state.set((state) => ({
-          internal: { ...state.internal, scheduler },
+          internal: {
+            ...state.internal,
+            rootId: newRootId,
+            unregisterRoot,
+            scheduler,
+          } as any,
         }))
-      } else {
-        // Update scheduler frameloop mode if it changed
-        state.internal.scheduler.frameloop = frameloop
       }
+
+      // Update scheduler frameloop mode
+      scheduler.frameloop = frameloop
 
       // Set locals
       onCreated = onCreatedCallback
@@ -478,12 +487,9 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
           try {
             const renderer = state.internal.actualRenderer
 
-            // Stop and disconnect the scheduler (useFrameNext)
-            const scheduler = state.internal.scheduler as Scheduler | null
-            if (scheduler) {
-              scheduler.stop()
-              scheduler.disconnect()
-            }
+            // Unregister this root from the global scheduler
+            const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
+            if (unregisterRoot) unregisterRoot()
 
             state.events.disconnect?.()
             renderer?.renderLists?.dispose?.()

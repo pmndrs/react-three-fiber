@@ -1,15 +1,15 @@
-//* useFrameNext Hook ==============================
+//* useFrame Hook ==============================
 
 import * as React from 'react'
 import { useStore } from '../'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
-import type { Scheduler } from './scheduler'
+import { getScheduler, type Scheduler } from './scheduler'
 
 //* Type Imports ==============================
 import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
 
 /**
- * Next-generation frame hook with phase-based ordering, priority, and FPS throttling.
+ * Frame hook with phase-based ordering, priority, and FPS throttling.
  *
  * Returns a controls object for manual stepping, pausing, and resuming.
  *
@@ -18,12 +18,16 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
  * @returns Controls object with step(), stepAll(), pause(), resume(), isPaused, id, scheduler
  *
  * @example
- * // Simple priority (backwards compat with useFrame)
- * useFrameNext((state, delta) => { ... }, 5)
+ * // Simple priority (backwards compat)
+ * useFrame((state, delta) => { ... }, 5)
+ *
+ * @example
+ * // With phase-based ordering
+ * useFrame((state, delta) => { ... }, { phase: 'physics' })
  *
  * @example
  * // With controls
- * const controls = useFrameNext(cb, { phase: 'physics', id: 'my-physics' })
+ * const controls = useFrame(cb, { phase: 'physics', id: 'my-physics' })
  * controls.step()      // Step this job only
  * controls.stepAll()   // Step all jobs
  * controls.pause()     // Pause this job
@@ -31,22 +35,29 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
  *
  * @example
  * // Manual mode (frameloop='never')
- * const { stepAll } = useFrameNext(cb)
+ * const { stepAll } = useFrame(cb)
  * // In your animation controller:
- * stepAll()  // Advance all useFrameNext jobs
+ * stepAll()  // Advance all useFrame jobs
  *
  * @example
  * // Scheduler-only access (no callback)
- * const { scheduler } = useFrameNext()
+ * const { scheduler } = useFrame()
  * scheduler.pauseJob('some-job-id')
  *
- * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useframenext
+ * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe
  */
-export function useFrameNext(
+export function useFrame(
   callback?: FrameNextCallback,
   priorityOrOptions?: number | UseFrameNextOptions,
 ): FrameNextControls {
   const store = useStore()
+
+  // Get the root ID from store for registering jobs with correct root
+  const getRootId = React.useCallback(() => {
+    const state = store.getState()
+    // The rootId should be stored in internal state
+    return (state.internal as any).rootId as string | undefined
+  }, [store])
 
   // Compute stable key from option VALUES (not reference)
   // This runs every render but is cheap - avoids inline object reference issues
@@ -78,29 +89,23 @@ export function useFrameNext(
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
 
-  // Get scheduler reference (stable across renders)
-  const getScheduler = React.useCallback(() => store.getState().internal.scheduler, [store])
-
   // Subscribe on mount, unsubscribe on unmount (only if callback provided)
   useIsomorphicLayoutEffect(() => {
     // Skip registration if no callback - user just wants scheduler access
     if (!callback) return
 
     const scheduler = getScheduler()
-
-    if (!scheduler) {
-      console.warn('[useFrameNext] Scheduler not initialized. Is this inside a Canvas?')
-      return
-    }
+    const rootId = getRootId()
 
     // Wrapper that calls the memoized ref
     const wrappedCallback: FrameNextCallback = (frameState, delta) => {
       callbackRef.current?.(frameState, delta)
     }
 
-    // Register with scheduler
+    // Register with global scheduler
     return scheduler.register(wrappedCallback, {
       id,
+      rootId,
       ...options,
     })
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
@@ -113,14 +118,12 @@ export function useFrameNext(
     // Subscribe function
     React.useCallback(
       (onStoreChange: () => void) => {
-        const scheduler = getScheduler()
-        if (!scheduler) return () => {}
-        return scheduler.subscribeJobState(id, onStoreChange)
+        return getScheduler().subscribeJobState(id, onStoreChange)
       },
-      [getScheduler, id],
+      [id],
     ),
     // getSnapshot function
-    React.useCallback(() => getScheduler()?.isJobPaused(id) ?? false, [getScheduler, id]),
+    React.useCallback(() => getScheduler().isJobPaused(id), [id]),
     // getServerSnapshot function (SSR)
     React.useCallback(() => false, []),
   )
@@ -134,7 +137,7 @@ export function useFrameNext(
       id,
 
       /**
-       * Access to the root scheduler for global control.
+       * Access to the global scheduler for frame loop control.
        * Use for controlling the entire frame loop, adding phases, etc.
        */
       scheduler: scheduler as Scheduler,
@@ -145,7 +148,7 @@ export function useFrameNext(
        * @param timestamp Optional timestamp (defaults to performance.now())
        */
       step: (timestamp?: number) => {
-        getScheduler()?.stepJob(id, timestamp)
+        getScheduler().stepJob(id, timestamp)
       },
 
       /**
@@ -154,7 +157,7 @@ export function useFrameNext(
        * @param timestamp Optional timestamp (defaults to performance.now())
        */
       stepAll: (timestamp?: number) => {
-        getScheduler()?.step(timestamp)
+        getScheduler().step(timestamp)
       },
 
       /**
@@ -162,14 +165,14 @@ export function useFrameNext(
        * Job remains registered but won't run.
        */
       pause: () => {
-        getScheduler()?.pauseJob(id)
+        getScheduler().pauseJob(id)
       },
 
       /**
        * Resume this job (set enabled=true).
        */
       resume: () => {
-        getScheduler()?.resumeJob(id)
+        getScheduler().resumeJob(id)
       },
 
       /**
@@ -178,17 +181,10 @@ export function useFrameNext(
        */
       isPaused,
     }
-  }, [getScheduler, id, isPaused])
+  }, [id, isPaused])
 
   return controls
 }
 
-// Re-export types for convenience
-export type {
-  UseFrameNextOptions,
-  FrameNextCallback,
-  FrameNextState,
-  AddPhaseOptions,
-  SchedulerApi,
-  FrameNextControls,
-} from '#types'
+// Re-export scheduler
+export { getScheduler, Scheduler } from './scheduler'

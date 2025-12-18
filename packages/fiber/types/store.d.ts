@@ -67,8 +67,12 @@ export interface InternalState {
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
   actualRenderer: THREE.WebGLRenderer | any // WebGPURenderer when available
-  /** Scheduler for useFrameNext hook (next-gen frame loop) */
+  /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
+  /** This root's unique ID in the global scheduler */
+  rootId?: string
+  /** Function to unregister this root from the global scheduler */
+  unregisterRoot?: () => void
 }
 
 export interface XRManager {

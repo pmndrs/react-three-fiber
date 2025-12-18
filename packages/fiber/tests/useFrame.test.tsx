@@ -2,13 +2,12 @@ import * as React from 'react'
 import * as THREE from 'three'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
-import { createRoot, act, useThree, extend } from '../src'
-import { useFrameNext } from '../src/core/hooks/useFrameNext'
-import { Scheduler } from '../src/core/hooks/useFrameNext/scheduler'
-import { PhaseGraph } from '../src/core/hooks/useFrameNext/phaseGraph'
-import { rebuildSortedJobs } from '../src/core/hooks/useFrameNext/sorter'
-import { shouldRun } from '../src/core/hooks/useFrameNext/rateLimiter'
-import type { FrameNextCallback } from '../src'
+import { createRoot, act, useThree, extend, useFrame } from '../src'
+import { Scheduler } from '../src/core/hooks/useFrame/scheduler'
+import { PhaseGraph } from '../src/core/hooks/useFrame/phaseGraph'
+import { rebuildSortedJobs } from '../src/core/hooks/useFrame/sorter'
+import { shouldRun } from '../src/core/hooks/useFrame/rateLimiter'
+import type { FrameCallback } from '../src'
 
 extend(THREE as any)
 
@@ -44,7 +43,7 @@ describe('PhaseGraph', () => {
 
     graph.addPhase('update', { before: 'render' })
 
-    expect(warnSpy).toHaveBeenCalledWith('[useFrameNext] Phase "update" already exists')
+    expect(warnSpy).toHaveBeenCalledWith('[useFrame] Phase "update" already exists')
     expect(graph.getOrderedPhases().filter((p) => p === 'update').length).toBe(1)
 
     warnSpy.mockRestore()
@@ -251,6 +250,7 @@ describe('shouldRun (rate limiter)', () => {
 
 describe('Scheduler', () => {
   let scheduler: Scheduler
+  let unregisterRoot: () => void
 
   // Mock R3F state for testing
   const mockState = {
@@ -261,18 +261,23 @@ describe('Scheduler', () => {
   } as any
 
   beforeEach(() => {
-    // Create scheduler with automatic connection to mock state
-    scheduler = Scheduler.create(() => mockState)
+    // Reset singleton and get fresh scheduler
+    Scheduler.reset()
+    scheduler = Scheduler.get()
+    // Set to never mode so loop doesn't auto-start
+    scheduler.frameloop = 'never'
+    // Register a mock root so jobs have somewhere to live
+    unregisterRoot = scheduler.registerRoot('test-root', () => mockState)
   })
 
   afterEach(() => {
-    scheduler.stop()
-    scheduler.disconnect()
+    unregisterRoot()
+    Scheduler.reset()
   })
 
   it('registers and unregisters jobs', () => {
     const cb = jest.fn()
-    const unsubscribe = scheduler.register(cb, { id: 'test-job' })
+    const unsubscribe = scheduler.register(cb, { id: 'test-job', rootId: 'test-root' })
 
     expect(scheduler.getJobCount()).toBe(1)
     expect(scheduler.getJobIds()).toContain('test-job')
@@ -284,7 +289,7 @@ describe('Scheduler', () => {
 
   it('generates IDs when not provided', () => {
     const cb = jest.fn()
-    scheduler.register(cb)
+    scheduler.register(cb, { rootId: 'test-root' })
 
     expect(scheduler.getJobCount()).toBe(1)
     expect(scheduler.getJobIds()[0]).toMatch(/^job_\d+$/)
@@ -309,7 +314,7 @@ describe('Scheduler', () => {
 
   it('updates job options', () => {
     const cb = jest.fn()
-    scheduler.register(cb, { id: 'test-job', priority: 1 })
+    scheduler.register(cb, { id: 'test-job', rootId: 'test-root', priority: 1 })
 
     scheduler.updateJob('test-job', { priority: 10, enabled: false })
 
@@ -320,10 +325,10 @@ describe('Scheduler', () => {
   it('handles duplicate IDs with warning', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
 
-    scheduler.register(jest.fn(), { id: 'dupe' })
-    scheduler.register(jest.fn(), { id: 'dupe' })
+    scheduler.register(jest.fn(), { id: 'dupe', rootId: 'test-root' })
+    scheduler.register(jest.fn(), { id: 'dupe', rootId: 'test-root' })
 
-    expect(warnSpy).toHaveBeenCalledWith('[useFrameNext] Job with id "dupe" already exists, replacing')
+    expect(warnSpy).toHaveBeenCalledWith('[useFrame] Job with id "dupe" already exists, replacing')
     expect(scheduler.getJobCount()).toBe(1)
 
     warnSpy.mockRestore()
@@ -332,8 +337,8 @@ describe('Scheduler', () => {
   it('supports manual step() for all jobs', () => {
     const calls: string[] = []
 
-    scheduler.register(() => calls.push('job1'), { id: 'job1' })
-    scheduler.register(() => calls.push('job2'), { id: 'job2' })
+    scheduler.register(() => calls.push('job1'), { id: 'job1', rootId: 'test-root' })
+    scheduler.register(() => calls.push('job2'), { id: 'job2', rootId: 'test-root' })
 
     // No automatic loop started
     expect(scheduler.isRunning).toBe(false)
@@ -351,8 +356,8 @@ describe('Scheduler', () => {
   it('supports stepJob() for a single job', () => {
     const calls: string[] = []
 
-    scheduler.register(() => calls.push('job1'), { id: 'job1' })
-    scheduler.register(() => calls.push('job2'), { id: 'job2' })
+    scheduler.register(() => calls.push('job1'), { id: 'job1', rootId: 'test-root' })
+    scheduler.register(() => calls.push('job2'), { id: 'job2', rootId: 'test-root' })
 
     // Step only job1
     scheduler.stepJob('job1')
@@ -366,7 +371,7 @@ describe('Scheduler', () => {
   it('supports pauseJob() and resumeJob()', () => {
     const calls: string[] = []
 
-    scheduler.register(() => calls.push('job1'), { id: 'job1' })
+    scheduler.register(() => calls.push('job1'), { id: 'job1', rootId: 'test-root' })
 
     expect(scheduler.isJobPaused('job1')).toBe(false)
 
@@ -385,8 +390,7 @@ describe('Scheduler', () => {
   })
 
   it('supports frameloop getter/setter', () => {
-    expect(scheduler.frameloop).toBe('always')
-
+    // With a root registered, frameloop defaults to 'never' until set
     scheduler.frameloop = 'never'
     expect(scheduler.frameloop).toBe('never')
     expect(scheduler.isRunning).toBe(false)
@@ -404,7 +408,7 @@ describe('Scheduler', () => {
     const calls: string[] = []
 
     scheduler.frameloop = 'demand'
-    scheduler.register(() => calls.push('frame'), { id: 'job' })
+    scheduler.register(() => calls.push('frame'), { id: 'job', rootId: 'test-root' })
 
     expect(calls.length).toBe(0)
     expect(scheduler.isRunning).toBe(false)
@@ -424,7 +428,7 @@ describe('Scheduler', () => {
 
 //* Integration Tests (with Canvas) ==============================
 
-describe('useFrameNext hook', () => {
+describe('useFrame hook', () => {
   let canvas: HTMLCanvasElement
   let root: ReturnType<typeof createRoot>
 
@@ -441,7 +445,7 @@ describe('useFrameNext hook', () => {
     const frameCalls: number[] = []
 
     const Component = () => {
-      useFrameNext((state, delta) => {
+      useFrame((state, delta) => {
         frameCalls.push(delta)
       })
       return <mesh />
@@ -461,12 +465,12 @@ describe('useFrameNext hook', () => {
     const calls: string[] = []
 
     const LowPriority = () => {
-      useFrameNext(() => calls.push('low'), 1)
+      useFrame(() => calls.push('low'), 1)
       return null
     }
 
     const HighPriority = () => {
-      useFrameNext(() => calls.push('high'), 10)
+      useFrame(() => calls.push('high'), 10)
       return null
     }
 
@@ -498,7 +502,7 @@ describe('useFrameNext hook', () => {
     const calls: string[] = []
 
     const Component = () => {
-      useFrameNext(
+      useFrame(
         () => {
           calls.push('physics')
         },
@@ -521,7 +525,7 @@ describe('useFrameNext hook', () => {
     const calls: number[] = []
 
     const Component = ({ enabled }: { enabled: boolean }) => {
-      useFrameNext(() => calls.push(Date.now()), { enabled })
+      useFrame(() => calls.push(Date.now()), { enabled })
       return null
     }
 
@@ -549,7 +553,7 @@ describe('useFrameNext hook', () => {
     const calls: number[] = []
 
     const Component = () => {
-      useFrameNext(() => calls.push(Date.now()))
+      useFrame(() => calls.push(Date.now()))
       return null
     }
 
@@ -592,17 +596,17 @@ describe('useFrameNext hook', () => {
     const order: string[] = []
 
     const RenderPhase = () => {
-      useFrameNext(() => order.push('render'), { phase: 'render' })
+      useFrame(() => order.push('render'), { phase: 'render' })
       return null
     }
 
     const PhysicsPhase = () => {
-      useFrameNext(() => order.push('physics'), { phase: 'physics' })
+      useFrame(() => order.push('physics'), { phase: 'physics' })
       return null
     }
 
     const UpdatePhase = () => {
-      useFrameNext(() => order.push('update'), { phase: 'update' })
+      useFrame(() => order.push('update'), { phase: 'update' })
       return null
     }
 
@@ -637,7 +641,7 @@ describe('useFrameNext hook', () => {
     let controls: any
 
     const Component = () => {
-      controls = useFrameNext(() => {}, { id: 'my-job' })
+      controls = useFrame(() => {}, { id: 'my-job' })
       return null
     }
 
@@ -658,12 +662,12 @@ describe('useFrameNext hook', () => {
     let controls2: any
 
     const Job1 = () => {
-      controls1 = useFrameNext(() => calls.push('job1'), { id: 'job1' })
+      controls1 = useFrame(() => calls.push('job1'), { id: 'job1' })
       return null
     }
 
     const Job2 = () => {
-      controls2 = useFrameNext(() => calls.push('job2'), { id: 'job2' })
+      controls2 = useFrame(() => calls.push('job2'), { id: 'job2' })
       return null
     }
 
@@ -698,12 +702,12 @@ describe('useFrameNext hook', () => {
     let controls: any
 
     const Job1 = () => {
-      controls = useFrameNext(() => calls.push('job1'), { id: 'job1' })
+      controls = useFrame(() => calls.push('job1'), { id: 'job1' })
       return null
     }
 
     const Job2 = () => {
-      useFrameNext(() => calls.push('job2'), { id: 'job2' })
+      useFrame(() => calls.push('job2'), { id: 'job2' })
       return null
     }
 
@@ -732,7 +736,7 @@ describe('useFrameNext hook', () => {
     let controls: any
 
     const Component = () => {
-      controls = useFrameNext(() => calls.push('frame'), { id: 'pausable' })
+      controls = useFrame(() => calls.push('frame'), { id: 'pausable' })
       return null
     }
 
@@ -774,7 +778,7 @@ describe('useFrameNext hook', () => {
     let controls: any
 
     const Component = () => {
-      controls = useFrameNext(() => calls.push('tick'))
+      controls = useFrame(() => calls.push('tick'))
       return null
     }
 

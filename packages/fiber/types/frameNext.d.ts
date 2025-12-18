@@ -71,8 +71,8 @@ declare global {
     running: boolean
     /** Current RAF handle */
     rafHandle: number | null
-    /** Last frame timestamp */
-    lastTime: number
+    /** Last frame timestamp (null = uninitialized) */
+    lastTime: number | null
     /** Frame counter */
     frameCount: number
     /** Elapsed time since first frame */

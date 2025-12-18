@@ -9,7 +9,6 @@ import type { RootState, RootStore, Instance, ObjectMap } from '#types'
 // export other hooks
 export * from './useLoader'
 export * from './useFrame'
-export * from './useFrameNext'
 export * from './useTexture'
 export * from './useTextures'
 

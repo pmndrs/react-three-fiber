@@ -1,11 +1,11 @@
-//* Scheduler Types (useFrameNext) ==============================
+//* Scheduler Types (useFrame) ==============================
 
 import type { RootState, Frameloop } from './store'
 
 // Public Options --------------------------------
 
 /**
- * Options for useFrameNext hook
+ * Options for useFrame hook
  */
 export interface UseFrameNextOptions {
   /** Optional stable id for the job. Auto-generated if not provided */
@@ -26,6 +26,9 @@ export interface UseFrameNextOptions {
   enabled?: boolean
 }
 
+/** Alias for UseFrameNextOptions */
+export type UseFrameOptions = UseFrameNextOptions
+
 /**
  * Options for addPhase
  */
@@ -39,7 +42,7 @@ export interface AddPhaseOptions {
 // Frame State --------------------------------
 
 /**
- * State passed to useFrameNext callbacks
+ * State passed to useFrame callbacks
  */
 export interface FrameNextState extends RootState {
   /** High-resolution timestamp from RAF (ms) */
@@ -52,22 +55,28 @@ export interface FrameNextState extends RootState {
   frame: number
 }
 
+/** Alias for FrameNextState */
+export type FrameState = FrameNextState
+
 // Callback Types --------------------------------
 
 /**
- * Callback function for useFrameNext
+ * Callback function for useFrame
  */
 export type FrameNextCallback = (state: FrameNextState, delta: number) => void
 
-// Controls returned from useFrameNext --------------------------------
+/** Alias for FrameNextCallback */
+export type FrameCallback = FrameNextCallback
+
+// Controls returned from useFrame --------------------------------
 
 /**
- * Controls object returned from useFrameNext hook
+ * Controls object returned from useFrame hook
  */
 export interface FrameNextControls {
   /** The job's unique ID */
   id: string
-  /** Access to the root scheduler for global frame loop control */
+  /** Access to the global scheduler for frame loop control */
   scheduler: SchedulerApi
   /** Manually step this job only (bypasses FPS limiting) */
   step(timestamp?: number): void
@@ -81,23 +90,43 @@ export interface FrameNextControls {
   isPaused: boolean
 }
 
+/** Alias for FrameNextControls */
+export type FrameControls = FrameNextControls
+
 // Scheduler Interface --------------------------------
 
 /**
- * Public interface for the Scheduler (exposed via useThree)
+ * Public interface for the global Scheduler
  */
 export interface SchedulerApi {
+  //* Phase Management --------------------------------
+
   /** Add a named phase to the scheduler */
   addPhase(name: string, options?: AddPhaseOptions): void
   /** Get the ordered list of phase names */
   readonly phases: string[]
   /** Check if a phase exists */
   hasPhase(name: string): boolean
+
+  //* Root Management --------------------------------
+
+  /** Register a root (Canvas) with the scheduler. Returns unsubscribe function. */
+  registerRoot(id: string, getState: () => RootState): () => void
+  /** Unregister a root */
+  unregisterRoot(id: string): void
+  /** Generate a unique root ID */
+  generateRootId(): string
+  /** Get the number of registered roots */
+  getRootCount(): number
+
+  //* Job Registration --------------------------------
+
   /** Register a job with the scheduler (returns unsubscribe function) */
   register(
     callback: FrameNextCallback,
     options?: {
       id?: string
+      rootId?: string
       phase?: string
       before?: string | string[]
       after?: string | string[]
@@ -121,19 +150,34 @@ export interface SchedulerApi {
     },
   ): void
   /** Unregister a job by ID */
-  unregister(id: string): void
+  unregister(id: string, rootId?: string): void
+  /** Get the number of registered jobs */
+  getJobCount(): number
+  /** Get all job IDs */
+  getJobIds(): string[]
+
+  //* Global Jobs (for legacy addEffect/addAfterEffect) --------------------------------
+
+  /** Register a global job (runs once per frame, not per-root). Returns unsubscribe function. */
+  registerGlobal(phase: 'before' | 'after', id: string, callback: (timestamp: number) => void): () => void
+
+  //* Idle Callbacks (for legacy addTail) --------------------------------
+
+  /** Register an idle callback (fires when loop stops). Returns unsubscribe function. */
+  onIdle(callback: (timestamp: number) => void): () => void
+
+  //* Frame Loop Control --------------------------------
+
   /** Start the scheduler loop */
   start(): void
   /** Stop the scheduler loop */
   stop(): void
   /** Check if the scheduler is running */
   readonly isRunning: boolean
-  /** Get the number of registered jobs */
-  getJobCount(): number
-  /** Get all job IDs */
-  getJobIds(): string[]
+  /** Get/set the frameloop mode ('always', 'demand', 'never') */
+  frameloop: Frameloop
 
-  // Manual stepping --------------------------------
+  //* Manual Stepping --------------------------------
 
   /** Manually step all jobs once (for frameloop='never' or testing) */
   step(timestamp?: number): void
@@ -142,7 +186,7 @@ export interface SchedulerApi {
   /** Request frame(s) to be rendered (for frameloop='demand') */
   invalidate(frames?: number): void
 
-  // Per-job control --------------------------------
+  //* Per-Job Control --------------------------------
 
   /** Check if a job is paused */
   isJobPaused(id: string): boolean
@@ -152,9 +196,4 @@ export interface SchedulerApi {
   resumeJob(id: string): void
   /** Subscribe to job state changes (for reactive isPaused). Returns unsubscribe function. */
   subscribeJobState(id: string, listener: () => void): () => void
-
-  // Frameloop mode --------------------------------
-
-  /** Get/set the frameloop mode ('always', 'demand', 'never') */
-  frameloop: Frameloop
 }

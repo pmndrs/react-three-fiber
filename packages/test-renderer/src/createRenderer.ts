@@ -126,8 +126,35 @@ export function createTestRenderer(deps: RendererDependencies) {
 
       async advanceFrames(frames: number, delta: number | number[] = 1) {
         const state = _store.getState()
-        const storeSubscribers = state.internal.subscribers
+        const scheduler = state.internal.scheduler
 
+        // Use the scheduler's step() method if available (new scheduler system)
+        if (scheduler) {
+          // Reset timing state to ensure deterministic behavior
+          // This prevents timing pollution from previous tests or scheduler state
+          if (scheduler.resetTiming) {
+            scheduler.resetTiming()
+          }
+
+          // Use a fixed base time for deterministic deltas
+          let baseTime = 0
+
+          // Initialize scheduler timing with first step (delta=0)
+          scheduler.step(baseTime)
+
+          // Now run the requested frames, each with the specified delta
+          for (let i = 0; i < frames; i++) {
+            const frameDeltaSeconds = Array.isArray(delta) ? delta[i] ?? delta[delta.length - 1] : delta
+            const frameDeltaMs = frameDeltaSeconds * 1000
+
+            baseTime += frameDeltaMs
+            scheduler.step(baseTime)
+          }
+          return
+        }
+
+        // Fallback to legacy subscriber system for backwards compatibility
+        const storeSubscribers = state.internal.subscribers
         const promises: Promise<void>[] = []
 
         storeSubscribers.forEach((subscriber: any) => {

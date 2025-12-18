@@ -52,7 +52,7 @@ export class PhaseGraph {
   addPhase(name: string, options: AddPhaseOptions = {}): void {
     // Don't add duplicates
     if (this.phaseMap.has(name)) {
-      console.warn(`[useFrameNext] Phase "${name}" already exists`)
+      console.warn(`[useFrame] Phase "${name}" already exists`)
       return
     }
 
@@ -66,7 +66,7 @@ export class PhaseGraph {
     if (targetIndex !== -1) insertIndex = before ? targetIndex : targetIndex + 1
     else {
       const constraintType = before ? 'before' : 'after'
-      console.warn(`[useFrameNext] Phase "${before ?? after}" not found for '${constraintType}' constraint`)
+      console.warn(`[useFrame] Phase "${before ?? after}" not found for '${constraintType}' constraint`)
     }
 
     // Insert at position
