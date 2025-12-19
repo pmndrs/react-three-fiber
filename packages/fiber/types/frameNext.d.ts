@@ -33,6 +33,8 @@ declare global {
     lastRun?: number
     /** Whether job is enabled */
     enabled: boolean
+    /** Internal flag: system jobs (like default render) don't block user render takeover */
+    system?: boolean
   }
 
   // Phase Graph --------------------------------

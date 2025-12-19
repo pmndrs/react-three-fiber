@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
@@ -6,7 +7,6 @@ import {
   createRoot,
   advance,
   useLoader,
-  act,
   useThree,
   useGraph,
   useFrame,

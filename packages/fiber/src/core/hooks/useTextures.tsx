@@ -1,3 +1,4 @@
+//* Not sure we will use this hook just yet.
 import { useMemo } from 'react'
 import { useStore } from './'
 import { Texture as _Texture } from '#three'

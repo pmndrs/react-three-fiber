@@ -1,8 +1,9 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
-import { createRoot, act, useThree, extend, useFrame } from '../src'
+import { createRoot, useThree, extend, useFrame } from '../src'
 import { Scheduler } from '../src/core/hooks/useFrame/scheduler'
 import { PhaseGraph } from '../src/core/hooks/useFrame/phaseGraph'
 import { rebuildSortedJobs } from '../src/core/hooks/useFrame/sorter'

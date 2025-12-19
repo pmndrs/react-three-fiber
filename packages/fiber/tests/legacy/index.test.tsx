@@ -5,17 +5,10 @@
  * Imports THREE from #three to use the same instance as R3F core.
  */
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from '#three'
 import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
-import {
-  ReconcilerRoot,
-  createRoot as createRootImpl,
-  act,
-  useFrame,
-  useThree,
-  RootState,
-  extend,
-} from '../../src/legacy'
+import { ReconcilerRoot, createRoot as createRootImpl, useFrame, useThree, RootState, extend } from '../../src/legacy'
 
 extend(THREE as any)
 let root: ReconcilerRoot<HTMLCanvasElement> = null!

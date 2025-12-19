@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
+import { act } from 'react'
+import { Canvas, extend } from '../src'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 

@@ -37,6 +37,8 @@ import type {
   InjectState,
 } from '#types'
 
+const isDefaultBuild = R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU
+//todo: what is this, why is it here?
 export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
@@ -345,7 +347,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         state.set({ xr })
       }
 
-      // Set shadowmap
+      //* Shadow Map ==============================
       if (renderer.shadowMap) {
         const oldEnabled = renderer.shadowMap.enabled
         const oldType = renderer.shadowMap.type
@@ -369,18 +371,31 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           (renderer.shadowMap as any).needsUpdate = true
       }
 
-      THREE.ColorManagement.enabled = !legacy
+      // Only execute legacy color management if could be using the webgl renderer is true
+      if (R3F_BUILD_LEGACY) {
+        //We only notifiy its depreciation for default and legaqcy. webgpu imports dont get noticed
+        if (isDefaultBuild) {
+          if (legacy)
+            notifyDepreciated({
+              heading: 'Legacy Color Management',
+              body: 'Legacy color management is deprecated and will be removed in a future version.',
+              link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
+            })
+        }
 
-      // Set color space and tonemapping preferences
-      if (!configured) {
-        renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-        renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        THREE.ColorManagement.enabled = !legacy
+
+        // Set color space and tonemapping preferences
+        if (!configured) {
+          renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+          renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        }
+
+        // Update color management state
+        if (state.legacy !== legacy) state.set(() => ({ legacy }))
+        if (state.linear !== linear) state.set(() => ({ linear }))
+        if (state.flat !== flat) state.set(() => ({ flat }))
       }
-
-      // Update color management state
-      if (state.legacy !== legacy) state.set(() => ({ legacy }))
-      if (state.linear !== linear) state.set(() => ({ linear }))
-      if (state.flat !== flat) state.set(() => ({ flat }))
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
@@ -404,12 +419,38 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const newRootId = scheduler.generateRootId()
         const unregisterRoot = scheduler.registerRoot(newRootId, () => store.getState())
 
+        // Register default render job - this handles the actual THREE.js rendering
+        // Marked as 'system' so it doesn't count as a user taking over the render phase
+        // Only renders if no user has registered in the 'render' phase (taking over rendering)
+        const unregisterRender = scheduler.register(
+          () => {
+            const state = store.getState()
+            const renderer = state.internal.actualRenderer
+
+            // Skip if a user has taken over rendering by registering in the 'render' phase
+            // Also check legacy priority system for backwards compatibility
+            const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
+            if (userHandlesRender || state.internal.priority) return
+
+            if (renderer?.render) renderer.render(state.scene, state.camera)
+          },
+          {
+            id: `${newRootId}_render`,
+            rootId: newRootId,
+            phase: 'render',
+            system: true, // Internal flag: this is a system job, not user-controlled
+          },
+        )
+
         // Store the rootId and unregister function in internal state
         state.set((state) => ({
           internal: {
             ...state.internal,
             rootId: newRootId,
-            unregisterRoot,
+            unregisterRoot: () => {
+              unregisterRoot()
+              unregisterRender()
+            },
             scheduler,
           } as any,
         }))

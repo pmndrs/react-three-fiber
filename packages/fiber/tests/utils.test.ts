@@ -1,5 +1,6 @@
 import * as THREE from 'three'
-import { type RootStore, type Instance, act, createRoot } from '../src'
+import { act } from 'react'
+import { type RootStore, type Instance, createRoot } from '../src'
 import {
   is,
   dispose,

@@ -135,8 +135,8 @@ function CanvasImpl({
         ...style,
       }}
       {...props}>
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} style={{ display: 'block' }}>
+      <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
+        <canvas ref={canvasRef} className="r3f-canvas" style={{ display: 'block' }}>
           {fallback}
         </canvas>
       </div>

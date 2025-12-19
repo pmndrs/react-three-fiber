@@ -1,7 +1,7 @@
 /**
- * useFrameNext Controls Demo
+ * useFrame Controls Demo
  *
- * Demonstrates the controls API returned by useFrameNext:
+ * Demonstrates the controls API returned by useFrame:
  * - pause() / resume() - Pause/resume individual jobs
  * - step() / stepAll() - Manual stepping
  * - isPaused - Reactive pause state
@@ -11,22 +11,22 @@
  */
 
 import { useRef, useMemo, useState, useCallback, useEffect } from 'react'
-import { Canvas, useFrameNext, useThree } from '@react-three/fiber'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three'
 import { CameraControls, Html } from '@react-three/drei'
 
 //* Orbiting Ball + Light ==============================
-// Uses plain useFrameNext with no config - just like normal animation
+// Uses plain useFrame with no config - just like normal animation
 
 function OrbitingElements() {
   const ballRef = useRef<THREE.Mesh>(null!)
   const lightRef = useRef<THREE.PointLight>(null!)
   const angleRef = useRef(0)
 
-  // Plain useFrameNext - no options, just callback
+  // Plain useFrame - no options, just callback
   // This is how most animations would be written
-  useFrameNext((state, delta) => {
+  useFrame((state, delta) => {
     angleRef.current += delta * 0.003
     const radius = 3
 
@@ -134,7 +134,7 @@ function ControlPanel({ sphereControls, schedulerRunning, onSchedulerToggle }: C
         border: '1px solid rgba(255,255,255,0.1)',
       }}>
       {/* Title */}
-      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#94a3b8' }}>useFrameNext Controls</div>
+      <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#94a3b8' }}>useFrame Controls</div>
 
       {/* Two-column layout for job vs scheduler */}
       <div style={{ display: 'flex', gap: '24px', width: '100%' }}>
@@ -247,7 +247,7 @@ function MovingSpotlight() {
   const lightRef = useRef<THREE.SpotLight>(null!)
   const helperRef = useRef<THREE.SpotLightHelper>(null!)
 
-  useFrameNext(
+  useFrame(
     ({ elapsed }, delta) => {
       const light = lightRef.current
       const maxX = 5
@@ -290,7 +290,7 @@ function MovingSpotlight() {
 
 // Control for the spotlight
 function SpotlightControls() {
-  const { scheduler } = useFrameNext()
+  const { scheduler } = useFrame()
   const pause = useCallback(() => {
     scheduler.pauseJob('moving-spotlight')
   }, [scheduler])
@@ -333,7 +333,7 @@ function Scene({ onControlsReady }: SceneProps) {
       <ambientLight intensity={0.4} />
       <directionalLight position={[5, 5, 5]} intensity={1} />
 
-      {/* Orbiting elements - plain useFrameNext, no config */}
+      {/* Orbiting elements - plain useFrame, no config */}
       <OrbitingElements />
       <MovingSpotlight />
       <SpotlightControls />
@@ -364,8 +364,8 @@ function ControlledSphereWithCallback({ onControlsReady }: ControlledSphereWithC
     return mix(blue, purple, t)
   }, [])
 
-  // useFrameNext with fps limit
-  const controls = useFrameNext(
+  // useFrame with fps limit
+  const controls = useFrame(
     (state, delta) => {
       meshRef.current.rotation.x += delta * 0.2
       meshRef.current.rotation.y += delta * 0.3
@@ -389,7 +389,7 @@ function ControlledSphereWithCallback({ onControlsReady }: ControlledSphereWithC
 
 //* Main Export ==============================
 
-export default function UseFrameNextControls() {
+export default function useFrameControls() {
   const [sphereControls, setSphereControls] = useState<any>(null)
   const [schedulerRunning, setSchedulerRunning] = useState(true)
 

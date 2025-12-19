@@ -215,10 +215,10 @@ export class Scheduler {
    * Register a job with a specific root.
    * @param rootId The root this job belongs to
    * @param callback The job callback
-   * @param options Job options
+   * @param options Job options (system flag is internal-only, not exposed in public API)
    * @returns Unsubscribe function
    */
-  register(callback: FrameNextCallback, options: JobOptions & { rootId?: string } = {}): () => void {
+  register(callback: FrameNextCallback, options: JobOptions & { rootId?: string; system?: boolean } = {}): () => void {
     // Find the root - use provided rootId or find first root
     const rootId = options.rootId
     const root = rootId ? this.roots.get(rootId) : this.roots.values().next().value
@@ -253,6 +253,7 @@ export class Scheduler {
       fps: options.fps,
       drop: options.drop ?? true,
       enabled: options.enabled ?? true,
+      system: options.system ?? false,
     }
 
     // Handle duplicate IDs (last wins)
@@ -596,6 +597,26 @@ export class Scheduler {
 
   getRootCount(): number {
     return this.roots.size
+  }
+
+  /**
+   * Check if any user (non-system) jobs are registered in a specific phase.
+   * Used by the default render job to know if a user has taken over rendering.
+   *
+   * @param phase The phase to check
+   * @param rootId Optional root ID to check (checks all roots if not provided)
+   * @returns true if any user jobs exist in the phase
+   */
+  hasUserJobsInPhase(phase: string, rootId?: string): boolean {
+    const rootsToCheck = rootId ? [this.roots.get(rootId)].filter(Boolean) : Array.from(this.roots.values())
+
+    for (const root of rootsToCheck) {
+      if (!root) continue
+      for (const job of root.jobs.values()) {
+        if (job.phase === phase && !job.system && job.enabled) return true
+      }
+    }
+    return false
   }
 
   //* Utility ================================
