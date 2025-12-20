@@ -36,6 +36,7 @@ const SVGRenderer = { Component: lazy(() => import('./legacy/SVGRenderer')) }
 const WebGPU = { Component: lazy(() => import('./webgpu/WebGPU')) }
 const WebGPUSharedUniforms = { Component: lazy(() => import('./webgpu/WebGPUSharedUniforms')) }
 const WebGPURagingSea = { Component: lazy(() => import('./webgpu/WebGPURagingSea')) }
+const WebGPUMotionBlur = { Component: lazy(() => import('./webgpu/WebGPUMotionBlur')) }
 
 //* useFrameNext Examples ==============================
 // Showcasing the new useFrameNext hook features
@@ -75,6 +76,7 @@ export {
   WebGPU,
   WebGPUSharedUniforms,
   WebGPURagingSea,
+  WebGPUMotionBlur,
   // useFrameNext
   UseFrameNextFPS,
   UseFrameNextPhases,

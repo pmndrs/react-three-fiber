@@ -151,6 +151,10 @@ export interface RootState {
   nodes: Record<string, any>
   /** Global TSL texture nodes - use useTextures() hook for operations */
   textures: Map<string, any>
+  /** WebGPU PostProcessing instance - use usePostProcessing() hook */
+  postProcessing: any | null // THREE.PostProcessing when available
+  /** Global TSL pass nodes for post-processing - use usePostProcessing() hook */
+  passes: Record<string, any>
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** If this state model is layered (via createPortal) then this contains the previous layer */

@@ -15,3 +15,6 @@ export * from './scheduler'
 
 // TSL module augmentations (side-effect import for type augmentation)
 import './tsl'
+
+// PostProcessing types (global declarations)
+import './postprocessing'

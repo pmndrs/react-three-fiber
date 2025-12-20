@@ -167,10 +167,12 @@ export const createStore = (
         set(() => ({ frameloop }))
       },
 
-      //* TSL State (managed via hooks: useUniforms, useNodes, useTextures) ==============================
+      //* TSL State (managed via hooks: useUniforms, useNodes, useTextures, usePostProcessing) ==============================
       uniforms: {},
       nodes: {},
       textures: new Map(),
+      postProcessing: null,
+      passes: {},
 
       previousRoot: undefined,
       internal: {

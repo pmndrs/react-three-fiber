@@ -215,7 +215,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // WebGPU-specific setup
         await renderer.init()
 
-        renderer.inspector = new Inspector()
+        // temp, stop the inspector
+        //renderer.inspector = new Inspector()
 
         const backend = renderer.backend
         const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
@@ -432,7 +433,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
-            if (renderer?.render) renderer.render(state.scene, state.camera)
+            // Use PostProcessing if available (from usePostProcessing hook)
+            // Otherwise fall back to standard renderer.render()
+            if (state.postProcessing?.render) {
+              state.postProcessing.render()
+            } else if (renderer?.render) {
+              renderer.render(state.scene, state.camera)
+            }
           },
           {
             id: `${newRootId}_render`,
