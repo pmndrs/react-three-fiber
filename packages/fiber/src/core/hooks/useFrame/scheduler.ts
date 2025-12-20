@@ -5,6 +5,27 @@ import { PhaseGraph } from './phaseGraph'
 import { rebuildSortedJobs } from './sorter'
 import { shouldRun, resetJobTiming } from './rateLimiter'
 
+//* HMR Support ==============================
+// Preserve scheduler instance across hot module reloads
+// This prevents the render loop from stopping during development
+declare const import_meta_hot: { data: Record<string, any>; accept: () => void } | undefined
+
+// Get HMR data for development hot reloading
+// - In production builds: unbuild transforms import.meta.hot to import_meta_hot
+// - In Jest tests: Skip entirely (NODE_ENV === 'test')
+// - Uses indirect eval to avoid TypeScript parsing import.meta syntax
+const hmrData = (() => {
+  if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') return undefined
+  if (typeof import_meta_hot !== 'undefined') return import_meta_hot
+  // Indirect eval prevents TypeScript from parsing import.meta
+  // eslint-disable-next-line no-eval
+  try {
+    return (0, eval)('import.meta.hot')
+  } catch {
+    return undefined
+  }
+})()
+
 //* Types ==============================
 
 interface RootEntry {
@@ -38,9 +59,20 @@ export class Scheduler {
 
   /**
    * Get the global scheduler instance (creates if doesn't exist)
+   * Uses HMR data to preserve instance across hot reloads
    */
   static get(): Scheduler {
-    if (!Scheduler.instance) Scheduler.instance = new Scheduler()
+    // Try to restore from HMR data first (prevents render loop stopping on HMR)
+    if (!Scheduler.instance && hmrData?.data?.scheduler) {
+      Scheduler.instance = hmrData.data.scheduler
+    }
+    if (!Scheduler.instance) {
+      Scheduler.instance = new Scheduler()
+      // Store in HMR data for persistence across reloads
+      if (hmrData?.data) {
+        hmrData.data.scheduler = Scheduler.instance
+      }
+    }
     return Scheduler.instance
   }
 
@@ -51,6 +83,10 @@ export class Scheduler {
     if (Scheduler.instance) {
       Scheduler.instance.stop()
       Scheduler.instance = null
+    }
+    // Also clear from HMR data
+    if (hmrData?.data) {
+      hmrData.data.scheduler = null
     }
   }
 
@@ -571,6 +607,8 @@ export class Scheduler {
         job.callback(frameState, delta)
       } catch (error) {
         console.error(`[Scheduler] Error in job "${job.id}":`, error)
+        // Propagate useFrame errors to error boundary
+        rootState.setError(error instanceof Error ? error : new Error(String(error)))
       }
     }
   }
@@ -645,3 +683,9 @@ export class Scheduler {
  * Creates one if it doesn't exist.
  */
 export const getScheduler = (): Scheduler => Scheduler.get()
+
+//* HMR Accept ==============================
+// Accept hot updates to preserve scheduler state
+if (hmrData) {
+  hmrData.accept?.()
+}

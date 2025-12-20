@@ -145,6 +145,10 @@ export interface RootState {
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
   setFrameloop: (frameloop: Frameloop) => void
+  /** Set error state to propagate to error boundary */
+  setError: (error: Error | null) => void
+  /** Current error state (null when no error) */
+  error: Error | null
   /** Global TSL uniform nodes - root-level uniforms + scoped sub-objects. Use useUniforms() hook */
   uniforms: UniformStore
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */

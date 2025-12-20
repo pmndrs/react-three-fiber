@@ -57,13 +57,22 @@ function CanvasImpl({
   if (error) throw error
 
   const root = React.useRef<ReconcilerRoot<HTMLCanvasElement>>(null!)
+  // Track if the current effect is still active (for async operations during HMR)
+  const effectActiveRef = React.useRef(true)
+  // Store subscription cleanup function
+  const unsubscribeErrorRef = React.useRef<(() => void) | null>(null)
 
   useIsomorphicLayoutEffect(() => {
+    effectActiveRef.current = true
     const canvas = canvasRef.current
+
     if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
       if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
 
       async function run() {
+        // Bail out if effect was cleaned up while awaiting (HMR race condition)
+        if (!effectActiveRef.current || !root.current) return
+
         await root.current.configure({
           gl,
           renderer,
@@ -102,21 +111,50 @@ function CanvasImpl({
             onCreated?.(state)
           },
         })
-        root.current.render(
+
+        // Bail out if effect was cleaned up while awaiting configure
+        if (!effectActiveRef.current || !root.current) return
+
+        const store = root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
               <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
             </ErrorBoundary>
           </Bridge>,
         )
+
+        // Clean up previous subscription if it exists
+        if (unsubscribeErrorRef.current) unsubscribeErrorRef.current()
+
+        // Subscribe to store error state and propagate to error boundary
+        unsubscribeErrorRef.current = store.subscribe((state) => {
+          if (state.error && effectActiveRef.current) {
+            setError(state.error)
+          }
+        })
       }
       run()
+    }
+
+    // Cleanup: mark effect as inactive to cancel pending async operations
+    return () => {
+      effectActiveRef.current = false
+      if (unsubscribeErrorRef.current) {
+        unsubscribeErrorRef.current()
+        unsubscribeErrorRef.current = null
+      }
     }
   })
 
   React.useEffect(() => {
     const canvas = canvasRef.current
-    if (canvas) return () => unmountComponentAtNode(canvas)
+    if (canvas) {
+      return () => {
+        unmountComponentAtNode(canvas)
+        // Clear root ref so HMR creates a fresh root
+        root.current = null!
+      }
+    }
   }, [])
 
   // When the event source is not this div, we need to set pointer-events to none

@@ -4,6 +4,7 @@
  * Sets up:
  * - React act environment flag
  * - WebGL context mocks (needed for <Canvas> tests)
+ * - import.meta mock (for HMR code in scheduler.ts)
  *
  * NOTE: THREE auto-extend is handled by entry points (index, legacy, webgpu)
  * NOTE: PointerEvent polyfill is in events.test.tsx (only test that needs it)
@@ -12,6 +13,13 @@ import { WebGL2RenderingContext } from '../../test-renderer/src/WebGL2RenderingC
 
 // Export to make this a module (required for declare global)
 export {}
+
+//* import.meta Mock ==============================
+// The scheduler uses import.meta.hot for HMR support
+// During build, unbuild transforms this to import_meta_hot
+// In Jest, we need to mock it since there's no bundler transformation
+// @ts-ignore - defining import.meta for Jest environment
+globalThis.import_meta_hot = undefined
 
 declare global {
   var IS_REACT_ACT_ENVIRONMENT: boolean

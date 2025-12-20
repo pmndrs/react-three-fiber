@@ -55,11 +55,13 @@ export function usePostProcessing(
   const store = useStore()
   const { scene, camera, renderer, isLegacy } = useThree()
 
-  // Track if we've warned about multiple calls
-  const hasWarnedRef = useRef(false)
+  // Track if callbacks have been run for the current PP instance
+  // Used to ensure callbacks run on first setup but not on every HMR re-render
+  const callbacksRanRef = useRef(false)
 
-  // Track if this instance initialized the PostProcessing
-  const didInitializeRef = useRef(false)
+  // Track the scene/camera used for the current scenePass to avoid unnecessary recreation
+  // Recreating scenePass triggers TSL node graph rebuild which can corrupt SkinningNode refs
+  const scenePassCacheRef = useRef<{ sceneUuid: string; cameraUuid: string; scenePass: any } | null>(null)
 
   // Store callbacks in refs to avoid useEffect re-running on every render
   // (inline callbacks get new references each render)
@@ -82,11 +84,14 @@ export function usePostProcessing(
       postProcessing: null,
       passes: {},
     })
-    didInitializeRef.current = false
+    callbacksRanRef.current = false
+    scenePassCacheRef.current = null
   }, [store])
 
   // Force re-run of setup/main callbacks with current closure values
   const rebuild = useCallback(() => {
+    callbacksRanRef.current = false // Allow callbacks to run again
+    scenePassCacheRef.current = null // Force new scenePass
     setRebuildVersion((v) => v + 1)
   }, [])
 
@@ -109,54 +114,71 @@ export function usePostProcessing(
       let pp = state.postProcessing as THREE.PostProcessing | null
       let currentPasses = { ...state.passes } as PassRecord
 
-      //* Create PostProcessing if not exists ==============================
+      //* Create PostProcessing if needed ==============================
+      let justCreatedPP = false
       if (!pp) {
         pp = new THREE.PostProcessing(renderer as THREE.WebGPURenderer)
-        didInitializeRef.current = true
-      } else if (!hasWarnedRef.current && (mainCBRef.current || setupCBRef.current)) {
-        // Warn if another component already configured PP
-        console.warn(
-          '[usePostProcessing] PostProcessing already exists. Multiple components configuring PP may cause unexpected behavior.',
-        )
-        hasWarnedRef.current = true
+        justCreatedPP = true
       }
 
       //* Create/Update default scenePass ==============================
-      // Always recreate scenePass when scene/camera changes
-      const scenePass = pass(scene, camera)
+      // Only recreate scenePass if scene/camera actually changed
+      // Unnecessary recreation triggers TSL node graph rebuild which corrupts SkinningNode refs
+      const cacheValid =
+        scenePassCacheRef.current &&
+        scenePassCacheRef.current.sceneUuid === scene.uuid &&
+        scenePassCacheRef.current.cameraUuid === camera.uuid
+
+      let scenePass
+      if (cacheValid) {
+        scenePass = scenePassCacheRef.current!.scenePass
+      } else {
+        scenePass = pass(scene, camera)
+        scenePassCacheRef.current = { sceneUuid: scene.uuid, cameraUuid: camera.uuid, scenePass }
+      }
       currentPasses.scenePass = scenePass
 
-      // Set default outputNode (passthrough) if not configured
-      if (!pp.outputNode || didInitializeRef.current) {
-        pp.outputNode = scenePass
-      }
+      // Set default outputNode (passthrough) if not configured or if we just created PP
+      if (!pp.outputNode || justCreatedPP) pp.outputNode = scenePass
 
       // Update state with PP and initial scenePass
       set({ postProcessing: pp, passes: currentPasses })
 
-      //* Run setupCB (MRT configuration) ==============================
-      // IMPORTANT: setupCB runs first so MRT is configured before any rendering
-      if (setupCBRef.current) {
-        // Get fresh state with updated passes
-        const freshState = store.getState()
-        const setupResult = setupCBRef.current(freshState)
+      //* Run setupCB and mainCB ==============================
+      // Only run callbacks if:
+      // 1. PP was just created (first setup)
+      // 2. Callbacks haven't run yet for this instance
+      // 3. scenePass was just recreated (scene/camera changed)
+      // 4. rebuild() was explicitly called
+      // Skipping on pure HMR (same scene/camera) prevents TSL corruption
+      const shouldRunCallbacks = justCreatedPP || !callbacksRanRef.current || !cacheValid
 
-        if (setupResult && typeof setupResult === 'object') {
-          currentPasses = { ...currentPasses, ...setupResult }
-          set({ passes: currentPasses })
+      if (shouldRunCallbacks) {
+        //* Run setupCB (MRT configuration) ==============================
+        // IMPORTANT: setupCB runs first so MRT is configured before any rendering
+        if (setupCBRef.current) {
+          const freshState = store.getState()
+          const setupResult = setupCBRef.current(freshState)
+
+          if (setupResult && typeof setupResult === 'object') {
+            currentPasses = { ...currentPasses, ...setupResult }
+            set({ passes: currentPasses })
+          }
         }
-      }
 
-      //* Run mainCB ==============================
-      if (mainCBRef.current) {
-        // Get fresh state with all passes
-        const freshState = store.getState()
-        const mainResult = mainCBRef.current(freshState)
+        //* Run mainCB ==============================
+        if (mainCBRef.current) {
+          const freshState = store.getState()
+          const mainResult = mainCBRef.current(freshState)
 
-        if (mainResult && typeof mainResult === 'object') {
-          currentPasses = { ...currentPasses, ...mainResult }
-          set({ passes: currentPasses })
+          if (mainResult && typeof mainResult === 'object') {
+            currentPasses = { ...currentPasses, ...mainResult }
+            set({ passes: currentPasses })
+          }
         }
+
+        // Mark callbacks as run so we don't re-run on HMR
+        callbacksRanRef.current = true
       }
     } catch (error) {
       console.error('[usePostProcessing] Setup error:', error)

@@ -8,7 +8,6 @@ import { Scheduler } from '../src/core/hooks/useFrame/scheduler'
 import { PhaseGraph } from '../src/core/hooks/useFrame/phaseGraph'
 import { rebuildSortedJobs } from '../src/core/hooks/useFrame/sorter'
 import { shouldRun } from '../src/core/hooks/useFrame/rateLimiter'
-import type { FrameCallback } from '../src'
 
 extend(THREE as any)
 
@@ -800,5 +799,30 @@ describe('useFrame hook', () => {
     })
 
     expect(calls.length).toBe(3)
+  })
+
+  it('propagates useFrame errors to store error state', async () => {
+    const testError = new Error('useFrame test error')
+    let store: any
+
+    const Component = () => {
+      useFrame(() => {
+        throw testError
+      })
+      return <mesh />
+    }
+
+    await act(async () => {
+      store = (await root.configure({ frameloop: 'always' })).render(<Component />)
+    })
+
+    // Wait for a frame to execute and trigger the error
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    })
+
+    // Verify error was set in store
+    const state = store.getState()
+    expect(state.error).toBe(testError)
   })
 })

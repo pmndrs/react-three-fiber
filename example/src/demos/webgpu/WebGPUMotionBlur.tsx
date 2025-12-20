@@ -14,7 +14,7 @@
  */
 
 import { useRef, useEffect, useState, useMemo } from 'react'
-import { Canvas, useFrame, useTexture } from '@react-three/fiber/webgpu'
+import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber/webgpu'
 import { useUniforms, usePostProcessing } from '@react-three/fiber/webgpu'
 import { useControls } from 'leva'
 import { OrbitControls } from '@react-three/drei'
@@ -34,9 +34,7 @@ function PostProcessingManager() {
   usePostProcessing(
     // mainCB - receives full RootState, set outputNode explicitly
     ({ postProcessing, passes, uniforms }) => {
-      // test if we have the uniforms yet
-      console.log('uniforms', uniforms)
-      // Get the rendered textures and pass to Inspector
+      // Get the rendered textures
       const beauty = passes.scenePass.getTextureNode()
       const vel = passes.scenePass.getTextureNode('velocity')
 
@@ -72,15 +70,32 @@ function PostProcessingManager() {
 // Skeletal animation to showcase motion blur on character movement
 // Uses GLTFLoader directly for WebGPU compatibility
 
+// Module-level cache for HMR - preserves model across hot reloads
+// This prevents WebGPU SkinningNode cache corruption
+let cachedModel: { scene: THREE.Group; mixer: THREE.AnimationMixer; animations: THREE.AnimationClip[] } | null = null
+
 function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
   const group = useRef<THREE.Group>(null!)
-  const [model, setModel] = useState<THREE.Group | null>(null)
-  const mixerRef = useRef<THREE.AnimationMixer | null>(null)
+  const [model, setModel] = useState<THREE.Group | null>(cachedModel?.scene ?? null)
+  const mixerRef = useRef<THREE.AnimationMixer | null>(cachedModel?.mixer ?? null)
+  const renderer = useThree((s) => s.gl) as unknown as THREE.WebGPURenderer
 
   // Load GLTF model directly (not using drei's useGLTF for WebGPU compatibility)
   useEffect(() => {
+    // If we have a cached model from HMR, use it
+    if (cachedModel) {
+      setModel(cachedModel.scene)
+      mixerRef.current = cachedModel.mixer
+      return
+    }
+
+    let disposed = false
     const loader = new GLTFLoader()
+
     loader.load('/Xbot.glb', (gltf) => {
+      // Don't set state if component unmounted during load
+      if (disposed) return
+
       const scene = gltf.scene
 
       // Enable shadows on all meshes
@@ -102,13 +117,40 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
         action.play()
       }
 
+      // Cache for HMR
+      cachedModel = { scene, mixer, animations: gltf.animations }
       setModel(scene)
     })
 
     return () => {
-      mixerRef.current?.stopAllAction()
+      disposed = true
+
+      // Before unmounting, preserve skeleton state to prevent SkinningNode errors
+      if (cachedModel?.scene) {
+        cachedModel.scene.traverse((child) => {
+          const mesh = child as THREE.SkinnedMesh
+          if (mesh.isSkinnedMesh && mesh.skeleton) {
+            const skeleton = mesh.skeleton as any // WebGPU adds previousBoneMatrices
+            // Ensure previousBoneMatrices exists and is populated
+            if (skeleton.boneMatrices) {
+              if (!skeleton.previousBoneMatrices) {
+                skeleton.previousBoneMatrices = new Float32Array(skeleton.boneMatrices.length)
+              }
+              skeleton.previousBoneMatrices.set(skeleton.boneMatrices)
+            }
+          }
+        })
+      }
+
+      // Clear renderer's node cache to force SkinningNode recreation
+      try {
+        const backend = (renderer as any).backend
+        if (backend?.nodes?.cache) backend.nodes.cache.clear()
+      } catch {
+        // Ignore cache clear errors
+      }
     }
-  }, [])
+  }, [renderer])
 
   // Update animation speed
   useEffect(() => {
@@ -116,6 +158,24 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
       mixerRef.current.timeScale = speed
     }
   }, [speed])
+
+  // Ensure skeleton.previousBoneMatrices exists when model changes
+  // This fixes HMR issues where SkinningNode expects it but skeleton was recreated
+  useEffect(() => {
+    if (!model) return
+
+    model.traverse((child) => {
+      const mesh = child as THREE.SkinnedMesh
+      if (mesh.isSkinnedMesh && mesh.skeleton) {
+        const skeleton = mesh.skeleton as any
+        // Initialize previousBoneMatrices if missing (required by WebGPU SkinningNode)
+        if (skeleton.boneMatrices && !skeleton.previousBoneMatrices) {
+          skeleton.previousBoneMatrices = new Float32Array(skeleton.boneMatrices.length)
+          skeleton.previousBoneMatrices.set(skeleton.boneMatrices)
+        }
+      }
+    })
+  }, [model])
 
   // Update animation mixer each frame
   useFrame((_, delta) => {
@@ -281,7 +341,7 @@ function Experience() {
       <Floor />
       <Walls />
 
-      {/* Animated character - the main attraction for motion blur */}
+      {/* Animated character - uses module-level cache for HMR resilience */}
       <AnimatedCharacter speed={levaControls.speed} />
 
       {/* Animated torus objects to showcase motion blur */}

@@ -25,7 +25,16 @@ module.exports = {
   },
   // Transform three's ESM files to CJS
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    // Configure ts-jest with ESNext module to support import.meta (used for HMR in scheduler.ts)
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          module: 'ESNext',
+          moduleResolution: 'bundler',
+        },
+      },
+    ],
     // Match three's ESM files on both Windows and Unix - use modules: 'commonjs' to convert ESM
     'node_modules[\\\\/]three[\\\\/].+\\.js$': [
       'babel-jest',

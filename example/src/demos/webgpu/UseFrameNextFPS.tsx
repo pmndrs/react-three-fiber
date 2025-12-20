@@ -1,5 +1,5 @@
 /**
- * useFrameNext FPS Throttling Demo
+ * useFrame FPS Throttling Demo
  *
  * Three rotating cubes demonstrating FPS throttling:
  * - Green cube: No limit (60fps)
@@ -10,7 +10,7 @@
  */
 
 import { useRef, useMemo } from 'react'
-import { Canvas, useFrameNext, type ThreeElements } from '@react-three/fiber'
+import { Canvas, useFrame, type ThreeElements } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three'
 
@@ -36,7 +36,7 @@ function FPSCube({ fps, baseColor, position, label }: FPSCubeProps) {
   }, [baseColor])
 
   // Rotate the cube each frame, throttled by FPS option
-  useFrameNext(
+  useFrame(
     (state, delta) => {
       meshRef.current.rotation.x += delta * 1.5
       meshRef.current.rotation.y += delta * 2
@@ -93,7 +93,7 @@ function Scene() {
 
 //* Main Export ==============================
 
-export default function UseFrameNextFPS() {
+export default function useFrameFPS() {
   return (
     <Canvas renderer camera={{ position: [0, 0, 8], fov: 50 }}>
       <Scene />

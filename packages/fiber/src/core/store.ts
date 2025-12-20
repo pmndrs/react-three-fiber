@@ -166,6 +166,8 @@ export const createStore = (
         }
         set(() => ({ frameloop }))
       },
+      setError: (error: Error | null) => set(() => ({ error })),
+      error: null as Error | null,
 
       //* TSL State (managed via hooks: useUniforms, useNodes, useTextures, usePostProcessing) ==============================
       uniforms: {},

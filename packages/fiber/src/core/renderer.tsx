@@ -435,10 +435,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
             // Use PostProcessing if available (from usePostProcessing hook)
             // Otherwise fall back to standard renderer.render()
-            if (state.postProcessing?.render) {
-              state.postProcessing.render()
-            } else if (renderer?.render) {
-              renderer.render(state.scene, state.camera)
+            // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
+            try {
+              if (state.postProcessing?.render) state.postProcessing.render()
+              else if (renderer?.render) renderer.render(state.scene, state.camera)
+            } catch (error) {
+              // Propagate render errors to error boundary
+              state.setError(error instanceof Error ? error : new Error(String(error)))
             }
           },
           {
