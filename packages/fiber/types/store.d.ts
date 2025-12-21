@@ -118,6 +118,8 @@ export interface RootState {
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
+  /** Working color space for automatic texture colorspace assignment */
+  workingColorSpace: THREE.ColorSpace
   /** Render loop flags */
   frameloop: Frameloop
   performance: Performance

@@ -78,6 +78,7 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
+      workingColorSpace: 'srgb',
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,

@@ -456,7 +456,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else {
       root[key] = value
 
-      // Auto-convert sRGB texture parameters for built-in materials
+      // Auto-convert texture colorspace for built-in materials
       // https://github.com/pmndrs/react-three-fiber/issues/344
       // https://github.com/mrdoob/three.js/pull/25857
       if (
@@ -468,8 +468,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
       ) {
-        // NOTE: this cannot be set from the renderer (e.g. sRGB source textures rendered to P3)
-        root[key].colorSpace = THREE.SRGBColorSpace
+        // Use configured working colorspace (defaults to sRGB)
+        root[key].colorSpace = rootState.workingColorSpace
       }
     }
   }
