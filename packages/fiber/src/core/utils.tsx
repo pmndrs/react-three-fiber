@@ -175,13 +175,29 @@ export const is = {
   },
 }
 
+// get the first part of a uuid string before the -
+export function getUuidPrefix(uuid: string): string {
+  return uuid.split('-')[0]
+}
+
 // Collects nodes and materials from a THREE.Object3D
 export function buildGraph(object: THREE.Object3D): ObjectMap {
   const data: ObjectMap = { nodes: {}, materials: {}, meshes: {} }
   if (object) {
     object.traverse((obj: any) => {
       if (obj.name) data.nodes[obj.name] = obj
-      if (obj.material && !data.materials[obj.material.name]) data.materials[obj.material.name] = obj.material
+      if (obj.material) {
+        // because duplicate names should be possible we need slightly better parsing
+        // see: https://github.com/pmndrs/react-three-fiber/issues/3358
+        const material = Array.isArray(obj.material) ? obj.material[0] : obj.material
+        const nameAlreadyUsed = data.materials[material.name]
+        let materialName = material.name
+        if (nameAlreadyUsed) {
+          materialName = materialName + `-${getUuidPrefix(material.uuid)}`
+          material.userData.materialCacheName = materialName
+        }
+        data.materials[materialName] = material
+      }
       if (obj.isMesh && !data.meshes[obj.name]) data.meshes[obj.name] = obj
     })
   }
