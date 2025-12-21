@@ -92,7 +92,7 @@ function AnimatedCharacter({ speed = 1 }: { speed?: number }) {
     let disposed = false
     const loader = new GLTFLoader()
 
-    loader.load('/Xbot.glb', (gltf) => {
+    loader.load('/models/Xbot.glb', (gltf) => {
       // Don't set state if component unmounted during load
       if (disposed) return
 
@@ -201,7 +201,7 @@ interface AnimatedTorusProps {
 
 function AnimatedTorus({ position, direction = 1 }: AnimatedTorusProps) {
   const meshRef = useRef<THREE.Mesh>(null!)
-  const map = useTexture('/uv_grid_opengl.jpg')
+  const map = useTexture('/images/uv_grid_opengl.jpg')
 
   // Configure texture properties
   useEffect(() => {
@@ -228,7 +228,7 @@ function AnimatedTorus({ position, direction = 1 }: AnimatedTorusProps) {
 function ScalingTorus({ position }: { position: [number, number, number] }) {
   const meshRef = useRef<THREE.Mesh>(null!)
   const clockRef = useRef(new THREE.Clock())
-  const map = useTexture('/uv_grid_opengl.jpg')
+  const map = useTexture('/images/uv_grid_opengl.jpg')
 
   // Configure texture properties
   useEffect(() => {
@@ -255,7 +255,7 @@ function ScalingTorus({ position }: { position: [number, number, number] }) {
 // Uses MeshPhongNodeMaterial for proper WebGPU MRT velocity support
 
 function Floor() {
-  const floorColor = useTexture('/FloorsCheckerboard_S_Diffuse.jpg', (t) => setupRepeat(t))
+  const floorColor = useTexture('/images/FloorsCheckerboard_S_Diffuse.jpg', (t) => setupRepeat(t))
 
   // Create NodeMaterial with TSL texture node (like vanilla example)
   // Memoize to avoid recreating on every render
@@ -277,7 +277,7 @@ function Floor() {
 // Uses MeshPhongNodeMaterial for proper WebGPU MRT velocity support
 
 function Walls() {
-  const wallColor = useTexture('/FloorsCheckerboard_S_Diffuse.jpg', (t) => setupRepeat(t))
+  const wallColor = useTexture('/images/FloorsCheckerboard_S_Diffuse.jpg', (t) => setupRepeat(t))
 
   // Create NodeMaterial with TSL texture node (like vanilla example)
   // Memoize to avoid recreating on every render

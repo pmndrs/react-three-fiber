@@ -8,7 +8,6 @@ function Plane(props: ThreeElements['mesh']) {
   const [hovered, hover] = useState(false)
   const { colorNode, positionNode, uHovered } = useMemo(() => {
     const uHovered = uniform(0.0)
-    console.log('uHovered', uHovered)
     const col1 = color('orange')
     const col2 = color('hotpink')
     const col3 = color('aquamarine')

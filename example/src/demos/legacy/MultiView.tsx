@@ -1,7 +1,6 @@
 import {
   ArcballControls,
   Bounds,
-  CameraShake,
   Environment,
   OrbitControls,
   OrthographicCamera,
@@ -35,7 +34,7 @@ function useHover() {
 
 export function Soda(props: ThreeElements['group']) {
   const [hovered, hoverProps] = useHover()
-  const { meshes, materials } = useGLTF('/bottle.gltf')
+  const { meshes, materials } = useGLTF('/models/bottle.gltf')
 
   return (
     <group {...props} {...hoverProps} dispose={null}>
@@ -168,7 +167,6 @@ const App = () => (
       <PerspectiveCamera makeDefault />
       <Scene preset="dawn" />
       <OrbitControls makeDefault />
-      <CameraShake intensity={2} />
     </View>
     <View index={4} placement="topright" clearColor={new THREE.Color('lightblue').convertLinearToSRGB()}>
       <PerspectiveCamera makeDefault />

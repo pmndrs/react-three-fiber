@@ -1,5 +1,5 @@
 /**
- * useFrameNext Phase Ordering Demo
+ * useFrame Phase Ordering Demo
  *
  * Demonstrates phase-based execution order:
  * - Physics phase: Ball bounces (runs first)
@@ -10,7 +10,7 @@
  */
 
 import { useRef, useMemo } from 'react'
-import { Canvas, useFrameNext } from '@react-three/fiber'
+import { Canvas, useFrame } from '@react-three/fiber'
 import { color, mix, sin, time } from 'three/tsl'
 import * as THREE from 'three'
 import { CameraControls } from '@react-three/drei'
@@ -30,9 +30,9 @@ function BouncingBall() {
   }, [])
 
   // Physics phase - calculate ball position (runs FIRST)
-  useFrameNext(
+  useFrame(
     (state) => {
-      const t = state.clock.elapsedTime
+      const t = state.elapsed
 
       // Horizontal oscillation
       ballRef.current.position.x = Math.sin(t * 2) * 3
@@ -47,11 +47,12 @@ function BouncingBall() {
   )
 
   // Update phase - shadow follows ball (runs AFTER physics)
-  useFrameNext(
+  useFrame(
     (state, delta) => {
       // Lerp shadow X toward ball X (with lag)
+      //      console.log(delta)
       // delta is in ms, convert to seconds and use as lerp factor
-      const lerpFactor = (delta / 1000) * 4 // 4 units per second
+      const lerpFactor = delta * 4 // 4 units per second
 
       shadowRef.current.position.x = THREE.MathUtils.lerp(
         shadowRef.current.position.x,
@@ -102,11 +103,11 @@ function Ground() {
   )
 }
 
-//* Scene ==============================
+//* Main Export ==============================
 
-function Scene() {
+export default function useFramePhases() {
   return (
-    <>
+    <Canvas renderer camera={{ position: [0, 3, 8], fov: 50 }}>
       <ambientLight intensity={0.4} />
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
       <pointLight position={[-5, 5, -5]} intensity={0.5} color="cyan" />
@@ -114,16 +115,6 @@ function Scene() {
       <BouncingBall />
       <Ground />
       <CameraControls />
-    </>
-  )
-}
-
-//* Main Export ==============================
-
-export default function UseFrameNextPhases() {
-  return (
-    <Canvas renderer camera={{ position: [0, 3, 8], fov: 50 }}>
-      <Scene />
     </Canvas>
   )
 }

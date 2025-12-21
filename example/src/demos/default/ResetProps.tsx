@@ -51,7 +51,7 @@ function Scene() {
     return () => clearInterval(interval)
   }, [])
 
-  useFrame(({ clock }) => group.current?.rotation.set(Math.sin(clock.elapsedTime), 0, 0))
+  useFrame(({ elapsed }) => group.current?.rotation.set(Math.sin(elapsed), 0, 0))
 
   return (
     <>

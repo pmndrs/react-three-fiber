@@ -3,18 +3,14 @@ import { getRootState } from './utils'
 
 //* Type Imports ==============================
 import type {
-  Properties,
   Instance,
   RootState,
   RootStore,
   Intersection,
-  Camera,
   ThreeEvent,
   DomEvent,
   Events,
   EventHandlers,
-  FilterFunction,
-  ComputeFunction,
   EventManager,
   PointerCaptureTarget,
 } from '#types'

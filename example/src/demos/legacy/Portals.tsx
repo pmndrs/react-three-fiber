@@ -22,18 +22,18 @@ export function Lights() {
 }
 
 export function Farm(props: ThreeElements['group']) {
-  const { scene } = useGLTF('/farm.gltf')
+  const { scene } = useGLTF('/models/farm.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Ramen(props: ThreeElements['group']) {
-  const { scene } = useGLTF('/ramen.gltf')
+  const { scene } = useGLTF('/models/ramen.gltf')
   return <primitive object={scene} {...props} />
 }
 
 export function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
-  const { meshes, materials } = useGLTF('/bottle.gltf')
+  const { meshes, materials } = useGLTF('/models/bottle.gltf')
   return (
     <group {...(spread as any)} {...props} dispose={null}>
       <mesh geometry={meshes.Mesh_sodaBottle.geometry}>

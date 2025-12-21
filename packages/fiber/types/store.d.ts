@@ -102,8 +102,6 @@ export interface RootState {
   rootScene: THREE.Scene
   /** Default raycaster */
   raycaster: THREE.Raycaster
-  /** Default clock */
-  clock: THREE.Clock
   /** Event layer interface, contains the event handler and the node they're connected to */
   events: EventManager<any>
   /** XR interface */

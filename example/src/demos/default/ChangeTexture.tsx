@@ -11,7 +11,7 @@ export default function App() {
 }
 
 function Plane() {
-  const textures = ['/pmndrs.png', '/react.png', '/three.png']
+  const textures = ['/images/pmndrs.png', '/images/react.png', '/images/three.png']
   const [index, setIndex] = useState(0)
   const deferred = useDeferredValue(index)
   const texture = useTexture(textures[deferred])

@@ -254,7 +254,6 @@ describe('Scheduler', () => {
 
   // Mock R3F state for testing
   const mockState = {
-    clock: { getDelta: () => 0.016 },
     scene: {},
     camera: {},
     internal: { scheduler: null },

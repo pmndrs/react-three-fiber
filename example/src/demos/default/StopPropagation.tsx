@@ -17,7 +17,7 @@ function useHover() {
 
 function Soda(props: ThreeElements['group']) {
   const [hovered, spread] = useHover()
-  const { meshes, materials } = useGLTF('/bottle.gltf')
+  const { meshes, materials } = useGLTF('/models/bottle.gltf')
 
   return (
     <group {...props} {...spread} dispose={null}>

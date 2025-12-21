@@ -10,7 +10,7 @@ type BoxProps = ThreeElements['object3D'] & {
 function Box1(props: BoxProps) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
-  useFrame((state) => (mesh.current.position.y = Math.sin(state.clock.elapsedTime)))
+  useFrame((state) => (mesh.current.position.y = Math.sin(state.elapsed)))
 
   return (
     <mesh
@@ -28,7 +28,7 @@ function Box1(props: BoxProps) {
 function Box2(props: BoxProps) {
   const mesh = useRef<THREE.Mesh>(null!)
   const [hovered, setHover] = useState(false)
-  useFrame((state) => (mesh.current.position.y = Math.sin(state.clock.elapsedTime)))
+  useFrame((state) => (mesh.current.position.y = Math.sin(state.elapsed)))
 
   return (
     <group {...props}>

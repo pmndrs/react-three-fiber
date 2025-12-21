@@ -13,7 +13,7 @@ function TorusKnot() {
   const ref = useRef<THREE.Mesh>(null!)
 
   useFrame((state) => {
-    const t = state.clock.elapsedTime / 2
+    const t = state.elapsed / 2
     ref.current.rotation.set(t, t, t)
   })
 

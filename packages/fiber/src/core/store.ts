@@ -1,37 +1,19 @@
-import {
-  WebGLRenderer,
-  WebGPURenderer,
-  type Intersection as ThreeIntersection,
-  Object3D,
-  Scene,
-  Raycaster,
-  Clock,
-  EventDispatcher,
-  Vector2,
-  Vector3,
-  Texture,
-  Inspector,
-} from '#three'
+import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector } from '#three'
 import * as React from 'react'
-import { type StoreApi } from 'zustand'
-import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
+import { createWithEqualityFn } from 'zustand/traditional'
 
 //* Type Imports ==============================
 import type {
-  Subscription,
   Dpr,
   Size,
   Frameloop,
   Viewport,
   RenderCallback,
-  Performance,
-  InternalState,
   XRManager,
   RootState,
   RootStore,
   DomEvent,
   EventManager,
-  PointerCaptureTarget,
   ThreeEvent,
   ThreeCamera,
 } from '#types'
@@ -101,7 +83,6 @@ export const createStore = (
       isNative: false,
 
       controls: null,
-      clock: new Clock(),
       pointer,
       mouse: pointer,
 
@@ -154,16 +135,6 @@ export const createStore = (
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
-        const clock = get().clock
-
-        // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
-        clock.stop()
-        clock.elapsedTime = 0
-
-        if (frameloop !== 'never') {
-          clock.start()
-          clock.elapsedTime = 0
-        }
         set(() => ({ frameloop }))
       },
       setError: (error: Error | null) => set(() => ({ error })),

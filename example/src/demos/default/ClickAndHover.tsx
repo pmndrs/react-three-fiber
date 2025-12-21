@@ -12,7 +12,7 @@ function Box(props: ThreeElements['mesh']) {
   const [clicked, setClicked] = useState(false)
 
   useFrame((state) => {
-    ref.current.position.y = Math.sin(state.clock.elapsedTime) / 3
+    ref.current.position.y = Math.sin(state.elapsed) / 3
   })
 
   return (

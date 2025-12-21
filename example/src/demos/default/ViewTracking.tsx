@@ -27,7 +27,7 @@ function useHover() {
 function Soda(props: ThreeElements['group']) {
   const ref = useRef<THREE.Group>(null!)
   const [hovered, spread] = useHover()
-  const { meshes, materials } = useGLTF('/bottle.gltf')
+  const { meshes, materials } = useGLTF('/models/bottle.gltf')
 
   useFrame((state, delta) => (ref.current.rotation.y += delta))
 
@@ -42,27 +42,19 @@ function Soda(props: ThreeElements['group']) {
 }
 
 function Duck(props: ThreeElements['group']) {
-  const { scene } = useGLTF('https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/duck/model.gltf')
+  const { scene } = useGLTF('/models/Duck.glb')
   useFrame((state, delta) => (scene.rotation.x = scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }
 
-function Candy(props: ThreeElements['group']) {
-  const { scene } = useGLTF(
-    'https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/candy-bucket/model.gltf',
-  )
-  useFrame((state, delta) => (scene.rotation.z = scene.rotation.y += delta))
-  return <primitive object={scene} {...props} />
-}
-
 function Flash(props: ThreeElements['group']) {
-  const { scene } = useGLTF('/lightning.gltf')
+  const { scene } = useGLTF('/models/lightning.gltf')
   useFrame((state, delta) => (scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }
 
 function Apple(props: ThreeElements['group']) {
-  const { scene } = useGLTF('/apple.gltf')
+  const { scene } = useGLTF('/models/apple.gltf')
   useFrame((state, delta) => (scene.rotation.x = scene.rotation.y += delta))
   return <primitive object={scene} {...props} />
 }
@@ -256,7 +248,7 @@ export default function App() {
         <View track={view4}>
           <color attach="background" args={['peachpuff']} />
           <Scene />
-          <Candy scale={3} />
+          <Apple scale={10} />
           <PerspectiveCamera makeDefault fov={40} position={[0, 0, 6]} />
         </View>
         <View track={view5}>
