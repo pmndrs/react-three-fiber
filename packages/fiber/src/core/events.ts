@@ -135,6 +135,7 @@ export function createEvents(store: RootStore) {
       })
 
     // DEBUG: Log hit priorities
+    /*
     if (hits.length > 1) {
       console.log(
         '%c[Events Debug] Sorted hits:',
@@ -146,6 +147,7 @@ export function createEvents(store: RootStore) {
         })),
       )
     }
+      */
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order, this likely only makes sense on the root filter

@@ -20,7 +20,7 @@ function RenderHud({ defaultScene, defaultCamera, renderPriority = 1 }: RenderHu
 
       if (renderPriority === 1) {
         // Clear scene and render the default scene first
-        gl.autoClear = true
+        //gl.autoClear = true
         gl.render(defaultScene, defaultCamera)
       }
 
