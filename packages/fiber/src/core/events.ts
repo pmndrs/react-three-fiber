@@ -109,17 +109,22 @@ export function createEvents(store: RootStore) {
       // Intersect object by object
       return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
     }
+    //console.log('raw eventObjects', eventsObjects)
 
     // Collect events
     let hits: THREE.Intersection<THREE.Object3D>[] = eventsObjects
       // Intersect objects
       .flatMap(handleRaycast)
       // Sort by event priority and distance
+      // Higher priority = processed first, then closer objects first
       .sort((a, b) => {
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
-        if (!aState || !bState) return a.distance - b.distance
-        return bState.events.priority - aState.events.priority || a.distance - b.distance
+        // Default priority is 1 (from createPointerEvents), but may be undefined for some objects
+        const aPriority = aState?.events?.priority ?? 1
+        const bPriority = bState?.events?.priority ?? 1
+        // Sort by priority descending (higher first), then by distance ascending (closer first)
+        return bPriority - aPriority || a.distance - b.distance
       })
       // Filter out duplicates
       .filter((item) => {
@@ -128,6 +133,19 @@ export function createEvents(store: RootStore) {
         duplicates.add(id)
         return true
       })
+
+    // DEBUG: Log hit priorities
+    if (hits.length > 1) {
+      console.log(
+        '%c[Events Debug] Sorted hits:',
+        'color: cyan',
+        hits.map((h) => ({
+          name: h.object.name || h.object.type,
+          priority: getRootState(h.object)?.events?.priority ?? 1,
+          distance: h.distance.toFixed(3),
+        })),
+      )
+    }
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order, this likely only makes sense on the root filter
@@ -164,19 +182,7 @@ export function createEvents(store: RootStore) {
     if (intersections.length) {
       const localState = { stopped: false }
       for (const hit of intersections) {
-        let state = getRootState(hit.object)
-
-        // If the object is not managed by R3F, it might be parented to an element which is.
-        // Traverse upwards until we find a managed parent and use its state instead.
-        if (!state) {
-          hit.object.traverseAncestors((obj) => {
-            const parentState = getRootState(obj)
-            if (parentState) {
-              state = parentState
-              return false
-            }
-          })
-        }
+        const state = getRootState(hit.object)
 
         if (state) {
           const { raycaster, pointer, camera, internal } = state

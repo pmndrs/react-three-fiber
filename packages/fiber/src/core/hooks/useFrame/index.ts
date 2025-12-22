@@ -3,6 +3,7 @@
 import * as React from 'react'
 import { useStore } from '../'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
+import { notifyDepreciated } from '../../notices'
 import { getScheduler, type Scheduler } from './scheduler'
 
 //* Type Imports ==============================
@@ -89,6 +90,12 @@ export function useFrame(
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
 
+  //* Legacy Priority Tracking --------------------------------
+  // In the old system, useFrame(cb, priority) with priority > 0 meant "I'm taking over rendering"
+  // This incremented internal.priority, causing the default renderer to skip
+  // We maintain this behavior for backwards compatibility while warning about deprecation
+  const isLegacyPriority = typeof priorityOrOptions === 'number' && priorityOrOptions > 0
+
   // Subscribe on mount, unsubscribe on unmount (only if callback provided)
   useIsomorphicLayoutEffect(() => {
     // Skip registration if no callback - user just wants scheduler access
@@ -96,6 +103,34 @@ export function useFrame(
 
     const scheduler = getScheduler()
     const rootId = getRootId()
+    const state = store.getState()
+
+    // Legacy backwards compat: priority > 0 meant "I'm taking over rendering"
+    // Increment internal.priority so the default renderer skips
+    // IMPORTANT: For portals, we must also increment the ROOT's internal.priority,
+    // not just the portal's, since the default renderer checks the root's state
+    if (isLegacyPriority) {
+      // Increment current store's priority
+      state.internal.priority++
+
+      // Also increment all parent roots' priority (for portal support)
+      // This ensures the main Canvas's default renderer skips when a portal takes over
+      let parentRoot = state.previousRoot
+      while (parentRoot) {
+        const parentState = parentRoot.getState()
+        if (parentState?.internal) parentState.internal.priority++
+        parentRoot = parentState?.previousRoot
+      }
+
+      notifyDepreciated({
+        heading: 'useFrame with numeric priority is deprecated',
+        body:
+          'Using useFrame(callback, number) to control render order is deprecated.\n\n' +
+          'For custom rendering, use: useFrame(callback, { phase: "render" })\n' +
+          'For execution order within update phase, use: useFrame(callback, { priority: number })',
+        link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
+      })
+    }
 
     // Wrapper that calls the memoized ref
     const wrappedCallback: FrameNextCallback = (frameState, delta) => {
@@ -103,15 +138,34 @@ export function useFrame(
     }
 
     // Register with global scheduler
-    return scheduler.register(wrappedCallback, {
+    const unregister = scheduler.register(wrappedCallback, {
       id,
       rootId,
       ...options,
     })
+
+    // Cleanup: unregister and decrement legacy priority counter
+    return () => {
+      unregister()
+      if (isLegacyPriority) {
+        const currentState = store.getState()
+        if (currentState.internal) {
+          currentState.internal.priority--
+
+          // Also decrement all parent roots' priority
+          let parentRoot = currentState.previousRoot
+          while (parentRoot) {
+            const parentState = parentRoot.getState()
+            if (parentState?.internal) parentState.internal.priority--
+            parentRoot = parentState?.previousRoot
+          }
+        }
+      }
+    }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
     // Including it would cause re-registration every render, resetting pause state
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, id, optionsKey])
+  }, [store, id, optionsKey, isLegacyPriority])
 
   // Reactive isPaused via useSyncExternalStore --------------------------------
   const isPaused = React.useSyncExternalStore(

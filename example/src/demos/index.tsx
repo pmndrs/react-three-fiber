@@ -24,6 +24,7 @@ const ViewTracking = { Component: lazy(() => import('./default/ViewTracking')) }
 
 //* Legacy Examples ==============================
 // WebGL-only examples using features not yet supported in WebGPU
+const EventPriority = { Component: lazy(() => import('./legacy/EventPriority')) }
 const Lines = { Component: lazy(() => import('./legacy/Lines')) }
 const MultiView = { Component: lazy(() => import('./legacy/MultiView')) }
 const Pointcloud = { Component: lazy(() => import('./legacy/Pointcloud')) }
@@ -66,6 +67,7 @@ export {
   Viewcube,
   ViewTracking,
   // Legacy
+  EventPriority,
   Lines,
   MultiView,
   Pointcloud,

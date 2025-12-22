@@ -21,9 +21,24 @@ export function notifyDepreciated({ heading, body, link }: DeprecationNotice): v
   if (shownNotices.has(heading)) return
   shownNotices.add(heading)
 
+  const caller = getCallerFrame()
+
+  if (caller) {
+    console.log()
+  }
+
   // Styled heading with orange box
   const boxStyle = 'background: #ff9800; color: #1a1a1a; padding: 8px 12px; border-radius: 4px; font-weight: 500;'
-  console.log(`%c⚠️ ${heading}`, boxStyle)
+  if (caller) {
+    // First line: orange box heading only
+    console.log(`%c⚠️ ${heading}`, boxStyle)
+    // Second line: function name and (location) in muted gray, no background
+    // todo: good idea, but internal locations may not be as useful
+    // console.log(`%c${caller.functionName} %c(${caller.location})`, 'color:#888;', 'color:#aaa;')
+  } else {
+    // Fallback: heading only
+    console.log(`%c⚠️ ${heading}`, boxStyle)
+  }
 
   // Plain warn for body details (uses browser's default warn styling)
   if (body || link) {
@@ -32,4 +47,41 @@ export function notifyDepreciated({ heading, body, link }: DeprecationNotice): v
     if (link) message += (body ? '\n\n' : '') + `More info: ${link}`
     console.warn(`%c${message}`, 'font-weight: bold;')
   }
+}
+
+type CallerFrame = {
+  functionName: string
+  location: string
+}
+
+function getCallerFrame(depth = 3): CallerFrame | null {
+  const stack = new Error().stack
+  if (!stack) return null
+
+  const lines = stack.split('\n')
+  const frame = lines[depth]
+  if (!frame) return null
+
+  // Chrome / Chromium
+  let match = frame.match(/^\s*at (?:(.+?) )?\(?(.+?):(\d+):(\d+)\)?$/)
+
+  // Firefox / Safari
+  if (!match) {
+    match = frame.match(/^(?:(.+?)@)?(.+?):(\d+):(\d+)$/)
+  }
+
+  if (!match) return null
+
+  const [, fn, url, line] = match
+
+  return {
+    functionName: fn ?? '<anonymous>',
+    location: formatLocation(url, Number(line)),
+  }
+}
+
+function formatLocation(url: string, line: number): string {
+  const clean = url.split('?')[0]
+  const file = clean.split('/').pop() ?? clean
+  return `${file}:${line}`
 }

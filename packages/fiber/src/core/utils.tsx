@@ -125,10 +125,22 @@ export function calculateDpr(dpr: Dpr): number {
 }
 
 /**
- * Returns instance root state
+ * Returns instance root state.
+ * If the object doesn't have __r3f (e.g., child meshes in primitives/GLTFs),
+ * traverses ancestors to find the nearest managed parent.
  */
 export function getRootState<T extends THREE.Object3D = THREE.Object3D>(obj: T) {
-  return (obj as Instance<T>['object']).__r3f?.root.getState()
+  let state = (obj as Instance<T>['object']).__r3f?.root.getState()
+  if (!state) {
+    obj.traverseAncestors((ancestor) => {
+      const parentState = (ancestor as Instance['object']).__r3f?.root.getState()
+      if (parentState) {
+        state = parentState
+        return false // Stop traversal
+      }
+    })
+  }
+  return state
 }
 
 // A collection of compare functions
