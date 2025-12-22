@@ -247,7 +247,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           ? (cameraOptions as ThreeCamera)
           : orthographic
           ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-          : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+          : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
           if (cameraOptions) {
