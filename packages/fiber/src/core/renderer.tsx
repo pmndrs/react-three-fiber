@@ -287,7 +287,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         // Set both scene and rootScene - rootScene always points to the actual THREE.Scene
         // even when scene is overridden in portals
-        state.set({ scene, rootScene: scene })
+        // Also set internal.container for consistent child attachment in reconciler
+        state.set((prev) => ({
+          scene,
+          rootScene: scene,
+          internal: { ...prev.internal, container: scene },
+        }))
       }
 
       // Store events internally
@@ -578,10 +583,27 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const { events, size, ...rest } = state
+  const { events, size, injectScene = true, ...rest } = state
   const previousRoot = useStore()
   const [raycaster] = useState(() => new THREE.Raycaster())
   const [pointer] = useState(() => new THREE.Vector2())
+
+  //* Portal Scene Injection ==============================
+  // https://github.com/pmndrs/react-three-fiber/issues/2725
+  // Ensure scene is always a real THREE.Scene so properties like background, environment, fog work
+  // If container is already a Scene, use it directly
+  // Otherwise inject a Scene as CHILD of container (children attach to injected scene)
+  // Set injectScene: false to skip injection (anti-pattern, for edge cases)
+  const [portalScene] = useState(() => {
+    // If container is already a Scene, use it directly
+    if ((container as THREE.Scene).isScene) return container as THREE.Scene
+    // If injection disabled, use container directly (anti-pattern)
+    if (!injectScene) return container as THREE.Scene
+    // Inject a Scene as child of container
+    const scene = new THREE.Scene()
+    container.add(scene)
+    return scene
+  })
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
     let viewport = undefined
@@ -597,8 +619,8 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       // The intersect consists of the previous root state
       ...rootState,
       ...injectState,
-      // Portals have their own scene, which forms the root, a raycaster and a pointer
-      scene: container as THREE.Scene,
+      // Portals have their own scene - always a real THREE.Scene (injected if needed)
+      scene: portalScene,
       // rootScene always points to the actual THREE.Scene, even inside portals
       rootScene: rootState.rootScene,
       raycaster,
@@ -613,6 +635,8 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
         injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+      // Container for child attachment - the portalScene (injected or container itself)
+      internal: { ...rootState.internal, ...injectState.internal, container: portalScene },
     } as RootState
   })
 

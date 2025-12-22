@@ -427,22 +427,28 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   appendInitialChild: appendChild,
   insertBefore,
   appendChildToContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
-    if (!child || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !instance) return
 
-    appendChild(scene, child)
+    appendChild(instance, child)
   },
   removeChildFromContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
-    if (!child || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !instance) return
 
-    removeChild(scene, child)
+    removeChild(instance, child)
   },
   insertInContainerBefore(container, child, beforeChild) {
-    const scene = (container.getState().scene as unknown as Instance<Scene>['object']).__r3f
-    if (!child || !beforeChild || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !beforeChild || !instance) return
 
-    insertBefore(scene, child, beforeChild)
+    insertBefore(instance, child, beforeChild)
   },
   getRootHostContext: () => NO_CONTEXT,
   getChildHostContext: () => NO_CONTEXT,
@@ -484,7 +490,11 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   commitMount() {},
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
-  preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
+  preparePortalMount: (container) => {
+    // Prepare the container (where children attach) for portal mounting
+    const target = container.getState().internal.container ?? container.getState().scene
+    return prepare(target, container, '', {})
+  },
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,

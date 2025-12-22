@@ -137,5 +137,11 @@ export type InjectState = Partial<
       compute?: ComputeFunction
       connected?: any
     }
+    /**
+     * When true (default), injects a THREE.Scene between container and children if container isn't already a Scene.
+     * This ensures state.scene is always a real THREE.Scene with proper properties (background, environment, fog).
+     * Set to false to use the container directly as scene (anti-pattern, but supported for edge cases).
+     */
+    injectScene?: boolean
   }
 >

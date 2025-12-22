@@ -191,6 +191,117 @@ describe('createPortal', () => {
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
   })
+
+  //* Portal Scene Injection Tests ==============================
+
+  it('should inject Scene as child of non-Scene container', async () => {
+    const object3D = new THREE.Object3D()
+    let portalState: RootState = null!
+
+    const Portal = () => {
+      portalState = useThree()
+      return <mesh />
+    }
+
+    await act(async () => {
+      root.render(createPortal(<Portal />, object3D))
+    })
+
+    // scene should be a real Scene
+    expect((portalState.scene as THREE.Scene).isScene).toBe(true)
+    // injected scene should be child of object3D
+    expect(object3D.children.length).toBe(1)
+    expect(object3D.children[0]).toBe(portalState.scene)
+    // portal children should attach to the injected scene
+    expect(portalState.scene.children.length).toBe(1)
+  })
+
+  it('should use Scene container directly without wrapping', async () => {
+    const scene = new THREE.Scene()
+    let portalState: RootState = null!
+
+    const Portal = () => {
+      portalState = useThree()
+      return <mesh />
+    }
+
+    await act(async () => {
+      root.render(createPortal(<Portal />, scene))
+    })
+
+    // Should use the exact Scene passed
+    expect(portalState.scene).toBe(scene)
+  })
+
+  it('should maintain rootScene reference to main canvas scene', async () => {
+    const portalContainer = new THREE.Object3D()
+    let mainState: RootState = null!
+    let portalState: RootState = null!
+
+    const Main = () => {
+      mainState = useThree()
+      return null
+    }
+    const Portal = () => {
+      portalState = useThree()
+      return null
+    }
+
+    await act(async () => {
+      root.render(
+        <>
+          <Main />
+          {createPortal(<Portal />, portalContainer)}
+        </>,
+      )
+    })
+
+    // Main and portal should share the same rootScene
+    expect(portalState.rootScene).toBe(mainState.rootScene)
+    // Portal scene should be different (injected)
+    expect(portalState.scene).not.toBe(mainState.scene)
+    expect((portalState.scene as THREE.Scene).isScene).toBe(true)
+  })
+
+  it('should skip injection with injectScene: false', async () => {
+    const group = new THREE.Group()
+    let portalState: RootState = null!
+
+    const Portal = () => {
+      portalState = useThree()
+      return <mesh />
+    }
+
+    await act(async () => {
+      root.render(createPortal(<Portal />, group, { injectScene: false }))
+    })
+
+    // scene should be the group itself (no injection)
+    expect(portalState.scene).toBe(group)
+    // group is NOT a Scene - this is the anti-pattern case
+    expect((portalState.scene as THREE.Scene).isScene).toBeFalsy()
+    // children should attach directly to group
+    expect(group.children.length).toBe(1)
+  })
+
+  it('should allow setting scene properties in portal', async () => {
+    const object3D = new THREE.Object3D()
+    let portalState: RootState = null!
+
+    const Portal = () => {
+      portalState = useThree()
+      return null
+    }
+
+    await act(async () => {
+      root.render(createPortal(<Portal />, object3D))
+    })
+
+    // Should be able to set Scene-specific properties
+    const color = new THREE.Color('red')
+    portalState.scene.background = color
+    expect(portalState.scene.background).toBe(color)
+  })
 })
 
 function getExports(source: string): string[] {

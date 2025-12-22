@@ -73,6 +73,8 @@ export interface InternalState {
   rootId?: string
   /** Function to unregister this root from the global scheduler */
   unregisterRoot?: () => void
+  /** Container for child attachment (scene for root, original container for portals) */
+  container?: THREE.Object3D
 }
 
 export interface XRManager {
