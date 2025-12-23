@@ -79,7 +79,11 @@ describe('web Canvas', () => {
 
   it('catches useFrame errors in error boundary', async () => {
     const testError = new Error('useFrame error boundary test')
-    let caughtError: Error | null = null
+
+    // Suppress expected console.error from error boundary and scheduler
+    const originalError = console.error
+    const errorSpy = jest.fn()
+    console.error = errorSpy
 
     const ErrorComponent = () => {
       useFrame(() => {
@@ -88,24 +92,34 @@ describe('web Canvas', () => {
       return <mesh />
     }
 
-    // Test that error is set in store and propagated to Canvas error boundary
-    const renderer = await act(async () =>
-      render(
-        <Canvas>
-          <ErrorComponent />
-        </Canvas>,
-      ),
-    )
+    try {
+      // Test that error is set in store and propagated to Canvas error boundary
+      const renderer = await act(async () =>
+        render(
+          <Canvas>
+            <ErrorComponent />
+          </Canvas>,
+        ),
+      )
 
-    // Wait for frames to execute and error to be thrown
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 150))
-    })
+      // Wait for frames to execute and error to be thrown
+      // Wrap in try-catch since React may re-throw after error boundary catches
+      try {
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 150))
+        })
+      } catch (err) {
+        // Expected - error may be re-thrown by React after boundary catches it
+      }
 
-    // The error should be caught by Canvas's internal error boundary
-    // We can verify this by checking that the component was unmounted or error state was set
-    // Since Canvas's error boundary will catch and re-throw, the error should be in the store
-    // Note: The actual error boundary behavior is tested through the store subscription
-    expect(renderer.container).toBeTruthy()
+      // Verify the scheduler error handler was called
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('[Scheduler] Error in job'), testError)
+
+      // Canvas should still be mounted (error boundary prevents unmount)
+      expect(renderer.container).toBeTruthy()
+    } finally {
+      // Restore console.error
+      console.error = originalError
+    }
   })
 })

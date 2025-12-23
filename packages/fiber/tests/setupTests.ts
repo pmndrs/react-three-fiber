@@ -28,6 +28,17 @@ declare global {
 // Let React know we're testing effectful components
 global.IS_REACT_ACT_ENVIRONMENT = true
 
+//* Suppress Three.js Multiple Instances Warning ==============================
+// Jest loads three.cjs and three.core.js as separate instances due to module resolution.
+// In production, bundlers deduplicate these, so this warning is Jest-specific noise.
+const originalWarn = console.warn
+console.warn = (...args: any[]) => {
+  if (typeof args[0] === 'string' && args[0].includes('Multiple instances of Three.js')) {
+    return
+  }
+  originalWarn.apply(console, args)
+}
+
 //* WebGL Context Mocks ==============================
 // Needed for tests that render <Canvas> directly (not using createTestCanvas)
 globalThis.WebGL2RenderingContext = WebGL2RenderingContext as any

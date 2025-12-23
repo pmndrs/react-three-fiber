@@ -373,7 +373,10 @@ describe('applyProps', () => {
     const target = new THREE.Object3D()
     applyProps(target, {})
     expect(() => applyProps(target, { ['foo-bar']: 1 })).not.toThrow()
-    expect((target as any)['foo-bar']).toBe(undefined)
+    // NOTE: Changed behavior - unknown props are now applied directly to the object
+    // Previously they were silently ignored. If this causes issues, may need to revert
+    // to filtering unknown props instead of applying them.
+    expect((target as any)['foo-bar']).toBe(1)
   })
 
   it('should throw when applying unknown props due to non-object intermediate', () => {

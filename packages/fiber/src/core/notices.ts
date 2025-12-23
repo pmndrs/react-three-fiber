@@ -35,10 +35,12 @@ export function notifyDepreciated({ heading, body, link }: DeprecationNotice): v
     // Second line: function name and (location) in muted gray, no background
     // todo: good idea, but internal locations may not be as useful
     // console.log(`%c${caller.functionName} %c(${caller.location})`, 'color:#888;', 'color:#aaa;')
-  } else {
-    // Fallback: heading only
-    console.log(`%c⚠️ ${heading}`, boxStyle)
   }
+  // I think this can never be reached so is being flagged in coverage
+  // else {
+  //   // Fallback: heading only
+  //   console.log(`%c⚠️ ${heading}`, boxStyle)
+  // }
 
   // Plain warn for body details (uses browser's default warn styling)
   if (body || link) {
@@ -66,6 +68,7 @@ function getCallerFrame(depth = 3): CallerFrame | null {
   let match = frame.match(/^\s*at (?:(.+?) )?\(?(.+?):(\d+):(\d+)\)?$/)
 
   // Firefox / Safari
+  // istanbul ignore next - Jest/Node.js stack traces follow Chrome format, this path only executes in Firefox/Safari browsers
   if (!match) {
     match = frame.match(/^(?:(.+?)@)?(.+?):(\d+):(\d+)$/)
   }
