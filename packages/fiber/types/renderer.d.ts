@@ -90,7 +90,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
   flat?: boolean
   /** Working color space for automatic texture colorspace assignment. Defaults to THREE.SRGBColorSpace */
-  workingColorSpace?: THREE.ColorSpace
+  /** Color space assigned to 8-bit input textures (color maps). Defaults to sRGB. Most textures are authored in sRGB. */
+  textureColorSpace?: THREE.ColorSpace
   /** Creates an orthographic camera */
   orthographic?: boolean
   /**

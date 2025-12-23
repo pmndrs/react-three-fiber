@@ -120,8 +120,8 @@ export interface RootState {
   linear: boolean
   /** Shortcut to gl.toneMapping = NoTonemapping */
   flat: boolean
-  /** Working color space for automatic texture colorspace assignment */
-  workingColorSpace: THREE.ColorSpace
+  /** Color space assigned to 8-bit input textures (color maps). Most textures are authored in sRGB. */
+  textureColorSpace: THREE.ColorSpace
   /** Render loop flags */
   frameloop: Frameloop
   performance: Performance

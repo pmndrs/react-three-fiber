@@ -484,7 +484,8 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else {
       root[key] = value
 
-      // Auto-convert texture colorspace for built-in materials
+      // Auto-assign color space to 8-bit input textures (color maps)
+      // Most 8-bit textures are authored in sRGB regardless of output display space
       // https://github.com/pmndrs/react-three-fiber/issues/344
       // https://github.com/mrdoob/three.js/pull/25857
       if (
@@ -496,8 +497,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
         root[key].format === THREE.RGBAFormat &&
         root[key].type === THREE.UnsignedByteType
       ) {
-        // Use configured working colorspace (defaults to sRGB)
-        root[key].colorSpace = rootState.workingColorSpace
+        root[key].colorSpace = rootState.textureColorSpace
       }
     }
   }

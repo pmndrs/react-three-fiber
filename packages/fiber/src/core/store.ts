@@ -78,7 +78,7 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      workingColorSpace: 'srgb',
+      textureColorSpace: 'srgb',
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,

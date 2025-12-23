@@ -143,7 +143,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         shadows = false,
         linear = false,
         flat = false,
-        workingColorSpace = THREE.SRGBColorSpace,
+        textureColorSpace = THREE.SRGBColorSpace,
         legacy = false,
         orthographic = false,
         frameloop = 'always',
@@ -404,8 +404,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         if (state.flat !== flat) state.set(() => ({ flat }))
       }
 
-      // Update workingColorSpace state
-      if (state.workingColorSpace !== workingColorSpace) state.set(() => ({ workingColorSpace }))
+      // Update textureColorSpace state (color space for 8-bit input textures)
+      if (state.textureColorSpace !== textureColorSpace) state.set(() => ({ textureColorSpace }))
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
