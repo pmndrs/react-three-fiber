@@ -214,8 +214,17 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
   if (!child) return
 
+  // Remove existing child if it exists (re-order to last)
+  // This emulates DOM appendChild behavior: https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
+  if (child.parent === parent) {
+    const existingIndex = parent.children.indexOf(child)
+    if (existingIndex !== -1) parent.children.splice(existingIndex, 1)
+  }
+
   // Link instances
   child.parent = parent
+
+  // Append child
   parent.children.push(child)
 
   // Attach tree once complete
@@ -229,10 +238,19 @@ function insertBefore(
 ) {
   if (!child || !beforeChild) return
 
+  // Remove existing child if it exists (re-order)
+  // This mirrors the logic in handleContainerEffects for object.children
+  if (child.parent === parent) {
+    const existingIndex = parent.children.indexOf(child)
+    if (existingIndex !== -1) parent.children.splice(existingIndex, 1)
+  }
+
   // Link instances
   child.parent = parent
-  const childIndex = parent.children.indexOf(beforeChild)
-  if (childIndex !== -1) parent.children.splice(childIndex, 0, child)
+
+  // Insert at target position (or append if beforeChild not found)
+  const beforeChildIndex = parent.children.indexOf(beforeChild)
+  if (beforeChildIndex !== -1) parent.children.splice(beforeChildIndex, 0, child)
   else parent.children.push(child)
 
   // Attach tree once complete
