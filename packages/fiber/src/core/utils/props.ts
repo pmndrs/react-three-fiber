@@ -26,7 +26,7 @@ export const RESERVED_PROPS = [
 /**
  * Regex to match event handler props (onPointer*, onClick, etc.)
  */
-const EVENT_REGEX = /^on(Pointer|Click|DoubleClick|ContextMenu|Wheel)/
+const EVENT_REGEX = /^on(Pointer|Drag|Drop|Click|DoubleClick|ContextMenu|Wheel)/
 
 /**
  * Regex to check if a dash-cased string ends with an integer (e.g., 'lights-0')

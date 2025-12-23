@@ -89,6 +89,8 @@ export const createStore = (
 
       frameloop: 'always',
       onPointerMissed: undefined,
+      onDragOverMissed: undefined,
+      onDropMissed: undefined,
 
       performance: {
         current: 1,

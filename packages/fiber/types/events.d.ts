@@ -37,6 +37,7 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
 export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
 export type DomEvent = PointerEvent | MouseEvent | WheelEvent
 
+/** DOM event handlers registered on the canvas element */
 export interface Events {
   onClick: EventListener
   onContextMenu: EventListener
@@ -48,12 +49,29 @@ export interface Events {
   onPointerMove: EventListener
   onPointerCancel: EventListener
   onLostPointerCapture: EventListener
+  onDragEnter: EventListener
+  onDragLeave: EventListener
+  onDragOver: EventListener
+  onDrop: EventListener
 }
 
+/** Event handlers that can be attached to R3F objects (meshes, groups, etc.) */
 export interface EventHandlers {
   onClick?: (event: ThreeEvent<MouseEvent>) => void
   onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
   onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
+  /** Fires continuously while dragging over the object */
+  onDragOver?: (event: ThreeEvent<DragEvent>) => void
+  /** Fires once when drag enters the object */
+  onDragOverEnter?: (event: ThreeEvent<DragEvent>) => void
+  /** Fires once when drag leaves the object */
+  onDragOverLeave?: (event: ThreeEvent<DragEvent>) => void
+  /** Fires when drag misses this object (for objects that have drag handlers) */
+  onDragOverMissed?: (event: DragEvent) => void
+  /** Fires when a drop occurs on this object */
+  onDrop?: (event: ThreeEvent<DragEvent>) => void
+  /** Fires when a drop misses this object (for objects that have drop handlers) */
+  onDropMissed?: (event: DragEvent) => void
   onPointerUp?: (event: ThreeEvent<PointerEvent>) => void
   onPointerDown?: (event: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (event: ThreeEvent<PointerEvent>) => void

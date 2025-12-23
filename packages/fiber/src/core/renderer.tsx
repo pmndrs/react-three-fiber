@@ -152,6 +152,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
+        onDragOverMissed,
+        onDropMissed,
       } = props
 
       let state = store.getState()
@@ -308,6 +310,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
+      // Check dragover missed
+      if (!state.onDragOverMissed) state.set({ onDragOverMissed })
+      // Check drop missed
+      if (!state.onDropMissed) state.set({ onDropMissed })
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))

@@ -163,6 +163,10 @@ export interface RootState {
   passes: Record<string, any>
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
+  /** When a dragover event has missed any target */
+  onDragOverMissed?: (event: DragEvent) => void
+  /** When a drop event has missed any target */
+  onDropMissed?: (event: DragEvent) => void
   /** If this state model is layered (via createPortal) then this contains the previous layer */
   previousRoot?: RootStore
   /** Internals */

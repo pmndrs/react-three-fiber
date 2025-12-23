@@ -7,6 +7,7 @@ const ChangeTexture = { Component: lazy(() => import('./default/ChangeTexture'))
 const ClickAndHover = { Component: lazy(() => import('./default/ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./default/ContextMenuOverride')) }
 const FlushSync = { Component: lazy(() => import('./default/FlushSync')) }
+const FileDragDrop = { Component: lazy(() => import('./default/FileDragDrop')) }
 const Gestures = { Component: lazy(() => import('./default/Gestures')) }
 const Gltf = { Component: lazy(() => import('./default/Gltf')) }
 const Inject = { Component: lazy(() => import('./default/Inject')) }
@@ -52,6 +53,7 @@ export {
   ClickAndHover,
   ContextMenuOverride,
   FlushSync,
+  FileDragDrop,
   Gestures,
   Gltf,
   Inject,

@@ -32,6 +32,8 @@ function CanvasImpl({
   camera,
   scene,
   onPointerMissed,
+  onDragOverMissed,
+  onDropMissed,
   onCreated,
   ...props
 }: CanvasProps) {
@@ -48,6 +50,8 @@ function CanvasImpl({
   React.useImperativeHandle(ref, () => canvasRef.current)
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
+  const handleDragOverMissed = useMutableCallback(onDragOverMissed)
+  const handleDropMissed = useMutableCallback(onDropMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
 
@@ -91,6 +95,8 @@ function CanvasImpl({
           size: containerRect,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+          onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
+          onDropMissed: (...args) => handleDropMissed.current?.(...args),
           onCreated: (state) => {
             // Connect to event source
             state.events.connect?.(

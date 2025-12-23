@@ -67,11 +67,17 @@ export function createEvents(store: RootStore) {
 
   /** Returns true if an instance has a valid pointer-event registered, this excludes scroll, clicks etc */
   function filterPointerEvents(objects: THREE.Object3D[]) {
-    return objects.filter((obj) =>
-      ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) =>
-          (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
-      ),
+    return objects.filter(
+      (obj) =>
+        ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
+          (name) =>
+            (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
+        ) ||
+        ['OverEnter', 'OverLeave', 'Over'].some(
+          (name) =>
+            (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onDrag' + name) as keyof EventHandlers],
+        ) ||
+        (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers.onDrop,
     )
   }
 
@@ -300,6 +306,7 @@ export function createEvents(store: RootStore) {
           const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
+          handlers.onDragOverLeave?.(data as ThreeEvent<DragEvent>)
         }
       }
     }
@@ -312,11 +319,26 @@ export function createEvents(store: RootStore) {
     }
   }
 
+  function dragOverMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onDragOverMissed?.(event)
+    }
+  }
+
+  function dropMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onDropMissed?.(event)
+    }
+  }
+
   function handlePointer(name: string) {
     // Deal with cancelation
     switch (name) {
       case 'onPointerLeave':
       case 'onPointerCancel':
+      case 'onDragLeave':
         return () => cancelPointer([])
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
@@ -339,15 +361,18 @@ export function createEvents(store: RootStore) {
 
     // Any other pointer goes here ...
     return function handleEvent(event: DomEvent) {
-      const { onPointerMissed, internal } = store.getState()
+      const { onPointerMissed, onDragOverMissed, onDropMissed, internal } = store.getState()
 
       // prepareRay(event)
       internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
+      const isDragOver = name === 'onDragOver'
+      const isDrop = name === 'onDrop'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
-      const filter = isPointerMove ? filterPointerEvents : undefined
+      // Filter interaction objects for pointer move and drag events
+      const filter = isPointerMove || isDragOver || isDrop ? filterPointerEvents : undefined
 
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
@@ -366,8 +391,21 @@ export function createEvents(store: RootStore) {
           if (onPointerMissed) onPointerMissed(event)
         }
       }
+
+      // If a dragover yields no results, fire the missed callback
+      if (isDragOver && !hits.length) {
+        dragOverMissed(event as DragEvent, internal.interaction)
+        if (onDragOverMissed) onDragOverMissed(event as DragEvent)
+      }
+
+      // If a drop yields no results, fire the missed callback
+      if (isDrop && !hits.length) {
+        dropMissed(event as DragEvent, internal.interaction)
+        if (onDropMissed) onDropMissed(event as DragEvent)
+      }
+
       // Take care of unhover
-      if (isPointerMove) cancelPointer(hits)
+      if (isPointerMove || isDragOver) cancelPointer(hits)
 
       function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
@@ -410,6 +448,23 @@ export function createEvents(store: RootStore) {
           }
           // Call mouse move
           handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
+        } else if (isDragOver) {
+          // Handle dragover enter/leave state tracking
+          const id = makeId(data)
+          const hoveredItem = internal.hovered.get(id)
+          if (!hoveredItem) {
+            // If the object wasn't previously hovered, book it and call its handler
+            internal.hovered.set(id, data)
+            handlers.onDragOverEnter?.(data as ThreeEvent<DragEvent>)
+          } else if (hoveredItem.stopped) {
+            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+            data.stopPropagation()
+          }
+          // Call continuous dragover handler (fires every frame while dragging over)
+          handlers.onDragOver?.(data as ThreeEvent<DragEvent>)
+        } else if (isDrop) {
+          // Handle drop event
+          handlers.onDrop?.(data as ThreeEvent<DragEvent>)
         } else {
           // All other events ...
           const handler = handlers[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
@@ -450,6 +505,10 @@ const DOM_EVENTS = {
   onClick: ['click', false],
   onContextMenu: ['contextmenu', false],
   onDoubleClick: ['dblclick', false],
+  onDragEnter: ['dragenter', false],
+  onDragLeave: ['dragleave', false],
+  onDragOver: ['dragover', false],
+  onDrop: ['drop', false],
   onWheel: ['wheel', true],
   onPointerDown: ['pointerdown', true],
   onPointerUp: ['pointerup', true],

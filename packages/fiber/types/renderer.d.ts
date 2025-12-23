@@ -118,6 +118,10 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onCreated?: (state: RootState) => void
   /** Response for pointer clicks that have missed any target */
   onPointerMissed?: (event: MouseEvent) => void
+  /** Response for dragover events that have missed any target */
+  onDragOverMissed?: (event: DragEvent) => void
+  /** Response for drop events that have missed any target */
+  onDropMissed?: (event: DragEvent) => void
 }
 
 //* Reconciler Root ==============================

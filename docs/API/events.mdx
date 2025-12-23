@@ -8,7 +8,7 @@ nav: 7
 
 Additionally, there's a special `onUpdate` that is called every time the object gets fresh props, which is good for things like `self => (self.verticesNeedUpdate = true)`.
 
-Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes.
+Also notice the `onPointerMissed` on the canvas element, which fires on clicks that haven't hit _any_ meshes. Similarly, `onDragOverMissed` and `onDropMissed` fire when drag/drop events don't hit any meshes.
 
 ```jsx
 <mesh
@@ -24,6 +24,12 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   onPointerLeave={(e) => console.log('leave')} // see note 1
   onPointerMove={(e) => console.log('move')}
   onPointerMissed={() => console.log('missed')}
+  onDragOver={(e) => console.log('dragging over')} // continuous drag event
+  onDragOverEnter={(e) => console.log('drag entered')}
+  onDragOverLeave={(e) => console.log('drag left')}
+  onDragOverMissed={(e) => console.log('drag missed this object')}
+  onDrop={(e) => console.log('dropped!', e.nativeEvent.dataTransfer?.files)}
+  onDropMissed={(e) => console.log('drop missed this object')}
   onUpdate={(self) => console.log('props have been updated')}
 />
 ```
@@ -44,6 +50,117 @@ Also notice the `onPointerMissed` on the canvas element, which fires on clicks t
   delta: number                 // Distance between mouse down and mouse up event in pixels
 }) => ...
 ```
+
+### File Drag & Drop
+
+R3F supports drag and drop events, allowing you to drag files from your desktop onto 3D objects. This is useful for features like dropping textures onto meshes or importing models.
+
+#### Drag events on meshes
+
+| Event | Description |
+|-------|-------------|
+| `onDragOver` | Fires continuously while dragging over the object |
+| `onDragOverEnter` | Fires once when drag enters the object |
+| `onDragOverLeave` | Fires once when drag leaves the object |
+| `onDragOverMissed` | Fires when drag is over canvas but misses this object |
+| `onDrop` | Fires when a file/item is dropped on this object |
+| `onDropMissed` | Fires when a drop misses this object |
+
+#### Canvas-level missed events
+
+The Canvas component accepts `onDragOverMissed` and `onDropMissed` props that fire when drag/drop events don't hit any objects:
+
+```jsx
+<Canvas
+  onDragOverMissed={(e) => console.log('Dragging over empty space')}
+  onDropMissed={(e) => console.log('Dropped on empty space', e.dataTransfer?.files)}
+>
+```
+
+#### Preventing browser defaults
+
+When using drag and drop, you must prevent the browser's default behavior to stop it from opening dropped files:
+
+```jsx
+const preventDefaults = {
+  onDrop: (e) => e.preventDefault(),
+  onDragEnter: (e) => e.preventDefault(),
+  onDragOver: (e) => e.preventDefault(),
+}
+
+<Canvas {...preventDefaults}>
+```
+
+#### Accessing dropped files
+
+Dropped files are available via `e.nativeEvent.dataTransfer.files` on mesh events, or `e.dataTransfer.files` on Canvas missed events:
+
+```jsx
+<mesh
+  onDrop={(e) => {
+    const files = e.nativeEvent.dataTransfer?.files
+    if (files?.length) {
+      const file = files[0]
+      console.log('Dropped:', file.name, file.type)
+    }
+  }}
+/>
+```
+
+#### Example: Loading a dropped texture
+
+Here's a complete example of loading a dropped image as a texture:
+
+```jsx
+function useFileTexture(file) {
+  const [texture, setTexture] = useState(null)
+  
+  useEffect(() => {
+    if (!file) {
+      texture?.dispose()
+      setTexture(null)
+      return
+    }
+    
+    const url = URL.createObjectURL(file)
+    new THREE.TextureLoader().load(url, (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace
+      setTexture((old) => {
+        old?.dispose()
+        return tex
+      })
+    })
+    
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+  
+  return texture
+}
+
+function TexturedBox() {
+  const [file, setFile] = useState(null)
+  const texture = useFileTexture(file)
+  
+  return (
+    <mesh
+      onDrop={(e) => {
+        const f = e.nativeEvent.dataTransfer?.files?.[0]
+        if (f?.type.startsWith('image/')) setFile(f)
+      }}
+      onDragOverEnter={() => console.log('Drag over box')}
+    >
+      <boxGeometry />
+      <meshBasicMaterial map={texture} color={texture ? 'white' : 'orange'} />
+    </mesh>
+  )
+}
+```
+
+> [!NOTE]
+> When loading textures from dropped files, remember to:
+> - Set `colorSpace = THREE.SRGBColorSpace` for proper color display
+> - Call `texture.dispose()` when replacing textures to free GPU memory
+> - Use `URL.revokeObjectURL()` to clean up blob URLs
 
 ### How the event-system works, bubbling and capture
 

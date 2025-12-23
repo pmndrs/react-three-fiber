@@ -559,10 +559,14 @@ export const reconciler = /* @__PURE__ */ createReconciler<
       case 'click':
       case 'contextmenu':
       case 'dblclick':
+      case 'dragenter':
+      case 'dragleave':
+      case 'drop':
       case 'pointercancel':
       case 'pointerdown':
       case 'pointerup':
         return DiscreteEventPriority
+      case 'dragover':
       case 'pointermove':
       case 'pointerout':
       case 'pointerover':
