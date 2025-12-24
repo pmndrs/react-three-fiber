@@ -77,7 +77,8 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
   extensions?: Extensions<L>,
 ): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return preload(loadingFn(extensions), [loader, ...keys])
+  // Preload each key individually so cache keys match useLoader calls
+  keys.forEach((key) => preload(loadingFn(extensions), [loader, key]))
 }
 
 /**
@@ -88,5 +89,6 @@ useLoader.clear = function <I extends InputLike, L extends LoaderLike | Construc
   input: I,
 ): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  return clear([loader, ...keys])
+  // Clear each key individually to match how they were cached
+  keys.forEach((key) => clear([loader, key]))
 }

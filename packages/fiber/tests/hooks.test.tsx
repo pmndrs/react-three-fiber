@@ -195,6 +195,55 @@ describe('hooks', () => {
     expect(proto).toBeInstanceOf(Loader)
   })
 
+  it('useLoader.preload with array caches each URL individually', async () => {
+    const loadCalls: string[] = []
+
+    class TestLoader extends THREE.Loader<string, string> {
+      load(url: string, onLoad: (result: string) => void): void {
+        loadCalls.push(url)
+        onLoad(`loaded:${url}`)
+      }
+    }
+
+    const URL_A = '/model-a.glb'
+    const URL_B = '/model-b.glb'
+
+    // Preload with an array - this should cache each URL individually
+    useLoader.preload(TestLoader, [URL_A, URL_B])
+
+    // Wait for preload promises to resolve
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    // Clear load tracking to isolate the useLoader calls
+    const preloadCallCount = loadCalls.length
+    expect(preloadCallCount).toBe(2) // Both URLs should have been loaded
+
+    // Now use useLoader with individual URLs - should hit cache, not reload
+    let resultA: string | undefined
+    let resultB: string | undefined
+
+    const ComponentA = () => {
+      resultA = useLoader(TestLoader, URL_A)
+      return null
+    }
+
+    const ComponentB = () => {
+      resultB = useLoader(TestLoader, URL_B)
+      return null
+    }
+
+    await act(async () => root.render(<ComponentA />))
+    await act(async () => root.render(<ComponentB />))
+
+    // The loader should NOT have been called again - cache should have been hit
+    expect(loadCalls.length).toBe(2) // Still just the 2 preload calls
+    expect(resultA).toBe(`loaded:${URL_A}`)
+    expect(resultB).toBe(`loaded:${URL_B}`)
+
+    // Clean up cache for other tests
+    useLoader.clear(TestLoader, [URL_A, URL_B])
+  })
+
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()
