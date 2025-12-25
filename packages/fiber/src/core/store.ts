@@ -24,7 +24,7 @@ import { notifyDepreciated } from './notices'
 export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
 
 export const createStore = (
-  invalidate: (state?: RootState, frames?: number) => void,
+  invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
@@ -72,7 +72,7 @@ export const createStore = (
       xr: null as unknown as XRManager,
       inspector: null as unknown as Inspector,
 
-      invalidate: (frames = 1) => invalidate(get(), frames),
+      invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
       legacy: false,

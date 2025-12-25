@@ -479,21 +479,22 @@ export class Scheduler {
    * Accumulates pending frames (capped at 60) and starts the loop if not running.
    * No-op if frameloop is not 'demand'.
    * @param {number} [frames=1] - Number of frames to request
+   * @param {boolean} [stackFrames=false] - If false, sets pendingFrames to frames. If true, adds to existing pendingFrames.
    * @returns {void}
    * @example
    * // Request a single frame render
    * scheduler.invalidate();
    * // Request 5 frames (e.g., for animations)
    * scheduler.invalidate(5);
+   * // Set pending frames to 3 (don't stack)
+   * scheduler.invalidate(3, false);
    */
-  invalidate(frames: number = 1): void {
+  invalidate(frames: number = 1, stackFrames: boolean = false): void {
     if (this._frameloop !== 'demand') return
+    const baseFrames = stackFrames ? this.pendingFrames : 0
+    this.pendingFrames = Math.min(60, baseFrames + frames)
 
-    this.pendingFrames = Math.min(60, this.pendingFrames + frames)
-
-    if (!this.loopState.running && this.pendingFrames > 0) {
-      this.start()
-    }
+    if (!this.loopState.running && this.pendingFrames > 0) this.start()
   }
 
   //* Manual Stepping ================================

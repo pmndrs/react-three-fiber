@@ -136,7 +136,7 @@ export interface RootState {
     ) => Omit<Viewport, 'dpr' | 'initialDpr'>
   }
   /** Flags the canvas for render, but doesn't render in itself */
-  invalidate: (frames?: number) => void
+  invalidate: (frames?: number, stackFrames?: boolean) => void
   /** Advance (render) one step */
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */

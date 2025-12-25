@@ -113,11 +113,12 @@ export function addTail(callback: GlobalRenderCallback): () => void {
  *
  * @param state - Optional root state (ignored in new scheduler, kept for backwards compat)
  * @param frames - Number of frames to request (default: 1)
+ * @param stackFrames - If false, sets pendingFrames to frames. If true, adds to existing pendingFrames (default: false)
  *
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
  */
-export function invalidate(state?: RootState, frames = 1): void {
-  getScheduler().invalidate(frames)
+export function invalidate(state?: RootState, frames = 1, stackFrames = false): void {
+  getScheduler().invalidate(frames, stackFrames)
 }
 
 /**
