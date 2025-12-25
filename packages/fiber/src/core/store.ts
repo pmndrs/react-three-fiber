@@ -253,12 +253,13 @@ export const createStore = (
         const clock = get().clock
 
         // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
-        clock.stop()
-        clock.elapsedTime = 0
-
-        if (frameloop !== 'never') {
-          clock.start()
+        if (frameloop === 'never') {
+          clock.stop()
           clock.elapsedTime = 0
+        }
+
+        if (frameloop !== 'never' && !clock.running) {
+          clock.start()
         }
         set(() => ({ frameloop }))
       },
