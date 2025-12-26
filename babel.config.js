@@ -1,5 +1,20 @@
 module.exports = {
-  plugins: [],
+  plugins: [
+    [
+      'module-resolver',
+      {
+        alias: {
+          // Note: #three is handled by the rollup plugin in preconstruct.config.js during build
+          // This fallback is for preconstruct dev mode and Jest testing
+          '#three': './packages/fiber/src/three/index.ts',
+          '#three/legacy': './packages/fiber/src/three/legacy.ts',
+          '#three/webgpu': './packages/fiber/src/three/webgpu.ts',
+          '#three/tsl': './packages/fiber/src/three/tsl.ts',
+          '#types': './packages/fiber/types/index.ts',
+        },
+      },
+    ],
+  ],
   presets: [
     [
       '@babel/preset-env',

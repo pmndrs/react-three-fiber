@@ -19,6 +19,7 @@
     },
     "ecmaVersion": 2018,
     "sourceType": "module",
+    "warnOnUnsupportedTypeScriptVersion": false,
     "rules": {
       "curly": ["warn", "multi-line", "consistent"],
       "no-console": "off",

@@ -1,100 +1,19 @@
-import * as THREE from 'three'
-import { type Properties, getRootState } from './utils'
-import type { Instance } from './reconciler'
-import type { RootState, RootStore } from './store'
+import * as THREE from '#three'
+import { getRootState } from './utils'
 
-export interface Intersection extends THREE.Intersection {
-  /** The event source (the object which registered the handler) */
-  eventObject: THREE.Object3D
-}
-
-export interface IntersectionEvent<TSourceEvent> extends Intersection {
-  /** The event source (the object which registered the handler) */
-  eventObject: THREE.Object3D
-  /** An array of intersections */
-  intersections: Intersection[]
-  /** vec3.set(pointer.x, pointer.y, 0).unproject(camera) */
-  unprojectedPoint: THREE.Vector3
-  /** Normalized event coordinates */
-  pointer: THREE.Vector2
-  /** Delta between first click and this event */
-  delta: number
-  /** The ray that pierced it */
-  ray: THREE.Ray
-  /** The camera that was used by the raycaster */
-  camera: Camera
-  /** stopPropagation will stop underlying handlers from firing */
-  stopPropagation: () => void
-  /** The original host event */
-  nativeEvent: TSourceEvent
-  /** If the event was stopped by calling stopPropagation */
-  stopped: boolean
-}
-
-export type Camera = THREE.OrthographicCamera | THREE.PerspectiveCamera
-export type ThreeEvent<TEvent> = IntersectionEvent<TEvent> & Properties<TEvent>
-export type DomEvent = PointerEvent | MouseEvent | WheelEvent
-
-export interface Events {
-  onClick: EventListener
-  onContextMenu: EventListener
-  onDoubleClick: EventListener
-  onWheel: EventListener
-  onPointerDown: EventListener
-  onPointerUp: EventListener
-  onPointerLeave: EventListener
-  onPointerMove: EventListener
-  onPointerCancel: EventListener
-  onLostPointerCapture: EventListener
-}
-
-export interface EventHandlers {
-  onClick?: (event: ThreeEvent<MouseEvent>) => void
-  onContextMenu?: (event: ThreeEvent<MouseEvent>) => void
-  onDoubleClick?: (event: ThreeEvent<MouseEvent>) => void
-  onPointerUp?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerDown?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerOver?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerOut?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerEnter?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerLeave?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerMove?: (event: ThreeEvent<PointerEvent>) => void
-  onPointerMissed?: (event: MouseEvent) => void
-  onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
-  onWheel?: (event: ThreeEvent<WheelEvent>) => void
-  onLostPointerCapture?: (event: ThreeEvent<PointerEvent>) => void
-}
-
-export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
-export type ComputeFunction = (event: DomEvent, root: RootState, previous?: RootState) => void
-
-export interface EventManager<TTarget> {
-  /** Determines if the event layer is active */
-  enabled: boolean
-  /** Event layer priority, higher prioritized layers come first and may stop(-propagate) lower layer  */
-  priority: number
-  /** The compute function needs to set up the raycaster and an xy- pointer  */
-  compute?: ComputeFunction
-  /** The filter can re-order or re-structure the intersections  */
-  filter?: FilterFunction
-  /** The target node the event layer is tied to */
-  connected?: TTarget
-  /** All the pointer event handlers through which the host forwards native events */
-  handlers?: Events
-  /** Allows re-connecting to another target */
-  connect?: (target: TTarget) => void
-  /** Removes all existing events handlers from the target */
-  disconnect?: () => void
-  /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
-   *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
-   */
-  update?: () => void
-}
-
-export interface PointerCaptureTarget {
-  intersection: Intersection
-  target: Element
-}
+//* Type Imports ==============================
+import type {
+  Instance,
+  RootState,
+  RootStore,
+  Intersection,
+  ThreeEvent,
+  DomEvent,
+  Events,
+  EventHandlers,
+  EventManager,
+  PointerCaptureTarget,
+} from '#types'
 
 function makeId(event: Intersection) {
   return (event.eventObject || event.object).uuid + '/' + event.index + event.instanceId
@@ -148,11 +67,17 @@ export function createEvents(store: RootStore) {
 
   /** Returns true if an instance has a valid pointer-event registered, this excludes scroll, clicks etc */
   function filterPointerEvents(objects: THREE.Object3D[]) {
-    return objects.filter((obj) =>
-      ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
-        (name) =>
-          (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
-      ),
+    return objects.filter(
+      (obj) =>
+        ['Move', 'Over', 'Enter', 'Out', 'Leave'].some(
+          (name) =>
+            (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onPointer' + name) as keyof EventHandlers],
+        ) ||
+        ['OverEnter', 'OverLeave', 'Over'].some(
+          (name) =>
+            (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers[('onDrag' + name) as keyof EventHandlers],
+        ) ||
+        (obj as Instance<THREE.Object3D>['object']).__r3f?.handlers.onDrop,
     )
   }
 
@@ -190,17 +115,22 @@ export function createEvents(store: RootStore) {
       // Intersect object by object
       return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
     }
+    //console.log('raw eventObjects', eventsObjects)
 
     // Collect events
     let hits: THREE.Intersection<THREE.Object3D>[] = eventsObjects
       // Intersect objects
       .flatMap(handleRaycast)
       // Sort by event priority and distance
+      // Higher priority = processed first, then closer objects first
       .sort((a, b) => {
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
-        if (!aState || !bState) return a.distance - b.distance
-        return bState.events.priority - aState.events.priority || a.distance - b.distance
+        // Default priority is 1 (from createPointerEvents), but may be undefined for some objects
+        const aPriority = aState?.events?.priority ?? 1
+        const bPriority = bState?.events?.priority ?? 1
+        // Sort by priority descending (higher first), then by distance ascending (closer first)
+        return bPriority - aPriority || a.distance - b.distance
       })
       // Filter out duplicates
       .filter((item) => {
@@ -209,6 +139,21 @@ export function createEvents(store: RootStore) {
         duplicates.add(id)
         return true
       })
+
+    // DEBUG: Log hit priorities
+    /*
+    if (hits.length > 1) {
+      console.log(
+        '%c[Events Debug] Sorted hits:',
+        'color: cyan',
+        hits.map((h) => ({
+          name: h.object.name || h.object.type,
+          priority: getRootState(h.object)?.events?.priority ?? 1,
+          distance: h.distance.toFixed(3),
+        })),
+      )
+    }
+      */
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order, this likely only makes sense on the root filter
@@ -245,19 +190,7 @@ export function createEvents(store: RootStore) {
     if (intersections.length) {
       const localState = { stopped: false }
       for (const hit of intersections) {
-        let state = getRootState(hit.object)
-
-        // If the object is not managed by R3F, it might be parented to an element which is.
-        // Traverse upwards until we find a managed parent and use its state instead.
-        if (!state) {
-          hit.object.traverseAncestors((obj) => {
-            const parentState = getRootState(obj)
-            if (parentState) {
-              state = parentState
-              return false
-            }
-          })
-        }
+        const state = getRootState(hit.object)
 
         if (state) {
           const { raycaster, pointer, camera, internal } = state
@@ -373,6 +306,7 @@ export function createEvents(store: RootStore) {
           const data = { ...hoveredObj, intersections }
           handlers.onPointerOut?.(data as ThreeEvent<PointerEvent>)
           handlers.onPointerLeave?.(data as ThreeEvent<PointerEvent>)
+          handlers.onDragOverLeave?.(data as ThreeEvent<DragEvent>)
         }
       }
     }
@@ -385,11 +319,26 @@ export function createEvents(store: RootStore) {
     }
   }
 
+  function dragOverMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onDragOverMissed?.(event)
+    }
+  }
+
+  function dropMissed(event: DragEvent, objects: THREE.Object3D[]) {
+    for (let i = 0; i < objects.length; i++) {
+      const instance = (objects[i] as Instance<THREE.Object3D>['object']).__r3f
+      instance?.handlers.onDropMissed?.(event)
+    }
+  }
+
   function handlePointer(name: string) {
     // Deal with cancelation
     switch (name) {
       case 'onPointerLeave':
       case 'onPointerCancel':
+      case 'onDragLeave':
         return () => cancelPointer([])
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
@@ -412,15 +361,18 @@ export function createEvents(store: RootStore) {
 
     // Any other pointer goes here ...
     return function handleEvent(event: DomEvent) {
-      const { onPointerMissed, internal } = store.getState()
+      const { onPointerMissed, onDragOverMissed, onDropMissed, internal } = store.getState()
 
       // prepareRay(event)
       internal.lastEvent.current = event
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
+      const isDragOver = name === 'onDragOver'
+      const isDrop = name === 'onDrop'
       const isClickEvent = name === 'onClick' || name === 'onContextMenu' || name === 'onDoubleClick'
-      const filter = isPointerMove ? filterPointerEvents : undefined
+      // Filter interaction objects for pointer move and drag events
+      const filter = isPointerMove || isDragOver || isDrop ? filterPointerEvents : undefined
 
       const hits = intersect(event, filter)
       const delta = isClickEvent ? calculateDistance(event) : 0
@@ -439,8 +391,21 @@ export function createEvents(store: RootStore) {
           if (onPointerMissed) onPointerMissed(event)
         }
       }
+
+      // If a dragover yields no results, fire the missed callback
+      if (isDragOver && !hits.length) {
+        dragOverMissed(event as DragEvent, internal.interaction)
+        if (onDragOverMissed) onDragOverMissed(event as DragEvent)
+      }
+
+      // If a drop yields no results, fire the missed callback
+      if (isDrop && !hits.length) {
+        dropMissed(event as DragEvent, internal.interaction)
+        if (onDropMissed) onDropMissed(event as DragEvent)
+      }
+
       // Take care of unhover
-      if (isPointerMove) cancelPointer(hits)
+      if (isPointerMove || isDragOver) cancelPointer(hits)
 
       function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
@@ -483,6 +448,23 @@ export function createEvents(store: RootStore) {
           }
           // Call mouse move
           handlers.onPointerMove?.(data as ThreeEvent<PointerEvent>)
+        } else if (isDragOver) {
+          // Handle dragover enter/leave state tracking
+          const id = makeId(data)
+          const hoveredItem = internal.hovered.get(id)
+          if (!hoveredItem) {
+            // If the object wasn't previously hovered, book it and call its handler
+            internal.hovered.set(id, data)
+            handlers.onDragOverEnter?.(data as ThreeEvent<DragEvent>)
+          } else if (hoveredItem.stopped) {
+            // If the object was previously hovered and stopped, we shouldn't allow other items to proceed
+            data.stopPropagation()
+          }
+          // Call continuous dragover handler (fires every frame while dragging over)
+          handlers.onDragOver?.(data as ThreeEvent<DragEvent>)
+        } else if (isDrop) {
+          // Handle drop event
+          handlers.onDrop?.(data as ThreeEvent<DragEvent>)
         } else {
           // All other events ...
           const handler = handlers[name as keyof EventHandlers] as (event: ThreeEvent<PointerEvent>) => void
@@ -515,4 +497,74 @@ export function createEvents(store: RootStore) {
   }
 
   return { handlePointer }
+}
+
+//* Migrated from web only folder to core
+
+const DOM_EVENTS = {
+  onClick: ['click', false],
+  onContextMenu: ['contextmenu', false],
+  onDoubleClick: ['dblclick', false],
+  onDragEnter: ['dragenter', false],
+  onDragLeave: ['dragleave', false],
+  onDragOver: ['dragover', false],
+  onDrop: ['drop', false],
+  onWheel: ['wheel', true],
+  onPointerDown: ['pointerdown', true],
+  onPointerUp: ['pointerup', true],
+  onPointerLeave: ['pointerleave', true],
+  onPointerMove: ['pointermove', true],
+  onPointerCancel: ['pointercancel', true],
+  onLostPointerCapture: ['lostpointercapture', true],
+} as const
+
+/** Default R3F event manager for web */
+export function createPointerEvents(store: RootStore): EventManager<HTMLElement> {
+  const { handlePointer } = createEvents(store)
+
+  return {
+    priority: 1,
+    enabled: true,
+    compute(event: DomEvent, state: RootState, previous?: RootState) {
+      // https://github.com/pmndrs/react-three-fiber/pull/782
+      // Events trigger outside of canvas when moved, use offsetX/Y by default and allow overrides
+      state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)
+      state.raycaster.setFromCamera(state.pointer, state.camera)
+    },
+
+    connected: undefined,
+    handlers: Object.keys(DOM_EVENTS).reduce(
+      (acc, key) => ({ ...acc, [key]: handlePointer(key) }),
+      {},
+    ) as unknown as Events,
+    update: () => {
+      const { events, internal } = store.getState()
+      if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
+    },
+    connect: (target: HTMLElement) => {
+      const { set, events } = store.getState()
+      events.disconnect?.()
+      set((state) => ({ events: { ...state.events, connected: target } }))
+      if (events.handlers) {
+        for (const name in events.handlers) {
+          const event = events.handlers[name as keyof typeof events.handlers]
+          const [eventName, passive] = DOM_EVENTS[name as keyof typeof DOM_EVENTS]
+          target.addEventListener(eventName, event, { passive })
+        }
+      }
+    },
+    disconnect: () => {
+      const { set, events } = store.getState()
+      if (events.connected) {
+        if (events.handlers) {
+          for (const name in events.handlers) {
+            const event = events.handlers[name as keyof typeof events.handlers]
+            const [eventName] = DOM_EVENTS[name as keyof typeof DOM_EVENTS]
+            events.connected.removeEventListener(eventName, event)
+          }
+        }
+        set((state) => ({ events: { ...state.events, connected: undefined } }))
+      }
+    },
+  }
 }

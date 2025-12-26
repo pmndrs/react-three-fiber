@@ -1,5 +1,31 @@
 # @react-three/fiber
 
+## 9.4.2
+
+### Patch Changes
+
+- 3d445fd158b25eb380cd27bd2e01304016aa23e3: fix: Expo SDK 54 compatibility through workaround
+
+## 9.4.1
+
+### Patch Changes
+
+- 4f8cec0d79003a9ef6d1ca1e56de94aec4158714: fix: pass DevTools config through createReconciler to fix React DevTools
+
+## 9.4.0
+
+### Minor Changes
+
+- f0976dc14a2d3203af267d0e3524d45a07f3248a: feat: improve applyProps errors, harden pierced props setting
+
+## 9.3.0
+
+### Minor Changes
+
+- 7579c2d79ed60e5c93a259637b65c01971f39d82: feat: add flushSync example
+- 26e5d6e8b8b00b817ebb5242432000abe38bfc2c: fix: update flushSync for new reconciler
+- 0281b6bc4fcf041ed801e64f1876f70c214aa117: fix(native): update react-native deep imports for 0.79 compatibility
+
 ## 9.2.0
 
 ### Minor Changes

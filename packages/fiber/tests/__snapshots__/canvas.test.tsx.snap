@@ -6,10 +6,12 @@ exports[`web Canvas should correctly mount 1`] = `
     style="position: relative; width: 100%; height: 100%; overflow: hidden; pointer-events: auto;"
   >
     <div
+      class="r3f-canvas-container"
       style="width: 100%; height: 100%;"
     >
       <canvas
-        data-engine="three.js r172"
+        class="r3f-canvas"
+        data-engine="three.js r181"
         height="800"
         style="display: block; width: 1280px; height: 800px;"
         width="1280"

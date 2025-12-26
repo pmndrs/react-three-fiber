@@ -1,38 +1,45 @@
-import * as React from 'react'
+import * as THREE from '#three'
+import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector } from '#three'
+
+import type { Object3D } from '#three'
+import type { JSX, ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
-import * as THREE from 'three'
 import { createWithEqualityFn } from 'zustand/traditional'
 
-import type { ThreeElement } from '../three-types'
-import { ComputeFunction, EventManager } from './events'
 import { useStore } from './hooks'
-import { advance, invalidate } from './loop'
-import { reconciler, Root } from './reconciler'
+import { advance, invalidate } from './hooks/useFrame/legacy'
+import { reconciler } from './reconciler'
+import { context, createStore } from './store'
 import {
-  context,
-  createStore,
-  Dpr,
-  Frameloop,
-  isRenderer,
-  Performance,
-  Renderer,
-  RootState,
-  RootStore,
-  Size,
-} from './store'
-import {
-  type Properties,
   applyProps,
   calculateDpr,
-  Camera,
   dispose,
-  EquConfig,
   is,
   prepare,
   updateCamera,
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
+import { notifyDepreciated } from './notices'
+import { getScheduler, Scheduler } from './hooks/useFrame/scheduler'
+
+import type {
+  RootState,
+  RootStore,
+  Size,
+  EventManager,
+  ThreeCamera,
+  EquConfig,
+  Root,
+  RenderProps,
+  ReconcilerRoot,
+  InjectState,
+} from '#types'
+
+const isDefaultBuild = R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU
+//todo: what is this, why is it here?
+export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
 // https://github.com/DefinitelyTyped/DefinitelyTyped/pull/54988
@@ -42,80 +49,15 @@ export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
 
-export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
-  canvas: HTMLCanvasElement | OffscreenCanvas
-}
-
-export type GLProps =
-  | Renderer
-  | ((defaultProps: DefaultGLProps) => Renderer)
-  | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
-
-export type CameraProps = (
-  | Camera
-  | Partial<
-      ThreeElement<typeof THREE.Camera> &
-        ThreeElement<typeof THREE.PerspectiveCamera> &
-        ThreeElement<typeof THREE.OrthographicCamera>
-    >
-) & {
-  /** Flags the camera as manual, putting projection into your own hands */
-  manual?: boolean
-}
-
-export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  /** A threejs renderer instance or props that go into the default renderer */
-  gl?: GLProps
-  /** Dimensions to fit the renderer to. Will measure canvas dimensions if omitted */
-  size?: Size
-  /**
-   * Enables shadows (by default PCFsoft). Can accept `gl.shadowMap` options for fine-tuning,
-   * but also strings: 'basic' | 'percentage' | 'soft' | 'variance'.
-   * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
-   */
-  shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
-  /**
-   * Disables three r139 color management.
-   * @see https://threejs.org/docs/#manual/en/introduction/Color-management
-   */
-  legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
-  linear?: boolean
-  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
-  flat?: boolean
-  /** Creates an orthographic camera */
-  orthographic?: boolean
-  /**
-   * R3F's render mode. Set to `demand` to only render on state change or `never` to take control.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#on-demand-rendering
-   */
-  frameloop?: Frameloop
-  /**
-   * R3F performance options for adaptive performance.
-   * @see https://docs.pmnd.rs/react-three-fiber/advanced/scaling-performance#movement-regression
-   */
-  performance?: Partial<Omit<Performance, 'regress'>>
-  /** Target pixel ratio. Can clamp between a range: `[min, max]` */
-  dpr?: Dpr
-  /** Props that go into the default raycaster */
-  raycaster?: Partial<THREE.Raycaster>
-  /** A `THREE.Scene` instance or props that go into the default scene */
-  scene?: THREE.Scene | Partial<THREE.Scene>
-  /** A `THREE.Camera` instance or props that go into the default camera */
-  camera?: CameraProps
-  /** An R3F event manager to manage elements' pointer events */
-  events?: (store: RootStore) => EventManager<HTMLElement>
-  /** Callback after the canvas has rendered (but not yet committed) */
-  onCreated?: (state: RootState) => void
-  /** Response for pointer clicks that have missed any target */
-  onPointerMissed?: (event: MouseEvent) => void
-}
-
-export interface ReconcilerRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
-  configure: (config?: RenderProps<TCanvas>) => Promise<ReconcilerRoot<TCanvas>>
-  render: (element: React.ReactNode) => RootStore
-  unmount: () => void
+// Helper to resolve renderer config (handles: function | instance | props)
+async function resolveRenderer<T>(
+  config: any,
+  defaultProps: Record<string, any>,
+  RendererClass: new (props: any) => T,
+): Promise<T> {
+  if (typeof config === 'function') return await config(defaultProps)
+  if (isRenderer(config)) return config as T
+  return new RendererClass({ ...defaultProps, ...config })
 }
 
 function computeInitialSize(canvas: HTMLCanvasElement | OffscreenCanvas, size?: Size): Size {
@@ -193,6 +135,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let {
         gl: glConfig,
+        renderer: rendererConfig,
         size: propsSize,
         scene: sceneOptions,
         events,
@@ -200,6 +143,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         shadows = false,
         linear = false,
         flat = false,
+        textureColorSpace = THREE.SRGBColorSpace,
         legacy = false,
         orthographic = false,
         frameloop = 'always',
@@ -208,36 +152,84 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         raycaster: raycastOptions,
         camera: cameraOptions,
         onPointerMissed,
+        onDragOverMissed,
+        onDropMissed,
       } = props
 
       let state = store.getState()
 
-      // Set up renderer (one time only!)
-      let gl = state.gl
-      if (!state.gl) {
-        const defaultProps: DefaultGLProps = {
-          canvas: canvas as HTMLCanvasElement,
-          powerPreference: 'high-performance',
-          antialias: true,
-          alpha: true,
-        }
+      //* Renderer Initialization ==============================
 
-        const customRenderer = (
-          typeof glConfig === 'function' ? await glConfig(defaultProps) : glConfig
-        ) as THREE.WebGLRenderer
-
-        if (isRenderer(customRenderer)) {
-          gl = customRenderer
-        } else {
-          gl = new THREE.WebGLRenderer({
-            ...defaultProps,
-            ...glConfig,
-          })
-        }
-
-        state.set({ gl })
+      const defaultGLProps = {
+        canvas: canvas as HTMLCanvasElement,
+        powerPreference: 'high-performance' as const,
+        antialias: true,
+        alpha: true,
       }
 
+      const defaultGPUProps = {
+        canvas: canvas as HTMLCanvasElement,
+      }
+
+      //* Build Flag Validation ==============================
+      // Check if the requested renderer is available in this build
+      if (glConfig && !R3F_BUILD_LEGACY) {
+        throw new Error(
+          'WebGLRenderer (gl prop) is not available in this build. ' +
+            'Use @react-three/fiber or @react-three/fiber/legacy instead.',
+        )
+      }
+      if (rendererConfig && !R3F_BUILD_WEBGPU) {
+        throw new Error(
+          'WebGPURenderer (renderer prop) is not available in this build. ' +
+            'Use @react-three/fiber or @react-three/fiber/webgpu instead.',
+        )
+      }
+
+      // Determine which renderer to use based on props and build flags
+      const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
+
+      if (glConfig && rendererConfig) {
+        throw new Error('Cannot use both gl and renderer props at the same time')
+      }
+
+      // Deprecation warning for WebGL usage (only in builds that support both)
+      if (R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU && !state.isLegacy && wantsGL) {
+        notifyDepreciated({
+          heading: 'WebGlRenderer Usage',
+          body: 'WebGlRenderer usage is deprecated in favor of WebGPU. Import from /legacy directly or upgrade to WebGPU.',
+          link: 'https://docs.pmnd.rs/react-three-fiber/api/renderer',
+        })
+      }
+
+      let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
+
+      //* Create Renderer (one time only) ==============================
+      if (R3F_BUILD_LEGACY && wantsGL && !state.internal.actualRenderer) {
+        //* WebGL path ---
+        renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+        state.internal.actualRenderer = renderer
+        // Set both gl and renderer to the WebGLRenderer for backwards compatibility
+        state.set({ isLegacy: true, gl: renderer, renderer: renderer })
+      } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
+        //* WebGPU path ---
+        renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+
+        // WebGPU-specific setup
+        await renderer.init()
+
+        // temp, stop the inspector
+        //renderer.inspector = new Inspector()
+
+        const backend = renderer.backend
+        const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
+
+        state.internal.actualRenderer = renderer
+        // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
+        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
+      }
+
+      //* Default Raycaster Initialization ==============================
       // Set up raycaster (one time only!)
       let raycaster = state.raycaster
       if (!raycaster) state.set({ raycaster: (raycaster = new THREE.Raycaster()) })
@@ -248,15 +240,16 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!is.equ(params, raycaster.params, shallowLoose))
         applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
 
+      //* Default Camera Initialization ==============================
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
-        const isCamera = (cameraOptions as unknown as THREE.Camera | undefined)?.isCamera
+        const isCamera = (cameraOptions as unknown as ThreeCamera | undefined)?.isCamera
         const camera = isCamera
-          ? (cameraOptions as Camera)
+          ? (cameraOptions as ThreeCamera)
           : orthographic
           ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-          : new THREE.PerspectiveCamera(75, 0, 0.1, 1000)
+          : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
           if (cameraOptions) {
@@ -264,13 +257,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             // Preserve user-defined frustum if possible
             // https://github.com/pmndrs/react-three-fiber/issues/3160
             if (!(camera as any).manual) {
-              if (
-                'aspect' in cameraOptions ||
-                'left' in cameraOptions ||
-                'right' in cameraOptions ||
-                'bottom' in cameraOptions ||
-                'top' in cameraOptions
-              ) {
+              const projectionProps = ['aspect', 'left', 'right', 'bottom', 'top']
+              if (projectionProps.some((prop) => prop in cameraOptions)) {
                 ;(camera as any).manual = true
                 camera.updateProjectionMatrix()
               }
@@ -299,7 +287,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           if (sceneOptions) applyProps(scene as any, sceneOptions as any)
         }
 
-        state.set({ scene })
+        // Set both scene and rootScene - rootScene always points to the actual THREE.Scene
+        // even when scene is overridden in portals
+        // Also set internal.container for consistent child attachment in reconciler
+        state.set((prev) => ({
+          scene,
+          rootScene: scene,
+          internal: { ...prev.internal, container: scene },
+        }))
       }
 
       // Store events internally
@@ -315,6 +310,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
+      // Check dragover missed
+      if (!state.onDragOverMissed) state.set({ onDragOverMissed })
+      // Check drop missed
+      if (!state.onDropMissed) state.set({ onDropMissed })
       // Check performance
       if (performance && !is.equ(performance, state.performance, shallowLoose))
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
@@ -328,42 +327,47 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           advance(timestamp, true, state, frame)
         }
 
+        const actualRenderer = state.internal.actualRenderer
+
         // Toggle render switching on session
         const handleSessionChange = () => {
           const state = store.getState()
-          state.gl.xr.enabled = state.gl.xr.isPresenting
+          const renderer = state.internal.actualRenderer
+          actualRenderer.xr.enabled = actualRenderer.xr.isPresenting
 
-          state.gl.xr.setAnimationLoop(state.gl.xr.isPresenting ? handleXRFrame : null)
-          if (!state.gl.xr.isPresenting) invalidate(state)
+          renderer.xr.setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
+          if (!renderer.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager
         const xr = {
           connect() {
-            const gl = store.getState().gl
-            gl.xr.addEventListener('sessionstart', handleSessionChange)
-            gl.xr.addEventListener('sessionend', handleSessionChange)
+            const { gl, renderer, isLegacy } = store.getState()
+            const actualRenderer = renderer || gl
+            actualRenderer.xr.addEventListener('sessionstart', handleSessionChange)
+            actualRenderer.xr.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
-            const gl = store.getState().gl
-            gl.xr.removeEventListener('sessionstart', handleSessionChange)
-            gl.xr.removeEventListener('sessionend', handleSessionChange)
+            const { gl, renderer, isLegacy } = store.getState()
+            const actualRenderer = renderer || gl
+            actualRenderer.xr.removeEventListener('sessionstart', handleSessionChange)
+            actualRenderer.xr.removeEventListener('sessionend', handleSessionChange)
           },
         }
 
         // Subscribe to WebXR session events
-        if (typeof gl.xr?.addEventListener === 'function') xr.connect()
+        if (typeof renderer.xr?.addEventListener === 'function') xr.connect()
         state.set({ xr })
       }
 
-      // Set shadowmap
-      if (gl.shadowMap) {
-        const oldEnabled = gl.shadowMap.enabled
-        const oldType = gl.shadowMap.type
-        gl.shadowMap.enabled = !!shadows
+      //* Shadow Map ==============================
+      if (renderer.shadowMap) {
+        const oldEnabled = renderer.shadowMap.enabled
+        const oldType = renderer.shadowMap.type
+        renderer.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          gl.shadowMap.type = THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap
         } else if (is.str(shadows)) {
           const types = {
             basic: THREE.BasicShadowMap,
@@ -371,30 +375,114 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             soft: THREE.PCFSoftShadowMap,
             variance: THREE.VSMShadowMap,
           }
-          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFSoftShadowMap
         } else if (is.obj(shadows)) {
-          Object.assign(gl.shadowMap, shadows)
+          Object.assign(renderer.shadowMap as any, shadows)
         }
 
-        if (oldEnabled !== gl.shadowMap.enabled || oldType !== gl.shadowMap.type) gl.shadowMap.needsUpdate = true
+        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type)
+          (renderer.shadowMap as any).needsUpdate = true
       }
 
-      THREE.ColorManagement.enabled = !legacy
+      // Only execute legacy color management if could be using the webgl renderer is true
+      if (R3F_BUILD_LEGACY) {
+        //We only notifiy its depreciation for default and legaqcy. webgpu imports dont get noticed
+        if (isDefaultBuild) {
+          if (legacy)
+            notifyDepreciated({
+              heading: 'Legacy Color Management',
+              body: 'Legacy color management is deprecated and will be removed in a future version.',
+              link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
+            })
+        }
 
-      // Set color space and tonemapping preferences
-      if (!configured) {
-        gl.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-        gl.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        THREE.ColorManagement.enabled = !legacy
+
+        // Set color space and tonemapping preferences
+        if (!configured) {
+          renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+          renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        }
+
+        // Update color management state
+        if (state.legacy !== legacy) state.set(() => ({ legacy }))
+        if (state.linear !== linear) state.set(() => ({ linear }))
+        if (state.flat !== flat) state.set(() => ({ flat }))
       }
 
-      // Update color management state
-      if (state.legacy !== legacy) state.set(() => ({ legacy }))
-      if (state.linear !== linear) state.set(() => ({ linear }))
-      if (state.flat !== flat) state.set(() => ({ flat }))
+      // Update textureColorSpace state (color space for 8-bit input textures)
+      if (state.textureColorSpace !== textureColorSpace) state.set(() => ({ textureColorSpace }))
 
       // Set gl props
-      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, gl, shallowLoose))
-        applyProps(gl, glConfig as any)
+      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
+        applyProps(renderer, glConfig as any)
+
+      // Set renderer props (WebGPU)
+      if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
+        const currentRenderer = state.renderer
+        if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
+          applyProps(currentRenderer, rendererConfig as any)
+        }
+      }
+
+      //* Scheduler Integration ==============================
+      // Register this root with the global scheduler
+      const scheduler = getScheduler()
+      const rootId = (state.internal as any).rootId as string | undefined
+
+      if (!rootId) {
+        // Generate a unique root ID and register with global scheduler
+        const newRootId = scheduler.generateRootId()
+        const unregisterRoot = scheduler.registerRoot(newRootId, () => store.getState())
+
+        // Register default render job - this handles the actual THREE.js rendering
+        // Marked as 'system' so it doesn't count as a user taking over the render phase
+        // Only renders if no user has registered in the 'render' phase (taking over rendering)
+        const unregisterRender = scheduler.register(
+          () => {
+            const state = store.getState()
+            const renderer = state.internal.actualRenderer
+
+            // Skip if a user has taken over rendering by registering in the 'render' phase
+            // Also check legacy priority system for backwards compatibility
+            const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
+            if (userHandlesRender || state.internal.priority) return
+
+            // Use PostProcessing if available (from usePostProcessing hook)
+            // Otherwise fall back to standard renderer.render()
+            // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
+            try {
+              if (state.postProcessing?.render) state.postProcessing.render()
+              else if (renderer?.render) renderer.render(state.scene, state.camera)
+            } catch (error) {
+              // Propagate render errors to error boundary
+              state.setError(error instanceof Error ? error : new Error(String(error)))
+            }
+          },
+          {
+            id: `${newRootId}_render`,
+            rootId: newRootId,
+            phase: 'render',
+            system: true, // Internal flag: this is a system job, not user-controlled
+          },
+        )
+
+        // Store the rootId and unregister function in internal state
+        state.set((state) => ({
+          internal: {
+            ...state.internal,
+            rootId: newRootId,
+            unregisterRoot: () => {
+              unregisterRoot()
+              unregisterRender()
+            },
+            scheduler,
+          } as any,
+        }))
+      }
+
+      // Update scheduler frameloop mode
+      scheduler.frameloop = frameloop
 
       // Set locals
       onCreated = onCreatedCallback
@@ -402,7 +490,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       resolve()
       return this
     },
-    render(children: React.ReactNode): RootStore {
+    render(children: ReactNode): RootStore {
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
@@ -426,7 +514,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 interface ProviderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
   onCreated?: (state: RootState) => void
   store: RootStore
-  children: React.ReactNode
+  children: ReactNode
   rootElement: TCanvas
 }
 
@@ -435,7 +523,7 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
   children,
   onCreated,
   rootElement,
-}: ProviderProps<TCanvas>): React.JSX.Element {
+}: ProviderProps<TCanvas>): JSX.Element {
   useIsomorphicLayoutEffect(() => {
     const state = store.getState()
     // Flag the canvas active, rendering will now begin
@@ -463,10 +551,16 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
       if (state) {
         setTimeout(() => {
           try {
+            const renderer = state.internal.actualRenderer
+
+            // Unregister this root from the global scheduler
+            const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
+            if (unregisterRoot) unregisterRoot()
+
             state.events.disconnect?.()
-            state.gl?.renderLists?.dispose?.()
-            state.gl?.forceContextLoss?.()
-            if (state.gl?.xr) state.xr.disconnect()
+            renderer?.renderLists?.dispose?.()
+            renderer?.forceContextLoss?.()
+            if (renderer?.xr) state.xr.disconnect()
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)
@@ -479,41 +573,43 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   }
 }
 
-export type InjectState = Partial<
-  Omit<RootState, 'events'> & {
-    events?: {
-      enabled?: boolean
-      priority?: number
-      compute?: ComputeFunction
-      connected?: any
-    }
-  }
->
-
-export function createPortal(
-  children: React.ReactNode,
-  container: THREE.Object3D,
-  state?: InjectState,
-): React.JSX.Element {
+export function createPortal(children: ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
   return <Portal children={children} container={container} state={state} />
 }
 
 interface PortalProps {
-  children: React.ReactNode
+  children: ReactNode
   state?: InjectState
-  container: THREE.Object3D
+  container: Object3D
 }
 
-function Portal({ state = {}, children, container }: PortalProps): React.JSX.Element {
+function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
    *  <Canvas>
    *    {createPortal(...)} */
-  const { events, size, ...rest } = state
+  const { events, size, injectScene = true, ...rest } = state
   const previousRoot = useStore()
-  const [raycaster] = React.useState(() => new THREE.Raycaster())
-  const [pointer] = React.useState(() => new THREE.Vector2())
+  const [raycaster] = useState(() => new THREE.Raycaster())
+  const [pointer] = useState(() => new THREE.Vector2())
+
+  //* Portal Scene Injection ==============================
+  // https://github.com/pmndrs/react-three-fiber/issues/2725
+  // Ensure scene is always a real THREE.Scene so properties like background, environment, fog work
+  // If container is already a Scene, use it directly
+  // Otherwise inject a Scene as CHILD of container (children attach to injected scene)
+  // Set injectScene: false to skip injection (anti-pattern, for edge cases)
+  const [portalScene] = useState(() => {
+    // If container is already a Scene, use it directly
+    if ((container as THREE.Scene).isScene) return container as THREE.Scene
+    // If injection disabled, use container directly (anti-pattern)
+    if (!injectScene) return container as THREE.Scene
+    // Inject a Scene as child of container
+    const scene = new THREE.Scene()
+    container.add(scene)
+    return scene
+  })
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
     let viewport = undefined
@@ -529,8 +625,10 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
       // The intersect consists of the previous root state
       ...rootState,
       ...injectState,
-      // Portals have their own scene, which forms the root, a raycaster and a pointer
-      scene: container as THREE.Scene,
+      // Portals have their own scene - always a real THREE.Scene (injected if needed)
+      scene: portalScene,
+      // rootScene always points to the actual THREE.Scene, even inside portals
+      rootScene: rootState.rootScene,
       raycaster,
       pointer,
       mouse: pointer,
@@ -543,10 +641,12 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
         injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+      // Container for child attachment - the portalScene (injected or container itself)
+      internal: { ...rootState.internal, ...injectState.internal, container: portalScene },
     } as RootState
   })
 
-  const usePortalStore = React.useMemo(() => {
+  const usePortalStore = useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
 

@@ -255,3 +255,53 @@ import { createRoot } from '@react-three/fiber'
 const store = await act(async () => createRoot(canvas).render(<App />))
 console.log(store.getState())
 ```
+
+### Test Renderer Entry Points
+
+`@react-three/test-renderer` now supports multiple entry points matching the fiber package structure. Choose the entry that matches your application's fiber import:
+
+| Your Fiber Import | Test Renderer Import |
+|-------------------|---------------------|
+| `@react-three/fiber` | `@react-three/test-renderer` |
+| `@react-three/fiber/legacy` | `@react-three/test-renderer/legacy` |
+| `@react-three/fiber/webgpu` | `@react-three/test-renderer/webgpu` |
+
+```diff
+// If using WebGPU with TSL hooks
+-import ReactThreeTestRenderer from '@react-three/test-renderer'
++import ReactThreeTestRenderer from '@react-three/test-renderer/webgpu'
+
+// If using legacy WebGL-only
+-import ReactThreeTestRenderer from '@react-three/test-renderer'
++import ReactThreeTestRenderer from '@react-three/test-renderer/legacy'
+```
+
+The WebGPU entry (`/webgpu`) also exports all WebGPU-specific hooks for testing:
+
+```tsx
+import ReactThreeTestRenderer, {
+  useUniform,
+  useUniforms,
+  useNodes,
+  useLocalNodes,
+  removeUniforms,
+  clearScope,
+} from '@react-three/test-renderer/webgpu'
+
+describe('WebGPU Hooks', () => {
+  it('should test uniforms', async () => {
+    let uniforms: any = null
+
+    function TestComponent() {
+      uniforms = useUniforms({ uTime: 0 })
+      return null
+    }
+
+    const renderer = await ReactThreeTestRenderer.create(<TestComponent />)
+    expect(uniforms.uTime.value).toBe(0)
+    await renderer.unmount()
+  })
+})
+```
+
+For more details, see the [WebGPU Testing Guide](/packages/test-renderer/markdown/webgpu-testing.md).

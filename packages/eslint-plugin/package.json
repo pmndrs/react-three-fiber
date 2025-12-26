@@ -24,17 +24,19 @@
     "type": "opencollective",
     "url": "https://opencollective.com/react-three-fiber"
   },
-  "main": "dist/react-three-eslint-plugin.cjs.js",
-  "module": "dist/react-three-eslint-plugin.esm.js",
-  "types": "dist/react-three-eslint-plugin.cjs.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
   "sideEffects": false,
-  "preconstruct": {
-    "entrypoints": [
-      "index.ts"
-    ]
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
   },
   "dependencies": {
     "@babel/runtime": "^7.17.8",
@@ -48,6 +50,8 @@
     "ts-node": "^10.9.1"
   },
   "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub",
     "codegen": "ts-node scripts/codegen.ts"
   }
 }

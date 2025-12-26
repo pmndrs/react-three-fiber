@@ -1,7 +1,37 @@
 import * as React from 'react'
-import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
-import THREE from 'three'
+import { render, fireEvent, RenderResult, createEvent } from '@testing-library/react'
+import { act } from 'react'
+import { Canvas, extend } from '../src'
+import * as THREE from '#three'
+import type { RootState } from '#types'
+
+//* PointerEvent Polyfill ==============================
+// JSDOM doesn't include PointerEvent
+// https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
+if (!global.PointerEvent) {
+  global.PointerEvent = class extends MouseEvent implements PointerEvent {
+    readonly pointerId: number = 0
+    readonly width: number = 1
+    readonly height: number = 1
+    readonly pressure: number = 0
+    readonly tangentialPressure: number = 0
+    readonly tiltX: number = 0
+    readonly tiltY: number = 0
+    readonly twist: number = 0
+    readonly pointerType: string = ''
+    readonly isPrimary: boolean = false
+    readonly altitudeAngle: number = 0
+    readonly azimuthAngle: number = 0
+
+    constructor(type: string, params: PointerEventInit = {}) {
+      super(type, params)
+      Object.assign(this, params)
+    }
+
+    getCoalescedEvents = () => []
+    getPredictedEvents = () => []
+  }
+}
 
 extend(THREE as any)
 
@@ -188,6 +218,164 @@ describe('events', () => {
     fireEvent(getContainer(), evt2)
 
     expect(handlePointerOut).toHaveBeenCalled()
+  })
+
+  //* Drag & Drop Events ==============================
+  // Note: DragEvent is not fully implemented in jsdom yet: https://github.com/jsdom/jsdom/issues/2913
+  // however, @testing-library/react does simulate it via createEvent
+
+  it('can handle onDragOverEnter & onDragOverLeave on mesh', async () => {
+    const handleDragOverEnter = jest.fn()
+    const handleDragOverLeave = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onDragOverEnter={handleDragOverEnter} onDragOverLeave={handleDragOverLeave}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Drag over the mesh
+    const evtOver = createEvent.dragOver(getContainer())
+    Object.defineProperty(evtOver, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evtOver, 'offsetY', { get: () => 480 })
+    fireEvent(getContainer(), evtOver)
+
+    expect(handleDragOverEnter).toHaveBeenCalled()
+
+    // Drag away from the mesh
+    const evtAway = createEvent.dragOver(getContainer())
+    Object.defineProperty(evtAway, 'offsetX', { get: () => 1 })
+    Object.defineProperty(evtAway, 'offsetY', { get: () => 1 })
+    fireEvent(getContainer(), evtAway)
+
+    expect(handleDragOverLeave).toHaveBeenCalled()
+  })
+
+  it('can handle continuous onDragOver on mesh', async () => {
+    const handleDragOver = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onDragOver={handleDragOver}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // First dragover
+    const evt1 = createEvent.dragOver(getContainer())
+    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
+    fireEvent(getContainer(), evt1)
+
+    // Second dragover (should still fire even if already over)
+    const evt2 = createEvent.dragOver(getContainer())
+    Object.defineProperty(evt2, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt2, 'offsetY', { get: () => 480 })
+    fireEvent(getContainer(), evt2)
+
+    expect(handleDragOver).toHaveBeenCalledTimes(2)
+  })
+
+  it('can handle onDragOverMissed on Canvas', async () => {
+    const handleDragOverMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onDragOverMissed={handleDragOverMissed}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Drag over empty area (miss the mesh)
+    const evt = createEvent.dragOver(getContainer())
+    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragOverMissed).toHaveBeenCalled()
+  })
+
+  it('can handle onDrop on mesh', async () => {
+    const handleDrop = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onDrop={handleDrop}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const evt = createEvent.drop(getContainer())
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+    fireEvent(getContainer(), evt)
+
+    expect(handleDrop).toHaveBeenCalled()
+  })
+
+  it('can handle onDropMissed on Canvas', async () => {
+    const handleDropMissed = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas onDropMissed={handleDropMissed}>
+          <mesh>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Drop on empty area (miss the mesh)
+    const evt = createEvent.drop(getContainer())
+    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
+    fireEvent(getContainer(), evt)
+
+    expect(handleDropMissed).toHaveBeenCalled()
+  })
+
+  it('can handle onDragOverMissed on mesh', async () => {
+    const handleDragOverMissed = jest.fn()
+    const handleDragOverEnter = jest.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onDragOverMissed={handleDragOverMissed} onDragOverEnter={handleDragOverEnter}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    // Drag over empty area (miss the mesh)
+    const evt = createEvent.dragOver(getContainer())
+    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
+    fireEvent(getContainer(), evt)
+
+    expect(handleDragOverEnter).not.toHaveBeenCalled()
+    expect(handleDragOverMissed).toHaveBeenCalled()
   })
 
   it('should handle stopPropagation', async () => {
@@ -425,7 +613,7 @@ describe('events', () => {
     await act(async () => {
       render(
         <Canvas
-          onCreated={(state) => {
+          onCreated={(state: RootState) => {
             state.size.left = 100
             state.size.top = 100
           }}>

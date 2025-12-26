@@ -781,13 +781,13 @@ describe('renderer', () => {
     expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Group)
   })
 
+  // https://github.com/pmndrs/react-three-fiber/pull/3490
+  // Tests that instance.children stays in sync with object.children during reorders
   it('should properly handle array of components with changing keys and order', async () => {
-    // Component that renders a mesh with a specific ID
     const MeshComponent = ({ id }: { id: number }) => {
       return <mesh name={`mesh-${id}`} />
     }
 
-    // Component that maps over an array of values to render MeshComponents
     const Test = ({ values }: { values: number[] }) => (
       <>
         {values.map((value) => (
@@ -796,24 +796,25 @@ describe('renderer', () => {
       </>
     )
 
-    // Initial render with 4 values
+    // Initial render with 4 values in ascending order
     const initialValues = [1, 2, 3, 4]
     const store = await act(async () => root.render(<Test values={initialValues} />))
     const { scene } = store.getState()
 
-    // Check initial state
+    // Check initial state - verify both Three.js and R3F instance arrays
     expect(scene.children.length).toBe(4)
-    const initialNames = scene.children.map((child) => child.name).sort()
-    expect(initialNames).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
+    expect(scene.children.map((child) => child.name)).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
+    expect((scene as any).__r3f.children.length).toBe(4)
 
     // Update with one less value and different order
     const updatedValues = [3, 1, 4]
     await act(async () => root.render(<Test values={updatedValues} />))
 
-    // Check that the scene has exactly the meshes we expect
+    // Check that scene has exactly the meshes we expect in correct order
     expect(scene.children.length).toBe(3)
-    const updatedNames = scene.children.map((child) => child.name).sort()
-    expect(updatedNames).toEqual(['mesh-1', 'mesh-3', 'mesh-4'])
+    expect(scene.children.map((child) => child.name)).toEqual(['mesh-3', 'mesh-1', 'mesh-4'])
+    // Verify R3F instance children array stays in sync (this is what the PR fixes)
+    expect((scene as any).__r3f.children.length).toBe(3)
 
     // Verify mesh-2 was removed
     expect(scene.children.find((child) => child.name === 'mesh-2')).toBeUndefined()
@@ -828,8 +829,9 @@ describe('renderer', () => {
 
     // Check final state
     expect(scene.children.length).toBe(2)
-    const finalNames = scene.children.map((child) => child.name).sort()
-    expect(finalNames).toEqual(['mesh-1', 'mesh-4'])
+    expect(scene.children.map((child) => child.name)).toEqual(['mesh-4', 'mesh-1'])
+    // Verify R3F instance children array stays in sync
+    expect((scene as any).__r3f.children.length).toBe(2)
 
     // Verify mesh-3 was removed
     expect(scene.children.find((child) => child.name === 'mesh-3')).toBeUndefined()

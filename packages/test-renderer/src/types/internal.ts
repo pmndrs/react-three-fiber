@@ -1,7 +1,16 @@
+/**
+ * Renderer mode for test canvas
+ * - 'webgl': WebGL/WebGL2 context (default, legacy)
+ * - 'webgpu': WebGPU context
+ */
+export type RendererMode = 'webgl' | 'webgpu'
+
 export type CreateCanvasParameters = {
   beforeReturn?: (canvas: HTMLCanvasElement) => void
   width?: number
   height?: number
+  /** Renderer mode - 'webgl' (default) or 'webgpu' */
+  mode?: RendererMode
 }
 
 export interface Obj {

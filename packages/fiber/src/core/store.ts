@@ -1,165 +1,45 @@
-import * as THREE from 'three'
+import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector } from '#three'
 import * as React from 'react'
-import { type StoreApi } from 'zustand'
-import { createWithEqualityFn, type UseBoundStoreWithEqualityFn } from 'zustand/traditional'
-import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
-import { calculateDpr, type Camera, isOrthographicCamera, updateCamera } from './utils'
+import { createWithEqualityFn } from 'zustand/traditional'
 
-export interface Intersection extends THREE.Intersection {
-  eventObject: THREE.Object3D
-}
+//* Type Imports ==============================
+import type {
+  Dpr,
+  Size,
+  Frameloop,
+  Viewport,
+  RenderCallback,
+  XRManager,
+  RootState,
+  RootStore,
+  DomEvent,
+  EventManager,
+  ThreeEvent,
+  ThreeCamera,
+} from '#types'
 
-export type Subscription = {
-  ref: React.RefObject<RenderCallback>
-  priority: number
-  store: RootStore
-}
-
-export type Dpr = number | [min: number, max: number]
-export interface Size {
-  width: number
-  height: number
-  top: number
-  left: number
-}
-export type Frameloop = 'always' | 'demand' | 'never'
-export interface Viewport extends Size {
-  /** The initial pixel ratio */
-  initialDpr: number
-  /** Current pixel ratio */
-  dpr: number
-  /** size.width / viewport.width */
-  factor: number
-  /** Camera distance */
-  distance: number
-  /** Camera aspect ratio: width / height */
-  aspect: number
-}
-
-export type RenderCallback = (state: RootState, delta: number, frame?: XRFrame) => void
-
-export interface Performance {
-  /** Current performance normal, between min and max */
-  current: number
-  /** How low the performance can go, between 0 and max */
-  min: number
-  /** How high the performance can go, between min and max */
-  max: number
-  /** Time until current returns to max in ms */
-  debounce: number
-  /** Sets current to min, puts the system in regression */
-  regress: () => void
-}
-
-export interface Renderer {
-  render: (scene: THREE.Scene, camera: THREE.Camera) => any
-}
-export const isRenderer = (def: any) => !!def?.render
-
-export interface InternalState {
-  interaction: THREE.Object3D[]
-  hovered: Map<string, ThreeEvent<DomEvent>>
-  subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
-  initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
-  lastEvent: React.RefObject<DomEvent | null>
-  active: boolean
-  priority: number
-  frames: number
-  subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
-}
-
-export interface XRManager {
-  connect: () => void
-  disconnect: () => void
-}
-
-export interface RootState {
-  /** Set current state */
-  set: StoreApi<RootState>['setState']
-  /** Get current state */
-  get: StoreApi<RootState>['getState']
-  /** The instance of the renderer */
-  gl: THREE.WebGLRenderer
-  /** Default camera */
-  camera: Camera
-  /** Default scene */
-  scene: THREE.Scene
-  /** Default raycaster */
-  raycaster: THREE.Raycaster
-  /** Default clock */
-  clock: THREE.Clock
-  /** Event layer interface, contains the event handler and the node they're connected to */
-  events: EventManager<any>
-  /** XR interface */
-  xr: XRManager
-  /** Currently used controls */
-  controls: THREE.EventDispatcher | null
-  /** Normalized event coordinates */
-  pointer: THREE.Vector2
-  /** @deprecated Normalized event coordinates, use "pointer" instead! */
-  mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement */
-  legacy: boolean
-  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
-  linear: boolean
-  /** Shortcut to gl.toneMapping = NoTonemapping */
-  flat: boolean
-  /** Render loop flags */
-  frameloop: Frameloop
-  performance: Performance
-  /** Reactive pixel-size of the canvas */
-  size: Size
-  /** Reactive size of the viewport in threejs units */
-  viewport: Viewport & {
-    getCurrentViewport: (
-      camera?: Camera,
-      target?: THREE.Vector3 | Parameters<THREE.Vector3['set']>,
-      size?: Size,
-    ) => Omit<Viewport, 'dpr' | 'initialDpr'>
-  }
-  /** Flags the canvas for render, but doesn't render in itself */
-  invalidate: (frames?: number) => void
-  /** Advance (render) one step */
-  advance: (timestamp: number, runGlobalEffects?: boolean) => void
-  /** Shortcut to setting the event layer */
-  setEvents: (events: Partial<EventManager<any>>) => void
-  /** Shortcut to manual sizing */
-  setSize: (width: number, height: number, top?: number, left?: number) => void
-  /** Shortcut to manual setting the pixel ratio */
-  setDpr: (dpr: Dpr) => void
-  /** Shortcut to setting frameloop flags */
-  setFrameloop: (frameloop: Frameloop) => void
-  /** When the canvas was clicked but nothing was hit */
-  onPointerMissed?: (event: MouseEvent) => void
-  /** If this state model is layered (via createPortal) then this contains the previous layer */
-  previousRoot?: RootStore
-  /** Internals */
-  internal: InternalState
-}
-
-export type RootStore = UseBoundStoreWithEqualityFn<StoreApi<RootState>>
+import { calculateDpr, isOrthographicCamera, updateCamera } from './utils'
+import { notifyDepreciated } from './notices'
 
 export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
 
 export const createStore = (
-  invalidate: (state?: RootState, frames?: number) => void,
+  invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
   advance: (timestamp: number, runGlobalEffects?: boolean, state?: RootState, frame?: XRFrame) => void,
 ): RootStore => {
   const rootStore = createWithEqualityFn<RootState>((set, get) => {
-    const position = new THREE.Vector3()
-    const defaultTarget = new THREE.Vector3()
-    const tempTarget = new THREE.Vector3()
+    const position = new Vector3()
+    const defaultTarget = new Vector3()
+    const tempTarget = new Vector3()
     function getCurrentViewport(
-      camera: Camera = get().camera,
-      target: THREE.Vector3 | Parameters<THREE.Vector3['set']> = defaultTarget,
+      camera: ThreeCamera = get().camera,
+      target: Vector3 | Parameters<Vector3['set']> = defaultTarget,
       size: Size = get().size,
     ): Omit<Viewport, 'dpr' | 'initialDpr'> {
       const { width, height, top, left } = size
       const aspect = width / height
-      if ((target as THREE.Vector3).isVector3) tempTarget.copy(target as THREE.Vector3)
-      else tempTarget.set(...(target as Parameters<THREE.Vector3['set']>))
+      if ((target as Vector3).isVector3) tempTarget.copy(target as Vector3)
+      else tempTarget.set(...(target as Parameters<Vector3['set']>))
       const distance = camera.getWorldPosition(position).distanceTo(tempTarget)
       if (isOrthographicCamera(camera)) {
         return { width: width / camera.zoom, height: height / camera.zoom, top, left, factor: 1, distance, aspect }
@@ -175,34 +55,42 @@ export const createStore = (
     const setPerformanceCurrent = (current: number) =>
       set((state) => ({ performance: { ...state.performance, current } }))
 
-    const pointer = new THREE.Vector2()
+    const pointer = new Vector2()
 
     const rootState: RootState = {
       set,
       get,
 
       // Mock objects that have to be configured
-      gl: null as unknown as THREE.WebGLRenderer,
-      camera: null as unknown as Camera,
-      raycaster: null as unknown as THREE.Raycaster,
+      gl: null as unknown as WebGLRenderer,
+      renderer: null as unknown as WebGPURenderer,
+      camera: null as unknown as ThreeCamera,
+      raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
-      scene: null as unknown as THREE.Scene,
+      scene: null as unknown as Scene,
+      rootScene: null as unknown as Scene,
       xr: null as unknown as XRManager,
+      inspector: null as unknown as Inspector,
 
-      invalidate: (frames = 1) => invalidate(get(), frames),
+      invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
       legacy: false,
       linear: false,
       flat: false,
+      textureColorSpace: 'srgb',
+      isLegacy: false,
+      webGPUSupported: false,
+      isNative: false,
 
       controls: null,
-      clock: new THREE.Clock(),
       pointer,
       mouse: pointer,
 
       frameloop: 'always',
       onPointerMissed: undefined,
+      onDragOverMissed: undefined,
+      onDropMissed: undefined,
 
       performance: {
         current: 1,
@@ -250,18 +138,18 @@ export const createStore = (
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
-        const clock = get().clock
-
-        // if frameloop === "never" clock.elapsedTime is updated using advance(timestamp)
-        clock.stop()
-        clock.elapsedTime = 0
-
-        if (frameloop !== 'never') {
-          clock.start()
-          clock.elapsedTime = 0
-        }
         set(() => ({ frameloop }))
       },
+      setError: (error: Error | null) => set(() => ({ error })),
+      error: null as Error | null,
+
+      //* TSL State (managed via hooks: useUniforms, useNodes, useTextures, usePostProcessing) ==============================
+      uniforms: {},
+      nodes: {},
+      textures: new Map(),
+      postProcessing: null,
+      passes: {},
+
       previousRoot: undefined,
       internal: {
         // Events
@@ -298,6 +186,12 @@ export const createStore = (
             }
           }
         },
+
+        // Renderer Storage (single source of truth)
+        actualRenderer: null as unknown as WebGLRenderer | WebGPURenderer,
+
+        // Scheduler for useFrameNext (initialized in renderer.tsx)
+        scheduler: null,
       },
     }
 
@@ -306,22 +200,98 @@ export const createStore = (
 
   const state = rootStore.getState()
 
+  //* Setup Renderer Accessors ==============================
+  // Both state.gl and state.renderer map to internal.actualRenderer
+  // state.gl shows deprecation warning in WebGPU mode for backwards compatibility
+
+  // state.gl - backwards compatibility with deprecation warning
+  Object.defineProperty(state, 'gl', {
+    get() {
+      const currentState = rootStore.getState()
+
+      // Warn if accessing gl in WebGPU mode (not legacy)
+      if (!currentState.isLegacy && currentState.internal.actualRenderer) {
+        // Capture stack trace to show where gl was accessed
+        const stack = new Error().stack || ''
+
+        // Skip warning if access is from internal operations (zustand setState, Object.assign, etc.)
+        const isInternalAccess =
+          stack.includes('zustand') ||
+          stack.includes('setState') ||
+          stack.includes('Object.assign') ||
+          stack.includes('react-three-fiber/packages/fiber/src/core')
+
+        if (!isInternalAccess) {
+          const cleanedStack = stack.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
+
+          notifyDepreciated({
+            heading: 'Accessing state.gl in WebGPU mode',
+            body:
+              'Please use state.renderer instead. state.gl is deprecated and will be removed in future versions.\n\n' +
+              'For backwards compatibility, state.gl currently maps to state.renderer, but this may cause issues with libraries expecting WebGLRenderer.\n\n' +
+              'Accessed from:\n' +
+              cleanedStack,
+          })
+        }
+      }
+
+      return currentState.internal.actualRenderer as WebGLRenderer
+    },
+    set(value: WebGLRenderer) {
+      rootStore.getState().internal.actualRenderer = value
+    },
+    enumerable: true,
+    configurable: true,
+  })
+
+  // state.renderer - modern accessor (no warning)
+  Object.defineProperty(state, 'renderer', {
+    get() {
+      return rootStore.getState().internal.actualRenderer
+    },
+    set(value: WebGPURenderer | WebGLRenderer) {
+      rootStore.getState().internal.actualRenderer = value
+    },
+    enumerable: true,
+    configurable: true,
+  })
+
+  //* Scene Sync Subscription ==============================
+  // If someone sets scene to an actual THREE.Scene (not a portal container),
+  // automatically sync rootScene to match
+  let oldScene = state.scene
+  rootStore.subscribe(() => {
+    const currentState = rootStore.getState()
+    const { scene, rootScene, set } = currentState
+
+    // Only sync if scene changed and it's an actual Scene (has isScene property)
+    if (scene !== oldScene) {
+      oldScene = scene
+      // If the new scene is a real THREE.Scene and different from rootScene, update rootScene
+      if ((scene as any)?.isScene && scene !== rootScene) {
+        set({ rootScene: scene })
+      }
+    }
+  })
+
   let oldSize = state.size
   let oldDpr = state.viewport.dpr
   let oldCamera = state.camera
   rootStore.subscribe(() => {
-    const { camera, size, viewport, gl, set } = rootStore.getState()
+    const { camera, size, viewport, set, internal } = rootStore.getState()
 
+    const actualRenderer = internal.actualRenderer
     // Resize camera and renderer on changes to size and pixelratio
     if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
       // Update camera & renderer
       updateCamera(camera, size)
-      if (viewport.dpr > 0) gl.setPixelRatio(viewport.dpr)
+      if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
 
-      const updateStyle = typeof HTMLCanvasElement !== 'undefined' && gl.domElement instanceof HTMLCanvasElement
-      gl.setSize(size.width, size.height, updateStyle)
+      const updateStyle =
+        typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
+      actualRenderer.setSize(size.width, size.height, updateStyle)
     }
 
     // Update viewport once the camera changes

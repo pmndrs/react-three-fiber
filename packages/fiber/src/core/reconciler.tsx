@@ -1,4 +1,6 @@
-import * as THREE from 'three'
+import type { Scene, Color, ColorRepresentation } from '#three'
+import packageData from '../../package.json'
+
 import * as React from 'react'
 import Reconciler from 'react-reconciler'
 import { ContinuousEventPriority, DiscreteEventPriority, DefaultEventPriority } from 'react-reconciler/constants'
@@ -12,11 +14,25 @@ import {
   prepare,
   isObject3D,
   findInitialRoot,
-  IsAllOptional,
 } from './utils'
-import type { RootStore } from './store'
-import { removeInteractivity, type EventHandlers } from './events'
-import type { ThreeElement } from '../three-types'
+import { removeInteractivity } from './events'
+import type { ThreeElement } from '../../types/three'
+
+//* Type Imports ==============================
+import type {
+  RootStore,
+  EventHandlers,
+  IsAllOptional,
+  Root,
+  AttachFnType,
+  AttachType,
+  ConstructorRepresentation,
+  Catalogue,
+  Args,
+  InstanceProps,
+  Instance,
+  HostConfig,
+} from '#types'
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 
@@ -24,7 +40,7 @@ function createReconciler<
   Type,
   Props,
   Container,
-  Instance,
+  InstanceType,
   TextInstance,
   SuspenseInstance,
   HydratableInstance,
@@ -40,7 +56,7 @@ function createReconciler<
     Type,
     Props,
     Container,
-    Instance,
+    InstanceType,
     TextInstance,
     SuspenseInstance,
     HydratableInstance,
@@ -52,86 +68,16 @@ function createReconciler<
     NoTimeout,
     TransitionStatus
   >,
-): Reconciler.Reconciler<Container, Instance, TextInstance, SuspenseInstance, FormInstance, PublicInstance> {
+): Reconciler.Reconciler<Container, InstanceType, TextInstance, SuspenseInstance, FormInstance, PublicInstance> {
   const reconciler = Reconciler(config as any)
 
-  reconciler.injectIntoDevTools({
-    bundleType: typeof process !== 'undefined' && process.env.NODE_ENV !== 'production' ? 1 : 0,
-    rendererPackageName: '@react-three/fiber',
-    version: React.version,
-  })
+  // @ts-ignore DefinitelyTyped is not up to date
+  reconciler.injectIntoDevTools()
 
   return reconciler as any
 }
 
 const NoEventPriority = 0
-
-export interface Root {
-  fiber: Reconciler.FiberRoot
-  store: RootStore
-}
-
-export type AttachFnType<O = any> = (parent: any, self: O) => () => void
-export type AttachType<O = any> = string | AttachFnType<O>
-
-export type ConstructorRepresentation<T = any> = new (...args: any[]) => T
-
-export interface Catalogue {
-  [name: string]: ConstructorRepresentation
-}
-
-// TODO: handle constructor overloads
-// https://github.com/pmndrs/react-three-fiber/pull/2931
-// https://github.com/microsoft/TypeScript/issues/37079
-export type Args<T> = T extends ConstructorRepresentation
-  ? T extends typeof THREE.Color
-    ? [r: number, g: number, b: number] | [color: THREE.ColorRepresentation]
-    : ConstructorParameters<T>
-  : any[]
-
-type ArgsProp<P> = P extends ConstructorRepresentation
-  ? IsAllOptional<ConstructorParameters<P>> extends true
-    ? { args?: Args<P> }
-    : { args: Args<P> }
-  : { args: unknown[] }
-
-export type InstanceProps<T = any, P = any> = ArgsProp<P> & {
-  object?: T
-  dispose?: null
-  attach?: AttachType<T>
-  onUpdate?: (self: T) => void
-}
-
-export interface Instance<O = any> {
-  root: RootStore
-  type: string
-  parent: Instance | null
-  children: Instance[]
-  props: InstanceProps<O> & Record<string, unknown>
-  object: O & { __r3f?: Instance<O> }
-  eventCount: number
-  handlers: Partial<EventHandlers>
-  attach?: AttachType<O>
-  previousAttach?: any
-  isHidden: boolean
-}
-
-interface HostConfig {
-  type: string
-  props: Instance['props']
-  container: RootStore
-  instance: Instance
-  textInstance: void
-  suspenseInstance: Instance
-  hydratableInstance: never
-  formInstance: never
-  publicInstance: Instance['object']
-  hostContext: {}
-  childSet: never
-  timeoutHandle: number | undefined
-  noTimeout: -1
-  TransitionStatus: null
-}
 
 const catalogue: Catalogue = {}
 
@@ -268,8 +214,17 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
   if (!child) return
 
+  // Remove existing child if it exists (re-order to last)
+  // This emulates DOM appendChild behavior: https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild
+  if (child.parent === parent) {
+    const existingIndex = parent.children.indexOf(child)
+    if (existingIndex !== -1) parent.children.splice(existingIndex, 1)
+  }
+
   // Link instances
   child.parent = parent
+
+  // Append child
   parent.children.push(child)
 
   // Attach tree once complete
@@ -283,10 +238,19 @@ function insertBefore(
 ) {
   if (!child || !beforeChild) return
 
+  // Remove existing child if it exists (re-order)
+  // This mirrors the logic in handleContainerEffects for object.children
+  if (child.parent === parent) {
+    const existingIndex = parent.children.indexOf(child)
+    if (existingIndex !== -1) parent.children.splice(existingIndex, 1)
+  }
+
   // Link instances
   child.parent = parent
-  const childIndex = parent.children.indexOf(beforeChild)
-  if (childIndex !== -1) parent.children.splice(childIndex, 0, child)
+
+  // Insert at target position (or append if beforeChild not found)
+  const beforeChildIndex = parent.children.indexOf(beforeChild)
+  if (beforeChildIndex !== -1) parent.children.splice(beforeChildIndex, 0, child)
   else parent.children.push(child)
 
   // Attach tree once complete
@@ -481,22 +445,28 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   appendInitialChild: appendChild,
   insertBefore,
   appendChildToContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
-    if (!child || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !instance) return
 
-    appendChild(scene, child)
+    appendChild(instance, child)
   },
   removeChildFromContainer(container, child) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
-    if (!child || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !instance) return
 
-    removeChild(scene, child)
+    removeChild(instance, child)
   },
   insertInContainerBefore(container, child, beforeChild) {
-    const scene = (container.getState().scene as unknown as Instance<THREE.Scene>['object']).__r3f
-    if (!child || !beforeChild || !scene) return
+    // Use internal.container for child attachment (supports portal wrapping)
+    const target = container.getState().internal.container ?? container.getState().scene
+    const instance = (target as unknown as Instance<Scene>['object']).__r3f
+    if (!child || !beforeChild || !instance) return
 
-    insertBefore(scene, child, beforeChild)
+    insertBefore(instance, child, beforeChild)
   },
   getRootHostContext: () => NO_CONTEXT,
   getChildHostContext: () => NO_CONTEXT,
@@ -538,7 +508,11 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   commitMount() {},
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
-  preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
+  preparePortalMount: (container) => {
+    // Prepare the container (where children attach) for portal mounting
+    const target = container.getState().internal.container ?? container.getState().scene
+    return prepare(target, container, '', {})
+  },
   resetAfterCommit: () => {},
   shouldSetTextContent: () => false,
   clearContainer: () => false,
@@ -585,10 +559,14 @@ export const reconciler = /* @__PURE__ */ createReconciler<
       case 'click':
       case 'contextmenu':
       case 'dblclick':
+      case 'dragenter':
+      case 'dragleave':
+      case 'drop':
       case 'pointercancel':
       case 'pointerdown':
       case 'pointerup':
         return DiscreteEventPriority
+      case 'dragover':
       case 'pointermove':
       case 'pointerout':
       case 'pointerover':
@@ -601,4 +579,7 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     }
   },
   resetFormInstance() {},
+  // @ts-ignore DefinitelyTyped is not up to date
+  rendererPackageName: '@react-three/fiber',
+  rendererVersion: packageData.version,
 })
