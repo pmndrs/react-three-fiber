@@ -22,7 +22,7 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "node -e \"try { if (require('fs').existsSync('./packages/fiber/src')) require('child_process').execSync('yarn stub', {stdio: 'inherit'}); } catch(e) {}\"",
+    "postinstall": "yarn stub",
     "build": "yarn workspace @react-three/fiber build && yarn workspace @react-three/eslint-plugin build",
     "examples": "yarn workspace example dev",
     "stub": "yarn workspace @react-three/fiber stub && yarn workspace @react-three/eslint-plugin stub",
@@ -41,8 +41,7 @@
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "verify-bundles": "node scripts/verify-bundles.js",
-    "update-dist-branch": "yarn build && git checkout v10-dist && git merge v10 --no-commit && git add -f packages/fiber/dist packages/eslint-plugin/dist && git commit -m \"Update dist from v10\" && git push origin v10-dist && git checkout v10"
+    "verify-bundles": "node scripts/verify-bundles.js"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
