@@ -19,12 +19,8 @@ export {
 } from './useNodes'
 
 // Textures - Re-exported from core (useTextures is now a core R3F hook)
-export {
-  useTextures,
-  type TextureEntry,
-  type TextureNode, // Backwards compat alias
-  type UseTexturesReturn,
-} from './useTextures'
+// Note: Not re-exported here to avoid duplicate exports since ../core already exports them
+// The file ./useTextures.tsx exists for direct import backwards compatibility only
 
 // Low-level texture utilities (prefer useTextures hook instead)
 export { createTextureOperations, type TextureOperations } from './utils'

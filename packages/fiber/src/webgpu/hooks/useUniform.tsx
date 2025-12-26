@@ -91,6 +91,7 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
     }))
 
     return node
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, name]) // Note: value intentionally excluded - updates happen imperatively
 }
 

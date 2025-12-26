@@ -73,6 +73,7 @@ export function useNodes<T extends NodeRecord>(
   return useMemo(() => {
     const state = store.getState()
     const set = store.setState
+    // todo: See if we need to do the diffcheck like useUniforms or callback caching
 
     // Case 1: No arguments - return all nodes (root + scopes)
     if (creatorOrScope === undefined) {
@@ -152,6 +153,7 @@ export function useNodes<T extends NodeRecord>(
     }
 
     return result as T
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, typeof creatorOrScope === 'string' ? creatorOrScope : scope])
 }
 
@@ -252,5 +254,6 @@ export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalN
   return useMemo(() => {
     const state = store.getState()
     return creator(state)
-  }, [store, creator, uniforms, nodes, textures])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, creator, uniforms, nodes, textures]) // extras intentionally included to trigger recreation
 }

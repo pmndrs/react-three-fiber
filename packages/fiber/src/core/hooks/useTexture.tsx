@@ -136,7 +136,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
   // Call onLoad when textures are ready (only on initial load, not cache hits)
   useLayoutEffect(() => {
     if (!cachedResult) onLoad?.(loadedTextures)
-  }, [onLoad, cachedResult])
+  }, [onLoad, cachedResult, loadedTextures])
 
   // https://github.com/mrdoob/three.js/issues/22696
   // Upload the texture to the GPU immediately instead of waiting for the first render

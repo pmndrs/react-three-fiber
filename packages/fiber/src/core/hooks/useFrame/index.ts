@@ -85,7 +85,8 @@ export function useFrame(
   }, [optionsKey])
 
   // Generate stable ID if not provided
-  const id = options.id ?? React.useId()
+  const reactId = React.useId()
+  const id = options.id ?? reactId
 
   // Memoize callback ref (always points to latest callback)
   const callbackRef = useMutableCallback(callback)
