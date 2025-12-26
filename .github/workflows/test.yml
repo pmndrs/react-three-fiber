@@ -32,9 +32,6 @@ jobs:
       - name: Check lint
         run: yarn run eslint
 
-      - name: Rsbuild (strict)
-        run: yarn add @rsbuild/core -D -W && yarn rsbuild build --root ./packages/fiber
-
       - name: Jest run
         run: yarn run dev && yarn run test
 

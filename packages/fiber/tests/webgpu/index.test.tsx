@@ -42,6 +42,33 @@ import {
 let root: ReconcilerRoot<HTMLCanvasElement> = null!
 const roots: ReconcilerRoot<HTMLCanvasElement>[] = []
 
+// Suppress WebGL deprecation warning in WebGPU tests
+// (Jest resolves #three to default entry with both flags true, but built bundles are correct)
+const originalWarn = console.warn
+const originalLog = console.log
+
+beforeAll(() => {
+  console.log = (...args: any[]) => {
+    const message = args[0]?.toString() || ''
+    // Skip WebGL deprecation logs (heading and empty line before it)
+    if (message.includes('WebGlRenderer Usage')) return
+    if (args.length === 0) return
+    if (args.length === 1 && message === 'undefined') return
+    originalLog.apply(console, args)
+  }
+
+  console.warn = (...args: any[]) => {
+    const message = args[0]?.toString() || ''
+    if (message.includes('WebGlRenderer usage is deprecated')) return
+    originalWarn.apply(console, args)
+  }
+})
+
+afterAll(() => {
+  console.warn = originalWarn
+  console.log = originalLog
+})
+
 function createRoot() {
   const canvas = createCanvas()
   const root = createRootImpl(canvas)
