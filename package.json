@@ -42,7 +42,7 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "verify-bundles": "node scripts/verify-bundles.js",
-    "update-dist-branch": "yarn build && git checkout v10-dist && git merge v10 --no-commit && git add -f packages/*/dist && git commit -m \"Update dist from v10\" && git push origin v10-dist && git checkout v10"
+    "update-dist-branch": "yarn build && git checkout v10-dist && git merge v10 --no-commit && git add -f packages/fiber/dist packages/eslint-plugin/dist && git commit -m \"Update dist from v10\" && git push origin v10-dist && git checkout v10"
   },
   "devDependencies": {
     "@babel/core": "^7.22.0",
