@@ -22,7 +22,7 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "yarn stub",
+    "postinstall": "node -e \"try { if (require('fs').existsSync('./packages/fiber/src')) require('child_process').execSync('yarn stub', {stdio: 'inherit'}); } catch(e) {}\"",
     "build": "yarn workspace @react-three/fiber build && yarn workspace @react-three/eslint-plugin build",
     "examples": "yarn workspace example dev",
     "stub": "yarn workspace @react-three/fiber stub && yarn workspace @react-three/eslint-plugin stub",
