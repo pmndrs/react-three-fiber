@@ -320,11 +320,4 @@ describe('exports', () => {
     const webExports = getExports(path.resolve(__dirname, '../../src/index.tsx'))
     expect(webExports).toMatchSnapshot()
   })
-
-  // Note: native.tsx no longer exists in the same form, skip this test
-  // it('are consistent between targets', () => {
-  //   const webExports = getExports(path.resolve(__dirname, '../../src/index.tsx'))
-  //   const nativeExports = getExports(path.resolve(__dirname, '../../src/native.tsx'))
-  //   expect(webExports).toStrictEqual(nativeExports)
-  // })
 })
