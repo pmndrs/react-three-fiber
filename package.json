@@ -7,6 +7,9 @@
     "packages/*",
     "example"
   ],
+  "resolutions": {
+    "camera-controls": "2.9.0"
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
