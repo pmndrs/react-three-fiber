@@ -13,7 +13,7 @@ import { shouldRun, resetJobTiming } from './rateLimiter'
 //* HMR Support ==============================
 // Preserve scheduler instance across hot module reloads
 // This prevents the render loop from stopping during development
-declare const import_meta_hot: { data: Record<string, any>; accept: () => void } | undefined
+declare const import_meta_hot: HMRData | undefined
 
 // Get HMR data for development hot reloading
 // - In production builds: unbuild transforms import.meta.hot to import_meta_hot
@@ -25,26 +25,11 @@ const hmrData = (() => {
   // Indirect eval prevents TypeScript from parsing import.meta
   // eslint-disable-next-line no-eval
   try {
-    return (0, eval)('import.meta.hot')
+    return (0, eval)('import.meta.hot') as HMRData | undefined
   } catch {
     return undefined
   }
 })()
-
-//* Internal Types ==============================
-
-interface RootEntry {
-  id: string
-  getState: () => RootState
-  jobs: Map<string, Job>
-  sortedJobs: Job[]
-  needsRebuild: boolean
-}
-
-interface GlobalJob {
-  id: string
-  callback: (timestamp: number) => void
-}
 
 /**
  * Global Singleton Scheduler - manages the frame loop and job execution for ALL R3F roots.
@@ -58,7 +43,7 @@ interface GlobalJob {
  * - Demand mode support via invalidate()
  */
 export class Scheduler {
-  //* Singleton Pattern ================================
+  //* Static State & Methods (Singlton Usage) ================================
 
   private static instance: Scheduler | null = null
 
@@ -98,22 +83,62 @@ export class Scheduler {
     }
   }
 
-  /**
-   * Reset timing state for deterministic testing.
-   * Preserves jobs and roots but resets lastTime, frameCount, elapsedTime, etc.
-   * @returns {void}
-   */
-  resetTiming(): void {
-    this.loopState.lastTime = null
-    this.loopState.frameCount = 0
-    this.loopState.elapsedTime = 0
-    this.loopState.createdAt = performance.now()
-  }
-
-  //* Root Management ================================
+  //* Critical State ================================
 
   private roots: Map<string, RootEntry> = new Map()
+  private phaseGraph: PhaseGraph
+  private loopState: FrameLoopState = {
+    running: false,
+    rafHandle: null,
+    lastTime: null, // null = uninitialized, 0+ = valid timestamp
+    frameCount: 0,
+    elapsedTime: 0,
+    createdAt: performance.now(),
+  }
+  private stoppedTime: number = 0
+
+  //* Private State ================================
+
   private nextRootIndex: number = 0
+  private globalBeforeJobs: Map<string, GlobalJob> = new Map()
+  private globalAfterJobs: Map<string, GlobalJob> = new Map()
+  private nextGlobalIndex: number = 0
+  private idleCallbacks: Set<(timestamp: number) => void> = new Set()
+  private nextJobIndex: number = 0
+  private jobStateListeners: Map<string, Set<() => void>> = new Map()
+  private pendingFrames: number = 0
+  private _frameloop: Frameloop = 'always'
+
+  //* Getters & Setters ================================
+
+  get phases(): string[] {
+    return this.phaseGraph.getOrderedPhases()
+  }
+
+  get frameloop(): Frameloop {
+    return this._frameloop
+  }
+
+  set frameloop(mode: Frameloop) {
+    if (this._frameloop === mode) return
+    const wasAlways = this._frameloop === 'always'
+    this._frameloop = mode
+
+    if (mode === 'always' && !this.loopState.running && this.roots.size > 0) this.start()
+    else if (mode !== 'always' && wasAlways) this.stop()
+  }
+
+  get isRunning(): boolean {
+    return this.loopState.running
+  }
+
+  //* Constructor ================================
+
+  constructor() {
+    this.phaseGraph = new PhaseGraph()
+  }
+
+  //* Root Management Methods ================================
 
   /**
    * Register a root (Canvas) with the scheduler.
@@ -170,21 +195,7 @@ export class Scheduler {
     }
   }
 
-  /**
-   * Generate a unique root ID for automatic root registration.
-   * @returns {string} A unique root ID in the format 'root_N'
-   */
-  generateRootId(): string {
-    return `root_${this.nextRootIndex++}`
-  }
-
-  //* Phase Management ================================
-
-  private phaseGraph: PhaseGraph
-
-  get phases(): string[] {
-    return this.phaseGraph.getOrderedPhases()
-  }
+  //* Phase Management Methods ================================
 
   /**
    * Add a named phase to the scheduler's execution order.
@@ -213,11 +224,7 @@ export class Scheduler {
     return this.phaseGraph.hasPhase(name)
   }
 
-  //* Global Jobs (for addEffect/addAfterEffect) ================================
-
-  private globalBeforeJobs: Map<string, GlobalJob> = new Map()
-  private globalAfterJobs: Map<string, GlobalJob> = new Map()
-  private nextGlobalIndex: number = 0
+  //* Global Job Registration Methods (Deprecated APIs) ================================
 
   /**
    * Register a global job that runs once per frame (not per-root).
@@ -243,9 +250,7 @@ export class Scheduler {
     }
   }
 
-  //* Idle Callbacks (for addTail) ================================
-
-  private idleCallbacks: Set<(timestamp: number) => void> = new Set()
+  //* Idle Callback Methods (Deprecated API) ================================
 
   /**
    * Register an idle callback that fires when the loop stops.
@@ -276,10 +281,7 @@ export class Scheduler {
     }
   }
 
-  //* Per-Root Job Registration ================================
-
-  private nextJobIndex: number = 0
-  private jobStateListeners: Map<string, Set<() => void>> = new Map()
+  //* Job Registration & Management Methods ================================
 
   /**
    * Register a job (frame callback) with a specific root.
@@ -406,161 +408,7 @@ export class Scheduler {
     }
   }
 
-  //* Frame Loop State ================================
-
-  private loopState: FrameLoopState = {
-    running: false,
-    rafHandle: null,
-    lastTime: null, // null = uninitialized, 0+ = valid timestamp
-    frameCount: 0,
-    elapsedTime: 0,
-    createdAt: performance.now(),
-  }
-
-  private pendingFrames: number = 0
-  private _frameloop: Frameloop = 'always'
-
-  get frameloop(): Frameloop {
-    return this._frameloop
-  }
-
-  set frameloop(mode: Frameloop) {
-    if (this._frameloop === mode) return
-    const wasAlways = this._frameloop === 'always'
-    this._frameloop = mode
-
-    if (mode === 'always' && !this.loopState.running && this.roots.size > 0) this.start()
-    else if (mode !== 'always' && wasAlways) this.stop()
-  }
-
-  get isRunning(): boolean {
-    return this.loopState.running
-  }
-
-  //* Frame Loop Control ================================
-
-  /**
-   * Start the requestAnimationFrame loop.
-   * Resets timing state (elapsedTime, frameCount) on start.
-   * No-op if already running.
-   * @returns {void}
-   */
-  start(): void {
-    if (this.loopState.running) return
-
-    Object.assign(this.loopState, {
-      running: true,
-      elapsedTime: 0,
-      lastTime: performance.now(),
-      createdAt: performance.now(),
-      frameCount: 0,
-      rafHandle: requestAnimationFrame(this.loop),
-    })
-  }
-
-  /**
-   * Stop the requestAnimationFrame loop.
-   * Cancels any pending RAF callback.
-   * No-op if not running.
-   * @returns {void}
-   */
-  stop(): void {
-    if (!this.loopState.running) return
-
-    this.loopState.running = false
-    if (this.loopState.rafHandle !== null) {
-      cancelAnimationFrame(this.loopState.rafHandle)
-      this.loopState.rafHandle = null
-    }
-  }
-
-  /**
-   * Request frames to be rendered in demand mode.
-   * Accumulates pending frames (capped at 60) and starts the loop if not running.
-   * No-op if frameloop is not 'demand'.
-   * @param {number} [frames=1] - Number of frames to request
-   * @param {boolean} [stackFrames=false] - If false, sets pendingFrames to frames. If true, adds to existing pendingFrames.
-   * @returns {void}
-   * @example
-   * // Request a single frame render
-   * scheduler.invalidate();
-   * // Request 5 frames (e.g., for animations)
-   * scheduler.invalidate(5);
-   * // Set pending frames to 3 (don't stack)
-   * scheduler.invalidate(3, false);
-   */
-  invalidate(frames: number = 1, stackFrames: boolean = false): void {
-    if (this._frameloop !== 'demand') return
-    const baseFrames = stackFrames ? this.pendingFrames : 0
-    this.pendingFrames = Math.min(60, baseFrames + frames)
-
-    if (!this.loopState.running && this.pendingFrames > 0) this.start()
-  }
-
-  //* Manual Stepping ================================
-
-  /**
-   * Manually execute a single frame for all roots.
-   * Useful for frameloop='never' mode or testing scenarios.
-   * @param {number} [timestamp] - Optional timestamp (defaults to performance.now())
-   * @returns {void}
-   * @example
-   * // Manual control mode
-   * scheduler.frameloop = 'never';
-   * scheduler.step(); // Execute one frame
-   */
-  step(timestamp?: number): void {
-    const now = timestamp ?? performance.now()
-    this.executeFrame(now)
-  }
-
-  /**
-   * Manually execute a single job by its ID.
-   * Useful for testing individual job callbacks in isolation.
-   * @param {string} id - The job ID to step
-   * @param {number} [timestamp] - Optional timestamp (defaults to performance.now())
-   * @returns {void}
-   */
-  stepJob(id: string, timestamp?: number): void {
-    // Find the job and its root
-    let job: Job | undefined
-    let root: RootEntry | undefined
-
-    for (const r of this.roots.values()) {
-      job = r.jobs.get(id)
-      if (job) {
-        root = r
-        break
-      }
-    }
-
-    if (!job || !root) {
-      console.warn(`[Scheduler] Job "${id}" not found`)
-      return
-    }
-
-    const now = timestamp ?? performance.now()
-    const deltaMs = this.loopState.lastTime !== null ? now - this.loopState.lastTime : 0
-    const delta = deltaMs / 1000 // Convert to seconds
-    const elapsed = now - this.loopState.createdAt
-    const rootState = root.getState()
-
-    const frameState: FrameNextState = {
-      ...rootState,
-      time: now,
-      delta,
-      elapsed,
-      frame: this.loopState.frameCount,
-    }
-
-    try {
-      job.callback(frameState, delta)
-    } catch (error) {
-      console.error(`[Scheduler] Error in job "${job.id}":`, error)
-    }
-  }
-
-  //* Job State Management ================================
+  //* Job State Management Methods ================================
 
   /**
    * Check if a job is currently paused (disabled).
@@ -629,7 +477,162 @@ export class Scheduler {
     this.notifyJobStateChange(id)
   }
 
-  //* Core Loop ================================
+  //* Frame Loop Control Methods ================================
+
+  /**
+   * Start the requestAnimationFrame loop.
+   * Resets timing state (elapsedTime, frameCount) on start.
+   * No-op if already running.
+   * @returns {void}
+   */
+  start(): void {
+    if (this.loopState.running) return
+    const { elapsedTime, createdAt } = this.loopState
+    let adjustedCreated = 0
+
+    // if we were stopped, the elapsed time will explode, so we need to subtract
+    // the time we were stopped for from the START time. Old elapsed will persist
+    if (this.stoppedTime > 0) {
+      adjustedCreated = createdAt - (performance.now() - this.stoppedTime)
+      this.stoppedTime = 0
+    }
+
+    Object.assign(this.loopState, {
+      running: true,
+      elapsedTime: elapsedTime ?? 0,
+      lastTime: performance.now(),
+      createdAt: adjustedCreated > 0 ? adjustedCreated : performance.now(),
+      frameCount: 0,
+      rafHandle: requestAnimationFrame(this.loop),
+    })
+  }
+
+  /**
+   * Stop the requestAnimationFrame loop.
+   * Cancels any pending RAF callback.
+   * No-op if not running.
+   * @returns {void}
+   */
+  stop(): void {
+    if (!this.loopState.running) return
+
+    this.loopState.running = false
+    if (this.loopState.rafHandle !== null) {
+      cancelAnimationFrame(this.loopState.rafHandle)
+      this.loopState.rafHandle = null
+    }
+    this.stoppedTime = performance.now()
+  }
+
+  /**
+   * Request frames to be rendered in demand mode.
+   * Accumulates pending frames (capped at 60) and starts the loop if not running.
+   * No-op if frameloop is not 'demand'.
+   * @param {number} [frames=1] - Number of frames to request
+   * @param {boolean} [stackFrames=false] - Whether to add frames to existing pending count
+   *   - `false` (default): Sets pending frames to the specified value (replaces existing count)
+   *   - `true`: Adds frames to existing pending count (useful for accumulating invalidations)
+   * @returns {void}
+   * @example
+   * // Request a single frame render
+   * scheduler.invalidate();
+   *
+   * @example
+   * // Request 5 frames (e.g., for animations)
+   * scheduler.invalidate(5);
+   *
+   * @example
+   * // Set pending frames to exactly 3 (don't stack with existing)
+   * scheduler.invalidate(3, false);
+   *
+   * @example
+   * // Add 2 more frames to existing pending count
+   * scheduler.invalidate(2, true);
+   */
+  invalidate(frames: number = 1, stackFrames: boolean = false): void {
+    if (this._frameloop !== 'demand') return
+    const baseFrames = stackFrames ? this.pendingFrames : 0
+    this.pendingFrames = Math.min(60, baseFrames + frames)
+
+    if (!this.loopState.running && this.pendingFrames > 0) this.start()
+  }
+
+  /**
+   * Reset timing state for deterministic testing.
+   * Preserves jobs and roots but resets lastTime, frameCount, elapsedTime, etc.
+   * @returns {void}
+   */
+  resetTiming(): void {
+    this.loopState.lastTime = null
+    this.loopState.frameCount = 0
+    this.loopState.elapsedTime = 0
+    this.loopState.createdAt = performance.now()
+  }
+
+  //* Manual Stepping Methods ================================
+
+  /**
+   * Manually execute a single frame for all roots.
+   * Useful for frameloop='never' mode or testing scenarios.
+   * @param {number} [timestamp] - Optional timestamp (defaults to performance.now())
+   * @returns {void}
+   * @example
+   * // Manual control mode
+   * scheduler.frameloop = 'never';
+   * scheduler.step(); // Execute one frame
+   */
+  step(timestamp?: number): void {
+    const now = timestamp ?? performance.now()
+    this.executeFrame(now)
+  }
+
+  /**
+   * Manually execute a single job by its ID.
+   * Useful for testing individual job callbacks in isolation.
+   * @param {string} id - The job ID to step
+   * @param {number} [timestamp] - Optional timestamp (defaults to performance.now())
+   * @returns {void}
+   */
+  stepJob(id: string, timestamp?: number): void {
+    // Find the job and its root
+    let job: Job | undefined
+    let root: RootEntry | undefined
+
+    for (const r of this.roots.values()) {
+      job = r.jobs.get(id)
+      if (job) {
+        root = r
+        break
+      }
+    }
+
+    if (!job || !root) {
+      console.warn(`[Scheduler] Job "${id}" not found`)
+      return
+    }
+
+    const now = timestamp ?? performance.now()
+    const deltaMs = this.loopState.lastTime !== null ? now - this.loopState.lastTime : 0
+    const delta = deltaMs / 1000 // Convert to seconds
+    const elapsed = now - this.loopState.createdAt
+    const rootState = root.getState()
+
+    const frameState: FrameNextState = {
+      ...rootState,
+      time: now,
+      delta,
+      elapsed,
+      frame: this.loopState.frameCount,
+    }
+
+    try {
+      job.callback(frameState, delta)
+    } catch (error) {
+      console.error(`[Scheduler] Error in job "${job.id}":`, error)
+    }
+  }
+
+  //* Core Loop Execution Methods ================================
 
   /**
    * Main RAF loop callback.
@@ -745,7 +748,7 @@ export class Scheduler {
     }
   }
 
-  //* Debug / Inspection ================================
+  //* Debug & Inspection Methods ================================
 
   /**
    * Get the total number of registered jobs across all roots.
@@ -794,16 +797,26 @@ export class Scheduler {
   hasUserJobsInPhase(phase: string, rootId?: string): boolean {
     const rootsToCheck = rootId ? [this.roots.get(rootId)].filter(Boolean) : Array.from(this.roots.values())
 
-    for (const root of rootsToCheck) {
-      if (!root) continue
+    // Early return pattern: stops iteration as soon as a match is found
+    return rootsToCheck.some((root) => {
+      if (!root) return false
+      // Check if any job in this root matches criteria
       for (const job of root.jobs.values()) {
         if (job.phase === phase && !job.system && job.enabled) return true
       }
-    }
-    return false
+      return false
+    })
   }
 
-  //* Utility ================================
+  //* Utility Methods ================================
+
+  /**
+   * Generate a unique root ID for automatic root registration.
+   * @returns {string} A unique root ID in the format 'root_N'
+   */
+  generateRootId(): string {
+    return `root_${this.nextRootIndex++}`
+  }
 
   /**
    * Generate a unique job ID.
@@ -825,12 +838,6 @@ export class Scheduler {
     if (!value) return new Set()
     if (Array.isArray(value)) return new Set(value)
     return new Set([value])
-  }
-
-  //* Constructor ================================
-
-  constructor() {
-    this.phaseGraph = new PhaseGraph()
   }
 }
 

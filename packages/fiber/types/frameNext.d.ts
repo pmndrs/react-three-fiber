@@ -73,14 +73,61 @@ declare global {
     running: boolean
     /** Current RAF handle */
     rafHandle: number | null
-    /** Last frame timestamp (null = uninitialized) */
+    /** Last frame timestamp in ms (null = uninitialized) */
     lastTime: number | null
     /** Frame counter */
     frameCount: number
-    /** Elapsed time since first frame */
+    /** Elapsed time since first frame in ms */
     elapsedTime: number
-    /** createdAt timestamp */
+    /** createdAt timestamp in ms */
     createdAt: number
+  }
+
+  // Root Entry --------------------------------
+
+  /**
+   * Internal representation of a registered root (Canvas).
+   * Tracks jobs and manages rebuild state for this root.
+   * @internal
+   */
+  interface RootEntry {
+    /** Unique identifier for this root */
+    id: string
+    /** Function to get the root's current state */
+    getState: () => import('#types').RootState
+    /** Map of job IDs to Job objects */
+    jobs: Map<string, Job>
+    /** Cached sorted job list for execution order */
+    sortedJobs: Job[]
+    /** Whether sortedJobs needs rebuilding */
+    needsRebuild: boolean
+  }
+
+  /**
+   * Internal representation of a global job (deprecated API).
+   * Global jobs run once per frame, not per-root.
+   * Used by legacy addEffect/addAfterEffect APIs.
+   * @internal
+   * @deprecated Use useFrame with phases instead
+   */
+  interface GlobalJob {
+    /** Unique identifier for this global job */
+    id: string
+    /** Callback invoked with RAF timestamp in ms */
+    callback: (timestamp: number) => void
+  }
+
+  // HMR Support --------------------------------
+
+  /**
+   * Hot Module Replacement data structure for preserving scheduler state
+   * @internal
+   */
+  interface HMRData {
+    /** Shared data object for storing values across reloads */
+    data: Record<string, any>
+    /** Optional function to accept HMR updates */
+    accept?: () => void
   }
 
   // Default Phases --------------------------------

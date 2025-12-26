@@ -47,9 +47,9 @@ export interface AddPhaseOptions {
 export interface FrameNextState extends RootState {
   /** High-resolution timestamp from RAF (ms) */
   time: number
-  /** Time since last frame (ms) */
+  /** Time since last frame in seconds (for legacy compatibility with THREE.Clock) */
   delta: number
-  /** Elapsed time since first frame (ms) */
+  /** Elapsed time since first frame in seconds (for legacy compatibility with THREE.Clock) */
   elapsed: number
   /** Incrementing frame counter */
   frame: number
