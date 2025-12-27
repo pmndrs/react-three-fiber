@@ -14,6 +14,7 @@ const Inject = { Component: lazy(() => import('./default/Inject')) }
 const Layers = { Component: lazy(() => import('./default/Layers')) }
 const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
+const PortalTest = { Component: lazy(() => import('./default/PortalTest')) }
 const ResetProps = { Component: lazy(() => import('./default/ResetProps')) }
 const Selection = { Component: lazy(() => import('./default/Selection')) }
 const StopPropagation = { Component: lazy(() => import('./default/StopPropagation')) }
@@ -68,6 +69,7 @@ export {
   Test,
   Viewcube,
   ViewTracking,
+  PortalTest,
   // Legacy
   EventPriority,
   Lines,

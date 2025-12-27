@@ -1,7 +1,7 @@
 import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
-import { useNodes } from '@react-three/fiber/webgpu'
 import { easing } from 'maath'
-import { useMemo, useState } from 'react'
+import * as React from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { color, mix, positionLocal, sin, time, uniform, vec3 } from 'three/tsl'
 
 function Plane(props: ThreeElements['mesh']) {
@@ -30,6 +30,7 @@ function Plane(props: ThreeElements['mesh']) {
 }
 
 export default function App() {
+  const meshRef = useRef<React.ComponentRef<'mesh'>>(null)
   return (
     <Canvas renderer>
       <ambientLight intensity={Math.PI} />

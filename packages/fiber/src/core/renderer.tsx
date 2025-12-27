@@ -2,7 +2,7 @@ import * as THREE from '#three'
 import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector } from '#three'
 
 import type { Object3D } from '#three'
-import type { JSX, ReactNode } from 'react'
+import type { JSX, ReactNode, RefObject } from 'react'
 import { useMemo, useState } from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { createWithEqualityFn } from 'zustand/traditional'
@@ -629,8 +629,12 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   }
 }
 
-export function createPortal(children: ReactNode, container: THREE.Object3D, state?: InjectState): JSX.Element {
-  return <Portal children={children} container={container} state={state} />
+export function createPortal(
+  children: ReactNode,
+  container: THREE.Object3D | RefObject<THREE.Object3D | null> | RefObject<THREE.Object3D>,
+  state?: InjectState,
+): JSX.Element {
+  return <PortalWrapper children={children} container={container} state={state} />
 }
 
 interface PortalProps {
@@ -639,6 +643,52 @@ interface PortalProps {
   container: Object3D
 }
 
+interface PortalWrapperProps {
+  children: ReactNode
+  state?: InjectState
+  container: Object3D | RefObject<Object3D | null> | RefObject<Object3D>
+}
+
+//* Portal Wrapper - Handles Ref Resolution ==============================
+function PortalWrapper({ children, container, state }: PortalWrapperProps): JSX.Element {
+  const isRef = (obj: any): obj is RefObject<Object3D> => obj && 'current' in obj
+  const [resolvedContainer, setResolvedContainer] = useState<Object3D | null>(() => {
+    if (isRef(container)) return container.current ?? null
+    return container as Object3D
+  })
+
+  // Watch for ref changes if container is a RefObject
+  useMemo(() => {
+    if (isRef(container)) {
+      const current = container.current
+      // If ref is currently null, set up a check to resolve it
+      if (!current) {
+        // Use microtask to check if ref gets populated after render
+        queueMicrotask(() => {
+          const updated = container.current
+          if (updated && updated !== resolvedContainer) {
+            setResolvedContainer(updated)
+          }
+        })
+      } else if (current !== resolvedContainer) {
+        setResolvedContainer(current)
+      }
+    } else if (container !== resolvedContainer) {
+      setResolvedContainer(container as Object3D)
+    }
+  }, [container, resolvedContainer, isRef])
+
+  // Don't render portal until we have a valid container
+  if (!resolvedContainer) return <></>
+
+  // Render the actual portal with resolved container
+  // Use container.uuid as key to force remount when container changes
+  // Fallback to container reference if uuid doesn't exist (defensive)
+  const portalKey = resolvedContainer.uuid ?? `portal-${resolvedContainer.id ?? 'unknown'}`
+  return <Portal key={portalKey} children={children} container={resolvedContainer} state={state} />
+}
+
+//* Portal - Actual Portal Implementation ==============================
 function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
@@ -658,7 +708,7 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
   // Set injectScene: false to skip injection (anti-pattern, for edge cases)
   const [portalScene] = useState(() => {
     // If container is already a Scene, use it directly
-    if ((container as THREE.Scene).isScene) return container as THREE.Scene
+    if ('isScene' in container && (container as THREE.Scene).isScene) return container as THREE.Scene
     // If injection disabled, use container directly (anti-pattern)
     if (!injectScene) return container as THREE.Scene
     // Inject a Scene as child of container
@@ -666,6 +716,18 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
     container.add(scene)
     return scene
   })
+
+  // Clean up injected scene when portal unmounts
+  useIsomorphicLayoutEffect(() => {
+    return () => {
+      // Only remove if we injected a scene (not if container IS the scene)
+      if (portalScene !== container && injectScene) {
+        container.remove(portalScene)
+        // Dispose of the scene's children (meshes, materials, etc.)
+        dispose(portalScene)
+      }
+    }
+  }, [portalScene, container, injectScene])
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
     let viewport = undefined

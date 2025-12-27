@@ -1,6 +1,16 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
+import {
+  ReconcilerRoot,
+  createRoot,
+  act,
+  extend,
+  ThreeElement,
+  ThreeElements,
+  flushSync,
+  useThree,
+  createPortal,
+} from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -1017,5 +1027,179 @@ describe('renderer', () => {
     expect(store.getState().frameloop).toBe('demand')
     // Size should have updated
     expect(store.getState().size.width).toBe(200)
+  })
+
+  describe('createPortal', () => {
+    it('should render portal with direct Object3D', async () => {
+      const container = new THREE.Group()
+      container.name = 'portal-container'
+
+      const store = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<mesh name="portaled-mesh" />, container)}
+          </>,
+        ),
+      )
+
+      const { scene } = store.getState()
+
+      // Container should be in scene
+      expect(scene.children.length).toBe(1)
+      expect(scene.children[0]).toBe(container)
+
+      // Portal injects a Scene as child of container
+      expect(container.children.length).toBe(1)
+      expect(container.children[0].type).toBe('Scene')
+
+      // Mesh should be in the injected scene
+      const portalScene = container.children[0] as THREE.Scene
+      expect(portalScene.children.length).toBe(1)
+      expect(portalScene.children[0].name).toBe('portaled-mesh')
+    })
+
+    it('should render portal with ref object', async () => {
+      const TestComponent = () => {
+        const containerRef = React.useRef<THREE.Group>(null)
+
+        return (
+          <>
+            <group ref={containerRef} name="ref-container" />
+            {createPortal(<mesh name="ref-portaled-mesh" />, containerRef)}
+          </>
+        )
+      }
+
+      const store = await act(async () => root.render(<TestComponent />))
+      const { scene } = store.getState()
+
+      // Wait for ref to resolve (portal renders after microtask)
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      const container = scene.children.find((c) => c.name === 'ref-container') as THREE.Group
+      expect(container).toBeDefined()
+
+      // Portal injects a Scene as child of container
+      expect(container.children.length).toBe(1)
+      expect(container.children[0].type).toBe('Scene')
+
+      // Mesh should be in the injected scene
+      const portalScene = container.children[0] as THREE.Scene
+      expect(portalScene.children.length).toBe(1)
+      expect(portalScene.children[0].name).toBe('ref-portaled-mesh')
+    })
+
+    it('should remount portal when container changes', async () => {
+      const TestComponent = ({ useSecondContainer }: { useSecondContainer: boolean }) => {
+        const container1 = React.useRef<THREE.Group>(null)
+        const container2 = React.useRef<THREE.Group>(null)
+
+        return (
+          <>
+            <group ref={container1} name="container-1" />
+            <group ref={container2} name="container-2" />
+            {createPortal(<mesh name="switching-mesh" />, useSecondContainer ? container2 : container1)}
+          </>
+        )
+      }
+
+      const store = await act(async () => root.render(<TestComponent useSecondContainer={false} />))
+      const { scene } = store.getState()
+
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      const container1 = scene.children.find((c) => c.name === 'container-1') as THREE.Group
+      const container2 = scene.children.find((c) => c.name === 'container-2') as THREE.Group
+
+      // Mesh should be in container1
+      expect(container1.children.length).toBeGreaterThan(0)
+      expect((container1.children[0] as THREE.Scene).children.length).toBe(1)
+      expect((container1.children[0] as THREE.Scene).children[0].name).toBe('switching-mesh')
+      expect(container2.children.length).toBe(0)
+
+      // Switch to container2
+      await act(async () => root.render(<TestComponent useSecondContainer={true} />))
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      // Mesh should now be in container2
+      // Old portal scene should be cleaned up from container1
+      expect(container1.children.length).toBe(0)
+      expect(container2.children.length).toBeGreaterThan(0)
+      expect((container2.children[0] as THREE.Scene).children.length).toBe(1)
+      expect((container2.children[0] as THREE.Scene).children[0].name).toBe('switching-mesh')
+    })
+
+    it('should handle camera changes in portal container', async () => {
+      const TestComponent = ({ useCustomCamera }: { useCustomCamera: boolean }) => {
+        const { camera: defaultCamera } = useThree()
+        const customCamera = React.useMemo(() => new THREE.PerspectiveCamera(), [])
+        const targetCamera = useCustomCamera ? customCamera : defaultCamera
+
+        return (
+          <>
+            <primitive object={customCamera} />
+            {createPortal(<mesh name="camera-bound-mesh" />, targetCamera)}
+          </>
+        )
+      }
+
+      const store = await act(async () => root.render(<TestComponent useCustomCamera={false} />))
+      const { scene, camera: defaultCamera } = store.getState()
+
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      // Mesh should be in default camera
+      expect(defaultCamera.children.length).toBe(1)
+      expect((defaultCamera.children[0] as THREE.Scene).children[0].name).toBe('camera-bound-mesh')
+
+      // Switch to custom camera
+      await act(async () => root.render(<TestComponent useCustomCamera={true} />))
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      const customCamera = scene.children.find((c) => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
+      expect(customCamera).toBeDefined()
+
+      // Mesh should now be in custom camera
+      // Old portal scene should be cleaned up from default camera
+      expect(defaultCamera.children.length).toBe(0)
+      expect(customCamera.children.length).toBeGreaterThan(0)
+      expect((customCamera.children[0] as THREE.Scene).children[0].name).toBe('camera-bound-mesh')
+    })
+
+    it('should not render portal until ref is resolved', async () => {
+      let renderCount = 0
+
+      const TestComponent = () => {
+        const containerRef = React.useRef<THREE.Group>(null)
+        renderCount++
+
+        return (
+          <>
+            <group ref={containerRef} name="delayed-container" />
+            {createPortal(
+              <mesh name="delayed-mesh">
+                <boxGeometry />
+              </mesh>,
+              containerRef,
+            )}
+          </>
+        )
+      }
+
+      const store = await act(async () => root.render(<TestComponent />))
+      const { scene } = store.getState()
+
+      // Initial render - container exists but portal may not be attached yet
+      const container = scene.children.find((c) => c.name === 'delayed-container') as THREE.Group
+      expect(container).toBeDefined()
+
+      // Wait for microtask to resolve ref
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+      // Now portal should be attached
+      expect(container.children.length).toBe(1)
+      expect((container.children[0] as THREE.Scene).children[0].name).toBe('delayed-mesh')
+    })
   })
 })
