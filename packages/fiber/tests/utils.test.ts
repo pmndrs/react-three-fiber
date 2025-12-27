@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { act } from 'react'
-import { type RootStore, type Instance, createRoot } from '../src'
+import { RootStore, Instance, createRoot } from '../src'
 import {
   is,
   dispose,
@@ -518,6 +518,63 @@ describe('applyProps', () => {
     expect(copy).not.toHaveBeenCalled()
     expect(target.scale).toBe(10)
     expect(target.rotation.z).toBe(4)
+  })
+
+  it('should create intermediate instance when target is null and value is vector-like', () => {
+    // Create an object with null color property (simulating custom material scenario)
+    const material: any = { color: null }
+    const colorRed = new THREE.Color('red')
+    const colorWhite = new THREE.Color('white')
+
+    // First application: target is null, should create intermediate instance
+    applyProps(material, { color: colorRed })
+
+    // Material should have a color instance now (not null)
+    expect(material.color).not.toBeNull()
+    expect(material.color).not.toBe(colorRed)
+    expect(material.color.getHex()).toBe(0xff0000)
+
+    // Store reference to the created intermediate instance
+    const intermediateColor = material.color
+
+    // Second application: should copy into the intermediate, not replace it
+    applyProps(material, { color: colorWhite })
+
+    // Material color should still be the same instance (intermediate)
+    expect(material.color).toBe(intermediateColor)
+    expect(material.color.getHex()).toBe(0xffffff)
+
+    // Original color objects should not be mutated
+    expect(colorRed.getHex()).toBe(0xff0000)
+    expect(colorWhite.getHex()).toBe(0xffffff)
+
+    // Third application: back to red - intermediate should update again
+    applyProps(material, { color: colorRed })
+    expect(material.color).toBe(intermediateColor)
+    expect(material.color.getHex()).toBe(0xff0000)
+  })
+
+  it('should create intermediate instance for vectors when target is null', () => {
+    const target = { position: null as THREE.Vector3 | null }
+    const vec1 = new THREE.Vector3(1, 2, 3)
+    const vec2 = new THREE.Vector3(4, 5, 6)
+
+    // First apply
+    applyProps(target, { position: vec1 })
+    expect(target.position).not.toBeNull()
+    expect(target.position).not.toBe(vec1)
+    expect(target.position?.toArray()).toStrictEqual([1, 2, 3])
+
+    const intermediate = target.position
+
+    // Second apply - should mutate intermediate, not replace
+    applyProps(target, { position: vec2 })
+    expect(target.position).toBe(intermediate)
+    expect(target.position?.toArray()).toStrictEqual([4, 5, 6])
+
+    // Original vectors should not be mutated
+    expect(vec1.toArray()).toStrictEqual([1, 2, 3])
+    expect(vec2.toArray()).toStrictEqual([4, 5, 6])
   })
 })
 
