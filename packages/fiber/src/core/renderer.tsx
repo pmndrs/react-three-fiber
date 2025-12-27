@@ -311,7 +311,20 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       // Store events internally
-      if (events && !state.events.handlers) state.set({ events: events(store) })
+      if (events && !state.events.handlers) {
+        state.set({ events: events(store) })
+
+        // Subscribe to enabled changes to auto-trigger raycaster update
+        let wasEnabled = true
+        store.subscribe((state) => {
+          const { enabled } = state.events
+          // When re-enabled, trigger raycaster to detect hover state
+          if (enabled && !wasEnabled) {
+            state.events.update?.()
+          }
+          wasEnabled = enabled
+        })
+      }
       // Check size, allow it to take on container bounds initially
       const size = computeInitialSize(canvas, propsSize)
       if (!is.equ(size, state.size, shallowLoose)) {

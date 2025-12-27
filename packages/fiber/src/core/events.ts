@@ -361,10 +361,14 @@ export function createEvents(store: RootStore) {
 
     // Any other pointer goes here ...
     return function handleEvent(event: DomEvent) {
-      const { onPointerMissed, onDragOverMissed, onDropMissed, internal } = store.getState()
+      const state = store.getState()
+      const { onPointerMissed, onDragOverMissed, onDropMissed, internal } = state
 
       // prepareRay(event)
       internal.lastEvent.current = event
+
+      // Early exit if events are disabled - prevents raycasting and intersection checks
+      if (!state.events.enabled) return
 
       // Get fresh intersects
       const isPointerMove = name === 'onPointerMove'
@@ -522,9 +526,12 @@ const DOM_EVENTS = {
 export function createPointerEvents(store: RootStore): EventManager<HTMLElement> {
   const { handlePointer } = createEvents(store)
 
+  //* EventManager object ==============================
+  // For portals and others we do it as a SPREADABLE object instead of a class.
   return {
     priority: 1,
     enabled: true,
+
     compute(event: DomEvent, state: RootState, previous?: RootState) {
       // https://github.com/pmndrs/react-three-fiber/pull/782
       // Events trigger outside of canvas when moved, use offsetX/Y by default and allow overrides
