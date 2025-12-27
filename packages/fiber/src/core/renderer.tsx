@@ -125,6 +125,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   let onCreated: ((state: RootState) => void) | undefined
   let lastCamera: RenderProps<TCanvas>['camera']
 
+  // Track last configured props for diffing - prevents imperative setter values
+  // from being overwritten when Canvas re-configures (e.g., on resize)
+  let lastConfiguredProps: Partial<{
+    dpr: RenderProps<TCanvas>['dpr']
+    frameloop: RenderProps<TCanvas>['frameloop']
+    performance: RenderProps<TCanvas>['performance']
+    shadows: RenderProps<TCanvas>['shadows']
+    linear: boolean
+    flat: boolean
+    legacy: boolean
+    textureColorSpace: THREE.ColorSpace
+  }> = {}
+
   let configured = false
   let pending: Promise<void> | null = null
 
@@ -304,19 +317,30 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!is.equ(size, state.size, shallowLoose)) {
         state.setSize(size.width, size.height, size.top, size.left)
       }
-      // Check pixelratio
-      if (dpr && state.viewport.dpr !== calculateDpr(dpr)) state.setDpr(dpr)
-      // Check frameloop
-      if (state.frameloop !== frameloop) state.setFrameloop(frameloop)
+      // Check pixelratio - only update if the PROP changed (not if state differs from prop)
+      // This preserves imperative setDpr() changes across Canvas re-configures
+      if (dpr !== undefined && !is.equ(dpr, lastConfiguredProps.dpr, shallowLoose)) {
+        state.setDpr(dpr)
+        lastConfiguredProps.dpr = dpr
+      }
+      // Check frameloop - only update if the PROP changed
+      // This preserves imperative setFrameloop() changes across Canvas re-configures
+      if (frameloop !== undefined && frameloop !== lastConfiguredProps.frameloop) {
+        state.setFrameloop(frameloop)
+        lastConfiguredProps.frameloop = frameloop
+      }
       // Check pointer missed
       if (!state.onPointerMissed) state.set({ onPointerMissed })
       // Check dragover missed
       if (!state.onDragOverMissed) state.set({ onDragOverMissed })
       // Check drop missed
       if (!state.onDropMissed) state.set({ onDropMissed })
-      // Check performance
-      if (performance && !is.equ(performance, state.performance, shallowLoose))
+      // Check performance - only update if the PROP changed
+      // This preserves any runtime performance changes across Canvas re-configures
+      if (performance && !is.equ(performance, lastConfiguredProps.performance, shallowLoose)) {
         state.set((state) => ({ performance: { ...state.performance, ...performance } }))
+        lastConfiguredProps.performance = performance
+      }
 
       // Set up XR (one time only!)
       if (!state.xr) {
@@ -361,7 +385,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       //* Shadow Map ==============================
-      if (renderer.shadowMap) {
+      // Only update if the shadows PROP changed (not just if state differs)
+      if (renderer.shadowMap && !is.equ(shadows, lastConfiguredProps.shadows, shallowLoose)) {
+        lastConfiguredProps.shadows = shadows
         const oldEnabled = renderer.shadowMap.enabled
         const oldType = renderer.shadowMap.type
         renderer.shadowMap.enabled = !!shadows
@@ -386,8 +412,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       // Only execute legacy color management if could be using the webgl renderer is true
       if (R3F_BUILD_LEGACY) {
-        //We only notifiy its depreciation for default and legaqcy. webgpu imports dont get noticed
-        if (isDefaultBuild) {
+        // Check if any of the color management props changed
+        const legacyChanged = legacy !== lastConfiguredProps.legacy
+        const linearChanged = linear !== lastConfiguredProps.linear
+        const flatChanged = flat !== lastConfiguredProps.flat
+
+        //We only notifiy its depreciation for default and legacy. webgpu imports dont get noticed
+        if (isDefaultBuild && legacyChanged) {
           if (legacy)
             notifyDepreciated({
               heading: 'Legacy Color Management',
@@ -396,22 +427,34 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             })
         }
 
-        THREE.ColorManagement.enabled = !legacy
-
-        // Set color space and tonemapping preferences
-        if (!configured) {
-          renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-          renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+        // Only apply if props changed
+        if (legacyChanged) {
+          THREE.ColorManagement.enabled = !legacy
+          lastConfiguredProps.legacy = legacy
         }
 
-        // Update color management state
-        if (state.legacy !== legacy) state.set(() => ({ legacy }))
-        if (state.linear !== linear) state.set(() => ({ linear }))
-        if (state.flat !== flat) state.set(() => ({ flat }))
+        // Set color space and tonemapping preferences - only on first configure or when prop changes
+        if (!configured || linearChanged) {
+          renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
+          lastConfiguredProps.linear = linear
+        }
+        if (!configured || flatChanged) {
+          renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
+          lastConfiguredProps.flat = flat
+        }
+
+        // Update color management state only if PROP changed
+        if (legacyChanged && state.legacy !== legacy) state.set(() => ({ legacy }))
+        if (linearChanged && state.linear !== linear) state.set(() => ({ linear }))
+        if (flatChanged && state.flat !== flat) state.set(() => ({ flat }))
       }
 
       // Update textureColorSpace state (color space for 8-bit input textures)
-      if (state.textureColorSpace !== textureColorSpace) state.set(() => ({ textureColorSpace }))
+      // Only update if the PROP changed
+      if (textureColorSpace !== lastConfiguredProps.textureColorSpace) {
+        if (state.textureColorSpace !== textureColorSpace) state.set(() => ({ textureColorSpace }))
+        lastConfiguredProps.textureColorSpace = textureColorSpace
+      }
 
       // Set gl props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
