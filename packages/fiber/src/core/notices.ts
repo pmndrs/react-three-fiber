@@ -17,6 +17,15 @@ const shownNotices = new Set<string>()
  * @param notice.link - Optional URL link to documentation or migration guide
  */
 export function notifyDepreciated({ heading, body, link }: DeprecationNotice): void {
+  // Suppress deprecation warnings in test environment unless explicitly enabled
+  if (
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) &&
+    process.env.R3F_SHOW_DEPRECATION_WARNINGS !== 'true'
+  ) {
+    return
+  }
+
   // Skip if we've already shown this notice in this session
   if (shownNotices.has(heading)) return
   shownNotices.add(heading)

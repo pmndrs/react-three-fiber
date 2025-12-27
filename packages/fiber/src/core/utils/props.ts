@@ -45,8 +45,6 @@ const MEMOIZED_PROTOTYPES = new Map()
  */
 const colorMaps = ['map', 'emissiveMap', 'sheenColorMap', 'specularColorMap', 'envMap']
 
-type ClassConstructor = { new (): void }
-
 /**
  * Resolves a potentially pierced property key (e.g., 'material-color' → material.color).
  * First tries the entire key as a single property, then attempts piercing.
@@ -255,10 +253,19 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       throw Error(`R3F: Cannot set "${prop}". Ensure it is an object before setting "${key}".`)
     }
 
+    // If the existing value is null and the new value is vector-like (has set/copy methods),
+    // create an intermediate instance to prevent mutation of the incoming value.
+    // This prevents issues where ColorA gets mutated to ColorB when alternating between values.
+    if (target === null && hasConstructor(value) && isVectorLike(value)) {
+      target = new (value.constructor as new () => typeof value)()
+      root[key] = target
+    }
+
     // Layers must be written to the mask property
     if (target instanceof THREE.Layers && value instanceof THREE.Layers) {
       target.mask = value.mask
     }
+
     // Set colors if valid color representation for automatic conversion (copy)
     // Use duck-typing (.isColor) instead of instanceof to handle multiple THREE instances
     else if ((target as THREE.Color)?.isColor && isColorRepresentation(value)) {
