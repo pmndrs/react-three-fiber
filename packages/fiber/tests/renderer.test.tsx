@@ -866,4 +866,156 @@ describe('renderer', () => {
     await act(async () => root.render(<TestComponent />))
     await act(async () => updateSynchronously(1))
   })
+
+  //* Props vs Setters Conflict Resolution Tests ==============================
+  // These tests verify that imperative setter changes (setDpr, setFrameloop, etc.)
+  // are preserved when Canvas re-configures (e.g., on resize)
+
+  it('should preserve setFrameloop changes across re-configure (no prop passed)', async () => {
+    // Test scenario: Canvas has no frameloop prop (defaults to 'always')
+    // User calls setFrameloop('demand'), then Canvas re-configures (resize)
+    // Frameloop should stay 'demand', not reset to default
+
+    // Initial configure with default frameloop (no prop passed explicitly uses 'always')
+    const store = await act(async () =>
+      (await root.configure({ size: { width: 100, height: 100, top: 0, left: 0 } })).render(<group />),
+    )
+    const state = store.getState()
+
+    // Verify initial state - frameloop should be 'always' (the default)
+    expect(state.frameloop).toBe('always')
+
+    // User imperatively changes frameloop to 'demand'
+    await act(async () => state.setFrameloop('demand'))
+    expect(store.getState().frameloop).toBe('demand')
+
+    // Simulate resize by re-configuring with new size (but same frameloop prop)
+    // This is what happens when the Canvas container resizes
+    await act(async () => root.configure({ size: { width: 200, height: 200, top: 0, left: 0 } }))
+
+    // Size should have updated
+    expect(store.getState().size.width).toBe(200)
+    expect(store.getState().size.height).toBe(200)
+
+    // Frameloop should STILL be 'demand' - not reset to 'always'
+    expect(store.getState().frameloop).toBe('demand')
+  })
+
+  it('should preserve setDpr changes from child component across re-configure', async () => {
+    // Test scenario: Canvas has dpr={[1, 2]} prop
+    // A child component calls setDpr(1) after mount
+    // Canvas re-configures (resize) - dpr should stay at 1, not reset to [1, 2]
+
+    let setDprFromComponent: (dpr: number) => void = () => {}
+
+    function DprSetter() {
+      const state = useThree()
+      React.useEffect(() => {
+        // Expose setDpr for test to call
+        setDprFromComponent = (dpr: number) => state.setDpr(dpr)
+      }, [state])
+      return null
+    }
+
+    // Initial configure with dpr={[1, 2]}
+    const store = await act(async () =>
+      (
+        await root.configure({
+          dpr: [1, 2],
+          size: { width: 100, height: 100, top: 0, left: 0 },
+        })
+      ).render(<DprSetter />),
+    )
+
+    // Verify initial dpr was applied (calculateDpr picks based on device pixel ratio)
+    const initialDpr = store.getState().viewport.dpr
+    expect(typeof initialDpr).toBe('number')
+
+    // Child component imperatively changes dpr to 1
+    await act(async () => setDprFromComponent(1))
+    expect(store.getState().viewport.dpr).toBe(1)
+
+    // Simulate resize by re-configuring with new size (but same dpr prop)
+    await act(async () =>
+      root.configure({
+        dpr: [1, 2],
+        size: { width: 200, height: 200, top: 0, left: 0 },
+      }),
+    )
+
+    // Size should have updated
+    expect(store.getState().size.width).toBe(200)
+    expect(store.getState().size.height).toBe(200)
+
+    // DPR should STILL be 1 - not reset based on [1, 2] range
+    expect(store.getState().viewport.dpr).toBe(1)
+  })
+
+  it('should update dpr when the PROP changes (controlled mode)', async () => {
+    // Test scenario: Canvas dpr prop actually changes from [1, 2] to 1
+    // In this case, the new prop value should be applied
+
+    const store = await act(async () =>
+      (
+        await root.configure({
+          dpr: [1, 2],
+          size: { width: 100, height: 100, top: 0, left: 0 },
+        })
+      ).render(<group />),
+    )
+
+    const initialDpr = store.getState().viewport.dpr
+
+    // Re-configure with a DIFFERENT dpr prop value
+    await act(async () =>
+      root.configure({
+        dpr: 0.5, // Changed from [1, 2] to 0.5
+        size: { width: 100, height: 100, top: 0, left: 0 },
+      }),
+    )
+
+    // DPR should now be 0.5 (the new prop value was applied)
+    expect(store.getState().viewport.dpr).toBe(0.5)
+  })
+
+  it('should preserve multiple setter changes across re-configure', async () => {
+    // Test scenario: Both dpr and frameloop are changed imperatively
+    // Both should be preserved after re-configure
+
+    const store = await act(async () =>
+      (
+        await root.configure({
+          dpr: [1, 2],
+          frameloop: 'always',
+          size: { width: 100, height: 100, top: 0, left: 0 },
+        })
+      ).render(<group />),
+    )
+
+    const state = store.getState()
+
+    // User imperatively changes both dpr and frameloop
+    await act(async () => {
+      state.setDpr(1)
+      state.setFrameloop('demand')
+    })
+
+    expect(store.getState().viewport.dpr).toBe(1)
+    expect(store.getState().frameloop).toBe('demand')
+
+    // Simulate resize by re-configuring with same props
+    await act(async () =>
+      root.configure({
+        dpr: [1, 2],
+        frameloop: 'always',
+        size: { width: 200, height: 200, top: 0, left: 0 },
+      }),
+    )
+
+    // Both values should be preserved
+    expect(store.getState().viewport.dpr).toBe(1)
+    expect(store.getState().frameloop).toBe('demand')
+    // Size should have updated
+    expect(store.getState().size.width).toBe(200)
+  })
 })
