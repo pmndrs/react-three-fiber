@@ -10,26 +10,48 @@ const memoizedLoaders = new WeakMap<ConstructorRepresentation<LoaderLike>, Loade
 const isConstructor = (value: unknown): value is ConstructorRepresentation<LoaderLike> =>
   typeof value === 'function' && value?.prototype?.constructor === value
 
+//* Loader Retrieval Utility ==============================
+
+/**
+ * Gets or creates a memoized loader instance from a loader constructor or returns the loader if it's already an instance.
+ * This allows external code to access loader methods like abort().
+ */
+function getLoader<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
+  Proto: L,
+): L extends ConstructorRepresentation<infer T> ? T : L {
+  // Construct and cache loader if constructor was passed
+  if (isConstructor(Proto)) {
+    let loader = memoizedLoaders.get(Proto)
+    if (!loader) {
+      loader = new Proto()
+      memoizedLoaders.set(Proto, loader)
+    }
+    return loader as L extends ConstructorRepresentation<infer T> ? T : L
+  }
+
+  // Return the loader instance as-is
+  return Proto as L extends ConstructorRepresentation<infer T> ? T : L
+}
+
 function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
   return function (Proto: L, input: string) {
-    let loader: LoaderLike = Proto as any
-
-    // Construct and cache loader if constructor was passed
-    if (isConstructor(Proto)) {
-      loader = memoizedLoaders.get(Proto)!
-      if (!loader) {
-        loader = new Proto()
-        memoizedLoaders.set(Proto, loader)
-      }
-    }
+    const loader = getLoader(Proto)
 
     // Apply loader extensions
     if (extensions) extensions(loader as any)
 
-    // Load single input
+    // Prefer loadAsync if available (supports abort, cleaner Promise API)
+    if ('loadAsync' in loader && typeof loader.loadAsync === 'function') {
+      return loader.loadAsync(input, onProgress).then((data: any) => {
+        if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
+        return data
+      }) as Promise<LoaderResult<L>>
+    }
+
+    // Fall back to callback-based load
     return new Promise<LoaderResult<L>>((res, reject) =>
       loader.load(
         input,
@@ -94,3 +116,9 @@ useLoader.clear = function <I extends InputLike, L extends LoaderLike | Construc
   // Clear each key individually to match how they were cached
   keys.forEach((key) => clear([loader, key]))
 }
+
+/**
+ * Gets the memoized loader instance, allowing access to loader methods like abort().
+ * For constructor-based loaders, returns the cached instance. For instance loaders, returns the instance itself.
+ */
+useLoader.loader = getLoader

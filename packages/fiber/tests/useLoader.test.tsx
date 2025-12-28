@@ -178,4 +178,121 @@ describe('useLoader', () => {
     // Clean up cache for other tests
     useLoader.clear(TestLoader, [URL_A, URL_B])
   })
+
+  it('can abort loader with loadAsync and clears suspend', async () => {
+    const URL_SLOW = '/slow-load.glb'
+    let abortCalled = false
+    let loadCompleted = false
+    let loadAsyncCalled = false
+
+    class AbortableLoader extends THREE.Loader<string, string> {
+      private abortController: (() => void) | null = null
+
+      // Implement loadAsync for abort support
+      loadAsync(url: string, onProgress?: (event: ProgressEvent) => void): Promise<string> {
+        loadAsyncCalled = true
+        return new Promise<string>((resolve, reject) => {
+          const timeoutId = setTimeout(() => {
+            loadCompleted = true
+            this.abortController = null
+            resolve(`loaded:${url}`)
+          }, 5000) // 5 second load time
+
+          // Store abort handler
+          this.abortController = () => {
+            abortCalled = true
+            clearTimeout(timeoutId)
+            reject(new Error('Load aborted'))
+          }
+        })
+      }
+
+      // Standard load method (won't be used since loadAsync exists)
+      load(url: string, onLoad: (result: string) => void): void {
+        onLoad(`loaded:${url}`)
+      }
+
+      // Override abort to call our controller
+      abort(): this {
+        if (this.abortController) {
+          this.abortController()
+          this.abortController = null
+        }
+        return super.abort()
+      }
+    }
+
+    const Component = () => {
+      const result = useLoader(AbortableLoader, URL_SLOW)
+      return <mesh name={result} />
+    }
+
+    // Start rendering (will suspend and trigger loadAsync)
+    let renderError: any = null
+    act(() => {
+      try {
+        root.render(
+          <React.Suspense fallback={<mesh name="loading" />}>
+            <Component />
+          </React.Suspense>,
+        )
+      } catch (err) {
+        renderError = err
+      }
+    })
+
+    // Wait for loadAsync to be called by suspend-react
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(loadAsyncCalled).toBe(true)
+    expect(loadCompleted).toBe(false)
+
+    // Get the loader instance and abort after 1 second
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const loaderInstance = useLoader.loader(AbortableLoader)
+    loaderInstance.abort()
+
+    // Verify abort was called
+    expect(abortCalled).toBe(true)
+    expect(loadCompleted).toBe(false)
+
+    // Wait a bit for the abort to propagate
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Clear the cache to ensure suspend is cleared
+    useLoader.clear(AbortableLoader, URL_SLOW)
+
+    // Reset flags for next test
+    loadAsyncCalled = false
+    abortCalled = false
+
+    // Verify the suspended load is no longer cached
+    // If we try to use it again, it should start a fresh load
+    const Component2 = () => {
+      const result = useLoader(AbortableLoader, URL_SLOW)
+      return <mesh name={result} />
+    }
+
+    // This should trigger a new load since cache was cleared
+    act(() => {
+      try {
+        root.render(
+          <React.Suspense fallback={<mesh name="loading2" />}>
+            <Component2 />
+          </React.Suspense>,
+        )
+      } catch (err) {
+        // Expected to suspend again
+      }
+    })
+
+    // Wait to let the new load attempt start
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    expect(loadAsyncCalled).toBe(true) // New load started
+    expect(abortCalled).toBe(false) // No abort on this new attempt yet
+
+    // Clean up
+    const newLoader = useLoader.loader(AbortableLoader)
+    newLoader.abort()
+    useLoader.clear(AbortableLoader, URL_SLOW)
+  })
 })
