@@ -14,7 +14,7 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ) {
-  return function (Proto: L, ...input: string[]) {
+  return function (Proto: L, input: string) {
     let loader: LoaderLike = Proto as any
 
     // Construct and cache loader if constructor was passed
@@ -29,21 +29,16 @@ function loadingFn<L extends LoaderLike | ConstructorRepresentation<LoaderLike>>
     // Apply loader extensions
     if (extensions) extensions(loader as any)
 
-    // Go through the urls and load them
-    return Promise.all(
-      input.map(
-        (input) =>
-          new Promise<LoaderResult<L>>((res, reject) =>
-            loader.load(
-              input,
-              (data: any) => {
-                if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
-                res(data)
-              },
-              onProgress,
-              (error: unknown) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
-            ),
-          ),
+    // Load single input
+    return new Promise<LoaderResult<L>>((res, reject) =>
+      loader.load(
+        input,
+        (data: any) => {
+          if (isObject3D(data?.scene)) Object.assign(data, buildGraph(data.scene))
+          res(data)
+        },
+        onProgress,
+        (error: unknown) => reject(new Error(`Could not load ${input}: ${(error as ErrorEvent)?.message}`)),
       ),
     )
   }
@@ -63,7 +58,10 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
 ) {
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
-  const results = suspend(loadingFn(extensions, onProgress), [loader, ...keys], { equal: is.equ })
+
+  // Call suspend individually for each key to match preload cache structure
+  const results = keys.map((key) => suspend(loadingFn(extensions, onProgress), [loader, key], { equal: is.equ }))
+
   // Return the object(s)
   return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
