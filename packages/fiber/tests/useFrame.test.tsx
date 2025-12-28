@@ -820,9 +820,9 @@ describe('useFrame hook', () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
     })
 
-    // Verify error was set in store
-    const state = store.getState()
-    expect(state.error).toBe(testError)
+    // Verify error was set in store (only extract the error property to avoid circular references)
+    const error = store.getState().error
+    expect(error).toBe(testError)
   })
 
   //* Legacy Priority Tests ==============================
