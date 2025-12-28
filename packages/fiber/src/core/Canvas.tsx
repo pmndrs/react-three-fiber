@@ -44,36 +44,38 @@ function CanvasImpl({
 
   const Bridge = useBridge()
 
-  //* Dynamic Debounce Setup ==============================
-  // Start with 0 debounce for immediate initial render, then switch to user settings
-  const hasInitialSize = React.useRef(false)
-  const [measureConfig, setMeasureConfig] = React.useState<{
-    scroll?: boolean
-    debounce?: number | { scroll: number; resize: number }
-    [key: string]: any
-  }>(() => ({
-    ...resize,
-    scroll: resize?.scroll ?? true,
-    debounce: 0, // Force initial to 0
-  }))
+  //* Dynamic Debounce for Fast Initial Render ==============================
+  // Track if we've gotten initial size measurement
+  const hasInitialSizeRef = React.useRef(false)
+
+  // Create measure config with immediate initial measurement (0ms debounce)
+  // After first size, we'll use user-provided debounce for subsequent updates
+  const measureConfig = React.useMemo(() => {
+    if (!hasInitialSizeRef.current) {
+      // First measurement: use 0ms debounce for immediate rendering
+      return {
+        ...resize,
+        scroll: resize?.scroll ?? true,
+        debounce: 0,
+      }
+    }
+    // Subsequent measurements: use user-provided debounce
+    return {
+      scroll: true,
+      debounce: { scroll: 50, resize: 0 },
+      ...resize,
+    }
+  }, [resize, hasInitialSizeRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [containerRef, containerRect] = useMeasure(measureConfig)
+
+  // Mark that we have initial size (for next render cycle)
+  if (!hasInitialSizeRef.current && containerRect.width > 0 && containerRect.height > 0) {
+    hasInitialSizeRef.current = true
+  }
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
-
-  // Switch to user-provided debounce after initial size is measured
-  React.useEffect(() => {
-    if (!hasInitialSize.current && containerRect.width > 0 && containerRect.height > 0) {
-      hasInitialSize.current = true
-      // Apply user's debounce settings after first valid measurement
-      setMeasureConfig({
-        scroll: resize?.scroll ?? true,
-        debounce: resize?.debounce ?? { scroll: 50, resize: 0 },
-        ...resize,
-      })
-    }
-  }, [containerRect.width, containerRect.height, resize])
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
   const handleDragOverMissed = useMutableCallback(onDragOverMissed)
