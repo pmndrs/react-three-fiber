@@ -44,7 +44,35 @@ function CanvasImpl({
 
   const Bridge = useBridge()
 
-  const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  //* Dynamic Debounce for Fast Initial Render ==============================
+  // Track if we've gotten initial size measurement
+  const hasInitialSizeRef = React.useRef(false)
+
+  // Create measure config with immediate initial measurement (0ms debounce)
+  // After first size, we'll use user-provided debounce for subsequent updates
+  const measureConfig = React.useMemo(() => {
+    if (!hasInitialSizeRef.current) {
+      // First measurement: use 0ms debounce for immediate rendering
+      return {
+        ...resize,
+        scroll: resize?.scroll ?? true,
+        debounce: 0,
+      }
+    }
+    // Subsequent measurements: use user-provided debounce
+    return {
+      scroll: true,
+      debounce: { scroll: 50, resize: 0 },
+      ...resize,
+    }
+  }, [resize, hasInitialSizeRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [containerRef, containerRect] = useMeasure(measureConfig)
+
+  // Mark that we have initial size (for next render cycle)
+  if (!hasInitialSizeRef.current && containerRect.width > 0 && containerRect.height > 0) {
+    hasInitialSizeRef.current = true
+  }
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
