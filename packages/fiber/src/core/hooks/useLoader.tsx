@@ -59,8 +59,11 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
   // Use suspense to load async assets
   const keys = (Array.isArray(input) ? input : [input]) as string[]
 
+  // Create the loading function once to ensure consistent function reference across suspend calls
+  const fn = loadingFn(extensions, onProgress)
+
   // Call suspend individually for each key to match preload cache structure
-  const results = keys.map((key) => suspend(loadingFn(extensions, onProgress), [loader, key], { equal: is.equ }))
+  const results = keys.map((key) => suspend(fn, [loader, key], { equal: is.equ }))
 
   // Return the object(s)
   return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>

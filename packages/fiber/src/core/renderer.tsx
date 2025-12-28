@@ -3,7 +3,7 @@ import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Insp
 
 import type { Object3D } from '#three'
 import type { JSX, ReactNode, RefObject } from 'react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { ConcurrentRoot } from 'react-reconciler/constants'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -651,7 +651,7 @@ interface PortalWrapperProps {
 
 //* Portal Wrapper - Handles Ref Resolution ==============================
 function PortalWrapper({ children, container, state }: PortalWrapperProps): JSX.Element {
-  const isRef = (obj: any): obj is RefObject<Object3D> => obj && 'current' in obj
+  const isRef = useCallback((obj: any): obj is RefObject<Object3D> => obj && 'current' in obj, [])
   const [resolvedContainer, setResolvedContainer] = useState<Object3D | null>(() => {
     if (isRef(container)) return container.current ?? null
     return container as Object3D
