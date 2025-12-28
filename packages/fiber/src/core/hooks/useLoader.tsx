@@ -73,10 +73,11 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
   loader: L,
   input: I,
   extensions?: Extensions<L>,
+  onProgress?: (event: ProgressEvent<EventTarget>) => void,
 ): void {
   const keys = (Array.isArray(input) ? input : [input]) as string[]
   // Preload each key individually so cache keys match useLoader calls
-  keys.forEach((key) => preload(loadingFn(extensions), [loader, key]))
+  keys.forEach((key) => preload(loadingFn(extensions, onProgress), [loader, key]))
 }
 
 /**
