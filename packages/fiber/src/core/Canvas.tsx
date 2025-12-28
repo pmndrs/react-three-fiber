@@ -44,10 +44,36 @@ function CanvasImpl({
 
   const Bridge = useBridge()
 
-  const [containerRef, containerRect] = useMeasure({ scroll: true, debounce: { scroll: 50, resize: 0 }, ...resize })
+  //* Dynamic Debounce Setup ==============================
+  // Start with 0 debounce for immediate initial render, then switch to user settings
+  const hasInitialSize = React.useRef(false)
+  const [measureConfig, setMeasureConfig] = React.useState<{
+    scroll?: boolean
+    debounce?: number | { scroll: number; resize: number }
+    [key: string]: any
+  }>(() => ({
+    ...resize,
+    scroll: resize?.scroll ?? true,
+    debounce: 0, // Force initial to 0
+  }))
+
+  const [containerRef, containerRect] = useMeasure(measureConfig)
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
   const divRef = React.useRef<HTMLDivElement>(null!)
   React.useImperativeHandle(ref, () => canvasRef.current)
+
+  // Switch to user-provided debounce after initial size is measured
+  React.useEffect(() => {
+    if (!hasInitialSize.current && containerRect.width > 0 && containerRect.height > 0) {
+      hasInitialSize.current = true
+      // Apply user's debounce settings after first valid measurement
+      setMeasureConfig({
+        scroll: resize?.scroll ?? true,
+        debounce: resize?.debounce ?? { scroll: 50, resize: 0 },
+        ...resize,
+      })
+    }
+  }, [containerRect.width, containerRect.height, resize])
 
   const handlePointerMissed = useMutableCallback(onPointerMissed)
   const handleDragOverMissed = useMutableCallback(onDragOverMissed)

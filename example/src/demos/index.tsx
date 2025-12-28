@@ -3,6 +3,7 @@ import { lazy } from 'react'
 //* Default Examples ==============================
 // Examples that work with both WebGL and WebGPU renderers
 const AutoDispose = { Component: lazy(() => import('./default/AutoDispose')) }
+const CanvasDebounceFixed = { Component: lazy(() => import('./default/CanvasDebounceFixed')) }
 const ChangeTexture = { Component: lazy(() => import('./default/ChangeTexture')) }
 const ClickAndHover = { Component: lazy(() => import('./default/ClickAndHover')) }
 const ContextMenuOverride = { Component: lazy(() => import('./default/ContextMenuOverride')) }
@@ -50,6 +51,7 @@ const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNe
 export {
   // Default
   AutoDispose,
+  CanvasDebounceFixed,
   ChangeTexture,
   ClickAndHover,
   ContextMenuOverride,
