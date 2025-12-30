@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.5.0
+
+### Minor Changes
+
+- 1050a62bd4bc15e60ab3a65deea08dedfcf24989: Support React 19.2
+
 ## 9.4.2
 
 ### Patch Changes
