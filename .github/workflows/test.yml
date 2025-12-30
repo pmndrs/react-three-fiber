@@ -6,8 +6,15 @@ on:
   pull_request: {}
 jobs:
   build:
-    name: Build, lint, and test
+    name: Build, lint, and test (React ${{ matrix.react-version }})
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        react-version:
+          - 19.0.0
+          - latest
 
     steps:
       - name: Checkout repo
@@ -18,10 +25,25 @@ jobs:
         with:
           node-version: 20
 
+      - name: Cache node_modules and Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+            .yarn/cache
+          key: >
+            ${{ runner.os }}-node20-react-${{ matrix.react-version }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-react-${{ matrix.react-version }}-
+
       - name: Install deps and build (with cache)
         uses: bahmutov/npm-install@v1
         with:
           install-command: yarn --immutable --silent
+
+      - name: Override React version (${{ matrix.react-version }})
+        run: |
+          yarn add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} --dev -W
 
       - name: Check types
         run: yarn run typecheck

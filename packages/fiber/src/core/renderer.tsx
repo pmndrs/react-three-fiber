@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ConcurrentRoot } from 'react-reconciler/constants'
+import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import * as THREE from 'three'
 import { createWithEqualityFn } from 'zustand/traditional'
 
