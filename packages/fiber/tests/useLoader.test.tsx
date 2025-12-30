@@ -228,26 +228,22 @@ describe('useLoader', () => {
     }
 
     // Start rendering (will suspend and trigger loadAsync)
-    let renderError: any = null
-    act(() => {
-      try {
-        root.render(
-          <React.Suspense fallback={<mesh name="loading" />}>
-            <Component />
-          </React.Suspense>,
-        )
-      } catch (err) {
-        renderError = err
-      }
+    // Use async act to properly handle Suspense
+    await act(async () => {
+      root.render(
+        <React.Suspense fallback={<mesh name="loading" />}>
+          <Component />
+        </React.Suspense>,
+      )
+      // Give time for suspend-react to start the load
+      await new Promise((resolve) => setTimeout(resolve, 50))
     })
 
-    // Wait for loadAsync to be called by suspend-react
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    // Verify loadAsync was called (component suspended and triggered the loader)
     expect(loadAsyncCalled).toBe(true)
     expect(loadCompleted).toBe(false)
 
-    // Get the loader instance and abort after 1 second
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Get the loader instance and abort
     const loaderInstance = useLoader.loader(AbortableLoader)
     loaderInstance.abort()
 
@@ -255,13 +251,10 @@ describe('useLoader', () => {
     expect(abortCalled).toBe(true)
     expect(loadCompleted).toBe(false)
 
-    // Wait a bit for the abort to propagate
-    await new Promise((resolve) => setTimeout(resolve, 100))
-
     // Clear the cache to ensure suspend is cleared
     useLoader.clear(AbortableLoader, URL_SLOW)
 
-    // Reset flags for next test
+    // Reset flags for second load attempt
     loadAsyncCalled = false
     abortCalled = false
 
@@ -273,21 +266,18 @@ describe('useLoader', () => {
     }
 
     // This should trigger a new load since cache was cleared
-    act(() => {
-      try {
-        root.render(
-          <React.Suspense fallback={<mesh name="loading2" />}>
-            <Component2 />
-          </React.Suspense>,
-        )
-      } catch (err) {
-        // Expected to suspend again
-      }
+    await act(async () => {
+      root.render(
+        <React.Suspense fallback={<mesh name="loading2" />}>
+          <Component2 />
+        </React.Suspense>,
+      )
+      // Give time for suspend-react to start the new load
+      await new Promise((resolve) => setTimeout(resolve, 50))
     })
 
-    // Wait to let the new load attempt start
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    expect(loadAsyncCalled).toBe(true) // New load started
+    // Verify a new load started
+    expect(loadAsyncCalled).toBe(true)
     expect(abortCalled).toBe(false) // No abort on this new attempt yet
 
     // Clean up

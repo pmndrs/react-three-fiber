@@ -1,6 +1,5 @@
 import * as THREE from '#three'
 import type { RootStore, Instance, ObjectMap, Disposable } from '#types'
-import type { Fiber } from 'react-reconciler'
 import { getUuidPrefix } from './three'
 
 //* Instance & Scene Graph Management ==============================
@@ -101,11 +100,11 @@ export function dispose<T extends Disposable>(obj: T): void {
  * @param queue - Pending props from reconciler fiber
  * @returns Props object without React-internal keys
  */
-export function getInstanceProps<T = any>(queue: Fiber['pendingProps']): Instance<T>['props'] {
+export function getInstanceProps<T = any>(pendingProps: Record<string, unknown>): Instance<T>['props'] {
   const props: Instance<T>['props'] = {}
 
-  for (const key in queue) {
-    if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = queue[key]
+  for (const key in pendingProps) {
+    if (!REACT_INTERNAL_PROPS.includes(key)) props[key] = pendingProps[key]
   }
 
   return props

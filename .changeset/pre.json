@@ -1,0 +1,11 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "example": "0.0.0",
+    "@react-three/eslint-plugin": "0.1.2",
+    "@react-three/fiber": "9.4.2",
+    "@react-three/test-renderer": "9.1.0"
+  },
+  "changesets": ["v10-alpha-release"]
+}

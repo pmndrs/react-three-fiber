@@ -11,6 +11,11 @@ import { dirname } from 'path'
  * - Default: #three → three/index.ts (both WebGL + WebGPU)
  * - Legacy: #three → three/legacy.ts (WebGL only)
  * - WebGPU: #three → three/webgpu.ts (WebGPU only)
+ *
+ * React Reconciler:
+ * - Source code imports from ./react-reconciler/* using relative paths
+ * - The patched ESM version is built via vite during postinstall (see root vite.config.ts)
+ * - Gets bundled into dist files (not externalized)
  */
 
 const __filename = fileURLToPath(import.meta.url)
@@ -36,10 +41,10 @@ const sharedRollup = {
 }
 
 //* Shared externals ==============================
+// Note: react-reconciler is NOT external - we bundle our patched ESM version
 const baseExternals = [
   'react',
   'react-dom',
-  'react-reconciler',
   'scheduler',
   'zustand',
   'zustand/shallow',

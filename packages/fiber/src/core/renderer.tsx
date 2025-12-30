@@ -4,7 +4,7 @@ import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Insp
 import type { Object3D } from '#three'
 import type { JSX, ReactNode, RefObject } from 'react'
 import { useCallback, useMemo, useState } from 'react'
-import { ConcurrentRoot } from 'react-reconciler/constants'
+import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import { createWithEqualityFn } from 'zustand/traditional'
 
 import { useStore } from './hooks'

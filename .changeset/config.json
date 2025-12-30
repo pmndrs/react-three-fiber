@@ -4,7 +4,7 @@
   "commit": true,
   "linked": [],
   "access": "public",
-  "baseBranch": "master",
+  "baseBranch": "v10",
   "updateInternalDependencies": "minor",
   "ignore": [],
   "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
