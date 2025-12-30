@@ -33,6 +33,12 @@
   "module": "./dist/index.mjs",
   "types": "./src/index.tsx",
   "sideEffects": false,
+  "files": [
+    "dist",
+    "types",
+    "react-reconciler",
+    "readme.md"
+  ],
   "exports": {
     ".": {
       "types": "./src/index.tsx",
