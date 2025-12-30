@@ -2,6 +2,7 @@ node_modules/
 coverage/
 dist/
 build/
+packages/fiber/react-reconciler/
 Thumbs.db
 ehthumbs.db
 Desktop.ini

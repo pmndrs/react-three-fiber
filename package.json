@@ -22,7 +22,8 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "yarn stub",
+    "postinstall": "yarn stub && yarn patch-react-reconciler",
+    "patch-react-reconciler": "vite build",
     "build": "yarn workspace @react-three/fiber build && yarn workspace @react-three/eslint-plugin build",
     "examples": "yarn workspace example dev",
     "stub": "yarn workspace @react-three/fiber stub && yarn workspace @react-three/eslint-plugin stub",
@@ -57,6 +58,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
+    "@types/react-reconciler": "^0.32.0",
     "@types/scheduler": "0.23.0",
     "@types/three": "^0.181.0",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
@@ -80,10 +82,12 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-nil": "^2.0.0",
+    "react-reconciler": "^0.33.0",
     "three": "^0.181.0",
     "ts-jest": "^29.1.2",
     "typescript": "^5.9.3",
-    "unbuild": "^3.6.1"
+    "unbuild": "^3.6.1",
+    "vite": "^6.0.0"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

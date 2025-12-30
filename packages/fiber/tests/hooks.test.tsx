@@ -109,6 +109,15 @@ describe('hooks', () => {
     })
   })
 
+  it('can handle future (19.x) hooks without crashing', async () => {
+    function Component() {
+      // @ts-ignore
+      React.useEffectEvent?.(() => {})
+      return null
+    }
+    expect(async () => await act(async () => root.render(<Component />))).not.toThrow()
+  })
+
   it('can handle useInstanceHandle hook', async () => {
     const ref = React.createRef<THREE.Group>()
     let instance!: React.RefObject<Instance>

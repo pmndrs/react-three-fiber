@@ -102,7 +102,47 @@ yarn build
 
 # Development mode with stub files (faster iteration)
 yarn stub
+
+# Patch react-reconciler to ESM (runs automatically during postinstall)
+yarn patch-react-reconciler
 ```
+
+## React Reconciler Patching
+
+The package includes a patching system for `react-reconciler` to convert it from CJS to ESM format. This is necessary because the official `react-reconciler` package has ESM compatibility issues.
+
+### How it works:
+
+1. **Automatic patching**: During `yarn install`, the `postinstall` script runs `yarn patch-react-reconciler`
+2. **Vite transformation**: Uses `vite build` (configured in root `vite.config.ts`) to:
+   - Bundle `react-reconciler` from `node_modules`
+   - Convert CJS constants to ESM exports
+   - Copy TypeScript definitions
+   - Output to `packages/fiber/react-reconciler/`
+3. **Build aliasing**: `build.config.ts` aliases `react-reconciler` imports to the patched version
+4. **Test integration**: `jest.config.js` also uses the patched version for tests
+
+### Output:
+
+```
+packages/fiber/react-reconciler/
+├── index.js          # Main reconciler bundle (ESM)
+├── index.d.ts        # TypeScript definitions
+├── constants.js      # Constants bundle (ESM)
+└── constants.d.ts    # Constants TypeScript definitions
+```
+
+This directory is gitignored and regenerated on install.
+
+### Testing and Building:
+
+Both tests and builds use the **same patched reconciler** to ensure consistency:
+
+- **Source code** imports via relative paths: `../../react-reconciler/index.js`
+- **Build time** (unbuild): Bundles the patched ESM version directly into `dist/` files
+- **Test time** (Jest): Transforms the patched ESM files to CJS on-the-fly using babel-jest
+
+This ensures you test exactly what you ship.
 
 ## Output Structure
 

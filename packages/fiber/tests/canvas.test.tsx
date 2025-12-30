@@ -85,6 +85,33 @@ describe('web Canvas', () => {
     const errorSpy = jest.fn()
     console.error = errorSpy
 
+    //* Track what the error boundary catches ==============================
+    let caughtError: Error | null = null
+    let errorInfo: React.ErrorInfo | null = null
+
+    // User-provided error boundary component
+    class TestErrorBoundary extends React.Component<
+      { children: React.ReactNode; fallback: React.ReactNode },
+      { hasError: boolean }
+    > {
+      state = { hasError: false }
+
+      static getDerivedStateFromError() {
+        return { hasError: true }
+      }
+
+      componentDidCatch(error: Error, info: React.ErrorInfo) {
+        caughtError = error
+        errorInfo = info
+      }
+
+      render() {
+        if (this.state.hasError) return this.props.fallback
+        return this.props.children
+      }
+    }
+
+    // Component that throws in useFrame
     const ErrorComponent = () => {
       useFrame(() => {
         throw testError
@@ -93,32 +120,28 @@ describe('web Canvas', () => {
     }
 
     try {
-      // Test that error is set in store and propagated to Canvas error boundary
       const renderer = await act(async () =>
         render(
-          <Canvas>
-            <ErrorComponent />
-          </Canvas>,
+          <TestErrorBoundary fallback={<div data-testid="error-fallback">Error caught</div>}>
+            <Canvas>
+              <ErrorComponent />
+            </Canvas>
+          </TestErrorBoundary>,
         ),
       )
 
-      // Wait for frames to execute and error to be thrown
-      // Wrap in try-catch since React may re-throw after error boundary catches
-      try {
-        await act(async () => {
-          await new Promise((resolve) => setTimeout(resolve, 150))
-        })
-      } catch (err) {
-        // Expected - error may be re-thrown by React after boundary catches it
-      }
+      // Wait for frames to execute and error to propagate to boundary
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150))
+      })
 
-      // Verify the scheduler error handler was called
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('[Scheduler] Error in job'), testError)
+      // Verify the error was caught by our boundary
+      expect(caughtError).toBe(testError)
+      expect(errorInfo).not.toBeNull()
 
-      // Canvas should still be mounted (error boundary prevents unmount)
-      expect(renderer.container).toBeTruthy()
+      // Verify fallback UI is rendered
+      expect(renderer.getByTestId('error-fallback')).toBeTruthy()
     } finally {
-      // Restore console.error
       console.error = originalError
     }
   })
