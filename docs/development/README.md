@@ -4,7 +4,7 @@ This directory contains technical documentation for `@react-three/fiber` develop
 
 ## For Contributors
 
-- **[CONTRIBUTING](../CONTRIBUTING.md)** - Start here! How to contribute, setup, and release process
+- **[CONTRIBUTING](./CONTRIBUTING.md)** - Start here! How to contribute, setup, and release process
 - **[BUILD](./BUILD.md)** - Build system, package manager, and tooling decisions
 - **[DEVELOPMENT](./DEVELOPMENT.md)** - Day-to-day development workflows and commands
 
