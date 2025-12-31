@@ -46,7 +46,7 @@ jobs:
 
       - name: Override React version (${{ matrix.react-version }})
         run: |
-          yarn add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} --dev -W
+          yarn add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} -D
 
       - name: Build
         run: yarn run build
