@@ -16,3 +16,13 @@ coverage/
 yarn-error.log
 .size-snapshot.json
 __tests__/__image_snapshots__/__diff_output__
+
+# Yarn 4 (Berry) - using nodeLinker: node-modules
+# We commit .yarn/releases for version pinning via packageManager field
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*

@@ -4,7 +4,6 @@
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
-  "private": false,
   "main": "dist/react-three-test-renderer.cjs.js",
   "module": "dist/react-three-test-renderer.esm.js",
   "types": "dist/react-three-test-renderer.cjs.d.ts",
@@ -42,8 +41,8 @@
     ]
   },
   "peerDependencies": {
-    "react": "^19.0.0",
     "@react-three/fiber": ">=10.0.0-alpha.0",
+    "react": "^19.0.0",
     "three": ">=0.181"
   },
   "peerDependenciesMeta": {

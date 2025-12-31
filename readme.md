@@ -15,11 +15,11 @@ react-three-fiber is a <a href="https://reactjs.org/docs/codebase-overview.html#
 Build your scene declaratively with re-usable, self-contained components that react to state, are readily interactive and can participate in React's ecosystem.
 
 ```bash
-npm install three @types/three @react-three/fiber
+yarn install three @types/three @react-three/fiber
 ```
 
 > [!WARNING]  
-> Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 pairs with react@19.
+> Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9+ pairs with react@19.
 
 ---
 
@@ -62,7 +62,7 @@ function Box(props) {
   const [hovered, hover] = useState(false)
   const [clicked, click] = useState(false)
   // Subscribe this component to the render-loop, rotate the mesh every frame
-  useFrame((state, delta) => (ref.current.rotation.x += delta))
+  useFrame(({ delta }) => (ref.current.rotation.x += delta))
   // Return the view, these are regular Threejs elements expressed in JSX
   return (
     <mesh
@@ -132,6 +132,7 @@ createRoot(document.getElementById('root') as HTMLElement).render(
 )
 ```
 
+TODO: Move this
 Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 
 </details>
@@ -284,14 +285,28 @@ A small selection of companies and projects relying on three-fiber.
 
 # How to contribute
 
-If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/react-three-fiber), or in crypto `BTC: 36fuguTPxGCNnYZSRdgdh6Ea94brCAjMbH`, `ETH: 0x6E3f79Ea1d0dcedeb33D3fC6c34d2B1f156F2682`.
+Checkout the detailed [contribution docs.](docs/development/README.md)
+
+If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/pmndrs)
+
+# Testing
+
+R3F uses Jest for unit testing and bundle verification scripts to ensure correct THREE.js imports across entry points. For detailed testing instructions, see the [Testing Guide](docs/development/TESTING.md).
+
+```bash
+# Run all tests
+yarn test
+
+# Build and verify bundles
+yarn build && yarn verify-bundles
+```
 
 #### Backers
 
 Thank you to all our backers! 🙏
 
-<a href="https://opencollective.com/react-three-fiber#backers" target="_blank">
-  <img src="https://opencollective.com/react-three-fiber/backers.svg?width=890"/>
+<a href="https://opencollective.com/pmndrsr#backers" target="_blank">
+  <img src="https://opencollective.com/pmndrs/backers.svg?width=890"/>
 </a>
 
 #### Contributors

@@ -1,23 +1,23 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`ReactThreeTestRenderer Core can render a composite component & correctly build simple graph 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
+[
+  {
+    "children": [
+      {
+        "children": [],
         "name": "",
         "type": undefined,
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
+      {
+        "children": [
+          {
+            "children": [],
             "name": "",
             "type": "BoxGeometry",
           },
-          Object {
-            "children": Array [],
+          {
+            "children": [],
             "name": "",
             "type": "MeshBasicMaterial",
           },
@@ -33,13 +33,13 @@ Array [
 `;
 
 exports[`ReactThreeTestRenderer Core correctly builds a tree 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             0,
             0,
             255,
@@ -48,14 +48,14 @@ Array [
         },
         "type": "color",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [
-              Object {
-                "children": Array [],
-                "props": Object {
-                  "args": Array [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "props": {
+                  "args": [
                     Float32Array [
                       -1,
                       -1,
@@ -83,26 +83,26 @@ Array [
                 "type": "bufferAttribute",
               },
             ],
-            "props": Object {
+            "props": {
               "attach": "geometry",
             },
             "type": "bufferGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
               "color": "hotpink",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {},
+        "props": {},
         "type": "mesh",
       },
     ],
-    "props": Object {
-      "position": Array [
+    "props": {
+      "position": [
         1,
         2,
         3,
@@ -114,13 +114,13 @@ Array [
 `;
 
 exports[`ReactThreeTestRenderer Core exposes the instance 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             2,
             2,
           ],
@@ -128,28 +128,28 @@ Array [
         },
         "type": "boxGeometry",
       },
-      Object {
-        "children": Array [],
-        "props": Object {
+      {
+        "children": [],
+        "props": {
           "attach": "material",
         },
         "type": "meshBasicMaterial",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "mesh",
   },
 ]
 `;
 
 exports[`ReactThreeTestRenderer Core exposes the instance 2`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             2,
             2,
           ],
@@ -157,31 +157,31 @@ Array [
         },
         "type": "boxGeometry",
       },
-      Object {
-        "children": Array [],
-        "props": Object {
+      {
+        "children": [],
+        "props": {
           "attach": "material",
         },
         "type": "meshStandardMaterial",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "mesh",
   },
 ]
 `;
 
 exports[`ReactThreeTestRenderer Core handles primitive objects and their children correctly in toGraph 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
+[
+  {
+    "children": [
+      {
+        "children": [],
         "name": "",
         "type": "BoxGeometry",
       },
-      Object {
-        "children": Array [],
+      {
+        "children": [],
         "name": "",
         "type": "MeshBasicMaterial",
       },
@@ -189,17 +189,17 @@ Array [
     "name": "RegularMesh",
     "type": "Mesh",
   },
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
+  {
+    "children": [
+      {
+        "children": [],
         "name": "PrimitiveChildMesh",
         "type": "Mesh",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
+      {
+        "children": [
+          {
+            "children": [],
             "name": "NestedMesh",
             "type": "Mesh",
           },
@@ -215,13 +215,13 @@ Array [
 `;
 
 exports[`ReactThreeTestRenderer Core toTree() handles complicated tree of fragments 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             0,
             0,
             0,
@@ -231,15 +231,15 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "group",
   },
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             0,
             0,
             255,
@@ -249,15 +249,15 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "group",
   },
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [],
-        "props": Object {
-          "args": Array [
+  {
+    "children": [
+      {
+        "children": [],
+        "props": {
+          "args": [
             255,
             0,
             0,
@@ -267,32 +267,32 @@ Array [
         "type": "color",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "group",
   },
 ]
 `;
 
 exports[`ReactThreeTestRenderer Core toTree() handles nested Fragments 1`] = `
-Array [
-  Object {
-    "children": Array [],
-    "props": Object {},
+[
+  {
+    "children": [],
+    "props": {},
     "type": "group",
   },
 ]
 `;
 
 exports[`ReactThreeTestRenderer Core updates children 1`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 2,
                 2,
               ],
@@ -300,25 +300,25 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "position-z": 12,
         },
         "type": "mesh",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 4,
                 4,
               ],
@@ -326,25 +326,25 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "position-y": 12,
         },
         "type": "mesh",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 6,
                 6,
               ],
@@ -352,36 +352,36 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "group",
   },
 ]
 `;
 
 exports[`ReactThreeTestRenderer Core updates children 2`] = `
-Array [
-  Object {
-    "children": Array [
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 6,
                 6,
               ],
@@ -389,25 +389,25 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "rotation-x": 1,
         },
         "type": "mesh",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 4,
                 4,
               ],
@@ -415,25 +415,25 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "position-y": 12,
         },
         "type": "mesh",
       },
-      Object {
-        "children": Array [
-          Object {
-            "children": Array [],
-            "props": Object {
-              "args": Array [
+      {
+        "children": [
+          {
+            "children": [],
+            "props": {
+              "args": [
                 2,
                 2,
               ],
@@ -441,21 +441,21 @@ Array [
             },
             "type": "boxGeometry",
           },
-          Object {
-            "children": Array [],
-            "props": Object {
+          {
+            "children": [],
+            "props": {
               "attach": "material",
             },
             "type": "meshBasicMaterial",
           },
         ],
-        "props": Object {
+        "props": {
           "position-x": 12,
         },
         "type": "mesh",
       },
     ],
-    "props": Object {},
+    "props": {},
     "type": "group",
   },
 ]

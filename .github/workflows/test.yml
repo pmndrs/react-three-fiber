@@ -25,16 +25,19 @@ jobs:
         with:
           node-version: 22
 
+      - name: Enable Corepack (for Yarn 4)
+        run: corepack enable
+
       - name: Cache node_modules and Yarn cache
         uses: actions/cache@v4
         with:
           path: |
             **/node_modules
-            .yarn/cache
+            ~/.yarn/berry/cache
           key: >
-            ${{ runner.os }}-node22-react-${{ matrix.react-version }}-${{ hashFiles('**/yarn.lock') }}
+            ${{ runner.os }}-yarn4-node22-react-${{ matrix.react-version }}-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-node22-react-${{ matrix.react-version }}-
+            ${{ runner.os }}-yarn4-node22-react-${{ matrix.react-version }}-
 
       - name: Install deps and build (with cache)
         uses: bahmutov/npm-install@v1
