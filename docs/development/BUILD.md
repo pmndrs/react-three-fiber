@@ -142,7 +142,7 @@ yarn build
 yarn verify-bundles
 ```
 
-See [DEVELOPMENT.md](./DEVELOPMENT.md) for detailed development workflows.
+See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
 
 ---
 
@@ -297,6 +297,6 @@ We evaluate tooling changes based on:
 
 ## Questions?
 
-- See [DEVELOPMENT](./DEVELOPMENT.md) for day-to-day development workflows
-- See [CONTRIBUTING](../CONTRIBUTING.md) for contribution guidelines
+- See [DEVELOPMENT](./DEVELOPMENT) for day-to-day development workflows
+- See [CONTRIBUTING](../CONTRIBUTING) for contribution guidelines
 - See the [unbuild config](../packages/fiber/build.config.ts) for technical details
