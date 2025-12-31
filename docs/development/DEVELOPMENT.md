@@ -1,11 +1,13 @@
 # Development Guide
 
-This guide covers how to develop `@react-three/fiber` locally using unbuild.
+This guide covers how to develop `@react-three/fiber` locally.
+
+> **Note:** For information about our build system, package manager choices, and migration history, see [BUILD](./BUILD.md).
 
 ## Quick Start
 
 ```bash
-# Install dependencies (automatically runs yarn stub)
+# Install dependencies with Yarn 4 (automatically runs yarn stub)
 yarn install
 
 # Start developing
@@ -14,18 +16,22 @@ yarn dev
 
 ## Build System Overview
 
-R3F uses **unbuild** for building, which replaced preconstruct. Key differences:
+R3F uses **[unbuild](https://github.com/unjs/unbuild)** for building. Key features:
 
-| Feature         | Preconstruct         | Unbuild                    |
-| --------------- | -------------------- | -------------------------- |
-| Dev mode        | `preconstruct dev`   | `unbuild --stub`           |
-| Build           | `preconstruct build` | `unbuild`                  |
-| Shared chunks   | Yes (problematic)    | No (standalone bundles)    |
-| Per-entry alias | Not supported        | Supported via rollup hooks |
+| Feature         | Capability                                         |
+| --------------- | -------------------------------------------------- |
+| Dev mode        | `unbuild --stub` - instant code reflection         |
+| Build           | `unbuild` - optimized production bundles           |
+| Per-entry alias | Different THREE.js resolution per entry point      |
+| Standalone      | Each entry is a complete bundle (no shared chunks) |
+
+See [BUILD](./BUILD.md) for the full story on why we use unbuild and our tooling choices.
 
 ## Development Commands
 
 ### `yarn stub` (Development Mode)
+
+**(You probably never need to run this, this is done for you)**
 
 Creates stub files that point to source code, allowing you to develop without rebuilding:
 
@@ -58,7 +64,9 @@ This means:
 - TypeScript types come from source files
 - Hot reload works in consuming apps
 
-### When to Rebuild
+### `yarn build` (Production Build)
+
+Creates optimized production bundles with per-entry THREE.js resolution.
 
 You need to run `yarn build` when:
 
@@ -71,10 +79,6 @@ You do NOT need to rebuild for:
 - Normal development
 - Testing source code changes
 - Running Jest tests
-
-### `yarn build` (Production Build)
-
-Creates optimized production bundles with per-entry THREE.js resolution:
 
 ```bash
 yarn build
@@ -130,8 +134,15 @@ function createAliasPlugin(threeVariant: 'default' | 'legacy' | 'webgpu') {
 ```bash
 git clone https://github.com/pmndrs/react-three-fiber.git
 cd react-three-fiber
-yarn install  # Automatically runs yarn stub
+
+# Install Yarn 4 if you don't have it
+corepack enable
+
+# Install dependencies (automatically runs yarn stub)
+yarn install
 ```
+
+> **Note:** We use Yarn 4 (Berry) with `nodeLinker: node-modules`. If you're coming from Yarn 1, everything works the same way. See [BUILD.md](./BUILD) for details.
 
 ### 2. Making Changes
 
@@ -175,6 +186,42 @@ yarn build
 # Verify bundle optimization
 yarn verify-bundles
 ```
+
+## Testing
+
+R3F uses a combination of Jest tests and bundle verification to ensure correctness across all entry points. For comprehensive testing information, see the [Testing Guide](./TESTING.md).
+
+### Quick Testing Commands
+
+```bash
+# Run all Jest tests
+yarn test
+
+# Run specific test file
+yarn test packages/fiber/tests/bundles.test.ts
+
+# Watch mode
+yarn test:watch
+
+# Build and verify bundles
+yarn build && yarn verify-bundles
+```
+
+### Testing Overview
+
+**Jest Tests**
+
+Jest tests run against source files and verify that all exports work correctly. However, they use babel which resolves `#three` to the default variant for all tests.
+
+**Bundle Verification**
+
+The `verify-bundles.js` script analyzes the actual built output to ensure each entry point has the correct THREE.js imports:
+
+- **Default**: Contains both `three` and `three/webgpu`
+- **Legacy**: Contains only `three` (no WebGPU imports)
+- **WebGPU**: Contains only `three/webgpu` (no legacy imports)
+
+For detailed testing workflows, troubleshooting, and adding new tests, see [TESTING](./TESTING.md).
 
 ## Project Structure
 
@@ -346,17 +393,27 @@ Ensure babel config has the aliases and Jest config maps packages to source.
 
 ## CI/CD
 
-For CI pipelines:
+For CI pipelines using Yarn 4:
 
 ```yaml
 steps:
+  # Enable Corepack for Yarn 4
+  - run: corepack enable
+
+  # Install dependencies
   - run: yarn install
+
+  # Build and verify
   - run: yarn build
   - run: yarn verify-bundles
   - run: yarn test
 ```
 
+> **Note:** The `packageManager` field in `package.json` pins the exact Yarn version, so `corepack enable` ensures consistency across environments.
+
 ## Release Process
+
+For the current Alpha Stage see [ALPHA RELEASE](./ALPHA-RELEASE.md)
 
 ```bash
 # 1. Make sure everything passes

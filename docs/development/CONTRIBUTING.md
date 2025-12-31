@@ -2,19 +2,21 @@
 
 This project uses [semantic commits](https://conventionalcommits.org) and [semver](https://semver.org).
 
-To get started, make sure you have [Node](https://nodejs.org) and [Yarn 1](https://classic.yarnpkg.com) (newer versions of Yarn do not work) installed. Install dependencies with:
+To get started, make sure you have [Node](https://nodejs.org) (v18+) and [Yarn](https://yarnpkg.com) (v4+) installed. Install dependencies with:
 
 ```bash
-yarn
+yarn install
 ```
 
-[Preconstruct](https://github.com/preconstruct/preconstruct) will automatically build and link packages for local development via symlinks. If you ever need to do this manually, try running:
+This will automatically run `yarn stub` to create development stubs that point to source code, allowing you to develop without rebuilding. See [BUILD](./docs/BUILD.md) for details on our build system.
+
+If you ever need to manually regenerate stubs, run:
 
 ```bash
 yarn dev
 ```
 
-> **Note**: Some Windows users may need to [enable developer mode](https://howtogeek.com/292914/what-is-developer-mode-in-windows-10) if experiencing `EPERM: operation not permitted, symlink` with Preconstruct. If this persists, you might be running on an unsupported drive/format. In which case, consider using [Docker](https://docs.docker.com/docker-for-windows).
+> **Note**: Some Windows users may need to [enable developer mode](https://howtogeek.com/292914/what-is-developer-mode-in-windows-10) if experiencing `EPERM: operation not permitted, symlink` with stub generation. If this persists, you might be running on an unsupported drive/format. In which case, consider using [Docker](https://docs.docker.com/docker-for-windows).
 
 ### Development
 
