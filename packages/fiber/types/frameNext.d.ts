@@ -1,6 +1,6 @@
 //* useFrameNext Types ==============================
 
-import type { FrameNextCallback } from './scheduler'
+import type { FrameNextCallback } from '#types'
 
 //* Global Type Declarations ==============================
 
@@ -94,7 +94,7 @@ declare global {
     /** Unique identifier for this root */
     id: string
     /** Function to get the root's current state */
-    getState: () => import('./store').RootState
+    getState: () => import('#types').RootState
     /** Map of job IDs to Job objects */
     jobs: Map<string, Job>
     /** Cached sorted job list for execution order */

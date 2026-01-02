@@ -1,7 +1,5 @@
-import type * as THREE from 'three'
-import type { Args, InstanceProps, ConstructorRepresentation } from './reconciler'
-import type { EventHandlers } from './events'
-import type { Overwrite, Mutable } from './utils'
+import type * as THREE from '#three'
+import type { Args, EventHandlers, InstanceProps, ConstructorRepresentation, Overwrite, Mutable } from '#types'
 
 type MutableOrReadonlyParameters<T extends (...args: any) => any> = Parameters<T> | Readonly<Parameters<T>>
 
