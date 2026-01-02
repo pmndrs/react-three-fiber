@@ -10,11 +10,13 @@ export * from './utils'
 export * from './canvas'
 export * from './loader'
 export * from './webgl'
-export * from './webgpu'
 export * from './scheduler'
+export * from './three'
 
-// TSL module augmentations (side-effect import for type augmentation)
+// Side-effect imports for module augmentations
+import './three'
 import './tsl'
-
-// PostProcessing types (global declarations)
 import './postprocessing'
+import './frameNext'
+
+// Note: webgpu types are exported separately via the /webgpu entry point

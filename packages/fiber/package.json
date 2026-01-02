@@ -31,27 +31,26 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./types/index.ts",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
     "dist",
-    "types",
     "react-reconciler",
     "readme.md"
   ],
   "exports": {
     ".": {
-      "types": "./types/index.ts",
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./legacy": {
-      "types": "./types/index.ts",
+      "types": "./dist/legacy.d.ts",
       "import": "./dist/legacy.mjs",
       "require": "./dist/legacy.cjs"
     },
     "./webgpu": {
-      "types": "./types/webgpu.d.ts",
+      "types": "./dist/webgpu/index.d.ts",
       "import": "./dist/webgpu/index.mjs",
       "require": "./dist/webgpu/index.cjs"
     }

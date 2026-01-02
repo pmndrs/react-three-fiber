@@ -75,7 +75,7 @@ export default defineBuildConfig([
     entries: ['src/index.tsx'],
     outDir: 'dist',
     clean: true,
-    declaration: false, // Skip declaration for now - using source types
+    declaration: true, // Generate .d.ts files for consumers
     failOnWarn: false,
     rollup: sharedRollup,
     hooks: {
@@ -91,7 +91,7 @@ export default defineBuildConfig([
     name: 'legacy',
     entries: ['src/legacy.tsx'],
     outDir: 'dist',
-    declaration: false,
+    declaration: true, // Generate .d.ts files for consumers
     failOnWarn: false,
     rollup: sharedRollup,
     hooks: {
@@ -107,7 +107,7 @@ export default defineBuildConfig([
     name: 'webgpu',
     entries: [{ input: 'src/webgpu/index.tsx', name: 'index' }],
     outDir: 'dist/webgpu',
-    declaration: false,
+    declaration: true, // Generate .d.ts files for consumers
     failOnWarn: false,
     rollup: sharedRollup,
     hooks: {

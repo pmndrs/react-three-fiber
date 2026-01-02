@@ -1,5 +1,5 @@
 import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
-import type { Properties } from '../src/core/utils'
+import type { Properties } from './utils'
 import type { BaseRendererProps, RendererFactory } from './renderer'
 
 export type WebGPUDefaultProps = Omit<WebGPURendererParameters, 'canvas'> & BaseRendererProps
