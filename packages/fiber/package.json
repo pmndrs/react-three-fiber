@@ -31,7 +31,7 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./src/index.tsx",
+  "types": "./types/index.ts",
   "sideEffects": false,
   "files": [
     "dist",
@@ -41,17 +41,17 @@
   ],
   "exports": {
     ".": {
-      "types": "./src/index.tsx",
+      "types": "./types/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.cjs"
     },
     "./legacy": {
-      "types": "./src/legacy.tsx",
+      "types": "./types/index.ts",
       "import": "./dist/legacy.mjs",
       "require": "./dist/legacy.cjs"
     },
     "./webgpu": {
-      "types": "./src/webgpu/index.tsx",
+      "types": "./types/webgpu.d.ts",
       "import": "./dist/webgpu/index.mjs",
       "require": "./dist/webgpu/index.cjs"
     }
