@@ -1,5 +1,5 @@
 import type * as THREE from 'three'
-import type { Properties } from '../src/core/utils'
+import type { Properties } from './utils'
 import type { BaseRendererProps, RendererFactory } from './renderer'
 
 export type WebGLDefaultProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & BaseRendererProps

@@ -26,3 +26,4 @@ __tests__/__image_snapshots__/__diff_output__
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+packages/fiber/*.tgz

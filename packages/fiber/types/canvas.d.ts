@@ -1,6 +1,6 @@
 import * as React from 'react'
 import type { Options as ResizeOptions } from 'react-use-measure'
-import type { RenderProps } from '../core/renderer'
+import type { RenderProps } from './renderer'
 
 //* Canvas Types ==============================
 
