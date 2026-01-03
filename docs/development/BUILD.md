@@ -151,43 +151,41 @@ See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
 
 **CI/CD:** This project uses GitHub Actions (`.github/workflows/test.yml`) which has been updated for pnpm and Vitest.
 
----
+## 🧩 Architecture Details
 
-## Future Considerations
+### How Alias Resolution Works
 
-### Potential Future Changes
+The key feature of our build system is **per-entry-point alias resolution**. All source files import from `#three`:
 
-1. **Bun Runtime**
+```typescript
+// src/core/renderer.tsx
+import { WebGLRenderer, WebGPURenderer } from '#three'
+```
 
-   - **When:** Bun stabilizes monorepo tooling and test runner
-   - **Benefit:** Even faster installs/builds, unified runtime
-   - **Risk:** Early ecosystem, potential compatibility issues
+During build, `#three` resolves differently for each entry:
 
-2. **Turbo/Nx Task Orchestration**
+| Entry       | `#three` resolves to  | Result              |
+| :---------- | :-------------------- | :------------------ |
+| **Default** | `src/three/index.ts`  | Both WebGL + WebGPU |
+| **Legacy**  | `src/three/legacy.ts` | WebGL only          |
+| **WebGPU**  | `src/three/webgpu.ts` | WebGPU only         |
 
-   - **When:** Project scales significantly or CI times become problematic
-   - **Benefit:** Task caching, distributed builds
-   - **Effort:** Medium (already partly achieved by pnpm filtering)
-
-3. **TypeScript 5.x Project References**
-   - **When:** TypeScript performance becomes a bottleneck
-   - **Benefit:** Faster type checking in monorepo
-   - **Effort:** Medium (requires tsconfig restructuring)
-
-### Decision Framework
-
-We evaluate tooling changes based on:
-
-- ✅ **Measurable benefit** - Performance, DX, or capability improvement
-- ✅ **Ecosystem stability** - Mature tools with active maintenance
-- ✅ **Contributor experience** - Lower friction, not higher
-- ✅ **Migration cost** - Reasonable effort vs benefit tradeoff
-- ✅ **Maintenance burden** - Doesn't add ongoing complexity
+This is configured in `packages/fiber/build.config.ts` using a custom Rollup alias plugin.
 
 ---
 
-## Questions?
+## 🆕 Adding a New Entry Point
 
-- See [DEVELOPMENT](./DEVELOPMENT) for day-to-day development workflows
-- See [CONTRIBUTING](../CONTRIBUTING) for contribution guidelines
-- See the [unbuild config](../packages/fiber/build.config.ts) for technical details
+If you need to add a specialized bundle (e.g., for a new rendering backend):
+
+1.  **Create Entry File**: Create `src/my-entry.tsx`. It usually just exports everything from `./core` and re-exports specific build flags from `#three`.
+2.  **Create THREE Variant**: Create `src/three/my-variant.ts` to define which parts of the Three.js ecosystem are included.
+3.  **Configure Unbuild**: Add a new entry to `build.config.ts`.
+4.  **Update exports**: Add the new sub-path to `package.json`'s `exports` field.
+5.  **Audit**: Add the new file to `scripts/verify-bundles.js` and add a corresponding test in `packages/fiber/tests/bundles.test.ts`.
+
+---
+
+## 🚀 Release Strategy
+
+For the current Alpha Stage procedures, see the **[Alpha Release Guide](./ALPHA-RELEASE.md)**.

@@ -1,393 +1,96 @@
-# Development Guide
+# Development Workflow Guide
 
-This guide covers how to develop `@react-three/fiber` locally.
+This guide covers the day-to-day process of developing `@react-three/fiber` locally. For technical details on our build architecture or testing infrastructure, please refer to the specialized guides.
 
-> **Note:** For information about our build system, package manager choices, and migration history, see [BUILD](./BUILD.md).
+## 🛠️ Development Cycle
 
-## Quick Start
+The general loop when working on a feature or fix:
 
-```bash
-# Install dependencies with pnpm (automatically runs pnpm stub)
-pnpm install
+1.  **Start Dev Mode**: `pnpm dev` (Generates stubs to link source to dist).
+2.  **Make Changes**: Edit files in `packages/fiber/src/`.
+3.  **Test**: Run tests with `pnpm test`.
+4.  **Verify UI**: Use the examples with `pnpm examples`.
+5.  **Clean up**: Ensure snapshots and lint pass.
 
-# Start developing
-pnpm dev
-```
+### 🏃 Common Commands
 
-## Build System Overview
+| Command         | Purpose                                          |
+| :-------------- | :----------------------------------------------- |
+| `pnpm dev`      | Starts development mode (alias for `pnpm stub`). |
+| `pnpm examples` | Launches the local example suite for UI testing. |
+| `pnpm test`     | Runs the full Vitest suite.                      |
+| `pnpm build`    | Generates final production bundles.              |
 
-R3F uses **[unbuild](https://github.com/unjs/unbuild)** for building. Key features:
+---
 
-| Feature         | Capability                                         |
-| --------------- | -------------------------------------------------- |
-| Dev mode        | `unbuild --stub` - instant code reflection         |
-| Build           | `unbuild` - optimized production bundles           |
-| Per-entry alias | Different THREE.js resolution per entry point      |
-| Standalone      | Each entry is a complete bundle (no shared chunks) |
+## 📂 Project Structure
 
-See [BUILD](./BUILD.md) for the full story on why we use unbuild and our tooling choices.
+Understanding where code lives:
 
-## Development Commands
-
-### `pnpm stub` (Development Mode)
-
-**(You probably never need to run this, this is done for you)**
-
-Creates stub files that point to source code, allowing you to develop without rebuilding:
-
-```bash
-pnpm stub
-# or
-pnpm dev  # alias for pnpm stub
-```
-
-This is run automatically after `pnpm install` via the `postinstall` script.
-
-**What it does:**
-
-- Creates `dist/index.mjs` → points to `src/index.tsx`
-- Creates `dist/legacy.mjs` → points to `src/legacy.tsx`
-- Creates `dist/webgpu/index.mjs` → points to `src/webgpu/index.tsx`
-
-**Stub file example:**
-
-```javascript
-// dist/index.mjs (stub)
-import * as module from '../src/index.tsx'
-export * from '../src/index.tsx'
-export default module.default
-```
-
-This means:
-
-- Your code changes are reflected immediately (no rebuild needed)
-- TypeScript types come from source files
-- Hot reload works in consuming apps
-
-### `pnpm build` (Production Build)
-
-Creates optimized production bundles with per-entry THREE.js resolution.
-
-You need to run `pnpm build` when:
-
-- Preparing for release/publish
-- Testing actual bundle output
-- Verifying THREE.js import resolution
-
-You do NOT need to rebuild for:
-
-- Normal development
-- Testing source code changes
-- Running tests
-
-```bash
-pnpm build
-```
-
-**Output:**
-
-```
-dist/
-  index.cjs      # Default entry (CommonJS)
-  index.mjs      # Default entry (ESM)
-  legacy.cjs     # Legacy entry (CommonJS)
-  legacy.mjs     # Legacy entry (ESM)
-  webgpu/
-    index.cjs    # WebGPU entry (CommonJS)
-    index.mjs    # WebGPU entry (ESM)
-```
-
-## How Alias Resolution Works
-
-The key feature of unbuild is **per-entry-point alias resolution**. All source files import from `#three`:
-
-```typescript
-// src/core/renderer.tsx
-import { WebGLRenderer, WebGPURenderer } from '#three'
-```
-
-During build, `#three` resolves differently for each entry:
-
-| Entry   | `#three` resolves to  | Result              |
-| ------- | --------------------- | ------------------- |
-| Default | `src/three/index.ts`  | Both WebGL + WebGPU |
-| Legacy  | `src/three/legacy.ts` | WebGL only          |
-| WebGPU  | `src/three/webgpu.ts` | WebGPU only         |
-
-This is configured in `packages/fiber/build.config.ts`:
-
-```typescript
-function createAliasPlugin(threeVariant: 'default' | 'legacy' | 'webgpu') {
-  return alias({
-    entries: [
-      { find: /^#three$/, replacement: threeAliases[threeVariant] },
-      // ...
-    ],
-  })
-}
-```
-
-## Development Workflow
-
-### 1. Initial Setup
-
-```bash
-git clone https://github.com/pmndrs/react-three-fiber.git
-cd react-three-fiber
-
-# Install dependencies (automatically runs pnpm stub)
-pnpm install
-```
-
-### 2. Making Changes
-
-Edit source files in `packages/fiber/src/`. Changes are picked up immediately because stubs point to source.
-
-```bash
-# Edit a file
-code packages/fiber/src/core/hooks/useFrame.tsx
-
-# Changes are immediately available - no rebuild needed
-```
-
-### 3. Testing Changes
-
-```bash
-# Run all tests
-pnpm test
-
-# Run specific test
-pnpm vitest packages/fiber/tests/events.test.tsx
-
-# Watch mode
-pnpm test:watch
-```
-
-### 4. Testing with Example App
-
-```bash
-# Start the example app
-pnpm examples
-
-# Navigate to http://localhost:5173
-```
-
-### 5. Building for Production
-
-```bash
-# Build
-pnpm build
-
-# Verify bundle optimization
-pnpm verify-bundles
-```
-
-## Testing
-
-R3F uses a combination of Vitest tests and bundle verification to ensure correctness across all entry points. For comprehensive testing information, see the [Testing Guide](./TESTING.md).
-
-### Quick Testing Commands
-
-```bash
-# Run all Vitest tests
-pnpm test
-
-# Run specific test file
-pnpm vitest packages/fiber/tests/events.test.tsx
-
-# Watch mode
-pnpm test:watch
-
-# Build and verify bundles
-pnpm build && pnpm verify-bundles
-```
-
-### Testing Overview
-
-**Vitest Tests**
-
-Vitest tests run against source files and verify that all exports work correctly. They use native ESM resolution and Vitest's built-in mocking capabilities.
-
-**Bundle Verification**
-
-The `verify-bundles.js` script analyzes the actual built output to ensure each entry point has the correct THREE.js imports:
-
-- **Default**: Contains both `three` and `three/webgpu`
-- **Legacy**: Contains only `three` (no WebGPU imports)
-- **WebGPU**: Contains only `three/webgpu` (no legacy imports)
-
-For detailed testing workflows, troubleshooting, and adding new tests, see [TESTING](./TESTING.md).
-
-## Project Structure
-
-```
+```text
 packages/fiber/
 ├── src/
-│   ├── index.tsx           # Default entry point
-│   ├── legacy.tsx          # Legacy entry point
-│   ├── webgpu/
-│   │   └── index.tsx       # WebGPU entry point
-│   ├── core/               # Core R3F code
-│   └── three/              # THREE.js re-exports
-│       ├── index.ts        # Default (WebGL + WebGPU)
-│       ├── legacy.ts       # Legacy (WebGL only)
-│       ├── webgpu.ts       # WebGPU only
-│       └── tsl.ts          # TSL re-exports
-├── types/                  # TypeScript type definitions
-├── tests/                  # Test files
-├── dist/                   # Built output (generated)
-├── build.config.ts         # Unbuild configuration
-└── package.json
+│   ├── index.tsx           # Default entry (WebGL + WebGPU)
+│   ├── legacy.tsx          # Legacy entry (WebGL only)
+│   ├── webgpu/             # WebGPU-specific entry/logic
+│   ├── core/               # Core reconciler and hooks (Shared)
+│   └── three/              # THREE.js alias resolution files
+├── types/                  # Internal TypeScript definitions
+├── tests/                  # All Vitest tests
+└── build.config.ts         # Build entry point configuration
 ```
 
-## Configuration Files
+- **Shared Logic**: Most changes should happen in `src/core/`.
+- **Three.js Aliases**: We use `#three` to dynamically switch between Three.js variants. See **[BUILD](./BUILD.md)** for how this works.
 
-### `build.config.ts`
+---
 
-Unbuild configuration with three build entries:
+## ✨ Adding New Features
 
-```typescript
-export default defineBuildConfig([
-  {
-    name: 'default',
-    entries: ['src/index.tsx'],
-    // #three → src/three/index.ts
-  },
-  {
-    name: 'legacy',
-    entries: ['src/legacy.tsx'],
-    // #three → src/three/legacy.ts
-  },
-  {
-    name: 'webgpu',
-    entries: ['src/webgpu/index.tsx'],
-    // #three → src/three/webgpu.ts
-  },
-])
-```
+### 1. Adding to All Entry Points
 
-## Adding New Features
+1.  Add your logic in `src/core/`.
+2.  Export it from `src/core/index.tsx`.
+3.  It will be automatically available in all bundles.
 
-### Adding to all entry points
+### 2. WebGPU-Specific Features
 
-1. Add code to `src/core/`
-2. Export from `src/core/index.tsx`
-3. It will be available in all entry points automatically
+1.  Add code to `src/webgpu/`.
+2.  Export from `src/webgpu/index.tsx`.
+3.  These features will _only_ be included in the `@react-three/fiber/webgpu` entry.
 
-### Adding WebGPU-specific features
+### 3. Adding New THREE.js Imports
 
-1. Add code to `src/webgpu/`
-2. Export from `src/webgpu/index.tsx`
-3. It will only be in the `@react-three/fiber/webgpu` entry
+If you need a new export from the Three.js ecosystem:
 
-### Adding a new THREE.js import
+1.  Update the relevant variant in `src/three/` (e.g., `index.ts`, `legacy.ts`, or `webgpu.ts`).
+2.  Import from `#three` in your core code.
 
-If you need a new THREE.js export:
+---
 
-1. Add to `src/three/index.ts` (for default/both)
-2. Add to `src/three/legacy.ts` (if WebGL-compatible)
-3. Add to `src/three/webgpu.ts` (if WebGPU-compatible)
+## 🧪 Testing Your Changes
 
-## Adding a New Entry Point
+We use **Vitest** for all logic testing.
 
-1. Create entry file in `src/`:
+- **Run tests**: `pnpm test`
+- **Watch mode**: `pnpm test:watch`
+- **Focus a file**: `pnpm vitest path/to/file.test.ts`
 
-   ```typescript
-   // src/my-entry.tsx
-   export * from './core'
-   export { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU } from '#three'
-   ```
+For a deep dive into our testing strategy, including bundle size verification, see the **[Testing Guide](./TESTING.md)**.
 
-2. Create THREE variant in `src/three/`:
+---
 
-   ```typescript
-   // src/three/my-variant.ts
-   export const R3F_BUILD_LEGACY = true
-   export const R3F_BUILD_WEBGPU = false
-   export * from 'three'
-   ```
+## 🔍 Troubleshooting
 
-3. Add to `build.config.ts`:
+- **Changes not showing?**: Run `pnpm stub` to ensure your `dist` folders point to `src`.
+- **Import errors in IDE?**: Restart your TypeScript server or run `pnpm typecheck`.
+- **"EPERM" errors on Windows?**: Ensure [Developer Mode](https://howtogeek.com/292914/what-is-developer-mode-in-windows-10) is enabled for symlink support.
 
-   ```typescript
-   {
-     name: 'my-entry',
-     entries: ['src/my-entry.tsx'],
-     outDir: 'dist',
-     hooks: {
-       'rollup:options': (_ctx, options) => {
-         options.plugins = [
-           createAliasPlugin('my-variant'),
-           // ...
-         ]
-       },
-     },
-   }
-   ```
+---
 
-4. Add to `package.json` exports:
+## 🚀 Ready to Release?
 
-   ```json
-   "./my-entry": {
-     "types": "./src/my-entry.tsx",
-     "import": "./dist/my-entry.mjs",
-     "require": "./dist/my-entry.cjs"
-   }
-   ```
+Once your changes are verified:
 
-5. Update `verify-bundles.js` and add tests.
-
-## Troubleshooting
-
-### Changes not reflected
-
-Make sure stubs are generated:
-
-```bash
-pnpm stub
-```
-
-### Import errors in IDE
-
-Restart TypeScript server in your IDE, or run:
-
-```bash
-pnpm typecheck
-```
-
-### Build fails with alias errors
-
-Check that `#three` and `#types` aliases are correctly configured in `build.config.ts`.
-
-## CI/CD
-
-For CI pipelines:
-
-```yaml
-steps:
-  # Install dependencies
-  - run: pnpm install
-
-  # Build and verify
-  - run: pnpm build
-  - run: pnpm verify-bundles
-  - run: pnpm test
-```
-
-## Release Process
-
-For the current Alpha Stage see [ALPHA RELEASE](./ALPHA-RELEASE.md)
-
-```bash
-# 1. Make sure everything passes
-pnpm ci
-
-# 2. Create changeset
-pnpm changeset:add
-
-# 3. Version packages
-pnpm vers
-
-# 4. Release
-pnpm release
-```
+1.  **Create a changeset**: `pnpm changeset:add`
+2.  **Follow the release guide**: **[Alpha Release Guide](./ALPHA-RELEASE.md)**

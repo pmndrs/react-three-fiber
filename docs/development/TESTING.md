@@ -114,79 +114,29 @@ For continuous integration, we run:
 pnpm ci
 ```
 
-## Test Files
+---
 
-### `packages/fiber/tests/bundles.test.ts`
+## 🛠️ Troubleshooting
 
-Tests entry point exports and functionality using dynamic imports.
+### "Multiple instances of Three.js"
 
-### `scripts/verify-bundles.js`
-
-Analyzes built output files. Run directly:
-
-```bash
-node scripts/verify-bundles.js
-```
-
-## Adding New Tests
-
-### Vitest Tests
-
-Add tests to the `tests/` directory with a `.test.ts` or `.test.tsx` extension.
-
-```typescript
-import { vi, describe, it, expect } from 'vitest'
-
-describe('My Feature', () => {
-  it('should work', async () => {
-    const fiber = await import('@react-three/fiber')
-    expect(fiber.myFeature).toBeDefined()
-  })
-})
-```
-
-### Bundle Verification
-
-To add new bundle checks, edit `scripts/verify-bundles.js`:
-
-```javascript
-const checks = [
-  {
-    name: 'My Entry',
-    file: 'my-entry.mjs',
-    shouldContain: ["from 'some-package'"],
-    shouldNotContain: ["from 'forbidden-package'"],
-    notes: 'Description of what this entry should contain',
-  },
-]
-```
-
-## Troubleshooting
-
-### "Multiple instances of Three.js" warning
-
-We suppress this warning in `setupTests.ts` as it's often a side effect of how test environments resolve multiple THREE entry points.
+A common warning in Vitest/JSDOM. It is usually safe to ignore in tests as long as functionality is verified. We suppress the most common variants in `setupTests.ts`.
 
 ### Tests fail with "Cannot find module"
 
-Ensure you have installed dependencies and created stubs:
+1.  Ensure you have run `pnpm install`.
+2.  If the error references `dist` files, run `pnpm stub` to regenerate the development links.
 
-```bash
-pnpm install
-# or
-pnpm stub
-```
+### Bundle verification failure
 
-### Bundle verification fails
+1.  **Build first**: You must run `pnpm build` before running `pnpm verify-bundles`.
+2.  **Check imports**: If a bundle correctly contains forbidden imports (e.g., `three/webgpu` in the legacy bundle), check your `#three` alias resolution in `build.config.ts`.
 
-1. Make sure you've built first: `pnpm build`
-2. Check if the dist folder exists: `ls packages/fiber/dist`
-3. Verify the build completed without errors
+---
 
-### snapshots fail
+## 🏗️ Methodology
 
-If you've made intentional changes that affect snapshots, update them using:
+We use a two-tier verification strategy:
 
-```bash
-pnpm vitest -u
-```
+1.  **Vitest (Source)**: Fast, iterative testing of logic, hooks, and reconciliation.
+2.  **Bundle Verification (Dist)**: Static analysis of built assets to ensure optimization and correct tree-shaking for our various entry points.
