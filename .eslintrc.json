@@ -12,35 +12,29 @@
     "plugin:import/recommended",
     "plugin:@react-three/recommended"
   ],
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "jest", "prettier", "@react-three"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "import", "vitest", "prettier", "@react-three"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true
     },
     "ecmaVersion": 2018,
-    "sourceType": "module",
-    "warnOnUnsupportedTypeScriptVersion": false,
-    "rules": {
-      "curly": ["warn", "multi-line", "consistent"],
-      "no-console": "off",
-      "no-empty-pattern": "warn",
-      "no-duplicate-imports": "error",
-      "import/no-unresolved": "off",
-      "import/export": "error",
-      // https://github.com/typescript-eslint/typescript-eslint/blob/master/docs/getting-started/linting/FAQ.md#eslint-plugin-import
-      // We recommend you do not use the following import/* rules, as TypeScript provides the same checks as part of standard type checking:
-      "import/named": "off",
-      "import/namespace": "off",
-      "import/default": "off",
-      "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-      "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
-      "@typescript-eslint/no-use-before-define": "off",
-      "@typescript-eslint/no-empty-function": "off",
-      "@typescript-eslint/no-empty-interface": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "jest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
-    }
+    "sourceType": "module"
+  },
+  "rules": {
+    "curly": ["warn", "multi-line", "consistent"],
+    "no-console": "off",
+    "no-empty-pattern": "warn",
+    "no-duplicate-imports": "error",
+    "import/no-unresolved": "off",
+    "import/export": "error",
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-use-before-define": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "vitest/consistent-test-it": ["error", { "fn": "it", "withinDescribe": "it" }]
   },
   "settings": {
     "react": {
@@ -67,12 +61,17 @@
       "parserOptions": {
         "project": "./tsconfig.json"
       }
+    },
+    {
+      "files": ["**/tests/**/*.{ts,tsx}", "**/*.test.{ts,tsx}"],
+      "extends": ["plugin:vitest/recommended"],
+      "rules": {
+        "vitest/no-disabled-tests": "warn",
+        "vitest/no-focused-tests": "error",
+        "vitest/no-identical-title": "error",
+        "vitest/prefer-to-have-length": "warn",
+        "vitest/valid-expect": "error"
+      }
     }
-  ],
-  "rules": {
-    "import/no-unresolved": "off",
-    "import/named": "off",
-    "import/namespace": "off",
-    "import/no-named-as-default-member": "off"
-  }
+  ]
 }

@@ -1,6 +1,6 @@
 /**
  * Verify that each entry point's bundle has the correct THREE imports
- * Run after `yarn build` to validate bundle optimization
+ * Run after `pnpm build` to validate bundle optimization
  *
  * Usage: node scripts/verify-bundles.js
  *
@@ -66,7 +66,7 @@ const results = []
 
 // First check if dist exists
 if (!fs.existsSync(FIBER_DIST)) {
-  console.log('❌ dist folder not found. Run `yarn build` first.\n')
+  console.log('❌ dist folder not found. Run `pnpm build` first.\n')
   process.exit(1)
 }
 
@@ -79,7 +79,7 @@ for (const check of checks) {
   // Check if file exists
   if (!fs.existsSync(filePath)) {
     console.log(`   ❌ File not found: dist/${check.file}`)
-    console.log('   Run `yarn build` first.')
+    console.log('   Run `pnpm build` first.')
     allPassed = false
     results.push({
       name: check.name,

@@ -26,10 +26,10 @@ export * from 'three/webgpu'
 //* WebGL Legacy Support (deprecated) ==============================
 // These are re-exported for backwards compatibility
 // Usage triggers deprecation warnings at runtime via notices.ts
-export { WebGLRenderer, type WebGLRendererParameters } from 'three'
-
-// Note: WebGLShadowMap type is the same in both, but we re-export for clarity
-export type { WebGLShadowMap } from 'three'
+export { WebGLRenderer } from 'three'
+// WebGLRendererParameters isn't exported from main 'three' entry in @types/three@0.181.0+
+// Import directly from internal path
+export type { WebGLRendererParameters } from 'three/src/renderers/WebGLRenderer.js'
 
 //* Addons ==============================
 export { Inspector } from 'three/addons/inspector/Inspector.js'

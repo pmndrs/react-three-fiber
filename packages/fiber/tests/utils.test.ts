@@ -136,9 +136,9 @@ describe('is', () => {
 
 describe('dispose', () => {
   it('should dispose of objects and their properties', () => {
-    const mesh = Object.assign(new THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>(), { dispose: jest.fn() })
-    mesh.material.dispose = jest.fn()
-    mesh.geometry.dispose = jest.fn()
+    const mesh = Object.assign(new THREE.Mesh<THREE.BoxGeometry, THREE.MeshBasicMaterial>(), { dispose: vi.fn() })
+    mesh.material.dispose = vi.fn()
+    mesh.geometry.dispose = vi.fn()
 
     dispose(mesh)
     expect(mesh.dispose).toHaveBeenCalled()
@@ -147,12 +147,12 @@ describe('dispose', () => {
   })
 
   it('should not dispose of a THREE.Scene', () => {
-    const scene = Object.assign(new THREE.Scene(), { dispose: jest.fn() })
+    const scene = Object.assign(new THREE.Scene(), { dispose: vi.fn() })
 
     dispose(scene)
     expect(scene.dispose).not.toHaveBeenCalled()
 
-    const disposable = { dispose: jest.fn(), scene }
+    const disposable = { dispose: vi.fn(), scene }
     dispose(disposable)
     expect(disposable.dispose).toHaveBeenCalled()
     expect(disposable.scene.dispose).not.toHaveBeenCalled()
@@ -161,8 +161,8 @@ describe('dispose', () => {
 
 describe('getInstanceProps', () => {
   it('should filter internal props without accessing them', () => {
-    const get = jest.fn()
-    const set = jest.fn()
+    const get = vi.fn()
+    const set = vi.fn()
 
     const props = { foo: true }
     const filtered = getInstanceProps(
@@ -280,8 +280,8 @@ describe('attach / detach', () => {
   })
 
   it('should attach & detach using attachFns', () => {
-    const mount = jest.fn()
-    const unmount = jest.fn()
+    const mount = vi.fn()
+    const unmount = vi.fn()
 
     const parent = prepare({}, store, '', {})
     const child = prepare({}, store, '', { attach: () => (mount(), unmount) })
@@ -348,8 +348,8 @@ describe('diffProps', () => {
   })
 
   it('should filter reserved props without accessing them', () => {
-    const get = jest.fn()
-    const set = jest.fn()
+    const get = vi.fn()
+    const set = vi.fn()
 
     const props = { foo: true }
     const filtered = diffProps(
@@ -386,8 +386,8 @@ describe('applyProps', () => {
   })
 
   it('should filter reserved props without accessing them', () => {
-    const get = jest.fn()
-    const set = jest.fn()
+    const get = vi.fn()
+    const set = vi.fn()
 
     const props = { foo: true }
     const target = {}
@@ -422,8 +422,8 @@ describe('applyProps', () => {
   })
 
   it('should not copy if props are supersets of another', () => {
-    const copy = jest.fn()
-    const set = jest.fn()
+    const copy = vi.fn()
+    const set = vi.fn()
 
     class Test {
       copy = copy
@@ -498,8 +498,8 @@ describe('applyProps', () => {
 
   // https://github.com/pmndrs/koota/issues/47
   it('should not fallthrough to set/copy for primitive types', () => {
-    const set = jest.fn()
-    const copy = jest.fn()
+    const set = vi.fn()
+    const copy = vi.fn()
 
     // @ts-ignore
     Number.prototype.set = set
@@ -583,13 +583,13 @@ describe('updateCamera', () => {
     const size = { width: 1280, height: 800, left: 0, top: 0 }
 
     const perspective = new THREE.PerspectiveCamera()
-    perspective.updateProjectionMatrix = jest.fn()
+    perspective.updateProjectionMatrix = vi.fn()
     updateCamera(perspective, size)
     expect(perspective.updateProjectionMatrix).toHaveBeenCalled()
     expect(perspective.projectionMatrix.toArray()).toMatchSnapshot()
 
     const orthographic = new THREE.OrthographicCamera()
-    orthographic.updateProjectionMatrix = jest.fn()
+    orthographic.updateProjectionMatrix = vi.fn()
     updateCamera(orthographic, size)
     expect(orthographic.updateProjectionMatrix).toHaveBeenCalled()
     expect(orthographic.projectionMatrix.toArray()).toMatchSnapshot()
@@ -599,12 +599,12 @@ describe('updateCamera', () => {
     const size = { width: 0, height: 0, left: 0, top: 0 }
 
     const perspective = Object.assign(new THREE.PerspectiveCamera(), { manual: true })
-    perspective.updateProjectionMatrix = jest.fn()
+    perspective.updateProjectionMatrix = vi.fn()
     updateCamera(perspective, size)
     expect(perspective.updateProjectionMatrix).not.toHaveBeenCalled()
 
     const orthographic = Object.assign(new THREE.OrthographicCamera(), { manual: true })
-    orthographic.updateProjectionMatrix = jest.fn()
+    orthographic.updateProjectionMatrix = vi.fn()
     updateCamera(orthographic, size)
     expect(orthographic.updateProjectionMatrix).not.toHaveBeenCalled()
   })

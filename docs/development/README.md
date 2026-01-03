@@ -1,45 +1,43 @@
-# Documentation
+# Development Documentation
 
-This directory contains technical documentation for `@react-three/fiber` development.
+Welcome to the `@react-three/fiber` development guide. This directory contains everything you need to know about contributing to, building, and testing the library.
 
-## For Contributors
+## 🚀 Quick Start
 
-- **[CONTRIBUTING](./CONTRIBUTING.md)** - Start here! How to contribute, setup, and release process
-- **[BUILD](./BUILD.md)** - Build system, package manager, and tooling decisions
-- **[DEVELOPMENT](./DEVELOPMENT.md)** - Day-to-day development workflows and commands
+If you just want to get up and running:
 
-## Quick Navigation
+1.  **Install dependencies**: `pnpm install`
+2.  **Start development mode**: `pnpm dev`
+3.  **Run examples**: `pnpm examples`
 
-### Getting Started
+---
 
-1. Read [CONTRIBUTING](../CONTRIBUTING.md) for setup instructions
-2. Install dependencies: `yarn install`
-3. Start developing: `yarn dev`
-4. See [DEVELOPMENT](./DEVELOPMENT.md) for detailed workflows
+## 📖 Documentation Guides
 
-### Understanding Our Tooling
+### Core Guides
 
-- **Why Yarn 4?** See [BUILD: Package Manager](./BUILD.md#package-manager-yarn-4)
-- **Why Unbuild?** See [BUILD: Build System](./BUILD.md#build-system-unbuild)
-- **Migration History** See [BUILD: Migration History](./BUILD.md#migration-history)
+- **[CONTRIBUTING](./CONTRIBUTING.md)**: Rules for contributing, setup instructions, and release process overview.
+- **[DEVELOPMENT](./DEVELOPMENT.md)**: Your day-to-day workflow, project structure, and how to add features.
 
-### Common Tasks
+### Specialized Technical Docs
 
-- **Running tests:** `yarn test`
-- **Building:** `yarn build`
-- **Running examples:** `yarn examples`
-- **Creating a release:** See [CONTRIBUTING: Publishing](../CONTRIBUTING.md#publishing)
+- **[BUILD](./BUILD.md)**: Deep dive into our build system (Unbuild), package manager (pnpm), and entry point architecture.
+- **[TESTING](./TESTING.md)**: Detailed information on Vitest, bundle verification, and troubleshooting tests.
+- **[ALPHA-RELEASE](./ALPHA-RELEASE.md)**: Step-by-step guide for creating and publishing alpha releases.
 
-## Architecture
+---
 
-- **Monorepo Structure:** Yarn workspaces with multiple packages
-- **Build Tool:** Unbuild with per-entry alias resolution
-- **Package Manager:** Yarn 4 (Berry) with `nodeLinker: node-modules`
-- **Test Framework:** Jest with React Testing Library
-- **Type System:** TypeScript with source-based types
+## 🏗️ Architecture at a Glance
+
+- **Monorepo**: Powered by [pnpm workspaces](https://pnpm.io/workspaces).
+- **Build System**: [Unbuild](https://github.com/unjs/unbuild) for stub-based development and per-entry-point optimization.
+- **Test Runner**: [Vitest](https://vitest.dev/) for fast, native ESM testing in JSDOM.
+- **Transpilation**: Native ESM with TypeScript.
+
+---
 
 ## Need Help?
 
-- Check [DEVELOPMENT](./DEVELOPMENT.md) for troubleshooting
-- See [BUILD](./BUILD.md) for tooling questions
-- Open a discussion on [GitHub Discussions](https://github.com/pmndrs/react-three-fiber/discussions)
+- Check the **Troubleshooting** section in [DEVELOPMENT](./DEVELOPMENT.md#troubleshooting).
+- See [BUILD](./BUILD.md) for architecture-specific questions.
+- Open a discussion on [GitHub Discussions](https://github.com/pmndrs/react-three-fiber/discussions).

@@ -16,8 +16,7 @@ import * as THREE from 'three'
 import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber'
 
 import { createTestRenderer } from './createRenderer'
-import type { WaitOptions } from './helpers/waitFor'
-import { waitFor } from './helpers/waitFor'
+import { waitFor, type WaitOptions } from './helpers/waitFor'
 
 //* Initialize Test Renderer ==============================
 

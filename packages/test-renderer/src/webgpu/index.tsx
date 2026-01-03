@@ -45,8 +45,7 @@ import {
 
 import { mockWebGPU, unmockWebGPU } from '../WebGPUContext'
 import { createTestRenderer } from '../createRenderer'
-import type { WaitOptions } from '../helpers/waitFor'
-import { waitFor } from '../helpers/waitFor'
+import { waitFor, type WaitOptions } from '../helpers/waitFor'
 
 //* Initialize WebGPU Mocking ==============================
 // Install mocks before any WebGPU code runs

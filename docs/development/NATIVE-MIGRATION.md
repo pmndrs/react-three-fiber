@@ -88,13 +88,13 @@ import { Canvas } from '@react-three/native'
 
 ```bash
 # Before (v9)
-npm install @react-three/fiber three
+pnpm add @react-three/fiber three
 
 # After (v10) - Web
-npm install @react-three/fiber three
+pnpm add @react-three/fiber three
 
 # After (v10) - React Native
-npm install @react-three/fiber @react-three/native three
+pnpm add @react-three/fiber @react-three/native three
 npx expo install expo-gl expo-asset expo-file-system
 ```
 

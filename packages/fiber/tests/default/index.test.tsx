@@ -75,22 +75,22 @@ describe('createRoot', () => {
 
     expect(store.getState().viewport.dpr).toEqual(0.1)
 
-    jest.useFakeTimers()
+    vi.useFakeTimers()
 
     await act(async () => {
       store.getState().performance.regress()
-      jest.advanceTimersByTime(100)
+      vi.advanceTimersByTime(100)
     })
 
     expect(store.getState().performance.current).toEqual(0.2)
 
     await act(async () => {
-      jest.advanceTimersByTime(200)
+      vi.advanceTimersByTime(200)
     })
 
     expect(store.getState().performance.current).toEqual(1)
 
-    jest.useRealTimers()
+    vi.useRealTimers()
   })
 
   it('should handle the DPR prop reactively', async () => {

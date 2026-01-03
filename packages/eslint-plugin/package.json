@@ -44,7 +44,9 @@
   },
   "devDependencies": {
     "@types/eslint": "^8.4.10",
+    "@types/estree": "^1.0.8",
     "@types/lodash": "^4.14.191",
+    "@types/prettier": "^3.0.0",
     "lodash": "^4.17.19",
     "prettier": "^2.6.1",
     "ts-node": "^10.9.1"

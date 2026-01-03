@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ReactThreeTestRenderer Core can render a composite component & correctly build simple graph 1`] = `
+exports[`ReactThreeTestRenderer Core > can render a composite component & correctly build simple graph 1`] = `
 [
   {
     "children": [
@@ -32,7 +32,7 @@ exports[`ReactThreeTestRenderer Core can render a composite component & correctl
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core correctly builds a tree 1`] = `
+exports[`ReactThreeTestRenderer Core > correctly builds a tree 1`] = `
 [
   {
     "children": [
@@ -113,7 +113,7 @@ exports[`ReactThreeTestRenderer Core correctly builds a tree 1`] = `
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core exposes the instance 1`] = `
+exports[`ReactThreeTestRenderer Core > exposes the instance 1`] = `
 [
   {
     "children": [
@@ -142,7 +142,7 @@ exports[`ReactThreeTestRenderer Core exposes the instance 1`] = `
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core exposes the instance 2`] = `
+exports[`ReactThreeTestRenderer Core > exposes the instance 2`] = `
 [
   {
     "children": [
@@ -171,7 +171,7 @@ exports[`ReactThreeTestRenderer Core exposes the instance 2`] = `
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core handles primitive objects and their children correctly in toGraph 1`] = `
+exports[`ReactThreeTestRenderer Core > handles primitive objects and their children correctly in toGraph 1`] = `
 [
   {
     "children": [
@@ -214,7 +214,7 @@ exports[`ReactThreeTestRenderer Core handles primitive objects and their childre
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core toTree() handles complicated tree of fragments 1`] = `
+exports[`ReactThreeTestRenderer Core > toTree() handles complicated tree of fragments 1`] = `
 [
   {
     "children": [
@@ -273,7 +273,7 @@ exports[`ReactThreeTestRenderer Core toTree() handles complicated tree of fragme
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core toTree() handles nested Fragments 1`] = `
+exports[`ReactThreeTestRenderer Core > toTree() handles nested Fragments 1`] = `
 [
   {
     "children": [],
@@ -283,7 +283,7 @@ exports[`ReactThreeTestRenderer Core toTree() handles nested Fragments 1`] = `
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core updates children 1`] = `
+exports[`ReactThreeTestRenderer Core > updates children 1`] = `
 [
   {
     "children": [
@@ -372,7 +372,7 @@ exports[`ReactThreeTestRenderer Core updates children 1`] = `
 ]
 `;
 
-exports[`ReactThreeTestRenderer Core updates children 2`] = `
+exports[`ReactThreeTestRenderer Core > updates children 2`] = `
 [
   {
     "children": [
