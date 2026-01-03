@@ -1,7 +1,6 @@
 import * as React from 'react'
 
-import ReactThreeTestRenderer from '../index'
-import type { ReactThreeTest } from '../index'
+import ReactThreeTestRenderer, { type ReactThreeTest } from '../index'
 
 describe('ReactThreeTestRenderer Events', () => {
   it('should fire an event', async () => {

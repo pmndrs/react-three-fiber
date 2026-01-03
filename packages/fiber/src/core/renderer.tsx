@@ -1,9 +1,7 @@
 import * as THREE from '#three'
-import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector } from '#three'
+import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector, type Object3D } from '#three'
 
-import type { Object3D } from '#three'
-import type { JSX, ReactNode, RefObject } from 'react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
 import { createWithEqualityFn } from 'zustand/traditional'
 
