@@ -32,12 +32,13 @@ jobs:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install deps
-        run: pnpm install
-
-      - name: Override React version (${{ matrix.react-version }})
+      - name: Set React version (${{ matrix.react-version }})
         run: |
-          pnpm add react@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} -D -w
+          npm pkg set devDependencies.react=${{ matrix.react-version }}
+          npm pkg set devDependencies.react-dom=${{ matrix.react-version }}
+
+      - name: Install deps
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build
         run: pnpm run build
