@@ -5,3 +5,4 @@ packages/fiber/react-reconciler/
 .yarn/
 *.gltf
 *.mdx
+pnpm-lock.yaml
