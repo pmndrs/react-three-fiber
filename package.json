@@ -6,6 +6,12 @@
   "resolutions": {
     "camera-controls": "2.9.0"
   },
+  "pnpm": {
+    "overrides": {
+      "react": "$react",
+      "react-dom": "$react-dom"
+    }
+  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"

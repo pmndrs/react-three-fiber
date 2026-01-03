@@ -3,7 +3,7 @@ import * as path from 'node:path'
 
 export default defineConfig({
   resolve: {
-    dedupe: ['react', 'react-dom', 'three'],
+    dedupe: ['react', 'react-dom', 'three', 'use-sync-external-store'],
     alias: {
       '@react-three/fiber/legacy': path.resolve(__dirname, './packages/fiber/src/legacy.tsx'),
       '@react-three/fiber/webgpu': path.resolve(__dirname, './packages/fiber/src/webgpu/index.tsx'),
@@ -14,6 +14,7 @@ export default defineConfig({
       'three/addons': path.resolve(__dirname, './node_modules/three/examples/jsm'),
       react: path.resolve(__dirname, './node_modules/react'),
       'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
+      'use-sync-external-store': path.resolve(__dirname, './node_modules/use-sync-external-store'),
     },
   },
   test: {
