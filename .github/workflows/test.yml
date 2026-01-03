@@ -37,7 +37,7 @@ jobs:
 
       - name: Override React version (${{ matrix.react-version }})
         run: |
-          pnpm add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} -D
+          pnpm add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} -D -w
 
       - name: Build
         run: pnpm run build
