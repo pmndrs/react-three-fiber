@@ -36,7 +36,7 @@ module.exports = {
       },
     ],
     // Match three's ESM files on both Windows and Unix - use modules: 'commonjs' to convert ESM
-    'node_modules[\\\\/]three[\\\\/].+\\.js$': [
+    'three[\\\\/](build|examples)[\\\\/].+\\.js$': [
       'babel-jest',
       {
         presets: [['@babel/preset-env', { modules: 'commonjs' }]],
@@ -51,7 +51,10 @@ module.exports = {
     ],
   },
   // Allow transforming three and patched react-reconciler - works on both Windows and Unix
-  transformIgnorePatterns: ['node_modules[\\\\/](?!(three)[\\\\/])', '!packages[\\\\/]fiber[\\\\/]react-reconciler'],
+  transformIgnorePatterns: [
+    'node_modules[\\\\/](?!(.pnpm|three)[\\\\/])',
+    '!packages[\\\\/]fiber[\\\\/]react-reconciler',
+  ],
   coveragePathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/packages/fiber/dist',

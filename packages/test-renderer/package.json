@@ -49,5 +49,9 @@
     "three": {
       "optional": false
     }
+  },
+  "devDependencies": {
+    "@react-three/fiber": "workspace:*",
+    "three": ">=0.181"
   }
 }

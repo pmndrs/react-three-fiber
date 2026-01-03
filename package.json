@@ -3,10 +3,6 @@
   "version": "0.0.0",
   "license": "MIT",
   "private": true,
-  "workspaces": [
-    "packages/*",
-    "example"
-  ],
   "resolutions": {
     "camera-controls": "2.9.0"
   },
@@ -22,22 +18,22 @@
   },
   "scripts": {
     "changeset:add": "changeset add",
-    "postinstall": "yarn stub && yarn patch-react-reconciler",
+    "postinstall": "pnpm stub && pnpm patch-react-reconciler",
     "patch-react-reconciler": "vite build",
-    "build": "yarn workspace @react-three/fiber build && yarn workspace @react-three/eslint-plugin build",
-    "examples": "yarn workspace example dev",
-    "stub": "yarn workspace @react-three/fiber stub && yarn workspace @react-three/eslint-plugin stub",
-    "dev": "yarn stub",
-    "ci": "yarn build && yarn typecheck && yarn eslint && yarn dev && yarn test && yarn format",
+    "build": "pnpm --filter @react-three/fiber build && pnpm --filter @react-three/eslint-plugin build",
+    "examples": "pnpm --filter example dev",
+    "stub": "pnpm --filter @react-three/fiber stub && pnpm --filter @react-three/eslint-plugin stub",
+    "dev": "pnpm stub",
+    "ci": "pnpm build && pnpm typecheck && pnpm eslint && pnpm dev && pnpm test && pnpm format",
     "prepare": "husky install",
     "eslint": "eslint packages/**/src/**/*.{ts,tsx}",
-    "eslint:fix": "yarn run eslint --fix",
+    "eslint:fix": "pnpm run eslint --fix",
     "test": "jest --coverage",
     "test:watch": "jest --watchAll",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
-    "release": "yarn build && yarn changeset publish",
-    "vers": "yarn changeset version",
-    "codegen:eslint": "cd packages/eslint-plugin && yarn codegen",
+    "release": "pnpm build && pnpm changeset publish",
+    "vers": "pnpm changeset version",
+    "codegen:eslint": "cd packages/eslint-plugin && pnpm codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
     "format": "prettier --check .",
@@ -90,5 +86,5 @@
     "unbuild": "^3.6.1",
     "vite": "^6.0.0"
   },
-  "packageManager": "yarn@4.12.0"
+  "packageManager": "pnpm@9.15.2"
 }
