@@ -71,3 +71,6 @@ export interface HostConfig {
   noTimeout: -1
   TransitionStatus: null
 }
+declare global {
+  var IS_REACT_ACT_ENVIRONMENT: boolean | undefined
+}

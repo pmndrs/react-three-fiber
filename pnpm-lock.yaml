@@ -40,6 +40,12 @@ importers:
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.3
+      '@types/offscreencanvas':
+        specifier: ^2019.7.3
+        version: 2019.7.3
+      '@types/prettier':
+        specifier: ^2.7.3
+        version: 2.7.3
       '@types/react':
         specifier: ^19.0.1
         version: 19.2.7
@@ -216,6 +222,9 @@ importers:
       '@types/lodash':
         specifier: ^4.14.191
         version: 4.17.21
+      '@types/prettier':
+        specifier: ^3.0.0
+        version: 3.0.0
       lodash:
         specifier: ^4.17.19
         version: 4.17.21
@@ -2214,6 +2223,15 @@ packages:
   '@types/offscreencanvas@2019.7.3':
     resolution:
       { integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A== }
+
+  '@types/prettier@2.7.3':
+    resolution:
+      { integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA== }
+
+  '@types/prettier@3.0.0':
+    resolution:
+      { integrity: sha512-mFMBfMOz8QxhYVbuINtswBp9VL2b4Y0QqYHwqLz3YbgtfAcat2Dl6Y1o4e22S/OVE6Ebl9m7wWiMT2lSbAs1wA== }
+    deprecated: This is a stub types definition. prettier provides its own type definitions, so you do not need this installed.
 
   '@types/react-dom@19.2.3':
     resolution:
@@ -7435,6 +7453,12 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/offscreencanvas@2019.7.3': {}
+
+  '@types/prettier@2.7.3': {}
+
+  '@types/prettier@3.0.0':
+    dependencies:
+      prettier: 2.8.8
 
   '@types/react-dom@19.2.3(@types/react@19.2.7)':
     dependencies:

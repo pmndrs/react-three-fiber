@@ -51,6 +51,8 @@
     "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^22.0.0",
+    "@types/offscreencanvas": "^2019.7.3",
+    "@types/prettier": "^2.7.3",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@types/react-reconciler": "^0.32.0",
