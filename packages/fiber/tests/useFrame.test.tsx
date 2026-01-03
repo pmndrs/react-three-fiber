@@ -39,7 +39,7 @@ describe('PhaseGraph', () => {
 
   it('prevents duplicate phases', () => {
     const graph = new PhaseGraph()
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     graph.addPhase('update', { before: 'render' })
 
@@ -104,7 +104,7 @@ describe('PhaseGraph', () => {
 describe('rebuildSortedJobs', () => {
   const createJob = (overrides: Partial<Job>): Job => ({
     id: 'test-job',
-    callback: jest.fn(),
+    callback: vi.fn(),
     phase: 'update',
     before: new Set(),
     after: new Set(),
@@ -187,7 +187,7 @@ describe('rebuildSortedJobs', () => {
 describe('shouldRun (rate limiter)', () => {
   const createJob = (overrides: Partial<Job>): Job => ({
     id: 'test-job',
-    callback: jest.fn(),
+    callback: vi.fn(),
     phase: 'update',
     before: new Set(),
     after: new Set(),
@@ -275,7 +275,7 @@ describe('Scheduler', () => {
   })
 
   it('registers and unregisters jobs', () => {
-    const cb = jest.fn()
+    const cb = vi.fn()
     const unsubscribe = scheduler.register(cb, { id: 'test-job', rootId: 'test-root' })
 
     expect(scheduler.getJobCount()).toBe(1)
@@ -287,7 +287,7 @@ describe('Scheduler', () => {
   })
 
   it('generates IDs when not provided', () => {
-    const cb = jest.fn()
+    const cb = vi.fn()
     scheduler.register(cb, { rootId: 'test-root' })
 
     expect(scheduler.getJobCount()).toBe(1)
@@ -312,7 +312,7 @@ describe('Scheduler', () => {
   })
 
   it('updates job options', () => {
-    const cb = jest.fn()
+    const cb = vi.fn()
     scheduler.register(cb, { id: 'test-job', rootId: 'test-root', priority: 1 })
 
     scheduler.updateJob('test-job', { priority: 10, enabled: false })
@@ -322,10 +322,10 @@ describe('Scheduler', () => {
   })
 
   it('handles duplicate IDs with warning', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
-    scheduler.register(jest.fn(), { id: 'dupe', rootId: 'test-root' })
-    scheduler.register(jest.fn(), { id: 'dupe', rootId: 'test-root' })
+    scheduler.register(vi.fn(), { id: 'dupe', rootId: 'test-root' })
+    scheduler.register(vi.fn(), { id: 'dupe', rootId: 'test-root' })
 
     expect(warnSpy).toHaveBeenCalledWith('[useFrame] Job with id "dupe" already exists, replacing')
     expect(scheduler.getJobCount()).toBe(1)

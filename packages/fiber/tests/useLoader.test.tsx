@@ -64,13 +64,13 @@ describe('useLoader', () => {
     // Use URL-based mock instead of mockImplementationOnce since
     // individual suspend calls may re-render and call load multiple times
     class ArrayTestLoader extends THREE.Loader {
-      load = jest.fn((url: string, onLoad: (result: any) => void) => {
+      load = vi.fn((url: string, onLoad: (result: any) => void) => {
         if (url === URL_MESH) onLoad(MockMesh)
         else if (url === URL_GROUP) onLoad(MockGroup)
       })
     }
 
-    const extensions = jest.fn()
+    const extensions = vi.fn()
 
     const Component = () => {
       const [mockMesh, mockScene] = useLoader(ArrayTestLoader, [URL_MESH, URL_GROUP], extensions)

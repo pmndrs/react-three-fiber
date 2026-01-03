@@ -5,7 +5,7 @@ import type { ReactThreeTest } from '../index'
 
 describe('ReactThreeTestRenderer Events', () => {
   it('should fire an event', async () => {
-    const handlePointerDown = jest.fn().mockImplementationOnce((event: ReactThreeTest.MockSyntheticEvent) => {
+    const handlePointerDown = vi.fn().mockImplementationOnce((event: ReactThreeTest.MockSyntheticEvent) => {
       expect(() => event.stopPropagation()).not.toThrow()
       expect(event.offsetX).toEqual(640)
       expect(event.offsetY).toEqual(400)
@@ -37,9 +37,9 @@ describe('ReactThreeTestRenderer Events', () => {
   })
 
   it('should not throw if the handle name is incorrect', async () => {
-    const handlePointerDown = jest.fn()
+    const handlePointerDown = vi.fn()
 
-    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementationOnce(jest.fn())
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementationOnce(vi.fn())
 
     const Component = () => {
       return (

@@ -405,19 +405,19 @@ describe('renderer', () => {
   })
 
   it('should handle unmount', async () => {
-    const dispose = jest.fn()
-    const childDispose = jest.fn()
-    const attachDispose = jest.fn()
-    const flagDispose = jest.fn()
+    const dispose = vi.fn()
+    const childDispose = vi.fn()
+    const attachDispose = vi.fn()
+    const flagDispose = vi.fn()
 
-    const attach = jest.fn()
-    const detach = jest.fn()
+    const attach = vi.fn()
+    const detach = vi.fn()
 
-    const object = Object.assign(new THREE.Object3D(), { dispose: jest.fn() })
-    const objectExternal = Object.assign(new THREE.Object3D(), { dispose: jest.fn() })
+    const object = Object.assign(new THREE.Object3D(), { dispose: vi.fn() })
+    const objectExternal = Object.assign(new THREE.Object3D(), { dispose: vi.fn() })
     object.add(objectExternal)
 
-    const disposeDeclarativePrimitive = jest.fn()
+    const disposeDeclarativePrimitive = vi.fn()
 
     const Test = (props: ThreeElements['mesh']) => (
       <mesh

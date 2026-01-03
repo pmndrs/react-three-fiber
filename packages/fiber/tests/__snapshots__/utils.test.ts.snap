@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`updateCamera updates camera matrices 1`] = `
+exports[`updateCamera > updates camera matrices 1`] = `
 [
   2.1445069205095586,
   0,
@@ -21,7 +21,7 @@ exports[`updateCamera updates camera matrices 1`] = `
 ]
 `;
 
-exports[`updateCamera updates camera matrices 2`] = `
+exports[`updateCamera > updates camera matrices 2`] = `
 [
   1,
   0,

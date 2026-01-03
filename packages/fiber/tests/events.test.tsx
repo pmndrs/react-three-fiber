@@ -1,45 +1,32 @@
+import { vi } from 'vitest'
 import * as React from 'react'
 import { render, fireEvent, RenderResult, createEvent } from '@testing-library/react'
-import { act } from 'react'
+async function act<T>(fn: () => Promise<T>) {
+  const value = await fn()
+  // Wait for R3F's initialization and frame loop
+  await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
+  return value
+}
 import { Canvas, extend } from '../src'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
-//* PointerEvent Polyfill ==============================
-// JSDOM doesn't include PointerEvent
-// https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
-if (!global.PointerEvent) {
-  global.PointerEvent = class extends MouseEvent implements PointerEvent {
-    readonly pointerId: number = 0
-    readonly width: number = 1
-    readonly height: number = 1
-    readonly pressure: number = 0
-    readonly tangentialPressure: number = 0
-    readonly tiltX: number = 0
-    readonly tiltY: number = 0
-    readonly twist: number = 0
-    readonly pointerType: string = ''
-    readonly isPrimary: boolean = false
-    readonly altitudeAngle: number = 0
-    readonly azimuthAngle: number = 0
-
-    constructor(type: string, params: PointerEventInit = {}) {
-      super(type, params)
-      Object.assign(this, params)
-    }
-
-    getCoalescedEvents = () => []
-    getPredictedEvents = () => []
-  }
-}
-
 extend(THREE as any)
 
-const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
+const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
+
+function createPointerEvent(type: string, props: any = {}) {
+  const evt = new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, ...props })
+  Object.defineProperty(evt, 'clientX', { value: props.clientX ?? 640 })
+  Object.defineProperty(evt, 'clientY', { value: props.clientY ?? 400 })
+  Object.defineProperty(evt, 'offsetX', { value: props.offsetX ?? 640 })
+  Object.defineProperty(evt, 'offsetY', { value: props.offsetY ?? 400 })
+  return evt
+}
 
 describe('events', () => {
   it('can handle onPointerDown', async () => {
-    const handlePointerDown = jest.fn()
+    const handlePointerDown = vi.fn()
 
     await act(async () => {
       render(
@@ -52,18 +39,17 @@ describe('events', () => {
       )
     })
 
-    const evt = new PointerEvent('pointerdown')
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
-
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('pointerdown')
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handlePointerDown).toHaveBeenCalled()
   })
 
   it('can handle onPointerMissed', async () => {
-    const handleClick = jest.fn()
-    const handleMissed = jest.fn()
+    const handleClick = vi.fn()
+    const handleMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -76,19 +62,18 @@ describe('events', () => {
       )
     })
 
-    const evt = new MouseEvent('click')
-    Object.defineProperty(evt, 'offsetX', { get: () => 0 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 0 })
-
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('click', { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 })
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleClick).not.toHaveBeenCalled()
     expect(handleMissed).toHaveBeenCalledWith(evt)
   })
 
   it('should not fire onPointerMissed when same element is clicked', async () => {
-    const handleClick = jest.fn()
-    const handleMissed = jest.fn()
+    const handleClick = vi.fn()
+    const handleMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -101,29 +86,23 @@ describe('events', () => {
       )
     })
 
-    const down = new PointerEvent('pointerdown')
-    Object.defineProperty(down, 'offsetX', { get: () => 577 })
-    Object.defineProperty(down, 'offsetY', { get: () => 480 })
+    const down = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const up = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const evt = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), down)
-
-    const up = new PointerEvent('pointerup')
-    Object.defineProperty(up, 'offsetX', { get: () => 577 })
-    Object.defineProperty(up, 'offsetY', { get: () => 480 })
-
-    const evt = new MouseEvent('click')
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
-
-    fireEvent(getContainer(), evt)
+    await act(async () => {
+      fireEvent(getContainer(), down)
+      fireEvent(getContainer(), up)
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleClick).toHaveBeenCalled()
     expect(handleMissed).not.toHaveBeenCalled()
   })
 
   it('should not fire onPointerMissed on parent when child element is clicked', async () => {
-    const handleClick = jest.fn()
-    const handleMissed = jest.fn()
+    const handleClick = vi.fn()
+    const handleMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -138,28 +117,22 @@ describe('events', () => {
       )
     })
 
-    const down = new PointerEvent('pointerdown')
-    Object.defineProperty(down, 'offsetX', { get: () => 577 })
-    Object.defineProperty(down, 'offsetY', { get: () => 480 })
+    const down = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const up = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const evt = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), down)
-
-    const up = new PointerEvent('pointerup')
-    Object.defineProperty(up, 'offsetX', { get: () => 577 })
-    Object.defineProperty(up, 'offsetY', { get: () => 480 })
-
-    const evt = new MouseEvent('click')
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
-
-    fireEvent(getContainer(), evt)
+    await act(async () => {
+      fireEvent(getContainer(), down)
+      fireEvent(getContainer(), up)
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleClick).toHaveBeenCalled()
     expect(handleMissed).not.toHaveBeenCalled()
   })
 
   it('can handle onPointerMissed on Canvas', async () => {
-    const handleMissed = jest.fn()
+    const handleMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -172,19 +145,19 @@ describe('events', () => {
       )
     })
 
-    const evt = new MouseEvent('click')
-    Object.defineProperty(evt, 'offsetX', { get: () => 0 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 0 })
+    const evt = createPointerEvent('click', { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 })
 
-    fireEvent(getContainer(), evt)
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
     expect(handleMissed).toHaveBeenCalledWith(evt)
   })
 
   it('can handle onPointerMove', async () => {
-    const handlePointerMove = jest.fn()
-    const handlePointerOver = jest.fn()
-    const handlePointerEnter = jest.fn()
-    const handlePointerOut = jest.fn()
+    const handlePointerMove = vi.fn()
+    const handlePointerOver = vi.fn()
+    const handlePointerEnter = vi.fn()
+    const handlePointerOut = vi.fn()
 
     await act(async () => {
       render(
@@ -201,21 +174,21 @@ describe('events', () => {
       )
     })
 
-    const evt1 = new PointerEvent('pointermove')
-    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
+    const evt1 = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), evt1)
+    await act(async () => {
+      fireEvent(getContainer(), evt1)
+    })
 
     expect(handlePointerMove).toHaveBeenCalled()
     expect(handlePointerOver).toHaveBeenCalled()
     expect(handlePointerEnter).toHaveBeenCalled()
 
-    const evt2 = new PointerEvent('pointermove')
-    Object.defineProperty(evt2, 'offsetX', { get: () => 0 })
-    Object.defineProperty(evt2, 'offsetY', { get: () => 0 })
+    const evt2 = createPointerEvent('pointermove', { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 })
 
-    fireEvent(getContainer(), evt2)
+    await act(async () => {
+      fireEvent(getContainer(), evt2)
+    })
 
     expect(handlePointerOut).toHaveBeenCalled()
   })
@@ -225,8 +198,8 @@ describe('events', () => {
   // however, @testing-library/react does simulate it via createEvent
 
   it('can handle onDragOverEnter & onDragOverLeave on mesh', async () => {
-    const handleDragOverEnter = jest.fn()
-    const handleDragOverLeave = jest.fn()
+    const handleDragOverEnter = vi.fn()
+    const handleDragOverLeave = vi.fn()
 
     await act(async () => {
       render(
@@ -240,24 +213,24 @@ describe('events', () => {
     })
 
     // Drag over the mesh
-    const evtOver = createEvent.dragOver(getContainer())
-    Object.defineProperty(evtOver, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evtOver, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), evtOver)
+    const evtOver = createPointerEvent('dragover', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    await act(async () => {
+      fireEvent(getContainer(), evtOver)
+    })
 
     expect(handleDragOverEnter).toHaveBeenCalled()
 
     // Drag away from the mesh
-    const evtAway = createEvent.dragOver(getContainer())
-    Object.defineProperty(evtAway, 'offsetX', { get: () => 1 })
-    Object.defineProperty(evtAway, 'offsetY', { get: () => 1 })
-    fireEvent(getContainer(), evtAway)
+    const evtAway = createPointerEvent('dragover', { clientX: 1, clientY: 1, offsetX: 1, offsetY: 1 })
+    await act(async () => {
+      fireEvent(getContainer(), evtAway)
+    })
 
     expect(handleDragOverLeave).toHaveBeenCalled()
   })
 
   it('can handle continuous onDragOver on mesh', async () => {
-    const handleDragOver = jest.fn()
+    const handleDragOver = vi.fn()
 
     await act(async () => {
       render(
@@ -271,22 +244,22 @@ describe('events', () => {
     })
 
     // First dragover
-    const evt1 = createEvent.dragOver(getContainer())
-    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), evt1)
+    const evt1 = createPointerEvent('dragover', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    await act(async () => {
+      fireEvent(getContainer(), evt1)
+    })
 
     // Second dragover (should still fire even if already over)
-    const evt2 = createEvent.dragOver(getContainer())
-    Object.defineProperty(evt2, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt2, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), evt2)
+    const evt2 = createPointerEvent('dragover', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    await act(async () => {
+      fireEvent(getContainer(), evt2)
+    })
 
     expect(handleDragOver).toHaveBeenCalledTimes(2)
   })
 
   it('can handle onDragOverMissed on Canvas', async () => {
-    const handleDragOverMissed = jest.fn()
+    const handleDragOverMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -300,16 +273,16 @@ describe('events', () => {
     })
 
     // Drag over empty area (miss the mesh)
-    const evt = createEvent.dragOver(getContainer())
-    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('dragover', { clientX: 1, clientY: 1, offsetX: 1, offsetY: 1 })
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleDragOverMissed).toHaveBeenCalled()
   })
 
   it('can handle onDrop on mesh', async () => {
-    const handleDrop = jest.fn()
+    const handleDrop = vi.fn()
 
     await act(async () => {
       render(
@@ -322,16 +295,16 @@ describe('events', () => {
       )
     })
 
-    const evt = createEvent.drop(getContainer())
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('drop', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleDrop).toHaveBeenCalled()
   })
 
   it('can handle onDropMissed on Canvas', async () => {
-    const handleDropMissed = jest.fn()
+    const handleDropMissed = vi.fn()
 
     await act(async () => {
       render(
@@ -345,17 +318,17 @@ describe('events', () => {
     })
 
     // Drop on empty area (miss the mesh)
-    const evt = createEvent.drop(getContainer())
-    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('drop', { clientX: 1, clientY: 1, offsetX: 1, offsetY: 1 })
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleDropMissed).toHaveBeenCalled()
   })
 
   it('can handle onDragOverMissed on mesh', async () => {
-    const handleDragOverMissed = jest.fn()
-    const handleDragOverEnter = jest.fn()
+    const handleDragOverMissed = vi.fn()
+    const handleDragOverEnter = vi.fn()
 
     await act(async () => {
       render(
@@ -369,20 +342,20 @@ describe('events', () => {
     })
 
     // Drag over empty area (miss the mesh)
-    const evt = createEvent.dragOver(getContainer())
-    Object.defineProperty(evt, 'offsetX', { get: () => 1 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 1 })
-    fireEvent(getContainer(), evt)
+    const evt = createPointerEvent('dragover', { clientX: 1, clientY: 1, offsetX: 1, offsetY: 1 })
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleDragOverEnter).not.toHaveBeenCalled()
     expect(handleDragOverMissed).toHaveBeenCalled()
   })
 
   it('should handle stopPropagation', async () => {
-    const handlePointerEnter = jest.fn().mockImplementation((e) => {
+    const handlePointerEnter = vi.fn().mockImplementation((e) => {
       expect(() => e.stopPropagation()).not.toThrow()
     })
-    const handlePointerLeave = jest.fn()
+    const handlePointerLeave = vi.fn()
 
     await act(async () => {
       render(
@@ -399,26 +372,26 @@ describe('events', () => {
       )
     })
 
-    const evt1 = new PointerEvent('pointermove')
-    Object.defineProperty(evt1, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt1, 'offsetY', { get: () => 480 })
+    const evt1 = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), evt1)
+    await act(async () => {
+      fireEvent(getContainer(), evt1)
+    })
 
     expect(handlePointerEnter).toHaveBeenCalled()
 
-    const evt2 = new PointerEvent('pointermove')
-    Object.defineProperty(evt2, 'offsetX', { get: () => 0 })
-    Object.defineProperty(evt2, 'offsetY', { get: () => 0 })
+    const evt2 = createPointerEvent('pointermove', { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 })
 
-    fireEvent(getContainer(), evt2)
+    await act(async () => {
+      fireEvent(getContainer(), evt2)
+    })
 
     expect(handlePointerLeave).toHaveBeenCalled()
   })
 
   it('should handle stopPropagation on click events', async () => {
-    const handleClickFront = jest.fn((e) => e.stopPropagation())
-    const handleClickRear = jest.fn()
+    const handleClickFront = vi.fn((e) => e.stopPropagation())
+    const handleClickRear = vi.fn()
 
     await act(async () => {
       render(
@@ -435,34 +408,26 @@ describe('events', () => {
       )
     })
 
-    const down = new PointerEvent('pointerdown')
-    Object.defineProperty(down, 'offsetX', { get: () => 577 })
-    Object.defineProperty(down, 'offsetY', { get: () => 480 })
+    const down = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const up = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const evt = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), down)
-
-    const up = new PointerEvent('pointerup')
-    Object.defineProperty(up, 'offsetX', { get: () => 577 })
-    Object.defineProperty(up, 'offsetY', { get: () => 480 })
-
-    fireEvent(getContainer(), up)
-
-    const event = new MouseEvent('click')
-    Object.defineProperty(event, 'offsetX', { get: () => 577 })
-    Object.defineProperty(event, 'offsetY', { get: () => 480 })
-
-    fireEvent(getContainer(), event)
+    await act(async () => {
+      fireEvent(getContainer(), down)
+      fireEvent(getContainer(), up)
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handleClickFront).toHaveBeenCalled()
     expect(handleClickRear).not.toHaveBeenCalled()
   })
 
   describe('web pointer capture', () => {
-    const handlePointerMove = jest.fn()
-    const handlePointerDown = jest.fn((ev) => (ev.target as any).setPointerCapture(ev.pointerId))
-    const handlePointerUp = jest.fn((ev) => (ev.target as any).releasePointerCapture(ev.pointerId))
-    const handlePointerEnter = jest.fn()
-    const handlePointerLeave = jest.fn()
+    const handlePointerMove = vi.fn()
+    const handlePointerDown = vi.fn((ev) => (ev.target as any).setPointerCapture(ev.pointerId))
+    const handlePointerUp = vi.fn((ev) => (ev.target as any).releasePointerCapture(ev.pointerId))
+    const handlePointerEnter = vi.fn()
+    const handlePointerLeave = vi.fn()
 
     /* This component lets us unmount the event-handling object */
     function PointerCaptureTest(props: { hasMesh: boolean; manualRelease?: boolean }) {
@@ -494,15 +459,21 @@ describe('events', () => {
 
       const canvas = getContainer()
 
-      canvas.setPointerCapture = jest.fn()
-      canvas.releasePointerCapture = jest.fn()
+      canvas.setPointerCapture = vi.fn()
+      canvas.releasePointerCapture = vi.fn()
 
-      const down = new PointerEvent('pointerdown', { pointerId })
-      Object.defineProperty(down, 'offsetX', { get: () => 577 })
-      Object.defineProperty(down, 'offsetY', { get: () => 480 })
+      const down = createPointerEvent('pointerdown', {
+        pointerId,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
-      await act(async () => canvas.dispatchEvent(down))
+      await act(async () => {
+        canvas.dispatchEvent(down)
+      })
 
       /* This should have captured the DOM pointer */
       expect(handlePointerDown).toHaveBeenCalledTimes(1)
@@ -510,15 +481,23 @@ describe('events', () => {
       expect(canvas.releasePointerCapture).not.toHaveBeenCalled()
 
       /* Now remove the mesh */
-      await act(async () => renderResult.rerender(<PointerCaptureTest hasMesh={false} />))
+      await act(async () => {
+        renderResult.rerender(<PointerCaptureTest hasMesh={false} />)
+      })
 
       expect(canvas.releasePointerCapture).toHaveBeenCalledWith(pointerId)
 
-      const move = new PointerEvent('pointerdown', { pointerId })
-      Object.defineProperty(move, 'offsetX', { get: () => 577 })
-      Object.defineProperty(move, 'offsetY', { get: () => 480 })
+      const move = createPointerEvent('pointermove', {
+        pointerId,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
 
-      await act(async () => canvas.dispatchEvent(move))
+      await act(async () => {
+        canvas.dispatchEvent(move)
+      })
 
       /* There should now be no pointer capture */
       expect(handlePointerMove).not.toHaveBeenCalled()
@@ -532,58 +511,79 @@ describe('events', () => {
       })
 
       const canvas = getContainer()
-      canvas.setPointerCapture = jest.fn()
-      canvas.releasePointerCapture = jest.fn()
+      canvas.setPointerCapture = vi.fn()
+      canvas.releasePointerCapture = vi.fn()
 
-      const moveIn = new PointerEvent('pointermove', { pointerId })
-      Object.defineProperty(moveIn, 'offsetX', { get: () => 577 })
-      Object.defineProperty(moveIn, 'offsetY', { get: () => 480 })
-
-      const moveOut = new PointerEvent('pointermove', { pointerId })
-      Object.defineProperty(moveOut, 'offsetX', { get: () => -10000 })
-      Object.defineProperty(moveOut, 'offsetY', { get: () => -10000 })
+      const moveIn = createPointerEvent('pointermove', {
+        pointerId,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
+      const moveOut = createPointerEvent('pointermove', {
+        pointerId,
+        clientX: -10000,
+        clientY: -10000,
+        offsetX: -10000,
+        offsetY: -10000,
+      })
 
       /* testing-utils/react's fireEvent wraps the event like React does, so it doesn't match how our event handlers are called in production, so we call dispatchEvent directly. */
-      await act(async () => canvas.dispatchEvent(moveIn))
+      await act(async () => {
+        canvas.dispatchEvent(moveIn)
+      })
       expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerMove).toHaveBeenCalledTimes(1)
 
-      const down = new PointerEvent('pointerdown', { pointerId })
-      Object.defineProperty(down, 'offsetX', { get: () => 577 })
-      Object.defineProperty(down, 'offsetY', { get: () => 480 })
+      const down = createPointerEvent('pointerdown', {
+        pointerId,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
 
-      await act(async () => canvas.dispatchEvent(down))
+      await act(async () => {
+        canvas.dispatchEvent(down)
+      })
 
       // If we move the pointer now, when it is captured, it should raise the onPointerMove event even though the pointer is not over the element,
       // and NOT raise the onPointerLeave event.
-      await act(async () => canvas.dispatchEvent(moveOut))
+      await act(async () => {
+        canvas.dispatchEvent(moveOut)
+      })
       expect(handlePointerMove).toHaveBeenCalledTimes(2)
       expect(handlePointerLeave).not.toHaveBeenCalled()
 
-      await act(async () => canvas.dispatchEvent(moveIn))
+      await act(async () => {
+        canvas.dispatchEvent(moveIn)
+      })
       expect(handlePointerMove).toHaveBeenCalledTimes(3)
 
-      const up = new PointerEvent('pointerup', { pointerId })
-      Object.defineProperty(up, 'offsetX', { get: () => 577 })
-      Object.defineProperty(up, 'offsetY', { get: () => 480 })
-      const lostpointercapture = new PointerEvent('lostpointercapture', { pointerId })
+      const up = createPointerEvent('pointerup', { pointerId, clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      const lostpointercapture = createPointerEvent('lostpointercapture', { pointerId })
 
-      await act(async () => canvas.dispatchEvent(up))
-      await act(async () => canvas.dispatchEvent(lostpointercapture))
+      await act(async () => {
+        canvas.dispatchEvent(up)
+        canvas.dispatchEvent(lostpointercapture)
+      })
 
       // The pointer is still over the element, so onPointerLeave should not have been called.
       expect(handlePointerLeave).not.toHaveBeenCalled()
 
       // The element pointer should no longer be captured, so moving it away should call onPointerLeave.
-      await act(async () => canvas.dispatchEvent(moveOut))
+      await act(async () => {
+        canvas.dispatchEvent(moveOut)
+      })
       expect(handlePointerEnter).toHaveBeenCalledTimes(1)
       expect(handlePointerLeave).toHaveBeenCalledTimes(1)
     })
   })
 
   it('can handle primitives', async () => {
-    const handlePointerDownOuter = jest.fn()
-    const handlePointerDownInner = jest.fn()
+    const handlePointerDownOuter = vi.fn()
+    const handlePointerDownInner = vi.fn()
 
     const object = new THREE.Group()
     object.add(new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial()))
@@ -598,18 +598,18 @@ describe('events', () => {
       )
     })
 
-    const evt = new PointerEvent('pointerdown')
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+    const evt = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), evt)
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handlePointerDownOuter).toHaveBeenCalled()
     expect(handlePointerDownInner).toHaveBeenCalled()
   })
 
   it('can handle a DOM offset canvas', async () => {
-    const handlePointerDown = jest.fn()
+    const handlePointerDown = vi.fn()
     await act(async () => {
       render(
         <Canvas
@@ -625,11 +625,11 @@ describe('events', () => {
       )
     })
 
-    const evt = new PointerEvent('pointerdown')
-    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
-    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+    const evt = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    fireEvent(getContainer(), evt)
+    await act(async () => {
+      fireEvent(getContainer(), evt)
+    })
 
     expect(handlePointerDown).toHaveBeenCalled()
   })

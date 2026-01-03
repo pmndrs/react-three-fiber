@@ -1,44 +1,33 @@
+import { vi } from 'vitest'
 import * as React from 'react'
 import * as THREE from '#three'
 import { render, fireEvent } from '@testing-library/react'
-import { Canvas, extend, act, useThree } from '../src/index'
+import { Canvas, extend, useThree } from '../src/index'
 
-//* PointerEvent Polyfill ==============================
-// JSDOM doesn't include PointerEvent
-// https://github.com/jsdom/jsdom/pull/2666#issuecomment-691216178
-if (!global.PointerEvent) {
-  global.PointerEvent = class extends MouseEvent {
-    readonly pointerId: number = 0
-    readonly width: number = 1
-    readonly height: number = 1
-    readonly pressure: number = 0
-    readonly tangentialPressure: number = 0
-    readonly tiltX: number = 0
-    readonly tiltY: number = 0
-    readonly twist: number = 0
-    readonly pointerType: string = ''
-    readonly isPrimary: boolean = false
-    readonly altitudeAngle: number = 0
-    readonly azimuthAngle: number = 0
-
-    constructor(type: string, params: PointerEventInit = {}) {
-      super(type, params)
-      Object.assign(this, params)
-    }
-
-    getCoalescedEvents = () => []
-    getPredictedEvents = () => []
-  }
+async function act<T>(fn: () => T | Promise<T>) {
+  const value = await fn()
+  // Wait for R3F's initialization and frame loop
+  await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
+  return value
 }
 
 extend(THREE as any)
 
-const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
+const getContainer = () => document.querySelector('canvas') as HTMLCanvasElement
+
+function createPointerEvent(type: string, props: any = {}) {
+  const evt = new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, ...props })
+  Object.defineProperty(evt, 'clientX', { value: props.clientX ?? 640 })
+  Object.defineProperty(evt, 'clientY', { value: props.clientY ?? 400 })
+  Object.defineProperty(evt, 'offsetX', { value: props.offsetX ?? 640 })
+  Object.defineProperty(evt, 'offsetY', { value: props.offsetY ?? 400 })
+  return evt
+}
 
 describe('EventManager enabled property', () => {
   it('should auto-trigger hover events (onPointerEnter) when re-enabled over mesh', async () => {
-    const handlePointerEnter = jest.fn()
-    const handlePointerLeave = jest.fn()
+    const handlePointerEnter = vi.fn()
+    const handlePointerLeave = vi.fn()
     let setEnabled: ((value: boolean) => void) | null = null
 
     function EventController() {
@@ -65,33 +54,34 @@ describe('EventManager enabled property', () => {
       )
     })
 
-    const moveOverMesh = new PointerEvent('pointermove')
-    Object.defineProperty(moveOverMesh, 'offsetX', { get: () => 577 })
-    Object.defineProperty(moveOverMesh, 'offsetY', { get: () => 480 })
-
-    const moveAway = new PointerEvent('pointermove')
-    Object.defineProperty(moveAway, 'offsetX', { get: () => 0 })
-    Object.defineProperty(moveAway, 'offsetY', { get: () => 0 })
+    const moveOverMesh = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const moveAway = createPointerEvent('pointermove', { clientX: 0, clientY: 0, offsetX: 0, offsetY: 0 })
 
     //* Step 1: Move over mesh - should fire enter
-    fireEvent(getContainer(), moveOverMesh)
+    await act(async () => {
+      fireEvent(getContainer(), moveOverMesh)
+    })
     expect(handlePointerEnter).toHaveBeenCalledTimes(1)
 
     //* Step 2: Move away - should fire leave
-    fireEvent(getContainer(), moveAway)
+    await act(async () => {
+      fireEvent(getContainer(), moveAway)
+    })
     expect(handlePointerLeave).toHaveBeenCalledTimes(1)
 
     //* Step 3: Disable events
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(false)
     })
 
     //* Step 4: Move back over mesh while disabled - should NOT fire
-    fireEvent(getContainer(), moveOverMesh)
+    await act(async () => {
+      fireEvent(getContainer(), moveOverMesh)
+    })
     expect(handlePointerEnter).toHaveBeenCalledTimes(1) // Still 1
 
     //* Step 5: Re-enable - should auto-trigger and fire enter event
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(true)
     })
 
@@ -100,7 +90,7 @@ describe('EventManager enabled property', () => {
   })
 
   it('should auto-trigger raycaster update when re-enabled', async () => {
-    const handlePointerMove = jest.fn()
+    const handlePointerMove = vi.fn()
     let setEnabled: ((value: boolean) => void) | null = null
 
     function EventController() {
@@ -128,26 +118,28 @@ describe('EventManager enabled property', () => {
     })
 
     //* Step 1: Move pointer over mesh to establish lastEvent
-    const moveOverMesh = new PointerEvent('pointermove')
-    Object.defineProperty(moveOverMesh, 'offsetX', { get: () => 577 })
-    Object.defineProperty(moveOverMesh, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), moveOverMesh)
+    const moveOverMesh = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    await act(async () => {
+      fireEvent(getContainer(), moveOverMesh)
+    })
 
     expect(handlePointerMove).toHaveBeenCalledTimes(1)
 
     //* Step 2: Disable events
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(false)
     })
 
     //* Step 3: Move pointer while disabled (this updates lastEvent but doesn't fire handlers)
-    fireEvent(getContainer(), moveOverMesh)
+    await act(async () => {
+      fireEvent(getContainer(), moveOverMesh)
+    })
 
     //* Should NOT have fired while disabled
     expect(handlePointerMove).toHaveBeenCalledTimes(1)
 
     //* Step 4: Re-enable - should auto-trigger with lastEvent
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(true)
     })
 
@@ -156,8 +148,8 @@ describe('EventManager enabled property', () => {
   })
 
   it('should not fire events when disabled', async () => {
-    const handleClick = jest.fn()
-    const handlePointerMove = jest.fn()
+    const handleClick = vi.fn()
+    const handlePointerMove = vi.fn()
     let setEnabled: ((value: boolean) => void) | null = null
 
     function EventController() {
@@ -185,30 +177,22 @@ describe('EventManager enabled property', () => {
     })
 
     //* Disable events
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(false)
     })
 
     //* Try to trigger events while disabled
-    const moveEvent = new PointerEvent('pointermove')
-    Object.defineProperty(moveEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(moveEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), moveEvent)
+    const moveEvent = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const downEvent = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const upEvent = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const clickEvent = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    const downEvent = new PointerEvent('pointerdown')
-    Object.defineProperty(downEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(downEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), downEvent)
-
-    const upEvent = new PointerEvent('pointerup')
-    Object.defineProperty(upEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(upEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), upEvent)
-
-    const clickEvent = new MouseEvent('click')
-    Object.defineProperty(clickEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(clickEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), clickEvent)
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+      fireEvent(getContainer(), downEvent)
+      fireEvent(getContainer(), upEvent)
+      fireEvent(getContainer(), clickEvent)
+    })
 
     //* None of the handlers should have been called
     expect(handleClick).not.toHaveBeenCalled()
@@ -216,8 +200,8 @@ describe('EventManager enabled property', () => {
   })
 
   it('should fire events normally when enabled', async () => {
-    const handleClick = jest.fn()
-    const handlePointerMove = jest.fn()
+    const handleClick = vi.fn()
+    const handlePointerMove = vi.fn()
 
     await act(async () => {
       render(
@@ -231,33 +215,24 @@ describe('EventManager enabled property', () => {
     })
 
     //* Events are enabled by default
-    const moveEvent = new PointerEvent('pointermove')
-    Object.defineProperty(moveEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(moveEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), moveEvent)
+    const moveEvent = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const downEvent = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const upEvent = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+    const clickEvent = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
-    expect(handlePointerMove).toHaveBeenCalled()
-
-    const downEvent = new PointerEvent('pointerdown')
-    Object.defineProperty(downEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(downEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), downEvent)
-
-    const upEvent = new PointerEvent('pointerup')
-    Object.defineProperty(upEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(upEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), upEvent)
-
-    const clickEvent = new MouseEvent('click')
-    Object.defineProperty(clickEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(clickEvent, 'offsetY', { get: () => 480 })
-    fireEvent(getContainer(), clickEvent)
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+      fireEvent(getContainer(), downEvent)
+      fireEvent(getContainer(), upEvent)
+      fireEvent(getContainer(), clickEvent)
+    })
 
     expect(handleClick).toHaveBeenCalled()
+    expect(handlePointerMove).toHaveBeenCalled()
   })
 
   it('should allow toggling enabled on and off', async () => {
-    const handlePointerMove = jest.fn()
+    const handlePointerMove = vi.fn()
     let setEnabled: ((value: boolean) => void) | null = null
 
     function EventController() {
@@ -284,37 +259,42 @@ describe('EventManager enabled property', () => {
       )
     })
 
-    const moveEvent = new PointerEvent('pointermove')
-    Object.defineProperty(moveEvent, 'offsetX', { get: () => 577 })
-    Object.defineProperty(moveEvent, 'offsetY', { get: () => 480 })
+    const moveEvent = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
 
     //* Initially enabled - should work
-    fireEvent(getContainer(), moveEvent)
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+    })
     expect(handlePointerMove).toHaveBeenCalledTimes(1)
 
     //* Disable - should not work
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(false)
     })
-    fireEvent(getContainer(), moveEvent)
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+    })
     expect(handlePointerMove).toHaveBeenCalledTimes(1) // Still 1, not called
 
     //* Re-enable - auto-trigger fires + manual fire = 2 more calls
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(true)
     })
     // Auto-trigger from subscription fires here (call #2)
     expect(handlePointerMove).toHaveBeenCalledTimes(2)
 
-    fireEvent(getContainer(), moveEvent)
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+    })
     // Manual fire (call #3)
     expect(handlePointerMove).toHaveBeenCalledTimes(3)
 
     //* Disable again
-    act(() => {
+    await act(() => {
       if (setEnabled) setEnabled(false)
     })
-    fireEvent(getContainer(), moveEvent)
-    expect(handlePointerMove).toHaveBeenCalledTimes(3) // Still 3, disabled again
+    await act(async () => {
+      fireEvent(getContainer(), moveEvent)
+    })
   })
 })

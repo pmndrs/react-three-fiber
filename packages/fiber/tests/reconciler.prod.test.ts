@@ -1,33 +1,20 @@
-import { vi } from 'vitest'
-import * as THREE from '#three'
-import { createCanvas as createTestCanvas } from '../../test-renderer/src/createTestCanvas'
+import * as THREE from 'three'
+import { act } from './reconciler.test'
+import { createCanvas } from './reconciler.test'
 
-export async function act<T>(fn: () => Promise<T>) {
-  const value = fn()
-  return new Promise<T>((res) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => res(value))))
-  })
-}
+process.env.NODE_ENV = 'production'
 
-export const createCanvas = () => {
-  const canvas = document.createElement('canvas')
-  canvas.width = 1280
-  canvas.height = 800
-  return canvas
-}
-
-describe('reconciler development', () => {
-  it('should work with development builds of React', async () => {
+describe('reconciler production', () => {
+  it('should work with production builds of React', async () => {
     // @ts-ignore
     if (typeof window !== 'undefined') delete window.__THREE__
-    process.env.NODE_ENV = 'development'
 
-    vi.resetModules()
     const React = await import('react')
     const R3F = await import('../src/index')
 
     // Ensure that the correct build was loaded
-    expect(typeof React.act === 'function')
+    // @ts-ignore
+    expect(typeof React.act === 'undefined')
 
     R3F.extend(THREE as any)
     const canvas = createCanvas()
