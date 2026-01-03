@@ -13,29 +13,29 @@ This directory contains technical documentation for `@react-three/fiber` develop
 ### Getting Started
 
 1. Read [CONTRIBUTING](../CONTRIBUTING.md) for setup instructions
-2. Install dependencies: `yarn install`
-3. Start developing: `yarn dev`
+2. Install dependencies: `pnpm install`
+3. Start developing: `pnpm dev`
 4. See [DEVELOPMENT](./DEVELOPMENT.md) for detailed workflows
 
 ### Understanding Our Tooling
 
-- **Why Yarn 4?** See [BUILD: Package Manager](./BUILD.md#package-manager-yarn-4)
+- **Why pnpm?** See [BUILD: Package Manager](./BUILD.md#package-manager-pnpm)
 - **Why Unbuild?** See [BUILD: Build System](./BUILD.md#build-system-unbuild)
 - **Migration History** See [BUILD: Migration History](./BUILD.md#migration-history)
 
 ### Common Tasks
 
-- **Running tests:** `yarn test`
-- **Building:** `yarn build`
-- **Running examples:** `yarn examples`
+- **Running tests:** `pnpm test`
+- **Building:** `pnpm build`
+- **Running examples:** `pnpm examples`
 - **Creating a release:** See [CONTRIBUTING: Publishing](../CONTRIBUTING.md#publishing)
 
 ## Architecture
 
-- **Monorepo Structure:** Yarn workspaces with multiple packages
+- **Monorepo Structure:** pnpm workspaces with multiple packages
 - **Build Tool:** Unbuild with per-entry alias resolution
-- **Package Manager:** Yarn 4 (Berry) with `nodeLinker: node-modules`
-- **Test Framework:** Jest with React Testing Library
+- **Package Manager:** pnpm
+- **Test Framework:** Vitest with React Testing Library
 - **Type System:** TypeScript with source-based types
 
 ## Need Help?

@@ -4,71 +4,36 @@ This document explains the build system, package manager, and tooling choices fo
 
 ## Table of Contents
 
-- [Package Manager: Yarn 4](#package-manager-yarn-4)
+- [Package Manager: pnpm](#package-manager-pnpm)
 - [Build System: Unbuild](#build-system-unbuild)
 - [Migration History](#migration-history)
 - [Future Considerations](#future-considerations)
 
 ---
 
-## Package Manager: Yarn 4
+## Package Manager: pnpm
 
 ### Current Setup
 
-We use **Yarn 4** (Berry) with `nodeLinker: node-modules` mode, providing modern Yarn features while maintaining compatibility with traditional workflows.
+We use **pnpm**, providing excellent performance, efficient disk usage, and a strict dependency resolution model that's ideal for monorepos.
 
-**Configuration:** [`.yarnrc.yml`](../.yarnrc.yml)
+**Configuration:** [`pnpm-workspace.yaml`](../pnpm-workspace.yaml)
 
-```yaml
-nodeLinker: node-modules
-```
-
-### Why Yarn 4?
+### Why pnpm?
 
 **Benefits:**
 
-- ✅ **Better performance** - Faster installs and improved caching vs Yarn 1
-- ✅ **Modern workspace protocol** - `workspace:*` for monorepo dependencies
-- ✅ **Active development** - Yarn 1 is in maintenance mode only
-- ✅ **Better tooling** - Constraints, releases, and improved DX
-- ✅ **Zero breaking changes** - With `nodeLinker: node-modules`, behavior is identical to Yarn 1
+- ✅ **Superior performance** - Faster installs and more efficient caching than Yarn or npm.
+- ✅ **Content-addressable storage** - Saves disk space by sharing dependencies across projects via hard links.
+- ✅ **Strict dependency resolution** - Prevents "phantom dependencies" (packages using dependencies they don't explicitly declare).
+- ✅ **First-class monorepo support** - Excellent workspace management and filtering capabilities.
+- ✅ **Deterministic** - Highly reliable lockfile and installation process.
 
-**Migration from Yarn 1:**
+**Migration from Yarn:**
 
-- Updated `packageManager` field in root `package.json`
-- Created `.yarnrc.yml` with `nodeLinker: node-modules`
-- No changes to scripts, dependencies, or workflows
-- CI/CD works identically
-
-### Why NOT Plug'n'Play (PnP)?
-
-While Yarn's PnP mode offers significant performance benefits, we're staying with traditional `node_modules` for now due to:
-
-**Compatibility Concerns:**
-
-1. **Jest Integration** - Our test suite uses Jest which requires additional configuration for PnP
-
-   - Would need `@yarnpkg/pnpify` or jest-pnp-resolver
-   - Coverage setup can be finicky
-   - Adds complexity to test configuration
-
-2. **Contributor Experience** - Lower friction for new contributors
-
-   - No need to run `yarn dlx @yarnpkg/sdks` for editor setup
-   - No `.yarn/sdks` directory to commit
-   - Debugging is more straightforward
-   - Error messages are familiar
-
-3. **Ecosystem Compatibility** - Some tools we use occasionally:
-
-   - React Native / Metro bundler (for related projects)
-   - Physics engines with WASM (Rapier, Jolt)
-   - Binary packages that may need `packageExtensions` config
-
-4. **Minimal Gains for Libraries** - PnP benefits are most pronounced for applications
-   - As a library, our install times are already fast
-   - CI time savings would be modest
-   - The complexity tradeoff isn't worth it yet
+- Migrated in early 2026 to improve build stability and CI performance.
+- Replaced `.yarnrc.yml` and `yarn.lock` with `pnpm-workspace.yaml` and `pnpm-lock.yaml`.
+- Normalized all scripts to use `pnpm` workspace commands.
 
 ---
 
@@ -111,6 +76,8 @@ Unbuild provides per-entry-point build configuration, which is critical for our 
 
 3. **No Shared Chunks** - Each entry is a standalone bundle, preventing the shared chunk issues we had with Preconstruct.
 
+4. **Dual CJS/ESM Support** - Native `.mjs` and `.cjs` outputs that are fully compliant with modern Node.js standards.
+
 ### Build Outputs
 
 ```
@@ -128,18 +95,20 @@ packages/fiber/dist/
 
 ```bash
 # Install and stub (automatic)
-yarn install
+pnpm install
 
 # Manual stub generation
-yarn stub
+pnpm stub
 # or
-yarn dev
+pnpm dev
+# or
+pnpm build --stub
 
 # Production build
-yarn build
+pnpm build
 
 # Verify bundle integrity
-yarn verify-bundles
+pnpm verify-bundles
 ```
 
 See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
@@ -148,30 +117,29 @@ See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
 
 ## Migration History
 
+### From Jest to Vitest (v10.0.0)
+
+**Date:** Early 2026
+
+**Reason:** Jest had significant overhead in JSDOM environments, especially with React 19 and modern ESM. Vitest provides a faster, native ESM experience with better HMR and developer experience.
+
+**Migration Impact:**
+
+- ✅ **Performance**: Full suite runs ~2x faster.
+- ✅ **Native ESM**: No more complex Babel transformations for tests.
+- ✅ **React 19 Compatibility**: Simplified `act` synchronization and event simulation in JSDOM.
+
+### From Yarn to pnpm (v10.0.0)
+
+**Date:** Early 2026
+
+**Reason:** pnpm's strictness and efficiency make it the preferred choice for modern React monorepos, especially as we scale with WebGPU and multiple entry points.
+
 ### From Preconstruct to Unbuild (v10.0.0)
 
 **Date:** Late 2025
 
 **Reason:** Preconstruct couldn't support per-entry alias resolution, which is essential for our THREE.js import strategy.
-
-**Problems with Preconstruct:**
-
-1. **No Per-Entry Aliases** - Impossible to have different `#three` resolution per entry point
-
-   - All entries shared the same import resolution
-   - Couldn't create separate WebGL-only and WebGPU-only bundles
-
-2. **Physical Folder Hacks** - Required creating stub `package.json` files in folders:
-   ```
-   legacy/package.json  → {"main": "../dist/legacy.cjs"}
-   webgpu/package.json  → {"main": "../dist/webgpu.cjs"}
-   ```
-3. **Shared Chunks** - Created shared dependencies between entries
-
-   - Users would get multiple files for a single import
-   - Tree-shaking was less predictable
-
-4. **Development Mode Issues** - `preconstruct dev` had limitations with TypeScript path mapping
 
 **Migration Impact:**
 
@@ -181,38 +149,7 @@ See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
 - ✅ Faster development with better stub support
 - ✅ More predictable builds
 
-**Breaking Changes:**
-
-- None for end users - package exports remained the same
-- Internal build process changed completely
-- Development setup simplified
-
-**CI/CD:** This project uses GitHub Actions (`.github/workflows/test.yml`) which has been updated for Yarn 4.
-
-### From Yarn 1 to Yarn 4 (v10.0.0)
-
-**Date:** Late 2025
-
-**Reason:** Yarn 1 is in maintenance-only mode, and Yarn 4 offers better performance and DX with zero breaking changes when using `nodeLinker: node-modules`.
-
-**Changes:**
-
-- Updated `packageManager` field
-- Created `.yarnrc.yml` with `nodeLinker: node-modules`
-- No changes to scripts, dependencies, or CI
-
-**Migration Impact:**
-
-- ✅ Faster installs (~20-30% improvement)
-- ✅ Better caching and deduplication
-- ✅ Access to modern Yarn features
-- ✅ Zero breaking changes for contributors
-
-**Why Now:**
-
-- Preconstruct (which had Yarn 2+ compatibility issues) is gone
-- Unbuild works perfectly with Yarn 4
-- Minimal risk, maximum benefit
+**CI/CD:** This project uses GitHub Actions (`.github/workflows/test.yml`) which has been updated for pnpm and Vitest.
 
 ---
 
@@ -220,65 +157,19 @@ See [DEVELOPMENT](./DEVELOPMENT.md) for detailed development workflows.
 
 ### Potential Future Changes
 
-### What Would PnP Migration Require?
-
-If we decide to enable PnP in the future, here's what it would take:
-
-**Configuration:**
-
-```yaml
-# .yarnrc.yml
-nodeLinker: pnp
-pnpMode: loose # Recommended for libraries
-```
-
-**Jest Setup:**
-
-```javascript
-// jest.config.js
-resolver: 'jest-pnp-resolver',
-// OR
-moduleNameMapper: {
-  // Custom mappings for PnP resolution
-}
-```
-
-**SDK Setup:**
-
-```bash
-# Generate editor SDKs (required for TypeScript, ESLint, etc.)
-yarn dlx @yarnpkg/sdks vscode
-```
-
-**Commit Requirements:**
-
-- Commit `.yarn/sdks/` directory
-- Commit `.pnp.cjs` and `.pnp.loader.mjs` (or use Zero-Installs)
-- Update contributor documentation
-
-**Estimated Effort:** 2-4 hours for migration + testing, ongoing maintenance for edge cases
-
-**Decision:** We'll revisit PnP if Jest adds native PnP support or if contributor friction decreases.
-
-1. **Plug'n'Play (PnP)**
-
-   - **When:** If Jest adds native PnP support, or contributor friction is resolved
-   - **Benefit:** 40-60% faster installs, strict dependency enforcement
-   - **Effort:** ~4 hours migration + ongoing edge case handling
-
-2. **Bun Runtime**
+1. **Bun Runtime**
 
    - **When:** Bun stabilizes monorepo tooling and test runner
    - **Benefit:** Even faster installs/builds, unified runtime
    - **Risk:** Early ecosystem, potential compatibility issues
 
-3. **Turbo/Nx Monorepo Tools**
+2. **Turbo/Nx Task Orchestration**
 
    - **When:** Project scales significantly or CI times become problematic
    - **Benefit:** Task caching, distributed builds
-   - **Effort:** High (requires restructuring workflows)
+   - **Effort:** Medium (already partly achieved by pnpm filtering)
 
-4. **TypeScript 5.x Project References**
+3. **TypeScript 5.x Project References**
    - **When:** TypeScript performance becomes a bottleneck
    - **Benefit:** Faster type checking in monorepo
    - **Effort:** Medium (requires tsconfig restructuring)

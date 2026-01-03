@@ -18,16 +18,16 @@ This guide covers how to create and publish alpha releases for the v10 branch to
 Before releasing, ensure:
 
 1. You are on the `v10` branch
-2. All tests pass: `yarn test`
-3. Build succeeds: `yarn build`
-4. Bundle verification passes: `yarn verify-bundles`
+2. All tests pass: `pnpm test`
+3. Build succeeds: `pnpm build`
+4. Bundle verification passes: `pnpm verify-bundles`
 
 ```bash
 # Verify you're on the correct branch
 git branch --show-current  # Should output: v10
 
 # Run the full CI check
-yarn ci
+pnpm ci
 ```
 
 ---
@@ -46,7 +46,7 @@ cat .changeset/pre.json
 If the file doesn't exist, enter prerelease mode:
 
 ```bash
-yarn changeset pre enter alpha
+pnpm changeset pre enter alpha
 ```
 
 This creates `.changeset/pre.json` which tells changesets to version packages as `X.X.X-alpha.X`.
@@ -56,7 +56,7 @@ This creates `.changeset/pre.json` which tells changesets to version packages as
 Describe what changed in this release:
 
 ```bash
-yarn changeset:add
+pnpm changeset:add
 ```
 
 You'll be prompted to:
@@ -76,7 +76,7 @@ Added WebGPU support with new entry point @react-three/fiber/webgpu
 Apply the changesets to update package versions:
 
 ```bash
-yarn vers
+pnpm vers
 ```
 
 This will:
@@ -105,7 +105,7 @@ Before publishing, build and verify what will be published:
 
 ```bash
 # Build all packages
-yarn build
+pnpm build
 
 # Dry run to see exactly what will be published (without actually publishing)
 cd packages/fiber && npm publish --dry-run --tag alpha
@@ -130,7 +130,7 @@ cd ../../
 
 ```bash
 # Publish with alpha tag
-yarn changeset publish --tag alpha
+pnpm changeset publish --tag alpha
 ```
 
 Or manually for each package:
@@ -170,25 +170,25 @@ latest: 9.x.x
 
 ```bash
 # Enter alpha prerelease mode (first time only)
-yarn changeset pre enter alpha
+pnpm changeset pre enter alpha
 
 # Add a changeset describing your changes
-yarn changeset:add
+pnpm changeset:add
 
 # Version packages (applies changesets)
-yarn vers
+pnpm vers
 
 # Build packages
-yarn build
+pnpm build
 
 # Dry-run to verify package contents (IMPORTANT!)
 cd packages/fiber && npm pack --dry-run
 
 # Publish with alpha tag
-yarn changeset publish --tag alpha
+pnpm changeset publish --tag alpha
 
 # Exit prerelease mode (when ready for stable v10)
-yarn changeset pre exit
+pnpm changeset pre exit
 
 # Check npm tags
 npm dist-tag ls @react-three/fiber
@@ -198,13 +198,13 @@ npm dist-tag ls @react-three/fiber
 
 ## Safety Checklist Before Publishing
 
-Before running `yarn changeset publish`:
+Before running `pnpm changeset publish`:
 
 - [ ] Verified on `v10` branch: `git branch --show-current`
 - [ ] Prerelease mode is active: Check `.changeset/pre.json` exists
 - [ ] Version looks correct: `grep version packages/fiber/package.json` shows `-alpha.X`
-- [ ] Tests pass: `yarn test`
-- [ ] Build passes: `yarn build`
+- [ ] Tests pass: `pnpm test`
+- [ ] Build passes: `pnpm build`
 - [ ] **Dry-run verified**: `npm publish --dry-run --tag alpha` shows `dist/` files included (~1 MB package size)
 - [ ] Will use `--tag alpha` flag
 
@@ -251,19 +251,19 @@ When v10 is ready to become the new stable version:
 ### 1. Exit Prerelease Mode
 
 ```bash
-yarn changeset pre exit
+pnpm changeset pre exit
 ```
 
 ### 2. Create Final Changeset
 
 ```bash
-yarn changeset:add
+pnpm changeset:add
 ```
 
 ### 3. Version as Stable
 
 ```bash
-yarn vers
+pnpm vers
 ```
 
 This will produce `10.0.0` (no alpha suffix).
@@ -271,8 +271,8 @@ This will produce `10.0.0` (no alpha suffix).
 ### 4. Publish to Latest
 
 ```bash
-yarn build
-yarn changeset publish  # No --tag flag = publishes to latest
+pnpm build
+pnpm changeset publish  # No --tag flag = publishes to latest
 ```
 
 ### 5. Update Branch Strategy
@@ -290,7 +290,7 @@ After stable v10 release:
 
 You're trying to publish a version that already exists. Either:
 
-- Create a new changeset and run `yarn vers` again
+- Create a new changeset and run `pnpm vers` again
 - Or increment the prerelease number manually
 
 ### Changesets not detecting changes
@@ -314,7 +314,7 @@ cat .changeset/pre.json
 If missing, re-enter prerelease mode:
 
 ```bash
-yarn changeset pre enter alpha
+pnpm changeset pre enter alpha
 ```
 
 ### Dry-run shows package is too small / missing dist/
@@ -328,7 +328,6 @@ If `npm pack --dry-run` shows ~100-200 KB instead of ~1 MB, the `dist/` folder i
 ```json
 "files": [
   "dist",
-  "types",
   "react-reconciler",
   "readme.md"
 ]

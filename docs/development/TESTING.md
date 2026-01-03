@@ -14,33 +14,31 @@ R3F has three entry points, each with different THREE.js imports:
 
 ## Testing Methods
 
-### 1. Jest Tests (Source Testing)
+### 1. Vitest Tests (Source Testing)
 
-Jest tests run against **source files** via babel, not built bundles. They verify that exports work correctly.
+Vitest tests run against **source files** using native ESM resolution. They verify that exports work correctly and that the reconciler behaves as expected in a JSDOM environment.
 
 ```bash
 # Run all tests
-yarn test
+pnpm test
 
-# Run bundle/entry point tests specifically
-yarn test packages/fiber/tests/bundles.test.ts
+# Run specific test file
+pnpm vitest packages/fiber/tests/bundles.test.ts
 
 # Watch mode
-yarn test:watch
+pnpm test:watch
 ```
 
-**What Jest tests verify:**
+**What Vitest tests verify:**
 
 - Build flags are exported (`R3F_BUILD_LEGACY`, `R3F_BUILD_WEBGPU`)
 - Core functions are exported (`createRoot`, `useThree`, `useFrame`, `extend`)
 - WebGPU-specific hooks are available from the webgpu entry
+- Event handling and state management correctness
 
-**Important Note:** Jest uses babel which resolves `#three` to the default `three/index.ts` for ALL entry points. This means:
+**How Vitest handles THREE.js:**
 
-- In Jest: All entry points show `R3F_BUILD_LEGACY=true` and `R3F_BUILD_WEBGPU=true`
-- In built bundles: Each entry has correct flags based on its THREE variant
-
-To verify actual bundle imports, use the bundle verification script.
+Unlike our previous Jest setup, Vitest uses a standardized mocking approach in `setupTests.ts` and native ESM resolution. This eliminates the need for complex Babel transformations. For event tests, we use a custom `act` wrapper to synchronize React's state with R3F's frame loop.
 
 ### 2. Bundle Verification (Built Output Testing)
 
@@ -48,10 +46,10 @@ The `verify-bundles.js` script analyzes the **built dist files** to ensure each 
 
 ```bash
 # Build first, then verify
-yarn build && yarn verify-bundles
+pnpm build && pnpm verify-bundles
 
 # Or just verify (if already built)
-yarn verify-bundles
+pnpm verify-bundles
 ```
 
 **What bundle verification checks:**
@@ -95,46 +93,32 @@ yarn verify-bundles
 ### Before Committing
 
 ```bash
-# 1. Run Jest tests
-yarn test
+# 1. Run all tests
+pnpm test
 
 # 2. Build and verify bundles
-yarn build && yarn verify-bundles
+pnpm build && pnpm verify-bundles
 ```
 
 ### Full Verification (Single Command)
 
 ```bash
-yarn build && yarn verify-bundles && yarn test packages/fiber/tests/bundles.test.ts
+pnpm build && pnpm verify-bundles && pnpm test
 ```
 
 ### CI/CD
 
-For continuous integration, run both:
+For continuous integration, we run:
 
 ```bash
-yarn test && yarn build && yarn verify-bundles
+pnpm ci
 ```
 
 ## Test Files
 
 ### `packages/fiber/tests/bundles.test.ts`
 
-Tests entry point exports and functionality:
-
-```typescript
-// Default entry
-import('@react-three/fiber')
-// Expects: R3F_BUILD_LEGACY=true, R3F_BUILD_WEBGPU=true
-
-// Legacy entry
-import('@react-three/fiber/legacy')
-// Expects: R3F_BUILD_LEGACY=true, R3F_BUILD_WEBGPU=false (in built bundle)
-
-// WebGPU entry
-import('@react-three/fiber/webgpu')
-// Expects: R3F_BUILD_LEGACY=false, R3F_BUILD_WEBGPU=true (in built bundle)
-```
+Tests entry point exports and functionality using dynamic imports.
 
 ### `scripts/verify-bundles.js`
 
@@ -146,11 +130,13 @@ node scripts/verify-bundles.js
 
 ## Adding New Tests
 
-### Jest Tests
+### Vitest Tests
 
-Add tests to `packages/fiber/tests/bundles.test.ts` or create new test files in the `tests/` directory.
+Add tests to the `tests/` directory with a `.test.ts` or `.test.tsx` extension.
 
 ```typescript
+import { vi, describe, it, expect } from 'vitest'
+
 describe('My Feature', () => {
   it('should work', async () => {
     const fiber = await import('@react-three/fiber')
@@ -179,25 +165,28 @@ const checks = [
 
 ### "Multiple instances of Three.js" warning
 
-This warning appears in Jest tests because both `three` and `three/webgpu` are loaded. It's expected in tests and doesn't affect functionality.
+We suppress this warning in `setupTests.ts` as it's often a side effect of how test environments resolve multiple THREE entry points.
 
 ### Tests fail with "Cannot find module"
 
-Run `yarn stub` to generate development stubs:
+Ensure you have installed dependencies and created stubs:
 
 ```bash
-yarn stub
+pnpm install
+# or
+pnpm stub
 ```
 
 ### Bundle verification fails
 
-1. Make sure you've built first: `yarn build`
+1. Make sure you've built first: `pnpm build`
 2. Check if the dist folder exists: `ls packages/fiber/dist`
 3. Verify the build completed without errors
 
-### TypeScript errors in tests
+### snapshots fail
 
-The package.json `types` field points to source files for development. If you see type errors:
+If you've made intentional changes that affect snapshots, update them using:
 
-1. Ensure TypeScript can resolve the source files
-2. Check that `#three` and `#types` aliases are configured in `tsconfig.json`
+```bash
+pnpm vitest -u
+```

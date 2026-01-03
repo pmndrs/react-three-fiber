@@ -7,11 +7,11 @@ This guide covers how to develop `@react-three/fiber` locally.
 ## Quick Start
 
 ```bash
-# Install dependencies with Yarn 4 (automatically runs yarn stub)
-yarn install
+# Install dependencies with pnpm (automatically runs pnpm stub)
+pnpm install
 
 # Start developing
-yarn dev
+pnpm dev
 ```
 
 ## Build System Overview
@@ -29,19 +29,19 @@ See [BUILD](./BUILD.md) for the full story on why we use unbuild and our tooling
 
 ## Development Commands
 
-### `yarn stub` (Development Mode)
+### `pnpm stub` (Development Mode)
 
 **(You probably never need to run this, this is done for you)**
 
 Creates stub files that point to source code, allowing you to develop without rebuilding:
 
 ```bash
-yarn stub
+pnpm stub
 # or
-yarn dev  # alias for yarn stub
+pnpm dev  # alias for pnpm stub
 ```
 
-This is run automatically after `yarn install` via the `postinstall` script.
+This is run automatically after `pnpm install` via the `postinstall` script.
 
 **What it does:**
 
@@ -64,11 +64,11 @@ This means:
 - TypeScript types come from source files
 - Hot reload works in consuming apps
 
-### `yarn build` (Production Build)
+### `pnpm build` (Production Build)
 
 Creates optimized production bundles with per-entry THREE.js resolution.
 
-You need to run `yarn build` when:
+You need to run `pnpm build` when:
 
 - Preparing for release/publish
 - Testing actual bundle output
@@ -78,10 +78,10 @@ You do NOT need to rebuild for:
 
 - Normal development
 - Testing source code changes
-- Running Jest tests
+- Running tests
 
 ```bash
-yarn build
+pnpm build
 ```
 
 **Output:**
@@ -135,14 +135,9 @@ function createAliasPlugin(threeVariant: 'default' | 'legacy' | 'webgpu') {
 git clone https://github.com/pmndrs/react-three-fiber.git
 cd react-three-fiber
 
-# Install Yarn 4 if you don't have it
-corepack enable
-
-# Install dependencies (automatically runs yarn stub)
-yarn install
+# Install dependencies (automatically runs pnpm stub)
+pnpm install
 ```
-
-> **Note:** We use Yarn 4 (Berry) with `nodeLinker: node-modules`. If you're coming from Yarn 1, everything works the same way. See [BUILD.md](./BUILD) for details.
 
 ### 2. Making Changes
 
@@ -158,21 +153,21 @@ code packages/fiber/src/core/hooks/useFrame.tsx
 ### 3. Testing Changes
 
 ```bash
-# Run tests
-yarn test
+# Run all tests
+pnpm test
 
 # Run specific test
-yarn test packages/fiber/tests/bundles.test.ts
+pnpm vitest packages/fiber/tests/events.test.tsx
 
 # Watch mode
-yarn test:watch
+pnpm test:watch
 ```
 
 ### 4. Testing with Example App
 
 ```bash
 # Start the example app
-yarn examples
+pnpm examples
 
 # Navigate to http://localhost:5173
 ```
@@ -181,37 +176,37 @@ yarn examples
 
 ```bash
 # Build
-yarn build
+pnpm build
 
 # Verify bundle optimization
-yarn verify-bundles
+pnpm verify-bundles
 ```
 
 ## Testing
 
-R3F uses a combination of Jest tests and bundle verification to ensure correctness across all entry points. For comprehensive testing information, see the [Testing Guide](./TESTING.md).
+R3F uses a combination of Vitest tests and bundle verification to ensure correctness across all entry points. For comprehensive testing information, see the [Testing Guide](./TESTING.md).
 
 ### Quick Testing Commands
 
 ```bash
-# Run all Jest tests
-yarn test
+# Run all Vitest tests
+pnpm test
 
 # Run specific test file
-yarn test packages/fiber/tests/bundles.test.ts
+pnpm vitest packages/fiber/tests/events.test.tsx
 
 # Watch mode
-yarn test:watch
+pnpm test:watch
 
 # Build and verify bundles
-yarn build && yarn verify-bundles
+pnpm build && pnpm verify-bundles
 ```
 
 ### Testing Overview
 
-**Jest Tests**
+**Vitest Tests**
 
-Jest tests run against source files and verify that all exports work correctly. However, they use babel which resolves `#three` to the default variant for all tests.
+Vitest tests run against source files and verify that all exports work correctly. They use native ESM resolution and Vitest's built-in mocking capabilities.
 
 **Bundle Verification**
 
@@ -269,29 +264,6 @@ export default defineBuildConfig([
     // #three → src/three/webgpu.ts
   },
 ])
-```
-
-### `babel.config.js`
-
-Used for Jest testing. Resolves `#three` to default for all tests:
-
-```javascript
-alias: {
-  '#three': './packages/fiber/src/three/index.ts',
-  '#types': './packages/fiber/types/index.ts',
-}
-```
-
-### `jest.config.js`
-
-Maps package imports to source files for testing:
-
-```javascript
-moduleNameMapper: {
-  '^@react-three/fiber$': '<rootDir>/packages/fiber/src/index.tsx',
-  '^@react-three/fiber/legacy$': '<rootDir>/packages/fiber/src/legacy.tsx',
-  '^@react-three/fiber/webgpu$': '<rootDir>/packages/fiber/src/webgpu/index.tsx',
-}
 ```
 
 ## Adding New Features
@@ -372,7 +344,7 @@ If you need a new THREE.js export:
 Make sure stubs are generated:
 
 ```bash
-yarn stub
+pnpm stub
 ```
 
 ### Import errors in IDE
@@ -380,36 +352,27 @@ yarn stub
 Restart TypeScript server in your IDE, or run:
 
 ```bash
-yarn typecheck
+pnpm typecheck
 ```
 
 ### Build fails with alias errors
 
 Check that `#three` and `#types` aliases are correctly configured in `build.config.ts`.
 
-### Jest tests fail with module errors
-
-Ensure babel config has the aliases and Jest config maps packages to source.
-
 ## CI/CD
 
-For CI pipelines using Yarn 4:
+For CI pipelines:
 
 ```yaml
 steps:
-  # Enable Corepack for Yarn 4
-  - run: corepack enable
-
   # Install dependencies
-  - run: yarn install
+  - run: pnpm install
 
   # Build and verify
-  - run: yarn build
-  - run: yarn verify-bundles
-  - run: yarn test
+  - run: pnpm build
+  - run: pnpm verify-bundles
+  - run: pnpm test
 ```
-
-> **Note:** The `packageManager` field in `package.json` pins the exact Yarn version, so `corepack enable` ensures consistency across environments.
 
 ## Release Process
 
@@ -417,14 +380,14 @@ For the current Alpha Stage see [ALPHA RELEASE](./ALPHA-RELEASE.md)
 
 ```bash
 # 1. Make sure everything passes
-yarn build && yarn verify-bundles && yarn test
+pnpm ci
 
 # 2. Create changeset
-yarn changeset:add
+pnpm changeset:add
 
 # 3. Version packages
-yarn vers
+pnpm vers
 
 # 4. Release
-yarn release
+pnpm release
 ```
