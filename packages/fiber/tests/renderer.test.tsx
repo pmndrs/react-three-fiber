@@ -10,6 +10,7 @@ import {
   flushSync,
   useThree,
   createPortal,
+  useFrame,
 } from '../src/index'
 import { suspend } from 'suspend-react'
 
@@ -1200,6 +1201,52 @@ describe('renderer', () => {
       // Now portal should be attached
       expect(container.children.length).toBe(1)
       expect((container.children[0] as THREE.Scene).children[0].name).toBe('delayed-mesh')
+    })
+
+    it('should provide correct portal scene to useFrame callbacks', async () => {
+      // This test verifies that useFrame inside a portal receives the portal's scene,
+      // not the root scene. This was a bug where the scheduler's tickRoot would
+      // use the root entry's getState() instead of the portal's store.
+      const container = new THREE.Group()
+      container.name = 'portal-container'
+
+      let rootSceneUuid: string | undefined
+      let portalSceneInUseFrame: THREE.Scene | undefined
+      let portalSceneActual: THREE.Scene | undefined
+
+      // Component inside the portal that captures scene from useFrame
+      const PortalContent = () => {
+        useFrame((state) => {
+          portalSceneInUseFrame = state.scene
+        })
+        return <mesh name="portal-child" />
+      }
+
+      const TestComponent = () => {
+        const { scene: rootScene } = useThree()
+        rootSceneUuid = rootScene.uuid
+
+        return (
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalContent />, container)}
+          </>
+        )
+      }
+
+      await act(async () => root.configure({ frameloop: 'always' }).then((r) => r.render(<TestComponent />)))
+
+      // Wait for portal to mount and microtask to resolve
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 50)))
+
+      // Get the actual portal scene (injected scene child of container)
+      portalSceneActual = container.children.find((c) => c.type === 'Scene') as THREE.Scene
+
+      // The scene from useFrame should be the portal scene, NOT the root scene
+      expect(portalSceneInUseFrame).toBeDefined()
+      expect(portalSceneActual).toBeDefined()
+      expect(portalSceneInUseFrame!.uuid).toBe(portalSceneActual!.uuid)
+      expect(portalSceneInUseFrame!.uuid).not.toBe(rootSceneUuid)
     })
   })
 })
