@@ -133,9 +133,22 @@ export function useFrame(
       })
     }
 
-    // Wrapper that calls the memoized ref
+    // Wrapper that calls the memoized ref with correct store state
+    // IMPORTANT: We use store.getState() instead of frameState to ensure portal isolation
+    // The scheduler's frameState comes from the root entry's getState(), which is always the
+    // Canvas root. For portals, the correct state (with portal scene, camera, etc.) lives
+    // in the portal's zustand store, which is accessible via React context (useStore).
+    // We merge timing info from the scheduler with the correct store state.
     const wrappedCallback: FrameNextCallback = (frameState, delta) => {
-      callbackRef.current?.(frameState, delta)
+      const localState = store.getState()
+      const mergedState = {
+        ...localState,
+        time: frameState.time,
+        delta: frameState.delta,
+        elapsed: frameState.elapsed,
+        frame: frameState.frame,
+      }
+      callbackRef.current?.(mergedState as typeof frameState, delta)
     }
 
     // Register with global scheduler
