@@ -1,69 +1,62 @@
 # Testing Guide
 
-This guide covers how to test `@react-three/fiber` entry points and bundle optimization.
+This guide covers testing strategies for `@react-three/fiber` entry points and bundle verification.
 
-## Overview
+---
+
+## Entry Points Overview
 
 R3F has three entry points, each with different THREE.js imports:
 
 | Entry Point | Import                      | THREE Imports            |
-| ----------- | --------------------------- | ------------------------ |
+| :---------- | :-------------------------- | :----------------------- |
 | Default     | `@react-three/fiber`        | `three` + `three/webgpu` |
 | Legacy      | `@react-three/fiber/legacy` | `three` only             |
 | WebGPU      | `@react-three/fiber/webgpu` | `three/webgpu` only      |
 
-## Testing Methods
+---
 
-### 1. Vitest Tests (Source Testing)
+## Vitest Tests (Source Testing)
 
-Vitest tests run against **source files** using native ESM resolution. They verify that exports work correctly and that the reconciler behaves as expected in a JSDOM environment.
+Vitest tests run against **source files** using native ESM resolution.
 
 ```bash
-# Run all tests
-pnpm test
-
-# Run specific test file
-pnpm vitest packages/fiber/tests/bundles.test.ts
-
-# Watch mode
-pnpm test:watch
+pnpm test                              # Run all tests
+pnpm test:watch                        # Watch mode
+pnpm vitest packages/fiber/tests/foo.test.ts  # Specific file
 ```
 
-**What Vitest tests verify:**
+//\* What Vitest Tests Verify ----------------------------
 
 - Build flags are exported (`R3F_BUILD_LEGACY`, `R3F_BUILD_WEBGPU`)
 - Core functions are exported (`createRoot`, `useThree`, `useFrame`, `extend`)
 - WebGPU-specific hooks are available from the webgpu entry
 - Event handling and state management correctness
 
-**How Vitest handles THREE.js:**
+//\* THREE.js Mocking ------------------------------------
 
-Unlike our previous Jest setup, Vitest uses a standardized mocking approach in `setupTests.ts` and native ESM resolution. This eliminates the need for complex Babel transformations. For event tests, we use a custom `act` wrapper to synchronize React's state with R3F's frame loop.
+Vitest uses standardized mocking in `setupTests.ts` with native ESM resolution. No complex Babel transformations required.
 
-### 2. Bundle Verification (Built Output Testing)
+---
 
-The `verify-bundles.js` script analyzes the **built dist files** to ensure each bundle has the correct THREE.js imports.
+## Bundle Verification (Built Output)
+
+The `verify-bundles.js` script analyzes **built dist files** to ensure correct THREE.js imports.
 
 ```bash
-# Build first, then verify
 pnpm build && pnpm verify-bundles
-
-# Or just verify (if already built)
-pnpm verify-bundles
 ```
 
-**What bundle verification checks:**
+//\* What Bundle Verification Checks ---------------------
 
 - Default bundle contains both `from 'three'` and `from 'three/webgpu'`
 - Legacy bundle contains `from 'three'` but NOT `from 'three/webgpu'` or `from 'three/tsl'`
 - WebGPU bundle contains `from 'three/webgpu'` but NOT plain `from 'three'`
 - All bundles are standalone (no shared chunks)
 
-**Example output:**
+//\* Example Output --------------------------------------
 
-```
-🔍 Bundle Analysis Report
-
+```text
 📦 Default entry (@react-three/fiber)
    📄 File: dist/index.mjs
    📊 Size: 74.44 KB
@@ -76,39 +69,27 @@ pnpm verify-bundles
    📊 Size: 74.03 KB
    ✅ Contains: from 'three'
    ✅ Does not contain: from 'three/webgpu'
-   ✅ Does not contain: from 'three/tsl'
    ✅ Standalone bundle (no shared chunks)
-
-📦 WebGPU entry (@react-three/fiber/webgpu)
-   📄 File: dist/webgpu/index.mjs
-   📊 Size: 84.85 KB
-   ✅ Contains: from 'three/webgpu'
-   ✅ Standalone bundle (no shared chunks)
-
-✅ All checks passed! Bundles are correctly optimized.
 ```
+
+---
 
 ## Testing Workflow
 
-### Before Committing
+//\* Before Committing -----------------------------------
 
 ```bash
-# 1. Run all tests
 pnpm test
-
-# 2. Build and verify bundles
 pnpm build && pnpm verify-bundles
 ```
 
-### Full Verification (Single Command)
+//\* Full Verification -----------------------------------
 
 ```bash
 pnpm build && pnpm verify-bundles && pnpm test
 ```
 
-### CI/CD
-
-For continuous integration, we run:
+//\* CI --------------------------------------------------
 
 ```bash
 pnpm ci
@@ -116,27 +97,35 @@ pnpm ci
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
-### "Multiple instances of Three.js"
+//\* Development Issues ----------------------------------
 
-A common warning in Vitest/JSDOM. It is usually safe to ignore in tests as long as functionality is verified. We suppress the most common variants in `setupTests.ts`.
+**Changes not showing?**
+Run `pnpm stub` to regenerate development links from `dist/` → `src/`.
 
-### Tests fail with "Cannot find module"
+**Import errors in IDE?**
+Restart your TypeScript server or run `pnpm typecheck`.
 
-1.  Ensure you have run `pnpm install`.
-2.  If the error references `dist` files, run `pnpm stub` to regenerate the development links.
+**"EPERM" errors on Windows?**
+Enable [Developer Mode](https://howtogeek.com/292914/what-is-developer-mode-in-windows-10) for symlink support.
 
-### Bundle verification failure
+//\* Test Issues -----------------------------------------
 
-1.  **Build first**: You must run `pnpm build` before running `pnpm verify-bundles`.
-2.  **Check imports**: If a bundle correctly contains forbidden imports (e.g., `three/webgpu` in the legacy bundle), check your `#three` alias resolution in `build.config.ts`.
+**"Multiple instances of Three.js" warning**
+Common in Vitest/JSDOM. Usually safe to ignore — we suppress common variants in `setupTests.ts`.
 
----
+**"Cannot find module" errors**
 
-## 🏗️ Methodology
+1. Ensure `pnpm install` has been run
+2. If error references `dist` files, run `pnpm stub` to regenerate development links
 
-We use a two-tier verification strategy:
+//\* Bundle Verification Issues --------------------------
 
-1.  **Vitest (Source)**: Fast, iterative testing of logic, hooks, and reconciliation.
-2.  **Bundle Verification (Dist)**: Static analysis of built assets to ensure optimization and correct tree-shaking for our various entry points.
+**Verification fails**
+
+1. You must run `pnpm build` before `pnpm verify-bundles`
+2. If a bundle incorrectly contains forbidden imports, check `#three` alias resolution in `build.config.ts`
+
+**Package too small in dry-run**
+If `npm pack --dry-run` shows ~100-200 KB instead of ~1 MB, the `dist/` folder is being excluded. Ensure the package's `package.json` has a `files` field that explicitly includes `dist`.

@@ -1,31 +1,42 @@
-# Development Workflow Guide
+# Development Guide
 
-This guide covers the day-to-day process of developing `@react-three/fiber` locally. For technical details on our build architecture or testing infrastructure, please refer to the specialized guides.
+This is the hub for all technical documentation. It covers day-to-day workflow, project structure, and links to specialized guides.
 
-## 🛠️ Development Cycle
+## v10 Context
 
-The general loop when working on a feature or fix:
+v10 introduces significant architectural changes:
 
-1.  **Start Dev Mode**: `pnpm dev` (Generates stubs to link source to dist).
-2.  **Make Changes**: Edit files in `packages/fiber/src/`.
-3.  **Test**: Run tests with `pnpm test`.
-4.  **Verify UI**: Use the examples with `pnpm examples`.
-5.  **Clean up**: Ensure snapshots and lint pass.
+- **WebGPU Support** — New `@react-three/fiber/webgpu` entry point alongside the default and legacy builds
+- **Native Split** — React Native support moved to separate `@react-three/native` package
+- **New Build System** — Unbuild with per-entry alias resolution for THREE.js imports
+- **Modern Tooling** — pnpm workspaces and Vitest for testing
 
-### 🏃 Common Commands
-
-| Command         | Purpose                                          |
-| :-------------- | :----------------------------------------------- |
-| `pnpm dev`      | Starts development mode (alias for `pnpm stub`). |
-| `pnpm examples` | Launches the local example suite for UI testing. |
-| `pnpm test`     | Runs the full Vitest suite.                      |
-| `pnpm build`    | Generates final production bundles.              |
+These changes enable tree-shaking between WebGL and WebGPU code paths and cleaner dependency management.
 
 ---
 
-## 📂 Project Structure
+## Development Workflow
 
-Understanding where code lives:
+//\* Development Cycle ===================================
+
+```bash
+pnpm dev        # Generate stubs linking src → dist
+pnpm examples   # Launch example suite for UI testing
+pnpm test       # Run Vitest suite
+pnpm build      # Generate production bundles
+```
+
+The general loop:
+
+1. `pnpm dev` — Start development mode
+2. Edit files in `packages/fiber/src/`
+3. `pnpm test` — Verify changes
+4. `pnpm examples` — Visual verification
+5. `pnpm changeset:add` — Document your changes
+
+---
+
+## Project Structure
 
 ```text
 packages/fiber/
@@ -33,64 +44,44 @@ packages/fiber/
 │   ├── index.tsx           # Default entry (WebGL + WebGPU)
 │   ├── legacy.tsx          # Legacy entry (WebGL only)
 │   ├── webgpu/             # WebGPU-specific entry/logic
-│   ├── core/               # Core reconciler and hooks (Shared)
+│   ├── core/               # Core reconciler and hooks (shared)
 │   └── three/              # THREE.js alias resolution files
 ├── types/                  # Internal TypeScript definitions
-├── tests/                  # All Vitest tests
+├── tests/                  # Vitest tests
 └── build.config.ts         # Build entry point configuration
 ```
 
-- **Shared Logic**: Most changes should happen in `src/core/`.
-- **Three.js Aliases**: We use `#three` to dynamically switch between Three.js variants. See **[BUILD](./BUILD.md)** for how this works.
+- **Shared Logic** — Most changes happen in `src/core/`
+- **THREE.js Aliases** — We use `#three` to dynamically switch between THREE.js variants (see [BUILD](./BUILD.md))
 
 ---
 
-## ✨ Adding New Features
+## Adding Features
 
-### 1. Adding to All Entry Points
+//\* All Entry Points ------------------------------------
 
-1.  Add your logic in `src/core/`.
-2.  Export it from `src/core/index.tsx`.
-3.  It will be automatically available in all bundles.
+1. Add logic in `src/core/`
+2. Export from `src/core/index.tsx`
+3. Automatically available in all bundles
 
-### 2. WebGPU-Specific Features
+//\* WebGPU-Specific -------------------------------------
 
-1.  Add code to `src/webgpu/`.
-2.  Export from `src/webgpu/index.tsx`.
-3.  These features will _only_ be included in the `@react-three/fiber/webgpu` entry.
+1. Add code to `src/webgpu/`
+2. Export from `src/webgpu/index.tsx`
+3. Only included in `@react-three/fiber/webgpu`
 
-### 3. Adding New THREE.js Imports
+//\* New THREE.js Imports --------------------------------
 
-If you need a new export from the Three.js ecosystem:
-
-1.  Update the relevant variant in `src/three/` (e.g., `index.ts`, `legacy.ts`, or `webgpu.ts`).
-2.  Import from `#three` in your core code.
+1. Update the relevant variant in `src/three/` (`index.ts`, `legacy.ts`, or `webgpu.ts`)
+2. Import from `#three` in your core code
 
 ---
 
-## 🧪 Testing Your Changes
+## Documentation Index
 
-We use **Vitest** for all logic testing.
-
-- **Run tests**: `pnpm test`
-- **Watch mode**: `pnpm test:watch`
-- **Focus a file**: `pnpm vitest path/to/file.test.ts`
-
-For a deep dive into our testing strategy, including bundle size verification, see the **[Testing Guide](./TESTING.md)**.
-
----
-
-## 🔍 Troubleshooting
-
-- **Changes not showing?**: Run `pnpm stub` to ensure your `dist` folders point to `src`.
-- **Import errors in IDE?**: Restart your TypeScript server or run `pnpm typecheck`.
-- **"EPERM" errors on Windows?**: Ensure [Developer Mode](https://howtogeek.com/292914/what-is-developer-mode-in-windows-10) is enabled for symlink support.
-
----
-
-## 🚀 Ready to Release?
-
-Once your changes are verified:
-
-1.  **Create a changeset**: `pnpm changeset:add`
-2.  **Follow the release guide**: **[Alpha Release Guide](./ALPHA-RELEASE.md)**
+| Guide                                         | Purpose                                                          |
+| :-------------------------------------------- | :--------------------------------------------------------------- |
+| **[BUILD](./BUILD.md)**                       | Build system architecture, alias resolution, adding entry points |
+| **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting           |
+| **[ALPHA-RELEASE](./ALPHA-RELEASE.md)**       | Alpha release process for v10 branch                             |
+| **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                 |
