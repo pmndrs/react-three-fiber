@@ -6,6 +6,12 @@ nav: 14
 
 # v10 Migration Guide
 
+> **Alpha Release** - v10 is currently in alpha. We'd love your feedback!
+>
+> - [Report an issue](https://github.com/pmndrs/react-three-fiber/issues/new?labels=v10) - Found a bug? Let us know
+> - [Join the discussion](https://github.com/pmndrs/react-three-fiber/discussions) - Questions or ideas
+> - [Track progress](https://github.com/pmndrs/react-three-fiber/projects) - See what's coming
+
 ## The Short Version
 
 **Your existing code works.** v10 is designed to be backwards compatible. The default import now supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU. You will however get a depreciation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
