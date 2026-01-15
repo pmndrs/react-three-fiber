@@ -1,4 +1,4 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector } from '#three'
+import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector, Frustum } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -18,10 +18,16 @@ import type {
   ThreeCamera,
 } from '#types'
 
-import { calculateDpr, isOrthographicCamera, updateCamera } from './utils'
+import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './notices'
 
-export const context = /* @__PURE__ */ React.createContext<RootStore>(null!)
+//* Cross-Bundle Singleton ==============================
+// Use Symbol.for() to ensure context is shared across bundle boundaries
+// This prevents issues when mixing imports from @react-three/fiber and @react-three/fiber/webgpu
+const R3F_CONTEXT = Symbol.for('@react-three/fiber.context')
+
+export const context: React.Context<RootStore> =
+  (globalThis as any)[R3F_CONTEXT] ?? ((globalThis as any)[R3F_CONTEXT] = React.createContext<RootStore>(null!))
 
 export const createStore = (
   invalidate: (state?: RootState, frames?: number, stackFrames?: boolean) => void,
@@ -65,6 +71,8 @@ export const createStore = (
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
+      frustum: new Frustum(),
+      autoUpdateFrustum: true,
       raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       scene: null as unknown as Scene,
@@ -294,11 +302,25 @@ export const createStore = (
       actualRenderer.setSize(size.width, size.height, updateStyle)
     }
 
-    // Update viewport once the camera changes
+    // Update viewport and frustum once the camera changes
     if (camera !== oldCamera) {
       oldCamera = camera
+
+      // Ensure camera is a child of the scene so camera children (HUDs, etc.) render
+      // Skip if user has already parented the camera elsewhere
+      // https://github.com/pmndrs/react-three-fiber/issues/3632
+      const { rootScene } = rootStore.getState()
+      if (camera && rootScene && !camera.parent) {
+        rootScene.add(camera)
+      }
+
       // Update viewport
       set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
+      // Update frustum from new camera (if auto-update enabled)
+      const currentState = rootStore.getState()
+      if (currentState.autoUpdateFrustum && camera) {
+        updateFrustum(camera, currentState.frustum)
+      }
     }
   })
 

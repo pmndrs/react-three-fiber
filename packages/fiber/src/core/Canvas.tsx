@@ -3,8 +3,9 @@ import * as THREE from '#three'
 import useMeasure from 'react-use-measure'
 import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
-import { extend, createRoot, unmountComponentAtNode } from './index'
+import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
 import { createPointerEvents } from './events'
+import { notifyAlpha } from './notices'
 
 //* Type Imports ==============================
 import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
@@ -99,7 +100,32 @@ function CanvasImpl({
     const canvas = canvasRef.current
 
     if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-      if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
+      if (!root.current) {
+        root.current = createRoot<HTMLCanvasElement>(canvas)
+
+        // Show alpha warning once per session
+        notifyAlpha({
+          message: 'React Three Fiber v10 is in ALPHA - expect breaking changes',
+          link: 'https://github.com/pmndrs/react-three-fiber/discussions',
+        })
+
+        //* Set up error subscription immediately after createRoot ==============================
+        // This ensures error propagation is ready BEFORE configure() starts the RAF loop.
+        // If we wait until after configure() and render(), errors in useFrame callbacks
+        // might occur before the subscription is established.
+        // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+        const rootEntry = _roots.get(canvas)
+        if (rootEntry?.store) {
+          // Clean up any previous subscription
+          if (unsubscribeErrorRef.current) unsubscribeErrorRef.current()
+
+          unsubscribeErrorRef.current = rootEntry.store.subscribe((state) => {
+            if (state.error && effectActiveRef.current) {
+              setError(state.error)
+            }
+          })
+        }
+      }
 
       async function run() {
         // Bail out if effect was cleaned up while awaiting (HMR race condition)
@@ -149,23 +175,15 @@ function CanvasImpl({
         // Bail out if effect was cleaned up while awaiting configure
         if (!effectActiveRef.current || !root.current) return
 
-        const store = root.current.render(
+        root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
               <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
             </ErrorBoundary>
           </Bridge>,
         )
-
-        // Clean up previous subscription if it exists
-        if (unsubscribeErrorRef.current) unsubscribeErrorRef.current()
-
-        // Subscribe to store error state and propagate to error boundary
-        unsubscribeErrorRef.current = store.subscribe((state) => {
-          if (state.error && effectActiveRef.current) {
-            setError(state.error)
-          }
-        })
+        // Note: Error subscription is set up synchronously in the parent scope
+        // immediately after createRoot() to ensure it's ready before RAF starts.
       }
       run()
     }

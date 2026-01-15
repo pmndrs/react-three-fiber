@@ -34,12 +34,14 @@ const playerUniforms = useUniforms('player')
 
 ### Return Value
 
-Returns `UniformRecord` - object mapping uniform names to UniformNodes:
+Returns `UniformsWithUtils<UniformRecord>` - object mapping uniform names to UniformNodes, plus `removeUniforms` and `clearUniforms` utils:
 
 ```typescript
 {
   uTime: UniformNode<number>
   uColor: UniformNode<THREE.Color>
+  removeUniforms: (names: string | string[], scope?: string) => void
+  clearUniforms: (scope?: string) => void
 }
 ```
 
@@ -263,26 +265,54 @@ useFrame(({ elapsed, uniforms }) => {
 
 ---
 
-## Utility Functions
+## Utils
+
+The hook returns `removeUniforms` and `clearUniforms` utils alongside your uniforms. These can be used in event handlers, useEffect cleanup, etc.
 
 ### removeUniforms
 
-```tsx
-import { removeUniforms } from '@react-three/fiber/webgpu'
-
-const store = useStore()
-removeUniforms(store.setState, ['uTime', 'uColor'])
-removeUniforms(store.setState, ['uHealth'], 'player') // From scope
-```
-
-### clearScope
+Remove specific uniforms by name:
 
 ```tsx
-import { clearScope } from '@react-three/fiber/webgpu'
+const { removeUniforms, uTime } = useUniforms({ uTime: 0 })
 
-const store = useStore()
-clearScope(store.setState, 'player')
+// Remove single uniform from root
+removeUniforms('uTime')
+
+// Remove multiple uniforms from a scope
+removeUniforms(['uHealth', 'uMana'], 'player')
+
+// Use in cleanup
+useEffect(() => {
+  return () => removeUniforms('temporaryUniform')
+}, [])
 ```
+
+### clearUniforms
+
+Clear uniforms by scope or all at once:
+
+```tsx
+const { clearUniforms } = useUniforms()
+
+// Clear specific scope
+clearUniforms('player')
+
+// Clear only root-level uniforms (preserve scopes)
+clearUniforms('root')
+
+// Clear everything (root + all scopes)
+clearUniforms()
+
+// Use in cleanup
+useEffect(() => {
+  return () => clearUniforms('myScope')
+}, [])
+```
+
+### Deprecated Standalone Functions
+
+The standalone `removeUniforms(set, names, scope)`, `clearScope(set, scope)`, and `clearRootUniforms(set)` functions are deprecated. Use the utils returned from the hook instead.
 
 ---
 

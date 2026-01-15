@@ -1,7 +1,7 @@
 //* useFrame Hook ==============================
 
 import * as React from 'react'
-import { useStore } from '../'
+import { context } from '../../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
 import { notifyDepreciated } from '../../notices'
 import { getScheduler, type Scheduler } from './scheduler'
@@ -11,6 +11,11 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
 
 /**
  * Frame hook with phase-based ordering, priority, and FPS throttling.
+ *
+ * Works both inside and outside Canvas context:
+ * - Inside Canvas: Full RootState (gl, scene, camera, etc.)
+ * - Outside Canvas (waiting mode): Waits for Canvas to mount, then gets full state
+ * - Outside Canvas (independent mode): Fires immediately with timing-only state
  *
  * Returns a controls object for manual stepping, pausing, and resuming.
  *
@@ -27,18 +32,16 @@ import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '
  * useFrame((state, delta) => { ... }, { phase: 'physics' })
  *
  * @example
- * // With controls
- * const controls = useFrame(cb, { phase: 'physics', id: 'my-physics' })
- * controls.step()      // Step this job only
- * controls.stepAll()   // Step all jobs
- * controls.pause()     // Pause this job
- * controls.resume()    // Resume this job
+ * // Outside Canvas - waits for Canvas to mount
+ * function UI() {
+ *   useFrame((state, delta) => { syncUI(state.camera) });
+ *   return <button>...</button>;
+ * }
  *
  * @example
- * // Manual mode (frameloop='never')
- * const { stepAll } = useFrame(cb)
- * // In your animation controller:
- * stepAll()  // Advance all useFrame jobs
+ * // Independent mode - no Canvas needed
+ * getScheduler().independent = true;
+ * useFrame((state, delta) => { updateGame(delta) });
  *
  * @example
  * // Scheduler-only access (no callback)
@@ -51,14 +54,11 @@ export function useFrame(
   callback?: FrameNextCallback,
   priorityOrOptions?: number | UseFrameNextOptions,
 ): FrameNextControls {
-  const store = useStore()
+  // Use context directly - returns null outside Canvas (doesn't throw!)
+  const store = React.useContext(context)
+  const isInsideCanvas = store !== null
 
-  // Get the root ID from store for registering jobs with correct root
-  const getRootId = React.useCallback(() => {
-    const state = store.getState()
-    // The rootId should be stored in internal state
-    return (state.internal as any).rootId as string | undefined
-  }, [store])
+  const scheduler = getScheduler()
 
   // Compute stable key from option VALUES (not reference)
   // This runs every render but is cheap - avoids inline object reference issues
@@ -102,84 +102,95 @@ export function useFrame(
     // Skip registration if no callback - user just wants scheduler access
     if (!callback) return
 
-    const scheduler = getScheduler()
-    const rootId = getRootId()
-    const state = store.getState()
+    if (isInsideCanvas) {
+      //* ===== INSIDE CANVAS: Full RootState behavior =====
+      const state = store.getState()
+      const rootId = (state.internal as any).rootId as string | undefined
 
-    // Legacy backwards compat: priority > 0 meant "I'm taking over rendering"
-    // Increment internal.priority so the default renderer skips
-    // IMPORTANT: For portals, we must also increment the ROOT's internal.priority,
-    // not just the portal's, since the default renderer checks the root's state
-    if (isLegacyPriority) {
-      // Increment current store's priority
-      state.internal.priority++
-
-      // Also increment all parent roots' priority (for portal support)
-      // This ensures the main Canvas's default renderer skips when a portal takes over
-      let parentRoot = state.previousRoot
-      while (parentRoot) {
-        const parentState = parentRoot.getState()
-        if (parentState?.internal) parentState.internal.priority++
-        parentRoot = parentState?.previousRoot
-      }
-
-      notifyDepreciated({
-        heading: 'useFrame with numeric priority is deprecated',
-        body:
-          'Using useFrame(callback, number) to control render order is deprecated.\n\n' +
-          'For custom rendering, use: useFrame(callback, { phase: "render" })\n' +
-          'For execution order within update phase, use: useFrame(callback, { priority: number })',
-        link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
-      })
-    }
-
-    // Wrapper that calls the memoized ref with correct store state
-    // IMPORTANT: We use store.getState() instead of frameState to ensure portal isolation
-    // The scheduler's frameState comes from the root entry's getState(), which is always the
-    // Canvas root. For portals, the correct state (with portal scene, camera, etc.) lives
-    // in the portal's zustand store, which is accessible via React context (useStore).
-    // We merge timing info from the scheduler with the correct store state.
-    const wrappedCallback: FrameNextCallback = (frameState, delta) => {
-      const localState = store.getState()
-      const mergedState = {
-        ...localState,
-        time: frameState.time,
-        delta: frameState.delta,
-        elapsed: frameState.elapsed,
-        frame: frameState.frame,
-      }
-      callbackRef.current?.(mergedState as typeof frameState, delta)
-    }
-
-    // Register with global scheduler
-    const unregister = scheduler.register(wrappedCallback, {
-      id,
-      rootId,
-      ...options,
-    })
-
-    // Cleanup: unregister and decrement legacy priority counter
-    return () => {
-      unregister()
+      // Legacy backwards compat: priority > 0 meant "I'm taking over rendering"
       if (isLegacyPriority) {
-        const currentState = store.getState()
-        if (currentState.internal) {
-          currentState.internal.priority--
+        state.internal.priority++
 
-          // Also decrement all parent roots' priority
-          let parentRoot = currentState.previousRoot
-          while (parentRoot) {
-            const parentState = parentRoot.getState()
-            if (parentState?.internal) parentState.internal.priority--
-            parentRoot = parentState?.previousRoot
+        // Also increment all parent roots' priority (for portal support)
+        let parentRoot = state.previousRoot
+        while (parentRoot) {
+          const parentState = parentRoot.getState()
+          if (parentState?.internal) parentState.internal.priority++
+          parentRoot = parentState?.previousRoot
+        }
+
+        notifyDepreciated({
+          heading: 'useFrame with numeric priority is deprecated',
+          body:
+            'Using useFrame(callback, number) to control render order is deprecated.\n\n' +
+            'For custom rendering, use: useFrame(callback, { phase: "render" })\n' +
+            'For execution order within update phase, use: useFrame(callback, { priority: number })',
+          link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
+        })
+      }
+
+      // Wrapper that merges store state with timing (for portal isolation)
+      const wrappedCallback: FrameNextCallback = (frameState, delta) => {
+        const localState = store.getState()
+        const mergedState = {
+          ...localState,
+          time: frameState.time,
+          delta: frameState.delta,
+          elapsed: frameState.elapsed,
+          frame: frameState.frame,
+        }
+        callbackRef.current?.(mergedState as typeof frameState, delta)
+      }
+
+      // Register with global scheduler
+      const unregister = scheduler.register(wrappedCallback, {
+        id,
+        rootId,
+        ...options,
+      })
+
+      // Cleanup: unregister and decrement legacy priority counter
+      return () => {
+        unregister()
+        if (isLegacyPriority) {
+          const currentState = store.getState()
+          if (currentState.internal) {
+            currentState.internal.priority--
+
+            let parentRoot = currentState.previousRoot
+            while (parentRoot) {
+              const parentState = parentRoot.getState()
+              if (parentState?.internal) parentState.internal.priority--
+              parentRoot = parentState?.previousRoot
+            }
           }
         }
       }
+    } else {
+      //* ===== OUTSIDE CANVAS: New behavior =====
+      const registerOutside = () => {
+        return scheduler.register((state, delta) => callbackRef.current?.(state, delta), { id, ...options })
+      }
+
+      // Independent mode or root already exists: register now
+      if (scheduler.independent || scheduler.isReady) {
+        return registerOutside()
+      }
+
+      // Wait for a Canvas to mount
+      let unregisterJob: (() => void) | null = null
+      const unsubReady = scheduler.onRootReady(() => {
+        unregisterJob = registerOutside()
+      })
+
+      return () => {
+        unsubReady()
+        unregisterJob?.()
+      }
     }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
-    // Including it would cause re-registration every render, resetting pause state
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, id, optionsKey, isLegacyPriority])
+  }, [store, scheduler, id, optionsKey, isLegacyPriority, isInsideCanvas])
 
   // Reactive isPaused via useSyncExternalStore --------------------------------
   const isPaused = React.useSyncExternalStore(

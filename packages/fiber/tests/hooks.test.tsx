@@ -2,7 +2,7 @@ import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 
-import { createRoot, useThree, useGraph, ObjectMap, useInstanceHandle, Instance, extend } from '../src'
+import { createRoot, useThree, useGraph, ObjectMap, useInstanceHandle, Instance, extend, useRenderTarget } from '../src'
 
 extend(THREE as any)
 
@@ -53,6 +53,80 @@ describe('hooks', () => {
   })
 
   // Note: useFrame has its own dedicated test file (useFrame.test.tsx)
+
+  it('exposes frustum in state', async () => {
+    let result = {} as {
+      frustum: THREE.Frustum
+      autoUpdateFrustum: boolean
+    }
+
+    const Component = () => {
+      const res = useThree((state) => ({
+        frustum: state.frustum,
+        autoUpdateFrustum: state.autoUpdateFrustum,
+      }))
+      result = res
+      return <group />
+    }
+
+    await act(async () => root.render(<Component />))
+
+    // Frustum should be a THREE.Frustum instance
+    expect(result.frustum).toBeDefined()
+    expect(result.frustum.planes).toBeDefined()
+    expect(result.frustum.planes.length).toBe(6)
+    // autoUpdateFrustum should default to true
+    expect(result.autoUpdateFrustum).toBe(true)
+  })
+
+  it('can handle useRenderTarget hook', async () => {
+    let renderTarget: THREE.WebGLRenderTarget | null = null
+
+    const Component = () => {
+      // Create a render target with explicit dimensions
+      const fbo = useRenderTarget(256, 256, { depthBuffer: true })
+      renderTarget = fbo as THREE.WebGLRenderTarget
+      return <group />
+    }
+
+    await act(async () => root.render(<Component />))
+
+    // Should create a render target
+    expect(renderTarget).toBeDefined()
+    expect(renderTarget).not.toBeNull()
+
+    // Check dimensions
+    expect(renderTarget!.width).toBe(256)
+    expect(renderTarget!.height).toBe(256)
+
+    // Check it has a texture
+    expect(renderTarget!.texture).toBeDefined()
+    expect(renderTarget!.texture.isTexture).toBe(true)
+
+    // Check depthBuffer option was applied
+    expect(renderTarget!.depthBuffer).toBe(true)
+  })
+
+  it('useRenderTarget defaults to canvas size when no dimensions provided', async () => {
+    let renderTarget: THREE.WebGLRenderTarget | null = null
+    let canvasSize: { width: number; height: number } = { width: 0, height: 0 }
+
+    const Component = () => {
+      const size = useThree((s) => s.size)
+      canvasSize = size
+      // No dimensions - should use canvas size
+      const fbo = useRenderTarget()
+      renderTarget = fbo as THREE.WebGLRenderTarget
+      return <group />
+    }
+
+    await act(async () => root.render(<Component />))
+
+    // Should create a render target with canvas dimensions
+    expect(renderTarget).toBeDefined()
+    expect(renderTarget!.width).toBe(canvasSize.width)
+    expect(renderTarget!.height).toBe(canvasSize.height)
+  })
 
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()

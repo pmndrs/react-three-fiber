@@ -61,3 +61,32 @@ export function updateCamera(camera: ThreeCamera, size: Size): void {
 
   camera.updateProjectionMatrix()
 }
+
+// Reusable matrix for frustum calculations (avoids allocation per frame)
+const frustumMatrix = new THREE.Matrix4()
+
+/**
+ * Updates a frustum from a camera's projection and world matrices.
+ * If no target frustum is provided, creates and returns a new one.
+ *
+ * @param camera - Camera to extract frustum from
+ * @param frustum - Optional existing frustum to update (creates new if not provided)
+ * @returns The updated or newly created frustum
+ *
+ * @example
+ * // Create new frustum
+ * const frustum = updateFrustum(camera)
+ *
+ * // Update existing frustum (no allocation)
+ * updateFrustum(camera, existingFrustum)
+ *
+ * // Use for visibility checks
+ * if (frustum.containsPoint(point)) { ... }
+ * if (frustum.intersectsObject(mesh)) { ... }
+ */
+export function updateFrustum(camera: ThreeCamera, frustum?: THREE.Frustum): THREE.Frustum {
+  const target = frustum ?? new THREE.Frustum()
+  frustumMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse)
+  target.setFromProjectionMatrix(frustumMatrix)
+  return target
+}

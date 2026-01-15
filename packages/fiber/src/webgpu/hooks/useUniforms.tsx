@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useStore } from '../../core/hooks'
 import type { RootState } from '#types'
 import * as THREE from '#three'
@@ -12,34 +12,49 @@ import { is } from '../../core/utils'
 /** Creator function that returns uniform inputs (can be raw values or UniformNodes) */
 export type UniformCreator<T extends UniformInputRecord = UniformInputRecord> = (state: RootState) => T
 
+/** Function signature for removeUniforms util */
+export type RemoveUniformsFn = (names: string | string[], scope?: string) => void
+
+/** Function signature for clearUniforms util */
+export type ClearUniformsFn = (scope?: string) => void
+
+/** Return type with utils included */
+export type UniformsWithUtils<T extends UniformRecord = UniformRecord> = T & {
+  removeUniforms: RemoveUniformsFn
+  clearUniforms: ClearUniformsFn
+}
+
 /** Type guard to check if a value is a UniformNode vs a scope object */
 const isUniformNode = (value: unknown): value is UniformNode =>
   value !== null && typeof value === 'object' && 'value' in value && 'uuid' in value
 
 //* Hook Overloads ==============================
 
-// Get all uniforms (returns full structure with root uniforms and scopes)
-export function useUniforms(): UniformRecord
+// Get all uniforms (returns full structure with root uniforms and scopes + utils)
+export function useUniforms(): UniformsWithUtils<UniformRecord & Record<string, UniformRecord>>
 
-// Get uniforms from a specific scope
-export function useUniforms(scope: string): UniformRecord
+// Get uniforms from a specific scope (+ utils)
+export function useUniforms(scope: string): UniformsWithUtils
 
-// Create/get uniforms at root level (no scope) - function
-// Input: raw values, Output: UniformNodes
-export function useUniforms<T extends UniformInputRecord>(creator: UniformCreator<T>): UniformRecord<UniformNode>
+// Create/get uniforms at root level (no scope) - function (+ utils)
+export function useUniforms<T extends UniformInputRecord>(
+  creator: UniformCreator<T>,
+): UniformsWithUtils<UniformRecord<UniformNode>>
 
-// Create/get uniforms within a scope - function
+// Create/get uniforms within a scope - function (+ utils)
 export function useUniforms<T extends UniformInputRecord>(
   creator: UniformCreator<T>,
   scope: string,
-): UniformRecord<UniformNode>
+): UniformsWithUtils<UniformRecord<UniformNode>>
 
-// Create/get uniforms at root level (no scope) - object
-// Input: raw values, Output: UniformNodes
-export function useUniforms<T extends UniformInputRecord>(uniforms: T): UniformRecord<UniformNode>
+// Create/get uniforms at root level (no scope) - object (+ utils)
+export function useUniforms<T extends UniformInputRecord>(uniforms: T): UniformsWithUtils<UniformRecord<UniformNode>>
 
-// Create/get uniforms within a scope - object
-export function useUniforms<T extends UniformInputRecord>(uniforms: T, scope: string): UniformRecord<UniformNode>
+// Create/get uniforms within a scope - object (+ utils)
+export function useUniforms<T extends UniformInputRecord>(
+  uniforms: T,
+  scope: string,
+): UniformsWithUtils<UniformRecord<UniformNode>>
 
 //* Hook Implementation ==============================
 
@@ -108,8 +123,55 @@ export function useUniforms<T extends UniformInputRecord>(uniforms: T, scope: st
 export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   creatorOrScope?: UniformCreator<T> | T | string,
   scope?: string,
-): UniformRecord | (UniformRecord & Record<string, UniformRecord>) {
+): UniformsWithUtils<UniformRecord> | UniformsWithUtils<UniformRecord & Record<string, UniformRecord>> {
   const store = useStore()
+
+  //* Utils ==============================
+  // Memoized util functions that capture store reference
+
+  /** Remove uniforms by name from root or a scope */
+  const removeUniforms = useCallback<RemoveUniformsFn>(
+    (names, targetScope) => {
+      const nameArray = Array.isArray(names) ? names : [names]
+      store.setState((state) => {
+        if (targetScope) {
+          // Remove from scoped uniforms
+          const currentScope = { ...(state.uniforms[targetScope] as UniformRecord) }
+          for (const name of nameArray) delete currentScope[name]
+          return { uniforms: { ...state.uniforms, [targetScope]: currentScope } }
+        }
+        // Remove from root level
+        const uniforms = { ...state.uniforms }
+        for (const name of nameArray) if (isUniformNode(uniforms[name])) delete uniforms[name]
+        return { uniforms }
+      })
+    },
+    [store],
+  )
+
+  /** Clear uniforms - scope name, 'root' for root only, or undefined for all */
+  const clearUniforms = useCallback<ClearUniformsFn>(
+    (targetScope) => {
+      store.setState((state) => {
+        // Clear specific scope
+        if (targetScope && targetScope !== 'root') {
+          const { [targetScope]: _, ...rest } = state.uniforms
+          return { uniforms: rest }
+        }
+        // Clear root only (preserve scopes)
+        if (targetScope === 'root') {
+          const uniforms: typeof state.uniforms = {}
+          for (const [key, value] of Object.entries(state.uniforms)) {
+            if (!isUniformNode(value)) uniforms[key] = value
+          }
+          return { uniforms }
+        }
+        // Clear everything
+        return { uniforms: {} }
+      })
+    },
+    [store],
+  )
 
   //* Input Processing ==============================
   // Execute functions immediately to capture reactive values, then deep-compare output.
@@ -124,7 +186,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   const memoizedInput = useCompareMemoize(inputForMemoization, true)
 
   //* Main Logic ==============================
-  return useMemo(() => {
+  const uniforms = useMemo(() => {
     const state = store.getState()
     const set = store.setState
 
@@ -141,7 +203,6 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     }
 
     // Create/update: Process uniform definitions
-    // At this point, memoizedInput is an object (either direct or from executed function)
     if (typeof memoizedInput !== 'object' || memoizedInput === null) {
       throw new Error('Invalid uniform input')
     }
@@ -192,61 +253,44 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
         set((s) => ({
           uniforms: {
             ...s.uniforms,
-            [scope]: {
-              ...(s.uniforms[scope] as UniformRecord),
-              ...result,
-            },
+            [scope]: { ...(s.uniforms[scope] as UniformRecord), ...result },
           },
         }))
       } else {
-        set((s) => ({
-          uniforms: {
-            ...s.uniforms,
-            ...result,
-          },
-        }))
+        set((s) => ({ uniforms: { ...s.uniforms, ...result } }))
       }
     }
 
     return result as UniformRecord
   }, [store, memoizedInput, scope])
+
+  // Return uniforms with utils
+  return { ...uniforms, removeUniforms, clearUniforms } as UniformsWithUtils<UniformRecord>
 }
 
-//* Utility Functions ==============================
+//* Standalone Utils (Deprecated) ==============================
+// These require manual store access. Prefer the utils returned from useUniforms() instead.
 
 /**
  * Remove uniforms by name from root level or a scope
- * @param scope - If provided, removes from that scope. Otherwise removes from root.
+ * @deprecated Use `const { removeUniforms } = useUniforms()` instead
  */
 export function removeUniforms(set: ReturnType<typeof useStore>['setState'], names: string[], scope?: string) {
   set((state) => {
     if (scope) {
-      // Remove from scoped uniforms
       const currentScope = { ...(state.uniforms[scope] as UniformRecord) }
-      for (const name of names) {
-        delete currentScope[name]
-      }
-      return {
-        uniforms: {
-          ...state.uniforms,
-          [scope]: currentScope,
-        },
-      }
+      for (const name of names) delete currentScope[name]
+      return { uniforms: { ...state.uniforms, [scope]: currentScope } }
     }
-
-    // Remove from root level
     const uniforms = { ...state.uniforms }
-    for (const name of names) {
-      if (isUniformNode(uniforms[name])) {
-        delete uniforms[name]
-      }
-    }
+    for (const name of names) if (isUniformNode(uniforms[name])) delete uniforms[name]
     return { uniforms }
   })
 }
 
 /**
  * Clear all uniforms from a scope (removes the entire scope object)
+ * @deprecated Use `const { clearUniforms } = useUniforms()` instead
  */
 export function clearScope(set: ReturnType<typeof useStore>['setState'], scope: string) {
   set((state) => {
@@ -257,15 +301,13 @@ export function clearScope(set: ReturnType<typeof useStore>['setState'], scope: 
 
 /**
  * Clear all root-level uniforms (preserves scopes)
+ * @deprecated Use `const { clearUniforms } = useUniforms()` with `clearUniforms('root')` instead
  */
 export function clearRootUniforms(set: ReturnType<typeof useStore>['setState']) {
   set((state) => {
     const uniforms: typeof state.uniforms = {}
-    // Keep only scope objects, remove root-level uniforms
     for (const [key, value] of Object.entries(state.uniforms)) {
-      if (!isUniformNode(value)) {
-        uniforms[key] = value
-      }
+      if (!isUniformNode(value)) uniforms[key] = value
     }
     return { uniforms }
   })

@@ -93,8 +93,8 @@ declare global {
   interface RootEntry {
     /** Unique identifier for this root */
     id: string
-    /** Function to get the root's current state */
-    getState: () => import('#types').RootState
+    /** Function to get the root's current state. Returns any to support independent mode. */
+    getState: () => any
     /** Map of job IDs to Job objects */
     jobs: Map<string, Job>
     /** Cached sorted job list for execution order */

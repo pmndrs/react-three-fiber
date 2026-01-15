@@ -16,6 +16,7 @@ import {
   is,
   prepare,
   updateCamera,
+  updateFrustum,
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
@@ -165,6 +166,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onPointerMissed,
         onDragOverMissed,
         onDropMissed,
+        autoUpdateFrustum = true,
       } = props
 
       let state = store.getState()
@@ -226,8 +228,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         //* WebGPU path ---
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
-        // WebGPU-specific setup
-        await renderer.init()
+        // WebGPU-specific setup - only init if not already initialized
+        // Allows users to pass pre-initialized external renderers
+        // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+        if (!renderer.hasInitialized?.()) {
+          await renderer.init()
+        }
 
         // temp, stop the inspector
         //renderer.inspector = new Inspector()
@@ -306,6 +312,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           rootScene: scene,
           internal: { ...prev.internal, container: scene },
         }))
+
+        // Add camera to scene if it exists and has no parent
+        // This ensures camera children (HUDs, etc.) render properly
+        // https://github.com/pmndrs/react-three-fiber/issues/3632
+        const camera = state.camera
+        if (camera && !camera.parent) scene.add(camera)
       }
 
       // Store events internally
@@ -346,6 +358,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.onDragOverMissed) state.set({ onDragOverMissed })
       // Check drop missed
       if (!state.onDropMissed) state.set({ onDropMissed })
+      // Set autoUpdateFrustum flag
+      if (state.autoUpdateFrustum !== autoUpdateFrustum) state.set({ autoUpdateFrustum })
       // Check performance - only update if the PROP changed
       // This preserves any runtime performance changes across Canvas re-configures
       if (performance && !is.equ(performance, lastConfiguredProps.performance, shallowLoose)) {
@@ -487,7 +501,27 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!rootId) {
         // Generate a unique root ID and register with global scheduler
         const newRootId = scheduler.generateRootId()
-        const unregisterRoot = scheduler.registerRoot(newRootId, () => store.getState())
+        const unregisterRoot = scheduler.registerRoot(newRootId, {
+          getState: () => store.getState(),
+          onError: (err) => store.getState().setError(err),
+        })
+
+        // Register frustum update job - updates frustum from camera before render
+        // Runs in preRender phase so it captures any camera movement from update phase
+        const unregisterFrustum = scheduler.register(
+          () => {
+            const state = store.getState()
+            if (state.autoUpdateFrustum && state.camera) {
+              updateFrustum(state.camera, state.frustum)
+            }
+          },
+          {
+            id: `${newRootId}_frustum`,
+            rootId: newRootId,
+            phase: 'preRender',
+            system: true,
+          },
+        )
 
         // Register default render job - this handles the actual THREE.js rendering
         // Marked as 'system' so it doesn't count as a user taking over the render phase
@@ -528,6 +562,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             rootId: newRootId,
             unregisterRoot: () => {
               unregisterRoot()
+              unregisterFrustum()
               unregisterRender()
             },
             scheduler,

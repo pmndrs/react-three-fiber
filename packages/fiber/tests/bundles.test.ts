@@ -34,6 +34,11 @@ describe('Entry Point: Default (@react-three/fiber)', () => {
     expect(typeof fiber.useFrame).toBe('function')
     expect(typeof fiber.extend).toBe('function')
   })
+
+  it('should export useRenderTarget hook', async () => {
+    const fiber = await import('@react-three/fiber')
+    expect(typeof fiber.useRenderTarget).toBe('function')
+  })
 })
 
 //* Legacy Entry Point Tests ==============================
@@ -61,6 +66,11 @@ describe('Entry Point: Legacy (@react-three/fiber/legacy)', () => {
     expect(typeof legacy.useThree).toBe('function')
     expect(typeof legacy.useFrame).toBe('function')
     expect(typeof legacy.extend).toBe('function')
+  })
+
+  it('should export useRenderTarget hook', async () => {
+    const legacy = await import('@react-three/fiber/legacy')
+    expect(typeof legacy.useRenderTarget).toBe('function')
   })
 })
 
@@ -115,5 +125,10 @@ describe('Entry Point: WebGPU (@react-three/fiber/webgpu)', () => {
     if (!webgpu) return
     expect(typeof webgpu.useUniforms).toBe('function')
     expect(typeof webgpu.useUniform).toBe('function')
+  })
+
+  it('should export useRenderTarget hook', () => {
+    if (!webgpu) return
+    expect(typeof webgpu.useRenderTarget).toBe('function')
   })
 })

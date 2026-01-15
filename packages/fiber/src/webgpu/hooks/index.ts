@@ -1,6 +1,16 @@
 // Uniforms - root-level + scoped with create-if-not-exists pattern
 // Note: UniformNode and UniformRecord are global types from types/tsl.d.ts
-export { useUniforms, removeUniforms, clearScope, clearRootUniforms, type UniformCreator } from './useUniforms'
+export {
+  useUniforms,
+  // Deprecated standalone utils (prefer useUniforms().removeUniforms/clearUniforms)
+  removeUniforms,
+  clearScope,
+  clearRootUniforms,
+  type UniformCreator,
+  type RemoveUniformsFn,
+  type ClearUniformsFn,
+  type UniformsWithUtils,
+} from './useUniforms'
 
 // Single uniform - simple create/get/update API
 export { useUniform, type UniformValue } from './useUniform'
@@ -9,6 +19,7 @@ export { useUniform, type UniformValue } from './useUniform'
 export {
   useNodes,
   useLocalNodes,
+  // Deprecated standalone utils (prefer useNodes().removeNodes/clearNodes)
   removeNodes,
   clearNodeScope,
   clearRootNodes,
@@ -16,6 +27,9 @@ export {
   type NodeRecord,
   type NodeCreator,
   type LocalNodeCreator,
+  type RemoveNodesFn,
+  type ClearNodesFn,
+  type NodesWithUtils,
 } from './useNodes'
 
 // Textures - Re-exported from core (useTextures is now a core R3F hook)

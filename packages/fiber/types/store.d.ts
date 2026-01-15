@@ -98,6 +98,10 @@ export interface RootState {
 
   /** Default camera */
   camera: ThreeCamera
+  /** Camera frustum for visibility checks - auto-updated each frame when autoUpdateFrustum is true */
+  frustum: THREE.Frustum
+  /** Whether to automatically update the frustum each frame (default: true) */
+  autoUpdateFrustum: boolean
   /** Default scene (may be overridden in portals to point to the portal container) */
   scene: THREE.Scene
   /** The actual root THREE.Scene - always points to the true scene, even inside portals */

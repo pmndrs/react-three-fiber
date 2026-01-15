@@ -1,3 +1,4 @@
+/* eslint-disable import/export */
 /**
  * @fileoverview Internal Three.js re-exports - DEFAULT ENTRY
  *
@@ -30,6 +31,13 @@ export { WebGLRenderer } from 'three'
 // WebGLRendererParameters isn't exported from main 'three' entry in @types/three@0.181.0+
 // Import directly from internal path
 export type { WebGLRendererParameters } from 'three/src/renderers/WebGLRenderer.js'
+
+//* RenderTarget Support ==============================
+// Default build needs both for runtime selection based on isLegacy
+export { WebGLRenderTarget } from 'three'
+// RenderTarget already exported via 'three/webgpu'
+// RenderTargetCompat alias for single-renderer build code paths (dead code in default build)
+export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
 
 //* Addons ==============================
 export { Inspector } from 'three/addons/inspector/Inspector.js'

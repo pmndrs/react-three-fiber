@@ -122,6 +122,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onDragOverMissed?: (event: DragEvent) => void
   /** Response for drop events that have missed any target */
   onDropMissed?: (event: DragEvent) => void
+  /** Whether to automatically update the frustum each frame (default: true) */
+  autoUpdateFrustum?: boolean
 }
 
 //* Reconciler Root ==============================

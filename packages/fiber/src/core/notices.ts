@@ -97,3 +97,43 @@ function formatLocation(url: string, line: number): string {
   const file = clean.split('/').pop() ?? clean
   return `${file}:${line}`
 }
+
+//* Alpha Warning ==============================
+
+interface AlphaNotice {
+  message: string
+  link?: string
+}
+
+/**
+ * Logs a formatted alpha warning to the console with colored styling.
+ * Less aggressive than deprecation warnings, but still prominent.
+ * Each unique notice (by message) is only shown once per session.
+ *
+ * @param notice - Object containing the alpha notice details
+ * @param notice.message - Required message for the alpha warning
+ * @param notice.link - Optional URL link to documentation or feedback channel
+ */
+export function notifyAlpha({ message, link }: AlphaNotice): void {
+  // Suppress alpha warnings in test environment unless explicitly enabled
+  if (
+    typeof process !== 'undefined' &&
+    (process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined) &&
+    process.env.R3F_SHOW_ALPHA_WARNINGS !== 'true'
+  ) {
+    return
+  }
+
+  // Skip if we've already shown this notice in this session
+  if (shownNotices.has(message)) return
+  shownNotices.add(message)
+
+  // Styled heading with blue/purple box (less aggressive than orange)
+  const boxStyle = 'background: #6366f1; color: #ffffff; padding: 6px 10px; border-radius: 4px; font-weight: 500;'
+  console.log(`%c🔬 ${message}`, boxStyle)
+
+  // Optional link with lighter styling
+  if (link) {
+    console.log(`%cMore info: ${link}`, 'color: #6366f1; font-weight: normal;')
+  }
+}
