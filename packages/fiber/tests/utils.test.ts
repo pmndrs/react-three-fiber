@@ -14,6 +14,7 @@ import {
   diffProps,
   applyProps,
   updateCamera,
+  updateFrustum,
   findInitialRoot,
 } from '../src/core/utils'
 
@@ -607,6 +608,65 @@ describe('updateCamera', () => {
     orthographic.updateProjectionMatrix = vi.fn()
     updateCamera(orthographic, size)
     expect(orthographic.updateProjectionMatrix).not.toHaveBeenCalled()
+  })
+})
+
+describe('updateFrustum', () => {
+  it('creates new frustum when no target provided', () => {
+    const camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000)
+    camera.position.set(0, 0, 5)
+    camera.updateMatrixWorld()
+
+    const frustum = updateFrustum(camera)
+
+    expect(frustum).toBeInstanceOf(THREE.Frustum)
+    // Verify frustum planes are set (not all zeros)
+    const hasValidPlanes = frustum.planes.some((plane) => plane.normal.length() > 0)
+    expect(hasValidPlanes).toBe(true)
+  })
+
+  it('updates existing frustum when target provided', () => {
+    const camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000)
+    camera.position.set(0, 0, 5)
+    camera.updateMatrixWorld()
+
+    const existingFrustum = new THREE.Frustum()
+    const result = updateFrustum(camera, existingFrustum)
+
+    // Should return the same frustum instance
+    expect(result).toBe(existingFrustum)
+    // Verify frustum was updated (not all zeros)
+    const hasValidPlanes = existingFrustum.planes.some((plane) => plane.normal.length() > 0)
+    expect(hasValidPlanes).toBe(true)
+  })
+
+  it('frustum correctly identifies points inside/outside', () => {
+    const camera = new THREE.PerspectiveCamera(75, 16 / 9, 0.1, 1000)
+    camera.position.set(0, 0, 5)
+    camera.lookAt(0, 0, 0)
+    camera.updateMatrixWorld()
+
+    const frustum = updateFrustum(camera)
+
+    // Point at origin (in front of camera) should be inside
+    const pointInside = new THREE.Vector3(0, 0, 0)
+    expect(frustum.containsPoint(pointInside)).toBe(true)
+
+    // Point way behind camera should be outside
+    const pointBehind = new THREE.Vector3(0, 0, 100)
+    expect(frustum.containsPoint(pointBehind)).toBe(false)
+  })
+
+  it('works with orthographic camera', () => {
+    const camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 1000)
+    camera.position.set(0, 0, 5)
+    camera.updateMatrixWorld()
+
+    const frustum = updateFrustum(camera)
+
+    expect(frustum).toBeInstanceOf(THREE.Frustum)
+    const hasValidPlanes = frustum.planes.some((plane) => plane.normal.length() > 0)
+    expect(hasValidPlanes).toBe(true)
   })
 })
 

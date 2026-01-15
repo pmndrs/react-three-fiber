@@ -54,6 +54,31 @@ describe('hooks', () => {
 
   // Note: useFrame has its own dedicated test file (useFrame.test.tsx)
 
+  it('exposes frustum in state', async () => {
+    let result = {} as {
+      frustum: THREE.Frustum
+      autoUpdateFrustum: boolean
+    }
+
+    const Component = () => {
+      const res = useThree((state) => ({
+        frustum: state.frustum,
+        autoUpdateFrustum: state.autoUpdateFrustum,
+      }))
+      result = res
+      return <group />
+    }
+
+    await act(async () => root.render(<Component />))
+
+    // Frustum should be a THREE.Frustum instance
+    expect(result.frustum).toBeDefined()
+    expect(result.frustum.planes).toBeDefined()
+    expect(result.frustum.planes.length).toBe(6)
+    // autoUpdateFrustum should default to true
+    expect(result.autoUpdateFrustum).toBe(true)
+  })
+
   it('can handle useGraph hook', async () => {
     const group = new THREE.Group()
     const mat1 = new THREE.MeshBasicMaterial()

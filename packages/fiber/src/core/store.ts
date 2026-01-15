@@ -1,4 +1,4 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector } from '#three'
+import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector, Frustum } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -18,7 +18,7 @@ import type {
   ThreeCamera,
 } from '#types'
 
-import { calculateDpr, isOrthographicCamera, updateCamera } from './utils'
+import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './notices'
 
 //* Cross-Bundle Singleton ==============================
@@ -71,6 +71,8 @@ export const createStore = (
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
+      frustum: new Frustum(),
+      autoUpdateFrustum: true,
       raycaster: null as unknown as Raycaster,
       events: { priority: 1, enabled: true, connected: false },
       scene: null as unknown as Scene,
@@ -300,11 +302,16 @@ export const createStore = (
       actualRenderer.setSize(size.width, size.height, updateStyle)
     }
 
-    // Update viewport once the camera changes
+    // Update viewport and frustum once the camera changes
     if (camera !== oldCamera) {
       oldCamera = camera
       // Update viewport
       set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
+      // Update frustum from new camera (if auto-update enabled)
+      const currentState = rootStore.getState()
+      if (currentState.autoUpdateFrustum && camera) {
+        updateFrustum(camera, currentState.frustum)
+      }
     }
   })
 

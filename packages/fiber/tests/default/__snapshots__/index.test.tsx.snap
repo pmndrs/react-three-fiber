@@ -86,6 +86,7 @@ exports[`exports > matches public API 1`] = `
   "resolve",
   "unmountComponentAtNode",
   "updateCamera",
+  "updateFrustum",
   "useBridge",
   "useFrame",
   "useGraph",

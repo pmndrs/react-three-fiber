@@ -42,6 +42,7 @@ const App = () => (
 | eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.RefObject<HTMLElement>`, `gl.domElement.parentNode` |
 | eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                   |
 | flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                    |
+| autoUpdateFrustum | Enable/disable automatic camera frustum updates each frame                                                                                      | `true`                                                     |
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                            |
 | onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                            |
 

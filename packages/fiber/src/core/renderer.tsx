@@ -16,6 +16,7 @@ import {
   is,
   prepare,
   updateCamera,
+  updateFrustum,
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
@@ -165,6 +166,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onPointerMissed,
         onDragOverMissed,
         onDropMissed,
+        autoUpdateFrustum = true,
       } = props
 
       let state = store.getState()
@@ -350,6 +352,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.onDragOverMissed) state.set({ onDragOverMissed })
       // Check drop missed
       if (!state.onDropMissed) state.set({ onDropMissed })
+      // Set autoUpdateFrustum flag
+      if (state.autoUpdateFrustum !== autoUpdateFrustum) state.set({ autoUpdateFrustum })
       // Check performance - only update if the PROP changed
       // This preserves any runtime performance changes across Canvas re-configures
       if (performance && !is.equ(performance, lastConfiguredProps.performance, shallowLoose)) {
@@ -496,6 +500,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           onError: (err) => store.getState().setError(err),
         })
 
+        // Register frustum update job - updates frustum from camera before render
+        // Runs in preRender phase so it captures any camera movement from update phase
+        const unregisterFrustum = scheduler.register(
+          () => {
+            const state = store.getState()
+            if (state.autoUpdateFrustum && state.camera) {
+              updateFrustum(state.camera, state.frustum)
+            }
+          },
+          {
+            id: `${newRootId}_frustum`,
+            rootId: newRootId,
+            phase: 'preRender',
+            system: true,
+          },
+        )
+
         // Register default render job - this handles the actual THREE.js rendering
         // Marked as 'system' so it doesn't count as a user taking over the render phase
         // Only renders if no user has registered in the 'render' phase (taking over rendering)
@@ -535,6 +556,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             rootId: newRootId,
             unregisterRoot: () => {
               unregisterRoot()
+              unregisterFrustum()
               unregisterRender()
             },
             scheduler,
