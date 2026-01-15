@@ -266,7 +266,7 @@ describe('Scheduler', () => {
     // Set to never mode so loop doesn't auto-start
     scheduler.frameloop = 'never'
     // Register a mock root so jobs have somewhere to live
-    unregisterRoot = scheduler.registerRoot('test-root', () => mockState)
+    unregisterRoot = scheduler.registerRoot('test-root', { getState: () => mockState })
   })
 
   afterEach(() => {
