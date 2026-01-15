@@ -5,6 +5,7 @@ import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
 import { extend, createRoot, unmountComponentAtNode } from './index'
 import { createPointerEvents } from './events'
+import { notifyAlpha } from './notices'
 
 //* Type Imports ==============================
 import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
@@ -99,7 +100,15 @@ function CanvasImpl({
     const canvas = canvasRef.current
 
     if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
-      if (!root.current) root.current = createRoot<HTMLCanvasElement>(canvas)
+      if (!root.current) {
+        root.current = createRoot<HTMLCanvasElement>(canvas)
+
+        // Show alpha warning once per session
+        notifyAlpha({
+          message: 'React Three Fiber v10 is in ALPHA - expect breaking changes',
+          link: 'https://github.com/pmndrs/react-three-fiber/discussions',
+        })
+      }
 
       async function run() {
         // Bail out if effect was cleaned up while awaiting (HMR race condition)
