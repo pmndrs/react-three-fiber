@@ -31,5 +31,11 @@ export { WebGLRenderer } from 'three'
 // Import directly from internal path
 export type { WebGLRendererParameters } from 'three/src/renderers/WebGLRenderer.js'
 
+//* RenderTarget Support ==============================
+// Default build needs both for runtime selection based on isLegacy
+export { WebGLRenderTarget } from 'three'
+// RenderTarget already exported via 'three/webgpu'
+// No RenderTargetCompat needed - default build uses explicit classes
+
 //* Addons ==============================
 export { Inspector } from 'three/addons/inspector/Inspector.js'

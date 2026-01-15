@@ -100,6 +100,92 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 
 ---
 
+## useRenderTarget
+
+The `useRenderTarget` hook creates a render target (FBO) that is automatically compatible with the current renderer, whether WebGL or WebGPU.
+
+### Why This Matters
+
+Three.js has different render target classes for different renderers:
+
+- `WebGLRenderTarget` for WebGLRenderer
+- `RenderTarget` for WebGPURenderer
+
+With v10's dual-renderer support, you need the right type for your active renderer. This hook handles that automatically.
+
+### Basic Usage
+
+```tsx
+import { useRenderTarget, useFrame } from '@react-three/fiber'
+
+function PortalScene() {
+  // Creates the correct render target type for your renderer
+  const fbo = useRenderTarget(512, 512, {
+    depthBuffer: true,
+    samples: 4,
+  })
+
+  useFrame(({ renderer, scene, camera }) => {
+    renderer.setRenderTarget(fbo)
+    renderer.render(scene, camera)
+    renderer.setRenderTarget(null)
+  })
+
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshBasicMaterial map={fbo.texture} />
+    </mesh>
+  )
+}
+```
+
+### Using Canvas Size
+
+If you omit width/height, the hook uses the canvas dimensions:
+
+```tsx
+// Full-screen render target that resizes with the canvas
+const fbo = useRenderTarget()
+
+// Or just specify options
+const fbo = useRenderTarget(undefined, undefined, { samples: 4 })
+```
+
+### API
+
+```ts
+useRenderTarget(
+  width?: number,   // Target width (defaults to canvas width)
+  height?: number,  // Target height (defaults to canvas height)
+  options?: RenderTargetOptions
+)
+```
+
+### Options
+
+| Option            | Type      | Default            | Description               |
+| ----------------- | --------- | ------------------ | ------------------------- |
+| `depthBuffer`     | `boolean` | `true`             | Create depth buffer       |
+| `stencilBuffer`   | `boolean` | `false`            | Create stencil buffer     |
+| `samples`         | `number`  | `0`                | MSAA sample count         |
+| `count`           | `number`  | `1`                | MRT target count (WebGPU) |
+| `format`          | `number`  | `RGBAFormat`       | Texture format            |
+| `type`            | `number`  | `UnsignedByteType` | Data type                 |
+| `minFilter`       | `number`  | `LinearFilter`     | Minification filter       |
+| `magFilter`       | `number`  | `LinearFilter`     | Magnification filter      |
+| `generateMipmaps` | `boolean` | `false`            | Generate mipmaps          |
+
+### Build Behavior
+
+The hook is optimized for each build target:
+
+- **Legacy build** (`@react-three/fiber/legacy`): Always returns `WebGLRenderTarget`
+- **WebGPU build** (`@react-three/fiber/webgpu`): Always returns `RenderTarget`
+- **Default build** (`@react-three/fiber`): Returns the appropriate type based on active renderer
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

@@ -32,3 +32,9 @@ export const WebGPURenderer = class WebGPURenderer {
     throw new Error('WebGPURenderer is not available in legacy builds. Use @react-three/fiber/webgpu instead.')
   }
 }
+
+//* RenderTarget Compatibility ==============================
+// Alias WebGLRenderTarget for useRenderTarget hook
+export { WebGLRenderTarget as RenderTargetCompat } from 'three'
+// Stub to prevent import errors (never instantiated due to build flags)
+export const RenderTarget = null as any

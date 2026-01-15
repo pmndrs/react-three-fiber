@@ -12,6 +12,7 @@ export * from './loader'
 export * from './webgl'
 export * from './scheduler'
 export * from './three'
+export * from './renderTarget'
 
 // Side-effect imports for module augmentations
 import './three'

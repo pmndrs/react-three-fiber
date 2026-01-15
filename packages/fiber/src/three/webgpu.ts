@@ -32,3 +32,9 @@ export const WebGLRenderer = class WebGLRenderer {
 // Type stubs for legacy types (never actually used)
 export type WebGLRendererParameters = never
 export type WebGLShadowMap = never
+
+//* RenderTarget Compatibility ==============================
+// Alias RenderTarget for useRenderTarget hook
+export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
+// Stub to prevent import errors (never instantiated due to build flags)
+export const WebGLRenderTarget = null as any
