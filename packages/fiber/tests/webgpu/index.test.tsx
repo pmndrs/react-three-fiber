@@ -1051,6 +1051,312 @@ describe('Cleanup Utilities', () => {
   })
 })
 
+//* Hook Utils (New API) ==============================
+
+describe('useNodes Utils', () => {
+  describe('removeNodes (returned util)', () => {
+    it('should remove single node from root', async () => {
+      let store: any = null
+      let removeNodesFn: any = null
+
+      function Test() {
+        const { removeNodes } = useNodes(() => ({ nodeToRemove: float(1), nodeToKeep: float(2) }))
+        removeNodesFn = removeNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.nodeToRemove).toBeDefined()
+      expect(store.nodes.nodeToKeep).toBeDefined()
+
+      await act(async () => {
+        removeNodesFn('nodeToRemove')
+      })
+
+      expect(store.nodes.nodeToRemove).toBeUndefined()
+      expect(store.nodes.nodeToKeep).toBeDefined()
+    })
+
+    it('should remove multiple nodes as array', async () => {
+      let store: any = null
+      let removeNodesFn: any = null
+
+      function Test() {
+        const { removeNodes } = useNodes(() => ({ nodeA: float(1), nodeB: float(2), nodeC: float(3) }))
+        removeNodesFn = removeNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.nodeA).toBeDefined()
+      expect(store.nodes.nodeB).toBeDefined()
+      expect(store.nodes.nodeC).toBeDefined()
+
+      await act(async () => {
+        removeNodesFn(['nodeA', 'nodeB'])
+      })
+
+      expect(store.nodes.nodeA).toBeUndefined()
+      expect(store.nodes.nodeB).toBeUndefined()
+      expect(store.nodes.nodeC).toBeDefined()
+    })
+
+    it('should remove nodes from scope', async () => {
+      let store: any = null
+      let removeNodesFn: any = null
+
+      function Test() {
+        const { removeNodes } = useNodes(() => ({ scopedNode: float(1), anotherNode: float(2) }), 'myScope')
+        removeNodesFn = removeNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.myScope.scopedNode).toBeDefined()
+      expect(store.nodes.myScope.anotherNode).toBeDefined()
+
+      await act(async () => {
+        removeNodesFn('scopedNode', 'myScope')
+      })
+
+      expect(store.nodes.myScope.scopedNode).toBeUndefined()
+      expect(store.nodes.myScope.anotherNode).toBeDefined()
+    })
+  })
+
+  describe('clearNodes (returned util)', () => {
+    it('should clear specific scope', async () => {
+      let store: any = null
+      let clearNodesFn: any = null
+
+      function Test() {
+        useNodes(() => ({ rootNode: float(1) }))
+        const { clearNodes } = useNodes(() => ({ scopedNode: float(2) }), 'toClear')
+        clearNodesFn = clearNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.rootNode).toBeDefined()
+      expect(store.nodes.toClear).toBeDefined()
+
+      await act(async () => {
+        clearNodesFn('toClear')
+      })
+
+      expect(store.nodes.rootNode).toBeDefined()
+      expect(store.nodes.toClear).toBeUndefined()
+    })
+
+    it('should clear root only with "root" argument', async () => {
+      let store: any = null
+      let clearNodesFn: any = null
+
+      function Test() {
+        const { clearNodes } = useNodes(() => ({ rootNode: float(1) }))
+        useNodes(() => ({ scopedNode: float(2) }), 'preserved')
+        clearNodesFn = clearNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.rootNode).toBeDefined()
+      expect(store.nodes.preserved).toBeDefined()
+
+      await act(async () => {
+        clearNodesFn('root')
+      })
+
+      expect(store.nodes.rootNode).toBeUndefined()
+      expect(store.nodes.preserved).toBeDefined()
+    })
+
+    it('should clear everything when called with no args', async () => {
+      let store: any = null
+      let clearNodesFn: any = null
+
+      function Test() {
+        const { clearNodes } = useNodes(() => ({ rootNode: float(1) }))
+        useNodes(() => ({ scopedNode: float(2) }), 'scopeA')
+        useNodes(() => ({ anotherNode: float(3) }), 'scopeB')
+        clearNodesFn = clearNodes
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.nodes.rootNode).toBeDefined()
+      expect(store.nodes.scopeA).toBeDefined()
+      expect(store.nodes.scopeB).toBeDefined()
+
+      await act(async () => {
+        clearNodesFn()
+      })
+
+      expect(store.nodes.rootNode).toBeUndefined()
+      expect(store.nodes.scopeA).toBeUndefined()
+      expect(store.nodes.scopeB).toBeUndefined()
+    })
+  })
+})
+
+describe('useUniforms Utils', () => {
+  describe('removeUniforms (returned util)', () => {
+    it('should remove single uniform from root', async () => {
+      let store: any = null
+      let removeUniformsFn: any = null
+
+      function Test() {
+        const { removeUniforms } = useUniforms({ uToRemove: 1, uToKeep: 2 })
+        removeUniformsFn = removeUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.uToRemove).toBeDefined()
+      expect(store.uniforms.uToKeep).toBeDefined()
+
+      await act(async () => {
+        removeUniformsFn('uToRemove')
+      })
+
+      expect(store.uniforms.uToRemove).toBeUndefined()
+      expect(store.uniforms.uToKeep).toBeDefined()
+    })
+
+    it('should remove multiple uniforms as array', async () => {
+      let store: any = null
+      let removeUniformsFn: any = null
+
+      function Test() {
+        const { removeUniforms } = useUniforms({ uA: 1, uB: 2, uC: 3 })
+        removeUniformsFn = removeUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.uA).toBeDefined()
+      expect(store.uniforms.uB).toBeDefined()
+      expect(store.uniforms.uC).toBeDefined()
+
+      await act(async () => {
+        removeUniformsFn(['uA', 'uB'])
+      })
+
+      expect(store.uniforms.uA).toBeUndefined()
+      expect(store.uniforms.uB).toBeUndefined()
+      expect(store.uniforms.uC).toBeDefined()
+    })
+
+    it('should remove uniforms from scope', async () => {
+      let store: any = null
+      let removeUniformsFn: any = null
+
+      function Test() {
+        const { removeUniforms } = useUniforms({ uScoped: 1, uAnother: 2 }, 'myScope')
+        removeUniformsFn = removeUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.myScope.uScoped).toBeDefined()
+      expect(store.uniforms.myScope.uAnother).toBeDefined()
+
+      await act(async () => {
+        removeUniformsFn('uScoped', 'myScope')
+      })
+
+      expect(store.uniforms.myScope.uScoped).toBeUndefined()
+      expect(store.uniforms.myScope.uAnother).toBeDefined()
+    })
+  })
+
+  describe('clearUniforms (returned util)', () => {
+    it('should clear specific scope', async () => {
+      let store: any = null
+      let clearUniformsFn: any = null
+
+      function Test() {
+        useUniforms({ uRoot: 1 })
+        const { clearUniforms } = useUniforms({ uScoped: 2 }, 'toClear')
+        clearUniformsFn = clearUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.uRoot).toBeDefined()
+      expect(store.uniforms.toClear).toBeDefined()
+
+      await act(async () => {
+        clearUniformsFn('toClear')
+      })
+
+      expect(store.uniforms.uRoot).toBeDefined()
+      expect(store.uniforms.toClear).toBeUndefined()
+    })
+
+    it('should clear root only with "root" argument', async () => {
+      let store: any = null
+      let clearUniformsFn: any = null
+
+      function Test() {
+        const { clearUniforms } = useUniforms({ uRoot: 1 })
+        useUniforms({ uScoped: 2 }, 'preserved')
+        clearUniformsFn = clearUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.uRoot).toBeDefined()
+      expect(store.uniforms.preserved).toBeDefined()
+
+      await act(async () => {
+        clearUniformsFn('root')
+      })
+
+      expect(store.uniforms.uRoot).toBeUndefined()
+      expect(store.uniforms.preserved).toBeDefined()
+    })
+
+    it('should clear everything when called with no args', async () => {
+      let store: any = null
+      let clearUniformsFn: any = null
+
+      function Test() {
+        const { clearUniforms } = useUniforms({ uRoot: 1 })
+        useUniforms({ uScoped: 2 }, 'scopeA')
+        useUniforms({ uAnother: 3 }, 'scopeB')
+        clearUniformsFn = clearUniforms
+        store = useThree()
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+      expect(store.uniforms.uRoot).toBeDefined()
+      expect(store.uniforms.scopeA).toBeDefined()
+      expect(store.uniforms.scopeB).toBeDefined()
+
+      await act(async () => {
+        clearUniformsFn()
+      })
+
+      expect(store.uniforms.uRoot).toBeUndefined()
+      expect(store.uniforms.scopeA).toBeUndefined()
+      expect(store.uniforms.scopeB).toBeUndefined()
+    })
+  })
+})
+
 //* Core R3F Features ==============================
 
 describe('Core R3F Features', () => {

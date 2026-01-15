@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
 import type { Node } from '#three'
@@ -11,23 +11,35 @@ export type TSLNode = Node
 export type NodeRecord<T extends Node = Node> = Record<string, T>
 export type NodeCreator<T extends NodeRecord> = (state: RootState) => T
 
+/** Function signature for removeNodes util */
+export type RemoveNodesFn = (names: string | string[], scope?: string) => void
+
+/** Function signature for clearNodes util */
+export type ClearNodesFn = (scope?: string) => void
+
+/** Return type with utils included */
+export type NodesWithUtils<T extends NodeRecord = NodeRecord> = T & {
+  removeNodes: RemoveNodesFn
+  clearNodes: ClearNodesFn
+}
+
 /** Type guard to check if a value is a TSLNode vs a scope object */
 const isTSLNode = (value: unknown): value is Node =>
   value !== null && typeof value === 'object' && ('uuid' in value || 'nodeType' in value)
 
 //* Hook Overloads ==============================
 
-// Get all nodes (returns full structure with root nodes and scopes)
-export function useNodes(): NodeRecord
+// Get all nodes (returns full structure with root nodes and scopes + utils)
+export function useNodes(): NodesWithUtils<NodeRecord & Record<string, NodeRecord>>
 
-// Get nodes from a specific scope
-export function useNodes(scope: string): NodeRecord
+// Get nodes from a specific scope (+ utils)
+export function useNodes(scope: string): NodesWithUtils
 
-// Create/get nodes at root level (no scope)
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): T
+// Create/get nodes at root level (no scope) (+ utils)
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
 
-// Create/get nodes within a scope
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): T
+// Create/get nodes within a scope (+ utils)
+export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
 
 //* Hook Implementation ==============================
 
@@ -67,13 +79,61 @@ export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: s
 export function useNodes<T extends NodeRecord>(
   creatorOrScope?: NodeCreator<T> | string,
   scope?: string,
-): T | NodeRecord | (NodeRecord & Record<string, NodeRecord>) {
+): NodesWithUtils<T> | NodesWithUtils<NodeRecord> | NodesWithUtils<NodeRecord & Record<string, NodeRecord>> {
   const store = useStore()
 
-  return useMemo(() => {
+  //* Utils ==============================
+  // Memoized util functions that capture store reference
+
+  /** Remove nodes by name from root or a scope */
+  const removeNodes = useCallback<RemoveNodesFn>(
+    (names, targetScope) => {
+      const nameArray = Array.isArray(names) ? names : [names]
+      store.setState((state) => {
+        if (targetScope) {
+          // Remove from scoped nodes
+          const currentScope = { ...(state.nodes[targetScope] as NodeRecord) }
+          for (const name of nameArray) delete currentScope[name]
+          return { nodes: { ...state.nodes, [targetScope]: currentScope } }
+        }
+        // Remove from root level
+        const nodes = { ...state.nodes }
+        for (const name of nameArray) if (isTSLNode(nodes[name])) delete nodes[name]
+        return { nodes }
+      })
+    },
+    [store],
+  )
+
+  /** Clear nodes - scope name, 'root' for root only, or undefined for all */
+  const clearNodes = useCallback<ClearNodesFn>(
+    (targetScope) => {
+      store.setState((state) => {
+        // Clear specific scope
+        if (targetScope && targetScope !== 'root') {
+          const { [targetScope]: _, ...rest } = state.nodes
+          return { nodes: rest }
+        }
+        // Clear root only (preserve scopes)
+        if (targetScope === 'root') {
+          const nodes: typeof state.nodes = {}
+          for (const [key, value] of Object.entries(state.nodes)) {
+            if (!isTSLNode(value)) nodes[key] = value
+          }
+          return { nodes }
+        }
+        // Clear everything
+        return { nodes: {} }
+      })
+    },
+    [store],
+  )
+
+  //* Main Logic ==============================
+
+  const nodes = useMemo(() => {
     const state = store.getState()
     const set = store.setState
-    // todo: See if we need to do the diffcheck like useUniforms or callback caching
 
     // Case 1: No arguments - return all nodes (root + scopes)
     if (creatorOrScope === undefined) {
@@ -84,9 +144,7 @@ export function useNodes<T extends NodeRecord>(
     if (typeof creatorOrScope === 'string') {
       const scopeData = state.nodes[creatorOrScope]
       // Make sure we're returning a scope object, not a TSL node
-      if (scopeData && !isTSLNode(scopeData)) {
-        return scopeData as NodeRecord
-      }
+      if (scopeData && !isTSLNode(scopeData)) return scopeData as NodeRecord
       return {}
     }
 
@@ -105,9 +163,7 @@ export function useNodes<T extends NodeRecord>(
           result[name] = currentScope[name]
         } else {
           // Apply label for debugging
-          if (typeof node.label === 'function') {
-            node.setName(`${scope}.${name}`)
-          }
+          if (typeof node.label === 'function') node.setName(`${scope}.${name}`)
           result[name] = node
           hasNewNodes = true
         }
@@ -117,10 +173,7 @@ export function useNodes<T extends NodeRecord>(
         set((s) => ({
           nodes: {
             ...s.nodes,
-            [scope]: {
-              ...(s.nodes[scope] as NodeRecord),
-              ...result,
-            },
+            [scope]: { ...(s.nodes[scope] as NodeRecord), ...result },
           },
         }))
       }
@@ -135,63 +188,47 @@ export function useNodes<T extends NodeRecord>(
         result[name] = existing
       } else {
         // Apply label for debugging
-        if (typeof node.label === 'function') {
-          node.setName(name)
-        }
+        if (typeof node.label === 'function') node.setName(name)
         result[name] = node
         hasNewNodes = true
       }
     }
 
     if (hasNewNodes) {
-      set((s) => ({
-        nodes: {
-          ...s.nodes,
-          ...result,
-        },
-      }))
+      set((s) => ({ nodes: { ...s.nodes, ...result } }))
     }
 
     return result as T
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, typeof creatorOrScope === 'string' ? creatorOrScope : scope])
+
+  // Return nodes with utils
+  return { ...nodes, removeNodes, clearNodes } as NodesWithUtils<T>
 }
 
-//* Utility Functions ==============================
+//* Standalone Utils (Deprecated) ==============================
+// These require manual store access. Prefer the utils returned from useNodes() instead.
 
 /**
  * Remove nodes by name from root level or a scope
- * @param scope - If provided, removes from that scope. Otherwise removes from root.
+ * @deprecated Use `const { removeNodes } = useNodes()` instead
  */
 export function removeNodes(set: ReturnType<typeof useStore>['setState'], names: string[], scope?: string) {
   set((state) => {
     if (scope) {
-      // Remove from scoped nodes
       const currentScope = { ...(state.nodes[scope] as NodeRecord) }
-      for (const name of names) {
-        delete currentScope[name]
-      }
-      return {
-        nodes: {
-          ...state.nodes,
-          [scope]: currentScope,
-        },
-      }
+      for (const name of names) delete currentScope[name]
+      return { nodes: { ...state.nodes, [scope]: currentScope } }
     }
-
-    // Remove from root level
     const nodes = { ...state.nodes }
-    for (const name of names) {
-      if (isTSLNode(nodes[name])) {
-        delete nodes[name]
-      }
-    }
+    for (const name of names) if (isTSLNode(nodes[name])) delete nodes[name]
     return { nodes }
   })
 }
 
 /**
  * Clear all nodes from a scope (removes the entire scope object)
+ * @deprecated Use `const { clearNodes } = useNodes()` instead
  */
 export function clearNodeScope(set: ReturnType<typeof useStore>['setState'], scope: string) {
   set((state) => {
@@ -202,15 +239,13 @@ export function clearNodeScope(set: ReturnType<typeof useStore>['setState'], sco
 
 /**
  * Clear all root-level nodes (preserves scopes)
+ * @deprecated Use `const { clearNodes } = useNodes()` with `clearNodes('root')` instead
  */
 export function clearRootNodes(set: ReturnType<typeof useStore>['setState']) {
   set((state) => {
     const nodes: typeof state.nodes = {}
-    // Keep only scope objects, remove root-level nodes
     for (const [key, value] of Object.entries(state.nodes)) {
-      if (!isTSLNode(value)) {
-        nodes[key] = value
-      }
+      if (!isTSLNode(value)) nodes[key] = value
     }
     return { nodes }
   })

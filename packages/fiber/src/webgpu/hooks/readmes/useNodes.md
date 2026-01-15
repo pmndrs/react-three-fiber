@@ -33,7 +33,7 @@ const effectNodes = useNodes('effects')
 
 ### Return Value
 
-Returns `NodeRecord` - object mapping names to TSL nodes.
+Returns `NodesWithUtils<NodeRecord>` - object mapping names to TSL nodes, plus `removeNodes` and `clearNodes` utils.
 
 ---
 
@@ -236,26 +236,54 @@ const { colorNode } = useLocalNodes(({ nodes, uniforms }) => ({
 
 ---
 
-## Utility Functions
+## Utils
+
+The hook returns `removeNodes` and `clearNodes` utils alongside your nodes. These can be used in event handlers, useEffect cleanup, etc.
 
 ### removeNodes
 
-```tsx
-import { removeNodes } from '@react-three/fiber/webgpu'
-
-const store = useStore()
-removeNodes(store.setState, ['wobbleFn', 'noiseFn'])
-removeNodes(store.setState, ['glowFn'], 'effects') // From scope
-```
-
-### clearNodeScope
+Remove specific nodes by name:
 
 ```tsx
-import { clearNodeScope } from '@react-three/fiber/webgpu'
+const { removeNodes, myNode } = useNodes(() => ({ myNode: float(1) }))
 
-const store = useStore()
-clearNodeScope(store.setState, 'effects')
+// Remove single node from root
+removeNodes('myNode')
+
+// Remove multiple nodes from a scope
+removeNodes(['nodeA', 'nodeB'], 'effects')
+
+// Use in cleanup
+useEffect(() => {
+  return () => removeNodes('temporaryNode')
+}, [])
 ```
+
+### clearNodes
+
+Clear nodes by scope or all at once:
+
+```tsx
+const { clearNodes } = useNodes()
+
+// Clear specific scope
+clearNodes('effects')
+
+// Clear only root-level nodes (preserve scopes)
+clearNodes('root')
+
+// Clear everything (root + all scopes)
+clearNodes()
+
+// Use in cleanup
+useEffect(() => {
+  return () => clearNodes('myScope')
+}, [])
+```
+
+### Deprecated Standalone Functions
+
+The standalone `removeNodes(set, names, scope)`, `clearNodeScope(set, scope)`, and `clearRootNodes(set)` functions are deprecated. Use the utils returned from the hook instead.
 
 ---
 
