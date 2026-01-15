@@ -43,9 +43,20 @@ const hmrData = (() => {
  * - Demand mode support via invalidate()
  */
 export class Scheduler {
-  //* Static State & Methods (Singlton Usage) ================================
+  //* Static State & Methods (Singleton Usage) ================================
 
-  private static instance: Scheduler | null = null
+  //* Cross-Bundle Singleton Key ==============================
+  // Use Symbol.for() to ensure scheduler is shared across bundle boundaries
+  // This prevents issues when mixing imports from @react-three/fiber and @react-three/fiber/webgpu
+  private static readonly INSTANCE_KEY = Symbol.for('@react-three/fiber.scheduler')
+
+  private static get instance(): Scheduler | null {
+    return (globalThis as any)[Scheduler.INSTANCE_KEY] ?? null
+  }
+
+  private static set instance(value: Scheduler | null) {
+    ;(globalThis as any)[Scheduler.INSTANCE_KEY] = value
+  }
 
   /**
    * Get the global scheduler instance (creates if doesn't exist).

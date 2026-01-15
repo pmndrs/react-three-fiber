@@ -83,7 +83,11 @@ function createReconciler<
 
 const NoEventPriority = 0
 
-const catalogue: Catalogue = {}
+//* Cross-Bundle Singleton ==============================
+// Use Symbol.for() to ensure catalogue is shared across bundle boundaries
+// This allows extend() from one entry point to work with JSX from another
+const R3F_CATALOGUE = Symbol.for('@react-three/fiber.catalogue')
+const catalogue: Catalogue = (globalThis as any)[R3F_CATALOGUE] ?? ((globalThis as any)[R3F_CATALOGUE] = {})
 
 const PREFIX_REGEX = /^three(?=[A-Z])/
 
