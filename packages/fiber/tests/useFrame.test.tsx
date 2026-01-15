@@ -1007,3 +1007,233 @@ describe('useFrame hook', () => {
     // This test verifies the base case; integration tests should verify portal behavior
   })
 })
+
+//* Independent Mode Tests ==============================
+
+describe('Scheduler Independent Mode', () => {
+  beforeEach(() => {
+    Scheduler.reset()
+  })
+
+  afterEach(() => {
+    Scheduler.reset()
+  })
+
+  it('runs callbacks immediately without Canvas when independent=true', () => {
+    const scheduler = Scheduler.get()
+    scheduler.independent = true
+    scheduler.frameloop = 'never'
+
+    const calls: number[] = []
+
+    scheduler.register((state, delta) => {
+      calls.push(state.frame)
+    })
+
+    // Should have a default root now
+    expect(scheduler.getRootCount()).toBe(1)
+
+    // Manual step should work
+    scheduler.step(1000)
+    expect(calls.length).toBe(1)
+  })
+
+  it('provides timing-only state in independent mode', () => {
+    const scheduler = Scheduler.get()
+    scheduler.independent = true
+    scheduler.frameloop = 'never'
+
+    let receivedState: any
+
+    scheduler.register((state) => {
+      receivedState = state
+    })
+
+    scheduler.step(1000)
+
+    // Should have timing properties
+    expect(receivedState).toHaveProperty('time')
+    expect(receivedState).toHaveProperty('delta')
+    expect(receivedState).toHaveProperty('elapsed')
+    expect(receivedState).toHaveProperty('frame')
+
+    // Should NOT have RootState properties (no Canvas)
+    expect(receivedState.gl).toBeUndefined()
+    expect(receivedState.scene).toBeUndefined()
+    expect(receivedState.camera).toBeUndefined()
+  })
+
+  it('creates default root automatically when independent mode is set', () => {
+    const scheduler = Scheduler.get()
+
+    expect(scheduler.getRootCount()).toBe(0)
+
+    scheduler.independent = true
+
+    expect(scheduler.getRootCount()).toBe(1)
+  })
+})
+
+//* Root Ready Tests ==============================
+
+describe('Scheduler Root Ready', () => {
+  beforeEach(() => {
+    Scheduler.reset()
+  })
+
+  afterEach(() => {
+    Scheduler.reset()
+  })
+
+  it('isReady returns false when no roots registered', () => {
+    const scheduler = Scheduler.get()
+    expect(scheduler.isReady).toBe(false)
+  })
+
+  it('isReady returns true after root is registered', () => {
+    const scheduler = Scheduler.get()
+
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+    })
+
+    expect(scheduler.isReady).toBe(true)
+  })
+
+  it('onRootReady fires immediately if already ready', () => {
+    const scheduler = Scheduler.get()
+
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+    })
+
+    let ready = false
+    scheduler.onRootReady(() => {
+      ready = true
+    })
+
+    // Should fire immediately since root is already registered
+    expect(ready).toBe(true)
+  })
+
+  it('onRootReady fires when root registers', () => {
+    const scheduler = Scheduler.get()
+
+    let ready = false
+    scheduler.onRootReady(() => {
+      ready = true
+    })
+
+    expect(ready).toBe(false)
+
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+    })
+
+    expect(ready).toBe(true)
+  })
+
+  it('onRootReady returns unsubscribe function', () => {
+    const scheduler = Scheduler.get()
+
+    let calls = 0
+    const unsubscribe = scheduler.onRootReady(() => {
+      calls++
+    })
+
+    // Unsubscribe before any root is registered
+    unsubscribe()
+
+    // Register root
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+    })
+
+    // Should NOT have fired
+    expect(calls).toBe(0)
+  })
+})
+
+//* Error Handling Tests ==============================
+
+describe('Scheduler Error Handling', () => {
+  beforeEach(() => {
+    Scheduler.reset()
+  })
+
+  afterEach(() => {
+    Scheduler.reset()
+  })
+
+  it('uses pluggable error handler from registerRoot', () => {
+    const scheduler = Scheduler.get()
+    scheduler.frameloop = 'never'
+
+    const errors: Error[] = []
+    const errorHandler = (err: Error) => errors.push(err)
+
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+      onError: errorHandler,
+    })
+
+    // Register a job that throws
+    scheduler.register(
+      () => {
+        throw new Error('Test error')
+      },
+      { rootId: 'test-root' },
+    )
+
+    // Suppress console.error for this test
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    scheduler.step(1000)
+
+    errorSpy.mockRestore()
+
+    // Error should have been captured by our handler
+    expect(errors.length).toBe(1)
+    expect(errors[0].message).toBe('Test error')
+  })
+
+  it('falls back to console.error when no error handler provided', () => {
+    const scheduler = Scheduler.get()
+    scheduler.frameloop = 'never'
+
+    scheduler.registerRoot('test-root', {
+      getState: () => ({}),
+      // No onError provided
+    })
+
+    scheduler.register(
+      () => {
+        throw new Error('Test error')
+      },
+      { rootId: 'test-root' },
+    )
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    scheduler.step(1000)
+
+    // Should have logged to console.error
+    expect(errorSpy).toHaveBeenCalled()
+
+    errorSpy.mockRestore()
+  })
+
+  it('triggerError calls the bound error handler', () => {
+    const scheduler = Scheduler.get()
+
+    const errors: Error[] = []
+    scheduler.registerRoot('test-root', {
+      onError: (err) => errors.push(err),
+    })
+
+    scheduler.triggerError(new Error('Manual error'))
+
+    expect(errors.length).toBe(1)
+    expect(errors[0].message).toBe('Manual error')
+  })
+})

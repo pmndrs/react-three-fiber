@@ -26,6 +26,82 @@ function AnimatedBox() {
 }
 ```
 
+## Using Outside Canvas
+
+`useFrame` works both inside and outside the `<Canvas>` component, enabling frame-based logic in UI components, state managers, and even completely independent applications.
+
+### Inside Canvas (Standard)
+
+Full access to R3F state (gl, scene, camera, etc.):
+
+```tsx
+function SpinningBox() {
+  useFrame((state, delta) => {
+    // state.gl, state.scene, state.camera, etc. available
+  })
+  return <mesh>...</mesh>
+}
+```
+
+### Outside Canvas (Waiting Mode)
+
+When used outside Canvas, `useFrame` waits for a Canvas to mount, then fires with full state:
+
+```tsx
+function App() {
+  return (
+    <>
+      <GameUI /> {/* Outside Canvas */}
+      <Canvas>
+        <Scene />
+      </Canvas>
+    </>
+  )
+}
+
+function GameUI() {
+  // Waits for Canvas, then gets full RootState
+  const { scheduler } = useFrame((state, delta) => {
+    syncUI(state.camera.position)
+  })
+
+  return <button onClick={() => scheduler.pauseJob('physics')}>Pause</button>
+}
+```
+
+### Independent Mode (No Canvas)
+
+For standalone frame loops without any Canvas:
+
+```tsx
+import { getScheduler, useFrame } from '@react-three/fiber'
+
+// Enable independent mode - no Canvas needed
+getScheduler().independent = true
+
+function GameLoop() {
+  useFrame((state, delta) => {
+    // state = { time, delta, elapsed, frame } only
+    // No gl, scene, camera (no Canvas exists)
+    updateGame(delta)
+  })
+  return null
+}
+```
+
+### Scheduler Access Only
+
+Get scheduler access without a frame callback:
+
+```tsx
+function PauseButton() {
+  // No callback - just need scheduler access from anywhere
+  const { scheduler } = useFrame()
+
+  return <button onClick={() => (scheduler.frameloop = 'never')}>Stop Rendering</button>
+}
+```
+
 ## API
 
 ```tsx

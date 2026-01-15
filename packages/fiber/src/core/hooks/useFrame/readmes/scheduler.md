@@ -52,6 +52,69 @@ function MyComponent() {
 
 ---
 
+## Independent Mode
+
+The scheduler can run independently without any Canvas, enabling frame-based logic in non-R3F applications.
+
+### `independent` (getter/setter)
+
+Enable independent mode for use without Canvas.
+
+```tsx
+import { getScheduler } from '@react-three/fiber'
+
+// Enable independent mode - no Canvas needed
+getScheduler().independent = true
+
+// Now useFrame works without Canvas
+// Callbacks receive timing-only state: { time, delta, elapsed, frame }
+```
+
+**Notes:**
+
+- When `true`, creates a default root automatically
+- Callbacks receive `FrameTimingState` (no `gl`, `scene`, `camera`)
+- Useful for game loops, animations, or any frame-based logic outside R3F
+
+---
+
+## Checking Ready State
+
+### `isReady` (getter)
+
+Check if any root (Canvas) is registered.
+
+```tsx
+if (scheduler.isReady) {
+  // At least one Canvas has mounted
+}
+```
+
+---
+
+### `onRootReady(callback)`
+
+Subscribe to be notified when a root becomes available.
+
+**Parameters:**
+
+- `callback: () => void` - Called when first root registers
+
+**Returns:** `() => void` - Unsubscribe function
+
+**Behavior:**
+
+- If already ready, fires immediately
+- Otherwise, fires when first Canvas mounts
+
+```tsx
+scheduler.onRootReady(() => {
+  console.log('Canvas is ready!')
+})
+```
+
+---
+
 ## Phase Management
 
 ### `addPhase(name, options?)`
@@ -132,30 +195,45 @@ console.log(scheduler.phases)
 
 Roots represent Canvas instances. The scheduler automatically manages roots when Canvas components mount/unmount.
 
-### `registerRoot(id, getState)`
+### `registerRoot(id, options?)`
 
 Register a root (Canvas) with the scheduler. The first root to register starts the RAF loop (if `frameloop='always'`).
 
 **Parameters:**
 
 - `id: string` - Unique identifier for this root
-- `getState: () => RootState` - Function to get the root's current state
+- `options?: RootOptions` - Optional configuration
+
+**Options:**
+
+```typescript
+interface RootOptions {
+  getState?: () => any // State provider for callbacks
+  onError?: (error: Error) => void // Error handler (default: console.error)
+}
+```
 
 **Returns:** `() => void` - Unsubscribe function to remove this root
 
 **Example:**
 
 ```tsx
-const unsubscribe = scheduler.registerRoot('my-canvas', () => state)
+// Full R3F integration
+const unsubscribe = scheduler.registerRoot('my-canvas', {
+  getState: () => store.getState(),
+  onError: (err) => store.getState().setError(err),
+})
 
-// Later, to unregister:
-unsubscribe()
+// Independent mode (no options needed)
+scheduler.registerRoot('standalone')
 ```
 
 **Notes:**
 
 - Typically handled automatically by Canvas component
 - First root starts the loop if `frameloop='always'`
+- `onError` is used when job callbacks throw errors
+- In independent mode, `getState` is optional
 - Last root to unregister stops the loop
 
 ---

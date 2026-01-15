@@ -5,7 +5,7 @@ It is based on various engine loops end schedule systems like Jokt and https://g
 It is class based (Krispy will hate it) but the api is solid
 */
 
-import type { RootState, AddPhaseOptions, FrameNextState, FrameNextCallback, Frameloop } from '#types'
+import type { AddPhaseOptions, FrameNextState, FrameNextCallback, Frameloop, RootOptions } from '#types'
 import { PhaseGraph } from './phaseGraph'
 import { rebuildSortedJobs } from './sorter'
 import { shouldRun, resetJobTiming } from './rateLimiter'
@@ -120,6 +120,12 @@ export class Scheduler {
   private pendingFrames: number = 0
   private _frameloop: Frameloop = 'always'
 
+  //* Independent Mode & Error Handling State ================================
+
+  private _independent: boolean = false
+  private errorHandler: ((error: Error) => void) | null = null
+  private rootReadyCallbacks: Set<() => void> = new Set()
+
   //* Getters & Setters ================================
 
   get phases(): string[] {
@@ -143,6 +149,19 @@ export class Scheduler {
     return this.loopState.running
   }
 
+  get isReady(): boolean {
+    return this.roots.size > 0
+  }
+
+  get independent(): boolean {
+    return this._independent
+  }
+
+  set independent(value: boolean) {
+    this._independent = value
+    if (value) this.ensureDefaultRoot()
+  }
+
   //* Constructor ================================
 
   constructor() {
@@ -155,10 +174,10 @@ export class Scheduler {
    * Register a root (Canvas) with the scheduler.
    * The first root to register starts the RAF loop (if frameloop='always').
    * @param {string} id - Unique identifier for this root
-   * @param {() => RootState} getState - Function to get the root's current state
+   * @param {RootOptions} [options] - Optional configuration with getState and onError callbacks
    * @returns {() => void} Unsubscribe function to remove this root
    */
-  registerRoot(id: string, getState: () => RootState): () => void {
+  registerRoot(id: string, options: RootOptions = {}): () => void {
     if (this.roots.has(id)) {
       console.warn(`[Scheduler] Root "${id}" already registered`)
       return () => this.unregisterRoot(id)
@@ -166,17 +185,24 @@ export class Scheduler {
 
     const entry: RootEntry = {
       id,
-      getState,
+      getState: options.getState ?? (() => ({})),
       jobs: new Map(),
       sortedJobs: [],
       needsRebuild: false,
     }
 
+    // Bind error handler from first root (or keep existing)
+    if (options.onError && !this.errorHandler) {
+      this.errorHandler = options.onError
+    }
+
     this.roots.set(id, entry)
 
-    // First root starts the loop (if frameloop allows)
-    if (this.roots.size === 1 && this._frameloop === 'always') {
-      this.start()
+    // Notify waiters on first root
+    if (this.roots.size === 1) {
+      this.notifyRootReady()
+      // First root starts the loop (if frameloop allows)
+      if (this._frameloop === 'always') this.start()
     }
 
     return () => this.unregisterRoot(id)
@@ -204,6 +230,61 @@ export class Scheduler {
     if (this.roots.size === 0) {
       this.stop()
     }
+  }
+
+  /**
+   * Subscribe to be notified when a root becomes available.
+   * Fires immediately if a root already exists.
+   * @param {() => void} callback - Function called when first root registers
+   * @returns {() => void} Unsubscribe function
+   */
+  onRootReady(callback: () => void): () => void {
+    if (this.roots.size > 0) {
+      callback()
+      return () => {}
+    }
+    this.rootReadyCallbacks.add(callback)
+    return () => this.rootReadyCallbacks.delete(callback)
+  }
+
+  /**
+   * Notify all registered root-ready callbacks.
+   * Called when the first root registers.
+   * @returns {void}
+   * @private
+   */
+  private notifyRootReady(): void {
+    for (const cb of this.rootReadyCallbacks) {
+      try {
+        cb()
+      } catch (error) {
+        console.error('[Scheduler] Error in root-ready callback:', error)
+      }
+    }
+    this.rootReadyCallbacks.clear()
+  }
+
+  /**
+   * Ensure a default root exists for independent mode.
+   * Creates a minimal root with no state provider.
+   * @returns {void}
+   * @private
+   */
+  private ensureDefaultRoot(): void {
+    if (!this.roots.has('__default__')) {
+      this.registerRoot('__default__')
+    }
+  }
+
+  /**
+   * Trigger error handling for job errors.
+   * Uses the bound error handler if available, otherwise logs to console.
+   * @param {Error} error - The error to handle
+   * @returns {void}
+   */
+  triggerError(error: Error): void {
+    if (this.errorHandler) this.errorHandler(error)
+    else console.error('[Scheduler]', error)
   }
 
   //* Phase Management Methods ================================
@@ -626,20 +707,21 @@ export class Scheduler {
     const deltaMs = this.loopState.lastTime !== null ? now - this.loopState.lastTime : 0
     const delta = deltaMs / 1000 // Convert to seconds
     const elapsed = now - this.loopState.createdAt
-    const rootState = root.getState()
+    const providedState = root.getState?.() ?? {}
 
-    const frameState: FrameNextState = {
-      ...rootState,
+    const frameState = {
+      ...providedState,
       time: now,
       delta,
       elapsed,
       frame: this.loopState.frameCount,
-    }
+    } as FrameNextState
 
     try {
       job.callback(frameState, delta)
     } catch (error) {
       console.error(`[Scheduler] Error in job "${job.id}":`, error)
+      this.triggerError(error instanceof Error ? error : new Error(String(error)))
     }
   }
 
@@ -719,7 +801,7 @@ export class Scheduler {
   /**
    * Execute all jobs for a single root in sorted order.
    * Rebuilds sorted job list if needed, then dispatches each job.
-   * Errors are caught and propagated to the root's error boundary.
+   * Errors are caught and propagated via triggerError.
    * @param {RootEntry} root - The root entry to tick
    * @param {number} timestamp - RAF timestamp in milliseconds
    * @param {number} delta - Time since last frame in seconds
@@ -733,17 +815,16 @@ export class Scheduler {
       root.needsRebuild = false
     }
 
-    const rootState = root.getState()
-    if (!rootState) return
+    const providedState = root.getState?.() ?? {}
 
     // Build frame state (elapsed converted to seconds for user-facing API)
-    const frameState: FrameNextState = {
-      ...rootState,
+    const frameState = {
+      ...providedState,
       time: timestamp,
       delta,
       elapsed: this.loopState.elapsedTime / 1000, // Convert ms to seconds
       frame: this.loopState.frameCount,
-    }
+    } as FrameNextState
 
     // Dispatch jobs
     for (const job of root.sortedJobs) {
@@ -753,8 +834,8 @@ export class Scheduler {
         job.callback(frameState, delta)
       } catch (error) {
         console.error(`[Scheduler] Error in job "${job.id}":`, error)
-        // Propagate useFrame errors to error boundary
-        rootState.setError(error instanceof Error ? error : new Error(String(error)))
+        // Propagate error via pluggable handler
+        this.triggerError(error instanceof Error ? error : new Error(String(error)))
       }
     }
   }

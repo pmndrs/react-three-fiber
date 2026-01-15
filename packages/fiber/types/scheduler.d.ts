@@ -42,9 +42,9 @@ export interface AddPhaseOptions {
 // Frame State --------------------------------
 
 /**
- * State passed to useFrame callbacks
+ * Timing-only state for independent/outside mode (no RootState)
  */
-export interface FrameNextState extends RootState {
+export interface FrameTimingState {
   /** High-resolution timestamp from RAF (ms) */
   time: number
   /** Time since last frame in seconds (for legacy compatibility with THREE.Clock) */
@@ -55,8 +55,25 @@ export interface FrameNextState extends RootState {
   frame: number
 }
 
+/**
+ * State passed to useFrame callbacks (extends RootState with timing)
+ */
+export interface FrameNextState extends RootState, FrameTimingState {}
+
 /** Alias for FrameNextState */
 export type FrameState = FrameNextState
+
+// Root Options --------------------------------
+
+/**
+ * Options for registerRoot
+ */
+export interface RootOptions {
+  /** State provider for callbacks. Optional in independent mode. */
+  getState?: () => any
+  /** Error handler for job errors. Falls back to console.error if not provided. */
+  onError?: (error: Error) => void
+}
 
 // Callback Types --------------------------------
 
@@ -111,13 +128,17 @@ export interface SchedulerApi {
   //* Root Management --------------------------------
 
   /** Register a root (Canvas) with the scheduler. Returns unsubscribe function. */
-  registerRoot(id: string, getState: () => RootState): () => void
+  registerRoot(id: string, options?: RootOptions): () => void
   /** Unregister a root */
   unregisterRoot(id: string): void
   /** Generate a unique root ID */
   generateRootId(): string
   /** Get the number of registered roots */
   getRootCount(): number
+  /** Check if any root is registered and ready */
+  readonly isReady: boolean
+  /** Subscribe to root-ready event. Fires immediately if already ready. Returns unsubscribe. */
+  onRootReady(callback: () => void): () => void
 
   //* Job Registration --------------------------------
 
@@ -176,6 +197,8 @@ export interface SchedulerApi {
   readonly isRunning: boolean
   /** Get/set the frameloop mode ('always', 'demand', 'never') */
   frameloop: Frameloop
+  /** Independent mode - runs without Canvas, callbacks receive timing-only state */
+  independent: boolean
 
   //* Manual Stepping --------------------------------
 

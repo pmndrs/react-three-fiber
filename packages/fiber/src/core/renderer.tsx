@@ -487,7 +487,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!rootId) {
         // Generate a unique root ID and register with global scheduler
         const newRootId = scheduler.generateRootId()
-        const unregisterRoot = scheduler.registerRoot(newRootId, () => store.getState())
+        const unregisterRoot = scheduler.registerRoot(newRootId, {
+          getState: () => store.getState(),
+          onError: (err) => store.getState().setError(err),
+        })
 
         // Register default render job - this handles the actual THREE.js rendering
         // Marked as 'system' so it doesn't count as a user taking over the render phase
