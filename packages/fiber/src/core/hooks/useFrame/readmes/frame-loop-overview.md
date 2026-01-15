@@ -119,7 +119,6 @@ Render only when `invalidate()` is called.
 
 ```tsx
 import { invalidate } from '@react-three/fiber'
-
 ;<Canvas frameloop="demand">
   <StaticScene />
 </Canvas>
