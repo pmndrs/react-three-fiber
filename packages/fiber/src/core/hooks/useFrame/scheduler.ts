@@ -191,8 +191,10 @@ export class Scheduler {
       needsRebuild: false,
     }
 
-    // Bind error handler from first root (or keep existing)
-    if (options.onError && !this.errorHandler) {
+    // Bind error handler from root
+    // Always update if provided - allows new roots to override stale handlers
+    // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+    if (options.onError) {
       this.errorHandler = options.onError
     }
 
@@ -226,9 +228,12 @@ export class Scheduler {
 
     this.roots.delete(id)
 
-    // Last root stops the loop
+    // Last root stops the loop and clears error handler
     if (this.roots.size === 0) {
       this.stop()
+      // Clear error handler to avoid stale references when new roots register
+      // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+      this.errorHandler = null
     }
   }
 

@@ -226,8 +226,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         //* WebGPU path ---
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
-        // WebGPU-specific setup
-        await renderer.init()
+        // WebGPU-specific setup - only init if not already initialized
+        // Allows users to pass pre-initialized external renderers
+        // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+        if (!renderer.hasInitialized?.()) {
+          await renderer.init()
+        }
 
         // temp, stop the inspector
         //renderer.inspector = new Inspector()
