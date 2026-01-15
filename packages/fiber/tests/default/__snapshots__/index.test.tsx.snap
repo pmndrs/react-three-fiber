@@ -94,6 +94,7 @@ exports[`exports > matches public API 1`] = `
   "useIsomorphicLayoutEffect",
   "useLoader",
   "useMutableCallback",
+  "useRenderTarget",
   "useStore",
   "useTexture",
   "useTextures",

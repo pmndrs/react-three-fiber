@@ -305,6 +305,15 @@ export const createStore = (
     // Update viewport and frustum once the camera changes
     if (camera !== oldCamera) {
       oldCamera = camera
+
+      // Ensure camera is a child of the scene so camera children (HUDs, etc.) render
+      // Skip if user has already parented the camera elsewhere
+      // https://github.com/pmndrs/react-three-fiber/issues/3632
+      const { rootScene } = rootStore.getState()
+      if (camera && rootScene && !camera.parent) {
+        rootScene.add(camera)
+      }
+
       // Update viewport
       set((state) => ({ viewport: { ...state.viewport, ...state.viewport.getCurrentViewport(camera) } }))
       // Update frustum from new camera (if auto-update enabled)

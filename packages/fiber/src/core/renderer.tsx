@@ -312,6 +312,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           rootScene: scene,
           internal: { ...prev.internal, container: scene },
         }))
+
+        // Add camera to scene if it exists and has no parent
+        // This ensures camera children (HUDs, etc.) render properly
+        // https://github.com/pmndrs/react-three-fiber/issues/3632
+        const camera = state.camera
+        if (camera && !camera.parent) scene.add(camera)
       }
 
       // Store events internally

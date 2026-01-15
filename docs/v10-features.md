@@ -100,6 +100,92 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 
 ---
 
+## Camera Scene Parenting
+
+In v10, the default camera is automatically added as a child of the scene when it doesn't have a parent. This enables camera-relative effects like HUDs, cockpit displays, or any objects that should follow the camera.
+
+### Why This Matters
+
+In previous versions, the default camera existed outside the scene graph. This meant any children attached to it wouldn't render because Three.js only renders objects that are part of the scene hierarchy.
+
+```tsx
+// Before v10: Children wouldn't render
+const { camera } = useThree()
+camera.add(hudMesh) // hudMesh never appears!
+
+// In v10: This now works automatically
+const { camera } = useThree()
+camera.add(hudMesh) // hudMesh renders and follows the camera
+```
+
+### Common Use Cases
+
+**HUD / UI Elements:**
+
+```tsx
+function HUD() {
+  const { camera } = useThree()
+  const hudRef = useRef<THREE.Group>(null)
+
+  useEffect(() => {
+    if (hudRef.current) {
+      camera.add(hudRef.current)
+      return () => camera.remove(hudRef.current!)
+    }
+  }, [camera])
+
+  return (
+    <group ref={hudRef} position={[0, 0, -2]}>
+      <mesh>
+        <planeGeometry args={[0.5, 0.1]} />
+        <meshBasicMaterial color="green" transparent opacity={0.8} />
+      </mesh>
+    </group>
+  )
+}
+```
+
+**Camera-Attached Lights:**
+
+```tsx
+function Flashlight() {
+  const { camera } = useThree()
+  const lightRef = useRef<THREE.SpotLight>(null)
+
+  useEffect(() => {
+    if (lightRef.current) {
+      camera.add(lightRef.current)
+      camera.add(lightRef.current.target)
+      lightRef.current.target.position.set(0, 0, -1)
+      return () => {
+        camera.remove(lightRef.current!)
+        camera.remove(lightRef.current!.target)
+      }
+    }
+  }, [camera])
+
+  return <spotLight ref={lightRef} intensity={2} angle={0.3} />
+}
+```
+
+### Custom Camera Behavior
+
+If you provide your own camera that already has a parent, R3F respects your setup and won't re-parent it:
+
+```tsx
+function App() {
+  const customCamera = useMemo(() => {
+    const cam = new THREE.PerspectiveCamera()
+    someGroup.add(cam) // You've parented it yourself
+    return cam
+  }, [])
+
+  return <Canvas camera={customCamera}>{/* Camera stays parented to someGroup */}</Canvas>
+}
+```
+
+---
+
 ## useRenderTarget
 
 The `useRenderTarget` hook creates a render target (FBO) that is automatically compatible with the current renderer, whether WebGL or WebGPU.
