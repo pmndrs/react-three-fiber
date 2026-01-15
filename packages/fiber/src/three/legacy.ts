@@ -1,3 +1,4 @@
+/* eslint-disable import/export */
 /**
  * @fileoverview Internal Three.js re-exports - LEGACY ENTRY
  *
