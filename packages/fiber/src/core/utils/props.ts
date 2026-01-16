@@ -2,6 +2,7 @@ import * as THREE from '#three'
 import type { Instance, EventHandlers } from '#types'
 import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
+import { registerVisibility, unregisterVisibility, hasVisibilityHandlers } from '../visibility'
 
 //* Property Resolution & Application ==============================
 // Functions for resolving, diffing, attaching, and applying props to instances
@@ -27,6 +28,11 @@ export const RESERVED_PROPS = [
  * Regex to match event handler props (onPointer*, onClick, etc.)
  */
 const EVENT_REGEX = /^on(Pointer|Drag|Drop|Click|DoubleClick|ContextMenu|Wheel)/
+
+/**
+ * Regex to match visibility event handler props (onFramed, onOccluded, onVisible)
+ */
+const VISIBILITY_EVENT_REGEX = /^on(Framed|Occluded|Visible)$/
 
 /**
  * Regex to check if a dash-cased string ends with an integer (e.g., 'lights-0')
@@ -242,6 +248,14 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       continue
     }
 
+    // Deal with visibility events (onFramed, onOccluded, onVisible)
+    if (instance && VISIBILITY_EVENT_REGEX.test(prop)) {
+      if (typeof value === 'function') instance.handlers[prop as keyof EventHandlers] = value as any
+      else delete instance.handlers[prop as keyof EventHandlers]
+      instance.eventCount = Object.keys(instance.handlers).length
+      continue
+    }
+
     // Ignore setting undefined props
     // https://github.com/pmndrs/react-three-fiber/issues/274
     if (value === undefined) continue
@@ -324,6 +338,21 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Add the instance to the interaction manager only when it has handlers
     if (instance.eventCount && object.raycast !== null) {
       rootState.internal.interaction.push(object)
+    }
+
+    // Register/update visibility handlers (onFramed, onOccluded, onVisible)
+    const root = findInitialRoot(instance)
+    const visibilityHandlers = {
+      onFramed: instance.handlers.onFramed,
+      onOccluded: instance.handlers.onOccluded,
+      onVisible: instance.handlers.onVisible,
+    }
+
+    if (hasVisibilityHandlers(visibilityHandlers)) {
+      registerVisibility(root, object, visibilityHandlers)
+    } else {
+      // Remove from visibility registry if no visibility handlers remain
+      unregisterVisibility(root, object)
     }
   }
 

@@ -10,96 +10,6 @@ This document covers new features added in v10. For breaking changes and migrati
 
 ---
 
-## Camera Frustum
-
-v10 exposes a `THREE.Frustum` on the root state that stays synchronized with the default camera. This enables efficient visibility checks without needing to create and manage your own frustum instance.
-
-### Basic Usage
-
-```tsx
-import { useThree } from '@react-three/fiber'
-
-function VisibilityCheck() {
-  const { frustum } = useThree()
-
-  // Check if a point is visible
-  const point = new THREE.Vector3(0, 5, 0)
-  if (frustum.containsPoint(point)) {
-    // Point is in view
-  }
-
-  // Check if an object is visible (uses bounding sphere)
-  if (frustum.intersectsObject(mesh)) {
-    // Object is at least partially visible
-  }
-
-  // Check against a bounding sphere directly
-  if (frustum.intersectsSphere(boundingSphere)) {
-    // Sphere intersects frustum
-  }
-}
-```
-
-### In the Frame Loop
-
-The frustum is updated automatically each frame (after all `update` phase callbacks, before `render`), so you can use it in `useFrame` for visibility-based logic:
-
-```tsx
-useFrame(({ frustum }) => {
-  // LOD based on visibility
-  for (const object of objects) {
-    object.visible = frustum.intersectsObject(object)
-  }
-
-  // Or custom culling logic
-  particles.forEach((particle) => {
-    particle.needsUpdate = frustum.containsPoint(particle.position)
-  })
-})
-```
-
-### Disabling Auto-Update
-
-If you don't need frustum updates or want to control updates manually, disable auto-updating via Canvas props:
-
-```tsx
-<Canvas autoUpdateFrustum={false}>
-  <Scene />
-</Canvas>
-```
-
-### Manual Frustum Updates
-
-The `updateFrustum` utility is also exported for manual control:
-
-```tsx
-import { updateFrustum } from '@react-three/fiber'
-
-// Update an existing frustum (no allocation)
-updateFrustum(camera, existingFrustum)
-
-// Create a new frustum from a camera
-const newFrustum = updateFrustum(camera)
-
-// Use with a different camera (e.g., shadow camera, portal camera)
-updateFrustum(light.shadow.camera, shadowFrustum)
-```
-
-### State Properties
-
-| Prop                | Description                             | Type            |
-| ------------------- | --------------------------------------- | --------------- |
-| `frustum`           | Camera frustum for visibility checks    | `THREE.Frustum` |
-| `autoUpdateFrustum` | Whether frustum auto-updates each frame | `boolean`       |
-
-### Canvas Props
-
-| Prop                | Description                              | Default |
-| ------------------- | ---------------------------------------- | ------- |
-| `autoUpdateFrustum` | Enable/disable automatic frustum updates | `true`  |
-
----
-
 ## Camera Scene Parenting
 
 In v10, the default camera is automatically added as a child of the scene when it doesn't have a parent. This enables camera-relative effects like HUDs, cockpit displays, or any objects that should follow the camera.
@@ -269,6 +179,207 @@ The hook is optimized for each build target:
 - **Legacy build** (`@react-three/fiber/legacy`): Always returns `WebGLRenderTarget`
 - **WebGPU build** (`@react-three/fiber/webgpu`): Always returns `RenderTarget`
 - **Default build** (`@react-three/fiber`): Returns the appropriate type based on active renderer
+
+---
+
+## Visibility Events
+
+v10 adds three new event handlers for tracking object visibility state changes. These events fire when visibility transitions occur, not every frame.
+
+### onFramed - Frustum Culling Events
+
+Fires when an object enters or exits the camera frustum:
+
+```tsx
+function FrustumAwareObject() {
+  return (
+    <mesh
+      onFramed={(inView) => {
+        console.log(inView ? 'Object entered view' : 'Object left view')
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+Common use cases:
+
+- Pausing animations when off-screen
+- Loading/unloading heavy resources
+- Analytics tracking for what users see
+
+### onOccluded - Occlusion Events (WebGPU Only)
+
+Fires when an object becomes occluded or visible based on GPU occlusion queries. This only works with WebGPU renderer:
+
+```tsx
+function OcclusionAwareObject() {
+  return (
+    <mesh
+      onOccluded={(occluded) => {
+        console.log(occluded ? 'Object is hidden behind something' : 'Object is visible')
+      }}>
+      <sphereGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+The `occlusionTest` flag is automatically enabled on the object when using this handler.
+
+**Note:** Occlusion queries are automatically enabled when any object uses `onOccluded` or `onVisible`. You can also enable it explicitly:
+
+```tsx
+<Canvas occlusion>{/* ... */}</Canvas>
+```
+
+If you use occlusion handlers with a WebGL renderer, a warning will be logged and the events won't fire.
+
+### onVisible - Combined Visibility Events
+
+Fires when the combined visibility state changes. An object is considered visible when:
+
+- It's within the camera frustum (in view)
+- It's not occluded (WebGPU only, otherwise always considered not occluded)
+- Its `visible` property is `true`
+
+```tsx
+function FullyVisibleObject() {
+  return (
+    <mesh
+      onVisible={(visible) => {
+        if (visible) {
+          // Start expensive animations, load high-res textures, etc.
+        } else {
+          // Pause animations, reduce quality, etc.
+        }
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+### Performance Notes
+
+- Events only fire on state changes, not every frame
+- Frustum checks use `THREE.Frustum.intersectsObject()` which relies on bounding spheres
+- The visibility system runs in the `preRender` phase after frustum updates
+- Objects are automatically unregistered when unmounted
+
+### Implementation Details
+
+When occlusion queries are enabled, R3F adds an internal helper group (`__r3fInternal`) to the scene. This group contains an invisible observer mesh that caches occlusion query results during the render pass. This is necessary because WebGPU's `isOccluded()` method only returns valid results during rendering.
+
+The helper group and observer mesh:
+
+- Are invisible and have no visual impact
+- Are automatically cleaned up on unmount
+- Can be identified by the `__r3fInternal` property if needed
+
+If you're counting scene children, be aware this group exists when occlusion is enabled.
+
+### Event Handler Reference
+
+| Handler      | Parameter           | Description                                  |
+| ------------ | ------------------- | -------------------------------------------- |
+| `onFramed`   | `inView: boolean`   | `true` when in frustum, `false` when out     |
+| `onOccluded` | `occluded: boolean` | `true` when occluded, `false` when visible   |
+| `onVisible`  | `visible: boolean`  | `true` when fully visible, `false` otherwise |
+
+---
+
+## Camera Frustum
+
+v10 exposes a `THREE.Frustum` on the root state that stays synchronized with the default camera. The visibility events above (`onFramed`, `onVisible`) use this frustum internally for frustum culling checks, but you can also use it directly for custom visibility logic.
+
+### Basic Usage
+
+```tsx
+import { useThree } from '@react-three/fiber'
+
+function VisibilityCheck() {
+  const { frustum } = useThree()
+
+  // Check if a point is visible
+  const point = new THREE.Vector3(0, 5, 0)
+  if (frustum.containsPoint(point)) {
+    // Point is in view
+  }
+
+  // Check if an object is visible (uses bounding sphere)
+  if (frustum.intersectsObject(mesh)) {
+    // Object is at least partially visible
+  }
+
+  // Check against a bounding sphere directly
+  if (frustum.intersectsSphere(boundingSphere)) {
+    // Sphere intersects frustum
+  }
+}
+```
+
+### In the Frame Loop
+
+The frustum is updated automatically each frame (after all `update` phase callbacks, before `render`), so you can use it in `useFrame` for visibility-based logic:
+
+```tsx
+useFrame(({ frustum }) => {
+  // LOD based on visibility
+  for (const object of objects) {
+    object.visible = frustum.intersectsObject(object)
+  }
+
+  // Or custom culling logic
+  particles.forEach((particle) => {
+    particle.needsUpdate = frustum.containsPoint(particle.position)
+  })
+})
+```
+
+### Disabling Auto-Update
+
+If you don't need frustum updates or want to control updates manually, disable auto-updating via Canvas props:
+
+```tsx
+<Canvas autoUpdateFrustum={false}>
+  <Scene />
+</Canvas>
+```
+
+### Manual Frustum Updates
+
+The `updateFrustum` utility is also exported for manual control:
+
+```tsx
+import { updateFrustum } from '@react-three/fiber'
+
+// Update an existing frustum (no allocation)
+updateFrustum(camera, existingFrustum)
+
+// Create a new frustum from a camera
+const newFrustum = updateFrustum(camera)
+
+// Use with a different camera (e.g., shadow camera, portal camera)
+updateFrustum(light.shadow.camera, shadowFrustum)
+```
+
+### State Properties
+
+| Prop                | Description                             | Type            |
+| ------------------- | --------------------------------------- | --------------- |
+| `frustum`           | Camera frustum for visibility checks    | `THREE.Frustum` |
+| `autoUpdateFrustum` | Whether frustum auto-updates each frame | `boolean`       |
+
+### Canvas Props
+
+| Prop                | Description                              | Default |
+| ------------------- | ---------------------------------------- | ------- |
+| `autoUpdateFrustum` | Enable/disable automatic frustum updates | `true`  |
 
 ---
 

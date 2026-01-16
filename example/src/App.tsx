@@ -41,6 +41,7 @@ const webgpuExamples = [
   'UseFrameNextFPS',
   'UseFrameNextPhases',
   'UseFrameNextControls',
+  'VisibilityEvents',
 ]
 
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})

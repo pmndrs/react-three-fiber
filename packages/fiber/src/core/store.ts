@@ -16,6 +16,7 @@ import type {
   EventManager,
   ThreeEvent,
   ThreeCamera,
+  VisibilityEntry,
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
@@ -168,6 +169,15 @@ export const createStore = (
         initialHits: [],
         capturedMap: new Map(),
         lastEvent: React.createRef(),
+
+        // Visibility tracking (onFramed, onOccluded, onVisible)
+        visibilityRegistry: new Map<string, VisibilityEntry>(),
+
+        // Occlusion system (WebGPU only)
+        occlusionEnabled: false,
+        occlusionObserver: null,
+        occlusionCache: new Map(),
+        helperGroup: null,
 
         // Updates
         active: false,

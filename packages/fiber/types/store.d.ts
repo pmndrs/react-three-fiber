@@ -2,7 +2,7 @@ import type * as React from 'react'
 import type * as THREE from 'three'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
-import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent } from './events'
+import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
 
@@ -61,6 +61,16 @@ export interface InternalState {
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
   lastEvent: React.RefObject<DomEvent | null>
+  /** Visibility event registry (onFramed, onOccluded, onVisible) */
+  visibilityRegistry: Map<string, VisibilityEntry>
+  /** Whether occlusion queries are enabled (WebGPU only) */
+  occlusionEnabled: boolean
+  /** Reference to the invisible occlusion observer mesh */
+  occlusionObserver: THREE.Mesh | null
+  /** Cached occlusion results from render pass - keyed by Object3D */
+  occlusionCache: Map<THREE.Object3D, boolean | null>
+  /** Internal helper group for R3F system objects (occlusion observer, etc.) */
+  helperGroup: THREE.Group | null
   active: boolean
   priority: number
   frames: number

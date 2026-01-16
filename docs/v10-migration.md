@@ -87,6 +87,56 @@ import { Canvas, useFrame } from '@react-three/fiber/legacy'
 import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
 ```
 
+### `useFrame` Clock Removed
+
+The `state.clock` (THREE.Clock) has been removed from FrameState. Timing information is now provided directly from the RAF timer, which is more accurate and consistent.
+
+```diff
+useFrame((state, delta) => {
+-  const elapsed = state.clock.getElapsedTime()
+-  const delta = state.clock.getDelta()
++  const { time, delta, elapsed } = state
++  // time: High-resolution timestamp from RAF (milliseconds)
++  // delta: Time since last frame (seconds)
++  // elapsed: Elapsed time since first frame (seconds)
+})
+```
+
+### Render Phase Takes Over Rendering
+
+**This is a significant behavior change.** In v9, setting a non-zero `priority` on `useFrame` would disable R3F's default rendering, requiring you to call `renderer.render()` manually.
+
+In v10, **registering ANY callback to the `render` phase** takes over the render loop. If you were using priority values and also calling `renderer.render()` yourself, you'll get double-rendering or other unexpected results.
+
+```tsx
+// v9: Priority disabled default rendering
+useFrame(({ gl, scene, camera }) => {
+  gl.render(scene, camera)
+}, 1) // priority > 0 meant "I'll handle rendering"
+
+// v10: Use the render phase explicitly
+useFrame(
+  ({ renderer, scene, camera }) => {
+    renderer.render(scene, camera)
+  },
+  { phase: 'render' },
+) // Render phase takes over
+```
+
+If you were using priority for ordering purposes (not rendering), switch to the new phase system or `before`/`after` constraints:
+
+```tsx
+// v9: Priority for ordering
+useFrame(() => physicsStep(), -1)
+useFrame(() => updateGame(), 0)
+useFrame(() => updateAI(), 1)
+
+// v10: Phase-based ordering (recommended)
+useFrame(() => physicsStep(), { phase: 'physics' })
+useFrame(() => updateGame(), { phase: 'update' })
+useFrame(() => updateAI(), { after: 'update', before: 'render' })
+```
+
 ---
 
 ## What's New

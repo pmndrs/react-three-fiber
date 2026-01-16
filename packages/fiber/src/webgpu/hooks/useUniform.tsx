@@ -9,6 +9,9 @@ import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
 /** Supported uniform value types */
 export type UniformValue = number | boolean | Vector2 | Vector3 | Vector4 | Color | Matrix3 | Matrix4
 
+/** Widen literal types to their base types (0 → number, true → boolean) */
+type Widen<T> = T extends number ? number : T extends boolean ? boolean : T
+
 /** Type guard to check if a value is a UniformNode */
 const isUniformNode = (value: unknown): value is UniformNode =>
   value !== null && typeof value === 'object' && 'value' in value && 'uuid' in value
@@ -18,8 +21,8 @@ const isUniformNode = (value: unknown): value is UniformNode =>
 // Get existing uniform (throws if not found)
 export function useUniform<T extends UniformValue>(name: string): UniformNode<T>
 
-// Create uniform if not exists, or update value if exists
-export function useUniform<T extends UniformValue>(name: string, value: T): UniformNode<T>
+// Create uniform if not exists, or update value if exists - widens literal types
+export function useUniform<T extends UniformValue>(name: string, value: T): UniformNode<Widen<T>>
 
 //* Hook Implementation ==============================
 
@@ -50,7 +53,7 @@ export function useUniform<T extends UniformValue>(name: string, value: T): Unif
  * material.positionNode = positionLocal.add(normal.mul(uHeight))
  * ```
  */
-export function useUniform<T extends UniformValue>(name: string, value?: T): UniformNode<T> {
+export function useUniform<T extends UniformValue>(name: string, value?: T): UniformNode<Widen<T>> {
   const store = useStore()
 
   return useMemo(() => {
@@ -64,7 +67,7 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
       if (value !== undefined) {
         existing.value = value
       }
-      return existing as UniformNode<T>
+      return existing as UniformNode<Widen<T>>
     }
 
     // Case 2: Get-only mode but uniform doesn't exist ---------------------------------
@@ -75,7 +78,7 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
     }
 
     // Case 3: Create new uniform ---------------------------------
-    const node = uniform(value) as UniformNode<T>
+    const node = uniform(value) as unknown as UniformNode<Widen<T>>
 
     // Label for debugging
     if (typeof node.setName === 'function') {
