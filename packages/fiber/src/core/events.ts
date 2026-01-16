@@ -1,5 +1,6 @@
 import * as THREE from '#three'
 import { getRootState } from './utils'
+import { unregisterVisibility } from './visibility'
 
 //* Type Imports ==============================
 import type {
@@ -54,6 +55,9 @@ export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
   internal.capturedMap.forEach((captures, pointerId) => {
     releaseInternalPointerCapture(internal.capturedMap, object, captures, pointerId)
   })
+
+  // Remove from visibility registry (onFramed, onOccluded, onVisible)
+  unregisterVisibility(store, object)
 }
 
 export function createEvents(store: RootStore) {

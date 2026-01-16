@@ -83,6 +83,14 @@ export interface EventHandlers {
   onPointerCancel?: (event: ThreeEvent<PointerEvent>) => void
   onWheel?: (event: ThreeEvent<WheelEvent>) => void
   onLostPointerCapture?: (event: ThreeEvent<PointerEvent>) => void
+
+  //* Visibility Events --------------------------------
+  /** Fires when object enters/exits camera frustum. Receives true when in view, false when out. */
+  onFramed?: (inView: boolean) => void
+  /** Fires when object occlusion state changes (WebGPU only, requires occlusionTest=true on object) */
+  onOccluded?: (occluded: boolean) => void
+  /** Fires when combined visibility changes (frustum + occlusion + visible prop) */
+  onVisible?: (visible: boolean) => void
 }
 
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
@@ -114,4 +122,15 @@ export interface EventManager<TTarget> {
 export interface PointerCaptureTarget {
   intersection: Intersection
   target: Element
+}
+
+//* Visibility System Types =====================================
+
+/** Entry in the visibility registry for tracking object visibility state */
+export interface VisibilityEntry {
+  object: THREE.Object3D
+  handlers: Pick<EventHandlers, 'onFramed' | 'onOccluded' | 'onVisible'>
+  lastFramedState: boolean | null
+  lastOccludedState: boolean | null
+  lastVisibleState: boolean | null
 }

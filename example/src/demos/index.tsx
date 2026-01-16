@@ -25,6 +25,7 @@ const SuspenseMaterial = { Component: lazy(() => import('./default/SuspenseMater
 const Test = { Component: lazy(() => import('./default/Test')) }
 const Viewcube = { Component: lazy(() => import('./default/Viewcube')) }
 const ViewTracking = { Component: lazy(() => import('./default/ViewTracking')) }
+const VisibilityEvents = { Component: lazy(() => import('./default/VisibilityEvents')) }
 
 //* Legacy Examples ==============================
 // WebGL-only examples using features not yet supported in WebGPU
@@ -73,6 +74,7 @@ export {
   Test,
   Viewcube,
   ViewTracking,
+  VisibilityEvents,
   PortalTest,
   // Legacy
   EventPriority,

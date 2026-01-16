@@ -272,6 +272,97 @@ The hook is optimized for each build target:
 
 ---
 
+## Visibility Events
+
+v10 adds three new event handlers for tracking object visibility state changes. These events fire when visibility transitions occur, not every frame.
+
+### onFramed - Frustum Culling Events
+
+Fires when an object enters or exits the camera frustum:
+
+```tsx
+function FrustumAwareObject() {
+  return (
+    <mesh
+      onFramed={(inView) => {
+        console.log(inView ? 'Object entered view' : 'Object left view')
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+Common use cases:
+
+- Pausing animations when off-screen
+- Loading/unloading heavy resources
+- Analytics tracking for what users see
+
+### onOccluded - Occlusion Events (WebGPU Only)
+
+Fires when an object becomes occluded or visible based on GPU occlusion queries. This only works with WebGPU renderer:
+
+```tsx
+function OcclusionAwareObject() {
+  return (
+    <mesh
+      onOccluded={(occluded) => {
+        console.log(occluded ? 'Object is hidden behind something' : 'Object is visible')
+      }}>
+      <sphereGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+The `occlusionTest` flag is automatically enabled on the object when using this handler.
+
+### onVisible - Combined Visibility Events
+
+Fires when the combined visibility state changes. An object is considered visible when:
+
+- It's within the camera frustum (in view)
+- It's not occluded (WebGPU only, otherwise always considered not occluded)
+- Its `visible` property is `true`
+
+```tsx
+function FullyVisibleObject() {
+  return (
+    <mesh
+      onVisible={(visible) => {
+        if (visible) {
+          // Start expensive animations, load high-res textures, etc.
+        } else {
+          // Pause animations, reduce quality, etc.
+        }
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+### Performance Notes
+
+- Events only fire on state changes, not every frame
+- Frustum checks use `THREE.Frustum.intersectsObject()` which relies on bounding spheres
+- The visibility system runs in the `preRender` phase after frustum updates
+- Objects are automatically unregistered when unmounted
+
+### Event Handler Reference
+
+| Handler      | Parameter           | Description                                  |
+| ------------ | ------------------- | -------------------------------------------- |
+| `onFramed`   | `inView: boolean`   | `true` when in frustum, `false` when out     |
+| `onOccluded` | `occluded: boolean` | `true` when occluded, `false` when visible   |
+| `onVisible`  | `visible: boolean`  | `true` when fully visible, `false` otherwise |
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

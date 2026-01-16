@@ -22,6 +22,7 @@ import {
 } from './utils'
 import { notifyDepreciated } from './notices'
 import { getScheduler, Scheduler } from './hooks/useFrame/scheduler'
+import { checkVisibility } from './visibility'
 
 import type {
   RootState,
@@ -523,6 +524,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           },
         )
 
+        // Register visibility check job - checks onFramed, onOccluded, onVisible events
+        // Runs in 'preRender' phase BEFORE render so occlusionTest flag is set before rendering
+        // (isOccluded reads from previous frame's render results)
+        const unregisterVisibility = scheduler.register(
+          () => {
+            const state = store.getState()
+            checkVisibility(state)
+          },
+          {
+            id: `${newRootId}_visibility`,
+            rootId: newRootId,
+            phase: 'preRender',
+            system: true,
+            after: `${newRootId}_frustum`,
+          },
+        )
+
         // Register default render job - this handles the actual THREE.js rendering
         // Marked as 'system' so it doesn't count as a user taking over the render phase
         // Only renders if no user has registered in the 'render' phase (taking over rendering)
@@ -563,6 +581,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             unregisterRoot: () => {
               unregisterRoot()
               unregisterFrustum()
+              unregisterVisibility()
               unregisterRender()
             },
             scheduler,
