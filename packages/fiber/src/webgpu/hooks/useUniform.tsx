@@ -78,7 +78,7 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
     }
 
     // Case 3: Create new uniform ---------------------------------
-    const node = uniform(value) as UniformNode<Widen<T>>
+    const node = uniform(value) as unknown as UniformNode<Widen<T>>
 
     // Label for debugging
     if (typeof node.setName === 'function') {

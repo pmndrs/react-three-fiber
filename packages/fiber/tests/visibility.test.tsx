@@ -368,7 +368,7 @@ describe('visibility events', () => {
       await advanceFrames(3)
 
       // Verify object is registered
-      expect(storeRef?.internal.visibilityRegistry.size).toBe(1)
+      expect(storeRef!.internal.visibilityRegistry.size).toBe(1)
 
       // Unmount the mesh
       await act(async () => {
@@ -383,7 +383,7 @@ describe('visibility events', () => {
       await advanceFrames(3)
 
       // Registry should be empty after unmount
-      expect(storeRef?.internal.visibilityRegistry.size).toBe(0)
+      expect(storeRef!.internal.visibilityRegistry.size).toBe(0)
     })
   })
 
