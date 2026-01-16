@@ -173,6 +173,12 @@ export const createStore = (
         // Visibility tracking (onFramed, onOccluded, onVisible)
         visibilityRegistry: new Map<string, VisibilityEntry>(),
 
+        // Occlusion system (WebGPU only)
+        occlusionEnabled: false,
+        occlusionObserver: null,
+        occlusionCache: new Map(),
+        helperGroup: null,
+
         // Updates
         active: false,
         frames: 0,

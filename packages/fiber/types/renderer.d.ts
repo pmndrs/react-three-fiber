@@ -124,6 +124,12 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   onDropMissed?: (event: DragEvent) => void
   /** Whether to automatically update the frustum each frame (default: true) */
   autoUpdateFrustum?: boolean
+  /**
+   * Enable WebGPU occlusion queries for onOccluded/onVisible events.
+   * Auto-enabled when any object uses onOccluded or onVisible handlers.
+   * Only works with WebGPU renderer - WebGL will log a warning.
+   */
+  occlusion?: boolean
 }
 
 //* Reconciler Root ==============================

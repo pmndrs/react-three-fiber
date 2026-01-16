@@ -1,251 +1,146 @@
 //* Visibility Events Demo ==============================
-// Testing CPU-side occlusion queries via cached results from render pass
+// Testing R3F's core visibility system: onFramed, onOccluded, onVisible
+// This uses the built-in event handlers - no manual setup required!
 
-import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
-import { OrbitControls } from '@react-three/drei'
-import { useEffect, useRef, useState } from 'react'
+import { Canvas, useThree } from '@react-three/fiber/webgpu'
+import { OrbitControls, Text } from '@react-three/drei'
+import { useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
-import { nodeObject, uniform } from 'three/tsl'
 
 //* ==============================
-//* SHARED OCCLUSION CACHE
-//* ==============================
-// The key insight: renderer.isOccluded() only works DURING render when
-// _currentRenderContext is set. We need to cache results during render
-// and read from the cache in useFrame.
-
-const occlusionCache = new Map<THREE.Object3D, boolean | null>()
-
-// Registry of objects to check - any object can register here
-const occlusionRegistry = new Set<THREE.Object3D>()
-
-// OcclusionObserverNode - ONE node checks ALL registered objects
-class OcclusionObserverNode extends THREE.Node {
-  frameCount = 0
-
-  constructor() {
-    super('float')
-    this.updateType = THREE.NodeUpdateType.OBJECT
-  }
-
-  update(frame: any) {
-    this.frameCount++
-
-    // During render, check ALL registered objects and cache results
-    for (const obj of occlusionRegistry) {
-      const isOccluded = frame.renderer.isOccluded(obj)
-      occlusionCache.set(obj, isOccluded)
-    }
-
-    // Log every 60 frames to confirm update() is running
-    if (this.frameCount % 60 === 0) {
-      const results: Record<string, boolean | null> = {}
-      for (const obj of occlusionRegistry) {
-        results[obj.uuid.slice(0, 6)] = occlusionCache.get(obj) ?? null
-      }
-      console.log('%c[Observer.update]', 'color: #a855f7', {
-        frame: this.frameCount,
-        registrySize: occlusionRegistry.size,
-        cacheSize: occlusionCache.size,
-        results,
-      })
-    }
-  }
-
-  setup() {
-    return uniform(0)
-  }
-}
-
-// Helper to register an object for occlusion checking
-function registerForOcclusion(obj: THREE.Object3D) {
-  obj.occlusionTest = true
-  occlusionRegistry.add(obj)
-  console.log('%c[Registry] Added', 'color: #4ade80', obj.uuid.slice(0, 6))
-}
-
-function unregisterFromOcclusion(obj: THREE.Object3D) {
-  occlusionRegistry.delete(obj)
-  occlusionCache.delete(obj)
-}
-
-//* ==============================
-//* CPU-SIDE OCCLUSION TEST (using shared registry)
+//* ORBITING SPHERE - Tests onFramed (frustum visibility)
 //* ==============================
 
-function CPUOcclusionTest() {
-  const sphereRef = useRef<THREE.Mesh>(null)
-  const [cpuResult, setCpuResult] = useState<boolean | null>('init' as any)
-  const frameCount = useRef(0)
-
-  // Just register the sphere - no material modification needed!
-  useEffect(() => {
-    if (!sphereRef.current) return
-    registerForOcclusion(sphereRef.current)
-    return () => {
-      if (sphereRef.current) unregisterFromOcclusion(sphereRef.current)
-    }
-  }, [])
-
-  // Read from cache in useFrame
-  useFrame(() => {
-    if (!sphereRef.current) return
-    frameCount.current++
-
-    // Read from shared cache
-    const cachedResult = occlusionCache.get(sphereRef.current)
-
-    // Log every 60 frames
-    if (frameCount.current % 60 === 0) {
-      console.log('%c[CPU useFrame]', 'color: #fbbf24', {
-        frame: frameCount.current,
-        cachedResult,
-        registrySize: occlusionRegistry.size,
-        cacheSize: occlusionCache.size,
-      })
-    }
-
-    // Update state only on change
-    if (cachedResult !== cpuResult && cachedResult !== undefined) {
-      setCpuResult(cachedResult)
-      console.log('%c[CPU] State changed!', 'color: #22c55e; font-weight: bold', {
-        from: cpuResult,
-        to: cachedResult,
-      })
-    }
-  })
+function OrbitingSphere() {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const [inView, setInView] = useState(true)
 
   return (
-    <group position={[-3, 0, 0]}>
-      {/* Plane in front - NO node attached, just a plain material */}
-      <mesh>
-        <planeGeometry args={[2, 2]} />
-        <meshStandardNodeMaterial
-          color={cpuResult === true ? '#00ff00' : cpuResult === false ? '#0000ff' : '#888888'}
+    <group position={[-4, 0, 0]}>
+      {/* Indicator plane */}
+      <mesh position={[0, 2, 0]}>
+        <planeGeometry args={[2.5, 0.5]} />
+        <meshBasicMaterial color={inView ? '#22c55e' : '#ef4444'} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* The sphere with onFramed handler */}
+      <mesh
+        ref={meshRef}
+        name="framed-sphere"
+        onFramed={(inFrustum: boolean) => {
+          setInView(inFrustum)
+          console.log('%c[onFramed]', 'color: #22c55e', inFrustum ? 'IN VIEW' : 'OUT OF VIEW')
+        }}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color="#3b82f6" />
+      </mesh>
+    </group>
+  )
+}
+
+//* ==============================
+//* OCCLUSION TEST - Tests onOccluded (WebGPU occlusion queries)
+//* ==============================
+
+function OcclusionTest() {
+  const [isOccluded, setIsOccluded] = useState<boolean | null>(null)
+
+  return (
+    <group position={[0, 0, 0]}>
+      {/* Indicator plane - shows occlusion state */}
+      <mesh position={[0, 2, 0]}>
+        <planeGeometry args={[2.5, 0.5]} />
+        <meshBasicMaterial
+          color={isOccluded === true ? '#00ff00' : isOccluded === false ? '#0000ff' : '#888888'}
           side={THREE.DoubleSide}
         />
       </mesh>
 
-      {/* Sphere behind - registered for occlusion testing */}
-      <mesh ref={sphereRef} position={[0, 0, -1]}>
-        <sphereGeometry args={[0.5]} />
-        <meshStandardNodeMaterial color="#ffff00" />
+      {/* Occluding box - large enough to fully block the sphere */}
+      <mesh position={[0, 0, 0.5]}>
+        <boxGeometry args={[3, 3, 0.2]} />
+        <meshStandardMaterial color="#64748b" />
+      </mesh>
+
+      {/* Sphere behind the box - has onOccluded handler */}
+      <mesh
+        name="occlusion-sphere"
+        position={[0, 0, -1.5]}
+        onOccluded={(occluded: boolean) => {
+          setIsOccluded(occluded)
+          console.log('%c[onOccluded]', 'color: #a855f7', occluded ? 'OCCLUDED' : 'VISIBLE')
+        }}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color="#fbbf24" />
       </mesh>
     </group>
   )
 }
 
 //* ==============================
-//* NODE-BASED OCCLUSION (Visual Reference)
+//* VISIBILITY TEST - Tests onVisible (combined check)
 //* ==============================
 
-// This one changes color visually - used as reference to compare
-class OcclusionColorNode extends THREE.Node {
-  testObject: THREE.Object3D
-  normalColor: THREE.Color
-  occludedColor: THREE.Color
-  uniformNode: ReturnType<typeof uniform>
-
-  constructor(testObject: THREE.Object3D, normalColor: THREE.Color, occludedColor: THREE.Color) {
-    super('vec3')
-    this.updateType = THREE.NodeUpdateType.OBJECT
-    this.uniformNode = uniform(new THREE.Color())
-    this.testObject = testObject
-    this.normalColor = normalColor
-    this.occludedColor = occludedColor
-  }
-
-  update(frame: any) {
-    const isOccluded = frame.renderer.isOccluded(this.testObject)
-    const color = isOccluded === true ? this.occludedColor : this.normalColor
-    ;(this.uniformNode.value as THREE.Color).copy(color)
-  }
-
-  setup() {
-    return this.uniformNode
-  }
-}
-
-function NodeOcclusionTest() {
-  const sphereRef = useRef<THREE.Mesh>(null)
-  const planeRef = useRef<THREE.Mesh>(null)
-  const [isSetup, setIsSetup] = useState(false)
-
-  useEffect(() => {
-    if (!sphereRef.current || !planeRef.current || isSetup) return
-
-    const sphere = sphereRef.current
-    const plane = planeRef.current
-
-    // Also register this sphere so the Observer caches it too!
-    registerForOcclusion(sphere)
-
-    const occlusionNode = nodeObject(
-      new OcclusionColorNode(sphere, new THREE.Color(0x0000ff), new THREE.Color(0x00ff00)) as any,
-    )
-
-    const planeMaterial = plane.material as THREE.MeshPhongNodeMaterial
-    ;(planeMaterial as any).colorNode = occlusionNode
-    planeMaterial.needsUpdate = true
-
-    setIsSetup(true)
-
-    return () => {
-      if (sphere) unregisterFromOcclusion(sphere)
-    }
-  }, [isSetup])
+function VisibilityTest() {
+  const [isVisible, setIsVisible] = useState<boolean | null>(null)
 
   return (
-    <group position={[3, 0, 0]}>
-      {/* Plane in front - color changes via Node */}
-      <mesh ref={planeRef}>
-        <planeGeometry args={[2, 2]} />
-        <meshPhongNodeMaterial color={0x00ff00} side={THREE.DoubleSide} />
+    <group position={[4, 0, 0]}>
+      {/* Indicator plane */}
+      <mesh position={[0, 2, 0]}>
+        <planeGeometry args={[2.5, 0.5]} />
+        <meshBasicMaterial
+          color={isVisible === true ? '#22c55e' : isVisible === false ? '#ef4444' : '#888888'}
+          side={THREE.DoubleSide}
+        />
       </mesh>
 
-      {/* Sphere behind */}
-      <mesh ref={sphereRef} position={[0, 0, -1]}>
-        <sphereGeometry args={[0.5]} />
-        <meshPhongNodeMaterial color={0xffff00} />
+      {/* Occluding box - large enough to fully block the sphere */}
+      <mesh position={[0, 0, 0.5]}>
+        <boxGeometry args={[3, 3, 0.2]} />
+        <meshStandardMaterial color="#64748b" />
+      </mesh>
+
+      {/* Sphere with onVisible - combines frustum + occlusion + visible prop */}
+      <mesh
+        name="visibility-sphere"
+        position={[0, 0, -1.5]}
+        onVisible={(visible: boolean) => {
+          setIsVisible(visible)
+          console.log('%c[onVisible]', 'color: #f472b6', visible ? 'FULLY VISIBLE' : 'NOT VISIBLE')
+        }}>
+        <sphereGeometry args={[0.5, 32, 32]} />
+        <meshStandardMaterial color="#ec4899" />
       </mesh>
     </group>
   )
 }
 
 //* ==============================
-//* INVISIBLE OBSERVER - hosts the single Node that checks ALL objects
+//* SCENE INFO - Shows internal state (debug)
 //* ==============================
 
-function OcclusionObserver() {
-  const observerRef = useRef<THREE.Mesh>(null)
-  const [isSetup, setIsSetup] = useState(false)
+function SceneInfo() {
+  const { internal } = useThree()
 
-  useEffect(() => {
-    if (!observerRef.current || isSetup) return
+  // Log internal state periodically for debugging
+  useRef<number>(0)
 
-    // Disable frustum culling so it always renders!
-    observerRef.current.frustumCulled = false
+  useState(() => {
+    const interval = setInterval(() => {
+      // Access via any to avoid type errors with unrebuilt package
+      const internalAny = internal as any
+      console.log('%c[Internal State]', 'color: #64748b', {
+        registry: internalAny.visibilityRegistry?.size ?? 0,
+        cache: internalAny.occlusionCache?.size ?? 0,
+        helperGroup: !!internalAny.helperGroup,
+        occlusionEnabled: !!internalAny.occlusionEnabled,
+      })
+    }, 5000) // Log every 5 seconds
+    return () => clearInterval(interval)
+  })
 
-    // Create the observer node and attach to this invisible mesh
-    const observerNode = nodeObject(new OcclusionObserverNode() as any)
-    const material = observerRef.current.material as THREE.MeshBasicNodeMaterial
-    ;(material as any).colorNode = observerNode
-    material.needsUpdate = true
-
-    console.log('%c[Observer] Invisible observer mesh ready', 'color: #a855f7; font-weight: bold', {
-      registrySize: occlusionRegistry.size,
-    })
-    setIsSetup(true)
-  }, [isSetup])
-
-  return (
-    // Tiny mesh with frustumCulled=false so it ALWAYS renders
-    // Position doesn't matter since frustum culling is disabled
-    <mesh ref={observerRef} visible={true} scale={0.0001}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshBasicNodeMaterial transparent opacity={0} />
-    </mesh>
-  )
+  return null
 }
 
 //* Main Scene --------------------------------
@@ -255,14 +150,12 @@ function Scene() {
       <ambientLight intensity={Math.PI * 0.5} />
       <directionalLight position={[0.32, 0.39, 0.7]} intensity={1} />
 
-      {/* THE KEY: One invisible observer checks ALL registered objects */}
-      <OcclusionObserver />
+      {/* Test components using R3F's visibility event handlers */}
+      <OrbitingSphere />
+      <OcclusionTest />
+      <VisibilityTest />
 
-      {/* CPU-side test (LEFT) - just registers, no material mod */}
-      <CPUOcclusionTest />
-
-      {/* Node-based test (RIGHT) - reference */}
-      <NodeOcclusionTest />
+      <SceneInfo />
 
       <gridHelper args={[20, 20, '#444', '#333']} position={[0, -2, 0]} />
       <OrbitControls makeDefault minDistance={3} maxDistance={25} />
@@ -279,37 +172,46 @@ function Instructions() {
         top: 16,
         left: 16,
         padding: 16,
-        background: 'rgba(0, 0, 0, 0.7)',
+        background: 'rgba(0, 0, 0, 0.85)',
         borderRadius: 8,
         color: 'white',
         fontFamily: 'system-ui, sans-serif',
         fontSize: 14,
-        maxWidth: 420,
+        maxWidth: 480,
       }}>
-      <h3 style={{ margin: '0 0 12px 0', fontSize: 16 }}>Occlusion: Cached CPU vs Direct Node</h3>
+      <h3 style={{ margin: '0 0 12px 0', fontSize: 16 }}>R3F Visibility Events Demo</h3>
 
       <div style={{ marginBottom: 12 }}>
-        <strong style={{ color: '#fbbf24' }}>LEFT: CPU-side (cached via Node)</strong>
+        <strong style={{ color: '#22c55e' }}>LEFT: onFramed (frustum)</strong>
         <p style={{ margin: '4px 0 0 0', fontSize: 12, opacity: 0.8 }}>
-          Node caches isOccluded() during render → useFrame reads from cache.
+          Fires when object enters/exits camera frustum.
           <br />
-          BLUE = visible, GREEN = occluded, GRAY = no data yet
+          GREEN = in view, RED = out of view
         </p>
       </div>
 
-      <div style={{ marginBottom: 8 }}>
-        <strong style={{ color: '#22c55e' }}>RIGHT: Direct Node (reference)</strong>
+      <div style={{ marginBottom: 12 }}>
+        <strong style={{ color: '#a855f7' }}>CENTER: onOccluded (WebGPU)</strong>
         <p style={{ margin: '4px 0 0 0', fontSize: 12, opacity: 0.8 }}>
-          OcclusionNode changes color directly during render.
+          Fires when object is hidden/revealed by other geometry.
           <br />
-          BLUE = visible, GREEN = occluded
+          GREEN = occluded, BLUE = visible, GRAY = no data
         </p>
       </div>
 
-      <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.6 }}>
-        Both planes should change color identically when you rotate the camera.
+      <div style={{ marginBottom: 12 }}>
+        <strong style={{ color: '#f472b6' }}>RIGHT: onVisible (combined)</strong>
+        <p style={{ margin: '4px 0 0 0', fontSize: 12, opacity: 0.8 }}>
+          Fires when combined visibility changes (frustum + occlusion + visible prop).
+          <br />
+          GREEN = fully visible, RED = not visible
+        </p>
+      </div>
+
+      <p style={{ margin: '12px 0 0 0', fontSize: 11, opacity: 0.6, borderTop: '1px solid #444', paddingTop: 8 }}>
+        Rotate the camera to see occlusion events fire.
         <br />
-        This proves CPU-side occlusion works via caching!
+        Check console for event logs. The __r3fInternal group is auto-created for occlusion.
       </p>
     </div>
   )

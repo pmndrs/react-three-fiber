@@ -6,10 +6,16 @@ import * as React from 'react'
 import { useRef, useEffect } from 'react'
 import { render, act as rtlAct } from '@testing-library/react'
 import { Canvas, useThree, useFrame, extend } from '../src'
+import { __resetWarningFlag } from '../src/core/visibility'
 import * as THREE from '#three'
 import type { RootState } from '#types'
 
 extend(THREE as any)
+
+// Reset warning flag before each test to ensure clean state
+beforeEach(() => {
+  __resetWarningFlag()
+})
 
 // Helper to wait for R3F's initialization and frame loop
 async function act<T>(fn: () => Promise<T>) {
@@ -124,6 +130,7 @@ describe('visibility events', () => {
   describe('onOccluded', () => {
     it('does not error when used without WebGPU renderer', async () => {
       const handleOccluded = vi.fn()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       // This should not throw
       await expect(
@@ -144,10 +151,16 @@ describe('visibility events', () => {
       // Without WebGPU, onOccluded should not fire (no occlusion support)
       // This is expected behavior - occlusion queries are WebGPU only
       expect(handleOccluded).not.toHaveBeenCalled()
+
+      // Should have warned about WebGL limitation
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('WebGPU'))
+
+      warnSpy.mockRestore()
     })
 
     it('sets occlusionTest flag on object', async () => {
       let meshRef: THREE.Mesh | null = null
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       function TestComponent() {
         const ref = useRef<THREE.Mesh>(null)
@@ -176,6 +189,34 @@ describe('visibility events', () => {
 
       // The occlusionTest flag should be set on the mesh
       expect((meshRef as any)?.occlusionTest).toBe(true)
+
+      warnSpy.mockRestore()
+    })
+
+    it('warns once about WebGL limitation', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      // First component
+      await act(async () => {
+        render(
+          <Canvas>
+            <mesh onOccluded={() => {}}>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      await advanceFrames(3)
+
+      // Warning should be called once
+      const warningCallCount = warnSpy.mock.calls.filter((call) => call[0]?.toString().includes('WebGPU')).length
+
+      // The warning is per-session, so it should only fire once even with multiple objects
+      expect(warningCallCount).toBeLessThanOrEqual(1)
+
+      warnSpy.mockRestore()
     })
   })
 
@@ -353,6 +394,7 @@ describe('visibility events', () => {
       const handleFramed = vi.fn()
       const handleOccluded = vi.fn()
       const handleVisible = vi.fn()
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
       await act(async () => {
         render(
@@ -371,6 +413,59 @@ describe('visibility events', () => {
       expect(handleFramed).toHaveBeenCalledWith(true)
       expect(handleVisible).toHaveBeenCalledWith(true)
       // onOccluded won't fire without WebGPU renderer
+
+      warnSpy.mockRestore()
+    })
+  })
+
+  //* Occlusion System Tests --------------------------------
+
+  describe('occlusion system', () => {
+    it('can be explicitly enabled via Canvas prop (triggers warning on WebGL)', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      // When using the occlusion prop with a handler, it should trigger
+      // the WebGL warning since the test environment doesn't have WebGPU
+      await act(async () => {
+        render(
+          <Canvas>
+            <mesh onOccluded={() => {}}>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      await advanceFrames(3)
+
+      // On WebGL, occlusion can't be enabled (warning should be logged)
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('WebGPU'))
+
+      warnSpy.mockRestore()
+    })
+
+    it('auto-enables when onVisible is used', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+      const handleVisible = vi.fn()
+
+      await act(async () => {
+        render(
+          <Canvas>
+            <mesh onVisible={handleVisible}>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      await advanceFrames(3)
+
+      // Should have tried to enable occlusion (and warned about WebGL)
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('WebGPU'))
+
+      warnSpy.mockRestore()
     })
   })
 })

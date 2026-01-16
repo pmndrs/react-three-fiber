@@ -63,6 +63,14 @@ export interface InternalState {
   lastEvent: React.RefObject<DomEvent | null>
   /** Visibility event registry (onFramed, onOccluded, onVisible) */
   visibilityRegistry: Map<string, VisibilityEntry>
+  /** Whether occlusion queries are enabled (WebGPU only) */
+  occlusionEnabled: boolean
+  /** Reference to the invisible occlusion observer mesh */
+  occlusionObserver: THREE.Mesh | null
+  /** Cached occlusion results from render pass - keyed by Object3D */
+  occlusionCache: Map<THREE.Object3D, boolean | null>
+  /** Internal helper group for R3F system objects (occlusion observer, etc.) */
+  helperGroup: THREE.Group | null
   active: boolean
   priority: number
   frames: number

@@ -22,7 +22,7 @@ import {
 } from './utils'
 import { notifyDepreciated } from './notices'
 import { getScheduler, Scheduler } from './hooks/useFrame/scheduler'
-import { checkVisibility } from './visibility'
+import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 
 import type {
   RootState,
@@ -168,6 +168,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onDragOverMissed,
         onDropMissed,
         autoUpdateFrustum = true,
+        occlusion = false,
       } = props
 
       let state = store.getState()
@@ -361,6 +362,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (!state.onDropMissed) state.set({ onDropMissed })
       // Set autoUpdateFrustum flag
       if (state.autoUpdateFrustum !== autoUpdateFrustum) state.set({ autoUpdateFrustum })
+      // Enable occlusion if requested via prop (auto-enables on handler registration too)
+      if (occlusion && !state.internal.occlusionEnabled) {
+        enableOcclusion(store)
+      }
       // Check performance - only update if the PROP changed
       // This preserves any runtime performance changes across Canvas re-configures
       if (performance && !is.equ(performance, lastConfiguredProps.performance, shallowLoose)) {
@@ -666,6 +671,8 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             if (unregisterRoot) unregisterRoot()
 
             state.events.disconnect?.()
+            // Clean up occlusion system and helper group
+            cleanupHelperGroup(root!.store)
             renderer?.renderLists?.dispose?.()
             renderer?.forceContextLoss?.()
             if (renderer?.xr) state.xr.disconnect()

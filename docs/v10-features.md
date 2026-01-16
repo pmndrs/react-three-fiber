@@ -320,6 +320,14 @@ function OcclusionAwareObject() {
 
 The `occlusionTest` flag is automatically enabled on the object when using this handler.
 
+**Note:** Occlusion queries are automatically enabled when any object uses `onOccluded` or `onVisible`. You can also enable it explicitly:
+
+```tsx
+<Canvas occlusion>{/* ... */}</Canvas>
+```
+
+If you use occlusion handlers with a WebGL renderer, a warning will be logged and the events won't fire.
+
 ### onVisible - Combined Visibility Events
 
 Fires when the combined visibility state changes. An object is considered visible when:
@@ -352,6 +360,18 @@ function FullyVisibleObject() {
 - Frustum checks use `THREE.Frustum.intersectsObject()` which relies on bounding spheres
 - The visibility system runs in the `preRender` phase after frustum updates
 - Objects are automatically unregistered when unmounted
+
+### Implementation Details
+
+When occlusion queries are enabled, R3F adds an internal helper group (`__r3fInternal`) to the scene. This group contains an invisible observer mesh that caches occlusion query results during the render pass. This is necessary because WebGPU's `isOccluded()` method only returns valid results during rendering.
+
+The helper group and observer mesh:
+
+- Are invisible and have no visual impact
+- Are automatically cleaned up on unmount
+- Can be identified by the `__r3fInternal` property if needed
+
+If you're counting scene children, be aware this group exists when occlusion is enabled.
 
 ### Event Handler Reference
 
