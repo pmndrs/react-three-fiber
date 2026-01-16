@@ -28,6 +28,15 @@ declare global {
   type UniformStore = Record<string, UniformNode | UniformRecord>
 
   /**
+   * Helper to safely access a uniform node from the store.
+   * Use this when accessing state.uniforms to get proper typing.
+   * @example
+   * const uTime = uniforms.uTime as UniformNode<number>
+   * const uColor = uniforms.uColor as UniformNode<import('three/webgpu').Color>
+   */
+  type GetUniform<T = unknown> = UniformNode<T>
+
+  /**
    * Acceptable input values for useUniforms - raw values that get converted to UniformNodes
    * Supports: primitives, Three.js types, plain objects (converted to vectors), and UniformNodes
    */

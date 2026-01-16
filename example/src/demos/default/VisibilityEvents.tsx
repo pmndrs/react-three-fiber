@@ -2,10 +2,12 @@
 // Testing R3F's core visibility system: onFramed, onOccluded, onVisible
 // This uses the built-in event handlers - no manual setup required!
 
-import { Canvas, useThree } from '@react-three/fiber/webgpu'
+import { Canvas, useLocalNodes, useThree, useUniform } from '@react-three/fiber/webgpu'
 import { OrbitControls, Text } from '@react-three/drei'
-import { useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import * as THREE from 'three/webgpu'
+import { useFrame } from '@react-three/fiber'
+import { color, int, mix } from 'three/tsl'
 
 //* ==============================
 //* ORBITING SPHERE - Tests onFramed (frustum visibility)
@@ -15,26 +17,45 @@ function OrbitingSphere() {
   const meshRef = useRef<THREE.Mesh>(null)
   const [inView, setInView] = useState(true)
 
-  return (
-    <group position={[-4, 0, 0]}>
-      {/* Indicator plane */}
-      <mesh position={[0, 2, 0]}>
-        <planeGeometry args={[2.5, 0.5]} />
-        <meshBasicMaterial color={inView ? '#22c55e' : '#ef4444'} side={THREE.DoubleSide} />
-      </mesh>
+  // make the sphere orbit the scene like a planet with diagonal orbit
+  useFrame(({ elapsed }) => {
+    if (!meshRef.current) return
 
-      {/* The sphere with onFramed handler */}
-      <mesh
-        ref={meshRef}
-        name="framed-sphere"
-        onFramed={(inFrustum: boolean) => {
-          setInView(inFrustum)
-          console.log('%c[onFramed]', 'color: #22c55e', inFrustum ? 'IN VIEW' : 'OUT OF VIEW')
-        }}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-        <meshStandardMaterial color="#3b82f6" />
+    const orbitRadius = 10
+    const orbitSpeed = 0.5
+    const tilt = Math.PI * 0.15 // 15 degree tilt for diagonal orbit
+
+    // Calculate position on elliptical orbit
+    const angle = elapsed * orbitSpeed
+    meshRef.current.position.x = Math.cos(angle) * orbitRadius
+    meshRef.current.position.z = Math.sin(angle) * orbitRadius
+    meshRef.current.position.y = Math.sin(angle) * orbitRadius * Math.sin(tilt)
+
+    // Make sphere rotate as it orbits
+    meshRef.current.rotation.y = elapsed
+  })
+
+  return (
+    <>
+      {/* Indicator plane follows the sphere */}
+      <mesh ref={meshRef} position={[0, 0, 0]}>
+        <group position={[0, 1.5, 0]}>
+          <planeGeometry args={[2.5, 0.5]} />
+          <meshBasicMaterial color={inView ? '#22c55e' : '#ef4444'} side={THREE.DoubleSide} />
+        </group>
+
+        {/* The sphere with onFramed handler */}
+        <mesh
+          name="framed-sphere"
+          onFramed={(inFrustum: boolean) => {
+            setInView(inFrustum)
+            console.log('%c[onFramed]', 'color: #22c55e', inFrustum ? 'IN VIEW' : 'OUT OF VIEW')
+          }}>
+          <sphereGeometry args={[0.5, 32, 32]} />
+          <meshStandardMaterial color="#3b82f6" />
+        </mesh>
       </mesh>
-    </group>
+    </>
   )
 }
 
@@ -43,35 +64,27 @@ function OrbitingSphere() {
 //* ==============================
 
 function OcclusionTest() {
+  // track with a CPU accessible state
   const [isOccluded, setIsOccluded] = useState<boolean | null>(null)
+
+  const uIsOccluded = useUniform('isOccluded', 0)
+
+  const handleOccluded = useCallback(
+    (occluded: boolean) => {
+      setIsOccluded(occluded)
+      uIsOccluded.value = occluded ? 1 : 0
+    },
+    [uIsOccluded],
+  )
 
   return (
     <group position={[0, 0, 0]}>
-      {/* Indicator plane - shows occlusion state */}
-      <mesh position={[0, 2, 0]}>
-        <planeGeometry args={[2.5, 0.5]} />
-        <meshBasicMaterial
-          color={isOccluded === true ? '#00ff00' : isOccluded === false ? '#0000ff' : '#888888'}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Occluding box - large enough to fully block the sphere */}
-      <mesh position={[0, 0, 0.5]}>
-        <boxGeometry args={[3, 3, 0.2]} />
-        <meshStandardMaterial color="#64748b" />
-      </mesh>
+      <Blocker />
 
       {/* Sphere behind the box - has onOccluded handler */}
-      <mesh
-        name="occlusion-sphere"
-        position={[0, 0, -1.5]}
-        onOccluded={(occluded: boolean) => {
-          setIsOccluded(occluded)
-          console.log('%c[onOccluded]', 'color: #a855f7', occluded ? 'OCCLUDED' : 'VISIBLE')
-        }}>
-        <sphereGeometry args={[0.5, 32, 32]} />
-        <meshStandardMaterial color="#fbbf24" />
+      <mesh name="occlusion-sphere" position={[0, 0, 0]} onOccluded={(occluded: boolean) => handleOccluded(occluded)}>
+        <icosahedronGeometry args={[0.5, 1]} />
+        <meshStandardMaterial color="#CC24FB" />
       </mesh>
     </group>
   )
@@ -116,31 +129,75 @@ function VisibilityTest() {
   )
 }
 
-//* ==============================
-//* SCENE INFO - Shows internal state (debug)
-//* ==============================
-
-function SceneInfo() {
-  const { internal } = useThree()
-
-  // Log internal state periodically for debugging
-  useRef<number>(0)
-
-  useState(() => {
-    const interval = setInterval(() => {
-      // Access via any to avoid type errors with unrebuilt package
-      const internalAny = internal as any
-      console.log('%c[Internal State]', 'color: #64748b', {
-        registry: internalAny.visibilityRegistry?.size ?? 0,
-        cache: internalAny.occlusionCache?.size ?? 0,
-        helperGroup: !!internalAny.helperGroup,
-        occlusionEnabled: !!internalAny.occlusionEnabled,
-      })
-    }, 5000) // Log every 5 seconds
-    return () => clearInterval(interval)
+//* Blocker, two planes spins around blocking the center mesh
+function Blocker() {
+  const groupRef = useRef<THREE.Group>(null)
+  useFrame(({ elapsed }) => {
+    if (!groupRef.current) return
+    groupRef.current.rotation.y = elapsed
   })
 
-  return null
+  const { colorNode } = useLocalNodes(({ uniforms }) => {
+    const uIsOccluded = uniforms.isOccluded as UniformNode<number>
+    return {
+      colorNode: mix(color('#FF0458'), color('#00FFEE'), uIsOccluded),
+    }
+  })
+  return (
+    <group ref={groupRef} position={[0, 0, 0]}>
+      <mesh position={[0, 0, 1.5]}>
+        <planeGeometry args={[2, 2]} />
+        <meshStandardMaterial colorNode={colorNode} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, 0, -1.5]}>
+        <planeGeometry args={[2, 2]} />
+        <meshStandardMaterial colorNode={colorNode} side={THREE.DoubleSide} />
+      </mesh>
+    </group>
+  )
+}
+
+//* Random cube
+function RandomCube() {
+  // for 3 seconds show visible then 3 seconds off and bounce around the scene
+  const distance = 5
+  const boxRef = useRef<THREE.Mesh>(null)
+  const [show, setShow] = useState(false)
+  const [position, setPosition] = useState([2, -2, 2])
+  // use an effect with timeouts for this logic
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShow((show) => !show)
+    }, 3000)
+    // every 6 seconds move the cube to a random position
+    const randomPosition = () => {
+      setPosition([Math.random() * distance, Math.random() * distance, Math.random() * distance])
+    }
+    const posInterval = setInterval(randomPosition, 6000)
+    return () => {
+      clearInterval(interval)
+      clearInterval(posInterval)
+    }
+  }, [])
+
+  // slow rotation in all axis
+  useFrame(({ delta }) => {
+    if (!boxRef.current) return
+    boxRef.current.rotation.x += delta
+    boxRef.current.rotation.y += delta
+    boxRef.current.rotation.z += delta
+  })
+
+  return (
+    <mesh
+      ref={boxRef}
+      position={position}
+      visible={show}
+      rotation={[Math.random() * 2 * Math.PI, Math.random() * 2 * Math.PI, Math.random() * 2 * Math.PI]}>
+      <boxGeometry args={[0.3, 0.3, 0.3]} />
+      <meshStandardMaterial color={'#FF5703'} />
+    </mesh>
+  )
 }
 
 //* Main Scene --------------------------------
@@ -154,8 +211,7 @@ function Scene() {
       <OrbitingSphere />
       <OcclusionTest />
       <VisibilityTest />
-
-      <SceneInfo />
+      <RandomCube />
 
       <gridHelper args={[20, 20, '#444', '#333']} position={[0, -2, 0]} />
       <OrbitControls makeDefault minDistance={3} maxDistance={25} />

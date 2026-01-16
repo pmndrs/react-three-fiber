@@ -259,6 +259,15 @@ export default useNodes
 export type LocalNodeCreator<T extends Record<string, unknown>> = (state: RootState) => T
 
 /**
+ * Helper to extract a typed uniform from the uniforms store.
+ * This is a runtime no-op but helps TypeScript understand the type.
+ * @internal
+ */
+function getUniform<T>(uniform: UniformNode | UniformRecord): UniformNode<T> {
+  return uniform as UniformNode<T>
+}
+
+/**
  * Creates local values that rebuild when uniforms, nodes, or textures change.
  *
  * Unlike `useNodes`, this does NOT register to the global store.
@@ -276,6 +285,12 @@ export type LocalNodeCreator<T extends Record<string, unknown>> = (state: RootSt
  * const { scaled } = useLocalNodes(({ camera, nodes }) => ({
  *   scaled: nodes.basePos.mul(camera.zoom),
  * }))
+ *
+ * // Type-safe uniform access
+ * const { colorNode } = useLocalNodes(({ uniforms }) => {
+ *   const uValue = uniforms.myUniform as UniformNode<number>
+ *   return { colorNode: mix(colorA, colorB, uValue) }
+ * })
  * ```
  */
 export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalNodeCreator<T>): T {
