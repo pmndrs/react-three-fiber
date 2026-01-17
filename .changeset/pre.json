@@ -7,5 +7,5 @@
     "@react-three/fiber": "9.4.2",
     "@react-three/test-renderer": "9.1.0"
   },
-  "changesets": ["v10-alpha-release"]
+  "changesets": ["aggregate-release", "v10-alpha-release"]
 }

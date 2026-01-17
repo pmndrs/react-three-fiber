@@ -1,5 +1,12 @@
 # example
 
+## 0.0.1-alpha.0
+
+### Patch Changes
+
+- Updated dependencies
+  - @react-three/fiber@10.0.0-alpha.1
+
 ## 1.1.0
 
 ### Minor Changes

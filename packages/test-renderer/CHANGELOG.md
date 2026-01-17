@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 10.0.0-alpha.1
+
+### Patch Changes
+
+- Aggregate changes merged since the last release.
+
 ## 10.0.0-alpha.0
 
 ### Major Changes

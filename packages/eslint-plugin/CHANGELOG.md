@@ -1,5 +1,11 @@
 # @react-three/eslint-plugin
 
+## 0.2.0-alpha.1
+
+### Patch Changes
+
+- Aggregate changes merged since the last release.
+
 ## 0.2.0-alpha.0
 
 ### Minor Changes
