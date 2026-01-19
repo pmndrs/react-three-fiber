@@ -82,7 +82,7 @@
     "three": "^0.181.0",
     "typescript": "^5.9.3",
     "unbuild": "^3.6.1",
-    "vite": "^6.0.0",
+    "vite": "^7.3.1",
     "vitest": "^4.0.17"
   },
   "packageManager": "pnpm@9.15.2"
