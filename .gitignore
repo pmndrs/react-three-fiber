@@ -9,6 +9,7 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 .vscode
+.claude
 .docz/
 package-lock.json
 coverage/
