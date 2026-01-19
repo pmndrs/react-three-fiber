@@ -56,7 +56,8 @@ async function generateConfig(name: string, rules: FoundRule[]) {
 
 async function writeFile(filepath: string, code: string) {
   const config = await resolveConfig(filepath)
-  await fs.writeFile(filepath, format(extname(filepath) === '.md' ? code : jsHeader(code), { ...config, filepath }))
+  const formatted = await format(extname(filepath) === '.md' ? code : jsHeader(code), { ...config, filepath })
+  await fs.writeFile(filepath, formatted)
 }
 
 async function generateRuleIndex(rules: FoundRule[]) {
