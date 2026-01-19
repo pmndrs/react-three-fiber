@@ -118,6 +118,17 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 - Fixed `useNodes()` and `useUniforms()` reader modes not updating when store changes
 - Fixed `usePostProcessing` callbacks not re-running after HMR due to stale ref guards
+- Fixed absolute Windows paths appearing in bundled type declarations by defining `FiberRoot` locally instead of importing from `react-reconciler`
+- Fixed eslint-plugin codegen script not awaiting prettier format before writing files
+
+### Maintenance
+
+- Migrated to ESLint 9 flat config
+- Updated Vite to v7
+- Updated Prettier to v3 and reformatted codebase
+- Updated Husky to v9 and lint-staged to v16
+- Updated various dependencies to latest versions
+- Converted `verify-bundles.js` script to ES modules
 
 ### Files Changed
 

@@ -8,7 +8,9 @@
       "Bash(npm view:*)",
       "Bash(pnpm install)",
       "Bash(pnpm typecheck:*)",
-      "Bash(pnpm format:fix:*)"
+      "Bash(pnpm format:fix:*)",
+      "Bash(pnpm verify-bundles:*)",
+      "Bash(pnpm run ci:*)"
     ]
   }
 }
