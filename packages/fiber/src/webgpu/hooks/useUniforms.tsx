@@ -1,16 +1,18 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
+import type { Node } from '#three'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
 import { vectorize } from './utils'
 import { useCompareMemoize } from './useCompareMemoize'
 import { is } from '../../core/utils'
+import { createScopedStore, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
 /** Creator function that returns uniform inputs (can be raw values or UniformNodes) */
-export type UniformCreator<T extends UniformInputRecord = UniformInputRecord> = (state: RootState) => T
+export type UniformCreator<T extends UniformInputRecord = UniformInputRecord> = (state: CreatorState) => T
 
 /** Function signature for removeUniforms util */
 export type RemoveUniformsFn = (names: string | string[], scope?: string) => void
@@ -205,7 +207,17 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // This allows: useUniforms(() => ({ uTime: time })) to work without useCallback wrapping.
   // Function runs every render, but GPU only updates when result values change.
   const inputForMemoization = useMemo(() => {
-    return is.fun(creatorOrScope) ? creatorOrScope(store.getState()) : creatorOrScope
+    if (is.fun(creatorOrScope)) {
+      const state = store.getState()
+      // Wrap state with ScopedStore for type-safe uniform/node access
+      const wrappedState: CreatorState = {
+        ...state,
+        uniforms: createScopedStore<UniformNode>(state.uniforms),
+        nodes: createScopedStore<Node>(state.nodes),
+      }
+      return creatorOrScope(wrappedState)
+    }
+    return creatorOrScope
   }, [creatorOrScope, store])
 
   // Deep-compare to detect actual value changes (not just reference changes)

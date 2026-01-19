@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
 import type { Node } from '#three'
+import { createScopedStore, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
@@ -9,7 +10,7 @@ import type { Node } from '#three'
 export type TSLNode = Node
 
 export type NodeRecord<T extends Node = Node> = Record<string, T>
-export type NodeCreator<T extends NodeRecord> = (state: RootState) => T
+export type NodeCreator<T extends NodeRecord> = (state: CreatorState) => T
 
 /** Function signature for removeNodes util */
 export type RemoveNodesFn = (names: string | string[], scope?: string) => void
@@ -191,7 +192,14 @@ export function useNodes<T extends NodeRecord>(
     const state = store.getState()
     const set = store.setState
     const creator = creatorOrScope
-    const created = creator(state)
+
+    // Wrap state with ScopedStore for type-safe uniform/node access
+    const wrappedState: CreatorState = {
+      ...state,
+      uniforms: createScopedStore<UniformNode>(state.uniforms),
+      nodes: createScopedStore<Node>(state.nodes),
+    }
+    const created = creator(wrappedState)
     const result: Record<string, TSLNode> = {}
     let hasNewNodes = false
 
@@ -333,8 +341,8 @@ export default useNodes
 
 //* useLocalNodes ==============================
 
-/** Creator receives RootState - destructure what you need. Returns any record. */
-export type LocalNodeCreator<T extends Record<string, unknown>> = (state: RootState) => T
+/** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
+export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
 
 /**
  * Helper to extract a typed uniform from the uniforms store.
@@ -381,7 +389,13 @@ export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalN
 
   return useMemo(() => {
     const state = store.getState()
-    return creator(state)
+    // Wrap state with ScopedStore for type-safe uniform/node access
+    const wrappedState: CreatorState = {
+      ...state,
+      uniforms: createScopedStore<UniformNode>(state.uniforms),
+      nodes: createScopedStore<Node>(state.nodes),
+    }
+    return creator(wrappedState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, creator, uniforms, nodes, textures]) // extras intentionally included to trigger recreation
 }

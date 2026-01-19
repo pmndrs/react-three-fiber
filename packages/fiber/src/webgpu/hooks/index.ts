@@ -1,3 +1,6 @@
+// ScopedStore - type-safe wrapper for creator function state
+export { createScopedStore, type ScopedStoreType, type CreatorState } from './ScopedStore'
+
 // Uniforms - root-level + scoped with create-if-not-exists pattern
 // Note: UniformNode and UniformRecord are global types from types/tsl.d.ts
 export {

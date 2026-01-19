@@ -8,6 +8,44 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### ScopedStore Wrapper for Type-Safe Uniform/Node Access
+
+Added `ScopedStore` proxy wrapper that provides TypeScript-friendly access to uniforms and nodes in creator functions without manual casting.
+
+**Before (required manual casting):**
+
+```typescript
+useLocalNodes(({ uniforms }) => ({
+  wobble: sin((uniforms.uTime as UniformNode<number>).mul(2)),
+}))
+```
+
+**After (no cast needed):**
+
+```typescript
+useLocalNodes(({ uniforms }) => ({
+  wobble: sin(uniforms.uTime.mul(2)), // Direct access typed as UniformNode
+  playerHealth: uniforms.scope('player').uHealth, // Explicit scope access
+}))
+```
+
+**New exports from `@react-three/fiber/webgpu`:**
+
+- `createScopedStore<T>()` - Factory function to wrap store data
+- `ScopedStoreType<T>` - Type for the wrapped store
+- `CreatorState` - Type passed to creator functions (replaces `RootState` in creators)
+
+**ScopedStore methods:**
+
+- `.scope(key)` - Access nested scope, returns empty wrapper if not found
+- `.has(key)` - Check if key exists
+- `.keys()` - Get all keys
+- Supports `Object.keys()`, `for...in`, and `'key' in store`
+
+**Type changes:**
+
+- `NodeCreator`, `LocalNodeCreator`, `UniformCreator` now receive `CreatorState` instead of `RootState`
+
 #### HMR Support for TSL Hooks
 
 Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
@@ -47,12 +85,13 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 ### Files Changed
 
+- `packages/fiber/src/webgpu/hooks/ScopedStore.ts` - **NEW** Type-safe proxy wrapper for uniform/node access
 - `packages/fiber/src/core/Canvas.tsx` - HMR detection and auto-refresh
 - `packages/fiber/src/core/store.ts` - Added `_hmrVersion` to initial state
-- `packages/fiber/src/webgpu/hooks/useNodes.tsx` - Reader subscription, rebuildNodes, hmrVersion support
-- `packages/fiber/src/webgpu/hooks/useUniforms.tsx` - Reader subscription, rebuildUniforms
+- `packages/fiber/src/webgpu/hooks/useNodes.tsx` - Reader subscription, rebuildNodes, hmrVersion support, ScopedStore integration
+- `packages/fiber/src/webgpu/hooks/useUniforms.tsx` - Reader subscription, rebuildUniforms, ScopedStore integration
 - `packages/fiber/src/webgpu/hooks/usePostProcessing.tsx` - HMR ref reset fix
-- `packages/fiber/src/webgpu/hooks/index.ts` - Export rebuild functions
+- `packages/fiber/src/webgpu/hooks/index.ts` - Export rebuild functions, ScopedStore exports
 - `packages/fiber/types/store.d.ts` - Added `_hmrVersion` type
 - `packages/fiber/types/canvas.d.ts` - Added `hmr` prop type
 - `docs/v10-features.md` - HMR documentation
