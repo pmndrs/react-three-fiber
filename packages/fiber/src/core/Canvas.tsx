@@ -37,6 +37,8 @@ function CanvasImpl({
   onDropMissed,
   onCreated,
   hmr,
+  width,
+  height,
   ...props
 }: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
@@ -71,8 +73,19 @@ function CanvasImpl({
 
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
+  // Compute effective size: props override container measurement
+  const effectiveSize = React.useMemo(
+    () => ({
+      width: width ?? containerRect.width,
+      height: height ?? containerRect.height,
+      top: containerRect.top,
+      left: containerRect.left,
+    }),
+    [width, height, containerRect],
+  )
+
   // Mark that we have initial size (for next render cycle)
-  if (!hasInitialSizeRef.current && containerRect.width > 0 && containerRect.height > 0) {
+  if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
     hasInitialSizeRef.current = true
   }
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
@@ -100,7 +113,7 @@ function CanvasImpl({
     effectActiveRef.current = true
     const canvas = canvasRef.current
 
-    if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
+    if (effectiveSize.width > 0 && effectiveSize.height > 0 && canvas) {
       if (!root.current) {
         root.current = createRoot<HTMLCanvasElement>(canvas)
 
@@ -147,7 +160,9 @@ function CanvasImpl({
           performance,
           raycaster,
           camera,
-          size: containerRect,
+          size: effectiveSize,
+          // Store size props for reset functionality
+          _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
@@ -237,7 +252,8 @@ function CanvasImpl({
     if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
       const hot = (import.meta as any).hot
       hot.on('vite:afterUpdate', handleHMR)
-      return () => hot.off('vite:afterUpdate', handleHMR)
+      // Vite uses dispose() for cleanup, not off()
+      return () => hot.dispose?.(() => {})
     }
 
     // Try webpack HMR

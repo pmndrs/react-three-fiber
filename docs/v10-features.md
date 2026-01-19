@@ -455,6 +455,121 @@ const playerUniforms = useUniforms('player')
 
 ---
 
+## Canvas Size Control
+
+v10 adds `width` and `height` props to Canvas for explicit resolution control. This enables use cases like video export at specific resolutions (e.g., 4K) independent of the container's CSS size.
+
+### Basic Usage
+
+```tsx
+// Fixed resolution - canvas renders at 1920×1080 regardless of container
+<Canvas width={1920} height={1080}>
+  <Scene />
+</Canvas>
+
+// Square canvas
+<Canvas width={800}>
+  <Scene />
+</Canvas>
+
+// Responsive (default, unchanged behavior)
+<Canvas>
+  <Scene />
+</Canvas>
+```
+
+### Video Export Use Case
+
+The primary motivation is capturing video frames at specific resolutions:
+
+```tsx
+function VideoExportScene() {
+  const { gl, scene, camera } = useThree()
+
+  const captureFrame = () => {
+    // Canvas is rendering at 3840×2160 for 4K export
+    gl.render(scene, camera)
+    const frame = new VideoFrame(gl.domElement)
+    // Use frame with MediaRecorder, WebCodecs, etc.
+  }
+
+  return <mesh>{/* ... */}</mesh>
+}
+
+// 4K resolution for video, displayed scaled in container
+;<Canvas width={3840} height={2160} dpr={1}>
+  <VideoExportScene />
+</Canvas>
+```
+
+### Imperative Size Control
+
+The `setSize` API has been enhanced with new capabilities:
+
+```tsx
+function DynamicResolution() {
+  const { setSize } = useThree()
+
+  // Temporarily boost to 4K for capture, then reset
+  const captureAt4K = async () => {
+    setSize(3840, 2160) // Take ownership, render at 4K
+    await captureFrame()
+    setSize() // Reset to props/container
+  }
+
+  // Create square canvas
+  const makeSquare = () => {
+    setSize(1024) // 1024×1024 square
+  }
+
+  return <button onClick={captureAt4K}>Capture 4K</button>
+}
+```
+
+### Ownership Model
+
+The size control follows an ownership model:
+
+1. **Props mode** (default): Canvas uses `width`/`height` props, or falls back to container measurement
+2. **Imperative mode**: Once `setSize(w, h)` is called, it takes ownership
+3. **Reset**: Call `setSize()` with no arguments to return to props/container mode
+
+```tsx
+// Initial: props control size (1920×1080)
+<Canvas width={1920} height={1080}>
+
+// User calls setSize(800, 600) → imperative mode, now 800×600
+// Container resizes → ignored, still 800×600
+// Props change to width={1280} → stored but not applied, still 800×600
+// User calls setSize() → reset to props mode, now 1280×1080
+```
+
+### API Reference
+
+**Canvas Props:**
+
+| Prop     | Type     | Default     | Description                        |
+| -------- | -------- | ----------- | ---------------------------------- |
+| `width`  | `number` | `undefined` | Canvas resolution width in pixels  |
+| `height` | `number` | `undefined` | Canvas resolution height in pixels |
+
+**setSize Methods:**
+
+| Call                       | Description                   |
+| -------------------------- | ----------------------------- |
+| `setSize()`                | Reset to props/container mode |
+| `setSize(n)`               | Set to n×n square             |
+| `setSize(w, h)`            | Set to w×h rectangle          |
+| `setSize(w, h, top, left)` | Set with position (existing)  |
+
+### Notes
+
+- **DPR**: Width/height are logical size. DPR multiplies as usual. For exact pixel control (e.g., 3840×2160 exactly), set `dpr={1}`.
+- **CSS**: When canvas resolution differs from container, CSS scales the canvas to fit. The canvas renders at full resolution internally.
+- **Partial props**: You can specify just `width` or just `height`; the other dimension comes from container measurement.
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

@@ -22,4 +22,8 @@ export interface CanvasProps
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
   /** Enable/disable automatic HMR refresh for TSL nodes and uniforms, default: true in dev */
   hmr?: boolean
+  /** Canvas resolution width in pixels. If omitted, uses container width. */
+  width?: number
+  /** Canvas resolution height in pixels. If omitted, uses container height. */
+  height?: number
 }

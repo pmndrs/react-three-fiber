@@ -169,6 +169,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onDropMissed,
         autoUpdateFrustum = true,
         occlusion = false,
+        _sizeProps,
       } = props
 
       let state = store.getState()
@@ -337,10 +338,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           wasEnabled = enabled
         })
       }
+      // Store size props for reset functionality
+      if (_sizeProps !== undefined) {
+        state.set({ _sizeProps })
+      }
       // Check size, allow it to take on container bounds initially
+      // Only apply size from props/container if not in imperative mode
       const size = computeInitialSize(canvas, propsSize)
-      if (!is.equ(size, state.size, shallowLoose)) {
+      if (!state._sizeImperative && !is.equ(size, state.size, shallowLoose)) {
+        // Use internal flag to avoid setSize from setting _sizeImperative
+        // This allows configure() to update size without taking imperative ownership
+        const wasImperative = state._sizeImperative
         state.setSize(size.width, size.height, size.top, size.left)
+        if (!wasImperative) state.set({ _sizeImperative: false })
       }
       // Check pixelratio - only update if the PROP changed (not if state differs from prop)
       // This preserves imperative setDpr() changes across Canvas re-configures
