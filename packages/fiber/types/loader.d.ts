@@ -28,20 +28,15 @@ type InferLoadResult<T> = T extends {
 }
   ? R
   : T extends ConstructorRepresentation<any>
-  ? InstanceType<T> extends {
-      load(url: any, onLoad?: (result: infer R) => void, ...args: any[]): any
-    }
-    ? R
+    ? InstanceType<T> extends {
+        load(url: any, onLoad?: (result: infer R) => void, ...args: any[]): any
+      }
+      ? R
+      : any
     : any
-  : any
 
-export type LoaderResult<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = InferLoadResult<
-  LoaderInstance<T>
-> extends infer R
-  ? R extends GLTFLike
-    ? R & ObjectMap
-    : R
-  : never
+export type LoaderResult<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> =
+  InferLoadResult<LoaderInstance<T>> extends infer R ? (R extends GLTFLike ? R & ObjectMap : R) : never
 
 export type Extensions<T extends LoaderLike | ConstructorRepresentation<LoaderLike>> = (
   loader: LoaderInstance<T>,

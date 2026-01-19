@@ -626,9 +626,7 @@ describe('renderer', () => {
 
     for (let i = 0; i < 3; i++) {
       await act(async () =>
-        (
-          await root.configure()
-        ).render(
+        (await root.configure()).render(
           <React.Suspense fallback={null}>
             <AsyncPrimitive object={i % 2 === 0 ? a : b} />
           </React.Suspense>,
@@ -666,9 +664,7 @@ describe('renderer', () => {
     // Mount unresolved A promise.
     // Fallback should be mounted and nothing else.
     const store = await act(async () =>
-      (
-        await root.configure()
-      ).render(
+      (await root.configure()).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,
@@ -686,9 +682,7 @@ describe('renderer', () => {
     // A should be mounted and visible and fallback should be unmounted.
     await act(async () => resolveA())
     await act(async () =>
-      (
-        await root.configure()
-      ).render(
+      (await root.configure()).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,
@@ -703,9 +697,7 @@ describe('renderer', () => {
     // Mount unresolved B promise.
     // A should remain mounted but be invisible, Fallback is mounted, B is unmounted.
     await act(async () =>
-      (
-        await root.configure()
-      ).render(
+      (await root.configure()).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={bPromise} />
         </React.Suspense>,
@@ -722,9 +714,7 @@ describe('renderer', () => {
     // B should be mounted and visible, fallback should be unmounted, A also unmounted and unhidden.
     await act(async () => resolveB())
     await act(async () =>
-      (
-        await root.configure()
-      ).render(
+      (await root.configure()).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={bPromise} />
         </React.Suspense>,
@@ -740,9 +730,7 @@ describe('renderer', () => {
     // Remount resolved A promise.
     // A should be mounted and visible, B should be unmounted and visible (not hidden), fallback should be unmounted.
     await act(async () =>
-      (
-        await root.configure()
-      ).render(
+      (await root.configure()).render(
         <React.Suspense fallback={<Fallback />}>
           <AsyncPrimitive object={aPromise} />
         </React.Suspense>,

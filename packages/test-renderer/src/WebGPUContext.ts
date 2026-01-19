@@ -47,10 +47,11 @@ export class MockGPUTexture {
   readonly usage: number
 
   constructor(descriptor: GPUTextureDescriptor) {
-    this.width = typeof descriptor.size === 'number' ? descriptor.size : (descriptor.size as GPUExtent3DDict).width ?? 1
-    this.height = typeof descriptor.size === 'number' ? 1 : (descriptor.size as GPUExtent3DDict).height ?? 1
+    this.width =
+      typeof descriptor.size === 'number' ? descriptor.size : ((descriptor.size as GPUExtent3DDict).width ?? 1)
+    this.height = typeof descriptor.size === 'number' ? 1 : ((descriptor.size as GPUExtent3DDict).height ?? 1)
     this.depthOrArrayLayers =
-      typeof descriptor.size === 'number' ? 1 : (descriptor.size as GPUExtent3DDict).depthOrArrayLayers ?? 1
+      typeof descriptor.size === 'number' ? 1 : ((descriptor.size as GPUExtent3DDict).depthOrArrayLayers ?? 1)
     this.mipLevelCount = descriptor.mipLevelCount ?? 1
     this.sampleCount = descriptor.sampleCount ?? 1
     this.dimension = descriptor.dimension ?? '2d'

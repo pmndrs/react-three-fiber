@@ -5,8 +5,7 @@ import type { RenderProps } from './renderer'
 //* Canvas Types ==============================
 
 export interface CanvasProps
-  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>,
-    React.HTMLAttributes<HTMLDivElement> {
+  extends Omit<RenderProps<HTMLCanvasElement>, 'size'>, React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode
   ref?: React.Ref<HTMLCanvasElement>
   /** Canvas fallback content, similar to img's alt prop */

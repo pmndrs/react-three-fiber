@@ -268,8 +268,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const camera = isCamera
           ? (cameraOptions as ThreeCamera)
           : orthographic
-          ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-          : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
+            ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+            : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
           if (cameraOptions) {
@@ -835,7 +835,7 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
 
   const usePortalStore = useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
-    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
+    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get }) as RootState)
 
     // Subscribe to previous root-state and copy changes over to the mirrored portal-state
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))

@@ -852,9 +852,7 @@ describe('Material Integration', () => {
     }
 
     const store = await act(async () =>
-      (
-        await root.configure({ frameloop: 'never' })
-      ).render(
+      (await root.configure({ frameloop: 'never' })).render(
         <>
           <Setup />
           <Mesh1 />
