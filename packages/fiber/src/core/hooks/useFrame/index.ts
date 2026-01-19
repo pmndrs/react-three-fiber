@@ -66,21 +66,21 @@ export function useFrame(
     typeof priorityOrOptions === 'number'
       ? `p:${priorityOrOptions}`
       : priorityOrOptions
-      ? JSON.stringify({
-          id: priorityOrOptions.id,
-          phase: priorityOrOptions.phase,
-          priority: priorityOrOptions.priority,
-          fps: priorityOrOptions.fps,
-          drop: priorityOrOptions.drop,
-          enabled: priorityOrOptions.enabled,
-          before: priorityOrOptions.before,
-          after: priorityOrOptions.after,
-        })
-      : ''
+        ? JSON.stringify({
+            id: priorityOrOptions.id,
+            phase: priorityOrOptions.phase,
+            priority: priorityOrOptions.priority,
+            fps: priorityOrOptions.fps,
+            drop: priorityOrOptions.drop,
+            enabled: priorityOrOptions.enabled,
+            before: priorityOrOptions.before,
+            after: priorityOrOptions.after,
+          })
+        : ''
 
   // Memoize options object using the stable key
   const options: UseFrameNextOptions = React.useMemo(() => {
-    return typeof priorityOrOptions === 'number' ? { priority: priorityOrOptions } : priorityOrOptions ?? {}
+    return typeof priorityOrOptions === 'number' ? { priority: priorityOrOptions } : (priorityOrOptions ?? {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [optionsKey])
 
@@ -189,7 +189,6 @@ export function useFrame(
       }
     }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, scheduler, id, optionsKey, isLegacyPriority, isInsideCanvas])
 
   // Reactive isPaused via useSyncExternalStore --------------------------------

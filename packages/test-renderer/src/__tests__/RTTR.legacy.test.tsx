@@ -70,7 +70,7 @@ describe('ReactThreeTestRenderer Legacy Entry', () => {
       )
 
       expect(renderer.scene.children[0].type).toBe('Group')
-      expect(renderer.scene.children[0].children.length).toBe(2)
+      expect(renderer.scene.children[0].children).toHaveLength(2)
       await renderer.unmount()
     })
 
@@ -93,7 +93,7 @@ describe('ReactThreeTestRenderer Legacy Entry', () => {
       )
 
       const group = renderer.scene.children[0]
-      expect(group.children.length).toBe(3)
+      expect(group.children).toHaveLength(3)
 
       const mesh1 = group.children[0].instance as THREE.Mesh
       const mesh2 = group.children[1].instance as THREE.Mesh
@@ -157,7 +157,7 @@ describe('ReactThreeTestRenderer Legacy Entry', () => {
       )
 
       const meshes = renderer.scene.findAllByType('Mesh')
-      expect(meshes.length).toBe(2)
+      expect(meshes).toHaveLength(2)
       await renderer.unmount()
     })
   })

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useCallback, useState } from 'react'
+import { useLayoutEffect, useEffect, useRef, useCallback, useState } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import * as THREE from '#three'
 import { pass } from '#three/tsl'
@@ -56,7 +56,7 @@ export function usePostProcessing(
   const { scene, camera, renderer, isLegacy } = useThree()
 
   // Track if callbacks have been run for the current PP instance
-  // Used to ensure callbacks run on first setup but not on every HMR re-render
+  // Reset on mount via useEffect to support HMR (see below)
   const callbacksRanRef = useRef(false)
 
   // Track the scene/camera used for the current scenePass to avoid unnecessary recreation
@@ -72,6 +72,13 @@ export function usePostProcessing(
 
   // Rebuild trigger - increment to force effect re-run
   const [rebuildVersion, setRebuildVersion] = useState(0)
+
+  // HMR fix: Reset callback tracking on mount so callbacks re-run after hot reload
+  // React preserves component identity during HMR but refs keep stale values
+  useEffect(() => {
+    callbacksRanRef.current = false
+    scenePassCacheRef.current = null
+  }, [])
 
   //* Cleanup Functions ==============================
 

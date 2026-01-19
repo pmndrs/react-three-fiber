@@ -36,6 +36,9 @@ function CanvasImpl({
   onDragOverMissed,
   onDropMissed,
   onCreated,
+  hmr,
+  width,
+  height,
   ...props
 }: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
@@ -70,8 +73,19 @@ function CanvasImpl({
 
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
+  // Compute effective size: props override container measurement
+  const effectiveSize = React.useMemo(
+    () => ({
+      width: width ?? containerRect.width,
+      height: height ?? containerRect.height,
+      top: containerRect.top,
+      left: containerRect.left,
+    }),
+    [width, height, containerRect],
+  )
+
   // Mark that we have initial size (for next render cycle)
-  if (!hasInitialSizeRef.current && containerRect.width > 0 && containerRect.height > 0) {
+  if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
     hasInitialSizeRef.current = true
   }
   const canvasRef = React.useRef<HTMLCanvasElement>(null!)
@@ -99,7 +113,7 @@ function CanvasImpl({
     effectActiveRef.current = true
     const canvas = canvasRef.current
 
-    if (containerRect.width > 0 && containerRect.height > 0 && canvas) {
+    if (effectiveSize.width > 0 && effectiveSize.height > 0 && canvas) {
       if (!root.current) {
         root.current = createRoot<HTMLCanvasElement>(canvas)
 
@@ -146,7 +160,9 @@ function CanvasImpl({
           performance,
           raycaster,
           camera,
-          size: containerRect,
+          size: effectiveSize,
+          // Store size props for reset functionality
+          _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
@@ -208,6 +224,47 @@ function CanvasImpl({
       }
     }
   }, [])
+
+  //* HMR Support for TSL Nodes and Uniforms ==============================
+  // Automatically refresh nodes/uniforms when HMR is detected (dev mode only)
+  // Can be disabled with hmr={false} prop
+  React.useEffect(() => {
+    // Skip if explicitly disabled
+    if (hmr === false) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // HMR refresh handler - clears caches and bumps version to trigger re-creation
+    const handleHMR = () => {
+      const rootEntry = _roots.get(canvas)
+      if (rootEntry?.store) {
+        // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
+        rootEntry.store.setState((state) => ({
+          nodes: {},
+          uniforms: {},
+          _hmrVersion: state._hmrVersion + 1,
+        }))
+      }
+    }
+
+    // Try Vite HMR
+    if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
+      const hot = (import.meta as any).hot
+      hot.on('vite:afterUpdate', handleHMR)
+      // Vite uses dispose() for cleanup, not off()
+      return () => hot.dispose?.(() => {})
+    }
+
+    // Try webpack HMR
+    if (typeof module !== 'undefined' && (module as any).hot) {
+      const hot = (module as any).hot
+      hot.addStatusHandler((status: string) => {
+        if (status === 'idle') handleHMR()
+      })
+      // Webpack doesn't have a clean way to remove status handlers, so no cleanup
+    }
+  }, [hmr])
 
   // When the event source is not this div, we need to set pointer-events to none
   // Or else the canvas will block events from reaching the event source

@@ -235,7 +235,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
   const prevHandlers = instance?.eventCount
 
   for (const prop in props) {
-    let value = props[prop]
+    const value = props[prop]
 
     // Don't mutate reserved keys
     if (RESERVED_PROPS.includes(prop)) continue

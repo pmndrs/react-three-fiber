@@ -144,7 +144,7 @@ export function createTestRenderer(deps: RendererDependencies) {
 
           // Now run the requested frames, each with the specified delta
           for (let i = 0; i < frames; i++) {
-            const frameDeltaSeconds = Array.isArray(delta) ? delta[i] ?? delta[delta.length - 1] : delta
+            const frameDeltaSeconds = Array.isArray(delta) ? (delta[i] ?? delta[delta.length - 1]) : delta
             const frameDeltaMs = frameDeltaSeconds * 1000
 
             baseTime += frameDeltaMs

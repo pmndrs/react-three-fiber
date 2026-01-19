@@ -127,7 +127,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   // Track last configured props for diffing - prevents imperative setter values
   // from being overwritten when Canvas re-configures (e.g., on resize)
-  let lastConfiguredProps: Partial<{
+  const lastConfiguredProps: Partial<{
     dpr: RenderProps<TCanvas>['dpr']
     frameloop: RenderProps<TCanvas>['frameloop']
     performance: RenderProps<TCanvas>['performance']
@@ -146,7 +146,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
-      let {
+      const {
         gl: glConfig,
         renderer: rendererConfig,
         size: propsSize,
@@ -169,9 +169,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         onDropMissed,
         autoUpdateFrustum = true,
         occlusion = false,
+        _sizeProps,
       } = props
 
-      let state = store.getState()
+      const state = store.getState()
 
       //* Renderer Initialization ==============================
 
@@ -256,8 +257,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
       if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
-      if (!is.equ(params, raycaster.params, shallowLoose))
+      if (!is.equ(params, raycaster.params, shallowLoose)) {
         applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
+      }
 
       //* Default Camera Initialization ==============================
       // Create default camera, don't overwrite any user-set state
@@ -267,8 +269,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const camera = isCamera
           ? (cameraOptions as ThreeCamera)
           : orthographic
-          ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
-          : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
+            ? new THREE.OrthographicCamera(0, 0, 0, 0, 0.1, 1000)
+            : new THREE.PerspectiveCamera(50, 0, 0.1, 1000)
         if (!isCamera) {
           camera.position.z = 5
           if (cameraOptions) {
@@ -337,10 +339,19 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           wasEnabled = enabled
         })
       }
+      // Store size props for reset functionality
+      if (_sizeProps !== undefined) {
+        state.set({ _sizeProps })
+      }
       // Check size, allow it to take on container bounds initially
+      // Only apply size from props/container if not in imperative mode
       const size = computeInitialSize(canvas, propsSize)
-      if (!is.equ(size, state.size, shallowLoose)) {
+      if (!state._sizeImperative && !is.equ(size, state.size, shallowLoose)) {
+        // Use internal flag to avoid setSize from setting _sizeImperative
+        // This allows configure() to update size without taking imperative ownership
+        const wasImperative = state._sizeImperative
         state.setSize(size.width, size.height, size.top, size.left)
+        if (!wasImperative) state.set({ _sizeImperative: false })
       }
       // Check pixelratio - only update if the PROP changed (not if state differs from prop)
       // This preserves imperative setDpr() changes across Canvas re-configures
@@ -437,8 +448,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           Object.assign(renderer.shadowMap as any, shadows)
         }
 
-        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type)
-          (renderer.shadowMap as any).needsUpdate = true
+        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type) {
+          ;(renderer.shadowMap as any).needsUpdate = true
+        }
       }
 
       // Only execute legacy color management if could be using the webgl renderer is true
@@ -450,12 +462,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         //We only notifiy its depreciation for default and legacy. webgpu imports dont get noticed
         if (isDefaultBuild && legacyChanged) {
-          if (legacy)
+          if (legacy) {
             notifyDepreciated({
               heading: 'Legacy Color Management',
               body: 'Legacy color management is deprecated and will be removed in a future version.',
               link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
             })
+          }
         }
 
         // Only apply if props changed
@@ -488,8 +501,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       // Set gl props
-      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
+      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
         applyProps(renderer, glConfig as any)
+      }
 
       // Set renderer props (WebGPU)
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
@@ -646,7 +660,6 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
     // Connect events to the targets parent, this is done to ensure events are registered on
     // a shared target, and not on the canvas itself
     if (!store.getState().events.connected) state.events.connect?.(rootElement)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return <context.Provider value={store}>{children}</context.Provider>
 }
@@ -825,7 +838,7 @@ function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
 
   const usePortalStore = useMemo(() => {
     // Create a mirrored store, based on the previous root with a few overrides ...
-    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get } as RootState))
+    const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get }) as RootState)
 
     // Subscribe to previous root-state and copy changes over to the mirrored portal-state
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))

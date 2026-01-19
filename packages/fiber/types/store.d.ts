@@ -155,8 +155,8 @@ export interface RootState {
   advance: (timestamp: number, runGlobalEffects?: boolean) => void
   /** Shortcut to setting the event layer */
   setEvents: (events: Partial<EventManager<any>>) => void
-  /** Shortcut to manual sizing */
-  setSize: (width: number, height: number, top?: number, left?: number) => void
+  /** Shortcut to manual sizing. No args resets to props/container. Single arg creates square. */
+  setSize: (width?: number, height?: number, top?: number, left?: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
   /** Shortcut to setting frameloop flags */
@@ -175,6 +175,12 @@ export interface RootState {
   postProcessing: any | null // THREE.PostProcessing when available
   /** Global TSL pass nodes for post-processing - use usePostProcessing() hook */
   passes: Record<string, any>
+  /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
+  _hmrVersion: number
+  /** Internal: whether setSize() has taken ownership of canvas dimensions */
+  _sizeImperative: boolean
+  /** Internal: stored size props from Canvas for reset functionality */
+  _sizeProps: { width?: number; height?: number } | null
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** When a dragover event has missed any target */

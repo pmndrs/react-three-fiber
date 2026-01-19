@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
 import type { Node } from '#three'
+import { createScopedStore, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
@@ -9,7 +10,7 @@ import type { Node } from '#three'
 export type TSLNode = Node
 
 export type NodeRecord<T extends Node = Node> = Record<string, T>
-export type NodeCreator<T extends NodeRecord> = (state: RootState) => T
+export type NodeCreator<T extends NodeRecord> = (state: CreatorState) => T
 
 /** Function signature for removeNodes util */
 export type RemoveNodesFn = (names: string | string[], scope?: string) => void
@@ -17,10 +18,14 @@ export type RemoveNodesFn = (names: string | string[], scope?: string) => void
 /** Function signature for clearNodes util */
 export type ClearNodesFn = (scope?: string) => void
 
+/** Function signature for rebuildNodes util */
+export type RebuildNodesFn = (scope?: string) => void
+
 /** Return type with utils included */
 export type NodesWithUtils<T extends NodeRecord = NodeRecord> = T & {
   removeNodes: RemoveNodesFn
   clearNodes: ClearNodesFn
+  rebuildNodes: RebuildNodesFn
 }
 
 /** Type guard to check if a value is a TSLNode vs a scope object */
@@ -129,28 +134,72 @@ export function useNodes<T extends NodeRecord>(
     [store],
   )
 
+  /** Rebuild nodes - clears cache and increments HMR version to trigger re-creation */
+  const rebuildNodes = useCallback<RebuildNodesFn>(
+    (targetScope) => {
+      store.setState((state) => {
+        // Clear the specified scope (or all) and bump version
+        let newNodes = state.nodes
+        if (targetScope && targetScope !== 'root') {
+          const { [targetScope]: _, ...rest } = state.nodes
+          newNodes = rest
+        } else if (targetScope === 'root') {
+          newNodes = {}
+          for (const [key, value] of Object.entries(state.nodes)) {
+            if (!isTSLNode(value)) newNodes[key] = value
+          }
+        } else {
+          newNodes = {}
+        }
+        return { nodes: newNodes, _hmrVersion: state._hmrVersion + 1 }
+      })
+    },
+    [store],
+  )
+
   //* Main Logic ==============================
 
-  const nodes = useMemo(() => {
-    const state = store.getState()
-    const set = store.setState
+  // Determine if we're in reader mode (no creator function)
+  const isReader = creatorOrScope === undefined || typeof creatorOrScope === 'string'
 
+  // Subscribe to nodes changes for reader modes
+  // This ensures useNodes() and useNodes('scope') reactively update when store changes
+  // For creator mode, we intentionally don't use this value to avoid re-running the creator
+  const storeNodes = useThree((s) => s.nodes)
+
+  // Subscribe to HMR version for creator modes
+  // This allows rebuildNodes() to bust the memoization cache and force re-creation
+  const hmrVersion = useThree((s) => s._hmrVersion)
+
+  const nodes = useMemo(() => {
     // Case 1: No arguments - return all nodes (root + scopes)
+    // Uses subscribed storeNodes for reactivity
     if (creatorOrScope === undefined) {
-      return state.nodes as NodeRecord & Record<string, NodeRecord>
+      return storeNodes as NodeRecord & Record<string, NodeRecord>
     }
 
     // Case 2: String argument - return nodes from that scope
+    // Uses subscribed storeNodes for reactivity
     if (typeof creatorOrScope === 'string') {
-      const scopeData = state.nodes[creatorOrScope]
+      const scopeData = storeNodes[creatorOrScope]
       // Make sure we're returning a scope object, not a TSL node
       if (scopeData && !isTSLNode(scopeData)) return scopeData as NodeRecord
       return {}
     }
 
     // Case 3: Creator function - create if not exists
+    // Uses store.getState() snapshot to avoid re-running creator on unrelated node changes
+    const state = store.getState()
+    const set = store.setState
     const creator = creatorOrScope
-    const created = creator(state)
+
+    // Wrap state with ScopedStore for type-safe uniform/node access
+    const wrappedState: CreatorState = {
+      ...state,
+      uniforms: createScopedStore<UniformNode>(state.uniforms),
+      nodes: createScopedStore<Node>(state.nodes),
+    }
+    const created = creator(wrappedState)
     const result: Record<string, TSLNode> = {}
     let hasNewNodes = false
 
@@ -200,10 +249,47 @@ export function useNodes<T extends NodeRecord>(
 
     return result as T
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, typeof creatorOrScope === 'string' ? creatorOrScope : scope])
+  }, [
+    store,
+    typeof creatorOrScope === 'string' ? creatorOrScope : scope,
+    // Only include storeNodes in deps for reader modes to enable reactivity
+    // Creator mode intentionally excludes it to avoid re-running creator on unrelated changes
+    isReader ? storeNodes : null,
+    // Include hmrVersion for creator modes to allow rebuildNodes() to bust the cache
+    isReader ? null : hmrVersion,
+  ])
 
   // Return nodes with utils
-  return { ...nodes, removeNodes, clearNodes } as NodesWithUtils<T>
+  return { ...nodes, removeNodes, clearNodes, rebuildNodes } as NodesWithUtils<T>
+}
+
+//* Standalone rebuildNodes ==============================
+// Global function for HMR integration - can be called from Canvas or module-level code
+
+/**
+ * Global rebuildNodes function for HMR integration.
+ * Clears cached nodes and increments _hmrVersion to trigger re-creation.
+ * Call this when HMR is detected to refresh all node creators.
+ *
+ * @param store - The R3F store (from useStore or context)
+ * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
+ */
+export function rebuildAllNodes(store: ReturnType<typeof useStore>, scope?: string) {
+  store.setState((state) => {
+    let newNodes = state.nodes
+    if (scope && scope !== 'root') {
+      const { [scope]: _, ...rest } = state.nodes
+      newNodes = rest
+    } else if (scope === 'root') {
+      newNodes = {}
+      for (const [key, value] of Object.entries(state.nodes)) {
+        if (!isTSLNode(value)) newNodes[key] = value
+      }
+    } else {
+      newNodes = {}
+    }
+    return { nodes: newNodes, _hmrVersion: state._hmrVersion + 1 }
+  })
 }
 
 //* Standalone Utils (Deprecated) ==============================
@@ -255,8 +341,8 @@ export default useNodes
 
 //* useLocalNodes ==============================
 
-/** Creator receives RootState - destructure what you need. Returns any record. */
-export type LocalNodeCreator<T extends Record<string, unknown>> = (state: RootState) => T
+/** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
+export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
 
 /**
  * Helper to extract a typed uniform from the uniforms store.
@@ -303,7 +389,13 @@ export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalN
 
   return useMemo(() => {
     const state = store.getState()
-    return creator(state)
+    // Wrap state with ScopedStore for type-safe uniform/node access
+    const wrappedState: CreatorState = {
+      ...state,
+      uniforms: createScopedStore<UniformNode>(state.uniforms),
+      nodes: createScopedStore<Node>(state.nodes),
+    }
+    return creator(wrappedState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, creator, uniforms, nodes, textures]) // extras intentionally included to trigger recreation
 }

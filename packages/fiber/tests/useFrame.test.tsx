@@ -474,9 +474,7 @@ describe('useFrame hook', () => {
     }
 
     await act(async () =>
-      (
-        await root.configure({ frameloop: 'always' })
-      ).render(
+      (await root.configure({ frameloop: 'always' })).render(
         <>
           <LowPriority />
           <HighPriority />
@@ -611,9 +609,7 @@ describe('useFrame hook', () => {
 
     // Render in non-phase order
     await act(async () =>
-      (
-        await root.configure({ frameloop: 'always' })
-      ).render(
+      (await root.configure({ frameloop: 'always' })).render(
         <>
           <RenderPhase />
           <PhysicsPhase />
@@ -671,9 +667,7 @@ describe('useFrame hook', () => {
     }
 
     await act(async () =>
-      (
-        await root.configure({ frameloop: 'never' })
-      ).render(
+      (await root.configure({ frameloop: 'never' })).render(
         <>
           <Job1 />
           <Job2 />
@@ -711,9 +705,7 @@ describe('useFrame hook', () => {
     }
 
     await act(async () =>
-      (
-        await root.configure({ frameloop: 'never' })
-      ).render(
+      (await root.configure({ frameloop: 'never' })).render(
         <>
           <Job1 />
           <Job2 />

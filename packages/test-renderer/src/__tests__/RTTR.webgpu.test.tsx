@@ -108,7 +108,7 @@ describe('ReactThreeTestRenderer WebGPU Entry', () => {
       )
 
       expect(renderer.scene.children[0].type).toBe('Group')
-      expect(renderer.scene.children[0].children.length).toBe(2)
+      expect(renderer.scene.children[0].children).toHaveLength(2)
       await renderer.unmount()
     })
 

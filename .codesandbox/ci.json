@@ -1,5 +1,0 @@
-{
-  "packages": ["/packages/fiber", "/packages/test-renderer", "/packages/eslint-plugin"],
-  "sandboxes": ["/example"],
-  "node": "20"
-}

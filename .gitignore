@@ -9,6 +9,7 @@ Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
 .vscode
+.claude
 .docz/
 package-lock.json
 coverage/
@@ -27,3 +28,4 @@ __tests__/__image_snapshots__/__diff_output__
 !.yarn/versions
 .pnp.*
 packages/fiber/*.tgz
+.claude/settings.local.json

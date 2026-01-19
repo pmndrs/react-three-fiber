@@ -117,10 +117,11 @@ function validateInstance(type: string, props: HostConfig['props']): void {
   const target = catalogue[name]
 
   // Validate element target
-  if (type !== 'primitive' && !target)
+  if (type !== 'primitive' && !target) {
     throw new Error(
       `R3F: ${name} is not part of the THREE namespace! Did you forget to extend? See: https://docs.pmnd.rs/react-three-fiber/api/objects#using-3rd-party-objects-declaratively`,
     )
+  }
 
   // Validate primitives
   if (type === 'primitive' && !props.object) throw new Error(`R3F: Primitives without 'object' are invalid!`)

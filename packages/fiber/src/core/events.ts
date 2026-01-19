@@ -168,15 +168,16 @@ export function createEvents(store: RootStore) {
       let eventObject: THREE.Object3D | null = hit.object
       // Bubble event up
       while (eventObject) {
-        if ((eventObject as Instance<THREE.Object3D>['object']).__r3f?.eventCount)
+        if ((eventObject as Instance<THREE.Object3D>['object']).__r3f?.eventCount) {
           intersections.push({ ...hit, eventObject })
+        }
         eventObject = eventObject.parent
       }
     }
 
     // If the interaction is captured, make all capturing targets part of the intersect.
     if ('pointerId' in event && state.internal.capturedMap.has(event.pointerId)) {
-      for (let captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
+      for (const captureData of state.internal.capturedMap.get(event.pointerId)!.values()) {
         if (!duplicates.has(makeId(captureData.intersection))) intersections.push(captureData.intersection)
       }
     }
@@ -226,16 +227,16 @@ export function createEvents(store: RootStore) {
           }
 
           // Add native event props
-          let extractEventProps: any = {}
+          const extractEventProps: any = {}
           // This iterates over the event's properties including the inherited ones. Native PointerEvents have most of their props as getters which are inherited, but polyfilled PointerEvents have them all as their own properties (i.e. not inherited). We can't use Object.keys() or Object.entries() as they only return "own" properties; nor Object.getPrototypeOf(event) as that *doesn't* return "own" properties, only inherited ones.
-          for (let prop in event) {
-            let property = event[prop as keyof DomEvent]
+          for (const prop in event) {
+            const property = event[prop as keyof DomEvent]
             // Only copy over atomics, leave functions alone as these should be
             // called as event.nativeEvent.fn()
             if (typeof property !== 'function') extractEventProps[prop] = property
           }
 
-          let raycastEvent: ThreeEvent<DomEvent> = {
+          const raycastEvent: ThreeEvent<DomEvent> = {
             ...hit,
             ...extractEventProps,
             pointer,

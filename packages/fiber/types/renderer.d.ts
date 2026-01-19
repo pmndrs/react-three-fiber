@@ -130,6 +130,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * Only works with WebGPU renderer - WebGL will log a warning.
    */
   occlusion?: boolean
+  /** Internal: stored size props from Canvas for reset functionality */
+  _sizeProps?: { width?: number; height?: number } | null
 }
 
 //* Reconciler Root ==============================

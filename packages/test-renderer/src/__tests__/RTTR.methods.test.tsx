@@ -110,6 +110,6 @@ describe('ReactThreeTestRenderer instance methods', () => {
       name: /^mesh_\d+$/,
     })
 
-    expect(multiple.length).toEqual(2)
+    expect(multiple).toHaveLength(2)
   })
 })

@@ -112,7 +112,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
 
   // Normalize options - support both legacy callback and options object
   const options: UseTextureOptions<Url> =
-    typeof optionsOrOnLoad === 'function' ? { onLoad: optionsOrOnLoad } : optionsOrOnLoad ?? {}
+    typeof optionsOrOnLoad === 'function' ? { onLoad: optionsOrOnLoad } : (optionsOrOnLoad ?? {})
 
   const { onLoad, cache = false } = options
 

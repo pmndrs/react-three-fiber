@@ -136,10 +136,45 @@ export const createStore = (
 
       setEvents: (events: Partial<EventManager<any>>) =>
         set((state) => ({ ...state, events: { ...state.events, ...events } })),
-      setSize: (width: number, height: number, top: number = 0, left: number = 0) => {
-        const camera = get().camera
-        const size = { width, height, top, left }
-        set((state) => ({ size, viewport: { ...state.viewport, ...getCurrentViewport(camera, defaultTarget, size) } }))
+      setSize: (width?: number, height?: number, top?: number, left?: number) => {
+        const state = get()
+
+        // No args = reset to props/container mode
+        if (width === undefined) {
+          set({ _sizeImperative: false })
+          // If we have stored props, apply them; otherwise size will be updated by next container measurement
+          if (state._sizeProps) {
+            const { width: propW, height: propH } = state._sizeProps
+            if (propW !== undefined || propH !== undefined) {
+              // Re-apply props (container will fill in missing dimensions)
+              const currentSize = state.size
+              const newSize = {
+                width: propW ?? currentSize.width,
+                height: propH ?? currentSize.height,
+                top: currentSize.top,
+                left: currentSize.left,
+              }
+              set((s) => ({
+                size: newSize,
+                viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
+              }))
+            }
+          }
+          return
+        }
+
+        // Single arg = square, two args = rectangle
+        const w = width
+        const h = height ?? width
+        const t = top ?? state.size.top
+        const l = left ?? state.size.left
+
+        const size = { width: w, height: h, top: t, left: l }
+        set((s) => ({
+          size,
+          viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
+          _sizeImperative: true,
+        }))
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -158,6 +193,9 @@ export const createStore = (
       textures: new Map(),
       postProcessing: null,
       passes: {},
+      _hmrVersion: 0,
+      _sizeImperative: false,
+      _sizeProps: null,
 
       previousRoot: undefined,
       internal: {
