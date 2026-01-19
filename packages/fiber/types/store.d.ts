@@ -175,6 +175,8 @@ export interface RootState {
   postProcessing: any | null // THREE.PostProcessing when available
   /** Global TSL pass nodes for post-processing - use usePostProcessing() hook */
   passes: Record<string, any>
+  /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
+  _hmrVersion: number
   /** When the canvas was clicked but nothing was hit */
   onPointerMissed?: (event: MouseEvent) => void
   /** When a dragover event has missed any target */

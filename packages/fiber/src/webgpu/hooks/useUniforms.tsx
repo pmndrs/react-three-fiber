@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { useStore } from '../../core/hooks'
+import { useStore, useThree } from '../../core/hooks'
 import type { RootState } from '#types'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
@@ -18,10 +18,14 @@ export type RemoveUniformsFn = (names: string | string[], scope?: string) => voi
 /** Function signature for clearUniforms util */
 export type ClearUniformsFn = (scope?: string) => void
 
+/** Function signature for rebuildUniforms util */
+export type RebuildUniformsFn = (scope?: string) => void
+
 /** Return type with utils included */
 export type UniformsWithUtils<T extends UniformRecord = UniformRecord> = T & {
   removeUniforms: RemoveUniformsFn
   clearUniforms: ClearUniformsFn
+  rebuildUniforms: RebuildUniformsFn
 }
 
 /** Type guard to check if a value is a UniformNode vs a scope object */
@@ -173,6 +177,29 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     [store],
   )
 
+  /** Rebuild uniforms - clears cache and increments HMR version to trigger re-creation */
+  const rebuildUniforms = useCallback<RebuildUniformsFn>(
+    (targetScope) => {
+      store.setState((state) => {
+        // Clear the specified scope (or all) and bump version
+        let newUniforms = state.uniforms
+        if (targetScope && targetScope !== 'root') {
+          const { [targetScope]: _, ...rest } = state.uniforms
+          newUniforms = rest
+        } else if (targetScope === 'root') {
+          newUniforms = {}
+          for (const [key, value] of Object.entries(state.uniforms)) {
+            if (!isUniformNode(value)) newUniforms[key] = value
+          }
+        } else {
+          newUniforms = {}
+        }
+        return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
+      })
+    },
+    [store],
+  )
+
   //* Input Processing ==============================
   // Execute functions immediately to capture reactive values, then deep-compare output.
   // This allows: useUniforms(() => ({ uTime: time })) to work without useCallback wrapping.
@@ -185,22 +212,32 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // Prevents: useUniforms({ uColor: 'blue' }) from updating every render
   const memoizedInput = useCompareMemoize(inputForMemoization, true)
 
+  // Determine if we're in reader mode (no creator function/object)
+  const isReader = memoizedInput === undefined || typeof memoizedInput === 'string'
+
+  // Subscribe to uniforms changes for reader modes
+  // This ensures useUniforms() and useUniforms('scope') reactively update when store changes
+  const storeUniforms = useThree((s) => s.uniforms)
+
   //* Main Logic ==============================
   const uniforms = useMemo(() => {
-    const state = store.getState()
-    const set = store.setState
-
     // Read-only: Return all uniforms
+    // Uses subscribed storeUniforms for reactivity
     if (memoizedInput === undefined) {
-      return state.uniforms as UniformRecord & Record<string, UniformRecord>
+      return storeUniforms as UniformRecord & Record<string, UniformRecord>
     }
 
     // Read-only: Return uniforms from specific scope
+    // Uses subscribed storeUniforms for reactivity
     if (typeof memoizedInput === 'string') {
-      const scopeData = state.uniforms[memoizedInput]
+      const scopeData = storeUniforms[memoizedInput]
       if (scopeData && !isUniformNode(scopeData)) return scopeData as UniformRecord
       return {}
     }
+
+    // Creator/object mode - use store.getState() snapshot
+    const state = store.getState()
+    const set = store.setState
 
     // Create/update: Process uniform definitions
     if (typeof memoizedInput !== 'object' || memoizedInput === null) {
@@ -262,10 +299,46 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     }
 
     return result as UniformRecord
-  }, [store, memoizedInput, scope])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    store,
+    memoizedInput,
+    scope,
+    // Only include storeUniforms in deps for reader modes to enable reactivity
+    isReader ? storeUniforms : null,
+  ])
 
   // Return uniforms with utils
-  return { ...uniforms, removeUniforms, clearUniforms } as UniformsWithUtils<UniformRecord>
+  return { ...uniforms, removeUniforms, clearUniforms, rebuildUniforms } as UniformsWithUtils<UniformRecord>
+}
+
+//* Standalone rebuildUniforms ==============================
+// Global function for HMR integration - can be called from Canvas or module-level code
+
+/**
+ * Global rebuildUniforms function for HMR integration.
+ * Clears cached uniforms and increments _hmrVersion to trigger re-creation.
+ * Call this when HMR is detected to refresh all uniform creators.
+ *
+ * @param store - The R3F store (from useStore or context)
+ * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
+ */
+export function rebuildAllUniforms(store: ReturnType<typeof useStore>, scope?: string) {
+  store.setState((state) => {
+    let newUniforms = state.uniforms
+    if (scope && scope !== 'root') {
+      const { [scope]: _, ...rest } = state.uniforms
+      newUniforms = rest
+    } else if (scope === 'root') {
+      newUniforms = {}
+      for (const [key, value] of Object.entries(state.uniforms)) {
+        if (!isUniformNode(value)) newUniforms[key] = value
+      }
+    } else {
+      newUniforms = {}
+    }
+    return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
+  })
 }
 
 //* Standalone Utils (Deprecated) ==============================

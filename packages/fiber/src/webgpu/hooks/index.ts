@@ -2,6 +2,8 @@
 // Note: UniformNode and UniformRecord are global types from types/tsl.d.ts
 export {
   useUniforms,
+  // Global rebuild function for HMR integration
+  rebuildAllUniforms,
   // Deprecated standalone utils (prefer useUniforms().removeUniforms/clearUniforms)
   removeUniforms,
   clearScope,
@@ -9,6 +11,7 @@ export {
   type UniformCreator,
   type RemoveUniformsFn,
   type ClearUniformsFn,
+  type RebuildUniformsFn,
   type UniformsWithUtils,
 } from './useUniforms'
 
@@ -19,6 +22,8 @@ export { useUniform, type UniformValue } from './useUniform'
 export {
   useNodes,
   useLocalNodes,
+  // Global rebuild function for HMR integration
+  rebuildAllNodes,
   // Deprecated standalone utils (prefer useNodes().removeNodes/clearNodes)
   removeNodes,
   clearNodeScope,
@@ -29,6 +34,7 @@ export {
   type LocalNodeCreator,
   type RemoveNodesFn,
   type ClearNodesFn,
+  type RebuildNodesFn,
   type NodesWithUtils,
 } from './useNodes'
 

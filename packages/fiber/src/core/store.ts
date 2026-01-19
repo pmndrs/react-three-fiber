@@ -158,6 +158,7 @@ export const createStore = (
       textures: new Map(),
       postProcessing: null,
       passes: {},
+      _hmrVersion: 0,
 
       previousRoot: undefined,
       internal: {

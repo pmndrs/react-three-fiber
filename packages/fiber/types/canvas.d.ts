@@ -20,4 +20,6 @@ export interface CanvasProps
   eventSource?: HTMLElement | React.RefObject<HTMLElement>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
+  /** Enable/disable automatic HMR refresh for TSL nodes and uniforms, default: true in dev */
+  hmr?: boolean
 }

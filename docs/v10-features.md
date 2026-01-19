@@ -383,6 +383,78 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 
 ---
 
+## HMR Support for TSL Hooks
+
+v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks (`useNodes`, `useUniforms`, `usePostProcessing`). When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
+
+### How It Works
+
+The Canvas component automatically detects HMR events from Vite or webpack and refreshes the TSL state:
+
+```tsx
+// Just works! Save your file and see changes immediately
+const { wobble } = useNodes(() => ({
+  wobble: sin(time.mul(2)), // Change to mul(5), save, see update
+}))
+
+const { uColor } = useUniforms({
+  uColor: '#ff0000', // Change color, save, see update
+})
+```
+
+### Disabling HMR
+
+If you need to disable automatic HMR refresh (rare), use the `hmr` prop:
+
+```tsx
+<Canvas hmr={false}>{/* HMR won't auto-refresh TSL state */}</Canvas>
+```
+
+### Manual Rebuild
+
+For edge cases or programmatic control, hooks return a rebuild function:
+
+```tsx
+const { wobble, rebuildNodes } = useNodes(() => ({
+  wobble: sin(time.mul(2)),
+}))
+
+const { uColor, rebuildUniforms } = useUniforms({
+  uColor: '#ff0000',
+})
+
+// Force rebuild (clears cache and re-runs creators)
+rebuildNodes() // Rebuild all nodes
+rebuildNodes('player') // Rebuild only 'player' scope
+rebuildUniforms() // Rebuild all uniforms
+```
+
+### Global Rebuild Functions
+
+For advanced use cases (custom HMR handlers, dev tools), standalone rebuild functions are exported:
+
+```tsx
+import { rebuildAllNodes, rebuildAllUniforms } from '@react-three/fiber/webgpu'
+
+// Requires the R3F store reference
+rebuildAllNodes(store)
+rebuildAllUniforms(store)
+```
+
+### Reader Reactivity
+
+Reader-mode hooks now properly subscribe to store changes:
+
+```tsx
+// These now reactively update when nodes/uniforms change elsewhere
+const allNodes = useNodes()
+const playerNodes = useNodes('player')
+const allUniforms = useUniforms()
+const playerUniforms = useUniforms('player')
+```
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

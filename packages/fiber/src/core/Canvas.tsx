@@ -36,6 +36,7 @@ function CanvasImpl({
   onDragOverMissed,
   onDropMissed,
   onCreated,
+  hmr,
   ...props
 }: CanvasProps) {
   // Create a known catalogue of Threejs-native elements
@@ -208,6 +209,46 @@ function CanvasImpl({
       }
     }
   }, [])
+
+  //* HMR Support for TSL Nodes and Uniforms ==============================
+  // Automatically refresh nodes/uniforms when HMR is detected (dev mode only)
+  // Can be disabled with hmr={false} prop
+  React.useEffect(() => {
+    // Skip if explicitly disabled
+    if (hmr === false) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    // HMR refresh handler - clears caches and bumps version to trigger re-creation
+    const handleHMR = () => {
+      const rootEntry = _roots.get(canvas)
+      if (rootEntry?.store) {
+        // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
+        rootEntry.store.setState((state) => ({
+          nodes: {},
+          uniforms: {},
+          _hmrVersion: state._hmrVersion + 1,
+        }))
+      }
+    }
+
+    // Try Vite HMR
+    if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
+      const hot = (import.meta as any).hot
+      hot.on('vite:afterUpdate', handleHMR)
+      return () => hot.off('vite:afterUpdate', handleHMR)
+    }
+
+    // Try webpack HMR
+    if (typeof module !== 'undefined' && (module as any).hot) {
+      const hot = (module as any).hot
+      hot.addStatusHandler((status: string) => {
+        if (status === 'idle') handleHMR()
+      })
+      // Webpack doesn't have a clean way to remove status handlers, so no cleanup
+    }
+  }, [hmr])
 
   // When the event source is not this div, we need to set pointer-events to none
   // Or else the canvas will block events from reaching the event source
