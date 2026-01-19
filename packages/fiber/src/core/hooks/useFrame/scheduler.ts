@@ -23,7 +23,7 @@ const hmrData = (() => {
   if (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') return undefined
   if (typeof import_meta_hot !== 'undefined') return import_meta_hot
   // Indirect eval prevents TypeScript from parsing import.meta
-  // eslint-disable-next-line no-eval
+
   try {
     return (0, eval)('import.meta.hot') as HMRData | undefined
   } catch {

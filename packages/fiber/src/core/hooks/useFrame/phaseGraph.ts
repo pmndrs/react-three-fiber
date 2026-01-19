@@ -63,8 +63,9 @@ export class PhaseGraph {
     let insertIndex = this.phases.length // default: append at end
 
     const targetIndex = this.getPhaseIndex(before ?? after)
-    if (targetIndex !== -1) insertIndex = before ? targetIndex : targetIndex + 1
-    else {
+    if (targetIndex !== -1) {
+      insertIndex = before ? targetIndex : targetIndex + 1
+    } else {
       const constraintType = before ? 'before' : 'after'
       console.warn(`[useFrame] Phase "${before ?? after}" not found for '${constraintType}' constraint`)
     }

@@ -127,7 +127,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   // Track last configured props for diffing - prevents imperative setter values
   // from being overwritten when Canvas re-configures (e.g., on resize)
-  let lastConfiguredProps: Partial<{
+  const lastConfiguredProps: Partial<{
     dpr: RenderProps<TCanvas>['dpr']
     frameloop: RenderProps<TCanvas>['frameloop']
     performance: RenderProps<TCanvas>['performance']
@@ -146,7 +146,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       let resolve!: () => void
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
-      let {
+      const {
         gl: glConfig,
         renderer: rendererConfig,
         size: propsSize,
@@ -172,7 +172,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         _sizeProps,
       } = props
 
-      let state = store.getState()
+      const state = store.getState()
 
       //* Renderer Initialization ==============================
 
@@ -257,8 +257,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set raycaster options
       const { params, ...options } = raycastOptions || {}
       if (!is.equ(options, raycaster, shallowLoose)) applyProps(raycaster, { ...options } as any)
-      if (!is.equ(params, raycaster.params, shallowLoose))
+      if (!is.equ(params, raycaster.params, shallowLoose)) {
         applyProps(raycaster, { params: { ...raycaster.params, ...params } } as any)
+      }
 
       //* Default Camera Initialization ==============================
       // Create default camera, don't overwrite any user-set state
@@ -447,8 +448,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           Object.assign(renderer.shadowMap as any, shadows)
         }
 
-        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type)
-          (renderer.shadowMap as any).needsUpdate = true
+        if (oldEnabled !== renderer.shadowMap.enabled || oldType !== renderer.shadowMap.type) {
+          ;(renderer.shadowMap as any).needsUpdate = true
+        }
       }
 
       // Only execute legacy color management if could be using the webgl renderer is true
@@ -460,12 +462,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         //We only notifiy its depreciation for default and legacy. webgpu imports dont get noticed
         if (isDefaultBuild && legacyChanged) {
-          if (legacy)
+          if (legacy) {
             notifyDepreciated({
               heading: 'Legacy Color Management',
               body: 'Legacy color management is deprecated and will be removed in a future version.',
               link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
             })
+          }
         }
 
         // Only apply if props changed
@@ -498,8 +501,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       // Set gl props
-      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose))
+      if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
         applyProps(renderer, glConfig as any)
+      }
 
       // Set renderer props (WebGPU)
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
@@ -656,7 +660,6 @@ function Provider<TCanvas extends HTMLCanvasElement | OffscreenCanvas>({
     // Connect events to the targets parent, this is done to ensure events are registered on
     // a shared target, and not on the canvas itself
     if (!store.getState().events.connected) state.events.connect?.(rootElement)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   return <context.Provider value={store}>{children}</context.Provider>
 }

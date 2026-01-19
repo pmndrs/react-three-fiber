@@ -189,7 +189,6 @@ export function useFrame(
       }
     }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store, scheduler, id, optionsKey, isLegacyPriority, isInsideCanvas])
 
   // Reactive isPaused via useSyncExternalStore --------------------------------

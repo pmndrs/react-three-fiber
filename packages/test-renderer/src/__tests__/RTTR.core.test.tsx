@@ -272,7 +272,7 @@ describe('ReactThreeTestRenderer Core', () => {
   it('gives a ref to native components', async () => {
     const log: THREE.Mesh[] = []
     await ReactThreeTestRenderer.create(<mesh ref={(r) => log.push(r as THREE.Mesh)} />)
-    expect(log.length).toEqual(1)
+    expect(log).toHaveLength(1)
 
     expect(log[0].type).toEqual('Mesh')
   })
@@ -372,12 +372,12 @@ describe('ReactThreeTestRenderer Core', () => {
 
     // Test from the root
     const allMeshes = renderer.scene.findAllByType('Mesh')
-    expect(allMeshes.length).toBe(3) // Should find all three meshes
+    expect(allMeshes).toHaveLength(3) // Should find all three meshes
 
     // Test from an intermediate node
     const topMesh = renderer.scene.find((node) => node.props.name === 'level1-mesh')
     const nestedMeshes = topMesh.findAllByType('Mesh')
-    expect(nestedMeshes.length).toBe(2) // Should find the two nested meshes
+    expect(nestedMeshes).toHaveLength(2) // Should find the two nested meshes
 
     // Find a deeply nested mesh from an intermediate node by property
     const level3 = topMesh.find((node) => node.props.name === 'level3-mesh')
