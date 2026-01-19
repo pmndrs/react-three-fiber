@@ -5,8 +5,12 @@ import type { IsAllOptional } from './utils'
 
 //* Reconciler Types ==============================
 
+// FiberRoot is an opaque internal React type - we define it locally
+// to avoid bundling @types/react-reconciler which causes absolute path issues
+type FiberRoot = any
+
 export interface Root {
-  fiber: import('react-reconciler').FiberRoot
+  fiber: FiberRoot
   store: RootStore
 }
 

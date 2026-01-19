@@ -9,8 +9,12 @@
  * - Legacy: only 'three' (no webgpu)
  * - WebGPU: only 'three/webgpu' (no plain three)
  */
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const FIBER_DIST = path.join(__dirname, '../packages/fiber/dist')
 
