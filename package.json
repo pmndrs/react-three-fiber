@@ -12,11 +12,6 @@
       "react-dom": "$react-dom"
     }
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix"
@@ -31,7 +26,7 @@
     "stub": "pnpm --filter @react-three/fiber stub && pnpm --filter @react-three/eslint-plugin stub",
     "dev": "pnpm stub",
     "ci": "pnpm build && pnpm typecheck && pnpm eslint && pnpm dev && pnpm test && pnpm format",
-    "prepare": "husky install",
+    "prepare": "husky",
     "eslint": "eslint packages/**/src/**/*.{ts,tsx}",
     "eslint:fix": "pnpm run eslint --fix",
     "test": "vitest run --coverage",
@@ -76,9 +71,9 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^4.4.0",
     "eslint-plugin-vitest": "^0.5.4",
-    "husky": "^7.0.4",
+    "husky": "^9.1.7",
     "jsdom": "^27.4.0",
-    "lint-staged": "^12.3.7",
+    "lint-staged": "^16.2.7",
     "prettier": "^2.6.1",
     "pretty-quick": "^3.1.3",
     "react": "^19.2.3",
