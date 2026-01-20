@@ -310,6 +310,22 @@ describe('useUniforms', () => {
       expect(uniforms.uColor).toBeDefined()
       expect(uniforms.uColor.value).toBeDefined()
     })
+
+    it('should accept TSL nodes as uniform inputs', async () => {
+      let uniforms: any = null
+
+      function Test() {
+        uniforms = useUniforms({
+          uColor: color('#00ff00'),
+        })
+        return null
+      }
+
+      await act(async () => root.render(<Test />))
+
+      expect(uniforms.uColor).toBeDefined()
+      expect((uniforms.uColor.value as any).isNode).toBe(true)
+    })
   })
 
   // Function Syntax ---------------------------------

@@ -45,6 +45,8 @@ declare global {
     | string
     | boolean
     | import('three/webgpu').Color
+    | import('three/webgpu').Node
+    | ShaderNodeObject<Node>
     | import('three/webgpu').Vector2
     | import('three/webgpu').Vector3
     | import('three/webgpu').Vector4
