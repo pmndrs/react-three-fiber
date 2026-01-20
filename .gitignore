@@ -29,3 +29,6 @@ __tests__/__image_snapshots__/__diff_output__
 .pnp.*
 packages/fiber/*.tgz
 .claude/settings.local.json
+CLAUDE.md
+.claude/settings.local.json
+.claude/settings.local.json

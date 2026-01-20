@@ -58,6 +58,7 @@
   "scripts": {
     "prebuild": "node -e \"require('fs').copyFileSync('../../readme.md', 'readme.md')\"",
     "build": "unbuild",
+    "postbuild": "node ../../scripts/fix-three-types.js",
     "stub": "unbuild --stub"
   },
   "dependencies": {

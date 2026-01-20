@@ -10,7 +10,8 @@
       "Bash(pnpm typecheck:*)",
       "Bash(pnpm format:fix:*)",
       "Bash(pnpm verify-bundles:*)",
-      "Bash(pnpm run ci:*)"
+      "Bash(pnpm run ci:*)",
+      "Bash(pnpm --filter @react-three/fiber build:*)"
     ]
   }
 }
