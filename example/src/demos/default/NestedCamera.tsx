@@ -1,24 +1,7 @@
 import * as THREE from 'three'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Canvas, useFrame, useThree, createPortal, Portal } from '@react-three/fiber'
 import { useRef, useMemo, useEffect } from 'react'
 import { PerspectiveCamera } from '@react-three/drei'
-
-// Create a figure-8 (lemniscate) curve
-function createFigure8Curve(scale = 10) {
-  const points: THREE.Vector3[] = []
-  const segments = 100
-
-  for (let i = 0; i <= segments; i++) {
-    const t = (i / segments) * Math.PI * 2
-    // Lemniscate of Bernoulli parametric equations
-    const x = scale * Math.sin(t)
-    const z = scale * Math.sin(t) * Math.cos(t)
-    const y = 1 // Keep camera at constant height above floor
-    points.push(new THREE.Vector3(x, y, z))
-  }
-
-  return new THREE.CatmullRomCurve3(points, true) // true = closed loop
-}
 
 // Build ribbon geometry in vanilla Three.js
 function createRibbonGeometry(curve: THREE.CatmullRomCurve3, width: number, segments: number) {
@@ -95,23 +78,23 @@ function Figure8Ribbon({ curve }: { curve: THREE.CatmullRomCurve3 }) {
 }
 
 function CameraRig({ curve }: { curve: THREE.CatmullRomCurve3 }) {
+  const { camera } = useThree()
   const progressRef = useRef(0)
 
   const targetLeftRef = useRef<THREE.Object3D>(null!)
   const targetRightRef = useRef<THREE.Object3D>(null!)
   const spotLightLeftRef = useRef<THREE.SpotLight>(null!)
   const spotLightRightRef = useRef<THREE.SpotLight>(null!)
-  const cameraRef = useRef<THREE.PerspectiveCamera>(null!)
 
   // Set spotlight targets after mount
   useEffect(() => {
+    console.log('spotLightLeftRef', spotLightLeftRef.current)
     if (!spotLightLeftRef.current! || !targetLeftRef.current) return
     spotLightLeftRef.current.target = targetLeftRef.current
     spotLightRightRef.current.target = targetRightRef.current
   }, [])
 
-  useFrame((_, delta) => {
-    const camera = cameraRef.current
+  useFrame(({ camera }, delta) => {
     const progress = progressRef.current
     if (!camera) return
 
@@ -128,37 +111,35 @@ function CameraRig({ curve }: { curve: THREE.CatmullRomCurve3 }) {
   })
 
   return (
-    <>
-      <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 1, 0]} fov={75}>
-        {/* Targets: in camera space, -Z is forward. Position ahead and down to illuminate the ground */}
-        <group ref={targetLeftRef} position={[-3, -2, -15]} />
-        <group ref={targetRightRef} position={[3, -2, -15]} />
+    <Portal container={camera}>
+      {/* Targets: in camera space, -Z is forward. Position ahead and down to illuminate the ground */}
+      <group ref={targetLeftRef} position={[-3, -2, -15]} />
+      <group ref={targetRightRef} position={[3, -2, -15]} />
 
-        {/* Left headlight: positioned at bottom-left of camera view */}
-        <spotLight
-          ref={spotLightLeftRef}
-          position={[-0.5, -0.3, 0]}
-          color="#ffffee"
-          intensity={100}
-          angle={0.5}
-          penumbra={0.3}
-          distance={30}
-          castShadow
-        />
+      {/* Left headlight: positioned at bottom-left of camera view */}
+      <spotLight
+        ref={spotLightLeftRef}
+        position={[-0.5, -0.3, 0]}
+        color="#ffffee"
+        intensity={100}
+        angle={0.5}
+        penumbra={0.3}
+        distance={30}
+        castShadow
+      />
 
-        {/* Right headlight: positioned at bottom-right of camera view */}
-        <spotLight
-          ref={spotLightRightRef}
-          position={[0.5, -0.3, 0]}
-          color="#ffffee"
-          intensity={100}
-          angle={0.5}
-          penumbra={0.3}
-          distance={30}
-          castShadow
-        />
-      </PerspectiveCamera>
-    </>
+      {/* Right headlight: positioned at bottom-right of camera view */}
+      <spotLight
+        ref={spotLightRightRef}
+        position={[0.5, -0.3, 0]}
+        color="#ffffee"
+        intensity={100}
+        angle={0.5}
+        penumbra={0.3}
+        distance={30}
+        castShadow
+      />
+    </Portal>
   )
 }
 
@@ -209,4 +190,22 @@ export default function App() {
       <CameraRig curve={curve} />
     </Canvas>
   )
+}
+
+//* Utils ==============================
+// Create a figure-8 (lemniscate) curve
+function createFigure8Curve(scale = 10) {
+  const points: THREE.Vector3[] = []
+  const segments = 100
+
+  for (let i = 0; i <= segments; i++) {
+    const t = (i / segments) * Math.PI * 2
+    // Lemniscate of Bernoulli parametric equations
+    const x = scale * Math.sin(t)
+    const z = scale * Math.sin(t) * Math.cos(t)
+    const y = 1 // Keep camera at constant height above floor
+    points.push(new THREE.Vector3(x, y, z))
+  }
+
+  return new THREE.CatmullRomCurve3(points, true) // true = closed loop
 }

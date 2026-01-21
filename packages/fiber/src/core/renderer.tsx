@@ -262,6 +262,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       //* Default Camera Initialization ==============================
+      // for temp purposes and to pass to later conditionals BEFORE the set value store a local ref
+      let tempCamera: THREE.Camera | null = state.camera
+
       // Create default camera, don't overwrite any user-set state
       if (!state.camera || (state.camera === lastCamera && !is.equ(lastCamera, cameraOptions, shallowLoose))) {
         lastCamera = cameraOptions
@@ -289,6 +292,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           if (!state.camera && !cameraOptions?.rotation) camera.lookAt(0, 0, 0)
         }
         state.set({ camera })
+
+        // set local camera
+        tempCamera = camera
 
         // Configure raycaster
         // https://github.com/pmndrs/react-xr/issues/300
@@ -320,7 +326,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // Add camera to scene if it exists and has no parent
         // This ensures camera children (HUDs, etc.) render properly
         // https://github.com/pmndrs/react-three-fiber/issues/3632
-        const camera = state.camera
+        const camera = tempCamera
         if (camera && !camera.parent) scene.add(camera)
       }
 
@@ -706,23 +712,23 @@ export function createPortal(
   container: THREE.Object3D | RefObject<THREE.Object3D | null> | RefObject<THREE.Object3D>,
   state?: InjectState,
 ): JSX.Element {
-  return <PortalWrapper children={children} container={container} state={state} />
+  return <Portal children={children} container={container} state={state} />
 }
 
-interface PortalProps {
+interface PortalInnerProps {
   children: ReactNode
   state?: InjectState
   container: Object3D
 }
 
-interface PortalWrapperProps {
+interface PortalProps {
   children: ReactNode
   state?: InjectState
   container: Object3D | RefObject<Object3D | null> | RefObject<Object3D>
 }
 
 //* Portal Wrapper - Handles Ref Resolution ==============================
-function PortalWrapper({ children, container, state }: PortalWrapperProps): JSX.Element {
+export function Portal({ children, container, state }: PortalProps): JSX.Element {
   const isRef = useCallback((obj: any): obj is RefObject<Object3D> => obj && 'current' in obj, [])
   const [resolvedContainer, setResolvedContainer] = useState<Object3D | null>(() => {
     if (isRef(container)) return container.current ?? null
@@ -757,11 +763,11 @@ function PortalWrapper({ children, container, state }: PortalWrapperProps): JSX.
   // Use container.uuid as key to force remount when container changes
   // Fallback to container reference if uuid doesn't exist (defensive)
   const portalKey = resolvedContainer.uuid ?? `portal-${resolvedContainer.id ?? 'unknown'}`
-  return <Portal key={portalKey} children={children} container={resolvedContainer} state={state} />
+  return <PortalInner key={portalKey} children={children} container={resolvedContainer} state={state} />
 }
 
 //* Portal - Actual Portal Implementation ==============================
-function Portal({ state = {}, children, container }: PortalProps): JSX.Element {
+function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX.Element {
   /** This has to be a component because it would not be able to call useThree/useStore otherwise since
    *  if this is our environment, then we are not in r3f's renderer but in react-dom, it would trigger
    *  the "R3F hooks can only be used within the Canvas component!" warning:
