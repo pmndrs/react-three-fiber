@@ -39,7 +39,8 @@ describe('useLoader', () => {
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
-    expect(scene.children[0]).toBe(MockMesh)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children[1]).toBe(MockMesh)
     expect(gltf.scene).toBe(MockMesh)
     expect(gltf.nodes.Scene).toBe(MockMesh)
   })
@@ -86,8 +87,9 @@ describe('useLoader', () => {
     const store = await act(async () => root.render(<Component />))
     const { scene } = store.getState()
 
-    expect(scene.children[0]).toBe(MockMesh)
-    expect(scene.children[1]).toBe(MockGroup)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children[1]).toBe(MockMesh)
+    expect(scene.children[2]).toBe(MockGroup)
     // Extensions called once per URL (may be called more due to re-renders, but at least 2)
     expect(extensions.mock.calls.length).toBeGreaterThanOrEqual(2)
 

@@ -26,7 +26,7 @@
     "examples": "pnpm --filter example dev",
     "stub": "pnpm --filter @react-three/fiber stub && pnpm --filter @react-three/eslint-plugin stub",
     "dev": "pnpm stub",
-    "ci": "pnpm build && pnpm typecheck && pnpm eslint && pnpm dev && pnpm test && pnpm format",
+    "ci": "pnpm build && pnpm verify-bundles && pnpm verify-types && pnpm typecheck && pnpm eslint && pnpm dev && pnpm test && pnpm format",
     "prepare": "husky",
     "eslint": "eslint packages/**/src/**/*.{ts,tsx}",
     "eslint:fix": "pnpm run eslint --fix",
@@ -40,7 +40,8 @@
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "verify-bundles": "node scripts/verify-bundles.js"
+    "verify-bundles": "node scripts/verify-bundles.js",
+    "verify-types": "node scripts/verify-types.js"
   },
   "devDependencies": {
     "@babel/core": "^7.28.6",

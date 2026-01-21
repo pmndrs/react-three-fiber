@@ -8,6 +8,62 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### Camera Scene Parenting
+
+The default camera is now automatically added as a child of the scene when it doesn't have a parent. This enables camera-relative effects like HUDs, headlights, and any objects that should follow the camera.
+
+**Why this matters:**
+
+- Previously, children attached to the camera wouldn't render because Three.js only renders objects in the scene hierarchy
+- Now `camera.add(mesh)` works automatically - the mesh renders and follows the camera
+
+**New Portal component:**
+
+```tsx
+import { Portal, useThree } from '@react-three/fiber'
+
+function CameraHeadlights() {
+  const { camera } = useThree()
+  return (
+    <Portal container={camera}>
+      <spotLight position={[-0.5, -0.3, 0]} intensity={100} />
+      <spotLight position={[0.5, -0.3, 0]} intensity={100} />
+    </Portal>
+  )
+}
+```
+
+#### Prop Utilities: fromRef and once
+
+Two new utilities for common prop patterns that previously required imperative code:
+
+**fromRef - Deferred Ref Resolution:**
+
+```tsx
+import { fromRef } from '@react-three/fiber'
+
+// target resolves after targetRef is populated - no useEffect needed!
+<group ref={targetRef} position={[0, 0, -10]} />
+<spotLight target={fromRef(targetRef)} intensity={100} />
+```
+
+**once - Mount-Only Method Calls:**
+
+```tsx
+import { once } from '@react-three/fiber'
+
+// Geometry transforms that shouldn't be reapplied on every render
+<boxGeometry rotateX={once(Math.PI / 2)} />
+<bufferGeometry center={once()} />
+```
+
+**Files changed:**
+
+- `packages/fiber/src/core/utils/fromRef.ts` - **NEW** Deferred ref resolution utility
+- `packages/fiber/src/core/utils/once.ts` - **NEW** Mount-only method call utility
+- `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
+- `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
+
 #### Canvas Size Control
 
 Added `width` and `height` props to Canvas for explicit resolution control, enabling use cases like 4K video export independent of container size.
@@ -120,6 +176,14 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 - Fixed `usePostProcessing` callbacks not re-running after HMR due to stale ref guards
 - Fixed absolute Windows paths appearing in bundled type declarations by defining `FiberRoot` locally instead of importing from `react-reconciler`
 - Fixed eslint-plugin codegen script not awaiting prettier format before writing files
+- Fixed type exports in `reconciler.d.ts` and `three.d.ts` to properly export Three.js types
+
+### Examples
+
+- Added **NestedCamera** demo showcasing camera-attached headlights using the new Portal component
+  - Demonstrates figure-8 path camera movement
+  - Shows spotlights following camera orientation
+  - Located at `example/src/demos/default/NestedCamera.tsx`
 
 ### Maintenance
 
@@ -132,6 +196,10 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 ### Files Changed
 
+- `packages/fiber/src/core/utils/fromRef.ts` - **NEW** Deferred ref resolution utility
+- `packages/fiber/src/core/utils/once.ts` - **NEW** Mount-only method call utility
+- `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
+- `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
 - `packages/fiber/src/webgpu/hooks/ScopedStore.ts` - **NEW** Type-safe proxy wrapper for uniform/node access
 - `packages/fiber/src/core/Canvas.tsx` - HMR detection and auto-refresh
 - `packages/fiber/src/core/store.ts` - Added `_hmrVersion` to initial state
@@ -141,7 +209,10 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 - `packages/fiber/src/webgpu/hooks/index.ts` - Export rebuild functions, ScopedStore exports
 - `packages/fiber/types/store.d.ts` - Added `_hmrVersion` type
 - `packages/fiber/types/canvas.d.ts` - Added `hmr` prop type
-- `docs/v10-features.md` - HMR documentation
+- `packages/fiber/types/reconciler.d.ts` - Fixed type exports
+- `packages/fiber/types/three.d.ts` - Fixed type exports
+- `example/src/demos/default/NestedCamera.tsx` - **NEW** Camera headlights demo
+- `docs/v10-features.md` - Camera parenting, Portal, fromRef, once documentation
 
 ---
 

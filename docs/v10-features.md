@@ -94,6 +94,88 @@ function App() {
 }
 ```
 
+### Portal Component for Camera Children
+
+The `Portal` component provides a declarative way to render children into the camera (or any container). This is cleaner than imperative `camera.add()` calls:
+
+```tsx
+import { Portal, useThree } from '@react-three/fiber'
+
+function CameraHeadlights() {
+  const { camera } = useThree()
+
+  return (
+    <Portal container={camera}>
+      {/* These render as camera children */}
+      <spotLight position={[-0.5, -0.3, 0]} intensity={100} />
+      <spotLight position={[0.5, -0.3, 0]} intensity={100} />
+    </Portal>
+  )
+}
+```
+
+Portal accepts any `Object3D` as a container - camera, groups, or any other scene object. Children are automatically added on mount and removed on unmount.
+
+---
+
+## Prop Utilities
+
+v10 adds two utilities for common prop patterns that previously required imperative code.
+
+### fromRef - Deferred Ref Resolution
+
+The `fromRef` utility defers prop application until refs are populated. This is essential for props like `target` that reference sibling elements:
+
+```tsx
+import { fromRef } from '@react-three/fiber'
+
+function SpotlightWithTarget() {
+  const targetRef = useRef<THREE.Object3D>(null)
+
+  return (
+    <>
+      <group ref={targetRef} position={[0, 0, -10]} />
+      {/* target resolves after targetRef is populated */}
+      <spotLight target={fromRef(targetRef)} intensity={100} />
+    </>
+  )
+}
+```
+
+**Before v10** you needed a `useEffect` to set the target after mount:
+
+```tsx
+// Old approach - required useEffect
+useEffect(() => {
+  if (lightRef.current && targetRef.current) {
+    lightRef.current.target = targetRef.current
+  }
+}, [])
+```
+
+**With fromRef** the relationship is declarative and automatic.
+
+### once - Mount-Only Method Calls
+
+The `once` utility marks a method to be called only on initial mount. This is useful for geometry transforms that shouldn't be reapplied on every render:
+
+```tsx
+import { once } from '@react-three/fiber'
+
+// Rotate geometry 90 degrees on mount
+<boxGeometry args={[1, 1, 1]} rotateX={once(Math.PI / 2)} />
+
+// Center geometry on mount
+<bufferGeometry center={once()} />
+
+// Apply matrix on mount
+<bufferGeometry applyMatrix4={once(transformMatrix)} />
+```
+
+**Why this matters:** Without `once`, putting `rotateX={Math.PI / 2}` as a prop would apply the rotation every render, compounding the rotation. With `once`, it applies exactly once when the geometry is created.
+
+**Reconstruction behavior:** When `args` changes (triggering element reconstruction), `once` methods run again on the new instance.
+
 ---
 
 ## useRenderTarget

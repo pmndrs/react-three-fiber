@@ -236,16 +236,20 @@ function CanvasImpl({
     if (!canvas) return
 
     // HMR refresh handler - clears caches and bumps version to trigger re-creation
+    // Uses queueMicrotask to defer setState out of any current render cycle,
+    // avoiding "Cannot update a component while rendering" errors
     const handleHMR = () => {
-      const rootEntry = _roots.get(canvas)
-      if (rootEntry?.store) {
-        // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
-        rootEntry.store.setState((state) => ({
-          nodes: {},
-          uniforms: {},
-          _hmrVersion: state._hmrVersion + 1,
-        }))
-      }
+      queueMicrotask(() => {
+        const rootEntry = _roots.get(canvas)
+        if (rootEntry?.store) {
+          // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
+          rootEntry.store.setState((state) => ({
+            nodes: {},
+            uniforms: {},
+            _hmrVersion: state._hmrVersion + 1,
+          }))
+        }
+      })
     }
 
     // Try Vite HMR

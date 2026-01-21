@@ -14,7 +14,7 @@ import type { CreateCanvasParameters, RendererMode } from './types/internal'
 /**
  * Sets up WebGL context mocking on the canvas prototype
  */
-function setupWebGLMocking(canvas: HTMLCanvasElement): void {
+function setupWebGLMocking(): void {
   if (globalThis.HTMLCanvasElement) {
     const originalGetContext = HTMLCanvasElement.prototype.getContext
 
@@ -39,7 +39,7 @@ function setupWebGLMocking(canvas: HTMLCanvasElement): void {
 /**
  * Sets up WebGPU context mocking on the canvas prototype
  */
-function setupWebGPUMocking(canvas: HTMLCanvasElement): void {
+function setupWebGPUMocking(): void {
   if (globalThis.HTMLCanvasElement) {
     const originalGetContext = HTMLCanvasElement.prototype.getContext
 
@@ -96,9 +96,9 @@ export const createCanvas = ({
 
   // Setup context mocking based on mode
   if (mode === 'webgpu') {
-    setupWebGPUMocking(canvas)
+    setupWebGPUMocking()
   } else {
-    setupWebGLMocking(canvas)
+    setupWebGLMocking()
   }
 
   // Allow consumer to modify canvas

@@ -16,6 +16,7 @@ const Inject = { Component: lazy(() => import('./default/Inject')) }
 const Layers = { Component: lazy(() => import('./default/Layers')) }
 const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
+const NestedCamera = { Component: lazy(() => import('./default/NestedCamera')) }
 const PortalTest = { Component: lazy(() => import('./default/PortalTest')) }
 const ResetProps = { Component: lazy(() => import('./default/ResetProps')) }
 const Selection = { Component: lazy(() => import('./default/Selection')) }
@@ -66,6 +67,7 @@ export {
   Layers,
   MultiMaterial,
   MultiRender,
+  NestedCamera,
   ResetProps,
   Selection,
   StopPropagation,

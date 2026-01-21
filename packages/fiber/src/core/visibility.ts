@@ -87,7 +87,7 @@ let occlusionSetupPromise: Promise<void> | null = null
  */
 export function enableOcclusion(store: RootStore): void {
   const state = store.getState()
-  const { internal, renderer, rootScene } = state
+  const { internal, renderer } = state
 
   // Already enabled or in progress
   if (internal.occlusionEnabled || occlusionSetupPromise) return

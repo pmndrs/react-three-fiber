@@ -38,7 +38,12 @@ declare global {
 
   /**
    * Acceptable input values for useUniforms - raw values that get converted to UniformNodes
-   * Supports: primitives, Three.js types, plain objects (converted to vectors), and UniformNodes
+   * Supports:
+   * - Primitives: number, string (color), boolean
+   * - Three.js types: Color, Vector2/3/4, Matrix3/4, Euler, Quaternion
+   * - Plain objects: { x, y, z, w } converted to vectors
+   * - TSL nodes: color(), vec3(), float() for type casting
+   * - UniformNode: existing uniforms (reused as-is)
    */
   type UniformValue =
     | number
@@ -53,6 +58,7 @@ declare global {
     | import('three/webgpu').Euler
     | import('three/webgpu').Quaternion
     | { x: number; y?: number; z?: number; w?: number } // Plain objects converted to vectors
+    | Node // TSL nodes like color(), vec3(), float() for type casting
     | UniformNode
 
   /** Input record for useUniforms - accepts raw values or UniformNodes */

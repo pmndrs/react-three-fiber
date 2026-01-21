@@ -136,6 +136,7 @@ export function prepare<T = any>(target: T, root: RootStore, type: string, props
       eventCount: 0,
       handlers: {},
       isHidden: false,
+      deferredRefs: [],
     }
 
     if (object) object.__r3f = instance

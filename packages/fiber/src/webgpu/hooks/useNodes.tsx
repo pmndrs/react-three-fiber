@@ -1,16 +1,25 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import type { RootState } from '#types'
 import type { Node } from '#three'
-import { createScopedStore, type CreatorState } from './ScopedStore'
+import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
 /** TSL node type - extends Three.js Node for material compatibility */
 export type TSLNode = Node
 
+/**
+ * A record of TSL nodes - allows mixed node types (OperatorNode, ConstNode, etc.)
+ * All values must extend Node, but they can be different subtypes.
+ */
 export type NodeRecord<T extends Node = Node> = Record<string, T>
-export type NodeCreator<T extends NodeRecord> = (state: CreatorState) => T
+
+/**
+ * Creator function that returns a record of nodes.
+ * The constraint `T extends Record<string, Node>` allows mixed node types
+ * (e.g., { n: OperatorNode; color: ConstNode<Color> }) to pass type checking.
+ */
+export type NodeCreator<T extends Record<string, Node>> = (state: CreatorState) => T
 
 /** Function signature for removeNodes util */
 export type RemoveNodesFn = (names: string | string[], scope?: string) => void
@@ -22,7 +31,7 @@ export type ClearNodesFn = (scope?: string) => void
 export type RebuildNodesFn = (scope?: string) => void
 
 /** Return type with utils included */
-export type NodesWithUtils<T extends NodeRecord = NodeRecord> = T & {
+export type NodesWithUtils<T extends Record<string, Node> = Record<string, Node>> = T & {
   removeNodes: RemoveNodesFn
   clearNodes: ClearNodesFn
   rebuildNodes: RebuildNodesFn
@@ -35,16 +44,16 @@ const isTSLNode = (value: unknown): value is Node =>
 //* Hook Overloads ==============================
 
 // Get all nodes (returns full structure with root nodes and scopes + utils)
-export function useNodes(): NodesWithUtils<NodeRecord & Record<string, NodeRecord>>
+export function useNodes(): NodesWithUtils<Record<string, Node> & Record<string, Record<string, Node>>>
 
 // Get nodes from a specific scope (+ utils)
-export function useNodes(scope: string): NodesWithUtils
+export function useNodes(scope: string): NodesWithUtils<Record<string, Node>>
 
 // Create/get nodes at root level (no scope) (+ utils)
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>): NodesWithUtils<T>
+export function useNodes<T extends Record<string, Node>>(creator: NodeCreator<T>): NodesWithUtils<T>
 
 // Create/get nodes within a scope (+ utils)
-export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
+export function useNodes<T extends Record<string, Node>>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
 
 //* Hook Implementation ==============================
 
@@ -81,10 +90,13 @@ export function useNodes<T extends NodeRecord>(creator: NodeCreator<T>, scope: s
  * material.positionNode = positionLocal.add(normal.mul(wobble))
  * ```
  */
-export function useNodes<T extends NodeRecord>(
+export function useNodes<T extends Record<string, Node>>(
   creatorOrScope?: NodeCreator<T> | string,
   scope?: string,
-): NodesWithUtils<T> | NodesWithUtils<NodeRecord> | NodesWithUtils<NodeRecord & Record<string, NodeRecord>> {
+):
+  | NodesWithUtils<T>
+  | NodesWithUtils<Record<string, Node>>
+  | NodesWithUtils<Record<string, Node> & Record<string, Record<string, Node>>> {
   const store = useStore()
 
   //* Utils ==============================
@@ -171,6 +183,11 @@ export function useNodes<T extends NodeRecord>(
   // This allows rebuildNodes() to bust the memoization cache and force re-creation
   const hmrVersion = useThree((s) => s._hmrVersion)
 
+  // Extracted deps to avoid complex expressions in useMemo dependency array
+  const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
+  const readerDep = isReader ? storeNodes : null
+  const creatorDep = isReader ? null : hmrVersion
+
   const nodes = useMemo(() => {
     // Case 1: No arguments - return all nodes (root + scopes)
     // Uses subscribed storeNodes for reactivity
@@ -193,12 +210,8 @@ export function useNodes<T extends NodeRecord>(
     const set = store.setState
     const creator = creatorOrScope
 
-    // Wrap state with ScopedStore for type-safe uniform/node access
-    const wrappedState: CreatorState = {
-      ...state,
-      uniforms: createScopedStore<UniformNode>(state.uniforms),
-      nodes: createScopedStore<Node>(state.nodes),
-    }
+    // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
+    const wrappedState = createLazyCreatorState(state)
     const created = creator(wrappedState)
     const result: Record<string, TSLNode> = {}
     let hasNewNodes = false
@@ -249,15 +262,7 @@ export function useNodes<T extends NodeRecord>(
 
     return result as T
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    store,
-    typeof creatorOrScope === 'string' ? creatorOrScope : scope,
-    // Only include storeNodes in deps for reader modes to enable reactivity
-    // Creator mode intentionally excludes it to avoid re-running creator on unrelated changes
-    isReader ? storeNodes : null,
-    // Include hmrVersion for creator modes to allow rebuildNodes() to bust the cache
-    isReader ? null : hmrVersion,
-  ])
+  }, [store, scopeDep, readerDep, creatorDep])
 
   // Return nodes with utils
   return { ...nodes, removeNodes, clearNodes, rebuildNodes } as NodesWithUtils<T>
@@ -345,15 +350,6 @@ export default useNodes
 export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
 
 /**
- * Helper to extract a typed uniform from the uniforms store.
- * This is a runtime no-op but helps TypeScript understand the type.
- * @internal
- */
-function getUniform<T>(uniform: UniformNode | UniformRecord): UniformNode<T> {
-  return uniform as UniformNode<T>
-}
-
-/**
  * Creates local values that rebuild when uniforms, nodes, or textures change.
  *
  * Unlike `useNodes`, this does NOT register to the global store.
@@ -386,16 +382,13 @@ export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalN
   const uniforms = useThree((s) => s.uniforms)
   const nodes = useThree((s) => s.nodes)
   const textures = useThree((s) => s.textures)
+  // Subscribe to HMR version to rebuild on hot reload
+  const hmrVersion = useThree((s) => s._hmrVersion)
 
   return useMemo(() => {
-    const state = store.getState()
-    // Wrap state with ScopedStore for type-safe uniform/node access
-    const wrappedState: CreatorState = {
-      ...state,
-      uniforms: createScopedStore<UniformNode>(state.uniforms),
-      nodes: createScopedStore<Node>(state.nodes),
-    }
+    // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
+    const wrappedState = createLazyCreatorState(store.getState())
     return creator(wrappedState)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, creator, uniforms, nodes, textures]) // extras intentionally included to trigger recreation
+  }, [store, creator, uniforms, nodes, textures, hmrVersion]) // hmrVersion triggers rebuild on HMR
 }

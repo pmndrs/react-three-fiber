@@ -537,7 +537,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
     priority: 1,
     enabled: true,
 
-    compute(event: DomEvent, state: RootState, previous?: RootState) {
+    compute(event: DomEvent, state: RootState) {
       // https://github.com/pmndrs/react-three-fiber/pull/782
       // Events trigger outside of canvas when moved, use offsetX/Y by default and allow overrides
       state.pointer.set((event.offsetX / state.size.width) * 2 - 1, -(event.offsetY / state.size.height) * 2 + 1)

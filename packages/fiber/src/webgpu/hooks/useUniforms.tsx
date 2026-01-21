@@ -1,13 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import type { RootState } from '#types'
-import type { Node } from '#three'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
 import { vectorize } from './utils'
 import { useCompareMemoize } from './useCompareMemoize'
 import { is } from '../../core/utils'
-import { createScopedStore, type CreatorState } from './ScopedStore'
+import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
@@ -77,18 +75,26 @@ export function useUniforms<T extends UniformInputRecord>(
  * - Scoped uniforms: `state.uniforms[scope].uName`
  *
  * **Inputs:**
- * - Raw values: numbers, strings, Three.js types (auto-wrapped in uniform())
+ * - Raw values: numbers, strings (colors), Three.js types (auto-wrapped in uniform())
  * - Plain objects: `{x, y, z}` auto-converted to Vector2/3/4
- * - TSL nodes: `uniform(float(5))`, `vec3(1, 0, 0)`, etc.
+ * - TSL nodes: `color()`, `vec3()`, `float()` for type casting
  *
  * @example
  * ```tsx
  * import * as THREE from 'three/webgpu'
+ * import { color, vec3, float } from 'three/tsl'
  *
  * // Simple object syntax (most common)
  * const { uTime, uColor } = useUniforms({
  *   uTime: 0,
  *   uColor: '#ff0000'
+ * })
+ *
+ * // TSL nodes for type casting (creates typed uniforms)
+ * const { uColorNode, uPosition, uIntensity } = useUniforms({
+ *   uColorNode: color('#ff0000'),  // color-typed uniform
+ *   uPosition: vec3(0, 1, 0),      // vec3-typed uniform
+ *   uIntensity: float(1.5),        // float-typed uniform
  * })
  *
  * // Supports Three.js types
@@ -97,8 +103,8 @@ export function useUniforms<T extends UniformInputRecord>(
  * })
  *
  * // Plain objects auto-convert to vectors (great for Leva)
- * const { uColor } = useUniforms({
- *   uColor: { x: 1, y: 0, z: 0 } // becomes Vector3
+ * const { uOffset } = useUniforms({
+ *   uOffset: { x: 1, y: 0, z: 0 } // becomes Vector3
  * })
  *
  * // Function syntax for reactive values or accessing state
@@ -184,18 +190,16 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
     (targetScope) => {
       store.setState((state) => {
         // Clear the specified scope (or all) and bump version
-        let newUniforms = state.uniforms
+        let newUniforms: typeof state.uniforms = {}
         if (targetScope && targetScope !== 'root') {
           const { [targetScope]: _, ...rest } = state.uniforms
           newUniforms = rest
         } else if (targetScope === 'root') {
-          newUniforms = {}
           for (const [key, value] of Object.entries(state.uniforms)) {
             if (!isUniformNode(value)) newUniforms[key] = value
           }
-        } else {
-          newUniforms = {}
         }
+        // else: stays as {} (clear all)
         return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
       })
     },
@@ -206,22 +210,39 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // Execute functions immediately to capture reactive values, then deep-compare output.
   // This allows: useUniforms(() => ({ uTime: time })) to work without useCallback wrapping.
   // Function runs every render, but GPU only updates when result values change.
+  //
+  // IMPORTANT: We normalize the input through vectorize() BEFORE comparison.
+  // This extracts actual values from TSL nodes (color(), vec3(), etc.) so that
+  // dequal compares Colors/Vectors/numbers instead of nodes with different uuids.
+  // Without this, useUniforms({ uColor: color('red') }) would see different nodes
+  // on each render (different uuid) and trigger unnecessary updates.
   const inputForMemoization = useMemo(() => {
+    let raw = creatorOrScope
+
+    // If a function, execute it and get what it returns
     if (is.fun(creatorOrScope)) {
-      const state = store.getState()
-      // Wrap state with ScopedStore for type-safe uniform/node access
-      const wrappedState: CreatorState = {
-        ...state,
-        uniforms: createScopedStore<UniformNode>(state.uniforms),
-        nodes: createScopedStore<Node>(state.nodes),
-      }
-      return creatorOrScope(wrappedState)
+      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
+      const wrappedState = createLazyCreatorState(store.getState())
+      raw = creatorOrScope(wrappedState)
     }
-    return creatorOrScope
+
+    // Normalize: extract values from TSL nodes for stable comparison
+    // This converts { uColor: color('red') } to { uColor: THREE.Color }
+    // Three does this internally as well
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const normalized: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(raw)) {
+        normalized[key] = vectorize(value)
+      }
+      return normalized
+    }
+
+    return raw
   }, [creatorOrScope, store])
 
   // Deep-compare to detect actual value changes (not just reference changes)
-  // Prevents: useUniforms({ uColor: 'blue' }) from updating every render
+  // Now compares extracted values (Colors, Vectors, numbers) not TSL nodes
+  // dequal handles THREE.Color comparison via r/g/b properties
   const memoizedInput = useCompareMemoize(inputForMemoization, true)
 
   // Determine if we're in reader mode (no creator function/object)
@@ -231,23 +252,36 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // This ensures useUniforms() and useUniforms('scope') reactively update when store changes
   const storeUniforms = useThree((s) => s.uniforms)
 
+  // Subscribe to HMR version for creator modes
+  // This ensures rebuildUniforms() triggers re-creation
+  const hmrVersion = useThree((s) => s._hmrVersion)
+
+  // Extracted deps to avoid complex expressions in useMemo dependency array
+  const readerDep = isReader ? storeUniforms : null
+  const creatorDep = isReader ? null : hmrVersion
+
   //* Main Logic ==============================
   const uniforms = useMemo(() => {
     // Read-only: Return all uniforms
     // Uses subscribed storeUniforms for reactivity
+    // ex: const { uDelay, uColor } = useUniforms()
     if (memoizedInput === undefined) {
       return storeUniforms as UniformRecord & Record<string, UniformRecord>
     }
 
     // Read-only: Return uniforms from specific scope
     // Uses subscribed storeUniforms for reactivity
+    // ex: const { uTuPower } = useUniforms('player')
     if (typeof memoizedInput === 'string') {
       const scopeData = storeUniforms[memoizedInput]
       if (scopeData && !isUniformNode(scopeData)) return scopeData as UniformRecord
       return {}
     }
 
-    // Creator/object mode - use store.getState() snapshot
+    //* CREATOR MODE ==============================
+    // here we are adding/creating NEW uniforms
+
+    // Get a clean state snapshot of the store
     const state = store.getState()
     const set = store.setState
 
@@ -275,7 +309,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
         const existingVal = result[name].value
         const newVal = vectorize(node)
 
-        // Efficient equality checking
+        // Second Phase Efficient equality checking
         let equals = newVal === existingVal // Fast path: primitives and same references
         if (!equals && hasEqualsMethod(existingVal) && hasEqualsMethod(newVal)) {
           // Three.js types: use native .equals() methods
@@ -312,13 +346,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
     return result as UniformRecord
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    store,
-    memoizedInput,
-    scope,
-    // Only include storeUniforms in deps for reader modes to enable reactivity
-    isReader ? storeUniforms : null,
-  ])
+  }, [store, memoizedInput, scope, readerDep, creatorDep])
 
   // Return uniforms with utils
   return { ...uniforms, removeUniforms, clearUniforms, rebuildUniforms } as UniformsWithUtils<UniformRecord>
@@ -337,18 +365,16 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
  */
 export function rebuildAllUniforms(store: ReturnType<typeof useStore>, scope?: string) {
   store.setState((state) => {
-    let newUniforms = state.uniforms
+    let newUniforms: typeof state.uniforms = {}
     if (scope && scope !== 'root') {
       const { [scope]: _, ...rest } = state.uniforms
       newUniforms = rest
     } else if (scope === 'root') {
-      newUniforms = {}
       for (const [key, value] of Object.entries(state.uniforms)) {
         if (!isUniformNode(value)) newUniforms[key] = value
       }
-    } else {
-      newUniforms = {}
     }
+    // else: stays as {} (clear all)
     return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
   })
 }
@@ -405,13 +431,21 @@ export default useUniforms
 /**
  * Creates a TSL uniform node from various input types
  * - Already a UniformNode: returns as-is
+ * - TSL nodes (color(), vec3(), float()): passed to uniform() for type casting
  * - Plain objects: converted to vectors via vectorize()
+ * - String colors: converted to Color via vectorize()
  * - Raw values: wrapped in uniform()
  */
 function createUniform(inName: string, node: any, scope?: string): UniformNode {
+  // Already a UniformNode - return as-is
   if (node.type === 'UniformNode') return node
 
-  const inValue = vectorize(node) // Convert plain objects to Three.js types
+  // vectorize handles:
+  // - TSL nodes: passed through unchanged
+  // - Plain objects {x,y,z}: converted to Vector3
+  // - String colors: converted to THREE.Color
+  // - Other values: passed through unchanged
+  const inValue = vectorize(node)
   const newUniform = uniform(inValue) as UniformNode
 
   // Set debug name for easier identification in GPU tools

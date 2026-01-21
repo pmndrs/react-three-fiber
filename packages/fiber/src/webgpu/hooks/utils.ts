@@ -70,16 +70,76 @@ export function createTextureOperations(set: StoreApi<RootState>['setState']): T
   }
 }
 
+//* TSL Node Value Extraction ==============================
+// Extracts actual values from TSL ConstNodes (color(), vec3(), float(), etc.)
+// This mirrors what Three.js's uniform() function does internally.
+
+/**
+ * Extracts the actual value from a TSL ConstNode.
+ *
+ * When you call `color('red')` or `vec3(1,2,3)`, TSL creates a ConstNode
+ * that wraps the actual value. This function extracts that value so it can
+ * be used for comparison and uniform creation.
+ *
+ * This mirrors Three.js's uniform() behavior which traverses nodes to find
+ * the concrete value before creating the UniformNode.
+ *
+ * @param value - Any value, potentially a TSL node
+ * @returns The extracted value if it's a TSL ConstNode, otherwise the original value
+ *
+ * @example
+ * extractTSLValue(color('red')) // => THREE.Color
+ * extractTSLValue(vec3(1, 2, 3)) // => THREE.Vector3
+ * extractTSLValue(float(1.5)) // => 1.5
+ * extractTSLValue(new THREE.Color('red')) // => THREE.Color (unchanged)
+ * extractTSLValue(5) // => 5 (unchanged)
+ */
+export function extractTSLValue(value: unknown): unknown {
+  if (value === null || value === undefined) return value
+  if (typeof value !== 'object') return value
+
+  const node = value as any
+
+  // Check if it's a TSL Node (has isNode flag like Three.js checks)
+  if (!node.isNode) return value
+
+  // For ConstNodes, extract the value directly
+  if (node.isConstNode) {
+    return node.value
+  }
+
+  // For other nodes with a value, try to traverse like Three.js uniform() does
+  // This handles cases where a node wraps a ConstNode
+  if ('value' in node) {
+    let extractedValue = node.value
+
+    // Traverse to find ConstNode values (mirrors Three.js uniform() logic)
+    if (typeof node.traverse === 'function') {
+      node.traverse((n: any) => {
+        if (n.isConstNode) {
+          extractedValue = n.value
+        }
+      })
+    }
+
+    return extractedValue
+  }
+
+  // Not a value-bearing node, return as-is
+  return value
+}
+
 //* Vectorization Utilities ==============================
 // Converts plain objects from Leva (e.g., {x: 1, y: 2}) to Three.js vectors
 
 /**
  * Converts plain objects with x/y/z/w properties to Three.js Vector types.
  * Also converts color strings (hex, named, rgb) to Three.js Color.
+ * Extracts values from TSL ConstNodes (color(), vec3(), etc.).
  * Handles Leva's output format while preserving existing Three.js types.
  *
- * @param inObject - Input value (can be number, vector, matrix, color string, plain object, etc.)
- * @returns Three.js Vector/Color if convertible, otherwise returns original value
+ * @param inObject - Input value (can be number, vector, matrix, color string, TSL node, plain object, etc.)
+ * @returns Three.js Vector/Color if convertible, extracted value if TSL node, otherwise original value
  *
  * @example
  * vectorize({x: 1, y: 2}) // => Vector2(1, 2)
@@ -87,6 +147,8 @@ export function createTextureOperations(set: StoreApi<RootState>['setState']): T
  * vectorize({x: 1, y: 2, z: 3, w: 4}) // => Vector4(1, 2, 3, 4)
  * vectorize('#ff0a81') // => Color(0xff0a81)
  * vectorize('red') // => Color('red')
+ * vectorize(color('red')) // => Color (extracted from TSL node)
+ * vectorize(vec3(1, 2, 3)) // => Vector3 (extracted from TSL node)
  * vectorize(new THREE.Vector3(1, 2, 3)) // => Vector3(1, 2, 3) (unchanged)
  * vectorize(5) // => 5 (unchanged)
  */
@@ -114,6 +176,12 @@ export function vectorize(inObject: unknown): unknown {
   if (typeof inObject !== 'object') return inObject
 
   const obj = inObject as any
+
+  // If it's a TSL Node (color(), vec3(), etc.), extract the actual value
+  // This ensures consistent comparison and prevents uuid mismatches on re-renders
+  if (obj.isNode) {
+    return extractTSLValue(inObject)
+  }
 
   // If already a Three.js vector, return as-is
   if (obj.isVector2 || obj.isVector3 || obj.isVector4) return inObject

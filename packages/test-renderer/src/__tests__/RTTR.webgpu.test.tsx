@@ -7,7 +7,7 @@
 
 import * as React from 'react'
 import * as THREE from 'three/webgpu'
-import { uniform, color, vec3, float, mix } from 'three/tsl'
+import { color, vec3, float, mix } from 'three/tsl'
 
 import ReactThreeTestRenderer, {
   create,
