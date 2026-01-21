@@ -146,3 +146,40 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes'> & {
   /** Type-safe node access - property access returns Node */
   nodes: ScopedStoreType<Node>
 }
+
+//* Lazy Creator State Factory ==============================
+
+/**
+ * Creates a CreatorState with lazy ScopedStore wrappers.
+ *
+ * The ScopedStore Proxies are only created when `uniforms` or `nodes` are
+ * actually accessed, avoiding expensive Proxy creation when the creator
+ * function doesn't need them.
+ *
+ * @param state - The raw RootState from store.getState()
+ * @returns CreatorState with lazy-initialized ScopedStore wrappers
+ *
+ * @example
+ * ```tsx
+ * const wrappedState = createLazyCreatorState(store.getState())
+ * const result = creatorFn(wrappedState)
+ * // Proxy only created if creatorFn accessed uniforms or nodes
+ * ```
+ */
+export function createLazyCreatorState(state: RootState): CreatorState {
+  let _uniforms: ScopedStoreType<UniformNode> | null = null
+  let _nodes: ScopedStoreType<Node> | null = null
+
+  return Object.create(state, {
+    uniforms: {
+      get() {
+        return (_uniforms ??= createScopedStore<UniformNode>(state.uniforms))
+      },
+    },
+    nodes: {
+      get() {
+        return (_nodes ??= createScopedStore<Node>(state.nodes))
+      },
+    },
+  }) as CreatorState
+}

@@ -16,7 +16,13 @@
       "Bash(pnpm ci:*)",
       "Bash(pnpm prettier:*)",
       "Bash(node scripts/verify-types.js:*)",
-      "Bash(pnpm verify-types:*)"
+      "Bash(pnpm verify-types:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(more:*)",
+      "Bash(powershell -Command \"Get-Content packages/fiber/dist/index.d.ts -Head 100\")"
     ]
   }
 }

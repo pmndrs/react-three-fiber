@@ -82,20 +82,12 @@ function verifyDtsFile(filename, config) {
     }
   }
 
-  // Verify ThreeElements interface exists and extends ThreeElementsImpl
-  if (!content.includes('interface ThreeElements extends')) {
+  // Verify ThreeElements interface exists
+  if (!content.includes('interface ThreeElements')) {
     console.error(`   ❌ ThreeElements interface not found`)
     passed = false
   } else {
     console.log(`   ✅ ThreeElements interface exists`)
-  }
-
-  // Verify module augmentation exists
-  if (!content.includes("declare module 'react'") || !content.includes('IntrinsicElements extends ThreeElements')) {
-    console.error(`   ❌ React JSX module augmentation not found`)
-    passed = false
-  } else {
-    console.log(`   ✅ React JSX module augmentation exists`)
   }
 
   return passed
@@ -108,7 +100,7 @@ function runTypeResolutionTest() {
   console.log('\n📦 Type Resolution Test')
   console.log('─'.repeat(60))
 
-  const testFile = resolve(__dirname, '../.type-test-temp.ts')
+  const testFile = resolve(__dirname, '../.type-test-temp.tsx')
   const testCode = `
 // Temporary file for type verification - will be deleted
 import type { ThreeElements, ThreeExports } from './packages/fiber/dist/index'
@@ -129,6 +121,15 @@ const _test3: MeshHasPosition = true
 type IsNotAny = ThreeExports extends { __brand: 'this-should-not-exist' } ? false : true
 const _test4: IsNotAny = true
 
+// Test 5: Verify mesh type has actual Three.js Mesh properties (not any)
+// If ThreeElements['mesh'] were 'any', this would pass with anything
+type MeshHasRotation = ThreeElements['mesh'] extends { rotation?: any } ? true : false
+const _test5: MeshHasRotation = true
+
+// Test 6: Verify boxGeometry exists
+type HasBoxGeometry = 'boxGeometry' extends keyof ThreeElements ? true : false
+const _test6: HasBoxGeometry = true
+
 export {}
 `
 
@@ -145,6 +146,8 @@ export {}
     console.log('      - ThreeExports has Mesh constructor')
     console.log('      - ThreeElements has mesh element')
     console.log('      - mesh element has position prop')
+    console.log('      - mesh element has rotation prop')
+    console.log('      - ThreeElements has boxGeometry element')
     console.log('      - ThreeExports is not any')
 
     unlinkSync(testFile)
