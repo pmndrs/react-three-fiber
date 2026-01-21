@@ -794,10 +794,11 @@ describe('Material Integration', () => {
     const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<TestMesh />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Mesh)
     // Verify material is a NodeMaterial
-    const mesh = scene.children[0] as THREE.Mesh
+    const mesh = scene.children[1] as THREE.Mesh
     expect(mesh.material).toBeInstanceOf(THREE.MeshBasicNodeMaterial)
   })
 
@@ -818,8 +819,9 @@ describe('Material Integration', () => {
     const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<TestMesh />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    const mesh = scene.children[0] as THREE.Mesh
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    const mesh = scene.children[1] as THREE.Mesh
     expect(mesh.material).toBeInstanceOf(THREE.MeshBasicNodeMaterial)
   })
 
@@ -862,10 +864,11 @@ describe('Material Integration', () => {
     )
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(2)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(3)
     // Both should use MeshBasicNodeMaterial
-    expect((scene.children[0] as THREE.Mesh).material).toBeInstanceOf(THREE.MeshBasicNodeMaterial)
     expect((scene.children[1] as THREE.Mesh).material).toBeInstanceOf(THREE.MeshBasicNodeMaterial)
+    expect((scene.children[2] as THREE.Mesh).material).toBeInstanceOf(THREE.MeshBasicNodeMaterial)
   })
 })
 
@@ -1378,7 +1381,8 @@ describe('Core R3F Features', () => {
     const store = await act(async () => root.render(<mesh />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Mesh)
   })
 })

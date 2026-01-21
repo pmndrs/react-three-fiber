@@ -59,31 +59,34 @@ describe('renderer', () => {
     const store = await act(async () => root.render(null))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(0)
+    // Camera is automatically added to scene
+    expect(scene.children.length).toBe(1)
   })
 
   it('should render native elements', async () => {
     const store = await act(async () => root.render(<group name="native" />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Group)
-    expect(scene.children[0].name).toBe('native')
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[1].name).toBe('native')
   })
 
   it('should render extended elements', async () => {
     const store = await act(async () => root.render(<mock name="mock" />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(Mock)
-    expect(scene.children[0].name).toBe('mock')
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(Mock)
+    expect(scene.children[1].name).toBe('mock')
 
     const Component = extend(THREE.Mesh)
     await act(async () => root.render(<Component />))
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Mesh)
   })
 
   it('should render primitives', async () => {
@@ -92,8 +95,9 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<primitive name="primitive" object={object} />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBe(object)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBe(object)
     expect(object.name).toBe('primitive')
   })
 
@@ -116,13 +120,15 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Component show={true} />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBe(object)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBe(object)
     expect(object.children.length).toBe(2)
 
     await act(async () => root.render(<Component show={false} />))
 
-    expect(scene.children.length).toBe(0)
+    // Only camera remains
+    expect(scene.children.length).toBe(1)
     expect(object.children.length).toBe(0)
   })
 
@@ -149,14 +155,15 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Component primitiveKey="A" />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBe(object)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBe(object)
     expect(object.children.length).toBe(2)
 
     await act(async () => root.render(<Component primitiveKey="B" />))
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBe(object)
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBe(object)
     expect(object.children.length).toBe(2)
   })
 
@@ -222,10 +229,11 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Group)
-    expect(scene.children[0].children.length).toBe(1)
-    expect(scene.children[0].children[0]).toBeInstanceOf(THREE.Mesh)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Group)
+    expect(scene.children[1].children.length).toBe(1)
+    expect(scene.children[1].children[0]).toBeInstanceOf(THREE.Mesh)
   })
 
   it('should handle attach', async () => {
@@ -247,15 +255,16 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(1)
-    expect(scene.children[0]).toBeInstanceOf(THREE.Mesh)
+    // Camera is at [0], rendered content starts at [1]
+    expect(scene.children.length).toBe(2)
+    expect(scene.children[1]).toBeInstanceOf(THREE.Mesh)
     // Handles geometry & material attach
-    expect((scene.children[0] as ComponentMesh).geometry).toBeInstanceOf(THREE.BoxGeometry)
-    expect((scene.children[0] as ComponentMesh).material).toBeInstanceOf(THREE.MeshStandardMaterial)
+    expect((scene.children[1] as ComponentMesh).geometry).toBeInstanceOf(THREE.BoxGeometry)
+    expect((scene.children[1] as ComponentMesh).material).toBeInstanceOf(THREE.MeshStandardMaterial)
     // Handles nested attach
-    expect(scene.children[0].userData.group).toBeInstanceOf(THREE.Group)
+    expect(scene.children[1].userData.group).toBeInstanceOf(THREE.Group)
     // attach bypasses scene-graph
-    expect(scene.children[0].children.length).toBe(0)
+    expect(scene.children[1].children.length).toBe(0)
     // attaches before presenting
     expect(lifecycle).toStrictEqual(['attach', 'mount'])
   })
@@ -263,7 +272,8 @@ describe('renderer', () => {
   it('should update props reactively', async () => {
     const store = await act(async () => root.render(<group />))
     const { scene } = store.getState()
-    const group = scene.children[0] as THREE.Group
+    // Camera is at [0], rendered content starts at [1]
+    const group = scene.children[1] as THREE.Group
 
     // Initial
     expect(group.name).toBe(new THREE.Group().name)
@@ -284,7 +294,8 @@ describe('renderer', () => {
   it('should handle event props reactively', async () => {
     const store = await act(async () => root.render(<mesh />))
     const { scene, internal } = store.getState()
-    const mesh = scene.children[0] as ComponentMesh
+    // Camera is at [0], rendered content starts at [1]
+    const mesh = scene.children[1] as ComponentMesh
     mesh.name = 'current'
 
     // Initial
@@ -464,8 +475,8 @@ describe('renderer', () => {
 
     const { scene, internal } = store.getState()
 
-    // Cleans up scene-graph
-    expect(scene.children.length).toBe(0)
+    // Cleans up scene-graph (only camera remains)
+    expect(scene.children.length).toBe(1)
     // Removes events
     expect(internal.interaction.length).toBe(0)
     // Calls dispose on top-level instance
@@ -508,15 +519,17 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test array={array} />))
     const { scene } = store.getState()
 
-    expect(scene.children.map((o) => o.name)).toStrictEqual(array.map((o) => o.name))
+    // Filter out camera to compare only rendered content
+    const contentChildren = () => scene.children.filter((c) => !(c as any).isCamera)
+    expect(contentChildren().map((o) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
     await act(async () => root.render(<Test array={reversedArray} />))
-    expect(scene.children.map((o) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
+    expect(contentChildren().map((o) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
     await act(async () => root.render(<Test array={mixedArray} />))
-    expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
+    expect(contentChildren().map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
   // https://github.com/pmndrs/react-three-fiber/issues/3125
@@ -543,17 +556,18 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test array={array} />))
     const { scene } = store.getState()
 
-    expect(scene.children.length).toBe(0)
+    // Only camera in scene (primitives are attached, not added as children)
+    expect(scene.children.length).toBe(1)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(array.map((o) => o.name))
 
     const reversedArray = [d, c, b, a]
     await act(async () => root.render(<Test array={reversedArray} />))
-    expect(scene.children.length).toBe(0)
+    expect(scene.children.length).toBe(1)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(reversedArray.map((o) => o.name))
 
     const mixedArray = [b, a, d, c]
     await act(async () => root.render(<Test array={mixedArray} />))
-    expect(scene.children.length).toBe(0)
+    expect(scene.children.length).toBe(1)
     expect(scene.userData.objects.map((o: THREE.Object3D) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
   })
 
@@ -764,20 +778,22 @@ describe('renderer', () => {
   it('resolves conflicting and prefixed elements', async () => {
     extend({ ThreeRandom: THREE.Group })
 
+    // Camera is at [0], rendered content starts at [1]
     const store = await act(async () => root.render(<line />))
-    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
+    expect(store.getState().scene.children[1]).toBeInstanceOf(THREE.Line)
 
     await act(async () => root.render(null))
-    expect(store.getState().scene.children.length).toBe(0)
+    // Only camera remains
+    expect(store.getState().scene.children.length).toBe(1)
 
     await act(async () => root.render(<threeLine />))
-    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Line)
+    expect(store.getState().scene.children[1]).toBeInstanceOf(THREE.Line)
 
     await act(async () => root.render(null))
-    expect(store.getState().scene.children.length).toBe(0)
+    expect(store.getState().scene.children.length).toBe(1)
 
     await act(async () => root.render(<threeRandom />))
-    expect(store.getState().scene.children[0]).toBeInstanceOf(THREE.Group)
+    expect(store.getState().scene.children[1]).toBeInstanceOf(THREE.Group)
   })
 
   // https://github.com/pmndrs/react-three-fiber/pull/3490
@@ -800,9 +816,13 @@ describe('renderer', () => {
     const store = await act(async () => root.render(<Test values={initialValues} />))
     const { scene } = store.getState()
 
+    // Filter out camera to compare only rendered content
+    const contentChildren = () => scene.children.filter((c) => !(c as any).isCamera)
+
     // Check initial state - verify both Three.js and R3F instance arrays
-    expect(scene.children.length).toBe(4)
-    expect(scene.children.map((child) => child.name)).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
+    // +1 for camera
+    expect(scene.children.length).toBe(5)
+    expect(contentChildren().map((child) => child.name)).toEqual(['mesh-1', 'mesh-2', 'mesh-3', 'mesh-4'])
     expect((scene as any).__r3f.children.length).toBe(4)
 
     // Update with one less value and different order
@@ -810,34 +830,35 @@ describe('renderer', () => {
     await act(async () => root.render(<Test values={updatedValues} />))
 
     // Check that scene has exactly the meshes we expect in correct order
-    expect(scene.children.length).toBe(3)
-    expect(scene.children.map((child) => child.name)).toEqual(['mesh-3', 'mesh-1', 'mesh-4'])
+    // +1 for camera
+    expect(scene.children.length).toBe(4)
+    expect(contentChildren().map((child) => child.name)).toEqual(['mesh-3', 'mesh-1', 'mesh-4'])
     // Verify R3F instance children array stays in sync (this is what the PR fixes)
     expect((scene as any).__r3f.children.length).toBe(3)
 
     // Verify mesh-2 was removed
-    expect(scene.children.find((child) => child.name === 'mesh-2')).toBeUndefined()
+    expect(contentChildren().find((child) => child.name === 'mesh-2')).toBeUndefined()
 
     // Verify no duplicates by checking unique names
-    const uniqueNames = new Set(scene.children.map((child) => child.name))
-    expect(uniqueNames.size).toBe(scene.children.length)
+    const uniqueNames = new Set(contentChildren().map((child) => child.name))
+    expect(uniqueNames.size).toBe(contentChildren().length)
 
     // Update with different order again
     const reorderedValues = [4, 1]
     await act(async () => root.render(<Test values={reorderedValues} />))
 
-    // Check final state
-    expect(scene.children.length).toBe(2)
-    expect(scene.children.map((child) => child.name)).toEqual(['mesh-4', 'mesh-1'])
+    // Check final state (+1 for camera)
+    expect(scene.children.length).toBe(3)
+    expect(contentChildren().map((child) => child.name)).toEqual(['mesh-4', 'mesh-1'])
     // Verify R3F instance children array stays in sync
     expect((scene as any).__r3f.children.length).toBe(2)
 
     // Verify mesh-3 was removed
-    expect(scene.children.find((child) => child.name === 'mesh-3')).toBeUndefined()
+    expect(contentChildren().find((child) => child.name === 'mesh-3')).toBeUndefined()
 
     // Verify no duplicates in final state
-    const finalUniqueNames = new Set(scene.children.map((child) => child.name))
-    expect(finalUniqueNames.size).toBe(scene.children.length)
+    const finalUniqueNames = new Set(contentChildren().map((child) => child.name))
+    expect(finalUniqueNames.size).toBe(contentChildren().length)
   })
 
   it('should update scene synchronously with flushSync', async () => {
@@ -853,8 +874,9 @@ describe('renderer', () => {
             setPositionX(value)
           })
 
-          expect(scene.children.length).toBe(1)
-          expect(scene.children[0].position.x).toBe(value)
+          // +1 for camera, rendered content at [1]
+          expect(scene.children.length).toBe(2)
+          expect(scene.children[1].position.x).toBe(value)
         },
         [scene, setPositionX],
       )
@@ -1034,9 +1056,9 @@ describe('renderer', () => {
 
       const { scene } = store.getState()
 
-      // Container should be in scene
-      expect(scene.children.length).toBe(1)
-      expect(scene.children[0]).toBe(container)
+      // Container should be in scene (camera at [0], container at [1])
+      expect(scene.children.length).toBe(2)
+      expect(scene.children[1]).toBe(container)
 
       // Portal injects a Scene as child of container
       expect(container.children.length).toBe(1)
@@ -1146,7 +1168,10 @@ describe('renderer', () => {
       await act(async () => root.render(<TestComponent useCustomCamera={true} />))
       await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
 
-      const customCamera = scene.children.find((c) => c instanceof THREE.PerspectiveCamera) as THREE.PerspectiveCamera
+      // Find the custom camera among non-camera scene children (it's a PerspectiveCamera but not the default camera)
+      const customCamera = scene.children.find(
+        (c) => c instanceof THREE.PerspectiveCamera && c !== defaultCamera,
+      ) as THREE.PerspectiveCamera
       expect(customCamera).toBeDefined()
 
       // Mesh should now be in custom camera

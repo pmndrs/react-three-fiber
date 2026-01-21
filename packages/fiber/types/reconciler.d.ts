@@ -1,3 +1,4 @@
+import type * as React from 'react'
 import type { Scene, Color, ColorRepresentation } from 'three'
 import type { RootStore } from './store'
 import type { EventHandlers } from './events'
@@ -57,6 +58,10 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
+  /** Deferred ref props to apply in commitMount */
+  deferredRefs?: Array<{ prop: string; ref: React.RefObject<any> }>
+  /** Set of props that have been applied via once() */
+  appliedOnce?: Set<string>
 }
 
 export interface HostConfig {

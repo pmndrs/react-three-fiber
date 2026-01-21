@@ -36,6 +36,38 @@ export interface RaycastableRepresentation {
 }
 export type EventProps<P> = P extends RaycastableRepresentation ? Partial<EventHandlers> : {}
 
+/**
+ * Props for geometry transform methods that can be called with `once()`.
+ * These methods modify the geometry in-place and only make sense to call once on mount.
+ *
+ * @example
+ * import { once } from '@react-three/fiber'
+ *
+ * <boxGeometry args={[1, 1, 1]} rotateX={once(Math.PI / 2)} />
+ * <planeGeometry args={[10, 10]} translate={once(0, 0, 5)} />
+ * <bufferGeometry applyMatrix4={once(matrix)} center={once()} />
+ */
+export interface GeometryTransformProps {
+  /** Rotate the geometry about the X axis (radians). Use with once(). */
+  rotateX?: number
+  /** Rotate the geometry about the Y axis (radians). Use with once(). */
+  rotateY?: number
+  /** Rotate the geometry about the Z axis (radians). Use with once(). */
+  rotateZ?: number
+  /** Translate the geometry (x, y, z). Use with once(). */
+  translate?: [x: number, y: number, z: number]
+  /** Scale the geometry (x, y, z). Use with once(). */
+  scale?: [x: number, y: number, z: number]
+  /** Center the geometry based on bounding box. Use with once(). */
+  center?: true
+  /** Apply a Matrix4 transformation. Use with once(). */
+  applyMatrix4?: THREE.Matrix4
+  /** Apply a Quaternion rotation. Use with once(). */
+  applyQuaternion?: THREE.Quaternion
+}
+
+export type GeometryProps<P> = P extends THREE.BufferGeometry ? GeometryTransformProps : {}
+
 export interface ReactProps<P> {
   children?: React.ReactNode
   ref?: React.Ref<P>
@@ -43,7 +75,7 @@ export interface ReactProps<P> {
 }
 
 export type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
-  Overwrite<P, MathProps<P> & ReactProps<P> & EventProps<P>>
+  Overwrite<P, MathProps<P> & ReactProps<P> & EventProps<P> & GeometryProps<P>>
 >
 
 export type ThreeElement<T extends ConstructorRepresentation> = Mutable<

@@ -3,6 +3,8 @@ import type { Instance, EventHandlers } from '#types'
 import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
 import { registerVisibility, unregisterVisibility, hasVisibilityHandlers } from '../visibility'
+import { isFromRef, FROM_REF } from './fromRef'
+import { isOnce, ONCE } from './once'
 
 //* Property Resolution & Application ==============================
 // Functions for resolving, diffing, attaching, and applying props to instances
@@ -259,6 +261,36 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // Ignore setting undefined props
     // https://github.com/pmndrs/react-three-fiber/issues/274
     if (value === undefined) continue
+
+    // Handle deferred ref resolution - store for commitMount
+    if (isFromRef(value)) {
+      instance?.deferredRefs?.push({ prop, ref: value[FROM_REF] })
+      continue
+    }
+
+    // Handle mount-only method calls
+    if (isOnce(value)) {
+      // Skip if already applied on this instance
+      if (instance?.appliedOnce?.has(prop)) continue
+
+      // Mark as applied
+      if (instance) {
+        instance.appliedOnce ??= new Set()
+        instance.appliedOnce.add(prop)
+      }
+
+      const { root: targetRoot, key: targetKey } = resolve(object, prop)
+      const args = value[ONCE]
+
+      if (typeof targetRoot[targetKey] === 'function') {
+        // Method call - invoke with arguments
+        targetRoot[targetKey].apply(targetRoot, args === true ? [] : args)
+      } else if (args !== true && args.length > 0) {
+        // Property - apply first argument as value
+        targetRoot[targetKey] = args[0]
+      }
+      continue
+    }
 
     let { root, key, target } = resolve(object, prop)
 

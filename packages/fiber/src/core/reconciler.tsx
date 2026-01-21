@@ -18,6 +18,8 @@ import {
   prepare,
   isObject3D,
   findInitialRoot,
+  isFromRef,
+  FROM_REF,
 } from './utils'
 import { removeInteractivity } from './events'
 import type { ThreeElement } from '../../types/three'
@@ -391,6 +393,9 @@ function swapInstances(): void {
       instance.object.__r3f = instance
       setFiberRef(fiber, instance.object)
 
+      // Clear appliedOnce so once() props can be reapplied to the new object
+      delete instance.appliedOnce
+
       // Set initial props
       applyProps(instance.object, instance.props)
 
@@ -513,8 +518,25 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     const isTailSibling = fiber.sibling === null || (fiber.flags & Update) === NoFlags
     if (isTailSibling) swapInstances()
   },
-  finalizeInitialChildren: () => false,
-  commitMount() {},
+  finalizeInitialChildren: (instance) => {
+    // Check if any props contain fromRef markers that need to be resolved after mount
+    for (const prop in instance.props) {
+      if (isFromRef(instance.props[prop])) return true
+    }
+    return false
+  },
+  commitMount(instance) {
+    // Apply deferred ref props after all refs are populated
+    const resolved: Record<string, any> = {}
+    for (const prop in instance.props) {
+      const value = instance.props[prop]
+      if (isFromRef(value)) {
+        const ref = value[FROM_REF]
+        if (ref.current != null) resolved[prop] = ref.current
+      }
+    }
+    if (Object.keys(resolved).length) applyProps(instance.object, resolved)
+  },
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
   preparePortalMount: (container) => {
