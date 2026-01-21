@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import type { RootState } from '#types'
 import type { Node } from '#three'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 
@@ -349,15 +348,6 @@ export default useNodes
 
 /** Creator receives CreatorState with ScopedStore wrappers for type-safe access. Returns any record. */
 export type LocalNodeCreator<T extends Record<string, unknown>> = (state: CreatorState) => T
-
-/**
- * Helper to extract a typed uniform from the uniforms store.
- * This is a runtime no-op but helps TypeScript understand the type.
- * @internal
- */
-function getUniform<T>(uniform: UniformNode | UniformRecord): UniformNode<T> {
-  return uniform as UniformNode<T>
-}
 
 /**
  * Creates local values that rebuild when uniforms, nodes, or textures change.

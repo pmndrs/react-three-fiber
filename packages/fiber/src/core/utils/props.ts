@@ -159,8 +159,8 @@ function getMemoizedPrototype(root: any) {
       ctor = new root.constructor()
       MEMOIZED_PROTOTYPES.set(root.constructor, ctor)
     }
-  } catch (e) {
-    // ...
+  } catch {
+    // Constructor may not be instantiable (e.g., abstract classes)
   }
   return ctor
 }
@@ -284,7 +284,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
 
       if (typeof targetRoot[targetKey] === 'function') {
         // Method call - invoke with arguments
-        targetRoot[targetKey].apply(targetRoot, args === true ? [] : args)
+        targetRoot[targetKey](...(args === true ? [] : args))
       } else if (args !== true && args.length > 0) {
         // Property - apply first argument as value
         targetRoot[targetKey] = args[0]

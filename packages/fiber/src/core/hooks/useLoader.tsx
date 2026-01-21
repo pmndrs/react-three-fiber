@@ -1,4 +1,3 @@
-import * as THREE from '#three'
 import { suspend, preload, clear } from 'suspend-react'
 import { buildGraph, is, isObject3D } from '../utils'
 

@@ -1,4 +1,4 @@
-import type { Scene, Color, ColorRepresentation } from '#three'
+import type { Scene } from '#three'
 import packageData from '../../package.json'
 
 import * as React from 'react'
@@ -25,20 +25,7 @@ import { removeInteractivity } from './events'
 import type { ThreeElement } from '../../types/three'
 
 //* Type Imports ==============================
-import type {
-  RootStore,
-  EventHandlers,
-  IsAllOptional,
-  Root,
-  AttachFnType,
-  AttachType,
-  ConstructorRepresentation,
-  Catalogue,
-  Args,
-  InstanceProps,
-  Instance,
-  HostConfig,
-} from '#types'
+import type { RootStore, ConstructorRepresentation, Catalogue, Instance, HostConfig } from '#types'
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
 

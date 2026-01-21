@@ -132,6 +132,6 @@ export function invalidate(state?: RootState, frames = 1, stackFrames = false): 
  *
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
  */
-export function advance(timestamp: number, runGlobalEffects: boolean = true, state?: RootState, frame?: XRFrame): void {
+export function advance(timestamp: number): void {
   getScheduler().step(timestamp)
 }

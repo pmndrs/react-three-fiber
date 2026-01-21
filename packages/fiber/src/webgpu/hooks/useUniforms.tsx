@@ -1,7 +1,5 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import type { RootState } from '#types'
-import type { Node } from '#three'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
 import { vectorize } from './utils'

@@ -1,5 +1,5 @@
 import * as THREE from '#three'
-import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, Inspector, type Object3D } from '#three'
+import { R3F_BUILD_LEGACY, R3F_BUILD_WEBGPU, WebGLRenderer, WebGPURenderer, type Object3D } from '#three'
 
 import { useCallback, useMemo, useState, type JSX, type ReactNode, type RefObject } from 'react'
 import { ConcurrentRoot } from '../../react-reconciler/constants.js'
@@ -11,7 +11,6 @@ import { reconciler } from './reconciler'
 import { context, createStore } from './store'
 import {
   applyProps,
-  calculateDpr,
   dispose,
   is,
   prepare,
@@ -21,7 +20,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './notices'
-import { getScheduler, Scheduler } from './hooks/useFrame/scheduler'
+import { getScheduler } from './hooks/useFrame/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 
 import type {
@@ -414,13 +413,13 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // WebXR session manager
         const xr = {
           connect() {
-            const { gl, renderer, isLegacy } = store.getState()
+            const { gl, renderer } = store.getState()
             const actualRenderer = renderer || gl
             actualRenderer.xr.addEventListener('sessionstart', handleSessionChange)
             actualRenderer.xr.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
-            const { gl, renderer, isLegacy } = store.getState()
+            const { gl, renderer } = store.getState()
             const actualRenderer = renderer || gl
             actualRenderer.xr.removeEventListener('sessionstart', handleSessionChange)
             actualRenderer.xr.removeEventListener('sessionend', handleSessionChange)
@@ -698,7 +697,7 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)
-          } catch (e) {
+          } catch {
             /* ... */
           }
         }, 500)

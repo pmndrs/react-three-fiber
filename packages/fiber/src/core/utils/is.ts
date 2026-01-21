@@ -1,26 +1,6 @@
 import * as THREE from '#three'
 
-import type {
-  Dpr,
-  RootStore,
-  Size,
-  EventHandlers,
-  Instance,
-  NonFunctionKeys,
-  Overwrite,
-  Properties,
-  Mutable,
-  IsOptional,
-  IsAllOptional,
-  Act,
-  ThreeCamera,
-  Bridge,
-  SetBlock,
-  UnblockProps,
-  ObjectMap,
-  EquConfig,
-  Disposable,
-} from '#types'
+import type { ThreeCamera, EquConfig } from '#types'
 
 // Base is util for common patterns
 
