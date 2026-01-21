@@ -395,7 +395,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
-          advance(timestamp, true, state, frame)
+          advance(timestamp)
         }
 
         const actualRenderer = state.internal.actualRenderer
