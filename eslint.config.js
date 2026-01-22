@@ -15,7 +15,7 @@ try {
   // Plugin not built yet, skip
 }
 
-export default tseslint.config(
+export default [
   // Global ignores
   {
     ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/react-reconciler/**'],
@@ -99,7 +99,7 @@ export default tseslint.config(
       curly: ['warn', 'multi-line', 'consistent'],
       'no-console': 'off',
       'no-empty-pattern': 'warn',
-      'no-duplicate-imports': 'error',
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }],
       'no-prototype-builtins': 'off',
       'prefer-const': 'off',
       'no-unused-vars': 'off', // Use TypeScript version instead
@@ -132,4 +132,4 @@ export default tseslint.config(
       'vitest/valid-expect': 'error',
     },
   },
-)
+]

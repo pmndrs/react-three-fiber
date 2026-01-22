@@ -19,7 +19,6 @@
  */
 
 import type { RootState } from '#types'
-import type { Node } from '#three'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -143,8 +142,8 @@ export function createScopedStore<T>(data: Record<string, any>): ScopedStoreType
 export type CreatorState = Omit<RootState, 'uniforms' | 'nodes'> & {
   /** Type-safe uniform access - property access returns UniformNode */
   uniforms: ScopedStoreType<UniformNode>
-  /** Type-safe node access - property access returns Node */
-  nodes: ScopedStoreType<Node>
+  /** Type-safe node access - property access returns TSLNodeType (Node | ShaderCallable | ShaderNodeObject) */
+  nodes: ScopedStoreType<TSLNodeType>
 }
 
 //* Lazy Creator State Factory ==============================
@@ -168,7 +167,7 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes'> & {
  */
 export function createLazyCreatorState(state: RootState): CreatorState {
   let _uniforms: ScopedStoreType<UniformNode> | null = null
-  let _nodes: ScopedStoreType<Node> | null = null
+  let _nodes: ScopedStoreType<TSLNodeType> | null = null
 
   return Object.create(state, {
     uniforms: {
@@ -178,7 +177,7 @@ export function createLazyCreatorState(state: RootState): CreatorState {
     },
     nodes: {
       get() {
-        return (_nodes ??= createScopedStore<Node>(state.nodes))
+        return (_nodes ??= createScopedStore<TSLNodeType>(state.nodes))
       },
     },
   }) as CreatorState

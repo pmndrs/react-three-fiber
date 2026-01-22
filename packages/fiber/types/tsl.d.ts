@@ -17,6 +17,63 @@ declare global {
     value: T
   }
 
+  /**
+   * ShaderCallable - the return type of Fn()
+   * A callable shader function node that can be invoked with parameters.
+   * The function returns a ShaderNodeObject when called.
+   *
+   * @example
+   * ```tsx
+   * // Define a shader function
+   * const blendColorFn = Fn(([color1, color2, factor]) => {
+   *   return mix(color1, color2, factor)
+   * })
+   *
+   * // Type when retrieving from nodes store
+   * const { blendColorFn } = nodes as { blendColorFn: ShaderCallable }
+   *
+   * // Or with specific return type
+   * const { myFn } = nodes as { myFn: ShaderCallable<THREE.Node> }
+   * ```
+   */
+  type ShaderCallable<R extends Node = Node> = ((...params: unknown[]) => ShaderNodeObject<R>) & Node
+
+  /**
+   * ShaderNodeRef - a ShaderNodeObject wrapper around a Node
+   * This is the common return type for TSL operations (add, mul, sin, etc.)
+   *
+   * @example
+   * ```tsx
+   * const { wobble } = nodes as { wobble: ShaderNodeRef }
+   * ```
+   */
+  type ShaderNodeRef<T extends Node = Node> = ShaderNodeObject<T>
+
+  /**
+   * TSLNodeType - Union of all common TSL node types
+   * Used by ScopedStore to properly type node access from the store.
+   *
+   * Includes:
+   * - Node: base Three.js node type
+   * - ShaderCallable: function nodes created with Fn()
+   * - ShaderNodeObject: wrapped nodes from TSL operations (sin, mul, mix, etc.)
+   *
+   * @example
+   * ```tsx
+   * // In useLocalNodes, nodes are typed as TSLNodeType
+   * const { positionNode, blendColorFn } = useLocalNodes(({ nodes }) => ({
+   *   positionNode: nodes.myPosition,      // Works - Node is in union
+   *   blendColorFn: nodes.myFn,            // Works - ShaderCallable is in union
+   * }))
+   *
+   * // Can narrow with type guard or assertion when needed
+   * if (typeof blendColorFn === 'function') {
+   *   blendColorFn(someColor, 0.5)
+   * }
+   * ```
+   */
+  type TSLNodeType = Node | ShaderCallable<Node> | ShaderNodeObject<Node>
+
   /** Flat record of uniform nodes (no nested scopes) */
   type UniformRecord<T extends UniformNode = UniformNode> = Record<string, T>
 
@@ -64,11 +121,6 @@ declare global {
   /** Input record for useUniforms - accepts raw values or UniformNodes */
   type UniformInputRecord = Record<string, UniformValue>
 }
-
-//* Fn Return Type ==============================
-
-/** The return type of Fn() - a callable shader function node */
-type ShaderCallable<R extends Node = Node> = ((...params: unknown[]) => ShaderNodeObject<R>) & Node
 
 //* Module Augmentation ==============================
 
