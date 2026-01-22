@@ -30,3 +30,14 @@ extend(THREE as any)
 //* WebGPU-specific exports ==============================
 // These hooks are only meaningful with WebGPU/TSL
 export * from './hooks'
+
+//* WebGPU-specific types ==============================
+// Re-export WebGPURootState as RootState so useThree() returns WebGPURenderer-typed state
+export type {
+  WebGPURootState as RootState,
+  WebGPUInternalState as InternalState,
+  WebGPUR3FRenderer as R3FRenderer,
+  WebGPUProps,
+  WebGPUDefaultProps,
+  WebGPUShadowConfig,
+} from '../../types/webgpu'

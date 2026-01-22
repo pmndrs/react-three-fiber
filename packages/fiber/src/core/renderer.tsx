@@ -410,23 +410,25 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           const renderer = state.internal.actualRenderer
           actualRenderer.xr.enabled = actualRenderer.xr.isPresenting
 
-          renderer.xr.setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
+          // Cast to any - both renderer XR managers have setAnimationLoop but with slightly different types
+          ;(renderer.xr as any).setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
           if (!renderer.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager
+        // Cast xr to any - both renderer XR managers have these methods but with slightly different event type signatures
         const xr = {
           connect() {
             const { gl, renderer } = store.getState()
-            const actualRenderer = renderer || gl
-            actualRenderer.xr.addEventListener('sessionstart', handleSessionChange)
-            actualRenderer.xr.addEventListener('sessionend', handleSessionChange)
+            const xrManager = (renderer || gl).xr as any
+            xrManager.addEventListener('sessionstart', handleSessionChange)
+            xrManager.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
             const { gl, renderer } = store.getState()
-            const actualRenderer = renderer || gl
-            actualRenderer.xr.removeEventListener('sessionstart', handleSessionChange)
-            actualRenderer.xr.removeEventListener('sessionend', handleSessionChange)
+            const xrManager = (renderer || gl).xr as any
+            xrManager.removeEventListener('sessionstart', handleSessionChange)
+            xrManager.removeEventListener('sessionend', handleSessionChange)
           },
         }
 
@@ -733,8 +735,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             state.events.disconnect?.()
             // Clean up occlusion system and helper group
             cleanupHelperGroup(root!.store)
-            renderer?.renderLists?.dispose?.()
-            renderer?.forceContextLoss?.()
+            // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
+            if (state.isLegacy && renderer) {
+              ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
+              ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
+            }
             if (renderer?.xr) state.xr.disconnect()
             dispose(state.scene)
             _roots.delete(canvas)
@@ -771,31 +776,29 @@ interface PortalProps {
 //* Portal Wrapper - Handles Ref Resolution ==============================
 export function Portal({ children, container, state }: PortalProps): JSX.Element {
   const isRef = useCallback((obj: any): obj is RefObject<Object3D> => obj && 'current' in obj, [])
-  const [resolvedContainer, setResolvedContainer] = useState<Object3D | null>(() => {
+  const [resolvedContainer, _setResolvedContainer] = useState<Object3D | null>(() => {
     if (isRef(container)) return container.current ?? null
     return container as Object3D
   })
+  const setResolvedContainer = useCallback(
+    (newContainer: Object3D | null) => {
+      if (!newContainer || newContainer === resolvedContainer) return
+      _setResolvedContainer(isRef(newContainer) ? newContainer.current : newContainer)
+    },
+    [resolvedContainer, _setResolvedContainer, isRef],
+  )
 
   // Watch for ref changes if container is a RefObject
   useMemo(() => {
-    if (isRef(container)) {
-      const current = container.current
+    if (isRef(container) && !container.current) {
       // If ref is currently null, set up a check to resolve it
-      if (!current) {
-        // Use microtask to check if ref gets populated after render
-        queueMicrotask(() => {
-          const updated = container.current
-          if (updated && updated !== resolvedContainer) {
-            setResolvedContainer(updated)
-          }
-        })
-      } else if (current !== resolvedContainer) {
-        setResolvedContainer(current)
-      }
-    } else if (container !== resolvedContainer) {
-      setResolvedContainer(container as Object3D)
+      // Use microtask to check if ref gets populated after render
+      return queueMicrotask(() => {
+        setResolvedContainer(container.current)
+      })
     }
-  }, [container, resolvedContainer, isRef])
+    setResolvedContainer(container as Object3D)
+  }, [container, isRef, setResolvedContainer])
 
   // Don't render portal until we have a valid container
   if (!resolvedContainer) return <></>

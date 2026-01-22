@@ -1,10 +1,16 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
+import type { WebGPURenderer } from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
+
+//* Renderer Types ========================================
+
+/** Default renderer type - union of WebGL and WebGPU renderers */
+export type R3FRenderer = THREE.WebGLRenderer | WebGPURenderer
 
 //* Core Store Types ========================================
 
@@ -76,7 +82,7 @@ export interface InternalState {
   frames: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
-  actualRenderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  actualRenderer: R3FRenderer
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
   /** This root's unique ID in the global scheduler */
@@ -99,10 +105,10 @@ export interface RootState {
   set: StoreApi<RootState>['setState']
   /** Get current state */
   get: StoreApi<RootState>['getState']
-  /** (deprecated) The instance of the WebGLrenderer */
+  /** @deprecated Use `renderer` instead. The instance of the renderer (typed as WebGLRenderer for backwards compat) */
   gl: THREE.WebGLRenderer
-  /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
-  renderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  /** The renderer instance - type depends on entry point (WebGPU, Legacy, or union for default) */
+  renderer: R3FRenderer
   /** Inspector of the webGPU Renderer. Init in the canvas */
   inspector: any // Inspector type from three/webgpu
 
