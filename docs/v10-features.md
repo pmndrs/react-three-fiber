@@ -652,6 +652,71 @@ The size control follows an ownership model:
 
 ---
 
+## Color Management
+
+v10 adds explicit `colorSpace` and `toneMapping` props for direct control over renderer color settings.
+
+### colorSpace
+
+Controls the renderer's output color space:
+
+```tsx
+import * as THREE from 'three'
+
+// sRGB output (default)
+<Canvas colorSpace={THREE.SRGBColorSpace}>
+
+// Linear output (for post-processing pipelines)
+<Canvas colorSpace={THREE.LinearSRGBColorSpace}>
+```
+
+### toneMapping
+
+Controls the tone mapping algorithm:
+
+```tsx
+// ACES Filmic (default) - cinematic look
+<Canvas toneMapping={THREE.ACESFilmicToneMapping}>
+
+// No tone mapping - raw HDR values
+<Canvas toneMapping={THREE.NoToneMapping}>
+
+// Other options
+<Canvas toneMapping={THREE.ReinhardToneMapping}>
+<Canvas toneMapping={THREE.CineonToneMapping}>
+<Canvas toneMapping={THREE.AgXToneMapping}>
+<Canvas toneMapping={THREE.NeutralToneMapping}>
+```
+
+### textureColorSpace
+
+Controls how 8-bit input textures (color maps) are interpreted:
+
+```tsx
+// sRGB textures (default - most textures are authored in sRGB)
+<Canvas textureColorSpace={THREE.SRGBColorSpace}>
+
+// Linear textures
+<Canvas textureColorSpace={THREE.LinearSRGBColorSpace}>
+```
+
+### State Access
+
+The resolved values are available in the root state:
+
+```tsx
+function ColorInfo() {
+  const { colorSpace, toneMapping } = useThree()
+
+  console.log(colorSpace) // THREE.SRGBColorSpace or THREE.LinearSRGBColorSpace
+  console.log(toneMapping) // THREE.ACESFilmicToneMapping, THREE.NoToneMapping, etc.
+
+  return null
+}
+```
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

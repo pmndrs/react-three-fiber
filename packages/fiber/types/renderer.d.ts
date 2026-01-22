@@ -85,11 +85,20 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * @see https://threejs.org/docs/#manual/en/introduction/Color-management
    */
   legacy?: boolean
-  /** Switch off automatic sRGB encoding and gamma correction */
+  /**
+   * @deprecated Use `colorSpace` instead. Will be removed in v11.
+   * Switch off automatic sRGB encoding and gamma correction
+   */
   linear?: boolean
-  /** Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping` */
+  /**
+   * @deprecated Use `toneMapping` instead. Will be removed in v11.
+   * Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`
+   */
   flat?: boolean
-  /** Working color space for automatic texture colorspace assignment. Defaults to THREE.SRGBColorSpace */
+  /** Output color space for the renderer. Defaults to THREE.SRGBColorSpace */
+  colorSpace?: THREE.ColorSpace
+  /** Tone mapping algorithm. Defaults to THREE.ACESFilmicToneMapping */
+  toneMapping?: THREE.ToneMapping
   /** Color space assigned to 8-bit input textures (color maps). Defaults to sRGB. Most textures are authored in sRGB. */
   textureColorSpace?: THREE.ColorSpace
   /** Creates an orthographic camera */

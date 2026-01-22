@@ -130,10 +130,14 @@ export interface RootState {
   mouse: THREE.Vector2
   /* Whether to enable r139's THREE.ColorManagement */
   legacy: boolean
-  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
+  /** @deprecated Use colorSpace instead */
   linear: boolean
-  /** Shortcut to gl.toneMapping = NoTonemapping */
+  /** @deprecated Use toneMapping instead */
   flat: boolean
+  /** Output color space for the renderer */
+  colorSpace: THREE.ColorSpace
+  /** Tone mapping algorithm */
+  toneMapping: THREE.ToneMapping
   /** Color space assigned to 8-bit input textures (color maps). Most textures are authored in sRGB. */
   textureColorSpace: THREE.ColorSpace
   /** Render loop flags */

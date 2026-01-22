@@ -8,6 +8,44 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### Color Management Props
+
+Added explicit `colorSpace` and `toneMapping` props for direct control over renderer color settings, deprecating the boolean `linear` and `flat` shortcuts.
+
+**New props:**
+
+- `colorSpace` - Set `renderer.outputColorSpace` directly (default: `THREE.SRGBColorSpace`)
+- `toneMapping` - Set `renderer.toneMapping` directly (default: `THREE.ACESFilmicToneMapping`)
+
+**Deprecated props:**
+
+- `linear` - Use `colorSpace={THREE.LinearSRGBColorSpace}` instead
+- `flat` - Use `toneMapping={THREE.NoToneMapping}` instead
+
+```tsx
+// Before (deprecated)
+<Canvas linear flat />
+
+// After
+<Canvas
+  colorSpace={THREE.LinearSRGBColorSpace}
+  toneMapping={THREE.NoToneMapping}
+/>
+
+// New flexibility - use any tone mapping algorithm
+<Canvas toneMapping={THREE.ReinhardToneMapping} />
+<Canvas toneMapping={THREE.CineonToneMapping} />
+```
+
+**Files changed:**
+
+- `packages/fiber/types/renderer.d.ts` - Added `colorSpace`, `toneMapping` props to RenderProps
+- `packages/fiber/types/store.d.ts` - Added `colorSpace`, `toneMapping` to RootState
+- `packages/fiber/src/core/store.ts` - Added initial state for new props
+- `packages/fiber/src/core/Canvas.tsx` - Pass new props to configure
+- `packages/fiber/src/core/renderer.tsx` - Resolution logic and deprecation warnings
+- `packages/fiber/src/core/utils/props.ts` - Use colorSpace for texture auto-assignment
+
 #### Camera Scene Parenting
 
 The default camera is now automatically added as a child of the scene when it doesn't have a parent. This enables camera-relative effects like HUDs, headlights, and any objects that should follow the camera.

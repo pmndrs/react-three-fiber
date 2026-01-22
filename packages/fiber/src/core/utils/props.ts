@@ -343,7 +343,7 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // https://github.com/mrdoob/three.js/pull/25857
       if (
         rootState &&
-        !rootState.linear &&
+        rootState.colorSpace === THREE.SRGBColorSpace &&
         colorMaps.includes(key) &&
         isTexture(value) &&
         (root[key] as unknown as THREE.Texture | undefined)?.isTexture &&

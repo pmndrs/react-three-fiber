@@ -1,4 +1,15 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector, Frustum } from '#three'
+import {
+  WebGLRenderer,
+  WebGPURenderer,
+  Scene,
+  Raycaster,
+  Vector2,
+  Vector3,
+  Inspector,
+  Frustum,
+  SRGBColorSpace,
+  ACESFilmicToneMapping,
+} from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -87,7 +98,9 @@ export const createStore = (
       legacy: false,
       linear: false,
       flat: false,
-      textureColorSpace: 'srgb',
+      colorSpace: SRGBColorSpace,
+      toneMapping: ACESFilmicToneMapping,
+      textureColorSpace: SRGBColorSpace,
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,

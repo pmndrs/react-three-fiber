@@ -139,6 +139,36 @@ useFrame(() => updateAI(), { after: 'update', before: 'render' })
 
 ---
 
+## Deprecations
+
+### `linear` and `flat` Props Deprecated
+
+The boolean shortcut props `linear` and `flat` are deprecated in favor of explicit `colorSpace` and `toneMapping` props.
+
+```diff
+- <Canvas linear />
++ <Canvas colorSpace={THREE.LinearSRGBColorSpace} />
+
+- <Canvas flat />
++ <Canvas toneMapping={THREE.NoToneMapping} />
+
+- <Canvas linear flat />
++ <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
+```
+
+The old props still work but will log a deprecation warning. They will be removed in v11.
+
+**Why the change?** The new props give you direct access to THREE.js constants, enabling any color space or tone mapping algorithm rather than just two hardcoded options.
+
+```tsx
+// Now possible with the new props
+<Canvas toneMapping={THREE.ReinhardToneMapping} />
+<Canvas toneMapping={THREE.CineonToneMapping} />
+<Canvas toneMapping={THREE.AgXToneMapping} />
+```
+
+---
+
 ## What's New
 
 ### Powerful New Scheduler
