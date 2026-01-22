@@ -16,6 +16,8 @@ function CanvasImpl({
   fallback,
   resize,
   style,
+  id,
+  primaryCanvas,
   gl,
   renderer,
   events = createPointerEvents,
@@ -148,6 +150,8 @@ function CanvasImpl({
         if (!effectActiveRef.current || !root.current) return
 
         await root.current.configure({
+          id,
+          primaryCanvas,
           gl,
           renderer,
           scene,
@@ -291,7 +295,7 @@ function CanvasImpl({
       }}
       {...props}>
       <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} className="r3f-canvas" style={{ display: 'block' }}>
+        <canvas ref={canvasRef} id={id} className="r3f-canvas" style={{ display: 'block' }}>
           {fallback}
         </canvas>
       </div>

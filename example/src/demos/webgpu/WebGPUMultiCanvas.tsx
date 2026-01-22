@@ -1,88 +1,129 @@
-import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements, useThree } from '@react-three/fiber'
-import { easing } from 'maath'
-import { useEffect, useMemo, useState } from 'react'
-import { color, mix, positionLocal, sin, time, uniform, vec3, Fn } from 'three/tsl'
+import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
+import { useRef } from 'react'
 import * as THREE from 'three/webgpu'
-import { useUniforms, useNodes, useUniform, useLocalNodes } from '@react-three/fiber/webgpu'
 
-// single setup of nodes for the app
-const Builder = () => {
-  useUniform('uRotationSpeed', 1.0)
-  useUniforms(() => {
-    return {
-      uBaseColor: uniform(new THREE.Color('red')),
-      uRipplePoint: uniform(new THREE.Vector3(0, 0, 0)),
-    }
+/**
+ * Multi-Canvas WebGPU Demo
+ *
+ * Demonstrates sharing a single WebGPURenderer across multiple Canvas components
+ * using the `id` and `primaryCanvas` props with Three.js CanvasTarget API.
+ *
+ * - Primary canvas: has `id` prop, creates and owns the WebGPURenderer
+ * - Secondary canvases: have `primaryCanvas` prop, share the primary's renderer
+ *
+ * Each canvas maintains its own scene, camera, and events.
+ */
+
+function RotatingBox({ color = 'orange' }: { color?: string }) {
+  const meshRef = useRef<THREE.Mesh>(null!)
+
+  useFrame((_, delta) => {
+    meshRef.current.rotation.x += delta
+    meshRef.current.rotation.y += delta * 0.5
   })
 
-  useNodes(({ uniforms }) => {
-    const baseColor = uniforms.uBaseColor
-
-    // Local only unshared nodes.
-    const col1 = color('orange')
-    const currentTime = time.mul(2)
-
-    const blendColorFn = Fn(([color2, isHovered]) => {
-      // this node is private to this FN
-      const rootColor = mix(col1, color2, sin(currentTime).add(1).div(2))
-      return mix(rootColor, baseColor, isHovered)
-    })
-    return {
-      positionNode: positionLocal.add(vec3(0, sin(currentTime).mul(0.05), 0)),
-      blendColorFn: blendColorFn,
-    }
-  })
-
-  return null
-}
-
-function Box(props: ThreeElements['mesh']) {
-  const { colorNode } = useNodes()
-  console.log('colorNode', colorNode)
   return (
-    <mesh {...props} rotation-x={Math.PI / 2}>
-      <boxGeometry />
-      <meshBasicNodeMaterial colorNode={colorNode} />
+    <mesh ref={meshRef}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={color} />
     </mesh>
   )
 }
 
-function Plane(props: ThreeElements['mesh']) {
-  const [hovered, hover] = useState(false)
-  const { renderer } = useThree()
-  useEffect(() => {
-    console.log('renderer', renderer.getCanvasTarget())
-  }, [renderer])
+function RotatingSphere({ color = 'hotpink' }: { color?: string }) {
+  const meshRef = useRef<THREE.Mesh>(null!)
 
-  useFrame((state, delta) => {
-    easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
-  })
-
-  const { uHovered, ...matNodes } = useLocalNodes(({ nodes }) => {
-    const uHovered = uniform(0.0)
-    const { blendColorFn, positionNode } = nodes
-
-    const col3 = color('aquamarine')
-
-    return { colorNode: blendColorFn(col3, uHovered), positionNode, uHovered }
+  useFrame((_, delta) => {
+    meshRef.current.rotation.y += delta * 0.8
+    meshRef.current.position.y = Math.sin(Date.now() * 0.002) * 0.3
   })
 
   return (
-    <mesh onPointerOver={() => hover(true)} onPointerOut={() => hover(false)} {...props}>
-      <planeGeometry />
-      <meshBasicNodeMaterial key={uHovered.uuid} {...matNodes} />
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[0.6, 32, 32]} />
+      <meshStandardMaterial color={color} />
     </mesh>
   )
 }
 
-export default function App() {
+function RotatingTorus({ color = 'cyan' }: { color?: string }) {
+  const meshRef = useRef<THREE.Mesh>(null!)
+
+  useFrame((_, delta) => {
+    meshRef.current.rotation.x += delta * 0.5
+    meshRef.current.rotation.z += delta
+  })
+
   return (
-    <Canvas renderer>
-      <ambientLight intensity={Math.PI} />
-      <Builder />
-      <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
-      <Plane scale={1.5} position={[-1.3, 0, 0]} />
-      <Plane scale={1.5} position={[0.6, 0, 2]} />
-    </Canvas>
+    <mesh ref={meshRef}>
+      <torusGeometry args={[0.5, 0.2, 16, 32]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
+function CanvasInfo() {
+  const { internal } = useThree()
+  const isSecondary = internal.isSecondary
+  const isMultiCanvas = internal.isMultiCanvas
+
+  return (
+    <group position={[0, -1.2, 0]}>
+      <mesh>
+        <planeGeometry args={[2, 0.4]} />
+        <meshBasicMaterial color={isSecondary ? '#333' : '#222'} transparent opacity={0.8} />
+      </mesh>
+    </group>
+  )
+}
+
+export default function WebGPUMultiCanvas() {
+  return (
+    <div style={{ display: 'flex', gap: '10px', width: '100%', height: '100%', padding: '10px' }}>
+      {/* Primary Canvas - creates the WebGPURenderer */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: 'white', marginBottom: '5px', fontSize: '12px' }}>
+          Primary Canvas (id="main") - Owns Renderer
+        </div>
+        <div style={{ flex: 1, border: '2px solid #4a4', borderRadius: '8px', overflow: 'hidden' }}>
+          <Canvas id="main" renderer>
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[5, 5, 5]} intensity={1} />
+            <RotatingBox color="orange" />
+            <CanvasInfo />
+          </Canvas>
+        </div>
+      </div>
+
+      {/* Secondary Canvas 1 - shares the renderer */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: 'white', marginBottom: '5px', fontSize: '12px' }}>
+          Secondary Canvas (primaryCanvas="main") - Shares Renderer
+        </div>
+        <div style={{ flex: 1, border: '2px solid #a4a', borderRadius: '8px', overflow: 'hidden' }}>
+          <Canvas primaryCanvas="main" renderer>
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[-5, 5, 5]} intensity={1} />
+            <RotatingSphere color="hotpink" />
+            <CanvasInfo />
+          </Canvas>
+        </div>
+      </div>
+
+      {/* Secondary Canvas 2 - also shares the renderer */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ color: 'white', marginBottom: '5px', fontSize: '12px' }}>
+          Secondary Canvas (primaryCanvas="main") - Shares Renderer
+        </div>
+        <div style={{ flex: 1, border: '2px solid #4aa', borderRadius: '8px', overflow: 'hidden' }}>
+          <Canvas primaryCanvas="main" renderer>
+            <ambientLight intensity={0.5} />
+            <directionalLight position={[0, 5, -5]} intensity={1} />
+            <RotatingTorus color="cyan" />
+            <CanvasInfo />
+          </Canvas>
+        </div>
+      </div>
+    </div>
   )
 }

@@ -1,6 +1,6 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
-import type { WebGPURenderer } from 'three/webgpu'
+import type { WebGPURenderer, CanvasTarget } from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
@@ -91,6 +91,33 @@ export interface InternalState {
   unregisterRoot?: () => void
   /** Container for child attachment (scene for root, original container for portals) */
   container?: THREE.Object3D
+  /**
+   * CanvasTarget for multi-canvas WebGPU rendering.
+   * Created for all WebGPU canvases to support renderer sharing.
+   * @see https://threejs.org/docs/#api/en/renderers/common/CanvasTarget
+   */
+  canvasTarget?: CanvasTarget
+  /**
+   * Whether multi-canvas rendering is active.
+   * True when any canvas uses `target` prop to share a renderer.
+   * When true, setCanvasTarget is called before each render.
+   */
+  isMultiCanvas?: boolean
+  /**
+   * Whether this canvas is a secondary canvas sharing another's renderer.
+   * True when `target` prop is used.
+   */
+  isSecondary?: boolean
+  /**
+   * The id of the primary canvas this secondary canvas targets.
+   * Only set when isSecondary is true.
+   */
+  targetId?: string
+  /**
+   * Function to unregister this primary canvas from the registry.
+   * Only set when this canvas has an `id` prop.
+   */
+  unregisterPrimary?: () => void
 }
 
 export interface XRManager {

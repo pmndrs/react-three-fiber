@@ -22,6 +22,7 @@ import {
 import { notifyDepreciated } from './notices'
 import { getScheduler } from './hooks/useFrame/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
+import { registerPrimary, waitForPrimary } from './canvasRegistry'
 
 import type {
   RootState,
@@ -148,6 +149,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
       const {
+        id: canvasId,
+        primaryCanvas,
         gl: glConfig,
         renderer: rendererConfig,
         size: propsSize,
@@ -223,6 +226,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
 
+      //* Multi-Canvas Target Validation ==============================
+      // Validate primaryCanvas prop is only used with WebGPU
+      if (primaryCanvas && !R3F_BUILD_WEBGPU) {
+        throw new Error(
+          'The `primaryCanvas` prop for multi-canvas rendering is only available with WebGPU. ' +
+            'Use @react-three/fiber/webgpu instead.',
+        )
+      }
+      if (primaryCanvas && wantsGL) {
+        throw new Error(
+          'The `primaryCanvas` prop for multi-canvas rendering cannot be used with WebGL. ' +
+            'Remove the `gl` prop or use WebGPU.',
+        )
+      }
+
       //* Create Renderer (one time only) ==============================
       if (R3F_BUILD_LEGACY && wantsGL && !state.internal.actualRenderer) {
         //* WebGL path ---
@@ -230,6 +248,35 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         state.internal.actualRenderer = renderer
         // Set both gl and renderer to the WebGLRenderer for backwards compatibility
         state.set({ isLegacy: true, gl: renderer, renderer: renderer })
+      } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas && !state.internal.actualRenderer) {
+        //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
+        // Wait for primary canvas to be registered (handles async init timing)
+        const primary = await waitForPrimary(primaryCanvas)
+
+        // Use the primary's renderer
+        renderer = primary.renderer
+        state.internal.actualRenderer = renderer
+
+        // Create a CanvasTarget for this secondary canvas
+        const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+
+        // Enable multi-canvas mode on the primary canvas
+        primary.store.setState((prev) => ({
+          internal: { ...prev.internal, isMultiCanvas: true },
+        }))
+
+        // Store secondary canvas info in internal state
+        state.set((prev) => ({
+          webGPUSupported: primary.store.getState().webGPUSupported,
+          renderer: renderer,
+          internal: {
+            ...prev.internal,
+            canvasTarget,
+            isMultiCanvas: true,
+            isSecondary: true,
+            targetId: primaryCanvas,
+          },
+        }))
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
         //* WebGPU path ---
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
@@ -250,6 +297,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         state.internal.actualRenderer = renderer
         // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
         state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
+
+        //* Register as Primary Canvas ==============================
+        // If this canvas has an id, register it so other canvases can target it
+        // Also create a CanvasTarget for when multi-canvas mode is enabled
+        if (canvasId && !state.internal.isSecondary) {
+          const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+          const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
+          state.set((prev) => ({
+            internal: {
+              ...prev.internal,
+              canvasTarget,
+              unregisterPrimary,
+            },
+          }))
+        }
       }
 
       //* Default Raycaster Initialization ==============================
@@ -615,7 +677,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterRender = scheduler.register(
           () => {
             const state = store.getState()
-            const renderer = state.internal.actualRenderer
+            const renderer = state.internal.actualRenderer as WebGPURenderer
 
             // Skip if a user has taken over rendering by registering in the 'render' phase
             // Also check legacy priority system for backwards compatibility
@@ -626,6 +688,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             // Otherwise fall back to standard renderer.render()
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
+              // For multi-canvas WebGPU: switch to this canvas's target before rendering
+              // Only needed when multiple canvases share a renderer (isMultiCanvas flag)
+              if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
+                renderer.setCanvasTarget(state.internal.canvasTarget)
+              }
+
               if (state.postProcessing?.render) state.postProcessing.render()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
@@ -732,6 +800,14 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
             if (unregisterRoot) unregisterRoot()
 
+            // Unregister primary canvas from registry (if it was registered)
+            const unregisterPrimary = state.internal.unregisterPrimary
+            if (unregisterPrimary) unregisterPrimary()
+
+            // Dispose CanvasTarget for secondary canvases
+            const canvasTarget = state.internal.canvasTarget
+            if (canvasTarget?.dispose) canvasTarget.dispose()
+
             state.events.disconnect?.()
             // Clean up occlusion system and helper group
             cleanupHelperGroup(root!.store)
@@ -740,7 +816,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
               ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
               ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
             }
-            if (renderer?.xr) state.xr.disconnect()
+            // Only disconnect XR and dispose renderer if this is not a secondary canvas
+            // Secondary canvases share the renderer, so we must not dispose it
+            if (!state.internal.isSecondary) {
+              if (renderer?.xr) state.xr.disconnect()
+            }
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)

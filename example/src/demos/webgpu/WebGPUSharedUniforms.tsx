@@ -1,9 +1,16 @@
-import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements, useThree } from '@react-three/fiber'
 import { easing } from 'maath'
-import { useEffect, useMemo, useState } from 'react'
+import { useState } from 'react'
 import { color, mix, positionLocal, sin, time, uniform, vec3, Fn } from 'three/tsl'
 import * as THREE from 'three/webgpu'
-import { useUniforms, useNodes, useUniform, useLocalNodes } from '@react-three/fiber/webgpu'
+import {
+  Canvas,
+  useFrame,
+  type ThreeElements,
+  useUniforms,
+  useNodes,
+  useUniform,
+  useLocalNodes,
+} from '@react-three/fiber/webgpu'
 
 // single setup of nodes for the app
 const Builder = () => {
@@ -49,10 +56,6 @@ function Box(props: ThreeElements['mesh']) {
 
 function Plane(props: ThreeElements['mesh']) {
   const [hovered, hover] = useState(false)
-  const { renderer } = useThree()
-  useEffect(() => {
-    console.log('renderer', renderer.getCanvasTarget())
-  }, [renderer])
 
   useFrame((state, delta) => {
     easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)

@@ -350,17 +350,30 @@ export const createStore = (
     const { camera, size, viewport, set, internal } = rootStore.getState()
 
     const actualRenderer = internal.actualRenderer
+    const canvasTarget = internal.canvasTarget
+
     // Resize camera and renderer on changes to size and pixelratio
     if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
-      // Update camera & renderer
+      // Update camera
       updateCamera(camera, size)
-      if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
 
-      const updateStyle =
-        typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
-      actualRenderer.setSize(size.width, size.height, updateStyle)
+      // For secondary canvases with CanvasTarget, update the target's size/dpr
+      // For primary canvases, update the renderer directly
+      if (canvasTarget) {
+        // Secondary canvas: update CanvasTarget
+        if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
+        const updateStyle =
+          typeof HTMLCanvasElement !== 'undefined' && canvasTarget.domElement instanceof HTMLCanvasElement
+        canvasTarget.setSize(size.width, size.height, updateStyle)
+      } else {
+        // Primary canvas: update renderer directly
+        if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
+        const updateStyle =
+          typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
+        actualRenderer.setSize(size.width, size.height, updateStyle)
+      }
     }
 
     // Update viewport and frustum once the camera changes

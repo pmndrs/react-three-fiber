@@ -68,6 +68,20 @@ export type CameraProps = (
 //* Render Props ==============================
 
 export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas> {
+  /**
+   * Unique identifier for multi-canvas renderer sharing.
+   * Makes this canvas targetable by other canvases using the `primaryCanvas` prop.
+   * Also sets the HTML `id` attribute on the canvas element.
+   * @example <Canvas id="main-viewer">...</Canvas>
+   */
+  id?: string
+  /**
+   * Share the renderer from another canvas instead of creating a new one.
+   * Pass the `id` of the primary canvas to share its WebGPURenderer.
+   * Only available with WebGPU (not legacy WebGL).
+   * @example <Canvas primaryCanvas="main-viewer">...</Canvas>
+   */
+  primaryCanvas?: string
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** A WebGPU renderer instance or props that go into the default renderer */

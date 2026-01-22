@@ -1,4 +1,4 @@
-import type { WebGPURenderer, WebGPURendererParameters } from 'three/webgpu'
+import type { WebGPURenderer, WebGPURendererParameters, CanvasTarget } from 'three/webgpu'
 import type { Properties } from './utils'
 import type { BaseRendererProps, RendererFactory } from './renderer'
 import type { RootState, InternalState } from './store'
