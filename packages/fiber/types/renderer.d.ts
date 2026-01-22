@@ -45,11 +45,37 @@ export type DefaultRendererProps = {
   [key: string]: any
 }
 
+/**
+ * Canvas-level scheduler configuration.
+ * Controls render timing relative to other canvases.
+ */
+export interface CanvasSchedulerConfig {
+  /**
+   * Render this canvas after another canvas completes.
+   * Pass the `id` of another canvas.
+   */
+  after?: string
+  /**
+   * Limit this canvas's render rate (frames per second).
+   */
+  fps?: number
+}
+
+/**
+ * Extended renderer configuration for multi-canvas support.
+ */
+export interface RendererConfigExtended {
+  /** Share renderer from another canvas (WebGPU only) */
+  primaryCanvas?: string
+  /** Canvas-level scheduler options */
+  scheduler?: CanvasSchedulerConfig
+}
+
 export type RendererProps =
   | any // WebGPURenderer
   | ((defaultProps: DefaultRendererProps) => any)
   | ((defaultProps: DefaultRendererProps) => Promise<any>)
-  | Partial<Properties<any> | Record<string, any>>
+  | (Partial<Properties<any> | Record<string, any>> & RendererConfigExtended)
 
 //* Camera Props ==============================
 
@@ -79,9 +105,18 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * Share the renderer from another canvas instead of creating a new one.
    * Pass the `id` of the primary canvas to share its WebGPURenderer.
    * Only available with WebGPU (not legacy WebGL).
-   * @example <Canvas primaryCanvas="main-viewer">...</Canvas>
+   *
+   * Note: This is extracted from `renderer={{ primaryCanvas: "id" }}` by Canvas.
+   * @internal
    */
   primaryCanvas?: string
+  /**
+   * Canvas-level scheduler options. Controls render timing relative to other canvases.
+   *
+   * Note: This is extracted from `renderer={{ scheduler: {...} }}` by Canvas.
+   * @internal
+   */
+  scheduler?: CanvasSchedulerConfig
   /** A threejs renderer instance or props that go into the default renderer */
   gl?: GLProps
   /** A WebGPU renderer instance or props that go into the default renderer */

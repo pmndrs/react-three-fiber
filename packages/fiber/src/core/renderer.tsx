@@ -151,6 +151,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       const {
         id: canvasId,
         primaryCanvas,
+        scheduler: schedulerConfig,
         gl: glConfig,
         renderer: rendererConfig,
         size: propsSize,
@@ -247,7 +248,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
         state.internal.actualRenderer = renderer
         // Set both gl and renderer to the WebGLRenderer for backwards compatibility
-        state.set({ isLegacy: true, gl: renderer, renderer: renderer })
+        // Self-reference primaryStore - this canvas is its own primary
+        state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
       } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas && !state.internal.actualRenderer) {
         //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
         // Wait for primary canvas to be registered (handles async init timing)
@@ -266,9 +268,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }))
 
         // Store secondary canvas info in internal state
+        // primaryStore points to the primary canvas's store for shared TSL resources
         state.set((prev) => ({
           webGPUSupported: primary.store.getState().webGPUSupported,
           renderer: renderer,
+          primaryStore: primary.store,
           internal: {
             ...prev.internal,
             canvasTarget,
@@ -296,7 +300,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         state.internal.actualRenderer = renderer
         // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
-        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
+        // Self-reference primaryStore - this canvas is its own primary
+        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
 
         //* Register as Primary Canvas ==============================
         // If this canvas has an id, register it so other canvases can target it
@@ -631,11 +636,29 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       if (!rootId) {
         // Generate a unique root ID and register with global scheduler
-        const newRootId = scheduler.generateRootId()
+        const newRootId = canvasId || scheduler.generateRootId()
         const unregisterRoot = scheduler.registerRoot(newRootId, {
           getState: () => store.getState(),
           onError: (err) => store.getState().setError(err),
         })
+
+        // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
+        // Runs in 'start' phase so it's set before any other jobs (including user render jobs)
+        const unregisterCanvasTarget = scheduler.register(
+          () => {
+            const state = store.getState()
+            if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
+              const renderer = state.internal.actualRenderer as WebGPURenderer
+              renderer.setCanvasTarget(state.internal.canvasTarget)
+            }
+          },
+          {
+            id: `${newRootId}_canvasTarget`,
+            rootId: newRootId,
+            phase: 'start',
+            system: true,
+          },
+        )
 
         // Register frustum update job - updates frustum from camera before render
         // Runs in preRender phase so it captures any camera movement from update phase
@@ -681,6 +704,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
             // Skip if a user has taken over rendering by registering in the 'render' phase
             // Also check legacy priority system for backwards compatibility
+            // Note: canvas target is already set by the 'start' phase job
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
@@ -688,12 +712,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             // Otherwise fall back to standard renderer.render()
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
-              // For multi-canvas WebGPU: switch to this canvas's target before rendering
-              // Only needed when multiple canvases share a renderer (isMultiCanvas flag)
-              if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
-                renderer.setCanvasTarget(state.internal.canvasTarget)
-              }
-
               if (state.postProcessing?.render) state.postProcessing.render()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
@@ -702,10 +720,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             }
           },
           {
-            id: `${newRootId}_render`,
+            // Use canvas ID directly as job ID if available, otherwise use generated rootId
+            id: canvasId || `${newRootId}_render`,
             rootId: newRootId,
             phase: 'render',
             system: true, // Internal flag: this is a system job, not user-controlled
+            // Apply scheduler config for render ordering and rate limiting
+            ...(schedulerConfig?.after && { after: schedulerConfig.after }),
+            ...(schedulerConfig?.fps && { fps: schedulerConfig.fps }),
           },
         )
 
@@ -716,6 +738,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             rootId: newRootId,
             unregisterRoot: () => {
               unregisterRoot()
+              unregisterCanvasTarget()
               unregisterFrustum()
               unregisterVisibility()
               unregisterRender()

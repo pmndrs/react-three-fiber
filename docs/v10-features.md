@@ -717,6 +717,155 @@ function ColorInfo() {
 
 ---
 
+## Multi-Canvas Rendering (WebGPU)
+
+v10 adds support for sharing a single WebGPURenderer across multiple Canvas components. This enables HUD overlays, picture-in-picture views, and multi-viewport rendering without the overhead of multiple GPU contexts.
+
+### Basic Setup
+
+**Primary Canvas** - Creates and owns the renderer:
+
+```tsx
+<Canvas id="main" renderer>
+  <Scene />
+</Canvas>
+```
+
+**Secondary Canvas** - Shares the primary's renderer:
+
+```tsx
+<Canvas renderer={{ primaryCanvas: 'main' }}>
+  <SecondaryScene />
+</Canvas>
+```
+
+The `id` prop on the primary canvas makes it targetable. Secondary canvases reference it via `renderer={{ primaryCanvas: 'id' }}`.
+
+### Scheduler Options
+
+Control render timing with the `scheduler` option:
+
+```tsx
+// Render after the primary canvas completes
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+
+// Limit to 30fps (useful for HUDs that don't need full framerate)
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
+
+// Both options together
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main', fps: 30 } }}>
+```
+
+| Option  | Type     | Description                           |
+| ------- | -------- | ------------------------------------- |
+| `after` | `string` | Render after another canvas (by `id`) |
+| `fps`   | `number` | Limit this canvas's render rate       |
+
+### Accessing the Primary Scene (HUD Pattern)
+
+Secondary canvases can render the primary's scene from a different viewpoint using `primaryStore`:
+
+```tsx
+import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three/webgpu'
+
+function HudScene() {
+  const orthoCamera = useRef<THREE.OrthographicCamera>(null!)
+
+  // Create and position the orthographic camera
+  useEffect(() => {
+    const cam = new THREE.OrthographicCamera(-3, 3, 3, -3, 0.1, 100)
+    cam.position.set(0, 10, 0) // Above the scene
+    cam.lookAt(0, 0, 0) // Looking at center
+    cam.updateProjectionMatrix()
+    orthoCamera.current = cam
+  }, [])
+
+  // Take over rendering to render the primary's scene
+  useFrame(
+    ({ primaryStore, renderer }) => {
+      if (!orthoCamera.current) return
+      // Get the primary canvas's state
+      const primaryState = primaryStore.getState()
+      // Render the primary's scene with our camera
+      renderer.render(primaryState.scene, orthoCamera.current)
+    },
+    { phase: 'render', after: 'main' },
+  )
+
+  return null
+}
+
+function App() {
+  return (
+    <>
+      {/* Main 3D scene */}
+      <Canvas id="main" renderer>
+        <ambientLight />
+        <mesh>
+          <boxGeometry />
+          <meshStandardMaterial color="orange" />
+        </mesh>
+      </Canvas>
+
+      {/* HUD overlay - top-down view of the same scene */}
+      <div style={{ position: 'absolute', top: 10, left: 10, width: 200, height: 200 }}>
+        <Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+          <HudScene />
+        </Canvas>
+      </div>
+    </>
+  )
+}
+```
+
+### How It Works
+
+Each canvas maintains its own:
+
+- Scene graph and camera
+- Event handling
+- State (via its own Zustand store)
+
+But secondary canvases share:
+
+- The WebGPURenderer instance
+- GPU resources and context
+
+The `primaryStore` on each canvas's state provides access to shared TSL resources (uniforms, nodes) and the primary's scene/camera for advanced patterns like HUDs.
+
+### Canvas Target Management
+
+R3F automatically manages `CanvasTarget` switching when rendering to multiple canvases. A job in the scheduler's `start` phase sets the correct canvas target before any other jobs run for that root, so user render callbacks automatically render to the correct canvas.
+
+### API Reference
+
+**Primary Canvas Props:**
+
+| Prop       | Type      | Description                                            |
+| ---------- | --------- | ------------------------------------------------------ |
+| `id`       | `string`  | Unique identifier, makes canvas targetable             |
+| `renderer` | `boolean` | Enable WebGPU renderer (shorthand for `renderer={{}}`) |
+
+**Secondary Canvas Props:**
+
+| Prop                       | Type     | Description                       |
+| -------------------------- | -------- | --------------------------------- |
+| `renderer.primaryCanvas`   | `string` | ID of the primary canvas to share |
+| `renderer.scheduler.after` | `string` | Render after another canvas       |
+| `renderer.scheduler.fps`   | `number` | Limit render rate                 |
+
+**State Properties:**
+
+| Property                 | Type        | Description                         |
+| ------------------------ | ----------- | ----------------------------------- |
+| `primaryStore`           | `RootStore` | Zustand store of the primary canvas |
+| `internal.isSecondary`   | `boolean`   | Whether this is a secondary canvas  |
+| `internal.isMultiCanvas` | `boolean`   | Whether multi-canvas mode is active |
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.

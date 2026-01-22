@@ -17,9 +17,8 @@ function CanvasImpl({
   resize,
   style,
   id,
-  primaryCanvas,
   gl,
-  renderer,
+  renderer: rendererProp,
   events = createPointerEvents,
   eventSource,
   eventPrefix,
@@ -45,6 +44,17 @@ function CanvasImpl({
   height,
   ...props
 }: CanvasProps) {
+  // Extract nested props from renderer object (primaryCanvas, scheduler)
+  const { primaryCanvas, scheduler, ...rendererConfig } =
+    typeof rendererProp === 'object' &&
+    rendererProp !== null &&
+    !('render' in rendererProp) &&
+    ('primaryCanvas' in rendererProp || 'scheduler' in rendererProp)
+      ? (rendererProp as { primaryCanvas?: string; scheduler?: { after?: string; fps?: number } })
+      : { primaryCanvas: undefined, scheduler: undefined }
+
+  // Use extracted config if we found nested props, otherwise pass through original renderer prop
+  const renderer = Object.keys(rendererConfig).length > 0 ? rendererConfig : rendererProp
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
@@ -152,6 +162,7 @@ function CanvasImpl({
         await root.current.configure({
           id,
           primaryCanvas,
+          scheduler,
           gl,
           renderer,
           scene,

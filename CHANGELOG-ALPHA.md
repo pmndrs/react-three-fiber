@@ -8,6 +8,41 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### Multi-Canvas Rendering (WebGPU)
+
+Added support for sharing a single WebGPURenderer across multiple Canvas components, enabling HUD overlays, picture-in-picture views, and multi-viewport rendering.
+
+**Primary canvas setup:**
+
+```tsx
+<Canvas id="main" renderer>
+  <Scene />
+</Canvas>
+```
+
+**Secondary canvas sharing the renderer:**
+
+```tsx
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main', fps: 30 } }}>
+  <HudScene />
+</Canvas>
+```
+
+**Key features:**
+
+- `renderer={{ primaryCanvas: 'id' }}` - Share renderer from another canvas
+- `scheduler.after` - Control render ordering between canvases
+- `scheduler.fps` - Limit secondary canvas render rate
+- `primaryStore` - Access primary's scene/camera for HUD-style rendering
+
+**Files changed:**
+
+- `packages/fiber/types/store.d.ts` - Added `primaryStore` to RootState
+- `packages/fiber/types/renderer.d.ts` - Added `CanvasSchedulerConfig`, `RendererConfigExtended`
+- `packages/fiber/types/canvas.d.ts` - Omit internal props from CanvasProps
+- `packages/fiber/src/core/Canvas.tsx` - Extract renderer config props
+- `packages/fiber/src/core/renderer.tsx` - Canvas target management, scheduler config, primaryStore setup
+
 #### Color Management Props
 
 Added explicit `colorSpace` and `toneMapping` props for direct control over renderer color settings, deprecating the boolean `linear` and `flat` shortcuts.

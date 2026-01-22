@@ -132,6 +132,15 @@ export interface RootState {
   set: StoreApi<RootState>['setState']
   /** Get current state */
   get: StoreApi<RootState>['getState']
+  /**
+   * Reference to the authoritative store for shared TSL resources (uniforms, nodes, etc).
+   * - For primary/independent canvases: points to its own store (self-reference)
+   * - For secondary canvases: points to the primary canvas's store
+   *
+   * Hooks like useNodes/useUniforms should read from primaryStore to ensure
+   * consistent shared state across all canvases sharing a renderer.
+   */
+  primaryStore: RootStore
   /** @deprecated Use `renderer` instead. The instance of the renderer (typed as WebGLRenderer for backwards compat) */
   gl: THREE.WebGLRenderer
   /** The renderer instance - type depends on entry point (WebGPU, Legacy, or union for default) */

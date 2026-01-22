@@ -80,6 +80,8 @@ export const createStore = (
       get,
 
       // Mock objects that have to be configured
+      // primaryStore is set after store creation (self-reference for primary, primary's store for secondary)
+      primaryStore: null as unknown as RootStore,
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
