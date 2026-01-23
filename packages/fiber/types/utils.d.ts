@@ -6,7 +6,7 @@ import type * as React from 'react'
 export type NonFunctionKeys<P> = { [K in keyof P]-?: P[K] extends Function ? never : K }[keyof P]
 export type Overwrite<P, O> = Omit<P, NonFunctionKeys<O>> & O
 export type Properties<T> = Pick<T, NonFunctionKeys<T>>
-export type Mutable<P> = { [K in keyof P]: P[K] | Readonly<P[K]> }
+export type Mutable<P> = { -readonly [K in keyof P]: P[K] }
 export type IsOptional<T> = undefined extends T ? true : false
 export type IsAllOptional<T extends any[]> = T extends [infer First, ...infer Rest]
   ? IsOptional<First> extends true

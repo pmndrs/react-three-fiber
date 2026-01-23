@@ -13,7 +13,7 @@ describe('fromRef', () => {
   afterEach(async () => act(async () => root.unmount()))
 
   it('should resolve ref after mount', async () => {
-    const targetRef = React.createRef<THREE.Object3D>()
+    const targetRef = React.createRef<THREE.Group>()
     const spotLightRef = React.createRef<THREE.SpotLight>()
 
     function Test() {
@@ -71,7 +71,7 @@ describe('fromRef', () => {
   })
 
   it('should work with nested components', async () => {
-    const targetRef = React.createRef<THREE.Object3D>()
+    const targetRef = React.createRef<THREE.Group>()
     const spotLightRef = React.createRef<THREE.SpotLight>()
 
     function Target() {
@@ -97,7 +97,7 @@ describe('fromRef', () => {
   })
 
   it('should work with state-managed refs', async () => {
-    const targetRef = React.createRef<THREE.Object3D>()
+    const targetRef = React.createRef<THREE.Group>()
     const spotLightRef = React.createRef<THREE.SpotLight>()
 
     function Test() {

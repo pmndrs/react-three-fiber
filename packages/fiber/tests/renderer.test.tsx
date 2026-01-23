@@ -208,7 +208,11 @@ describe('renderer', () => {
         <>
           <mesh ref={immutableRef} />
           <mesh ref={mutableRef} />
-          <mesh ref={(r) => (mutableRefSpecific.current = r)} />
+          <mesh
+            ref={(r) => {
+              mutableRefSpecific.current = r
+            }}
+          />
         </>
       )
     }

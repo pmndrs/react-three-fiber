@@ -68,6 +68,21 @@ export interface GeometryTransformProps {
 
 export type GeometryProps<P> = P extends THREE.BufferGeometry ? GeometryTransformProps : {}
 
+/**
+ * Workaround for @types/three TSL node type issues.
+ * The Node base class has properties that subclasses (OperatorNode, ConstNode, etc.) don't inherit.
+ * This transforms `Node | null` properties to accept any object with node-like shape.
+ */
+type TSLNodeInput = { nodeType?: string | null; uuid?: string } | null
+
+/**
+ * For node material properties (colorNode, positionNode, etc.), accept broader types
+ * since @types/three has broken inheritance for TSL node subclasses.
+ */
+export type NodeProps<P> = {
+  [K in keyof P as P[K] extends THREE.Node | null ? K : never]?: TSLNodeInput
+}
+
 export interface ReactProps<P> {
   children?: React.ReactNode
   ref?: React.Ref<P>
@@ -75,7 +90,7 @@ export interface ReactProps<P> {
 }
 
 export type ElementProps<T extends ConstructorRepresentation, P = InstanceType<T>> = Partial<
-  Overwrite<P, MathProps<P> & ReactProps<P> & EventProps<P> & GeometryProps<P>>
+  Overwrite<P, MathProps<P> & ReactProps<P> & EventProps<P> & GeometryProps<P> & NodeProps<P>>
 >
 
 export type ThreeElement<T extends ConstructorRepresentation> = Mutable<
