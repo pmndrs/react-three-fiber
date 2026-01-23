@@ -8,7 +8,6 @@ import {
   Inspector,
   Frustum,
   SRGBColorSpace,
-  ACESFilmicToneMapping,
 } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
@@ -98,11 +97,6 @@ export const createStore = (
       invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
-      legacy: false,
-      linear: false,
-      flat: false,
-      colorSpace: SRGBColorSpace,
-      toneMapping: ACESFilmicToneMapping,
       textureColorSpace: SRGBColorSpace,
       isLegacy: false,
       webGPUSupported: false,

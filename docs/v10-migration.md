@@ -139,33 +139,43 @@ useFrame(() => updateAI(), { after: 'update', before: 'render' })
 
 ---
 
-## Deprecations
+## Removed Props
 
-### `linear` and `flat` Props Deprecated
+### Renderer Props Removed
 
-The boolean shortcut props `linear` and `flat` are deprecated in favor of explicit `colorSpace` and `toneMapping` props.
+The following Canvas props have been removed. Use the `gl` (WebGL) or `renderer` (WebGPU) props to pass these settings directly to the renderer:
+
+**Removed props:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true` (modern Three.js default)
+- `linear` - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
 
 ```diff
 - <Canvas linear />
-+ <Canvas colorSpace={THREE.LinearSRGBColorSpace} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }} />
 
 - <Canvas flat />
-+ <Canvas toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ toneMapping: THREE.NoToneMapping }} />
 
-- <Canvas linear flat />
-+ <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
 ```
 
-The old props still work but will log a deprecation warning. They will be removed in v11.
+**Why the change?** These props were redundant with what you can already pass via `gl`/`renderer`. Removing them simplifies the API and makes it clear that renderer settings should be configured through the renderer props.
 
-**Why the change?** The new props give you direct access to THREE.js constants, enabling any color space or tone mapping algorithm rather than just two hardcoded options.
+**Accessing values:** If you were reading these from `useThree()`, access them from the renderer directly:
 
-```tsx
-// Now possible with the new props
-<Canvas toneMapping={THREE.ReinhardToneMapping} />
-<Canvas toneMapping={THREE.CineonToneMapping} />
-<Canvas toneMapping={THREE.AgXToneMapping} />
+```diff
+- const { colorSpace, toneMapping, legacy, linear, flat } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
 ```
+
+**Note:** `textureColorSpace` remains available as an R3F-specific prop for controlling how textures are interpreted.
 
 ### `<color attach="background">` Pattern Deprecated
 

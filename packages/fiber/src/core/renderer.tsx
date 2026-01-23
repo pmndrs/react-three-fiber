@@ -132,11 +132,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     frameloop: RenderProps<TCanvas>['frameloop']
     performance: RenderProps<TCanvas>['performance']
     shadows: RenderProps<TCanvas>['shadows']
-    linear: boolean
-    flat: boolean
-    colorSpace: THREE.ColorSpace
-    toneMapping: THREE.ToneMapping
-    legacy: boolean
     textureColorSpace: THREE.ColorSpace
   }> = {}
 
@@ -159,12 +154,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         events,
         onCreated: onCreatedCallback,
         shadows = false,
-        linear,
-        flat,
-        colorSpace: colorSpaceProp,
-        toneMapping: toneMappingProp,
         textureColorSpace = THREE.SRGBColorSpace,
-        legacy = false,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -537,82 +527,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
-      // Resolve colorSpace: explicit prop takes precedence, then linear fallback
-      let colorSpace = colorSpaceProp
-      if (colorSpace === undefined) {
-        if (linear !== undefined) {
-          notifyDepreciated({
-            heading: 'linear prop is deprecated',
-            body: `Use colorSpace={THREE.${linear ? 'LinearSRGBColorSpace' : 'SRGBColorSpace'}} instead.`,
-            link: 'https://docs.pmnd.rs/react-three-fiber/api/canvas#color-management',
-          })
-          colorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-        } else {
-          colorSpace = THREE.SRGBColorSpace
-        }
-      }
-
-      // Resolve toneMapping: explicit prop takes precedence, then flat fallback
-      let toneMapping = toneMappingProp
-      if (toneMapping === undefined) {
-        if (flat !== undefined) {
-          notifyDepreciated({
-            heading: 'flat prop is deprecated',
-            body: `Use toneMapping={THREE.${flat ? 'NoToneMapping' : 'ACESFilmicToneMapping'}} instead.`,
-            link: 'https://docs.pmnd.rs/react-three-fiber/api/canvas#color-management',
-          })
-          toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-        } else {
-          toneMapping = THREE.ACESFilmicToneMapping
-        }
-      }
-
-      // Only execute legacy color management if could be using the webgl renderer is true
-      if (R3F_BUILD_LEGACY) {
-        // Check if any of the color management props changed
-        const legacyChanged = legacy !== lastConfiguredProps.legacy
-        const colorSpaceChanged = colorSpace !== lastConfiguredProps.colorSpace
-        const toneMappingChanged = toneMapping !== lastConfiguredProps.toneMapping
-
-        //We only notifiy its depreciation for default and legacy. webgpu imports dont get noticed
-        if (isDefaultBuild && legacyChanged) {
-          if (legacy) {
-            notifyDepreciated({
-              heading: 'Legacy Color Management',
-              body: 'Legacy color management is deprecated and will be removed in a future version.',
-              link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
-            })
-          }
-        }
-
-        // Only apply if props changed
-        if (legacyChanged) {
-          THREE.ColorManagement.enabled = !legacy
-          lastConfiguredProps.legacy = legacy
-        }
-
-        // Apply colorSpace
-        if (!configured || colorSpaceChanged) {
-          renderer.outputColorSpace = colorSpace
-          lastConfiguredProps.colorSpace = colorSpace
-        }
-
-        // Apply toneMapping
-        if (!configured || toneMappingChanged) {
-          renderer.toneMapping = toneMapping
-          lastConfiguredProps.toneMapping = toneMapping
-        }
-
-        // Update color management state only if values changed
-        if (legacyChanged && state.legacy !== legacy) state.set(() => ({ legacy }))
-        if (colorSpaceChanged) {
-          const linear = colorSpace === THREE.LinearSRGBColorSpace
-          state.set(() => ({ colorSpace, linear }))
-        }
-        if (toneMappingChanged) {
-          const flat = toneMapping === THREE.NoToneMapping
-          state.set(() => ({ toneMapping, flat }))
-        }
+      //* Color Management ==============================
+      // Set sensible defaults on first configure only - gl/renderer props can override via applyProps
+      if (!configured) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace
+        renderer.toneMapping = THREE.ACESFilmicToneMapping
       }
 
       // Update textureColorSpace state (color space for 8-bit input textures)

@@ -129,25 +129,6 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
   shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
-  /**
-   * Disables three r139 color management.
-   * @see https://threejs.org/docs/#manual/en/introduction/Color-management
-   */
-  legacy?: boolean
-  /**
-   * @deprecated Use `colorSpace` instead. Will be removed in v11.
-   * Switch off automatic sRGB encoding and gamma correction
-   */
-  linear?: boolean
-  /**
-   * @deprecated Use `toneMapping` instead. Will be removed in v11.
-   * Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`
-   */
-  flat?: boolean
-  /** Output color space for the renderer. Defaults to THREE.SRGBColorSpace */
-  colorSpace?: THREE.ColorSpace
-  /** Tone mapping algorithm. Defaults to THREE.ACESFilmicToneMapping */
-  toneMapping?: THREE.ToneMapping
   /** Color space assigned to 8-bit input textures (color maps). Defaults to sRGB. Most textures are authored in sRGB. */
   textureColorSpace?: THREE.ColorSpace
   /** Creates an orthographic camera */

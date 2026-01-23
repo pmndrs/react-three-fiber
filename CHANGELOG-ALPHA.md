@@ -6,6 +6,47 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ## Unreleased
 
+### Breaking Changes
+
+#### Removed Renderer Props
+
+Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
+
+**Removed from Canvas/RenderProps:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
+- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+
+**Removed from RootState (useThree):**
+
+- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
+- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
+
+**Migration:**
+
+```diff
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
+
+- const { colorSpace, toneMapping } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
+```
+
+**Note:** `textureColorSpace` remains in RenderProps as it's R3F-specific.
+
+**Files changed:**
+
+- `packages/fiber/types/renderer.d.ts` - Removed props from RenderProps
+- `packages/fiber/types/store.d.ts` - Removed props from RootState
+- `packages/fiber/src/core/Canvas.tsx` - Removed prop destructuring and passing
+- `packages/fiber/src/core/renderer.tsx` - Simplified configure() logic
+- `packages/fiber/src/core/store.ts` - Removed from initial state
+
 ### Features
 
 #### forceEven Canvas Prop
@@ -117,44 +158,6 @@ Added support for sharing a single WebGPURenderer across multiple Canvas compone
 - `packages/fiber/types/canvas.d.ts` - Omit internal props from CanvasProps
 - `packages/fiber/src/core/Canvas.tsx` - Extract renderer config props
 - `packages/fiber/src/core/renderer.tsx` - Canvas target management, scheduler config, primaryStore setup
-
-#### Color Management Props
-
-Added explicit `colorSpace` and `toneMapping` props for direct control over renderer color settings, deprecating the boolean `linear` and `flat` shortcuts.
-
-**New props:**
-
-- `colorSpace` - Set `renderer.outputColorSpace` directly (default: `THREE.SRGBColorSpace`)
-- `toneMapping` - Set `renderer.toneMapping` directly (default: `THREE.ACESFilmicToneMapping`)
-
-**Deprecated props:**
-
-- `linear` - Use `colorSpace={THREE.LinearSRGBColorSpace}` instead
-- `flat` - Use `toneMapping={THREE.NoToneMapping}` instead
-
-```tsx
-// Before (deprecated)
-<Canvas linear flat />
-
-// After
-<Canvas
-  colorSpace={THREE.LinearSRGBColorSpace}
-  toneMapping={THREE.NoToneMapping}
-/>
-
-// New flexibility - use any tone mapping algorithm
-<Canvas toneMapping={THREE.ReinhardToneMapping} />
-<Canvas toneMapping={THREE.CineonToneMapping} />
-```
-
-**Files changed:**
-
-- `packages/fiber/types/renderer.d.ts` - Added `colorSpace`, `toneMapping` props to RenderProps
-- `packages/fiber/types/store.d.ts` - Added `colorSpace`, `toneMapping` to RootState
-- `packages/fiber/src/core/store.ts` - Added initial state for new props
-- `packages/fiber/src/core/Canvas.tsx` - Pass new props to configure
-- `packages/fiber/src/core/renderer.tsx` - Resolution logic and deprecation warnings
-- `packages/fiber/src/core/utils/props.ts` - Use colorSpace for texture auto-assignment
 
 #### Camera Scene Parenting
 

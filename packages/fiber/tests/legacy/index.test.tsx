@@ -38,8 +38,8 @@ describe('Legacy WebGL Renderer', () => {
     expect(gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
   })
 
-  it('should set tonemapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace if linear is false', async () => {
-    const store = await act(async () => (await root.configure({ linear: false })).render(<group />))
+  it('should set default toneMapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace', async () => {
+    const store = await act(async () => (await root.configure({})).render(<group />))
     const { gl } = store.getState()
 
     expect(gl.toneMapping).toBe(THREE.ACESFilmicToneMapping)
@@ -87,7 +87,7 @@ describe('Legacy WebGL Renderer', () => {
     expect(gl instanceof Renderer).toBe(true)
   })
 
-  it('should respect color management preferences via gl', async () => {
+  it('should respect color management preferences via gl props', async () => {
     let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
     let texture: THREE.Texture & { colorSpace?: string } = null!
 
@@ -98,26 +98,16 @@ describe('Legacy WebGL Renderer', () => {
       return <meshBasicMaterial key={key++} map={texture} />
     }
 
-    await act(async () => (await createRoot().configure({ linear: true })).render(<Test />))
+    await act(async () =>
+      (await createRoot().configure({ gl: { outputColorSpace: THREE.LinearSRGBColorSpace } })).render(<Test />),
+    )
     expect(gl.outputColorSpace).toBe(THREE.LinearSRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.NoColorSpace)
 
-    await act(async () => (await createRoot().configure({ linear: false })).render(<Test />))
+    await act(async () =>
+      (await createRoot().configure({ gl: { outputColorSpace: THREE.SRGBColorSpace } })).render(<Test />),
+    )
     expect(gl.outputColorSpace).toBe(THREE.SRGBColorSpace)
     expect(texture.colorSpace).toBe(THREE.SRGBColorSpace)
-  })
-
-  it('should respect legacy prop', async () => {
-    THREE.ColorManagement.enabled = true
-
-    await act(async () => {
-      ;(await root.configure({ legacy: true })).render(<group />)
-    })
-    expect(THREE.ColorManagement.enabled).toBe(false)
-
-    await act(async () => {
-      ;(await root.configure({ legacy: false })).render(<group />)
-    })
-    expect(THREE.ColorManagement.enabled).toBe(true)
   })
 })

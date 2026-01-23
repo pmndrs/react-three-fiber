@@ -172,16 +172,6 @@ export interface RootState {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement */
-  legacy: boolean
-  /** @deprecated Use colorSpace instead */
-  linear: boolean
-  /** @deprecated Use toneMapping instead */
-  flat: boolean
-  /** Output color space for the renderer */
-  colorSpace: THREE.ColorSpace
-  /** Tone mapping algorithm */
-  toneMapping: THREE.ToneMapping
   /** Color space assigned to 8-bit input textures (color maps). Most textures are authored in sRGB. */
   textureColorSpace: THREE.ColorSpace
   /** Render loop flags */

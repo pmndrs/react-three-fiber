@@ -652,45 +652,9 @@ The size control follows an ownership model:
 
 ---
 
-## Color Management
+## Texture Color Space
 
-v10 adds explicit `colorSpace` and `toneMapping` props for direct control over renderer color settings.
-
-### colorSpace
-
-Controls the renderer's output color space:
-
-```tsx
-import * as THREE from 'three'
-
-// sRGB output (default)
-<Canvas colorSpace={THREE.SRGBColorSpace}>
-
-// Linear output (for post-processing pipelines)
-<Canvas colorSpace={THREE.LinearSRGBColorSpace}>
-```
-
-### toneMapping
-
-Controls the tone mapping algorithm:
-
-```tsx
-// ACES Filmic (default) - cinematic look
-<Canvas toneMapping={THREE.ACESFilmicToneMapping}>
-
-// No tone mapping - raw HDR values
-<Canvas toneMapping={THREE.NoToneMapping}>
-
-// Other options
-<Canvas toneMapping={THREE.ReinhardToneMapping}>
-<Canvas toneMapping={THREE.CineonToneMapping}>
-<Canvas toneMapping={THREE.AgXToneMapping}>
-<Canvas toneMapping={THREE.NeutralToneMapping}>
-```
-
-### textureColorSpace
-
-Controls how 8-bit input textures (color maps) are interpreted:
+R3F provides a `textureColorSpace` prop to control how 8-bit input textures (color maps) are interpreted:
 
 ```tsx
 // sRGB textures (default - most textures are authored in sRGB)
@@ -700,20 +664,30 @@ Controls how 8-bit input textures (color maps) are interpreted:
 <Canvas textureColorSpace={THREE.LinearSRGBColorSpace}>
 ```
 
-### State Access
+### Renderer Color Settings
 
-The resolved values are available in the root state:
+For renderer-level settings like `outputColorSpace` and `toneMapping`, pass them via the `gl` or `renderer` props:
 
 ```tsx
+// Configure renderer color space and tone mapping
+<Canvas gl={{
+  outputColorSpace: THREE.LinearSRGBColorSpace,
+  toneMapping: THREE.NoToneMapping
+}}>
+
+// Access from components
 function ColorInfo() {
-  const { colorSpace, toneMapping } = useThree()
-
-  console.log(colorSpace) // THREE.SRGBColorSpace or THREE.LinearSRGBColorSpace
-  console.log(toneMapping) // THREE.ACESFilmicToneMapping, THREE.NoToneMapping, etc.
-
+  const { renderer } = useThree()
+  console.log(renderer.outputColorSpace)
+  console.log(renderer.toneMapping)
   return null
 }
 ```
+
+**Defaults:**
+
+- `outputColorSpace`: `THREE.SRGBColorSpace`
+- `toneMapping`: `THREE.ACESFilmicToneMapping`
 
 ---
 
