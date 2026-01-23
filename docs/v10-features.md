@@ -198,10 +198,7 @@ import { useRenderTarget, useFrame } from '@react-three/fiber'
 
 function PortalScene() {
   // Creates the correct render target type for your renderer
-  const fbo = useRenderTarget(512, 512, {
-    depthBuffer: true,
-    samples: 4,
-  })
+  const fbo = useRenderTarget(512, 512, { depthBuffer: true, samples: 4 })
 
   useFrame(({ renderer, scene, camera }) => {
     renderer.setRenderTarget(fbo)
@@ -218,26 +215,41 @@ function PortalScene() {
 }
 ```
 
-### Using Canvas Size
+### Flexible Arguments
 
-If you omit width/height, the hook uses the canvas dimensions:
+The hook accepts multiple argument patterns for convenience:
 
 ```tsx
-// Full-screen render target that resizes with the canvas
+// Use canvas size (resizes with canvas)
 const fbo = useRenderTarget()
 
-// Or just specify options
-const fbo = useRenderTarget(undefined, undefined, { samples: 4 })
+// Canvas size with options
+const fbo = useRenderTarget({ samples: 4 })
+
+// Square render target (512×512)
+const fbo = useRenderTarget(512)
+
+// Square render target with options
+const fbo = useRenderTarget(512, { depthBuffer: true })
+
+// Explicit dimensions
+const fbo = useRenderTarget(512, 256)
+
+// Explicit dimensions with options
+const fbo = useRenderTarget(512, 256, { samples: 4 })
 ```
 
 ### API
 
 ```ts
-useRenderTarget(
-  width?: number,   // Target width (defaults to canvas width)
-  height?: number,  // Target height (defaults to canvas height)
-  options?: RenderTargetOptions
-)
+// Canvas size (defaults to canvas dimensions)
+useRenderTarget(options?: RenderTargetOptions)
+
+// Square render target
+useRenderTarget(size: number, options?: RenderTargetOptions)
+
+// Explicit dimensions
+useRenderTarget(width: number, height: number, options?: RenderTargetOptions)
 ```
 
 ### Options
