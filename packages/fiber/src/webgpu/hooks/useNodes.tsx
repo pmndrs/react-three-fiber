@@ -1,25 +1,38 @@
 import { useCallback, useMemo } from 'react'
 import { useStore, useThree } from '../../core/hooks'
-import type { Node } from '#three'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
 
-/** TSL node type - extends Three.js Node for material compatibility */
-export type TSLNode = Node
+/**
+ * Minimal interface for TSL nodes.
+ * Used instead of Three.js's Node type because the @types/three definitions
+ * have inconsistencies where OperatorNode, ConstNode, etc. don't properly
+ * extend Node with all required properties.
+ */
+export interface TSLNodeLike {
+  uuid?: string
+  nodeType?: string | null
+  /** label method for chaining - sets the node's label and returns self */
+  label?: ((label: string) => TSLNodeLike) | string
+  setName?: (name: string) => this
+}
+
+/** TSL node type - alias for compatibility */
+export type TSLNode = TSLNodeLike
 
 /**
  * A record of TSL nodes - allows mixed node types (OperatorNode, ConstNode, etc.)
- * All values must extend Node, but they can be different subtypes.
+ * Uses TSLNodeLike for broader compatibility with Three.js's TSL type definitions.
  */
-export type NodeRecord<T extends Node = Node> = Record<string, T>
+export type NodeRecord<T extends TSLNodeLike = TSLNodeLike> = Record<string, T>
 
 /**
  * Creator function that returns a record of nodes.
- * The constraint `T extends Record<string, Node>` allows mixed node types
+ * Uses TSLNodeLike constraint to allow mixed node types
  * (e.g., { n: OperatorNode; color: ConstNode<Color> }) to pass type checking.
  */
-export type NodeCreator<T extends Record<string, Node>> = (state: CreatorState) => T
+export type NodeCreator<T extends Record<string, TSLNodeLike>> = (state: CreatorState) => T
 
 /** Function signature for removeNodes util */
 export type RemoveNodesFn = (names: string | string[], scope?: string) => void
@@ -31,29 +44,32 @@ export type ClearNodesFn = (scope?: string) => void
 export type RebuildNodesFn = (scope?: string) => void
 
 /** Return type with utils included */
-export type NodesWithUtils<T extends Record<string, Node> = Record<string, Node>> = T & {
+export type NodesWithUtils<T extends Record<string, TSLNodeLike> = Record<string, TSLNodeLike>> = T & {
   removeNodes: RemoveNodesFn
   clearNodes: ClearNodesFn
   rebuildNodes: RebuildNodesFn
 }
 
 /** Type guard to check if a value is a TSLNode vs a scope object */
-const isTSLNode = (value: unknown): value is Node =>
+const isTSLNode = (value: unknown): value is TSLNodeLike =>
   value !== null && typeof value === 'object' && ('uuid' in value || 'nodeType' in value)
 
 //* Hook Overloads ==============================
 
 // Get all nodes (returns full structure with root nodes and scopes + utils)
-export function useNodes(): NodesWithUtils<Record<string, Node> & Record<string, Record<string, Node>>>
+export function useNodes(): NodesWithUtils<Record<string, TSLNodeLike> & Record<string, Record<string, TSLNodeLike>>>
 
 // Get nodes from a specific scope (+ utils)
-export function useNodes(scope: string): NodesWithUtils<Record<string, Node>>
+export function useNodes(scope: string): NodesWithUtils<Record<string, TSLNodeLike>>
 
 // Create/get nodes at root level (no scope) (+ utils)
-export function useNodes<T extends Record<string, Node>>(creator: NodeCreator<T>): NodesWithUtils<T>
+export function useNodes<T extends Record<string, TSLNodeLike>>(creator: NodeCreator<T>): NodesWithUtils<T>
 
 // Create/get nodes within a scope (+ utils)
-export function useNodes<T extends Record<string, Node>>(creator: NodeCreator<T>, scope: string): NodesWithUtils<T>
+export function useNodes<T extends Record<string, TSLNodeLike>>(
+  creator: NodeCreator<T>,
+  scope: string,
+): NodesWithUtils<T>
 
 //* Hook Implementation ==============================
 
@@ -90,13 +106,13 @@ export function useNodes<T extends Record<string, Node>>(creator: NodeCreator<T>
  * material.positionNode = positionLocal.add(normal.mul(wobble))
  * ```
  */
-export function useNodes<T extends Record<string, Node>>(
+export function useNodes<T extends Record<string, TSLNodeLike>>(
   creatorOrScope?: NodeCreator<T> | string,
   scope?: string,
 ):
   | NodesWithUtils<T>
-  | NodesWithUtils<Record<string, Node>>
-  | NodesWithUtils<Record<string, Node> & Record<string, Record<string, Node>>> {
+  | NodesWithUtils<Record<string, TSLNodeLike>>
+  | NodesWithUtils<Record<string, TSLNodeLike> & Record<string, Record<string, TSLNodeLike>>> {
   const store = useStore()
 
   //* Utils ==============================
@@ -213,7 +229,7 @@ export function useNodes<T extends Record<string, Node>>(
     // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
     const wrappedState = createLazyCreatorState(state)
     const created = creator(wrappedState)
-    const result: Record<string, TSLNode> = {}
+    const result: Record<string, TSLNodeLike> = {}
     let hasNewNodes = false
 
     // Scoped nodes ---------------------------------
@@ -225,7 +241,7 @@ export function useNodes<T extends Record<string, Node>>(
           result[name] = currentScope[name]
         } else {
           // Apply label for debugging
-          if (typeof node.label === 'function') node.setName(`${scope}.${name}`)
+          node.setName?.(`${scope}.${name}`)
           result[name] = node
           hasNewNodes = true
         }
@@ -250,7 +266,7 @@ export function useNodes<T extends Record<string, Node>>(
         result[name] = existing
       } else {
         // Apply label for debugging
-        if (typeof node.label === 'function') node.setName(name)
+        node.setName?.(name)
         result[name] = node
         hasNewNodes = true
       }
