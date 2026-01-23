@@ -1,6 +1,5 @@
-import { useTexture } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import { useDeferredValue, useEffect, useState } from 'react'
+import { Canvas, useTexture } from '@react-three/fiber'
+import { useEffect, useState } from 'react'
 
 export default function App() {
   return (
@@ -9,15 +8,14 @@ export default function App() {
     </Canvas>
   )
 }
+const textures = ['/images/pmndrs.png', '/images/react.png', '/images/three.png']
 
 function Plane() {
-  const textures = ['/images/pmndrs.png', '/images/react.png', '/images/three.png']
   const [index, setIndex] = useState(0)
-  const deferred = useDeferredValue(index)
-  const texture = useTexture(textures[deferred], () => console.log('texture loaded'))
+  const texture = useTexture(textures[index])
 
   useEffect(() => {
-    const interval = setInterval(() => setIndex((i) => (i + 1) % textures.length), 1000)
+    const interval = setInterval(() => setIndex((i) => (i + 1) % textures.length), 2000)
     return () => clearInterval(interval)
   }, [])
 
@@ -28,3 +26,4 @@ function Plane() {
     </mesh>
   )
 }
+useTexture.preload(textures)

@@ -118,6 +118,8 @@ export interface InternalState {
    * Only set when this canvas has an `id` prop.
    */
   unregisterPrimary?: () => void
+  /** Whether canvas dimensions are forced to even numbers */
+  forceEven?: boolean
 }
 
 export interface XRManager {

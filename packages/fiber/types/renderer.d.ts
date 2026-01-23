@@ -190,6 +190,8 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   occlusion?: boolean
   /** Internal: stored size props from Canvas for reset functionality */
   _sizeProps?: { width?: number; height?: number } | null
+  /** Force canvas dimensions to even numbers (fixes Safari rendering issues with odd/fractional sizes) */
+  forceEven?: boolean
 }
 
 //* Reconciler Root ==============================

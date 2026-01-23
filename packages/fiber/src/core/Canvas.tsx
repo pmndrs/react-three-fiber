@@ -45,6 +45,7 @@ function CanvasImpl({
   width,
   height,
   background,
+  forceEven,
   ...props
 }: CanvasProps) {
   // Extract nested props from renderer object (primaryCanvas, scheduler)
@@ -135,15 +136,20 @@ function CanvasImpl({
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
   // Compute effective size: props override container measurement
-  const effectiveSize = React.useMemo(
-    () => ({
-      width: width ?? containerRect.width,
-      height: height ?? containerRect.height,
+  const effectiveSize = React.useMemo(() => {
+    let w = width ?? containerRect.width
+    let h = height ?? containerRect.height
+    if (forceEven) {
+      w = Math.ceil(w / 2) * 2
+      h = Math.ceil(h / 2) * 2
+    }
+    return {
+      width: w,
+      height: h,
       top: containerRect.top,
       left: containerRect.left,
-    }),
-    [width, height, containerRect],
-  )
+    }
+  }, [width, height, containerRect, forceEven])
 
   // Mark that we have initial size (for next render cycle)
   if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
@@ -229,6 +235,7 @@ function CanvasImpl({
           size: effectiveSize,
           // Store size props for reset functionality
           _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
+          forceEven,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),

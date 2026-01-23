@@ -177,6 +177,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         autoUpdateFrustum = true,
         occlusion = false,
         _sizeProps,
+        forceEven,
       } = props
 
       const state = store.getState()
@@ -419,6 +420,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Store size props for reset functionality
       if (_sizeProps !== undefined) {
         state.set({ _sizeProps })
+      }
+      // Store forceEven in internal state for Drei access
+      if (forceEven !== undefined && state.internal.forceEven !== forceEven) {
+        state.set((prev) => ({ internal: { ...prev.internal, forceEven } }))
       }
       // Check size, allow it to take on container bounds initially
       // Only apply size from props/container if not in imperative mode
@@ -956,13 +961,17 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
   }, [portalScene, container, injectScene])
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
+    // Resolve size: parent → portal's accumulated state → explicit prop override
+    // This ensures portal size persists through parent resize events
+    const resolvedSize = { ...rootState.size, ...injectState.size, ...size }
+
     let viewport = undefined
-    if (injectState.camera && size) {
+    if (injectState.camera && (size || injectState.size)) {
       const camera = injectState.camera
       // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
+      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), resolvedSize)
       // Update the portal camera, if it differs from the previous layer
-      if (camera !== rootState.camera) updateCamera(camera, size)
+      if (camera !== rootState.camera) updateCamera(camera, resolvedSize)
     }
 
     return {
@@ -980,7 +989,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       previousRoot,
       // Events, size and viewport can be overridden by the inject layer
       events: { ...rootState.events, ...injectState.events, ...events },
-      size: { ...rootState.size, ...size },
+      size: resolvedSize,
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>

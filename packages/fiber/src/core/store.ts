@@ -32,6 +32,7 @@ import type {
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
+import { getScheduler } from './hooks/useFrame/scheduler'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -173,6 +174,8 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
+              // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
+              getScheduler().invalidate()
             }
           }
           return
@@ -190,6 +193,8 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
+        // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
+        getScheduler().invalidate()
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {

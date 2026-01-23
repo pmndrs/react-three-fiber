@@ -8,6 +8,27 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### forceEven Canvas Prop
+
+Added `forceEven` prop to Canvas for Safari compatibility. Safari has issues with odd or fractional HTML canvas dimensions. When enabled, canvas dimensions are rounded up to the nearest even number.
+
+```tsx
+<Canvas forceEven>{/* Canvas dimensions are guaranteed to be even numbers */}</Canvas>
+```
+
+**Key details:**
+
+- Rounds dimensions UP to the nearest even number (e.g., 501 → 502, 301 → 302)
+- Uses `Math.ceil(n / 2) * 2` to ensure odd values round up, not down
+- Accessible to Drei components via `useThree((state) => state.internal.forceEven)`
+
+**Files changed:**
+
+- `packages/fiber/types/canvas.d.ts` - Added `forceEven` prop type
+- `packages/fiber/types/store.d.ts` - Added `forceEven` to InternalState
+- `packages/fiber/src/core/Canvas.tsx` - Prop destructuring and effectiveSize rounding logic
+- `packages/fiber/src/core/renderer.tsx` - Store forceEven in internal state
+
 #### Canvas Background Prop
 
 Added a flexible `background` prop to Canvas for declarative scene background and environment configuration. Supports colors, URLs, presets, and an expanded object form for separate background/environment maps.
@@ -299,6 +320,8 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 ### Bug Fixes
 
+- Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
+- Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
 - Fixed `useNodes()` and `useUniforms()` reader modes not updating when store changes
 - Fixed `usePostProcessing` callbacks not re-running after HMR due to stale ref guards
 - Fixed absolute Windows paths appearing in bundled type declarations by defining `FiberRoot` locally instead of importing from `react-reconciler`

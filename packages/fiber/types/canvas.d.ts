@@ -94,6 +94,8 @@ export interface CanvasProps
   width?: number
   /** Canvas resolution height in pixels. If omitted, uses container height. */
   height?: number
+  /** Force canvas dimensions to even numbers (fixes Safari rendering issues with odd/fractional sizes) */
+  forceEven?: boolean
   /**
    * Scene background configuration.
    * Accepts colors, URLs, presets, or an expanded object for separate background/environment.

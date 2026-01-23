@@ -1,7 +1,7 @@
 // Migrated from Drei
 import { Texture as _Texture, TextureLoader } from '#three'
 import { useLoader, useThree, useStore } from './'
-import { useLayoutEffect, useEffect, useMemo, ReactNode } from 'react'
+import { useLayoutEffect, useEffect, useMemo, useRef, ReactNode } from 'react'
 
 //* Types ==============================
 
@@ -116,6 +116,13 @@ export function useTexture<Url extends string[] | string | Record<string, string
 
   const { onLoad, cache = false } = options
 
+  // Use ref for onLoad to avoid re-running effect when callback reference changes
+  const onLoadRef = useRef(onLoad)
+  onLoadRef.current = onLoad
+
+  // Track which input we've already called onLoad for (prevents duplicate calls on re-render)
+  const onLoadCalledForRef = useRef<string | null>(null)
+
   //* Check our cache first when cache is enabled --
   // If all requested textures are in our cache, use those (preserves modifications)
   const urls = useMemo(() => getUrls(input), [input])
@@ -134,9 +141,14 @@ export function useTexture<Url extends string[] | string | Record<string, string
   ) as MappedTextureType<Url>
 
   // Call onLoad when textures are ready (only on initial load, not cache hits)
+  // Use a stable key based on URLs to prevent duplicate calls on re-render
+  const inputKey = urls.join('\0')
   useLayoutEffect(() => {
-    if (!cachedResult) onLoad?.(loadedTextures)
-  }, [onLoad, cachedResult, loadedTextures])
+    if (cachedResult) return
+    if (onLoadCalledForRef.current === inputKey) return
+    onLoadCalledForRef.current = inputKey
+    onLoadRef.current?.(loadedTextures)
+  }, [cachedResult, loadedTextures, inputKey])
 
   // https://github.com/mrdoob/three.js/issues/22696
   // Upload the texture to the GPU immediately instead of waiting for the first render
