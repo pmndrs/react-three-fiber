@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { context } from '../../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
-import { notifyDepreciated } from '../../notices'
+import { notifyDepreciated } from '../../utils/notices'
 import { getScheduler, type Scheduler } from './scheduler'
 
 //* Type Imports ==============================

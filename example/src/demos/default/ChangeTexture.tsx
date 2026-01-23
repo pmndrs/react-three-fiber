@@ -14,7 +14,7 @@ function Plane() {
   const textures = ['/images/pmndrs.png', '/images/react.png', '/images/three.png']
   const [index, setIndex] = useState(0)
   const deferred = useDeferredValue(index)
-  const texture = useTexture(textures[deferred])
+  const texture = useTexture(textures[deferred], () => console.log('texture loaded'))
 
   useEffect(() => {
     const interval = setInterval(() => setIndex((i) => (i + 1) % textures.length), 1000)

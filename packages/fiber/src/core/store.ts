@@ -31,7 +31,7 @@ import type {
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
-import { notifyDepreciated } from './notices'
+import { notifyDepreciated } from './utils/notices'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries

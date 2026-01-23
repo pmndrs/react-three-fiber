@@ -63,6 +63,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.28.6",
+    "@monogrid/gainmap-js": "^3.4.0",
     "dequal": "^2.0.3",
     "its-fine": "^2.0.0",
     "react-use-measure": "^2.1.7",

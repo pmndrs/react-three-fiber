@@ -3,6 +3,7 @@ export type * from '#types'
 
 //* Runtime Exports ==============================
 export * from './canvasRegistry'
+export * from './components/Environment'
 export * from './events'
 export * from './hooks'
 export * from './hooks/useFrame/legacy'

@@ -16,7 +16,7 @@ function Test() {
 
 export default function App() {
   return (
-    <Canvas renderer>
+    <Canvas renderer background="sunset">
       <ambientLight intensity={Math.PI} />
       <Suspense fallback={null}>
         <Test />

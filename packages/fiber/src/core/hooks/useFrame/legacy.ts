@@ -10,7 +10,7 @@
 //   - addTail → scheduler.onIdle(cb)
 
 import { getScheduler } from './scheduler'
-import { notifyDepreciated } from '../../notices'
+import { notifyDepreciated } from '../../utils/notices'
 
 //* Type Imports ==============================
 import type { GlobalRenderCallback, RootState } from '#types'

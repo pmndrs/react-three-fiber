@@ -19,7 +19,7 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { notifyDepreciated } from './notices'
+import { notifyDepreciated } from './utils/notices.js'
 import { getScheduler } from './hooks/useFrame/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
@@ -192,6 +192,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       const defaultGPUProps = {
         canvas: canvas as HTMLCanvasElement,
+        antialias: true,
       }
 
       //* Build Flag Validation ==============================

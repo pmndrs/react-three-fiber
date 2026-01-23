@@ -8,6 +8,60 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ### Features
 
+#### Canvas Background Prop
+
+Added a flexible `background` prop to Canvas for declarative scene background and environment configuration. Supports colors, URLs, presets, and an expanded object form for separate background/environment maps.
+
+**Simple string forms:**
+
+```tsx
+<Canvas background="red" />              // Color
+<Canvas background="#1a1a2e" />          // Hex color
+<Canvas background={0xff0000} />         // Hex number
+<Canvas background="/path/to/env.hdr" /> // URL
+<Canvas background="sunset" />           // Preset
+```
+
+**Expanded object form:**
+
+```tsx
+<Canvas
+  background={{
+    preset: 'city',
+    backgroundBlurriness: 0.5,
+    backgroundIntensity: 1,
+    environmentIntensity: 1.2,
+  }}
+/>
+```
+
+**Key features:**
+
+- String detection: presets → URLs → colors (priority order)
+- Supports all HDRI presets: apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse
+- Object form allows separate `backgroundMap` and environment files
+- Replaces verbose `<color attach="background">` pattern
+
+**Loader migrations:**
+
+- `RGBELoader` → `HDRLoader` (renamed in Three.js r180)
+- `HDRJPGLoader` → `UltraHDRLoader` (Three.js native)
+
+**New exports:**
+
+- `Environment` component from `@react-three/fiber`
+- `useEnvironment` hook from `@react-three/fiber`
+- `presetsObj` and `PresetsType` for preset names
+
+**Files changed:**
+
+- `packages/fiber/types/canvas.d.ts` - Added `BackgroundProp`, `BackgroundConfig` types
+- `packages/fiber/src/core/Canvas.tsx` - Background prop parsing and Environment rendering
+- `packages/fiber/src/core/components/Environment/Environment.tsx` - Enhanced with color/backgroundFiles support
+- `packages/fiber/src/core/hooks/useEnvironment.tsx` - Loader migrations
+- `packages/fiber/src/core/index.tsx` - Added Environment exports
+- `packages/fiber/src/core/hooks/index.tsx` - Added useEnvironment export
+
 #### Multi-Canvas Rendering (WebGPU)
 
 Added support for sharing a single WebGPURenderer across multiple Canvas components, enabling HUD overlays, picture-in-picture views, and multi-viewport rendering.

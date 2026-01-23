@@ -5,10 +5,12 @@ import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
 import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
 import { createPointerEvents } from './events'
-import { notifyAlpha } from './notices'
+import { notifyAlpha } from './utils/notices'
+import { Environment, EnvironmentProps } from './components/Environment/Environment'
+import { presetsObj } from './components/Environment/environment-assets'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, BackgroundConfig } from '#types'
 
 function CanvasImpl({
   ref,
@@ -42,6 +44,7 @@ function CanvasImpl({
   hmr,
   width,
   height,
+  background,
   ...props
 }: CanvasProps) {
   // Extract nested props from renderer object (primaryCanvas, scheduler)
@@ -61,6 +64,50 @@ function CanvasImpl({
   React.useMemo(() => extend(THREE as any), [])
 
   const Bridge = useBridge()
+
+  //* Background Prop Parsing ==============================
+  // Parse background prop into Environment-compatible props
+  const backgroundProps = React.useMemo((): EnvironmentProps | null => {
+    if (!background) return null
+
+    // Object form - pass through with mapping
+    if (typeof background === 'object' && !(background as any).isColor) {
+      const { backgroundMap, envMap, files, preset, ...rest } = background as BackgroundConfig
+      return {
+        ...rest,
+        preset,
+        files: envMap || files,
+        backgroundFiles: backgroundMap,
+        background: true,
+      }
+    }
+
+    // Number = hex color
+    if (typeof background === 'number') {
+      return { color: background, background: true }
+    }
+
+    // String - detect type
+    if (typeof background === 'string') {
+      // Preset?
+      if (background in presetsObj) {
+        return { preset: background as keyof typeof presetsObj, background: true }
+      }
+      // URL pattern or image extension?
+      if (/^(https?:\/\/|\/|\.\/|\.\.\/)|\\.(hdr|exr|jpg|jpeg|png|webp|gif)$/i.test(background)) {
+        return { files: background, background: true }
+      }
+      // Default to color
+      return { color: background, background: true }
+    }
+
+    // THREE.Color instance
+    if ((background as any).isColor) {
+      return { color: background as THREE.ColorRepresentation, background: true }
+    }
+
+    return null
+  }, [background])
 
   //* Dynamic Debounce for Fast Initial Render ==============================
   // Track if we've gotten initial size measurement
@@ -213,7 +260,10 @@ function CanvasImpl({
         root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
-              <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
+              <React.Suspense fallback={<Block set={setBlock} />}>
+                {backgroundProps && <Environment {...backgroundProps} />}
+                {children ?? null}
+              </React.Suspense>
             </ErrorBoundary>
           </Bridge>,
         )

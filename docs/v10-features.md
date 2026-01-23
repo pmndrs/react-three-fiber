@@ -866,6 +866,137 @@ R3F automatically manages `CanvasTarget` switching when rendering to multiple ca
 
 ---
 
+## Canvas Background Prop
+
+v10 adds a flexible `background` prop to Canvas that enables declarative scene background and environment configuration. This replaces the need to manually set up `<color attach="background">` or use separate Environment components for simple cases.
+
+### Simple String Forms
+
+```tsx
+// Color (CSS color names, hex values, rgb(), etc.)
+<Canvas background="red" />
+<Canvas background="#1a1a2e" />
+<Canvas background="rgb(100, 149, 237)" />
+
+// Hex number
+<Canvas background={0xff0000} />
+
+// URL to HDR/EXR/image file
+<Canvas background="/path/to/env.hdr" />
+<Canvas background="./sky.exr" />
+
+// Preset name (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
+<Canvas background="sunset" />
+```
+
+### String Detection Logic
+
+When a string is provided, it's detected in this priority order:
+
+1. **Preset** - Exact match against known preset names
+2. **URL** - Starts with `/`, `./`, `../`, `http://`, `https://`, OR has image extension (.hdr, .exr, .jpg, .png, .webp, etc.)
+3. **Color** - Default fallback (CSS color names, hex values, etc.)
+
+Example: `"city"` → preset, `"./city.jpg"` → URL, `"cyan"` → color
+
+### Expanded Object Form
+
+For advanced scenarios with separate background and environment maps:
+
+```tsx
+<Canvas
+  background={{
+    // Preset or files for environment (PBR lighting/reflections)
+    preset: 'city',
+    // Or use files directly:
+    // files: '/path/to/env.hdr',
+    // files: ['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'],
+
+    // Separate files for visual backdrop (optional, defaults to same as environment)
+    backgroundMap: '/path/to/sky.jpg',
+
+    // Background settings
+    backgroundBlurriness: 0.5,
+    backgroundIntensity: 1,
+    backgroundRotation: [0, Math.PI / 2, 0],
+
+    // Environment settings
+    environmentIntensity: 1.2,
+    environmentRotation: [0, 0, 0],
+
+    // Base path for file loading
+    path: '/textures/',
+  }}
+/>
+```
+
+### Why Use This Instead of `<color attach="background">`
+
+Previously, setting a scene background required:
+
+```tsx
+// Old approach - still works but verbose
+<Canvas>
+  <color attach="background" args={['#1a1a2e']} />
+  <Scene />
+</Canvas>
+```
+
+The new `background` prop is more concise and handles more cases:
+
+```tsx
+// New approach - cleaner
+<Canvas background="#1a1a2e">
+  <Scene />
+</Canvas>
+
+// And supports environments directly
+<Canvas background="sunset">
+  <Scene />
+</Canvas>
+```
+
+### Environment Component
+
+The underlying `Environment` component is also exported for direct use:
+
+```tsx
+import { Environment } from '@react-three/fiber'
+
+// Use directly for more control
+;<Canvas>
+  <Environment preset="sunset" background />
+  <Scene />
+</Canvas>
+```
+
+### API Reference
+
+**Simple Forms:**
+
+| Input Type    | Example                     | Description                              |
+| ------------- | --------------------------- | ---------------------------------------- |
+| Color string  | `"red"`, `"#ff0000"`        | CSS color for solid background           |
+| Hex number    | `0xff0000`                  | Numeric color for solid background       |
+| Preset string | `"city"`, `"sunset"`        | HDRI preset for environment + background |
+| URL string    | `"/env.hdr"`, `"./sky.jpg"` | File path for environment texture        |
+
+**Object Form Properties:**
+
+| Property               | Type                 | Description                                  |
+| ---------------------- | -------------------- | -------------------------------------------- |
+| `preset`               | `string`             | HDRI preset name                             |
+| `files`                | `string \| string[]` | File path(s) for environment                 |
+| `backgroundMap`        | `string \| string[]` | Separate file(s) for visual backdrop         |
+| `backgroundBlurriness` | `number`             | Blur factor (0-1, default: 0)                |
+| `backgroundIntensity`  | `number`             | Background brightness (default: 1)           |
+| `backgroundRotation`   | `[x, y, z]`          | Background rotation in radians               |
+| `environmentIntensity` | `number`             | Environment lighting brightness (default: 1) |
+| `environmentRotation`  | `[x, y, z]`          | Environment rotation in radians              |
+| `path`                 | `string`             | Base path for file loading                   |
+
+---
+
 ## More Features Coming
 
 v10 is in active development. More features will be documented here as they're released.
