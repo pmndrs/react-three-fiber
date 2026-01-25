@@ -236,6 +236,9 @@ export function createEvents(store: RootStore) {
             if (typeof property !== 'function') extractEventProps[prop] = property
           }
 
+          // Extract pointerId from the event, handling both pointer events and fallback cases
+          const eventPointerId = 'pointerId' in event ? event.pointerId : undefined
+
           const raycastEvent: ThreeEvent<DomEvent> = {
             ...hit,
             ...extractEventProps,
@@ -246,11 +249,12 @@ export function createEvents(store: RootStore) {
             unprojectedPoint,
             ray: raycaster.ray,
             camera: camera,
+            pointerId: eventPointerId,
             // Hijack stopPropagation, which just sets a flag
             stopPropagation() {
               // https://github.com/pmndrs/react-three-fiber/issues/596
               // Events are not allowed to stop propagation if the pointer has been captured
-              const capturesForPointer = 'pointerId' in event && internal.capturedMap.get(event.pointerId)
+              const capturesForPointer = eventPointerId !== undefined && internal.capturedMap.get(eventPointerId)
 
               // We only authorize stopPropagation...
               if (
@@ -268,7 +272,7 @@ export function createEvents(store: RootStore) {
                 ) {
                   // Objects cannot flush out higher up objects that have already caught the event
                   const higher = intersections.slice(0, intersections.indexOf(hit))
-                  cancelPointer([...higher, hit])
+                  cancelPointer([...higher, hit], eventPointerId)
                 }
               }
             },
@@ -288,10 +292,19 @@ export function createEvents(store: RootStore) {
     return intersections
   }
 
-  function cancelPointer(intersections: Intersection[]) {
+  function cancelPointer(intersections: Intersection[], pointerId?: number) {
     const { internal } = store.getState()
-    for (const hoveredObj of internal.hovered.values()) {
-      // When no objects were hit or the the hovered object wasn't found underneath the cursor
+
+    // Create a list of hovered objects to process
+    const hoveredEntries = Array.from(internal.hovered.entries())
+    for (const [hoveredId, hoveredObj] of hoveredEntries) {
+      // Get the pointerId from the stored event data
+      const hoveredPointerId = hoveredObj.pointerId
+      // Only process hovers for the specific pointer, or global hovers when no pointerId specified
+      const shouldProcess = !hoveredPointerId || hoveredPointerId === pointerId
+
+      if (!shouldProcess) continue
+      // When no objects were hit or the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
         !intersections.length ||
@@ -304,7 +317,7 @@ export function createEvents(store: RootStore) {
       ) {
         const eventObject = hoveredObj.eventObject
         const instance = (eventObject as Instance<THREE.Object3D>['object']).__r3f
-        internal.hovered.delete(makeId(hoveredObj))
+        internal.hovered.delete(hoveredId)
         if (instance?.eventCount) {
           const handlers = instance.handlers
           // Clear out intersects, they are outdated by now
@@ -344,7 +357,7 @@ export function createEvents(store: RootStore) {
       case 'onPointerLeave':
       case 'onPointerCancel':
       case 'onDragLeave':
-        return () => cancelPointer([])
+        return () => cancelPointer([]) // Global cancel of these events
       case 'onLostPointerCapture':
         return (event: DomEvent) => {
           const { internal } = store.getState()
@@ -357,7 +370,7 @@ export function createEvents(store: RootStore) {
               // Only release if pointer-up didn't do it already
               if (internal.capturedMap.has(event.pointerId)) {
                 internal.capturedMap.delete(event.pointerId)
-                cancelPointer([])
+                cancelPointer([], event.pointerId)
               }
             })
           }
@@ -414,7 +427,10 @@ export function createEvents(store: RootStore) {
       }
 
       // Take care of unhover
-      if (isPointerMove || isDragOver) cancelPointer(hits)
+      if (isPointerMove || isDragOver) {
+        const eventPointerId = 'pointerId' in event ? event.pointerId : undefined
+        cancelPointer(hits, eventPointerId)
+      }
 
       function onIntersect(data: ThreeEvent<DomEvent>) {
         const eventObject = data.eventObject
@@ -443,6 +459,8 @@ export function createEvents(store: RootStore) {
           // Move event ...
           if (handlers.onPointerOver || handlers.onPointerEnter || handlers.onPointerOut || handlers.onPointerLeave) {
             // When enter or out is present take care of hover-state
+            // Use regular ID for hover tracking - pointerId is stored in the event data
+
             const id = makeId(data)
             const hoveredItem = internal.hovered.get(id)
             if (!hoveredItem) {

@@ -20,6 +20,8 @@ export interface IntersectionEvent<TSourceEvent> extends Intersection {
   unprojectedPoint: THREE.Vector3
   /** Normalized event coordinates */
   pointer: THREE.Vector2
+  /** pointerId of the original event for multiple pointer events */
+  pointerId: number
   /** Delta between first click and this event */
   delta: number
   /** The ray that pierced it */
