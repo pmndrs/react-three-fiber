@@ -19,9 +19,10 @@ import {
   useIsomorphicLayoutEffect,
   useMutableCallback,
 } from './utils'
-import { notifyDepreciated } from './notices'
+import { notifyDepreciated } from './utils/notices.js'
 import { getScheduler } from './hooks/useFrame/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
+import { registerPrimary, waitForPrimary } from './canvasRegistry'
 
 import type {
   RootState,
@@ -131,9 +132,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     frameloop: RenderProps<TCanvas>['frameloop']
     performance: RenderProps<TCanvas>['performance']
     shadows: RenderProps<TCanvas>['shadows']
-    linear: boolean
-    flat: boolean
-    legacy: boolean
     textureColorSpace: THREE.ColorSpace
   }> = {}
 
@@ -146,6 +144,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       pending = new Promise<void>((_resolve) => (resolve = _resolve))
 
       const {
+        id: canvasId,
+        primaryCanvas,
+        scheduler: schedulerConfig,
         gl: glConfig,
         renderer: rendererConfig,
         size: propsSize,
@@ -153,10 +154,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         events,
         onCreated: onCreatedCallback,
         shadows = false,
-        linear = false,
-        flat = false,
         textureColorSpace = THREE.SRGBColorSpace,
-        legacy = false,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -169,6 +167,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         autoUpdateFrustum = true,
         occlusion = false,
         _sizeProps,
+        forceEven,
       } = props
 
       const state = store.getState()
@@ -184,6 +183,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       const defaultGPUProps = {
         canvas: canvas as HTMLCanvasElement,
+        antialias: true,
       }
 
       //* Build Flag Validation ==============================
@@ -219,13 +219,60 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       let renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
 
+      //* Multi-Canvas Target Validation ==============================
+      // Validate primaryCanvas prop is only used with WebGPU
+      if (primaryCanvas && !R3F_BUILD_WEBGPU) {
+        throw new Error(
+          'The `primaryCanvas` prop for multi-canvas rendering is only available with WebGPU. ' +
+            'Use @react-three/fiber/webgpu instead.',
+        )
+      }
+      if (primaryCanvas && wantsGL) {
+        throw new Error(
+          'The `primaryCanvas` prop for multi-canvas rendering cannot be used with WebGL. ' +
+            'Remove the `gl` prop or use WebGPU.',
+        )
+      }
+
       //* Create Renderer (one time only) ==============================
       if (R3F_BUILD_LEGACY && wantsGL && !state.internal.actualRenderer) {
         //* WebGL path ---
         renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
         state.internal.actualRenderer = renderer
         // Set both gl and renderer to the WebGLRenderer for backwards compatibility
-        state.set({ isLegacy: true, gl: renderer, renderer: renderer })
+        // Self-reference primaryStore - this canvas is its own primary
+        state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
+      } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas && !state.internal.actualRenderer) {
+        //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
+        // Wait for primary canvas to be registered (handles async init timing)
+        const primary = await waitForPrimary(primaryCanvas)
+
+        // Use the primary's renderer
+        renderer = primary.renderer
+        state.internal.actualRenderer = renderer
+
+        // Create a CanvasTarget for this secondary canvas
+        const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+
+        // Enable multi-canvas mode on the primary canvas
+        primary.store.setState((prev) => ({
+          internal: { ...prev.internal, isMultiCanvas: true },
+        }))
+
+        // Store secondary canvas info in internal state
+        // primaryStore points to the primary canvas's store for shared TSL resources
+        state.set((prev) => ({
+          webGPUSupported: primary.store.getState().webGPUSupported,
+          renderer: renderer,
+          primaryStore: primary.store,
+          internal: {
+            ...prev.internal,
+            canvasTarget,
+            isMultiCanvas: true,
+            isSecondary: true,
+            targetId: primaryCanvas,
+          },
+        }))
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
         //* WebGPU path ---
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
@@ -245,7 +292,23 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         state.internal.actualRenderer = renderer
         // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
-        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer })
+        // Self-reference primaryStore - this canvas is its own primary
+        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+
+        //* Register as Primary Canvas ==============================
+        // If this canvas has an id, register it so other canvases can target it
+        // Also create a CanvasTarget for when multi-canvas mode is enabled
+        if (canvasId && !state.internal.isSecondary) {
+          const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+          const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
+          state.set((prev) => ({
+            internal: {
+              ...prev.internal,
+              canvasTarget,
+              unregisterPrimary,
+            },
+          }))
+        }
       }
 
       //* Default Raycaster Initialization ==============================
@@ -348,6 +411,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       if (_sizeProps !== undefined) {
         state.set({ _sizeProps })
       }
+      // Store forceEven in internal state for Drei access
+      if (forceEven !== undefined && state.internal.forceEven !== forceEven) {
+        state.set((prev) => ({ internal: { ...prev.internal, forceEven } }))
+      }
       // Check size, allow it to take on container bounds initially
       // Only apply size from props/container if not in imperative mode
       const size = computeInitialSize(canvas, propsSize)
@@ -406,23 +473,25 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           const renderer = state.internal.actualRenderer
           actualRenderer.xr.enabled = actualRenderer.xr.isPresenting
 
-          renderer.xr.setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
+          // Cast to any - both renderer XR managers have setAnimationLoop but with slightly different types
+          ;(renderer.xr as any).setAnimationLoop(renderer.xr.isPresenting ? handleXRFrame : null)
           if (!renderer.xr.isPresenting) invalidate(state)
         }
 
         // WebXR session manager
+        // Cast xr to any - both renderer XR managers have these methods but with slightly different event type signatures
         const xr = {
           connect() {
             const { gl, renderer } = store.getState()
-            const actualRenderer = renderer || gl
-            actualRenderer.xr.addEventListener('sessionstart', handleSessionChange)
-            actualRenderer.xr.addEventListener('sessionend', handleSessionChange)
+            const xrManager = (renderer || gl).xr as any
+            xrManager.addEventListener('sessionstart', handleSessionChange)
+            xrManager.addEventListener('sessionend', handleSessionChange)
           },
           disconnect() {
             const { gl, renderer } = store.getState()
-            const actualRenderer = renderer || gl
-            actualRenderer.xr.removeEventListener('sessionstart', handleSessionChange)
-            actualRenderer.xr.removeEventListener('sessionend', handleSessionChange)
+            const xrManager = (renderer || gl).xr as any
+            xrManager.removeEventListener('sessionstart', handleSessionChange)
+            xrManager.removeEventListener('sessionend', handleSessionChange)
           },
         }
 
@@ -458,44 +527,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }
       }
 
-      // Only execute legacy color management if could be using the webgl renderer is true
-      if (R3F_BUILD_LEGACY) {
-        // Check if any of the color management props changed
-        const legacyChanged = legacy !== lastConfiguredProps.legacy
-        const linearChanged = linear !== lastConfiguredProps.linear
-        const flatChanged = flat !== lastConfiguredProps.flat
-
-        //We only notifiy its depreciation for default and legacy. webgpu imports dont get noticed
-        if (isDefaultBuild && legacyChanged) {
-          if (legacy) {
-            notifyDepreciated({
-              heading: 'Legacy Color Management',
-              body: 'Legacy color management is deprecated and will be removed in a future version.',
-              link: 'https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe',
-            })
-          }
-        }
-
-        // Only apply if props changed
-        if (legacyChanged) {
-          THREE.ColorManagement.enabled = !legacy
-          lastConfiguredProps.legacy = legacy
-        }
-
-        // Set color space and tonemapping preferences - only on first configure or when prop changes
-        if (!configured || linearChanged) {
-          renderer.outputColorSpace = linear ? THREE.LinearSRGBColorSpace : THREE.SRGBColorSpace
-          lastConfiguredProps.linear = linear
-        }
-        if (!configured || flatChanged) {
-          renderer.toneMapping = flat ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping
-          lastConfiguredProps.flat = flat
-        }
-
-        // Update color management state only if PROP changed
-        if (legacyChanged && state.legacy !== legacy) state.set(() => ({ legacy }))
-        if (linearChanged && state.linear !== linear) state.set(() => ({ linear }))
-        if (flatChanged && state.flat !== flat) state.set(() => ({ flat }))
+      //* Color Management ==============================
+      // Set sensible defaults on first configure only - gl/renderer props can override via applyProps
+      if (!configured) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace
+        renderer.toneMapping = THREE.ACESFilmicToneMapping
       }
 
       // Update textureColorSpace state (color space for 8-bit input textures)
@@ -525,11 +561,29 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
       if (!rootId) {
         // Generate a unique root ID and register with global scheduler
-        const newRootId = scheduler.generateRootId()
+        const newRootId = canvasId || scheduler.generateRootId()
         const unregisterRoot = scheduler.registerRoot(newRootId, {
           getState: () => store.getState(),
           onError: (err) => store.getState().setError(err),
         })
+
+        // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
+        // Runs in 'start' phase so it's set before any other jobs (including user render jobs)
+        const unregisterCanvasTarget = scheduler.register(
+          () => {
+            const state = store.getState()
+            if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
+              const renderer = state.internal.actualRenderer as WebGPURenderer
+              renderer.setCanvasTarget(state.internal.canvasTarget)
+            }
+          },
+          {
+            id: `${newRootId}_canvasTarget`,
+            rootId: newRootId,
+            phase: 'start',
+            system: true,
+          },
+        )
 
         // Register frustum update job - updates frustum from camera before render
         // Runs in preRender phase so it captures any camera movement from update phase
@@ -571,10 +625,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterRender = scheduler.register(
           () => {
             const state = store.getState()
-            const renderer = state.internal.actualRenderer
+            const renderer = state.internal.actualRenderer as WebGPURenderer
 
             // Skip if a user has taken over rendering by registering in the 'render' phase
             // Also check legacy priority system for backwards compatibility
+            // Note: canvas target is already set by the 'start' phase job
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
@@ -590,10 +645,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             }
           },
           {
-            id: `${newRootId}_render`,
+            // Use canvas ID directly as job ID if available, otherwise use generated rootId
+            id: canvasId || `${newRootId}_render`,
             rootId: newRootId,
             phase: 'render',
             system: true, // Internal flag: this is a system job, not user-controlled
+            // Apply scheduler config for render ordering and rate limiting
+            ...(schedulerConfig?.after && { after: schedulerConfig.after }),
+            ...(schedulerConfig?.fps && { fps: schedulerConfig.fps }),
           },
         )
 
@@ -604,6 +663,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             rootId: newRootId,
             unregisterRoot: () => {
               unregisterRoot()
+              unregisterCanvasTarget()
               unregisterFrustum()
               unregisterVisibility()
               unregisterRender()
@@ -688,12 +748,27 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
             if (unregisterRoot) unregisterRoot()
 
+            // Unregister primary canvas from registry (if it was registered)
+            const unregisterPrimary = state.internal.unregisterPrimary
+            if (unregisterPrimary) unregisterPrimary()
+
+            // Dispose CanvasTarget for secondary canvases
+            const canvasTarget = state.internal.canvasTarget
+            if (canvasTarget?.dispose) canvasTarget.dispose()
+
             state.events.disconnect?.()
             // Clean up occlusion system and helper group
             cleanupHelperGroup(root!.store)
-            renderer?.renderLists?.dispose?.()
-            renderer?.forceContextLoss?.()
-            if (renderer?.xr) state.xr.disconnect()
+            // WebGL-specific cleanup (these methods don't exist on WebGPURenderer)
+            if (state.isLegacy && renderer) {
+              ;(renderer as THREE.WebGLRenderer).renderLists?.dispose?.()
+              ;(renderer as THREE.WebGLRenderer).forceContextLoss?.()
+            }
+            // Only disconnect XR and dispose renderer if this is not a secondary canvas
+            // Secondary canvases share the renderer, so we must not dispose it
+            if (!state.internal.isSecondary) {
+              if (renderer?.xr) state.xr.disconnect()
+            }
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)
@@ -729,31 +804,29 @@ interface PortalProps {
 //* Portal Wrapper - Handles Ref Resolution ==============================
 export function Portal({ children, container, state }: PortalProps): JSX.Element {
   const isRef = useCallback((obj: any): obj is RefObject<Object3D> => obj && 'current' in obj, [])
-  const [resolvedContainer, setResolvedContainer] = useState<Object3D | null>(() => {
+  const [resolvedContainer, _setResolvedContainer] = useState<Object3D | null>(() => {
     if (isRef(container)) return container.current ?? null
     return container as Object3D
   })
+  const setResolvedContainer = useCallback(
+    (newContainer: Object3D | null) => {
+      if (!newContainer || newContainer === resolvedContainer) return
+      _setResolvedContainer(isRef(newContainer) ? newContainer.current : newContainer)
+    },
+    [resolvedContainer, _setResolvedContainer, isRef],
+  )
 
   // Watch for ref changes if container is a RefObject
   useMemo(() => {
-    if (isRef(container)) {
-      const current = container.current
+    if (isRef(container) && !container.current) {
       // If ref is currently null, set up a check to resolve it
-      if (!current) {
-        // Use microtask to check if ref gets populated after render
-        queueMicrotask(() => {
-          const updated = container.current
-          if (updated && updated !== resolvedContainer) {
-            setResolvedContainer(updated)
-          }
-        })
-      } else if (current !== resolvedContainer) {
-        setResolvedContainer(current)
-      }
-    } else if (container !== resolvedContainer) {
-      setResolvedContainer(container as Object3D)
+      // Use microtask to check if ref gets populated after render
+      return queueMicrotask(() => {
+        setResolvedContainer(container.current)
+      })
     }
-  }, [container, resolvedContainer, isRef])
+    setResolvedContainer(container as Object3D)
+  }, [container, isRef, setResolvedContainer])
 
   // Don't render portal until we have a valid container
   if (!resolvedContainer) return <></>
@@ -807,13 +880,17 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
   }, [portalScene, container, injectScene])
 
   const inject = useMutableCallback((rootState: RootState, injectState: RootState) => {
+    // Resolve size: parent → portal's accumulated state → explicit prop override
+    // This ensures portal size persists through parent resize events
+    const resolvedSize = { ...rootState.size, ...injectState.size, ...size }
+
     let viewport = undefined
-    if (injectState.camera && size) {
+    if (injectState.camera && (size || injectState.size)) {
       const camera = injectState.camera
       // Calculate the override viewport, if present
-      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), size)
+      viewport = rootState.viewport.getCurrentViewport(camera, new THREE.Vector3(), resolvedSize)
       // Update the portal camera, if it differs from the previous layer
-      if (camera !== rootState.camera) updateCamera(camera, size)
+      if (camera !== rootState.camera) updateCamera(camera, resolvedSize)
     }
 
     return {
@@ -831,7 +908,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       previousRoot,
       // Events, size and viewport can be overridden by the inject layer
       events: { ...rootState.events, ...injectState.events, ...events },
-      size: { ...rootState.size, ...size },
+      size: resolvedSize,
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>

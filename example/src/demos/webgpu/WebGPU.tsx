@@ -32,7 +32,14 @@ function Plane(props: ThreeElements['mesh']) {
 export default function App() {
   const meshRef = useRef<React.ComponentRef<'mesh'>>(null)
   return (
-    <Canvas renderer>
+    <Canvas
+      renderer
+      background={{
+        preset: 'city',
+        backgroundBlurriness: 0.3,
+        backgroundIntensity: 0.8,
+        environmentIntensity: 1.2,
+      }}>
       <ambientLight intensity={Math.PI} />
       <Plane scale={1.5} position={[-1.5, 2.5, -3]} />
       <Plane scale={1.5} position={[-1.3, 0, 0]} />

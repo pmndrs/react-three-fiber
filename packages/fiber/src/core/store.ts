@@ -1,4 +1,14 @@
-import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Inspector, Frustum } from '#three'
+import {
+  WebGLRenderer,
+  WebGPURenderer,
+  Scene,
+  Raycaster,
+  Vector2,
+  Vector3,
+  Inspector,
+  Frustum,
+  SRGBColorSpace,
+} from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 
@@ -20,7 +30,8 @@ import type {
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
-import { notifyDepreciated } from './notices'
+import { notifyDepreciated } from './utils/notices'
+import { getScheduler } from './hooks/useFrame/scheduler'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -69,6 +80,8 @@ export const createStore = (
       get,
 
       // Mock objects that have to be configured
+      // primaryStore is set after store creation (self-reference for primary, primary's store for secondary)
+      primaryStore: null as unknown as RootStore,
       gl: null as unknown as WebGLRenderer,
       renderer: null as unknown as WebGPURenderer,
       camera: null as unknown as ThreeCamera,
@@ -84,10 +97,7 @@ export const createStore = (
       invalidate: (frames = 1, stackFrames = false) => invalidate(get(), frames, stackFrames),
       advance: (timestamp: number, runGlobalEffects?: boolean) => advance(timestamp, runGlobalEffects, get()),
 
-      legacy: false,
-      linear: false,
-      flat: false,
-      textureColorSpace: 'srgb',
+      textureColorSpace: SRGBColorSpace,
       isLegacy: false,
       webGPUSupported: false,
       isNative: false,
@@ -158,6 +168,8 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
+              // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
+              getScheduler().invalidate()
             }
           }
           return
@@ -175,6 +187,8 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
+        // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
+        getScheduler().invalidate()
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -337,17 +351,30 @@ export const createStore = (
     const { camera, size, viewport, set, internal } = rootStore.getState()
 
     const actualRenderer = internal.actualRenderer
+    const canvasTarget = internal.canvasTarget
+
     // Resize camera and renderer on changes to size and pixelratio
     if (size.width !== oldSize.width || size.height !== oldSize.height || viewport.dpr !== oldDpr) {
       oldSize = size
       oldDpr = viewport.dpr
-      // Update camera & renderer
+      // Update camera
       updateCamera(camera, size)
-      if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
 
-      const updateStyle =
-        typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
-      actualRenderer.setSize(size.width, size.height, updateStyle)
+      // For secondary canvases with CanvasTarget, update the target's size/dpr
+      // For primary canvases, update the renderer directly
+      if (canvasTarget) {
+        // Secondary canvas: update CanvasTarget
+        if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
+        const updateStyle =
+          typeof HTMLCanvasElement !== 'undefined' && canvasTarget.domElement instanceof HTMLCanvasElement
+        canvasTarget.setSize(size.width, size.height, updateStyle)
+      } else {
+        // Primary canvas: update renderer directly
+        if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
+        const updateStyle =
+          typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
+        actualRenderer.setSize(size.width, size.height, updateStyle)
+      }
     }
 
     // Update viewport and frustum once the camera changes

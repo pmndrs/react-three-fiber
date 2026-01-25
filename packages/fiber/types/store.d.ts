@@ -1,10 +1,16 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
+import type { WebGPURenderer, CanvasTarget } from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
+
+//* Renderer Types ========================================
+
+/** Default renderer type - union of WebGL and WebGPU renderers */
+export type R3FRenderer = THREE.WebGLRenderer | WebGPURenderer
 
 //* Core Store Types ========================================
 
@@ -76,7 +82,7 @@ export interface InternalState {
   frames: number
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
   /** Internal renderer storage - use state.renderer or state.gl to access */
-  actualRenderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  actualRenderer: R3FRenderer
   /** Global scheduler reference (for useFrame hook) */
   scheduler: SchedulerApi | null
   /** This root's unique ID in the global scheduler */
@@ -85,6 +91,35 @@ export interface InternalState {
   unregisterRoot?: () => void
   /** Container for child attachment (scene for root, original container for portals) */
   container?: THREE.Object3D
+  /**
+   * CanvasTarget for multi-canvas WebGPU rendering.
+   * Created for all WebGPU canvases to support renderer sharing.
+   * @see https://threejs.org/docs/#api/en/renderers/common/CanvasTarget
+   */
+  canvasTarget?: CanvasTarget
+  /**
+   * Whether multi-canvas rendering is active.
+   * True when any canvas uses `target` prop to share a renderer.
+   * When true, setCanvasTarget is called before each render.
+   */
+  isMultiCanvas?: boolean
+  /**
+   * Whether this canvas is a secondary canvas sharing another's renderer.
+   * True when `target` prop is used.
+   */
+  isSecondary?: boolean
+  /**
+   * The id of the primary canvas this secondary canvas targets.
+   * Only set when isSecondary is true.
+   */
+  targetId?: string
+  /**
+   * Function to unregister this primary canvas from the registry.
+   * Only set when this canvas has an `id` prop.
+   */
+  unregisterPrimary?: () => void
+  /** Whether canvas dimensions are forced to even numbers */
+  forceEven?: boolean
 }
 
 export interface XRManager {
@@ -99,10 +134,19 @@ export interface RootState {
   set: StoreApi<RootState>['setState']
   /** Get current state */
   get: StoreApi<RootState>['getState']
-  /** (deprecated) The instance of the WebGLrenderer */
+  /**
+   * Reference to the authoritative store for shared TSL resources (uniforms, nodes, etc).
+   * - For primary/independent canvases: points to its own store (self-reference)
+   * - For secondary canvases: points to the primary canvas's store
+   *
+   * Hooks like useNodes/useUniforms should read from primaryStore to ensure
+   * consistent shared state across all canvases sharing a renderer.
+   */
+  primaryStore: RootStore
+  /** @deprecated Use `renderer` instead. The instance of the renderer (typed as WebGLRenderer for backwards compat) */
   gl: THREE.WebGLRenderer
-  /** The instance of the WebGPU renderer, the fallback, OR the default renderer as a mask of gl */
-  renderer: THREE.WebGLRenderer | any // WebGPURenderer when available
+  /** The renderer instance - type depends on entry point (WebGPU, Legacy, or union for default) */
+  renderer: R3FRenderer
   /** Inspector of the webGPU Renderer. Init in the canvas */
   inspector: any // Inspector type from three/webgpu
 
@@ -128,12 +172,6 @@ export interface RootState {
   pointer: THREE.Vector2
   /** @deprecated Normalized event coordinates, use "pointer" instead! */
   mouse: THREE.Vector2
-  /* Whether to enable r139's THREE.ColorManagement */
-  legacy: boolean
-  /** Shortcut to gl.outputColorSpace = THREE.LinearSRGBColorSpace */
-  linear: boolean
-  /** Shortcut to gl.toneMapping = NoTonemapping */
-  flat: boolean
   /** Color space assigned to 8-bit input textures (color maps). Most textures are authored in sRGB. */
   textureColorSpace: THREE.ColorSpace
   /** Render loop flags */

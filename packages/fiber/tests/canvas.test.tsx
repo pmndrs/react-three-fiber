@@ -2,7 +2,8 @@ import { vi } from 'vitest'
 import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { Canvas, useFrame } from '../src'
+import * as THREE from 'three'
+import { Canvas, useFrame, useThree } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -153,5 +154,94 @@ describe('web Canvas', () => {
     } finally {
       console.error = originalError
     }
+  })
+
+  describe('background prop', () => {
+    it('should set scene.background with color string', async () => {
+      let sceneBackground: THREE.Color | null = null
+
+      function BackgroundChecker() {
+        const { scene } = useThree()
+        React.useEffect(() => {
+          sceneBackground = scene.background as THREE.Color
+        })
+        return null
+      }
+
+      await act(async () =>
+        render(
+          <Canvas background="#ff0000">
+            <BackgroundChecker />
+          </Canvas>,
+        ),
+      )
+
+      // Wait for Environment to apply background
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      })
+
+      expect(sceneBackground).toBeInstanceOf(THREE.Color)
+      expect(sceneBackground!.getHexString()).toBe('ff0000')
+    })
+
+    it('should set scene.background with hex number', async () => {
+      let sceneBackground: THREE.Color | null = null
+
+      function BackgroundChecker() {
+        const { scene } = useThree()
+        React.useEffect(() => {
+          sceneBackground = scene.background as THREE.Color
+        })
+        return null
+      }
+
+      await act(async () =>
+        render(
+          <Canvas background={0x00ff00}>
+            <BackgroundChecker />
+          </Canvas>,
+        ),
+      )
+
+      // Wait for Environment to apply background
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      })
+
+      expect(sceneBackground).toBeInstanceOf(THREE.Color)
+      expect(sceneBackground!.getHexString()).toBe('00ff00')
+    })
+
+    it('should parse object form with preset', async () => {
+      // This test verifies the parsing works without waiting for network
+      // The preset will try to load but we verify the Environment is rendered
+      let environmentRendered = false
+
+      // Mock console.error to suppress network errors from preset loading
+      const originalError = console.error
+      console.error = vi.fn()
+
+      try {
+        await act(async () =>
+          render(
+            <Canvas
+              background={{
+                preset: 'city',
+                backgroundBlurriness: 0.5,
+              }}>
+              <group />
+            </Canvas>,
+          ),
+        )
+
+        // The Canvas should mount without throwing
+        environmentRendered = true
+      } finally {
+        console.error = originalError
+      }
+
+      expect(environmentRendered).toBe(true)
+    })
   })
 })

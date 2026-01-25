@@ -271,7 +271,13 @@ describe('ReactThreeTestRenderer Core', () => {
 
   it('gives a ref to native components', async () => {
     const log: THREE.Mesh[] = []
-    await ReactThreeTestRenderer.create(<mesh ref={(r) => log.push(r as THREE.Mesh)} />)
+    await ReactThreeTestRenderer.create(
+      <mesh
+        ref={(r) => {
+          log.push(r as THREE.Mesh)
+        }}
+      />,
+    )
     expect(log).toHaveLength(1)
 
     expect(log[0].type).toEqual('Mesh')
@@ -407,7 +413,13 @@ describe('ReactThreeTestRenderer Core', () => {
 
   it('root instance and refs return the same value', async () => {
     let refInst = null
-    const renderer = await ReactThreeTestRenderer.create(<mesh ref={(ref) => (refInst = ref)} />)
+    const renderer = await ReactThreeTestRenderer.create(
+      <mesh
+        ref={(ref) => {
+          refInst = ref
+        }}
+      />,
+    )
     const root = renderer.getInstance() // this will be Mesh
     expect(root).toEqual(refInst)
   })

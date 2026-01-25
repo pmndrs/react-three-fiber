@@ -838,7 +838,7 @@ describe('Material Integration', () => {
       return (
         <mesh position={[-1, 0, 0]}>
           <boxGeometry />
-          <meshBasicNodeMaterial colorNode={sharedColor} />
+          <meshBasicNodeMaterial colorNode={sharedColor as unknown as THREE.Node} />
         </mesh>
       )
     }
@@ -848,7 +848,7 @@ describe('Material Integration', () => {
       return (
         <mesh position={[1, 0, 0]}>
           <boxGeometry />
-          <meshBasicNodeMaterial colorNode={sharedColor} />
+          <meshBasicNodeMaterial colorNode={sharedColor as unknown as THREE.Node} />
         </mesh>
       )
     }

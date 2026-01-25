@@ -1,11 +1,16 @@
-import { Canvas, extend, type ThreeToJSXElements, useFrame, type ThreeElements } from '@react-three/fiber'
 import { easing } from 'maath'
-import { useMemo, useState } from 'react'
-import { color, mix, positionLocal, sin, time, uniform, vec2, vec3 } from 'three/tsl'
+import { useState } from 'react'
+import { color, mix, positionLocal, sin, time, uniform, vec3, Fn } from 'three/tsl'
 import * as THREE from 'three/webgpu'
-import { useUniforms, useNodes, useUniform, useLocalNodes } from '@react-three/fiber/webgpu'
-import { Fn } from 'three/tsl'
-import type { UniformNode } from '@react-three/fiber/webgpu'
+import {
+  Canvas,
+  useFrame,
+  type ThreeElements,
+  useUniforms,
+  useNodes,
+  useUniform,
+  useLocalNodes,
+} from '@react-three/fiber/webgpu'
 
 // single setup of nodes for the app
 const Builder = () => {
@@ -18,8 +23,7 @@ const Builder = () => {
   })
 
   useNodes(({ uniforms }) => {
-    // temp casting until I fix types
-    const baseColor = uniforms.uBaseColor as UniformNode<THREE.Color>
+    const baseColor = uniforms.uBaseColor
 
     // Local only unshared nodes.
     const col1 = color('orange')
@@ -57,13 +61,13 @@ function Plane(props: ThreeElements['mesh']) {
     easing.damp(uHovered, 'value', hovered ? 1 : 0, 0.1, delta)
   })
 
-  const { uHovered, ...matNodes } = useLocalNodes(({ uniforms, nodes }) => {
+  const { uHovered, ...matNodes } = useLocalNodes(({ nodes }) => {
     const uHovered = uniform(0.0)
-    const { blendColorFn } = nodes
+    const { blendColorFn, positionNode } = nodes
 
     const col3 = color('aquamarine')
 
-    return { colorNode: blendColorFn(col3, uHovered), positionNode: nodes.positionNode, uHovered }
+    return { colorNode: blendColorFn(col3, uHovered), positionNode, uHovered }
   })
 
   return (

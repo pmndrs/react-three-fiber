@@ -5,10 +5,12 @@ import { FiberProvider } from 'its-fine'
 import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEffect, useBridge } from './utils'
 import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
 import { createPointerEvents } from './events'
-import { notifyAlpha } from './notices'
+import { notifyAlpha } from './utils/notices'
+import { Environment, EnvironmentProps } from './components/Environment/Environment'
+import { presetsObj } from './components/Environment/environment-assets'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, BackgroundConfig } from '#types'
 
 function CanvasImpl({
   ref,
@@ -16,15 +18,13 @@ function CanvasImpl({
   fallback,
   resize,
   style,
+  id,
   gl,
-  renderer,
+  renderer: rendererProp,
   events = createPointerEvents,
   eventSource,
   eventPrefix,
   shadows,
-  linear,
-  flat,
-  legacy,
   orthographic,
   frameloop,
   dpr,
@@ -39,14 +39,71 @@ function CanvasImpl({
   hmr,
   width,
   height,
+  background,
+  forceEven,
   ...props
 }: CanvasProps) {
+  // Extract nested props from renderer object (primaryCanvas, scheduler)
+  const { primaryCanvas, scheduler, ...rendererConfig } =
+    typeof rendererProp === 'object' &&
+    rendererProp !== null &&
+    !('render' in rendererProp) &&
+    ('primaryCanvas' in rendererProp || 'scheduler' in rendererProp)
+      ? (rendererProp as { primaryCanvas?: string; scheduler?: { after?: string; fps?: number } })
+      : { primaryCanvas: undefined, scheduler: undefined }
+
+  // Use extracted config if we found nested props, otherwise pass through original renderer prop
+  const renderer = Object.keys(rendererConfig).length > 0 ? rendererConfig : rendererProp
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
   React.useMemo(() => extend(THREE as any), [])
 
   const Bridge = useBridge()
+
+  //* Background Prop Parsing ==============================
+  // Parse background prop into Environment-compatible props
+  const backgroundProps = React.useMemo((): EnvironmentProps | null => {
+    if (!background) return null
+
+    // Object form - pass through with mapping
+    if (typeof background === 'object' && !(background as any).isColor) {
+      const { backgroundMap, envMap, files, preset, ...rest } = background as BackgroundConfig
+      return {
+        ...rest,
+        preset,
+        files: envMap || files,
+        backgroundFiles: backgroundMap,
+        background: true,
+      }
+    }
+
+    // Number = hex color
+    if (typeof background === 'number') {
+      return { color: background, background: true }
+    }
+
+    // String - detect type
+    if (typeof background === 'string') {
+      // Preset?
+      if (background in presetsObj) {
+        return { preset: background as keyof typeof presetsObj, background: true }
+      }
+      // URL pattern or image extension?
+      if (/^(https?:\/\/|\/|\.\/|\.\.\/)|\\.(hdr|exr|jpg|jpeg|png|webp|gif)$/i.test(background)) {
+        return { files: background, background: true }
+      }
+      // Default to color
+      return { color: background, background: true }
+    }
+
+    // THREE.Color instance
+    if ((background as any).isColor) {
+      return { color: background as THREE.ColorRepresentation, background: true }
+    }
+
+    return null
+  }, [background])
 
   //* Dynamic Debounce for Fast Initial Render ==============================
   // Track if we've gotten initial size measurement
@@ -74,15 +131,20 @@ function CanvasImpl({
   const [containerRef, containerRect] = useMeasure(measureConfig)
 
   // Compute effective size: props override container measurement
-  const effectiveSize = React.useMemo(
-    () => ({
-      width: width ?? containerRect.width,
-      height: height ?? containerRect.height,
+  const effectiveSize = React.useMemo(() => {
+    let w = width ?? containerRect.width
+    let h = height ?? containerRect.height
+    if (forceEven) {
+      w = Math.ceil(w / 2) * 2
+      h = Math.ceil(h / 2) * 2
+    }
+    return {
+      width: w,
+      height: h,
       top: containerRect.top,
       left: containerRect.left,
-    }),
-    [width, height, containerRect],
-  )
+    }
+  }, [width, height, containerRect, forceEven])
 
   // Mark that we have initial size (for next render cycle)
   if (!hasInitialSizeRef.current && effectiveSize.width > 0 && effectiveSize.height > 0) {
@@ -146,14 +208,14 @@ function CanvasImpl({
         if (!effectActiveRef.current || !root.current) return
 
         await root.current.configure({
+          id,
+          primaryCanvas,
+          scheduler,
           gl,
           renderer,
           scene,
           events,
           shadows,
-          linear,
-          flat,
-          legacy,
           orthographic,
           frameloop,
           dpr,
@@ -163,6 +225,7 @@ function CanvasImpl({
           size: effectiveSize,
           // Store size props for reset functionality
           _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
+          forceEven,
           // Pass mutable reference to onPointerMissed so it's free to update
           onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
           onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
@@ -194,7 +257,10 @@ function CanvasImpl({
         root.current.render(
           <Bridge>
             <ErrorBoundary set={setError}>
-              <React.Suspense fallback={<Block set={setBlock} />}>{children ?? null}</React.Suspense>
+              <React.Suspense fallback={<Block set={setBlock} />}>
+                {backgroundProps && <Environment {...backgroundProps} />}
+                {children ?? null}
+              </React.Suspense>
             </ErrorBoundary>
           </Bridge>,
         )
@@ -287,7 +353,7 @@ function CanvasImpl({
       }}
       {...props}>
       <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} className="r3f-canvas" style={{ display: 'block' }}>
+        <canvas ref={canvasRef} id={id} className="r3f-canvas" style={{ display: 'block' }}>
           {fallback}
         </canvas>
       </div>

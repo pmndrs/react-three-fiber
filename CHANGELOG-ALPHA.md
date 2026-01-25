@@ -6,7 +6,158 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ## Unreleased
 
+### Breaking Changes
+
+#### Removed Renderer Props
+
+Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
+
+**Removed from Canvas/RenderProps:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
+- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+
+**Removed from RootState (useThree):**
+
+- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
+- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
+
+**Migration:**
+
+```diff
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
+
+- const { colorSpace, toneMapping } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
+```
+
+**Note:** `textureColorSpace` remains in RenderProps as it's R3F-specific.
+
+**Files changed:**
+
+- `packages/fiber/types/renderer.d.ts` - Removed props from RenderProps
+- `packages/fiber/types/store.d.ts` - Removed props from RootState
+- `packages/fiber/src/core/Canvas.tsx` - Removed prop destructuring and passing
+- `packages/fiber/src/core/renderer.tsx` - Simplified configure() logic
+- `packages/fiber/src/core/store.ts` - Removed from initial state
+
 ### Features
+
+#### forceEven Canvas Prop
+
+Added `forceEven` prop to Canvas for Safari compatibility. Safari has issues with odd or fractional HTML canvas dimensions. When enabled, canvas dimensions are rounded up to the nearest even number.
+
+```tsx
+<Canvas forceEven>{/* Canvas dimensions are guaranteed to be even numbers */}</Canvas>
+```
+
+**Key details:**
+
+- Rounds dimensions UP to the nearest even number (e.g., 501 → 502, 301 → 302)
+- Uses `Math.ceil(n / 2) * 2` to ensure odd values round up, not down
+- Accessible to Drei components via `useThree((state) => state.internal.forceEven)`
+
+**Files changed:**
+
+- `packages/fiber/types/canvas.d.ts` - Added `forceEven` prop type
+- `packages/fiber/types/store.d.ts` - Added `forceEven` to InternalState
+- `packages/fiber/src/core/Canvas.tsx` - Prop destructuring and effectiveSize rounding logic
+- `packages/fiber/src/core/renderer.tsx` - Store forceEven in internal state
+
+#### Canvas Background Prop
+
+Added a flexible `background` prop to Canvas for declarative scene background and environment configuration. Supports colors, URLs, presets, and an expanded object form for separate background/environment maps.
+
+**Simple string forms:**
+
+```tsx
+<Canvas background="red" />              // Color
+<Canvas background="#1a1a2e" />          // Hex color
+<Canvas background={0xff0000} />         // Hex number
+<Canvas background="/path/to/env.hdr" /> // URL
+<Canvas background="sunset" />           // Preset
+```
+
+**Expanded object form:**
+
+```tsx
+<Canvas
+  background={{
+    preset: 'city',
+    backgroundBlurriness: 0.5,
+    backgroundIntensity: 1,
+    environmentIntensity: 1.2,
+  }}
+/>
+```
+
+**Key features:**
+
+- String detection: presets → URLs → colors (priority order)
+- Supports all HDRI presets: apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse
+- Object form allows separate `backgroundMap` and environment files
+- Replaces verbose `<color attach="background">` pattern
+
+**Loader migrations:**
+
+- `RGBELoader` → `HDRLoader` (renamed in Three.js r180)
+- `HDRJPGLoader` → `UltraHDRLoader` (Three.js native)
+
+**New exports:**
+
+- `Environment` component from `@react-three/fiber`
+- `useEnvironment` hook from `@react-three/fiber`
+- `presetsObj` and `PresetsType` for preset names
+
+**Files changed:**
+
+- `packages/fiber/types/canvas.d.ts` - Added `BackgroundProp`, `BackgroundConfig` types
+- `packages/fiber/src/core/Canvas.tsx` - Background prop parsing and Environment rendering
+- `packages/fiber/src/core/components/Environment/Environment.tsx` - Enhanced with color/backgroundFiles support
+- `packages/fiber/src/core/hooks/useEnvironment.tsx` - Loader migrations
+- `packages/fiber/src/core/index.tsx` - Added Environment exports
+- `packages/fiber/src/core/hooks/index.tsx` - Added useEnvironment export
+
+#### Multi-Canvas Rendering (WebGPU)
+
+Added support for sharing a single WebGPURenderer across multiple Canvas components, enabling HUD overlays, picture-in-picture views, and multi-viewport rendering.
+
+**Primary canvas setup:**
+
+```tsx
+<Canvas id="main" renderer>
+  <Scene />
+</Canvas>
+```
+
+**Secondary canvas sharing the renderer:**
+
+```tsx
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main', fps: 30 } }}>
+  <HudScene />
+</Canvas>
+```
+
+**Key features:**
+
+- `renderer={{ primaryCanvas: 'id' }}` - Share renderer from another canvas
+- `scheduler.after` - Control render ordering between canvases
+- `scheduler.fps` - Limit secondary canvas render rate
+- `primaryStore` - Access primary's scene/camera for HUD-style rendering
+
+**Files changed:**
+
+- `packages/fiber/types/store.d.ts` - Added `primaryStore` to RootState
+- `packages/fiber/types/renderer.d.ts` - Added `CanvasSchedulerConfig`, `RendererConfigExtended`
+- `packages/fiber/types/canvas.d.ts` - Omit internal props from CanvasProps
+- `packages/fiber/src/core/Canvas.tsx` - Extract renderer config props
+- `packages/fiber/src/core/renderer.tsx` - Canvas target management, scheduler config, primaryStore setup
 
 #### Camera Scene Parenting
 
@@ -172,6 +323,8 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 ### Bug Fixes
 
+- Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
+- Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
 - Fixed `useNodes()` and `useUniforms()` reader modes not updating when store changes
 - Fixed `usePostProcessing` callbacks not re-running after HMR due to stale ref guards
 - Fixed absolute Windows paths appearing in bundled type declarations by defining `FiberRoot` locally instead of importing from `react-reconciler`

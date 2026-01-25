@@ -9,7 +9,7 @@
  */
 
 import type { ThreeToJSXElements, ThreeElement } from '@react-three/fiber'
-import type * as THREE from 'three'
+import type * as THREE from 'three/webgpu'
 
 type ThreeJSXElements = ThreeToJSXElements<typeof THREE>
 

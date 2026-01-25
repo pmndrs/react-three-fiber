@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { uniform } from '#three/tsl'
 import { Color as ThreeColor, Node } from '#three'
-// eslint-disable-next-line no-duplicate-imports -- Separate imports needed: code imports vs type-only imports to avoid conflicting lint errors
+
 import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
 import { useStore, useThree } from '../../core/hooks'
 

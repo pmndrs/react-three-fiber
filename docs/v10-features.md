@@ -198,10 +198,7 @@ import { useRenderTarget, useFrame } from '@react-three/fiber'
 
 function PortalScene() {
   // Creates the correct render target type for your renderer
-  const fbo = useRenderTarget(512, 512, {
-    depthBuffer: true,
-    samples: 4,
-  })
+  const fbo = useRenderTarget(512, 512, { depthBuffer: true, samples: 4 })
 
   useFrame(({ renderer, scene, camera }) => {
     renderer.setRenderTarget(fbo)
@@ -218,26 +215,41 @@ function PortalScene() {
 }
 ```
 
-### Using Canvas Size
+### Flexible Arguments
 
-If you omit width/height, the hook uses the canvas dimensions:
+The hook accepts multiple argument patterns for convenience:
 
 ```tsx
-// Full-screen render target that resizes with the canvas
+// Use canvas size (resizes with canvas)
 const fbo = useRenderTarget()
 
-// Or just specify options
-const fbo = useRenderTarget(undefined, undefined, { samples: 4 })
+// Canvas size with options
+const fbo = useRenderTarget({ samples: 4 })
+
+// Square render target (512×512)
+const fbo = useRenderTarget(512)
+
+// Square render target with options
+const fbo = useRenderTarget(512, { depthBuffer: true })
+
+// Explicit dimensions
+const fbo = useRenderTarget(512, 256)
+
+// Explicit dimensions with options
+const fbo = useRenderTarget(512, 256, { samples: 4 })
 ```
 
 ### API
 
 ```ts
-useRenderTarget(
-  width?: number,   // Target width (defaults to canvas width)
-  height?: number,  // Target height (defaults to canvas height)
-  options?: RenderTargetOptions
-)
+// Canvas size (defaults to canvas dimensions)
+useRenderTarget(options?: RenderTargetOptions)
+
+// Square render target
+useRenderTarget(size: number, options?: RenderTargetOptions)
+
+// Explicit dimensions
+useRenderTarget(width: number, height: number, options?: RenderTargetOptions)
 ```
 
 ### Options
@@ -649,6 +661,325 @@ The size control follows an ownership model:
 - **DPR**: Width/height are logical size. DPR multiplies as usual. For exact pixel control (e.g., 3840×2160 exactly), set `dpr={1}`.
 - **CSS**: When canvas resolution differs from container, CSS scales the canvas to fit. The canvas renders at full resolution internally.
 - **Partial props**: You can specify just `width` or just `height`; the other dimension comes from container measurement.
+
+---
+
+## Texture Color Space
+
+R3F provides a `textureColorSpace` prop to control how 8-bit input textures (color maps) are interpreted:
+
+```tsx
+// sRGB textures (default - most textures are authored in sRGB)
+<Canvas textureColorSpace={THREE.SRGBColorSpace}>
+
+// Linear textures
+<Canvas textureColorSpace={THREE.LinearSRGBColorSpace}>
+```
+
+### Renderer Color Settings
+
+For renderer-level settings like `outputColorSpace` and `toneMapping`, pass them via the `gl` or `renderer` props:
+
+```tsx
+// Configure renderer color space and tone mapping
+<Canvas gl={{
+  outputColorSpace: THREE.LinearSRGBColorSpace,
+  toneMapping: THREE.NoToneMapping
+}}>
+
+// Access from components
+function ColorInfo() {
+  const { renderer } = useThree()
+  console.log(renderer.outputColorSpace)
+  console.log(renderer.toneMapping)
+  return null
+}
+```
+
+**Defaults:**
+
+- `outputColorSpace`: `THREE.SRGBColorSpace`
+- `toneMapping`: `THREE.ACESFilmicToneMapping`
+
+---
+
+## Multi-Canvas Rendering (WebGPU)
+
+v10 adds support for sharing a single WebGPURenderer across multiple Canvas components. This enables HUD overlays, picture-in-picture views, and multi-viewport rendering without the overhead of multiple GPU contexts.
+
+### Basic Setup
+
+**Primary Canvas** - Creates and owns the renderer:
+
+```tsx
+<Canvas id="main" renderer>
+  <Scene />
+</Canvas>
+```
+
+**Secondary Canvas** - Shares the primary's renderer:
+
+```tsx
+<Canvas renderer={{ primaryCanvas: 'main' }}>
+  <SecondaryScene />
+</Canvas>
+```
+
+The `id` prop on the primary canvas makes it targetable. Secondary canvases reference it via `renderer={{ primaryCanvas: 'id' }}`.
+
+### Scheduler Options
+
+Control render timing with the `scheduler` option:
+
+```tsx
+// Render after the primary canvas completes
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+
+// Limit to 30fps (useful for HUDs that don't need full framerate)
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>
+
+// Both options together
+<Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main', fps: 30 } }}>
+```
+
+| Option  | Type     | Description                           |
+| ------- | -------- | ------------------------------------- |
+| `after` | `string` | Render after another canvas (by `id`) |
+| `fps`   | `number` | Limit this canvas's render rate       |
+
+### Accessing the Primary Scene (HUD Pattern)
+
+Secondary canvases can render the primary's scene from a different viewpoint using `primaryStore`:
+
+```tsx
+import { Canvas, useFrame, useThree } from '@react-three/fiber/webgpu'
+import { useEffect, useRef } from 'react'
+import * as THREE from 'three/webgpu'
+
+function HudScene() {
+  const orthoCamera = useRef<THREE.OrthographicCamera>(null!)
+
+  // Create and position the orthographic camera
+  useEffect(() => {
+    const cam = new THREE.OrthographicCamera(-3, 3, 3, -3, 0.1, 100)
+    cam.position.set(0, 10, 0) // Above the scene
+    cam.lookAt(0, 0, 0) // Looking at center
+    cam.updateProjectionMatrix()
+    orthoCamera.current = cam
+  }, [])
+
+  // Take over rendering to render the primary's scene
+  useFrame(
+    ({ primaryStore, renderer }) => {
+      if (!orthoCamera.current) return
+      // Get the primary canvas's state
+      const primaryState = primaryStore.getState()
+      // Render the primary's scene with our camera
+      renderer.render(primaryState.scene, orthoCamera.current)
+    },
+    { phase: 'render', after: 'main' },
+  )
+
+  return null
+}
+
+function App() {
+  return (
+    <>
+      {/* Main 3D scene */}
+      <Canvas id="main" renderer>
+        <ambientLight />
+        <mesh>
+          <boxGeometry />
+          <meshStandardMaterial color="orange" />
+        </mesh>
+      </Canvas>
+
+      {/* HUD overlay - top-down view of the same scene */}
+      <div style={{ position: 'absolute', top: 10, left: 10, width: 200, height: 200 }}>
+        <Canvas renderer={{ primaryCanvas: 'main', scheduler: { after: 'main' } }}>
+          <HudScene />
+        </Canvas>
+      </div>
+    </>
+  )
+}
+```
+
+### How It Works
+
+Each canvas maintains its own:
+
+- Scene graph and camera
+- Event handling
+- State (via its own Zustand store)
+
+But secondary canvases share:
+
+- The WebGPURenderer instance
+- GPU resources and context
+
+The `primaryStore` on each canvas's state provides access to shared TSL resources (uniforms, nodes) and the primary's scene/camera for advanced patterns like HUDs.
+
+### Canvas Target Management
+
+R3F automatically manages `CanvasTarget` switching when rendering to multiple canvases. A job in the scheduler's `start` phase sets the correct canvas target before any other jobs run for that root, so user render callbacks automatically render to the correct canvas.
+
+### API Reference
+
+**Primary Canvas Props:**
+
+| Prop       | Type      | Description                                            |
+| ---------- | --------- | ------------------------------------------------------ |
+| `id`       | `string`  | Unique identifier, makes canvas targetable             |
+| `renderer` | `boolean` | Enable WebGPU renderer (shorthand for `renderer={{}}`) |
+
+**Secondary Canvas Props:**
+
+| Prop                       | Type     | Description                       |
+| -------------------------- | -------- | --------------------------------- |
+| `renderer.primaryCanvas`   | `string` | ID of the primary canvas to share |
+| `renderer.scheduler.after` | `string` | Render after another canvas       |
+| `renderer.scheduler.fps`   | `number` | Limit render rate                 |
+
+**State Properties:**
+
+| Property                 | Type        | Description                         |
+| ------------------------ | ----------- | ----------------------------------- |
+| `primaryStore`           | `RootStore` | Zustand store of the primary canvas |
+| `internal.isSecondary`   | `boolean`   | Whether this is a secondary canvas  |
+| `internal.isMultiCanvas` | `boolean`   | Whether multi-canvas mode is active |
+
+---
+
+## Canvas Background Prop
+
+v10 adds a flexible `background` prop to Canvas that enables declarative scene background and environment configuration. This replaces the need to manually set up `<color attach="background">` or use separate Environment components for simple cases.
+
+### Simple String Forms
+
+```tsx
+// Color (CSS color names, hex values, rgb(), etc.)
+<Canvas background="red" />
+<Canvas background="#1a1a2e" />
+<Canvas background="rgb(100, 149, 237)" />
+
+// Hex number
+<Canvas background={0xff0000} />
+
+// URL to HDR/EXR/image file
+<Canvas background="/path/to/env.hdr" />
+<Canvas background="./sky.exr" />
+
+// Preset name (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
+<Canvas background="sunset" />
+```
+
+### String Detection Logic
+
+When a string is provided, it's detected in this priority order:
+
+1. **Preset** - Exact match against known preset names
+2. **URL** - Starts with `/`, `./`, `../`, `http://`, `https://`, OR has image extension (.hdr, .exr, .jpg, .png, .webp, etc.)
+3. **Color** - Default fallback (CSS color names, hex values, etc.)
+
+Example: `"city"` → preset, `"./city.jpg"` → URL, `"cyan"` → color
+
+### Expanded Object Form
+
+For advanced scenarios with separate background and environment maps:
+
+```tsx
+<Canvas
+  background={{
+    // Preset or files for environment (PBR lighting/reflections)
+    preset: 'city',
+    // Or use files directly:
+    // files: '/path/to/env.hdr',
+    // files: ['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'],
+
+    // Separate files for visual backdrop (optional, defaults to same as environment)
+    backgroundMap: '/path/to/sky.jpg',
+
+    // Background settings
+    backgroundBlurriness: 0.5,
+    backgroundIntensity: 1,
+    backgroundRotation: [0, Math.PI / 2, 0],
+
+    // Environment settings
+    environmentIntensity: 1.2,
+    environmentRotation: [0, 0, 0],
+
+    // Base path for file loading
+    path: '/textures/',
+  }}
+/>
+```
+
+### Why Use This Instead of `<color attach="background">`
+
+Previously, setting a scene background required:
+
+```tsx
+// Old approach - still works but verbose
+<Canvas>
+  <color attach="background" args={['#1a1a2e']} />
+  <Scene />
+</Canvas>
+```
+
+The new `background` prop is more concise and handles more cases:
+
+```tsx
+// New approach - cleaner
+<Canvas background="#1a1a2e">
+  <Scene />
+</Canvas>
+
+// And supports environments directly
+<Canvas background="sunset">
+  <Scene />
+</Canvas>
+```
+
+### Environment Component
+
+The underlying `Environment` component is also exported for direct use:
+
+```tsx
+import { Environment } from '@react-three/fiber'
+
+// Use directly for more control
+;<Canvas>
+  <Environment preset="sunset" background />
+  <Scene />
+</Canvas>
+```
+
+### API Reference
+
+**Simple Forms:**
+
+| Input Type    | Example                     | Description                              |
+| ------------- | --------------------------- | ---------------------------------------- |
+| Color string  | `"red"`, `"#ff0000"`        | CSS color for solid background           |
+| Hex number    | `0xff0000`                  | Numeric color for solid background       |
+| Preset string | `"city"`, `"sunset"`        | HDRI preset for environment + background |
+| URL string    | `"/env.hdr"`, `"./sky.jpg"` | File path for environment texture        |
+
+**Object Form Properties:**
+
+| Property               | Type                 | Description                                  |
+| ---------------------- | -------------------- | -------------------------------------------- |
+| `preset`               | `string`             | HDRI preset name                             |
+| `files`                | `string \| string[]` | File path(s) for environment                 |
+| `backgroundMap`        | `string \| string[]` | Separate file(s) for visual backdrop         |
+| `backgroundBlurriness` | `number`             | Blur factor (0-1, default: 0)                |
+| `backgroundIntensity`  | `number`             | Background brightness (default: 1)           |
+| `backgroundRotation`   | `[x, y, z]`          | Background rotation in radians               |
+| `environmentIntensity` | `number`             | Environment lighting brightness (default: 1) |
+| `environmentRotation`  | `[x, y, z]`          | Environment rotation in radians              |
+| `path`                 | `string`             | Base path for file loading                   |
 
 ---
 

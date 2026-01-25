@@ -139,6 +139,85 @@ useFrame(() => updateAI(), { after: 'update', before: 'render' })
 
 ---
 
+## Removed Props
+
+### Renderer Props Removed
+
+The following Canvas props have been removed. Use the `gl` (WebGL) or `renderer` (WebGPU) props to pass these settings directly to the renderer:
+
+**Removed props:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true` (modern Three.js default)
+- `linear` - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+
+```diff
+- <Canvas linear />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }} />
+
+- <Canvas flat />
++ <Canvas gl={{ toneMapping: THREE.NoToneMapping }} />
+
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
+```
+
+**Why the change?** These props were redundant with what you can already pass via `gl`/`renderer`. Removing them simplifies the API and makes it clear that renderer settings should be configured through the renderer props.
+
+**Accessing values:** If you were reading these from `useThree()`, access them from the renderer directly:
+
+```diff
+- const { colorSpace, toneMapping, legacy, linear, flat } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
+```
+
+**Note:** `textureColorSpace` remains available as an R3F-specific prop for controlling how textures are interpreted.
+
+### `<color attach="background">` Pattern Deprecated
+
+The pattern of using `<color attach="background">` to set the scene background is deprecated in favor of the new `background` prop on Canvas.
+
+```diff
+- <Canvas>
+-   <color attach="background" args={['#1a1a2e']} />
+-   <Scene />
+- </Canvas>
++ <Canvas background="#1a1a2e">
++   <Scene />
++ </Canvas>
+```
+
+The new `background` prop is more powerful, supporting colors, URLs, presets, and expanded object form for separate background/environment maps:
+
+```tsx
+// Simple color
+<Canvas background="steelblue" />
+
+// Hex number
+<Canvas background={0x1a1a2e} />
+
+// Environment preset (applies to both background and PBR lighting)
+<Canvas background="sunset" />
+
+// HDR file
+<Canvas background="/path/to/environment.hdr" />
+
+// Advanced: separate background and environment
+<Canvas background={{
+  preset: 'city',
+  backgroundBlurriness: 0.5,
+  environmentIntensity: 1.2,
+}} />
+```
+
+The old `<color attach="background">` pattern still works but is more verbose and doesn't support environments. See [Canvas Background Prop](./v10-features.md#canvas-background-prop) for full documentation.
+
+---
+
 ## What's New
 
 ### Powerful New Scheduler

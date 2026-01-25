@@ -234,6 +234,9 @@ importers:
       '@babel/runtime':
         specifier: ^7.28.6
         version: 7.28.6
+      '@monogrid/gainmap-js':
+        specifier: ^3.4.0
+        version: 3.4.0(three@0.181.2)
       dequal:
         specifier: ^2.0.3
         version: 2.0.3
