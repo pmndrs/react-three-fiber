@@ -114,7 +114,7 @@ function CameraHeadlights() {
 }
 ```
 
-Portal accepts any `Object3D` as a container - camera, groups, or any other scene object. Children are automatically added on mount and removed on unmount.
+Portal accepts any `Object3D` as a container - camera, groups, or any other scene object. Children are automatically added on mount and cleaned up on unmount, including proper disposal of internal subscriptions to prevent memory leaks.
 
 ---
 
@@ -1082,6 +1082,58 @@ events.flush?.()
 ```
 
 This is called automatically at the start of each frame (in the scheduler's `input` phase).
+
+---
+
+## Interactive Priority (userData.interactivePriority)
+
+v10 adds support for object-level interactive priority via `userData.interactivePriority`. This allows UI controls and overlays that render on top using depth tricks to receive pointer events correctly, even when other objects are technically closer in world space.
+
+### The Problem
+
+Tools like `PivotControls` in Drei use depth buffer manipulation to render on top of other objects. However, the raycaster operates in world space, so these controls may not receive events because other objects are closer to the camera.
+
+### The Solution
+
+Set `userData.interactivePriority` on objects that should take precedence over distance-based hit testing:
+
+```tsx
+// This mesh receives events even if behind other objects in world space
+<mesh userData={{ interactivePriority: 1 }}>
+  <boxGeometry />
+  <meshBasicMaterial />
+</mesh>
+```
+
+### Priority Ordering
+
+When raycasting, hits are sorted by:
+
+1. **Interactive priority** - Objects with `userData.interactivePriority` come first
+2. **Priority value** - Higher `interactivePriority` values win among prioritized objects
+3. **Root events.priority** - Standard portal/layer priority
+4. **Distance** - Closer objects first (existing behavior)
+
+```tsx
+// Higher priority takes precedence
+<mesh userData={{ interactivePriority: 10 }}>
+  {/* Receives events before interactivePriority: 1 */}
+</mesh>
+
+<mesh userData={{ interactivePriority: 1 }}>
+  {/* Receives events before non-prioritized objects */}
+</mesh>
+
+<mesh>
+  {/* Standard distance-based ordering */}
+</mesh>
+```
+
+### Use Cases
+
+- **Transform controls** - Gizmos that render on top of the scene
+- **UI overlays** - Buttons and panels using depth tricks
+- **Debug helpers** - Tools that should always be interactive regardless of scene geometry
 
 ---
 

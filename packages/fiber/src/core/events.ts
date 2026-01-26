@@ -155,9 +155,24 @@ export function createEvents(store: RootStore) {
     let hits: THREE.Intersection<THREE.Object3D>[] = eventsObjects
       // Intersect objects
       .flatMap(handleRaycast)
-      // Sort by event priority and distance
-      // Higher priority = processed first, then closer objects first
+      // Sort by interactive priority, then event priority, then distance
+      // Objects with userData.interactivePriority take precedence over distance-based sorting
       .sort((a, b) => {
+        // Check for object-level interactive priority (e.g., UI controls that render on top)
+        const aInteractivePriority = a.object.userData?.interactivePriority as number | undefined
+        const bInteractivePriority = b.object.userData?.interactivePriority as number | undefined
+
+        // If either has interactivePriority, prioritize those objects
+        if (aInteractivePriority !== undefined || bInteractivePriority !== undefined) {
+          // Objects with interactivePriority come before those without
+          if (aInteractivePriority !== undefined && bInteractivePriority === undefined) return -1
+          if (bInteractivePriority !== undefined && aInteractivePriority === undefined) return 1
+          // Both have interactivePriority: higher value wins
+          if (aInteractivePriority !== bInteractivePriority) {
+            return (bInteractivePriority ?? 0) - (aInteractivePriority ?? 0)
+          }
+        }
+
         const aState = getRootState(a.object)
         const bState = getRootState(b.object)
         // Default priority is 1 (from createPointerEvents), but may be undefined for some objects

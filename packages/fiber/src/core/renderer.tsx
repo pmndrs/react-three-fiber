@@ -938,14 +938,22 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get }) as RootState)
 
-    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+    // Initialize with current state synchronously (required for reconciler.createPortal)
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
     onMutate(previousRoot.getState())
-    previousRoot.subscribe(onMutate)
 
     return store
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousRoot, container])
+
+  // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+  // This must be in useEffect to properly clean up on unmount (fixes memory leak)
+  // Note: inject is a stable ref from useMutableCallback, so not needed in deps
+  useIsomorphicLayoutEffect(() => {
+    const onMutate = (prev: RootState) => usePortalStore.setState((state) => inject.current(prev, state))
+    const unsubscribe = previousRoot.subscribe(onMutate)
+    return unsubscribe
+  }, [previousRoot, usePortalStore])
 
   return (
     // @ts-ignore, reconciler types are not maintained
