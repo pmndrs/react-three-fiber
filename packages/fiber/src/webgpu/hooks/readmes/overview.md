@@ -191,6 +191,8 @@ All WebGPU hooks interact with R3F's root store:
 interface RootState {
   uniforms: UniformRecord // Global uniforms + scopes
   nodes: NodeRecord // Global TSL nodes + scopes
+  buffers: BufferRecord // GPU buffer storage + scopes
+  gpuStorage: StorageRecord // GPU texture storage + scopes
   textures: TextureRecord // Texture registry
   postProcessing: PostProcessing | null
   passes: PassRecord // Post-processing passes
@@ -224,6 +226,7 @@ This means:
 - **[useUniforms](./useUniforms.md)** - Batch uniforms with scoping, Leva integration
 - **[useNodes](./useNodes.md)** - Global TSL node sharing
 - **[useLocalNodes](./useLocalNodes.md)** - Component-local node composition
+- **[useBuffers & useGPUStorage](./useBuffers-useGPUStorage.md)** - GPU buffer and storage texture management
 - **[usePostProcessing](./usePostProcessing.md)** - Post-processing setup
 
 ## External Resources

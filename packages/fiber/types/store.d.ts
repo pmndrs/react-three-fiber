@@ -1,11 +1,73 @@
 import type * as React from 'react'
 import type * as THREE from 'three'
-import type { WebGPURenderer, CanvasTarget } from 'three/webgpu'
+import type { WebGPURenderer, CanvasTarget, Node, StorageTexture, Data3DTexture } from 'three/webgpu'
 import type { StoreApi } from 'zustand'
 import type { UseBoundStoreWithEqualityFn } from 'zustand/traditional'
 import type { DomEvent, EventManager, PointerCaptureTarget, ThreeEvent, VisibilityEntry } from './events'
 import type { ThreeCamera } from './utils'
 import type { SchedulerApi } from './scheduler'
+
+//* Buffer Types (useBuffers) ========================================
+
+/**
+ * Buffer-like types for GPU compute and storage operations.
+ * Includes raw CPU arrays, Three.js buffer attributes, and TSL buffer nodes.
+ *
+ * @example
+ * ```tsx
+ * const { positions, velocities } = useBuffers(() => ({
+ *   positions: instancedArray(count, 'vec3'),       // StorageBufferNode
+ *   velocities: new Float32Array(count * 3),        // TypedArray
+ * }), 'particles')
+ * ```
+ */
+export type BufferLike =
+  | Float32Array
+  | Uint32Array
+  | Int32Array
+  | Float64Array
+  | Uint8Array
+  | Int8Array
+  | Uint16Array
+  | Int16Array
+  | THREE.BufferAttribute // Base class for all buffer attributes
+  | Node // TSL buffer nodes (instancedArray, storage)
+
+/** Flat record of buffer-like values (no nested scopes) */
+export type BufferRecord = Record<string, BufferLike>
+
+/**
+ * Buffer store that can contain both root-level buffers and scoped buffer objects.
+ * Structure: { positions: Float32Array, particles: { vel: StorageBufferNode } }
+ */
+export type BufferStore = Record<string, BufferLike | BufferRecord>
+
+//* Storage Types (useGPUStorage) ========================================
+
+/**
+ * GPU storage types for texture-based storage operations.
+ * Includes Three.js storage textures and TSL storage texture nodes.
+ *
+ * @example
+ * ```tsx
+ * const { heightMap } = useGPUStorage(() => ({
+ *   heightMap: new StorageTexture(512, 512),
+ * }), 'terrain')
+ * ```
+ */
+export type StorageLike =
+  | StorageTexture // GPU storage texture
+  | Data3DTexture // 3D texture (can be used as storage)
+  | Node // TSL storage texture nodes (storageTexture)
+
+/** Flat record of storage-like values (no nested scopes) */
+export type StorageRecord = Record<string, StorageLike>
+
+/**
+ * Storage store that can contain both root-level storage and scoped storage objects.
+ * Structure: { heightMap: StorageTexture, terrain: { normal: StorageTextureNode } }
+ */
+export type StorageStore = Record<string, StorageLike | StorageRecord>
 
 //* Renderer Types ========================================
 
@@ -18,6 +80,18 @@ export type Subscription = {
   ref: React.RefObject<RenderCallback>
   priority: number
   store: RootStore
+}
+
+/** Per-pointer state for multi-touch and XR support */
+export type PointerState = {
+  /** Objects currently hovered by this pointer */
+  hovered: Map<string, ThreeEvent<DomEvent>>
+  /** Objects capturing this pointer */
+  captured: Map<THREE.Object3D, PointerCaptureTarget>
+  /** Initial click position [x, y] */
+  initialClick: [x: number, y: number]
+  /** Objects hit on initial click */
+  initialHits: THREE.Object3D[]
 }
 
 export type Dpr = number | [min: number, max: number]
@@ -61,12 +135,21 @@ export interface Performance {
 
 export interface InternalState {
   interaction: THREE.Object3D[]
-  hovered: Map<string, ThreeEvent<DomEvent>>
   subscribers: Subscription[]
-  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
-  initialClick: [x: number, y: number]
-  initialHits: THREE.Object3D[]
+  /** Per-pointer state (hover, capture, click tracking) - replaces hovered, capturedMap, initialClick, initialHits */
+  pointerMap: Map<number, PointerState>
+  /** Pointers needing raycast this frame (used with frameTimedRaycasts) */
+  pointerDirty: Map<number, DomEvent>
+  /** Last event received (for events.update() compatibility) */
   lastEvent: React.RefObject<DomEvent | null>
+  /** @deprecated Use pointerMap.get(pointerId).hovered instead */
+  hovered: Map<string, ThreeEvent<DomEvent>>
+  /** @deprecated Use pointerMap.get(pointerId).captured instead */
+  capturedMap: Map<number, Map<THREE.Object3D, PointerCaptureTarget>>
+  /** @deprecated Use pointerMap.get(pointerId).initialClick instead */
+  initialClick: [x: number, y: number]
+  /** @deprecated Use pointerMap.get(pointerId).initialHits instead */
+  initialHits: THREE.Object3D[]
   /** Visibility event registry (onFramed, onOccluded, onVisible) */
   visibilityRegistry: Map<string, VisibilityEntry>
   /** Whether occlusion queries are enabled (WebGPU only) */
@@ -207,6 +290,10 @@ export interface RootState {
   uniforms: UniformStore
   /** Global TSL nodes - root-level nodes + scoped sub-objects. Use useNodes() hook */
   nodes: Record<string, any>
+  /** Global TSL buffer nodes - root-level buffers + scoped sub-objects. Use useBuffers() hook */
+  buffers: BufferStore
+  /** Global GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() hook */
+  gpuStorage: StorageStore
   /** Global TSL texture nodes - use useTextures() hook for operations */
   textures: Map<string, any>
   /** WebGPU PostProcessing instance - use usePostProcessing() hook */

@@ -49,6 +49,62 @@ Removed redundant renderer props that can be passed via `gl` or `renderer` props
 
 ### Features
 
+#### useBuffers & useGPUStorage Hooks
+
+Added two new hooks for managing GPU storage in compute-intensive WebGPU applications:
+
+**useBuffers** - Manages buffer data for GPU compute:
+
+```tsx
+import { useBuffers } from '@react-three/fiber/webgpu'
+import { instancedArray } from 'three/tsl'
+
+const { positions, velocities } = useBuffers(
+  () => ({
+    positions: instancedArray(count, 'vec3'),
+    velocities: new Float32Array(count * 3),
+  }),
+  'particles',
+)
+```
+
+**useGPUStorage** - Manages GPU storage textures:
+
+```tsx
+import { useGPUStorage } from '@react-three/fiber/webgpu'
+import { StorageTexture } from 'three/webgpu'
+
+const { heightMap } = useGPUStorage(
+  () => ({
+    heightMap: new StorageTexture(512, 512),
+  }),
+  'terrain',
+)
+```
+
+**Key features:**
+
+- Same API pattern as `useNodes` and `useUniforms`
+- Scoped storage with create-if-not-exists semantics
+- Accessible in node creators via `({ buffers, gpuStorage }) => ...`
+- Utility functions: `removeBuffers/Storage`, `clearBuffers/Storage`, `rebuildBuffers/Storage`, `disposeBuffers/Storage`
+- GPU resource disposal via `disposeBuffers()` and `disposeStorage()`
+
+**Supported types:**
+
+- **useBuffers**: TypedArrays, BufferAttribute, StorageBufferAttribute, TSL buffer nodes (`instancedArray`, `storage`)
+- **useGPUStorage**: StorageTexture, Storage3DTexture, TSL storage texture nodes
+
+**Files changed:**
+
+- `packages/fiber/src/core/store.ts` - Added `buffers: {}`, `gpuStorage: {}` to state
+- `packages/fiber/types/store.d.ts` - Added BufferLike, BufferStore, StorageLike, StorageStore types
+- `packages/fiber/src/webgpu/hooks/useBuffers.tsx` - **NEW** Buffer management hook
+- `packages/fiber/src/webgpu/hooks/useGPUStorage.tsx` - **NEW** GPU storage management hook
+- `packages/fiber/src/webgpu/hooks/ScopedStore.ts` - Added buffers/gpuStorage to CreatorState
+- `packages/fiber/src/webgpu/hooks/index.ts` - Export new hooks
+- `packages/fiber/src/webgpu/hooks/readmes/useBuffers-useGPUStorage.md` - **NEW** Documentation
+
 #### forceEven Canvas Prop
 
 Added `forceEven` prop to Canvas for Safari compatibility. Safari has issues with odd or fractional HTML canvas dimensions. When enabled, canvas dimensions are rounded up to the nearest even number.

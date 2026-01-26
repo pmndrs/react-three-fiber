@@ -585,6 +585,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           },
         )
 
+        // Register events flush job - flushes deferred pointer raycasts at frame start
+        // Runs in 'input' phase (before physics/update) so hover state is up-to-date
+        const unregisterEventsFlush = scheduler.register(
+          () => {
+            const state = store.getState()
+            state.events.flush?.()
+          },
+          {
+            id: `${newRootId}_events`,
+            rootId: newRootId,
+            phase: 'input',
+            system: true,
+          },
+        )
+
         // Register frustum update job - updates frustum from camera before render
         // Runs in preRender phase so it captures any camera movement from update phase
         const unregisterFrustum = scheduler.register(
@@ -664,6 +679,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             unregisterRoot: () => {
               unregisterRoot()
               unregisterCanvasTarget()
+              unregisterEventsFlush()
               unregisterFrustum()
               unregisterVisibility()
               unregisterRender()

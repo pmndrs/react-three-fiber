@@ -27,6 +27,7 @@ import type {
   ThreeEvent,
   ThreeCamera,
   VisibilityEntry,
+  PointerState,
 } from '#types'
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
@@ -88,7 +89,14 @@ export const createStore = (
       frustum: new Frustum(),
       autoUpdateFrustum: true,
       raycaster: null as unknown as Raycaster,
-      events: { priority: 1, enabled: true, connected: false },
+      events: {
+        priority: 1,
+        enabled: true,
+        connected: false,
+        frameTimedRaycasts: true,
+        alwaysFireOnScroll: true,
+        updateOnFrame: false,
+      },
       scene: null as unknown as Scene,
       rootScene: null as unknown as Scene,
       xr: null as unknown as XRManager,
@@ -201,9 +209,11 @@ export const createStore = (
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
 
-      //* TSL State (managed via hooks: useUniforms, useNodes, useTextures, usePostProcessing) ==============================
+      //* TSL State (managed via hooks: useUniforms, useNodes, useBuffers, useGPUStorage, useTextures, usePostProcessing) ==============================
       uniforms: {},
       nodes: {},
+      buffers: {},
+      gpuStorage: {},
       textures: new Map(),
       postProcessing: null,
       passes: {},
@@ -215,12 +225,16 @@ export const createStore = (
       internal: {
         // Events
         interaction: [],
-        hovered: new Map<string, ThreeEvent<DomEvent>>(),
         subscribers: [],
+        // Per-pointer state (new unified structure)
+        pointerMap: new Map<number, PointerState>(),
+        pointerDirty: new Map<number, DomEvent>(),
+        lastEvent: React.createRef(),
+        // Deprecated but kept for backwards compatibility
+        hovered: new Map<string, ThreeEvent<DomEvent>>(),
         initialClick: [0, 0],
         initialHits: [],
         capturedMap: new Map(),
-        lastEvent: React.createRef(),
 
         // Visibility tracking (onFramed, onOccluded, onVisible)
         visibilityRegistry: new Map<string, VisibilityEntry>(),

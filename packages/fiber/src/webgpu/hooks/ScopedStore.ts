@@ -18,7 +18,7 @@
  * ```
  */
 
-import type { RootState } from '#types'
+import type { RootState, BufferLike, StorageLike } from '#types'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -137,13 +137,17 @@ export function createScopedStore<T>(data: Record<string, any>): ScopedStoreType
 
 /**
  * State type passed to creator functions with ScopedStore wrappers.
- * Provides type-safe access to uniforms and nodes without manual casting.
+ * Provides type-safe access to uniforms, nodes, buffers, and gpuStorage without manual casting.
  */
-export type CreatorState = Omit<RootState, 'uniforms' | 'nodes'> & {
+export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
   /** Type-safe uniform access - property access returns UniformNode */
   uniforms: ScopedStoreType<UniformNode>
   /** Type-safe node access - property access returns TSLNodeType (Node | ShaderCallable | ShaderNodeObject) */
   nodes: ScopedStoreType<TSLNodeType>
+  /** Type-safe buffer access - property access returns BufferLike (TypedArrays, BufferAttributes, TSL nodes) */
+  buffers: ScopedStoreType<BufferLike>
+  /** Type-safe GPU storage access - property access returns StorageLike (StorageTexture, TSL nodes) */
+  gpuStorage: ScopedStoreType<StorageLike>
 }
 
 //* Lazy Creator State Factory ==============================
@@ -168,6 +172,8 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes'> & {
 export function createLazyCreatorState(state: RootState): CreatorState {
   let _uniforms: ScopedStoreType<UniformNode> | null = null
   let _nodes: ScopedStoreType<TSLNodeType> | null = null
+  let _buffers: ScopedStoreType<BufferLike> | null = null
+  let _gpuStorage: ScopedStoreType<StorageLike> | null = null
 
   return Object.create(state, {
     uniforms: {
@@ -178,6 +184,16 @@ export function createLazyCreatorState(state: RootState): CreatorState {
     nodes: {
       get() {
         return (_nodes ??= createScopedStore<TSLNodeType>(state.nodes))
+      },
+    },
+    buffers: {
+      get() {
+        return (_buffers ??= createScopedStore<BufferLike>(state.buffers))
+      },
+    },
+    gpuStorage: {
+      get() {
+        return (_gpuStorage ??= createScopedStore<StorageLike>(state.gpuStorage))
       },
     },
   }) as CreatorState

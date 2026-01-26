@@ -98,6 +98,18 @@ export interface EventHandlers {
 export type FilterFunction = (items: THREE.Intersection[], state: RootState) => THREE.Intersection[]
 export type ComputeFunction = (event: DomEvent, root: RootState, previous?: RootState) => void
 
+/** Configuration for XR pointer registration (controllers/hands) */
+export interface XRPointerConfig {
+  /** Ray origin (updated each frame by XR system) */
+  ray: THREE.Ray
+  /** Optional: custom compute function for this pointer */
+  compute?: (state: RootState) => void
+  /** Pointer type identifier */
+  type: 'controller' | 'hand' | 'gaze'
+  /** Which hand (for controller/hand types) */
+  handedness?: 'left' | 'right'
+}
+
 export interface EventManager<TTarget> {
   /** Determines if the event layer is active */
   enabled: boolean
@@ -117,8 +129,21 @@ export interface EventManager<TTarget> {
   disconnect?: () => void
   /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
    *  explicit user interaction, for instance when the camera moves a hoverable object underneath the cursor.
+   *  @param pointerId - Optional pointer ID to update specific pointer only
    */
-  update?: () => void
+  update?: (pointerId?: number) => void
+  /** Defer pointer move raycasting to frame start (default: true) */
+  frameTimedRaycasts?: boolean
+  /** Always fire raycaster immediately on scroll events (default: true) */
+  alwaysFireOnScroll?: boolean
+  /** Automatically re-raycast every frame to detect hover changes from moving objects/camera (default: false) */
+  updateOnFrame?: boolean
+  /** Flush deferred pointer raycasts. Called by scheduler at frame start (input phase). */
+  flush?: () => void
+  /** Register an XR pointer (controller/hand). Returns assigned pointerId */
+  registerPointer?: (config: XRPointerConfig) => number
+  /** Unregister an XR pointer */
+  unregisterPointer?: (pointerId: number) => void
 }
 
 export interface PointerCaptureTarget {

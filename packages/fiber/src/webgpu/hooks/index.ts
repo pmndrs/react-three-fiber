@@ -41,6 +41,32 @@ export {
   type NodesWithUtils,
 } from './useNodes'
 
+// Buffers - root-level + scoped with create-if-not-exists pattern
+export {
+  useBuffers,
+  // Global rebuild function for HMR integration
+  rebuildAllBuffers,
+  type BufferCreator,
+  type RemoveBuffersFn,
+  type ClearBuffersFn,
+  type RebuildBuffersFn,
+  type DisposeBuffersFn,
+  type BuffersWithUtils,
+} from './useBuffers'
+
+// GPU Storage - root-level + scoped with create-if-not-exists pattern
+export {
+  useGPUStorage,
+  // Global rebuild function for HMR integration
+  rebuildAllStorage,
+  type StorageCreator,
+  type RemoveStorageFn,
+  type ClearStorageFn,
+  type RebuildStorageFn,
+  type DisposeStorageFn,
+  type StorageWithUtils,
+} from './useGPUStorage'
+
 // Textures - Re-exported from core (useTextures is now a core R3F hook)
 // Note: Not re-exported here to avoid duplicate exports since ../core already exports them
 // The file ./useTextures.tsx exists for direct import backwards compatibility only
