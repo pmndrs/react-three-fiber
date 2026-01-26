@@ -648,11 +648,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
-            // Use PostProcessing if available (from usePostProcessing hook)
+            // Use RenderPipeline if available (from useRenderPipeline hook)
             // Otherwise fall back to standard renderer.render()
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
-              if (state.postProcessing?.render) state.postProcessing.render()
+              if (state.renderPipeline?.render) state.renderPipeline.render()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
               // Propagate render errors to error boundary

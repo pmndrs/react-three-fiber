@@ -479,7 +479,7 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 
 ## HMR Support for TSL Hooks
 
-v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks (`useNodes`, `useUniforms`, `usePostProcessing`). When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
+v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks (`useNodes`, `useUniforms`, `useRenderPipeline`). When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
 
 ### How It Works
 

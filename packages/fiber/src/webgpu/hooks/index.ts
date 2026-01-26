@@ -74,6 +74,6 @@ export {
 // Low-level texture utilities (prefer useTextures hook instead)
 export { createTextureOperations, type TextureOperations } from './utils'
 
-// PostProcessing - WebGPU post-processing management
-// Types are declared globally in types/postprocessing.d.ts
-export { usePostProcessing } from './usePostProcessing'
+// RenderPipeline - WebGPU render pipeline management
+// Types are declared globally in types/renderPipeline.d.ts
+export { useRenderPipeline } from './useRenderPipeline'

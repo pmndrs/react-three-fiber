@@ -296,9 +296,9 @@ export interface RootState {
   gpuStorage: StorageStore
   /** Global TSL texture nodes - use useTextures() hook for operations */
   textures: Map<string, any>
-  /** WebGPU PostProcessing instance - use usePostProcessing() hook */
-  postProcessing: any | null // THREE.PostProcessing when available
-  /** Global TSL pass nodes for post-processing - use usePostProcessing() hook */
+  /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
+  renderPipeline: any | null // THREE.PostProcessing (will be THREE.RenderPipeline in future Three.js release)
+  /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
   passes: Record<string, any>
   /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
   _hmrVersion: number

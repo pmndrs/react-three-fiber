@@ -209,13 +209,13 @@ export const createStore = (
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
 
-      //* TSL State (managed via hooks: useUniforms, useNodes, useBuffers, useGPUStorage, useTextures, usePostProcessing) ==============================
+      //* TSL State (managed via hooks: useUniforms, useNodes, useBuffers, useGPUStorage, useTextures, useRenderPipeline) ==============================
       uniforms: {},
       nodes: {},
       buffers: {},
       gpuStorage: {},
       textures: new Map(),
-      postProcessing: null,
+      renderPipeline: null,
       passes: {},
       _hmrVersion: 0,
       _sizeImperative: false,
