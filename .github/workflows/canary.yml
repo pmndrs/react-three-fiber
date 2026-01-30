@@ -1,0 +1,50 @@
+name: Canary Release
+
+on:
+  push:
+    branches: [v10]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for npm OIDC
+  contents: read
+
+jobs:
+  canary:
+    name: Publish canary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install deps
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Set canary versions
+        run: |
+          CANARY_VERSION="10.0.0-canary.$(git rev-parse --short HEAD)"
+          echo "Publishing canary version: $CANARY_VERSION"
+          cd packages/fiber && npm version $CANARY_VERSION --no-git-tag-version
+          cd ../eslint-plugin && npm version $CANARY_VERSION --no-git-tag-version
+          cd ../test-renderer && npm version $CANARY_VERSION --no-git-tag-version
+
+      - name: Publish to npm
+        run: |
+          pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks --provenance
