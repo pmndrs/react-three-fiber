@@ -3,8 +3,7 @@ name: Canary Release
 on:
   push:
     branches: [v10]
-  workflow_dispatch: # Manual trigger
-    branches: [v10]
+  workflow_dispatch:
 
 permissions:
   id-token: write # Required for npm OIDC
@@ -38,7 +37,7 @@ jobs:
 
       - name: Set canary versions
         run: |
-          CANARY_VERSION="0.0.0-canary.$(git rev-parse --short HEAD)"
+          CANARY_VERSION="10.0.0-canary.$(git rev-parse --short HEAD)"
           echo "Publishing canary version: $CANARY_VERSION"
           cd packages/fiber && npm version $CANARY_VERSION --no-git-tag-version
           cd ../eslint-plugin && npm version $CANARY_VERSION --no-git-tag-version
@@ -46,6 +45,6 @@ jobs:
 
       - name: Publish to npm
         run: |
-          pnpm --filter @react-three/fiber publish --tag canary --no-git-checks
-          pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks
-          pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks
+          pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks --provenance
