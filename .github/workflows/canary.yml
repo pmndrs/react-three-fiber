@@ -22,15 +22,15 @@ jobs:
         with:
           run_install: false
 
-      - name: Use Node 22
+      - name: Use Node 24
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Update npm for OIDC
-        run: pnpm install -g npm@latest
+      - name: Verify npm version
+        run: npm -v
 
       - name: Install deps
         run: pnpm install
