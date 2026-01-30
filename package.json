@@ -32,7 +32,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
-    "release": "pnpm build && pnpm -r publish --filter './packages/*' --dry-run",
+    "release": "pnpm build && pnpm -r publish --filter './packages/*'",
     "codegen:eslint": "cd packages/eslint-plugin && pnpm codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",

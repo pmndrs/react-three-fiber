@@ -33,9 +33,6 @@ pnpm ci               # build → typecheck → eslint → dev → test → form
 
 # Single Test File
 vitest packages/fiber/tests/hooks.test.tsx
-
-# Changesets (required for all code changes)
-pnpm changeset:add    # Create changeset for PR
 ```
 
 ## Architecture
@@ -139,9 +136,7 @@ Prefer clean, minimal code patterns:
 ## Commits & Releases
 
 - **Conventional commits**: `feat:`, `fix:`, `chore:`, `docs:`
-- **Changesets required**: Every code change needs `pnpm changeset:add` before merge
-- **Version bump**: `pnpm vers` (from changesets)
-- **Release**: `pnpm release` (build + changeset publish)
+- **Release**: `pnpm release` (build + publish all packages)
 
 ## Common Pitfalls
 
