@@ -1,9 +1,8 @@
 name: Canary Release
 
 on:
-  schedule:
-    # Run at 2am UTC every night
-    - cron: '0 2 * * *'
+  push:
+    branches: [v10]
   workflow_dispatch: # Manual trigger
 
 permissions:
@@ -17,30 +16,13 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          ref: v10
-          fetch-depth: 0
-
-      - name: Check for changes in last 24 hours
-        id: changes
-        run: |
-          COMMITS=$(git log --oneline --since="24 hours ago" | wc -l)
-          if [ "$COMMITS" -eq 0 ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            echo "No changes in last 24 hours, skipping canary release"
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-            echo "Found $COMMITS commits or manual trigger, proceeding with canary release"
-          fi
 
       - name: Install pnpm
-        if: steps.changes.outputs.skip != 'true'
         uses: pnpm/action-setup@v4
         with:
           run_install: false
 
       - name: Use Node 22
-        if: steps.changes.outputs.skip != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -48,17 +30,21 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install deps
-        if: steps.changes.outputs.skip != 'true'
         run: pnpm install
 
       - name: Build
-        if: steps.changes.outputs.skip != 'true'
         run: pnpm build
 
-      - name: Create canary versions
-        if: steps.changes.outputs.skip != 'true'
-        run: pnpm changeset version --snapshot canary
+      - name: Set canary versions
+        run: |
+          CANARY_VERSION="0.0.0-canary.$(git rev-parse --short HEAD)"
+          echo "Publishing canary version: $CANARY_VERSION"
+          cd packages/fiber && npm version $CANARY_VERSION --no-git-tag-version
+          cd ../eslint-plugin && npm version $CANARY_VERSION --no-git-tag-version
+          cd ../test-renderer && npm version $CANARY_VERSION --no-git-tag-version
 
       - name: Publish to npm
-        if: steps.changes.outputs.skip != 'true'
-        run: pnpm changeset publish --tag canary
+        run: |
+          pnpm --filter @react-three/fiber publish --tag canary --no-git-checks
+          pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks
+          pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks
