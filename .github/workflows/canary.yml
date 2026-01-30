@@ -4,6 +4,7 @@ on:
   push:
     branches: [v10]
   workflow_dispatch: # Manual trigger
+    branches: [v10]
 
 permissions:
   id-token: write # Required for npm OIDC
