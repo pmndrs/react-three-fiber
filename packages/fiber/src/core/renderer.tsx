@@ -11,6 +11,7 @@ import { reconciler } from './reconciler'
 import { context, createStore } from './store'
 import {
   applyProps,
+  calculateDpr,
   dispose,
   is,
   prepare,
@@ -281,6 +282,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // Allows users to pass pre-initialized external renderers
         // @see https://github.com/pmndrs/react-three-fiber/issues/3651
         if (!renderer.hasInitialized?.()) {
+          // Set canvas dimensions before init to ensure depth buffer is created at correct size
+          // WebGPU creates GPU resources during init() based on canvas.width/height
+          // Without this, depth buffer uses default 300x150 causing size mismatch errors
+          const size = computeInitialSize(canvas, propsSize)
+          if (size.width > 0 && size.height > 0) {
+            const pixelRatio = calculateDpr(dpr)
+            ;(canvas as HTMLCanvasElement).width = size.width * pixelRatio
+            ;(canvas as HTMLCanvasElement).height = size.height * pixelRatio
+          }
           await renderer.init()
         }
 
