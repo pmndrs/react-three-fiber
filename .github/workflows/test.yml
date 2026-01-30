@@ -20,51 +20,42 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Use Node 20
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Use Node 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          cache: 'pnpm'
 
-      - name: Cache node_modules and Yarn cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            **/node_modules
-            .yarn/cache
-          key: >
-            ${{ runner.os }}-node20-react-${{ matrix.react-version }}-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-react-${{ matrix.react-version }}-
-
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn --immutable --silent
-
-      - name: Override React version (${{ matrix.react-version }})
+      - name: Set React version (${{ matrix.react-version }})
         run: |
-          yarn add @types/react@${{ matrix.react-version }} react@${{ matrix.react-version }} @types/react-dom@${{ matrix.react-version }} react-dom@${{ matrix.react-version }} --dev -W
+          npm pkg set devDependencies.react=${{ matrix.react-version }}
+          npm pkg set devDependencies.react-dom=${{ matrix.react-version }}
 
-      - name: Check types
-        run: yarn run typecheck
-
-      - name: Check lint
-        run: yarn run eslint
+      - name: Install deps
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build
-        run: yarn run build
+        run: pnpm run build
 
-      - name: Rsbuild (strict)
-        run: yarn add @rsbuild/core -D -W && yarn rsbuild build --root ./packages/fiber
+      - name: Check types
+        run: pnpm run typecheck
+
+      - name: Check lint
+        run: pnpm run eslint
 
       - name: Jest run
-        run: yarn run dev && yarn run test
+        run: pnpm run dev && pnpm run test
 
       - name: Report Fiber size
-        run: yarn run analyze-fiber
+        run: pnpm run analyze-fiber
 
       - name: Report Test Renderer size
-        run: yarn run analyze-test
+        run: pnpm run analyze-test
 
       - name: Check formatting
-        run: yarn run format
+        run: pnpm run format
