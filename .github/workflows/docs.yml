@@ -13,7 +13,6 @@ jobs:
   build:
     uses: pmndrs/docs/.github/workflows/build.yml@v3
     with:
-      docker_tag: '3'
       mdx: 'docs'
       libname: 'React Three Fiber'
       libname_short: 'r3f'
