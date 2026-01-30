@@ -29,6 +29,9 @@ jobs:
           cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Update npm for OIDC
+        run: pnpm install -g npm@latest
+
       - name: Install deps
         run: pnpm install
 
