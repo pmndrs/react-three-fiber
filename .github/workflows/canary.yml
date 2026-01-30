@@ -27,7 +27,6 @@ jobs:
         with:
           node-version: 24
           cache: 'pnpm'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Verify npm version
         run: npm -v
@@ -46,8 +45,17 @@ jobs:
           cd ../eslint-plugin && npm version $CANARY_VERSION --no-git-tag-version
           cd ../test-renderer && npm version $CANARY_VERSION --no-git-tag-version
 
+      - name: Verify npm auth context
+        run: |
+          echo "NODE_AUTH_TOKEN set? ${NODE_AUTH_TOKEN:+yes}"
+          echo "NPM_CONFIG_USERCONFIG=$NPM_CONFIG_USERCONFIG"
+        env:
+          NODE_AUTH_TOKEN: ''
+
       - name: Publish to npm
         run: |
           pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
           pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks --provenance
           pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks --provenance
+        env:
+          NODE_AUTH_TOKEN: ''
