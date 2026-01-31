@@ -15,16 +15,6 @@ We use [Conventional Commits](https://conventionalcommits.org) for automated rel
 
 All packages follow [Semantic Versioning (SemVer)](https://semver.org).
 
-## Changesets
-
-Every code change requires a changeset. This powers our automated release process.
-
-```bash
-pnpm changeset:add
-```
-
-You'll be prompted to select affected packages, bump type (major/minor/patch), and write a summary.
-
 ## What Reviewers Look For
 
 - **Tests** — All changes should include appropriate test coverage

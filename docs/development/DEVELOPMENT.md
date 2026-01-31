@@ -32,7 +32,6 @@ The general loop:
 2. Edit files in `packages/fiber/src/`
 3. `pnpm test` — Verify changes
 4. `pnpm examples` — Visual verification
-5. `pnpm changeset:add` — Document your changes
 
 ---
 
