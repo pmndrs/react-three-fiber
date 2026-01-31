@@ -40,6 +40,10 @@ import { worleyNoise } from './specialNodes/RoadmapWorley'
 import { objectSpacePosition } from './specialNodes/utils'
 import { softLight, softLightClamped } from './specialNodes/SoftLight'
 import { colorRamp, colorRampConstant } from './specialNodes/ColorRamp'
+import { mx_worley_noise_float_smooth } from './specialNodes/SmoothWorley'
+import { fresnel } from './specialNodes/Fresnel'
+import { waveTexture } from './specialNodes/WaveTexture'
+
 function mappingOffset(coord: any, loc: any) {
   return vec3(coord).add(vec3(loc))
 }
@@ -63,21 +67,32 @@ const SharedNodes = () => {
     uSplashSpeed: { value: 1, min: 0, max: 3, step: 0.01 },
 
     // ripples
-    uRippleSpeed: { value: 1, min: 0, max: 3, step: 0.01 },
-    uRippleOuterRadius: { value: 0.56, min: 0, max: 3, step: 0.01 },
-    uRippleInnerRadius: { value: 0, min: 0, max: 3, step: 0.01 },
-    uRippleWobble: { value: 0.15, min: 0, max: 1, step: 0.01 },
-    uRippleWaveSize: { value: 6, min: 0, max: 10, step: 0.01 },
-    uRippleVorMix: { value: 0.37, min: 0, max: 1, step: 0.01 },
-    uRippleEdgeMix: { value: 0.79, min: 0, max: 1, step: 0.01 },
-    uFinalColorRamp: { value: 0.094, min: 0, max: 1, step: 0.01 },
+    uRippleStepoff: { value: 0.32, min: 0, max: 1, step: 0.01, label: 'Stepoff' },
+    uRippleSpeed: { value: 1, min: 0, max: 3, step: 0.01, label: 'Speed' },
+    uRippleOuterRadius: { value: 0.56, min: 0, max: 3, step: 0.01, label: 'Outer Radius' },
+    uRippleInnerRadius: { value: 0, min: 0, max: 3, step: 0.01, label: 'Inner Radius' },
+    uRippleWobble: { value: 0.15, min: 0, max: 1, step: 0.01, label: 'Wobble' },
+    uRippleWaveSize: { value: 6, min: 0, max: 10, step: 0.01, label: 'Wave Size' },
+    uRippleVorMix: { value: 0.37, min: 0, max: 1, step: 0.01, label: 'Vor Mix' },
+    uRippleEdgeMix: { value: 0.5, min: 0, max: 1, step: 0.01, label: 'Edge Mix' },
+    // Wave
+    uWaveScale: { value: 1, min: 0, max: 10, step: 0.01, label: 'Wave Scale' },
+    uWaveDistortion: { value: 2.0, min: 0, max: 10, step: 0.01, label: 'Wave Distortion' },
+    uWaveDetail: { value: 3, min: 0, max: 10, step: 0.01, label: 'Wave Detail' },
+    uWaveDetailScale: { value: 3, min: 0, max: 10, step: 0.01, label: 'Wave Detail Scale' },
+    uWaveSpeed: { value: 0.8, min: 0, max: 10, step: 0.01, label: 'Wave Speed' },
+    uFallsBaseColor: { value: { r: 0, g: 31, b: 42 }, label: 'Falls Base Color' },
   })
   useUniforms(mainUniforms)
+
+  useEffect(() => {
+    console.log('color changed', mainUniforms.uFallsBaseColor)
+  }, [mainUniforms.uFallsBaseColor])
 
   useUniform('uDeformDriver', new THREE.Vector3(0, 0, 0))
   useFrame(({ elapsed, uniforms }) => {
     tempVector.set(Math.sin(elapsed) * 0.5, Math.cos(elapsed) * 0.5, 0)
-    uniforms.uDeformDriver.value.copy(tempVector)
+    if (uniforms.uDeformDriver) (uniforms.uDeformDriver.value as THREE.Vector3).copy(tempVector)
   })
 
   useNodes(({ uniforms }) => {
@@ -107,7 +122,7 @@ function Foam({
     const heightFactor = remap(normalizedHeight, uniforms.uheightLow, uniforms.uheightHigh, 0, 1)
 
     // scale 10 voronoi
-    const raw = mx_worley_noise_float(objectPosition.mul(vec3(3, 1, 1)).mul(10))
+    const raw = mx_worley_noise_float(objectPosition.mul(vec3(3, 1, 1)).mul(4))
     const voronoiTen = raw.div(0.87).pow(uniforms.uVpower)
 
     const voronoiThree = float(1).sub(
@@ -129,7 +144,7 @@ function Foam({
 
     const topMix = mix(secondMix, topColorRamp, float(uniforms.uMixFactor3))
     // blue
-    const blueRamp = colorRampConstant(topMix, vec3(0.298, 0.691, 0.838), vec3(0.637, 0.91, 0.996), 0, 0.227)
+    const blueRamp = colorRampConstant(topMix, vec3(0.298, 0.691, 0.938), vec3(0.637, 0.91, 0.996), 0, 0.227)
 
     // position is dispalcement along the vertex normal, sampled from a cloud noise, multiplied by strength
     // and offset by a vec3 driver
@@ -203,12 +218,12 @@ function Ripple({
     const angle = centered.y.atan(centered.x).abs()
 
     // Polar coords — radius is primary axis (rings), angle is secondary (variation)
-    const speed = uniforms.uSplashSpeed
     const radial = radius.mul(10).sub(time.mul(uniforms.uRippleSpeed))
     const polarCoord = vec3(radial, angle.mul(1.5), 0)
 
     // Two slightly offset Voronoi — subtraction isolates thin cell edges
     const rippleA = mx_worley_noise_float(polarCoord.mul(2))
+
     const radialGradient = radius.smoothstep(uniforms.uRippleOuterRadius, uniforms.uRippleInnerRadius)
 
     // this is so stupid
@@ -219,17 +234,21 @@ function Ripple({
     const waveDistFn = Fn(([r, d, c, wobble, waveSize]: any) => {
       return r.add(d.mul(wobble)).add(c.mul(0.3)).mul(waveSize).sin().mul(0.5).add(0.5).pow(8).clamp(0, 1)
     })
+    /* Nice super organic but gets blown out
+    const warpedCoord = polarCoord.add(cloudNoise.mul(0.3))
+    const rippleC = mx_worley_noise_float(warpedCoord.mul(2))
+      .pow(uniforms.uRippleSecondBoost)
+      .mul(uniforms.uRippleSecondMul)
+      */
     const waveDist = waveDistFn(radial, distortion, cloudNoise, uniforms.uRippleWobble, uniforms.uRippleWaveSize)
 
     const waveVorMix = mix(rippleA, waveDist, uniforms.uRippleVorMix)
 
     const mulMix = mix(waveVorMix, waveVorMix.mul(colorRampGradient), uniforms.uRippleEdgeMix)
 
-    const finalColorRamp = colorRampConstant(mulMix, vec3(0), vec3(1), 0, uniforms.uFinalColorRamp)
-
-    const finalColor = select(mulMix.lessThan(0.5), vec4(1, 1, 1, 0), finalColorRamp)
+    const stepped = mulMix.step(uniforms.uRippleStepoff)
     return {
-      finalColor: vec3(mulMix),
+      finalColor: select(stepped.greaterThan(0.5), vec4(1), vec4(1, 1, 1, 0)),
       finalAlpha: float(1),
     }
   })
@@ -248,6 +267,44 @@ function Ripple({
   )
 }
 
+const Falls = () => {
+  const { colorNode } = useLocalNodes(({ uniforms }) => {
+    const fres = fresnel(5)
+    const offsetPosition = positionLocal.add(vec3(0, time.mul(4), 0))
+    const worley = mx_worley_noise_float(offsetPosition.mul(4)).pow(1).mul(3)
+    //.step(0.5)
+    const jagged = fres.mul(worley)
+    const hardEdges = fres.mix(jagged, 0.5).step(0.2)
+    // we use the hard edge as a transparent outside
+
+    // Layer 1: large slow bands
+    const wave = waveTexture(positionLocal.mul(vec3(1, 1, 1)), 1, 3, 3, 5.8, 4)
+      .oneMinus()
+      .pow(4)
+
+    const wor2 = mx_worley_noise_float(offsetPosition.mul(6).mul(vec3(1, 0.125, 1)))
+      .smoothstep(0.3, 0.9)
+      .step(0.2)
+
+    const baseColor = uniforms.uFallsBaseColor
+
+    const blended = baseColor.add(wave.mul(0.3))
+
+    const mixed = mix(blended, vec3(0.6, 0.6, 1), wor2)
+
+    const outColor = select(hardEdges.greaterThan(0.5), vec4(1, 1, 1, 0), vec4(mixed, 1))
+
+    const colorNode = outColor
+    return { colorNode }
+  })
+  return (
+    <mesh position={[0, 0, 0]}>
+      <cylinderGeometry args={[0.5, 0.5, 6, 32]} />
+      <meshBasicNodeMaterial colorNode={colorNode} transparent />
+    </mesh>
+  )
+}
+
 function Scene() {
   return (
     <>
@@ -255,16 +312,15 @@ function Scene() {
       <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
       <pointLight position={[-5, 5, -5]} intensity={0.5} color="#ffd700" />
       <SharedNodes />
+      <Falls />
 
-      {/*}
-      <group>
-        <Foam />
-        <Foam position={[0, 0.8, 0]} scale={[2, 1.4, 2]} />
-        <Foam position={[0, -0.5, 0]} scale={[0.5, 0.5, 0.5]} />
+      <group position={[0, -2.7, 0]}>
+        <Foam position={[0, 1.7, 0]} rotation={[0.1, 0.5, 0]} scale={[0.6, 1, 0.6]} />
+        <Foam position={[0, 1.7, 0]} scale={[0.7, 1, 0.7]} />
+        <Foam position={[0, 1, 0]} scale={[1.2, 0.2, 1.2]} />
       </group>
-      */}
 
-      <Ripple position={[0, 0.01, 0]} />
+      <Ripple position={[0, -1.99, 0]} />
 
       {/* Ground */}
       <mesh position={[0, -2, 0]} receiveShadow>

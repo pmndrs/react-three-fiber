@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@react-three/drei": "^10.7.7",
+    "@react-three/drei": "11.0.0-alpha.4",
     "@react-three/fiber": "workspace:*",
     "leva": "^0.10.1",
     "react": "19.2.0",

@@ -1,67 +1,114 @@
 /**
- * Demo: HL2 Fluid Bottle
- * Features: useBuffers, useNodes, TSL Compute
+ * Demo: Fluid Bottle
+ * Features: useLocalNodes, useUniforms, TSL Fn nodes
  *
- * Classic Half-Life 2 fluid simulation in a bottle.
- * Tilt the bottle, fluid responds with satisfying physics.
+ * Port of the classic Unity fake-liquid shader effect.
+ * Wobble physics simulate liquid responding to motion.
  */
 
-import { Canvas, useFrame } from '@react-three/fiber/webgpu'
-import { OrbitControls } from '@react-three/drei'
-import { useRef } from 'react'
-import * as THREE from 'three'
+import { Canvas, useFrame, useLocalNodes, useUniforms } from '@react-three/fiber/webgpu'
+import { OrbitControls, PivotControls, TransformControls } from '@react-three/drei'
+import { useMemo, useRef } from 'react'
+import * as THREE from 'three/webgpu'
+import { useControls } from 'leva'
+import { float, uniform, vec4, step } from 'three/tsl'
 
-function Bottle() {
+import { liquidFill, liquidColor, liquidSurface } from './Nodes/LiquidNode'
+import { WobblePhysics } from './Nodes/WobblePhysics'
+
+const _worldPos = new THREE.Vector3()
+const _worldQuat = new THREE.Quaternion()
+
+function LiquidBottle() {
   const groupRef = useRef<THREE.Group>(null)
-  const fluidRef = useRef<THREE.Mesh>(null)
 
-  useFrame(({ elapsed }) => {
-    if (groupRef.current) {
-      // Gentle idle rotation
-      groupRef.current.rotation.z = Math.sin(elapsed * 0.5) * 0.1
-      groupRef.current.rotation.x = Math.sin(elapsed * 0.3) * 0.05
-    }
+  const controls = useControls({
+    fill: { value: 0.5, min: 0, max: 1, step: 0.01 },
+    maxWobble: { value: 0.03, min: 0, max: 0.2, step: 0.005 },
+    wobbleSpeed: { value: 1, min: 0.1, max: 5, step: 0.1 },
+    recovery: { value: 1, min: 0.1, max: 5, step: 0.1 },
+    liquidColor: { value: { r: 255, g: 107, b: 53 } },
+    foamColor: { value: { r: 255, g: 220, b: 180 } },
+    surfaceColor: { value: { r: 255, g: 140, b: 80 } },
+    rimWidth: { value: 0.05, min: 0.005, max: 0.2, step: 0.005 },
+  })
+  useUniforms(controls)
 
-    if (fluidRef.current) {
-      // Simulate fluid responding to tilt
-      const tilt = Math.sin(elapsed * 0.5) * 0.1
-      fluidRef.current.position.y = -0.3 + tilt * 0.2
-      fluidRef.current.rotation.z = -tilt * 2
+  const wobble = useMemo(() => new WobblePhysics(), [])
+
+  const { liquidColorNode, liquidAlpha, uWobbleX, uWobbleZ, uFillY } = useLocalNodes(({ uniforms }) => {
+    const uWobbleX = uniform(float(0))
+    const uWobbleZ = uniform(float(0))
+    const uFillY = uniform(float(0))
+
+    const fillTest = liquidFill(uWobbleX, uWobbleZ, uFillY)
+
+    const liqCol = liquidColor(fillTest, uniforms.liquidColor, uniforms.foamColor, uniforms.rimWidth)
+    const finalCol = liquidSurface(uniforms.surfaceColor, liqCol)
+
+    // Below surface (fillTest < 0) = visible, above = clipped
+    // step(edge, x) returns 1 when x >= edge, so step(0, fillTest.negate()) = 1 when fillTest <= 0
+    const alpha = step(0, fillTest.negate())
+
+    return {
+      liquidColorNode: vec4(finalCol, 1),
+      liquidAlpha: alpha,
+      uWobbleX,
+      uWobbleZ,
+      uFillY,
     }
+  })
+
+  useFrame(({ delta }) => {
+    if (!groupRef.current) return
+
+    groupRef.current.getWorldPosition(_worldPos)
+    groupRef.current.getWorldQuaternion(_worldQuat)
+
+    wobble.maxWobble = controls.maxWobble
+    wobble.wobbleSpeed = controls.wobbleSpeed
+    wobble.recovery = controls.recovery
+    wobble.update(_worldPos, _worldQuat, delta)
+
+    if (uWobbleX) uWobbleX.value = wobble.wobbleX
+    if (uWobbleZ) uWobbleZ.value = wobble.wobbleZ
+    // Remap fill [0,1] to local Y range [-1.07, 1.07] (capsule half-extent)
+    const halfExtent = 1.07
+    if (uFillY) uFillY.value = THREE.MathUtils.lerp(-halfExtent, halfExtent, controls.fill)
   })
 
   return (
     <group ref={groupRef}>
-      {/* Bottle Glass */}
+      {/* Glass shell */}
       <mesh>
-        <cylinderGeometry args={[0.4, 0.5, 2, 32, 1, true]} />
+        <capsuleGeometry args={[0.5, 1.2, 16, 32]} />
         <meshPhysicalMaterial
           color="#88ccff"
           transparent
-          opacity={0.3}
-          roughness={0}
+          opacity={0.15}
+          roughness={0.05}
           metalness={0}
-          transmission={0.9}
-          thickness={0.1}
+          transmission={0.95}
+          thickness={0.2}
           side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
 
-      {/* Bottle Bottom */}
-      <mesh position={[0, -1, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[0.5, 32]} />
-        <meshPhysicalMaterial color="#88ccff" transparent opacity={0.3} transmission={0.9} />
-      </mesh>
-
-      {/* Fluid (placeholder - would use compute shader in full implementation) */}
-      <mesh ref={fluidRef} position={[0, -0.3, 0]}>
-        <cylinderGeometry args={[0.35, 0.45, 1, 32]} />
-        <meshStandardMaterial color="#ff6b35" transparent opacity={0.8} />
+      {/* Liquid */}
+      <mesh>
+        <capsuleGeometry args={[0.48, 1.18, 16, 32]} />
+        <meshStandardNodeMaterial
+          colorNode={liquidColorNode}
+          opacityNode={liquidAlpha}
+          side={THREE.DoubleSide}
+          alphaTest={0.5}
+        />
       </mesh>
 
       {/* Cork */}
-      <mesh position={[0, 1.1, 0]}>
-        <cylinderGeometry args={[0.3, 0.35, 0.3, 16]} />
+      <mesh position={[0, 1.2, 0]}>
+        <cylinderGeometry args={[0.25, 0.3, 0.25, 16]} />
         <meshStandardMaterial color="#8b5a2b" roughness={0.9} />
       </mesh>
     </group>
@@ -71,19 +118,18 @@ function Bottle() {
 function Scene() {
   return (
     <>
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[5, 10, 5]} intensity={1} castShadow />
-      <pointLight position={[-5, 5, -5]} intensity={0.5} color="#ffd700" />
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[5, 10, 5]} intensity={1.2} castShadow />
+      <pointLight position={[-5, 5, -5]} intensity={0.4} color="#ffd700" />
 
-      <Bottle />
+      <LiquidBottle />
 
-      {/* Ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
         <planeGeometry args={[10, 10]} />
         <meshStandardMaterial color="#2d2d2d" />
       </mesh>
 
-      <OrbitControls enablePan={false} minDistance={3} maxDistance={8} />
+      <OrbitControls enablePan={false} minDistance={3} maxDistance={8} makeDefault />
     </>
   )
 }
