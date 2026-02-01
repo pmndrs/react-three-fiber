@@ -12,12 +12,17 @@ import { Fn, float, vec3, positionWorld, modelPosition, faceDirection, mix, abs,
  * wobbleX/Z  = tilt the surface plane
  */
 export const liquidFill = /*@__PURE__*/ Fn(([wobbleX, wobbleZ, fillY]) => {
+  const wx = float(wobbleX)
+  const wz = float(wobbleZ)
   // World-up plane tilted by wobble
-  const wobbleNormal = vec3(float(wobbleX), 1, float(wobbleZ)).normalize()
+  const wobbleNormal = vec3(wx, 1, wz).normalize()
   // Position relative to object center — keeps fill stable during translation
   const relPos = positionWorld.sub(modelPosition)
+  // When the surface tilts, the center fill point drops (volume conservation).
+  // Proportional to tilt² so it's always a drop, scales naturally with wobble.
+  const fillDrop = wx.mul(wx).add(wz.mul(wz)).mul(0.25)
   // Positive = above surface (air), negative = below (liquid)
-  return dot(relPos, wobbleNormal).sub(float(fillY))
+  return dot(relPos, wobbleNormal).sub(float(fillY)).add(fillDrop)
 })
 
 /**
