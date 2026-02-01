@@ -1,17 +1,22 @@
 import * as THREE from 'three'
 
 /**
- * Port of Unity's Liquid.cs wobble physics.
+ * Port of Minion Art's Unity Liquid.cs wobble physics.
  * Tracks object velocity & angular velocity, produces damped sine-wave wobble values.
+ * Computes fill position with shape compensation from mesh vertex iteration.
  */
 export class WobblePhysics {
   maxWobble = 0.03
   wobbleSpeed = 1
   recovery = 1
+  thickness = 1
   fillAmount = 0.5
+  compensateAmount = 0
 
   wobbleX = 0
   wobbleZ = 0
+  /** Fill position offset — matches Unity's `pos` passed to `_FillAmount`. */
+  fillOffset = new THREE.Vector3()
 
   private wobbleAddX = 0
   private wobbleAddZ = 0
@@ -26,6 +31,10 @@ export class WobblePhysics {
 
   // scratch
   private _q = new THREE.Quaternion()
+  private _q2 = new THREE.Quaternion()
+  private _comp = new THREE.Vector3()
+  private _worldPos = new THREE.Vector3()
+  private _vert = new THREE.Vector3()
   private initialized = false
 
   update(position: THREE.Vector3, rotation: THREE.Quaternion, delta: number) {
@@ -51,7 +60,7 @@ export class WobblePhysics {
     this.sinewave = THREE.MathUtils.lerp(
       this.sinewave,
       Math.sin(this.pulse * this.time),
-      delta * THREE.MathUtils.clamp(mag, 1, 10),
+      delta * THREE.MathUtils.clamp(mag, this.thickness, 10),
     )
 
     this.wobbleX = this.wobbleAddX * this.sinewave
@@ -61,7 +70,7 @@ export class WobblePhysics {
     this.velocity.subVectors(this.lastPos, position).divideScalar(delta)
 
     // Angular velocity from quaternion difference
-    this._q.copy(rotation).multiply(this._q.copy(this.lastRot).invert())
+    this._q.copy(rotation).multiply(this._q2.copy(this.lastRot).invert())
     const qw = this._q.w
     if (Math.abs(qw) < 1023.5 / 1024.0) {
       const sign = qw < 0 ? -1 : 1
@@ -79,8 +88,69 @@ export class WobblePhysics {
     this.wobbleAddX += THREE.MathUtils.clamp(vx * this.maxWobble, -this.maxWobble, this.maxWobble)
     this.wobbleAddZ += THREE.MathUtils.clamp(vz * this.maxWobble, -this.maxWobble, this.maxWobble)
 
+    // Clamp accumulated wobble — Unity's lerp decay can't keep up with sustained
+    // high-frequency input (e.g. TransformControls drag), causing the fill plane
+    // to tilt near-vertical. Cap at 10× single-frame max (~17° tilt).
+    const wobbleCap = this.maxWobble * 10
+    this.wobbleAddX = THREE.MathUtils.clamp(this.wobbleAddX, -wobbleCap, wobbleCap)
+    this.wobbleAddZ = THREE.MathUtils.clamp(this.wobbleAddZ, -wobbleCap, wobbleCap)
+
     // Store for next frame
     this.lastPos.copy(position)
     this.lastRot.copy(rotation)
+  }
+
+  /**
+   * Compute fill position with shape compensation.
+   * Matches Unity's UpdatePos() + GetLowestPoint().
+   * Call after update() each frame.
+   */
+  computeFillPosition(mesh: THREE.Mesh, delta: number) {
+    const geometry = mesh.geometry
+    if (!geometry.boundingBox) geometry.computeBoundingBox()
+    const center = geometry.boundingBox!.getCenter(this._worldPos)
+
+    const bb = geometry.boundingBox!
+    // Map fillAmount (0 = empty, 1 = full) to local Y within bounding box
+    const fillY = THREE.MathUtils.lerp(bb.min.y, bb.max.y, this.fillAmount)
+
+    if (this.compensateAmount > 0) {
+      const lowestY = this.getLowestPoint(mesh)
+      const worldPos = mesh.localToWorld(this._vert.copy(center))
+      const target = this._worldPos.set(worldPos.x, worldPos.y - lowestY, worldPos.z)
+
+      if (delta !== 0) {
+        this._comp.lerp(target, delta * 10)
+      } else {
+        this._comp.copy(target)
+      }
+
+      this.fillOffset.set(center.x, fillY + this._comp.y * this.compensateAmount, center.z)
+    } else {
+      // Local fill Y level. objectWorldY is added in the shader, so this must stay local.
+      this.fillOffset.set(center.x, fillY, center.z)
+    }
+  }
+
+  /**
+   * Find the lowest world-space Y vertex of the mesh.
+   * Matches Unity's GetLowestPoint().
+   * This method is super agressive, a bounding box check would be much better
+   */
+  private getLowestPoint(mesh: THREE.Mesh): number {
+    const posAttr = mesh.geometry.getAttribute('position')
+    let lowestY = Infinity
+    let lowestVertY = 0
+
+    for (let i = 0; i < posAttr.count; i++) {
+      this._vert.fromBufferAttribute(posAttr, i)
+      mesh.localToWorld(this._vert)
+      if (this._vert.y < lowestY) {
+        lowestY = this._vert.y
+        lowestVertY = this._vert.y
+      }
+    }
+
+    return lowestVertY
   }
 }
