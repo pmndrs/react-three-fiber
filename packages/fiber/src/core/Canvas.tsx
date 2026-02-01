@@ -308,6 +308,7 @@ function CanvasImpl({
       queueMicrotask(() => {
         const rootEntry = _roots.get(canvas)
         if (rootEntry?.store) {
+          console.log('[R3F] HMR detected — rebuilding nodes/uniforms')
           // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
           rootEntry.store.setState((state) => ({
             nodes: {},
@@ -322,8 +323,7 @@ function CanvasImpl({
     if (typeof import.meta !== 'undefined' && (import.meta as any).hot) {
       const hot = (import.meta as any).hot
       hot.on('vite:afterUpdate', handleHMR)
-      // Vite uses dispose() for cleanup, not off()
-      return () => hot.dispose?.(() => {})
+      return () => hot.off?.('vite:afterUpdate', handleHMR)
     }
 
     // Try webpack HMR

@@ -11,6 +11,7 @@ import { reconciler } from './reconciler'
 import { context, createStore } from './store'
 import {
   applyProps,
+  calculateDpr,
   dispose,
   is,
   prepare,
@@ -281,6 +282,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         // Allows users to pass pre-initialized external renderers
         // @see https://github.com/pmndrs/react-three-fiber/issues/3651
         if (!renderer.hasInitialized?.()) {
+          // Set canvas dimensions before init to ensure depth buffer is created at correct size
+          // WebGPU creates GPU resources during init() based on canvas.width/height
+          // Without this, depth buffer uses default 300x150 causing size mismatch errors
+          const size = computeInitialSize(canvas, propsSize)
+          if (size.width > 0 && size.height > 0) {
+            const pixelRatio = calculateDpr(dpr)
+            ;(canvas as HTMLCanvasElement).width = size.width * pixelRatio
+            ;(canvas as HTMLCanvasElement).height = size.height * pixelRatio
+          }
           await renderer.init()
         }
 
@@ -585,6 +595,21 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           },
         )
 
+        // Register events flush job - flushes deferred pointer raycasts at frame start
+        // Runs in 'input' phase (before physics/update) so hover state is up-to-date
+        const unregisterEventsFlush = scheduler.register(
+          () => {
+            const state = store.getState()
+            state.events.flush?.()
+          },
+          {
+            id: `${newRootId}_events`,
+            rootId: newRootId,
+            phase: 'input',
+            system: true,
+          },
+        )
+
         // Register frustum update job - updates frustum from camera before render
         // Runs in preRender phase so it captures any camera movement from update phase
         const unregisterFrustum = scheduler.register(
@@ -633,11 +658,11 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             const userHandlesRender = scheduler.hasUserJobsInPhase('render', newRootId)
             if (userHandlesRender || state.internal.priority) return
 
-            // Use PostProcessing if available (from usePostProcessing hook)
+            // Use RenderPipeline if available (from useRenderPipeline hook)
             // Otherwise fall back to standard renderer.render()
             // Wrapped in try-catch to handle HMR scenarios where scene objects may be disposed
             try {
-              if (state.postProcessing?.render) state.postProcessing.render()
+              if (state.renderPipeline?.render) state.renderPipeline.render()
               else if (renderer?.render) renderer.render(state.scene, state.camera)
             } catch (error) {
               // Propagate render errors to error boundary
@@ -664,6 +689,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             unregisterRoot: () => {
               unregisterRoot()
               unregisterCanvasTarget()
+              unregisterEventsFlush()
               unregisterFrustum()
               unregisterVisibility()
               unregisterRender()
@@ -922,14 +948,22 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
     // Create a mirrored store, based on the previous root with a few overrides ...
     const store = createWithEqualityFn<RootState>((set, get) => ({ ...rest, set, get }) as RootState)
 
-    // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+    // Initialize with current state synchronously (required for reconciler.createPortal)
     const onMutate = (prev: RootState) => store.setState((state) => inject.current(prev, state))
     onMutate(previousRoot.getState())
-    previousRoot.subscribe(onMutate)
 
     return store
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [previousRoot, container])
+
+  // Subscribe to previous root-state and copy changes over to the mirrored portal-state
+  // This must be in useEffect to properly clean up on unmount (fixes memory leak)
+  // Note: inject is a stable ref from useMutableCallback, so not needed in deps
+  useIsomorphicLayoutEffect(() => {
+    const onMutate = (prev: RootState) => usePortalStore.setState((state) => inject.current(prev, state))
+    const unsubscribe = previousRoot.subscribe(onMutate)
+    return unsubscribe
+  }, [previousRoot, usePortalStore])
 
   return (
     // @ts-ignore, reconciler types are not maintained

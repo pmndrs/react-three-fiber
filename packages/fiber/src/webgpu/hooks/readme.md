@@ -12,10 +12,10 @@ React hooks for WebGPU/TSL shader development. **v10+ only.**
 - **[useUniforms](./readmes/useUniforms.md)** - Batch uniforms with scoping
 - **[useNodes](./readmes/useNodes.md)** - Global TSL node sharing
 - **[useLocalNodes](./readmes/useLocalNodes.md)** - Component-local nodes
-- **[usePostProcessing](./readmes/usePostProcessing.md)** - Post-processing setup
+- **[useRenderPipeline](./readmes/useRenderPipeline.md)** - Render pipeline setup
 
 ## Import
 
 ```tsx
-import { useUniforms, useNodes, useLocalNodes, usePostProcessing } from '@react-three/fiber/webgpu'
+import { useUniforms, useNodes, useLocalNodes, useRenderPipeline } from '@react-three/fiber/webgpu'
 ```

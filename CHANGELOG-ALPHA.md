@@ -49,6 +49,92 @@ Removed redundant renderer props that can be passed via `gl` or `renderer` props
 
 ### Features
 
+#### Interactive Priority (userData.interactivePriority)
+
+Added support for object-level interactive priority in the event system. Objects with `userData.interactivePriority` take precedence over standard distance-based hit testing, enabling UI controls that render on top via depth tricks to receive events correctly.
+
+```tsx
+// This mesh receives events even if behind other objects in world space
+<mesh userData={{ interactivePriority: 1 }}>
+  <boxGeometry />
+  <meshBasicMaterial />
+</mesh>
+
+// Higher values take precedence
+<mesh userData={{ interactivePriority: 10 }}>
+  {/* Receives events before interactivePriority: 1 */}
+</mesh>
+```
+
+**Sort order:**
+
+1. Objects with `interactivePriority` come before objects without
+2. Higher `interactivePriority` values win among prioritized objects
+3. Then standard `events.priority` (portal/layer priority)
+4. Then distance (closer first)
+
+**Use cases:** Transform controls (PivotControls), UI overlays, debug helpers that use depth tricks to render on top.
+
+**Files changed:**
+
+- `packages/fiber/src/core/events.ts` - Added interactivePriority check in hit sorting
+
+#### useBuffers & useGPUStorage Hooks
+
+Added two new hooks for managing GPU storage in compute-intensive WebGPU applications:
+
+**useBuffers** - Manages buffer data for GPU compute:
+
+```tsx
+import { useBuffers } from '@react-three/fiber/webgpu'
+import { instancedArray } from 'three/tsl'
+
+const { positions, velocities } = useBuffers(
+  () => ({
+    positions: instancedArray(count, 'vec3'),
+    velocities: new Float32Array(count * 3),
+  }),
+  'particles',
+)
+```
+
+**useGPUStorage** - Manages GPU storage textures:
+
+```tsx
+import { useGPUStorage } from '@react-three/fiber/webgpu'
+import { StorageTexture } from 'three/webgpu'
+
+const { heightMap } = useGPUStorage(
+  () => ({
+    heightMap: new StorageTexture(512, 512),
+  }),
+  'terrain',
+)
+```
+
+**Key features:**
+
+- Same API pattern as `useNodes` and `useUniforms`
+- Scoped storage with create-if-not-exists semantics
+- Accessible in node creators via `({ buffers, gpuStorage }) => ...`
+- Utility functions: `removeBuffers/Storage`, `clearBuffers/Storage`, `rebuildBuffers/Storage`, `disposeBuffers/Storage`
+- GPU resource disposal via `disposeBuffers()` and `disposeStorage()`
+
+**Supported types:**
+
+- **useBuffers**: TypedArrays, BufferAttribute, StorageBufferAttribute, TSL buffer nodes (`instancedArray`, `storage`)
+- **useGPUStorage**: StorageTexture, Storage3DTexture, TSL storage texture nodes
+
+**Files changed:**
+
+- `packages/fiber/src/core/store.ts` - Added `buffers: {}`, `gpuStorage: {}` to state
+- `packages/fiber/types/store.d.ts` - Added BufferLike, BufferStore, StorageLike, StorageStore types
+- `packages/fiber/src/webgpu/hooks/useBuffers.tsx` - **NEW** Buffer management hook
+- `packages/fiber/src/webgpu/hooks/useGPUStorage.tsx` - **NEW** GPU storage management hook
+- `packages/fiber/src/webgpu/hooks/ScopedStore.ts` - Added buffers/gpuStorage to CreatorState
+- `packages/fiber/src/webgpu/hooks/index.ts` - Export new hooks
+- `packages/fiber/src/webgpu/hooks/readmes/useBuffers-useGPUStorage.md` - **NEW** Documentation
+
 #### forceEven Canvas Prop
 
 Added `forceEven` prop to Canvas for Safari compatibility. Safari has issues with odd or fractional HTML canvas dimensions. When enabled, canvas dimensions are rounded up to the nearest even number.
@@ -323,6 +409,7 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 ### Bug Fixes
 
+- Fixed memory leak in `createPortal` where subscriptions to parent store were never cleaned up. When portals were created/destroyed frequently (e.g., with rapidly changing data), each portal subscribed to `previousRoot` but never unsubscribed, keeping the portal's zustand store and all its state in memory indefinitely.
 - Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
 - Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
 - Fixed `useNodes()` and `useUniforms()` reader modes not updating when store changes

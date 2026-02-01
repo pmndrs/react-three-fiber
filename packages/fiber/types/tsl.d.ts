@@ -115,6 +115,7 @@ declare global {
     | import('three/webgpu').Euler
     | import('three/webgpu').Quaternion
     | { x: number; y?: number; z?: number; w?: number } // Plain objects converted to vectors
+    | { r: number; g: number; b: number; a?: number } // Plain objects converted to Color
     | Node // TSL nodes like color(), vec3(), float() for type casting
     | UniformNode
 

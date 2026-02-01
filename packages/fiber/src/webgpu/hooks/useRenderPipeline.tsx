@@ -3,19 +3,19 @@ import { useStore, useThree } from '../../core/hooks'
 import * as THREE from '#three'
 import { pass } from '#three/tsl'
 
-// Types are declared globally in types/postprocessing.d.ts:
+// Types are declared globally in types/renderPipeline.d.ts:
 // - PassRecord
-// - PostProcessingSetupCallback
-// - PostProcessingMainCallback
-// - UsePostProcessingReturn
+// - RenderPipelineSetupCallback
+// - RenderPipelineMainCallback
+// - UseRenderPipelineReturn
 
 //* Hook Implementation ==============================
 
 /**
- * Hook for managing WebGPU PostProcessing with automatic scenePass setup.
+ * Hook for managing WebGPU RenderPipeline with automatic scenePass setup.
  *
  * Features:
- * - Creates PostProcessing instance if not exists
+ * - Creates RenderPipeline instance if not exists
  * - Creates default scenePass (no MRT) automatically
  * - Callbacks receive full RootState for flexibility
  * - No auto-cleanup on unmount - use reset() for explicit cleanup
@@ -23,21 +23,21 @@ import { pass } from '#three/tsl'
  *
  * @param mainCB - Main callback to configure outputNode and create effect passes
  * @param setupCB - Optional setup callback to configure MRT on scenePass
- * @returns { passes, postProcessing, clearPasses, reset, rebuild }
+ * @returns { passes, renderPipeline, clearPasses, reset, rebuild }
  *
  * @example
  * ```tsx
  * // Simple effect
- * usePostProcessing(({ postProcessing, passes }) => {
- *   postProcessing.outputNode = bloom(passes.scenePass.getTextureNode())
+ * useRenderPipeline(({ renderPipeline, passes }) => {
+ *   renderPipeline.outputNode = bloom(passes.scenePass.getTextureNode())
  * })
  *
  * // With MRT setup
- * usePostProcessing(
- *   ({ postProcessing, passes }) => {
+ * useRenderPipeline(
+ *   ({ renderPipeline, passes }) => {
  *     const beauty = passes.scenePass.getTextureNode().toInspector('Color')
  *     const vel = passes.scenePass.getTextureNode('velocity')
- *     postProcessing.outputNode = motionBlur(beauty, vel)
+ *     renderPipeline.outputNode = motionBlur(beauty, vel)
  *   },
  *   ({ passes }) => {
  *     passes.scenePass.setMRT(mrt({ output, velocity }))
@@ -45,13 +45,13 @@ import { pass } from '#three/tsl'
  * )
  *
  * // Read-only access
- * const { postProcessing, passes } = usePostProcessing()
+ * const { renderPipeline, passes } = useRenderPipeline()
  * ```
  */
-export function usePostProcessing(
-  mainCB?: PostProcessingMainCallback,
-  setupCB?: PostProcessingSetupCallback,
-): UsePostProcessingReturn {
+export function useRenderPipeline(
+  mainCB?: RenderPipelineMainCallback,
+  setupCB?: RenderPipelineSetupCallback,
+): UseRenderPipelineReturn {
   const store = useStore()
   const { scene, camera, renderer, isLegacy } = useThree()
 
@@ -88,7 +88,7 @@ export function usePostProcessing(
 
   const reset = useCallback(() => {
     store.setState({
-      postProcessing: null,
+      renderPipeline: null,
       passes: {},
     })
     callbacksRanRef.current = false
@@ -102,14 +102,14 @@ export function usePostProcessing(
     setRebuildVersion((v) => v + 1)
   }, [])
 
-  //* Main Effect - Setup PostProcessing ==============================
+  //* Main Effect - Setup RenderPipeline ==============================
   // useLayoutEffect runs synchronously BEFORE browser paint
   // This ensures MRT is configured before the first render frame
 
   useLayoutEffect(() => {
     // WebGPU only - throw if used with WebGL
     if (isLegacy) {
-      throw new Error('usePostProcessing is only available with WebGPU renderer. Set renderer prop on Canvas.')
+      throw new Error('useRenderPipeline is only available with WebGPU renderer. Set renderer prop on Canvas.')
     }
 
     if (!renderer || !scene || !camera) return
@@ -118,10 +118,11 @@ export function usePostProcessing(
     const set = store.setState
 
     try {
-      let pp = state.postProcessing as THREE.PostProcessing | null
+      let pp = state.renderPipeline as THREE.PostProcessing | null
       let currentPasses = { ...state.passes } as PassRecord
 
-      //* Create PostProcessing if needed ==============================
+      //* Create RenderPipeline if needed ==============================
+      // NOTE: Three.js still exports as PostProcessing - will be renamed to RenderPipeline in a future release
       let justCreatedPP = false
       if (!pp) {
         pp = new THREE.PostProcessing(renderer as THREE.WebGPURenderer)
@@ -149,7 +150,7 @@ export function usePostProcessing(
       if (!pp.outputNode || justCreatedPP) pp.outputNode = scenePass
 
       // Update state with PP and initial scenePass
-      set({ postProcessing: pp, passes: currentPasses })
+      set({ renderPipeline: pp, passes: currentPasses })
 
       //* Run setupCB and mainCB ==============================
       // Only run callbacks if:
@@ -188,27 +189,27 @@ export function usePostProcessing(
         callbacksRanRef.current = true
       }
     } catch (error) {
-      console.error('[usePostProcessing] Setup error:', error)
+      console.error('[useRenderPipeline] Setup error:', error)
     }
 
-    // No auto-cleanup on unmount - PostProcessing persists
+    // No auto-cleanup on unmount - RenderPipeline persists
   }, [store, renderer, scene, camera, isLegacy, rebuildVersion]) // Callbacks accessed via refs; rebuildVersion triggers manual re-run
 
   //* Return current state ==============================
 
   // Subscribe to state changes for reactive updates
   const passes = useThree((s) => s.passes)
-  const postProcessing = useThree((s) => s.postProcessing)
+  const renderPipeline = useThree((s) => s.renderPipeline)
 
   return {
     passes,
-    postProcessing,
+    renderPipeline,
     clearPasses,
     reset,
     rebuild,
-    // isReady indicates if PostProcessing is configured and ready for rendering
-    isReady: postProcessing !== null,
+    // isReady indicates if RenderPipeline is configured and ready for rendering
+    isReady: renderPipeline !== null,
   }
 }
 
-export default usePostProcessing
+export default useRenderPipeline

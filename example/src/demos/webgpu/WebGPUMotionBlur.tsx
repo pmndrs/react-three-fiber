@@ -1,9 +1,9 @@
 /**
- * WebGPU Motion Blur Post-Processing Example
+ * WebGPU Motion Blur Render Pipeline Example
  *
  * Demonstrates:
- * - WebGPU post-processing with motion blur effect
- * - usePostProcessing hook for easy PP setup
+ * - WebGPU render pipeline with motion blur effect
+ * - useRenderPipeline hook for easy pipeline setup
  * - useUniforms for reactive blur amount control
  * - Animated GLTF model with skeletal animation
  *
@@ -15,7 +15,7 @@
 
 import { useRef, useEffect, useState, useMemo } from 'react'
 import { Canvas, useFrame, useTexture, useThree } from '@react-three/fiber/webgpu'
-import { useUniforms, usePostProcessing } from '@react-three/fiber/webgpu'
+import { useUniforms, useRenderPipeline } from '@react-three/fiber/webgpu'
 import { useControls } from 'leva'
 import { OrbitControls } from '@react-three/drei'
 import * as THREE from 'three/webgpu'
@@ -23,17 +23,17 @@ import { mrt, output, velocity, screenUV, texture, uv } from 'three/tsl'
 import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
-//* Post-Processing Manager ==============================
-// This component sets up and manages the post-processing pipeline
-// Uses usePostProcessing hook - no manual useFrame needed!
+//* Render Pipeline Manager ==============================
+// This component sets up and manages the render pipeline
+// Uses useRenderPipeline hook - no manual useFrame needed!
 
-function PostProcessingManager() {
+function RenderPipelineManager() {
   // Get the blur amount uniform from shared state (registered in Experience)
   const { blurAmount } = useUniforms()
 
-  usePostProcessing(
+  useRenderPipeline(
     // mainCB - receives full RootState, set outputNode explicitly
-    ({ postProcessing, passes, uniforms }) => {
+    ({ renderPipeline, passes, uniforms }) => {
       // Get the rendered textures
       const beauty = passes.scenePass.getTextureNode()
       const vel = passes.scenePass.getTextureNode('velocity')
@@ -47,7 +47,7 @@ function PostProcessingManager() {
       const vignette = screenUV.distance(0.5).remap(0.6, 1).mul(2).clamp().oneMinus()
 
       // Explicitly set the output node
-      postProcessing.outputNode = mBlur.mul(vignette)
+      renderPipeline.outputNode = mBlur.mul(vignette)
 
       // Return passes to share (optional)
       return { beauty, velocity: vel, motionBlur: mBlur }
@@ -332,7 +332,7 @@ function Experience() {
     autoRotate: { value: true },
   })
 
-  // Register uniforms with R3F state (makes them available to PostProcessingManager)
+  // Register uniforms with R3F state (makes them available to RenderPipelineManager)
   useUniforms({ blurAmount: levaControls.blurAmount })
 
   return (
@@ -348,8 +348,8 @@ function Experience() {
       <AnimatedTorus position={[3.5, 1.5, -4]} direction={1} />
       <ScalingTorus position={[-3.5, 1.5, -4]} />
 
-      {/* Post-processing manager - takes over rendering */}
-      <PostProcessingManager />
+      {/* Render pipeline manager - takes over rendering */}
+      <RenderPipelineManager />
 
       {/* Camera controls with auto-rotate */}
       <OrbitControls

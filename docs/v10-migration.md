@@ -302,7 +302,7 @@ function WobblyMesh() {
 - **`useUniforms`** - Create and share uniforms across components. Scoping prevents naming conflicts. Auto-converts Leva controls.
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
 - **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
-- **`usePostProcessing`** - Declarative post-processing setup with automatic MRT configuration.
+- **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration.
 
 📚 **Learn more:** [WebGPU Hooks Overview](../packages/fiber/src/webgpu/hooks/readmes/overview.md)
 

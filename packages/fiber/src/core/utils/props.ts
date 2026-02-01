@@ -337,6 +337,11 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     else {
       root[key] = value
 
+      // Trigger shader recompilation when node props change on materials
+      if (key.endsWith('Node') && (root as any).isMaterial) {
+        ;(root as any).needsUpdate = true
+      }
+
       // Auto-assign color space to 8-bit input textures (color maps)
       // Most 8-bit textures are authored in sRGB regardless of output display space
       // https://github.com/pmndrs/react-three-fiber/issues/344

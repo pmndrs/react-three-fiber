@@ -55,16 +55,16 @@ function WobblyMesh() {
 }
 ```
 
-### Post-Processing
+### Render Pipeline
 
 ```tsx
-import { usePostProcessing } from '@react-three/fiber/webgpu'
+import { useRenderPipeline } from '@react-three/fiber/webgpu'
 import { bloom } from 'three/tsl'
 
 function Scene() {
-  usePostProcessing(({ postProcessing, passes }) => {
+  useRenderPipeline(({ renderPipeline, passes }) => {
     const sceneTexture = passes.scenePass.getTextureNode()
-    postProcessing.outputNode = bloom(sceneTexture, 1.5, 0.1, 0.9)
+    renderPipeline.outputNode = bloom(sceneTexture, 1.5, 0.1, 0.9)
   })
 
   return <mesh>...</mesh>
@@ -191,9 +191,11 @@ All WebGPU hooks interact with R3F's root store:
 interface RootState {
   uniforms: UniformRecord // Global uniforms + scopes
   nodes: NodeRecord // Global TSL nodes + scopes
+  buffers: BufferRecord // GPU buffer storage + scopes
+  gpuStorage: StorageRecord // GPU texture storage + scopes
   textures: TextureRecord // Texture registry
-  postProcessing: PostProcessing | null
-  passes: PassRecord // Post-processing passes
+  renderPipeline: RenderPipeline | null
+  passes: PassRecord // Render pipeline passes
 }
 ```
 
@@ -224,7 +226,8 @@ This means:
 - **[useUniforms](./useUniforms.md)** - Batch uniforms with scoping, Leva integration
 - **[useNodes](./useNodes.md)** - Global TSL node sharing
 - **[useLocalNodes](./useLocalNodes.md)** - Component-local node composition
-- **[usePostProcessing](./usePostProcessing.md)** - Post-processing setup
+- **[useBuffers & useGPUStorage](./useBuffers-useGPUStorage.md)** - GPU buffer and storage texture management
+- **[useRenderPipeline](./useRenderPipeline.md)** - Render pipeline setup
 
 ## External Resources
 

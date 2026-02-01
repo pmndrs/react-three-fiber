@@ -192,6 +192,20 @@ export function vectorize(inObject: unknown): unknown {
   // If it's a Color, Euler, Quaternion, or other Three.js types, return as-is
   if (obj.isColor || obj.isEuler || obj.isQuaternion || obj.isSpherical) return inObject
 
+  // Check if it's a plain object with r/g/b properties (Color)
+  if (
+    'r' in obj &&
+    'g' in obj &&
+    'b' in obj &&
+    typeof obj.r === 'number' &&
+    typeof obj.g === 'number' &&
+    typeof obj.b === 'number'
+  ) {
+    // Leva returns 0-255 range, THREE.Color expects 0-1
+    const scale = obj.r > 1 || obj.g > 1 || obj.b > 1 ? 1 / 255 : 1
+    return new THREE.Color(obj.r * scale, obj.g * scale, obj.b * scale)
+  }
+
   // Check if it's a plain object with numeric x/y properties
   if ('x' in obj && 'y' in obj && typeof obj.x === 'number' && typeof obj.y === 'number') {
     // Check for Vector4 (x, y, z, w)
