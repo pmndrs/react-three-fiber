@@ -19,7 +19,6 @@
     ]
   },
   "scripts": {
-    "changeset:add": "changeset add",
     "postinstall": "pnpm stub && pnpm patch-react-reconciler",
     "patch-react-reconciler": "vite build",
     "build": "pnpm --filter @react-three/fiber build && pnpm --filter @react-three/eslint-plugin build",
@@ -33,8 +32,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
-    "release": "pnpm build && pnpm changeset publish",
-    "vers": "pnpm changeset version",
+    "release": "pnpm build && pnpm -r publish --filter './packages/*'",
     "codegen:eslint": "cd packages/eslint-plugin && pnpm codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
@@ -48,8 +46,6 @@
     "@babel/preset-env": "^7.28.6",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
-    "@changesets/changelog-git": "^0.2.1",
-    "@changesets/cli": "^2.29.8",
     "@rollup/plugin-alias": "^6.0.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.1",

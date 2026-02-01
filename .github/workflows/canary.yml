@@ -1,0 +1,46 @@
+name: Canary Release
+
+on:
+  push:
+    branches: [v10]
+  workflow_dispatch:
+
+permissions:
+  id-token: write # Required for npm OIDC
+  contents: read
+
+jobs:
+  canary:
+    name: Publish canary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+      - name: Set canary version
+        run: |
+          CANARY_VERSION="10.0.0-canary.$(git rev-parse --short HEAD)"
+          echo "Publishing canary version: $CANARY_VERSION"
+          cd packages/fiber && npm version $CANARY_VERSION --no-git-tag-version
+
+      - name: Publish to npm
+        run: pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+        env:
+          NODE_AUTH_TOKEN: ''
