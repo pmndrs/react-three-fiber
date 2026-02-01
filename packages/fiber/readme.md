@@ -35,6 +35,10 @@ No. There is no overhead. Components render outside of React. It outperforms Thr
 
 Yes. It merely expresses Threejs in JSX, `<mesh />` dynamically turns into `new THREE.Mesh()`. If a new Threejs version adds, removes or changes features, it will be available to you instantly without depending on updates to this library.
 
+#### Does it support WebGPU?
+
+Yes. With minor changes in v9 and significant work in v10 WebGPU support is first class. We support all ThreeJS WebGPU features/Nodes and expand it with our own hooks and utilities.
+
 ### What does it look like?
 
 <table>
@@ -206,7 +210,7 @@ export default function App() {
 
 # Documentation, tutorials, examples
 
-Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber)
+Visit [docs.pmnd.rs](https://docs.pmnd.rs/react-three-fiber) | [Awesome React Three Fiber](AwesomeR3F.md)
 
 # First steps
 
@@ -217,89 +221,11 @@ You need to be versed in both React and Threejs before rushing into this. If you
 3. [Look up](https://threejs.org/docs/index.html#api/en/objects/Mesh) the JSX elements that you see (mesh, ambientLight, etc), _all_ threejs exports are native to three-fiber.
 4. Try changing some values, scroll through our [API](https://docs.pmnd.rs/react-three-fiber) to see what the various settings and hooks do.
 
-Some helpful material:
-
-- [Threejs-docs](https://threejs.org/docs) and [examples](https://threejs.org/examples)
-- [Discover Threejs](https://discoverthreejs.com), especially the [Tips and Tricks](https://discoverthreejs.com/tips-and-tricks) chapter for best practices
-- [Bruno Simons Threejs Journey](https://threejs-journey.com), arguably the best learning resource, now includes a full [R3F chapter](https://threejs-journey.com/lessons/what-are-react-and-react-three-fiber)
-
-<a href="https://threejs-journey.com"><img src="docs/banner-journey.jpg" /></a>
-
-# Ecosystem
-
-There is a vibrant and extensive eco system around three-fiber, full of libraries, helpers and abstractions.
-
-- [`@react-three/drei`](https://github.com/pmndrs/drei) &ndash; useful helpers, this is an eco system in itself
-- [`@react-three/gltfjsx`](https://github.com/pmndrs/gltfjsx) &ndash; turns GLTFs into JSX components
-- [`@react-three/postprocessing`](https://github.com/pmndrs/react-postprocessing) &ndash; post-processing effects
-- [`@react-three/uikit`](https://github.com/pmndrs/uikit) &ndash; WebGL rendered UI components for three-fiber
-- [`@react-three/test-renderer`](https://github.com/pmndrs/react-three-fiber/tree/master/packages/test-renderer) &ndash; for unit tests in node
-- [`@react-three/offscreen`](https://github.com/pmndrs/react-three-offscreen) &ndash; offscreen/worker canvas for react-three-fiber
-- [`@react-three/flex`](https://github.com/pmndrs/react-three-flex) &ndash; flexbox for react-three-fiber
-- [`@react-three/xr`](https://github.com/pmndrs/react-xr) &ndash; VR/AR controllers and events
-- [`@react-three/csg`](https://github.com/pmndrs/react-three-csg) &ndash; constructive solid geometry
-- [`@react-three/rapier`](https://github.com/pmndrs/react-three-rapier) &ndash; 3D physics using Rapier
-- [`@react-three/cannon`](https://github.com/pmndrs/use-cannon) &ndash; 3D physics using Cannon
-- [`@react-three/p2`](https://github.com/pmndrs/use-p2) &ndash; 2D physics using P2
-- [`@react-three/a11y`](https://github.com/pmndrs/react-three-a11y) &ndash; real a11y for your scene
-- [`@react-three/gpu-pathtracer`](https://github.com/pmndrs/react-three-gpu-pathtracer) &ndash; realistic path tracing
-- [`create-r3f-app next`](https://github.com/pmndrs/react-three-next) &ndash; nextjs starter
-- [`lamina`](https://github.com/pmndrs/lamina) &ndash; layer based shader materials
-- [`zustand`](https://github.com/pmndrs/zustand) &ndash; flux based state management
-- [`jotai`](https://github.com/pmndrs/jotai) &ndash; atoms based state management
-- [`valtio`](https://github.com/pmndrs/valtio) &ndash; proxy based state management
-- [`react-spring`](https://github.com/pmndrs/react-spring) &ndash; a spring-physics-based animation library
-- [`framer-motion-3d`](https://www.framer.com/docs/three-introduction/) &ndash; framer motion, a popular animation library
-- [`use-gesture`](https://github.com/pmndrs/react-use-gesture) &ndash; mouse/touch gestures
-- [`leva`](https://github.com/pmndrs/leva) &ndash; create GUI controls in seconds
-- [`maath`](https://github.com/pmndrs/maath) &ndash; a kitchen sink for math helpers
-- [`miniplex`](https://github.com/hmans/miniplex) &ndash; ECS (entity management system)
-- [`composer-suite`](https://github.com/hmans/composer-suite) &ndash; composing shaders, particles, effects and game mechanics
-- [`triplex`](https://triplex.dev/) &ndash; visual editor for react-three-fiber
-- [`koestlich`](https://github.com/coconut-xr/koestlich) &ndash; UI component library for react-three-fiber
-
-[Usage Trend of the @react-three Family](https://npm-compare.com/@react-three/a11y,@react-three/cannon,@react-three/csg,@react-three/drei,@react-three/flex,@react-three/gltfjsx,@react-three/gpu-pathtracer,@react-three/offscreen,@react-three/p2,@react-three/postprocessing,@react-three/rapier,@react-three/test-renderer,@react-three/uikit,@react-three/xr)
-
-# Who is using Three-fiber
-
-A small selection of companies and projects relying on three-fiber.
-
-- [`vercel`](https://www.vercel.com) (design agency)
-- [`basement`](https://basement.studio) (design agency)
-- [`studio freight`](https://studiofreight.com) (design agency)
-- [`14 islands`](https://www.14islands.com) (design agency)
-- [`ueno`](https://dribbble.com/ueno) (design agency) — [video](https://twitter.com/0xca0a/status/1204373807408013312)
-- [`flux.ai`](https://www.flux.ai) (PCB builder)
-- [`colorful.app`](https://www.colorful.app) (modeller)
-- [`bezi`](https://www.bezi.com) (modeller)
-- [`readyplayer.me`](https://readyplayer.me) (avatar configurator)
-- [`zillow`](https://www.zillow.com) (real estate)
-- [`lumalabs.ai/genie`](https://lumalabs.ai/genie) (AI models)
-- [`skybox.blockadelabs`](https://skybox.blockadelabs.com) (AI envmaps)
-- [`3dconfig`](https://3dconfig.com) (floor planer)
-- [`buerli.io`](https://buerli.io) (CAD)
-- [`getencube`](https://www.getencube.com) (CAD)
-- [`glowbuzzer`](https://www.glowbuzzer.com) (CAD) — [video](https://twitter.com/glowbuzzer/status/1678396014644940800)
-- [`triplex`](https://triplex.dev) (editor) — [video](https://twitter.com/_douges/status/1708859381369221539)
-- [`theatrejs`](https://www.theatrejs.com) (editor) — [video](https://twitter.com/0xca0a/status/1566838823170068480)
-
 # How to contribute
 
-Checkout the detailed [contribution docs.](docs/development/README.md)
+See the [Development Guide](docs/development/README.md) for setup, workflow, and [contributing standards](docs/development/CONTRIBUTING.md).
 
-If you like this project, please consider helping out. All contributions are welcome as well as donations to [Opencollective](https://opencollective.com/pmndrs)
-
-# Testing
-
-R3F uses Jest for unit testing and bundle verification scripts to ensure correct THREE.js imports across entry points. For detailed testing instructions, see the [Testing Guide](docs/development/TESTING.md).
-
-```bash
-# Run all tests
-yarn test
-
-# Build and verify bundles
-yarn build && yarn verify-bundles
-```
+All contributions are welcome as well as donations to [Open Collective](https://opencollective.com/pmndrs).
 
 #### Backers
 

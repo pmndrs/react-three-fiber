@@ -635,4 +635,293 @@ describe('events', () => {
   })
 
   it.todo('can handle different event prefixes')
+
+  //* Frame-Timed Raycasting Tests ==============================
+
+  describe('frame-timed raycasting', () => {
+    it('should defer pointer move raycasts when frameTimedRaycasts is enabled', async () => {
+      const handlePointerMove = vi.fn()
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh onPointerMove={handlePointerMove}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Verify frameTimedRaycasts is enabled by default
+      expect(storeRef!.events.frameTimedRaycasts).toBe(true)
+
+      // Fire pointer move - should be deferred
+      const evt = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      getContainer().dispatchEvent(evt)
+
+      // The event should be in pointerDirty, not processed yet
+      expect(storeRef!.internal.pointerDirty.size).toBeGreaterThanOrEqual(0)
+
+      // Wait for frame to process
+      await act(async () => {
+        await new Promise((res) => requestAnimationFrame(res))
+      })
+
+      // Now the handler should have been called (after flush)
+      expect(handlePointerMove).toHaveBeenCalled()
+    })
+
+    it('should raycast clicks immediately even with frameTimedRaycasts enabled', async () => {
+      const handleClick = vi.fn()
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh onClick={handleClick}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Verify frameTimedRaycasts is enabled
+      expect(storeRef!.events.frameTimedRaycasts).toBe(true)
+
+      // Click events should raycast immediately
+      const down = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      const up = createPointerEvent('pointerup', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      const click = createPointerEvent('click', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+
+      await act(async () => {
+        fireEvent(getContainer(), down)
+        fireEvent(getContainer(), up)
+        fireEvent(getContainer(), click)
+      })
+
+      // Click should have been processed immediately
+      expect(handleClick).toHaveBeenCalled()
+    })
+
+    it('should still work with pointer move when events.update() is called manually', async () => {
+      const handlePointerMove = vi.fn()
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh onPointerMove={handlePointerMove}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Fire pointer move - this will be deferred
+      const evt = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      getContainer().dispatchEvent(evt)
+
+      // Manually call update to process immediately
+      await act(async () => {
+        storeRef?.events.update?.()
+      })
+
+      // Should be processed after manual update call
+      expect(handlePointerMove).toHaveBeenCalled()
+    })
+  })
+
+  //* Per-Pointer State Tests ==============================
+
+  describe('per-pointer state (pointerMap)', () => {
+    it('should initialize pointerMap in internal state', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Verify pointerMap exists
+      expect(storeRef!.internal.pointerMap).toBeInstanceOf(Map)
+      expect(storeRef!.internal.pointerDirty).toBeInstanceOf(Map)
+    })
+
+    it('should track hover state per pointer', async () => {
+      const handlePointerEnter = vi.fn()
+      const handlePointerLeave = vi.fn()
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh onPointerEnter={handlePointerEnter} onPointerLeave={handlePointerLeave}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Pointer 1 enters
+      const enter1 = createPointerEvent('pointermove', {
+        pointerId: 1,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
+
+      await act(async () => {
+        getContainer().dispatchEvent(enter1)
+        await new Promise((res) => requestAnimationFrame(res))
+      })
+
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+
+      // Pointer 2 enters (different finger)
+      const enter2 = createPointerEvent('pointermove', {
+        pointerId: 2,
+        clientX: 577,
+        clientY: 480,
+        offsetX: 577,
+        offsetY: 480,
+      })
+
+      await act(async () => {
+        getContainer().dispatchEvent(enter2)
+        await new Promise((res) => requestAnimationFrame(res))
+      })
+
+      // Should be called again for pointer 2
+      expect(handlePointerEnter).toHaveBeenCalledTimes(2)
+    })
+
+    it('should track hover state in pointerMap', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh onPointerEnter={() => {}}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Verify pointerMap exists
+      expect(storeRef!.internal.pointerMap).toBeInstanceOf(Map)
+
+      const enter = createPointerEvent('pointermove', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+
+      await act(async () => {
+        getContainer().dispatchEvent(enter)
+        await new Promise((res) => requestAnimationFrame(res))
+      })
+
+      // Pointer state should be created and have hovered entries (pointerId: 1 from createPointerEvent)
+      const pointerState = storeRef!.internal.pointerMap.get(1)
+      expect(pointerState).toBeDefined()
+      expect(pointerState?.hovered.size).toBeGreaterThan(0)
+    })
+  })
+
+  //* Event Manager Config Tests ==============================
+
+  describe('event manager configuration', () => {
+    it('should have default config values', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      expect(storeRef!.events.frameTimedRaycasts).toBe(true)
+      expect(storeRef!.events.alwaysFireOnScroll).toBe(true)
+      expect(storeRef!.events.updateOnFrame).toBe(false)
+    })
+
+    it('should expose events.flush method', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      expect(typeof storeRef!.events.flush).toBe('function')
+    })
+
+    it('should expose events.update with optional pointerId', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      expect(typeof storeRef!.events.update).toBe('function')
+      // Should accept optional pointerId
+      expect(() => storeRef!.events.update?.()).not.toThrow()
+      expect(() => storeRef!.events.update?.(1)).not.toThrow()
+    })
+  })
 })

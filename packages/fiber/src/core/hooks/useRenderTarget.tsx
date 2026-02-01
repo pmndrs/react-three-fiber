@@ -38,13 +38,9 @@ import type { RenderTargetOptions } from '#types'
  * const fbo = useRenderTarget(512, 256, { samples: 4 })
  * ```
  */
-export function useRenderTarget(options?: RenderTargetOptions): RenderTarget | WebGLRenderTarget
-export function useRenderTarget(size: number, options?: RenderTargetOptions): RenderTarget | WebGLRenderTarget
-export function useRenderTarget(
-  width: number,
-  height: number,
-  options?: RenderTargetOptions,
-): RenderTarget | WebGLRenderTarget
+export function useRenderTarget(options?: RenderTargetOptions): RenderTargetCompat
+export function useRenderTarget(size: number, options?: RenderTargetOptions): RenderTargetCompat
+export function useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTargetCompat
 export function useRenderTarget(
   widthOrOptions?: number | RenderTargetOptions,
   heightOrOptions?: number | RenderTargetOptions,

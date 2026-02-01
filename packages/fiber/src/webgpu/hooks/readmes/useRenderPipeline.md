@@ -1,15 +1,15 @@
-# usePostProcessing Hook
+# useRenderPipeline Hook
 
-Declarative WebGPU post-processing setup with automatic scene pass creation and MRT (Multiple Render Target) configuration.
+Declarative WebGPU render pipeline setup with automatic scene pass creation and MRT (Multiple Render Target) configuration.
 
-PostProcessing is now a main level component within ThreeJS.
+RenderPipeline is now a main level component within ThreeJS (currently named PostProcessing, will be renamed to RenderPipeline in a future release).
 EffectComposer and super complex passes will be less common and shared Fn Nodes and workflows will become the norm.
 
 What I expect is instead of some new library with complex passes/works it be a collection of pass nodes with some utils to glue them together. This acts as a base for user _OR_ libraries to build onto.
 
-New hook to access and setup post production. This hook does a LOT behind the scenes.
+New hook to access and setup render pipeline. This hook does a LOT behind the scenes.
 
-- Running this at all creates a postProcess object, puts it on the state, and creates a default ScenePass
+- Running this at all creates a renderPipeline object, puts it on the state, and creates a default ScenePass
 - Two input callbacks, one for after creation one for pre-creation (set mrt etc)
 - access to full nodes and uniforms like other nodes
 - passes isolated in their own records
@@ -20,18 +20,18 @@ New hook to access and setup post production. This hook does a LOT behind the sc
 ## API
 
 ```tsx
-// Basic post-processing
-usePostProcessing(({ postProcessing, passes }) => {
-  postProcessing.outputNode = bloom(passes.scenePass.getTextureNode())
+// Basic render pipeline
+useRenderPipeline(({ renderPipeline, passes }) => {
+  renderPipeline.outputNode = bloom(passes.scenePass.getTextureNode())
 })
 
 // With MRT setup for advanced effects
-usePostProcessing(
+useRenderPipeline(
   // mainCB - configure output
-  ({ postProcessing, passes }) => {
+  ({ renderPipeline, passes }) => {
     const beauty = passes.scenePass.getTextureNode()
     const velocity = passes.scenePass.getTextureNode('velocity')
-    postProcessing.outputNode = motionBlur(beauty, velocity)
+    renderPipeline.outputNode = motionBlur(beauty, velocity)
   },
   // setupCB - configure MRT
   ({ passes }) => {
@@ -40,21 +40,21 @@ usePostProcessing(
 )
 
 // Read-only access
-const { postProcessing, passes } = usePostProcessing()
+const { renderPipeline, passes } = useRenderPipeline()
 ```
 
 ### Parameters
 
 | Parameter | Type                          | Description                                   |
 | --------- | ----------------------------- | --------------------------------------------- |
-| `mainCB`  | `PostProcessingMainCallback`  | Configure outputNode and create effect passes |
-| `setupCB` | `PostProcessingSetupCallback` | Optional. Configure MRT on scenePass          |
+| `mainCB`  | `RenderPipelineMainCallback`  | Configure outputNode and create effect passes |
+| `setupCB` | `RenderPipelineSetupCallback` | Optional. Configure MRT on scenePass          |
 
 ### Callbacks
 
 ```typescript
-type PostProcessingMainCallback = (state: RootState) => PassRecord | void
-type PostProcessingSetupCallback = (state: RootState) => PassRecord | void
+type RenderPipelineMainCallback = (state: RootState) => PassRecord | void
+type RenderPipelineSetupCallback = (state: RootState) => PassRecord | void
 ```
 
 Both callbacks receive full RootState for access to uniforms, nodes, camera, etc.
@@ -62,13 +62,13 @@ Both callbacks receive full RootState for access to uniforms, nodes, camera, etc
 ### Return Value
 
 ```typescript
-interface UsePostProcessingReturn {
+interface UseRenderPipelineReturn {
   passes: PassRecord // All registered passes
-  postProcessing: PostProcessing | null
+  renderPipeline: RenderPipeline | null
   clearPasses: () => void // Clear all passes
-  reset: () => void // Reset PostProcessing instance
+  reset: () => void // Reset RenderPipeline instance
   rebuild: () => void // Force callback re-run
-  isReady: boolean // PostProcessing configured
+  isReady: boolean // RenderPipeline configured
 }
 ```
 
@@ -79,13 +79,13 @@ interface UsePostProcessingReturn {
 ### Simple Bloom Effect
 
 ```tsx
-import { usePostProcessing } from '@react-three/fiber/webgpu'
+import { useRenderPipeline } from '@react-three/fiber/webgpu'
 import { bloom } from 'three/tsl'
 
 function Scene() {
-  usePostProcessing(({ postProcessing, passes }) => {
+  useRenderPipeline(({ renderPipeline, passes }) => {
     const sceneTexture = passes.scenePass.getTextureNode()
-    postProcessing.outputNode = bloom(sceneTexture, 1.5, 0.1, 0.9)
+    renderPipeline.outputNode = bloom(sceneTexture, 1.5, 0.1, 0.9)
   })
 
   return (
@@ -101,14 +101,14 @@ function Scene() {
 
 ```tsx
 function DebugPanel() {
-  const { postProcessing, passes, isReady } = usePostProcessing()
+  const { renderPipeline, passes, isReady } = useRenderPipeline()
 
   if (!isReady) return <div>Loading...</div>
 
   return (
     <div>
       <p>Passes: {Object.keys(passes).join(', ')}</p>
-      <p>Output: {postProcessing?.outputNode ? 'Configured' : 'None'}</p>
+      <p>Output: {renderPipeline?.outputNode ? 'Configured' : 'None'}</p>
     </div>
   )
 }
@@ -118,7 +118,7 @@ function DebugPanel() {
 
 ## What the Hook Does Automatically
 
-1. **Creates PostProcessing instance** if not exists
+1. **Creates RenderPipeline instance** if not exists
 2. **Creates default scenePass** (no MRT by default)
 3. **Sets default outputNode** to scenePass (passthrough)
 4. **Handles scene/camera changes** (recreates scenePass only when needed)
@@ -133,18 +133,18 @@ For advanced effects like motion blur, velocity buffers, G-buffers:
 ### Motion Blur Example
 
 ```tsx
-import { usePostProcessing } from '@react-three/fiber/webgpu'
+import { useRenderPipeline } from '@react-three/fiber/webgpu'
 import { mrt, output, velocity } from 'three/tsl'
 import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js'
 
-function PostProcessingManager() {
-  usePostProcessing(
+function RenderPipelineManager() {
+  useRenderPipeline(
     // mainCB - configure effect
-    ({ postProcessing, passes }) => {
+    ({ renderPipeline, passes }) => {
       const beauty = passes.scenePass.getTextureNode()
       const vel = passes.scenePass.getTextureNode('velocity')
 
-      postProcessing.outputNode = motionBlur(beauty, vel.mul(1.0))
+      renderPipeline.outputNode = motionBlur(beauty, vel.mul(1.0))
     },
     // setupCB - configure MRT BEFORE mainCB runs
     ({ passes }) => {
@@ -167,14 +167,14 @@ function PostProcessingManager() {
 import { mrt, output, normal, depth } from 'three/tsl'
 
 function DeferredRenderer() {
-  usePostProcessing(
-    ({ postProcessing, passes }) => {
+  useRenderPipeline(
+    ({ renderPipeline, passes }) => {
       const color = passes.scenePass.getTextureNode()
       const normals = passes.scenePass.getTextureNode('normal')
       const depths = passes.scenePass.getTextureNode('depth')
 
       // Deferred lighting pass
-      postProcessing.outputNode = deferredLighting(color, normals, depths)
+      renderPipeline.outputNode = deferredLighting(color, normals, depths)
     },
     ({ passes }) => {
       passes.scenePass.setMRT(
@@ -204,7 +204,7 @@ function DeferredRenderer() {
 
 Callbacks execute when:
 
-- PostProcessing is first created
+- RenderPipeline is first created
 - Scene or camera changes (scenePass needs recreation)
 - `rebuild()` is explicitly called
 
@@ -222,9 +222,9 @@ function DynamicEffect() {
   // Get uniform from store to use in callback
   const { uIntensity } = useUniforms(() => ({ uIntensity: intensity }))
 
-  usePostProcessing(({ postProcessing, passes, uniforms }) => {
+  useRenderPipeline(({ renderPipeline, passes, uniforms }) => {
     // Access via uniforms (always current)
-    postProcessing.outputNode = bloom(passes.scenePass.getTextureNode(), uniforms.uIntensity)
+    renderPipeline.outputNode = bloom(passes.scenePass.getTextureNode(), uniforms.uIntensity)
   })
 }
 ```
@@ -239,13 +239,13 @@ function DynamicEffect() {
 import { screenUV } from 'three/tsl'
 
 function VignetteEffect() {
-  usePostProcessing(({ postProcessing, passes }) => {
+  useRenderPipeline(({ renderPipeline, passes }) => {
     const scene = passes.scenePass.getTextureNode()
 
     // Distance from center creates vignette
     const vignette = screenUV.distance(0.5).remap(0.6, 1).mul(2).clamp().oneMinus()
 
-    postProcessing.outputNode = scene.mul(vignette)
+    renderPipeline.outputNode = scene.mul(vignette)
   })
 
   return null
@@ -258,7 +258,7 @@ function VignetteEffect() {
 import { pass, bloom, pass as effectPass } from 'three/tsl'
 
 function MultiPassEffects() {
-  usePostProcessing(({ postProcessing, passes, scene, camera }) => {
+  useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
     // Start with scene
     let output = passes.scenePass.getTextureNode()
 
@@ -270,7 +270,7 @@ function MultiPassEffects() {
     customPass.setMRT(/* custom MRT */)
     output = customPass.getTextureNode()
 
-    postProcessing.outputNode = output
+    renderPipeline.outputNode = output
 
     // ✅ IMPORTANT: Return passes to register them in state
     // Returned passes are merged into state.passes
@@ -280,7 +280,7 @@ function MultiPassEffects() {
 
 // Now accessible in other components
 function OtherComponent() {
-  const { passes } = usePostProcessing()
+  const { passes } = useRenderPipeline()
   // passes.customPass is available!
 }
 ```
@@ -292,14 +292,14 @@ function ConditionalEffect() {
   const { useBloom } = useControls({ useBloom: true })
   const { uUseBloom } = useUniforms(() => ({ uUseBloom: useBloom ? 1 : 0 }))
 
-  usePostProcessing(({ postProcessing, passes, uniforms }) => {
+  useRenderPipeline(({ renderPipeline, passes, uniforms }) => {
     const scene = passes.scenePass.getTextureNode()
 
     // Use uniforms for dynamic switching (no callback re-run needed)
     const bloomEffect = bloom(scene, 1.5, 0.1, 0.9)
     const output = select(uniforms.uUseBloom.greaterThan(0.5), bloomEffect, scene)
 
-    postProcessing.outputNode = output
+    renderPipeline.outputNode = output
   })
 }
 ```
@@ -322,11 +322,11 @@ function DynamicBloom() {
     'bloom',
   )
 
-  usePostProcessing(({ postProcessing, passes, uniforms }) => {
+  useRenderPipeline(({ renderPipeline, passes, uniforms }) => {
     const scene = passes.scenePass.getTextureNode()
     const bloom = uniforms.bloom
 
-    postProcessing.outputNode = bloom(scene, bloom.bloomIntensity, 0.1, bloom.bloomThreshold)
+    renderPipeline.outputNode = bloom(scene, bloom.bloomIntensity, 0.1, bloom.bloomThreshold)
   })
 }
 ```
@@ -342,24 +342,24 @@ Both `setupCB` and `mainCB` can register passes by **returning** an object. The 
 ### ❌ Wrong: Direct Assignment
 
 ```tsx
-usePostProcessing(({ postProcessing, passes, scene, camera }) => {
+useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
   const customPass = pass(scene, camera)
 
   // ❌ WRONG: This won't register the pass!
   // Direct assignment doesn't trigger state update
   passes.customPass = customPass
 
-  postProcessing.outputNode = customPass
+  renderPipeline.outputNode = customPass
 })
 ```
 
 ### ✅ Correct: Return from Callback
 
 ```tsx
-usePostProcessing(({ postProcessing, passes, scene, camera }) => {
+useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
   const customPass = pass(scene, camera)
 
-  postProcessing.outputNode = customPass
+  renderPipeline.outputNode = customPass
 
   // ✅ CORRECT: Return passes to register them
   return { customPass }
@@ -367,7 +367,7 @@ usePostProcessing(({ postProcessing, passes, scene, camera }) => {
 
 // Now accessible in other components
 function OtherComponent() {
-  const { passes } = usePostProcessing()
+  const { passes } = useRenderPipeline()
 
   useFrame(() => {
     // passes.customPass is available!
@@ -379,12 +379,12 @@ function OtherComponent() {
 ### Registering in setupCB
 
 ```tsx
-usePostProcessing(
+useRenderPipeline(
   // mainCB - configure output
-  ({ postProcessing, passes }) => {
+  ({ renderPipeline, passes }) => {
     const beauty = passes.scenePass.getTextureNode()
     const velocity = passes.velocityPass.getTextureNode('velocity')
-    postProcessing.outputNode = motionBlur(beauty, velocity)
+    renderPipeline.outputNode = motionBlur(beauty, velocity)
   },
   // setupCB - register passes with MRT
   ({ passes, scene, camera }) => {
@@ -400,7 +400,7 @@ usePostProcessing(
 ### Registering Multiple Passes
 
 ```tsx
-usePostProcessing(({ postProcessing, scene, camera }) => {
+useRenderPipeline(({ renderPipeline, scene, camera }) => {
   const depthPass = pass(scene, camera)
   depthPass.setMRT(mrt({ depth }))
 
@@ -415,7 +415,7 @@ usePostProcessing(({ postProcessing, scene, camera }) => {
   const normal = normalPass.getTextureNode('normal')
   const ao = aoPass.getTextureNode('occlusion')
 
-  postProcessing.outputNode = ssao(depth, normal, ao)
+  renderPipeline.outputNode = ssao(depth, normal, ao)
 
   // ✅ Return all passes to register them
   return { depthPass, normalPass, aoPass }
@@ -426,11 +426,11 @@ usePostProcessing(({ postProcessing, scene, camera }) => {
 
 The hook uses React state management:
 
-1. **Return from callback** → Merged into `state.passes` → Available everywhere via `usePostProcessing()`
+1. **Return from callback** → Merged into `state.passes` → Available everywhere via `useRenderPipeline()`
 2. **Direct assignment** → Only local variable → Lost after callback completes
 
 ```tsx
-// Inside usePostProcessing.tsx implementation:
+// Inside useRenderPipeline.tsx implementation:
 if (mainResult && typeof mainResult === 'object') {
   currentPasses = { ...currentPasses, ...mainResult }
   set({ passes: currentPasses }) // ← Triggers state update
@@ -441,13 +441,13 @@ if (mainResult && typeof mainResult === 'object') {
 
 ## Manual Control
 
-### Reset PostProcessing
+### Reset RenderPipeline
 
 ```tsx
 function ResetButton() {
-  const { reset } = usePostProcessing()
+  const { reset } = useRenderPipeline()
 
-  return <button onClick={reset}>Reset Post-Processing</button>
+  return <button onClick={reset}>Reset Render Pipeline</button>
 }
 ```
 
@@ -455,7 +455,7 @@ function ResetButton() {
 
 ```tsx
 function RebuildButton() {
-  const { rebuild } = usePostProcessing()
+  const { rebuild } = useRenderPipeline()
 
   // Force callbacks to re-run with current closure values
   return <button onClick={rebuild}>Rebuild Effects</button>
@@ -466,7 +466,7 @@ function RebuildButton() {
 
 ```tsx
 function ClearButton() {
-  const { clearPasses } = usePostProcessing()
+  const { clearPasses } = useRenderPipeline()
 
   return <button onClick={clearPasses}>Clear All Passes</button>
 }
@@ -489,7 +489,7 @@ interface PassRecord {
 
 ```tsx
 // In callback
-usePostProcessing(({ passes }) => {
+useRenderPipeline(({ passes }) => {
   passes.scenePass // Default scene pass
   passes.customPass // Your custom pass
 })
@@ -504,7 +504,7 @@ console.log(passes.scenePass)
 ```tsx
 import { pass } from 'three/tsl'
 
-usePostProcessing(({ postProcessing, passes, scene, camera }) => {
+useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
   // Create custom pass
   const customPass = pass(scene, camera)
 
@@ -514,7 +514,7 @@ usePostProcessing(({ postProcessing, passes, scene, camera }) => {
   // Use in effect chain
   const sceneOutput = passes.scenePass.getTextureNode()
   const customOutput = customPass.getTextureNode()
-  postProcessing.outputNode = mix(sceneOutput, customOutput, 0.5)
+  renderPipeline.outputNode = mix(sceneOutput, customOutput, 0.5)
 
   // Register pass by returning it
   return { customPass }
@@ -525,32 +525,32 @@ usePostProcessing(({ postProcessing, passes, scene, camera }) => {
 
 ## Best Practices
 
-### 1. One usePostProcessing Per App
+### 1. One useRenderPipeline Per App
 
 Only call once near the root:
 
 ```tsx
-// ✅ Good: Single PP manager
+// ✅ Good: Single pipeline manager
 function App() {
   return (
     <Canvas renderer>
-      <PostProcessingManager />
+      <RenderPipelineManager />
       <Scene />
     </Canvas>
   )
 }
 
-function PostProcessingManager() {
-  usePostProcessing(/* ... */)
+function RenderPipelineManager() {
+  useRenderPipeline(/* ... */)
   return null
 }
 
-// ❌ Bad: Multiple PP setups
+// ❌ Bad: Multiple pipeline setups
 function SceneA() {
-  usePostProcessing(/* ... */) // Overwrites
+  useRenderPipeline(/* ... */) // Overwrites
 }
 function SceneB() {
-  usePostProcessing(/* ... */) // Overwrites
+  useRenderPipeline(/* ... */) // Overwrites
 }
 ```
 
@@ -560,8 +560,8 @@ function SceneB() {
 // ✅ Good: Uniforms for dynamic control
 const { uIntensity } = useUniforms({ uIntensity: 1.0 })
 
-usePostProcessing(({ postProcessing, passes, uniforms }) => {
-  postProcessing.outputNode = bloom(
+useRenderPipeline(({ renderPipeline, passes, uniforms }) => {
+  renderPipeline.outputNode = bloom(
     passes.scenePass.getTextureNode(),
     uniforms.uIntensity  // Reactive without callback re-run
   )
@@ -569,8 +569,8 @@ usePostProcessing(({ postProcessing, passes, uniforms }) => {
 
 // ❌ Bad: Closure values need rebuild
 const intensity = 1.0
-usePostProcessing(({ postProcessing, passes }) => {
-  postProcessing.outputNode = bloom(
+useRenderPipeline(({ renderPipeline, passes }) => {
+  renderPipeline.outputNode = bloom(
     passes.scenePass.getTextureNode(),
     intensity  // Stale value, needs rebuild() to update
   })
@@ -581,8 +581,8 @@ usePostProcessing(({ postProcessing, passes }) => {
 
 ```tsx
 // ✅ Good: MRT in setupCB
-usePostProcessing(
-  ({ postProcessing, passes }) => {
+useRenderPipeline(
+  ({ renderPipeline, passes }) => {
     // MRT already configured
     const velocity = passes.scenePass.getTextureNode('velocity')
   },
@@ -592,7 +592,7 @@ usePostProcessing(
 )
 
 // ❌ Bad: MRT in mainCB (may run too late)
-usePostProcessing(({ postProcessing, passes }) => {
+useRenderPipeline(({ renderPipeline, passes }) => {
   passes.scenePass.setMRT(mrt({ output, velocity })) // Timing issues
   const velocity = passes.scenePass.getTextureNode('velocity')
 })
@@ -602,9 +602,9 @@ usePostProcessing(({ postProcessing, passes }) => {
 
 ```tsx
 // ✅ Good: Return custom passes to register them in state
-usePostProcessing(({ postProcessing, passes, scene, camera }) => {
+useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
   const customPass = pass(scene, camera)
-  postProcessing.outputNode = customPass
+  renderPipeline.outputNode = customPass
 
   // Return to register - available everywhere
   return { customPass }
@@ -612,7 +612,7 @@ usePostProcessing(({ postProcessing, passes, scene, camera }) => {
 
 // Access returned passes in other components
 function OtherComponent() {
-  const { passes } = usePostProcessing()
+  const { passes } = useRenderPipeline()
   // passes.customPass is available!
 }
 ```
@@ -626,7 +626,7 @@ function OtherComponent() {
 ```tsx
 // Throws if used with WebGL renderer
 function Scene() {
-  usePostProcessing(/* ... */) // Error: WebGPU only
+  useRenderPipeline(/* ... */) // Error: WebGPU only
 }
 
 // Must use WebGPU renderer
@@ -637,19 +637,19 @@ function Scene() {
 </Canvas>
 ```
 
-### Missing PostProcessing
+### Missing RenderPipeline
 
 ```tsx
-// Read-only access when PP not configured
-const { postProcessing, isReady } = usePostProcessing()
+// Read-only access when pipeline not configured
+const { renderPipeline, isReady } = useRenderPipeline()
 
 if (!isReady) {
-  console.log('PostProcessing not ready')
+  console.log('RenderPipeline not ready')
   return null
 }
 
-// Safe to use postProcessing
-postProcessing.outputNode = /* ... */
+// Safe to use renderPipeline
+renderPipeline.outputNode = /* ... */
 ```
 
 ---
@@ -659,16 +659,16 @@ postProcessing.outputNode = /* ... */
 Full type inference:
 
 ```typescript
-import type { PostProcessing, PassNode } from 'three/webgpu'
+import type { RenderPipeline, PassNode } from 'three/webgpu'
 
 const {
   passes, // PassRecord
-  postProcessing, // PostProcessing | null
+  renderPipeline, // RenderPipeline | null
   clearPasses, // () => void
   reset, // () => void
   rebuild, // () => void
   isReady, // boolean
-} = usePostProcessing()
+} = useRenderPipeline()
 ```
 
 Typed callbacks:
@@ -676,15 +676,15 @@ Typed callbacks:
 ```typescript
 import type { RootState, PassRecord } from '@react-three/fiber'
 
-const mainCB: PostProcessingMainCallback = ({ postProcessing, passes }) => {
+const mainCB: RenderPipelineMainCallback = ({ renderPipeline, passes }) => {
   // Typed parameters
 }
 
-const setupCB: PostProcessingSetupCallback = ({ passes }) => {
+const setupCB: RenderPipelineSetupCallback = ({ passes }) => {
   // Typed parameters
 }
 
-usePostProcessing(mainCB, setupCB)
+useRenderPipeline(mainCB, setupCB)
 ```
 
 ---
@@ -694,5 +694,5 @@ usePostProcessing(mainCB, setupCB)
 - **[useUniforms](./useUniforms.md)** - Dynamic effect parameters
 - **[useNodes](./useNodes.md)** - Shared effect functions
 - **[Overview](./overview.md)** - WebGPU hooks architecture
-- **[Three.js PostProcessing](https://threejs.org/docs/#api/en/renderers/webgpu/PostProcessing)** - Three.js PP docs
+- **[Three.js RenderPipeline](https://threejs.org/docs/#api/en/renderers/webgpu/RenderPipeline)** - Three.js docs (currently named PostProcessing)
 - **[TSL Effects](https://github.com/mrdoob/three.js/tree/dev/examples/jsm/tsl/display)** - Built-in TSL effects

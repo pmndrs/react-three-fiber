@@ -114,7 +114,7 @@ function CameraHeadlights() {
 }
 ```
 
-Portal accepts any `Object3D` as a container - camera, groups, or any other scene object. Children are automatically added on mount and removed on unmount.
+Portal accepts any `Object3D` as a container - camera, groups, or any other scene object. Children are automatically added on mount and cleaned up on unmount, including proper disposal of internal subscriptions to prevent memory leaks.
 
 ---
 
@@ -479,7 +479,7 @@ updateFrustum(light.shadow.camera, shadowFrustum)
 
 ## HMR Support for TSL Hooks
 
-v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks (`useNodes`, `useUniforms`, `usePostProcessing`). When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
+v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks (`useNodes`, `useUniforms`, `useRenderPipeline`). When you save changes to files containing TSL node or uniform definitions, they automatically refresh without a full page reload.
 
 ### How It Works
 
@@ -980,6 +980,313 @@ import { Environment } from '@react-three/fiber'
 | `environmentIntensity` | `number`             | Environment lighting brightness (default: 1) |
 | `environmentRotation`  | `[x, y, z]`          | Environment rotation in radians              |
 | `path`                 | `string`             | Base path for file loading                   |
+
+---
+
+## Frame-Timed Raycasting
+
+v10 introduces a performance optimization for pointer events: **frame-timed raycasting**. Instead of raycasting on every `pointermove` event (which can fire 1000+ times per second on high-refresh systems), R3F now defers move/hover raycasts to frame start, performing at most one raycast per frame.
+
+### How It Works
+
+- **Pointer moves are deferred**: When `pointermove` fires, the pointer position is updated immediately (for responsive feel), but the actual raycast is queued for the next frame's `input` phase.
+- **Clicks raycast immediately**: Click events (`pointerdown`, `pointerup`, `click`, etc.) always raycast synchronously to ensure accuracy.
+- **Scroll events**: By default, scroll (`wheel`) events also raycast immediately.
+
+This means if your mouse moves 10 times between frames, R3F only performs 1 raycast instead of 10.
+
+### Configuration
+
+Frame-timed raycasting is **enabled by default** in v10. You can configure it via the `events` prop or `setEvents`:
+
+```tsx
+// Disable frame-timed raycasting (sync behavior like v9)
+<Canvas events={(store) => {
+  const events = createPointerEvents(store)
+  events.frameTimedRaycasts = false
+  return events
+}}>
+```
+
+Or dynamically:
+
+```tsx
+function DisableFrameTiming() {
+  const { setEvents } = useThree()
+
+  useEffect(() => {
+    setEvents({ frameTimedRaycasts: false })
+  }, [])
+
+  return null
+}
+```
+
+### Event Manager Options
+
+| Option               | Type      | Default | Description                                                                   |
+| -------------------- | --------- | ------- | ----------------------------------------------------------------------------- |
+| `frameTimedRaycasts` | `boolean` | `true`  | Defer pointer move raycasting to frame start (only when `frameloop='always'`) |
+| `alwaysFireOnScroll` | `boolean` | `true`  | Always raycast immediately on scroll events                                   |
+| `updateOnFrame`      | `boolean` | `false` | Re-raycast every frame (for moving objects under cursor)                      |
+
+> **Note:** Frame-timed raycasting is automatically disabled when `frameloop` is `'demand'` or `'never'`, since the frame loop may not run to flush deferred events.
+
+### Update on Frame
+
+When objects move under a stationary cursor, hover events won't fire unless you enable `updateOnFrame`:
+
+```tsx
+function Scene() {
+  const { events } = useThree()
+
+  useEffect(() => {
+    events.updateOnFrame = true
+    return () => {
+      events.updateOnFrame = false
+    }
+  }, [events])
+
+  return <AnimatedMesh />
+}
+```
+
+With `updateOnFrame: true`, R3F re-raycasts every frame using the last known pointer position. This detects hover changes from moving objects or camera movement.
+
+### Manual Updates
+
+You can manually trigger a raycast using `events.update()`:
+
+```tsx
+function CameraControls() {
+  const { events } = useThree()
+
+  // Re-raycast when camera moves
+  const onCameraMove = () => {
+    events.update?.() // Re-raycast all pointers
+    // Or for a specific pointer:
+    events.update?.(1) // Re-raycast pointer ID 1
+  }
+}
+```
+
+### Flush Method
+
+The `events.flush()` method processes all pending deferred raycasts immediately:
+
+```tsx
+const { events } = useThree()
+
+// Force process all pending pointer raycasts
+events.flush?.()
+```
+
+This is called automatically at the start of each frame (in the scheduler's `input` phase).
+
+---
+
+## Interactive Priority (userData.interactivePriority)
+
+v10 adds support for object-level interactive priority via `userData.interactivePriority`. This allows UI controls and overlays that render on top using depth tricks to receive pointer events correctly, even when other objects are technically closer in world space.
+
+### The Problem
+
+Tools like `PivotControls` in Drei use depth buffer manipulation to render on top of other objects. However, the raycaster operates in world space, so these controls may not receive events because other objects are closer to the camera.
+
+### The Solution
+
+Set `userData.interactivePriority` on objects that should take precedence over distance-based hit testing:
+
+```tsx
+// This mesh receives events even if behind other objects in world space
+<mesh userData={{ interactivePriority: 1 }}>
+  <boxGeometry />
+  <meshBasicMaterial />
+</mesh>
+```
+
+### Priority Ordering
+
+When raycasting, hits are sorted by:
+
+1. **Interactive priority** - Objects with `userData.interactivePriority` come first
+2. **Priority value** - Higher `interactivePriority` values win among prioritized objects
+3. **Root events.priority** - Standard portal/layer priority
+4. **Distance** - Closer objects first (existing behavior)
+
+```tsx
+// Higher priority takes precedence
+<mesh userData={{ interactivePriority: 10 }}>
+  {/* Receives events before interactivePriority: 1 */}
+</mesh>
+
+<mesh userData={{ interactivePriority: 1 }}>
+  {/* Receives events before non-prioritized objects */}
+</mesh>
+
+<mesh>
+  {/* Standard distance-based ordering */}
+</mesh>
+```
+
+### Use Cases
+
+- **Transform controls** - Gizmos that render on top of the scene
+- **UI overlays** - Buttons and panels using depth tricks
+- **Debug helpers** - Tools that should always be interactive regardless of scene geometry
+
+---
+
+## Per-Pointer State (Multi-Touch Support)
+
+v10 refactors the event system to track state **per pointer**, enabling proper multi-touch support and preparing for WebXR integration.
+
+### How It Works
+
+Previously, R3F tracked hover state in a single global `internal.hovered` map. Now, each pointer (touch finger, mouse, XR controller) has its own state in `internal.pointerMap`:
+
+```typescript
+type PointerState = {
+  hovered: Map<string, ThreeEvent<DomEvent>> // Objects this pointer is hovering
+  captured: Map<THREE.Object3D, PointerCaptureTarget> // Capture state
+  initialClick: [x: number, y: number] // Click start position
+  initialHits: THREE.Object3D[] // Objects hit on click start
+}
+
+// Access via internal.pointerMap
+const pointerState = state.internal.pointerMap.get(pointerId)
+```
+
+### Multi-Touch Example
+
+With per-pointer state, each touch finger tracks its own hover state independently:
+
+```tsx
+function MultiTouchDemo() {
+  const [touches, setTouches] = useState<number[]>([])
+
+  return (
+    <mesh
+      onPointerEnter={(e) => {
+        console.log(`Pointer ${e.pointerId} entered`)
+        setTouches((prev) => [...prev, e.pointerId])
+      }}
+      onPointerLeave={(e) => {
+        console.log(`Pointer ${e.pointerId} left`)
+        setTouches((prev) => prev.filter((id) => id !== e.pointerId))
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial color={touches.length > 0 ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
+```
+
+### XR Pointer Registration (API Preview)
+
+The event system now includes an API for registering XR pointers (controllers, hands, gaze). This enables XR systems to participate in the same event flow as DOM pointers:
+
+```tsx
+// Register an XR controller as a pointer
+const pointerId = events.registerPointer?.({
+  ray: controllerRay, // THREE.Ray updated each frame
+  type: 'controller',
+  handedness: 'right',
+})
+
+// XR system updates the ray and triggers raycasting
+events.update?.(pointerId)
+
+// Unregister when controller disconnects
+events.unregisterPointer?.(pointerId)
+```
+
+**Note:** This is a low-level API. XR integration libraries will typically handle this automatically.
+
+### Backwards Compatibility
+
+The deprecated `internal.hovered`, `internal.capturedMap`, `internal.initialClick`, and `internal.initialHits` properties are still maintained for backwards compatibility. They reflect the combined state from all pointers:
+
+```tsx
+// Still works, but deprecated
+const hoveredCount = state.internal.hovered.size
+
+// New approach - check specific pointer
+const pointer0State = state.internal.pointerMap.get(0)
+const hoveredByMouse = pointer0State?.hovered.size ?? 0
+```
+
+---
+
+## useBuffers & useGPUStorage Hooks (WebGPU)
+
+v10 adds two new hooks for managing GPU storage in compute-intensive applications:
+
+- **`useBuffers`** - Manages buffer data: TypedArrays, BufferAttributes, and TSL buffer nodes (`instancedArray`, `storage`)
+- **`useGPUStorage`** - Manages GPU storage textures: `StorageTexture`, `Storage3DTexture`, and TSL storage texture nodes
+
+These hooks follow the same pattern as `useNodes` and `useUniforms`, with scoped storage and create-if-not-exists semantics.
+
+### Basic Usage
+
+```tsx
+import { useBuffers, useGPUStorage, useNodes } from '@react-three/fiber/webgpu'
+import { instancedArray } from 'three/tsl'
+import { StorageTexture } from 'three/webgpu'
+
+// Create buffer storage for particle data
+const { positions, velocities } = useBuffers(
+  () => ({
+    positions: instancedArray(count, 'vec3'),
+    velocities: new Float32Array(count * 3),
+  }),
+  'particles',
+)
+
+// Create texture storage for compute results
+const { heightMap } = useGPUStorage(
+  () => ({
+    heightMap: new StorageTexture(512, 512),
+  }),
+  'terrain',
+)
+
+// Access in node creators
+const { positionNode } = useNodes(({ buffers, gpuStorage }) => ({
+  positionNode: buffers.scope('particles').positions.element(instanceIndex),
+}))
+```
+
+### Utility Functions
+
+Both hooks return utility functions:
+
+```tsx
+const { positions, removeBuffers, clearBuffers, rebuildBuffers, disposeBuffers } = useBuffers(...)
+
+// Remove specific buffers
+removeBuffers('positions')
+
+// Dispose (releases GPU resources + removes from store)
+disposeBuffers('positions')
+
+// Rebuild (for HMR)
+rebuildBuffers()
+```
+
+### Accessing in Node Creators
+
+Buffer and storage data is available in `useNodes` and `useLocalNodes` via the creator state:
+
+```tsx
+const { computeNode } = useLocalNodes(({ buffers, gpuStorage, uniforms }) => ({
+  computeNode: Fn(() => {
+    const pos = buffers.particles.positions.element(instanceIndex)
+    const height = texture(gpuStorage.terrain.heightMap, uv())
+    return pos.add(vec3(0, height, 0))
+  })(),
+}))
+```
 
 ---
 
