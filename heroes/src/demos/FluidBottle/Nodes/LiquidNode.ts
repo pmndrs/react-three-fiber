@@ -1,4 +1,4 @@
-import { Fn, float, vec3, positionWorld, modelPosition, faceDirection, mix, abs, dot } from 'three/tsl'
+import { Fn, float, vec3, positionWorld, modelPosition, mix, abs, dot, frontFacing } from 'three/tsl'
 
 /**
  * Core liquid clipping in WORLD space.
@@ -34,18 +34,11 @@ export const liquidColor = /*@__PURE__*/ Fn(([fillTest, liquidCol, foamCol, rimW
 })
 
 /**
- * isBackFace — 0 for front faces, 1 for back faces.
- */
-export const isBackFace = /*@__PURE__*/ Fn(() => {
-  return float(1).sub(faceDirection).mul(0.5)
-})
-
-/**
  * Lit color output — front faces get bodyCol for PBR lighting,
  * back faces get black (lighting has nothing to act on).
  */
 export const liquidLitColor = /*@__PURE__*/ Fn(([bodyCol]) => {
-  return mix(vec3(bodyCol), vec3(0), isBackFace())
+  return mix(vec3(0), vec3(bodyCol), frontFacing)
 })
 
 /**
@@ -53,5 +46,5 @@ export const liquidLitColor = /*@__PURE__*/ Fn(([bodyCol]) => {
  * front faces get zero emissive (they use standard lighting).
  */
 export const liquidEmissive = /*@__PURE__*/ Fn(([surfaceCol]) => {
-  return mix(vec3(0), vec3(surfaceCol), isBackFace())
+  return mix(vec3(surfaceCol), vec3(0), frontFacing)
 })
