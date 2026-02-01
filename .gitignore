@@ -10,6 +10,8 @@ $RECYCLE.BIN/
 .DS_Store
 .vscode
 .claude
+.cursor
+Claude.md
 .docz/
 package-lock.json
 coverage/
