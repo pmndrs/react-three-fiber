@@ -519,15 +519,22 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         renderer.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          renderer.shadowMap.type = THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = THREE.PCFShadowMap
         } else if (is.str(shadows)) {
+          if (shadows === 'soft') {
+            notifyDepreciated({
+              heading: 'shadows="soft" is deprecated',
+              body: 'Three has depreciated soft and improved basic PCFShadows, we converted for you.',
+              link: 'https://github.com/mrdoob/three.js/wiki/Migration-Guide?utm_source=chatgpt.com#181--182',
+            })
+          }
           const types = {
             basic: THREE.BasicShadowMap,
             percentage: THREE.PCFShadowMap,
-            soft: THREE.PCFSoftShadowMap,
+            soft: THREE.PCFShadowMap,
             variance: THREE.VSMShadowMap,
           }
-          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFShadowMap
         } else if (is.obj(shadows)) {
           Object.assign(renderer.shadowMap as any, shadows)
         }
