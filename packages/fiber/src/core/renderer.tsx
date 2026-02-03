@@ -155,7 +155,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         events,
         onCreated: onCreatedCallback,
         shadows = false,
-        textureColorSpace = THREE.SRGBColorSpace,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -170,6 +169,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         _sizeProps,
         forceEven,
       } = props
+
+      // Extract textureColorSpace from gl or renderer config (not a real renderer property)
+      const textureColorSpace: THREE.ColorSpace =
+        (is.obj(glConfig) && !is.fun(glConfig) && !isRenderer(glConfig) && (glConfig as any).textureColorSpace) ||
+        (is.obj(rendererConfig) &&
+          !is.fun(rendererConfig) &&
+          !isRenderer(rendererConfig) &&
+          (rendererConfig as any).textureColorSpace) ||
+        THREE.SRGBColorSpace
 
       const state = store.getState()
 
@@ -558,16 +566,18 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         lastConfiguredProps.textureColorSpace = textureColorSpace
       }
 
-      // Set gl props
+      // Set gl props (filter out R3F-specific props that aren't real renderer properties)
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
-        applyProps(renderer, glConfig as any)
+        const { textureColorSpace: _, ...glProps } = glConfig as Record<string, any>
+        applyProps(renderer, glProps as any)
       }
 
-      // Set renderer props (WebGPU)
+      // Set renderer props (WebGPU) - filter out R3F-specific props
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
         const currentRenderer = state.renderer
         if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
-          applyProps(currentRenderer, rendererConfig as any)
+          const { textureColorSpace: _, ...rendererProps } = rendererConfig as Record<string, any>
+          applyProps(currentRenderer, rendererProps as any)
         }
       }
 

@@ -18,12 +18,12 @@ nav: 14
 
 ## Quick Checklist
 
-For most apps, here's all you need to do:
+For most apps, nothing will change. For those that access the renderer using `useThree()` or `useFrame()` here's all you need to do:
 
 - [ ] Replace `state.gl` with `state.renderer`
 - [ ] That's it!
 
-If you specifically need `WebGLRenderer` and want to avoid the warning:
+If you specifically need `WebGLRenderer` and want to avoid the depreciation warning:
 
 - [ ] Import from `@react-three/fiber/legacy` instead of `@react-three/fiber`
 
@@ -143,25 +143,25 @@ useFrame(() => updateAI(), { after: 'update', before: 'render' })
 
 ### Renderer Props Removed
 
-The following Canvas props have been removed. Use the `gl` (WebGL) or `renderer` (WebGPU) props to pass these settings directly to the renderer:
+The following Canvas props have been removed. Use the `gl` (WebGL LEGACY ONLY) or `renderer` (WebGPU) props to pass these settings directly to the renderer:
 
 **Removed props:**
 
 - `legacy` - `THREE.ColorManagement.enabled` is now always `true` (modern Three.js default)
-- `linear` - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
-- `flat` - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
-- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
-- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+- `linear` - Use `renderer={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` - Use `renderer={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `renderer={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `renderer={{ toneMapping: ... }}`
 
 ```diff
 - <Canvas linear />
-+ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }} />
++ <Canvas renderer={{ outputColorSpace: THREE.LinearSRGBColorSpace }} />
 
 - <Canvas flat />
-+ <Canvas gl={{ toneMapping: THREE.NoToneMapping }} />
++ <Canvas renderer={{ toneMapping: THREE.NoToneMapping }} />
 
 - <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
-+ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
++ <Canvas renderer={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
 ```
 
 **Why the change?** These props were redundant with what you can already pass via `gl`/`renderer`. Removing them simplifies the API and makes it clear that renderer settings should be configured through the renderer props.

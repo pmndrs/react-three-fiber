@@ -578,12 +578,12 @@ The primary motivation is capturing video frames at specific resolutions:
 
 ```tsx
 function VideoExportScene() {
-  const { gl, scene, camera } = useThree()
+  const { renderer, scene, camera } = useThree()
 
   const captureFrame = () => {
     // Canvas is rendering at 3840×2160 for 4K export
-    gl.render(scene, camera)
-    const frame = new VideoFrame(gl.domElement)
+    renderer.render(scene, camera)
+    const frame = new VideoFrame(renderer.domElement)
     // Use frame with MediaRecorder, WebCodecs, etc.
   }
 
@@ -666,32 +666,44 @@ The size control follows an ownership model:
 
 ## Texture Color Space
 
-R3F provides a `textureColorSpace` prop to control how 8-bit input textures (color maps) are interpreted:
+R3F provides a `textureColorSpace` option to control how 8-bit input textures (color maps) are interpreted. This is configured via the `gl` (WebGL) or `renderer` (WebGPU) props:
 
 ```tsx
 // sRGB textures (default - most textures are authored in sRGB)
-<Canvas textureColorSpace={THREE.SRGBColorSpace}>
+<Canvas gl={{ textureColorSpace: THREE.SRGBColorSpace }}>
 
-// Linear textures
-<Canvas textureColorSpace={THREE.LinearSRGBColorSpace}>
+// Linear textures (WebGL)
+<Canvas gl={{ textureColorSpace: THREE.LinearSRGBColorSpace }}>
+
+// Linear textures (WebGPU)
+<Canvas renderer={{ textureColorSpace: THREE.LinearSRGBColorSpace }}>
 ```
 
 ### Renderer Color Settings
 
-For renderer-level settings like `outputColorSpace` and `toneMapping`, pass them via the `gl` or `renderer` props:
+Other renderer-level settings like `outputColorSpace` and `toneMapping` are configured in the same `gl` or `renderer` props:
 
 ```tsx
-// Configure renderer color space and tone mapping
+// Configure renderer color space, tone mapping, and texture color space together
 <Canvas gl={{
   outputColorSpace: THREE.LinearSRGBColorSpace,
-  toneMapping: THREE.NoToneMapping
+  toneMapping: THREE.NoToneMapping,
+  textureColorSpace: THREE.LinearSRGBColorSpace
+}}>
+
+// WebGPU equivalent
+<Canvas renderer={{
+  outputColorSpace: THREE.LinearSRGBColorSpace,
+  toneMapping: THREE.NoToneMapping,
+  textureColorSpace: THREE.LinearSRGBColorSpace
 }}>
 
 // Access from components
 function ColorInfo() {
-  const { renderer } = useThree()
+  const { renderer, textureColorSpace } = useThree()
   console.log(renderer.outputColorSpace)
   console.log(renderer.toneMapping)
+  console.log(textureColorSpace) // From R3F state, not renderer
   return null
 }
 ```
@@ -700,6 +712,7 @@ function ColorInfo() {
 
 - `outputColorSpace`: `THREE.SRGBColorSpace`
 - `toneMapping`: `THREE.ACESFilmicToneMapping`
+- `textureColorSpace`: `THREE.SRGBColorSpace`
 
 ---
 
@@ -1215,6 +1228,140 @@ const hoveredCount = state.internal.hovered.size
 const pointer0State = state.internal.pointerMap.get(0)
 const hoveredByMouse = pointer0State?.hovered.size ?? 0
 ```
+
+---
+
+## Drag and Drop Events
+
+v10 adds native HTML5 drag and drop event support for Three.js objects. You can now drag files directly onto meshes and handle them declaratively.
+
+### Available Events
+
+| Event             | Description                                       |
+| ----------------- | ------------------------------------------------- |
+| `onDragOver`      | Fires continuously while dragging over the object |
+| `onDragOverEnter` | Fires once when a drag enters the object          |
+| `onDragOverLeave` | Fires once when a drag leaves the object          |
+| `onDrop`          | Fires when files/data are dropped on the object   |
+
+### Basic Usage
+
+```tsx
+function DroppableMesh() {
+  const [texture, setTexture] = useState<THREE.Texture | null>(null)
+
+  const handleDrop = (e: ThreeEvent<DragEvent>) => {
+    const file = e.nativeEvent.dataTransfer?.files[0]
+    if (file?.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      new THREE.TextureLoader().load(url, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace
+        setTexture(tex)
+      })
+    }
+  }
+
+  return (
+    <mesh
+      onDrop={handleDrop}
+      onDragOverEnter={() => console.log('Drag entered')}
+      onDragOverLeave={() => console.log('Drag left')}>
+      <boxGeometry />
+      <meshBasicMaterial map={texture} />
+    </mesh>
+  )
+}
+```
+
+### Canvas-Level Missed Callbacks
+
+When a drag/drop misses all interactive objects, Canvas-level callbacks fire:
+
+```tsx
+<Canvas
+  onDragOverMissed={(e: DragEvent) => {
+    // Drag is over the canvas but not over any mesh
+    setBackgroundHighlight(true)
+  }}
+  onDropMissed={(e: DragEvent) => {
+    // File was dropped on canvas but missed all meshes
+    const file = e.dataTransfer?.files[0]
+    if (file) setBackgroundTexture(file)
+  }}>
+  <DroppableMesh />
+</Canvas>
+```
+
+### Preventing Browser Defaults
+
+To prevent the browser from opening dropped files, add these handlers to your Canvas:
+
+```tsx
+<Canvas
+  onDrop={(e) => e.preventDefault()}
+  onDragEnter={(e) => e.preventDefault()}
+  onDragOver={(e) => e.preventDefault()}
+  onDropMissed={handleBackgroundDrop}>
+  <Scene />
+</Canvas>
+```
+
+### Complete Example
+
+Here's a complete example with visual feedback during drag:
+
+```tsx
+import { Canvas, ThreeEvent } from '@react-three/fiber'
+import { useState } from 'react'
+import * as THREE from 'three'
+
+function DroppableBox() {
+  const [hovered, setHovered] = useState(false)
+  const [texture, setTexture] = useState<THREE.Texture | null>(null)
+
+  const handleDrop = (e: ThreeEvent<DragEvent>) => {
+    const file = e.nativeEvent.dataTransfer?.files[0]
+    if (file?.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file)
+      new THREE.TextureLoader().load(url, setTexture)
+    }
+  }
+
+  return (
+    <mesh
+      scale={hovered ? 1.2 : 1}
+      onDrop={handleDrop}
+      onDragOverEnter={() => setHovered(true)}
+      onDragOverLeave={() => setHovered(false)}>
+      <boxGeometry />
+      <meshStandardMaterial map={texture} color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
+
+export default function App() {
+  return (
+    <Canvas onDrop={(e) => e.preventDefault()} onDragOver={(e) => e.preventDefault()}>
+      <ambientLight />
+      <DroppableBox />
+    </Canvas>
+  )
+}
+```
+
+### Event Handler Reference
+
+| Canvas Prop        | Type                     | Description                          |
+| ------------------ | ------------------------ | ------------------------------------ |
+| `onDragOverMissed` | `(e: DragEvent) => void` | Drag over canvas, missed all objects |
+| `onDropMissed`     | `(e: DragEvent) => void` | Drop on canvas, missed all objects   |
+
+| Object Event      | Type                                 | Description               |
+| ----------------- | ------------------------------------ | ------------------------- |
+| `onDragOver`      | `(e: ThreeEvent<DragEvent>) => void` | Dragging over this object |
+| `onDragOverEnter` | `(e: ThreeEvent<DragEvent>) => void` | Drag entered this object  |
+| `onDragOverLeave` | `(e: ThreeEvent<DragEvent>) => void` | Drag left this object     |
+| `onDrop`          | `(e: ThreeEvent<DragEvent>) => void` | Dropped on this object    |
 
 ---
 
