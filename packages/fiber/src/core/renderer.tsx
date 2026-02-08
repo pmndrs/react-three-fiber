@@ -38,8 +38,6 @@ import type {
   InjectState,
 } from '#types'
 
-const isDefaultBuild = R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU
-//todo: what is this, why is it here?
 export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
@@ -210,7 +208,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         )
       }
 
-      // Determine which renderer to use based on props and build flags
+      //* Determine which renderer to use ==============================
+      // Build-specific defaults:
+      // - WebGPU-only build (@react-three/fiber/webgpu): Always use WebGPU (R3F_BUILD_LEGACY=false)
+      // - Legacy-only build (@react-three/fiber/legacy): Always use WebGL (R3F_BUILD_WEBGPU=false)
+      // - Default build (@react-three/fiber): Use WebGL unless renderer prop is provided
+      //
+      // For WebGPU-only builds, wantsGL is always false because R3F_BUILD_LEGACY=false
+      // This means WebGPU is used automatically without needing the renderer prop
       const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
 
       if (glConfig && rendererConfig) {
@@ -284,6 +289,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }))
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
         //* WebGPU path ---
+        // This path is taken when:
+        // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
+        // 2. Default build with explicit renderer prop
+        // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
         // WebGPU-specific setup - only init if not already initialized
