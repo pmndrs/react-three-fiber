@@ -13,7 +13,6 @@ import type {
   Events,
   EventHandlers,
   EventManager,
-  PointerCaptureTarget,
   PointerState,
   XRPointerConfig,
 } from '#types'
@@ -738,6 +737,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
     },
 
     connect: (target: HTMLElement) => {
+      if (!target) return
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))
