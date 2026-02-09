@@ -154,6 +154,9 @@ importers:
       react-use-refs:
         specifier: ^1.0.1
         version: 1.0.1(react@19.2.3)
+      stats-gl:
+        specifier: ^4.0.2
+        version: 4.0.2(three@0.181.2)
       three:
         specifier: ^0.181.0
         version: 0.181.2
@@ -4240,6 +4243,14 @@ packages:
     peerDependencies:
       '@types/three': '*'
       three: '*'
+
+  stats-gl@4.0.2:
+    resolution: {integrity: sha512-tWz/aicKrc/akqPWjGMdqqoHAMUValmzvQf73dGSBnGfRtWNMceo1KUY1wvpexYBt8udaUnQqsH2p9OtH6CkmA==}
+    peerDependencies:
+      three: '*'
+    peerDependenciesMeta:
+      three:
+        optional: true
 
   stats.js@0.17.0:
     resolution: {integrity: sha512-hNKz8phvYLPEcRkeG1rsGmV5ChMjKDAWU7/OJJdDErPBNChQXxCo3WZurGpnWc6gZhAzEPFad1aVgyOANH1sMw==}
@@ -9213,6 +9224,10 @@ snapshots:
   stats-gl@2.4.2(@types/three@0.181.0)(three@0.181.2):
     dependencies:
       '@types/three': 0.181.0
+      three: 0.181.2
+
+  stats-gl@4.0.2(three@0.181.2):
+    optionalDependencies:
       three: 0.181.2
 
   stats.js@0.17.0: {}
