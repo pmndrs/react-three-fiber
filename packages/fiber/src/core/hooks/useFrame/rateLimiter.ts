@@ -28,8 +28,8 @@ export function shouldRun(job: Job, now: number): boolean {
   const lastRun = job.lastRun ?? 0
   const elapsed = now - lastRun
 
-  // Not enough time has passed
-  if (elapsed < minInterval) return false
+  // Not enough time has passed (1ms tolerance for rAF timing jitter)
+  if (elapsed < minInterval - 1) return false
 
   // Time to run - update lastRun based on drop behavior
   if (job.drop) {

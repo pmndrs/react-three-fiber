@@ -43,17 +43,25 @@ function CanvasImpl({
   forceEven,
   ...props
 }: CanvasProps) {
-  // Extract nested props from renderer object (primaryCanvas, scheduler)
-  const { primaryCanvas, scheduler, ...rendererConfig } =
+  // Extract nested props (primaryCanvas, scheduler) from renderer object if it's a config bag rather than a renderer instance
+  const isRendererConfig =
     typeof rendererProp === 'object' &&
     rendererProp !== null &&
     !('render' in rendererProp) &&
     ('primaryCanvas' in rendererProp || 'scheduler' in rendererProp)
-      ? (rendererProp as { primaryCanvas?: string; scheduler?: { after?: string; fps?: number } })
-      : { primaryCanvas: undefined, scheduler: undefined }
 
-  // Use extracted config if we found nested props, otherwise pass through original renderer prop
-  const renderer = Object.keys(rendererConfig).length > 0 ? rendererConfig : rendererProp
+  let primaryCanvas: string | undefined
+  let scheduler: { after?: string; fps?: number } | undefined
+  let renderer: CanvasProps['renderer']
+
+  if (isRendererConfig) {
+    const { primaryCanvas: pc, scheduler: sc, ...rest } = rendererProp as Record<string, unknown>
+    primaryCanvas = pc as string | undefined
+    scheduler = sc as { after?: string; fps?: number } | undefined
+    renderer = Object.keys(rest).length > 0 ? rest : rendererProp
+  } else {
+    renderer = rendererProp
+  }
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead
@@ -353,7 +361,11 @@ function CanvasImpl({
       }}
       {...props}>
       <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} id={id} className="r3f-canvas" style={{ display: 'block' }}>
+        <canvas
+          ref={canvasRef}
+          id={id}
+          className="r3f-canvas"
+          style={{ display: 'block', width: '100%', height: '100%' }}>
           {fallback}
         </canvas>
       </div>

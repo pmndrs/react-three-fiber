@@ -13,7 +13,6 @@ import type {
   Events,
   EventHandlers,
   EventManager,
-  PointerCaptureTarget,
   PointerState,
   XRPointerConfig,
 } from '#types'
@@ -415,12 +414,11 @@ export function createEvents(store: RootStore) {
   /** Process a deferred pointer event (raycasting) */
   function processDeferredPointer(event: DomEvent, pointerId: number) {
     const state = store.getState()
-    const { onPointerMissed, onDragOverMissed, internal } = state
+    const { internal } = state
 
     // Early exit if events are disabled
     if (!state.events.enabled) return
 
-    const isPointerMove = true // Deferred events are always pointer moves
     const filter = filterPointerEvents
 
     const hits = intersect(event, filter)
@@ -738,6 +736,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
     },
 
     connect: (target: HTMLElement) => {
+      if (!target) return
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))

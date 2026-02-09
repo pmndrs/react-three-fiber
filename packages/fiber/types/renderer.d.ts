@@ -26,6 +26,20 @@ export interface Renderer {
   render: (scene: THREE.Scene, camera: THREE.Camera) => any
 }
 
+//* Color Management Config ==============================
+
+/**
+ * Color management configuration shared by both WebGL and WebGPU renderers.
+ */
+export interface ColorManagementConfig {
+  /**
+   * Color space assigned to 8-bit input textures (color maps).
+   * Defaults to sRGB. Most textures are authored in sRGB.
+   * @default THREE.SRGBColorSpace
+   */
+  textureColorSpace?: THREE.ColorSpace
+}
+
 //* WebGL Renderer Props ==============================
 
 export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
@@ -36,7 +50,7 @@ export type GLProps =
   | Renderer
   | ((defaultProps: DefaultGLProps) => Renderer)
   | ((defaultProps: DefaultGLProps) => Promise<Renderer>)
-  | Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters>
+  | (Partial<Properties<THREE.WebGLRenderer> | THREE.WebGLRendererParameters> & ColorManagementConfig)
 
 //* WebGPU Renderer Props ==============================
 
@@ -62,9 +76,9 @@ export interface CanvasSchedulerConfig {
 }
 
 /**
- * Extended renderer configuration for multi-canvas support.
+ * Extended renderer configuration for multi-canvas support and color management.
  */
-export interface RendererConfigExtended {
+export interface RendererConfigExtended extends ColorManagementConfig {
   /** Share renderer from another canvas (WebGPU only) */
   primaryCanvas?: string
   /** Canvas-level scheduler options */
@@ -129,8 +143,6 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
    * @see https://threejs.org/docs/#api/en/renderers/WebGLRenderer.shadowMap
    */
   shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
-  /** Color space assigned to 8-bit input textures (color maps). Defaults to sRGB. Most textures are authored in sRGB. */
-  textureColorSpace?: THREE.ColorSpace
   /** Creates an orthographic camera */
   orthographic?: boolean
   /**

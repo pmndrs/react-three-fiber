@@ -407,6 +407,10 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 
 - Added `_hmrVersion: number` to RootState for coordinating HMR rebuilds
 
+#### Default Shadow Type: PCFShadowMap
+
+Changed the default shadow map type from `PCFSoftShadowMap` to `PCFShadowMap` to match Three.js r182 defaults. Three.js deprecated `PCFSoftShadowMap` and improved the standard `PCFShadowMap`, so R3F now aligns with upstream. Legacy shadow types (`percentage`, `soft`) are mapped to `PCFShadowMap` with a console warning.
+
 ### Bug Fixes
 
 - Fixed memory leak in `createPortal` where subscriptions to parent store were never cleaned up. When portals were created/destroyed frequently (e.g., with rapidly changing data), each portal subscribed to `previousRoot` but never unsubscribed, keeping the portal's zustand store and all its state in memory indefinitely.
@@ -424,6 +428,11 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
   - Demonstrates figure-8 path camera movement
   - Shows spotlights following camera orientation
   - Located at `example/src/demos/default/NestedCamera.tsx`
+- Added **Layered Reality** demo showcasing multi-canvas rendering with HTML content sandwiched between two 3D layers
+  - Background canvas renders the main scene (ring, wireframe shapes)
+  - Foreground canvas renders in front of HTML using shared WebGPU renderer
+  - Demonstrates `renderer={{ primaryCanvas: 'id' }}` and render phase control
+  - Located at `example/src/demos/default/Layered.tsx`
 
 ### Maintenance
 
