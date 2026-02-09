@@ -575,17 +575,29 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         lastConfiguredProps.textureColorSpace = textureColorSpace
       }
 
-      // Set gl props (filter out R3F-specific props that aren't real renderer properties)
+      // R3F-specific props that aren't real renderer properties (handled separately by R3F)
+      const r3fProps = ['textureColorSpace']
+      // Three.js renderer constructor-only props that are read-only on the live instance
+      const constructorOnlyProps = ['samples', 'antialias', 'alpha', 'canvas', 'powerPreference']
+      const nonApplyProps = [...r3fProps, ...constructorOnlyProps]
+
+      // Set gl props - filter out non-applicable props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
-        const { textureColorSpace: _, ...glProps } = glConfig as Record<string, any>
+        const glProps: Record<string, any> = {}
+        for (const key in glConfig as Record<string, any>) {
+          if (!nonApplyProps.includes(key)) glProps[key] = (glConfig as any)[key]
+        }
         applyProps(renderer, glProps as any)
       }
 
-      // Set renderer props (WebGPU) - filter out R3F-specific props
+      // Set renderer props (WebGPU) - filter out non-applicable props
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
         const currentRenderer = state.renderer
         if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
-          const { textureColorSpace: _, ...rendererProps } = rendererConfig as Record<string, any>
+          const rendererProps: Record<string, any> = {}
+          for (const key in rendererConfig as Record<string, any>) {
+            if (!nonApplyProps.includes(key)) rendererProps[key] = (rendererConfig as any)[key]
+          }
           applyProps(currentRenderer, rendererProps as any)
         }
       }
