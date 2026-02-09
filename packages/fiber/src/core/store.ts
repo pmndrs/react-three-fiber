@@ -374,20 +374,22 @@ export const createStore = (
       // Update camera
       updateCamera(camera, size)
 
-      // For secondary canvases with CanvasTarget, update the target's size/dpr
-      // For primary canvases, update the renderer directly
-      if (canvasTarget) {
-        // Secondary canvas: update CanvasTarget
+      // Secondary canvases only update their CanvasTarget (renderer is shared, owned by primary)
+      // Primary canvases always update the renderer directly (owns the depth buffer/GPU resources)
+      // plus their canvas target if one exists (keeps it sized for multi-canvas mode)
+      // Never pass updateStyle=true to Three.js setSize — explicit pixel CSS on the canvas
+      // breaks flex/percentage layouts. R3F manages canvas CSS sizing via the container divs
+      // (width: 100%, height: 100%), and only the canvas buffer attributes need pixel values.
+      if (internal.isSecondary && canvasTarget) {
         if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
-        const updateStyle =
-          typeof HTMLCanvasElement !== 'undefined' && canvasTarget.domElement instanceof HTMLCanvasElement
-        canvasTarget.setSize(size.width, size.height, updateStyle)
+        canvasTarget.setSize(size.width, size.height, false)
       } else {
-        // Primary canvas: update renderer directly
         if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
-        const updateStyle =
-          typeof HTMLCanvasElement !== 'undefined' && actualRenderer.domElement instanceof HTMLCanvasElement
-        actualRenderer.setSize(size.width, size.height, updateStyle)
+        actualRenderer.setSize(size.width, size.height, false)
+        if (canvasTarget) {
+          if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
+          canvasTarget.setSize(size.width, size.height, false)
+        }
       }
     }
 

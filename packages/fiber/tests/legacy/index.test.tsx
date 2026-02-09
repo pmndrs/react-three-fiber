@@ -31,11 +31,11 @@ afterEach(async () => {
 })
 
 describe('Legacy WebGL Renderer', () => {
-  it('should set PCFSoftShadowMap as the default shadow map', async () => {
+  it('should set PCFShadowMap as the default shadow map', async () => {
     const store = await act(async () => (await root.configure({ shadows: true })).render(<group />))
     const { gl } = store.getState()
 
-    expect(gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
+    expect(gl.shadowMap.type).toBe(THREE.PCFShadowMap)
   })
 
   it('should set default toneMapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace', async () => {

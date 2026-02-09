@@ -172,7 +172,7 @@ export default function WebGPUMultiCanvas() {
       {/* Secondary Canvas 2 - also shares the renderer, limited to 30fps */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ color: 'white', marginBottom: '5px', fontSize: '12px' }}>
-          Secondary Canvas (renderer.primaryCanvas) - Limited to 30fps
+          Tertiary Canvas (renderer.primaryCanvas) - Limited to 30fps
         </div>
         <div style={{ flex: 1, border: '2px solid #4aa', borderRadius: '8px', overflow: 'hidden' }}>
           <Canvas renderer={{ primaryCanvas: 'main', scheduler: { fps: 30 } }}>

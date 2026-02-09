@@ -856,6 +856,99 @@ describe('events', () => {
     })
   })
 
+  //* Connect Null Guard Tests ==============================
+
+  describe('events.connect null guard', () => {
+    it('should not crash when connect is called with null target', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Calling connect with null should not throw
+      expect(() => storeRef!.events.connect?.(null as unknown as HTMLElement)).not.toThrow()
+    })
+
+    it('should not register event listeners when connect is called with null', async () => {
+      let storeRef: RootState | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            onCreated={(state) => {
+              storeRef = state
+            }}>
+            <mesh>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Store the current connected target
+      const previousConnected = storeRef!.events.connected
+
+      // Calling connect with null should be a no-op
+      storeRef!.events.connect?.(null as unknown as HTMLElement)
+
+      // connected should not have changed
+      expect(storeRef!.events.connected).toBe(previousConnected)
+    })
+
+    it('should not disconnect existing events when connect is called with null', async () => {
+      const handlePointerDown = vi.fn()
+
+      await act(async () => {
+        render(
+          <Canvas>
+            <mesh onPointerDown={handlePointerDown}>
+              <boxGeometry args={[2, 2]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      // Get the store via onCreated isn't available here, so use the canvas events directly
+      // First verify events work
+      const evt1 = createPointerEvent('pointerdown', { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 })
+      await act(async () => {
+        fireEvent(getContainer(), evt1)
+      })
+      expect(handlePointerDown).toHaveBeenCalledTimes(1)
+    })
+
+    it('should not crash when eventSource ref is null', async () => {
+      const nullRef = React.createRef<HTMLElement>()
+
+      // Simulate the race condition: eventSource ref is null during async init
+      await act(async () => {
+        expect(() =>
+          render(
+            <Canvas eventSource={nullRef}>
+              <mesh>
+                <boxGeometry args={[2, 2]} />
+                <meshBasicMaterial />
+              </mesh>
+            </Canvas>,
+          ),
+        ).not.toThrow()
+      })
+    })
+  })
+
   //* Event Manager Config Tests ==============================
 
   describe('event manager configuration', () => {

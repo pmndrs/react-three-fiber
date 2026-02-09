@@ -14,6 +14,7 @@ const Gestures = { Component: lazy(() => import('./default/Gestures')) }
 const Gltf = { Component: lazy(() => import('./default/Gltf')) }
 const Inject = { Component: lazy(() => import('./default/Inject')) }
 const Layers = { Component: lazy(() => import('./default/Layers')) }
+const LayeredReality = { Component: lazy(() => import('./default/Layered')) }
 const MultiMaterial = { Component: lazy(() => import('./default/MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
 const NestedCamera = { Component: lazy(() => import('./default/NestedCamera')) }
@@ -52,7 +53,7 @@ const WebGPUMotionBlur = { Component: lazy(() => import('./webgpu/WebGPUMotionBl
 const UseFrameNextFPS = { Component: lazy(() => import('./webgpu/UseFrameNextFPS')) }
 const UseFrameNextPhases = { Component: lazy(() => import('./webgpu/UseFrameNextPhases')) }
 const UseFrameNextControls = { Component: lazy(() => import('./webgpu/UseFrameNextControls')) }
-
+const VerekiaFpsDrop = { Component: lazy(() => import('./webgpu/verekiaFpsDrop')) }
 export {
   // Default
   Activity,
@@ -67,6 +68,7 @@ export {
   Gltf,
   Inject,
   Layers,
+  LayeredReality,
   MultiMaterial,
   MultiRender,
   NestedCamera,
@@ -99,4 +101,5 @@ export {
   UseFrameNextFPS,
   UseFrameNextPhases,
   UseFrameNextControls,
+  VerekiaFpsDrop,
 }

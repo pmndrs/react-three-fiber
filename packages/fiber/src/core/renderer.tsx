@@ -38,8 +38,6 @@ import type {
   InjectState,
 } from '#types'
 
-const isDefaultBuild = R3F_BUILD_LEGACY && R3F_BUILD_WEBGPU
-//todo: what is this, why is it here?
 export const isRenderer = (def: any) => !!def?.render
 
 // Shim for OffscreenCanvas since it was removed from DOM types
@@ -155,7 +153,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         events,
         onCreated: onCreatedCallback,
         shadows = false,
-        textureColorSpace = THREE.SRGBColorSpace,
         orthographic = false,
         frameloop = 'always',
         dpr = [1, 2],
@@ -170,6 +167,15 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         _sizeProps,
         forceEven,
       } = props
+
+      // Extract textureColorSpace from gl or renderer config (not a real renderer property)
+      const textureColorSpace: THREE.ColorSpace =
+        (is.obj(glConfig) && !is.fun(glConfig) && !isRenderer(glConfig) && (glConfig as any).textureColorSpace) ||
+        (is.obj(rendererConfig) &&
+          !is.fun(rendererConfig) &&
+          !isRenderer(rendererConfig) &&
+          (rendererConfig as any).textureColorSpace) ||
+        THREE.SRGBColorSpace
 
       const state = store.getState()
 
@@ -202,7 +208,14 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         )
       }
 
-      // Determine which renderer to use based on props and build flags
+      //* Determine which renderer to use ==============================
+      // Build-specific defaults:
+      // - WebGPU-only build (@react-three/fiber/webgpu): Always use WebGPU (R3F_BUILD_LEGACY=false)
+      // - Legacy-only build (@react-three/fiber/legacy): Always use WebGL (R3F_BUILD_WEBGPU=false)
+      // - Default build (@react-three/fiber): Use WebGL unless renderer prop is provided
+      //
+      // For WebGPU-only builds, wantsGL is always false because R3F_BUILD_LEGACY=false
+      // This means WebGPU is used automatically without needing the renderer prop
       const wantsGL = R3F_BUILD_LEGACY && (state.isLegacy || glConfig || !R3F_BUILD_WEBGPU || !rendererConfig)
 
       if (glConfig && rendererConfig) {
@@ -276,6 +289,10 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }))
       } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
         //* WebGPU path ---
+        // This path is taken when:
+        // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
+        // 2. Default build with explicit renderer prop
+        // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
         renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
         // WebGPU-specific setup - only init if not already initialized
@@ -469,7 +486,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
-        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
+        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, _frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
           advance(timestamp)
@@ -519,15 +536,22 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         renderer.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          renderer.shadowMap.type = THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = THREE.PCFShadowMap
         } else if (is.str(shadows)) {
+          if (shadows === 'soft') {
+            notifyDepreciated({
+              heading: 'shadows="soft" is deprecated',
+              body: 'Three has depreciated soft and improved basic PCFShadows, we converted for you.',
+              link: 'https://github.com/mrdoob/three.js/wiki/Migration-Guide?utm_source=chatgpt.com#181--182',
+            })
+          }
           const types = {
             basic: THREE.BasicShadowMap,
             percentage: THREE.PCFShadowMap,
-            soft: THREE.PCFSoftShadowMap,
+            soft: THREE.PCFShadowMap,
             variance: THREE.VSMShadowMap,
           }
-          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFSoftShadowMap
+          renderer.shadowMap.type = types[shadows as keyof typeof types] ?? THREE.PCFShadowMap
         } else if (is.obj(shadows)) {
           Object.assign(renderer.shadowMap as any, shadows)
         }
@@ -551,16 +575,30 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         lastConfiguredProps.textureColorSpace = textureColorSpace
       }
 
-      // Set gl props
+      // R3F-specific props that aren't real renderer properties (handled separately by R3F)
+      const r3fProps = ['textureColorSpace']
+      // Three.js renderer constructor-only props that are read-only on the live instance
+      const constructorOnlyProps = ['samples', 'antialias', 'alpha', 'canvas', 'powerPreference']
+      const nonApplyProps = [...r3fProps, ...constructorOnlyProps]
+
+      // Set gl props - filter out non-applicable props
       if (glConfig && !is.fun(glConfig) && !isRenderer(glConfig) && !is.equ(glConfig, renderer, shallowLoose)) {
-        applyProps(renderer, glConfig as any)
+        const glProps: Record<string, any> = {}
+        for (const key in glConfig as Record<string, any>) {
+          if (!nonApplyProps.includes(key)) glProps[key] = (glConfig as any)[key]
+        }
+        applyProps(renderer, glProps as any)
       }
 
-      // Set renderer props (WebGPU)
+      // Set renderer props (WebGPU) - filter out non-applicable props
       if (rendererConfig && !is.fun(rendererConfig) && !isRenderer(rendererConfig) && state.renderer) {
         const currentRenderer = state.renderer
         if (!is.equ(rendererConfig, currentRenderer, shallowLoose)) {
-          applyProps(currentRenderer, rendererConfig as any)
+          const rendererProps: Record<string, any> = {}
+          for (const key in rendererConfig as Record<string, any>) {
+            if (!nonApplyProps.includes(key)) rendererProps[key] = (rendererConfig as any)[key]
+          }
+          applyProps(currentRenderer, rendererProps as any)
         }
       }
 
