@@ -85,7 +85,7 @@ export interface CanvasProps
    */
   resize?: ResizeOptions
   /** The target where events are being subscribed to, default: the div that wraps canvas */
-  eventSource?: HTMLElement | React.RefObject<HTMLElement>
+  eventSource?: HTMLElement | React.RefObject<HTMLElement | null>
   /** The event prefix that is cast into canvas pointer x/y events, default: "offset" */
   eventPrefix?: 'offset' | 'client' | 'page' | 'layer' | 'screen'
   /** Enable/disable automatic HMR refresh for TSL nodes and uniforms, default: true in dev */

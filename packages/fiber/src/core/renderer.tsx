@@ -486,7 +486,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set up XR (one time only!)
       if (!state.xr) {
         // Handle frame behavior in WebXR
-        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, frame?: XRFrame) => {
+        const handleXRFrame: XRFrameRequestCallback = (timestamp: number, _frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
           advance(timestamp)

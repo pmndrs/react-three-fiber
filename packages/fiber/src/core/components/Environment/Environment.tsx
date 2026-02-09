@@ -11,7 +11,7 @@ import {
   ColorRepresentation,
 } from '#three'
 import { GroundedSkybox as GroundProjectedEnvImpl } from 'three/examples/jsm/objects/GroundedSkybox.js'
-import { presetsObj, PresetsType } from './environment-assets'
+import { PresetsType } from './environment-assets'
 import { EnvironmentLoaderProps, useEnvironment } from '../../hooks/useEnvironment'
 
 /**
@@ -299,7 +299,22 @@ export function EnvironmentPortal({
       environmentIntensity,
       environmentRotation,
     })
-  }, [children, virtualScene, fbo.texture, scene, defaultScene, background, frames, gl])
+  }, [
+    children,
+    virtualScene,
+    fbo.texture,
+    scene,
+    defaultScene,
+    background,
+    frames,
+    gl,
+    blur,
+    backgroundBlurriness,
+    backgroundIntensity,
+    backgroundRotation,
+    environmentIntensity,
+    environmentRotation,
+  ])
 
   let count = 1
   useFrame(() => {

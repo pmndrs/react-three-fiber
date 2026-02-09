@@ -414,12 +414,11 @@ export function createEvents(store: RootStore) {
   /** Process a deferred pointer event (raycasting) */
   function processDeferredPointer(event: DomEvent, pointerId: number) {
     const state = store.getState()
-    const { onPointerMissed, onDragOverMissed, internal } = state
+    const { internal } = state
 
     // Early exit if events are disabled
     if (!state.events.enabled) return
 
-    const isPointerMove = true // Deferred events are always pointer moves
     const filter = filterPointerEvents
 
     const hits = intersect(event, filter)

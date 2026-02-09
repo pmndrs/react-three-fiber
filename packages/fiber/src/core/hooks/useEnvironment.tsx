@@ -69,7 +69,7 @@ export function useEnvironment({
     }
 
     renderer.domElement.addEventListener('webglcontextlost', clearGainmapTexture, { once: true })
-  }, [files, renderer.domElement])
+  }, [extension, files, loader, multiFile, renderer.domElement])
 
   const loaderResult: Texture | Texture[] = useLoader(
     loader,
