@@ -284,6 +284,16 @@ export const createStore = (
           // As long as this flag is positive there can be no internal rendering at all
           // because there could be multiple render subscriptions
           internal.priority = internal.priority + (priority > 0 ? 1 : 0)
+          // Warn in development when a positive-priority subscriber is registered.
+          // These subscribers disable R3F's automatic gl.render(scene, camera) call,
+          // so the user must call it manually inside their useFrame callback.
+          if (process.env.NODE_ENV !== 'production' && priority > 0) {
+            console.warn(
+              `R3F: useFrame with priority=${priority} disables automatic rendering.\n` +
+                `You must call gl.render(scene, camera) manually inside your useFrame callback.\n` +
+                `See: https://docs.pmnd.rs/react-three-fiber/api/hooks#useFame`,
+            )
+          }
           internal.subscribers.push({ ref, priority, store })
           // Register subscriber and sort layers from lowest to highest, meaning,
           // highest priority renders last (on top of the other frames)

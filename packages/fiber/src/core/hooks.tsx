@@ -39,8 +39,37 @@ export function useThree<T = RootState>(
 }
 
 /**
- * Executes a callback before render in a shared frame loop.
- * Can order effects with render priority or manually render with a positive priority.
+ * Executes a callback in a shared frame loop.
+ *
+ * @param callback - Function called every frame with `(state, delta, xrFrame)`.
+ * @param renderPriority - Execution order and render ownership (default: `0`).
+ *
+ * **Priority behaviour:**
+ * - `priority = 0` (default): callback runs before R3F's automatic `gl.render()`.
+ *   The scene is rendered automatically after all priority-0 callbacks complete.
+ * - `priority > 0`: callback runs **after** all priority-0 callbacks.
+ *   **Automatic rendering is disabled** — you must call `gl.render(scene, camera)`
+ *   manually inside your callback. This is required for multi-camera setups
+ *   (e.g. minimaps, portals, reflections).
+ *
+ * @example
+ * ```tsx
+ * // Priority 0 — scene updates only, auto-render handles the rest
+ * useFrame(({ clock }) => {
+ *   meshRef.current.rotation.y = clock.elapsedTime
+ * })
+ *
+ * // Priority > 0 — manual render required (e.g. minimap)
+ * useFrame(({ gl, scene, camera }) => {
+ *   gl.render(scene, camera)          // ← main render (required!)
+ *   gl.autoClear = false
+ *   gl.setScissorTest(true)
+ *   gl.render(scene, minimapCamera)   // ← extra pass
+ *   gl.setScissorTest(false)
+ *   gl.autoClear = true
+ * }, 1)
+ * ```
+ *
  * @see https://docs.pmnd.rs/react-three-fiber/api/hooks#useframe
  */
 export function useFrame(callback: RenderCallback, renderPriority: number = 0): null {
