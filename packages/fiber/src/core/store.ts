@@ -67,6 +67,7 @@ export interface InternalState {
   active: boolean
   priority: number
   frames: number
+  warnedUseFramePriority: boolean
   subscribe: (callback: React.RefObject<RenderCallback>, priority: number, store: RootStore) => () => void
 }
 
@@ -277,6 +278,7 @@ export const createStore = (
         active: false,
         frames: 0,
         priority: 0,
+        warnedUseFramePriority: false,
         subscribe: (ref: React.RefObject<RenderCallback>, priority: number, store: RootStore) => {
           const internal = get().internal
           // If this subscription was given a priority, it takes rendering into its own hands
@@ -287,12 +289,13 @@ export const createStore = (
           // Warn in development when a positive-priority subscriber is registered.
           // These subscribers disable R3F's automatic gl.render(scene, camera) call,
           // so the user must call it manually inside their useFrame callback.
-          if (process.env.NODE_ENV !== 'production' && priority > 0) {
+          if (process.env.NODE_ENV !== 'production' && priority > 0 && !internal.warnedUseFramePriority) {
             console.warn(
               `R3F: useFrame with priority=${priority} disables automatic rendering.\n` +
                 `You must call gl.render(scene, camera) manually inside your useFrame callback.\n` +
-                `See: https://docs.pmnd.rs/react-three-fiber/api/hooks#useFame`,
+                `See: https://docs.pmnd.rs/react-three-fiber/api/hooks#useFrame`,
             )
+            internal.warnedUseFramePriority = true
           }
           internal.subscribers.push({ ref, priority, store })
           // Register subscriber and sort layers from lowest to highest, meaning,
