@@ -177,3 +177,10 @@ export function Canvas(props: CanvasProps) {
     </FiberProvider>
   )
 }
+// Canvas bootstrapping flow:
+// 1. Measure container size and pixel ratio
+// 2. Create the R3F root container
+// 3. Initialize renderer, scene, camera and raycaster
+// 4. Configure event manager and frameloop
+// 5. Render the React component tree into the Three.js scene
+
