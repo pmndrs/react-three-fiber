@@ -516,3 +516,9 @@ export function createEvents(store: RootStore) {
 
   return { handlePointer }
 }
+// Event dispatch flow:
+// 1. Collect interactive objects from the internal interaction list
+// 2. Perform raycasting to find current intersections
+// 3. Build a propagation path from target object to its parents
+// 4. Dispatch pointer events in bubbling order
+// 5. Respect stopPropagation and pointer capture state
