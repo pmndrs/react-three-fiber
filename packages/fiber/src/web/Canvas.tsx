@@ -177,3 +177,10 @@ export function Canvas(props: CanvasProps) {
     </FiberProvider>
   )
 }
+// Canvas bootstrap flow:
+// 1. Register THREE namespace objects for JSX usage
+// 2. Measure container size and device pixel ratio
+// 3. Create the R3F root container
+// 4. Initialize renderer, camera, scene and event manager
+// 5. Render the React component tree into the Three.js scene
+
