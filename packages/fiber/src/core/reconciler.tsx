@@ -678,3 +678,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   // https://github.com/facebook/react/pull/34522
   getSuspendedCommitReason: (_state: any, _rootContainer: any) => null,
 })
+// Reconciler lifecycle for Three.js objects:
+// 1. Create instance metadata from React elements
+// 2. Construct native Three.js objects from the catalogue
+// 3. Apply prop diffs to sync React props with native objects
+// 4. Attach children into the scene graph or parent slots
+// 5. Remove objects and dispose resources on unmount
