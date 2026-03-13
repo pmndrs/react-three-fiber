@@ -667,6 +667,13 @@ export const reconciler = /* @__PURE__ */ createReconciler<
 
   // https://github.com/facebook/react/pull/34486
   startSuspendingCommit: () => null,
+  // Reconciler flow:
+// 1. Create Three.js instances from the registered catalogue
+// 2. Bind React props to native Three.js objects
+// 3. Attach children into the scene graph with parent.add(child)
+// 4. Apply prop diffs during updates
+// 5. Remove objects and dispose resources when unmounted
+
 
   // https://github.com/facebook/react/pull/34522
   getSuspendedCommitReason: (_state: any, _rootContainer: any) => null,
