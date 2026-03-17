@@ -55,6 +55,7 @@ Enable the rules that you would like to use.
 | Rule                                                            | Description                                                                                | ✅  | 🔧  | 💡  |
 | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --- | --- | --- |
 | <a href="./docs/rules/no-clone-in-loop.md">no-clone-in-loop</a> | Disallow cloning vectors in the frame loop which can cause performance problems.           | ✅  |     |     |
+| <a href="./docs/rules/no-fast-state.md">no-fast-state</a>       | Disallow calling React state setters inside useFrame which causes re-renders every frame.  | ✅  |     |     |
 | <a href="./docs/rules/no-new-in-loop.md">no-new-in-loop</a>     | Disallow instantiating new objects in the frame loop which can cause performance problems. | ✅  |     |     |
 
 <!-- END_CODEGEN -->
