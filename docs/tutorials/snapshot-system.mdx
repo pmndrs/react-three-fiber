@@ -1,0 +1,317 @@
+# 场景快照与回放系统
+
+React Three Fiber 现在提供了一个强大的场景快照与回放系统，让你能够轻松捕获、保存、恢复和比较 3D 场景的不同状态。
+
+## 核心功能
+
+- **一键捕获**: 捕获 3D 场景的完整状态（相机位置、物体变换、材质属性、灯光等）
+- **快照管理**: 存储、切换和删除多个快照
+- **动画序列**: 创建关键帧动画，在多个快照之间自动过渡
+- **导入/导出**: 将快照保存为 JSON 文件，方便分享和版本控制
+- **快照对比**: 比较两个快照之间的差异
+
+## 快速开始
+
+### 1. 使用 SnapshotProvider 包裹你的场景
+
+```tsx
+import { Canvas } from '@react-three/fiber'
+import { SnapshotProvider } from '@react-three/fiber'
+
+function App() {
+  return (
+    <SnapshotProvider maxSnapshots={20}>
+      <Canvas>
+        <Scene />
+      </Canvas>
+      <SnapshotUI />
+    </SnapshotProvider>
+  )
+}
+```
+
+### 2. 使用 useSnapshot Hook
+
+```tsx
+import { useSnapshot } from '@react-three/fiber'
+
+function SnapshotUI() {
+  const { 
+    snapshots, 
+    currentSnapshot, 
+    capture, 
+    apply, 
+    remove,
+    exportToJSON,
+    importFromJSON 
+  } = useSnapshot()
+
+  return (
+    <div>
+      <button onClick={() => capture({ metadata: { name: 'My Snapshot' } })}>
+        捕获快照
+      </button>
+      
+      {snapshots.map((snapshot) => (
+        <button 
+          key={snapshot.id}
+          onClick={() => apply(snapshot)}
+        >
+          {snapshot.state.metadata?.name || snapshot.id}
+        </button>
+      ))}
+    </div>
+  )
+}
+```
+
+### 3. 使用内置的 SnapshotPlayer 组件
+
+```tsx
+import { SnapshotPlayer, SnapshotTimeline } from '@react-three/fiber'
+
+function App() {
+  return (
+    <SnapshotProvider>
+      <Canvas>
+        <Scene />
+      </Canvas>
+      <div style={{ position: 'absolute', top: 20, right: 20 }}>
+        <SnapshotPlayer />
+        <SnapshotTimeline />
+      </div>
+    </SnapshotProvider>
+  )
+}
+```
+
+## API 参考
+
+### useSnapshot
+
+主要 Hook，用于访问快照系统的所有功能。
+
+```tsx
+const {
+  // 状态
+  snapshots,           // 所有快照数组
+  currentSnapshot,     // 当前选中的快照
+  sequences,           // 所有动画序列
+  currentSequence,     // 当前播放的序列
+  isPlaying,          // 是否正在播放动画
+  currentTime,        // 当前动画时间
+  
+  // 方法
+  capture,            // 捕获新快照
+  apply,              // 应用快照
+  remove,             // 删除快照
+  update,             // 更新快照
+  exportToJSON,       // 导出为 JSON
+  importFromJSON,     // 从 JSON 导入
+  createSequence,     // 创建动画序列
+  play,               // 播放序列
+  stop,               // 停止播放
+  goToTime,           // 跳转到指定时间
+} = useSnapshot()
+```
+
+### capture 选项
+
+```tsx
+capture({
+  // 包含哪些状态
+  includeCamera: true,      // 相机状态
+  includeObjects: true,     // 物体变换
+  includeMaterials: true,   // 材质属性
+  includeLights: true,      // 灯光状态
+  includeEnvironment: true, // 环境（背景、雾等）
+  
+  // 过滤特定物体
+  filterObjects: (object) => object.name !== 'exclude-me',
+  
+  // 元数据
+  metadata: {
+    name: 'Snapshot 1',
+    description: 'Initial state',
+    tags: ['v1', 'debug'],
+    createdAt: Date.now(),
+    version: '1.0.0',
+  }
+})
+```
+
+### apply 选项
+
+```tsx
+apply(snapshot, {
+  transitionDuration: 500,  // 过渡动画时长（毫秒）
+  easing: 'easeInOutQuad',  // 缓动函数
+  onComplete: () => console.log('Done!')
+})
+```
+
+### 缓动函数
+
+支持以下缓动函数：
+- `linear`
+- `easeInQuad`, `easeOutQuad`, `easeInOutQuad`
+- `easeInCubic`, `easeOutCubic`, `easeInOutCubic`
+- `easeInQuart`, `easeOutQuart`, `easeInOutQuart`
+
+### 创建动画序列
+
+```tsx
+const sequence = createSequence('My Animation', [
+  { snapshotId: 'snapshot-1', time: 0, duration: 1000, easing: 'easeInOutQuad' },
+  { snapshotId: 'snapshot-2', time: 2000, duration: 1000, easing: 'easeInOutQuad' },
+  { snapshotId: 'snapshot-3', time: 4000, duration: 1000 },
+])
+
+// 播放序列
+play(sequence.id)
+
+// 停止播放
+stop()
+```
+
+### 快照对比
+
+```tsx
+import { SnapshotComparer, compareSnapshots } from '@react-three/fiber'
+
+// 使用组件
+<SnapshotComparer snapshotA={snapshot1} snapshotB={snapshot2} />
+
+// 或使用函数
+const diff = compareSnapshots(snapshot1, snapshot2)
+// diff = {
+//   cameraChanged: boolean,
+//   objectsAdded: string[],
+//   objectsRemoved: string[],
+//   objectsModified: string[],
+//   materialsChanged: string[],
+//   lightsChanged: string[]
+// }
+```
+
+### 导入/导出
+
+```tsx
+import { exportSnapshotsToFile, importSnapshotsFromFile } from '@react-three/fiber'
+
+// 导出所有快照
+exportSnapshotsToFile(snapshots, 'my-scene-snapshots.json')
+
+// 导出单个快照
+const json = exportToJSON(snapshotId)
+
+// 导入
+const fileInput = document.getElementById('file-input')
+fileInput.addEventListener('change', async (e) => {
+  const file = e.target.files[0]
+  const snapshots = await importSnapshotsFromFile(file)
+  snapshots.forEach(s => importFromJSON(JSON.stringify(s)))
+})
+```
+
+## 完整示例
+
+```tsx
+import * as React from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { 
+  SnapshotProvider, 
+  useSnapshot, 
+  SnapshotPlayer,
+  SnapshotTimeline,
+  exportSnapshotsToFile,
+  importSnapshotsFromFile 
+} from '@react-three/fiber'
+import * as THREE from 'three'
+
+function Scene() {
+  const meshRef = React.useRef<THREE.Mesh>(null)
+  
+  useFrame((state) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.x = state.clock.elapsedTime * 0.5
+    }
+  })
+  
+  return (
+    <>
+      <ambientLight intensity={0.5} />
+      <pointLight position={[10, 10, 10]} />
+      <mesh ref={meshRef}>
+        <boxGeometry />
+        <meshStandardMaterial color="orange" />
+      </mesh>
+    </>
+  )
+}
+
+function UI() {
+  const { capture, snapshots, createSequence, play } = useSnapshot()
+  const [showComparer, setShowComparer] = React.useState(false)
+  
+  // 创建示例动画序列
+  const handleCreateAnimation = () => {
+    if (snapshots.length >= 2) {
+      const sequence = createSequence('Demo Animation', 
+        snapshots.slice(0, 3).map((s, i) => ({
+          snapshotId: s.id,
+          time: i * 2000,
+          duration: 1000,
+          easing: 'easeInOutQuad' as const
+        }))
+      )
+      play(sequence.id)
+    }
+  }
+  
+  return (
+    <div style={{ position: 'absolute', top: 20, right: 20 }}>
+      <SnapshotPlayer />
+      <SnapshotTimeline height={80} />
+      
+      <div style={{ marginTop: 16 }}>
+        <button onClick={() => capture({ metadata: { name: `Snapshot ${snapshots.length + 1}` } })}>
+          捕获快照
+        </button>
+        <button onClick={handleCreateAnimation} disabled={snapshots.length < 2}>
+          创建动画
+        </button>
+        <button onClick={() => exportSnapshotsToFile(snapshots)}>
+          导出所有
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <SnapshotProvider maxSnapshots={50}>
+      <Canvas>
+        <Scene />
+      </Canvas>
+      <UI />
+    </SnapshotProvider>
+  )
+}
+```
+
+## 最佳实践
+
+1. **命名快照**: 使用有意义的名称和描述，方便后续识别
+2. **限制数量**: 设置合理的 `maxSnapshots` 限制，避免内存占用过大
+3. **版本控制**: 将重要的快照导出为 JSON 并纳入版本控制
+4. **动画性能**: 复杂场景的过渡动画可能会影响性能，适当调整 `transitionDuration`
+
+## 应用场景
+
+- **调试**: 快速复现特定的场景状态
+- **设计迭代**: 比较不同的材质、光照和布局方案
+- **演示动画**: 创建简单的 3D 演示动画
+- **用户保存**: 允许用户保存和分享他们的场景配置
+- **回归测试**: 验证场景修改不会意外改变其他部分
