@@ -16,6 +16,7 @@ const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
 const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
 const Selection = { Component: lazy(() => import('./Selection')) }
+const SnapshotDemo = { Component: lazy(() => import('./SnapshotDemo')) }
 const StopPropagation = { Component: lazy(() => import('./StopPropagation')) }
 const SuspenseAndErrors = { Component: lazy(() => import('./SuspenseAndErrors')) }
 const SuspenseMaterial = { Component: lazy(() => import('./SuspenseMaterial')) }
@@ -44,6 +45,7 @@ export {
   Reparenting,
   ResetProps,
   Selection,
+  SnapshotDemo,
   StopPropagation,
   SuspenseAndErrors,
   SuspenseMaterial,
