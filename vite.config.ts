@@ -9,8 +9,8 @@ export default defineConfig({
     lib: {
       formats: ['es'],
       entry: {
-        index: 'packages/fiber/node_modules/react-reconciler/index.js',
-        constants: 'packages/fiber/node_modules/react-reconciler/cjs/react-reconciler-constants.production.js',
+        index: 'node_modules/react-reconciler/index.js',
+        constants: 'node_modules/react-reconciler/cjs/react-reconciler-constants.production.js',
       },
       fileName: '[name]',
     },
@@ -45,7 +45,7 @@ export default defineConfig({
           if (!('isEntry' in bundle[key]) || !bundle[key].isEntry) continue
 
           const name = bundle[key].name
-          const source = fs.readFileSync(`packages/fiber/node_modules/@types/react-reconciler/${name}.d.ts`, 'utf-8')
+          const source = fs.readFileSync(`node_modules/@types/react-reconciler/${name}.d.ts`, 'utf-8')
           this.emitFile({ type: 'asset', fileName: `${name}.d.ts`, source })
         }
       },

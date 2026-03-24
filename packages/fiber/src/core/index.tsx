@@ -40,3 +40,6 @@ export type {
 export { context } from './store'
 export type { ObjectMap, Camera, Disposable, Act } from './utils'
 export { applyProps, getRootState, dispose, act, buildGraph } from './utils'
+
+// Snapshot System
+export * from './snapshot'

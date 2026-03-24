@@ -27,6 +27,7 @@ const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
 const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
+const SnapshotDemo = { Component: lazy(() => import('./SnapshotDemo')) }
 
 export {
   Activity,
@@ -56,4 +57,5 @@ export {
   ChangeTexture,
   WebGPU,
   FlushSync,
+  SnapshotDemo,
 }
