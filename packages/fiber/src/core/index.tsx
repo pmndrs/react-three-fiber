@@ -40,3 +40,35 @@ export type {
 export { context } from './store'
 export type { ObjectMap, Camera, Disposable, Act } from './utils'
 export { applyProps, getRootState, dispose, act, buildGraph } from './utils'
+export type {
+  TransformState,
+  CameraState,
+  MaterialState,
+  ObjectState,
+  LightState,
+  SceneState,
+  SnapshotMetadata,
+  Snapshot,
+  Keyframe,
+  EasingFunction,
+  AnimationSequence,
+  SnapshotStore,
+  SnapshotOptions,
+  ApplySnapshotOptions,
+  SnapshotPlayerProps,
+  SnapshotTimelineProps,
+  SnapshotComparerProps,
+  SnapshotDiff,
+  UseSnapshotReturn,
+  SnapshotProviderProps,
+} from './snapshot'
+export {
+  useSnapshot,
+  SnapshotProvider,
+  SnapshotPlayer,
+  SnapshotTimeline,
+  SnapshotComparer,
+  compareSnapshots,
+  exportSnapshotsToFile,
+  importSnapshotsFromFile,
+} from './snapshot'
