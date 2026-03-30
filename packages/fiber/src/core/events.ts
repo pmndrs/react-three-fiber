@@ -353,7 +353,7 @@ export function createEvents(store: RootStore) {
   function cancelPointer(intersections: Intersection[]) {
     const { internal } = store.getState()
     for (const hoveredObj of internal.hovered.values()) {
-      // When no objects were hit or the the hovered object wasn't found underneath the cursor
+      // When no objects were hit or the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
         !intersections.length ||
