@@ -194,12 +194,6 @@ function App() {
 > [!NOTE]
 > Assets loaded with useLoader are cached by default. The urls given serve as cache-keys. This allows you to re-use loaded data everywhere in the component tree.
 
-You can also provide an explicit cache key as the fifth argument when the request URL changes (for example signed URLs or auth tokens):
-
-```jsx
-const model = useLoader(GLTFLoader, signedUrl, undefined, undefined, '/model.glb')
-```
-
 > [!WARNING]
 > Be very careful with mutating or disposing of loaded assets, especially when you plan to re-use them. Refer to the automatic disposal section in the API.
 
@@ -249,13 +243,6 @@ You can pre-load assets in global space so that models can be loaded in anticipa
 
 ```jsx
 useLoader.preload(GLTFLoader, '/model.glb' /* extensions */)
-```
-
-You can pass the same cache key to `preload` and `clear`:
-
-```jsx
-useLoader.preload(GLTFLoader, signedUrl, undefined, '/model.glb')
-useLoader.clear(GLTFLoader, signedUrl, '/model.glb')
 ```
 
 ## `useGraph`
