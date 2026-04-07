@@ -14,32 +14,33 @@ This page showcases some React Three Fiber/r3f community components that have no
 
 #### Data sources
 
- - [NASA-AMMOS/3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS/) (r3f [readme](https://github.com/NASA-AMMOS/3DTilesRendererJS/blob/master/src/r3f/README.md)) repo with doc
- - Luma Labs [Gaussian Splats](https://cdn-luma.com/public/lumalabs.ai/luma-web-library/0.2/fefe154/index.html#react-three-fiber) renderer doc with demos
- - [NYTimes/three-loader-3dtiles](https://nytimes.github.io/three-loader-3dtiles) 
+ - [NASA-AMMOS/3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS/) (r3f [readme](https://github.com/NASA-AMMOS/3DTilesRendererJS/blob/master/src/r3f/README.md)) to render OGC 3D Tiles (+ 2D & 3D tiled content) in threejs
+ - [SparkJS R3F](https://github.com/sparkjsdev/spark-react-r3f) for 3DGS rendering, animation etc
+ - [Stale] Luma Labs [Gaussian Splats](https://cdn-luma.com/public/lumalabs.ai/luma-web-library/0.2/fefe154/index.html#react-three-fiber) renderer 
+ - [Stale] [NYTimes/three-loader-3dtiles](https://nytimes.github.io/three-loader-3dtiles) 
 
 #### Renderers & frameworks
 
  - Takram three-geospatial [clouds doc](https://github.com/takram-design-engineering/three-geospatial/tree/main/packages/clouds) and [demos](https://takram-design-engineering.github.io/three-geospatial/?path=/story/clouds-3d-tiles-renderer-integration--tokyo), and [atmosphere doc](https://github.com/takram-design-engineering/three-geospatial/tree/main/packages/atmosphere)
- - [sparkjsdev/spark-react-r3f](https://github.com/sparkjsdev/spark-react-r3f)
- - [threepipe plugin-r3f](https://threepipe.org/package/plugin-r3f.html#importing-and-setup)
- - [Looking Glass](https://docs.lookingglassfactory.com/developer-tools/webxr/react-three-fiber) doc and demos
- - [Theatre-js](https://github.com/theatre-js/theatre) repo and [doc](https://www.theatrejs.com/docs/latest)
+ - [threepipe plugin-r3f](https://threepipe.org/package/plugin-r3f.html#importing-and-setup) leveraging ThreePipe's powerful viewer context and plugin system
+ - [RodrigoHamuy/react-three-map](https://github.com/RodrigoHamuy/react-three-map) to bridge R3F on top of Maplibre/Mapbox react-map-gl
+ - [14islands/r3f-scroll-rig](https://github.com/14islands/r3f-scroll-rig) and [doc](https://tympanus.net/codrops/2023/10/10/progressively-enhanced-webgl-lens-refraction/) for syncing 3D meshes and DOM elements
+ - [Stale] [Theatre-js](https://github.com/theatre-js/theatre) repo and [doc](https://www.theatrejs.com/docs/latest) animation and keyframing
+ - [Stale] [Looking Glass](https://lfdocs.lookingglassfactory.com/software/creator-tools/webxr/react-three-fiber) 
 
-#### Materials
+#### Materials and VFX
 
  - [FarazzShaikh/CustomShaderMaterial](https://github.com/FarazzShaikh/THREE-CustomShaderMaterial)
  - [pmndrs/THREE.MeshLine](https://github.com/pmndrs/meshline)
+ - [wass08/wawa-vfx](https://github.com/wass08/wawa-vfx)
+ - [mustache-dev/Three-VFX](https://github.com/mustache-dev/Three-VFX)
  - [ektogamat/R3F-Ultimate-Lens-Flare](https://github.com/ektogamat/R3F-Ultimate-Lens-Flare)
  - [troika-three-text](https://github.com/protectwise/troika/tree/main/packages/troika-three-text)
 
 #### Utilities
 
  - [utsuboco/r3f-perf](https://github.com/utsuboco/r3f-perf)
- - [RodrigoHamuy/react-three-map](https://github.com/RodrigoHamuy/react-three-map)
  - [vasturiano/r3f-globe](https://github.com/vasturiano/r3f-globe) 
- - [wass08/wawa-vfx](https://github.com/wass08/wawa-vfx)
- - [mustache-dev/Three-VFX](https://github.com/mustache-dev/Three-VFX)
 
 ### Codesandboxes and demos
 
@@ -47,7 +48,7 @@ This page showcases some React Three Fiber/r3f community components that have no
   <li>
     [NASA-AMMOS/3DTilesRendererJS](https://github.com/NASA-AMMOS/3DTilesRendererJS)
 
-    [<Img src="https://raw.githubusercontent.com/NASA-AMMOS/3DTilesRendererJS/master/images/header-mars.png" alt="3DTilesRendererJS r3f demo" className="aspect-[16/9] object-cover" width="1763" height="926" />](https://nasa-ammos.github.io/3DTilesRendererJS/example/bundle/r3f/basic.html)
+    [<Img src="https://raw.githubusercontent.com/NASA-AMMOS/3DTilesRendererJS/master/images/header-mars.png" alt="3DTilesRendererJS r3f demo" className="aspect-[16/9] object-cover" width="1763" height="926" />](https://nasa-ammos.github.io/3DTilesRendererJS/r3f/basic.html)
   </li>
 
   <li>
@@ -57,24 +58,21 @@ This page showcases some React Three Fiber/r3f community components that have no
   </li>
 
   <li>
-    [Luma Gaussian Splats](https://cdn-luma.com/public/lumalabs.ai/luma-web-library/0.2/fefe154/index.html#react-three-fiber)
-    <Codesandbox id="h2fkgq" />
+    [sparkjsdev/spark-react-r3f](https://github.com/sparkjsdev/spark-react-r3f) 3DGS
+
+    [<Img src="https://cgworld.jp/flashnews/Spark20-07.jpg" alt="spark-react-r3f preview" className="aspect-[16/9] object-cover" />](https://sparkjs.dev/examples/#sogs)
   </li>
 
   <li>
-    [NYTimes/three-loader-3dtiles](https://github.com/nytimes/three-loader-3dtiles/blob/dev/examples/r3f/src/index.tsx)
+    [threepipe plugin-r3f](https://threepipe.org/package/plugin-r3f.html#importing-and-setup)
 
-    [<Img src="https://rd.nytimes.com/static/1ffcbe7f02d6168aecebdb7a84929dcf/1b9fc/7579e21f-3af0-46bb-a073-28c4a97594f9_Demo4.jpg" alt="three-loader-3dtiles r3f demo" className="aspect-[16/9] object-cover" width="1763" height="926" />](https://nytimes.github.io/three-loader-3dtiles/dist/web/examples/demos/realitycapture/)
+    [<Img src="https://raw.githubusercontent.com/repalash/threepipe/refs/heads/master/website/public/images/editor-edit.webp" alt="threepipe r3f plugin preview" className="aspect-[16/9] object-cover" />](https://threepipe.org/examples/tweakpane-editor/)
   </li>
 
   <li>
-    [Looking Glass](https://docs.lookingglassfactory.com/developer-tools/webxr/react-three-fiber)
-    <Codesandbox id="xzlmzz" screenshot_url="https://blog.lookingglassfactory.com/content/images/size/w2000/2024/05/LKG-32-Spatial-Display-Portrait-Cleopatra-1.jpg"/> 
-  </li> 
+    [react-three-map](https://github.com/RodrigoHamuy/react-three-map)
 
-  <li>
-    [Theatre-js](https://github.com/theatre-js/theatre)
-    <Codesandbox id="6xfrsv" screenshot_url="https://www.theatrejs.com/images/docs/0.5/manual/studio/ui.png" />
+    [<Img src="https://raw.githubusercontent.com/RodrigoHamuy/react-three-map/refs/heads/main/docs/coordinates.png" alt="react-three-map demo" className="aspect-[16/9] object-cover" />](https://rodrigohamuy.github.io/react-three-map/?story=buildings-3d--default&theme=dark)
   </li>
 
   <li>
@@ -84,14 +82,37 @@ This page showcases some React Three Fiber/r3f community components that have no
   </li>
 
   <li>
+    [wass08/wawa-vfx](https://github.com/wass08/wawa-vfx)
+
+    [<Img src="https://assets.wawasensei.dev/react-three-fiber/vfx-engine/wawa-vfx-preview.jpg?v=2" alt="wawa-vfx preview" className="aspect-[16/9] object-cover" />](https://wawa-vfx.wawasensei.dev/)
+  </li>
+
+  <li>
+    [mustache-dev/Three-VFX](https://github.com/mustache-dev/Three-VFX)
+
+    [<Img src="https://pbs.twimg.com/media/HBw0pCxW0AAZy4d?format=jpg&name=4096x4096" alt="Three-VFX preview" className="aspect-[16/9] object-cover" />](https://three-vfx.vercel.app/)
+  </li>
+
+  <li>
+    [14islands/r3f-scroll-rig](https://github.com/14islands/r3f-scroll-rig)
+    <Codesandbox id="fu0ky6" />
+  </li>
+   
+  <li>
+    [utsuboco/r3f-perf](https://github.com/utsuboco/r3f-perf)
+    <Codesandbox id="ykfpwf" />
+  </li>
+
+  <li>
     [Takram three-geospatial atmosphere](https://github.com/takram-design-engineering/three-geospatial/tree/main/packages/atmosphere)
 
     [<Img src="https://media.githubusercontent.com/media/takram-design-engineering/three-geospatial/main/packages/atmosphere/docs/manhattan.jpg" alt="Takram three-geospatial atmosphere" className="aspect-[16/9] object-cover" width="1763" height="926" />](https://takram-design-engineering.github.io/three-geospatial/?path=/story/atmosphere-3d-tiles-renderer-integration--manhattan)
   </li>
 
   <li>
-    [utsuboco/r3f-perf](https://github.com/utsuboco/r3f-perf)
-    <Codesandbox id="ykfpwf" />
+    [vasturiano/r3f-globe](https://github.com/vasturiano/r3f-globe)
+
+    [<Img src="https://raw.githubusercontent.com/vasturiano/r3f-globe/master/example/preview.png" alt="r3f-globe demo" className="aspect-[16/9] object-cover" />](https://vasturiano.github.io/r3f-globe/example/multiple-globes/)
   </li>
 
   <li>
@@ -106,38 +127,24 @@ This page showcases some React Three Fiber/r3f community components that have no
   </li>
 
   <li>
-    [sparkjsdev/spark-react-r3f](https://github.com/sparkjsdev/spark-react-r3f) 3DGS
-
-    [<Img src="https://cgworld.jp/flashnews/Spark20-07.jpg" alt="spark-react-r3f preview" className="aspect-[16/9] object-cover" />](https://github.com/sparkjsdev/spark-react-r3f)
+    [Stale] [Theatre-js](https://github.com/theatre-js/theatre)
+    <Codesandbox id="6xfrsv" screenshot_url="https://www.theatrejs.com/images/docs/0.5/manual/studio/ui.png" />
   </li>
 
   <li>
-    [threepipe plugin-r3f](https://threepipe.org/package/plugin-r3f.html#importing-and-setup)
-
-    [<Img src="https://raw.githubusercontent.com/repalash/threepipe/refs/heads/master/website/public/images/editor-edit.webp" alt="threepipe r3f plugin preview" className="aspect-[16/9] object-cover" />](https://threepipe.org/package/plugin-r3f.html#importing-and-setup)
+    [Stale] [Luma Gaussian Splats](https://cdn-luma.com/public/lumalabs.ai/luma-web-library/0.2/fefe154/index.html#react-three-fiber)
+    <Codesandbox id="h2fkgq" />
   </li>
 
   <li>
-    [react-three-map](https://github.com/RodrigoHamuy/react-three-map)
+    [Stale] [NYTimes/three-loader-3dtiles](https://github.com/nytimes/three-loader-3dtiles/blob/dev/examples/r3f/src/index.tsx)
 
-    [<Img src="https://raw.githubusercontent.com/RodrigoHamuy/react-three-map/refs/heads/main/docs/coordinates.png" alt="react-three-map demo" className="aspect-[16/9] object-cover" />](https://github.com/RodrigoHamuy/react-three-map)
+    [<Img src="https://rd.nytimes.com/static/1ffcbe7f02d6168aecebdb7a84929dcf/1b9fc/7579e21f-3af0-46bb-a073-28c4a97594f9_Demo4.jpg" alt="three-loader-3dtiles r3f demo" className="aspect-[16/9] object-cover" width="1763" height="926" />](https://nytimes.github.io/three-loader-3dtiles/dist/web/examples/demos/realitycapture/)
   </li>
 
   <li>
-    [wass08/wawa-vfx](https://github.com/wass08/wawa-vfx)
-
-    [<Img src="https://assets.wawasensei.dev/react-three-fiber/vfx-engine/wawa-vfx-preview.jpg?v=2" alt="wawa-vfx preview" className="aspect-[16/9] object-cover" />](https://github.com/wass08/wawa-vfx)
+    [Stale] [Looking Glass](https://docs.lookingglassfactory.com/developer-tools/webxr/react-three-fiber)
+    <Codesandbox id="xzlmzz" screenshot_url="https://blog.lookingglassfactory.com/content/images/size/w2000/2024/05/LKG-32-Spatial-Display-Portrait-Cleopatra-1.jpg"/> 
   </li>
 
-  <li>
-    [vasturiano/r3f-globe](https://github.com/vasturiano/r3f-globe)
-
-    [<Img src="https://raw.githubusercontent.com/vasturiano/r3f-globe/master/example/preview.png" alt="r3f-globe demo" className="aspect-[16/9] object-cover" />](https://vasturiano.github.io/r3f-globe/)
-  </li>
-
-  <li>
-    [mustache-dev/Three-VFX](https://github.com/mustache-dev/Three-VFX)
-
-    [<Img src="https://pbs.twimg.com/media/HBw0pCxW0AAZy4d?format=jpg&name=4096x4096" alt="Three-VFX preview" className="aspect-[16/9] object-cover" />](https://github.com/mustache-dev/Three-VFX)
-  </li>
 </Grid>
