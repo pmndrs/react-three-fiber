@@ -12,7 +12,6 @@ const Lines = { Component: lazy(() => import('./Lines')) }
 const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./MultiRender')) }
 const MultiView = { Component: lazy(() => import('./MultiView')) }
-const ObjectControl = { Component: lazy(() => import('./ObjectControl')) }
 const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
 const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
@@ -28,6 +27,7 @@ const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
 const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
+const PathCruise = { Component: lazy(() => import('./PathCruise')) }
 
 export {
   Activity,
@@ -41,7 +41,6 @@ export {
   Lines,
   MultiMaterial,
   MultiRender,
-  ObjectControl,
   Pointcloud,
   Reparenting,
   ResetProps,
@@ -58,4 +57,5 @@ export {
   ChangeTexture,
   WebGPU,
   FlushSync,
+  PathCruise,
 }
