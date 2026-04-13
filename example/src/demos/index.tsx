@@ -27,7 +27,7 @@ const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
 const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
-const PathDrawing = { Component: lazy(() => import('./PathDrawing')) }
+const PuzzleGame = { Component: lazy(() => import('./PuzzleGame')) }
 
 export {
   Activity,
@@ -57,5 +57,5 @@ export {
   ChangeTexture,
   WebGPU,
   FlushSync,
-  PathDrawing,
+  PuzzleGame,
 }
