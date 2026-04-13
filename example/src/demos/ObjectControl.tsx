@@ -1,658 +1,934 @@
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Text } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import * as THREE from 'three'
 
-type PowerLevel = 0 | 1 | 2 | 3
-type NodeType = 'solar' | 'wind' | 'thermal'
-type GameStatus = 'running' | 'success' | 'fail'
+type EnergyLevel = 'low' | 'medium' | 'high' | 'critical'
 
-interface EnergyNode {
+type ObjectState = {
   id: string
   name: string
-  type: NodeType
+  visible: boolean
+  color: string
+  scale: number
   position: [number, number, number]
   connected: boolean
-  powerLevel: PowerLevel
   bufferMode: boolean
-  peakLimit: number
-  currentOutput: number
+  peakLimited: boolean
+  level: EnergyLevel
+  currentValue: number
+  fluctuationSpeed: number
+  fluctuationAmplitude: number
+  phase: number
   stability: number
-  color: string
 }
 
-interface CoreState {
-  totalLoad: number
+type CoreState = {
+  currentLoad: number
   maxCapacity: number
-  bufferRemaining: number
-  maxBuffer: number
-  safeTime: number
-  overloadTime: number
-  status: GameStatus
+  safeThreshold: number
+  overloadThreshold: number
+  timeInSafeZone: number
+  timeInOverload: number
+  bufferTimeRemaining: number
+  status: 'normal' | 'warning' | 'critical' | 'success' | 'failed'
+}
+
+type SystemState = {
+  totalLoad: number
+  stableNodes: number
+  isOverloaded: boolean
+  bufferTimeRemaining: number
+  result: 'running' | 'success' | 'failed'
   failReason: string
+  successTimeRequired: number
+  overloadTimeLimit: number
 }
 
-interface SystemState {
-  nodes: EnergyNode[]
-  core: CoreState
-  selectedNodeId: string | null
+type CameraPreset = {
+  name: string
+  position: [number, number, number]
+  target: [number, number, number]
 }
 
-const SAFE_THRESHOLD = 0.85
-const OVERLOAD_THRESHOLD = 1.0
-const SUCCESS_SAFE_DURATION = 15
-const FAIL_OVERLOAD_DURATION = 5
-const MAX_BUFFER = 10
+const cameraPresets: CameraPreset[] = [
+  { name: '正视图', position: [0, 0, 7], target: [0, 0, 0] },
+  { name: '俯视图', position: [0, 8, 0], target: [0, 0, 0] },
+  { name: '斜侧等距视角', position: [5, 5, 5], target: [0, 0, 0] },
+]
 
-const nodeConfigs = [
+const colorOptions = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dfe6e9', '#fd79a8', '#a29bfe']
+
+const levelConfig: Record<EnergyLevel, { color: string; output: number; fluctuation: number }> = {
+  low: { color: '#4ecdc4', output: 0.3, fluctuation: 0.1 },
+  medium: { color: '#ffeaa7', output: 0.6, fluctuation: 0.2 },
+  high: { color: '#ff6b6b', output: 1.0, fluctuation: 0.3 },
+  critical: { color: '#e84393', output: 1.5, fluctuation: 0.5 },
+}
+
+const initialObjects: ObjectState[] = [
   {
-    id: 'solar',
-    name: '太阳能节点',
-    type: 'solar' as NodeType,
-    position: [-4, 0, 0] as [number, number, number],
-    color: '#ffd93d',
-    basePower: 25,
-  },
-  {
-    id: 'wind',
-    name: '风能节点',
-    type: 'wind' as NodeType,
-    position: [0, 0, -4] as [number, number, number],
-    color: '#6bcb77',
-    basePower: 20,
-  },
-  {
-    id: 'thermal',
-    name: '热能节点',
-    type: 'thermal' as NodeType,
-    position: [4, 0, 0] as [number, number, number],
+    id: 'cube',
+    name: 'Alpha 节点',
+    visible: true,
     color: '#ff6b6b',
-    basePower: 30,
+    scale: 1,
+    position: [-2.5, 0, 0],
+    connected: true,
+    bufferMode: false,
+    peakLimited: false,
+    level: 'medium',
+    currentValue: 0.6,
+    fluctuationSpeed: 1.2,
+    fluctuationAmplitude: 0.2,
+    phase: 0,
+    stability: 0.8,
+  },
+  {
+    id: 'sphere',
+    name: 'Beta 节点',
+    visible: true,
+    color: '#4ecdc4',
+    scale: 1,
+    position: [0, 0, 0],
+    connected: true,
+    bufferMode: false,
+    peakLimited: false,
+    level: 'high',
+    currentValue: 1.0,
+    fluctuationSpeed: 0.8,
+    fluctuationAmplitude: 0.3,
+    phase: Math.PI / 3,
+    stability: 0.6,
+  },
+  {
+    id: 'cylinder',
+    name: 'Gamma 节点',
+    visible: true,
+    color: '#45b7d1',
+    scale: 1,
+    position: [2.5, 0, 0],
+    connected: true,
+    bufferMode: false,
+    peakLimited: false,
+    level: 'low',
+    currentValue: 0.3,
+    fluctuationSpeed: 1.5,
+    fluctuationAmplitude: 0.15,
+    phase: (Math.PI * 2) / 3,
+    stability: 0.9,
   },
 ]
 
-function EnergyNodeMesh({
-  node,
+const initialCore: CoreState = {
+  currentLoad: 0,
+  maxCapacity: 3.0,
+  safeThreshold: 2.0,
+  overloadThreshold: 2.5,
+  timeInSafeZone: 0,
+  timeInOverload: 0,
+  bufferTimeRemaining: 10,
+  status: 'normal',
+}
+
+const initialSystem: SystemState = {
+  totalLoad: 0,
+  stableNodes: 0,
+  isOverloaded: false,
+  bufferTimeRemaining: 10,
+  result: 'running',
+  failReason: '',
+  successTimeRequired: 15,
+  overloadTimeLimit: 5,
+}
+
+function ControllableObject({
+  state,
   isSelected,
   onSelect,
-  onOutputChange,
+  children,
 }: {
-  node: EnergyNode
+  state: ObjectState
   isSelected: boolean
   onSelect: (id: string) => void
-  onOutputChange: (id: string, value: number) => void
+  children: React.ReactNode
 }) {
   const groupRef = useRef<THREE.Group>(null)
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const [hovered, setHovered] = useState(false)
 
-  useFrame(({ clock }) => {
+  useEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.scale.setScalar(state.scale)
+    }
+  }, [state.scale])
+
+  useFrame((frameState) => {
     if (!groupRef.current || !meshRef.current || !glowRef.current) return
 
-    const time = clock.getElapsedTime()
-    const typeOffset = node.type === 'solar' ? 0 : node.type === 'wind' ? 2 : 4
-    const wave = Math.sin(time * 1.5 + typeOffset) * 0.15 + Math.sin(time * 0.7 + typeOffset) * 0.1
+    const time = frameState.clock.elapsedTime
 
-    const baseOutput = node.connected ? (node.powerLevel * nodeConfigs.find((n) => n.id === node.id)!.basePower) / 3 : 0
-    const fluctuation = node.connected ? wave * baseOutput * 0.3 : 0
-    const bufferEffect = node.bufferMode ? Math.abs(wave) * -5 : 0
-    const peakLimited = Math.min(baseOutput + fluctuation + bufferEffect, node.peakLimit)
-    const finalOutput = node.connected ? Math.max(0, peakLimited) : 0
+    groupRef.current.rotation.y = time * 0.3 + state.phase
 
-    onOutputChange(node.id, finalOutput)
+    const pulseScale = state.connected ? 1 + Math.sin(time * state.fluctuationSpeed * 2 + state.phase) * 0.1 : 0.5
+    meshRef.current.scale.setScalar(state.visible ? pulseScale : 0.5)
 
-    const pulseScale = 1 + wave * 0.1
-    meshRef.current.scale.setScalar(pulseScale)
-
-    const glowIntensity = node.connected ? (finalOutput / 30) * 0.5 + 0.3 : 0.1
+    const glowIntensity = state.connected && state.visible ? 0.3 + Math.sin(time * 3 + state.phase) * 0.2 : 0.1
     const glowMaterial = glowRef.current.material as THREE.MeshBasicMaterial
-    glowMaterial.opacity = glowIntensity * (hovered || isSelected ? 1.5 : 1)
-
-    groupRef.current.rotation.y += 0.005
+    glowMaterial.opacity = glowIntensity
+    glowRef.current.scale.setScalar(state.visible && state.connected ? 1.5 + state.currentValue * 0.5 : 0.8)
   })
 
-  const getGeometry = () => {
-    switch (node.type) {
-      case 'solar':
-        return <octahedronGeometry args={[0.8, 0]} />
-      case 'wind':
-        return <icosahedronGeometry args={[0.8, 0]} />
-      case 'thermal':
-        return <torusKnotGeometry args={[0.5, 0.2, 64, 8]} />
-    }
-  }
+  if (!state.visible) return null
+
+  const effectiveColor = state.connected ? levelConfig[state.level].color : '#666666'
 
   return (
     <group
       ref={groupRef}
-      position={node.position}
+      position={state.position}
       onClick={(e) => {
         e.stopPropagation()
-        onSelect(node.id)
+        onSelect(state.id)
       }}
       onPointerOver={(e) => {
         e.stopPropagation()
         setHovered(true)
       }}
       onPointerOut={() => setHovered(false)}>
-      <mesh ref={glowRef} scale={1.5}>
-        {node.type === 'thermal' ? (
-          <torusKnotGeometry args={[0.5, 0.2, 64, 8]} />
-        ) : (
-          <sphereGeometry args={[1, 32, 32]} />
-        )}
-        <meshBasicMaterial color={node.color} transparent opacity={0.3} side={THREE.BackSide} />
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[0.8, 32, 32]} />
+        <meshBasicMaterial color={effectiveColor} transparent opacity={0.3} />
       </mesh>
 
-      {isSelected && (
-        <mesh scale={2}>
-          <ringGeometry args={[1.1, 1.3, 32]} />
-          <meshBasicMaterial color="#ffd700" transparent opacity={0.6} side={THREE.DoubleSide} />
+      <mesh ref={meshRef}>{children}</mesh>
+
+      {state.bufferMode && (
+        <mesh rotation={[Math.PI / 2, 0, 0]}>
+          <torusGeometry args={[0.7, 0.05, 16, 32]} />
+          <meshBasicMaterial color="#00ff88" transparent opacity={0.8} />
         </mesh>
       )}
 
-      <mesh ref={meshRef}>
-        {getGeometry()}
+      {state.peakLimited && (
+        <mesh rotation={[0, 0, 0]}>
+          <torusGeometry args={[0.6, 0.03, 16, 32]} />
+          <meshBasicMaterial color="#ff8800" transparent opacity={0.6} />
+        </mesh>
+      )}
+
+      {!state.connected && (
+        <mesh>
+          <boxGeometry args={[0.3, 0.3, 0.3]} />
+          <meshBasicMaterial color="#ff0000" wireframe />
+        </mesh>
+      )}
+
+      {isSelected && (
+        <mesh scale={1.3}>
+          <boxGeometry args={[1.2, 1.2, 1.2]} />
+          <meshBasicMaterial color="#ffd700" wireframe transparent opacity={0.8} />
+        </mesh>
+      )}
+
+      {hovered && !isSelected && (
+        <mesh scale={1.15}>
+          <boxGeometry args={[1.1, 1.1, 1.1]} />
+          <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.3} />
+        </mesh>
+      )}
+
+      <Text
+        position={[0, -1.2, 0]}
+        fontSize={0.25}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000">
+        {state.name}
+      </Text>
+
+      <Text position={[0, -1.5, 0]} fontSize={0.18} color={effectiveColor} anchorX="center" anchorY="middle">
+        {state.connected ? `${(state.currentValue * 100).toFixed(0)}%` : '已断开'}
+      </Text>
+    </group>
+  )
+}
+
+function Cube({ color }: { color: string }) {
+  return (
+    <mesh>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
+function Sphere({ color }: { color: string }) {
+  return (
+    <mesh>
+      <sphereGeometry args={[0.6, 32, 32]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
+function Cylinder({ color }: { color: string }) {
+  return (
+    <mesh>
+      <cylinderGeometry args={[0.4, 0.4, 1.2, 32]} />
+      <meshStandardMaterial color={color} />
+    </mesh>
+  )
+}
+
+function CoreCore({ core }: { core: CoreState }) {
+  const groupRef = useRef<THREE.Group>(null)
+  const innerRef = useRef<THREE.Mesh>(null)
+  const outerRef = useRef<THREE.Mesh>(null)
+  const ringsRef = useRef<THREE.Group>(null)
+
+  const getStatusColor = () => {
+    switch (core.status) {
+      case 'success':
+        return '#00ff88'
+      case 'failed':
+        return '#ff0000'
+      case 'critical':
+        return '#ff0044'
+      case 'warning':
+        return '#ffaa00'
+      default:
+        return '#4488ff'
+    }
+  }
+
+  useFrame((frameState) => {
+    if (!groupRef.current || !innerRef.current || !outerRef.current || !ringsRef.current) return
+
+    const time = frameState.clock.elapsedTime
+    const loadRatio = core.currentLoad / core.maxCapacity
+
+    groupRef.current.rotation.y = time * 0.2
+
+    const pulseSpeed = core.status === 'critical' ? 5 : core.status === 'warning' ? 3 : 1
+    const pulseScale = 1 + Math.sin(time * pulseSpeed) * 0.1 * loadRatio
+    innerRef.current.scale.setScalar(pulseScale)
+
+    const innerMaterial = innerRef.current.material as THREE.MeshStandardMaterial
+    innerMaterial.emissiveIntensity = 0.3 + loadRatio * 0.7
+
+    const outerMaterial = outerRef.current.material as THREE.MeshBasicMaterial
+    outerMaterial.opacity = 0.1 + loadRatio * 0.3
+
+    ringsRef.current.children.forEach((ring, i) => {
+      const ringMesh = ring as THREE.Mesh
+      ringMesh.rotation.z = time * (0.5 + i * 0.3)
+      const ringMaterial = ringMesh.material as THREE.MeshBasicMaterial
+      ringMaterial.opacity = 0.3 + Math.sin(time * 2 + i) * 0.2
+    })
+  })
+
+  const statusColor = getStatusColor()
+  const loadRatio = core.currentLoad / core.maxCapacity
+
+  return (
+    <group ref={groupRef} position={[0, -2, 0]}>
+      <mesh ref={outerRef}>
+        <sphereGeometry args={[1.2, 32, 32]} />
+        <meshBasicMaterial color={statusColor} transparent opacity={0.2} />
+      </mesh>
+
+      <mesh ref={innerRef}>
+        <icosahedronGeometry args={[0.8, 1]} />
         <meshStandardMaterial
-          color={node.connected ? node.color : '#555555'}
-          emissive={node.connected ? node.color : '#222222'}
-          emissiveIntensity={node.connected ? 0.4 : 0.1}
-          metalness={0.8}
-          roughness={0.2}
+          color={statusColor}
+          emissive={statusColor}
+          emissiveIntensity={0.5}
+          metalness={0.9}
+          roughness={0.1}
         />
       </mesh>
 
-      {!node.connected && (
-        <mesh position={[0, 1.2, 0]}>
-          <sphereGeometry args={[0.15, 16, 16]} />
-          <meshBasicMaterial color="#ff4444" />
-        </mesh>
-      )}
+      <group ref={ringsRef}>
+        {[1.5, 1.7, 1.9].map((radius, i) => (
+          <mesh key={i} rotation={[Math.PI / 2 + i * 0.3, i * 0.5, 0]}>
+            <torusGeometry args={[radius, 0.02, 16, 64]} />
+            <meshBasicMaterial color={statusColor} transparent opacity={0.3} />
+          </mesh>
+        ))}
+      </group>
 
-      {node.bufferMode && node.connected && (
-        <mesh position={[0, 1.2, 0]}>
-          <ringGeometry args={[0.15, 0.25, 16]} />
-          <meshBasicMaterial color="#00ffff" />
-        </mesh>
-      )}
+      <Text
+        position={[0, -2.2, 0]}
+        fontSize={0.3}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.02}
+        outlineColor="#000000">
+        总控核心
+      </Text>
+
+      <Text position={[0, -2.6, 0]} fontSize={0.22} color={statusColor} anchorX="center" anchorY="middle">
+        负载: {(loadRatio * 100).toFixed(0)}%
+      </Text>
     </group>
   )
 }
 
-function ControlCore({ state }: { state: CoreState }) {
-  const coreRef = useRef<THREE.Group>(null)
-  const shellRef = useRef<THREE.Mesh>(null)
-
-  useFrame(({ clock }) => {
-    if (!coreRef.current || !shellRef.current) return
-
-    const time = clock.getElapsedTime()
-    const loadRatio = state.totalLoad / state.maxCapacity
-
-    coreRef.current.rotation.y += 0.01
-    coreRef.current.rotation.x = Math.sin(time * 0.5) * 0.2
-
-    const pulseSpeed = loadRatio > OVERLOAD_THRESHOLD ? 3 : loadRatio > SAFE_THRESHOLD ? 2 : 1
-    const pulse = Math.sin(time * pulseSpeed) * 0.1 + 1
-    shellRef.current.scale.setScalar(pulse * (1 + loadRatio * 0.3))
-
-    const shellMaterial = shellRef.current.material as THREE.MeshStandardMaterial
-    if (state.status === 'fail') {
-      shellMaterial.emissive.set('#ff0000')
-      shellMaterial.emissiveIntensity = 1
-    } else if (state.status === 'success') {
-      shellMaterial.emissive.set('#00ff00')
-      shellMaterial.emissiveIntensity = 1
-    } else if (loadRatio > OVERLOAD_THRESHOLD) {
-      shellMaterial.emissive.set('#ff4400')
-      shellMaterial.emissiveIntensity = 0.8
-    } else if (loadRatio > SAFE_THRESHOLD) {
-      shellMaterial.emissive.set('#ffaa00')
-      shellMaterial.emissiveIntensity = 0.5
-    } else {
-      shellMaterial.emissive.set('#00aaff')
-      shellMaterial.emissiveIntensity = 0.3
-    }
-  })
-
-  return (
-    <group ref={coreRef} position={[0, 0, 0]}>
-      <mesh ref={shellRef}>
-        <icosahedronGeometry args={[1, 1]} />
-        <meshStandardMaterial color="#1a1a2e" metalness={0.9} roughness={0.1} wireframe={false} />
-      </mesh>
-
-      <mesh scale={0.6}>
-        <icosahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial color="#00ffff" emissive="#00ffff" emissiveIntensity={0.5} transparent opacity={0.8} />
-      </mesh>
-
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <mesh key={i} rotation={[(i * Math.PI) / 3, 0, 0]}>
-          <torusGeometry args={[1.5, 0.02, 8, 100]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.3} />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-function EnergyConnection({
+function EnergyBeam({
   start,
   end,
   active,
+  intensity,
 }: {
   start: [number, number, number]
   end: [number, number, number]
   active: boolean
+  intensity: number
 }) {
-  const ref = useRef<THREE.Line>(null)
-  const points = useMemo(() => {
-    const p1 = new THREE.Vector3(...start)
-    const p2 = new THREE.Vector3(...end)
-    const mid = p1.clone().add(p2).multiplyScalar(0.5)
-    mid.y += 1
-    return [p1, mid, p2]
-  }, [start, end])
+  const beamRef = useRef<THREE.Mesh>(null)
 
-  const curve = new THREE.QuadraticBezierCurve3(points[0], points[1], points[2])
-  const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(50))
-
-  useFrame(({ clock }) => {
-    if (!ref.current || !active) return
-    const material = ref.current.material as THREE.LineBasicMaterial
-    material.opacity = 0.3 + Math.sin(clock.getElapsedTime() * 3) * 0.2
+  useFrame((frameState) => {
+    if (!beamRef.current) return
+    const material = beamRef.current.material as THREE.MeshBasicMaterial
+    if (active) {
+      material.opacity = 0.3 + Math.sin(frameState.clock.elapsedTime * 5) * 0.2 * intensity
+    } else {
+      material.opacity = 0.05
+    }
   })
 
-  const material = useMemo(
-    () =>
-      new THREE.LineBasicMaterial({
-        color: active ? '#00ffff' : '#333333',
-        transparent: true,
-        opacity: active ? 0.5 : 0.2,
-      }),
-    [active],
+  const direction = new THREE.Vector3(...end).sub(new THREE.Vector3(...start))
+  const length = direction.length()
+  const midPoint = new THREE.Vector3(...start).add(direction.multiplyScalar(0.5))
+
+  return (
+    <mesh ref={beamRef} position={midPoint.toArray()} rotation={[0, 0, Math.atan2(direction.y, direction.x)]}>
+      <cylinderGeometry args={[0.03, 0.03, length, 8]} />
+      <meshBasicMaterial color={active ? '#00ffff' : '#333333'} transparent opacity={active ? 0.5 : 0.1} />
+    </mesh>
   )
+}
 
-  const line = useMemo(() => {
-    const l = new THREE.Line()
-    l.geometry = geometry
-    l.material = material
-    return l
-  }, [geometry, material])
+function CameraController({ preset }: { preset: CameraPreset }) {
+  const { camera, controls } = useThree()
 
-  return <primitive object={line} ref={ref} />
+  useEffect(() => {
+    if (controls) {
+      const startPos = camera.position.clone()
+      const endPos = new THREE.Vector3(...preset.position)
+      const orbitControls = controls as any
+      const startTarget = orbitControls.target.clone()
+      const endTarget = new THREE.Vector3(...preset.target)
+
+      let progress = 0
+      const duration = 1000
+      const startTime = Date.now()
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime
+        progress = Math.min(elapsed / duration, 1)
+        const easeProgress = 1 - Math.pow(1 - progress, 3)
+
+        camera.position.lerpVectors(startPos, endPos, easeProgress)
+        orbitControls.target.lerpVectors(startTarget, endTarget, easeProgress)
+        orbitControls.update()
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        }
+      }
+
+      animate()
+    }
+  }, [preset, camera, controls])
+
+  return null
 }
 
 function ControlPanel({
-  state,
-  onSelectNode,
+  objects,
+  selectedId,
+  onSelect,
+  onToggleVisibility,
+  onChangeColor,
+  onChangeScale,
+  onChangeLevel,
   onToggleConnection,
-  onChangePowerLevel,
-  onToggleBufferMode,
-  onChangePeakLimit,
-  onReset,
+  onToggleBuffer,
+  onTogglePeakLimit,
+  cameraPreset,
+  onChangeCameraPreset,
+  system,
+  core,
 }: {
-  state: SystemState
-  onSelectNode: (id: string | null) => void
+  objects: ObjectState[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onToggleVisibility: (id: string) => void
+  onChangeColor: (id: string, color: string) => void
+  onChangeScale: (id: string, scale: number) => void
+  onChangeLevel: (id: string, level: EnergyLevel) => void
   onToggleConnection: (id: string) => void
-  onChangePowerLevel: (id: string, level: PowerLevel) => void
-  onToggleBufferMode: (id: string) => void
-  onChangePeakLimit: (id: string, limit: number) => void
-  onReset: () => void
+  onToggleBuffer: (id: string) => void
+  onTogglePeakLimit: (id: string) => void
+  cameraPreset: number
+  onChangeCameraPreset: (index: number) => void
+  system: SystemState
+  core: CoreState
 }) {
-  const selectedNode = state.nodes.find((n) => n.id === state.selectedNodeId)
-  const stableNodes = state.nodes.filter((n) => n.connected && n.currentOutput > 0 && n.stability > 0.6).length
-  const loadRatio = (state.core.totalLoad / state.core.maxCapacity) * 100
-  const isOverloaded = loadRatio > OVERLOAD_THRESHOLD * 100
+  const selectedObject = objects.find((obj) => obj.id === selectedId)
+  const levels: EnergyLevel[] = ['low', 'medium', 'high', 'critical']
+  const levelNames: Record<EnergyLevel, string> = {
+    low: '低档',
+    medium: '中档',
+    high: '高档',
+    critical: '临界',
+  }
+
+  const getStatusClass = () => {
+    if (system.result === 'success') return 'status-success'
+    if (system.result === 'failed') return 'status-failed'
+    if (system.isOverloaded) return 'status-critical'
+    return 'status-normal'
+  }
 
   return (
     <div className="control-panel">
-      <div className="panel-section system-status">
-        <h3>⚡ 系统监控中心</h3>
-        <div className={`status-badge ${state.core.status}`}>
-          {state.core.status === 'running'
-            ? '系统运行中'
-            : state.core.status === 'success'
-            ? '✓ 调度成功'
-            : '✗ 系统失败'}
-        </div>
-
-        <div className="monitor-grid">
-          <div className="monitor-item">
-            <label>总负载</label>
-            <div className="progress-bar">
-              <div
-                className={`progress-fill ${
-                  isOverloaded ? 'danger' : loadRatio > SAFE_THRESHOLD * 100 ? 'warning' : 'safe'
-                }`}
-                style={{ width: `${Math.min(loadRatio, 120)}%` }}
-              />
-            </div>
-            <span className="value">
-              {state.core.totalLoad.toFixed(1)} / {state.core.maxCapacity} MW
-            </span>
-          </div>
-
-          <div className="monitor-item">
-            <label>稳定节点</label>
-            <span className="value large">
-              {stableNodes} / {state.nodes.length}
-            </span>
-          </div>
-
-          <div className="monitor-item">
-            <label>过载状态</label>
-            <span className={`value status ${isOverloaded ? 'danger' : 'safe'}`}>
-              {isOverloaded ? '⚠ 过载' : '正常'}
-            </span>
-          </div>
-
-          <div className="monitor-item">
-            <label>剩余缓冲</label>
-            <span className="value large">{state.core.bufferRemaining.toFixed(1)} s</span>
-          </div>
-
-          <div className="monitor-item">
-            <label>安全运行计时</label>
-            <span className="value">
-              {state.core.safeTime.toFixed(1)} / {SUCCESS_SAFE_DURATION} s
-            </span>
-          </div>
-
-          <div className="monitor-item">
-            <label>过载计时</label>
-            <span className={`value ${state.core.overloadTime > 2 ? 'danger' : ''}`}>
-              {state.core.overloadTime.toFixed(1)} / {FAIL_OVERLOAD_DURATION} s
-            </span>
-          </div>
-        </div>
-
-        {state.core.status === 'fail' && (
-          <div className="result-panel fail">
-            <h4>调度失败</h4>
-            <p>失败原因: {state.core.failReason}</p>
-            <button className="reset-btn" onClick={onReset}>
-              重新开始
-            </button>
-          </div>
-        )}
-
-        {state.core.status === 'success' && (
-          <div className="result-panel success">
-            <h4>🎉 调度成功!</h4>
-            <p>系统已连续安全运行 {SUCCESS_SAFE_DURATION} 秒</p>
-            <button className="reset-btn" onClick={onReset}>
-              再次挑战
-            </button>
-          </div>
-        )}
-      </div>
-
       <div className="panel-section">
-        <h3>🔋 能量节点列表</h3>
-        <div className="node-list">
-          {state.nodes.map((node) => (
+        <h3>能量节点列表</h3>
+        <div className="object-list">
+          {objects.map((obj) => (
             <div
-              key={node.id}
-              className={`node-item ${state.selectedNodeId === node.id ? 'selected' : ''}`}
-              onClick={() => onSelectNode(state.selectedNodeId === node.id ? null : node.id)}>
-              <span className="node-dot" style={{ backgroundColor: node.color }} />
-              <span className="node-name">{node.name}</span>
-              <span className={`node-status ${node.connected ? 'connected' : 'disconnected'}`}>
-                {node.connected ? `${node.currentOutput.toFixed(0)}MW` : '离线'}
+              key={obj.id}
+              className={`object-item ${selectedId === obj.id ? 'selected' : ''}`}
+              onClick={() => onSelect(obj.id)}>
+              <span className="object-name">{obj.name}</span>
+              <span className={`visibility-indicator ${obj.visible ? 'visible' : 'hidden'}`}>
+                {obj.visible ? '👁' : '🚫'}
               </span>
             </div>
           ))}
         </div>
       </div>
 
-      {selectedNode && (
-        <div className="panel-section">
-          <h3>🎛️ 节点控制 - {selectedNode.name}</h3>
-
-          <div className="control-group">
-            <label>连接状态</label>
-            <button
-              className={`toggle-btn ${selectedNode.connected ? 'active' : ''}`}
-              onClick={() => onToggleConnection(selectedNode.id)}>
-              {selectedNode.connected ? '✓ 已连接' : '✗ 已断开'}
-            </button>
+      <div className="panel-section">
+        <h3>系统监控</h3>
+        <div className={`system-monitor-mini ${getStatusClass()}`}>
+          <div className="monitor-row">
+            <span>总负载:</span>
+            <span>{(system.totalLoad * 100).toFixed(0)}%</span>
           </div>
-
-          <div className="control-group">
-            <label>输出档位: Lv.{selectedNode.powerLevel}</label>
-            <div className="level-buttons">
-              {[0, 1, 2, 3].map((level) => (
-                <button
-                  key={level}
-                  className={`level-btn ${selectedNode.powerLevel === level ? 'active' : ''}`}
-                  onClick={() => onChangePowerLevel(selectedNode.id, level as PowerLevel)}
-                  disabled={!selectedNode.connected}>
-                  {level === 0 ? '待机' : `Lv.${level}`}
-                </button>
-              ))}
+          <div className="monitor-row">
+            <span>稳定节点:</span>
+            <span>{system.stableNodes}/3</span>
+          </div>
+          <div className="monitor-row">
+            <span>状态:</span>
+            <span className={system.isOverloaded ? 'text-danger' : 'text-success'}>
+              {system.isOverloaded ? '⚠️ 过载' : '✓ 正常'}
+            </span>
+          </div>
+          <div className="monitor-row">
+            <span>缓冲时间:</span>
+            <span>{system.bufferTimeRemaining.toFixed(1)}s</span>
+          </div>
+          {system.result !== 'running' && (
+            <div className={`result-badge ${system.result}`}>
+              {system.result === 'success' ? '🎉 调度成功!' : `💥 ${system.failReason}`}
             </div>
-          </div>
-
-          <div className="control-group">
-            <label>缓冲模式: {selectedNode.bufferMode ? '开启' : '关闭'}</label>
-            <button
-              className={`toggle-btn ${selectedNode.bufferMode ? 'active' : ''}`}
-              onClick={() => onToggleBufferMode(selectedNode.id)}
-              disabled={!selectedNode.connected}>
-              {selectedNode.bufferMode ? '✓ 波动抑制中' : '开启缓冲'}
-            </button>
-          </div>
-
-          <div className="control-group">
-            <label>峰值限制: {selectedNode.peakLimit} MW</label>
-            <input
-              type="range"
-              min="5"
-              max="40"
-              step="1"
-              value={selectedNode.peakLimit}
-              onChange={(e) => onChangePeakLimit(selectedNode.id, parseInt(e.target.value))}
-              disabled={!selectedNode.connected}
-            />
-          </div>
-
-          <div className="info-grid">
-            <div className="info-item">
-              <label>当前输出</label>
-              <span>{selectedNode.currentOutput.toFixed(1)} MW</span>
-            </div>
-            <div className="info-item">
-              <label>稳定性</label>
-              <span>{(selectedNode.stability * 100).toFixed(0)}%</span>
-            </div>
-          </div>
+          )}
         </div>
+      </div>
+
+      {selectedObject && (
+        <>
+          <div className="panel-section">
+            <h3>节点信息</h3>
+            <div className="info-grid">
+              <div className="info-item">
+                <label>名称:</label>
+                <span>{selectedObject.name}</span>
+              </div>
+              <div className="info-item">
+                <label>状态:</label>
+                <span>{selectedObject.connected ? '已连接' : '已断开'}</span>
+              </div>
+              <div className="info-item">
+                <label>输出:</label>
+                <span>{(selectedObject.currentValue * 100).toFixed(1)}%</span>
+              </div>
+              <div className="info-item">
+                <label>稳定性:</label>
+                <span>{(selectedObject.stability * 100).toFixed(0)}%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="panel-section">
+            <h3>节点控制</h3>
+
+            <div className="control-group">
+              <label>显示/隐藏</label>
+              <button
+                className={`toggle-btn ${selectedObject.visible ? 'active' : ''}`}
+                onClick={() => onToggleVisibility(selectedObject.id)}>
+                {selectedObject.visible ? '隐藏对象' : '显示对象'}
+              </button>
+            </div>
+
+            <div className="control-group">
+              <label>连接状态</label>
+              <button
+                className={`toggle-btn ${selectedObject.connected ? 'connected' : 'disconnected'}`}
+                onClick={() => onToggleConnection(selectedObject.id)}>
+                {selectedObject.connected ? '已连接' : '已断开'}
+              </button>
+            </div>
+
+            <div className="control-group">
+              <label>输出档位</label>
+              <div className="level-buttons">
+                {levels.map((level) => (
+                  <button
+                    key={level}
+                    className={`level-btn ${selectedObject.level === level ? 'active' : ''}`}
+                    style={{ backgroundColor: levelConfig[level].color }}
+                    onClick={() => onChangeLevel(selectedObject.id, level)}>
+                    {levelNames[level]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="control-group">
+              <label>缓冲模式</label>
+              <button
+                className={`toggle-btn ${selectedObject.bufferMode ? 'active' : ''}`}
+                onClick={() => onToggleBuffer(selectedObject.id)}
+                disabled={!selectedObject.connected}>
+                {selectedObject.bufferMode ? '已开启' : '已关闭'}
+              </button>
+            </div>
+
+            <div className="control-group">
+              <label>峰值限制</label>
+              <button
+                className={`toggle-btn ${selectedObject.peakLimited ? 'active' : ''}`}
+                onClick={() => onTogglePeakLimit(selectedObject.id)}
+                disabled={!selectedObject.connected}>
+                {selectedObject.peakLimited ? '已启用' : '已禁用'}
+              </button>
+            </div>
+
+            <div className="control-group">
+              <label>颜色选择</label>
+              <div className="color-grid">
+                {colorOptions.map((color) => (
+                  <button
+                    key={color}
+                    className={`color-btn ${selectedObject.color === color ? 'selected' : ''}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => onChangeColor(selectedObject.id, color)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="control-group">
+              <label>缩放调整: {selectedObject.scale.toFixed(2)}x</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.1"
+                value={selectedObject.scale}
+                onChange={(e) => onChangeScale(selectedObject.id, parseFloat(e.target.value))}
+              />
+            </div>
+          </div>
+        </>
       )}
 
-      <div className="panel-section tips">
-        <h4>💡 操作提示</h4>
-        <ul>
-          <li>点击场景中的节点或列表选中进行控制</li>
-          <li>保持总负载在 85% 以下维持安全状态</li>
-          <li>缓冲模式可降低波动但减少输出</li>
-          <li>连续过载5秒将导致系统崩溃</li>
-          <li>连续安全运行15秒即可通关</li>
-        </ul>
+      <div className="panel-section">
+        <h3>相机视角</h3>
+        <div className="camera-presets">
+          {cameraPresets.map((preset, index) => (
+            <button
+              key={preset.name}
+              className={`preset-btn ${cameraPreset === index ? 'active' : ''}`}
+              onClick={() => onChangeCameraPreset(index)}>
+              {preset.name}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
 }
 
 function Scene({
-  state,
-  onNodeOutputChange,
-  onSelectNode,
+  objects,
+  selectedId,
+  onSelect,
+  cameraPreset,
+  core,
 }: {
-  state: SystemState
-  onNodeOutputChange: (id: string, value: number) => void
-  onSelectNode: (id: string) => void
+  objects: ObjectState[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  cameraPreset: CameraPreset
+  core: CoreState
 }) {
+  const corePosition: [number, number, number] = [0, -2, 0]
+
   return (
     <>
-      <color attach="background" args={['#0a0a1a']} />
-      <ambientLight intensity={0.2} />
-      <pointLight decay={0} position={[10, 10, 10]} intensity={1} />
-      <pointLight decay={0} position={[-10, -10, -10]} color="#00ffff" intensity={0.5} />
+      <color attach="background" args={['#f0f0f0']} />
+      <ambientLight intensity={Math.PI * 0.5} />
+      <pointLight decay={0} position={[10, 10, 10]} />
+      <pointLight decay={0} position={[-10, -10, -10]} color="#4ecdc4" />
 
-      <ControlCore state={state.core} />
-
-      {state.nodes.map((node) => (
-        <EnergyConnection key={`line-${node.id}`} start={node.position} end={[0, 0, 0]} active={node.connected} />
-      ))}
-
-      {state.nodes.map((node) => (
-        <EnergyNodeMesh
-          key={node.id}
-          node={node}
-          isSelected={state.selectedNodeId === node.id}
-          onSelect={onSelectNode}
-          onOutputChange={onNodeOutputChange}
+      {objects.map((obj) => (
+        <EnergyBeam
+          key={obj.id}
+          start={obj.position}
+          end={corePosition}
+          active={obj.connected && obj.visible}
+          intensity={obj.currentValue}
         />
       ))}
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.5, 0]}>
-        <circleGeometry args={[8, 64]} />
-        <meshStandardMaterial color="#0f0f23" metalness={0.9} roughness={0.3} />
+      <ControllableObject state={objects[0]} isSelected={selectedId === objects[0].id} onSelect={onSelect}>
+        <Cube color={objects[0].color} />
+      </ControllableObject>
+
+      <ControllableObject state={objects[1]} isSelected={selectedId === objects[1].id} onSelect={onSelect}>
+        <Sphere color={objects[1].color} />
+      </ControllableObject>
+
+      <ControllableObject state={objects[2]} isSelected={selectedId === objects[2].id} onSelect={onSelect}>
+        <Cylinder color={objects[2].color} />
+      </ControllableObject>
+
+      <CoreCore core={core} />
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -4, 0]} receiveShadow>
+        <planeGeometry args={[20, 20]} />
+        <meshStandardMaterial color="#e0e0e0" />
       </mesh>
 
-      {Array.from({ length: 12 }).map((_, i) => (
-        <mesh key={i} rotation={[-Math.PI / 2, 0, (i * Math.PI) / 6]} position={[0, -2.49, 0]}>
-          <ringGeometry args={[6, 6.2, 1, 1]} />
-          <meshBasicMaterial color="#00ffff" transparent opacity={0.3} />
-        </mesh>
-      ))}
-
-      <OrbitControls makeDefault minDistance={5} maxDistance={20} />
+      <CameraController preset={cameraPreset} />
+      <OrbitControls makeDefault />
     </>
   )
 }
 
 export default function App() {
-  const createInitialState = (): SystemState => ({
-    nodes: nodeConfigs.map((config) => ({
-      ...config,
-      connected: true,
-      powerLevel: 1 as PowerLevel,
-      bufferMode: false,
-      peakLimit: 35,
-      currentOutput: 0,
-      stability: 0.8,
-    })),
-    core: {
-      totalLoad: 0,
-      maxCapacity: 80,
-      bufferRemaining: MAX_BUFFER,
-      maxBuffer: MAX_BUFFER,
-      safeTime: 0,
-      overloadTime: 0,
-      status: 'running',
-      failReason: '',
-    },
-    selectedNodeId: null,
-  })
+  const [objects, setObjects] = useState<ObjectState[]>(initialObjects)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [cameraPresetIndex, setCameraPresetIndex] = useState(0)
+  const [core, setCore] = useState<CoreState>(initialCore)
+  const [system, setSystem] = useState<SystemState>(initialSystem)
 
-  const [state, setState] = useState<SystemState>(createInitialState)
+  const updateSimulation = useCallback(() => {
+    if (system.result !== 'running') return
 
-  const handleNodeOutputChange = useCallback((nodeId: string, value: number) => {
-    setState((prev) => {
-      if (prev.core.status !== 'running') return prev
-
-      const newNodes = prev.nodes.map((n) =>
-        n.id === nodeId ? { ...n, currentOutput: value, stability: 0.6 + Math.random() * 0.4 } : n,
-      )
-      const totalLoad = newNodes.reduce((sum, n) => sum + n.currentOutput, 0)
-
-      return { ...prev, nodes: newNodes, core: { ...prev.core, totalLoad } }
-    })
-  }, [])
-
-  useEffect(() => {
-    if (state.core.status !== 'running') return
-
-    const interval = setInterval(() => {
-      setState((prev) => {
-        const loadRatio = prev.core.totalLoad / prev.core.maxCapacity
-        let { safeTime, overloadTime, bufferRemaining, status, failReason } = prev.core
-
-        if (loadRatio > OVERLOAD_THRESHOLD) {
-          overloadTime += 0.1
-          safeTime = 0
-          if (overloadTime >= FAIL_OVERLOAD_DURATION) {
-            status = 'fail'
-            failReason = `系统持续过载 ${FAIL_OVERLOAD_DURATION} 秒，核心熔断`
-          }
-        } else if (loadRatio <= SAFE_THRESHOLD && loadRatio > 0) {
-          safeTime += 0.1
-          overloadTime = Math.max(0, overloadTime - 0.05)
-          if (safeTime >= SUCCESS_SAFE_DURATION) {
-            status = 'success'
-          }
-        } else {
-          safeTime = Math.max(0, safeTime - 0.05)
-          overloadTime = Math.max(0, overloadTime - 0.02)
+    setObjects((prevNodes) => {
+      return prevNodes.map((node) => {
+        if (!node.connected || !node.visible) {
+          return { ...node, currentValue: 0 }
         }
 
-        bufferRemaining = Math.max(0, bufferRemaining - (loadRatio > SAFE_THRESHOLD ? 0.15 : 0))
+        const config = levelConfig[node.level]
+        let newValue = config.output
+
+        const time = Date.now() / 1000
+        const fluctuation = Math.sin(time * node.fluctuationSpeed + node.phase) * node.fluctuationAmplitude
+        newValue += fluctuation
+
+        if (node.peakLimited) {
+          newValue = Math.min(newValue, 1.2)
+        }
+
+        if (node.bufferMode) {
+          newValue *= 0.7
+        }
+
+        const stability = 0.5 + Math.random() * 0.5
+        newValue *= stability
 
         return {
-          ...prev,
-          core: { ...prev.core, safeTime, overloadTime, bufferRemaining, status, failReason },
+          ...node,
+          currentValue: Math.max(0, Math.min(2, newValue)),
+          stability: node.bufferMode ? Math.min(1, node.stability + 0.01) : Math.max(0.3, node.stability - 0.005),
         }
       })
-    }, 100)
+    })
 
+    setObjects((currentNodes) => {
+      const connectedNodes = currentNodes.filter((n) => n.connected && n.visible)
+      const totalOutput = connectedNodes.reduce((sum, n) => sum + n.currentValue, 0)
+      const stableCount = connectedNodes.filter((n) => n.stability > 0.7).length
+
+      setCore((prevCore) => {
+        const newLoad = totalOutput
+        const isOverloaded = newLoad > prevCore.overloadThreshold
+        const isSafe = newLoad < prevCore.safeThreshold
+
+        let newTimeInSafeZone = prevCore.timeInSafeZone
+        let newTimeInOverload = prevCore.timeInOverload
+        let newBufferTime = prevCore.bufferTimeRemaining
+        let newStatus: CoreState['status'] = 'normal'
+
+        if (isSafe) {
+          newTimeInSafeZone += 0.016
+          newTimeInOverload = 0
+        } else if (isOverloaded) {
+          newTimeInOverload += 0.016
+          newTimeInSafeZone = 0
+          if (newBufferTime > 0) {
+            newBufferTime = Math.max(0, newBufferTime - 0.016)
+          }
+        } else {
+          newTimeInSafeZone = Math.max(0, newTimeInSafeZone - 0.008)
+          newTimeInOverload = Math.max(0, newTimeInOverload - 0.008)
+        }
+
+        if (newLoad > prevCore.overloadThreshold) {
+          newStatus = 'critical'
+        } else if (newLoad > prevCore.safeThreshold) {
+          newStatus = 'warning'
+        }
+
+        return {
+          ...prevCore,
+          currentLoad: newLoad,
+          timeInSafeZone: newTimeInSafeZone,
+          timeInOverload: newTimeInOverload,
+          bufferTimeRemaining: newBufferTime,
+          status: newStatus,
+        }
+      })
+
+      return currentNodes
+    })
+  }, [system.result])
+
+  useEffect(() => {
+    if (system.result !== 'running') return
+
+    const interval = setInterval(updateSimulation, 16)
     return () => clearInterval(interval)
-  }, [state.core.status])
+  }, [system.result, updateSimulation])
 
-  const handleSelectNode = (id: string | null) => setState((prev) => ({ ...prev, selectedNodeId: id }))
+  useEffect(() => {
+    if (system.result !== 'running') return
 
-  const handleToggleConnection = (id: string) =>
-    setState((prev) => ({
+    const checkResult = () => {
+      if (core.timeInSafeZone >= system.successTimeRequired) {
+        setSystem((prev) => ({ ...prev, result: 'success' }))
+        setCore((prev) => ({ ...prev, status: 'success' }))
+      } else if (core.timeInOverload >= system.overloadTimeLimit && core.bufferTimeRemaining <= 0) {
+        setSystem((prev) => ({
+          ...prev,
+          result: 'failed',
+          failReason: '持续过载导致系统崩溃',
+        }))
+        setCore((prev) => ({ ...prev, status: 'failed' }))
+      }
+    }
+
+    checkResult()
+  }, [
+    core.timeInSafeZone,
+    core.timeInOverload,
+    core.bufferTimeRemaining,
+    system.result,
+    system.successTimeRequired,
+    system.overloadTimeLimit,
+  ])
+
+  useEffect(() => {
+    if (system.result !== 'running') return
+
+    const connectedNodes = objects.filter((n) => n.connected && n.visible)
+    const totalOutput = connectedNodes.reduce((sum, n) => sum + n.currentValue, 0)
+    const stableCount = connectedNodes.filter((n) => n.stability > 0.7).length
+
+    setSystem((prev) => ({
       ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, connected: !n.connected } : n)),
+      totalLoad: totalOutput,
+      stableNodes: stableCount,
+      isOverloaded: core.currentLoad > core.overloadThreshold,
+      bufferTimeRemaining: core.bufferTimeRemaining,
     }))
+  }, [objects, core, system.result])
 
-  const handleChangePowerLevel = (id: string, level: PowerLevel) =>
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, powerLevel: level } : n)),
-    }))
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+  }
 
-  const handleToggleBufferMode = (id: string) =>
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, bufferMode: !n.bufferMode } : n)),
-    }))
+  const handleToggleVisibility = (id: string) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, visible: !obj.visible } : obj)))
+  }
 
-  const handleChangePeakLimit = (id: string, limit: number) =>
-    setState((prev) => ({
-      ...prev,
-      nodes: prev.nodes.map((n) => (n.id === id ? { ...n, peakLimit: limit } : n)),
-    }))
+  const handleChangeColor = (id: string, color: string) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, color } : obj)))
+  }
 
-  const handleReset = () => setState(createInitialState())
+  const handleChangeScale = (id: string, scale: number) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, scale } : obj)))
+  }
+
+  const handleChangeLevel = (id: string, level: EnergyLevel) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, level } : obj)))
+  }
+
+  const handleToggleConnection = (id: string) => {
+    setObjects((prev) =>
+      prev.map((obj) => (obj.id === id ? { ...obj, connected: !obj.connected, currentValue: 0 } : obj)),
+    )
+  }
+
+  const handleToggleBuffer = (id: string) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, bufferMode: !obj.bufferMode } : obj)))
+  }
+
+  const handleTogglePeakLimit = (id: string) => {
+    setObjects((prev) => prev.map((obj) => (obj.id === id ? { ...obj, peakLimited: !obj.peakLimited } : obj)))
+  }
 
   return (
     <div className="object-control-container">
-      <Canvas dpr={[1, 2]} camera={{ position: [0, 8, 12], fov: 50 }} className="object-control-canvas">
-        <Scene state={state} onNodeOutputChange={handleNodeOutputChange} onSelectNode={handleSelectNode} />
+      <Canvas dpr={[1, 2]} camera={{ position: [0, 3, 10] }} className="object-control-canvas">
+        <Scene
+          objects={objects}
+          selectedId={selectedId}
+          onSelect={handleSelect}
+          cameraPreset={cameraPresets[cameraPresetIndex]}
+          core={core}
+        />
       </Canvas>
       <ControlPanel
-        state={state}
-        onSelectNode={handleSelectNode}
+        objects={objects}
+        selectedId={selectedId}
+        onSelect={handleSelect}
+        onToggleVisibility={handleToggleVisibility}
+        onChangeColor={handleChangeColor}
+        onChangeScale={handleChangeScale}
+        onChangeLevel={handleChangeLevel}
         onToggleConnection={handleToggleConnection}
-        onChangePowerLevel={handleChangePowerLevel}
-        onToggleBufferMode={handleToggleBufferMode}
-        onChangePeakLimit={handleChangePeakLimit}
-        onReset={handleReset}
+        onToggleBuffer={handleToggleBuffer}
+        onTogglePeakLimit={handleTogglePeakLimit}
+        cameraPreset={cameraPresetIndex}
+        onChangeCameraPreset={setCameraPresetIndex}
+        system={system}
+        core={core}
       />
     </div>
   )
