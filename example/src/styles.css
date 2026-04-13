@@ -440,3 +440,264 @@ input[type='range']::-moz-range-thumb {
   border-radius: 8px;
   border: 1px dashed #ddd;
 }
+
+/* Energy System Styles */
+.control-panel {
+  background: rgba(20, 20, 40, 0.95) !important;
+  color: #e0e0e0 !important;
+  border: 1px solid rgba(0, 255, 255, 0.2) !important;
+}
+
+.panel-section h3 {
+  color: #00ffff !important;
+}
+
+.system-status .status-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.status-badge.running {
+  background: linear-gradient(90deg, #00aaff, #00ffff);
+  color: white;
+}
+
+.status-badge.success {
+  background: linear-gradient(90deg, #00aa44, #00ff88);
+  color: white;
+}
+
+.status-badge.fail {
+  background: linear-gradient(90deg, #ff4400, #ff0044);
+  color: white;
+}
+
+.monitor-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.monitor-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.monitor-item label {
+  display: block;
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.monitor-item .value {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.monitor-item .value.large {
+  font-size: 24px;
+  color: #00ffff;
+}
+
+.monitor-item .value.danger {
+  color: #ff4444;
+}
+
+.monitor-item .value.safe {
+  color: #44ff44;
+}
+
+.progress-bar {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.progress-fill.safe {
+  background: linear-gradient(90deg, #44ff44, #88ff88);
+}
+
+.progress-fill.warning {
+  background: linear-gradient(90deg, #ffaa00, #ffdd44);
+}
+
+.progress-fill.danger {
+  background: linear-gradient(90deg, #ff4400, #ff0044);
+}
+
+.node-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.node-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+
+.node-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.node-item.selected {
+  background: rgba(0, 255, 255, 0.15);
+  border-color: #00ffff;
+}
+
+.node-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.node-name {
+  flex: 1;
+  font-size: 13px;
+}
+
+.node-status {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.node-status.connected {
+  color: #44ff44;
+}
+
+.node-status.disconnected {
+  color: #ff4444;
+}
+
+.level-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.level-btn {
+  padding: 8px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.level-btn:hover:not(:disabled) {
+  border-color: #00ffff;
+  color: #00ffff;
+}
+
+.level-btn.active {
+  background: #00ffff;
+  border-color: #00ffff;
+  color: #0a0a1a;
+  font-weight: 600;
+}
+
+.level-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.result-panel {
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 12px;
+  text-align: center;
+}
+
+.result-panel.success {
+  background: rgba(0, 255, 100, 0.15);
+  border: 1px solid rgba(0, 255, 100, 0.4);
+}
+
+.result-panel.fail {
+  background: rgba(255, 50, 50, 0.15);
+  border: 1px solid rgba(255, 50, 50, 0.4);
+}
+
+.result-panel h4 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+}
+
+.result-panel p {
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.reset-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #00aaff, #00ffff);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  transform: scale(1.05);
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-item label {
+  color: #888;
+  font-size: 12px;
+}
+
+.info-item span {
+  color: #00ffff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.tips h4 {
+  margin: 0 0 10px 0;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.tips ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #888;
+}
+
+.tips li {
+  margin-bottom: 4px;
+}
