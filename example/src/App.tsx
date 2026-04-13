@@ -7,7 +7,7 @@ import './styles.css'
 
 import * as demos from './demos'
 
-const DEFAULT_COMPONENT_NAME = 'Portals'
+const DEFAULT_COMPONENT_NAME = 'PathCruise'
 const visibleComponents: any = Object.entries(demos).reduce((acc, [name, item]) => ({ ...acc, [name]: item }), {})
 
 function ErrorBoundary({ children, fallback, name }: any) {
