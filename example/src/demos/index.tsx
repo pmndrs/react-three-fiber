@@ -27,7 +27,7 @@ const ViewTracking = { Component: lazy(() => import('./ViewTracking')) }
 const ChangeTexture = { Component: lazy(() => import('./ChangeTexture')) }
 const WebGPU = { Component: lazy(() => import('./WebGPU')) }
 const FlushSync = { Component: lazy(() => import('./FlushSync')) }
-const InteractiveControls = { Component: lazy(() => import('./InteractiveControls')) }
+const ObjectControl = { Component: lazy(() => import('./ObjectControl')) }
 
 export {
   Activity,
@@ -57,5 +57,5 @@ export {
   ChangeTexture,
   WebGPU,
   FlushSync,
-  InteractiveControls,
+  ObjectControl,
 }
