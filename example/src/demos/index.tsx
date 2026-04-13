@@ -12,7 +12,6 @@ const Lines = { Component: lazy(() => import('./Lines')) }
 const MultiMaterial = { Component: lazy(() => import('./MultiMaterial')) }
 const MultiRender = { Component: lazy(() => import('./MultiRender')) }
 const MultiView = { Component: lazy(() => import('./MultiView')) }
-const ObjectControl = { Component: lazy(() => import('./ObjectControl')) }
 const Pointcloud = { Component: lazy(() => import('./Pointcloud')) }
 const Reparenting = { Component: lazy(() => import('./Reparenting')) }
 const ResetProps = { Component: lazy(() => import('./ResetProps')) }
@@ -41,8 +40,6 @@ export {
   Lines,
   MultiMaterial,
   MultiRender,
-  MultiView,
-  ObjectControl,
   Pointcloud,
   Reparenting,
   ResetProps,
@@ -53,6 +50,7 @@ export {
   SVGRenderer,
   Test,
   Viewcube,
+  MultiView,
   Portals,
   ViewTracking,
   ChangeTexture,
