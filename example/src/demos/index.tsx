@@ -20,6 +20,7 @@ const MultiRender = { Component: lazy(() => import('./default/MultiRender')) }
 const NestedCamera = { Component: lazy(() => import('./default/NestedCamera')) }
 const PortalTest = { Component: lazy(() => import('./default/PortalTest')) }
 const ResetProps = { Component: lazy(() => import('./default/ResetProps')) }
+const ShaderMaterial = { Component: lazy(() => import('./default/ShaderMaterial')) }
 const Selection = { Component: lazy(() => import('./default/Selection')) }
 const StopPropagation = { Component: lazy(() => import('./default/StopPropagation')) }
 const SuspenseAndErrors = { Component: lazy(() => import('./default/SuspenseAndErrors')) }
@@ -73,6 +74,7 @@ export {
   MultiRender,
   NestedCamera,
   ResetProps,
+  ShaderMaterial,
   Selection,
   StopPropagation,
   SuspenseAndErrors,

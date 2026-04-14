@@ -333,6 +333,23 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
       // Otherwise just set single value
       else target.set(value)
     }
+    // ShaderMaterial uniforms must keep a stable target reference
+    else if (root instanceof THREE.ShaderMaterial && key === 'uniforms' && is.obj(value)) {
+      if (!is.obj(root.uniforms)) root.uniforms = {}
+      const uniforms = root.uniforms as Record<string, THREE.Uniform>
+      const nextUniforms = value as Record<string, THREE.Uniform | { value: unknown }>
+
+      for (const name in nextUniforms) {
+        const uniform = nextUniforms[name]
+        const targetUniform = uniforms[name]
+
+        if (targetUniform) Object.assign(targetUniform, uniform)
+        else {
+          const nextUniform = uniform instanceof THREE.Uniform ? uniform.clone() : new THREE.Uniform(uniform.value)
+          uniforms[name] = nextUniform
+        }
+      }
+    }
     // Else, just overwrite the value
     else {
       root[key] = value
