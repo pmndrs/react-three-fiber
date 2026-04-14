@@ -23,6 +23,7 @@ const defaultExamples = [
   'MultiMaterial',
   'MultiRender',
   'ResetProps',
+  'ShaderMaterial',
   'Selection',
   'StopPropagation',
   'SuspenseAndErrors',
