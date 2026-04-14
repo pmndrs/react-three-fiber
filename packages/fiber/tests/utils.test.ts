@@ -430,6 +430,20 @@ describe('applyProps', () => {
     expect(material.uniforms.resolution.value.toArray()).toStrictEqual([4, 8])
   })
 
+  it('should merge pierced uniform props into stable shader uniforms', () => {
+    const material = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color('hotpink') } },
+    })
+    const uniforms = material.uniforms
+    const uColor = material.uniforms.uColor
+
+    applyProps(material, { 'uniforms-uColor-value': 'royalblue' })
+
+    expect(material.uniforms).toBe(uniforms)
+    expect(material.uniforms.uColor).toBe(uColor)
+    expect((material.uniforms.uColor.value as THREE.Color).getHex()).toBe(new THREE.Color('royalblue').getHex())
+  })
+
   it('should prefer to copy potentially read-only math classes', () => {
     const one = new THREE.Vector3(1, 1, 1)
     const two = new THREE.Vector3(2, 2, 2)
