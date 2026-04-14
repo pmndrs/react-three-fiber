@@ -1,5 +1,5 @@
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 const vertexShader = `
@@ -18,26 +18,38 @@ void main() {
 
 const fragmentShader = `
 uniform float uTime;
+uniform vec3 uColor;
 varying vec2 vUv;
 
 void main() {
-  vec3 color = 0.5 + 0.5 * cos(uTime + vUv.xyx + vec3(0.0, 2.0, 4.0));
-  gl_FragColor = vec4(color, 1.0);
+  vec3 rainbow = 0.5 + 0.5 * cos(uTime + vUv.xyx + vec3(0.0, 2.0, 4.0));
+  gl_FragColor = vec4(mix(rainbow, uColor, 0.6), 1.0);
 }
 `
 
 function Plane() {
   const material = useRef<THREE.ShaderMaterial>(null!)
-  const uniforms = useMemo(() => ({ uTime: { value: 0 } }), [])
+  const [hovered, setHovered] = useState(false)
 
   useFrame(({ clock }) => {
     material.current.uniforms.uTime.value = clock.elapsedTime
   })
 
   return (
-    <mesh>
+    <mesh onPointerOver={() => setHovered(true)} onPointerOut={() => setHovered(false)}>
       <planeGeometry args={[2, 2, 64, 64]} />
-      <shaderMaterial ref={material} uniforms={uniforms} vertexShader={vertexShader} fragmentShader={fragmentShader} />
+      <shaderMaterial
+        ref={material}
+        // The uniforms object has a stable reference so objects can be safely merged in
+        uniforms={{
+          uTime: { value: 0 },
+          uColor: { value: new THREE.Color('hotpink') },
+        }}
+        // Individual uniforms can also be safely updated with pierce notation
+        uniforms-uColor-value={hovered ? 'royalblue' : 'hotpink'}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+      />
     </mesh>
   )
 }
