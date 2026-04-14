@@ -208,3 +208,47 @@ function Mesh() {
     <group dispose={null}>
       <mesh geometry={globalGeometry} material={globalMaterial} />
 ```
+
+## Shader material uniforms
+
+`ShaderMaterial`, `RawShaderMaterial` and subclasses keep the material's [`uniforms` object](https://threejs.org/docs/#ShaderMaterial.uniforms) stable. When you pass a new `uniforms` object, React Three Fiber merges the incoming uniforms into the existing target instead of replacing it.
+
+This preserves three.js internal uniform caching, even if your component creates a fresh `uniforms` object on each render. Existing uniform entries are updated in place and new entries are added as needed.
+
+```jsx
+<shaderMaterial
+  uniforms={{
+    time: { value: time },
+    color: { value: color },
+  }}
+/>
+```
+
+To get a stable reference to the material's `uniforms`, use the React ref.
+
+```jsx
+function Component() {
+  const ref = useRef()
+
+  // This object is merged into the material, so mutating this reference
+  // later will not update the shader.
+  const uniforms = useMemo(
+    () => ({
+      time: { value: 0 },
+      color: { value: color },
+    }),
+    [color],
+  )
+
+  useFrame(({ clock }) => {
+    // The material ref's uniforms object is stable and should be mutated instead.
+    ref.current.uniforms.time.value = clock.elapsedTime
+  })
+
+  return (
+    <mesh>
+      <shaderMaterial ref={ref} uniforms={uniforms} />
+    </mesh>
+  )
+}
+```
