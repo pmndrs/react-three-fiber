@@ -6,5 +6,6 @@ export default {
   rules: {
     '@react-three/no-clone-in-loop': 'error',
     '@react-three/no-new-in-loop': 'error',
+    '@react-three/prefer-useloader': 'error',
   },
 }

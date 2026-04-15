@@ -52,10 +52,11 @@ Enable the rules that you would like to use.
 <!-- START_RULE_CODEGEN -->
 <!-- @command yarn codegen:eslint -->
 
-| Rule                                                            | Description                                                                                | ✅  | 🔧  | 💡  |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --- | --- | --- |
-| <a href="./docs/rules/no-clone-in-loop.md">no-clone-in-loop</a> | Disallow cloning vectors in the frame loop which can cause performance problems.           | ✅  |     |     |
-| <a href="./docs/rules/no-new-in-loop.md">no-new-in-loop</a>     | Disallow instantiating new objects in the frame loop which can cause performance problems. | ✅  |     |     |
+| Rule                                                            | Description                                                                                                         | ✅  | 🔧  | 💡  |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --- | --- | --- |
+| <a href="./docs/rules/no-clone-in-loop.md">no-clone-in-loop</a> | Disallow cloning vectors in the frame loop which can cause performance problems.                                    | ✅  |     |     |
+| <a href="./docs/rules/no-new-in-loop.md">no-new-in-loop</a>     | Disallow instantiating new objects in the frame loop which can cause performance problems.                          | ✅  |     |     |
+| <a href="./docs/rules/prefer-useloader.md">prefer-useloader</a> | Prefer useLoader over calling Loader.load() or Loader.loadAsync() inside effects for suspense and caching benefits. | ✅  |     |     |
 
 <!-- END_CODEGEN -->
 
