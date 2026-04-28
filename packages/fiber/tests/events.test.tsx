@@ -269,6 +269,154 @@ describe('events', () => {
     expect(handleClickRear).not.toHaveBeenCalled()
   })
 
+  describe('swapping instances', () => {
+    it('re-registers events when a primitive object prop is swapped', async () => {
+      const handleClick = jest.fn()
+
+      const meshA = new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial())
+      const meshB = new THREE.Mesh(new THREE.BoxGeometry(2, 2), new THREE.MeshBasicMaterial())
+
+      function App({ object }: { object: THREE.Object3D }) {
+        return (
+          <Canvas>
+            <primitive object={object} onClick={handleClick} />
+          </Canvas>
+        )
+      }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<App object={meshA} />)
+      })
+
+      // Swap the underlying THREE object — this triggers reconciler reconstruction.
+      await act(async () => {
+        result.rerender(<App object={meshB} />)
+      })
+
+      const down = new PointerEvent('pointerdown')
+      Object.defineProperty(down, 'offsetX', { get: () => 577 })
+      Object.defineProperty(down, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), down)
+
+      const up = new PointerEvent('pointerup')
+      Object.defineProperty(up, 'offsetX', { get: () => 577 })
+      Object.defineProperty(up, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), up)
+
+      const evt = new MouseEvent('click')
+      Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+      Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), evt)
+
+      expect(handleClick).toHaveBeenCalledTimes(1)
+      expect(handleClick.mock.calls[0][0].eventObject).toBe(meshB)
+    })
+
+    it('re-registers events when an args change reconstructs the instance', async () => {
+      const handleClick = jest.fn()
+
+      const geometry = new THREE.BoxGeometry(2, 2)
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+
+      function App({ material }: { material: THREE.Material }) {
+        return (
+          <Canvas>
+            <mesh args={[geometry, material]} onClick={handleClick} />
+          </Canvas>
+        )
+      }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<App material={materialA} />)
+      })
+
+      // Reconstruct the mesh via args change while keeping onClick attached.
+      await act(async () => {
+        result.rerender(<App material={materialB} />)
+      })
+
+      const down = new PointerEvent('pointerdown')
+      Object.defineProperty(down, 'offsetX', { get: () => 577 })
+      Object.defineProperty(down, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), down)
+
+      const up = new PointerEvent('pointerup')
+      Object.defineProperty(up, 'offsetX', { get: () => 577 })
+      Object.defineProperty(up, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), up)
+
+      const evt = new MouseEvent('click')
+      Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+      Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+      fireEvent(getContainer(), evt)
+
+      expect(handleClick).toHaveBeenCalledTimes(1)
+      expect((handleClick.mock.calls[0][0].eventObject as THREE.Mesh).material).toBe(materialB)
+    })
+
+    it('keeps previous event state when an instance is swapped', async () => {
+      const handlePointerEnter = jest.fn()
+      const handlePointerLeave = jest.fn()
+      const handlePointerMove = jest.fn()
+
+      const geometry = new THREE.BoxGeometry(2, 2)
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+
+      function App({ material }: { material: THREE.Material }) {
+        return (
+          <Canvas>
+            <mesh
+              args={[geometry, material]}
+              onPointerEnter={handlePointerEnter}
+              onPointerLeave={handlePointerLeave}
+              onPointerMove={handlePointerMove}
+            />
+          </Canvas>
+        )
+      }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<App material={materialA} />)
+      })
+
+      const canvas = getContainer()
+
+      // Move pointer over the mesh to establish hovered state
+      const moveIn = new PointerEvent('pointermove')
+      Object.defineProperty(moveIn, 'offsetX', { get: () => 577 })
+      Object.defineProperty(moveIn, 'offsetY', { get: () => 480 })
+
+      await act(async () => canvas.dispatchEvent(moveIn))
+
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+      expect(handlePointerMove).toHaveBeenCalledTimes(1)
+
+      // Swap instance via args change — should NOT trigger leave/enter
+      await act(async () => {
+        result.rerender(<App material={materialB} />)
+      })
+
+      expect(handlePointerLeave).not.toHaveBeenCalled()
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+
+      // Moving again over the same spot should still fire move, not a new enter
+      const moveAgain = new PointerEvent('pointermove')
+      Object.defineProperty(moveAgain, 'offsetX', { get: () => 577 })
+      Object.defineProperty(moveAgain, 'offsetY', { get: () => 480 })
+
+      await act(async () => canvas.dispatchEvent(moveAgain))
+
+      expect(handlePointerMove).toHaveBeenCalledTimes(2)
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+      expect(handlePointerLeave).not.toHaveBeenCalled()
+    })
+  })
+
   describe('web pointer capture', () => {
     const handlePointerMove = jest.fn()
     const handlePointerDown = jest.fn((ev) => (ev.target as any).setPointerCapture(ev.pointerId))

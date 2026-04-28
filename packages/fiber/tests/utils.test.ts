@@ -406,6 +406,44 @@ describe('applyProps', () => {
     expect(target.foo.value).toBe(false)
   })
 
+  it('should merge shader material uniforms into a stable target', () => {
+    const material = new THREE.ShaderMaterial({ uniforms: { time: { value: 1 } } })
+    const uniforms = material.uniforms
+    const time = material.uniforms.time
+
+    const nextUniforms = {
+      time: { value: 2 },
+      resolution: { value: new THREE.Vector2(4, 8) },
+    }
+
+    applyProps(material, { uniforms: nextUniforms })
+
+    // The uniforms object is copied in leaviung a stable ref
+    expect(material.uniforms).toBe(uniforms)
+    expect(material.uniforms).not.toBe(nextUniforms)
+    // Individual uniforms are also copied into if present
+    expect(material.uniforms.time).toBe(time)
+    expect(material.uniforms.time).not.toBe(nextUniforms.time)
+    expect(material.uniforms.time.value).toBe(2)
+    // When it is a new uniform it gets cloned isntead of assigning by ref
+    expect(material.uniforms.resolution).not.toBe(nextUniforms.resolution)
+    expect(material.uniforms.resolution.value.toArray()).toStrictEqual([4, 8])
+  })
+
+  it('should merge pierced uniform props into stable shader uniforms', () => {
+    const material = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color('hotpink') } },
+    })
+    const uniforms = material.uniforms
+    const uColor = material.uniforms.uColor
+
+    applyProps(material, { 'uniforms-uColor-value': 'royalblue' })
+
+    expect(material.uniforms).toBe(uniforms)
+    expect(material.uniforms.uColor).toBe(uColor)
+    expect((material.uniforms.uColor.value as THREE.Color).getHex()).toBe(new THREE.Color('royalblue').getHex())
+  })
+
   it('should prefer to copy potentially read-only math classes', () => {
     const one = new THREE.Vector3(1, 1, 1)
     const two = new THREE.Vector3(2, 2, 2)
