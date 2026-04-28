@@ -144,7 +144,7 @@ export function invalidate(state?: RootState, frames = 1): void {
       //called from within a useFrame, it means the user wants an additional frame
       state.internal.frames = 2
     } else {
-      //the user need a new frame, no need to increment further than 1
+      //the user needs a new frame, no need to increment further than 1
       state.internal.frames = 1
     }
   }

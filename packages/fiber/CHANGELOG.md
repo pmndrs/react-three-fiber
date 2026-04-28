@@ -1,5 +1,17 @@
 # @react-three/fiber
 
+## 9.6.1
+
+### Patch Changes
+
+- b645741874486417727ea75a0704d48e9f21d623: fix: Seamlessly transfer interactivity state when swapping instances
+
+## 9.6.0
+
+### Minor Changes
+
+- 26e4716412b11a189dd9ac4b3033d0e504f1d7df: Fix uniforms refs so they remain stable for ShaderMaterial
+
 ## 9.5.0
 
 ### Minor Changes

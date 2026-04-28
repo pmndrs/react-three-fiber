@@ -121,6 +121,39 @@ function releaseInternalPointerCapture(
   }
 }
 
+/** This function transfers all interactivity state from one object instance to another. Used when swapping instances due to reconstruction. */
+export function swapInteractivity(store: RootStore, object: THREE.Object3D, newObject: THREE.Object3D) {
+  const { internal } = store.getState()
+
+  for (let i = 0; i < internal.interaction.length; i++) {
+    if (internal.interaction[i] === object) internal.interaction[i] = newObject
+  }
+
+  for (let i = 0; i < internal.initialHits.length; i++) {
+    if (internal.initialHits[i] === object) internal.initialHits[i] = newObject
+  }
+
+  internal.hovered.forEach((value, key) => {
+    if (value.eventObject === object || value.object === object) {
+      internal.hovered.delete(key)
+      const next = {
+        ...value,
+        eventObject: value.eventObject === object ? newObject : value.eventObject,
+        object: value.object === object ? newObject : value.object,
+      }
+      internal.hovered.set(makeId(next), next)
+    }
+  })
+
+  internal.capturedMap.forEach((captures) => {
+    const captureData = captures.get(object)
+    if (captureData) {
+      captures.delete(object)
+      captures.set(newObject, captureData)
+    }
+  })
+}
+
 export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store
@@ -353,7 +386,7 @@ export function createEvents(store: RootStore) {
   function cancelPointer(intersections: Intersection[]) {
     const { internal } = store.getState()
     for (const hoveredObj of internal.hovered.values()) {
-      // When no objects were hit or the the hovered object wasn't found underneath the cursor
+      // When no objects were hit or the hovered object wasn't found underneath the cursor
       // we call onPointerOut and delete the object from the hovered-elements map
       if (
         !intersections.length ||
