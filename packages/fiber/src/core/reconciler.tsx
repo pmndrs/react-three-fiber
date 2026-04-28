@@ -20,7 +20,7 @@ import {
   IsAllOptional,
 } from './utils'
 import type { RootStore } from './store'
-import { removeInteractivity, type EventHandlers } from './events'
+import { swapInteractivity, removeInteractivity, type EventHandlers } from './events'
 import type { ThreeElement } from '../three-types'
 
 type Fiber = Omit<Reconciler.Fiber, 'alternate'> & { refCleanup: null | (() => void); alternate: Fiber | null }
@@ -416,11 +416,13 @@ function swapInstances(): void {
       const target = catalogue[toPascalCase(instance.type)]
 
       // Create object
+      const prevObject = instance.object
       instance.object = instance.props.object ?? new target(...(instance.props.args ?? []))
       instance.object.__r3f = instance
       setFiberRef(fiber, instance.object)
 
-      // Set initial props
+      swapInteractivity(findInitialRoot(instance), prevObject, instance.object)
+
       applyProps(instance.object, instance.props)
 
       if (instance.props.attach) {
