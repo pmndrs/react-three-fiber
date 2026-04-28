@@ -1,5 +1,11 @@
 # @react-three/fiber
 
+## 9.6.1
+
+### Patch Changes
+
+- b645741874486417727ea75a0704d48e9f21d623: fix: Seamlessly transfer interactivity state when swapping instances
+
 ## 9.6.0
 
 ### Minor Changes
