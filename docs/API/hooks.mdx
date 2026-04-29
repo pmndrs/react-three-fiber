@@ -170,7 +170,7 @@ This hook loads assets and suspends for easier fallback- and error-handling. It 
 ```jsx
 import { Suspense } from 'react'
 import { useLoader } from '@react-three/fiber'
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
 function Model() {
   const result = useLoader(GLTFLoader, '/model.glb')
@@ -202,7 +202,7 @@ function App() {
 You can provide a callback as the third argument if you need to configure your loader:
 
 ```jsx
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
 
 useLoader(GLTFLoader, url, (loader) => {
   const dracoLoader = new DRACOLoader()
