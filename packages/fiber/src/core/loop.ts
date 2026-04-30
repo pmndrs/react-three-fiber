@@ -123,6 +123,10 @@ export function loop(timestamp: number): void {
 
     // Flag end of operation
     running = false
+    // Release references to prevent leaking the last root's state after all roots unmount
+    state = undefined!
+    subscribers = undefined!
+    subscription = undefined!
     return cancelAnimationFrame(frame)
   }
 }
