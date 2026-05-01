@@ -363,7 +363,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         gl.shadowMap.enabled = !!shadows
 
         if (is.boo(shadows)) {
-          gl.shadowMap.type = THREE.PCFSoftShadowMap
+          gl.shadowMap.type = THREE.PCFShadowMap
         } else if (is.str(shadows)) {
           const types = {
             basic: THREE.BasicShadowMap,
@@ -371,7 +371,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             soft: THREE.PCFSoftShadowMap,
             variance: THREE.VSMShadowMap,
           }
-          gl.shadowMap.type = types[shadows] ?? THREE.PCFSoftShadowMap
+          gl.shadowMap.type = types[shadows] ?? THREE.PCFShadowMap
         } else if (is.obj(shadows)) {
           Object.assign(gl.shadowMap, shadows)
         }
