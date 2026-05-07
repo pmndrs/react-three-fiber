@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
+import { Canvas, act, extend, events as createPointerEvents, type RootStore } from '../src'
 import THREE from 'three'
 
 extend(THREE as any)
@@ -8,6 +8,30 @@ extend(THREE as any)
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
 describe('events', () => {
+  it('disconnects without throwing when connecting to a null target', () => {
+    let state: any
+    const store = {
+      getState: () => state,
+    } as RootStore
+
+    state = {
+      set: (fn: (_state: any) => any) => {
+        state = { ...state, ...fn(state) }
+      },
+      events: createPointerEvents(store),
+    }
+
+    const target = document.createElement('div')
+    const removeEventListener = jest.spyOn(target, 'removeEventListener')
+
+    state.events.connect(target)
+
+    expect(state.events.connected).toBe(target)
+    expect(() => state.events.connect(null)).not.toThrow()
+    expect(removeEventListener).toHaveBeenCalled()
+    expect(state.events.connected).toBeUndefined()
+  })
+
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
 
