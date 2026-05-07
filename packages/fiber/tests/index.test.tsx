@@ -100,11 +100,11 @@ describe('createRoot', () => {
     expect(store.getState().viewport.dpr).toEqual(window.devicePixelRatio)
   })
 
-  it('should set PCFSoftShadowMap as the default shadow map', async () => {
+  it('should set PCFShadowMap as the default shadow map', async () => {
     const store = await act(async () => (await root.configure({ shadows: true })).render(<group />))
     const { gl } = store.getState()
 
-    expect(gl.shadowMap.type).toBe(THREE.PCFSoftShadowMap)
+    expect(gl.shadowMap.type).toBe(THREE.PCFShadowMap)
   })
 
   it('should set tonemapping to ACESFilmicToneMapping and outputColorSpace to SRGBColorSpace if linear is false', async () => {
