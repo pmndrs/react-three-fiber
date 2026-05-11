@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
 import { Canvas, act, extend } from '../src'
+import { createStore } from '../src/core/store'
+import { createPointerEvents } from '../src/web/events'
 import THREE from 'three'
 
 extend(THREE as any)
@@ -8,6 +10,16 @@ extend(THREE as any)
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
 describe('events', () => {
+  it('ignores null pointer event targets', () => {
+    const store = createStore(jest.fn(), jest.fn())
+    const events = createPointerEvents(store)
+
+    store.getState().setEvents(events)
+
+    expect(() => store.getState().events.connect?.(null)).not.toThrow()
+    expect(store.getState().events.connected).toBeUndefined()
+  })
+
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
 
