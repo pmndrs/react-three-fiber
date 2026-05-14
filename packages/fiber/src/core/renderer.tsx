@@ -41,6 +41,7 @@ interface OffscreenCanvas extends EventTarget {}
 export const _roots = new Map<HTMLCanvasElement | OffscreenCanvas, Root>()
 
 const shallowLoose = { objects: 'shallow', strict: false } as EquConfig
+const isPromise = <T,>(value: T | Promise<T>): value is Promise<T> => typeof (value as Promise<T>)?.then === 'function'
 
 export type DefaultGLProps = Omit<THREE.WebGLRendererParameters, 'canvas'> & {
   canvas: HTMLCanvasElement | OffscreenCanvas
@@ -185,6 +186,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   let configured = false
   let pending: Promise<void> | null = null
+  let rendererInit: THREE.WebGLRenderer | Promise<THREE.WebGLRenderer> | null = null
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
@@ -215,27 +217,47 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       // Set up renderer (one time only!)
       let gl = state.gl
       if (!state.gl) {
-        const defaultProps: DefaultGLProps = {
-          canvas: canvas as HTMLCanvasElement,
-          powerPreference: 'high-performance',
-          antialias: true,
-          alpha: true,
+        if (!rendererInit) {
+          const defaultProps: DefaultGLProps = {
+            canvas: canvas as HTMLCanvasElement,
+            powerPreference: 'high-performance',
+            antialias: true,
+            alpha: true,
+          }
+
+          const createRenderer = (customRenderer: any) => {
+            if (isRenderer(customRenderer)) {
+              return customRenderer
+            }
+
+            return new THREE.WebGLRenderer({
+              ...defaultProps,
+              ...(typeof glConfig === 'function' ? {} : glConfig),
+            })
+          }
+
+          const customRenderer =
+            typeof glConfig === 'function' ? glConfig(defaultProps) : (glConfig as THREE.WebGLRenderer)
+
+          rendererInit = isPromise(customRenderer)
+            ? customRenderer.then(createRenderer)
+            : createRenderer(customRenderer)
+
+          if (isPromise(rendererInit)) rendererInit.catch(() => (rendererInit = null))
         }
 
-        const customRenderer = (
-          typeof glConfig === 'function' ? await glConfig(defaultProps) : glConfig
-        ) as THREE.WebGLRenderer
+        const initializedRenderer = rendererInit
+        if (!initializedRenderer) throw new Error('Renderer could not be initialized')
 
-        if (isRenderer(customRenderer)) {
-          gl = customRenderer
+        gl = isPromise(initializedRenderer) ? await initializedRenderer : initializedRenderer
+        state = store.getState()
+
+        if (!state.gl) {
+          state.set({ gl })
+          state = store.getState()
         } else {
-          gl = new THREE.WebGLRenderer({
-            ...defaultProps,
-            ...glConfig,
-          })
+          gl = state.gl
         }
-
-        state.set({ gl })
       }
 
       // Set up raycaster (one time only!)

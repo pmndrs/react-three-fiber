@@ -190,6 +190,34 @@ describe('createRoot', () => {
     expect(gl instanceof Renderer).toBe(true)
   })
 
+  it('should reuse async gl initialization while configure is pending', async () => {
+    class Renderer extends THREE.WebGLRenderer {}
+
+    let resolve!: () => void
+    const ready = new Promise<void>((res) => {
+      resolve = res
+    })
+    const gl = jest.fn(async (props) => {
+      await ready
+      return new Renderer(props)
+    })
+
+    const first = root.configure({ gl, size: { width: 300, height: 150, top: 0, left: 0 } })
+    const second = root.configure({ gl, size: { width: 500, height: 400, top: 0, left: 0 } })
+
+    expect(gl).toHaveBeenCalledTimes(1)
+
+    let store: RootStore = null!
+    await act(async () => {
+      resolve()
+      await Promise.all([first, second])
+      store = root.render(<group />)
+    })
+
+    expect(store.getState().gl).toBeInstanceOf(Renderer)
+    expect(store.getState().size).toMatchObject({ width: 500, height: 400 })
+  })
+
   it('should respect color management preferences via gl', async () => {
     let gl: THREE.WebGLRenderer & { outputColorSpace?: string } = null!
     let texture: THREE.Texture & { colorSpace?: string } = null!
