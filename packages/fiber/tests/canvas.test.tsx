@@ -1,5 +1,5 @@
 import React from 'react'
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import { Canvas, act } from '../src'
 
 describe('web Canvas', () => {
@@ -61,6 +61,24 @@ describe('web Canvas', () => {
     )
 
     expect(() => renderer.unmount()).not.toThrow()
+  })
+
+  it('should render fallback outside the canvas when renderer creation fails', async () => {
+    const renderer = await act(async () =>
+      render(
+        <Canvas
+          fallback={<div>Sorry no WebGL supported!</div>}
+          gl={() => {
+            throw new Error('WebGL unavailable')
+          }}>
+          <group />
+        </Canvas>,
+      ),
+    )
+
+    await waitFor(() => {
+      expect(renderer.getByText('Sorry no WebGL supported!').closest('canvas')).toBe(null)
+    })
   })
 
   it('plays nice with react SSR', async () => {
