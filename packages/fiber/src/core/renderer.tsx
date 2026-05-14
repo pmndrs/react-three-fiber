@@ -189,7 +189,12 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
       let resolve!: () => void
-      pending = new Promise<void>((_resolve) => (resolve = _resolve))
+      const previous = pending
+      const current = new Promise<void>((_resolve) => (resolve = _resolve))
+      const nextPending = previous ? previous.then(() => current) : current
+      pending = nextPending
+
+      if (previous) await previous
 
       let {
         gl: glConfig,
@@ -400,20 +405,28 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       onCreated = onCreatedCallback
       configured = true
       resolve()
+      if (pending === nextPending) pending = null
       return this
     },
     render(children: React.ReactNode): RootStore {
       // The root has to be configured before it can be rendered
       if (!configured && !pending) this.configure()
 
-      pending!.then(() => {
+      const render = (): void => {
+        if (pending) {
+          pending.then(render)
+          return
+        }
+
         reconciler.updateContainer(
           <Provider store={store} children={children} onCreated={onCreated} rootElement={canvas} />,
           fiber,
           null,
           () => undefined,
         )
-      })
+      }
+
+      render()
 
       return store
     },

@@ -51,6 +51,32 @@ describe('renderer', () => {
     expect(scene.children.length).toBe(0)
   })
 
+  it('should serialize async renderer configuration', async () => {
+    let resolveRenderer!: () => void
+    const rendererReady = new Promise<void>((resolve) => (resolveRenderer = resolve))
+    const gl = jest.fn(async (props) => {
+      await rendererReady
+      return new THREE.WebGLRenderer(props)
+    })
+
+    const firstConfigure = root.configure({ gl, size: { width: 300, height: 150, top: 0, left: 0 } })
+    const secondConfigure = root.configure({ gl, size: { width: 500, height: 400, top: 0, left: 0 } })
+
+    await Promise.resolve()
+
+    expect(gl).toHaveBeenCalledTimes(1)
+
+    let store!: ReturnType<ReconcilerRoot<HTMLCanvasElement>['render']>
+    await act(async () => {
+      store = root.render(null)
+      resolveRenderer()
+      await Promise.all([firstConfigure, secondConfigure])
+    })
+
+    expect(gl).toHaveBeenCalledTimes(1)
+    expect(store.getState().size).toMatchObject({ width: 500, height: 400 })
+  })
+
   it('should render native elements', async () => {
     const store = await act(async () => root.render(<group name="native" />))
     const { scene } = store.getState()
