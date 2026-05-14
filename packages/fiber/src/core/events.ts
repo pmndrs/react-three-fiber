@@ -82,7 +82,7 @@ export interface EventManager<TTarget> {
   /** All the pointer event handlers through which the host forwards native events */
   handlers?: Events
   /** Allows re-connecting to another target */
-  connect?: (target: TTarget) => void
+  connect?: (target: TTarget | null) => void
   /** Removes all existing events handlers from the target */
   disconnect?: () => void
   /** Triggers a onPointerMove with the last known event. This can be useful to enable raycasting without
