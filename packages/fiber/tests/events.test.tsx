@@ -8,6 +8,20 @@ extend(THREE as any)
 const getContainer = () => document.querySelector('canvas')?.parentNode?.parentNode as HTMLDivElement
 
 describe('events', () => {
+  it('does not throw when connecting to a null event source ref', async () => {
+    const eventSource = React.createRef<HTMLElement>()
+
+    await expect(
+      act(async () => {
+        render(
+          <Canvas eventSource={eventSource}>
+            <group />
+          </Canvas>,
+        )
+      }),
+    ).resolves.toBeUndefined()
+  })
+
   it('can handle onPointerDown', async () => {
     const handlePointerDown = jest.fn()
 
