@@ -525,6 +525,8 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
       if (camera !== rootState.camera) updateCamera(camera, size)
     }
 
+    const set = injectState.set
+
     return {
       // The intersect consists of the previous root state
       ...rootState,
@@ -542,7 +544,7 @@ function Portal({ state = {}, children, container }: PortalProps): React.JSX.Ele
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
-        injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+        set((state) => ({ ...state, events: { ...state.events, ...events } })),
     } as RootState
   })
 
