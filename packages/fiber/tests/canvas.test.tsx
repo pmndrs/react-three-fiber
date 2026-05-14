@@ -15,6 +15,21 @@ describe('web Canvas', () => {
     expect(renderer.container).toMatchSnapshot()
   })
 
+  it('should render fallback when renderer setup fails', async () => {
+    const renderer = render(
+      <Canvas
+        gl={() => {
+          throw new Error('WebGL unsupported')
+        }}
+        fallback={<div>Sorry no WebGL supported!</div>}>
+        <group />
+      </Canvas>,
+    )
+
+    expect(await renderer.findByText('Sorry no WebGL supported!')).toBeTruthy()
+    expect(renderer.container.querySelector('canvas')).toBeNull()
+  })
+
   it('should forward ref', async () => {
     const ref = React.createRef<HTMLCanvasElement>()
 

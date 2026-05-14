@@ -73,6 +73,7 @@ function CanvasImpl({
   const handlePointerMissed = useMutableCallback(onPointerMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
+  const [canvasFallback, setCanvasFallback] = React.useState(false)
 
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
@@ -132,7 +133,14 @@ function CanvasImpl({
           </Bridge>,
         )
       }
-      run()
+      run().catch((error) => {
+        if (fallback != null) {
+          root.current?.unmount()
+          setCanvasFallback(true)
+        } else {
+          setError(error)
+        }
+      })
     }
   })
 
@@ -158,9 +166,13 @@ function CanvasImpl({
       }}
       {...props}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
-        <canvas ref={canvasRef} style={{ display: 'block' }}>
-          {fallback}
-        </canvas>
+        {canvasFallback ? (
+          fallback
+        ) : (
+          <canvas ref={canvasRef} style={{ display: 'block' }}>
+            {fallback}
+          </canvas>
+        )}
       </div>
     </div>
   )
