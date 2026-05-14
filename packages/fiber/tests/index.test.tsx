@@ -286,6 +286,46 @@ describe('createPortal', () => {
     expect(groupHandle).toBeDefined()
     expect(prevUUID).not.toBe(groupHandle!.uuid)
   })
+
+  it('does not retain stale portal state in setEvents', async () => {
+    const scene = new THREE.Scene()
+    let rootStore: RootStore = null!
+    let portalState: RootState = null!
+
+    function PortalProbe() {
+      portalState = useThree()
+      return null
+    }
+
+    await act(async () => {
+      rootStore = root.render(createPortal(<PortalProbe />, scene, { scene }))
+    })
+
+    const stalePortalState = portalState
+    const staleSet = stalePortalState.set
+
+    await act(async () => {
+      rootStore.getState().set((state) => ({
+        size: { ...state.size },
+      }))
+    })
+
+    expect(portalState).not.toBe(stalePortalState)
+
+    stalePortalState.set = (() => {
+      throw new Error('stale portal state setter was retained')
+    }) as RootState['set']
+
+    try {
+      await act(async () => {
+        portalState.setEvents({ enabled: false })
+      })
+
+      expect(portalState.get().events.enabled).toBe(false)
+    } finally {
+      stalePortalState.set = staleSet
+    }
+  })
 })
 
 function getExports(source: string): string[] {
