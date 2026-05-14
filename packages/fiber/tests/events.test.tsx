@@ -594,5 +594,54 @@ describe('events', () => {
     expect(handlePointerDown).toHaveBeenCalled()
   })
 
-  it.todo('can handle different event prefixes')
+  it.each([
+    ['client', 0, 0],
+    ['page', 20, 40],
+  ] as const)('can handle different event prefixes (%s)', async (eventPrefix, scrollX, scrollY) => {
+    const scrollXDescriptor = Object.getOwnPropertyDescriptor(window, 'scrollX')
+    const scrollYDescriptor = Object.getOwnPropertyDescriptor(window, 'scrollY')
+    Object.defineProperty(window, 'scrollX', { configurable: true, value: scrollX })
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: scrollY })
+
+    try {
+      const handlePointerDown = jest.fn()
+      let eventCoordinates: { width: number; height: number; left: number; top: number } | null = null
+
+      await act(async () => {
+        render(
+          <Canvas
+            eventPrefix={eventPrefix}
+            onCreated={(state) => {
+              state.size.left = 300
+              state.size.top = 180
+              eventCoordinates = state.size
+            }}>
+            <mesh onPointerDown={handlePointerDown}>
+              <boxGeometry args={[1000, 1000, 1]} />
+              <meshBasicMaterial />
+            </mesh>
+          </Canvas>,
+        )
+      })
+
+      expect(eventCoordinates).not.toBeNull()
+      const { width, height, left, top } = eventCoordinates!
+      const x = left + scrollX + width / 2
+      const y = top + scrollY + height / 2
+
+      const evt = new PointerEvent('pointerdown')
+      Object.defineProperty(evt, `${eventPrefix}X`, { get: () => x })
+      Object.defineProperty(evt, `${eventPrefix}Y`, { get: () => y })
+
+      fireEvent(getContainer(), evt)
+
+      const threeEvent = handlePointerDown.mock.calls[0]?.[0]
+      expect(threeEvent).toBeDefined()
+      expect(threeEvent.pointer.x).toBeCloseTo(0, 5)
+      expect(threeEvent.pointer.y).toBeCloseTo(0, 5)
+    } finally {
+      if (scrollXDescriptor) Object.defineProperty(window, 'scrollX', scrollXDescriptor)
+      if (scrollYDescriptor) Object.defineProperty(window, 'scrollY', scrollYDescriptor)
+    }
+  })
 })

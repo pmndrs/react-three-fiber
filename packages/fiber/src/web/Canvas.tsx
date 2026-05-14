@@ -113,8 +113,14 @@ function CanvasImpl({
             if (eventPrefix) {
               state.setEvents({
                 compute: (event, state) => {
-                  const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
-                  const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+                  const eventX = event[(eventPrefix + 'X') as keyof DomEvent] as number
+                  const eventY = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+                  const scrollX = eventPrefix === 'page' ? window.scrollX : 0
+                  const scrollY = eventPrefix === 'page' ? window.scrollY : 0
+                  const offsetX = eventPrefix === 'client' || eventPrefix === 'page' ? state.size.left + scrollX : 0
+                  const offsetY = eventPrefix === 'client' || eventPrefix === 'page' ? state.size.top + scrollY : 0
+                  const x = eventX - offsetX
+                  const y = eventY - offsetY
                   state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
                   state.raycaster.setFromCamera(state.pointer, state.camera)
                 },
