@@ -64,6 +64,8 @@ export interface InternalState {
   initialClick: [x: number, y: number]
   initialHits: THREE.Object3D[]
   lastEvent: React.RefObject<DomEvent | null>
+  /** Number of root updates in-flight (configure/render). */
+  updating: number
   active: boolean
   priority: number
   frames: number
@@ -272,6 +274,7 @@ export const createStore = (
         initialHits: [],
         capturedMap: new Map(),
         lastEvent: React.createRef(),
+        updating: 0,
 
         // Updates
         active: false,

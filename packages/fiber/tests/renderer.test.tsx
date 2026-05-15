@@ -1,6 +1,17 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
+import {
+  ReconcilerRoot,
+  createRoot,
+  act,
+  extend,
+  ThreeElement,
+  ThreeElements,
+  advance,
+  flushSync,
+  useFrame,
+  useThree,
+} from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -863,5 +874,42 @@ describe('renderer', () => {
 
     await act(async () => root.render(<TestComponent />))
     await act(async () => updateSynchronously(1))
+  })
+
+  it('updates camera and objects atomically during prop-driven scene updates', async () => {
+    const framePairs: [meshX: number, cameraZ: number][] = []
+
+    function Test({ step }: { step: number }) {
+      const mesh = React.useRef<THREE.Mesh>(null!)
+      const camera = useThree((state) => state.camera)
+
+      useFrame(() => {
+        if (!mesh.current) return
+        framePairs.push([mesh.current.position.x, camera.position.z])
+      })
+
+      camera.position.z = step
+
+      return <mesh position={[step, 0, 0]} ref={mesh} />
+    }
+
+    const store = await act(async () => (await root.configure({ frameloop: 'never' })).render(<Test step={0} />))
+    advance(Date.now())
+    framePairs.length = 0
+
+    await act(async () => root.render(<Test step={1} />))
+    advance(Date.now())
+
+    const hasMixedNewObjectOldCamera = framePairs.some(([meshX, cameraZ]) => meshX === 0 && cameraZ === 1)
+    const hasMixedOldObjectNewCamera = framePairs.some(([meshX, cameraZ]) => meshX === 1 && cameraZ === 0)
+    const hasAtomicFrame = framePairs.some(([meshX, cameraZ]) => meshX === 1 && cameraZ === 1)
+
+    expect(hasMixedNewObjectOldCamera).toBe(false)
+    expect(hasMixedOldObjectNewCamera).toBe(false)
+    expect(hasAtomicFrame).toBe(true)
+
+    await act(async () => {
+      store.getState().setFrameloop('always')
+    })
   })
 })

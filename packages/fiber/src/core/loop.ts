@@ -134,6 +134,7 @@ export function loop(timestamp: number): void {
 export function invalidate(state?: RootState, frames = 1): void {
   if (!state) return _roots.forEach((root) => invalidate(root.store.getState(), frames))
   if (state.gl.xr?.isPresenting || !state.internal.active || state.frameloop === 'never') return
+  if (state.internal.updating) return
 
   if (frames > 1) {
     // legacy support for people using frames parameters
