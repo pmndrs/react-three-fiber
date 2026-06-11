@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
+import { Canvas, act, extend, type RootState } from '../src'
 import THREE from 'three'
 
 extend(THREE as any)
@@ -584,6 +584,33 @@ describe('events', () => {
         </Canvas>,
       )
     })
+
+    const evt = new PointerEvent('pointerdown')
+    Object.defineProperty(evt, 'offsetX', { get: () => 577 })
+    Object.defineProperty(evt, 'offsetY', { get: () => 480 })
+
+    fireEvent(getContainer(), evt)
+
+    expect(handlePointerDown).toHaveBeenCalled()
+  })
+
+  it('should not throw and keeps the previous connection when connect is called with a null target', async () => {
+    const handlePointerDown = jest.fn()
+    let state: RootState = null!
+
+    await act(async () => {
+      render(
+        <Canvas onCreated={(s) => (state = s)}>
+          <mesh onPointerDown={handlePointerDown}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    expect(() => state.events.connect?.(null as unknown as HTMLElement)).not.toThrow()
+    expect(state.events.connected).not.toBeNull()
 
     const evt = new PointerEvent('pointerdown')
     Object.defineProperty(evt, 'offsetX', { get: () => 577 })
