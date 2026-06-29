@@ -4,10 +4,10 @@ import * as React from 'react'
 import { context } from '../../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
 import { notifyDepreciated } from '../../utils/notices'
-import { getScheduler, type Scheduler } from './scheduler'
+import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
-import type { FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
+import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextControls } from '#types'
 
 /**
  * Frame hook with phase-based ordering, priority, and FPS throttling.
@@ -169,7 +169,10 @@ export function useFrame(
     } else {
       //* ===== OUTSIDE CANVAS: New behavior =====
       const registerOutside = () => {
-        return scheduler.register((state, delta) => callbackRef.current?.(state, delta), { id, ...options })
+        return scheduler.register((state, delta) => callbackRef.current?.(state as FrameNextState, delta), {
+          id,
+          ...options,
+        })
       }
 
       // Independent mode or root already exists: register now
@@ -264,5 +267,5 @@ export function useFrame(
   return controls
 }
 
-// Re-export scheduler
-export { getScheduler, Scheduler } from './scheduler'
+// Re-export scheduler (now sourced from @pmndrs/scheduler) for backwards compatibility
+export { getScheduler, Scheduler } from '@pmndrs/scheduler'

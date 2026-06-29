@@ -46,6 +46,8 @@ const baseExternals = [
   'react',
   'react-dom',
   'scheduler',
+  '@pmndrs/scheduler',
+  '@pmndrs/scheduler/react',
   'zustand',
   'zustand/shallow',
   'its-fine',
