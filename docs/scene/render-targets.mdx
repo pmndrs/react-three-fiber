@@ -1,0 +1,102 @@
+---
+title: Render Targets
+description: useRenderTarget creates a framebuffer (FBO) that matches the active renderer — a WebGL target or a WebGPU RenderTarget
+nav: 22
+---
+
+`useRenderTarget` creates a render target (FBO) that is automatically the correct type for the current renderer. With v10's dual-renderer support you no longer have to pick the class yourself.
+
+## Why this matters
+
+Three.js uses different render target classes per renderer:
+
+- `WebGLRenderTarget` for the WebGL renderer
+- `RenderTarget` for the WebGPU renderer
+
+`useRenderTarget` returns the right one for the active renderer, so the same component works against either.
+
+## Basic usage
+
+```tsx
+import { useRenderTarget, useFrame } from '@react-three/fiber'
+
+function PortalScene() {
+  const fbo = useRenderTarget(512, 512, { depthBuffer: true, samples: 4 })
+
+  useFrame(({ renderer, scene, camera }) => {
+    renderer.setRenderTarget(fbo)
+    renderer.render(scene, camera)
+    renderer.setRenderTarget(null)
+  })
+
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshBasicMaterial map={fbo.texture} />
+    </mesh>
+  )
+}
+```
+
+## Argument forms
+
+The hook accepts several patterns. With no size, it uses the canvas dimensions (and resizes with the canvas).
+
+```tsx
+// canvas size (resizes with canvas)
+const fbo = useRenderTarget()
+
+// canvas size with options
+const fbo = useRenderTarget({ samples: 4 })
+
+// square render target (512×512)
+const fbo = useRenderTarget(512)
+
+// square render target with options
+const fbo = useRenderTarget(512, { depthBuffer: true })
+
+// explicit dimensions
+const fbo = useRenderTarget(512, 256)
+
+// explicit dimensions with options
+const fbo = useRenderTarget(512, 256, { samples: 4 })
+```
+
+### Signatures
+
+```ts
+// canvas size (defaults to canvas dimensions)
+useRenderTarget(options?: RenderTargetOptions): RenderTargetCompat
+
+// square render target
+useRenderTarget(size: number, options?: RenderTargetOptions): RenderTargetCompat
+
+// explicit dimensions
+useRenderTarget(width: number, height: number, options?: RenderTargetOptions): RenderTargetCompat
+```
+
+The return type `RenderTargetCompat` resolves to `WebGLRenderTarget` or `RenderTarget` depending on the renderer (see [Per-renderer type](#per-renderer-type) below).
+
+## Options
+
+| Option            | Type      | Default            | Description               |
+| ----------------- | --------- | ------------------ | ------------------------- |
+| `depthBuffer`     | `boolean` | `true`             | Create depth buffer       |
+| `stencilBuffer`   | `boolean` | `false`            | Create stencil buffer     |
+| `samples`         | `number`  | `0`                | MSAA sample count         |
+| `count`           | `number`  | `1`                | MRT target count (WebGPU) |
+| `format`          | `number`  | `RGBAFormat`       | Texture format            |
+| `type`            | `number`  | `UnsignedByteType` | Data type                 |
+| `minFilter`       | `number`  | `LinearFilter`     | Minification filter       |
+| `magFilter`       | `number`  | `LinearFilter`     | Magnification filter      |
+| `generateMipmaps` | `boolean` | `false`            | Generate mipmaps          |
+
+## Per-renderer type
+
+The class you get back depends on the build entry point and, for the default build, the renderer that is actually running:
+
+- **Legacy build** (`@react-three/fiber/legacy`): always returns a `WebGLRenderTarget`.
+- **WebGPU build** (`@react-three/fiber/webgpu`): always returns a `RenderTarget`.
+- **Default build** (`@react-three/fiber`): returns whichever matches the active renderer at runtime — a `WebGLRenderTarget` on WebGL, a `RenderTarget` on WebGPU.
+
+In the default build the decision is made from the root state's `isLegacy` flag, so you can rely on the target being valid for the renderer in use without branching yourself.

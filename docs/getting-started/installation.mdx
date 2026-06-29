@@ -127,7 +127,7 @@ ReactDOM.render(
 
 ## React Native
 
-R3F v8 adds support for react-native and can be imported from `@react-three/fiber/native`. We use `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and three.js loaders.
+React Native support lives in its own package, `@react-three/native` (in v9 and earlier this was the `@react-three/fiber/native` entry point). It uses `expo-gl` and `expo-asset` under the hood for WebGL2 bindings and ensuring interplay between Metro and three.js loaders.
 
 To get started, create an app via `expo` or `react-native`:
 
@@ -151,7 +151,7 @@ Then install dependencies (for manual installation or migration, see [expo modul
 expo install expo-gl
 
 # Install NPM dependencies
-npm install three @react-three/fiber
+npm install three @react-three/native
 ```
 
 Some configuration may be required to tell the Metro bundler about your assets if you use `useLoader` or Drei abstractions like `useGLTF` and `useTexture`:
@@ -169,14 +169,14 @@ module.exports = {
 R3F's API is completely x-platform, so you can use [events](/api/events) and [hooks](/api/hooks) just as you would on the web.
 
 > [!NOTE]
-> Make sure to import from `@react-three/fiber/native` or `@react-three/drei/native` for correct IntelliSense and platform-specific abstractions.
+> Make sure to import from `@react-three/native` or `@react-three/drei/native` for correct IntelliSense and platform-specific abstractions.
 
 > [!NOTE]
 > iOS simulators often have incomplete or unreliable OpenGL ES support, which can cause EXC_BAD_ACCESS crashes when rendering 3D content. Always test on a physical iOS device (iPhone/iPad running iOS 16 or later) to ensure stable WebGL rendering.
 
 ```jsx
 import { Suspense } from 'react'
-import { Canvas } from '@react-three/fiber/native'
+import { Canvas } from '@react-three/native'
 import { useGLTF } from '@react-three/drei/native'
 import modelPath from './path/to/model.glb'
 

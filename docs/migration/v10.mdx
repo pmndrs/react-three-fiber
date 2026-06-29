@@ -1,7 +1,7 @@
 ---
 title: 'v10 Migration Guide'
 description: Upgrading to v10 - WebGPU support, new scheduler, and what changes for you
-nav: 14
+nav: 31
 ---
 
 # v10 Migration Guide
@@ -14,7 +14,7 @@ nav: 14
 
 ## The Short Version
 
-**Your existing code works.** v10 is designed to be backwards compatible. The default import now supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU. You will however get a depreciation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
+**Your existing code works.** v10 is designed to be backwards compatible. The default import now supports both WebGL and WebGPU renderers, and your app will continue using WebGL unless you explicitly opt into WebGPU. You will however get a deprecation warning and should be importing from `/legacy` if you plan to stay with the old renderer.
 
 ## Quick Checklist
 
@@ -23,7 +23,7 @@ For most apps, nothing will change. For those that access the renderer using `us
 - [ ] Replace `state.gl` with `state.renderer`
 - [ ] That's it!
 
-If you specifically need `WebGLRenderer` and want to avoid the depreciation warning:
+If you specifically need `WebGLRenderer` and want to avoid the deprecation warning:
 
 - [ ] Import from `@react-three/fiber/legacy` instead of `@react-three/fiber`
 
@@ -214,7 +214,7 @@ The new `background` prop is more powerful, supporting colors, URLs, presets, an
 }} />
 ```
 
-The old `<color attach="background">` pattern still works but is more verbose and doesn't support environments. See [Canvas Background Prop](./v10-features.md#canvas-background-prop) for full documentation.
+The old `<color attach="background">` pattern still works but is more verbose and doesn't support environments. See [Canvas Background](/api/canvas#canvas-background) for full documentation.
 
 ---
 
@@ -258,7 +258,7 @@ physics.resume()
 
 **Multiple canvases, one loop** - The scheduler manages all your Canvas instances in a single RAF loop. No more frame sync issues.
 
-📚 **Learn more:** [Frame Loop Overview](../packages/fiber/src/core/hooks/useFrame/readmes/frame-loop-overview.md)
+📚 **Learn more:** [Frame Loop & Scheduler](/frame-loop)
 
 ---
 
@@ -302,9 +302,9 @@ function WobblyMesh() {
 - **`useUniforms`** - Create and share uniforms across components. Scoping prevents naming conflicts. Auto-converts Leva controls.
 - **`useNodes`** - Define TSL functions once, use everywhere. Share expensive noise functions, effects, varyings.
 - **`useLocalNodes`** - Compose shared nodes with local logic. Access all uniforms and nodes from state.
-- **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration.
+- **`useRenderPipeline`** - Declarative render pipeline setup with automatic MRT configuration. Note: pipeline callbacks do **not** re-run on HMR (to avoid corrupting TSL state); edits need a manual `rebuild()` or full reload.
 
-📚 **Learn more:** [WebGPU Hooks Overview](../packages/fiber/src/webgpu/hooks/readmes/overview.md)
+📚 **Learn more:** [WebGPU Overview](/webgpu/overview)
 
 ---
 
@@ -345,7 +345,7 @@ It still works! You'll see a console warning in development, but your code will 
 
 ## Migration from v9
 
-If you're coming from v9, also review the [v9 Migration Guide](./tutorials/v9-migration-guide.mdx) for React 19 compatibility changes that may apply.
+If you're coming from v9, also review the [v9 Migration Guide](/tutorials/v9-migration-guide) for React 19 compatibility changes that may apply.
 
 ---
 

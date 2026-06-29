@@ -1,8 +1,11 @@
 ---
 title: 'v9 Migration Guide'
 description: Changes and new features with v9 and React 19
-nav: 13
+nav: 25
 ---
+
+> [!TIP]
+> Looking to upgrade to the latest version? See the [v10 Migration Guide](/migration/v10) for WebGPU support and the new scheduler.
 
 This is a compatibility release for React 19, which brings further performance, stability, and type improvements. You can check out the React 19 changelog [here](https://react.dev/blog/2024/04/25/react-19).
 
@@ -199,7 +202,7 @@ extend({ CustomElement })
 
 ### ThreeElements
 
-`ThreeElements` was added as an interface since v8.1.0 and is the current way of declaring or accessing JSX within R3F since React's depreciation of `global` JSX (see https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript). All JSX types belonging to R3F are accessible from `ThreeElements`.
+`ThreeElements` was added as an interface since v8.1.0 and is the current way of declaring or accessing JSX within R3F since React's deprecation of `global` JSX (see https://react.dev/blog/2024/04/25/react-19-upgrade-guide#the-jsx-namespace-in-typescript). All JSX types belonging to R3F are accessible from `ThreeElements`.
 
 ```diff
 -import { type Node } from '@react-three/fiber'
@@ -304,4 +307,4 @@ describe('WebGPU Hooks', () => {
 })
 ```
 
-For more details, see the [WebGPU Testing Guide](/packages/test-renderer/markdown/webgpu-testing.md).
+For more details, see the [WebGPU Testing Guide](https://github.com/pmndrs/react-three-fiber/blob/master/packages/test-renderer/markdown/webgpu-testing.md).

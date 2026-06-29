@@ -1,6 +1,6 @@
 ---
 title: Additional Exports
-nav: 8
+nav: 9
 ---
 
 | export               | usage                                                          |
@@ -20,4 +20,50 @@ nav: 8
 | `applyProps`         | `applyProps(element, props)` sets element properties,          |
 | `act`                | usage with react-testing                                       |
 | `useInstanceHandle`  | Exposes react-internal local state from `instance.__r3f`       |
-|                      |                                                                |
+| `fromRef`            | Defers a prop until a ref is populated (e.g. `target`)          |
+| `once`               | Marks a method prop to run only on mount                        |
+| `updateFrustum`      | Recomputes the camera frustum — `updateFrustum(camera, frustum?)` (see [Visibility & Frustum](/scene/visibility)) |
+| `Environment`        | Scene background / image-based lighting component (see [Canvas Background](/api/canvas#canvas-background)) |
+| `Portal`             | Re-parents children into another container (see [Camera Parenting](/scene/camera-parenting)) |
+
+## Prop Utilities
+
+v10 adds two utilities for common prop patterns that previously required imperative code.
+
+### `fromRef` — deferred ref resolution
+
+`fromRef` defers prop application until a ref is populated. This is essential for props like `target` that reference sibling elements, replacing the old mount-time `useEffect`:
+
+```tsx
+import { fromRef } from '@react-three/fiber'
+
+function SpotlightWithTarget() {
+  const targetRef = useRef<THREE.Object3D>(null)
+  return (
+    <>
+      <group ref={targetRef} position={[0, 0, -10]} />
+      {/* target resolves after targetRef is populated */}
+      <spotLight target={fromRef(targetRef)} intensity={100} />
+    </>
+  )
+}
+```
+
+### `once` — mount-only method calls
+
+`once` marks a method prop to be applied only on initial mount, which is useful for geometry transforms that shouldn't compound every render:
+
+```tsx
+import { once } from '@react-three/fiber'
+
+// Rotate geometry 90° on mount (without `once` this compounds every render)
+<boxGeometry args={[1, 1, 1]} rotateX={once(Math.PI / 2)} />
+
+// Center geometry on mount
+<bufferGeometry center={once()} />
+
+// Apply a matrix on mount
+<bufferGeometry applyMatrix4={once(transformMatrix)} />
+```
+
+When `args` change (triggering element reconstruction), `once` methods run again on the new instance.

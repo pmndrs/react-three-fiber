@@ -59,3 +59,46 @@ jobs:
 
       - name: Check formatting
         run: pnpm run format
+
+  docs-links:
+    name: Docs link check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Enforce the readme-stub contract: every source readme is a thin pointer to
+      # the canonical docs, never a second copy of the docs (the "drift rule").
+      - name: Assert readme stubs link to docs and stay small
+        run: |
+          fail=0
+          while IFS= read -r f; do
+            n=$(grep -c "Full documentation:" "$f" || true)
+            if [ "$n" -ne 1 ]; then
+              echo "::error file=$f::readme must contain exactly one 'Full documentation:' link (found $n)"
+              fail=1
+            fi
+            lines=$(wc -l < "$f")
+            if [ "$lines" -gt 15 ]; then
+              echo "::error file=$f::readme exceeds the 15-line stub budget ($lines lines) — move usage content into docs/"
+              fail=1
+            fi
+          done < <(find packages -path '*readmes*' -name '*.md')
+          exit $fail
+
+      # Check external links in docs + readmes. The production docs host is excluded
+      # (those pages are validated after deploy), and only http(s) links are checked
+      # so the site-relative routes (/frame-loop, /api/canvas, ...) the docs renderer
+      # resolves are not flagged here.
+      - name: Link check
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --scheme http
+            --scheme https
+            --exclude 'docs\.pmnd\.rs'
+            'docs/**/*.md'
+            'docs/**/*.mdx'
+            'packages/**/readmes/*.md'
+          fail: true

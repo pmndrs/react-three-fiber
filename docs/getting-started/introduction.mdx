@@ -14,7 +14,10 @@ nav: 0
 npm install three @types/three @react-three/fiber
 ```
 > [!WARNING]  
-> Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 pairs with react@19.
+> Three-fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 and @10 pair with react@19.
+
+> [!TIP]
+> **New in v10:** WebGPU support and a rewritten frame-loop scheduler. See the [v10 Migration Guide](/migration/v10), the [WebGPU section](/webgpu/overview), and [Frame Loop & Scheduler](/frame-loop). React Native now lives in its own package, [`@react-three/native`](/getting-started/installation#react-native).
 
 ## Does it have limitations?
 
@@ -112,7 +115,7 @@ For installation instructions see [react native installation instructions](/gett
 
 ```jsx
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber/native'
+import { Canvas, useFrame } from '@react-three/native'
 
 function Box(props) {
   const meshRef = useRef(null)

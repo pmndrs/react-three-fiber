@@ -1,0 +1,451 @@
+---
+title: Frame Loop & Scheduler
+description: The v10 scheduler — phases, ordering, fps throttling, pause/resume, render takeover, and demand mode
+nav: 12
+---
+
+React Three Fiber v10 ships with a rewritten frame loop. For most apps nothing changes — `useFrame((state, delta) => { ... })` works exactly as before. Underneath, every callback is now a **job** scheduled by a single global scheduler that gives you named phases, explicit ordering, per-job fps throttling, pause/resume controls, composable render takeover, and demand/manual modes.
+
+```tsx
+// Still works exactly the same
+useFrame((state, delta) => {
+  meshRef.current.rotation.y += delta
+})
+```
+
+## The shared RAF loop {#shared-raf}
+
+A single global singleton `Scheduler` drives one `requestAnimationFrame` loop for the **entire application**. Every `<Canvas>` (root) registers with this shared loop, so multiple canvases stay frame-synced instead of each spinning their own RAF. Each frame the scheduler walks its registered roots and executes their jobs in order.
+
+The scheduler instance is a cross-bundle singleton (shared via `Symbol.for`), so mixing imports from `@react-three/fiber` and `@react-three/fiber/webgpu` still resolves to the same scheduler.
+
+Each frame produces a state object passed to your callback:
+
+```ts
+interface FrameState extends RootState {
+  time: number // high-resolution RAF timestamp (milliseconds)
+  delta: number // time since last frame (seconds — THREE.Clock compatible)
+  elapsed: number // time since the first frame (seconds)
+  frame: number // incrementing frame counter
+  // ...plus all RootState (gl/renderer, scene, camera, etc.)
+}
+```
+
+The `delta` passed as the second callback argument is the same value as `state.delta`.
+
+## Phases {#phases}
+
+Jobs run inside named **phases** that execute in a fixed sequence each frame. The six default phases are:
+
+| Phase     | Purpose                                            |
+| --------- | -------------------------------------------------- |
+| `start`   | Early frame setup / initialization                 |
+| `input`   | Input processing, event handling                   |
+| `physics` | Physics simulation                                 |
+| `update`  | Game logic and animations (**default phase**)      |
+| `render`  | Rendering and custom render passes                 |
+| `finish`  | Cleanup, stats, telemetry                          |
+
+A `useFrame` callback with no phase runs in `update`:
+
+```tsx
+useFrame(() => {
+  /* runs in 'update' */
+})
+
+// Explicit, identical
+useFrame(() => {}, { phase: 'update' })
+```
+
+Organize a game loop by assigning phases:
+
+```tsx
+useFrame(processInput, { phase: 'input' })
+useFrame(() => world.step(1 / 60), { phase: 'physics' })
+useFrame(updateGameState, { phase: 'update' })
+useFrame(renderEffects, { phase: 'render' })
+useFrame(recordStats, { phase: 'finish' })
+```
+
+### Custom phases {#custom-phases}
+
+Add your own phases relative to existing ones with `scheduler.addPhase(name, { before, after })`:
+
+```tsx
+const { scheduler } = useThree()
+
+useEffect(() => {
+  // Insert an 'ai' phase between physics and update
+  scheduler.addPhase('ai', { after: 'physics', before: 'update' })
+}, [scheduler])
+
+useFrame(aiSystemUpdate, { phase: 'ai' })
+```
+
+Adding a phase with no position appends it to the end. Duplicate phase names are ignored with a warning. Inspect the current order with the `scheduler.phases` getter and check existence with `scheduler.hasPhase(name)`.
+
+## Ordering jobs {#ordering}
+
+Within a phase, jobs run in registration order, with `priority` as a tie-breaker (higher `priority` runs earlier, default `0`).
+
+For ordering across jobs, every job has a unique `id` (auto-generated from React's `useId()` if you don't supply one). Reference an `id` — or a phase name — via `before` / `after` to create explicit dependencies:
+
+```tsx
+// Camera updates first
+useFrame(updateCamera, { id: 'camera' })
+
+// Character runs after the camera job
+useFrame(updateCharacter, { after: 'camera', id: 'character' })
+
+// Enemies run after the character job
+useFrame(updateEnemies, { after: 'character' })
+```
+
+`before` / `after` accept either a single name or an array, and a target can be a job `id` or a phase name:
+
+```tsx
+useFrame(updateCharacter, { after: ['physics', 'input'] })
+useFrame(prepRenderTargets, { before: 'render' })
+```
+
+When you use `before`/`after` without an explicit `phase`, the scheduler auto-resolves placement (creating implicit ordering around the target), keeping any default job in that phase intact — your work happens around it, not instead of it.
+
+> **Migrating from priority numbers.** v9's numeric priority is still accepted for backwards compatibility, but it is deprecated for controlling order or render takeover. Prefer phases or `before`/`after`. Note that a numeric `priority > 0` retains its v9 meaning of "I am taking over rendering" and emits a deprecation notice — see [render takeover](#render-takeover).
+
+## FPS throttling {#fps}
+
+Not all work needs to run every frame. Set `fps` to cap how often a job runs:
+
+```tsx
+useFrame(expensiveAI, { fps: 20 })
+useFrame(particlePhysics, { fps: 30 })
+useFrame(smoothAnimation) // no limit — runs every frame
+```
+
+A throttled job runs **at most once per RAF**. The scheduler computes the minimum interval (`1000 / fps`) and skips the job on frames where not enough time has elapsed (with ~1ms tolerance for RAF jitter). It never invokes the callback multiple times in a single frame to "catch up."
+
+The `drop` option controls how the job's internal timestamp is advanced when it has fallen behind — it does **not** change how many times the callback fires:
+
+- **`drop: true`** (default) — snap the job's last-run time to now, discarding missed intervals. Good for visual / UI updates where only the latest state matters.
+- **`drop: false`** — advance the last-run time by whole interval steps (catch-up semantics), keeping timing aligned for physics and simulations. The callback still fires at most once per frame; only the timestamp accounting differs (and is clamped to avoid runaway drift).
+
+```tsx
+// Visual updates: discard missed frames
+useFrame(updateUI, { fps: 30, drop: true })
+
+// Simulation: keep interval timing consistent (still one call per frame)
+useFrame(physicsStep, { fps: 60, drop: false })
+```
+
+## Pause, resume & enabled {#pause-resume}
+
+`useFrame` returns a controls object for managing the job:
+
+```ts
+interface FrameControls {
+  id: string // the job's unique id
+  scheduler: Scheduler // the global scheduler
+  step(timestamp?: number): void // step this job only (bypasses fps limiting)
+  stepAll(timestamp?: number): void // step all jobs once
+  pause(): void // pause this job (enabled = false)
+  resume(): void // resume this job (enabled = true)
+  isPaused: boolean // reactive — re-renders the component on change
+}
+```
+
+`isPaused` is reactive (backed by `useSyncExternalStore`), so it updates the component when the job is paused or resumed from anywhere:
+
+```tsx
+function PausableEffect() {
+  const controls = useFrame((state, delta) => {
+    // animation work
+  }, { id: 'particle-system' })
+
+  return (
+    <button onClick={() => (controls.isPaused ? controls.resume() : controls.pause())}>
+      {controls.isPaused ? 'Resume' : 'Pause'}
+    </button>
+  )
+}
+```
+
+Control any job by id through the scheduler — handy for debug panels and pause menus:
+
+```tsx
+const { scheduler } = useThree()
+scheduler.pauseJob('particle-system')
+scheduler.resumeJob('particle-system')
+scheduler.isJobPaused('particle-system')
+```
+
+Resuming resets the job's timing so it doesn't try to account for the time it was paused.
+
+For conditional execution, prefer the `enabled` option over an early `return` inside the callback. A disabled job stays registered but is skipped entirely by the scheduler — no wasted frame budget:
+
+```tsx
+const isActive = useGameState()
+useFrame(doWork, { enabled: isActive })
+```
+
+## Render-phase takeover {#render-takeover}
+
+By default R3F registers an internal **system** render job in the `render` phase that draws your scene each frame. When you register **any** `useFrame` job in the `render` phase, the default render is automatically skipped for that root — you have taken over rendering.
+
+```tsx
+// You now control rendering for this root
+useFrame(
+  () => {
+    effectComposer.render()
+  },
+  { phase: 'render' },
+)
+// The built-in render is skipped while this job is registered
+```
+
+The check is dynamic each frame (`scheduler.hasUserJobsInPhase('render')`), so when your render job unmounts the default render **resumes automatically** — nothing to clean up.
+
+To add render work *without* taking over, attach to the render phase with `before` / `after` instead. The default render still runs, and multiple components can compose around it:
+
+```tsx
+// Prep before the default render
+useFrame(updateUniforms, { before: 'render' })
+
+// Overlay a HUD after the default render
+useFrame(
+  ({ gl }) => {
+    gl.autoClear = false
+    gl.render(hudScene, hudCamera)
+    gl.autoClear = true
+  },
+  { after: 'render' },
+)
+```
+
+> The legacy v9 mechanism — a numeric `priority > 0` on `useFrame` — still disables the default render for backwards compatibility, but is deprecated. Migrate to `{ phase: 'render' }`.
+
+## Frameloop modes {#frameloop-modes}
+
+The Canvas `frameloop` prop (mirrored by `scheduler.frameloop`) controls how the loop runs:
+
+### `frameloop="always"` (default) {#always}
+
+Continuous rendering — jobs run every RAF.
+
+```tsx
+<Canvas frameloop="always">
+  <Scene />
+</Canvas>
+```
+
+### `frameloop="demand"` {#demand}
+
+Render only when explicitly requested via `invalidate()`. Ideal for static scenes that change occasionally.
+
+```tsx
+import { useThree } from '@react-three/fiber'
+
+function StaticScene() {
+  const { invalidate } = useThree()
+  return (
+    <mesh
+      onClick={() => {
+        updateSomething()
+        invalidate() // request one frame
+      }}
+    />
+  )
+}
+```
+
+### `frameloop="never"` {#never}
+
+The loop never runs on its own. Advance frames manually with the controls returned by `useFrame`, the standalone `advance()` util, or `scheduler.step()` — useful for tests, debugging, and non-realtime rendering.
+
+```tsx
+function ManualScene() {
+  const { stepAll } = useFrame((state, delta) => {
+    // only runs when stepped
+  })
+  return <button onClick={() => stepAll()}>Step Frame</button>
+}
+```
+
+### Changing modes at runtime {#set-frameloop}
+
+```tsx
+const { setFrameloop } = useThree()
+setFrameloop('demand') // store action — sets Canvas frameloop
+
+// Or set directly on the scheduler
+const { scheduler } = useThree()
+scheduler.frameloop = 'always'
+```
+
+Switching to `'always'` starts the loop; switching away from it stops the loop.
+
+## Demand mode: invalidate, onIdle & addTail {#demand-mode}
+
+Demand and manual modes use a small set of utilities. **`onIdle` and `addTail` callbacks only fire in `demand` mode** — they run when the pending-frame count reaches zero and the loop goes idle. In `always` mode the loop never becomes idle, so they never fire.
+
+### `invalidate(frames?, stackFrames?)` {#invalidate}
+
+Requests rendering in demand mode. Available as both a standalone export and from `useThree()`.
+
+```tsx
+import { invalidate } from '@react-three/fiber'
+
+invalidate() // request a single frame
+invalidate(undefined, 5) // request 5 frames (standalone signature)
+```
+
+The standalone export's signature is `invalidate(state?, frames = 1, stackFrames = false)`; `state` is ignored (kept for backwards compatibility) and it delegates to `scheduler.invalidate(frames, stackFrames)`. Notes:
+
+- No-op unless `frameloop` is `'demand'`.
+- Pending frames are **capped at 60**.
+- Each rendered frame decrements the pending count by 1.
+- When the count reaches 0 the loop stops and `onIdle` callbacks fire.
+- `stackFrames: true` adds to the existing pending count instead of replacing it.
+
+### `advance(timestamp)` {#advance}
+
+Standalone util that manually runs one frame for all roots, delegating to `scheduler.step(timestamp)`. Use it in `frameloop="never"` mode and in tests.
+
+```tsx
+import { advance } from '@react-three/fiber'
+
+advance(performance.now())
+```
+
+### `onIdle(callback)` {#on-idle}
+
+Register a callback that fires when the demand-mode loop goes idle (pending frames hit 0). Returns an unsubscribe function.
+
+```tsx
+function IdleHandler() {
+  const { scheduler } = useFrame()
+  useEffect(() => scheduler.onIdle((timestamp) => saveState()), [scheduler])
+  return null
+}
+```
+
+### Deprecated globals: addEffect / addAfterEffect / addTail {#deprecated-globals}
+
+The v9 global hooks still work but are deprecated. They run once per frame (not per-root) and only receive the raw RAF timestamp — no `gl`/`scene`/`camera` and no seconds-based `delta`. Prefer phased `useFrame`:
+
+| Legacy                 | Modern replacement                            |
+| ---------------------- | --------------------------------------------- |
+| `addEffect(cb)`        | `useFrame(cb, { phase: 'start' })`            |
+| `addAfterEffect(cb)`   | `useFrame(cb, { phase: 'finish' })`           |
+| `addTail(cb)`          | `scheduler.onIdle(cb)` (demand mode only)     |
+| `invalidate()`         | unchanged ✅                                  |
+| `advance(timestamp)`   | unchanged ✅                                  |
+
+## Accessing the scheduler {#scheduler-access}
+
+```tsx
+// From useThree
+const { scheduler } = useThree()
+
+// From useFrame (with or without a callback)
+const { scheduler } = useFrame()
+
+// Inside a frame callback
+useFrame(({ scheduler }) => {})
+
+// Outside React
+import { getScheduler } from '@react-three/fiber'
+const scheduler = getScheduler()
+```
+
+Calling `useFrame()` with **no callback** is a valid way to get scheduler access without registering a job.
+
+### Using useFrame outside Canvas {#outside-canvas}
+
+`useFrame` does not throw when used outside `<Canvas>`. If a Canvas mounts later, the job registers then and receives full `RootState`. For frame loops with no Canvas at all, enable **independent mode** — the scheduler creates a default root and callbacks receive a timing-only state (`{ time, delta, elapsed, frame }`, no `gl`/`scene`/`camera`):
+
+```tsx
+import { getScheduler, useFrame } from '@react-three/fiber'
+
+getScheduler().independent = true
+
+function GameLoop() {
+  useFrame((state, delta) => updateGame(delta))
+  return null
+}
+```
+
+## Scheduler API reference {#scheduler-api}
+
+`getScheduler()` (or `useThree().scheduler`) returns the singleton. Key members:
+
+**Phases:** `addPhase(name, { before?, after? })`, `hasPhase(name)`, `phases` (getter).
+
+**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically; the first root to register starts the loop (in `always` mode) and the last to unregister stops it.
+
+**Jobs:** `register(callback, options?)`, `unregister(id, rootId?)`, `updateJob(id, partialOptions)`, `getJobCount()`, `getJobIds()`, `hasUserJobsInPhase(phase, rootId?)`.
+
+**Job state:** `pauseJob(id)`, `resumeJob(id)`, `isJobPaused(id)`, `subscribeJobState(id, listener)`.
+
+**Loop control:** `start()`, `stop()`, `isRunning` (getter), `frameloop` (getter/setter), `invalidate(frames?, stackFrames?)`, `resetTiming()`.
+
+**Manual stepping:** `step(timestamp?)` (run one frame for all roots), `stepJob(id, timestamp?)` (run one job in isolation).
+
+`register` accepts the full job options:
+
+```ts
+interface JobOptions {
+  id?: string // unique id (auto-generated if omitted)
+  rootId?: string // target root (defaults to the first root)
+  phase?: string // execution phase (default: 'update')
+  before?: string | string[] // run before this phase or job id
+  after?: string | string[] // run after this phase or job id
+  priority?: number // tie-breaker within a phase (higher = earlier, default 0)
+  fps?: number // throttle limit (at most one call per RAF)
+  drop?: boolean // timestamp catch-up behavior when throttled (default true)
+  enabled?: boolean // skip without unregistering (default true)
+}
+```
+
+`updateJob` can mutate `priority`, `fps`, `drop`, and `enabled` without a rebuild; changing `phase`, `before`, or `after` triggers a rebuild of the sorted job list.
+
+## Example: a full game loop {#example-game-loop}
+
+```tsx
+function GameLoop() {
+  const { scheduler } = useThree()
+
+  useEffect(() => {
+    scheduler.addPhase('ai', { after: 'physics', before: 'update' })
+  }, [scheduler])
+
+  // Input first
+  useFrame(processInput, { phase: 'input', id: 'input-handler' })
+
+  // Physics at 60fps with catch-up timing
+  useFrame(() => physicsWorld.step(1 / 60), { phase: 'physics', fps: 60, drop: false })
+
+  // AI at 20fps, dropping missed intervals
+  useFrame(aiSystemUpdate, { phase: 'ai', fps: 20, drop: true })
+
+  // Game state every frame
+  useFrame(updateGameState, { phase: 'update', id: 'game-state' })
+
+  // VFX after game state
+  useFrame(updateVFX, { after: 'game-state' })
+
+  // HUD overlay after the default render (does not take over rendering)
+  useFrame(
+    ({ gl }) => {
+      gl.autoClear = false
+      gl.render(hudScene, hudCamera)
+      gl.autoClear = true
+    },
+    { after: 'render' },
+  )
+
+  // Stats last
+  useFrame(collectStats, { phase: 'finish' })
+
+  return null
+}
+```

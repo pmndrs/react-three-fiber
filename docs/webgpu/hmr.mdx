@@ -1,0 +1,104 @@
+---
+title: TSL HMR
+description: How react-three-fiber refreshes TSL state on hot reload - what rebuilds automatically, what does not, and how to rebuild manually.
+nav: 19
+---
+
+v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks. When you save changes to files containing TSL node, uniform, buffer, or storage definitions, R3F refreshes the affected state without a full page reload.
+
+The `Canvas` component detects HMR events from Vite or webpack and bumps an internal HMR version on R3F state, which busts the memoization caches of the creator hooks and re-runs their creators.
+
+```tsx
+// Just works - save your file and see changes immediately
+const { wobble } = useNodes(() => ({
+  wobble: sin(time.mul(2)), // change to mul(5), save, see the update
+}))
+
+const { uColor } = useUniforms({
+  uColor: '#ff0000', // change the color, save, see the update
+})
+```
+
+## What Rebuilds on HMR
+
+All four creator families re-run their creators when the HMR version is bumped:
+
+| Hook                          | Rebuilds on HMR | How                                |
+| ----------------------------- | --------------- | ---------------------------------- |
+| `useNodes` / `useLocalNodes`  | Yes             | Re-runs creator                    |
+| `useUniforms` / `useUniform`  | Yes             | Re-runs creator                    |
+| `useBuffers`                  | Yes             | Re-runs creator                    |
+| `useGPUStorage`               | Yes             | Re-runs creator                    |
+| `useRenderPipeline`           | **No**          | Skipped on HMR - see below         |
+
+`useLocalNodes` also rebuilds because it subscribes to the HMR version directly, alongside its `uniforms`/`nodes`/`textures` triggers.
+
+## useRenderPipeline Does NOT Rebuild on HMR
+
+This is the important exception. `useRenderPipeline` callbacks do **not** re-run on a plain hot reload (same scene/camera). Re-running them rebuilds the TSL node graph, which can corrupt cached references (such as `SkinningNode`), so the hook intentionally skips re-running its `setupCB`/`mainCB` on HMR.
+
+**To apply render-pipeline edits during development, call `rebuild()` or do a full page reload.** Pipeline callbacks only re-run on first creation, on a real scene/camera change, or when you call `rebuild()` explicitly.
+
+```tsx
+function RebuildButton() {
+  const { rebuild } = useRenderPipeline()
+  return <button onClick={rebuild}>Rebuild Effects</button>
+}
+```
+
+For dynamic values you want to change without rebuilding, drive them through uniforms (which do refresh) rather than closure values. See [Render Pipeline](./render-pipeline#hmr-does-not-re-run-pipeline-callbacks).
+
+## Disabling HMR
+
+If you need to turn off automatic refresh (rare), use the `hmr` prop:
+
+```tsx
+<Canvas hmr={false}>{/* HMR won't auto-refresh TSL state */}</Canvas>
+```
+
+## Manual Rebuild
+
+Each creator hook returns a `rebuild*` util that clears its cache and bumps the HMR version to force re-creation. Pass a scope name to rebuild a single scope, `'root'` for root only, or no argument for everything.
+
+```tsx
+const { rebuildNodes } = useNodes(() => ({ wobble: sin(time.mul(2)) }))
+const { rebuildUniforms } = useUniforms({ uColor: '#ff0000' })
+const { rebuildBuffers } = useBuffers(() => ({ positions: instancedArray(count, 'vec3') }))
+const { rebuildStorage } = useGPUStorage(() => ({ heightMap: new StorageTexture(512, 512) }))
+
+rebuildNodes() // all nodes
+rebuildNodes('player') // only the 'player' scope
+rebuildUniforms()
+rebuildBuffers('particles')
+rebuildStorage()
+```
+
+## Global Rebuild Functions
+
+For custom HMR handlers or dev tooling, standalone rebuild functions are exported. They require the R3F store reference:
+
+```tsx
+import { rebuildAllNodes, rebuildAllUniforms, rebuildAllBuffers, rebuildAllStorage } from '@react-three/fiber/webgpu'
+
+rebuildAllNodes(store)
+rebuildAllUniforms(store)
+rebuildAllBuffers(store)
+rebuildAllStorage(store)
+```
+
+## Reader Reactivity
+
+Reader-mode hooks subscribe to store changes, so they update reactively when nodes/uniforms change elsewhere (including after an HMR-triggered rebuild):
+
+```tsx
+const allNodes = useNodes()
+const playerNodes = useNodes('player')
+const allUniforms = useUniforms()
+const playerUniforms = useUniforms('player')
+```
+
+## Related
+
+- [TSL Hooks](./tsl-hooks) - the `rebuild*` utils on each hook
+- [Render Pipeline](./render-pipeline) - why pipeline callbacks skip HMR
+- [Compute (Buffers & Storage)](./compute) - rebuild for buffers and storage

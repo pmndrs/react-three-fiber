@@ -1,0 +1,165 @@
+---
+title: Visibility & Frustum
+description: Track when objects enter or leave view with onFramed, onVisible and onOccluded, and work with the camera frustum directly
+nav: 20
+---
+
+R3F v10 can tell you when an object's visibility changes. Three event handlers fire on *state transitions* (not every frame): `onFramed` for frustum culling, `onOccluded` for GPU occlusion (WebGPU only), and `onVisible` for the combined result. The root state also exposes a live `THREE.Frustum` you can query yourself.
+
+## Visibility events
+
+Add any of these handlers to a mesh (or any `Object3D`). They are debounced internally — the callback only runs when the boolean state actually changes.
+
+| Handler      | Parameter           | Fires when                                       |
+| ------------ | ------------------- | ------------------------------------------------ |
+| `onFramed`   | `inView: boolean`   | object enters (`true`) or leaves (`false`) the frustum |
+| `onOccluded` | `occluded: boolean` | object becomes hidden (`true`) or revealed (`false`) — WebGPU only |
+| `onVisible`  | `visible: boolean`  | combined visibility changes (`true`/`false`)     |
+
+### onFramed — frustum culling
+
+Fires when the object enters or exits the camera frustum. The check uses the object's bounding sphere via `THREE.Frustum.intersectsObject()`.
+
+```tsx
+function FrustumAwareObject() {
+  return (
+    <mesh
+      onFramed={(inView) => {
+        console.log(inView ? 'Object entered view' : 'Object left view')
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+Useful for pausing animations off-screen, lazy-loading heavy resources, or analytics on what users actually see.
+
+### onOccluded — occlusion queries (WebGPU only)
+
+Fires when the object becomes occluded or revealed, based on GPU occlusion queries. This only works with the WebGPU renderer.
+
+```tsx
+function OcclusionAwareObject() {
+  return (
+    <mesh
+      onOccluded={(occluded) => {
+        console.log(occluded ? 'Object is hidden behind something' : 'Object is visible')
+      }}>
+      <sphereGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+When you attach `onOccluded` (or `onVisible`), R3F automatically sets `occlusionTest = true` on the object and enables the occlusion system for the canvas. On a WebGL renderer a one-time warning is logged and the occlusion events simply never fire.
+
+### onVisible — combined visibility
+
+Fires when the *combined* visibility state changes. An object is considered visible when **all** of the following are true:
+
+- it is within the camera frustum, **and**
+- it is not occluded (WebGPU only — on WebGL it is always treated as not occluded), **and**
+- its `visible` property is `true`.
+
+```tsx
+function FullyVisibleObject() {
+  return (
+    <mesh
+      onVisible={(visible) => {
+        if (visible) {
+          // start expensive animations, load high-res textures, etc.
+        } else {
+          // pause animations, reduce quality, etc.
+        }
+      }}>
+      <boxGeometry />
+      <meshStandardMaterial />
+    </mesh>
+  )
+}
+```
+
+## The camera frustum
+
+R3F keeps a `THREE.Frustum` on the root state, synchronized with the default camera. The visibility events above use it internally, but you can read it directly from `useThree` for custom logic.
+
+```tsx
+import { useThree } from '@react-three/fiber'
+
+function VisibilityCheck() {
+  const frustum = useThree((state) => state.frustum)
+
+  // point test
+  if (frustum.containsPoint(new THREE.Vector3(0, 5, 0))) {
+    // point is in view
+  }
+
+  // object test (bounding sphere)
+  if (frustum.intersectsObject(mesh)) {
+    // object is at least partially visible
+  }
+
+  // sphere test
+  if (frustum.intersectsSphere(boundingSphere)) {
+    // sphere intersects frustum
+  }
+}
+```
+
+### In the frame loop
+
+The frustum is updated automatically each frame — after all `update`-phase callbacks and before `render` — so it is safe to read inside `useFrame`:
+
+```tsx
+useFrame(({ frustum }) => {
+  for (const object of objects) {
+    object.visible = frustum.intersectsObject(object)
+  }
+})
+```
+
+## autoUpdateFrustum
+
+By default R3F refreshes the frustum every frame. If you don't need it, or want to drive updates yourself, disable it on the `Canvas`:
+
+```tsx
+<Canvas autoUpdateFrustum={false}>
+  <Scene />
+</Canvas>
+```
+
+| Canvas prop         | Type      | Default | Description                              |
+| ------------------- | --------- | ------- | ---------------------------------------- |
+| `autoUpdateFrustum` | `boolean` | `true`  | Enable/disable automatic frustum updates |
+
+The matching `autoUpdateFrustum` and `frustum` values are also available on the root state via `useThree`.
+
+### Manual frustum updates
+
+The `updateFrustum` utility is exported for manual control. Passing an existing frustum updates it in place (no allocation); omitting it returns a new one.
+
+```tsx
+import { updateFrustum } from '@react-three/fiber'
+
+// signature: updateFrustum(camera, frustum?) => THREE.Frustum
+
+// update an existing frustum in place
+updateFrustum(camera, existingFrustum)
+
+// create a new frustum from a camera
+const newFrustum = updateFrustum(camera)
+
+// works with any camera — e.g. a shadow or portal camera
+updateFrustum(light.shadow.camera, shadowFrustum)
+```
+
+## Performance & implementation notes
+
+- Events fire on state changes only, not every frame.
+- Frustum checks rely on bounding spheres; geometry without a computed `boundingSphere` is computed on first check.
+- The visibility scan runs in the `preRender` phase, after frustum updates.
+- Objects are unregistered automatically when they unmount.
+- When occlusion is enabled, R3F adds an invisible internal helper group named `__r3fInternal` to the scene, containing a tiny observer mesh that caches `isOccluded()` results during the render pass (WebGPU's `isOccluded()` only returns valid results while rendering). Both are invisible, carry a `__r3fInternal` flag, and are cleaned up on unmount — relevant only if you are counting scene children.

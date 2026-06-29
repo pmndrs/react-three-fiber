@@ -1,0 +1,88 @@
+---
+title: Textures
+description: useTextures manages a global texture cache in R3F state for sharing texture references across materials and components.
+nav: 17
+---
+
+> **Experimental / preview.** `useTextures` is an early hook and may change. The source notes it is not certain to be a permanent part of the API ("Not sure we will use this hook just yet"). Treat it as a preview and pin your version.
+
+`useTextures` manages a global texture cache stored in R3F state. Textures are kept in a `Map` keyed by URL/path, which makes it easy to share texture references across materials and components.
+
+```tsx
+import { useTextures } from '@react-three/fiber/webgpu'
+```
+
+`useTextures` is a core R3F hook re-exported from the `/webgpu` entry point for convenience; it works with WebGPU node-material workflows.
+
+## API
+
+```tsx
+const { textures, get, has, add, addMultiple, remove, removeMultiple, dispose, disposeMultiple, disposeAll } =
+  useTextures()
+```
+
+`useTextures()` takes no arguments and returns the cache plus its operations.
+
+## Return Value
+
+```typescript
+interface UseTexturesReturn {
+  /** Map of all textures currently in cache (reactive) */
+  textures: Map<string, TextureEntry>
+
+  // Read
+  get: (key: string) => TextureEntry | undefined
+  has: (key: string) => boolean
+
+  // Write
+  add: (key: string, value: TextureEntry) => void
+  addMultiple: (items: Map<string, TextureEntry> | Record<string, TextureEntry>) => void
+
+  // Remove (cache only - does NOT free GPU resources)
+  remove: (key: string) => void
+  removeMultiple: (keys: string[]) => void
+
+  // Dispose (GPU cleanup + remove from cache)
+  dispose: (key: string) => void
+  disposeMultiple: (keys: string[]) => void
+  disposeAll: () => void
+}
+```
+
+A `TextureEntry` is either a raw Three.js `Texture` or a `{ value: Texture, ... }` wrapper (e.g. a TSL node carrying a texture). Both forms are handled by the dispose helpers.
+
+```typescript
+type TextureEntry = Texture | { value: Texture; [key: string]: any }
+```
+
+> `remove` / `removeMultiple` only drop entries from the cache - the texture stays in GPU memory. Use `dispose` / `disposeMultiple` / `disposeAll` to free GPU resources.
+
+## Usage
+
+```tsx
+const { get, has, add, remove, dispose, disposeAll } = useTextures()
+
+// Check whether a texture is already cached
+if (!has('/textures/diffuse.png')) {
+  // Load and cache it (e.g. via useTexture with cache: true, or add() manually)
+}
+
+// Access a cached texture from anywhere
+const diffuse = get('/textures/diffuse.png')
+if (diffuse) material.map = diffuse
+
+// Remove from cache only (texture still in GPU memory)
+remove('/textures/old.png')
+
+// Fully dispose (frees GPU memory + removes from cache)
+dispose('/textures/unused.png')
+
+// Dispose everything - use with caution
+disposeAll()
+```
+
+## Related
+
+- [TSL Hooks](./tsl-hooks) - uniforms and nodes
+- [Compute (Buffers & Storage)](./compute) - GPU storage textures for compute
+- [WebGPU Overview](./overview) - concepts and architecture

@@ -1,7 +1,7 @@
 ---
 title: Canvas
 description: The Canvas object is your portal into three.js
-nav: 4
+nav: 5
 ---
 
 The `Canvas` object is where you start to define your React Three Fiber Scene.
@@ -27,21 +27,23 @@ const App = () => (
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
 | children        | three.js JSX elements or regular components                                                                                                       |                                                            |
 | fallback        | optional DOM JSX elements or regular components in case GL is not supported                                                                       |                                                            |
-| gl              | Props that go into the default renderer. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}`          | `{}`                                                       |
+| renderer        | Selects/configures the renderer. Omit for WebGL (default). Pass `renderer` (boolean shorthand for `renderer={{}}`), a config bag, a renderer instance, or a sync/async callback to use **WebGPU** — R3F handles `init()` for you. Also accepts a config bag for multi-canvas (`{ primaryCanvas, scheduler }`) and color settings (`{ textureColorSpace }`) | WebGL |
+| gl              | **Deprecated** — WebGL-only renderer props/instance. Prefer `renderer`. Accepts sync/async callback with default props `gl={defaults => new Renderer({ ...defaults })}` | `{}`                                  |
 | camera          | Props that go into the default camera, or your own `THREE.Camera`                                                                                 | `{ fov: 75, near: 0.1, far: 1000, position: [0, 0, 5] }`   |
 | scene           | Props that go into the default scene, or your own `THREE.Scene`                                                                                   | `{}`                                                       |
+| background      | Sets the scene background — a CSS color, hex number, `THREE.Color`, a Drei environment preset name, an HDR/EXR/image URL, or a config object. See [Canvas Background](#canvas-background) | `undefined`                            |
 | shadows         | Props that go into `gl.shadowMap`, can be set true for `PCFsoft` or one of the following: 'basic', 'percentage', 'soft', 'variance'               | `false`                                                    |
 | raycaster       | Props that go into the default raycaster                                                                                                          | `{}`                                                       |
 | frameloop       | Render mode: always, demand, never                                                                                                                | `always`                                                   |
 | resize          | Resize config, see react-use-measure's options                                                                                                    | `{ scroll: true, debounce: { scroll: 50, resize: 0 } }`    |
 | orthographic    | Creates an orthographic camera                                                                                                                    | `false`                                                    |
 | dpr             | Pixel-ratio, use `window.devicePixelRatio`, or automatic: [min, max]                                                                              | `[1, 2]`                                                   |
-| legacy          | Enables THREE.ColorManagement in three r139 or later                                                                                              | `false`                                                    |
-| linear          | Switch off automatic sRGB color space and gamma correction                                                                                        | `false`                                                    |
+| width           | Fixed drawing-buffer width in pixels. When set, R3F stops auto-sizing to the container width. See [Canvas Size Control](#canvas-size-control)     | container width                                            |
+| height          | Fixed drawing-buffer height in pixels. When set, R3F stops auto-sizing to the container height                                                    | container height                                           |
+| forceEven       | Round computed width/height down to even numbers (useful for video encoders)                                                                      | `false`                                                    |
 | events          | Configuration for the event manager, as a function of state                                                                                       | `import { events } from "@react-three/fiber"`              |
-| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.RefObject<HTMLElement>`, `gl.domElement.parentNode` |
+| eventSource     | The source where events are being subscribed to, HTMLElement                                                                                      | `React.RefObject<HTMLElement>`, `renderer.domElement.parentNode` |
 | eventPrefix     | The event prefix that is cast into canvas pointer x/y events                                                                                      | `offset`                                                   |
-| flat            | Use `THREE.NoToneMapping` instead of `THREE.ACESFilmicToneMapping`                                                                                | `false`                                                    |
 | autoUpdateFrustum | Enable/disable automatic camera frustum updates each frame                                                                                      | `true`                                                     |
 | onCreated       | Callback after the canvas has rendered (but not yet committed)                                                                                    | `(state) => {}`                                            |
 | onPointerMissed | Response for pointer clicks that have missed any target                                                                                           | `(event) => {}`                                            |
@@ -100,35 +102,108 @@ function App() {
 > [!NOTE]
 > Ideally, and if possible, your fallback is a seamless, visual replacement for what the canvas would have otherwise rendered.
 
-## WebGPU
+## Canvas Background
 
-Recent Three.js now includes a WebGPU renderer. While still a work in progress and not fully backward-compatible with all of Three's features, the renderer requires an async initialization method. R3F streamlines this by allowing the gl prop to return a promise.
+The `background` prop sets the scene background (and, for environment maps, image-based lighting) declaratively — replacing manual `<color attach="background">` or a separate Environment component for simple cases.
 
 ```tsx
-import * as THREE from 'three/webgpu'
-import * as TSL from 'three/tsl'
-import { Canvas, extend, useFrame, useThree } from '@react-three/fiber'
+// Color (CSS color names, hex strings, rgb(), or a hex number)
+<Canvas background="red" />
+<Canvas background="#1a1a2e" />
+<Canvas background={0xff0000} />
 
-declare module '@react-three/fiber' {
-  interface ThreeElements extends ThreeToJSXElements<typeof THREE> {}
-}
+// Drei environment preset (apartment, city, dawn, forest, lobby, night, park, studio, sunset, warehouse)
+<Canvas background="sunset" />
 
-extend(THREE as any)
+// URL to an HDR/EXR/image file
+<Canvas background="/env.hdr" />
+<Canvas background="./sky.jpg" />
+```
+
+When a **string** is given it is resolved in this order: exact **preset** name → **URL** (starts with `/`, `./`, `../`, `http://`, `https://`, or ends in `.hdr`/`.exr`/`.jpg`/`.jpeg`/`.png`/`.webp`/`.gif`) → otherwise a **CSS color**. So `"city"` is a preset, `"./city.jpg"` is a URL, and `"cyan"` is a color.
+
+For separate backdrop and environment maps, pass an object:
+
+```tsx
+<Canvas
+  background={{
+    preset: 'city', // or files: '/env.hdr'
+    backgroundMap: '/sky.jpg', // optional separate visual backdrop
+    backgroundBlurriness: 0.5,
+    backgroundIntensity: 1,
+    environmentIntensity: 1.2,
+    path: '/textures/',
+  }}
+/>
+```
+
+The underlying `Environment` component is also exported from `@react-three/fiber` for direct use.
+
+## Canvas Size Control
+
+By default the canvas auto-sizes to its container. The `width`/`height` props pin the drawing-buffer resolution instead — independent of CSS size — which is useful for fixed-resolution capture such as video export.
+
+```tsx
+// Fixed resolution regardless of container size
+<Canvas width={1920} height={1080}>
+  <Scene />
+</Canvas>
+
+// Partial: width pinned, height from container
+<Canvas width={800}>
+  <Scene />
+</Canvas>
+
+// 4K capture (set dpr={1} for exact pixel dimensions)
+<Canvas width={3840} height={2160} dpr={1}>
+  <Scene />
+</Canvas>
+```
+
+Size follows an ownership model: props (or container fallback) drive size until you call `setSize()` imperatively, which takes ownership; call `setSize()` with no arguments to release back to props/container.
+
+```tsx
+const { setSize } = useThree()
+setSize(3840, 2160) // imperative mode, 4K
+setSize(1024) // 1024×1024 square
+setSize() // reset to props/container
+```
+
+> [!NOTE]
+> `width`/`height` are logical pixels; DPR multiplies as usual. Set `dpr={1}` for exact pixel dimensions. Use `forceEven` to round dimensions down to even numbers for video encoders.
+
+## Renderer color settings
+
+Renderer color options — `textureColorSpace`, `outputColorSpace`, `toneMapping` — go into the `gl` prop (WebGL) or `renderer` prop (WebGPU):
+
+```tsx
+// WebGL
+<Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping, textureColorSpace: THREE.LinearSRGBColorSpace }} />
+
+// WebGPU
+<Canvas renderer={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping, textureColorSpace: THREE.LinearSRGBColorSpace }} />
+```
+
+Defaults: `outputColorSpace` = `THREE.SRGBColorSpace`, `toneMapping` = `THREE.ACESFilmicToneMapping`, `textureColorSpace` = `THREE.SRGBColorSpace`.
+
+## WebGPU
+
+Recent Three.js ships a WebGPU renderer that requires async initialization. In v10 you opt in with the `renderer` prop and R3F handles `init()` for you — no manual `await renderer.init()`:
+
+```tsx
+import { Canvas } from '@react-three/fiber'
 
 export default () => (
-  <Canvas
-    gl={async (props) => {
-      const renderer = new THREE.WebGPURenderer(props as any)
-      await renderer.init()
-      return renderer
-    }}>
-      <mesh>
-        <meshBasicNodeMaterial />
-        <boxGeometry />
-      </mesh>
+  <Canvas renderer>
+    <mesh>
+      <meshBasicNodeMaterial />
+      <boxGeometry />
+    </mesh>
   </Canvas>
 )
 ```
+
+`renderer` (the boolean shorthand for `renderer={{}}`) also accepts a config bag, a renderer instance, or a sync/async callback. For the WebGPU-only entry point, node-material auto-extend, TSL hooks, and multi-canvas, see the [WebGPU section](../webgpu/overview).
 
 ## Custom Canvas
 

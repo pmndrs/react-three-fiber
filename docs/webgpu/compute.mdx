@@ -1,0 +1,202 @@
+---
+title: Compute (Buffers & Storage)
+description: GPU compute storage for WebGPU - useBuffers manages buffer data and useGPUStorage manages storage textures, both with scoping and create-if-not-exists.
+nav: 16
+---
+
+> **Experimental.** `useBuffers` and `useGPUStorage` cover GPU compute workflows that are still evolving. APIs may change between releases. Pin your version and expect churn.
+
+`useBuffers` and `useGPUStorage` manage GPU storage for compute operations. They follow the same create-if-not-exists pattern and scoping model as [`useNodes` and `useUniforms`](./tsl-hooks), and their creators receive a [`CreatorState`](./tsl-hooks#scopedstore) with ScopedStore wrappers.
+
+```tsx
+import { useBuffers, useGPUStorage } from '@react-three/fiber/webgpu'
+```
+
+## useBuffers
+
+Manages buffer data: CPU TypedArrays, GPU buffer attributes, and TSL buffer nodes.
+
+```tsx
+// Root level
+const buffers = useBuffers(() => ({
+  positions: instancedArray(count, 'vec3'),
+  velocities: new Float32Array(count * 3),
+}))
+
+// Scoped
+const buffers = useBuffers(() => ({ particlePos: new StorageBufferAttribute(count, 4) }), 'particles')
+
+// Read all / read a scope
+const all = useBuffers()
+const particleBuffers = useBuffers('particles')
+```
+
+### Parameters
+
+| Parameter | Type                      | Description                                  |
+| --------- | ------------------------- | -------------------------------------------- |
+| `creator` | `BufferCreator \| string` | Function that returns buffers, or scope name |
+| `scope`   | `string`                  | Optional scope name for organization         |
+
+### Return Value
+
+Returns `BuffersWithUtils<BufferRecord>` - your buffers by name, **plus four util functions**:
+
+```typescript
+{
+  // ...your buffers
+  removeBuffers: (names: string | string[], scope?: string) => void
+  clearBuffers: (scope?: string) => void
+  rebuildBuffers: (scope?: string) => void
+  disposeBuffers: (names: string | string[], scope?: string) => void
+}
+```
+
+- **`removeBuffers`** - remove buffers by name from root or a scope (store only).
+- **`clearBuffers`** - clear a scope, `'root'` for root only, or no argument for everything.
+- **`rebuildBuffers`** - clear the cache and bump the HMR version to force re-creation (all, `'root'`, or a scope).
+- **`disposeBuffers`** - releases GPU resources (`.dispose()`) **and** removes from the store.
+
+### What Can Be Stored
+
+```tsx
+useBuffers(() => ({
+  // TypedArrays (CPU-side data)
+  cpuData: new Float32Array(count * 3),
+  indices: new Uint32Array(count),
+
+  // Three.js buffer attributes
+  storageAttr: new StorageBufferAttribute(count, 4),
+  instancedAttr: new StorageInstancedBufferAttribute(count, 4),
+  indirectAttr: new IndirectStorageBufferAttribute(data, 1),
+
+  // TSL buffer nodes
+  positions: instancedArray(count, 'vec3'),
+  custom: storage(bufferAttribute, 'vec4', count),
+}))
+```
+
+## useGPUStorage
+
+Manages GPU storage textures for compute operations.
+
+```tsx
+// Root level
+const storage = useGPUStorage(() => ({ heightMap: new StorageTexture(512, 512) }))
+
+// Scoped
+const storage = useGPUStorage(() => ({ normalMap: new StorageTexture(1024, 1024) }), 'terrain')
+
+// Read all / read a scope
+const all = useGPUStorage()
+const terrainStorage = useGPUStorage('terrain')
+```
+
+### Parameters
+
+| Parameter | Type                       | Description                                  |
+| --------- | -------------------------- | -------------------------------------------- |
+| `creator` | `StorageCreator \| string` | Function that returns storage, or scope name |
+| `scope`   | `string`                   | Optional scope name for organization         |
+
+### Return Value
+
+Returns `StorageWithUtils<StorageRecord>` - your storage by name, **plus four util functions**:
+
+```typescript
+{
+  // ...your storage
+  removeStorage: (names: string | string[], scope?: string) => void
+  clearStorage: (scope?: string) => void
+  rebuildStorage: (scope?: string) => void
+  disposeStorage: (names: string | string[], scope?: string) => void
+}
+```
+
+These mirror the `useBuffers` utils. `disposeStorage` releases GPU texture memory and removes the entry from the store.
+
+### What Can Be Stored
+
+```tsx
+useGPUStorage(() => ({
+  // Three.js storage textures
+  heightMap: new StorageTexture(512, 512),
+  voxelData: new Storage3DTexture(64, 64, 64),
+
+  // TSL storage texture nodes
+  storageNode: storageTexture(texture, uvNode, storeNode),
+}))
+```
+
+## Accessing in Node Creators
+
+Both hooks expose their data to `useNodes` and `useLocalNodes` through the creator state's ScopedStore wrappers:
+
+```tsx
+const { positions } = useBuffers(() => ({ positions: instancedArray(count, 'vec3') }), 'particles')
+const { heightMap } = useGPUStorage(() => ({ heightMap: new StorageTexture(512, 512) }), 'terrain')
+
+const { positionNode, heightNode } = useNodes(({ buffers, gpuStorage }) => ({
+  positionNode: buffers.scope('particles').positions.element(instanceIndex),
+  heightNode: texture(gpuStorage.scope('terrain').heightMap),
+}))
+```
+
+## Example: Particle System
+
+```tsx
+import { useBuffers, useGPUStorage, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { instancedArray, Fn, vec3, instanceIndex, texture } from 'three/tsl'
+import { StorageTexture } from 'three/webgpu'
+
+const PARTICLE_COUNT = 10000
+
+function ParticleSystem() {
+  const { positions, velocities } = useBuffers(
+    () => ({
+      positions: instancedArray(PARTICLE_COUNT, 'vec3'),
+      velocities: instancedArray(PARTICLE_COUNT, 'vec3'),
+    }),
+    'particles',
+  )
+
+  const { forceField } = useGPUStorage(() => ({ forceField: new StorageTexture(256, 256) }), 'particles')
+
+  const { updateParticles } = useNodes(
+    ({ buffers, gpuStorage }) => ({
+      updateParticles: Fn(() => {
+        const pos = buffers.scope('particles').positions.element(instanceIndex)
+        const vel = buffers.scope('particles').velocities.element(instanceIndex)
+        const uv = pos.xz.div(100).add(0.5)
+        const force = texture(gpuStorage.scope('particles').forceField, uv).xyz
+        vel.addAssign(force.mul(0.01))
+        pos.addAssign(vel)
+      })(),
+    }),
+    'compute',
+  )
+
+  const { positionNode } = useLocalNodes(({ buffers }) => ({
+    positionNode: buffers.particles.positions.element(instanceIndex),
+  }))
+
+  return (
+    <instancedMesh args={[undefined, undefined, PARTICLE_COUNT]}>
+      <sphereGeometry args={[0.1, 8, 8]} />
+      <meshBasicNodeMaterial positionNode={positionNode} />
+    </instancedMesh>
+  )
+}
+```
+
+## Best Practices
+
+- Use scopes to group buffers/storage by system (`'particles'`, `'terrain'`).
+- Call `disposeBuffers` / `disposeStorage` in cleanup to free GPU resources.
+- Use `.scope('name')` for safe access (returns an empty wrapper if the scope is missing); direct `buffers.name` access works when you know the scope exists.
+
+## Related
+
+- [TSL Hooks](./tsl-hooks) - nodes and uniforms, plus the ScopedStore wrapper
+- [WebGPU Overview](./overview) - concepts and architecture
+- [TSL HMR](./hmr) - rebuild behavior for buffers and storage
