@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useStore, useThree } from '../../core/hooks'
+import { useStore } from '../../core/hooks'
+import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
 import { vectorize } from './utils'
@@ -136,7 +137,7 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   creatorOrScope?: UniformCreator<T> | T | string,
   scope?: string,
 ): UniformsWithUtils<UniformRecord> | UniformsWithUtils<UniformRecord & Record<string, UniformRecord>> {
-  const store = useStore()
+  const store = usePrimaryStore()
 
   //* Utils ==============================
   // Memoized util functions that capture store reference
@@ -250,11 +251,11 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
   // Subscribe to uniforms changes for reader modes
   // This ensures useUniforms() and useUniforms('scope') reactively update when store changes
-  const storeUniforms = useThree((s) => s.uniforms)
+  const storeUniforms = usePrimaryThree((s) => s.uniforms)
 
   // Subscribe to HMR version for creator modes
   // This ensures rebuildUniforms() triggers re-creation
-  const hmrVersion = useThree((s) => s._hmrVersion)
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   // Extracted deps to avoid complex expressions in useMemo dependency array
   const readerDep = isReader ? storeUniforms : null
@@ -364,6 +365,8 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllUniforms(store: ReturnType<typeof useStore>, scope?: string) {
+  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
+  store = store.getState().primaryStore ?? store
   store.setState((state) => {
     let newUniforms: typeof state.uniforms = {}
     if (scope && scope !== 'root') {

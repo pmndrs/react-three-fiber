@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useStore, useThree } from '../../core/hooks'
+import { useStore } from '../../core/hooks'
+import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 
 //* Types ==============================
@@ -113,7 +114,7 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
   | NodesWithUtils<T>
   | NodesWithUtils<Record<string, TSLNodeLike>>
   | NodesWithUtils<Record<string, TSLNodeLike> & Record<string, Record<string, TSLNodeLike>>> {
-  const store = useStore()
+  const store = usePrimaryStore()
 
   //* Utils ==============================
   // Memoized util functions that capture store reference
@@ -193,11 +194,11 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
   // Subscribe to nodes changes for reader modes
   // This ensures useNodes() and useNodes('scope') reactively update when store changes
   // For creator mode, we intentionally don't use this value to avoid re-running the creator
-  const storeNodes = useThree((s) => s.nodes)
+  const storeNodes = usePrimaryThree((s) => s.nodes)
 
   // Subscribe to HMR version for creator modes
   // This allows rebuildNodes() to bust the memoization cache and force re-creation
-  const hmrVersion = useThree((s) => s._hmrVersion)
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   // Extracted deps to avoid complex expressions in useMemo dependency array
   const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
@@ -296,6 +297,8 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllNodes(store: ReturnType<typeof useStore>, scope?: string) {
+  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
+  store = store.getState().primaryStore ?? store
   store.setState((state) => {
     let newNodes = state.nodes
     if (scope && scope !== 'root') {
@@ -392,14 +395,14 @@ export type LocalNodeCreator<T extends Record<string, unknown>> = (state: Creato
  * ```
  */
 export function useLocalNodes<T extends Record<string, unknown>>(creator: LocalNodeCreator<T>): T {
-  const store = useStore()
+  const store = usePrimaryStore()
 
   // Subscribe to trigger recreation when these change
-  const uniforms = useThree((s) => s.uniforms)
-  const nodes = useThree((s) => s.nodes)
-  const textures = useThree((s) => s.textures)
+  const uniforms = usePrimaryThree((s) => s.uniforms)
+  const nodes = usePrimaryThree((s) => s.nodes)
+  const textures = usePrimaryThree((s) => s.textures)
   // Subscribe to HMR version to rebuild on hot reload
-  const hmrVersion = useThree((s) => s._hmrVersion)
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   return useMemo(() => {
     // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
