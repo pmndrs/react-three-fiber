@@ -22,11 +22,16 @@ export type UseTextureOptions<Url extends string[] | string | Record<string, str
   /** Callback when texture(s) finish loading */
   onLoad?: (texture: MappedTextureType<Url>) => void
   /**
-   * Cache the texture in R3F's global state for access via useTextures().
-   * When true:
+   * Register the texture(s) in R3F's global texture registry for access via useTextures().
+   * When true (the default):
    * - Textures persist until explicitly disposed
-   * - Returns existing cached textures if available (preserving modifications like colorSpace)
-   * @default false
+   * - On mount, returns existing registered textures if available (preserving modifications like colorSpace)
+   *
+   * Reads are taken once at mount — a mounted `useTexture` does not re-render when the registry
+   * changes. To react to registry swaps, use `useTextures(s => s.get(key))` instead.
+   *
+   * Pass `false` to opt out of registry enrollment entirely.
+   * @default true
    */
   cache?: boolean
 }
@@ -87,15 +92,18 @@ function buildFromCache<Url extends string[] | string | Record<string, string>>(
  *   normal: '/normal.png'
  * })
  *
- * // With caching - returns same texture object across components
- * // Modifications (colorSpace, wrapS, etc.) are preserved
- * const diffuse = useTexture('/diffuse.png', { cache: true })
+ * // Textures are registered in the global registry by default — the same texture
+ * // object is shared across components and modifications (colorSpace, wrapS, etc.) are preserved
+ * const diffuse = useTexture('/diffuse.png')
  * diffuse.colorSpace = THREE.SRGBColorSpace
  *
  * // Another component gets the SAME texture with colorSpace already set
- * const sameDiffuse = useTexture('/diffuse.png', { cache: true })
+ * const sameDiffuse = useTexture('/diffuse.png')
  *
- * // Access cache directly
+ * // Opt out of registry enrollment for a one-off texture
+ * const scratch = useTexture('/scratch.png', { cache: false })
+ *
+ * // Access the registry directly
  * const { get } = useTextures()
  * const cached = get('/diffuse.png')
  * ```
@@ -107,14 +115,11 @@ export function useTexture<Url extends string[] | string | Record<string, string
   const renderer = useThree((state) => state.internal.actualRenderer)
   const store = useStore()
 
-  // Subscribe to texture cache changes (for reactivity when cache updates)
-  const textureCache = useThree((state) => state.textures)
-
   // Normalize options - support both legacy callback and options object
   const options: UseTextureOptions<Url> =
     typeof optionsOrOnLoad === 'function' ? { onLoad: optionsOrOnLoad } : (optionsOrOnLoad ?? {})
 
-  const { onLoad, cache = false } = options
+  const { onLoad, cache = true } = options
 
   // Use ref for onLoad to avoid re-running effect when callback reference changes
   const onLoadRef = useRef(onLoad)
@@ -123,15 +128,19 @@ export function useTexture<Url extends string[] | string | Record<string, string
   // Track which input we've already called onLoad for (prevents duplicate calls on re-render)
   const onLoadCalledForRef = useRef<string | null>(null)
 
-  //* Check our cache first when cache is enabled --
-  // If all requested textures are in our cache, use those (preserves modifications)
+  //* Check the registry once at mount (non-reactive) --
+  // If all requested textures are already registered, use those (preserves modifications). We read
+  // the registry imperatively rather than subscribing, so a mounted useTexture never re-renders on a
+  // registry change — loading texture A can't re-render a component using texture B.
   const urls = useMemo(() => getUrls(input), [input])
 
   const cachedResult = useMemo(() => {
     if (!cache) return null
-    if (!allUrlsCached(urls, textureCache)) return null
-    return buildFromCache(input, textureCache)
-  }, [cache, urls, textureCache, input])
+    const textures = store.getState().textures
+    if (!allUrlsCached(urls, textures)) return null
+    return buildFromCache(input, textures)
+    // Intentionally not keyed on the registry contents — this is a one-time read at mount (per input).
+  }, [cache, urls, input, store])
 
   //* Load via useLoader (handles suspense) --
   // This always runs to maintain hooks order, but we may not use the result
@@ -191,15 +200,13 @@ export function useTexture<Url extends string[] | string | Record<string, string
     }
   }, [input, loadedTextures, cachedResult])
 
-  //* Add to cache if requested and not already cached --
+  //* Register in the texture cache + refcount while mounted --
+  // Adds missing textures and retains them so useTextures().dispose() is safe; releases on unmount.
+  // Textures stay in the registry after the last release (persist until explicit dispose).
   useEffect(() => {
     if (!cache) return
-    // Don't re-cache if we got the result from cache
-    if (cachedResult) return
 
-    const set = store.setState
-
-    // Build URL to texture mapping
+    // Build URL → texture mapping (works for cache hits and fresh loads; mappedTextures is final either way)
     const urlTextureMap: Array<[string, _Texture]> = []
 
     if (typeof input === 'string') {
@@ -215,21 +222,38 @@ export function useTexture<Url extends string[] | string | Record<string, string
       }
     }
 
-    // Add to cache (only if not already present)
-    set((state) => {
-      const newMap = new Map(state.textures)
-      let changed = false
+    // Retain: add missing textures and increment their refcount so useTextures().dispose() is safe.
+    // Only clone `textures` (and so notify registry subscribers) when a texture is actually added —
+    // a refcount-only bump (re-mounting an already-cached consumer) must not churn the registry.
+    store.setState((state) => {
+      const refs = new Map(state._textureRefs)
+      let textures = state.textures
+      let added = false
       for (const [url, texture] of urlTextureMap) {
-        if (!newMap.has(url)) {
-          newMap.set(url, texture)
-          changed = true
+        if (!textures.has(url)) {
+          if (!added) {
+            textures = new Map(textures)
+            added = true
+          }
+          textures.set(url, texture)
         }
+        refs.set(url, (refs.get(url) ?? 0) + 1)
       }
-      return changed ? { textures: newMap } : state
+      return added ? { textures, _textureRefs: refs } : { _textureRefs: refs }
     })
 
-    // No cleanup on unmount - textures persist until explicit dispose
-  }, [cache, input, mappedTextures, store, cachedResult])
+    // Release on unmount: decrement refcount. Textures persist until explicit dispose.
+    return () =>
+      store.setState((state) => {
+        const refs = new Map(state._textureRefs)
+        for (const [url] of urlTextureMap) {
+          const next = (refs.get(url) ?? 0) - 1
+          if (next <= 0) refs.delete(url)
+          else refs.set(url, next)
+        }
+        return { _textureRefs: refs }
+      })
+  }, [cache, input, mappedTextures, store])
 
   return mappedTextures
 }

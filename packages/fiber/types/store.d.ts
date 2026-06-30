@@ -294,8 +294,10 @@ export interface RootState {
   buffers: BufferStore
   /** Global GPU storage (textures, etc.) - root-level storage + scoped sub-objects. Use useGPUStorage() hook */
   gpuStorage: StorageStore
-  /** Global TSL texture nodes - use useTextures() hook for operations */
-  textures: Map<string, any>
+  /** Global Texture registry (key → Texture, usually keyed by URL) - use useTextures() hook for access + lifecycle */
+  textures: Map<string, THREE.Texture>
+  /** Internal: refcount per texture key, driven by mounted useTexture consumers (registry enrollment is on by default) */
+  _textureRefs: Map<string, number>
   /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
   renderPipeline: any | null // THREE.PostProcessing (will be THREE.RenderPipeline in future Three.js release)
   /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
