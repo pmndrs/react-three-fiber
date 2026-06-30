@@ -1,6 +1,8 @@
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
+import { render, cleanup } from '@testing-library/react'
+import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useThree, extend, useFrame } from '../src'
@@ -579,5 +581,70 @@ describe('useFrame hook', () => {
 
     // Note: Full portal testing would require createPortal which needs more setup
     // This test verifies the base case; integration tests should verify portal behavior
+  })
+})
+
+//* Outside Canvas: host-guaranteed ==============================
+// r3f's useFrame always delivers full RootState. Used outside a Canvas the job
+// registers on the scheduler's ambient root, but the callback is held until a
+// Canvas adopts the job (host state present).
+
+describe('useFrame outside Canvas', () => {
+  beforeEach(() => {
+    Scheduler.reset()
+    getScheduler().frameloop = 'never' // drive frames manually
+  })
+
+  afterEach(() => {
+    cleanup()
+    Scheduler.reset()
+  })
+
+  it('registers but does not fire until a host exists', () => {
+    const seen: any[] = []
+    function UI() {
+      useFrame((state) => seen.push(state.renderer))
+      return null
+    }
+
+    act(() => {
+      render(<UI />)
+    })
+
+    const scheduler = getScheduler()
+    // Job is registered immediately...
+    expect(scheduler.getJobCount()).toBe(1)
+    // ...but the callback is held — no host, so no full RootState yet
+    act(() => scheduler.step(1000))
+    expect(seen.length).toBe(0)
+  })
+
+  it('fires with full state once a Canvas adopts the job', () => {
+    const seen: any[] = []
+    function UI() {
+      useFrame((state) => seen.push(state.renderer))
+      return null
+    }
+
+    act(() => {
+      render(<UI />)
+    })
+
+    const scheduler = getScheduler()
+
+    // No host yet — guarded
+    act(() => scheduler.step(1000))
+    expect(seen.length).toBe(0)
+
+    // A host (Canvas) registers and adopts the job
+    const fakeRenderer = { isFakeRenderer: true }
+    act(() => {
+      scheduler.registerRoot('host', { getState: () => ({ renderer: fakeRenderer }) })
+    })
+
+    // Now the callback runs, always with host state present
+    act(() => scheduler.step(2000))
+    expect(seen.length).toBe(1)
+    expect(seen[0]).toBe(fakeRenderer)
   })
 })

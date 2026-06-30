@@ -12,10 +12,11 @@ import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextC
 /**
  * Frame hook with phase-based ordering, priority, and FPS throttling.
  *
- * Works both inside and outside Canvas context:
- * - Inside Canvas: Full RootState (gl, scene, camera, etc.)
- * - Outside Canvas (waiting mode): Waits for Canvas to mount, then gets full state
- * - Outside Canvas (independent mode): Fires immediately with timing-only state
+ * Always delivers full RootState — works both inside and outside Canvas context:
+ * - Inside Canvas: Full RootState (renderer, scene, camera, etc.)
+ * - Outside Canvas: The job registers immediately but the callback is held until a
+ *   Canvas adopts it, then runs with full RootState. For hostless / standalone
+ *   frame loops with no Canvas, use `@pmndrs/scheduler` directly.
  *
  * Returns a controls object for manual stepping, pausing, and resuming.
  *
@@ -32,16 +33,16 @@ import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextC
  * useFrame((state, delta) => { ... }, { phase: 'physics' })
  *
  * @example
- * // Outside Canvas - waits for Canvas to mount
+ * // Outside Canvas - callback waits for a Canvas, then always has full state
  * function UI() {
  *   useFrame((state, delta) => { syncUI(state.camera) });
  *   return <button>...</button>;
  * }
  *
  * @example
- * // Independent mode - no Canvas needed
- * getScheduler().independent = true;
- * useFrame((state, delta) => { updateGame(delta) });
+ * // Hostless / standalone loop (no Canvas) - use @pmndrs/scheduler directly
+ * import { getScheduler } from '@pmndrs/scheduler'
+ * getScheduler().register((state, delta) => { updateGame(delta) })
  *
  * @example
  * // Scheduler-only access (no callback)
@@ -167,29 +168,23 @@ export function useFrame(
         }
       }
     } else {
-      //* ===== OUTSIDE CANVAS: New behavior =====
-      const registerOutside = () => {
-        return scheduler.register((state, delta) => callbackRef.current?.(state as FrameNextState, delta), {
-          id,
-          ...options,
-        })
-      }
-
-      // Independent mode or root already exists: register now
-      if (scheduler.independent || scheduler.isReady) {
-        return registerOutside()
-      }
-
-      // Wait for a Canvas to mount
-      let unregisterJob: (() => void) | null = null
-      const unsubReady = scheduler.onRootReady(() => {
-        unregisterJob = registerOutside()
-      })
-
-      return () => {
-        unsubReady()
-        unregisterJob?.()
-      }
+      //* ===== OUTSIDE CANVAS: host-guaranteed =====
+      // r3f's useFrame always delivers full RootState. The job registers
+      // immediately (lands on the scheduler's lazily-created ambient root) but the
+      // callback is held until a Canvas adopts the job and host state is present.
+      // We probe `state.renderer` (the modern host marker; `state.gl` is deprecated
+      // and warns on access) — absent on the timing-only ambient frames, present
+      // once a Canvas adopts the job. For hostless / standalone loops, use
+      // @pmndrs/scheduler directly.
+      // @see @pmndrs/scheduler docs/design/ambient-root.md
+      return scheduler.register(
+        (state, delta) => {
+          const frameState = state as FrameNextState
+          if (!frameState.renderer) return // no host yet — wait for a Canvas
+          callbackRef.current?.(frameState, delta)
+        },
+        { id, ...options },
+      )
     }
     // Note: `callback` intentionally excluded - useMutableCallback handles updates
   }, [store, scheduler, id, optionsKey, isLegacyPriority, isInsideCanvas])

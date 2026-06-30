@@ -43,9 +43,12 @@ function SpinningBox() {
 }
 ```
 
-### Outside Canvas (Waiting Mode)
+### Outside Canvas (Waits for a Canvas)
 
-When used outside Canvas, `useFrame` waits for a Canvas to mount, then fires with full state:
+`useFrame` from `@react-three/fiber` **always delivers full `RootState`**. Used outside a
+Canvas, the job registers immediately, but the callback is **held until a Canvas adopts it** —
+then it runs every frame with `state.renderer`, `state.camera`, etc. guaranteed present. No
+null-checks, no timing-only frames:
 
 ```tsx
 function App() {
@@ -60,7 +63,7 @@ function App() {
 }
 
 function GameUI() {
-  // Waits for Canvas, then gets full RootState
+  // Doesn't run until the Canvas exists; then always has full RootState
   const { scheduler } = useFrame((state, delta) => {
     syncUI(state.camera.position)
   })
@@ -69,24 +72,23 @@ function GameUI() {
 }
 ```
 
-### Independent Mode (No Canvas)
+With **no Canvas at all**, the callback never runs — that's the host-guaranteed contract. For
+hostless frame loops, use the scheduler directly (next section).
 
-For standalone frame loops without any Canvas:
+### Standalone (No Canvas)
+
+For frame loops with no Canvas at all, use `@pmndrs/scheduler` directly — it has no host
+requirement and fires immediately with timing-only state. (r3f's `useFrame` intentionally
+waits for a host, so it is not the tool for this case.)
 
 ```tsx
-import { getScheduler, useFrame } from '@react-three/fiber'
+import { getScheduler } from '@pmndrs/scheduler'
 
-// Enable independent mode - no Canvas needed
-getScheduler().independent = true
-
-function GameLoop() {
-  useFrame((state, delta) => {
-    // state = { time, delta, elapsed, frame } only
-    // No gl, scene, camera (no Canvas exists)
-    updateGame(delta)
-  })
-  return null
-}
+const scheduler = getScheduler()
+scheduler.register((state, delta) => {
+  // state = { time, delta, elapsed, frame } only — no Canvas exists
+  updateGame(delta)
+})
 ```
 
 ### Scheduler Access Only
