@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useStore, useThree } from '../../core/hooks'
+import { useStore } from '../../core/hooks'
+import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import type { StorageLike, StorageRecord } from '#types'
 
@@ -130,7 +131,7 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
   | StorageWithUtils<T>
   | StorageWithUtils<Record<string, StorageLike>>
   | StorageWithUtils<Record<string, StorageLike> & Record<string, Record<string, StorageLike>>> {
-  const store = useStore()
+  const store = usePrimaryStore()
 
   //* Utils ==============================
   // Memoized util functions that capture store reference
@@ -233,11 +234,11 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
   // Subscribe to gpuStorage changes for reader modes
   // This ensures useGPUStorage() and useGPUStorage('scope') reactively update when store changes
   // For creator mode, we intentionally don't use this value to avoid re-running the creator
-  const storeStorage = useThree((s) => s.gpuStorage)
+  const storeStorage = usePrimaryThree((s) => s.gpuStorage)
 
   // Subscribe to HMR version for creator modes
   // This allows rebuildStorage() to bust the memoization cache and force re-creation
-  const hmrVersion = useThree((s) => s._hmrVersion)
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   // Extracted deps to avoid complex expressions in useMemo dependency array
   const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
@@ -354,6 +355,8 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllStorage(store: ReturnType<typeof useStore>, scope?: string) {
+  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
+  store = store.getState().primaryStore ?? store
   store.setState((state) => {
     let newStorage = state.gpuStorage
     if (scope && scope !== 'root') {

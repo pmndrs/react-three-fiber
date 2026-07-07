@@ -388,6 +388,33 @@ describe('Scheduler', () => {
     expect(calls).toEqual(['job1'])
   })
 
+  // Regression: Bug #1 — frustum/visibility jobs registered with { before: 'render' }
+  // must run AFTER the update phase but BEFORE render (previously they used a bogus
+  // 'preRender' phase that the sorter appended after render/finish, leaving state.frustum
+  // one frame stale for render-phase consumers).
+  it('runs { before: render } jobs after update and before render', () => {
+    const calls: string[] = []
+
+    // Mirror renderer.tsx registration order/options for the system jobs
+    scheduler.register(() => calls.push('update'), { id: 'update-job', rootId: 'test-root', phase: 'update' })
+    scheduler.register(() => calls.push('render'), { id: 'render-job', rootId: 'test-root', phase: 'render' })
+    scheduler.register(() => calls.push('frustum'), { id: 'frustum', rootId: 'test-root', before: 'render' })
+    scheduler.register(() => calls.push('visibility'), {
+      id: 'visibility',
+      rootId: 'test-root',
+      before: 'render',
+      after: 'frustum',
+    })
+
+    scheduler.step()
+
+    // update precedes both checks; both checks precede render; frustum precedes visibility
+    expect(calls.indexOf('update')).toBeLessThan(calls.indexOf('frustum'))
+    expect(calls.indexOf('frustum')).toBeLessThan(calls.indexOf('visibility'))
+    expect(calls.indexOf('visibility')).toBeLessThan(calls.indexOf('render'))
+    expect(calls).toEqual(['update', 'frustum', 'visibility', 'render'])
+  })
+
   it('supports frameloop getter/setter', () => {
     // With a root registered, frameloop defaults to 'never' until set
     scheduler.frameloop = 'never'

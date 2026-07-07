@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
-import { useStore, useThree } from '../../core/hooks'
+import { useStore } from '../../core/hooks'
+import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import type { BufferLike, BufferRecord } from '#types'
 
@@ -128,7 +129,7 @@ export function useBuffers<T extends Record<string, BufferLike>>(
   | BuffersWithUtils<T>
   | BuffersWithUtils<Record<string, BufferLike>>
   | BuffersWithUtils<Record<string, BufferLike> & Record<string, Record<string, BufferLike>>> {
-  const store = useStore()
+  const store = usePrimaryStore()
 
   //* Utils ==============================
   // Memoized util functions that capture store reference
@@ -231,11 +232,11 @@ export function useBuffers<T extends Record<string, BufferLike>>(
   // Subscribe to buffers changes for reader modes
   // This ensures useBuffers() and useBuffers('scope') reactively update when store changes
   // For creator mode, we intentionally don't use this value to avoid re-running the creator
-  const storeBuffers = useThree((s) => s.buffers)
+  const storeBuffers = usePrimaryThree((s) => s.buffers)
 
   // Subscribe to HMR version for creator modes
   // This allows rebuildBuffers() to bust the memoization cache and force re-creation
-  const hmrVersion = useThree((s) => s._hmrVersion)
+  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
 
   // Extracted deps to avoid complex expressions in useMemo dependency array
   const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
@@ -338,6 +339,8 @@ export function useBuffers<T extends Record<string, BufferLike>>(
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllBuffers(store: ReturnType<typeof useStore>, scope?: string) {
+  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
+  store = store.getState().primaryStore ?? store
   store.setState((state) => {
     let newBuffers = state.buffers
     if (scope && scope !== 'root') {
