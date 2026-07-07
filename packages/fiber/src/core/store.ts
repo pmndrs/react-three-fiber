@@ -215,6 +215,7 @@ export const createStore = (
       buffers: {},
       gpuStorage: {},
       textures: new Map(),
+      _textureRefs: new Map(),
       renderPipeline: null,
       passes: {},
       _hmrVersion: 0,
