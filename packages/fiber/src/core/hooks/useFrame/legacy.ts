@@ -9,7 +9,7 @@
 //   - addAfterEffect → useFrame(cb, { phase: 'finish' })
 //   - addTail → scheduler.onIdle(cb)
 
-import { getScheduler } from './scheduler'
+import { getScheduler } from '@pmndrs/scheduler'
 import { notifyDepreciated } from '../../utils/notices'
 
 //* Type Imports ==============================

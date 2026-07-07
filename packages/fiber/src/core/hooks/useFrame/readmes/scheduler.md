@@ -52,29 +52,28 @@ function MyComponent() {
 
 ---
 
-## Independent Mode
+## Standalone (No Canvas)
 
-The scheduler can run independently without any Canvas, enabling frame-based logic in non-R3F applications.
-
-### `independent` (getter/setter)
-
-Enable independent mode for use without Canvas.
+The scheduler runs without any Canvas — **no setup required**. The first `useFrame` (or
+`getScheduler().register`) lazily creates an internal ambient root, so frame-based logic
+works in non-R3F applications out of the box.
 
 ```tsx
 import { getScheduler } from '@react-three/fiber'
 
-// Enable independent mode - no Canvas needed
-getScheduler().independent = true
-
-// Now useFrame works without Canvas
-// Callbacks receive timing-only state: { time, delta, elapsed, frame }
+// No Canvas, no flag — just register
+getScheduler().register((state, delta) => {
+  // Callbacks receive timing-only state: { time, delta, elapsed, frame }
+})
 ```
 
 **Notes:**
 
-- When `true`, creates a default root automatically
-- Callbacks receive `FrameTimingState` (no `gl`, `scene`, `camera`)
-- Useful for game loops, animations, or any frame-based logic outside R3F
+- The ambient root is created on demand; you never reference it directly.
+- Callbacks receive `FrameTimingState` (no `gl`, `scene`, `camera`).
+- Useful for game loops, animations, or any frame-based logic outside R3F.
+- If a Canvas mounts later, it **adopts** these jobs and they begin receiving full
+  `RootState`.
 
 ---
 

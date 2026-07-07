@@ -21,7 +21,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './utils/notices.js'
-import { getScheduler } from './hooks/useFrame/scheduler'
+import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
 
