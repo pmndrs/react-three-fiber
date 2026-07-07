@@ -21,8 +21,6 @@
       "#three/*": ["packages/fiber/src/three/*"],
       "#types": ["packages/fiber/types/index.ts"],
       "#types/*": ["packages/fiber/types/*"],
-      "@pmndrs/scheduler": ["../scheduler/src/index.ts"],
-      "@pmndrs/scheduler/react": ["../scheduler/src/react.ts"],
       "@react-three/fiber": ["packages/fiber/src/index.tsx"],
       "@react-three/fiber/*": ["packages/fiber/src/*"],
       "@react-three/test-renderer": ["packages/test-renderer/src/index.tsx"],

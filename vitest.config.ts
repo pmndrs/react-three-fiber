@@ -8,8 +8,6 @@ export default defineConfig({
       '@react-three/fiber/legacy': path.resolve(__dirname, './packages/fiber/src/legacy.tsx'),
       '@react-three/fiber/webgpu': path.resolve(__dirname, './packages/fiber/src/webgpu/index.tsx'),
       '@react-three/fiber': path.resolve(__dirname, './packages/fiber/src/index.tsx'),
-      '@pmndrs/scheduler/react': path.resolve(__dirname, '../scheduler/src/react.ts'),
-      '@pmndrs/scheduler': path.resolve(__dirname, '../scheduler/src/index.ts'),
       '#three': path.resolve(__dirname, './packages/fiber/src/three'),
       '#types': path.resolve(__dirname, './packages/fiber/src/types.ts'),
       '#utils': path.resolve(__dirname, './packages/fiber/src/core/utils.ts'),
