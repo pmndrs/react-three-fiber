@@ -361,18 +361,19 @@ Calling `useFrame()` with **no callback** is a valid way to get scheduler access
 
 ### Using useFrame outside Canvas {#outside-canvas}
 
-`useFrame` does not throw when used outside `<Canvas>`. If a Canvas mounts later, the job registers then and receives full `RootState`. For frame loops with no Canvas at all, enable **independent mode** — the scheduler creates a default root and callbacks receive a timing-only state (`{ time, delta, elapsed, frame }`, no `gl`/`scene`/`camera`):
+`useFrame` does not throw when used outside `<Canvas>`. The scheduler runs with **no setup required**: the first `useFrame` (or `getScheduler().register`) lazily creates an internal **ambient root**, so frame-based logic works in non-R3F apps out of the box. On the ambient root, callbacks receive a timing-only state (`{ time, delta, elapsed, frame }`, with no `gl`/`scene`/`camera`). If a `<Canvas>` mounts later, it **adopts** those jobs and they begin receiving the full `RootState`.
 
 ```tsx
-import { getScheduler, useFrame } from '@react-three/fiber'
+import { useFrame } from '@react-three/fiber'
 
-getScheduler().independent = true
-
+// No Canvas, no flag — the ambient root is created on demand
 function GameLoop() {
   useFrame((state, delta) => updateGame(delta))
   return null
 }
 ```
+
+> The scheduler itself lives in [`@pmndrs/scheduler`](https://www.npmjs.com/package/@pmndrs/scheduler) and is consumed by R3F; you still reach it through `getScheduler()` / `useThree().scheduler`.
 
 ## Scheduler API reference {#scheduler-api}
 

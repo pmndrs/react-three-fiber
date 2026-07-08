@@ -68,6 +68,8 @@ catch-up; that was never the implementation.)
 
 `useFrame` reads the Canvas context directly and returns `null` outside a Canvas instead of
 throwing. This supports three modes from one hook: inside Canvas (full `RootState`), outside
-Canvas "waiting" (registers once a root mounts, via `onRootReady`), and independent mode
-(`scheduler.independent = true` creates a default root and delivers timing-only state for
-non-R3F loops).
+Canvas "waiting" (registers once a root mounts, via `onRootReady`), and standalone — the first
+`useFrame`/`register` lazily creates an **ambient root** that delivers timing-only state for
+non-R3F loops, which a later Canvas then adopts. (The scheduler now lives in
+`@pmndrs/scheduler`; the older `scheduler.independent` flag is gone in favor of the ambient
+root.)

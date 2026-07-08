@@ -18,6 +18,5 @@ export * from './renderTarget'
 import './three'
 import './tsl'
 import './renderPipeline'
-import './frameNext'
 
 // Note: webgpu types are exported separately via the /webgpu entry point

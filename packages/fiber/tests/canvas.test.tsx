@@ -244,4 +244,51 @@ describe('web Canvas', () => {
       expect(environmentRendered).toBe(true)
     })
   })
+
+  describe('frustum / occlusion props', () => {
+    // Regression for Bug #2: autoUpdateFrustum/occlusion were not destructured in
+    // CanvasImpl, so they fell into ...props and were spread onto the wrapper <div>
+    // instead of being forwarded to configure().
+    it('forwards autoUpdateFrustum to configure', async () => {
+      let value: boolean | undefined
+
+      function Checker() {
+        value = useThree((s) => s.autoUpdateFrustum)
+        return null
+      }
+
+      await act(async () =>
+        render(
+          <Canvas autoUpdateFrustum={false}>
+            <Checker />
+          </Canvas>,
+        ),
+      )
+
+      expect(value).toBe(false)
+    })
+
+    it('forwards occlusion to configure (warns on WebGL)', async () => {
+      // Occlusion needs WebGPU; under the jsdom WebGL test renderer, configure()
+      // forwarding the prop reaches enableOcclusion(), which warns once. The warning
+      // is proof the prop was forwarded (it was silently dropped before the fix).
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+      try {
+        await act(async () =>
+          render(
+            <Canvas occlusion>
+              <group />
+            </Canvas>,
+          ),
+        )
+
+        expect(
+          warn.mock.calls.some(([msg]) => typeof msg === 'string' && /occlusion queries require WebGPU/i.test(msg)),
+        ).toBe(true)
+      } finally {
+        warn.mockRestore()
+      }
+    })
+  })
 })

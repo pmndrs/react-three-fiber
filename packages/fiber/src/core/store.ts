@@ -32,7 +32,7 @@ import type {
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
-import { getScheduler } from './hooks/useFrame/scheduler'
+import { getScheduler } from '@pmndrs/scheduler'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -215,6 +215,7 @@ export const createStore = (
       buffers: {},
       gpuStorage: {},
       textures: new Map(),
+      _textureRefs: new Map(),
       renderPipeline: null,
       passes: {},
       _hmrVersion: 0,

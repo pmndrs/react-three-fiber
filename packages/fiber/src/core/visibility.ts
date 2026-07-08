@@ -307,7 +307,8 @@ export function updateVisibilityHandlers(
 
 /**
  * Check visibility state for all registered objects.
- * Called each frame in the preRender phase.
+ * Called each frame before the render phase (via the frustum/visibility jobs'
+ * { before: 'render' } scheduling).
  *
  * @param state - The current root state
  */

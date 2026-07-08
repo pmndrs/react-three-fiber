@@ -6,11 +6,12 @@ import { isRef, Block, ErrorBoundary, useMutableCallback, useIsomorphicLayoutEff
 import { extend, createRoot, unmountComponentAtNode, _roots } from './index'
 import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
-import { Environment, EnvironmentProps } from './components/Environment/Environment'
-import { presetsObj } from './components/Environment/environment-assets'
+import { Environment } from './components/Environment/Environment'
+import { parseBackground } from './utils/parseBackground'
+import { clearHmrCaches } from './utils/hmr'
 
 //* Type Imports ==============================
-import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps, BackgroundConfig } from '#types'
+import type { SetBlock, ReconcilerRoot, DomEvent, CanvasProps } from '#types'
 
 function CanvasImpl({
   ref,
@@ -32,6 +33,8 @@ function CanvasImpl({
   raycaster,
   camera,
   scene,
+  autoUpdateFrustum,
+  occlusion,
   onPointerMissed,
   onDragOverMissed,
   onDropMissed,
@@ -70,48 +73,8 @@ function CanvasImpl({
   const Bridge = useBridge()
 
   //* Background Prop Parsing ==============================
-  // Parse background prop into Environment-compatible props
-  const backgroundProps = React.useMemo((): EnvironmentProps | null => {
-    if (!background) return null
-
-    // Object form - pass through with mapping
-    if (typeof background === 'object' && !(background as any).isColor) {
-      const { backgroundMap, envMap, files, preset, ...rest } = background as BackgroundConfig
-      return {
-        ...rest,
-        preset,
-        files: envMap || files,
-        backgroundFiles: backgroundMap,
-        background: true,
-      }
-    }
-
-    // Number = hex color
-    if (typeof background === 'number') {
-      return { color: background, background: true }
-    }
-
-    // String - detect type
-    if (typeof background === 'string') {
-      // Preset?
-      if (background in presetsObj) {
-        return { preset: background as keyof typeof presetsObj, background: true }
-      }
-      // URL pattern or image extension?
-      if (/^(https?:\/\/|\/|\.\/|\.\.\/)|\\.(hdr|exr|jpg|jpeg|png|webp|gif)$/i.test(background)) {
-        return { files: background, background: true }
-      }
-      // Default to color
-      return { color: background, background: true }
-    }
-
-    // THREE.Color instance
-    if ((background as any).isColor) {
-      return { color: background as THREE.ColorRepresentation, background: true }
-    }
-
-    return null
-  }, [background])
+  // Parse background prop into Environment-compatible props (see ./utils/parseBackground)
+  const backgroundProps = React.useMemo(() => parseBackground(background), [background])
 
   //* Dynamic Debounce for Fast Initial Render ==============================
   // Track if we've gotten initial size measurement
@@ -230,6 +193,8 @@ function CanvasImpl({
           performance,
           raycaster,
           camera,
+          autoUpdateFrustum,
+          occlusion,
           size: effectiveSize,
           // Store size props for reset functionality
           _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
@@ -299,8 +264,8 @@ function CanvasImpl({
     }
   }, [])
 
-  //* HMR Support for TSL Nodes and Uniforms ==============================
-  // Automatically refresh nodes/uniforms when HMR is detected (dev mode only)
+  //* HMR Support for TSL Resources ==============================
+  // Automatically refresh nodes/uniforms/buffers/gpuStorage when HMR is detected (dev mode only)
   // Can be disabled with hmr={false} prop
   React.useEffect(() => {
     // Skip if explicitly disabled
@@ -315,15 +280,7 @@ function CanvasImpl({
     const handleHMR = () => {
       queueMicrotask(() => {
         const rootEntry = _roots.get(canvas)
-        if (rootEntry?.store) {
-          console.log('[R3F] HMR detected — rebuilding nodes/uniforms')
-          // Clear nodes/uniforms and increment _hmrVersion to trigger creators to re-run
-          rootEntry.store.setState((state) => ({
-            nodes: {},
-            uniforms: {},
-            _hmrVersion: state._hmrVersion + 1,
-          }))
-        }
+        if (rootEntry?.store) clearHmrCaches(rootEntry.store)
       })
     }
 

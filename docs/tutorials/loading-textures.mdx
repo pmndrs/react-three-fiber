@@ -148,3 +148,99 @@ return (
 You can play with the sandbox and see how it looks:
 
 <Codesandbox id="rusfd" />
+
+## The texture registry with `useTextures` (experimental)
+
+> **Experimental (A5).** The `useTextures` API may change before it's stabilized.
+
+In v10, `useTexture` is built into `@react-three/fiber` (no need for drei) and, by default, enrolls what it loads into a global **texture registry** — a `Map` of plain `Texture` objects keyed by URL. `useTextures()` lets you reach those textures from anywhere and manage their GPU lifetime, without threading refs through your component tree.
+
+`useTexture` does the **loading**; `useTextures` does the **access and lifecycle**. They're separate jobs on purpose.
+
+### Enrolling textures
+
+Loading registers automatically, so other components can read it back by URL:
+
+```jsx
+import { useTexture, useTextures } from '@react-three/fiber'
+
+function Floor() {
+  // Load once, anywhere in the tree — registered by default
+  useTexture({
+    map: 'PavingStones092_1K_Color.jpg',
+    normalMap: 'PavingStones092_1K_Normal.jpg',
+    roughnessMap: 'PavingStones092_1K_Roughness.jpg',
+  })
+  return null
+}
+
+function Wall() {
+  // Reach the same textures from a different component — the record form
+  // mirrors its input, so it drops straight into a material
+  const { map, normalMap, roughnessMap } = useTextures().get({
+    map: 'PavingStones092_1K_Color.jpg',
+    normalMap: 'PavingStones092_1K_Normal.jpg',
+    roughnessMap: 'PavingStones092_1K_Roughness.jpg',
+  })
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshStandardMaterial map={map} normalMap={normalMap} roughnessMap={roughnessMap} />
+    </mesh>
+  )
+}
+```
+
+Pass `{ cache: false }` to opt a one-off texture out of the registry. Note that registry reads in `useTexture` happen **once at mount** — a mounted `useTexture` does not re-render when the registry changes (loading texture A never re-renders a component using texture B). To react to registry changes, use the selector form below.
+
+You can also register textures that have no URL — render targets or procedural textures — with `add`, and free GPU memory deliberately with `dispose` (refcount-aware: it won't free a texture still in use by a mounted `useTexture` consumer unless you pass `{ force: true }`):
+
+```jsx
+const textures = useTextures()
+textures.add('rt-main', renderTarget.texture) // register a render target
+textures.dispose('rt-main') // free its GPU memory + remove from the registry
+textures.disposeAll() // scene teardown
+```
+
+### When is the registry reactive? (and the flip-flop pattern)
+
+There are three distinct situations, and only one of them wants React reactivity:
+
+| Use case | Tool | Reactive? |
+| --- | --- | --- |
+| Load an asset by URL | `useTexture(url)` | No — the object never changes |
+| **Swap** which texture lives under a key (occasionally) | `useTextures(s => s.get(key))` | Yes — scoped to that one key |
+| Swap a texture **every frame** (ping-pong) | `registry.get(key)` inside `useFrame` | No — read it imperatively |
+
+Loading a URL never needs reactivity (the texture instance is stable), and a render target being drawn into updates *inside* three.js (`needsUpdate`) without changing the JS object — so neither involves React.
+
+The one case that does is a **flip-flop / ping-pong**: you keep two textures and swap which one a material reads. For an *occasional* swap (e.g. toggling an output on some event), subscribe to just that key with the selector form — only this component re-renders, and only when the slot actually changes:
+
+```jsx
+function Output() {
+  // Re-renders only when the texture under 'finalOutput' is swapped
+  const tex = useTextures((s) => s.get('finalOutput'))
+  return (
+    <mesh>
+      <planeGeometry />
+      <meshBasicMaterial map={tex} />
+    </mesh>
+  )
+}
+
+// Elsewhere, swap the slot — the Output component picks up texB
+useTextures().add('finalOutput', texB)
+```
+
+For a **per-frame** ping-pong, don't make React re-render every frame — read the current texture imperatively in the loop instead:
+
+```jsx
+function PingPong({ material }) {
+  const textures = useTextures()
+  useFrame((state) => {
+    const even = Math.floor(state.elapsed * 60) % 2 === 0
+    material.map = textures.get(even ? 'a' : 'b')
+  })
+  return null
+}
+```

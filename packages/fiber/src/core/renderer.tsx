@@ -21,7 +21,7 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './utils/notices.js'
-import { getScheduler } from './hooks/useFrame/scheduler'
+import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
 
@@ -649,7 +649,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         )
 
         // Register frustum update job - updates frustum from camera before render
-        // Runs in preRender phase so it captures any camera movement from update phase
+        // Uses { before: 'render' } so it runs after 'update' (capturing this frame's
+        // camera movement) but before 'render', keeping state.frustum fresh for the
+        // render phase. This resolves to an auto-generated 'before:render' phase.
         const unregisterFrustum = scheduler.register(
           () => {
             const state = store.getState()
@@ -660,14 +662,17 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           {
             id: `${newRootId}_frustum`,
             rootId: newRootId,
-            phase: 'preRender',
+            before: 'render',
             system: true,
           },
         )
 
         // Register visibility check job - checks onFramed, onOccluded, onVisible events
-        // Runs in 'preRender' phase BEFORE render so occlusionTest flag is set before rendering
-        // (isOccluded reads from previous frame's render results)
+        // Runs before 'render' (same 'before:render' phase as the frustum job) and after
+        // the frustum job. Frustum/onFramed checks are pure CPU math off the camera, so
+        // running before render keeps them current. Occlusion (onOccluded / the occlusion
+        // half of onVisible) reads internal.occlusionCache, which the render pass populates;
+        // that data is inherently one frame deferred regardless of this job's ordering.
         const unregisterVisibility = scheduler.register(
           () => {
             const state = store.getState()
@@ -676,7 +681,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           {
             id: `${newRootId}_visibility`,
             rootId: newRootId,
-            phase: 'preRender',
+            before: 'render',
             system: true,
             after: `${newRootId}_frustum`,
           },
