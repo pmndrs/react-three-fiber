@@ -32,6 +32,7 @@ import type {
 
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
+import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
 import { getScheduler } from '@pmndrs/scheduler'
 
 //* Cross-Bundle Singleton ==============================
@@ -299,14 +300,9 @@ export const createStore = (
         // Capture stack trace to show where gl was accessed
         const stack = new Error().stack || ''
 
-        // Skip warning if access is from internal operations (zustand setState, Object.assign, etc.)
-        const isInternalAccess =
-          stack.includes('zustand') ||
-          stack.includes('setState') ||
-          stack.includes('Object.assign') ||
-          stack.includes('react-three-fiber/packages/fiber/src/core')
-
-        if (!isInternalAccess) {
+        // Skip warning if access is from internal operations (zustand setState,
+        // Object.assign spreads, R3F's own components like <Environment>, etc.)
+        if (!isInternalRendererAccess(stack)) {
           const cleanedStack = stack.split('\n').slice(2).join('\n') || 'Stack trace unavailable'
 
           notifyDepreciated({

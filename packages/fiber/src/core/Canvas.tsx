@@ -8,6 +8,7 @@ import { createPointerEvents } from './events'
 import { notifyAlpha } from './utils/notices'
 import { Environment } from './components/Environment/Environment'
 import { parseBackground } from './utils/parseBackground'
+import { parseRendererConfig } from './utils/parseRendererConfig'
 import { clearHmrCaches } from './utils/hmr'
 
 //* Type Imports ==============================
@@ -47,24 +48,7 @@ function CanvasImpl({
   ...props
 }: CanvasProps) {
   // Extract nested props (primaryCanvas, scheduler) from renderer object if it's a config bag rather than a renderer instance
-  const isRendererConfig =
-    typeof rendererProp === 'object' &&
-    rendererProp !== null &&
-    !('render' in rendererProp) &&
-    ('primaryCanvas' in rendererProp || 'scheduler' in rendererProp)
-
-  let primaryCanvas: string | undefined
-  let scheduler: { after?: string; fps?: number } | undefined
-  let renderer: CanvasProps['renderer']
-
-  if (isRendererConfig) {
-    const { primaryCanvas: pc, scheduler: sc, ...rest } = rendererProp as Record<string, unknown>
-    primaryCanvas = pc as string | undefined
-    scheduler = sc as { after?: string; fps?: number } | undefined
-    renderer = Object.keys(rest).length > 0 ? rest : rendererProp
-  } else {
-    renderer = rendererProp
-  }
+  const { primaryCanvas, scheduler, renderer } = parseRendererConfig(rendererProp)
   // Create a known catalogue of Threejs-native elements
   // This will include the entire THREE namespace by default, users can extend
   // their own elements by using the createRoot API instead

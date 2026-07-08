@@ -42,14 +42,31 @@ jobs:
       - name: Build
         run: pnpm run build
 
+      # Keep CI in lockstep with the local `pnpm ci` gate (see docs/development/TESTING.md
+      # → Local ↔ CI parity). These run locally but were previously CI-only gaps.
+      - name: Verify bundles
+        run: pnpm run verify-bundles
+
+      - name: Verify types
+        run: pnpm run verify-types
+
       - name: Check types
         run: pnpm run typecheck
 
       - name: Check lint
         run: pnpm run eslint
 
-      - name: Jest run
+      - name: Test (with coverage)
         run: pnpm run dev && pnpm run test
+
+      - name: Upload coverage report
+        if: ${{ matrix.react-version == 'latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Report Fiber size
         run: pnpm run analyze-fiber
