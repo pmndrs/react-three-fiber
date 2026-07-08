@@ -1,7 +1,7 @@
 ---
 title: Events
 description: All the events you can hook up to
-nav: 7
+nav: 8
 ---
 
 `three.js` objects that implement their own `raycast` method (meshes, lines, etc) can be interacted with by declaring events on them. We support pointer events, clicks and wheel-scroll. Events contain the browser event as well as the `three.js` event data (object, point, distance, etc). You may want to [polyfill](https://github.com/jquery/PEP) them, if that's a concern.
@@ -195,7 +195,7 @@ Because events go to all intersected objects, capturing the pointer also works d
 
 Note that you can access the `setPointerCapture` and `releasePointerCapture` methods **only** via `event.target`: they don't get added to the `Object3D` instances in the scene graph.
 
-`setPointerCapture` and `releasePointerCapture` take a `pointerId` parameter like in the DOM, but for now they don't have support for multiple active pointers. PRs are welcome!
+`setPointerCapture` and `releasePointerCapture` take a `pointerId` parameter like in the DOM. In v10 the event system tracks each pointer independently (an internal per-`pointerId` map), so multi-touch and multiple simultaneous captures are supported — each pointer's hover/capture state is isolated from the others.
 
 ```jsx
 onPointerDown={e => {
@@ -304,3 +304,35 @@ function RaycastWhenCameraMoves() {
   })
 }
 ```
+
+### Prioritizing objects with `interactivePriority`
+
+By default, intersections are sorted by distance from the camera (nearest first). Set `userData.interactivePriority` on an object to make it win regardless of distance — useful for gizmos, handles, or UI that must stay interactive even when occluded.
+
+```jsx
+// This handle is hit-tested before anything in front of it
+<mesh userData={{ interactivePriority: 10 }} onPointerDown={...} />
+```
+
+Objects with an `interactivePriority` are sorted ahead of objects without one; among several that have it, the higher value wins. Objects without it keep their normal distance-based order behind them.
+
+### Frame-timed raycasting
+
+For pointer-heavy scenes you can defer move-raycasts to the frame loop instead of running one per DOM pointer event. This is configured on the `events` prop and only applies while `frameloop="always"`:
+
+```tsx
+const eventManagerFactory = (state) => ({
+  ...events(state),
+  // Coalesce pointer-move raycasts to once per frame
+  frameTimedRaycasts: true,
+  // Whether wheel/scroll events still raycast immediately (default: fire on scroll)
+  alwaysFireOnScroll: true,
+})
+```
+
+When enabled, R3F batches pending move raycasts and flushes them once per frame; click events flush any pending move first so hover state stays accurate.
+
+### XR pointers
+
+> [!NOTE]
+> **Preview.** WebXR controller/hand pointers register into the same event system via an internal pointer registry. The API surface is still settling — treat XR pointer support as a preview in v10.

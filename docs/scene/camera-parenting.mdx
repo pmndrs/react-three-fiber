@@ -1,0 +1,127 @@
+---
+title: Camera Parenting
+description: The default camera lives in the scene — parent objects under it for HUDs and headlights, and render into any container with Portal
+nav: 21
+---
+
+In v10 the default camera is added as a child of the scene whenever it has no parent. This lets you attach objects to the camera so they follow it — HUDs, cockpit overlays, headlights, and similar camera-relative effects.
+
+## The default camera lives in the scene
+
+In earlier versions the default camera existed *outside* the scene graph, so anything you parented to it never rendered (Three.js only renders objects that are part of the scene hierarchy). In v10 R3F calls `scene.add(camera)` when the camera has no parent, so camera children render and follow the camera.
+
+```tsx
+// Before v10: children wouldn't render
+const { camera } = useThree()
+camera.add(hudMesh) // hudMesh never appears
+
+// In v10: this works — the camera is in the scene
+const { camera } = useThree()
+camera.add(hudMesh) // hudMesh renders and follows the camera
+```
+
+R3F only re-parents the camera **when it has no parent**. If you supply your own camera that you've already parented somewhere, R3F leaves it alone:
+
+```tsx
+function App() {
+  const customCamera = useMemo(() => {
+    const cam = new THREE.PerspectiveCamera()
+    someGroup.add(cam) // you parented it yourself
+    return cam
+  }, [])
+
+  // camera stays parented to someGroup — R3F won't move it
+  return <Canvas camera={customCamera}>{/* ... */}</Canvas>
+}
+```
+
+## Parenting objects under the camera
+
+You can imperatively add to the camera, but remember to clean up:
+
+```tsx
+function HUD() {
+  const { camera } = useThree()
+  const hudRef = useRef<THREE.Group>(null)
+
+  useEffect(() => {
+    const hud = hudRef.current
+    if (!hud) return
+    camera.add(hud)
+    return () => void camera.remove(hud)
+  }, [camera])
+
+  return (
+    <group ref={hudRef} position={[0, 0, -2]}>
+      <mesh>
+        <planeGeometry args={[0.5, 0.1]} />
+        <meshBasicMaterial color="green" transparent opacity={0.8} />
+      </mesh>
+    </group>
+  )
+}
+```
+
+The declarative `Portal` component below is usually cleaner.
+
+## The Portal component
+
+`Portal` renders its children into any `Object3D` container — the camera, a group, or any other scene object — and handles mounting and cleanup for you.
+
+```tsx
+import { Portal, useThree } from '@react-three/fiber'
+
+function CameraHeadlights() {
+  const { camera } = useThree()
+
+  return (
+    <Portal container={camera}>
+      <spotLight position={[-0.5, -0.3, 0]} intensity={100} />
+      <spotLight position={[0.5, -0.3, 0]} intensity={100} />
+    </Portal>
+  )
+}
+```
+
+`container` accepts an `Object3D` directly or a ref to one. Children are added on mount and disposed on unmount, including internal subscriptions.
+
+## injectScene — how children attach to the container
+
+This is the important detail to get right. By default `Portal` does **not** add your children directly to the container. It inserts a fresh `THREE.Scene` *under* the container and renders the children into that scene. So when you `<Portal container={camera}>`, your objects become **grand-children** of the camera:
+
+```
+camera → (injected THREE.Scene) → your children
+```
+
+This default exists so that `state.scene` inside the portal is always a real `THREE.Scene`, which means scene-only properties like `background`, `environment`, and `fog` keep working inside the portal ([#2725](https://github.com/pmndrs/react-three-fiber/issues/2725)). The injection is controlled by `injectScene`, which defaults to `true` and is passed through the Portal's `state` prop:
+
+```tsx
+// default — injectScene is true
+<Portal container={camera}>
+  {/* rendered into an injected THREE.Scene that is a child of the camera */}
+  <spotLight intensity={100} />
+</Portal>
+```
+
+> Note: if the `container` you pass is itself already a `THREE.Scene`, no extra scene is injected — the container is used directly.
+
+### injectScene={false} — direct camera children
+
+When you specifically need your objects to be *direct* children of the camera (for example a light whose transform must be exactly the camera's, with no intermediate node), set `injectScene: false` in the portal `state`:
+
+```tsx
+<Portal container={camera} state={{ injectScene: false }}>
+  {/* rendered directly as children of the camera — no injected scene */}
+  <spotLight intensity={100} />
+</Portal>
+```
+
+With `injectScene={false}` the hierarchy is simply:
+
+```
+camera → your children
+```
+
+This is treated as an edge-case "anti-pattern" in the source because the portal's `state.scene` is then the container itself rather than a real `THREE.Scene` (so scene-level properties like `background`/`environment`/`fog` won't apply). Use it only when you genuinely need direct parenting.
+
+> In practice the default `injectScene={true}` is what you want for HUDs and overlays — the extra scene node is harmless for transforms since it sits at the camera's origin. Reach for `injectScene={false}` only when the intermediate scene is a problem.

@@ -2,7 +2,7 @@
 title: How does it work?
 description: This is an advanced guide on the inner workings of Fiber, if you are just getting started, take a
   look at our introduction!
-nav: 18
+nav: 30
 ---
 
 React Three Fiber is a React <a href="https://reactjs.org/docs/codebase-overview.html#renderers">renderer</a> for **three.js**.
@@ -177,12 +177,12 @@ return <mesh raycast={useCamera(anotherCamera)} />
 
 ## Render Loop
 
-By default, Fiber will setup a render loop that renders the default `scene` from the default `camera` to a [WebGLRenderer](https://threejs.org/docs/#api/en/renderers/WebGLRenderer).
+By default, Fiber sets up a render loop that renders the default `scene` from the default `camera` to the renderer (a `WebGLRenderer`, or a `WebGPURenderer` when you opt into the `renderer` prop).
 
-The loop is setup using [setAnimationLoop](https://threejs.org/docs/#api/en/renderers/WebGLRenderer.setAnimationLoop), which will execute its callback every time a new frame is renderable. This is what will happen every render:
+In v10 the loop is driven by a single shared `requestAnimationFrame` scheduler, not three.js' `setAnimationLoop`. Work is organised into ordered **phases** — the defaults are `start`, `input`, `physics`, `update`, `render`, `finish` — and on each frame the scheduler:
 
-1. All global before effects are executed
-2. Clock delta is saved - implying all `useFrame` calls will share the same `delta`
-3. `useFrame` callbacks are executed in order
-4. `renderer.render(scene, camera)` is called, effectively rendering the scene to screen
-5. All global after effects are executed
+1. Computes a shared frame `delta` and `elapsed`, so all jobs in the frame see the same timing
+2. Runs every registered job in phase order (and, within a phase, by `before`/`after`/`priority`)
+3. Runs the built-in render job in the `render` phase, which calls `renderer.render(scene, camera)` — unless a user job has taken over that phase
+
+This single scheduler is shared across all roots/canvases, and `useFrame` is simply a job registered into it. For the full model — phases, ordering, fps throttling, render takeover, and demand mode — see [Frame Loop & Scheduler](/frame-loop).

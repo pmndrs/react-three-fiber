@@ -1,7 +1,7 @@
 ---
 title: Scaling performance
 description: This is a short primer on how to scale performance.
-nav: 11
+nav: 23
 ---
 
 Running WebGL can be quite expensive depending on how powerful your devices are. In order to mitigate this, especially if you want to make your application available to a broad variety of devices, including weaker options, you should look into performance optimizations. This article goes through a couple of them.
@@ -29,12 +29,12 @@ One major caveat is that if anything in the tree _mutates_ props, then React can
 ```jsx
 function Controls() {
   const orbitControlsRef = useRef()
-  const { invalidate, camera, gl } = useThree()
+  const { invalidate, camera, renderer } = useThree()
   useEffect(() => {
     orbitControlsRef.current.addEventListener('change', invalidate)
     return () => orbitControlsRef.current.removeEventListener('change', invalidate)
   }, [])
-  return <orbitControls ref={orbitControlsRef} args={[camera, gl.domElement]} />
+  return <orbitControls ref={orbitControlsRef} args={[camera, renderer.domElement]} />
 ```
 
 > [!NOTE]

@@ -39,7 +39,7 @@ When we import from `three/webgpu` it exports ThreeCore and ThreeWebGPU.
 
 This means many, many, many systems that import from root `three` will also get the WebGL related objects. This is a few mb extra in size which in size critical apps has been pointed out as an issue.
 
-- Root: The root system will support both import paths (both are bundled) the default will be WebGPU but can be switched to legacy by using `gl` in the canvas. This will throw a depreciation warning and point people to use the `legacy` import if they want it and that in future versions the gl import wont be included at root. usage of `gl` anywhere (including the useThree hooks) will also throw.
+- Root: The root system will support both import paths (both are bundled) the default will be WebGPU but can be switched to legacy by using `gl` in the canvas. This will throw a deprecation warning and point people to use the `legacy` import if they want it and that in future versions the gl import wont be included at root. usage of `gl` anywhere (including the useThree hooks) will also throw.
 - **Legacy:** The legacy import will work as the current one does using the webGLRenderer and the `gl` usage wont be flagged
 - **WebGPU:** To match other libraries (three, drei, etc) we will also have a `/webgpu` path that does not include the core webGLRenderer. Usage of `gl` will throw errors as its expected you plan on using only webGPU and trying to access it with old code should be refactored. If you want to be lazy you can use root while it still supports it.
 - **Other paths:** Native, XR, etc will pull in the same way.
@@ -52,7 +52,7 @@ The other thing is for some reason the renderer was accessed as “gl” in the 
 
 The renderer will now be accessed with `renderer` like: `<Canvas renderer />` `const { renderer } = useThree()` etc.
 
-Using `gl`will still be supported on the root import but will throw depreciation warnings.
+Using `gl`will still be supported on the root import but will throw deprecation warnings.
 
 We should be clear too when binding a backend. `<Canvas webgl />` for a backend seems clean but is less clear. We should be explicit: `<Canvas webglONLY />`
 

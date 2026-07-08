@@ -1,0 +1,390 @@
+---
+title: TSL Hooks
+description: React hooks for managing TSL uniforms and nodes - useUniform, useUniforms, useNodes, useLocalNodes - plus the ScopedStore wrapper.
+nav: 14
+---
+
+These hooks manage TSL uniforms and nodes in R3F's root store. For build-time vs run-time concepts and TSL built-ins, see the [WebGPU Overview](./overview).
+
+```tsx
+import { useUniform, useUniforms, useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+```
+
+## useUniform
+
+Single-uniform hook with create/get/update semantics.
+
+```tsx
+// Create uniform (or get existing + update value)
+const uName = useUniform(name, value)
+
+// Get existing uniform (throws if not found)
+const uName = useUniform(name)
+```
+
+### Parameters
+
+| Parameter | Type           | Description                                    |
+| --------- | -------------- | ---------------------------------------------- |
+| `name`    | `string`       | Unique identifier for the uniform              |
+| `value`   | `UniformValue` | Optional. Initial value, or value to update to |
+
+### Return Value
+
+Returns a `UniformNode<T>` - a Three.js TSL uniform node.
+
+| Property | Type     | Description                                    |
+| -------- | -------- | ---------------------------------------------- |
+| `value`  | `T`      | Current uniform value (get/set)                |
+| `uuid`   | `string` | Three.js UUID                                  |
+| `name`   | `string` | Debug name (set automatically from `name` arg) |
+
+### Supported Types
+
+```typescript
+type UniformValue =
+  | number
+  | boolean
+  | string // string colors auto-convert to THREE.Color
+  | Vector2
+  | Vector3
+  | Vector4
+  | Color
+  | Matrix3
+  | Matrix4
+  | Node // TSL nodes like color(), vec3(), float() for type casting
+  | UniformNode // existing uniform nodes
+```
+
+### Usage
+
+```tsx
+import { useUniform } from '@react-three/fiber/webgpu'
+import { positionLocal, normalLocal } from 'three/tsl'
+
+function DisplacedSphere() {
+  const uDisplacement = useUniform('uDisplacement', 0.5)
+
+  useFrame((state) => {
+    uDisplacement.value = Math.sin(state.elapsed) * 0.5
+  })
+
+  return (
+    <mesh>
+      <sphereGeometry />
+      <meshStandardNodeMaterial positionNode={positionLocal.add(normalLocal.mul(uDisplacement))} />
+    </mesh>
+  )
+}
+```
+
+- **Create mode** (`useUniform('uTime', 0)`): creates if missing; if it exists, returns the existing uniform and updates its value.
+- **Get mode** (`useUniform('uTime')`): returns the existing uniform; throws if it does not exist.
+
+Uniforms are shared across components - one component can create a uniform and another can read it by name.
+
+## useUniforms
+
+Batch uniform management with scoping and the create-if-not-exists pattern.
+
+```tsx
+// Create/update uniforms at root level
+const uniforms = useUniforms({ uTime: 0, uColor: '#ff0000' })
+
+// Create/update uniforms in a scope
+const uniforms = useUniforms({ uHealth: 100 }, 'player')
+
+// Function syntax for RootState access
+const uniforms = useUniforms((state) => ({
+  uAspect: state.size.width / state.size.height,
+}))
+
+// Read all uniforms / read a scope
+const all = useUniforms()
+const playerUniforms = useUniforms('player')
+```
+
+### Parameters
+
+| Parameter | Type                                 | Description                                  |
+| --------- | ------------------------------------ | -------------------------------------------- |
+| `creator` | `UniformCreator \| object \| string` | Uniform definitions, function, or scope name |
+| `scope`   | `string`                             | Optional scope name for organization         |
+
+When using the function form, the creator receives a [`CreatorState`](#scopedstore) (RootState with ScopedStore wrappers on `uniforms`, `nodes`, `buffers`, `gpuStorage`).
+
+### Return Value
+
+Returns `UniformsWithUtils<UniformRecord>` - your uniforms by name, **plus three util functions**:
+
+```typescript
+{
+  // ...your uniforms
+  uTime: UniformNode<number>
+  uColor: UniformNode<THREE.Color>
+  // utils
+  removeUniforms: (names: string | string[], scope?: string) => void
+  clearUniforms: (scope?: string) => void
+  rebuildUniforms: (scope?: string) => void
+}
+```
+
+- **`removeUniforms`** - remove specific uniforms by name from root or a scope.
+- **`clearUniforms`** - clear a scope, `'root'` for root only, or no argument to clear everything.
+- **`rebuildUniforms`** - clear the cache and bump the HMR version to force re-creation of the creators (all, `'root'`, or a named scope).
+
+### Input Types
+
+```tsx
+const uniforms = useUniforms({
+  uNumber: 5.0, // primitive
+  uBool: true,
+  uColor: '#ff0000', // string -> THREE.Color
+  uVec2: { x: 1, y: 2 }, // plain object -> THREE.Vector2 (great for Leva)
+  uVec3: new THREE.Vector3(1, 2, 3), // Three.js types
+  uColorNode: color('#ff0000'), // TSL node -> typed uniform
+})
+```
+
+### Leva Integration
+
+Leva controls work directly. The component re-renders on change, plain objects auto-convert to vectors, and function syntax deep-compares output so the GPU only updates when a value actually changes:
+
+```tsx
+const { color, intensity } = useControls({
+  color: { x: 1, y: 0.5, z: 0 },
+  intensity: { value: 1.0, min: 0, max: 2 },
+})
+
+const { uColor, uIntensity } = useUniforms({ uColor: color, uIntensity: intensity })
+```
+
+### Updating Values
+
+Always update uniform values imperatively in `useFrame` (no React re-render):
+
+```tsx
+const { uTime } = useUniforms({ uTime: 0 })
+useFrame(({ elapsed }) => {
+  uTime.value = elapsed
+})
+
+// Also available from state
+useFrame(({ elapsed, uniforms }) => {
+  uniforms.uTime.value = elapsed
+})
+```
+
+### Scoped Uniforms
+
+Scopes prevent naming conflicts across features. The same name lives independently in each scope:
+
+```tsx
+useUniforms({ uHealth: 100, uSpeed: 1.0 }, 'player')
+useUniforms({ uHealth: 75, uSpeed: 0.8 }, 'enemy')
+
+// Read elsewhere
+const playerUniforms = useUniforms('player')
+```
+
+## useNodes
+
+Global TSL node management with the create-if-not-exists pattern and optional scoping. Use it to share expensive TSL expressions, functions, and varyings across components.
+
+```tsx
+const nodes = useNodes(() => ({
+  wobbleFn: Fn(() => vec3(sin(time), cos(time), sin(time.mul(2)))),
+}))
+
+// Scoped
+const nodes = useNodes(() => ({ effectFn: Fn(() => /* ... */) }), 'effects')
+
+// Read all / read a scope
+const all = useNodes()
+const effectNodes = useNodes('effects')
+```
+
+### Parameters
+
+| Parameter | Type                    | Description                                    |
+| --------- | ----------------------- | ---------------------------------------------- |
+| `creator` | `NodeCreator \| string` | Function that returns TSL nodes, or scope name |
+| `scope`   | `string`                | Optional scope name for organization           |
+
+The creator receives a [`CreatorState`](#scopedstore).
+
+### Return Value
+
+Returns `NodesWithUtils<NodeRecord>` - your nodes by name, **plus three util functions**:
+
+```typescript
+{
+  // ...your nodes
+  // utils
+  removeNodes: (names: string | string[], scope?: string) => void
+  clearNodes: (scope?: string) => void
+  rebuildNodes: (scope?: string) => void
+}
+```
+
+- **`removeNodes`** - remove specific nodes by name from root or a scope.
+- **`clearNodes`** - clear a scope, `'root'` for root only, or no argument to clear everything.
+- **`rebuildNodes`** - clear the cache and bump the HMR version to force re-creation of node creators (all, `'root'`, or a named scope).
+
+> The `rebuild*` utils are returned by the hook directly; you do not need the standalone `rebuildAllNodes`/`rebuildAllUniforms` exports for in-component use.
+
+### What to Store
+
+Store expensive, reusable work - complex noise/effect functions, shared varyings:
+
+```tsx
+useNodes(() => ({
+  noiseFn: Fn(() => fbm(positionWorld.mul(scale))),
+  glowFn: Fn(([color, intensity]) => color.mul(pow(fresnel, intensity))),
+  vWorldPos: varying(vec3()),
+}))
+```
+
+Don't store trivial expressions or constants - use them directly instead.
+
+### Usage
+
+```tsx
+import { useNodes, useLocalNodes } from '@react-three/fiber/webgpu'
+import { Fn, vec3, sin, cos, time } from 'three/tsl'
+
+// Define shared nodes once, usually near the root
+function GlobalNodes() {
+  useNodes(() => ({
+    wobbleFn: Fn(() => vec3(sin(time), cos(time.mul(1.3)), sin(time.mul(2)))),
+  }))
+  return null
+}
+
+function WobblyMesh() {
+  const { colorNode } = useLocalNodes(({ nodes }) => ({
+    colorNode: nodes.wobbleFn.mul(0.5).add(0.5),
+  }))
+
+  return (
+    <mesh>
+      <sphereGeometry />
+      <meshBasicNodeMaterial colorNode={colorNode} />
+    </mesh>
+  )
+}
+```
+
+## useLocalNodes
+
+Creates component-local TSL nodes that rebuild when the store's `uniforms`, `nodes`, or `textures` change. Unlike `useNodes`, this does **not** register to the global store - the result is local to the component.
+
+```tsx
+const localNodes = useLocalNodes(({ uniforms, nodes }) => ({
+  colorNode: nodes.noiseFn.mul(uniforms.intensity),
+  positionNode: positionLocal.add(vec3(0, uniforms.height, 0)),
+}))
+```
+
+### Creator Type
+
+```typescript
+type LocalNodeCreator<T> = (state: CreatorState) => T
+```
+
+The creator receives a [`CreatorState`](#scopedstore) - **not** a raw `RootState`. `uniforms`, `nodes`, `buffers`, and `gpuStorage` are wrapped in a ScopedStore (property access returns the leaf node; use `.scope(name)` for nested scopes). All other RootState properties (`size`, `viewport`, `camera`, etc.) pass through unchanged. Returns any object, not limited to TSL nodes.
+
+### Rebuild Triggers
+
+`useLocalNodes` re-runs its creator when:
+
+- A uniform is added or removed (`state.uniforms`)
+- A node is added or removed (`state.nodes`)
+- A texture is added or removed (`state.textures`)
+- The HMR version is bumped (see [TSL HMR](./hmr))
+
+Value changes do **not** trigger a rebuild - TSL nodes reference uniforms, they do not capture values:
+
+```tsx
+const { uTime } = useUniforms({ uTime: 0 })
+const { colorNode } = useLocalNodes(({ uniforms }) => ({ colorNode: sin(uniforms.uTime) }))
+
+useFrame(() => {
+  uTime.value = performance.now() // value-only change -> no rebuild
+})
+```
+
+### Use For
+
+- Component-specific compositions of shared nodes
+- Props-driven node creation
+- Combining global uniforms/nodes with local logic
+
+Do not use it for expensive nodes shared across many components (use `useNodes`) or for static nodes that never change (use `useMemo` or direct creation).
+
+### GPU-Side Branching
+
+Use TSL conditionals so branches react to uniform changes at run-time:
+
+```tsx
+import { If, select } from 'three/tsl'
+
+const { colorNode } = useLocalNodes(({ uniforms, nodes }) => {
+  const result = vec3(0).toVar()
+  If(uniforms.uVariant.equal(0), () => result.assign(nodes.noisePattern))
+    .ElseIf(uniforms.uVariant.equal(1), () => result.assign(nodes.stripesPattern))
+    .Else(() => result.assign(nodes.dotsPattern))
+  return { colorNode: result }
+})
+
+// Or select() for two-way branching
+const { colorNode } = useLocalNodes(({ uniforms, nodes }) => ({
+  colorNode: select(uniforms.uUseNoise.equal(1), nodes.noisePattern, nodes.stripesPattern),
+}))
+```
+
+### useNodes vs useLocalNodes
+
+| Feature         | useNodes                  | useLocalNodes                       |
+| --------------- | ------------------------- | ----------------------------------- |
+| Storage         | Global store              | Component-local                     |
+| Sharing         | Shared across components  | Component-specific                  |
+| Best for        | Expensive, reusable nodes | Component compositions              |
+| Rebuild trigger | Never (cached)            | When uniforms/nodes/textures change |
+
+## ScopedStore
+
+Creator functions for `useUniforms`, `useNodes`, `useLocalNodes`, `useBuffers`, and `useGPUStorage` receive a `CreatorState`, not the raw `RootState`. `CreatorState` wraps the nested stores in a **ScopedStore** for type-safe access:
+
+```typescript
+type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage'> & {
+  uniforms: ScopedStoreType<UniformNode>
+  nodes: ScopedStoreType<TSLNodeType>
+  buffers: ScopedStoreType<BufferLike>
+  gpuStorage: ScopedStoreType<StorageLike>
+}
+```
+
+The runtime structure of these stores is `Record<string, Leaf | Record<string, Leaf>>` (a leaf node, or a nested scope). The ScopedStore wrapper lets you:
+
+1. Access a leaf directly by property - `uniforms.uTime` returns a `UniformNode` with no cast needed.
+2. Access a nested scope explicitly with `.scope(key)` - returns an empty wrapper if the scope does not exist, so it is safe.
+3. Iterate with `has(key)`, `keys()`, `Object.keys()`, spread, and `for...in`.
+
+```tsx
+useLocalNodes(({ uniforms, nodes }) => ({
+  // Direct leaf access - no cast
+  wobble: sin(uniforms.uTime.mul(2)),
+  // Explicit nested scope access
+  playerHealth: uniforms.scope('player').uHealth,
+  glow: nodes.scope('effects').rimLightFn(),
+}))
+```
+
+The wrappers are created lazily - the underlying Proxy is only built when you actually access `uniforms`, `nodes`, `buffers`, or `gpuStorage`, so creators that don't touch them pay no cost.
+
+## Related
+
+- [WebGPU Overview](./overview) - concepts and architecture
+- [Render Pipeline](./render-pipeline) - post-processing and passes
+- [TSL HMR](./hmr) - what rebuilds on hot reload

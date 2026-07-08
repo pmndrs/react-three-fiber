@@ -17,15 +17,15 @@ In v10, React Native support has been extracted from `@react-three/fiber` into a
 
 ## Decisions Made
 
-| Question         | Decision                                                       |
-| ---------------- | -------------------------------------------------------------- |
-| Package name     | `@react-three/native`                                          |
-| Version strategy | Same version as fiber (coupled releases)                       |
-| Migration path   | Hard break (v10 is major, no deprecation)                      |
-| Release timing   | v10 major release                                              |
-| WebGPU native    | Pluggable architecture, default expo-gl                        |
-| XR native        | Under `@react-three/native/xr` if needed, no expo deps in core |
-| Shared code      | Re-export from fiber (native depends on fiber)                 |
+| Question         | Decision                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package name     | `@react-three/native`                                                                                                                       |
+| Version strategy | Independent versioning — `@react-three/native` lives in its own repo and releases on its own cadence; it is **not** version-locked to fiber |
+| Migration path   | Hard break (v10 is major, no deprecation)                                                                                                   |
+| Release timing   | v10 major release                                                                                                                           |
+| WebGPU native    | Pluggable architecture, default expo-gl                                                                                                     |
+| XR native        | Under `@react-three/native/xr` if needed, no expo deps in core                                                                              |
+| Shared code      | Re-export from fiber (native depends on fiber)                                                                                              |
 
 ---
 
@@ -224,13 +224,9 @@ polyfills()
 
 ## Version Alignment
 
-`@react-three/native` versions are coupled with `@react-three/fiber`:
+`@react-three/native` is **independently versioned**. It lives in its own repository and releases on its own cadence — its version number does **not** track `@react-three/fiber`. Pick the `@react-three/native` release that declares a compatible `@react-three/fiber` peer range, the same way you would for any other ecosystem package (drei, postprocessing, etc.).
 
-| fiber  | native |
-| ------ | ------ |
-| 10.0.0 | 10.0.0 |
-| 10.1.0 | 10.1.0 |
-| ...    | ...    |
+> Earlier drafts of this plan proposed coupled/lock-step releases; that decision was reversed in favor of independent versioning.
 
 ---
 

@@ -1,0 +1,269 @@
+---
+title: Render Pipeline
+description: Declarative WebGPU render pipeline setup with automatic scene pass creation, MRT configuration, and custom passes via useRenderPipeline.
+nav: 15
+---
+
+`useRenderPipeline` provides declarative WebGPU render pipeline setup with automatic scene pass creation and MRT (Multiple Render Target) configuration. Calling it creates a render pipeline instance, places it on R3F state, and creates a default scene pass.
+
+```tsx
+import { useRenderPipeline } from '@react-three/fiber/webgpu'
+```
+
+> The render pipeline is exposed by Three.js as `PostProcessing` today and is expected to be renamed to `RenderPipeline` in a future release. R3F uses the forward-looking name; internally it instantiates `THREE.PostProcessing`.
+
+## API
+
+```tsx
+// Basic - configure the output
+useRenderPipeline(({ renderPipeline, passes }) => {
+  renderPipeline.outputNode = bloom(passes.scenePass.getTextureNode())
+})
+
+// With MRT setup
+useRenderPipeline(
+  // mainCB - configure output
+  ({ renderPipeline, passes }) => {
+    const beauty = passes.scenePass.getTextureNode()
+    const velocity = passes.scenePass.getTextureNode('velocity')
+    renderPipeline.outputNode = motionBlur(beauty, velocity)
+  },
+  // setupCB - configure MRT (runs first)
+  ({ passes }) => {
+    passes.scenePass.setMRT(mrt({ output, velocity }))
+  },
+)
+
+// Read-only access
+const { renderPipeline, passes } = useRenderPipeline()
+```
+
+### Parameters
+
+| Parameter | Type                          | Description                                   |
+| --------- | ----------------------------- | --------------------------------------------- |
+| `mainCB`  | `RenderPipelineMainCallback`  | Configure `outputNode` and create effect passes |
+| `setupCB` | `RenderPipelineSetupCallback` | Optional. Configure MRT on the scene pass     |
+
+Both callbacks receive the full RootState (uniforms, nodes, scene, camera, etc.). Returning an object from either callback registers those passes into `state.passes`.
+
+```typescript
+type RenderPipelineMainCallback = (state: RootState) => PassRecord | void
+type RenderPipelineSetupCallback = (state: RootState) => PassRecord | void
+```
+
+### Return Value
+
+```typescript
+interface UseRenderPipelineReturn {
+  passes: PassRecord // All registered passes
+  renderPipeline: RenderPipeline | null
+  clearPasses: () => void // Clear all passes
+  reset: () => void // Reset the RenderPipeline instance
+  rebuild: () => void // Force callbacks to re-run
+  isReady: boolean // True once RenderPipeline is configured
+}
+```
+
+## You must set outputNode
+
+If you change away from the default scene pass, you **must** set `renderPipeline.outputNode` yourself. This is deliberate - changing the pipeline output is not inferred automatically, so you stay in control of what gets rendered.
+
+## Usage
+
+### Simple Bloom
+
+```tsx
+import { useRenderPipeline } from '@react-three/fiber/webgpu'
+import { bloom } from 'three/tsl'
+
+function Scene() {
+  useRenderPipeline(({ renderPipeline, passes }) => {
+    const sceneTexture = passes.scenePass.getTextureNode()
+    renderPipeline.outputNode = bloom(sceneTexture, 1.5, 0.1, 0.9)
+  })
+
+  return (
+    <mesh>
+      <boxGeometry />
+      <meshBasicNodeMaterial color="hotpink" />
+    </mesh>
+  )
+}
+```
+
+### Read-Only Access
+
+```tsx
+function DebugPanel() {
+  const { renderPipeline, passes, isReady } = useRenderPipeline()
+  if (!isReady) return <div>Loading...</div>
+  return <p>Passes: {Object.keys(passes).join(', ')}</p>
+}
+```
+
+## What the Hook Does Automatically
+
+1. Creates the RenderPipeline instance if it does not exist.
+2. Creates a default scene pass (no MRT by default).
+3. Sets a default `outputNode` to the scene pass (passthrough).
+4. Recreates the scene pass only when the scene or camera actually changes.
+5. Persists across unmounts (no auto-cleanup; use `reset()` for explicit cleanup).
+
+## MRT (Multiple Render Targets)
+
+For effects like motion blur, velocity buffers, or G-buffers, configure MRT in `setupCB`, which runs before `mainCB`.
+
+```tsx
+import { mrt, output, velocity } from 'three/tsl'
+import { motionBlur } from 'three/addons/tsl/display/MotionBlur.js'
+
+function RenderPipelineManager() {
+  useRenderPipeline(
+    // mainCB - configure effect (MRT already set)
+    ({ renderPipeline, passes }) => {
+      const beauty = passes.scenePass.getTextureNode()
+      const vel = passes.scenePass.getTextureNode('velocity')
+      renderPipeline.outputNode = motionBlur(beauty, vel.mul(1.0))
+    },
+    // setupCB - configure MRT BEFORE mainCB runs
+    ({ passes }) => {
+      passes.scenePass.setMRT(mrt({ output, velocity }))
+    },
+  )
+  return null
+}
+```
+
+## Callback Execution
+
+Order: `setupCB` runs **first** (MRT must be configured before rendering), then `mainCB`.
+
+Callbacks run when:
+
+- The RenderPipeline is first created
+- The scene or camera changes (the scene pass needs recreation)
+- `rebuild()` is called explicitly
+
+Callbacks do **not** re-run on:
+
+- Component re-renders
+- **HMR (Hot Module Reload)** - see below
+
+### HMR Does Not Re-Run Pipeline Callbacks
+
+Unlike the node and uniform hooks, `useRenderPipeline` does **not** auto-refresh on HMR. Re-running the callbacks would rebuild the TSL node graph and can corrupt cached references (such as `SkinningNode`), so the hook intentionally skips re-running them on a plain hot reload (same scene/camera).
+
+**To apply pipeline edits during development, call `rebuild()` or do a full page reload.** Inline closure values captured in the callbacks are not picked up until you do. For values you want to change without rebuilding, use uniforms (see below).
+
+```tsx
+function RebuildButton() {
+  const { rebuild } = useRenderPipeline()
+  // Re-runs setupCB/mainCB with current closure values
+  return <button onClick={rebuild}>Rebuild Effects</button>
+}
+```
+
+### Prefer Uniforms for Dynamic Values
+
+Because callbacks don't re-run on render or HMR, drive dynamic parameters through uniforms rather than closure values:
+
+```tsx
+const { intensity } = useControls({ intensity: 1.0 })
+const { uIntensity } = useUniforms(() => ({ uIntensity: intensity }))
+
+useRenderPipeline(({ renderPipeline, passes, uniforms }) => {
+  // uniforms.uIntensity stays current with no callback re-run
+  renderPipeline.outputNode = bloom(passes.scenePass.getTextureNode(), uniforms.uIntensity)
+})
+```
+
+## Registering Custom Passes
+
+Register passes by **returning** them from a callback. The hook merges returned passes into `state.passes`. Direct assignment to `passes.x` does not register and is lost after the callback completes.
+
+```tsx
+useRenderPipeline(({ renderPipeline, passes, scene, camera }) => {
+  const customPass = pass(scene, camera)
+  renderPipeline.outputNode = customPass
+  // ✅ Return to register - now available via useRenderPipeline() anywhere
+  return { customPass }
+})
+```
+
+You can register from `setupCB` too, and return multiple passes at once:
+
+```tsx
+useRenderPipeline(({ renderPipeline, scene, camera }) => {
+  const depthPass = pass(scene, camera)
+  depthPass.setMRT(mrt({ depth }))
+  const normalPass = pass(scene, camera)
+  normalPass.setMRT(mrt({ normal }))
+
+  renderPipeline.outputNode = ssao(depthPass.getTextureNode('depth'), normalPass.getTextureNode('normal'))
+  return { depthPass, normalPass }
+})
+```
+
+## Pass Registry
+
+Passes live in `state.passes`:
+
+```typescript
+interface PassRecord {
+  scenePass: PassNode // Always created automatically
+  [key: string]: any // Custom passes you register
+}
+```
+
+Access them from a callback, from `useThree()`, or from `useRenderPipeline()`:
+
+```tsx
+const { passes } = useThree()
+console.log(passes.scenePass)
+```
+
+## Manual Control
+
+```tsx
+const { reset, rebuild, clearPasses } = useRenderPipeline()
+
+reset() // Clear the RenderPipeline instance and all passes
+rebuild() // Force setupCB/mainCB to re-run with current closures
+clearPasses() // Remove all passes
+```
+
+## Best Practices
+
+- **One `useRenderPipeline` per app**, near the root. Multiple setups overwrite each other and risk race conditions.
+- **Use uniforms for dynamic values** - closure values need a `rebuild()` to update.
+- **Configure MRT in `setupCB`**, not `mainCB`.
+- **Return custom passes** to register them.
+
+## Error Handling
+
+`useRenderPipeline` throws if used with a WebGL (legacy) renderer - it requires the WebGPU renderer (`<Canvas renderer>`). In read-only mode, guard on `isReady` before using `renderPipeline`.
+
+## TypeScript
+
+```typescript
+import type { RenderPipeline, PassNode } from 'three/webgpu'
+import type { RootState, PassRecord } from '@react-three/fiber'
+
+const { passes, renderPipeline, clearPasses, reset, rebuild, isReady } = useRenderPipeline()
+
+const mainCB: RenderPipelineMainCallback = ({ renderPipeline, passes }) => {
+  /* ... */
+}
+const setupCB: RenderPipelineSetupCallback = ({ passes }) => {
+  /* ... */
+}
+useRenderPipeline(mainCB, setupCB)
+```
+
+## Related
+
+- [TSL Hooks](./tsl-hooks) - uniforms and nodes for effect parameters
+- [TSL HMR](./hmr) - what rebuilds on hot reload (and what does not)
+- [Three.js RenderPipeline](https://threejs.org/docs/#api/en/renderers/webgpu/RenderPipeline) (currently `PostProcessing`)
+- [Built-in TSL effects](https://github.com/mrdoob/three.js/tree/dev/examples/jsm/tsl/display)

@@ -153,7 +153,7 @@ npm install expo-cli -g
 expo init my-app
 cd my-app
 # Install dependencies
-npm install three @react-three/fiber@beta react@rc
+npm install three @react-three/native
 # Start
 expo start
 ```
@@ -172,7 +172,7 @@ module.exports = {
 
 ```tsx
 import React, { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber/native'
+import { Canvas, useFrame } from '@react-three/native'
 function Box(props) {
   const mesh = useRef(null)
   const [hovered, setHover] = useState(false)

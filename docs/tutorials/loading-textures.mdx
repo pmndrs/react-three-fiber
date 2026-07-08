@@ -1,7 +1,7 @@
 ---
 title: 'Loading Textures'
 description: Let's load some fancy textures.
-nav: 16
+nav: 28
 ---
 
 > All textures used in this chapter were downloaded from [cc0textures](https://cc0textures.com/).
@@ -237,8 +237,8 @@ For a **per-frame** ping-pong, don't make React re-render every frame — read t
 ```jsx
 function PingPong({ material }) {
   const textures = useTextures()
-  useFrame(({ clock }) => {
-    const even = Math.floor(clock.elapsedTime * 60) % 2 === 0
+  useFrame((state) => {
+    const even = Math.floor(state.elapsed * 60) % 2 === 0
     material.map = textures.get(even ? 'a' : 'b')
   })
   return null
