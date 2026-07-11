@@ -14,7 +14,7 @@ But if the moving parts in your scene are allowed to come to rest, then it would
 
 Open the sandbox below in a full screen and look into dev tools, you will see that it is completely idle when nothing is going on. It renders only when you move the model.
 
-<Codesandbox id="wvgxp" />
+<Codesandbox id="wvgxp" /  screenshot_url="/images/sandboxes/wvgxp.png" />
 
 All you need to do is set the canvas `frameloop` prop to `demand`. It will render frames whenever it detects prop changes throughout the component tree.
 
@@ -101,7 +101,7 @@ THREE.ColorManagement.legacyMode = false
 
 If you access a resource via useLoader with the same URL, throughout the component tree, then you will always refer to the same asset and thereby re-use it. This is especially useful if you run your GLTF assets through [GLTFJSX](https://github.com/pmndrs/gltfjsx) because it links up geometries and materials and thereby creates re-usable models.
 
-<Codesandbox id="dix1y" />
+<Codesandbox id="dix1y" /  screenshot_url="/images/sandboxes/dix1y.png" />
 
 ```jsx
 function Shoe(props) {
@@ -121,7 +121,7 @@ function Shoe(props) {
 
 Each mesh is a draw call, you should be mindful of how many of these you employ: no more than 1000 as the very maximum, and optimally a few hundred or less. You can win performance back by reducing draw calls, for example by instancing repeating objects. This way you can have hundreds of thousands of objects in a single draw call.
 
-<Codesandbox id="h873k" />
+<Codesandbox id="h873k" /  screenshot_url="/images/sandboxes/h873k.png" />
 
 Setting up instancing is not so hard, consult [the three.js docs](https://threejs.org/docs/#api/en/objects/InstancedMesh) if you need help.
 
@@ -153,7 +153,7 @@ Sometimes it can be beneficial to reduce the quality of an object the further it
 
 Scroll in and out to see the effect:
 
-<Codesandbox id="12nmp" />
+<Codesandbox id="12nmp" /  screenshot_url="/images/sandboxes/12nmp.png" />
 
 There is a small component in Drei called `<Detailed />` which sets up LOD without boilerplate. You load or prepare a couple of resolution stages, as many as you like, and then give them the same amount of distances from the camera, starting from highest quality to lowest.
 
@@ -182,7 +182,7 @@ The following sandbox goes through three loading stages:
 - Low quality
 - High quality
 
-<Codesandbox id="7duy8" />
+<Codesandbox id="7duy8" /  screenshot_url="/images/sandboxes/7duy8.png" />
 
 And this is how easy it is to achieve it, you can nest suspense and even use it as a fallback:
 
@@ -257,7 +257,7 @@ Websites like Sketchfab make sure the scene is always fluid, running at 60 fps, 
 
 The following sandbox uses expensive lights and post-processing. In order for it to run relatively smooth it will scale the pixel ratio on movement and also skip heavy post-processing effects like ambient occlusion.
 
-<Codesandbox id="pz0q6" />
+<Codesandbox id="pz0q6" /  screenshot_url="/images/sandboxes/pz0q6.png" />
 
 When you inspect the state model you will notice an object called `performance`.
 
