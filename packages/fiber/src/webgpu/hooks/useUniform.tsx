@@ -5,6 +5,22 @@ import { Color as ThreeColor, Node } from '#three'
 import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
 import { useStore, useThree } from '../../core/hooks'
 
+/**
+ * `uniform()` typed to its documented runtime contract.
+ *
+ * three's JSDoc for `uniform` reads `@param {any|string} value` — the implementation accepts any
+ * value and derives the node type from it. Its `.d.ts`, however, enumerates a closed overload set
+ * (number, boolean, Vector2-4, Matrix2-4, Color, InputNode, VarNode). R3F's public input type is
+ * deliberately wider — plain `{ x, y, z }` objects and CSS colour strings are supported and
+ * normalised before they reach here — so a generic `T` can never be proven to select one of those
+ * overloads, and a union argument cannot select among them either.
+ *
+ * Rather than scatter `as any` over each argument, the mismatch is isolated to this one named
+ * seam. The return type stays three's real `UniformNode`, so everything downstream is still
+ * checked against the installed three.
+ */
+const uniformOf = uniform as (value: unknown, type?: string) => UniformNode<unknown>
+
 //* Types ==============================
 
 /**
@@ -132,13 +148,13 @@ export function useUniform<T extends UniformValue>(name: string, value?: T): Uni
 
     if (isTSLNode(value)) {
       // TSL nodes (color(), vec3(), float()) - pass directly for type casting
-      node = uniform(value) as unknown as UniformNode<Widen<T>>
+      node = uniformOf(value) as unknown as UniformNode<Widen<T>>
     } else if (typeof value === 'string') {
-      // String colors - convert to Three.js Color
+      // String colors - convert to Three.js Color (matches three's `(value: Color)` overload)
       node = uniform(new ThreeColor(value)) as unknown as UniformNode<Widen<T>>
     } else {
       // Raw values (number, Vector3, Color, etc.)
-      node = uniform(value) as unknown as UniformNode<Widen<T>>
+      node = uniformOf(value) as unknown as UniformNode<Widen<T>>
     }
 
     // Label for debugging

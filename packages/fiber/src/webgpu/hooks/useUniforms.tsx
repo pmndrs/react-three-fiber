@@ -449,7 +449,9 @@ function createUniform(inName: string, node: any, scope?: string): UniformNode {
   // - String colors: converted to THREE.Color
   // - Other values: passed through unchanged
   const inValue = vectorize(node)
-  const newUniform = uniform(inValue) as UniformNode
+  // See useUniform.tsx: three's uniform() accepts any value at runtime, but its declared
+  // overloads are a closed set that R3F's wider (already-normalised) input can't select from.
+  const newUniform = (uniform as (value: unknown, type?: string) => UniformNode)(inValue)
 
   // Set debug name for easier identification in GPU tools
   // Use underscore instead of dot to ensure WGSL compatibility

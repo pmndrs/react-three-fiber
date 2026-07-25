@@ -31,32 +31,36 @@ describe('isInternalRendererAccess', () => {
     it('Object.assign spread over enumerable getters', () => {
       expect(isInternalRendererAccess(stack('Object.assign (<anonymous>)'))).toBe(true)
     })
+  })
 
+  describe("warns on R3F's own access too (returns false)", () => {
+    // R3F source used to be blanket-exempted here. That exemption was written for library
+    // plumbing but also covered genuine R3F code: EnvironmentPortal read `state.gl` from inside
+    // its own exemption, so the warning it should have raised never appeared. Migrating to
+    // `state.renderer` is a v10 pillar, and R3F holds itself to it — core has no `state.gl`
+    // reads left, and a reintroduced one must warn like anyone else's.
     it("R3F's own dev source (monorepo, any repo name)", () => {
-      // The key regression: a directory NOT named "react-three-fiber".
       expect(
         isInternalRendererAccess(
           stack(
             'Environment (/Users/dev/r3f-a3-test-coverage/packages/fiber/src/core/components/Environment.tsx:272:20)',
           ),
         ),
-      ).toBe(true)
+      ).toBe(false)
     })
 
     it("R3F's built monorepo output", () => {
-      expect(isInternalRendererAccess(stack('r (/repo/packages/fiber/dist/index.mjs:1:5000)'))).toBe(true)
+      expect(isInternalRendererAccess(stack('r (/repo/packages/fiber/dist/index.mjs:1:5000)'))).toBe(false)
     })
 
     it('the installed package (node_modules/@react-three/fiber)', () => {
       expect(
         isInternalRendererAccess(stack('Environment (/app/node_modules/@react-three/fiber/dist/index.mjs:1:9000)')),
-      ).toBe(true)
+      ).toBe(false)
     })
 
     it('the Vite dep-optimized package form', () => {
-      expect(
-        isInternalRendererAccess(stack('Environment (/app/node_modules/.vite/deps/@react-three_fiber.js:900:12)')),
-      ).toBe(true)
+      expect(isInternalRendererAccess(stack('/app/node_modules/.vite/deps/@react-three_fiber.js:900:12'))).toBe(false)
     })
   })
 
@@ -88,6 +92,7 @@ describe('isInternalRendererAccess', () => {
     // Firefox/Safari stacks omit the leading "Error" line, so the caller sits one line earlier.
     const ffStack = ['get@/anywhere/store.ts:300:23', 'App@/Users/dev/my-app/src/App.tsx:14:19'].join('\n')
     expect(isInternalRendererAccess(ffStack, 1)).toBe(false)
-    expect(isInternalRendererAccess(ffStack.replace('my-app/src', 'packages/fiber/src'), 1)).toBe(true)
+    // …and the plumbing markers still match at that depth
+    expect(isInternalRendererAccess(ffStack.replace('App@', 'Object.assign@'), 1)).toBe(true)
   })
 })

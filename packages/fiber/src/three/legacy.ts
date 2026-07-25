@@ -38,3 +38,9 @@ export const WebGPURenderer = class WebGPURenderer {
 export { WebGLRenderTarget as RenderTargetCompat } from 'three'
 // Stub to prevent import errors (never instantiated due to build flags)
 export const RenderTarget = null as any
+
+//* CubeRenderTarget Compatibility ==============================
+// Alias WebGLCubeRenderTarget for Environment's cubemap capture
+export { WebGLCubeRenderTarget as CubeRenderTargetCompat } from 'three'
+// Stub to prevent import errors (never instantiated due to build flags)
+export const CubeRenderTarget = null as any

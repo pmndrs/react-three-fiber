@@ -299,7 +299,7 @@ export interface RootState {
   /** Internal: refcount per texture key, driven by mounted useTexture consumers (registry enrollment is on by default) */
   _textureRefs: Map<string, number>
   /** WebGPU RenderPipeline instance - use useRenderPipeline() hook */
-  renderPipeline: any | null // THREE.PostProcessing (will be THREE.RenderPipeline in future Three.js release)
+  renderPipeline: ThreeRenderPipeline | null
   /** Global TSL pass nodes for render pipeline - use useRenderPipeline() hook */
   passes: Record<string, any>
   /** Internal version counter for HMR - incremented by rebuildNodes/rebuildUniforms to bust memoization */
