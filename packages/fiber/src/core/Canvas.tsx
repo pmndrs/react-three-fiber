@@ -114,6 +114,8 @@ function CanvasImpl({
   const handleDropMissed = useMutableCallback(onDropMissed)
   const [block, setBlock] = React.useState<SetBlock>(false)
   const [error, setError] = React.useState<any>(false)
+  // Set when renderer setup fails and a `fallback` should be shown as visible DOM (#3757)
+  const [fallbackVisible, setFallbackVisible] = React.useState(false)
 
   // Suspend this component if block is a promise (2nd run)
   if (block) throw block
@@ -128,6 +130,8 @@ function CanvasImpl({
 
   useIsomorphicLayoutEffect(() => {
     effectActiveRef.current = true
+    // A prior renderer setup failed and we're showing the fallback DOM; don't re-attempt.
+    if (fallbackVisible) return
     const canvas = canvasRef.current
 
     if (effectiveSize.width > 0 && effectiveSize.height > 0 && canvas) {
@@ -162,54 +166,68 @@ function CanvasImpl({
         // Bail out if effect was cleaned up while awaiting (HMR race condition)
         if (!effectActiveRef.current || !root.current) return
 
-        await root.current.configure({
-          id,
-          primaryCanvas,
-          scheduler,
-          gl,
-          renderer,
-          scene,
-          events,
-          shadows,
-          orthographic,
-          frameloop,
-          dpr,
-          performance,
-          raycaster,
-          camera,
-          autoUpdateFrustum,
-          occlusion,
-          size: effectiveSize,
-          // Store size props for reset functionality
-          _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
-          forceEven,
-          // Pass mutable reference to onPointerMissed so it's free to update
-          onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
-          onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
-          onDropMissed: (...args) => handleDropMissed.current?.(...args),
-          onCreated: (state) => {
-            // Connect to event source
-            state.events.connect?.(
-              eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current,
-            )
-            // Set up compute function
-            if (eventPrefix) {
-              state.setEvents({
-                compute: (event, state) => {
-                  const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
-                  const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
-                  state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
-                  state.raycaster.setFromCamera(state.pointer, state.camera)
-                },
-              })
-            }
-            // Call onCreated callback
-            onCreated?.(state)
-          },
-        })
+        const configured = await root.current
+          .configure({
+            id,
+            primaryCanvas,
+            scheduler,
+            gl,
+            renderer,
+            scene,
+            events,
+            shadows,
+            orthographic,
+            frameloop,
+            dpr,
+            performance,
+            raycaster,
+            camera,
+            autoUpdateFrustum,
+            occlusion,
+            size: effectiveSize,
+            // Store size props for reset functionality
+            _sizeProps: width !== undefined || height !== undefined ? { width, height } : null,
+            forceEven,
+            // Pass mutable reference to onPointerMissed so it's free to update
+            onPointerMissed: (...args) => handlePointerMissed.current?.(...args),
+            onDragOverMissed: (...args) => handleDragOverMissed.current?.(...args),
+            onDropMissed: (...args) => handleDropMissed.current?.(...args),
+            onCreated: (state) => {
+              // Connect to event source
+              state.events.connect?.(
+                eventSource ? (isRef(eventSource) ? eventSource.current : eventSource) : divRef.current,
+              )
+              // Set up compute function
+              if (eventPrefix) {
+                state.setEvents({
+                  compute: (event, state) => {
+                    const x = event[(eventPrefix + 'X') as keyof DomEvent] as number
+                    const y = event[(eventPrefix + 'Y') as keyof DomEvent] as number
+                    state.pointer.set((x / state.size.width) * 2 - 1, -(y / state.size.height) * 2 + 1)
+                    state.raycaster.setFromCamera(state.pointer, state.camera)
+                  },
+                })
+              }
+              // Call onCreated callback
+              onCreated?.(state)
+            },
+          })
+          .then(
+            () => true,
+            // Renderer setup failed (e.g. no WebGL/WebGPU support). The `fallback` prop lives
+            // inside <canvas>, which browsers don't display, so surface it as visible DOM
+            // instead; with no fallback, rethrow to an external error boundary. (#3757)
+            (setupError) => {
+              if (effectActiveRef.current) {
+                if (fallback != null) setFallbackVisible(true)
+                else setError(setupError)
+              }
+              return false
+            },
+          )
 
-        // Bail out if effect was cleaned up while awaiting configure
-        if (!effectActiveRef.current || !root.current) return
+        // Bail out if setup failed or the effect was cleaned up while awaiting configure
+        if (!configured || !effectActiveRef.current || !root.current) return
 
         root.current.render(
           <Bridge>
@@ -301,15 +319,21 @@ function CanvasImpl({
         ...style,
       }}
       {...props}>
-      <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
-        <canvas
-          ref={canvasRef}
-          id={id}
-          className="r3f-canvas"
-          style={{ display: 'block', width: '100%', height: '100%' }}>
-          {fallback}
-        </canvas>
-      </div>
+      {fallbackVisible ? (
+        // Renderer setup failed: render the fallback as visible DOM. Inside <canvas> (below)
+        // it exists in the tree but browsers never paint it, which is the whole bug (#3757).
+        fallback
+      ) : (
+        <div ref={containerRef} className="r3f-canvas-container" style={{ width: '100%', height: '100%' }}>
+          <canvas
+            ref={canvasRef}
+            id={id}
+            className="r3f-canvas"
+            style={{ display: 'block', width: '100%', height: '100%' }}>
+            {fallback}
+          </canvas>
+        </div>
+      )}
     </div>
   )
 }
