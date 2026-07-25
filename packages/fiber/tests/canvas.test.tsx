@@ -66,6 +66,86 @@ describe('web Canvas', () => {
     expect(() => renderer.unmount()).not.toThrow()
   })
 
+  // Regression for #3757: the `fallback` prop lives inside <canvas>, which browsers never
+  // paint, so a renderer-setup failure must surface the fallback as visible sibling DOM.
+  it('renders the fallback outside the canvas when renderer setup fails', async () => {
+    // Suppress the expected error log from the failed renderer setup
+    const originalError = console.error
+    console.error = vi.fn()
+
+    try {
+      const renderer = await act(async () =>
+        render(
+          <Canvas
+            fallback={<div>Sorry no WebGL supported!</div>}
+            gl={() => {
+              throw new Error('WebGL unavailable')
+            }}>
+            <group />
+          </Canvas>,
+        ),
+      )
+
+      // Allow the async configure() rejection + fallback state update to flush
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      })
+
+      const fallbackEl = renderer.getByText('Sorry no WebGL supported!')
+      expect(fallbackEl).toBeTruthy()
+      // Must be rendered as visible DOM, not as a child of <canvas>
+      expect(fallbackEl.closest('canvas')).toBe(null)
+    } finally {
+      console.error = originalError
+    }
+  })
+
+  // When no fallback is supplied, a renderer-setup failure should propagate to an
+  // external error boundary rather than silently swallowing the error.
+  it('surfaces renderer setup failure to an error boundary when no fallback is given', async () => {
+    const originalError = console.error
+    console.error = vi.fn()
+
+    let caughtError: Error | null = null
+    class TestErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+      state = { hasError: false }
+      static getDerivedStateFromError() {
+        return { hasError: true }
+      }
+      componentDidCatch(error: Error) {
+        caughtError = error
+      }
+      render() {
+        if (this.state.hasError) return <div data-testid="boundary">boom</div>
+        return this.props.children
+      }
+    }
+
+    try {
+      const renderer = await act(async () =>
+        render(
+          <TestErrorBoundary>
+            <Canvas
+              gl={() => {
+                throw new Error('WebGL unavailable')
+              }}>
+              <group />
+            </Canvas>
+          </TestErrorBoundary>,
+        ),
+      )
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 50))
+      })
+
+      expect(caughtError).toBeInstanceOf(Error)
+      expect(renderer.getByTestId('boundary')).toBeTruthy()
+    } finally {
+      console.error = originalError
+    }
+  })
+
   it('plays nice with react SSR', async () => {
     const useLayoutEffect = vi.spyOn(React, 'useLayoutEffect')
     const useEffect = vi.spyOn(React, 'useEffect')

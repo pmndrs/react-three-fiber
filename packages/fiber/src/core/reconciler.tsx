@@ -361,6 +361,9 @@ function swapInstances(): void {
     // So, we manually check if an instance was hidden and unhide it.
     if (instance.isHidden) unhideInstance(instance)
 
+    // The old object is being discarded. Scrub it from the interaction manager so it isn't
+    // left behind as a dead raycast target (and doesn't leak) after reconstruction (#3778).
+    if (isObject3D(instance.object)) removeInteractivity(findInitialRoot(instance), instance.object)
     // Dispose of old object if able
     if (instance.object.__r3f) delete instance.object.__r3f
     if (instance.type !== 'primitive') disposeOnIdle(instance.object)
@@ -382,6 +385,14 @@ function swapInstances(): void {
 
       // Clear appliedOnce so once() props can be reapplied to the new object
       delete instance.appliedOnce
+
+      // The instance is reused across reconstruction, so eventCount/handlers still reflect the
+      // OLD object. Reset them so applyProps re-derives handlers from the new props and
+      // re-registers the NEW object in the interaction manager — otherwise prevHandlers ===
+      // eventCount, the registration block is skipped, and pointer events silently stop working
+      // after an args change (#3778).
+      instance.eventCount = 0
+      instance.handlers = {}
 
       // Set initial props
       applyProps(instance.object, instance.props)

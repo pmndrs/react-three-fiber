@@ -76,15 +76,22 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
   input: I,
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
+  cacheKey?: InputLike,
 ) {
-  // Use suspense to load async assets
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  // What to load
+  const inputs = (Array.isArray(input) ? input : [input]) as string[]
+  // What to cache under. Defaults to the input URLs, but can be overridden so assets fetched
+  // from URLs that change per request (signed/auth URLs) still reuse the same cache entry.
+  const cacheKeys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
 
   // Create the loading function once to ensure consistent function reference across suspend calls
   const fn = loadingFn(extensions, onProgress)
 
-  // Call suspend individually for each key to match preload cache structure
-  const results = keys.map((key) => suspend(fn, [loader, key], { equal: is.equ }))
+  // Call suspend individually for each key to match preload cache structure.
+  // Suspend caches on `key`, but the closure always loads the matching `input`.
+  const results = cacheKeys.map((key, index) =>
+    suspend(() => fn(loader, inputs[index]), [loader, key], { equal: is.equ }),
+  )
 
   // Return the object(s)
   return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
@@ -98,10 +105,14 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
   input: I,
   extensions?: Extensions<L>,
   onProgress?: (event: ProgressEvent<EventTarget>) => void,
+  cacheKey?: InputLike,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
+  const inputs = (Array.isArray(input) ? input : [input]) as string[]
+  const cacheKeys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
   // Preload each key individually so cache keys match useLoader calls
-  keys.forEach((key) => preload(loadingFn(extensions, onProgress), [loader, key]))
+  cacheKeys.forEach((key, index) =>
+    preload(() => loadingFn(extensions, onProgress)(loader, inputs[index]), [loader, key]),
+  )
 }
 
 /**
@@ -110,10 +121,11 @@ useLoader.preload = function <I extends InputLike, L extends LoaderLike | Constr
 useLoader.clear = function <I extends InputLike, L extends LoaderLike | ConstructorRepresentation<LoaderLike>>(
   loader: L,
   input: I,
+  cacheKey?: InputLike,
 ): void {
-  const keys = (Array.isArray(input) ? input : [input]) as string[]
-  // Clear each key individually to match how they were cached
-  keys.forEach((key) => clear([loader, key]))
+  const cacheKeys = (Array.isArray(cacheKey ?? input) ? (cacheKey ?? input) : [cacheKey ?? input]) as string[]
+  // Clear each key individually to match how they were cached (custom cache key when provided)
+  cacheKeys.forEach((key) => clear([loader, key]))
 }
 
 /**

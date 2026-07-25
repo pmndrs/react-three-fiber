@@ -47,6 +47,48 @@ describe('events', () => {
     expect(handlePointerDown).toHaveBeenCalled()
   })
 
+  // Regression for #3778: when an element's `args` change, R3F reconstructs the underlying
+  // THREE object (swapInstances). The new object must be re-registered in the interaction
+  // manager, or pointer events silently stop working after the first reconstruction.
+  it('keeps pointer events working after an args-triggered reconstruction', async () => {
+    const handlePointerDown = vi.fn()
+    let setSwap: (v: boolean) => void = () => {}
+
+    function Scene() {
+      const [swap, _setSwap] = React.useState(false)
+      setSwap = _setSwap
+      // Geometry identity changes once → mesh args change → reconstruction
+      const geometry = React.useMemo(() => new THREE.BoxGeometry(2, 2, 2), [swap])
+      const material = React.useMemo(() => new THREE.MeshBasicMaterial(), [])
+      return <mesh args={[geometry, material]} onPointerDown={handlePointerDown} />
+    }
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <Scene />
+        </Canvas>,
+      )
+    })
+
+    // Works before reconstruction
+    await act(async () => {
+      fireEvent(getContainer(), createPointerEvent('pointerdown'))
+    })
+    expect(handlePointerDown).toHaveBeenCalledTimes(1)
+
+    // Force the args change that reconstructs the mesh
+    await act(async () => {
+      setSwap(true)
+    })
+
+    // Must still fire after reconstruction
+    await act(async () => {
+      fireEvent(getContainer(), createPointerEvent('pointerdown'))
+    })
+    expect(handlePointerDown).toHaveBeenCalledTimes(2)
+  })
+
   it('can handle onPointerMissed', async () => {
     const handleClick = vi.fn()
     const handleMissed = vi.fn()

@@ -136,6 +136,8 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
   let configured = false
   let pending: Promise<void> | null = null
+  // In-flight renderer creation, shared across overlapping configure() calls (see #3752)
+  let rendererSetup: Promise<void> | null = null
 
   return {
     async configure(props: RenderProps<TCanvas> = {}): Promise<ReconcilerRoot<TCanvas>> {
@@ -177,7 +179,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           (rendererConfig as any).textureColorSpace) ||
         THREE.SRGBColorSpace
 
-      const state = store.getState()
+      let state = store.getState()
 
       //* Renderer Initialization ==============================
 
@@ -249,93 +251,116 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
       }
 
       //* Create Renderer (one time only) ==============================
-      if (R3F_BUILD_LEGACY && wantsGL && !state.internal.actualRenderer) {
-        //* WebGL path ---
-        renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
-        state.internal.actualRenderer = renderer
-        // Set both gl and renderer to the WebGLRenderer for backwards compatibility
-        // Self-reference primaryStore - this canvas is its own primary
-        state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
-      } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas && !state.internal.actualRenderer) {
-        //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
-        // Wait for primary canvas to be registered (handles async init timing)
-        const primary = await waitForPrimary(primaryCanvas)
+      // Serialize concurrent configure() calls. Renderer creation is async — the gl/renderer
+      // factory and WebGPU renderer.init() are awaited, and `actualRenderer` is only assigned
+      // afterwards — so overlapping configure() calls (e.g. a parent re-render while a slow
+      // WebGPU init is in flight) would each pass the `!actualRenderer` guard and invoke the
+      // factory multiple times (#3752). The first call owns creation; later overlapping calls
+      // await the same promise, then re-read state below and apply their own (latest) size.
+      if (!state.internal.actualRenderer) {
+        if (!rendererSetup) {
+          rendererSetup = (async () => {
+            if (R3F_BUILD_LEGACY && wantsGL) {
+              //* WebGL path ---
+              renderer = (await resolveRenderer(glConfig, defaultGLProps, WebGLRenderer)) as WebGLRenderer
+              state.internal.actualRenderer = renderer
+              // Set both gl and renderer to the WebGLRenderer for backwards compatibility
+              // Self-reference primaryStore - this canvas is its own primary
+              state.set({ isLegacy: true, gl: renderer, renderer: renderer, primaryStore: store })
+            } else if (R3F_BUILD_WEBGPU && !wantsGL && primaryCanvas) {
+              //* WebGPU Secondary Canvas path (shares renderer via CanvasTarget) ---
+              // Wait for primary canvas to be registered (handles async init timing)
+              const primary = await waitForPrimary(primaryCanvas)
 
-        // Use the primary's renderer
-        renderer = primary.renderer
-        state.internal.actualRenderer = renderer
+              // Use the primary's renderer
+              renderer = primary.renderer
+              state.internal.actualRenderer = renderer
 
-        // Create a CanvasTarget for this secondary canvas
-        const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+              // Create a CanvasTarget for this secondary canvas
+              const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
 
-        // Enable multi-canvas mode on the primary canvas
-        primary.store.setState((prev) => ({
-          internal: { ...prev.internal, isMultiCanvas: true },
-        }))
+              // Enable multi-canvas mode on the primary canvas
+              primary.store.setState((prev) => ({
+                internal: { ...prev.internal, isMultiCanvas: true },
+              }))
 
-        // Store secondary canvas info in internal state
-        // primaryStore points to the primary canvas's store for shared TSL resources
-        state.set((prev) => ({
-          webGPUSupported: primary.store.getState().webGPUSupported,
-          renderer: renderer,
-          primaryStore: primary.store,
-          internal: {
-            ...prev.internal,
-            canvasTarget,
-            isMultiCanvas: true,
-            isSecondary: true,
-            targetId: primaryCanvas,
-          },
-        }))
-      } else if (R3F_BUILD_WEBGPU && !wantsGL && !state.internal.actualRenderer) {
-        //* WebGPU path ---
-        // This path is taken when:
-        // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
-        // 2. Default build with explicit renderer prop
-        // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
-        renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
+              // Store secondary canvas info in internal state
+              // primaryStore points to the primary canvas's store for shared TSL resources
+              state.set((prev) => ({
+                webGPUSupported: primary.store.getState().webGPUSupported,
+                renderer: renderer,
+                primaryStore: primary.store,
+                internal: {
+                  ...prev.internal,
+                  canvasTarget,
+                  isMultiCanvas: true,
+                  isSecondary: true,
+                  targetId: primaryCanvas,
+                },
+              }))
+            } else if (R3F_BUILD_WEBGPU && !wantsGL) {
+              //* WebGPU path ---
+              // This path is taken when:
+              // 1. WebGPU-only build (@react-three/fiber/webgpu) - always, even without renderer prop
+              // 2. Default build with explicit renderer prop
+              // If rendererConfig is undefined, resolveRenderer creates a default WebGPURenderer
+              renderer = (await resolveRenderer(rendererConfig, defaultGPUProps, WebGPURenderer)) as WebGPURenderer
 
-        // WebGPU-specific setup - only init if not already initialized
-        // Allows users to pass pre-initialized external renderers
-        // @see https://github.com/pmndrs/react-three-fiber/issues/3651
-        if (!renderer.hasInitialized?.()) {
-          // Set canvas dimensions before init to ensure depth buffer is created at correct size
-          // WebGPU creates GPU resources during init() based on canvas.width/height
-          // Without this, depth buffer uses default 300x150 causing size mismatch errors
-          const size = computeInitialSize(canvas, propsSize)
-          if (size.width > 0 && size.height > 0) {
-            const pixelRatio = calculateDpr(dpr)
-            ;(canvas as HTMLCanvasElement).width = size.width * pixelRatio
-            ;(canvas as HTMLCanvasElement).height = size.height * pixelRatio
-          }
-          await renderer.init()
+              // WebGPU-specific setup - only init if not already initialized
+              // Allows users to pass pre-initialized external renderers
+              // @see https://github.com/pmndrs/react-three-fiber/issues/3651
+              if (!renderer.hasInitialized?.()) {
+                // Set canvas dimensions before init to ensure depth buffer is created at correct size
+                // WebGPU creates GPU resources during init() based on canvas.width/height
+                // Without this, depth buffer uses default 300x150 causing size mismatch errors
+                const size = computeInitialSize(canvas, propsSize)
+                if (size.width > 0 && size.height > 0) {
+                  const pixelRatio = calculateDpr(dpr)
+                  ;(canvas as HTMLCanvasElement).width = size.width * pixelRatio
+                  ;(canvas as HTMLCanvasElement).height = size.height * pixelRatio
+                }
+                await renderer.init()
+              }
+
+              // temp, stop the inspector
+              //renderer.inspector = new Inspector()
+
+              const backend = renderer.backend
+              const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
+
+              state.internal.actualRenderer = renderer
+              // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
+              // Self-reference primaryStore - this canvas is its own primary
+              state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
+
+              //* Register as Primary Canvas ==============================
+              // If this canvas has an id, register it so other canvases can target it
+              // Also create a CanvasTarget for when multi-canvas mode is enabled
+              if (canvasId && !state.internal.isSecondary) {
+                const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
+                const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
+                state.set((prev) => ({
+                  internal: {
+                    ...prev.internal,
+                    canvasTarget,
+                    unregisterPrimary,
+                  },
+                }))
+              }
+            }
+          })().catch((err) => {
+            // Reset so a subsequent configure() can retry after a failed setup
+            rendererSetup = null
+            throw err
+          })
         }
 
-        // temp, stop the inspector
-        //renderer.inspector = new Inspector()
-
-        const backend = renderer.backend
-        const isWebGPUBackend = backend && 'isWebGPUBackend' in backend
-
-        state.internal.actualRenderer = renderer
-        // Set renderer to WebGPURenderer, gl stays null (not available in WebGPU-only)
-        // Self-reference primaryStore - this canvas is its own primary
-        state.set({ webGPUSupported: isWebGPUBackend, renderer: renderer, primaryStore: store })
-
-        //* Register as Primary Canvas ==============================
-        // If this canvas has an id, register it so other canvases can target it
-        // Also create a CanvasTarget for when multi-canvas mode is enabled
-        if (canvasId && !state.internal.isSecondary) {
-          const canvasTarget = new THREE.CanvasTarget(canvas as HTMLCanvasElement)
-          const unregisterPrimary = registerPrimary(canvasId, renderer as WebGPURenderer, store)
-          state.set((prev) => ({
-            internal: {
-              ...prev.internal,
-              canvasTarget,
-              unregisterPrimary,
-            },
-          }))
-        }
+        await rendererSetup
+        // Re-read state after the shared async setup so the remainder of configure() (size,
+        // dpr, shadows, …) operates on the latest store — this is how the newest configure's
+        // size wins even though the renderer was created by an earlier overlapping call.
+        state = store.getState()
+        renderer = state.internal.actualRenderer as WebGPURenderer | WebGLRenderer
       }
 
       //* Default Raycaster Initialization ==============================
@@ -962,6 +987,11 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       if (camera !== rootState.camera) updateCamera(camera, resolvedSize)
     }
 
+    // Capture only the stable Zustand setter, not the whole injectState. Referencing
+    // injectState.set inside the setEvents closure below would anchor the entire previous
+    // portal state in memory, chaining every replaced state through setEvents → unbounded leak (#3751).
+    const set = injectState.set
+
     return {
       // The intersect consists of the previous root state
       ...rootState,
@@ -981,7 +1011,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
-        injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+        set((state) => ({ ...state, events: { ...state.events, ...events } })),
       // Container for child attachment - the portalScene (injected or container itself)
       internal: { ...rootState.internal, ...injectState.internal, container: portalScene },
     } as RootState
