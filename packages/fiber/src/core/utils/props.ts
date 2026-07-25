@@ -2,7 +2,12 @@ import * as THREE from '#three'
 import type { Instance, EventHandlers } from '#types'
 import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
-import { registerVisibility, unregisterVisibility, hasVisibilityHandlers } from '../visibility'
+import {
+  registerVisibility,
+  unregisterVisibility,
+  updateVisibilityHandlers,
+  hasVisibilityHandlers,
+} from '../visibility'
 import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
 
@@ -392,8 +397,21 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     if (instance.eventCount && object.raycast !== null) {
       rootState.internal.interaction.push(object)
     }
+  }
 
-    // Register/update visibility handlers (onFramed, onOccluded, onVisible)
+  // Register/update visibility handlers (onFramed, onOccluded, onVisible)
+  //
+  // Deliberately NOT behind the `prevHandlers !== instance.eventCount` gate above. That gate
+  // compares a handler *count*, so swapping `onOccluded` for a different function leaves the
+  // count unchanged and the block never runs — and the registry keeps a snapshot of the OLD
+  // closure. Inline handlers (`onFramed={() => …}`) produce a new function every render, which
+  // is the common case, so the user's updated callback would simply never fire.
+  if (
+    instance?.parent &&
+    rootState?.internal &&
+    (instance.object as unknown as THREE.Object3D | undefined)?.isObject3D
+  ) {
+    const object = instance.object as unknown as THREE.Object3D
     const root = findInitialRoot(instance)
     const visibilityHandlers = {
       onFramed: instance.handlers.onFramed,
@@ -402,7 +420,12 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     }
 
     if (hasVisibilityHandlers(visibilityHandlers)) {
-      registerVisibility(root, object, visibilityHandlers)
+      // Update in place when already tracked, so the last-known visibility state survives.
+      // Re-registering would reset it and re-fire events that did not change (see
+      // updateVisibilityHandlers). Falls through to a fresh registration on first sight.
+      if (!updateVisibilityHandlers(root, object, visibilityHandlers)) {
+        registerVisibility(root, object, visibilityHandlers)
+      }
     } else {
       // Remove from visibility registry if no visibility handlers remain
       unregisterVisibility(root, object)

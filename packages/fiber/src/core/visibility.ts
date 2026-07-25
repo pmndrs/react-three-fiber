@@ -276,6 +276,44 @@ export function unregisterVisibility(store: RootStore, object: THREE.Object3D): 
   internal.occlusionCache.delete(object)
 }
 
+/**
+ * Update the handlers of an already-registered object, in place.
+ *
+ * This exists because it is NOT equivalent to calling `registerVisibility` again.
+ * `registerVisibility` builds a fresh entry with `lastFramedState`, `lastOccludedState` and
+ * `lastVisibleState` reset to `null`, and the checker treats `null` as "no previous state, fire
+ * on the next check". Re-registering an already-tracked object would therefore re-fire
+ * `onFramed`/`onOccluded`/`onVisible` even though nothing about the object's visibility changed,
+ * breaking the "fires only on state change" contract.
+ *
+ * Updating in place swaps the handler closures while preserving that state.
+ *
+ * @param store    - The root store for this object
+ * @param object   - The THREE.Object3D to update
+ * @param handlers - The new visibility event handlers
+ * @returns `true` if an entry existed and was updated, `false` if the object is not registered
+ *          (in which case the caller should register it).
+ */
+export function updateVisibilityHandlers(
+  store: RootStore,
+  object: THREE.Object3D,
+  handlers: Pick<EventHandlers, 'onFramed' | 'onOccluded' | 'onVisible'>,
+): boolean {
+  const { internal } = store.getState()
+  const entry = internal.visibilityRegistry.get(object.uuid)
+  if (!entry) return false
+
+  entry.handlers = handlers
+
+  // Occlusion may have been switched on by this update (e.g. onVisible added alongside onFramed)
+  if ((handlers.onOccluded || handlers.onVisible) && !internal.occlusionEnabled) {
+    ;(object as any).occlusionTest = true
+    enableOcclusion(store)
+  }
+
+  return true
+}
+
 //* Check Function ==============================
 
 /**
