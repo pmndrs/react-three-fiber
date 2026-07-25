@@ -5,7 +5,7 @@
  * a single WebGPURenderer using Three.js CanvasTarget API.
  *
  * Primary canvas: Has `id` prop, creates its own renderer, registers here
- * Secondary canvas: Has `target="id"` prop, shares primary's renderer via CanvasTarget
+ * Secondary canvas: Has `renderer={{ primaryCanvas: 'id' }}`, shares primary's renderer via CanvasTarget
  */
 
 import type { WebGPURenderer } from '#three'

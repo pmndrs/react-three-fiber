@@ -387,6 +387,120 @@ describe('visibility events', () => {
     })
   })
 
+  //* Handler Updates --------------------------------
+  // Regression coverage for two halves of one defect. Visibility registration used to sit behind
+  // `prevHandlers !== instance.eventCount` in applyProps — a handler *count*. See
+  // updateVisibilityHandlers for why re-registering is not a valid substitute for updating.
+
+  describe('handler updates on a mounted object', () => {
+    it('uses the latest handler after it is swapped for a different function', async () => {
+      // The count is unchanged across this swap, so the old gate never re-ran and the registry
+      // kept the first closure. Inline handlers produce a new function every render, so this is
+      // the normal case, not an edge case.
+      const first = vi.fn()
+      const second = vi.fn()
+      let storeRef: RootState | null = null
+
+      function StoreCapture() {
+        const state = useThree()
+        useEffect(() => {
+          storeRef = state
+        }, [state])
+        return null
+      }
+
+      function TestMesh({ handler }: { handler: () => void }) {
+        return (
+          <mesh onFramed={handler}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial />
+          </mesh>
+        )
+      }
+
+      const { rerender } = await act(async () =>
+        render(
+          <Canvas>
+            <StoreCapture />
+            <TestMesh handler={first} />
+          </Canvas>,
+        ),
+      )
+      await advanceFrames(3)
+
+      await act(async () => {
+        rerender(
+          <Canvas>
+            <StoreCapture />
+            <TestMesh handler={second} />
+          </Canvas>,
+        )
+      })
+      await advanceFrames(3)
+
+      const entry = [...storeRef!.internal.visibilityRegistry.values()][0]
+      expect(entry).toBeDefined()
+      // The registry must hold the CURRENT closure, not the one captured at mount.
+      expect(entry.handlers.onFramed).toBe(second)
+      expect(entry.handlers.onFramed).not.toBe(first)
+    })
+
+    it('preserves last-known visibility state when a handler is ADDED', async () => {
+      // Adding a handler changes eventCount, which DID re-run the old block -> registerVisibility
+      // -> a fresh entry with lastFramedState = null. The checker reads null as "no previous
+      // state, fire on next check", so onFramed re-fired even though the object never left the
+      // frustum, breaking the "only fires on state change" contract asserted earlier in this file.
+      const handleFramed = vi.fn()
+      let storeRef: RootState | null = null
+
+      function StoreCapture() {
+        const state = useThree()
+        useEffect(() => {
+          storeRef = state
+        }, [state])
+        return null
+      }
+
+      function TestMesh({ withVisible }: { withVisible: boolean }) {
+        return (
+          <mesh onFramed={handleFramed} {...(withVisible ? { onVisible: () => {} } : {})}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshBasicMaterial />
+          </mesh>
+        )
+      }
+
+      const { rerender } = await act(async () =>
+        render(
+          <Canvas>
+            <StoreCapture />
+            <TestMesh withVisible={false} />
+          </Canvas>,
+        ),
+      )
+      await advanceFrames(3)
+
+      const callsAfterMount = handleFramed.mock.calls.length
+      const stateAfterMount = [...storeRef!.internal.visibilityRegistry.values()][0].lastFramedState
+      expect(stateAfterMount).not.toBeNull()
+
+      // Add a second handler: eventCount changes 1 -> 2
+      await act(async () => {
+        rerender(
+          <Canvas>
+            <StoreCapture />
+            <TestMesh withVisible={true} />
+          </Canvas>,
+        )
+      })
+      await advanceFrames(3)
+
+      const entry = [...storeRef!.internal.visibilityRegistry.values()][0]
+      expect(entry.lastFramedState).toBe(stateAfterMount)
+      expect(handleFramed.mock.calls.length).toBe(callsAfterMount)
+    })
+  })
+
   //* Combined Handler Tests --------------------------------
 
   describe('multiple handlers', () => {

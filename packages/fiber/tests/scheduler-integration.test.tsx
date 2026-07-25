@@ -284,4 +284,50 @@ describe('scheduler integration', () => {
       expect(calls.length).toBe(3)
     })
   })
+
+  //* 3. Imperative setFrameloop reaches the scheduler ==============================
+
+  describe('imperative setFrameloop', () => {
+    it('mirrors runtime mode changes onto the scheduler, not just store state', async () => {
+      const renderer = new MockWebGPURenderer({ canvas })
+      const store = await act(async () => (await root.configure({ renderer, frameloop: 'never' })).render(<mesh />))
+
+      const scheduler = getScheduler()
+      const { setFrameloop } = store.getState()
+
+      // configure() pushed the prop through, so both sides start at 'never'
+      expect(scheduler.frameloop).toBe('never')
+
+      // Runtime change must reach the scheduler. Before the bridge this only moved
+      // store state and the scheduler stayed on 'never'.
+      await act(async () => setFrameloop('demand'))
+      expect(store.getState().frameloop).toBe('demand')
+      expect(scheduler.frameloop).toBe('demand')
+
+      // 'always' additionally starts the RAF loop (the scheduler's setter owns that)
+      await act(async () => setFrameloop('always'))
+      expect(scheduler.frameloop).toBe('always')
+      expect(scheduler.isRunning).toBe(true)
+
+      // ...and leaving 'always' stops it again. Also returns the shared scheduler to
+      // 'never' so this test doesn't leave a live RAF loop for the next one.
+      await act(async () => setFrameloop('never'))
+      expect(scheduler.frameloop).toBe('never')
+      expect(scheduler.isRunning).toBe(false)
+    })
+
+    it('defaults to always when called with no argument', async () => {
+      const renderer = new MockWebGPURenderer({ canvas })
+      const store = await act(async () => (await root.configure({ renderer, frameloop: 'never' })).render(<mesh />))
+
+      const scheduler = getScheduler()
+      const { setFrameloop } = store.getState()
+
+      await act(async () => setFrameloop())
+      expect(store.getState().frameloop).toBe('always')
+      expect(scheduler.frameloop).toBe('always')
+
+      await act(async () => setFrameloop('never'))
+    })
+  })
 })

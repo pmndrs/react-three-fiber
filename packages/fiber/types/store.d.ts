@@ -182,7 +182,7 @@ export interface InternalState {
   canvasTarget?: CanvasTarget
   /**
    * Whether multi-canvas rendering is active.
-   * True when any canvas uses `target` prop to share a renderer.
+   * True when any canvas uses `renderer={{ primaryCanvas: 'id' }}` to share a renderer.
    * When true, setCanvasTarget is called before each render.
    */
   isMultiCanvas?: boolean
@@ -280,8 +280,8 @@ export interface RootState {
   setSize: (width?: number, height?: number, top?: number, left?: number) => void
   /** Shortcut to manual setting the pixel ratio */
   setDpr: (dpr: Dpr) => void
-  /** Shortcut to setting frameloop flags */
-  setFrameloop: (frameloop: Frameloop) => void
+  /** Shortcut to setting frameloop flags. No args resets to 'always'. */
+  setFrameloop: (frameloop?: Frameloop) => void
   /** Set error state to propagate to error boundary */
   setError: (error: Error | null) => void
   /** Current error state (null when no error) */

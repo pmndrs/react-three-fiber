@@ -14,34 +14,37 @@
  */
 
 import * as THREE from 'three/webgpu'
-import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber/webgpu'
-
-// Import WebGPU hooks directly from fiber source for Jest compatibility
-import { useUniform, type UniformValue } from '../../../fiber/src/webgpu/hooks/useUniform'
+// All WebGPU hooks come from fiber's public entry, never from its source tree. Importing via
+// relative `../../fiber/src/...` paths pulled fiber's internal `#three` / `#types` aliases into
+// this package's bundle — unresolvable for consumers — and bundled a second copy of hooks whose
+// module-level scoped stores must be shared with the fiber instance under test.
 import {
+  extend,
+  _roots as mockRoots,
+  createRoot,
+  reconciler,
+  act,
+  useUniform,
   useUniforms,
   removeUniforms,
   clearScope,
   clearRootUniforms,
-  type UniformCreator,
-} from '../../../fiber/src/webgpu/hooks/useUniforms'
-import {
   useNodes,
   useLocalNodes,
   removeNodes,
   clearNodeScope,
   clearRootNodes,
+  useTextures,
+  type UniformValue,
+  type UniformCreator,
   type TSLNode,
   type NodeRecord,
   type NodeCreator,
   type LocalNodeCreator,
-} from '../../../fiber/src/webgpu/hooks/useNodes'
-import {
-  useTextures,
   type TextureEntry,
   type TextureNode,
   type UseTexturesReturn,
-} from '../../../fiber/src/webgpu/hooks/useTextures'
+} from '@react-three/fiber/webgpu'
 
 import { mockWebGPU, unmockWebGPU } from '../WebGPUContext'
 import { createTestRenderer } from '../createRenderer'
