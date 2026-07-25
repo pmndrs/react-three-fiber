@@ -40,7 +40,7 @@
   "peerDependencies": {
     "@react-three/fiber": ">=10.0.0-alpha.0",
     "react": "^19.0.0",
-    "three": ">=0.181"
+    "three": ">=0.185.0"
   },
   "peerDependenciesMeta": {
     "three": {
@@ -49,7 +49,8 @@
   },
   "devDependencies": {
     "@react-three/fiber": "workspace:*",
-    "three": ">=0.181"
+    "@webgpu/types": "^0.1.64",
+    "three": ">=0.185.0"
   },
   "files": [
     "dist",

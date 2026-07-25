@@ -15,7 +15,7 @@
     "resolveJsonModule": true,
     "noImplicitThis": false,
     "baseUrl": "./",
-    "types": ["vitest/globals", "node", "offscreencanvas", "prettier"],
+    "types": ["vitest/globals", "node", "offscreencanvas", "prettier", "@webgpu/types"],
     "paths": {
       "#three": ["packages/fiber/src/three/index.ts"],
       "#three/*": ["packages/fiber/src/three/*"],
