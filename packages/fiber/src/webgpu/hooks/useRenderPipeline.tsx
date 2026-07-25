@@ -55,7 +55,7 @@ export function useRenderPipeline(
   const store = useStore()
   const { scene, camera, renderer, isLegacy } = useThree()
 
-  // Track if callbacks have been run for the current PP instance
+  // Track if callbacks have been run for the current render-pipeline instance
   // Reset on mount via useEffect to support HMR (see below)
   const callbacksRanRef = useRef(false)
 
@@ -118,15 +118,15 @@ export function useRenderPipeline(
     const set = store.setState
 
     try {
-      let pp = state.renderPipeline as THREE.PostProcessing | null
+      let pipeline = state.renderPipeline as THREE.PostProcessing | null
       let currentPasses = { ...state.passes } as PassRecord
 
       //* Create RenderPipeline if needed ==============================
       // NOTE: Three.js still exports as PostProcessing - will be renamed to RenderPipeline in a future release
-      let justCreatedPP = false
-      if (!pp) {
-        pp = new THREE.PostProcessing(renderer as THREE.WebGPURenderer)
-        justCreatedPP = true
+      let justCreatedPipeline = false
+      if (!pipeline) {
+        pipeline = new THREE.PostProcessing(renderer as THREE.WebGPURenderer)
+        justCreatedPipeline = true
       }
 
       //* Create/Update default scenePass ==============================
@@ -146,20 +146,20 @@ export function useRenderPipeline(
       }
       currentPasses.scenePass = scenePass
 
-      // Set default outputNode (passthrough) if not configured or if we just created PP
-      if (!pp.outputNode || justCreatedPP) pp.outputNode = scenePass
+      // Set default outputNode (passthrough) if not configured or if we just created the pipeline
+      if (!pipeline.outputNode || justCreatedPipeline) pipeline.outputNode = scenePass
 
-      // Update state with PP and initial scenePass
-      set({ renderPipeline: pp, passes: currentPasses })
+      // Update state with the pipeline and initial scenePass
+      set({ renderPipeline: pipeline, passes: currentPasses })
 
       //* Run setupCB and mainCB ==============================
       // Only run callbacks if:
-      // 1. PP was just created (first setup)
+      // 1. The pipeline was just created (first setup)
       // 2. Callbacks haven't run yet for this instance
       // 3. scenePass was just recreated (scene/camera changed)
       // 4. rebuild() was explicitly called
       // Skipping on pure HMR (same scene/camera) prevents TSL corruption
-      const shouldRunCallbacks = justCreatedPP || !callbacksRanRef.current || !cacheValid
+      const shouldRunCallbacks = justCreatedPipeline || !callbacksRanRef.current || !cacheValid
 
       if (shouldRunCallbacks) {
         //* Run setupCB (MRT configuration) ==============================
