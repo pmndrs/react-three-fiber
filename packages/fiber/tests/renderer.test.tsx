@@ -12,6 +12,7 @@ import {
   createPortal,
   useFrame,
 } from '../src/index'
+import type { RootState, RootStore } from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -1289,6 +1290,98 @@ describe('renderer', () => {
       expect(portalSceneActual).toBeDefined()
       expect(portalSceneInUseFrame!.uuid).toBe(portalSceneActual!.uuid)
       expect(portalSceneInUseFrame!.uuid).not.toBe(rootSceneUuid)
+    })
+
+    // Regression for #3751: Portal's setEvents closure must capture only the stable
+    // store setter, not the whole previous portal state, or every replaced state stays
+    // anchored in memory through a setEvents → injectState chain (unbounded leak).
+    it('does not retain stale portal state in setEvents (#3751)', async () => {
+      const container = new THREE.Group()
+      let portalState: RootState = null!
+
+      function PortalProbe() {
+        portalState = useThree()
+        return null
+      }
+
+      const rootStore: RootStore = await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<PortalProbe />, container)}
+          </>,
+        ),
+      )
+
+      const stalePortalState = portalState
+      const staleSet = stalePortalState.set
+
+      // Mutating the parent root store rebuilds the portal state via the inject callback,
+      // replacing portalState with a fresh object.
+      await act(async () => {
+        rootStore.getState().set((state) => ({ size: { ...state.size } }))
+      })
+      expect(portalState).not.toBe(stalePortalState)
+
+      // Poison the *property* on the stale state. The fixed setEvents captured the setter
+      // by value, so it is unaffected; the buggy version looked it up off the retained
+      // injectState at call time and would route through (and throw on) this.
+      stalePortalState.set = (() => {
+        throw new Error('stale portal state setter was retained')
+      }) as RootState['set']
+
+      try {
+        await act(async () => {
+          portalState.setEvents({ enabled: false })
+        })
+        expect(portalState.get().events.enabled).toBe(false)
+      } finally {
+        stalePortalState.set = staleSet
+      }
+    })
+
+    // Regression for the second Portal leak reported on #3760: the subscription to the
+    // parent (previous) root store must be torn down when the portal unmounts. It lives in
+    // a layout effect that returns its unsubscribe; if that subscription is ever moved back
+    // into the useMemo (where the unsubscribe is discarded), every portal mount would pin
+    // its THREE.Scene in the parent store's listener set for good.
+    it('unsubscribes from the parent root store when the portal unmounts', async () => {
+      const container = new THREE.Group()
+
+      // Render the parent tree once (no portal) to obtain the real root store.
+      const rootStore: RootStore = await act(async () => root.render(<primitive object={container} />))
+
+      // Track subscriptions added through the store from here on, and drop them as their
+      // unsubscribe fires, so `live` reflects the currently-attached listeners.
+      const live = new Set<() => void>()
+      const realSubscribe = rootStore.subscribe.bind(rootStore)
+      const subscribeSpy = vi.spyOn(rootStore, 'subscribe').mockImplementation((listener: any) => {
+        const unsub = realSubscribe(listener)
+        live.add(unsub)
+        return () => {
+          live.delete(unsub)
+          unsub()
+        }
+      })
+
+      const baseline = live.size
+
+      // Mount the portal — PortalInner subscribes to the parent store.
+      await act(async () =>
+        root.render(
+          <>
+            <primitive object={container} />
+            {createPortal(<mesh />, container)}
+          </>,
+        ),
+      )
+      expect(live.size).toBeGreaterThan(baseline)
+
+      // Unmount the portal — the subscription must be cleaned up, not leaked.
+      await act(async () => root.render(<primitive object={container} />))
+      expect(live.size).toBe(baseline)
+
+      subscribeSpy.mockRestore()
     })
   })
 })

@@ -987,6 +987,11 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       if (camera !== rootState.camera) updateCamera(camera, resolvedSize)
     }
 
+    // Capture only the stable Zustand setter, not the whole injectState. Referencing
+    // injectState.set inside the setEvents closure below would anchor the entire previous
+    // portal state in memory, chaining every replaced state through setEvents → unbounded leak (#3751).
+    const set = injectState.set
+
     return {
       // The intersect consists of the previous root state
       ...rootState,
@@ -1006,7 +1011,7 @@ function PortalInner({ state = {}, children, container }: PortalInnerProps): JSX
       viewport: { ...rootState.viewport, ...viewport },
       // Layers are allowed to override events
       setEvents: (events: Partial<EventManager<any>>) =>
-        injectState.set((state) => ({ ...state, events: { ...state.events, ...events } })),
+        set((state) => ({ ...state, events: { ...state.events, ...events } })),
       // Container for child attachment - the portalScene (injected or container itself)
       internal: { ...rootState.internal, ...injectState.internal, container: portalScene },
     } as RootState
