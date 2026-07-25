@@ -3,7 +3,7 @@ import type { Instance, EventHandlers } from '#types'
 import { hasConstructor, is, isColorRepresentation, isCopyable, isTexture, isVectorLike } from './is'
 import { findInitialRoot, invalidateInstance } from './instance'
 import { registerVisibility, unregisterVisibility, hasVisibilityHandlers } from '../visibility'
-import { isFromRef, FROM_REF } from './fromRef'
+import { isFromRef } from './fromRef'
 import { isOnce, ONCE } from './once'
 
 //* Property Resolution & Application ==============================
@@ -262,11 +262,9 @@ export function applyProps<T = any>(object: Instance<T>['object'], props: Instan
     // https://github.com/pmndrs/react-three-fiber/issues/274
     if (value === undefined) continue
 
-    // Handle deferred ref resolution - store for commitMount
-    if (isFromRef(value)) {
-      instance?.deferredRefs?.push({ prop, ref: value[FROM_REF] })
-      continue
-    }
+    // Deferred refs are resolved in commitMount, which re-scans instance.props for them once
+    // the target ref is populated. Skip here so the sentinel is never applied as a raw value.
+    if (isFromRef(value)) continue
 
     // Handle mount-only method calls
     if (isOnce(value)) {

@@ -58,8 +58,6 @@ export interface Instance<O = any> {
   attach?: AttachType<O>
   previousAttach?: any
   isHidden: boolean
-  /** Deferred ref props to apply in commitMount */
-  deferredRefs?: Array<{ prop: string; ref: React.RefObject<any> }>
   /** Set of props that have been applied via once() */
   appliedOnce?: Set<string>
 }

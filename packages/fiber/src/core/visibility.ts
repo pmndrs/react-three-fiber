@@ -276,33 +276,6 @@ export function unregisterVisibility(store: RootStore, object: THREE.Object3D): 
   internal.occlusionCache.delete(object)
 }
 
-/**
- * Update visibility handlers for an already registered object.
- * Used when handlers change but object stays mounted.
- *
- * @param store - The root store for this object
- * @param object - The THREE.Object3D to update
- * @param handlers - The new visibility event handlers
- */
-export function updateVisibilityHandlers(
-  store: RootStore,
-  object: THREE.Object3D,
-  handlers: Pick<EventHandlers, 'onFramed' | 'onOccluded' | 'onVisible'>,
-): void {
-  const { internal } = store.getState()
-  const entry = internal.visibilityRegistry.get(object.uuid)
-
-  if (entry) {
-    entry.handlers = handlers
-
-    // Enable occlusion if newly added
-    if ((handlers.onOccluded || handlers.onVisible) && !internal.occlusionEnabled) {
-      ;(object as any).occlusionTest = true
-      enableOcclusion(store)
-    }
-  }
-}
-
 //* Check Function ==============================
 
 /**
