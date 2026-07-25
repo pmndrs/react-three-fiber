@@ -634,7 +634,48 @@ describe('events', () => {
     expect(handlePointerDown).toHaveBeenCalled()
   })
 
-  it.todo('can handle different event prefixes')
+  it('can handle different event prefixes', async () => {
+    // Exercises the DOM_EVENTS name mapping: onContextMenu->contextmenu,
+    // onDoubleClick->dblclick, onWheel->wheel all route to the right R3F handler.
+    const handleContextMenu = vi.fn()
+    const handleDoubleClick = vi.fn()
+    const handleWheel = vi.fn()
+
+    await act(async () => {
+      render(
+        <Canvas>
+          <mesh onContextMenu={handleContextMenu} onDoubleClick={handleDoubleClick} onWheel={handleWheel}>
+            <boxGeometry args={[2, 2]} />
+            <meshBasicMaterial />
+          </mesh>
+        </Canvas>,
+      )
+    })
+
+    const at = { clientX: 577, clientY: 480, offsetX: 577, offsetY: 480 }
+
+    // contextmenu is a click-type event: it needs a preceding pointerdown to record initialHits
+    await act(async () => {
+      fireEvent(getContainer(), createPointerEvent('pointerdown', at))
+      fireEvent(getContainer(), createPointerEvent('pointerup', at))
+      fireEvent(getContainer(), createPointerEvent('contextmenu', at))
+    })
+    expect(handleContextMenu).toHaveBeenCalled()
+
+    // dblclick is likewise a click-type event
+    await act(async () => {
+      fireEvent(getContainer(), createPointerEvent('pointerdown', at))
+      fireEvent(getContainer(), createPointerEvent('pointerup', at))
+      fireEvent(getContainer(), createPointerEvent('dblclick', at))
+    })
+    expect(handleDoubleClick).toHaveBeenCalled()
+
+    // wheel fires immediately with the default alwaysFireOnScroll
+    await act(async () => {
+      fireEvent(getContainer(), createPointerEvent('wheel', at))
+    })
+    expect(handleWheel).toHaveBeenCalled()
+  })
 
   //* Frame-Timed Raycasting Tests ==============================
 
