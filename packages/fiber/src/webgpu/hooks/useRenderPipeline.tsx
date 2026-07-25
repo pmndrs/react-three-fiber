@@ -9,6 +9,23 @@ import { pass } from '#three/tsl'
 // - RenderPipelineMainCallback
 // - UseRenderPipelineReturn
 
+//* Constructor Resolution ==============================
+
+/**
+ * Three.js renamed `PostProcessing` to `RenderPipeline` in r183. `PostProcessing` still exists,
+ * but only as a deprecated subclass that emits a `warnOnce` on construction — so building one
+ * would print a deprecation warning for every user on a modern three.
+ *
+ * Our peer range starts at three 0.181.2, which predates the rename, so the name is resolved at
+ * runtime instead of imported directly.
+ *
+ * Detect on the **export** and nothing else: 0.181.2 has an unrelated internal
+ * `class RenderPipeline extends Pipeline` (the WebGPU pipeline primitive) which is *not* exported.
+ * Probing anything module-internal would pick up that class and construct the wrong object.
+ */
+const RenderPipelineCtor: typeof THREE.PostProcessing =
+  (THREE as unknown as { RenderPipeline?: typeof THREE.PostProcessing }).RenderPipeline ?? THREE.PostProcessing
+
 //* Hook Implementation ==============================
 
 /**
@@ -122,10 +139,9 @@ export function useRenderPipeline(
       let currentPasses = { ...state.passes } as PassRecord
 
       //* Create RenderPipeline if needed ==============================
-      // NOTE: Three.js still exports as PostProcessing - will be renamed to RenderPipeline in a future release
       let justCreatedPipeline = false
       if (!pipeline) {
-        pipeline = new THREE.PostProcessing(renderer as THREE.WebGPURenderer)
+        pipeline = new RenderPipelineCtor(renderer as THREE.WebGPURenderer)
         justCreatedPipeline = true
       }
 
