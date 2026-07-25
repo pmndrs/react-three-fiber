@@ -148,7 +148,6 @@ export function createEvents(store: RootStore) {
       // Intersect object by object
       return state.raycaster.camera ? state.raycaster.intersectObject(obj, true) : []
     }
-    //console.log('raw eventObjects', eventsObjects)
 
     // Collect events
     let hits: THREE.Intersection<THREE.Object3D>[] = eventsObjects
@@ -187,21 +186,6 @@ export function createEvents(store: RootStore) {
         duplicates.add(id)
         return true
       })
-
-    // DEBUG: Log hit priorities
-    /*
-    if (hits.length > 1) {
-      console.log(
-        '%c[Events Debug] Sorted hits:',
-        'color: cyan',
-        hits.map((h) => ({
-          name: h.object.name || h.object.type,
-          priority: getRootState(h.object)?.events?.priority ?? 1,
-          distance: h.distance.toFixed(3),
-        })),
-      )
-    }
-      */
 
     // https://github.com/mrdoob/three.js/issues/16031
     // Allow custom userland intersect sort order, this likely only makes sense on the root filter
