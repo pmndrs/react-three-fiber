@@ -182,7 +182,7 @@ export interface InternalState {
   canvasTarget?: CanvasTarget
   /**
    * Whether multi-canvas rendering is active.
-   * True when any canvas uses `target` prop to share a renderer.
+   * True when any canvas uses `renderer={{ primaryCanvas: 'id' }}` to share a renderer.
    * When true, setCanvasTarget is called before each render.
    */
   isMultiCanvas?: boolean
