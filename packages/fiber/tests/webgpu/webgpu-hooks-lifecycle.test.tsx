@@ -42,15 +42,6 @@ import type { RootStore } from '../../src'
 const noop = () => {}
 const makeStore = () => createStore(noop, noop)
 
-/**
- * Mirrors the hook's own resolution: three renamed `PostProcessing` -> `RenderPipeline` in r183,
- * keeping `PostProcessing` as a deprecated subclass that warns on construction. Our peer range
- * starts at 0.181.2, which predates the rename, so which class gets built depends on the
- * installed three.
- */
-const RenderPipelineCtor: typeof THREE.PostProcessing =
-  (THREE as unknown as { RenderPipeline?: typeof THREE.PostProcessing }).RenderPipeline ?? THREE.PostProcessing
-
 /** Render `children` with `useStore()` resolving to the given store. */
 function withStore(store: RootStore, children: React.ReactNode) {
   return render(<context.Provider value={store}>{children}</context.Provider>)
@@ -459,10 +450,7 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     await act(async () => withStore(store, <Comp />))
 
     const state = store.getState()
-    // three renamed PostProcessing -> RenderPipeline in r183 and made PostProcessing a
-    // deprecated subclass, so assert against whichever the installed three exports. Asserting
-    // PostProcessing outright would fail on three >= r183, where the hook builds a RenderPipeline.
-    expect(state.renderPipeline).toBeInstanceOf(RenderPipelineCtor)
+    expect(state.renderPipeline).toBeInstanceOf(THREE.RenderPipeline)
     // The render-loop delegation hook: renderer.tsx reads `state.renderPipeline?.render`.
     expect(typeof (state.renderPipeline as any).render).toBe('function')
     expect(state.passes.scenePass).toBeDefined()
@@ -557,65 +545,4 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
   // and that call producing correct post-processed output, both need a real device.
   it.todo('covered by Tier 2: default render loop delegates to state.renderPipeline.render() each frame')
   it.todo('covered by Tier 2: renderPipeline / scenePass produce correct post-processed output')
-})
-
-//* PostProcessing -> RenderPipeline rename (three r183) ==============================
-
-describe('render pipeline constructor resolution', () => {
-  afterEach(() => {
-    vi.doUnmock('#three')
-    vi.resetModules()
-  })
-
-  // three r183 renamed PostProcessing -> RenderPipeline and kept PostProcessing as a deprecated
-  // subclass that warnOnce()s on construction. The repo pins three 0.181.2 (our peer floor), which
-  // predates the rename, so the suite above only ever exercises the PostProcessing fallback.
-  // This test injects the post-rename shape so the branch every user on three >= r183 hits is
-  // actually covered — without it, a regression here would only surface as a deprecation warning
-  // in someone else's console.
-  it('builds THREE.RenderPipeline, not the deprecated PostProcessing, when three exports it', async () => {
-    vi.resetModules()
-
-    class FakeRenderPipeline {
-      outputNode: any = null
-      constructor(public renderer: any) {}
-      render() {}
-    }
-    // Post-r183 shape: PostProcessing still present, but subclassing RenderPipeline.
-    class FakePostProcessing extends FakeRenderPipeline {}
-
-    const actual = await vi.importActual<typeof THREE>('#three')
-    vi.doMock('#three', () => ({
-      ...actual,
-      RenderPipeline: FakeRenderPipeline,
-      PostProcessing: FakePostProcessing,
-    }))
-
-    // Re-import through the mocked graph. The store/context must come from the same graph,
-    // otherwise useStore() reads a different React context instance.
-    const { createStore: freshCreateStore, context: freshContext } = await import('../../src/core/store')
-    const { useRenderPipeline: freshHook } = await import('../../src/webgpu')
-
-    const store = freshCreateStore(noop, noop)
-    store.setState({
-      scene: new THREE.Scene(),
-      camera: new THREE.PerspectiveCamera(),
-      renderer: {} as any,
-      isLegacy: false,
-    } as any)
-
-    function Comp() {
-      freshHook(() => {})
-      return null
-    }
-    await act(async () => {
-      render(<freshContext.Provider value={store as any}>{<Comp />}</freshContext.Provider>)
-    })
-
-    const built = store.getState().renderPipeline
-    expect(built).toBeInstanceOf(FakeRenderPipeline)
-    // The important half: it must NOT be the deprecated subclass, which is what would emit
-    // three's "PostProcessing has been renamed to RenderPipeline" warning.
-    expect(built).not.toBeInstanceOf(FakePostProcessing)
-  })
 })

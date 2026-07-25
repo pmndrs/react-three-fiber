@@ -5,6 +5,13 @@
 import type { RootState } from './store'
 
 declare global {
+  /**
+   * three's own render pipeline type. Named here so the rest of R3F refers to three's shape
+   * rather than `any`. three r183 renamed `PostProcessing` to `RenderPipeline`; our peer floor
+   * is r185, so the new name is the only one.
+   */
+  type ThreeRenderPipeline = import('three/webgpu').RenderPipeline
+
   /** Pass record - stores TSL pass nodes for render pipeline */
   type PassRecord = Record<string, any>
 
@@ -19,7 +26,7 @@ declare global {
     /** Current passes from state */
     passes: PassRecord
     /** RenderPipeline instance (null if not initialized) */
-    renderPipeline: any | null // THREE.PostProcessing (will be THREE.RenderPipeline in future Three.js release)
+    renderPipeline: ThreeRenderPipeline | null
     /** Clear all passes from state */
     clearPasses: () => void
     /** Reset RenderPipeline entirely (clears PP + passes) */
