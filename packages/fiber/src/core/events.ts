@@ -747,6 +747,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
       }
     },
 
+    // PREVIEW (A8): the XR pointer registration API may change before stable.
     registerPointer: (config: XRPointerConfig) => {
       const pointerId = nextXRPointerId++
       xrPointers.set(pointerId, config)

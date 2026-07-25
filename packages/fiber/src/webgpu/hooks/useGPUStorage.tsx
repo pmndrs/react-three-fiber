@@ -1,3 +1,4 @@
+// EXPERIMENTAL (A3): API may change before stable. Reactive GPU storage registry for TSL.
 import { useCallback, useMemo } from 'react'
 import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
