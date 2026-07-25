@@ -206,6 +206,11 @@ export const createStore = (
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
         set(() => ({ frameloop }))
+        // Mirror the mode onto the scheduler. `configure()` only pushes the *prop* value, so
+        // without this an imperative setFrameloop() would update store state while the RAF loop
+        // kept running (or stayed stopped) — the mode change would never take effect at runtime.
+        // The scheduler's setter is idempotent and owns starting/stopping the loop.
+        getScheduler().frameloop = frameloop
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
