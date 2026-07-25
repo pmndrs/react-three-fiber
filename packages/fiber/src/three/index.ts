@@ -34,6 +34,13 @@ export type { WebGLRendererParameters } from 'three/src/renderers/WebGLRenderer.
 //* RenderTarget Support ==============================
 // Default build needs both for runtime selection based on isLegacy
 export { WebGLRenderTarget } from 'three'
+// Cube render targets: the default build carries both and selects on `isLegacy` at runtime,
+// mirroring the WebGLRenderTarget/RenderTarget pair above. 'three/webgpu' deliberately does not
+// export WebGLCubeRenderTarget — CubeRenderTarget is its WebGPURenderer-compatible counterpart —
+// so the WebGL one is taken from the WebGL entry and is only ever constructed on the legacy path.
+export { WebGLCubeRenderTarget } from 'three'
+export { CubeRenderTarget } from 'three/webgpu'
+export { CubeRenderTarget as CubeRenderTargetCompat } from 'three/webgpu'
 // RenderTarget already exported via 'three/webgpu'
 // RenderTargetCompat alias for single-renderer build code paths (dead code in default build)
 export { RenderTarget as RenderTargetCompat } from 'three/webgpu'

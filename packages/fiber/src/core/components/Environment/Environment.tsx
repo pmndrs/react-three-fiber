@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useThree, createPortal, useFrame, extend, Euler, applyProps, ThreeElement } from '@react-three/fiber'
 import {
   WebGLCubeRenderTarget,
+  CubeRenderTarget,
   Texture,
   Scene,
   CubeCamera,
@@ -269,15 +270,20 @@ export function EnvironmentPortal({
   preset = undefined,
   extensions,
 }: EnvironmentProps) {
-  const gl = useThree((state) => state.gl)
+  const renderer = useThree((state) => state.renderer)
+  const isLegacy = useThree((state) => state.isLegacy)
   const defaultScene = useThree((state) => state.scene)
   const camera = React.useRef<CubeCamera>(null!)
   const [virtualScene] = React.useState(() => new Scene())
   const fbo = React.useMemo(() => {
-    const fbo = new WebGLCubeRenderTarget(resolution)
+    // WebGLCubeRenderTarget is WebGL-only. Under WebGPURenderer the equivalent is three's
+    // CubeRenderTarget, which exists precisely because the WebGL one is not compatible —
+    // 'three/webgpu' stopped exporting WebGLCubeRenderTarget in r185 for that reason.
+    // Mirrors the selection useRenderTarget makes for regular render targets.
+    const fbo = isLegacy ? new WebGLCubeRenderTarget(resolution) : new CubeRenderTarget(resolution)
     fbo.texture.type = HalfFloatType
     return fbo
-  }, [resolution])
+  }, [resolution, isLegacy])
 
   React.useEffect(() => {
     return () => {
@@ -287,10 +293,10 @@ export function EnvironmentPortal({
 
   React.useLayoutEffect(() => {
     if (frames === 1) {
-      const autoClear = gl.autoClear
-      gl.autoClear = true
-      camera.current.update(gl, virtualScene)
-      gl.autoClear = autoClear
+      const autoClear = renderer.autoClear
+      renderer.autoClear = true
+      camera.current.update(renderer as Parameters<CubeCamera['update']>[0], virtualScene)
+      renderer.autoClear = autoClear
     }
     return setEnvProps(background, scene, defaultScene, fbo.texture, {
       backgroundBlurriness: blur ?? backgroundBlurriness,
@@ -307,7 +313,7 @@ export function EnvironmentPortal({
     defaultScene,
     background,
     frames,
-    gl,
+    renderer,
     blur,
     backgroundBlurriness,
     backgroundIntensity,
@@ -319,10 +325,10 @@ export function EnvironmentPortal({
   let count = 1
   useFrame(() => {
     if (frames === Infinity || count < frames) {
-      const autoClear = gl.autoClear
-      gl.autoClear = true
-      camera.current.update(gl, virtualScene)
-      gl.autoClear = autoClear
+      const autoClear = renderer.autoClear
+      renderer.autoClear = true
+      camera.current.update(renderer as Parameters<CubeCamera['update']>[0], virtualScene)
+      renderer.autoClear = autoClear
       count++
     }
   })

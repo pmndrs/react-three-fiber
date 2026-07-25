@@ -38,3 +38,10 @@ export type WebGLShadowMap = never
 export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
 // Stub to prevent import errors (never instantiated due to build flags)
 export const WebGLRenderTarget = null as any
+
+//* CubeRenderTarget Compatibility ==============================
+// three's WebGPU-compatible cube render target. `WebGLCubeRenderTarget` is not exported from
+// 'three/webgpu' — CubeRenderTarget is its documented WebGPURenderer-compatible counterpart.
+export { CubeRenderTarget as CubeRenderTargetCompat } from 'three/webgpu'
+// Stub to prevent import errors (never instantiated due to build flags)
+export const WebGLCubeRenderTarget = null as any
