@@ -12,10 +12,21 @@ import type { Node, ShaderNodeObject } from 'three/webgpu'
 //* Global Types ==============================
 
 declare global {
-  /** Uniform node type - a Node with a value property (matches Three.js UniformNode) */
-  interface UniformNode<T = unknown> extends Node {
-    value: T
-  }
+  /**
+   * Uniform node type.
+   *
+   * This is three's own `UniformNode`, not a re-declaration of it. It previously was a
+   * hand-rolled `interface UniformNode<T> extends Node { value: T }`, which shadowed the real
+   * exported type globally — so R3F's ~58 references resolved to an approximation that was
+   * missing members three actually ships (`setName` among them) and had drifted to the wrong
+   * arity when three made `UniformNode` two-parameter.
+   *
+   * three's signature is `UniformNode<TNodeType, TValue>`. R3F only ever varies the value type,
+   * so the node type is fixed to `unknown` and the single parameter is kept for call-site
+   * ergonomics. The result is three's structural type, so members stay in sync with the
+   * installed three instead of needing to be mirrored by hand.
+   */
+  type UniformNode<T = unknown> = import('three/webgpu').UniformNode<unknown, T>
 
   /**
    * ShaderCallable - the return type of Fn()
