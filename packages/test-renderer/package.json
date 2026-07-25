@@ -4,25 +4,29 @@
   "description": "Test Renderer for react-three-fiber",
   "author": "Josh Ellis",
   "license": "MIT",
-  "main": "dist/react-three-test-renderer.cjs.js",
-  "module": "dist/react-three-test-renderer.esm.js",
-  "types": "dist/react-three-test-renderer.cjs.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "sideEffects": false,
+  "scripts": {
+    "build": "unbuild",
+    "stub": "unbuild --stub"
+  },
   "exports": {
     ".": {
-      "types": "./src/index.tsx",
-      "import": "./dist/react-three-test-renderer.esm.js",
-      "require": "./dist/react-three-test-renderer.cjs.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     },
     "./legacy": {
-      "types": "./src/legacy.tsx",
-      "import": "./dist/legacy.esm.js",
-      "require": "./dist/legacy.cjs.js"
+      "types": "./dist/legacy.d.ts",
+      "import": "./dist/legacy.mjs",
+      "require": "./dist/legacy.cjs"
     },
     "./webgpu": {
-      "types": "./src/webgpu/index.tsx",
-      "import": "./dist/webgpu.esm.js",
-      "require": "./dist/webgpu.cjs.js"
+      "types": "./dist/webgpu/index.d.ts",
+      "import": "./dist/webgpu/index.mjs",
+      "require": "./dist/webgpu/index.cjs"
     }
   },
   "bugs": {
@@ -32,13 +36,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pmndrs/react-three-fiber.git"
-  },
-  "preconstruct": {
-    "entrypoints": [
-      "index.tsx",
-      "legacy.tsx",
-      "webgpu/index.tsx"
-    ]
   },
   "peerDependencies": {
     "@react-three/fiber": ">=10.0.0-alpha.0",
@@ -53,5 +50,9 @@
   "devDependencies": {
     "@react-three/fiber": "workspace:*",
     "three": ">=0.181"
-  }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
