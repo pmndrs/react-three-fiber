@@ -3,7 +3,8 @@ import React, { act } from 'react'
 import { render } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import * as THREE from 'three'
-import { Canvas, useFrame, useThree } from '../src'
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js'
+import { Canvas, useFrame, useLoader, useThree } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
@@ -294,13 +295,18 @@ describe('web Canvas', () => {
     })
 
     it('should parse object form with preset', async () => {
-      // This test verifies the parsing works without waiting for network
-      // The preset will try to load but we verify the Environment is rendered
-      let environmentRendered = false
-
-      // Mock console.error to suppress network errors from preset loading
-      const originalError = console.error
-      console.error = vi.fn()
+      // `preset: 'city'` resolves to a .hdr under CUBEMAP_ROOT, so the real path would hit
+      // raw.githack.com over the network — which makes this test fail offline or in a
+      // sandboxed runner. Stub the loader instead: HDRLoader.loadAsync() delegates to
+      // load(), so this covers both branches of useLoader's loadingFn. Everything else
+      // (background parsing, Environment, useEnvironment, useLoader) stays real.
+      const loadSpy = vi
+        .spyOn(HDRLoader.prototype, 'load')
+        .mockImplementation((_url: string, onLoad?: (data: THREE.DataTexture, texData: object) => void) => {
+          const texture = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1)
+          onLoad?.(texture, {})
+          return texture
+        })
 
       try {
         await act(async () =>
@@ -315,13 +321,15 @@ describe('web Canvas', () => {
           ),
         )
 
-        // The Canvas should mount without throwing
-        environmentRendered = true
+        // The preset was resolved through the loader rather than silently skipped
+        expect(loadSpy).toHaveBeenCalled()
+        expect(loadSpy.mock.calls[0][0]).toBe('potsdamer_platz_1k.hdr')
       } finally {
-        console.error = originalError
+        // Drop the stubbed texture from the suspend-react cache so it can't leak into
+        // another test that loads the same key.
+        useLoader.clear(HDRLoader, 'potsdamer_platz_1k.hdr')
+        loadSpy.mockRestore()
       }
-
-      expect(environmentRendered).toBe(true)
     })
   })
 
