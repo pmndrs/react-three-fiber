@@ -8,27 +8,22 @@
 const INTERNAL_LIB_MARKERS = ['zustand', 'setState', 'Object.assign']
 
 /**
- * Path fragments that identify a frame as R3F's own runtime code — across every
- * environment it actually ships/runs in:
- *   - `packages/fiber/src`  — monorepo dev source (repo-name independent)
- *   - `packages/fiber/dist` — monorepo built output
- *   - `@react-three/fiber`  — installed package (node_modules)
- *   - `@react-three_fiber`  — Vite dep-optimized form of the above
+ * R3F's own source is deliberately NOT on this list.
  *
- * Deliberately path-INDEPENDENT: the previous heuristic hard-coded
- * `react-three-fiber/packages/fiber/src/core`, which only matched a checkout
- * literally named `react-three-fiber` — so it suppressed everything there
- * (the getter's own frame always matched) and nothing anywhere else (installed
- * as `@react-three/fiber`, or any other directory name). Note these markers
- * match `packages/fiber/src|dist` but NOT `packages/fiber/tests`, so the test
- * suite's own `state.gl` access is correctly treated as external.
+ * It used to be: any frame under `packages/fiber/src|dist` (or the installed
+ * `@react-three/fiber`) had its `state.gl` deprecation warning suppressed. That blanket
+ * exemption was written for library plumbing, but it also covered genuine R3F code — the one
+ * real internal consumer, `EnvironmentPortal`, sat inside its own exemption and so never
+ * surfaced the warning it should have. Migrating to `state.renderer` is a v10 pillar; R3F must
+ * hold itself to it, not silence itself.
+ *
+ * Core has no `state.gl` reads left, so nothing needs suppressing. If one is reintroduced it now
+ * warns like any other consumer's would.
  */
-const INTERNAL_FIBER_MARKERS = ['packages/fiber/src', 'packages/fiber/dist', '@react-three/fiber', '@react-three_fiber']
-
 /**
- * Decide whether a `state.gl` read (captured via `new Error().stack` inside the
- * getter) originated from R3F's own machinery — in which case the deprecation
- * warning should be suppressed — rather than from user/consumer code.
+ * Decide whether a `state.gl` read (captured via `new Error().stack` inside the getter) came
+ * from library plumbing that walks every enumerable getter — in which case the deprecation
+ * warning is noise — rather than from a deliberate read in user, consumer, or R3F code.
  *
  * Only the IMMEDIATE caller frame is inspected. Scanning the whole stack would
  * misfire on every user access, because R3F internals (the reconciler,
@@ -42,5 +37,5 @@ const INTERNAL_FIBER_MARKERS = ['packages/fiber/src', 'packages/fiber/dist', '@r
 export function isInternalRendererAccess(stack: string | undefined, callerDepth = 2): boolean {
   if (!stack) return false
   const caller = stack.split('\n')[callerDepth] ?? ''
-  return INTERNAL_LIB_MARKERS.some((m) => caller.includes(m)) || INTERNAL_FIBER_MARKERS.some((m) => caller.includes(m))
+  return INTERNAL_LIB_MARKERS.some((m) => caller.includes(m))
 }
