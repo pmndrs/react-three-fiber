@@ -29,7 +29,7 @@ pnpm format           # Check Prettier formatting
 pnpm format:fix       # Auto-fix formatting
 
 # Full CI Suite
-pnpm ci               # build → typecheck → eslint → dev → test → format
+pnpm run ci           # build → typecheck → eslint → dev → test → format
 
 # Single Test File
 vitest packages/fiber/tests/hooks.test.tsx

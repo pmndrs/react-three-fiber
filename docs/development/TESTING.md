@@ -9,7 +9,7 @@ This is the **canonical** testing guide for `@react-three/fiber`. It is the sing
 ```bash
 pnpm test            # Tier 1: unit + mock suite with coverage (what CI runs)
 pnpm test:watch      # Tier 1: watch mode, no coverage
-pnpm ci              # Full local gate: build → verify → typecheck → eslint → test → format
+pnpm run ci          # Full local gate: build → verify → typecheck → eslint → test → format
 ```
 
 - **Tier 1 (this repo's everyday suite)** runs in jsdom on every PR. Pure-JS logic + hook lifecycle against mocks.
@@ -118,10 +118,10 @@ Time-boxed and exploratory — **do not block any release on it.** If the spike 
 
 The local full gate and the CI workflow **must run the same checks in the same way**, or they drift and "passes locally" stops meaning anything.
 
-- **Local full gate:** `pnpm ci` → `build → verify-bundles → verify-types → typecheck → eslint → dev → test → format`.
+- **Local full gate:** `pnpm run ci` → `build → verify-bundles → verify-types → typecheck → eslint → dev → test → format`.
 - **CI workflow:** [`.github/workflows/test.yml`](../../.github/workflows/test.yml) — runs on PRs and `master`, across a React version matrix (19.0.0 + latest).
 
-> **Known gap (tracked in the roadmap below):** CI currently does **not** run `verify-bundles` / `verify-types`, so `pnpm ci` locally is stricter than CI. The fix is to have CI invoke the same script set (ideally `pnpm ci` directly, or a shared composite step) so the two cannot diverge.
+> **Known gap (tracked in the roadmap below):** CI currently does **not** run `verify-bundles` / `verify-types`, so `pnpm run ci` locally is stricter than CI. The fix is to have CI invoke the same script set (ideally `pnpm run ci` directly, or a shared composite step) so the two cannot diverge.
 
 **Rule for new checks:** if you add a verification step, add it to _both_ the `ci` script and the workflow — or, better, add it to the shared script the workflow calls.
 
@@ -235,7 +235,7 @@ Open work to bring local/CI testing fully into line with this guide. Trim items 
 
 ### Parity & CI
 
-- [x] **Make CI run the same checks as `pnpm ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm ci` order. _(task D5)_
+- [x] **Make CI run the same checks as `pnpm run ci`.** `verify-bundles` + `verify-types` now run in [`.github/workflows/test.yml`](../../.github/workflows/test.yml) right after Build, matching the local `pnpm run ci` order. _(task D5)_
 - [x] **Surface coverage in CI** — the `text-summary` reporter prints totals in the run log, and the `coverage/` report is uploaded as a build artifact (no failing threshold yet).
 
 ### Coverage (soft now → hard at stable)
