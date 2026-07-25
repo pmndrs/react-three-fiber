@@ -652,12 +652,14 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   cloneMutableTextInstance(textInstance: any) {
     return textInstance
   },
-  cloneRootViewTransitionContainer(_rootContainer: any) {
-    throw new Error('Not implemented.')
-  },
-  removeRootViewTransitionClone(_rootContainer: any, _clone: any) {
-    throw new Error('Not implemented.')
-  },
+  // React 19.2 added these for root-level view transitions. They only run for hosts that opt into
+  // view transitions by returning a container from cloneRootViewTransitionContainer; R3F renders
+  // into a WebGL/WebGPU canvas, where cloning the root has no meaning, so we never opt in and
+  // React never calls them. They stay as no-ops rather than throws: the host config is shared by
+  // every root, and a throw here would turn a React-internal probe into a hard crash for users.
+  // Guarded by a test asserting a full render + unmount never reaches them.
+  cloneRootViewTransitionContainer(_rootContainer: any): void {},
+  removeRootViewTransitionClone(_rootContainer: any, _clone: any): void {},
 
   // https://github.com/facebook/react/pull/32465
   createFragmentInstance: (_fiber: any): null => null,
