@@ -926,6 +926,31 @@ describe('renderer', () => {
     expect(store.getState().frameloop).toBe('demand')
   })
 
+  // Regression for #3752: when the gl/renderer factory is async and slow, overlapping
+  // configure() calls (e.g. a parent re-render mid-init) must not each build a renderer.
+  it('serializes overlapping configure() calls with an async gl factory (#3752)', async () => {
+    const glFactory = vi.fn(async (props: any) => {
+      // Simulate a slow async renderer init so both configures overlap in-flight.
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      return new THREE.WebGLRenderer(props)
+    })
+
+    let store: RootStore = null!
+    await act(async () => {
+      // Kick off two configures before the first has finished initializing the renderer.
+      const first = root.configure({ gl: glFactory as any, size: { width: 100, height: 100, top: 0, left: 0 } })
+      const second = root.configure({ gl: glFactory as any, size: { width: 300, height: 300, top: 0, left: 0 } })
+      await Promise.all([first, second])
+      store = root.render(null)
+    })
+
+    // The factory must run exactly once despite two overlapping configures.
+    expect(glFactory).toHaveBeenCalledTimes(1)
+    // The latest configure's size wins after the shared renderer resolves.
+    expect(store.getState().size.width).toBe(300)
+    expect(store.getState().size.height).toBe(300)
+  })
+
   it('should preserve setDpr changes from child component across re-configure', async () => {
     // Test scenario: Canvas has dpr={[1, 2]} prop
     // A child component calls setDpr(1) after mount
