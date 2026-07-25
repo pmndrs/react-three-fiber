@@ -181,6 +181,70 @@ describe('useLoader', () => {
     useLoader.clear(TestLoader, [URL_A, URL_B])
   })
 
+  // #3711: a custom cacheKey lets URLs that change per request (signed/auth URLs) reuse the
+  // same cached asset instead of reloading.
+  it('reuses the cache across changing input URLs when a stable cacheKey is given', async () => {
+    const loadCalls: string[] = []
+    class TestLoader extends THREE.Loader<string, string> {
+      load(url: string, onLoad: (result: string) => void): void {
+        loadCalls.push(url)
+        onLoad(`loaded:${url}`)
+      }
+    }
+
+    const CACHE_KEY = '/model.glb'
+    const SIGNED_A = '/model.glb?token=aaa'
+    const SIGNED_B = '/model.glb?token=bbb'
+
+    let result: string | undefined
+    const Comp = ({ url }: { url: string }) => {
+      result = useLoader(TestLoader, url, undefined, undefined, CACHE_KEY)
+      return null
+    }
+
+    await act(async () => root.render(<Comp url={SIGNED_A} />))
+    expect(loadCalls).toEqual([SIGNED_A])
+    expect(result).toBe(`loaded:${SIGNED_A}`)
+
+    // A different signed URL but the SAME cache key → served from cache, no reload.
+    await act(async () => root.render(<Comp url={SIGNED_B} />))
+    expect(loadCalls).toEqual([SIGNED_A])
+    expect(result).toBe(`loaded:${SIGNED_A}`)
+
+    useLoader.clear(TestLoader, SIGNED_A, CACHE_KEY)
+  })
+
+  it('preload and clear honor a custom cacheKey', async () => {
+    const loadCalls: string[] = []
+    class TestLoader extends THREE.Loader<string, string> {
+      load(url: string, onLoad: (result: string) => void): void {
+        loadCalls.push(url)
+        onLoad(`loaded:${url}`)
+      }
+    }
+
+    const CACHE_KEY = '/asset.bin'
+    const SIGNED = '/asset.bin?sig=xyz'
+
+    // Preload the real (signed) URL but cache it under the stable key.
+    useLoader.preload(TestLoader, SIGNED, undefined, undefined, CACHE_KEY)
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    expect(loadCalls).toEqual([SIGNED])
+
+    // useLoader with the same cache key (yet another signed URL) hits the preloaded entry.
+    let result: string | undefined
+    const Comp = () => {
+      result = useLoader(TestLoader, '/asset.bin?sig=other', undefined, undefined, CACHE_KEY)
+      return null
+    }
+    await act(async () => root.render(<Comp />))
+    expect(loadCalls).toEqual([SIGNED])
+    expect(result).toBe(`loaded:${SIGNED}`)
+
+    // clear with the cache key removes the entry.
+    useLoader.clear(TestLoader, SIGNED, CACHE_KEY)
+  })
+
   it('can abort loader with loadAsync and clears suspend', async () => {
     const URL_SLOW = '/slow-load.glb'
     let abortCalled = false
