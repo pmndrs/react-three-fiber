@@ -4,48 +4,7 @@ This changelog tracks changes during the v10 alpha period. For the full changelo
 
 ---
 
-## Unreleased
-
-### Breaking Changes
-
-#### Removed Renderer Props
-
-Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
-
-**Removed from Canvas/RenderProps:**
-
-- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
-- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
-- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
-- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
-- `toneMapping` - Use `gl={{ toneMapping: ... }}`
-
-**Removed from RootState (useThree):**
-
-- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
-- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
-
-**Migration:**
-
-```diff
-- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
-+ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
-
-- const { colorSpace, toneMapping } = useThree()
-+ const { renderer } = useThree()
-+ const colorSpace = renderer.outputColorSpace
-+ const toneMapping = renderer.toneMapping
-```
-
-**Note:** `textureColorSpace` remains in RenderProps as it's R3F-specific.
-
-**Files changed:**
-
-- `packages/fiber/types/renderer.d.ts` - Removed props from RenderProps
-- `packages/fiber/types/store.d.ts` - Removed props from RootState
-- `packages/fiber/src/core/Canvas.tsx` - Removed prop destructuring and passing
-- `packages/fiber/src/core/renderer.tsx` - Simplified configure() logic
-- `packages/fiber/src/core/store.ts` - Removed from initial state
+## 10.0.0-alpha.3
 
 ### Features
 
@@ -301,6 +260,124 @@ import { once } from '@react-three/fiber'
 - `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
 - `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
 
+#### Frame Scheduler Extracted to `@pmndrs/scheduler`
+
+The frame scheduler is no longer bundled in fiber. It now ships as its own package,
+`@pmndrs/scheduler`, and is consumed as a normal dependency. Named phases, `before`/`after`
+constraints, per-callback fps throttling and the single shared RAF all behave as before.
+
+#### `useTextures` — Reactive Texture Registry
+
+**EXPERIMENTAL (A5).** A reactive, refcounted texture registry. The API may change before stable.
+
+### Bug Fixes
+
+- Fixed memory leak in `createPortal` where subscriptions to parent store were never cleaned up. When portals were created/destroyed frequently (e.g., with rapidly changing data), each portal subscribed to `previousRoot` but never unsubscribed, keeping the portal's zustand store and all its state in memory indefinitely.
+- Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
+- Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
+- Fixed frustum culling and visibility events running one frame late. The checks now run via
+  `{ before: 'render' }` rather than an unregistered `preRender` phase.
+- Fixed `autoUpdateFrustum` and `occlusion` Canvas props not being forwarded to `configure()` —
+  they fell through to the wrapper `<div>` instead.
+- Fixed the `background` URL detection regex, which was over-escaped and never matched.
+- Fixed HMR not clearing the buffer and GPU-storage caches, so only nodes/uniforms rebuilt.
+- Fixed multi-canvas TSL state not being shared: WebGPU hooks now resolve `primaryStore` when
+  present and fall back to the local store for single-canvas roots.
+- Fixed runtime `setFrameloop()` never reaching the scheduler, so imperative mode changes had no
+  effect on the RAF loop.
+- Fixed `useRenderPipeline` constructing `THREE.PostProcessing`, which three deprecated in r183 in
+  favour of `RenderPipeline` and which warns on construction. R3F now builds `RenderPipeline` when
+  the installed three exports it, falling back for three < r183.
+- Fixed React 19.2's `cloneRootViewTransitionContainer` / `removeRootViewTransitionClone` host
+  methods throwing `Not implemented.`; they are now no-ops.
+- Fixed an async `gl` factory being invoked more than once when `configure()` calls overlapped.
+- Fixed the Canvas `fallback` not being visible when renderer setup failed — it lived inside
+  `<canvas>`, which browsers never paint.
+- Fixed pointer events silently dying after an `args`-triggered reconstruction.
+- Fixed `ShaderMaterial` uniforms losing their target reference across prop updates.
+- Added a custom `cacheKey` argument to `useLoader` / `.preload` / `.clear` for assets fetched
+  from URLs that change per request.
+
+### Examples
+
+- Added **NestedCamera** demo showcasing camera-attached headlights using the new Portal component
+  - Demonstrates figure-8 path camera movement
+  - Shows spotlights following camera orientation
+  - Located at `example/src/demos/default/NestedCamera.tsx`
+- Added **Layered Reality** demo showcasing multi-canvas rendering with HTML content sandwiched between two 3D layers
+  - Background canvas renders the main scene (ring, wireframe shapes)
+  - Foreground canvas renders in front of HTML using shared WebGPU renderer
+  - Demonstrates `renderer={{ primaryCanvas: 'id' }}` and render phase control
+  - Located at `example/src/demos/default/Layered.tsx`
+
+### Maintenance
+
+- `@react-three/test-renderer` now has a real build. It previously had no build script and no
+  `dist`, while `main`/`module`/`types` all pointed into `dist/` — it would have published broken.
+- Removed dead `Instance.deferredRefs` and `updateVisibilityHandlers`.
+- Renamed the last internal `PostProcessing`/`pp` identifiers to `RenderPipeline`/`pipeline`.
+- Dropped the dangling `heroes` entry from `pnpm-workspace.yaml`.
+- Corrected `pnpm ci` to `pnpm run ci` in CLAUDE.md and docs — pnpm reserves `ci` as a built-in,
+  so the documented command always errored instead of running the gate.
+- Stubbed the HDR loader in the background-preset test, which previously made a live network
+  request to raw.githack.com and failed offline.
+
+### Files Changed
+
+- `packages/fiber/src/core/utils/fromRef.ts` - **NEW** Deferred ref resolution utility
+- `packages/fiber/src/core/utils/once.ts` - **NEW** Mount-only method call utility
+- `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
+- `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
+- `example/src/demos/default/NestedCamera.tsx` - **NEW** Camera headlights demo
+- `docs/v10-features.md` - Camera parenting, Portal, fromRef, once documentation
+
+---
+
+## 10.0.0-alpha.2
+
+### Breaking Changes
+
+#### Removed Renderer Props
+
+Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
+
+**Removed from Canvas/RenderProps:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
+- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+
+**Removed from RootState (useThree):**
+
+- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
+- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
+
+**Migration:**
+
+```diff
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
+
+- const { colorSpace, toneMapping } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
+```
+
+**Note:** `textureColorSpace` remains in RenderProps as it's R3F-specific.
+
+**Files changed:**
+
+- `packages/fiber/types/renderer.d.ts` - Removed props from RenderProps
+- `packages/fiber/types/store.d.ts` - Removed props from RootState
+- `packages/fiber/src/core/Canvas.tsx` - Removed prop destructuring and passing
+- `packages/fiber/src/core/renderer.tsx` - Simplified configure() logic
+- `packages/fiber/src/core/store.ts` - Removed from initial state
+
+### Features
+
 #### Canvas Size Control
 
 Added `width` and `height` props to Canvas for explicit resolution control, enabling use cases like 4K video export independent of container size.
@@ -413,26 +490,11 @@ Changed the default shadow map type from `PCFSoftShadowMap` to `PCFShadowMap` to
 
 ### Bug Fixes
 
-- Fixed memory leak in `createPortal` where subscriptions to parent store were never cleaned up. When portals were created/destroyed frequently (e.g., with rapidly changing data), each portal subscribed to `previousRoot` but never unsubscribed, keeping the portal's zustand store and all its state in memory indefinitely.
-- Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
-- Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
 - Fixed `useNodes()` and `useUniforms()` reader modes not updating when store changes
 - Fixed `usePostProcessing` callbacks not re-running after HMR due to stale ref guards
 - Fixed absolute Windows paths appearing in bundled type declarations by defining `FiberRoot` locally instead of importing from `react-reconciler`
 - Fixed eslint-plugin codegen script not awaiting prettier format before writing files
 - Fixed type exports in `reconciler.d.ts` and `three.d.ts` to properly export Three.js types
-
-### Examples
-
-- Added **NestedCamera** demo showcasing camera-attached headlights using the new Portal component
-  - Demonstrates figure-8 path camera movement
-  - Shows spotlights following camera orientation
-  - Located at `example/src/demos/default/NestedCamera.tsx`
-- Added **Layered Reality** demo showcasing multi-canvas rendering with HTML content sandwiched between two 3D layers
-  - Background canvas renders the main scene (ring, wireframe shapes)
-  - Foreground canvas renders in front of HTML using shared WebGPU renderer
-  - Demonstrates `renderer={{ primaryCanvas: 'id' }}` and render phase control
-  - Located at `example/src/demos/default/Layered.tsx`
 
 ### Maintenance
 
@@ -445,10 +507,6 @@ Changed the default shadow map type from `PCFSoftShadowMap` to `PCFShadowMap` to
 
 ### Files Changed
 
-- `packages/fiber/src/core/utils/fromRef.ts` - **NEW** Deferred ref resolution utility
-- `packages/fiber/src/core/utils/once.ts` - **NEW** Mount-only method call utility
-- `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
-- `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
 - `packages/fiber/src/webgpu/hooks/ScopedStore.ts` - **NEW** Type-safe proxy wrapper for uniform/node access
 - `packages/fiber/src/core/Canvas.tsx` - HMR detection and auto-refresh
 - `packages/fiber/src/core/store.ts` - Added `_hmrVersion` to initial state
@@ -460,8 +518,6 @@ Changed the default shadow map type from `PCFSoftShadowMap` to `PCFShadowMap` to
 - `packages/fiber/types/canvas.d.ts` - Added `hmr` prop type
 - `packages/fiber/types/reconciler.d.ts` - Fixed type exports
 - `packages/fiber/types/three.d.ts` - Fixed type exports
-- `example/src/demos/default/NestedCamera.tsx` - **NEW** Camera headlights demo
-- `docs/v10-features.md` - Camera parenting, Portal, fromRef, once documentation
 
 ---
 
