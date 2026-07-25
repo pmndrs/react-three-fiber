@@ -223,6 +223,21 @@ useLoader(loader, url, extensions, (xhr) => {
 })
 ```
 
+### Custom cache keys
+
+By default the request URL is also the cache key. When the URL changes on every request — for example signed or authenticated URLs — that would defeat caching and reload the same asset. Pass an explicit cache key as the fifth argument to load from the changing URL but cache under a stable key:
+
+```jsx
+const model = useLoader(GLTFLoader, signedUrl, undefined, undefined, '/model.glb')
+```
+
+`preload` and `clear` accept the same cache key so the entries line up:
+
+```jsx
+useLoader.preload(GLTFLoader, signedUrl, undefined, undefined, '/model.glb')
+useLoader.clear(GLTFLoader, signedUrl, '/model.glb')
+```
+
 ### Special treatment of GLTFLoaders and all loaders that return a scene prop
 
 If a `result.scene` prop is found the hook will automatically create a object & material collection: `{ nodes, materials }`. This lets you build immutable scene graphs selectively. You can also specifically alter the data without having to traverse it. [GLTFJSX](https://github.com/pmndrs/gltfjsx) specifically relies on this data.
