@@ -648,3 +648,41 @@ describe('useFrame outside Canvas', () => {
     expect(seen[0]).toBe(fakeRenderer)
   })
 })
+
+//* System-job ordering: Bug #1 regression ==============================
+// The frustum/visibility system jobs register with { before: 'render' } (see
+// renderer.tsx). They must run after update but before render — previously they
+// used a bogus 'preRender' phase that the sorter appended after render/finish,
+// leaving state.frustum one frame stale for render-phase consumers.
+
+describe('system job ordering', () => {
+  beforeEach(() => {
+    Scheduler.reset()
+    getScheduler().frameloop = 'never' // drive frames manually
+  })
+
+  afterEach(() => {
+    Scheduler.reset()
+  })
+
+  it('runs { before: render } jobs after update and before render', () => {
+    const calls: string[] = []
+    const scheduler = getScheduler()
+    scheduler.registerRoot('test-root', { getState: () => ({}) })
+
+    // Mirror renderer.tsx registration order/options for the system jobs
+    scheduler.register(() => calls.push('update'), { id: 'update-job', rootId: 'test-root', phase: 'update' })
+    scheduler.register(() => calls.push('render'), { id: 'render-job', rootId: 'test-root', phase: 'render' })
+    scheduler.register(() => calls.push('frustum'), { id: 'frustum', rootId: 'test-root', before: 'render' })
+    scheduler.register(() => calls.push('visibility'), {
+      id: 'visibility',
+      rootId: 'test-root',
+      before: 'render',
+      after: 'frustum',
+    })
+
+    scheduler.step(1000)
+
+    expect(calls).toEqual(['update', 'frustum', 'visibility', 'render'])
+  })
+})
