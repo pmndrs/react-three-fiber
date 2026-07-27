@@ -188,7 +188,10 @@ export function useRenderPipeline(
         callbacksRanRef.current = true
       }
     } catch (error) {
-      console.error('[useRenderPipeline] Setup error:', error)
+      // Surfaced rather than rethrown: throwing here would take down the whole tree for what is
+      // usually a recoverable pass-configuration mistake. Logged loudly so a failed pipeline
+      // setup cannot look like "the effect silently did nothing".
+      console.warn('[useRenderPipeline] Setup failed; the render pipeline was not configured:', error)
     }
 
     // No auto-cleanup on unmount - RenderPipeline persists

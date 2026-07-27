@@ -26,6 +26,24 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'text-summary', 'json', 'html'],
       exclude: ['node_modules/', 'packages/fiber/dist', 'packages/fiber/src/index', 'packages/test-renderer/dist'],
+      /**
+       * A ratchet, not a target. Each value sits just under what the suite currently achieves, so
+       * the build fails if coverage *drops* — it does not assert that coverage is good.
+       *
+       * Raise these as coverage improves; never lower one to make a build pass. The 80% goal for
+       * `src/core` in the release plan is a beta.1 objective and is not reachable by config: the
+       * gap is concentrated in `Environment.tsx`, `useEnvironment.tsx` and `visibility.ts`, all of
+       * which ship stable and need real tests.
+       *
+       * Statements/branches read low because v8 counts every bundled three.js expression that the
+       * suite touches; `lines` is the meaningful figure for R3F's own code.
+       */
+      thresholds: {
+        lines: 78,
+        functions: 50,
+        statements: 41,
+        branches: 30,
+      },
     },
     testTimeout: 30000,
   },

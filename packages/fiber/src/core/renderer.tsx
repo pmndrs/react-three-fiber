@@ -866,8 +866,11 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
             dispose(state.scene)
             _roots.delete(canvas)
             if (callback) callback(canvas)
-          } catch {
-            /* ... */
+          } catch (error) {
+            // Teardown is best-effort — a failure here must not throw out of unmount, or React is
+            // left with a half-torn-down root. But swallowing it silently hid real WebGPU teardown
+            // failures, which is how this surfaces as "dispose appears to do nothing".
+            console.warn('[R3F] Error while unmounting root; teardown may be incomplete:', error)
           }
         }, 500)
       }
