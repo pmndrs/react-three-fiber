@@ -116,7 +116,9 @@ jobs:
       # pages are validated after deploy. 403/429 are accepted because codesandbox,
       # npmjs and friends bot-block HEAD requests -- treating those as rot makes
       # the job flake, and no real breakage we have hit reported 403 (they were
-      # 404 and 400, both still caught).
+      # 404 and 400, both still caught). The opencollective badge SVGs are
+      # generated on demand and 500 under load -- the page links they wrap are
+      # still checked.
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
@@ -127,6 +129,7 @@ jobs:
             --root-dir "$GITHUB_WORKSPACE/docs"
             --exclude '^file://'
             --exclude 'docs\.pmnd\.rs'
+            --exclude 'opencollective\.com/.*\.svg'
             --accept '200,206,403,429'
             'docs/**/*.md'
             'docs/**/*.mdx'
