@@ -136,7 +136,6 @@ createRoot(document.getElementById('root') as HTMLElement).render(
 )
 ```
 
-TODO: Move this
 Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 
 </details>

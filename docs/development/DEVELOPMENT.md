@@ -82,5 +82,14 @@ packages/fiber/
 | :-------------------------------------------- | :--------------------------------------------------------------- |
 | **[BUILD](./BUILD.md)**                       | Build system architecture, alias resolution, adding entry points |
 | **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting           |
-| **[ALPHA-RELEASE](./ALPHA-RELEASE.md)**       | Alpha release process for v10 branch                             |
 | **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                 |
+
+### Design notes
+
+Contributor-facing rationale — _why_ a subsystem is shaped the way it is, not how to use it.
+
+| Doc                                             | Purpose                                                                 |
+| :---------------------------------------------- | :---------------------------------------------------------------------- |
+| **[frame-loop-design](./frame-loop-design.md)** | Global singleton scheduler, phase-graph ordering, render takeover, fps  |
+| **[webgpu-tsl-design](./webgpu-tsl-design.md)** | `useRenderPipeline` intent, `outputNode`, deliberate HMR behavior       |
+| **[webgpu-outline](./webgpu-outline.md)**       | ⚠️ Historical, non-canonical — the original v10 WebGPU planning outline |

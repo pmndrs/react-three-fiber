@@ -223,6 +223,6 @@ If you're upgrading from v8 and using WebGPU features:
 
 ## API
 
-- [React Three Test Renderer API](/packages/test-renderer/markdown/rttr.md)
-- [React Three Test Instance API](/packages/test-renderer/markdown/rttr-instance.md)
-- [WebGPU Testing Guide](/packages/test-renderer/markdown/webgpu-testing.md)
+- [React Three Test Renderer API](./markdown/rttr.md)
+- [React Three Test Instance API](./markdown/rttr-instance.md)
+- [WebGPU Testing Guide](./markdown/webgpu-testing.md)

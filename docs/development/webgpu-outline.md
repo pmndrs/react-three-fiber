@@ -1,4 +1,35 @@
-# R3F Web GPU Upgrade
+# R3F WebGPU Upgrade — Historical Planning Outline
+
+> **⚠️ Non-canonical. This is a historical snapshot, not documentation.**
+>
+> This is the original planning outline that kicked off the v10 WebGPU work, preserved verbatim
+> below for provenance. Its decisions have since been made, and several were made _differently_.
+> **Do not treat anything below as a description of how v10 behaves.**
+>
+> - For how v10 behaves: [`docs/webgpu/`](../webgpu/overview.mdx) and [`docs/migration/v10.mdx`](../migration/v10.mdx).
+> - For _why_ it was built this way: [`frame-loop-design.md`](./frame-loop-design.md) and
+>   [`webgpu-tsl-design.md`](./webgpu-tsl-design.md).
+
+## What actually shipped, versus this outline
+
+The deltas worth knowing before reading, so the outline is not mistaken for a spec:
+
+| This outline proposed                                               | What v10 shipped                                                                                                          |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Root entry defaults to **WebGPU**, `gl` switches you back to legacy | Root entry defaults to **WebGL** and is WebGPU-_ready_; WebGPU is opt-in via the `renderer` prop                          |
+| `gl` **throws** on the `/webgpu` entry                              | `state.gl` never throws. It maps to the active renderer and emits a deprecation warning outside the `/legacy` entry       |
+| An explicit `<Canvas webglONLY />` backend flag                     | No such prop. Backend selection is the entry point (`/legacy`, `/webgpu`) plus `renderer` / `gl` on `<Canvas>`            |
+| `useUniforms(['colorA', { name: 'scale', type: 'int' }])`           | Shipped with a different signature; see [`docs/webgpu/tsl-hooks.mdx`](../webgpu/tsl-hooks.mdx)                            |
+| Texture and material caches ("more theoretical")                    | `useTextures` shipped **experimental**; no material cache                                                                 |
+| "I'm not sure our current `useFrame` works well with it"            | The frame loop was rewritten around a global phase-graph scheduler — see [`frame-loop-design.md`](./frame-loop-design.md) |
+
+Unchanged and still accurate: the `#three` alias as the single import boundary, the
+core/webgpu/legacy source split, the three published entry points, and exposing the
+inspector on state (`useThree().inspector`).
+
+---
+
+_Verbatim original follows._
 
 # Overview
 
