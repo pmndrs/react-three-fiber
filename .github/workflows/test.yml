@@ -103,10 +103,20 @@ jobs:
           done < <(find packages -path '*readmes*' -name '*.md')
           exit $fail
 
-      # Check external links in docs + readmes. The production docs host is excluded
-      # (those pages are validated after deploy), and only http(s) links are checked
-      # so the site-relative routes (/frame-loop, /api/canvas, ...) the docs renderer
-      # resolves are not flagged here.
+      # Check external links in docs + readmes. Only http(s) links are in scope:
+      # the docs renderer resolves site routes itself, in two flavours that both
+      # look broken on disk -- root-relative ('/frame-loop', '/api/canvas') and
+      # extension-less relative ('./tsl-hooks'). `--scheme` alone does not skip
+      # them, because lychee turns local links into `file://` URIs and root-relative
+      # ones fail at parse time before any exclude applies. So:
+      #   --root-dir     lets root-relative links parse (resolved under docs/)
+      #   --exclude ^file:// then drops every local link, however it was written
+      # Relative *file* links (../webgpu/overview.mdx) are covered by the repo's
+      # own check, not here. The production docs host is excluded because those
+      # pages are validated after deploy. 403/429 are accepted because codesandbox,
+      # npmjs and friends bot-block HEAD requests -- treating those as rot makes
+      # the job flake, and no real breakage we have hit reported 403 (they were
+      # 404 and 400, both still caught).
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
@@ -114,7 +124,10 @@ jobs:
             --no-progress
             --scheme http
             --scheme https
+            --root-dir "$GITHUB_WORKSPACE/docs"
+            --exclude '^file://'
             --exclude 'docs\.pmnd\.rs'
+            --accept '200,206,403,429'
             'docs/**/*.md'
             'docs/**/*.mdx'
             'packages/**/readmes/*.md'

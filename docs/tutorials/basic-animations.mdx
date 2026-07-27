@@ -45,7 +45,7 @@ useFrame((state) => {
 
 ## Animating with Refs
 
-It would be tempting to just update the state of our component via `setState` and let it change the `mesh` via props, but going through state isn't ideal, when dealing with continuous updates, commonly know as [transient updates]().
+It would be tempting to just update the state of our component via `setState` and let it change the `mesh` via props, but going through state isn't ideal, when dealing with continuous updates, commonly known as [transient updates](https://zustand.docs.pmnd.rs/guides/updating-state#transient-updates-(for-often-occurring-state-changes)).
 Instead, we want to **directly mutate our mesh each frame**. First, we'll have to get a `reference` to it, via the `useRef` React hook:
 
 ```jsx
