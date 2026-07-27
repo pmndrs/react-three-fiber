@@ -54,7 +54,7 @@ Returns `BuffersWithUtils<BufferRecord>` - your buffers by name, **plus four uti
 
 - **`removeBuffers`** - remove buffers by name from root or a scope (store only).
 - **`clearBuffers`** - clear a scope, `'root'` for root only, or no argument for everything.
-- **`rebuildBuffers`** - clear the cache and bump the HMR version to force re-creation (all, `'root'`, or a scope).
+- **`rebuildBuffers`** - invalidate the cache and bump the HMR version to force re-creation (all, `'root'`, or a scope). See [TSL HMR](./hmr) for the rebuild guarantees.
 - **`disposeBuffers`** - releases GPU resources (`.dispose()`) **and** removes from the store.
 
 ### What Can Be Stored
