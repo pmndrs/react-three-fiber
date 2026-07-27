@@ -82,5 +82,7 @@ packages/fiber/
 | :-------------------------------------------- | :--------------------------------------------------------------- |
 | **[BUILD](./BUILD.md)**                       | Build system architecture, alias resolution, adding entry points |
 | **[TESTING](./TESTING.md)**                   | Testing strategy, bundle verification, troubleshooting           |
-| **[ALPHA-RELEASE](./ALPHA-RELEASE.md)**       | Alpha release process for v10 branch                             |
 | **[NATIVE-MIGRATION](./NATIVE-MIGRATION.md)** | v10 native package split details                                 |
+
+Design rationale is not kept as separate documents — it lives with the feature it explains. See
+[README](./README.md#where-design-rationale-lives).

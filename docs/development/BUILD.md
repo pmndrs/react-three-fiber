@@ -10,7 +10,7 @@ We use **pnpm** for its performance, strict dependency resolution, and first-cla
 
 **Configuration:** `pnpm-workspace.yaml`
 
-//\* Why pnpm? -------------------------------------------
+### Why pnpm?
 
 - **Content-addressable storage** — Saves disk space via hard links
 - **Strict resolution** — Prevents phantom dependencies
@@ -24,11 +24,15 @@ We use **[Unbuild](https://github.com/unjs/unbuild)** for building all packages.
 
 **Configuration:** `packages/fiber/build.config.ts`
 
-//\* Why Unbuild? ----------------------------------------
+### Why Unbuild?
 
 Unbuild provides per-entry-point build configuration, which is critical for our THREE.js import strategy.
 
-//\* Per-Entry Alias Resolution --------------------------
+### Per-Entry Alias Resolution
+
+**Why this exists.** `three` and `three/webgpu` are separate bundles, and each is a superset of three's core: importing from root `three` gives you core + the WebGL renderer, importing from `three/webgpu` gives you core + WebGPU. There is no import that gives you core alone. If R3F imported from `three` throughout, every consumer would ship the WebGL renderer even on a WebGPU-only app — megabytes that size-sensitive apps have (loudly) objected to.
+
+So all source imports go through a single `#three` alias, and the build points that alias at a different file per entry. That is the whole reason we need per-entry build config, and it is why `verify-bundles` exists: it asserts each built bundle imports only what it should.
 
 Each entry point resolves imports differently:
 
@@ -42,15 +46,44 @@ import { WebGLRenderer } from '#three'
 // - WebGPU entry:  src/three/webgpu.ts (WebGPU only)
 ```
 
-| Entry   | `#three` resolves to  | Result         |
-| :------ | :-------------------- | :------------- |
-| Default | `src/three/index.ts`  | WebGL + WebGPU |
-| Legacy  | `src/three/legacy.ts` | WebGL only     |
-| WebGPU  | `src/three/webgpu.ts` | WebGPU only    |
+`packages/fiber/src/three/` is the single source of truth for what each entry pulls in:
 
-This is configured in `build.config.ts` using a custom Rollup alias plugin.
+| File        | Purpose                             | Used by                          |
+| :---------- | :---------------------------------- | :------------------------------- |
+| `index.ts`  | Default (WebGPU + deprecated WebGL) | Root `@react-three/fiber` import |
+| `legacy.ts` | WebGL only                          | `@react-three/fiber/legacy`      |
+| `webgpu.ts` | WebGPU only (no legacy)             | `@react-three/fiber/webgpu`      |
+| `tsl.ts`    | TSL convenience exports             | WebGPU builds                    |
 
-//\* Stub Mode for Development ---------------------------
+This is wired up in `build.config.ts` using a custom Rollup alias plugin. Adding a THREE.js import means adding it to the appropriate file above, never importing `three` directly in core code.
+
+### Importing `#three` in source
+
+```typescript
+// Namespace import
+import * as THREE from '#three'
+
+// Named imports
+import { WebGPURenderer, Inspector, type WebGLShadowMap } from '#three'
+
+// TSL imports (webgpu builds only)
+import { uniform, vec3, Fn } from '#three/tsl'
+```
+
+For editors and `tsc`, the alias is declared in the root `tsconfig.json` — the build resolves it separately, so both have to agree:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "#three": ["packages/fiber/src/three/index.ts"],
+      "#three/*": ["packages/fiber/src/three/*"]
+    }
+  }
+}
+```
+
+### Stub Mode for Development
 
 `unbuild --stub` creates lightweight stubs that redirect to source:
 
@@ -63,7 +96,7 @@ export default module.default
 
 Code changes reflect immediately without rebuilding.
 
-//\* Build Outputs ---------------------------------------
+### Build Outputs
 
 ```text
 packages/fiber/dist/
@@ -92,7 +125,7 @@ To add a specialized bundle (e.g., a new rendering backend):
 
 ## Migration History
 
-//\* Jest → Vitest (v10) ---------------------------------
+### Jest → Vitest (v10)
 
 Vitest provides faster native ESM testing with better React 19 compatibility.
 
@@ -100,11 +133,11 @@ Vitest provides faster native ESM testing with better React 19 compatibility.
 - No complex Babel transformations
 - Simplified `act` synchronization in JSDOM
 
-//\* Yarn → pnpm (v10) -----------------------------------
+### Yarn → pnpm (v10)
 
 pnpm's strictness and efficiency make it preferred for modern React monorepos.
 
-//\* Preconstruct → Unbuild (v10) ------------------------
+### Preconstruct → Unbuild (v10)
 
 Preconstruct couldn't support per-entry alias resolution for our THREE.js import strategy.
 

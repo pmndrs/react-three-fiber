@@ -1,6 +1,6 @@
 # Changelog (Alpha)
 
-This changelog tracks changes during the v10 alpha period. For the full changelog after stable release, see [CHANGELOG.md](./CHANGELOG.md).
+This changelog tracks changes during the v10 alpha period. For the full per-package history, see [`packages/fiber/CHANGELOG.md`](./packages/fiber/CHANGELOG.md). At stable release this file is folded into the release notes and retired.
 
 ---
 

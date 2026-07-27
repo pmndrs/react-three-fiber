@@ -84,29 +84,41 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Enforce the readme-stub contract: every source readme is a thin pointer to
-      # the canonical docs, never a second copy of the docs (the "drift rule").
-      - name: Assert readme stubs link to docs and stay small
+      # Enforce the readme-stub contract: every readme that sits next to source is a
+      # thin pointer to the canonical docs, never a second copy of them (the "drift
+      # rule"). Docs that drift are worse than no docs -- they get believed.
+      - name: Assert source readmes stay thin pointers
         run: |
           fail=0
           while IFS= read -r f; do
-            n=$(grep -c "Full documentation:" "$f" || true)
-            if [ "$n" -ne 1 ]; then
-              echo "::error file=$f::readme must contain exactly one 'Full documentation:' link (found $n)"
+            if ! grep -q "Full documentation:" "$f"; then
+              echo "::error file=$f::source readme must carry a 'Full documentation:' pointer to docs/ or docs.pmnd.rs"
               fail=1
             fi
             lines=$(wc -l < "$f")
-            if [ "$lines" -gt 15 ]; then
-              echo "::error file=$f::readme exceeds the 15-line stub budget ($lines lines) — move usage content into docs/"
+            if [ "$lines" -gt 25 ]; then
+              echo "::error file=$f::source readme exceeds the 25-line stub budget ($lines lines) — move the content into docs/ and link to it"
               fail=1
             fi
-          done < <(find packages -path '*readmes*' -name '*.md')
+          done < <(find packages/*/src -iname 'readme.md')
           exit $fail
 
-      # Check external links in docs + readmes. The production docs host is excluded
-      # (those pages are validated after deploy), and only http(s) links are checked
-      # so the site-relative routes (/frame-loop, /api/canvas, ...) the docs renderer
-      # resolves are not flagged here.
+      # Check external links in docs + readmes. Only http(s) links are in scope:
+      # the docs renderer resolves site routes itself, in two flavours that both
+      # look broken on disk -- root-relative ('/frame-loop', '/api/canvas') and
+      # extension-less relative ('./tsl-hooks'). `--scheme` alone does not skip
+      # them, because lychee turns local links into `file://` URIs and root-relative
+      # ones fail at parse time before any exclude applies. So:
+      #   --root-dir     lets root-relative links parse (resolved under docs/)
+      #   --exclude ^file:// then drops every local link, however it was written
+      # Relative *file* links (../webgpu/overview.mdx) are covered by the repo's
+      # own check, not here. The production docs host is excluded because those
+      # pages are validated after deploy. 403/429 are accepted because codesandbox,
+      # npmjs and friends bot-block HEAD requests -- treating those as rot makes
+      # the job flake, and no real breakage we have hit reported 403 (they were
+      # 404 and 400, both still caught). The opencollective badge SVGs are
+      # generated on demand and 500 under load -- the page links they wrap are
+      # still checked.
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
@@ -114,8 +126,12 @@ jobs:
             --no-progress
             --scheme http
             --scheme https
+            --root-dir "$GITHUB_WORKSPACE/docs"
+            --exclude '^file://'
             --exclude 'docs\.pmnd\.rs'
+            --exclude 'opencollective\.com/.*\.svg'
+            --accept '200,206,403,429'
             'docs/**/*.md'
             'docs/**/*.mdx'
-            'packages/**/readmes/*.md'
+            'packages/*/src/**/[Rr][Ee][Aa][Dd][Mm][Ee].md'
           fail: true

@@ -60,6 +60,10 @@ import { Canvas, useFrame, useUniforms } from '@react-three/fiber/webgpu'
 
 The WebGPU/TSL hooks (`useUniforms`, `useNodes`, `useLocalNodes`, `useRenderPipeline`, `useBuffers`, `useGPUStorage`) are only exported from `@react-three/fiber/webgpu`.
 
+> **On the naming.** Three's `WebGPURenderer` is a slight misnomer — it is the renderer that speaks TSL, and WebGPU is only one of its backends. It can and does run on WebGL. So "WebGPU vs WebGL" is really two questions: which renderer (`WebGPURenderer` or the older `WebGLRenderer`), and which backend the former picks at runtime. R3F names the split by renderer, not backend: the new one is `renderer`, the old one is `legacy`. The `/webgpu` entry keeps its name to match three and the rest of the ecosystem. If you want the new renderer but not the WebGPU backend, that's `renderer={{ forceWebGL: true }}` — still TSL, still node materials.
+
+The entry points exist because `three` and `three/webgpu` are different bundles, not different flavours of one. Importing from root `three` pulls in the WebGL renderer whether or not you use it, which is real weight in a size-sensitive app. Every entry resolves its three imports through a single internal alias so a `/webgpu` build never pulls WebGL in, and `/legacy` never pulls WebGPU in — see [BUILD.md](https://github.com/pmndrs/react-three-fiber/blob/v10/docs/development/BUILD.md) for how that resolution works.
+
 ## Node-Material Auto-Extend
 
 The `/webgpu` entry point automatically calls `extend()` with the THREE WebGPU namespace. This makes node materials available as declarative JSX elements - no manual `extend()` call needed:
