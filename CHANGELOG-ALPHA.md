@@ -6,6 +6,19 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ## 10.0.0-alpha.3
 
+### Breaking Changes
+
+#### three.js peer floor raised to `>=0.185.0`
+
+The `three` peer range moved from `>=0.181.2` to **`>=0.185.0`**. **If you are on r181–r184 you cannot install alpha.3** — upgrade three alongside R3F.
+
+```diff
+- "three": ">=0.181.2"
++ "three": ">=0.185.0"
+```
+
+The floor moved because v10 now uses three's own APIs rather than shadowing them: `RenderPipeline` (renamed from `PostProcessing` in r183), `CubeRenderTarget`, and the real `UniformNode` types. Keeping a fallback path for older three meant maintaining a parallel implementation of types three already ships.
+
 ### Features
 
 #### Interactive Priority (userData.interactivePriority)
@@ -275,8 +288,8 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
 - Fixed memory leak in `createPortal` where subscriptions to parent store were never cleaned up. When portals were created/destroyed frequently (e.g., with rapidly changing data), each portal subscribed to `previousRoot` but never unsubscribed, keeping the portal's zustand store and all its state in memory indefinitely.
 - Fixed portal `size` state being overwritten by parent resize events. Portals now correctly preserve their own size override when the root canvas resizes, matching the existing behavior for `events`. This also fixes nested portals ignoring their size configuration.
 - Fixed `setSize` not triggering a frame in demand mode. Now calls `scheduler.invalidate()` directly so `useFrame` callbacks can respond to size changes.
-- Fixed frustum culling and visibility events running one frame late. The checks now run via
-  `{ before: 'render' }` rather than an unregistered `preRender` phase.
+- Fixed `state.frustum` being stale when read during the render phase. The frustum and visibility
+  checks now run via `{ before: 'render' }` rather than an unregistered `preRender` phase.
 - Fixed `autoUpdateFrustum` and `occlusion` Canvas props not being forwarded to `configure()` —
   they fell through to the wrapper `<div>` instead.
 - Fixed the `background` URL detection regex, which was over-escaped and never matched.
@@ -286,8 +299,8 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
 - Fixed runtime `setFrameloop()` never reaching the scheduler, so imperative mode changes had no
   effect on the RAF loop.
 - Fixed `useRenderPipeline` constructing `THREE.PostProcessing`, which three deprecated in r183 in
-  favour of `RenderPipeline` and which warns on construction. R3F now builds `RenderPipeline` when
-  the installed three exports it, falling back for three < r183.
+  favour of `RenderPipeline` and which warns on construction. R3F now constructs `THREE.RenderPipeline`
+  directly — with the peer floor at r185 there is no version left to fall back for.
 - Fixed React 19.2's `cloneRootViewTransitionContainer` / `removeRootViewTransitionClone` host
   methods throwing `Not implemented.`; they are now no-ops.
 - Fixed an async `gl` factory being invoked more than once when `configure()` calls overlapped.
