@@ -99,7 +99,18 @@ export function useEnvironment({
   return texture
 }
 
-type EnvironmentLoaderPreloadOptions = Omit<EnvironmentLoaderProps, 'encoding'>
+/**
+ * Options accepted by `useEnvironment.preload`.
+ *
+ * `colorSpace` is deliberately omitted: preload only warms the loader cache, and colorSpace is
+ * applied to the texture by `useEnvironment()` at use time, per consumer. Accepting it here would
+ * advertise an option this function silently ignores.
+ *
+ * This previously read `Omit<…, 'encoding'>` — omitting a key that does not exist on
+ * `EnvironmentLoaderProps`, a leftover from three's pre-`colorSpace` `encoding` API. That made the
+ * type equivalent to the full props, so `colorSpace` was accepted and then dropped on the floor.
+ */
+type EnvironmentLoaderPreloadOptions = Omit<EnvironmentLoaderProps, 'colorSpace'>
 const preloadDefaultOptions = {
   files: defaultFiles,
   path: '',

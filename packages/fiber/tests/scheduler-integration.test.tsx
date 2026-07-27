@@ -285,6 +285,40 @@ describe('scheduler integration', () => {
     })
   })
 
+  //* 3. Frustum / visibility run before render (Bug #1, task A1) ==============================
+
+  describe('frustum + visibility ordering', () => {
+    it('runs the visibility check before the default render, in the same frame', async () => {
+      const order: string[] = []
+      const renderer = new MockWebGPURenderer({ canvas })
+      vi.spyOn(renderer, 'render').mockImplementation(() => {
+        order.push('render')
+      })
+
+      await act(async () =>
+        (await root.configure({ renderer, frameloop: 'never' })).render(
+          <mesh onFramed={() => order.push('visibility')} />,
+        ),
+      )
+
+      const scheduler = getScheduler()
+      order.length = 0
+      await act(async () => scheduler.step(1000))
+
+      // Both jobs are registered `{ before: 'render' }`. Verified to fail if that regresses,
+      // both when the jobs move to an unregistered `preRender` phase (the original Bug #1
+      // shape) and when the visibility job moves to `after: 'render'`.
+      //
+      // Scope note: this guards ORDERING WITHIN the frame, not callback latency. The audit
+      // found the "callbacks fire one frame late" framing in the README to be wrong — every
+      // job runs inside the same `step()` regardless of intra-frame order, so a camera move
+      // is reported on the same frame either way. What the ordering actually buys is that
+      // `state.frustum` is fresh when the render phase reads it. Do not add a "frame late"
+      // test here; it cannot discriminate.
+      expect(order).toEqual(['visibility', 'render'])
+    })
+  })
+
   //* 3. Imperative setFrameloop reaches the scheduler ==============================
 
   describe('imperative setFrameloop', () => {
