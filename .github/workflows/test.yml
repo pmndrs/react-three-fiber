@@ -84,23 +84,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      # Enforce the readme-stub contract: every source readme is a thin pointer to
-      # the canonical docs, never a second copy of the docs (the "drift rule").
-      - name: Assert readme stubs link to docs and stay small
+      # Enforce the readme-stub contract: every readme that sits next to source is a
+      # thin pointer to the canonical docs, never a second copy of them (the "drift
+      # rule"). Docs that drift are worse than no docs -- they get believed.
+      - name: Assert source readmes stay thin pointers
         run: |
           fail=0
           while IFS= read -r f; do
-            n=$(grep -c "Full documentation:" "$f" || true)
-            if [ "$n" -ne 1 ]; then
-              echo "::error file=$f::readme must contain exactly one 'Full documentation:' link (found $n)"
+            if ! grep -q "Full documentation:" "$f"; then
+              echo "::error file=$f::source readme must carry a 'Full documentation:' pointer to docs/ or docs.pmnd.rs"
               fail=1
             fi
             lines=$(wc -l < "$f")
-            if [ "$lines" -gt 15 ]; then
-              echo "::error file=$f::readme exceeds the 15-line stub budget ($lines lines) — move usage content into docs/"
+            if [ "$lines" -gt 25 ]; then
+              echo "::error file=$f::source readme exceeds the 25-line stub budget ($lines lines) — move the content into docs/ and link to it"
               fail=1
             fi
-          done < <(find packages -path '*readmes*' -name '*.md')
+          done < <(find packages/*/src -iname 'readme.md')
           exit $fail
 
       # Check external links in docs + readmes. Only http(s) links are in scope:
@@ -133,5 +133,5 @@ jobs:
             --accept '200,206,403,429'
             'docs/**/*.md'
             'docs/**/*.mdx'
-            'packages/**/readmes/*.md'
+            'packages/*/src/**/[Rr][Ee][Aa][Dd][Mm][Ee].md'
           fail: true

@@ -27,17 +27,20 @@ pnpm examples
 - **[Testing](./TESTING.md)** — Test layout, the WebGPU mocks, and what runs in CI.
 - **[Native migration](./NATIVE-MIGRATION.md)** — The `@react-three/fiber/native` → `@react-three/native` split.
 
-## Design Notes
+## Where design rationale lives
 
-Contributor-facing rationale — _why_ a subsystem is shaped the way it is. These are not usage
-docs; user-facing content lives under [`docs/`](../) and at https://docs.pmnd.rs/react-three-fiber.
+There is no separate pile of design docs. The _why_ sits with the thing it explains:
 
-- **[Frame loop & scheduler](./frame-loop-design.md)** — the global singleton, phase-graph ordering, render takeover, fps throttling.
-- **[WebGPU / TSL](./webgpu-tsl-design.md)** — `useRenderPipeline` intent, `outputNode`, and the deliberate HMR behavior.
+- **Frame loop** — why one global scheduler, why named dependencies instead of priority numbers,
+  why throttled jobs never catch up: [frame-loop docs](https://docs.pmnd.rs/react-three-fiber/frame-loop).
+- **WebGPU / TSL** — why `outputNode` is explicit, why `useRenderPipeline` skips HMR:
+  [render-pipeline](https://docs.pmnd.rs/react-three-fiber/webgpu/render-pipeline) and
+  [hmr](https://docs.pmnd.rs/react-three-fiber/webgpu/hmr).
+- **Entry points and the `#three` alias** — [BUILD.md](./BUILD.md).
 
-## Historical
+This is deliberate. A planning doc that outlives its decision becomes misinformation, and a
+rationale doc kept off to the side gets read after the thing it describes has already changed.
+If a decision is worth recording, record it where someone will hit it — in the docs for the
+feature, or in a comment on the code that implements it.
 
-Superseded planning material, kept for provenance and clearly marked non-canonical. Decisions
-here have been made — and some were made differently. Never cite these as current behavior.
-
-- **[WebGPU upgrade outline](./webgpu-outline.md)** — the original v10 WebGPU planning outline (Dec 2025).
+Superseded planning material is archived in Notion, not in this repo.

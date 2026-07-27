@@ -17,7 +17,7 @@ useFrame((state, delta) => {
 
 A single global singleton `Scheduler` drives one `requestAnimationFrame` loop for the **entire application**. Every `<Canvas>` (root) registers with this shared loop, so multiple canvases stay frame-synced instead of each spinning their own RAF. Each frame the scheduler walks its registered roots and executes their jobs in order.
 
-The scheduler instance is a cross-bundle singleton (shared via `Symbol.for`), so mixing imports from `@react-three/fiber` and `@react-three/fiber/webgpu` still resolves to the same scheduler.
+The scheduler instance is a cross-bundle singleton (shared via `Symbol.for`), so mixing imports from `@react-three/fiber` and `@react-three/fiber/webgpu` still resolves to the same scheduler. The same key means it also survives hot module reloads — the loop keeps running while you edit rather than stopping dead on every save.
 
 Each frame produces a state object passed to your callback:
 
@@ -111,6 +111,8 @@ useFrame(prepRenderTargets, { before: 'render' })
 When you use `before`/`after` without an explicit `phase`, the scheduler auto-resolves placement (creating implicit ordering around the target), keeping any default job in that phase intact — your work happens around it, not instead of it.
 
 > **Migrating from priority numbers.** v9's numeric priority is still accepted for backwards compatibility, but it is deprecated for controlling order or render takeover. Prefer phases or `before`/`after`. Note that a numeric `priority > 0` retains its v9 meaning of "I am taking over rendering" and emits a deprecation notice — see [render takeover](#render-takeover).
+>
+> **Why the change.** A single number can't compose across packages. Two libraries that both pick `0` have no defined order between them, and there is no way for you to reorder a job you don't own — the number is baked into someone else's source. Naming the dependency instead (`after: 'physics'`) states the constraint you actually care about, so the scheduler can resolve a correct order no matter what else is registered. Numeric priority survives only as a tie-breaker and a v9 shim.
 
 ## FPS throttling {#fps}
 

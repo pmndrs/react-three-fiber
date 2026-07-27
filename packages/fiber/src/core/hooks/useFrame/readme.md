@@ -3,15 +3,14 @@
 `useFrame`, the scheduler, phases, fps throttling, pause/resume, render takeover, and demand mode.
 
 ```ts
-import { useFrame } from '@react-three/fiber'
+import { useFrame, invalidate, advance, getScheduler } from '@react-three/fiber'
 ```
 
-## API Reference
-
-- **[useFrame](./readmes/useFrame.md)** — the per-frame hook: ordering, fps throttling, pause/resume
-- **[Scheduler API](./readmes/scheduler.md)** — the global singleton: phases, roots, jobs, manual stepping
-- **[Frame loop utilities](./readmes/frame-loop-api.md)** — `invalidate`, `advance`, deprecated globals
+| Export         | What it does                                                          |
+| -------------- | --------------------------------------------------------------------- |
+| `useFrame`     | Run a callback each frame — phase ordering, fps throttling, pause     |
+| `getScheduler` | The global singleton — phases, roots, jobs, loop control, manual step |
+| `invalidate`   | Request a frame in demand mode                                        |
+| `advance`      | Step the loop manually in `frameloop="never"`                         |
 
 📖 **Full documentation:** https://docs.pmnd.rs/react-three-fiber/frame-loop
-
-> Design notes for contributors live in `docs/development/frame-loop-design.md`.
