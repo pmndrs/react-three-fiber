@@ -1,8 +1,10 @@
 // EXPERIMENTAL (A3): API may change before stable. Reactive GPU storage registry for TSL.
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
+import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { useScopedResource } from './useScopedResource'
 import type { StorageLike, StorageRecord } from '#types'
 
 //* Types ==============================
@@ -139,68 +141,20 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
 
   /** Remove storage by name from root or a scope */
   const removeStorage = useCallback<RemoveStorageFn>(
-    (names, targetScope) => {
-      const nameArray = Array.isArray(names) ? names : [names]
-      store.setState((state) => {
-        if (targetScope) {
-          // Remove from scoped storage
-          const currentScope = { ...(state.gpuStorage[targetScope] as StorageRecord) }
-          for (const name of nameArray) delete currentScope[name]
-          return { gpuStorage: { ...state.gpuStorage, [targetScope]: currentScope } }
-        }
-        // Remove from root level
-        const gpuStorage = { ...state.gpuStorage }
-        for (const name of nameArray) if (isStorageLike(gpuStorage[name])) delete gpuStorage[name]
-        return { gpuStorage }
-      })
-    },
+    (names, targetScope) =>
+      removeResourceEntries(store, 'gpuStorage', Array.isArray(names) ? names : [names], targetScope, isStorageLike),
     [store],
   )
 
   /** Clear storage - scope name, 'root' for root only, or undefined for all */
   const clearStorage = useCallback<ClearStorageFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear specific scope
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.gpuStorage
-          return { gpuStorage: rest }
-        }
-        // Clear root only (preserve scopes)
-        if (targetScope === 'root') {
-          const gpuStorage: typeof state.gpuStorage = {}
-          for (const [key, value] of Object.entries(state.gpuStorage)) {
-            if (!isStorageLike(value)) gpuStorage[key] = value
-          }
-          return { gpuStorage }
-        }
-        // Clear everything
-        return { gpuStorage: {} }
-      })
-    },
+    (targetScope) => clearResourceEntries(store, 'gpuStorage', targetScope, isStorageLike),
     [store],
   )
 
-  /** Rebuild storage - clears cache and increments HMR version to trigger re-creation */
+  /** Rebuild storage - invalidates the cache and increments HMR version to trigger re-creation */
   const rebuildStorage = useCallback<RebuildStorageFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear the specified scope (or all) and bump version
-        let newStorage = state.gpuStorage
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.gpuStorage
-          newStorage = rest
-        } else if (targetScope === 'root') {
-          newStorage = {}
-          for (const [key, value] of Object.entries(state.gpuStorage)) {
-            if (!isStorageLike(value)) newStorage[key] = value
-          }
-        } else {
-          newStorage = {}
-        }
-        return { gpuStorage: newStorage, _hmrVersion: state._hmrVersion + 1 }
-      })
-    },
+    (targetScope) => rebuildResource(store, 'gpuStorage', targetScope),
     [store],
   )
 
@@ -237,102 +191,44 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
   // For creator mode, we intentionally don't use this value to avoid re-running the creator
   const storeStorage = usePrimaryThree((s) => s.gpuStorage)
 
-  // Subscribe to HMR version for creator modes
-  // This allows rebuildStorage() to bust the memoization cache and force re-creation
-  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
-
-  // Extracted deps to avoid complex expressions in useMemo dependency array
-  const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
-  const readerDep = isReader ? storeStorage : null
-  const creatorDep = isReader ? null : hmrVersion
-
-  const gpuStorage = useMemo(() => {
-    // Case 1: No arguments - return all storage (root + scopes)
-    // Uses subscribed storeStorage for reactivity
-    if (creatorOrScope === undefined) {
-      return storeStorage as StorageRecordType & Record<string, StorageRecordType>
-    }
-
-    // Case 2: String argument - return storage from that scope
-    // Uses subscribed storeStorage for reactivity
-    if (typeof creatorOrScope === 'string') {
-      const scopeData = storeStorage[creatorOrScope]
-      // Make sure we're returning a scope object, not a storage item
-      if (scopeData && !isStorageLike(scopeData)) return scopeData as StorageRecordType
-      return {}
-    }
-
-    // Case 3: Creator function - create if not exists
-    // Uses store.getState() snapshot to avoid re-running creator on unrelated storage changes
-    const state = store.getState()
-    const set = store.setState
-    const creator = creatorOrScope
-
-    // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers/storage accessed
-    const wrappedState = createLazyCreatorState(state)
-    const created = creator(wrappedState)
-    const result: Record<string, StorageLike> = {}
-    let hasNewStorage = false
-
-    // Scoped storage ---------------------------------
-    if (scope) {
-      const currentScope = (state.gpuStorage[scope] as StorageRecord) ?? {}
-
-      for (const [name, storage] of Object.entries(created)) {
-        if (currentScope[name]) {
-          result[name] = currentScope[name]
-        } else {
-          // Apply label for debugging if it's a TSL node
-          if ('setName' in storage && typeof storage.setName === 'function') {
-            storage.setName(`${scope}.${name}`)
-          }
-          // Apply name to textures if they have a name property
-          if ('name' in storage && typeof storage.name === 'string') {
-            ;(storage as any).name = `${scope}.${name}`
-          }
-          result[name] = storage
-          hasNewStorage = true
-        }
+  // Creator mode: run the creator and register the result through the shared
+  // staged-registration mechanism (render-phase creation, commit-phase store
+  // write). In reader mode this stages nothing and returns {}.
+  const created = useScopedResource<StorageLike>({
+    store,
+    kind: 'gpuStorage',
+    scope: isReader ? undefined : scope,
+    isLeaf: isStorageLike,
+    create: () => {
+      if (isReader) return {}
+      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers/storage accessed
+      return (creatorOrScope as StorageCreator<T>)(createLazyCreatorState(store.getState(), store))
+    },
+    prepare: (name, storage) => {
+      const label = scope ? `${scope}.${name}` : name
+      // Apply label for debugging if it's a TSL node
+      if ('setName' in storage && typeof storage.setName === 'function') {
+        storage.setName(label)
       }
-
-      if (hasNewStorage) {
-        set((s) => ({
-          gpuStorage: {
-            ...s.gpuStorage,
-            [scope]: { ...(s.gpuStorage[scope] as StorageRecord), ...result },
-          },
-        }))
+      // Apply name to textures if they have a name property
+      if ('name' in storage && typeof storage.name === 'string') {
+        ;(storage as any).name = label
       }
+      return storage
+    },
+  })
 
-      return result as T
-    }
-
-    // Root-level storage ---------------------------------
-    for (const [name, storage] of Object.entries(created)) {
-      const existing = state.gpuStorage[name]
-      if (existing && isStorageLike(existing)) {
-        result[name] = existing
-      } else {
-        // Apply label for debugging if it's a TSL node
-        if ('setName' in storage && typeof storage.setName === 'function') {
-          storage.setName(name)
-        }
-        // Apply name to textures if they have a name property
-        if ('name' in storage && typeof storage.name === 'string') {
-          ;(storage as any).name = name
-        }
-        result[name] = storage
-        hasNewStorage = true
-      }
-    }
-
-    if (hasNewStorage) {
-      set((s) => ({ gpuStorage: { ...s.gpuStorage, ...result } }))
-    }
-
-    return result as T
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, scopeDep, readerDep, creatorDep])
+  // Case 1: No arguments - all storage (root + scopes), reactive via storeStorage
+  // Case 2: String argument - that scope's storage (guard against a storage
+  //         item stored under the same name), reactive via storeStorage
+  // Case 3: Creator function - the entries registered above
+  let gpuStorage: StorageRecordType | (StorageRecordType & Record<string, StorageRecordType>) = created
+  if (creatorOrScope === undefined) {
+    gpuStorage = storeStorage as StorageRecordType & Record<string, StorageRecordType>
+  } else if (typeof creatorOrScope === 'string') {
+    const scopeData = storeStorage[creatorOrScope]
+    gpuStorage = scopeData && !isStorageLike(scopeData) ? (scopeData as StorageRecordType) : {}
+  }
 
   // Return storage with utils
   return {
@@ -349,30 +245,17 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
 
 /**
  * Global rebuildStorage function for HMR integration.
- * Clears cached storage and increments _hmrVersion to trigger re-creation.
+ * Invalidates cached storage and increments _hmrVersion to trigger re-creation.
  * Call this when HMR is detected to refresh all storage creators.
+ *
+ * Resolves to the primary store so shared TSL resources rebuild on the
+ * authoritative store.
  *
  * @param store - The R3F store (from useStore or context)
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllStorage(store: ReturnType<typeof useStore>, scope?: string) {
-  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
-  store = store.getState().primaryStore ?? store
-  store.setState((state) => {
-    let newStorage = state.gpuStorage
-    if (scope && scope !== 'root') {
-      const { [scope]: _, ...rest } = state.gpuStorage
-      newStorage = rest
-    } else if (scope === 'root') {
-      newStorage = {}
-      for (const [key, value] of Object.entries(state.gpuStorage)) {
-        if (!isStorageLike(value)) newStorage[key] = value
-      }
-    } else {
-      newStorage = {}
-    }
-    return { gpuStorage: newStorage, _hmrVersion: state._hmrVersion + 1 }
-  })
+  rebuildResource(store, 'gpuStorage', scope)
 }
 
 export default useGPUStorage

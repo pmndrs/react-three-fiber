@@ -74,7 +74,7 @@ afterEach(() => {
 
 /** React logs cross-component render-phase setState through console.error. */
 function renderPhaseViolations() {
-  return errorSpy.mock.calls.filter((args) => String(args[0]).includes('Cannot update a component'))
+  return errorSpy.mock.calls.filter((args: unknown[]) => String(args[0]).includes('Cannot update a component'))
 }
 
 describe('TSL HMR rebuild (C16) — creator + mounted reader', () => {

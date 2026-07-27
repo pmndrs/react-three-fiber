@@ -1,8 +1,10 @@
 // EXPERIMENTAL (A3): API may change before stable. Reactive GPU buffer registry for TSL.
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
+import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { useScopedResource } from './useScopedResource'
 import type { BufferLike, BufferRecord } from '#types'
 
 //* Types ==============================
@@ -137,68 +139,20 @@ export function useBuffers<T extends Record<string, BufferLike>>(
 
   /** Remove buffers by name from root or a scope */
   const removeBuffers = useCallback<RemoveBuffersFn>(
-    (names, targetScope) => {
-      const nameArray = Array.isArray(names) ? names : [names]
-      store.setState((state) => {
-        if (targetScope) {
-          // Remove from scoped buffers
-          const currentScope = { ...(state.buffers[targetScope] as BufferRecord) }
-          for (const name of nameArray) delete currentScope[name]
-          return { buffers: { ...state.buffers, [targetScope]: currentScope } }
-        }
-        // Remove from root level
-        const buffers = { ...state.buffers }
-        for (const name of nameArray) if (isBufferLike(buffers[name])) delete buffers[name]
-        return { buffers }
-      })
-    },
+    (names, targetScope) =>
+      removeResourceEntries(store, 'buffers', Array.isArray(names) ? names : [names], targetScope, isBufferLike),
     [store],
   )
 
   /** Clear buffers - scope name, 'root' for root only, or undefined for all */
   const clearBuffers = useCallback<ClearBuffersFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear specific scope
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.buffers
-          return { buffers: rest }
-        }
-        // Clear root only (preserve scopes)
-        if (targetScope === 'root') {
-          const buffers: typeof state.buffers = {}
-          for (const [key, value] of Object.entries(state.buffers)) {
-            if (!isBufferLike(value)) buffers[key] = value
-          }
-          return { buffers }
-        }
-        // Clear everything
-        return { buffers: {} }
-      })
-    },
+    (targetScope) => clearResourceEntries(store, 'buffers', targetScope, isBufferLike),
     [store],
   )
 
-  /** Rebuild buffers - clears cache and increments HMR version to trigger re-creation */
+  /** Rebuild buffers - invalidates the cache and increments HMR version to trigger re-creation */
   const rebuildBuffers = useCallback<RebuildBuffersFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear the specified scope (or all) and bump version
-        let newBuffers = state.buffers
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.buffers
-          newBuffers = rest
-        } else if (targetScope === 'root') {
-          newBuffers = {}
-          for (const [key, value] of Object.entries(state.buffers)) {
-            if (!isBufferLike(value)) newBuffers[key] = value
-          }
-        } else {
-          newBuffers = {}
-        }
-        return { buffers: newBuffers, _hmrVersion: state._hmrVersion + 1 }
-      })
-    },
+    (targetScope) => rebuildResource(store, 'buffers', targetScope),
     [store],
   )
 
@@ -235,94 +189,39 @@ export function useBuffers<T extends Record<string, BufferLike>>(
   // For creator mode, we intentionally don't use this value to avoid re-running the creator
   const storeBuffers = usePrimaryThree((s) => s.buffers)
 
-  // Subscribe to HMR version for creator modes
-  // This allows rebuildBuffers() to bust the memoization cache and force re-creation
-  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
-
-  // Extracted deps to avoid complex expressions in useMemo dependency array
-  const scopeDep = typeof creatorOrScope === 'string' ? creatorOrScope : scope
-  const readerDep = isReader ? storeBuffers : null
-  const creatorDep = isReader ? null : hmrVersion
-
-  const buffers = useMemo(() => {
-    // Case 1: No arguments - return all buffers (root + scopes)
-    // Uses subscribed storeBuffers for reactivity
-    if (creatorOrScope === undefined) {
-      return storeBuffers as BufferRecordType & Record<string, BufferRecordType>
-    }
-
-    // Case 2: String argument - return buffers from that scope
-    // Uses subscribed storeBuffers for reactivity
-    if (typeof creatorOrScope === 'string') {
-      const scopeData = storeBuffers[creatorOrScope]
-      // Make sure we're returning a scope object, not a buffer
-      if (scopeData && !isBufferLike(scopeData)) return scopeData as BufferRecordType
-      return {}
-    }
-
-    // Case 3: Creator function - create if not exists
-    // Uses store.getState() snapshot to avoid re-running creator on unrelated buffer changes
-    const state = store.getState()
-    const set = store.setState
-    const creator = creatorOrScope
-
-    // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers accessed
-    const wrappedState = createLazyCreatorState(state)
-    const created = creator(wrappedState)
-    const result: Record<string, BufferLike> = {}
-    let hasNewBuffers = false
-
-    // Scoped buffers ---------------------------------
-    if (scope) {
-      const currentScope = (state.buffers[scope] as BufferRecord) ?? {}
-
-      for (const [name, buffer] of Object.entries(created)) {
-        if (currentScope[name]) {
-          result[name] = currentScope[name]
-        } else {
-          // Apply label for debugging if it's a TSL node
-          if ('setName' in buffer && typeof buffer.setName === 'function') {
-            buffer.setName(`${scope}.${name}`)
-          }
-          result[name] = buffer
-          hasNewBuffers = true
-        }
+  // Creator mode: run the creator and register the result through the shared
+  // staged-registration mechanism (render-phase creation, commit-phase store
+  // write). In reader mode this stages nothing and returns {}.
+  const created = useScopedResource<BufferLike>({
+    store,
+    kind: 'buffers',
+    scope: isReader ? undefined : scope,
+    isLeaf: isBufferLike,
+    create: () => {
+      if (isReader) return {}
+      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes/buffers accessed
+      return (creatorOrScope as BufferCreator<T>)(createLazyCreatorState(store.getState(), store))
+    },
+    prepare: (name, buffer) => {
+      // Apply label for debugging if it's a TSL node
+      if ('setName' in buffer && typeof buffer.setName === 'function') {
+        buffer.setName(scope ? `${scope}.${name}` : name)
       }
+      return buffer
+    },
+  })
 
-      if (hasNewBuffers) {
-        set((s) => ({
-          buffers: {
-            ...s.buffers,
-            [scope]: { ...(s.buffers[scope] as BufferRecord), ...result },
-          },
-        }))
-      }
-
-      return result as T
-    }
-
-    // Root-level buffers ---------------------------------
-    for (const [name, buffer] of Object.entries(created)) {
-      const existing = state.buffers[name]
-      if (existing && isBufferLike(existing)) {
-        result[name] = existing
-      } else {
-        // Apply label for debugging if it's a TSL node
-        if ('setName' in buffer && typeof buffer.setName === 'function') {
-          buffer.setName(name)
-        }
-        result[name] = buffer
-        hasNewBuffers = true
-      }
-    }
-
-    if (hasNewBuffers) {
-      set((s) => ({ buffers: { ...s.buffers, ...result } }))
-    }
-
-    return result as T
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, scopeDep, readerDep, creatorDep])
+  // Case 1: No arguments - all buffers (root + scopes), reactive via storeBuffers
+  // Case 2: String argument - that scope's buffers (guard against a buffer
+  //         stored under the same name), reactive via storeBuffers
+  // Case 3: Creator function - the entries registered above
+  let buffers: BufferRecordType | (BufferRecordType & Record<string, BufferRecordType>) = created
+  if (creatorOrScope === undefined) {
+    buffers = storeBuffers as BufferRecordType & Record<string, BufferRecordType>
+  } else if (typeof creatorOrScope === 'string') {
+    const scopeData = storeBuffers[creatorOrScope]
+    buffers = scopeData && !isBufferLike(scopeData) ? (scopeData as BufferRecordType) : {}
+  }
 
   // Return buffers with utils
   return { ...buffers, removeBuffers, clearBuffers, rebuildBuffers, disposeBuffers } as BuffersWithUtils<T>
@@ -333,30 +232,17 @@ export function useBuffers<T extends Record<string, BufferLike>>(
 
 /**
  * Global rebuildBuffers function for HMR integration.
- * Clears cached buffers and increments _hmrVersion to trigger re-creation.
+ * Invalidates cached buffers and increments _hmrVersion to trigger re-creation.
  * Call this when HMR is detected to refresh all buffer creators.
+ *
+ * Resolves to the primary store so shared TSL resources rebuild on the
+ * authoritative store.
  *
  * @param store - The R3F store (from useStore or context)
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllBuffers(store: ReturnType<typeof useStore>, scope?: string) {
-  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
-  store = store.getState().primaryStore ?? store
-  store.setState((state) => {
-    let newBuffers = state.buffers
-    if (scope && scope !== 'root') {
-      const { [scope]: _, ...rest } = state.buffers
-      newBuffers = rest
-    } else if (scope === 'root') {
-      newBuffers = {}
-      for (const [key, value] of Object.entries(state.buffers)) {
-        if (!isBufferLike(value)) newBuffers[key] = value
-      }
-    } else {
-      newBuffers = {}
-    }
-    return { buffers: newBuffers, _hmrVersion: state._hmrVersion + 1 }
-  })
+  rebuildResource(store, 'buffers', scope)
 }
 
 export default useBuffers
