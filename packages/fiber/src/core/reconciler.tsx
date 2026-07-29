@@ -272,6 +272,8 @@ function appendChild(parent: HostConfig['instance'], child: HostConfig['instance
 
   // Link instances
   child.parent = parent
+  const childIndex = parent.children.indexOf(child)
+  if (childIndex !== -1) parent.children.splice(childIndex, 1)
   parent.children.push(child)
 
   // Attach tree once complete
@@ -287,6 +289,8 @@ function insertBefore(
 
   // Link instances
   child.parent = parent
+  const existingIndex = parent.children.indexOf(child)
+  if (existingIndex !== -1) parent.children.splice(existingIndex, 1)
   const childIndex = parent.children.indexOf(beforeChild)
   if (childIndex !== -1) parent.children.splice(childIndex, 0, child)
   else parent.children.push(child)

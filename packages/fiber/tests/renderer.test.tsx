@@ -1,6 +1,16 @@
 import * as React from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
+import {
+  ReconcilerRoot,
+  createRoot,
+  act,
+  extend,
+  ThreeElement,
+  ThreeElements,
+  flushSync,
+  useThree,
+  type Instance,
+} from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)
@@ -506,6 +516,30 @@ describe('renderer', () => {
     const mixedArray = [b, a, d, c]
     await act(async () => root.render(<Test array={mixedArray} />))
     expect(scene.children.map((o) => o.name)).toStrictEqual(mixedArray.map((o) => o.name))
+  })
+
+  it('keeps instance children unique when keyed children are reordered', async () => {
+    const Test = ({ names }: { names: string[] }) => (
+      <group>
+        {names.map((name) => (
+          <mesh key={name} name={name} />
+        ))}
+      </group>
+    )
+
+    const store = await act(async () => root.render(<Test names={['A', 'B', 'C']} />))
+    const group = store.getState().scene.children[0] as Instance<THREE.Group>['object']
+    const instance = group.__r3f!
+    const children = () => instance.children.map((child) => child.object.name)
+
+    expect(children()).toStrictEqual(['A', 'B', 'C'])
+
+    await act(async () => root.render(<Test names={['B', 'A', 'C']} />))
+    expect(children()).toStrictEqual(['B', 'A', 'C'])
+
+    await act(async () => root.render(<Test names={['B', 'C', 'A']} />))
+    expect(children()).toStrictEqual(['B', 'C', 'A'])
+    expect(new Set(instance.children).size).toBe(3)
   })
 
   // https://github.com/pmndrs/react-three-fiber/issues/3125
