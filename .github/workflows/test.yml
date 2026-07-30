@@ -119,6 +119,12 @@ jobs:
       # 404 and 400, both still caught). The opencollective badge SVGs are
       # generated on demand and 500 under load -- the page links they wrap are
       # still checked.
+      #
+      # Timeouts count as failures, so a live-but-slow third-party host reds out
+      # every unrelated PR that happens to touch docs. `fail: true` is still what
+      # we want for real rot, so instead of accepting timeouts we give a slow host
+      # room to answer: lychee's 20s default is tight for asset sites that render
+      # a preview per request. Retries cover the single-packet-loss case.
       - name: Link check
         uses: lycheeverse/lychee-action@v2
         with:
@@ -131,6 +137,8 @@ jobs:
             --exclude 'docs\.pmnd\.rs'
             --exclude 'opencollective\.com/.*\.svg'
             --accept '200,206,403,429'
+            --timeout 30
+            --max-retries 3
             'docs/**/*.md'
             'docs/**/*.mdx'
             'packages/*/src/**/[Rr][Ee][Aa][Dd][Mm][Ee].md'
