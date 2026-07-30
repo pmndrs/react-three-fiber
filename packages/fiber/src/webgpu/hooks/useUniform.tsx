@@ -1,9 +1,10 @@
-import { useMemo } from 'react'
 import { uniform } from '#three/tsl'
 import { Color as ThreeColor, Node } from '#three'
 
 import type { Vector2, Vector3, Vector4, Color, Matrix3, Matrix4 } from '#three'
-import { useStore, useThree } from '../../core/hooks'
+import { useStore } from '../../core/hooks'
+import { ROOT_SCOPE, peekStaged } from '../../core/utils/resourceRegistry'
+import { useScopedResource } from './useScopedResource'
 
 /**
  * `uniform()` typed to its documented runtime contract.
@@ -106,73 +107,62 @@ export function useUniform<T extends UniformValue>(name: string, value: T): Unif
 export function useUniform<T extends UniformValue>(name: string, value?: T): UniformNode<Widen<T>> {
   const store = useStore()
 
-  // Subscribe to HMR version - when it changes, uniforms get re-created
-  const hmrVersion = useThree((s) => s._hmrVersion)
-
-  return useMemo(() => {
-    const state = store.getState()
-    const set = store.setState
-    const existing = state.uniforms[name]
-
-    // Case 1: Uniform exists in store ---------------------------------
-    if (existing && isUniformNode(existing)) {
+  // Create mode: register through the shared staged mechanism (render-phase
+  // creation, commit-phase store write, generation-aware reuse). In get-only
+  // mode this stages nothing and returns {}.
+  // Note: `value` is intentionally not a memo trigger - updates happen
+  // imperatively via `node.value`.
+  const registered = useScopedResource<UniformValue, UniformNode>({
+    store,
+    kind: 'uniforms',
+    scope: undefined,
+    isLeaf: isUniformNode,
+    input: name,
+    create: () => (value === undefined ? {} : { [name]: value }),
+    prepare: createNamedUniform,
+    reconcile: (existing) => {
       // Update value if provided (but not for TSL nodes - those are immutable)
       if (value !== undefined && !isTSLNode(value) && !isUniformNode(value)) {
         existing.value = typeof value === 'string' ? new ThreeColor(value) : value
       }
-      return existing as UniformNode<Widen<T>>
-    }
+    },
+  })
+  if (registered[name]) return registered[name] as UniformNode<Widen<T>>
 
-    // Case 2: Get-only mode but uniform doesn't exist ---------------------------------
-    if (value === undefined) {
-      throw new Error(
-        `[useUniform] Uniform "${name}" not found. ` + `Create it first with: useUniform('${name}', initialValue)`,
-      )
-    }
+  // Get-only mode: return the uniform another hook registered — committed, or
+  // staged earlier in this same render pass (not yet flushed).
+  const existing = peekStaged(store, 'uniforms', ROOT_SCOPE)?.[name] ?? store.getState().uniforms[name]
+  if (existing && isUniformNode(existing)) return existing as UniformNode<Widen<T>>
 
-    // Case 3: Value is already a UniformNode ---------------------------------
-    // Just register it to the store (e.g., from external library)
-    if (isUniformNode(value)) {
-      const node = value as unknown as UniformNode<Widen<T>>
-      if (typeof node.setName === 'function') {
-        node.setName(name)
-      }
-      set((s) => ({
-        uniforms: { ...s.uniforms, [name]: node },
-      }))
-      return node
-    }
+  throw new Error(
+    `[useUniform] Uniform "${name}" not found. ` + `Create it first with: useUniform('${name}', initialValue)`,
+  )
+}
 
-    // Case 4: Create new uniform ---------------------------------
-    let node: UniformNode<Widen<T>>
+/** Build the stored UniformNode for a fresh registration (see useUniform cases). */
+function createNamedUniform(name: string, value: UniformValue): UniformNode {
+  let node: UniformNode
 
-    if (isTSLNode(value)) {
-      // TSL nodes (color(), vec3(), float()) - pass directly for type casting
-      node = uniformOf(value) as unknown as UniformNode<Widen<T>>
-    } else if (typeof value === 'string') {
-      // String colors - convert to Three.js Color (matches three's `(value: Color)` overload)
-      node = uniform(new ThreeColor(value)) as unknown as UniformNode<Widen<T>>
-    } else {
-      // Raw values (number, Vector3, Color, etc.)
-      node = uniformOf(value) as unknown as UniformNode<Widen<T>>
-    }
+  if (isUniformNode(value)) {
+    // Already a UniformNode - register it to the store as-is (e.g., from external library)
+    node = value
+  } else if (isTSLNode(value)) {
+    // TSL nodes (color(), vec3(), float()) - pass directly for type casting
+    node = uniformOf(value)
+  } else if (typeof value === 'string') {
+    // String colors - convert to Three.js Color (matches three's `(value: Color)` overload)
+    node = uniform(new ThreeColor(value)) as unknown as UniformNode
+  } else {
+    // Raw values (number, Vector3, Color, etc.)
+    node = uniformOf(value)
+  }
 
-    // Label for debugging
-    if (typeof node.setName === 'function') {
-      node.setName(name)
-    }
+  // Label for debugging
+  if (typeof node.setName === 'function') {
+    node.setName(name)
+  }
 
-    // Register to store
-    set((s) => ({
-      uniforms: {
-        ...s.uniforms,
-        [name]: node,
-      },
-    }))
-
-    return node
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, name, hmrVersion]) // Note: value intentionally excluded - updates happen imperatively
+  return node
 }
 
 export default useUniform

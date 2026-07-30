@@ -131,7 +131,7 @@ Returns `UniformsWithUtils<UniformRecord>` - your uniforms by name, **plus three
 
 - **`removeUniforms`** - remove specific uniforms by name from root or a scope.
 - **`clearUniforms`** - clear a scope, `'root'` for root only, or no argument to clear everything.
-- **`rebuildUniforms`** - clear the cache and bump the HMR version to force re-creation of the creators (all, `'root'`, or a named scope).
+- **`rebuildUniforms`** - invalidate the cache and bump the HMR version to force re-creation of the creators (all, `'root'`, or a named scope).
 
 ### Input Types
 
@@ -229,7 +229,7 @@ Returns `NodesWithUtils<NodeRecord>` - your nodes by name, **plus three util fun
 
 - **`removeNodes`** - remove specific nodes by name from root or a scope.
 - **`clearNodes`** - clear a scope, `'root'` for root only, or no argument to clear everything.
-- **`rebuildNodes`** - clear the cache and bump the HMR version to force re-creation of node creators (all, `'root'`, or a named scope).
+- **`rebuildNodes`** - invalidate the cache and bump the HMR version to force re-creation of node creators (all, `'root'`, or a named scope).
 
 > The `rebuild*` utils are returned by the hook directly; you do not need the standalone `rebuildAllNodes`/`rebuildAllUniforms` exports for in-component use.
 

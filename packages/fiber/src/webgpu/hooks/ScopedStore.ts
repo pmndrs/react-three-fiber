@@ -18,7 +18,8 @@
  * ```
  */
 
-import type { RootState, BufferLike, StorageLike } from '#types'
+import { withStagedOverlay } from '../../core/utils/resourceRegistry'
+import type { RootState, RootStore, BufferLike, StorageLike } from '#types'
 
 //* Symbol for internal data storage ==============================
 const INTERNAL_DATA = Symbol('ScopedStore.data')
@@ -159,41 +160,51 @@ export type CreatorState = Omit<RootState, 'uniforms' | 'nodes' | 'buffers' | 'g
  * actually accessed, avoiding expensive Proxy creation when the creator
  * function doesn't need them.
  *
+ * When `store` is provided, the wrappers overlay entries STAGED during the
+ * current render pass on top of the committed maps. Registration is deferred
+ * to the commit phase, so without the overlay a creator could not see
+ * resources a sibling hook created earlier in the same render (e.g. a node
+ * deriving from a uniform declared two lines above).
+ *
  * @param state - The raw RootState from store.getState()
+ * @param store - The (primary-resolved) store, for the staged-entry overlay
  * @returns CreatorState with lazy-initialized ScopedStore wrappers
  *
  * @example
  * ```tsx
- * const wrappedState = createLazyCreatorState(store.getState())
+ * const wrappedState = createLazyCreatorState(store.getState(), store)
  * const result = creatorFn(wrappedState)
  * // Proxy only created if creatorFn accessed uniforms or nodes
  * ```
  */
-export function createLazyCreatorState(state: RootState): CreatorState {
+export function createLazyCreatorState(state: RootState, store?: RootStore): CreatorState {
   let _uniforms: ScopedStoreType<UniformNode> | null = null
   let _nodes: ScopedStoreType<TSLNodeType> | null = null
   let _buffers: ScopedStoreType<BufferLike> | null = null
   let _gpuStorage: ScopedStoreType<StorageLike> | null = null
 
+  const view = (kind: 'uniforms' | 'nodes' | 'buffers' | 'gpuStorage') =>
+    store ? withStagedOverlay(store, kind, state[kind]) : state[kind]
+
   return Object.create(state, {
     uniforms: {
       get() {
-        return (_uniforms ??= createScopedStore<UniformNode>(state.uniforms))
+        return (_uniforms ??= createScopedStore<UniformNode>(view('uniforms')))
       },
     },
     nodes: {
       get() {
-        return (_nodes ??= createScopedStore<TSLNodeType>(state.nodes))
+        return (_nodes ??= createScopedStore<TSLNodeType>(view('nodes')))
       },
     },
     buffers: {
       get() {
-        return (_buffers ??= createScopedStore<BufferLike>(state.buffers))
+        return (_buffers ??= createScopedStore<BufferLike>(view('buffers')))
       },
     },
     gpuStorage: {
       get() {
-        return (_gpuStorage ??= createScopedStore<StorageLike>(state.gpuStorage))
+        return (_gpuStorage ??= createScopedStore<StorageLike>(view('gpuStorage')))
       },
     },
   }) as CreatorState

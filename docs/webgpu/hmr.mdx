@@ -6,7 +6,7 @@ nav: 19
 
 v10 includes automatic Hot Module Replacement (HMR) support for the WebGPU TSL hooks. When you save changes to files containing TSL node, uniform, buffer, or storage definitions, R3F refreshes the affected state without a full page reload.
 
-The `Canvas` component detects HMR events from Vite or webpack and bumps an internal HMR version on R3F state, which busts the memoization caches of the creator hooks and re-runs their creators.
+The `Canvas` component detects HMR events from Vite or webpack, invalidates the TSL resource caches, and bumps an internal HMR version on R3F state, which re-runs every creator hook.
 
 ```tsx
 // Just works - save your file and see changes immediately
@@ -33,6 +33,41 @@ All four creator families re-run their creators when the HMR version is bumped:
 
 `useLocalNodes` also rebuilds because it subscribes to the HMR version directly, alongside its `uniforms`/`nodes`/`textures` triggers.
 
+## Rebuild Guarantees
+
+A rebuild — whether from a hot update or a manual `rebuild*` call — is **atomic** from a reader's point of view:
+
+- The shared maps are never emptied. Readers keep the previous generation of nodes/uniforms until the re-run creators commit the new one, then see a single swap from old-complete to new-complete. A reader can never observe an empty or half-rebuilt scope (which would strip `*Node` props off materials mid-reload).
+- Creators never write to the store during render. New entries are registered in React's commit phase, so a rebuild can't interrupt other components mid-render.
+- Reuse is generation-aware. After an invalidation, previously cached entries can't be re-adopted into the new generation — every creator produces fresh resources, no matter how re-runs interleave (StrictMode double-invokes, multiple canvases sharing a `primaryStore`, and so on).
+
+Two consequences worth knowing:
+
+- **Removed creators leave their last generation in place.** If an edit deletes a creator component (or a whole scope), the old entries stay visible to readers until something re-registers the scope or you call `clearNodes`/`removeNodes`. During a hot reload, last-good data beats an empty scene.
+- **Captured references go stale across rebuilds.** A rebuild replaces uniform/node objects. Code that reads through the hooks each render picks up the new generation automatically, but a long-lived closure that captured a uniform object directly (for example a `useFrame` callback or an external library callback holding `uTime` from an old generation) keeps writing to the replaced object. Prefer reading through the hook, or re-capture inside the component so the closure refreshes with the rebuild.
+
+## Effects Must Be Re-Run Safe
+
+Fast Refresh re-runs your components' effects on every hot update, while R3F's reconciler correctly keeps the underlying three.js objects alive. An effect that mutates a reconciler-managed object must therefore be idempotent:
+
+```tsx
+// ❌ accumulates 90° per hot update — after one edit the plane faces away
+useEffect(() => {
+  geometryRef.current?.rotateX(-Math.PI / 2)
+}, [])
+
+// ✅ guard per instance, safe to re-run
+useEffect(() => {
+  const geometry = geometryRef.current
+  if (geometry && !geometry.userData.rotated) {
+    geometry.userData.rotated = true
+    geometry.rotateX(-Math.PI / 2)
+  }
+}, [])
+```
+
+Where possible, prefer declarative props (`rotation` on the mesh) or bake transforms at creation time instead of mutating in effects.
+
 ## useRenderPipeline Does NOT Rebuild on HMR
 
 This is the important exception. `useRenderPipeline` callbacks do **not** re-run on a plain hot reload (same scene/camera). Re-running them rebuilds the TSL node graph, which can corrupt cached references (such as `SkinningNode`), so the hook intentionally skips re-running its `setupCB`/`mainCB` on HMR.
@@ -58,7 +93,7 @@ If you need to turn off automatic refresh (rare), use the `hmr` prop:
 
 ## Manual Rebuild
 
-Each creator hook returns a `rebuild*` util that clears its cache and bumps the HMR version to force re-creation. Pass a scope name to rebuild a single scope, `'root'` for root only, or no argument for everything.
+Each creator hook returns a `rebuild*` util that invalidates its cache and bumps the HMR version to force re-creation (with the same atomic-swap guarantees as automatic HMR). Pass a scope name to rebuild a single scope, `'root'` for root only, or no argument for everything. Other scopes are untouched — their entries keep their identity.
 
 ```tsx
 const { rebuildNodes } = useNodes(() => ({ wobble: sin(time.mul(2)) }))

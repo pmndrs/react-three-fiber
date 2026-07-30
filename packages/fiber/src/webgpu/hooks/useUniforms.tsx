@@ -6,7 +6,9 @@ import { uniform } from '#three/tsl'
 import { vectorize } from './utils'
 import { useCompareMemoize } from './useCompareMemoize'
 import { is } from '../../core/utils'
+import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
+import { useScopedResource } from './useScopedResource'
 
 //* Types ==============================
 
@@ -144,66 +146,20 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
   /** Remove uniforms by name from root or a scope */
   const removeUniforms = useCallback<RemoveUniformsFn>(
-    (names, targetScope) => {
-      const nameArray = Array.isArray(names) ? names : [names]
-      store.setState((state) => {
-        if (targetScope) {
-          // Remove from scoped uniforms
-          const currentScope = { ...(state.uniforms[targetScope] as UniformRecord) }
-          for (const name of nameArray) delete currentScope[name]
-          return { uniforms: { ...state.uniforms, [targetScope]: currentScope } }
-        }
-        // Remove from root level
-        const uniforms = { ...state.uniforms }
-        for (const name of nameArray) if (isUniformNode(uniforms[name])) delete uniforms[name]
-        return { uniforms }
-      })
-    },
+    (names, targetScope) =>
+      removeResourceEntries(store, 'uniforms', Array.isArray(names) ? names : [names], targetScope, isUniformNode),
     [store],
   )
 
   /** Clear uniforms - scope name, 'root' for root only, or undefined for all */
   const clearUniforms = useCallback<ClearUniformsFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear specific scope
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.uniforms
-          return { uniforms: rest }
-        }
-        // Clear root only (preserve scopes)
-        if (targetScope === 'root') {
-          const uniforms: typeof state.uniforms = {}
-          for (const [key, value] of Object.entries(state.uniforms)) {
-            if (!isUniformNode(value)) uniforms[key] = value
-          }
-          return { uniforms }
-        }
-        // Clear everything
-        return { uniforms: {} }
-      })
-    },
+    (targetScope) => clearResourceEntries(store, 'uniforms', targetScope, isUniformNode),
     [store],
   )
 
-  /** Rebuild uniforms - clears cache and increments HMR version to trigger re-creation */
+  /** Rebuild uniforms - invalidates the cache and increments HMR version to trigger re-creation */
   const rebuildUniforms = useCallback<RebuildUniformsFn>(
-    (targetScope) => {
-      store.setState((state) => {
-        // Clear the specified scope (or all) and bump version
-        let newUniforms: typeof state.uniforms = {}
-        if (targetScope && targetScope !== 'root') {
-          const { [targetScope]: _, ...rest } = state.uniforms
-          newUniforms = rest
-        } else if (targetScope === 'root') {
-          for (const [key, value] of Object.entries(state.uniforms)) {
-            if (!isUniformNode(value)) newUniforms[key] = value
-          }
-        }
-        // else: stays as {} (clear all)
-        return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
-      })
-    },
+    (targetScope) => rebuildResource(store, 'uniforms', targetScope),
     [store],
   )
 
@@ -222,8 +178,10 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
     // If a function, execute it and get what it returns
     if (is.fun(creatorOrScope)) {
-      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed
-      const wrappedState = createLazyCreatorState(store.getState())
+      // Lazy ScopedStore wrapping - Proxies only created if uniforms/nodes accessed.
+      // The store is passed so entries staged by creator hooks earlier in this
+      // render pass are visible here too.
+      const wrappedState = createLazyCreatorState(store.getState(), store)
       raw = creatorOrScope(wrappedState)
     }
 
@@ -253,101 +211,55 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
   // This ensures useUniforms() and useUniforms('scope') reactively update when store changes
   const storeUniforms = usePrimaryThree((s) => s.uniforms)
 
-  // Subscribe to HMR version for creator modes
-  // This ensures rebuildUniforms() triggers re-creation
-  const hmrVersion = usePrimaryThree((s) => s._hmrVersion)
-
-  // Extracted deps to avoid complex expressions in useMemo dependency array
-  const readerDep = isReader ? storeUniforms : null
-  const creatorDep = isReader ? null : hmrVersion
-
   //* Main Logic ==============================
-  const uniforms = useMemo(() => {
-    // Read-only: Return all uniforms
-    // Uses subscribed storeUniforms for reactivity
-    // ex: const { uDelay, uColor } = useUniforms()
-    if (memoizedInput === undefined) {
-      return storeUniforms as UniformRecord & Record<string, UniformRecord>
-    }
 
-    // Read-only: Return uniforms from specific scope
-    // Uses subscribed storeUniforms for reactivity
-    // ex: const { uTuPower } = useUniforms('player')
-    if (typeof memoizedInput === 'string') {
-      const scopeData = storeUniforms[memoizedInput]
-      if (scopeData && !isUniformNode(scopeData)) return scopeData as UniformRecord
-      return {}
-    }
+  // Creator mode: register the (normalized, deep-compared) definitions through
+  // the shared staged-registration mechanism — new uniforms are created
+  // render-phase but only land on the store in the commit-phase flush. Value
+  // changes on reused uniforms are reconciled in place (GPU-only, no store
+  // write). In reader mode this stages nothing and returns {}.
+  const created = useScopedResource<unknown, UniformNode>({
+    store,
+    kind: 'uniforms',
+    scope: isReader ? undefined : scope,
+    isLeaf: isUniformNode,
+    input: memoizedInput,
+    create: () => {
+      if (isReader) return {}
+      if (typeof memoizedInput !== 'object' || memoizedInput === null) throw new Error('Invalid uniform input')
+      return memoizedInput as Record<string, unknown>
+    },
+    prepare: (name, candidate) => createUniform(name, candidate, scope),
+    reconcile: (existing, candidate) => {
+      const existingVal = existing.value
+      const newVal = vectorize(candidate)
 
-    //* CREATOR MODE ==============================
-    // here we are adding/creating NEW uniforms
-
-    // Get a clean state snapshot of the store
-    const state = store.getState()
-    const set = store.setState
-
-    // Create/update: Process uniform definitions
-    if (typeof memoizedInput !== 'object' || memoizedInput === null) {
-      throw new Error('Invalid uniform input')
-    }
-
-    const created = memoizedInput as UniformRecord
-    const result: Record<string, UniformNode> = {}
-    let hasNewUniforms = false
-
-    // Determine target location (root or scope)
-    let targetRecord: UniformRecord = state.uniforms as UniformRecord
-    if (scope) {
-      if (!state.uniforms[scope]) state.uniforms[scope] = {}
-      targetRecord = state.uniforms[scope] as UniformRecord
-    }
-
-    // Process each uniform definition
-    for (const [name, node] of Object.entries(created)) {
-      if (targetRecord[name]) {
-        // Uniform exists - reuse it but check if value changed
-        result[name] = targetRecord[name]
-        const existingVal = result[name].value
-        const newVal = vectorize(node)
-
-        // Second Phase Efficient equality checking
-        let equals = newVal === existingVal // Fast path: primitives and same references
-        if (!equals && hasEqualsMethod(existingVal) && hasEqualsMethod(newVal)) {
-          // Three.js types: use native .equals() methods
-          if (isThreeVector(existingVal) && isThreeVector(newVal)) {
-            equals = vectorEquals(existingVal, newVal)
-          } else if (isSameThreeType(existingVal, newVal)) {
-            equals = (existingVal as any).equals(newVal)
-          }
+      // Efficient equality checking
+      let equals = newVal === existingVal // Fast path: primitives and same references
+      if (!equals && hasEqualsMethod(existingVal) && hasEqualsMethod(newVal)) {
+        // Three.js types: use native .equals() methods
+        if (isThreeVector(existingVal) && isThreeVector(newVal)) {
+          equals = vectorEquals(existingVal, newVal)
+        } else if (isSameThreeType(existingVal, newVal)) {
+          equals = (existingVal as any).equals(newVal)
         }
-
-        // Only update GPU if value actually changed
-        if (!equals) result[name].value = newVal
-      } else {
-        // New uniform - create it
-        result[name] = createUniform(name, node, scope)
-        hasNewUniforms = true
       }
-    }
 
-    // Only update React state if new uniforms were created
-    // Value changes don't trigger state updates (GPU-only)
-    if (hasNewUniforms) {
-      if (scope) {
-        set((s) => ({
-          uniforms: {
-            ...s.uniforms,
-            [scope]: { ...(s.uniforms[scope] as UniformRecord), ...result },
-          },
-        }))
-      } else {
-        set((s) => ({ uniforms: { ...s.uniforms, ...result } }))
-      }
-    }
+      // Only update GPU if value actually changed
+      if (!equals) existing.value = newVal
+    },
+  })
 
-    return result as UniformRecord
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, memoizedInput, scope, readerDep, creatorDep])
+  // Read-only: all uniforms / a specific scope (guard against a uniform stored
+  // under the requested name), reactive via storeUniforms. Creator mode returns
+  // the entries registered above.
+  let uniforms: UniformRecord | (UniformRecord & Record<string, UniformRecord>) = created
+  if (memoizedInput === undefined) {
+    uniforms = storeUniforms as UniformRecord & Record<string, UniformRecord>
+  } else if (typeof memoizedInput === 'string') {
+    const scopeData = storeUniforms[memoizedInput]
+    uniforms = scopeData && !isUniformNode(scopeData) ? (scopeData as UniformRecord) : {}
+  }
 
   // Return uniforms with utils
   return { ...uniforms, removeUniforms, clearUniforms, rebuildUniforms } as UniformsWithUtils<UniformRecord>
@@ -358,28 +270,17 @@ export function useUniforms<T extends UniformInputRecord = UniformInputRecord>(
 
 /**
  * Global rebuildUniforms function for HMR integration.
- * Clears cached uniforms and increments _hmrVersion to trigger re-creation.
+ * Invalidates cached uniforms and increments _hmrVersion to trigger re-creation.
  * Call this when HMR is detected to refresh all uniform creators.
+ *
+ * Resolves to the primary store so shared TSL resources rebuild on the
+ * authoritative store.
  *
  * @param store - The R3F store (from useStore or context)
  * @param scope - Optional scope to rebuild ('root' for root only, string for specific scope, undefined for all)
  */
 export function rebuildAllUniforms(store: ReturnType<typeof useStore>, scope?: string) {
-  // Resolve to the primary store so shared TSL resources rebuild on the authoritative store
-  store = store.getState().primaryStore ?? store
-  store.setState((state) => {
-    let newUniforms: typeof state.uniforms = {}
-    if (scope && scope !== 'root') {
-      const { [scope]: _, ...rest } = state.uniforms
-      newUniforms = rest
-    } else if (scope === 'root') {
-      for (const [key, value] of Object.entries(state.uniforms)) {
-        if (!isUniformNode(value)) newUniforms[key] = value
-      }
-    }
-    // else: stays as {} (clear all)
-    return { uniforms: newUniforms, _hmrVersion: state._hmrVersion + 1 }
-  })
+  rebuildResource(store, 'uniforms', scope)
 }
 
 //* Standalone Utils (Deprecated) ==============================

@@ -117,8 +117,13 @@ function makeSeaUniforms() {
 export const TerrainGeometry = () => {
   const geometryRef = useRef<PlaneGeometry>(null)
   useEffect(() => {
-    if (geometryRef.current) {
-      geometryRef.current.rotateX(-Math.PI / 2)
+    const geometry = geometryRef.current
+    // Guard per geometry instance: effects re-run on Fast Refresh while the
+    // reconciler keeps the same geometry, so an unguarded rotateX accumulates
+    // 90° per hot update until the terrain faces away from the camera.
+    if (geometry && !geometry.userData.rotatedToHorizontal) {
+      geometry.userData.rotatedToHorizontal = true
+      geometry.rotateX(-Math.PI / 2)
     }
   }, [])
 
