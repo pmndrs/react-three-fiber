@@ -1,6 +1,7 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
+import { ReconcilerRoot, createRoot, extend, ThreeElement, ThreeElements, flushSync, useThree } from '../src/index'
 import { suspend } from 'suspend-react'
 
 extend(THREE as any)

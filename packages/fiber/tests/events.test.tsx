@@ -1,6 +1,7 @@
 import * as React from 'react'
+import { act } from 'react'
 import { render, fireEvent, RenderResult } from '@testing-library/react'
-import { Canvas, act, extend } from '../src'
+import { Canvas, extend } from '../src'
 import THREE from 'three'
 
 extend(THREE as any)

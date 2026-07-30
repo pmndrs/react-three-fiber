@@ -1,7 +1,8 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
 
-import { extend, _roots as mockRoots, createRoot, reconciler, act, Instance } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler, Instance } from '@react-three/fiber'
 
 import { toTree } from './helpers/tree'
 import { toGraph } from './helpers/graph'
