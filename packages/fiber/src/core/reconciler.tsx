@@ -270,6 +270,12 @@ function handleContainerEffects(parent: Instance, child: Instance, beforeChild?:
 function appendChild(parent: HostConfig['instance'], child: HostConfig['instance'] | HostConfig['textInstance']) {
   if (!child) return
 
+  // Move an existing child instead of duplicating it
+  if (child.parent === parent) {
+    const childIndex = parent.children.indexOf(child)
+    if (childIndex !== -1) parent.children.splice(childIndex, 1)
+  }
+
   // Link instances
   child.parent = parent
   parent.children.push(child)
@@ -284,6 +290,12 @@ function insertBefore(
   beforeChild: HostConfig['instance'] | HostConfig['textInstance'],
 ) {
   if (!child || !beforeChild) return
+
+  // Move an existing child instead of duplicating it.
+  if (child.parent === parent) {
+    const childIndex = parent.children.indexOf(child)
+    if (childIndex !== -1) parent.children.splice(childIndex, 1)
+  }
 
   // Link instances
   child.parent = parent
