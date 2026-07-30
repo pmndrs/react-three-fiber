@@ -840,6 +840,21 @@ describe('renderer', () => {
     expect(finalUniqueNames.size).toBe(scene.children.length)
   })
 
+  it('should keep instance children synchronized after a keyed reorder', async () => {
+    const children = (order: string[]) => order.map((name) => <group key={name} name={name} />)
+
+    const store = await act(async () => root.render(children(['a', 'b'])))
+    const { scene } = store.getState()
+
+    await act(async () => root.render(children(['b', 'a'])))
+
+    const objectOrder = scene.children.map((child) => child.name)
+    const instanceOrder = (scene as any).__r3f.children.map((child: any) => child.object.name)
+
+    expect(objectOrder).toEqual(['b', 'a'])
+    expect(instanceOrder).toEqual(objectOrder)
+  })
+
   it('should update scene synchronously with flushSync', async () => {
     let updateSynchronously: (value: number) => void
 
