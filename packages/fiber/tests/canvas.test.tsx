@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { act } from 'react'
 import { render } from '@testing-library/react'
-import { Canvas, act } from '../src'
+import { Canvas } from '../src'
 
 describe('web Canvas', () => {
   it('should correctly mount', async () => {
