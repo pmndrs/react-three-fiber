@@ -28,7 +28,6 @@ import {
   findInitialRoot,
   getInstanceProps,
   IsAllOptional,
-  scheduleMicrotask,
 } from './utils'
 import type { RootStore } from './store'
 import { swapInteractivity, removeInteractivity, type EventHandlers } from './events'
@@ -575,6 +574,22 @@ function getEventPriority(type: string): number {
     }
     default:
       return DefaultEventPriority
+  }
+}
+
+function scheduleMicrotask(callback: () => void): void {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback)
+  } else if (typeof Promise !== 'undefined') {
+    Promise.resolve()
+      .then(callback)
+      .catch((error: unknown) => {
+        setTimeout(() => {
+          throw error
+        })
+      })
+  } else {
+    setTimeout(callback)
   }
 }
 
