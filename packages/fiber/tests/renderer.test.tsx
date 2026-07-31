@@ -880,4 +880,25 @@ describe('renderer', () => {
     await act(async () => root.render(<TestComponent />))
     await act(async () => updateSynchronously(1))
   })
+
+  it('should reset removed pierced props on the pierced target', async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test(props: any) {
+      return (
+        <mesh ref={ref} {...props}>
+          <boxGeometry />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    await act(async () => root.render(<Test position-x={5} />))
+    expect(ref.current!.position.x).toBe(5)
+
+    await act(async () => root.render(<Test />))
+    expect(ref.current!.position.x).toBe(0)
+    // The reset must not leak a stray leaf-key property onto the object root
+    expect((ref.current as any).x).toBeUndefined()
+  })
 })
