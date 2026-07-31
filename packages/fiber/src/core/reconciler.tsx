@@ -17,6 +17,7 @@ import {
   prepare,
   isObject3D,
   findInitialRoot,
+  getInstanceProps,
   IsAllOptional,
 } from './utils'
 import type { RootStore } from './store'
@@ -536,14 +537,21 @@ export const reconciler = /* @__PURE__ */ createReconciler<
 
     // Reconstruct when args or <primitive object={...} have changes
     if (reconstruct) {
-      reconstructed.push([instance, { ...newProps }, fiber])
+      reconstructed.push([instance, getInstanceProps(newProps), fiber])
     } else {
       // Create a diff-set, flag if there are any changes
       const changedProps = diffProps(instance, newProps)
-      if (Object.keys(changedProps).length) {
-        Object.assign(instance.props, changedProps)
-        applyProps(instance.object, changedProps)
-      }
+
+      // Sync props with the committed ones so removed props aren't diffed again
+      // and instance-level props like onUpdate and dispose stay current.
+      // attach is fixed at its mount-time (possibly inferred) value since the
+      // instance is attached with it; changing attach requires a remount via key
+      const attach = instance.props.attach
+      instance.props = getInstanceProps(newProps)
+      if (attach !== undefined) instance.props.attach = attach
+      else delete instance.props.attach
+
+      if (Object.keys(changedProps).length) applyProps(instance.object, changedProps)
     }
 
     // Flush reconstructed siblings when we hit the last updated child in a sequence

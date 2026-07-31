@@ -901,4 +901,59 @@ describe('renderer', () => {
     // The reset must not leak a stray leaf-key property onto the object root
     expect((ref.current as any).x).toBeUndefined()
   })
+
+  it('should not re-apply removed prop defaults on later unrelated updates', async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test(props: any) {
+      return (
+        <mesh ref={ref} {...props}>
+          <boxGeometry />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    await act(async () => root.render(<Test position-x={5} />))
+    await act(async () => root.render(<Test />))
+    expect(ref.current!.position.x).toBe(0)
+
+    // User mutates the object imperatively (e.g. from an animation)
+    ref.current!.position.x = 3
+
+    // An unrelated prop update must not stomp the imperative change
+    await act(async () => root.render(<Test name="updated" />))
+    expect(ref.current!.position.x).toBe(3)
+  })
+
+  it('should keep the onUpdate prop current across updates', async () => {
+    const onUpdate1 = jest.fn()
+    const onUpdate2 = jest.fn()
+
+    await act(async () => root.render(<mesh onUpdate={onUpdate1} />))
+    onUpdate1.mockClear()
+
+    await act(async () => root.render(<mesh onUpdate={onUpdate2} position-x={1} />))
+    expect(onUpdate1).not.toHaveBeenCalled()
+    expect(onUpdate2).toHaveBeenCalled()
+  })
+
+  it('should respect dispose={null} added after mount', async () => {
+    const dispose = jest.fn()
+
+    const Test = (props: any) => (
+      <mesh
+        {...props}
+        ref={(self: any) => {
+          if (self) self.dispose = dispose
+        }}
+      />
+    )
+
+    await act(async () => root.render(<Test />))
+    await act(async () => root.render(<Test dispose={null} />))
+    await act(async () => root.render(null))
+
+    expect(dispose).not.toHaveBeenCalled()
+  })
 })
