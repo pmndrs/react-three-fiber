@@ -28,6 +28,7 @@ import {
   findInitialRoot,
   getInstanceProps,
   IsAllOptional,
+  scheduleMicrotask,
 } from './utils'
 import type { RootStore } from './store'
 import { swapInteractivity, removeInteractivity, type EventHandlers } from './events'
@@ -674,6 +675,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
+  // Mirrors react-dom, which flushes discrete work in microtasks
+  supportsMicrotasks: true,
+  scheduleMicrotask,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   noTimeout: -1,
