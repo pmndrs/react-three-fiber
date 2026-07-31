@@ -955,7 +955,7 @@ describe('renderer', () => {
     expect(dispose).not.toHaveBeenCalled()
   })
 
-  it('should apply args changes when no later fiber in the commit is a tail sibling', async () => {
+  it('should apply args changes when followed by an unchanged memoized sibling', async () => {
     const ref = React.createRef<THREE.Mesh>()
     const Sibling = React.memo(() => <group name="static" />)
 

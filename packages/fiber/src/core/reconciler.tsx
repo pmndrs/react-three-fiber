@@ -388,17 +388,17 @@ function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance'])
 
 const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Fiber][] = []
 
-function swapInstances(): void {
+function flushReconstructedInstances(): void {
   if (reconstructed.length === 0) return
 
   try {
-    swapInstancesImpl()
+    swapReconstructedInstances()
   } finally {
     reconstructed.length = 0
   }
 }
 
-function swapInstancesImpl(): void {
+function swapReconstructedInstances(): void {
   // Detach instance
   for (const [instance] of reconstructed) {
     const parent = instance.parent
@@ -564,7 +564,7 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
   // Reconstructed instances are swapped once all mutations are committed,
   // before layout effects run so refs point to the new objects
-  resetAfterCommit: swapInstances,
+  resetAfterCommit: flushReconstructedInstances,
   shouldSetTextContent: () => false,
   clearContainer: () => false,
   hideInstance,
