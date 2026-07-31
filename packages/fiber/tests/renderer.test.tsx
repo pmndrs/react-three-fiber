@@ -954,4 +954,28 @@ describe('renderer', () => {
 
     expect(dispose).not.toHaveBeenCalled()
   })
+
+  it('should apply args changes when no later fiber in the commit is a tail sibling', async () => {
+    const ref = React.createRef<THREE.Mesh>()
+    const Sibling = React.memo(() => <group name="static" />)
+
+    function Test({ size }: { size: number }) {
+      const material = React.useMemo(() => <meshBasicMaterial />, [])
+      return (
+        <>
+          <mesh ref={ref}>
+            <boxGeometry args={[size, size, size]} />
+            {material}
+          </mesh>
+          <Sibling />
+        </>
+      )
+    }
+
+    await act(async () => root.render(<Test size={1} />))
+    expect((ref.current!.geometry as THREE.BoxGeometry).parameters.width).toBe(1)
+
+    await act(async () => root.render(<Test size={2} />))
+    expect((ref.current!.geometry as THREE.BoxGeometry).parameters.width).toBe(2)
+  })
 })
