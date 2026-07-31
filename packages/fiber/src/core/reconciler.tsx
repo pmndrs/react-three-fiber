@@ -7,8 +7,17 @@ import {
   ContinuousEventPriority,
   DiscreteEventPriority,
   DefaultEventPriority,
+  IdleEventPriority,
 } from '../../react-reconciler/constants.js'
-import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
+import {
+  unstable_IdlePriority as idlePriority,
+  unstable_ImmediatePriority as immediatePriority,
+  unstable_UserBlockingPriority as userBlockingPriority,
+  unstable_NormalPriority as normalPriority,
+  unstable_LowPriority as lowPriority,
+  unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
+  unstable_scheduleCallback as scheduleCallback,
+} from 'scheduler'
 import {
   diffProps,
   applyProps,
@@ -18,6 +27,7 @@ import {
   prepare,
   isObject3D,
   findInitialRoot,
+  getInstanceProps,
   isFromRef,
   FROM_REF,
 } from './utils'
@@ -335,7 +345,17 @@ function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance'])
 
 const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Fiber][] = []
 
-function swapInstances(): void {
+function flushReconstructedInstances(): void {
+  if (reconstructed.length === 0) return
+
+  try {
+    swapReconstructedInstances()
+  } finally {
+    reconstructed.length = 0
+  }
+}
+
+function swapReconstructedInstances(): void {
   // Detach instance
   for (const [instance] of reconstructed) {
     const parent = instance.parent
@@ -415,8 +435,6 @@ function swapInstances(): void {
       invalidateInstance(instance)
     }
   }
-
-  reconstructed.length = 0
 }
 
 // Don't handle text instances, make it no-op
@@ -426,9 +444,114 @@ const NO_CONTEXT: HostConfig['hostContext'] = {}
 
 let currentUpdatePriority: number = NoEventPriority
 
-// https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberFlags.js
-const NoFlags = 0
-const Update = 4
+// Mirrors react-dom's getEventPriority for parity with events outside of React
+// https://github.com/facebook/react/blob/main/packages/react-dom-bindings/src/events/ReactDOMEventListener.js
+function getEventPriority(type: string): number {
+  switch (type) {
+    case 'beforetoggle':
+    case 'cancel':
+    case 'click':
+    case 'close':
+    case 'contextmenu':
+    case 'copy':
+    case 'cut':
+    case 'auxclick':
+    case 'dblclick':
+    case 'dragend':
+    case 'dragstart':
+    case 'drop':
+    case 'focusin':
+    case 'focusout':
+    case 'input':
+    case 'invalid':
+    case 'keydown':
+    case 'keypress':
+    case 'keyup':
+    case 'mousedown':
+    case 'mouseup':
+    case 'paste':
+    case 'pause':
+    case 'play':
+    case 'pointercancel':
+    case 'pointerdown':
+    case 'pointerup':
+    case 'ratechange':
+    case 'reset':
+    case 'resize':
+    case 'seeked':
+    case 'submit':
+    case 'touchcancel':
+    case 'touchend':
+    case 'touchstart':
+    case 'volumechange':
+    case 'change':
+    case 'selectionchange':
+    case 'compositionstart':
+    case 'compositionend':
+    case 'compositionupdate':
+    case 'beforeinput':
+    case 'blur':
+    case 'fullscreenchange':
+    case 'focus':
+    case 'hashchange':
+    case 'popstate':
+    case 'select':
+    case 'selectstart':
+      return DiscreteEventPriority
+    case 'drag':
+    case 'dragenter':
+    case 'dragexit':
+    case 'dragleave':
+    case 'dragover':
+    case 'mousemove':
+    case 'mouseout':
+    case 'mouseover':
+    case 'pointermove':
+    case 'pointerout':
+    case 'pointerover':
+    case 'scroll':
+    case 'touchmove':
+    case 'wheel':
+    case 'mouseenter':
+    case 'mouseleave':
+    case 'pointerenter':
+    case 'pointerleave':
+      return ContinuousEventPriority
+    case 'message': {
+      switch (getCurrentPriorityLevel()) {
+        case immediatePriority:
+          return DiscreteEventPriority
+        case userBlockingPriority:
+          return ContinuousEventPriority
+        case normalPriority:
+        case lowPriority:
+          return DefaultEventPriority
+        case idlePriority:
+          return IdleEventPriority
+        default:
+          return DefaultEventPriority
+      }
+    }
+    default:
+      return DefaultEventPriority
+  }
+}
+
+function scheduleMicrotask(callback: () => void): void {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback)
+  } else if (typeof Promise !== 'undefined') {
+    Promise.resolve()
+      .then(callback)
+      .catch((error: unknown) => {
+        setTimeout(() => {
+          throw error
+        })
+      })
+  } else {
+    setTimeout(callback)
+  }
+}
 
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
@@ -500,21 +623,23 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     // Reconstruct instance if args were changed
     else if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) reconstruct = true
 
-    // Reconstruct when args or <primitive object={...} have changes
+    // Reconstruct when args or <primitive object={...} have changes.
+    // Instances are swapped at the end of the mutation phase (resetAfterCommit)
     if (reconstruct) {
-      reconstructed.push([instance, { ...newProps }, fiber])
+      reconstructed.push([instance, getInstanceProps(newProps), fiber])
     } else {
       // Create a diff-set, flag if there are any changes
       const changedProps = diffProps(instance, newProps)
-      if (Object.keys(changedProps).length) {
-        Object.assign(instance.props, changedProps)
-        applyProps(instance.object, changedProps)
-      }
-    }
 
-    // Flush reconstructed siblings when we hit the last updated child in a sequence
-    const isTailSibling = fiber.sibling === null || (fiber.flags & Update) === NoFlags
-    if (isTailSibling) swapInstances()
+      // Replace the old prop snapshot after computing the diff
+      //`attach` is preserved since it cannot be updated dynamically
+      const attach = instance.props.attach
+      instance.props = getInstanceProps(newProps)
+      if (attach !== undefined) instance.props.attach = attach
+      else delete instance.props.attach
+
+      if (Object.keys(changedProps).length) applyProps(instance.object, changedProps)
+    }
   },
   finalizeInitialChildren: (instance) => {
     // Check if any props contain fromRef markers that need to be resolved after mount
@@ -542,7 +667,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     const target = container.getState().internal.container ?? container.getState().scene
     return prepare(target, container, '', {})
   },
-  resetAfterCommit: () => {},
+  // Reconstructed instances are swapped once all mutations are committed,
+  // before layout effects run so refs point to the new objects
+  resetAfterCommit: flushReconstructedInstances,
   shouldSetTextContent: () => false,
   clearContainer: () => false,
   hideInstance,
@@ -550,6 +677,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
+  // Mirrors react-dom, which flushes discrete work in microtasks
+  supportsMicrotasks: true,
+  scheduleMicrotask,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   noTimeout: -1,
@@ -583,28 +713,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   resolveUpdatePriority() {
     if (currentUpdatePriority !== NoEventPriority) return currentUpdatePriority
 
-    switch (typeof window !== 'undefined' && window.event?.type) {
-      case 'click':
-      case 'contextmenu':
-      case 'dblclick':
-      case 'dragenter':
-      case 'dragleave':
-      case 'drop':
-      case 'pointercancel':
-      case 'pointerdown':
-      case 'pointerup':
-        return DiscreteEventPriority
-      case 'dragover':
-      case 'pointermove':
-      case 'pointerout':
-      case 'pointerover':
-      case 'pointerenter':
-      case 'pointerleave':
-      case 'wheel':
-        return ContinuousEventPriority
-      default:
-        return DefaultEventPriority
-    }
+    const eventType = typeof window !== 'undefined' ? window.event?.type : undefined
+    if (eventType === undefined) return DefaultEventPriority
+    return getEventPriority(eventType)
   },
   resetFormInstance() {},
   // @ts-ignore DefinitelyTyped is not up to date
