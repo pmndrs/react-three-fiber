@@ -376,13 +376,14 @@ export function diffProps<T = any>(instance: Instance<T>, newProps: Instance<T>[
     // has no means to do this. Hence we curate a small collection of value-classes
     // with their respective constructor/set arguments
     // For removed props, try to set default values, if possible
+    // NOTE: changes are keyed by the full (pierced) prop so applyProps resolves the same target
     if (root.constructor && root.constructor.length === 0) {
       // create a blank slate of the instance and copy the particular parameter.
       const ctor = getMemoizedPrototype(root)
-      if (!is.und(ctor)) changedProps[key] = ctor[key]
+      if (!is.und(ctor)) changedProps[prop] = ctor[key]
     } else {
       // instance does not have constructor, just set it to 0
-      changedProps[key] = 0
+      changedProps[prop] = 0
     }
   }
 
