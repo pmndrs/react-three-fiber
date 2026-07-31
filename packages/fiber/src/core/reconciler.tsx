@@ -542,10 +542,8 @@ export const reconciler = /* @__PURE__ */ createReconciler<
       // Create a diff-set, flag if there are any changes
       const changedProps = diffProps(instance, newProps)
 
-      // Sync props with the committed ones so removed props aren't diffed again
-      // and instance-level props like onUpdate and dispose stay current.
-      // attach is fixed at its mount-time (possibly inferred) value since the
-      // instance is attached with it; changing attach requires a remount via key
+      // Replace the old prop snapshot after computing the diff
+      //`attach` is preserved since it cannot be updated dynamically
       const attach = instance.props.attach
       instance.props = getInstanceProps(newProps)
       if (attach !== undefined) instance.props.attach = attach
