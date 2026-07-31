@@ -250,6 +250,34 @@ describe('renderer', () => {
     expect(lifecycle).toStrictEqual(['attach', 'mount'])
   })
 
+  it('should keep attach fixed until the instance is remounted', async () => {
+    const ref = React.createRef<THREE.Group>()
+
+    function Test({ attach, childKey }: { attach?: string; childKey: string }) {
+      return (
+        <group>
+          <group key={childKey} ref={ref} attach={attach} />
+        </group>
+      )
+    }
+
+    const store = await act(async () => root.render(<Test childKey="one" attach="userData-one" />))
+    const parent = store.getState().scene.children[0]
+    const child = ref.current
+    expect(parent.userData.one).toBe(child)
+
+    await act(async () => root.render(<Test childKey="one" attach="userData-two" />))
+    expect(parent.userData.one).toBe(child)
+    expect(parent.userData.two).toBeUndefined()
+
+    await act(async () => root.render(<Test childKey="one" />))
+    expect(parent.userData.one).toBe(child)
+
+    await act(async () => root.render(<Test childKey="two" attach="userData-two" />))
+    expect(parent.userData.one).toBeUndefined()
+    expect(parent.userData.two).toBe(ref.current)
+  })
+
   it('should update props reactively', async () => {
     const store = await act(async () => root.render(<group />))
     const { scene } = store.getState()
@@ -900,5 +928,30 @@ describe('renderer', () => {
     expect(ref.current!.position.x).toBe(0)
     // The reset must not leak a stray leaf-key property onto the object root
     expect((ref.current as any).x).toBeUndefined()
+
+    // Imperative updates should not get overwritten by unrelated updates now
+    ref.current!.position.x = 3
+
+    await act(async () => root.render(<Test name="updated" />))
+    expect(ref.current!.position.x).toBe(3)
+  })
+
+  it('should respect dispose={null} added after mount', async () => {
+    const dispose = jest.fn()
+
+    const Test = (props: any) => (
+      <mesh
+        {...props}
+        ref={(self: any) => {
+          if (self) self.dispose = dispose
+        }}
+      />
+    )
+
+    await act(async () => root.render(<Test />))
+    await act(async () => root.render(<Test dispose={null} />))
+    await act(async () => root.render(null))
+
+    expect(dispose).not.toHaveBeenCalled()
   })
 })
