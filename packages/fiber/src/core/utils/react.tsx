@@ -6,14 +6,6 @@ import type { Bridge, UnblockProps } from '#types'
 // React-specific hooks, components, and utilities for R3F
 
 /**
- * Safely flush async effects when testing, simulating a legacy root.
- * @deprecated Import from React instead. import { act } from 'react'
- */
-// Reference with computed key to break Webpack static analysis
-// https://github.com/webpack/webpack/issues/14814
-export const act: typeof React.act = React[('act' + '') as 'act']
-
-/**
  * An SSR-friendly useLayoutEffect.
  *
  * React currently throws a warning when using useLayoutEffect on the server.
