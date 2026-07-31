@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
 import {
   ReconcilerRoot,
   createRoot,
-  act,
   extend,
   ThreeElement,
   ThreeElements,

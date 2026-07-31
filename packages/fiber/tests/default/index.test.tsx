@@ -5,6 +5,7 @@
  * both WebGL and WebGPU renderers. WebGL-specific tests are in ../legacy/
  */
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
 import ts from 'typescript'
 import * as path from 'path'
@@ -12,7 +13,6 @@ import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
 import {
   ReconcilerRoot,
   createRoot as createRootImpl,
-  act,
   useThree,
   createPortal,
   RootState,

@@ -1,6 +1,7 @@
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, once } from '../src/index'
+import { ReconcilerRoot, createRoot, extend, once } from '../src/index'
 
 extend(THREE as any)
 

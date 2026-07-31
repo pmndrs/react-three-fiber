@@ -8,13 +8,13 @@
  * For bundle import verification, use: yarn build && yarn verify-bundles
  */
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three/webgpu'
 import { uniform, color, vec3, float, mix } from 'three/tsl'
 import { createCanvas } from '../../../test-renderer/src/createTestCanvas'
 import {
   ReconcilerRoot,
   createRoot as createRootImpl,
-  act,
   useThree,
   extend,
   R3F_BUILD_LEGACY,

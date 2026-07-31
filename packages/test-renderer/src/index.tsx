@@ -12,8 +12,9 @@
  *   import ReactThreeTestRenderer from '@react-three/test-renderer'
  */
 
+import { act } from 'react'
 import * as THREE from 'three'
-import { extend, _roots as mockRoots, createRoot, reconciler, act } from '@react-three/fiber'
+import { extend, _roots as mockRoots, createRoot, reconciler } from '@react-three/fiber'
 
 import { createTestRenderer } from './createRenderer'
 import { waitFor, type WaitOptions } from './helpers/waitFor'

@@ -13,6 +13,7 @@
  *   import ReactThreeTestRenderer, { useUniform, useNodes } from '@react-three/test-renderer/webgpu'
  */
 
+import { act } from 'react'
 import * as THREE from 'three/webgpu'
 // All WebGPU hooks come from fiber's public entry, never from its source tree. Importing via
 // relative `../../fiber/src/...` paths pulled fiber's internal `#three` / `#types` aliases into
@@ -23,7 +24,6 @@ import {
   _roots as mockRoots,
   createRoot,
   reconciler,
-  act,
   useUniform,
   useUniforms,
   removeUniforms,

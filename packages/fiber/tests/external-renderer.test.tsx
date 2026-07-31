@@ -7,8 +7,9 @@
  * @see https://github.com/pmndrs/react-three-fiber/issues/3651
  */
 import * as React from 'react'
+import { act } from 'react'
 import * as THREE from 'three'
-import { ReconcilerRoot, createRoot, act, extend, useThree } from '../src/index'
+import { ReconcilerRoot, createRoot, extend, useThree } from '../src/index'
 
 extend(THREE as any)
 
