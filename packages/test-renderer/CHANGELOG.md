@@ -1,5 +1,11 @@
 # @react-three/test-renderer
 
+## 9.1.1
+
+### Patch Changes
+
+- c340195e7129d6b244a9eb11c0c10573954d03ef: Import `act` from React to avoid relying on the deprecated React Three Fiber re-export.
+
 ## 9.1.0
 
 ### Minor Changes

@@ -1,5 +1,15 @@
 # @react-three/fiber
 
+## 9.7.0
+
+### Minor Changes
+
+- c340195e7129d6b244a9eb11c0c10573954d03ef: Match React DOM event priorities and microtask scheduling so reconciler updates flush with consistent priority and timing.
+
+### Patch Changes
+
+- c340195e7129d6b244a9eb11c0c10573954d03ef: Harden internal instance synchronization after keyed reorders and batched reconstruction, and correctly reset pierced props.
+
 ## 9.6.1
 
 ### Patch Changes
