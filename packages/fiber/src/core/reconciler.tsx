@@ -388,7 +388,17 @@ function setFiberRef(fiber: Fiber, publicInstance: HostConfig['publicInstance'])
 
 const reconstructed: [oldInstance: HostConfig['instance'], props: HostConfig['props'], fiber: Fiber][] = []
 
-function swapInstances(): void {
+function flushReconstructedInstances(): void {
+  if (reconstructed.length === 0) return
+
+  try {
+    swapReconstructedInstances()
+  } finally {
+    reconstructed.length = 0
+  }
+}
+
+function swapReconstructedInstances(): void {
   // Detach instance
   for (const [instance] of reconstructed) {
     const parent = instance.parent
@@ -456,8 +466,6 @@ function swapInstances(): void {
       invalidateInstance(instance)
     }
   }
-
-  reconstructed.length = 0
 }
 
 // Don't handle text instances, make it no-op
@@ -466,10 +474,6 @@ const handleTextInstance = () => {}
 const NO_CONTEXT: HostConfig['hostContext'] = {}
 
 let currentUpdatePriority: number = NoEventPriority
-
-// https://github.com/facebook/react/blob/main/packages/react-reconciler/src/ReactFiberFlags.js
-const NoFlags = 0
-const Update = 4
 
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
@@ -535,7 +539,8 @@ export const reconciler = /* @__PURE__ */ createReconciler<
     // Reconstruct instance if args were changed
     else if (newProps.args?.some((value, index) => value !== oldProps.args?.[index])) reconstruct = true
 
-    // Reconstruct when args or <primitive object={...} have changes
+    // Reconstruct when args or <primitive object={...} have changes.
+    // Instances are swapped at the end of the mutation phase (resetAfterCommit)
     if (reconstruct) {
       reconstructed.push([instance, getInstanceProps(newProps), fiber])
     } else {
@@ -551,17 +556,15 @@ export const reconciler = /* @__PURE__ */ createReconciler<
 
       if (Object.keys(changedProps).length) applyProps(instance.object, changedProps)
     }
-
-    // Flush reconstructed siblings when we hit the last updated child in a sequence
-    const isTailSibling = fiber.sibling === null || (fiber.flags & Update) === NoFlags
-    if (isTailSibling) swapInstances()
   },
   finalizeInitialChildren: () => false,
   commitMount() {},
   getPublicInstance: (instance) => instance?.object!,
   prepareForCommit: () => null,
   preparePortalMount: (container) => prepare(container.getState().scene, container, '', {}),
-  resetAfterCommit: () => {},
+  // Reconstructed instances are swapped once all mutations are committed,
+  // before layout effects run so refs point to the new objects
+  resetAfterCommit: flushReconstructedInstances,
   shouldSetTextContent: () => false,
   clearContainer: () => false,
   hideInstance,
