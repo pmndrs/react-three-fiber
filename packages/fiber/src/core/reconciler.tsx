@@ -577,6 +577,22 @@ function getEventPriority(type: string): number {
   }
 }
 
+function scheduleMicrotask(callback: () => void): void {
+  if (typeof queueMicrotask === 'function') {
+    queueMicrotask(callback)
+  } else if (typeof Promise !== 'undefined') {
+    Promise.resolve()
+      .then(callback)
+      .catch((error: unknown) => {
+        setTimeout(() => {
+          throw error
+        })
+      })
+  } else {
+    setTimeout(callback)
+  }
+}
+
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -674,6 +690,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   createTextInstance: handleTextInstance,
   hideTextInstance: handleTextInstance,
   unhideTextInstance: handleTextInstance,
+  // Mirrors react-dom, which flushes discrete work in microtasks
+  supportsMicrotasks: true,
+  scheduleMicrotask,
   scheduleTimeout: (typeof setTimeout === 'function' ? setTimeout : undefined) as any,
   cancelTimeout: (typeof clearTimeout === 'function' ? clearTimeout : undefined) as any,
   noTimeout: -1,
