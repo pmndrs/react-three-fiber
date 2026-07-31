@@ -274,6 +274,35 @@ describe('renderer', () => {
     expect(lifecycle).toStrictEqual(['attach', 'mount'])
   })
 
+  it('should keep attach fixed until the instance is remounted', async () => {
+    const ref = React.createRef<THREE.Group>()
+
+    function Test({ attach, childKey }: { attach?: string; childKey: string }) {
+      return (
+        <group>
+          <group key={childKey} ref={ref} attach={attach} />
+        </group>
+      )
+    }
+
+    const store = await act(async () => root.render(<Test childKey="one" attach="userData-one" />))
+    // Camera is at [0], rendered content starts at [1]
+    const parent = store.getState().scene.children[1]
+    const child = ref.current
+    expect(parent.userData.one).toBe(child)
+
+    await act(async () => root.render(<Test childKey="one" attach="userData-two" />))
+    expect(parent.userData.one).toBe(child)
+    expect(parent.userData.two).toBeUndefined()
+
+    await act(async () => root.render(<Test childKey="one" />))
+    expect(parent.userData.one).toBe(child)
+
+    await act(async () => root.render(<Test childKey="two" attach="userData-two" />))
+    expect(parent.userData.one).toBeUndefined()
+    expect(parent.userData.two).toBe(ref.current)
+  })
+
   it('should update props reactively', async () => {
     const store = await act(async () => root.render(<group />))
     const { scene } = store.getState()
@@ -866,6 +895,22 @@ describe('renderer', () => {
     expect(finalUniqueNames.size).toBe(contentChildren().length)
   })
 
+  it('should keep instance children synchronized after a keyed reorder', async () => {
+    const children = (order: string[]) => order.map((name) => <group key={name} name={name} />)
+
+    const store = await act(async () => root.render(children(['a', 'b'])))
+    const { scene } = store.getState()
+
+    await act(async () => root.render(children(['b', 'a'])))
+
+    // Filter out the default camera, which lives in scene.children but not in __r3f.children
+    const objectOrder = scene.children.filter((child) => !(child as any).isCamera).map((child) => child.name)
+    const instanceOrder = (scene as any).__r3f.children.map((child: any) => child.object.name)
+
+    expect(objectOrder).toEqual(['b', 'a'])
+    expect(instanceOrder).toEqual(objectOrder)
+  })
+
   it('should update scene synchronously with flushSync', async () => {
     let updateSynchronously: (value: number) => void
 
@@ -891,6 +936,76 @@ describe('renderer', () => {
 
     await act(async () => root.render(<TestComponent />))
     await act(async () => updateSynchronously(1))
+  })
+
+  it('should reset removed pierced props on the pierced target', async () => {
+    const ref = React.createRef<THREE.Mesh>()
+
+    function Test(props: any) {
+      return (
+        <mesh ref={ref} {...props}>
+          <boxGeometry />
+          <meshBasicMaterial />
+        </mesh>
+      )
+    }
+
+    await act(async () => root.render(<Test position-x={5} />))
+    expect(ref.current!.position.x).toBe(5)
+
+    await act(async () => root.render(<Test />))
+    expect(ref.current!.position.x).toBe(0)
+    // The reset must not leak a stray leaf-key property onto the object root
+    expect((ref.current as any).x).toBeUndefined()
+
+    // Imperative updates should not get overwritten by unrelated updates now
+    ref.current!.position.x = 3
+
+    await act(async () => root.render(<Test name="updated" />))
+    expect(ref.current!.position.x).toBe(3)
+  })
+
+  it('should respect dispose={null} added after mount', async () => {
+    const dispose = vi.fn()
+
+    const Test = (props: any) => (
+      <mesh
+        {...props}
+        ref={(self: any) => {
+          if (self) self.dispose = dispose
+        }}
+      />
+    )
+
+    await act(async () => root.render(<Test />))
+    await act(async () => root.render(<Test dispose={null} />))
+    await act(async () => root.render(null))
+
+    expect(dispose).not.toHaveBeenCalled()
+  })
+
+  it('should apply args changes when followed by an unchanged memoized sibling', async () => {
+    const ref = React.createRef<THREE.Mesh>()
+    const Sibling = React.memo(() => <group name="static" />)
+
+    function Test({ size }: { size: number }) {
+      const material = React.useMemo(() => <meshBasicMaterial />, [])
+      return (
+        <>
+          <mesh ref={ref}>
+            <boxGeometry args={[size, size, size]} />
+            {material}
+          </mesh>
+          <Sibling />
+        </>
+      )
+    }
+
+    await act(async () => root.render(<Test size={1} />))
+    expect((ref.current!.geometry as THREE.BoxGeometry).parameters.width).toBe(1)
+
+    await act(async () => root.render(<Test size={2} />))
+    expect((ref.current!.geometry as THREE.BoxGeometry).parameters.width).toBe(2)
   })
 
   //* Props vs Setters Conflict Resolution Tests ==============================
