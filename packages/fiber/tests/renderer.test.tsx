@@ -896,16 +896,15 @@ describe('renderer', () => {
   })
 
   it('should keep instance children synchronized after a keyed reorder', async () => {
+    const parent = React.createRef<THREE.Group>()
     const children = (order: string[]) => order.map((name) => <group key={name} name={name} />)
+    const tree = (order: string[]) => <group ref={parent}>{children(order)}</group>
 
-    const store = await act(async () => root.render(children(['a', 'b'])))
-    const { scene } = store.getState()
+    await act(async () => root.render(tree(['a', 'b'])))
+    await act(async () => root.render(tree(['b', 'a'])))
 
-    await act(async () => root.render(children(['b', 'a'])))
-
-    // Filter out the default camera, which lives in scene.children but not in __r3f.children
-    const objectOrder = scene.children.filter((child) => !(child as any).isCamera).map((child) => child.name)
-    const instanceOrder = (scene as any).__r3f.children.map((child: any) => child.object.name)
+    const objectOrder = parent.current!.children.map((child) => child.name)
+    const instanceOrder = (parent.current as any).__r3f.children.map((child: any) => child.object.name)
 
     expect(objectOrder).toEqual(['b', 'a'])
     expect(instanceOrder).toEqual(objectOrder)
