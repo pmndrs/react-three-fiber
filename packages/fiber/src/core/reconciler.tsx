@@ -6,8 +6,17 @@ import {
   ContinuousEventPriority,
   DiscreteEventPriority,
   DefaultEventPriority,
+  IdleEventPriority,
 } from '../../react-reconciler/constants.js'
-import { unstable_IdlePriority as idlePriority, unstable_scheduleCallback as scheduleCallback } from 'scheduler'
+import {
+  unstable_IdlePriority as idlePriority,
+  unstable_ImmediatePriority as immediatePriority,
+  unstable_UserBlockingPriority as userBlockingPriority,
+  unstable_NormalPriority as normalPriority,
+  unstable_LowPriority as lowPriority,
+  unstable_getCurrentPriorityLevel as getCurrentPriorityLevel,
+  unstable_scheduleCallback as scheduleCallback,
+} from 'scheduler'
 import {
   diffProps,
   applyProps,
@@ -475,6 +484,99 @@ const NO_CONTEXT: HostConfig['hostContext'] = {}
 
 let currentUpdatePriority: number = NoEventPriority
 
+// Mirrors react-dom's getEventPriority for parity with events outside of React
+// https://github.com/facebook/react/blob/main/packages/react-dom-bindings/src/events/ReactDOMEventListener.js
+function getEventPriority(type: string): number {
+  switch (type) {
+    case 'beforetoggle':
+    case 'cancel':
+    case 'click':
+    case 'close':
+    case 'contextmenu':
+    case 'copy':
+    case 'cut':
+    case 'auxclick':
+    case 'dblclick':
+    case 'dragend':
+    case 'dragstart':
+    case 'drop':
+    case 'focusin':
+    case 'focusout':
+    case 'input':
+    case 'invalid':
+    case 'keydown':
+    case 'keypress':
+    case 'keyup':
+    case 'mousedown':
+    case 'mouseup':
+    case 'paste':
+    case 'pause':
+    case 'play':
+    case 'pointercancel':
+    case 'pointerdown':
+    case 'pointerup':
+    case 'ratechange':
+    case 'reset':
+    case 'resize':
+    case 'seeked':
+    case 'submit':
+    case 'touchcancel':
+    case 'touchend':
+    case 'touchstart':
+    case 'volumechange':
+    case 'change':
+    case 'selectionchange':
+    case 'compositionstart':
+    case 'compositionend':
+    case 'compositionupdate':
+    case 'beforeinput':
+    case 'blur':
+    case 'fullscreenchange':
+    case 'focus':
+    case 'hashchange':
+    case 'popstate':
+    case 'select':
+    case 'selectstart':
+      return DiscreteEventPriority
+    case 'drag':
+    case 'dragenter':
+    case 'dragexit':
+    case 'dragleave':
+    case 'dragover':
+    case 'mousemove':
+    case 'mouseout':
+    case 'mouseover':
+    case 'pointermove':
+    case 'pointerout':
+    case 'pointerover':
+    case 'scroll':
+    case 'touchmove':
+    case 'wheel':
+    case 'mouseenter':
+    case 'mouseleave':
+    case 'pointerenter':
+    case 'pointerleave':
+      return ContinuousEventPriority
+    case 'message': {
+      switch (getCurrentPriorityLevel()) {
+        case immediatePriority:
+          return DiscreteEventPriority
+        case userBlockingPriority:
+          return ContinuousEventPriority
+        case normalPriority:
+        case lowPriority:
+          return DefaultEventPriority
+        case idlePriority:
+          return IdleEventPriority
+        default:
+          return DefaultEventPriority
+      }
+    }
+    default:
+      return DefaultEventPriority
+  }
+}
+
 export const reconciler = /* @__PURE__ */ createReconciler<
   HostConfig['type'],
   HostConfig['props'],
@@ -605,24 +707,9 @@ export const reconciler = /* @__PURE__ */ createReconciler<
   resolveUpdatePriority() {
     if (currentUpdatePriority !== NoEventPriority) return currentUpdatePriority
 
-    switch (typeof window !== 'undefined' && window.event?.type) {
-      case 'click':
-      case 'contextmenu':
-      case 'dblclick':
-      case 'pointercancel':
-      case 'pointerdown':
-      case 'pointerup':
-        return DiscreteEventPriority
-      case 'pointermove':
-      case 'pointerout':
-      case 'pointerover':
-      case 'pointerenter':
-      case 'pointerleave':
-      case 'wheel':
-        return ContinuousEventPriority
-      default:
-        return DefaultEventPriority
-    }
+    const eventType = typeof window !== 'undefined' ? window.event?.type : undefined
+    if (eventType === undefined) return DefaultEventPriority
+    return getEventPriority(eventType)
   },
   resetFormInstance() {},
   // @ts-ignore DefinitelyTyped is not up to date
