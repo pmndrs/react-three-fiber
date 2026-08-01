@@ -16,6 +16,12 @@ describe('web Canvas', () => {
       ),
     )
 
+    // three stamps its revision onto the canvas (data-engine="three.js rNNN"); assert its
+    // shape, then strip it so the snapshot doesn't pin a three version (#3802)
+    const canvas = renderer.container.querySelector('canvas')
+    expect(canvas?.getAttribute('data-engine')).toMatch(/^three\.js r\d+$/)
+    canvas?.removeAttribute('data-engine')
+
     expect(renderer.container).toMatchSnapshot()
   })
 
