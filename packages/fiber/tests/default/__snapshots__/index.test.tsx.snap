@@ -59,7 +59,6 @@ exports[`exports > matches public API 1`] = `
   "Vector4",
   "VectorRepresentation",
   "_roots",
-  "act",
   "addAfterEffect",
   "addEffect",
   "addTail",
