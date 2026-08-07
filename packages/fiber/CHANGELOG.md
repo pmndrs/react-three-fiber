@@ -1,5 +1,44 @@
 # @react-three/fiber
 
+## 10.0.0-alpha.3
+
+Full detail, with migration notes and examples, is in
+[`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha3) at the repo root. This is the summary.
+
+### Breaking Changes
+
+- **`three` peer floor raised to `>=0.185.0`** (from `>=0.181.2`). If you are on r181–r184 you
+  cannot install alpha.3 — upgrade three alongside R3F. v10 now uses three's own `RenderPipeline`,
+  `CubeRenderTarget` and `UniformNode` types rather than shadowing them.
+- **`act` is no longer re-exported.** Import it from React instead — it is the same function.
+
+### Features
+
+- Interactive priority: `userData.interactivePriority` takes precedence over distance-based hit
+  testing, for UI controls that render on top via depth tricks
+- `useBuffers` and `useGPUStorage` for GPU compute (experimental)
+- `useTextures`, a reactive texture registry (experimental)
+- Multi-canvas rendering on WebGPU via `renderer={{ primaryCanvas: 'id' }}`, with shared state
+- Camera scene parenting, so children of the camera render and track it
+- `forceEven` and `background` Canvas props
+- `fromRef` and `once` prop utilities
+- The frame scheduler moved out to `@pmndrs/scheduler`
+
+### Bug Fixes
+
+- Visibility handlers (`onFramed`/`onOccluded`/`onVisible`) no longer keep a stale closure — inline
+  handlers now fire the current callback
+- TSL hot module replacement no longer rebuilds against stale scoped state
+- Multi-canvas TSL state is shared via `primaryStore`
+- Runtime `setFrameloop()` reaches the scheduler
+- `state.frustum` is current when read during the render phase
+- `createPortal` no longer leaks subscriptions; portal `size` survives parent resizes
+- Pointer events survive an `args`-triggered reconstruction
+- `ShaderMaterial` uniforms keep a stable target reference
+- Reconciler hardening from `@react-three/fiber@9.7.0` ported over, including react-dom event
+  priorities and microtask scheduling
+- `useLoader` / `.preload` / `.clear` accept a custom `cacheKey`
+
 ## 10.0.0-alpha.2
 
 ### Features

@@ -1,5 +1,18 @@
 # @react-three/eslint-plugin
 
+## 1.0.0-alpha.3
+
+### Patch Changes
+
+- No rule changes. Released alongside `@react-three/fiber@10.0.0-alpha.3` to keep the alpha line in
+  step; see [that package's changelog](../fiber/CHANGELOG.md) for what changed, and
+  [`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha3) for full detail.
+
+  Note this package is versioned on its **own 1.x line**, not fiber's 10.x — matching alpha numbers
+  denote the same release train, not the same version.
+
+- Changelog restructured: the alpha.2 entries had been collapsed into a single run-on bullet.
+
 ## 1.0.0-alpha.2
 
 ### Major Changes
