@@ -32,14 +32,15 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false --strict",
-    "release": "pnpm build && pnpm -r publish --filter './packages/*'",
+    "release": "pnpm build && node scripts/release.js",
     "codegen:eslint": "cd packages/eslint-plugin && pnpm codegen",
     "analyze-fiber": "cd packages/fiber && npm publish --dry-run",
     "analyze-test": "cd packages/test-renderer && npm publish --dry-run",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "verify-bundles": "node scripts/verify-bundles.js",
-    "verify-types": "node scripts/verify-types.js"
+    "verify-types": "node scripts/verify-types.js",
+    "release:dry": "node scripts/release.js --dry-run"
   },
   "devDependencies": {
     "@babel/core": "^7.28.6",
