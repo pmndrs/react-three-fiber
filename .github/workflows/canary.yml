@@ -34,6 +34,16 @@ jobs:
       - name: Build
         run: pnpm build
 
+      # Verify before publishing, not after. This job fires on every push to v10 and pushes straight
+      # to npm, where a version can never be withdrawn -- so it is the last place a bad artifact can
+      # be stopped. These are the checks that catch the self-import leak, a stub shipped as a build,
+      # and absolute local paths in declarations; none of them ran here before.
+      - name: Verify bundles
+        run: pnpm verify-bundles
+
+      - name: Verify types
+        run: pnpm verify-types
+
       # Every published package gets a canary, not just fiber -- test-renderer has had a real build
       # since it gained one, and a canary of fiber alone cannot be integration-tested against it.
       #
