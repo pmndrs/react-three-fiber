@@ -1,5 +1,15 @@
 import * as React from 'react'
-import { useThree, createPortal, useFrame, extend, Euler, applyProps, ThreeElement } from '@react-three/fiber'
+// Relative, never the package name. A self-import leaves rollup unable to resolve the specifier,
+// so it stays external and every entry ends up importing `@react-three/fiber` -- which resolves
+// back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
+import { useThree, useFrame } from '../../hooks'
+import { createPortal } from '../../renderer'
+import { extend } from '../../reconciler'
+import { applyProps } from '../../utils'
+// `Euler` here is R3F's permissive prop type (`MathType<THREE.Euler>`, which also accepts a tuple),
+// not three's class. That is what the package-name import was resolving to, and narrowing it to
+// three's `Euler` would quietly break `backgroundRotation={[0, 0, 0]}` for every consumer.
+import type { Euler, ThreeElement } from '../../../../types/three'
 import {
   WebGLCubeRenderTarget,
   CubeRenderTarget,
