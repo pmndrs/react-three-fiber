@@ -143,7 +143,7 @@ Live demo: https://codesandbox.io/s/icy-tree-brnsm?file=/src/App.tsx
 <details>
   <summary>Show React Native example</summary>
 
-This example relies on react 18 and uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI.
+This example uses `expo-cli`, but you can create a bare project with their template or with the `react-native` CLI.
 
 ```bash
 # Install expo-cli, this will create our app

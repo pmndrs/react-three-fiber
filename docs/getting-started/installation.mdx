@@ -8,8 +8,24 @@ nav: 1
 npm install three @react-three/fiber
 ```
 
+To try the v10 alpha:
+
+```bash
+npm install three@latest @react-three/fiber@alpha
+```
+
 > [!WARNING]  
-> Fiber is compatible with React v18 and v19 and works with ReactDOM and React Native. Fiber is a React renderer, it must pair with a major version of React, just like react-dom, react-native, etc. @react-three/fiber@8 pairs with react@18, @react-three/fiber@9 pairs with react@19.
+> Fiber is a React renderer, so it must pair with a major version of React, just like react-dom or
+> react-native. It works with ReactDOM and React Native.
+>
+> | Fiber                           | React          | three        |
+> | ------------------------------- | -------------- | ------------ |
+> | `@react-three/fiber@8`          | `react@18`     | —            |
+> | `@react-three/fiber@9`          | `react@19`     | —            |
+> | `@react-three/fiber@10` (alpha) | `>=19.0 <19.3` | `>=0.185.0`  |
+>
+> The v10 bounds are deliberate — they state the versions we have tested, and move when a newer one
+> is verified. Installing v10 against React 19.3 or three r184 will fail peer resolution.
 
 Getting started with React Three Fiber is not nearly as hard as you might have thought, but various frameworks may require particular attention.
 

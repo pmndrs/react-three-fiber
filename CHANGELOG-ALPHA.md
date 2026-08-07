@@ -31,6 +31,104 @@ removed from the public surface.
 
 It is the same function, so this is an import change and nothing more.
 
+#### React peer range is `>=19.0 <19.3`
+
+v10 requires React 19, with an upper bound. The ceiling is deliberate and follows the same rule as
+the three range: we state the versions we have tested. It moves when a newer React is verified, not
+before.
+
+```json
+"react": ">=19.0 <19.3",
+"react-dom": ">=19.0 <19.3"
+```
+
+#### Removed Renderer Props
+
+> **These shipped in alpha.3, not alpha.2.** The alpha.2 notes described them, but the entries were
+> written after `v10.0.0-alpha.2` was tagged — "Removed Renderer Props" four days after, the shadow
+> default nineteen days after — so anyone reading the published alpha.2 notes was told this had
+> already happened when it had not. Moved here, where an alpha.2 → alpha.3 upgrader will meet them.
+
+Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
+
+**Removed from Canvas/RenderProps:**
+
+- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
+- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
+- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
+- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
+- `toneMapping` - Use `gl={{ toneMapping: ... }}`
+
+**Removed from RootState (useThree):**
+
+- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
+- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
+
+**Migration:**
+
+```diff
+- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
++ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
+
+- const { colorSpace, toneMapping } = useThree()
++ const { renderer } = useThree()
++ const colorSpace = renderer.outputColorSpace
++ const toneMapping = renderer.toneMapping
+```
+
+**Note:** `textureColorSpace` survives, but **not as a Canvas prop**. It moved into
+`ColorManagementConfig`, which is intersected into `GLProps` and `RendererProps` — so it goes inside
+the config bag, not at the top level:
+
+```diff
+- <Canvas textureColorSpace="srgb" />
++ <Canvas gl={{ textureColorSpace: 'srgb' }} />
++ <Canvas renderer={{ textureColorSpace: 'srgb' }} />
+```
+
+#### Default shadow type is now `PCFShadowMap`
+
+Changed from `PCFSoftShadowMap` to match three r182 defaults. three deprecated `PCFSoftShadowMap` and
+improved the standard `PCFShadowMap`, so R3F aligns with upstream. The legacy `shadows` aliases
+`percentage` and `soft` still work, mapping to `PCFShadowMap` with a console warning.
+
+_(Also written into the alpha.2 notes after that tag — see the box above.)_
+
+#### `usePostProcessing` → `useRenderPipeline`
+
+three renamed `PostProcessing` to `RenderPipeline` in r183. `usePostProcessing` was a **public export**
+of `@react-three/fiber/webgpu` at alpha.2 and no longer exists, and the store key moved with it.
+
+```diff
+- import { usePostProcessing } from '@react-three/fiber/webgpu'
++ import { useRenderPipeline } from '@react-three/fiber/webgpu'
+
+- const { postProcessing } = useThree()
++ const { renderPipeline } = useThree()
+```
+
+#### Smaller breaking changes
+
+Individually minor, collectively enough to break a build — none of these were listed before.
+
+- **`useTexture({ cache })` now defaults to `true`.** Every URL-loaded texture enrols in the global
+  registry and persists until disposed. If you were relying on textures being collected, this reads
+  like a leak. Opt out per call with `{ cache: false }`.
+- **`useTextures()` return shape changed.** `textures` is now `all`; `addMultiple`, `remove`,
+  `removeMultiple` and `disposeMultiple` are gone; `dispose()` returns a boolean and is refcount-gated,
+  so it no longer disposes a texture another consumer still holds.
+- **Pointer-move raycasts are deferred to frame start by default** (`events.frameTimedRaycasts: true`).
+  Moves are now processed once per frame rather than per DOM event.
+- **The default camera is a child of `scene`.** This shifts every index in `scene.children` by one —
+  code doing `scene.children[0]` to reach the first rendered object now gets the camera.
+- **`advance()` is narrowed to `(timestamp: number)`.** Extra arguments are a type error.
+- **`Mutable<P>` now uses `-readonly`** rather than `P[K] | Readonly<P[K]>`, which affects every
+  `ThreeElement` prop type.
+- **`ObjectMap` is generic**, with `Record<>` members.
+- **Canvas CSS is `width: 100%; height: 100%`**, and `setSize(w, h, false)` is now unconditional.
+- **`TextureEntry` is no longer exported** from the default entry.
+- **`@react-three/test-renderer` entry paths and peer range changed** — see that package's changelog.
+
 ### Features
 
 #### Interactive Priority (userData.interactivePriority)
@@ -339,12 +437,16 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
   Registration is now atomic and generation-aware. Verified live over three consecutive edits on a
   real GPU.
 - Ported the reconciler hardening released in `@react-three/fiber@9.7.0`: removed pierced props
-  reset on their pierced target rather than the object root; `instance.props` synced wholesale in
-  `commitUpdate` so removed props do not linger, changed reserved props take effect, and imperative
-  mutations are not stomped by re-applied defaults; reconstructed instances flushed in
+  reset on their pierced target rather than the object root; reconstructed instances flushed in
   `resetAfterCommit` so `args`/`primitive` changes apply even when the last updated sibling bailed
-  out. Also aligned update scheduling — `resolveUpdatePriority` now mirrors react-dom's
-  `getEventPriority`, and the reconciler uses microtask scheduling.
+  out.
+
+  Three parts of that port are **behaviour changes rather than fixes**, and are worth knowing about:
+  - **`commitUpdate` now syncs `instance.props` wholesale.** Removed props no longer linger, changed
+    reserved props (`onUpdate`, `dispose`) take effect — and imperative mutations survive a re-render
+    instead of being stomped by re-applied defaults. That last one is the change people will notice.
+  - **`dragenter`/`dragleave` moved from Discrete to Continuous priority**, matching react-dom.
+  - **The reconciler now schedules via microtasks.**
 
 ### Examples
 
@@ -377,47 +479,6 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
 ---
 
 ## 10.0.0-alpha.2
-
-### Breaking Changes
-
-#### Removed Renderer Props
-
-Removed redundant renderer props that can be passed via `gl` or `renderer` props directly:
-
-**Removed from Canvas/RenderProps:**
-
-- `legacy` - `THREE.ColorManagement.enabled` is now always `true`
-- `linear` (deprecated) - Use `gl={{ outputColorSpace: THREE.LinearSRGBColorSpace }}`
-- `flat` (deprecated) - Use `gl={{ toneMapping: THREE.NoToneMapping }}`
-- `colorSpace` - Use `gl={{ outputColorSpace: ... }}`
-- `toneMapping` - Use `gl={{ toneMapping: ... }}`
-
-**Removed from RootState (useThree):**
-
-- `legacy`, `linear`, `flat`, `colorSpace`, `toneMapping`
-- Access via `state.renderer.outputColorSpace` and `state.renderer.toneMapping` instead
-
-**Migration:**
-
-```diff
-- <Canvas colorSpace={THREE.LinearSRGBColorSpace} toneMapping={THREE.NoToneMapping} />
-+ <Canvas gl={{ outputColorSpace: THREE.LinearSRGBColorSpace, toneMapping: THREE.NoToneMapping }} />
-
-- const { colorSpace, toneMapping } = useThree()
-+ const { renderer } = useThree()
-+ const colorSpace = renderer.outputColorSpace
-+ const toneMapping = renderer.toneMapping
-```
-
-**Note:** `textureColorSpace` remains in RenderProps as it's R3F-specific.
-
-**Files changed:**
-
-- `packages/fiber/types/renderer.d.ts` - Removed props from RenderProps
-- `packages/fiber/types/store.d.ts` - Removed props from RootState
-- `packages/fiber/src/core/Canvas.tsx` - Removed prop destructuring and passing
-- `packages/fiber/src/core/renderer.tsx` - Simplified configure() logic
-- `packages/fiber/src/core/store.ts` - Removed from initial state
 
 ### Features
 
@@ -526,10 +587,6 @@ Added automatic Hot Module Replacement (HMR) support for WebGPU TSL hooks. When 
 **Store changes:**
 
 - Added `_hmrVersion: number` to RootState for coordinating HMR rebuilds
-
-#### Default Shadow Type: PCFShadowMap
-
-Changed the default shadow map type from `PCFSoftShadowMap` to `PCFShadowMap` to match Three.js r182 defaults. Three.js deprecated `PCFSoftShadowMap` and improved the standard `PCFShadowMap`, so R3F now aligns with upstream. Legacy shadow types (`percentage`, `soft`) are mapped to `PCFShadowMap` with a console warning.
 
 ### Bug Fixes
 
