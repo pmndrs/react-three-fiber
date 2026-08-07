@@ -12,6 +12,11 @@
  * argument parsing, the isLegacy type split, sizing from the store, memoization,
  * and disposal are all fully provable in jsdom (Tier 1). Actually *rendering into*
  * a target is Tier 2.
+ *
+ * Tiers are defined in `docs/development/TESTING.md`. In short: Tier 1 runs on every PR and
+ * proves wiring; Tier 2 needs a real GPU and runs as a pre-release gate. An `it.todo('covered
+ * by Tier 2: …')` marks something jsdom structurally cannot prove, rather than a hollow
+ * assertion that would look like coverage.
  */
 import * as React from 'react'
 import { act } from 'react'

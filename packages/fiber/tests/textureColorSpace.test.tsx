@@ -14,6 +14,11 @@ import { ReconcilerRoot, createRoot } from '../src/index'
  * These tests drive the WebGL (`gl={{...}}`) path end-to-end, which runs under the
  * jsdom WebGL mock. The `renderer={{...}}` config bag selects WebGPU, which cannot
  * init without a device — see the Tier-2 todo at the bottom.
+ *
+ * Tiers are defined in `docs/development/TESTING.md`. In short: Tier 1 runs on every PR and
+ * proves wiring; Tier 2 needs a real GPU and runs as a pre-release gate. An `it.todo('covered
+ * by Tier 2: …')` marks something jsdom structurally cannot prove, rather than a hollow
+ * assertion that would look like coverage.
  */
 
 // 1x1 RGBA8 texture — DataTexture defaults to RGBAFormat + UnsignedByteType,

@@ -19,6 +19,11 @@
  *   - that uniform/node value changes actually reach the compiled shader
  *   - that the render loop's `state.renderPipeline.render()` produces correct output
  *   These need a device; faking them in jsdom would be a hollow assertion.
+ *
+ * Tiers are defined in `docs/development/TESTING.md`. In short: Tier 1 runs on every PR and
+ * proves wiring; Tier 2 needs a real GPU and runs as a pre-release gate. An `it.todo('covered
+ * by Tier 2: …')` marks something jsdom structurally cannot prove, rather than a hollow
+ * assertion that would look like coverage.
  */
 import * as React from 'react'
 import { act } from 'react'
