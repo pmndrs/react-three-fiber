@@ -464,6 +464,80 @@ describe('events', () => {
     expect(handleClickRear).not.toHaveBeenCalled()
   })
 
+  describe('interactivity across reconstruction', () => {
+    const geometry = new THREE.BoxGeometry(2, 2)
+
+    function SwapApp({ material, ...handlers }: { material: THREE.Material } & Record<string, unknown>) {
+      return (
+        <Canvas>
+          <mesh args={[geometry, material]} {...handlers} />
+        </Canvas>
+      )
+    }
+
+    it('keeps firing events after an args change reconstructs the instance', async () => {
+      const handleClick = vi.fn()
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<SwapApp material={materialA} onClick={handleClick} />)
+      })
+      await act(async () => {
+        result.rerender(<SwapApp material={materialB} onClick={handleClick} />)
+      })
+
+      const canvas = getContainer()
+      fireEvent(canvas, createPointerEvent('pointerdown'))
+      fireEvent(canvas, createPointerEvent('pointerup'))
+      fireEvent(canvas, createPointerEvent('click'))
+
+      expect(handleClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not re-enter a hovered object when the instance is swapped underneath it', async () => {
+      const handlePointerEnter = vi.fn()
+      const handlePointerLeave = vi.fn()
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+      const handlers = { onPointerEnter: handlePointerEnter, onPointerLeave: handlePointerLeave }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<SwapApp material={materialA} {...handlers} />)
+      })
+
+      const canvas = getContainer()
+      await act(async () => {
+        canvas.dispatchEvent(createPointerEvent('pointermove'))
+      })
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+
+      // The pointer has not moved. Reconstructing the object beneath it is an implementation
+      // detail, and must not surface as the pointer leaving and re-entering. Before
+      // swapInteractivity the hover entry was discarded here, so the next move re-fired enter --
+      // without a matching leave, leaving the pair unbalanced.
+      await act(async () => {
+        result.rerender(<SwapApp material={materialB} {...handlers} />)
+      })
+      await act(async () => {
+        canvas.dispatchEvent(createPointerEvent('pointermove'))
+      })
+
+      expect(handlePointerEnter).toHaveBeenCalledTimes(1)
+      expect(handlePointerLeave).not.toHaveBeenCalled()
+    })
+
+    // KNOWN GAP, deliberately not asserted as passing: an active pointer capture does not survive
+    // reconstruction. swapInteractivity re-keys `pointerState.captured` and rewrites the stored
+    // intersection, and both are verifiably correct at replay time (the captured hit resolves to
+    // the new object with its handlers intact) -- but the deferred pointer-move path never reaches
+    // `onIntersect` afterwards, so a drag in progress goes silent. That is a frame-timed raycast
+    // interaction rather than a state-transfer problem, and it needs its own fix.
+    it.todo('keeps an active pointer capture alive across reconstruction')
+  })
+
   describe('web pointer capture', () => {
     const handlePointerMove = vi.fn()
     const handlePointerDown = vi.fn((ev) => (ev.target as any).setPointerCapture(ev.pointerId))
