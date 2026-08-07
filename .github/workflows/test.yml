@@ -1,8 +1,12 @@
 name: Test
 on:
   push:
+    # Both active release lines. `v10` matters as much as `master`: PR checks verify a PR's *head*,
+    # not the result of merging it, and a PR head can lag behind the branch it points at -- so a
+    # merge can land content no run ever saw. Verifying the branch after the merge catches that.
     branches:
       - 'master'
+      - 'v10'
   pull_request: {}
 jobs:
   build:
