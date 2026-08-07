@@ -61,6 +61,73 @@ function releaseInternalPointerCapture(internal: RootState['internal'], obj: THR
   }
 }
 
+/**
+ * Moves every trace of interactivity from one object to its replacement, for reconstruction.
+ *
+ * When `args` or a `primitive`'s `object` changes, R3F builds a new three object and keeps the same
+ * instance. Removing the old object from the interaction state and registering the new one from
+ * scratch makes events *work* again (#3778), but it forgets what was in flight: a pointer resting on
+ * the object fires a second `onPointerEnter` without ever having left, and an active pointer capture
+ * is dropped mid-drag. Rewriting the references instead keeps the interaction continuous across a
+ * swap the user never asked to see (#3744).
+ *
+ * Captures are re-keyed rather than released, so the DOM-level capture on `captureData.target` is
+ * left alone — releasing and re-acquiring it is precisely the glitch being avoided.
+ *
+ * Visibility handlers are deliberately not transferred: that registry is keyed by `object.uuid`, so
+ * the replacement re-registers itself through `applyProps`. The old entry is dropped here so it
+ * cannot outlive the object it described.
+ */
+export function swapInteractivity(store: RootStore, object: THREE.Object3D, newObject: THREE.Object3D) {
+  const { internal } = store.getState()
+
+  // Replaced in place: an object's position in the interaction list feeds hit ordering, so the
+  // replacement should inherit it rather than being appended at the end.
+  for (let i = 0; i < internal.interaction.length; i++) {
+    if (internal.interaction[i] === object) internal.interaction[i] = newObject
+  }
+
+  for (const pointerState of internal.pointerMap.values()) {
+    for (let i = 0; i < pointerState.initialHits.length; i++) {
+      if (pointerState.initialHits[i] === object) pointerState.initialHits[i] = newObject
+    }
+
+    // Hover entries are keyed by uuid, so a swap needs a new key as well as new references —
+    // rewriting the value alone would strand the entry under the old object's id.
+    pointerState.hovered.forEach((value, key) => {
+      if (value.eventObject === object || value.object === object) {
+        pointerState.hovered.delete(key)
+        const next = {
+          ...value,
+          eventObject: value.eventObject === object ? newObject : value.eventObject,
+          object: value.object === object ? newObject : value.object,
+        }
+        pointerState.hovered.set(makeId(next), next)
+      }
+    })
+
+    // Captures need more than a re-key. The stored `intersection` is replayed into the hit list on
+    // every subsequent event, and it holds its own `object`/`eventObject` references — leave those
+    // pointing at the discarded object and the replay resolves to a corpse whose `__r3f` link has
+    // already been severed, so the drag goes silent even though the capture "survived".
+    const captureData = pointerState.captured.get(object)
+    if (captureData) {
+      pointerState.captured.delete(object)
+      pointerState.captured.set(newObject, {
+        ...captureData,
+        intersection: {
+          ...captureData.intersection,
+          object: captureData.intersection.object === object ? newObject : captureData.intersection.object,
+          eventObject:
+            captureData.intersection.eventObject === object ? newObject : captureData.intersection.eventObject,
+        },
+      })
+    }
+  }
+
+  unregisterVisibility(store, object)
+}
+
 export function removeInteractivity(store: RootStore, object: THREE.Object3D) {
   const { internal } = store.getState()
   // Removes every trace of an object from the data store

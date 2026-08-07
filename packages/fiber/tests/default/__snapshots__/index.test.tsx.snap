@@ -109,6 +109,7 @@ exports[`exports > matches public API 1`] = `
   "registerPrimary",
   "removeInteractivity",
   "resolve",
+  "swapInteractivity",
   "unmountComponentAtNode",
   "unregisterPrimary",
   "updateCamera",

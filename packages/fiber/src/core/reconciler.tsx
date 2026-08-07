@@ -31,7 +31,7 @@ import {
   isFromRef,
   FROM_REF,
 } from './utils'
-import { removeInteractivity } from './events'
+import { removeInteractivity, swapInteractivity } from './events'
 import type { ThreeElement } from '../../types/three'
 
 //* Type Imports ==============================
@@ -381,9 +381,14 @@ function swapReconstructedInstances(): void {
     // So, we manually check if an instance was hidden and unhide it.
     if (instance.isHidden) unhideInstance(instance)
 
-    // The old object is being discarded. Scrub it from the interaction manager so it isn't
-    // left behind as a dead raycast target (and doesn't leak) after reconstruction (#3778).
-    if (isObject3D(instance.object)) removeInteractivity(findInitialRoot(instance), instance.object)
+    // The old object must not survive in the interaction manager as a dead raycast target (#3778).
+    // How it leaves depends on whether a replacement is coming: the second loop hands its state to
+    // the new object via swapInteractivity, and scrubbing it here would destroy exactly what that
+    // transfer needs. Only orphans — instances with no parent, which the second loop skips — are
+    // removed outright.
+    if (isObject3D(instance.object) && !instance.parent) {
+      removeInteractivity(findInitialRoot(instance), instance.object)
+    }
     // Dispose of old object if able
     if (instance.object.__r3f) delete instance.object.__r3f
     if (instance.type !== 'primitive') disposeOnIdle(instance.object)
@@ -399,9 +404,18 @@ function swapReconstructedInstances(): void {
       const target = catalogue[toPascalCase(instance.type)]
 
       // Create object
+      const prevObject = instance.object
       instance.object = instance.props.object ?? new target(...(instance.props.args ?? []))
       instance.object.__r3f = instance
       setFiberRef(fiber, instance.object)
+
+      // Hand the outgoing object's interaction state to its replacement before anything reads it,
+      // so a hover or an in-flight pointer capture survives the swap rather than being torn down
+      // and rebuilt (#3744). This also retires the old object as a raycast target, which is the
+      // job the first loop skipped for exactly this reason.
+      if (isObject3D(prevObject) && isObject3D(instance.object)) {
+        swapInteractivity(findInitialRoot(instance), prevObject, instance.object)
+      }
 
       // Clear appliedOnce so once() props can be reapplied to the new object
       delete instance.appliedOnce
