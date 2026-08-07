@@ -4,12 +4,7 @@ import * as THREE from '#three'
 import { render, fireEvent } from '@testing-library/react'
 import { Canvas, extend, useThree } from '../src/index'
 
-async function act<T>(fn: () => T | Promise<T>) {
-  const value = await fn()
-  // Wait for R3F's initialization and frame loop
-  await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
-  return value
-}
+import { act } from './utils/act'
 
 extend(THREE as any)
 

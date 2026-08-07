@@ -2,12 +2,10 @@ import { vi } from 'vitest'
 import * as THREE from '#three'
 import { createCanvas as createTestCanvas } from '../../test-renderer/src/createTestCanvas'
 
-export async function act<T>(fn: () => Promise<T>) {
-  const value = fn()
-  return new Promise<T>((res) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(() => res(value))))
-  })
-}
+// Imported *and* re-exported: `reconciler.prod.test.ts` pulls `act`/`createCanvas` from here, and a
+// bare `export { act } from …` would forward the name without binding it in this module's scope.
+import { act } from './utils/act'
+export { act }
 
 export const createCanvas = () => {
   const canvas = document.createElement('canvas')

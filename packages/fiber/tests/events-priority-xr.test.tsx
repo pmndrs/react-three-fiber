@@ -1,9 +1,15 @@
 import { vi } from 'vitest'
 import * as React from 'react'
 import { render, fireEvent } from '@testing-library/react'
+// NOTE: this file deliberately keeps a local frame-settling helper instead of the shared
+// act() in ./utils/act. Wrapping these cases in React's real act changes the raycast the
+// pointer events see -- 'falls back to distance ordering' starts reporting the far mesh
+// first, i.e. declaration order, which is what a distance tie would produce. That points at
+// world matrices not being current at dispatch time under a real act scope, and it needs its
+// own investigation rather than being papered over here. Tracked separately; the act(...)
+// warnings from this file stay until then.
 async function act<T>(fn: () => Promise<T>) {
   const value = await fn()
-  // Wait for R3F's initialization and frame loop
   await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
   return value
 }

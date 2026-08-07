@@ -17,19 +17,7 @@ beforeEach(() => {
   __resetWarningFlag()
 })
 
-// Helper to wait for R3F's initialization and frame loop
-async function act<T>(fn: () => Promise<T>) {
-  const value = await fn()
-  await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
-  return value
-}
-
-// Helper to advance multiple frames
-async function advanceFrames(count: number = 3) {
-  for (let i = 0; i < count; i++) {
-    await new Promise((res) => requestAnimationFrame(() => res(null)))
-  }
-}
+import { act, advanceFrames } from './utils/act'
 
 describe('visibility events', () => {
   //* onFramed Tests --------------------------------

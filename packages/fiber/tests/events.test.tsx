@@ -1,12 +1,7 @@
 import { vi } from 'vitest'
 import * as React from 'react'
 import { render, fireEvent, RenderResult, createEvent } from '@testing-library/react'
-async function act<T>(fn: () => Promise<T>) {
-  const value = await fn()
-  // Wait for R3F's initialization and frame loop
-  await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => res(null))))
-  return value
-}
+import { act } from './utils/act'
 import { Canvas, extend } from '../src'
 import * as THREE from '#three'
 import type { RootState } from '#types'
