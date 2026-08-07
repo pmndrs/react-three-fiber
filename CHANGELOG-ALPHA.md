@@ -19,6 +19,18 @@ The `three` peer range moved from `>=0.181.2` to **`>=0.185.0`**. **If you are o
 
 The floor moved because v10 now uses three's own APIs rather than shadowing them: `RenderPipeline` (renamed from `PostProcessing` in r183), `CubeRenderTarget`, and the real `UniformNode` types. Keeping a fallback path for older three meant maintaining a parallel implementation of types three already ships.
 
+#### `act` is no longer re-exported
+
+R3F's `act` was a re-export of React's own, deprecated in favour of importing it directly. It is now
+removed from the public surface.
+
+```diff
+- import { act } from '@react-three/fiber'
++ import { act } from 'react'
+```
+
+It is the same function, so this is an import change and nothing more.
+
 ### Features
 
 #### Interactive Priority (userData.interactivePriority)
@@ -310,6 +322,29 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
 - Fixed `ShaderMaterial` uniforms losing their target reference across prop updates.
 - Added a custom `cacheKey` argument to `useLoader` / `.preload` / `.clear` for assets fetched
   from URLs that change per request.
+- Fixed visibility handlers (`onFramed`/`onOccluded`/`onVisible`) keeping a stale closure. Handler
+  registration sat behind a check comparing the handler _count_, so swapping `onOccluded` for a
+  different function left the count unchanged and the registry kept a snapshot of the old closure.
+  Inline handlers (`onFramed={() => …}`) produce a new function every render, which is the common
+  case — so an updated callback would simply never fire. Registration now runs on every prop update
+  and updates in place, preserving the last-known visibility state instead of re-firing events for
+  transitions that did not happen.
+- **Fixed TSL hot module replacement rebuilding against stale scoped state.** Vite would hot-update
+  a WebGPU scene without a full reload, but the remounted scene reused the previous module's TSL
+  nodes: the first edit lost environment lighting, the second lost the mesh entirely, while a cold
+  reload of the same code was correct. Two causes in `webgpu/hooks/useNodes.tsx` — creator mode
+  called `store.setState` inside `useMemo` during render (producing a React "Cannot update … while
+  rendering" error on every HMR remount), and the creator-mode cache returned the old module's
+  nodes because nothing invoked the existing `rebuildNodes`/`_hmrVersion` bust on the HMR path.
+  Registration is now atomic and generation-aware. Verified live over three consecutive edits on a
+  real GPU.
+- Ported the reconciler hardening released in `@react-three/fiber@9.7.0`: removed pierced props
+  reset on their pierced target rather than the object root; `instance.props` synced wholesale in
+  `commitUpdate` so removed props do not linger, changed reserved props take effect, and imperative
+  mutations are not stomped by re-applied defaults; reconstructed instances flushed in
+  `resetAfterCommit` so `args`/`primitive` changes apply even when the last updated sibling bailed
+  out. Also aligned update scheduling — `resolveUpdatePriority` now mirrors react-dom's
+  `getEventPriority`, and the reconciler uses microtask scheduling.
 
 ### Examples
 
@@ -327,22 +362,17 @@ constraints, per-callback fps throttling and the single shared RAF all behave as
 
 - `@react-three/test-renderer` now has a real build. It previously had no build script and no
   `dist`, while `main`/`module`/`types` all pointed into `dist/` — it would have published broken.
-- Removed dead `Instance.deferredRefs` and `updateVisibilityHandlers`.
+- Removed dead `Instance.deferredRefs`.
 - Renamed the last internal `PostProcessing`/`pp` identifiers to `RenderPipeline`/`pipeline`.
 - Dropped the dangling `heroes` entry from `pnpm-workspace.yaml`.
 - Corrected `pnpm ci` to `pnpm run ci` in CLAUDE.md and docs — pnpm reserves `ci` as a built-in,
   so the documented command always errored instead of running the gate.
 - Stubbed the HDR loader in the background-preset test, which previously made a live network
   request to raw.githack.com and failed offline.
-
-### Files Changed
-
-- `packages/fiber/src/core/utils/fromRef.ts` - **NEW** Deferred ref resolution utility
-- `packages/fiber/src/core/utils/once.ts` - **NEW** Mount-only method call utility
-- `packages/fiber/src/core/utils/props.ts` - Integration of fromRef and once in applyProps
-- `packages/fiber/src/core/renderer.tsx` - Camera scene parenting logic, Portal support
-- `example/src/demos/default/NestedCamera.tsx` - **NEW** Camera headlights demo
-- `docs/v10-features.md` - Camera parenting, Portal, fromRef, once documentation
+- Documentation consolidated into a single canonical home under `docs/`, with stale v9 API
+  references corrected and a CI link check added. Readmes beside source are now thin pointers.
+- The docs link check no longer fails on third-party hosts that are merely slow, and the
+  cc0textures links it kept tripping over now point at ambientCG, which is where that site moved.
 
 ---
 

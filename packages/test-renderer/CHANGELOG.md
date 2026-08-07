@@ -1,5 +1,29 @@
 # @react-three/test-renderer
 
+## 10.0.0-alpha.3
+
+### Major Changes
+
+- **This package now has a real build.** It previously had no build script and no `dist`, while
+  `main`, `module` and `types` all pointed into `dist/` — it would have published broken. It now
+  builds all three entries (`.`, `/legacy`, `/webgpu`) with a config mirroring `@react-three/fiber`.
+
+  If you were installing alpha.2 or earlier and hitting unresolvable imports, this is why.
+
+### Minor Changes
+
+- `@react-three/test-renderer/webgpu` no longer reaches into fiber's source, which had been leaking
+  the internal `#three` alias into the bundle as unresolvable specifiers and duplicating hooks.
+  Bundle size dropped from ~67 kB to ~44 kB as a result.
+- Export-parity tests added against `@react-three/fiber`.
+
+### Patch Changes
+
+- Tracks `@react-three/fiber@10.0.0-alpha.3`. See
+  [that package's changelog](../fiber/CHANGELOG.md) for the authoritative list, and
+  [`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha3) for full detail. The headline is a
+  **breaking peer bump: `three` now requires `>=0.185.0`**, and `act` is no longer re-exported.
+
 ## 10.0.0-alpha.2
 
 ### Major Changes
