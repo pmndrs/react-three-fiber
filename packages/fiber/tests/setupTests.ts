@@ -123,3 +123,33 @@ Object.defineProperties(HTMLCanvasElement.prototype, {
   clientWidth: { get: () => 1280 },
   clientHeight: { get: () => 800 },
 })
+
+//* Pointer Capture Polyfill ==============================
+// jsdom implements PointerEvent poorly and the capture API not at all, so `setPointerCapture` is
+// simply absent from elements. R3F's pointer-capture path calls straight through to it, which means
+// any test that captures a pointer dies on the DOM call rather than on the behaviour it is testing.
+//
+// Modelled on the real contract rather than stubbed to no-ops, because the failure modes are the
+// interesting part: releasing an id that is not captured throws `NotFoundError` in browsers, and
+// code that unmounts mid-drag has to survive that.
+const capturedPointers = new WeakMap<Element, Set<number>>()
+
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = function (pointerId: number) {
+    let ids = capturedPointers.get(this)
+    if (!ids) capturedPointers.set(this, (ids = new Set()))
+    ids.add(pointerId)
+  }
+
+  Element.prototype.hasPointerCapture = function (pointerId: number) {
+    return capturedPointers.get(this)?.has(pointerId) ?? false
+  }
+
+  Element.prototype.releasePointerCapture = function (pointerId: number) {
+    const ids = capturedPointers.get(this)
+    if (!ids?.has(pointerId)) {
+      throw new DOMException(`Failed to release pointer capture for pointerId ${pointerId}`, 'NotFoundError')
+    }
+    ids.delete(pointerId)
+  }
+}
