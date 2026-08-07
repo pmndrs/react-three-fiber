@@ -27,7 +27,8 @@
       "types": "./dist/webgpu/index.d.ts",
       "import": "./dist/webgpu/index.mjs",
       "require": "./dist/webgpu/index.cjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "bugs": {
     "url": "https://github.com/pmndrs/react-three-fiber/issues"
@@ -39,7 +40,7 @@
   },
   "peerDependencies": {
     "@react-three/fiber": ">=10.0.0-alpha.0",
-    "react": "^19.0.0",
+    "react": ">=19.0 <19.3",
     "three": ">=0.185.0"
   },
   "peerDependenciesMeta": {
