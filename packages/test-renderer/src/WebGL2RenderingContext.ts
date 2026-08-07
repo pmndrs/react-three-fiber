@@ -722,7 +722,10 @@ export class WebGL2RenderingContext {
     this.drawingBufferHeight = canvas.height
 
     for (const method of functions) {
-      this[method] ??= () => {}
+      // Object factories hand back a fresh object rather than undefined: three keys per-object
+      // render state in WeakMaps (WebGLState.drawBuffers keys on the framebuffer), which throws
+      // on an undefined key the first time a render target is bound.
+      this[method] ??= method.startsWith('create') ? () => ({}) : () => {}
     }
 
     Object.assign(this, enums)
