@@ -713,6 +713,27 @@ const extensions: { [key: string]: any } = {
   WEBGL_compressed_texture_etc1: null,
 }
 
+/**
+ * Whether a GL entry point hands back an opaque *handle* rather than a value.
+ *
+ * Real WebGL returns objects here — `WebGLFramebuffer`, `WebGLBuffer`, `WebGLSync` and friends —
+ * and callers legitimately treat them as identities: they compare them, and they use them as map
+ * keys. The blanket `() => {}` stub returns `undefined` for all of them, which silently breaks any
+ * consumer that stores state *per handle*, because every handle is then the same value.
+ *
+ * three r185 does exactly that. `WebGLState.drawBuffers()` caches per-framebuffer draw-buffer state
+ * in a `WeakMap` keyed on the framebuffer, so the first framebuffer-backed `setRenderTarget()`
+ * evaluates `currentDrawbuffers.set(undefined, [])` and throws
+ * `TypeError: Invalid value used as weak map key`. The PMREM/equirect background path is the only
+ * thing in the suite that binds such a target today, which is why it surfaced there first — but the
+ * defect is in the mock, not in that test, and any behavioural coverage of `Environment` /
+ * `useEnvironment` will hit it routinely (see #3820, #3797).
+ *
+ * Matching on the name rather than listing the ten `create*` functions keeps this correct as the
+ * function table grows: the WebGL naming convention is the contract being honoured here.
+ */
+const returnsHandle = (method: string) => method.startsWith('create') || method === 'fenceSync'
+
 export class WebGL2RenderingContext {
   [key: string]: any
 
@@ -722,7 +743,7 @@ export class WebGL2RenderingContext {
     this.drawingBufferHeight = canvas.height
 
     for (const method of functions) {
-      this[method] ??= () => {}
+      this[method] ??= returnsHandle(method) ? () => ({}) : () => {}
     }
 
     Object.assign(this, enums)
