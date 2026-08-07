@@ -35,7 +35,6 @@
   "sideEffects": false,
   "files": [
     "dist",
-    "react-reconciler",
     "readme.md"
   ],
   "exports": {
@@ -53,7 +52,8 @@
       "types": "./dist/webgpu/index.d.ts",
       "import": "./dist/webgpu/index.mjs",
       "require": "./dist/webgpu/index.cjs"
-    }
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "prebuild": "node -e \"require('fs').copyFileSync('../../readme.md', 'readme.md')\"",
