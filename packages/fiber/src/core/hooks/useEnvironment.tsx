@@ -1,4 +1,7 @@
-import { useLoader, useThree } from '@react-three/fiber'
+// Relative, never the package name. A self-import leaves rollup unable to resolve the specifier,
+// so it stays external and every entry ends up importing `@react-three/fiber` -- which resolves
+// back to the default entry and drags `three/webgpu` into the WebGL-only build. See verify-bundles.
+import { useLoader, useThree } from './'
 import {
   EquirectangularReflectionMapping,
   CubeTextureLoader,

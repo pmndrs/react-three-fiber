@@ -42,10 +42,22 @@ const checks = [
     file: 'webgpu/index.mjs',
     // WebGPU should have three/webgpu but NOT plain three
     shouldContain: ["from 'three/webgpu'"],
-    shouldNotContain: [],
+    // This used to be empty while the note below claimed otherwise -- the invariant was documented
+    // and never enforced. Subpath imports (three/tsl, three/addons/*) are fine and are not matched
+    // by this, because the pattern includes the closing quote.
+    shouldNotContain: ["from 'three'"],
     notes: 'WebGPU entry should only have WebGPU (no plain three imports)',
   },
 ]
+
+/**
+ * Emitted JS that must not import the package by name, and the minimum size that counts as a real
+ * build. Both guard failure modes the per-entry checks structurally cannot see.
+ */
+const EMITTED_JS = ['index.mjs', 'index.cjs', 'legacy.mjs', 'legacy.cjs', 'webgpu/index.mjs', 'webgpu/index.cjs']
+
+// A stub is ~5 KB of jiti; a real entry is ~660 KB. Anything in between is not a thing we ship.
+const MIN_REAL_BUILD_BYTES = 100 * 1024
 
 //* Helpers ==============================
 
@@ -161,6 +173,69 @@ for (const check of checks) {
     isStandalone,
   })
 }
+
+//* Cross-cutting checks ==============================
+// The per-entry checks above look for `three/webgpu` in each bundle. That is one hop short of the
+// invariant we actually care about: an entry that imports `@react-three/fiber` by name pulls the
+// *default* entry at runtime, and the default entry imports `three/webgpu`. So the legacy build can
+// carry the entire WebGPU renderer while every check above passes.
+//
+// The specifier survives a build because rollup cannot resolve the package from inside itself,
+// leaves it external, and `failOnWarn: false` swallows the warning. `pnpm stub` does not reproduce
+// it -- unbuild detects the self-reference and hands jiti an explicit alias -- so stub and build
+// disagree and only the build is wrong. Hence checking the emitted files directly.
+
+console.log('\n\n📦 Cross-cutting checks')
+console.log('-'.repeat(60))
+
+let crossCuttingPassed = true
+
+console.log('\n   Package self-imports (must be none):')
+for (const file of EMITTED_JS) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) continue
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const selfImport = content.match(/(?:from|require\()\s*['"]@react-three\/fiber['"]/)
+
+  if (selfImport) {
+    console.log(`   ❌ dist/${file} imports '@react-three/fiber' -- use a relative import instead`)
+    console.log(`      This drags the default entry (and three/webgpu) into every bundle.`)
+    crossCuttingPassed = false
+  } else {
+    console.log(`   ✅ dist/${file}`)
+  }
+}
+
+console.log('\n   Real build, not a stub:')
+for (const file of EMITTED_JS) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) continue
+
+  const { size } = fs.statSync(filePath)
+  if (size < MIN_REAL_BUILD_BYTES) {
+    console.log(`   ❌ dist/${file} is ${(size / 1024).toFixed(1)} KB -- this is a stub, not a build`)
+    console.log(`      Run \`pnpm build\`. \`pnpm dev\`/\`pnpm stub\` overwrite dist with jiti stubs.`)
+    crossCuttingPassed = false
+  } else {
+    console.log(`   ✅ dist/${file} (${(size / 1024).toFixed(1)} KB)`)
+  }
+}
+
+// Stub .d.ts files embed absolute paths from the machine that generated them.
+const dtsWithLocalPaths = ['index.d.ts', 'legacy.d.ts', 'webgpu/index.d.ts'].filter((file) => {
+  const filePath = path.join(FIBER_DIST, file)
+  return fs.existsSync(filePath) && /["']\/(?:Users|home)\//.test(fs.readFileSync(filePath, 'utf-8'))
+})
+
+if (dtsWithLocalPaths.length > 0) {
+  console.log(`\n   ❌ Absolute local paths in declarations: ${dtsWithLocalPaths.join(', ')}`)
+  crossCuttingPassed = false
+} else {
+  console.log('\n   ✅ No absolute local paths in declarations')
+}
+
+if (!crossCuttingPassed) allPassed = false
 
 //* Summary ==============================
 
