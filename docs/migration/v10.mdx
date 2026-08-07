@@ -49,6 +49,31 @@ You can also pass renderer parameters or a pre-created renderer instance. R3F ha
 
 ## Breaking Changes
 
+### Dependency ranges moved
+
+The first thing you will hit, before any code change: v10 will not install alongside the versions v9
+accepted.
+
+| Peer      | v9        | v10            |
+| --------- | --------- | -------------- |
+| `three`   | `>=0.156` | `>=0.185.0`    |
+| `react`   | `>=19.0`  | `>=19.0 <19.3` |
+
+The three floor moved because v10 uses three's own `RenderPipeline` (renamed from `PostProcessing`
+in r183), `CubeRenderTarget`, and the real `UniformNode` types, rather than shadowing them. **If you
+are on r181–r184 you cannot install v10** — upgrade three alongside R3F.
+
+The React ceiling states the versions we have tested, and moves when a newer one is verified.
+
+### React Native moved to its own package
+
+`@react-three/fiber/native` is now **`@react-three/native`**, versioned independently.
+
+```diff
+- import { Canvas, useFrame } from '@react-three/fiber/native'
++ import { Canvas, useFrame } from '@react-three/native'
+```
+
 ### `gl` renamed to `renderer`
 
 The `gl` property in state has been renamed to `renderer` to be renderer-agnostic and match Three.js conventions.
@@ -175,7 +200,15 @@ The following Canvas props have been removed. Use the `gl` (WebGL LEGACY ONLY) o
 + const toneMapping = renderer.toneMapping
 ```
 
-**Note:** `textureColorSpace` remains available as an R3F-specific prop for controlling how textures are interpreted.
+**Note:** `textureColorSpace` survives, but **not as a Canvas prop**. It lives in
+`ColorManagementConfig`, intersected into `GLProps` and `RendererProps`, so it goes inside the
+config bag rather than at the top level:
+
+```diff
+- <Canvas textureColorSpace="srgb" />
++ <Canvas gl={{ textureColorSpace: 'srgb' }} />
++ <Canvas renderer={{ textureColorSpace: 'srgb' }} />
+```
 
 ### `<color attach="background">` Pattern Deprecated
 
@@ -335,7 +368,12 @@ No. WebGL remains the default and will continue to be supported. WebGPU is opt-i
 
 ### Will my drei/postprocessing code work?
 
-Yes. The ecosystem packages are compatible with v10's default import. WebGPU-specific features may require updates to ecosystem packages over time.
+Mostly, with one caveat during the alpha. v10's default import keeps the v9 surface these packages
+build on, so ordinary drei and postprocessing usage is expected to work.
+
+The caveat is peer ranges: a `@react-three/drei` release declaring support for
+`@react-three/fiber@^10` is still pending, so your package manager may warn or refuse to resolve
+until it lands. WebGPU-specific features will need ecosystem updates over time regardless.
 
 ### What if I'm using `state.gl` everywhere?
 
