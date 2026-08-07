@@ -529,13 +529,42 @@ describe('events', () => {
       expect(handlePointerLeave).not.toHaveBeenCalled()
     })
 
-    // KNOWN GAP, deliberately not asserted as passing: an active pointer capture does not survive
-    // reconstruction. swapInteractivity re-keys `pointerState.captured` and rewrites the stored
-    // intersection, and both are verifiably correct at replay time (the captured hit resolves to
-    // the new object with its handlers intact) -- but the deferred pointer-move path never reaches
-    // `onIntersect` afterwards, so a drag in progress goes silent. That is a frame-timed raycast
-    // interaction rather than a state-transfer problem, and it needs its own fix.
-    it.todo('keeps an active pointer capture alive across reconstruction')
+    it('keeps an active pointer capture alive across reconstruction', async () => {
+      const handlePointerDown = vi.fn((ev: any) => ev.target.setPointerCapture(ev.pointerId))
+      const handlePointerMove = vi.fn()
+      const materialA = new THREE.MeshBasicMaterial()
+      const materialB = new THREE.MeshBasicMaterial()
+      const handlers = { onPointerDown: handlePointerDown, onPointerMove: handlePointerMove }
+
+      let result: RenderResult = null!
+      await act(async () => {
+        result = render(<SwapApp material={materialA} {...handlers} />)
+      })
+
+      const canvas = getContainer()
+      await act(async () => {
+        canvas.dispatchEvent(createPointerEvent('pointerdown'))
+      })
+      expect(handlePointerDown).toHaveBeenCalledTimes(1)
+
+      // Reconstruct mid-drag, then move well off the mesh. Only a live capture keeps delivering
+      // there -- without one the pointer misses everything and the drag dies silently.
+      //
+      // Re-keying `captured` is not enough on its own: `PointerCaptureTarget` carries its own
+      // `intersection`, and that is what gets replayed into the hit list on every later event. Left
+      // pointing at the discarded object, the replayed hit resolves to something whose `__r3f` link
+      // has been severed.
+      await act(async () => {
+        result.rerender(<SwapApp material={materialB} {...handlers} />)
+      })
+
+      handlePointerMove.mockClear()
+      await act(async () => {
+        canvas.dispatchEvent(createPointerEvent('pointermove', { offsetX: 5, offsetY: 5, clientX: 5, clientY: 5 }))
+      })
+
+      expect(handlePointerMove).toHaveBeenCalled()
+    })
   })
 
   describe('web pointer capture', () => {

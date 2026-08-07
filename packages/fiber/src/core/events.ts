@@ -57,7 +57,23 @@ function releaseInternalPointerCapture(internal: RootState['internal'], obj: THR
   const captureData = pointerState.captured.get(obj)
   if (captureData) {
     pointerState.captured.delete(obj)
-    captureData.target.releasePointerCapture(pointerId)
+
+    // Our own bookkeeping is done; the DOM release is best-effort on top of it.
+    //
+    // This runs from `removeInteractivity` during unmount, and the browser may well have released
+    // the capture already -- on pointerup, on pointercancel, or when the element was detached. In
+    // that case `releasePointerCapture` throws `NotFoundError` for an id it no longer considers
+    // captured. Letting that escape means a component that was mid-drag when it unmounted takes
+    // the whole teardown down with it.
+    //
+    // Unlike the swallowed errors removed elsewhere in v10, there is nothing here worth surfacing:
+    // the release we wanted has happened either way, and warning on every such unmount would be
+    // noise for a non-event.
+    try {
+      captureData.target.releasePointerCapture?.(pointerId)
+    } catch {
+      // Already released, or the target is gone. Either way the capture is not held.
+    }
   }
 }
 
