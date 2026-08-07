@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   build:
-    uses: pmndrs/docs/.github/workflows/build.yml@v2
+    uses: pmndrs/docs/.github/workflows/build.yml@v3
     with:
       mdx: 'docs'
       libname: 'React Three Fiber'
@@ -38,4 +38,4 @@ jobs:
 
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

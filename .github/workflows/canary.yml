@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
@@ -23,7 +23,7 @@ jobs:
           run_install: false
 
       - name: Use Node 24
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: 'pnpm'
@@ -34,13 +34,27 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Set canary version
+      # Every published package gets a canary, not just fiber -- test-renderer has had a real build
+      # since it gained one, and a canary of fiber alone cannot be integration-tested against it.
+      #
+      # The version is derived per package rather than shared. fiber and test-renderer are both on
+      # the 10.x line, but eslint-plugin is on 1.x: stamping 10.0.0-canary onto it would jump it two
+      # majors ahead of its own line, and npm versions cannot be withdrawn. Reading the major from
+      # each package.json keeps that impossible to get wrong by hand.
+      - name: Set canary versions
         run: |
-          CANARY_VERSION="10.0.0-canary.$(git rev-parse --short HEAD)"
-          echo "Publishing canary version: $CANARY_VERSION"
-          cd packages/fiber && npm version $CANARY_VERSION --no-git-tag-version
+          SHA="$(git rev-parse --short HEAD)"
+          for pkg in fiber test-renderer eslint-plugin; do
+            MAJOR="$(node -p "require('./packages/$pkg/package.json').version.split('.')[0]")"
+            VERSION="$MAJOR.0.0-canary.$SHA"
+            echo "Publishing @react-three/$pkg as $VERSION"
+            (cd "packages/$pkg" && npm version "$VERSION" --no-git-tag-version)
+          done
 
       - name: Publish to npm
-        run: pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+        run: |
+          pnpm --filter @react-three/fiber publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/test-renderer publish --tag canary --no-git-checks --provenance
+          pnpm --filter @react-three/eslint-plugin publish --tag canary --no-git-checks --provenance
         env:
           NODE_AUTH_TOKEN: ''
