@@ -648,6 +648,26 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
               const renderer = state.internal.actualRenderer as WebGPURenderer
               renderer.setCanvasTarget(state.internal.canvasTarget)
+
+              // Flush a pending resize for THIS root, now that its target is the active one.
+              //
+              // The backend caches a render pass descriptor per canvas whose depth-stencil view
+              // is built once, while the colour attachment comes fresh from the swap chain each
+              // frame. They only stay in step because Renderer._onCanvasTargetResize calls
+              // backend.updateSize() -- but that listener lives on a single target at a time and
+              // setCanvasTarget moves it on every swap, so a canvas that resizes while it is not
+              // active never hears its own resize and renders a stale depth view forever
+              // (per-frame GPUValidationError about mismatched attachment sizes).
+              //
+              // This is the correct place to flush precisely because updateSize() acts on
+              // getCanvasTarget(): immediately after setCanvasTarget, that is us. See #3847.
+              if (state.internal.canvasTargetSizeDirty) {
+                state.internal.canvasTargetSizeDirty = false
+                // Backend.updateSize() exists at runtime on three's base Backend (and
+                // WebGPUBackend), but is absent from the shipped type declarations. Optional-call
+                // so a backend without it is simply a no-op rather than a crash.
+                ;(renderer.backend as Partial<{ updateSize(): void }> | undefined)?.updateSize?.()
+              }
             }
           },
           {

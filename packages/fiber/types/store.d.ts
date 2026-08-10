@@ -181,6 +181,18 @@ export interface InternalState {
    */
   canvasTarget?: CanvasTarget
   /**
+   * Set when this root's canvas target has been resized and the backend's cached render pass
+   * descriptor (which holds a depth-stencil view built once per canvas) is therefore stale.
+   *
+   * Flushed by the canvas-target job in the `start` phase, which is the only place this root's
+   * target is guaranteed to be the renderer's active one — `backend.updateSize()` operates on
+   * whatever `getCanvasTarget()` returns, so calling it from the resize subscription would
+   * invalidate some other canvas's descriptor instead.
+   *
+   * @see https://github.com/pmndrs/react-three-fiber/issues/3847
+   */
+  canvasTargetSizeDirty?: boolean
+  /**
    * Whether multi-canvas rendering is active.
    * True when any canvas uses `renderer={{ primaryCanvas: 'id' }}` to share a renderer.
    * When true, setCanvasTarget is called before each render.

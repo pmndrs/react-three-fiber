@@ -376,23 +376,40 @@ export const createStore = (
       // Update camera
       updateCamera(camera, size)
 
-      // Secondary canvases only update their CanvasTarget (renderer is shared, owned by primary)
-      // Primary canvases always update the renderer directly (owns the depth buffer/GPU resources)
-      // plus their canvas target if one exists (keeps it sized for multi-canvas mode)
+      // Size our own canvas target if we have one, otherwise the renderer.
+      //
+      // Renderer.setSize / setPixelRatio are target-IMPLICIT -- they forward to
+      // `renderer._canvasTarget`, whichever target setCanvasTarget last pointed at. In
+      // multi-canvas mode that is normally some *other* canvas, since the secondaries run after
+      // the primary in the scheduler and nothing restores the primary's target afterwards. So
+      // the primary resizing used to resize a secondary's canvas element to the primary's
+      // dimensions, before sizing its own target correctly on the next line: the renderer call
+      // was redundant for us and wrong for whoever happened to be active. See #3847.
+      //
+      // Once a canvas target exists, `isSecondary` stops mattering here -- primary and secondary
+      // both own exactly one target and should touch only that.
+      //
       // Never pass updateStyle=true to Three.js setSize — explicit pixel CSS on the canvas
       // breaks flex/percentage layouts. R3F manages canvas CSS sizing via the container divs
       // (width: 100%, height: 100%), and only the canvas buffer attributes need pixel values.
-      if (internal.isSecondary && canvasTarget) {
-        if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
-        canvasTarget.setSize(size.width, size.height, false)
-      } else {
-        if (viewport.dpr > 0) actualRenderer.setPixelRatio(viewport.dpr)
-        actualRenderer.setSize(size.width, size.height, false)
-        if (canvasTarget) {
-          if (viewport.dpr > 0) canvasTarget.setPixelRatio(viewport.dpr)
-          canvasTarget.setSize(size.width, size.height, false)
-        }
-      }
+      const resizeTarget = canvasTarget ?? actualRenderer
+      if (viewport.dpr > 0) resizeTarget.setPixelRatio(viewport.dpr)
+      resizeTarget.setSize(size.width, size.height, false)
+
+      // Invalidate this root's cached render pass descriptor on the next frame.
+      //
+      // WebGPUBackend caches the depth-stencil attachment view per canvas and only rebuilds it
+      // when the sample count changes, while the colour attachment is pulled fresh from the swap
+      // chain every frame. They stay in step only because Renderer._onCanvasTargetResize ->
+      // backend.updateSize() clears the cache -- but that listener is attached to one target at a
+      // time and setCanvasTarget moves it on every swap, so only the active canvas can hear its
+      // own resize. Every other one resizes silently and renders against a stale depth view
+      // forever, which surfaces as a per-frame GPUValidationError about mismatched attachment
+      // sizes. updateSize() compounds it by deleting the *active* target rather than the resized
+      // one, so it cannot be called safely from here. The flush happens in the canvas-target job
+      // (see renderer.tsx), which runs in the `start` phase where our own target is guaranteed
+      // active. See #3847.
+      internal.canvasTargetSizeDirty = true
     }
 
     // Update viewport and frustum once the camera changes
