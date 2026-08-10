@@ -45,6 +45,20 @@ function getUrls(input: string | string[] | Record<string, string>): string[] {
   return Object.values(input)
 }
 
+/**
+ * A value-equal signature for any input form, used to key memos off the input's *contents*
+ * rather than its reference. The record form includes its keys: two records can share the same
+ * URLs while mapping them to different names, and those are not interchangeable.
+ */
+function inputSignature(input: string | string[] | Record<string, string>): string {
+  if (typeof input === 'string') return input
+  if (Array.isArray(input)) return input.join('\0')
+  return Object.keys(input)
+    .sort()
+    .map((key) => `${key}\0${input[key]}`)
+    .join('\u0001')
+}
+
 /** Check if all URLs exist in the texture cache */
 function allUrlsCached(urls: string[], textureCache: Map<string, any>): boolean {
   return urls.every((url) => textureCache.has(url))
@@ -128,30 +142,41 @@ export function useTexture<Url extends string[] | string | Record<string, string
   // Track which input we've already called onLoad for (prevents duplicate calls on re-render)
   const onLoadCalledForRef = useRef<string | null>(null)
 
+  //* Identity-stable view of `input` --
+  // Callers routinely pass an inline literal — useTexture(['/a.png', '/b.png']) or
+  // useTexture({ map: '/a.png' }) — so `input` is a fresh reference on every render. Everything
+  // below keys off `inputKey` (a value, so it compares by equality) and `stableInput` instead of
+  // the raw reference. Without this the registry effect re-runs every render and its setState
+  // re-renders every store subscriber, which feed each other until React bails out with
+  // "Maximum update depth exceeded" (#3849). Hoisting the argument to a module constant did not
+  // help, because the instability was never only in `input`.
+  const inputKey = useMemo(() => inputSignature(input), [input])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the value, not the reference
+  const stableInput = useMemo(() => input, [inputKey])
+
   //* Check the registry once at mount (non-reactive) --
   // If all requested textures are already registered, use those (preserves modifications). We read
   // the registry imperatively rather than subscribing, so a mounted useTexture never re-renders on a
   // registry change — loading texture A can't re-render a component using texture B.
-  const urls = useMemo(() => getUrls(input), [input])
+  const urls = useMemo(() => getUrls(stableInput), [stableInput])
 
   const cachedResult = useMemo(() => {
     if (!cache) return null
     const textures = store.getState().textures
     if (!allUrlsCached(urls, textures)) return null
-    return buildFromCache(input, textures)
+    return buildFromCache(stableInput, textures)
     // Intentionally not keyed on the registry contents — this is a one-time read at mount (per input).
-  }, [cache, urls, input, store])
+  }, [cache, urls, stableInput, store])
 
   //* Load via useLoader (handles suspense) --
   // This always runs to maintain hooks order, but we may not use the result
   const loadedTextures = useLoader(
     TextureLoader,
-    IsObject(input) ? Object.values(input) : input,
+    IsObject(stableInput) ? Object.values(stableInput) : stableInput,
   ) as MappedTextureType<Url>
 
   // Call onLoad when textures are ready (only on initial load, not cache hits)
-  // Use a stable key based on URLs to prevent duplicate calls on re-render
-  const inputKey = urls.join('\0')
+  // Keyed on inputKey (computed above) so repeat renders don't re-fire the callback
   useLayoutEffect(() => {
     if (cachedResult) return
     if (onLoadCalledForRef.current === inputKey) return
@@ -189,16 +214,16 @@ export function useTexture<Url extends string[] | string | Record<string, string
     // If we have cached result, it's already in the right format
     if (cachedResult) return cachedResult
 
-    if (IsObject(input)) {
+    if (IsObject(stableInput)) {
       const keyed = {} as Record<string, _Texture>
       const textureArray = loadedTextures as _Texture[]
       let i = 0
-      for (const key in input) keyed[key] = textureArray[i++]
+      for (const key in stableInput) keyed[key] = textureArray[i++]
       return keyed as TextureRecord<Url>
     } else {
       return loadedTextures
     }
-  }, [input, loadedTextures, cachedResult])
+  }, [stableInput, loadedTextures, cachedResult])
 
   //* Register in the texture cache + refcount while mounted --
   // Adds missing textures and retains them so useTextures().dispose() is safe; releases on unmount.
@@ -209,15 +234,15 @@ export function useTexture<Url extends string[] | string | Record<string, string
     // Build URL → texture mapping (works for cache hits and fresh loads; mappedTextures is final either way)
     const urlTextureMap: Array<[string, _Texture]> = []
 
-    if (typeof input === 'string') {
-      urlTextureMap.push([input, mappedTextures as _Texture])
-    } else if (Array.isArray(input)) {
+    if (typeof stableInput === 'string') {
+      urlTextureMap.push([stableInput, mappedTextures as _Texture])
+    } else if (Array.isArray(stableInput)) {
       const textureArray = mappedTextures as _Texture[]
-      input.forEach((url, i) => urlTextureMap.push([url, textureArray[i]]))
-    } else if (IsObject(input)) {
+      stableInput.forEach((url, i) => urlTextureMap.push([url, textureArray[i]]))
+    } else if (IsObject(stableInput)) {
       const textureRecord = mappedTextures as Record<string, _Texture>
-      for (const key in input) {
-        const url = input[key]
+      for (const key in stableInput) {
+        const url = stableInput[key]
         urlTextureMap.push([url, textureRecord[key]])
       }
     }
@@ -253,7 +278,7 @@ export function useTexture<Url extends string[] | string | Record<string, string
         }
         return { _textureRefs: refs }
       })
-  }, [cache, input, mappedTextures, store])
+  }, [cache, stableInput, mappedTextures, store])
 
   return mappedTextures
 }
