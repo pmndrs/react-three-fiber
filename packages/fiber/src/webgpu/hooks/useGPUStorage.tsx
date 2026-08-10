@@ -5,6 +5,7 @@ import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimarySto
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { useScopedResource } from './useScopedResource'
+import { scopedNodeName } from './utils'
 import type { StorageLike, StorageRecord } from '#types'
 
 //* Types ==============================
@@ -205,7 +206,7 @@ export function useGPUStorage<T extends Record<string, StorageLike>>(
       return (creatorOrScope as StorageCreator<T>)(createLazyCreatorState(store.getState(), store))
     },
     prepare: (name, storage) => {
-      const label = scope ? `${scope}.${name}` : name
+      const label = scopedNodeName(scope, name)
       // Apply label for debugging if it's a TSL node
       if ('setName' in storage && typeof storage.setName === 'function') {
         storage.setName(label)

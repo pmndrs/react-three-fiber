@@ -70,6 +70,37 @@ export function createTextureOperations(set: StoreApi<RootState>['setState']): T
   }
 }
 
+//* Scoped Node Naming ==============================
+
+/**
+ * Builds the debug/identifier name for a scoped TSL resource.
+ *
+ * This is not cosmetic. three derives WGSL struct names straight from the node name, so the
+ * name has to be a valid WGSL identifier — `[A-Za-z_][A-Za-z0-9_]*`. A scope separator of `.`
+ * lands a dot inside a declaration and every shader touching the resource fails to parse:
+ *
+ * ```wgsl
+ * struct flipGrid.tilesStruct {
+ *                ^ error: expected '{' for struct declaration
+ * ```
+ *
+ * Hence `_` as the separator, plus a sanitising pass — scope and key names can come from user
+ * data (leva labels, dynamic keys), so swapping the separator alone is not sufficient.
+ *
+ * @see https://github.com/pmndrs/react-three-fiber/issues/3848
+ *
+ * @example
+ * scopedNodeName('flipGrid', 'tiles') // => 'flipGrid_tiles'
+ * scopedNodeName(undefined, 'tiles')  // => 'tiles'
+ * scopedNodeName('my sim', 'a-b')     // => 'my_sim_a_b'
+ * scopedNodeName(undefined, '2d')     // => '_2d'   (WGSL identifiers cannot start with a digit)
+ */
+export function scopedNodeName(scope: string | undefined, name: string): string {
+  const raw = scope ? `${scope}_${name}` : name
+  const safe = raw.replace(/[^A-Za-z0-9_]/g, '_')
+  return /^[A-Za-z_]/.test(safe) ? safe : `_${safe}`
+}
+
 //* TSL Node Value Extraction ==============================
 // Extracts actual values from TSL ConstNodes (color(), vec3(), float(), etc.)
 // This mirrors what Three.js's uniform() function does internally.

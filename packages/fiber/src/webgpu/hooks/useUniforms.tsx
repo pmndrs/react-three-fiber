@@ -3,7 +3,7 @@ import { useStore } from '../../core/hooks'
 import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimaryStore'
 import * as THREE from '#three'
 import { uniform } from '#three/tsl'
-import { vectorize } from './utils'
+import { vectorize, scopedNodeName } from './utils'
 import { useCompareMemoize } from './useCompareMemoize'
 import { is } from '../../core/utils'
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
@@ -354,11 +354,10 @@ function createUniform(inName: string, node: any, scope?: string): UniformNode {
   // overloads are a closed set that R3F's wider (already-normalised) input can't select from.
   const newUniform = (uniform as (value: unknown, type?: string) => UniformNode)(inValue)
 
-  // Set debug name for easier identification in GPU tools
-  // Use underscore instead of dot to ensure WGSL compatibility
+  // Set debug name for easier identification in GPU tools.
+  // Shares scopedNodeName with the other resource hooks so the separator cannot drift again.
   if (typeof newUniform.setName === 'function') {
-    const name = scope ? `${scope}_${inName}` : inName
-    newUniform.setName(name)
+    newUniform.setName(scopedNodeName(scope, inName))
   }
 
   return newUniform

@@ -4,6 +4,7 @@ import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimarySto
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { useScopedResource } from './useScopedResource'
+import { scopedNodeName } from './utils'
 
 //* Types ==============================
 
@@ -165,7 +166,7 @@ export function useNodes<T extends Record<string, TSLNodeLike>>(
     },
     prepare: (name, node) => {
       // Apply label for debugging
-      node.setName?.(scope ? `${scope}.${name}` : name)
+      node.setName?.(scopedNodeName(scope, name))
       return node
     },
   })

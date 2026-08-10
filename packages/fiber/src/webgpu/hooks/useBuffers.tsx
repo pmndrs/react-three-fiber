@@ -5,6 +5,7 @@ import { usePrimaryStore, usePrimaryThree } from '../../core/hooks/usePrimarySto
 import { clearResourceEntries, rebuildResource, removeResourceEntries } from '../../core/utils/resourceRegistry'
 import { createLazyCreatorState, type CreatorState } from './ScopedStore'
 import { useScopedResource } from './useScopedResource'
+import { scopedNodeName } from './utils'
 import type { BufferLike, BufferRecord } from '#types'
 
 //* Types ==============================
@@ -205,7 +206,7 @@ export function useBuffers<T extends Record<string, BufferLike>>(
     prepare: (name, buffer) => {
       // Apply label for debugging if it's a TSL node
       if ('setName' in buffer && typeof buffer.setName === 'function') {
-        buffer.setName(scope ? `${scope}.${name}` : name)
+        buffer.setName(scopedNodeName(scope, name))
       }
       return buffer
     },
