@@ -20,6 +20,10 @@ import { pass } from '#three/tsl'
  * - Callbacks receive full RootState for flexibility
  * - No auto-cleanup on unmount - use reset() for explicit cleanup
  * - Scene/camera changes trigger scenePass recreation
+ * - A replaced scenePass is disposed once the new graph is installed, so rebuild() does not
+ *   strand its render target (and MRT attachments) on the GPU
+ * - Any run that changes the output node sets RenderPipeline.needsUpdate, so rebuild() actually
+ *   recompiles instead of silently keeping the first compiled graph
  *
  * @param mainCB - Main callback to configure outputNode and create effect passes
  * @param setupCB - Optional setup callback to configure MRT on scenePass
@@ -63,6 +67,12 @@ export function useRenderPipeline(
   // Recreating scenePass triggers TSL node graph rebuild which can corrupt SkinningNode refs
   const scenePassCacheRef = useRef<{ sceneUuid: string; cameraUuid: string; scenePass: any } | null>(null)
 
+  // Force scenePass recreation on the next effect run, without dropping the reference to the
+  // outgoing pass. Clearing scenePassCacheRef directly would strand it: three does not free
+  // render-target GPU memory on JS garbage collection, and once the ref is gone neither we nor
+  // the app can dispose it. Keeping the ref lets the effect dispose it after the swap. See #3854.
+  const forceScenePassRebuildRef = useRef(false)
+
   // Store callbacks in refs to avoid useEffect re-running on every render
   // (inline callbacks get new references each render)
   const mainCBRef = useRef(mainCB)
@@ -77,7 +87,10 @@ export function useRenderPipeline(
   // React preserves component identity during HMR but refs keep stale values
   useEffect(() => {
     callbacksRanRef.current = false
-    scenePassCacheRef.current = null
+    // Flag rather than clearing the cache: this runs *after* the layout effect has already
+    // created and installed a scenePass, so dropping the ref here would leak exactly the pass
+    // that is currently live. The flag makes the next run recreate and dispose it properly.
+    forceScenePassRebuildRef.current = true
   }, [])
 
   //* Cleanup Functions ==============================
@@ -91,14 +104,21 @@ export function useRenderPipeline(
       renderPipeline: null,
       passes: {},
     })
+    // Safe to dispose synchronously here: the pipeline is torn down in the same tick, so nothing
+    // is left referencing the pass. This is explicit user-requested cleanup.
+    scenePassCacheRef.current?.scenePass?.dispose?.()
     callbacksRanRef.current = false
     scenePassCacheRef.current = null
+    forceScenePassRebuildRef.current = false
   }, [store])
 
   // Force re-run of setup/main callbacks with current closure values
   const rebuild = useCallback(() => {
     callbacksRanRef.current = false // Allow callbacks to run again
-    scenePassCacheRef.current = null // Force new scenePass
+    // Deliberately NOT disposing here. The pipeline keeps rendering the current graph until the
+    // layout effect swaps it, so disposing now would leave the live graph pointing at a freed
+    // render target. The effect disposes the outgoing pass once the new one is installed.
+    forceScenePassRebuildRef.current = true // Force new scenePass
     setRebuildVersion((v) => v + 1)
   }, [])
 
@@ -132,21 +152,37 @@ export function useRenderPipeline(
       // Only recreate scenePass if scene/camera actually changed
       // Unnecessary recreation triggers TSL node graph rebuild which corrupts SkinningNode refs
       const cacheValid =
+        !forceScenePassRebuildRef.current &&
         scenePassCacheRef.current &&
         scenePassCacheRef.current.sceneUuid === scene.uuid &&
         scenePassCacheRef.current.cameraUuid === camera.uuid
+
+      // The pass being replaced, if any. Disposed at the end of this effect, once the new graph
+      // is installed -- never before, or the pipeline would render against a freed target.
+      let outgoingScenePass: any = null
 
       let scenePass
       if (cacheValid) {
         scenePass = scenePassCacheRef.current!.scenePass
       } else {
+        outgoingScenePass = scenePassCacheRef.current?.scenePass ?? null
         scenePass = pass(scene, camera)
         scenePassCacheRef.current = { sceneUuid: scene.uuid, cameraUuid: camera.uuid, scenePass }
+        forceScenePassRebuildRef.current = false
       }
       currentPasses.scenePass = scenePass
 
-      // Set default outputNode (passthrough) if not configured or if we just created the pipeline
-      if (!pipeline.outputNode || justCreatedPipeline) pipeline.outputNode = scenePass
+      // Whether the node graph changed this run and the pipeline must recompile. See #3853.
+      let outputNodeChanged = false
+
+      // Set default outputNode (passthrough) if not configured, if we just created the pipeline,
+      // or if it still points at the pass we are about to replace. That last case matters when
+      // there is no mainCB, or mainCB does not assign outputNode: the default passthrough has to
+      // follow the new scenePass, otherwise we would dispose the pass the pipeline still renders.
+      if (!pipeline.outputNode || justCreatedPipeline || pipeline.outputNode === outgoingScenePass) {
+        pipeline.outputNode = scenePass
+        outputNodeChanged = true
+      }
 
       // Update state with the pipeline and initial scenePass
       set({ renderPipeline: pipeline, passes: currentPasses })
@@ -184,9 +220,25 @@ export function useRenderPipeline(
           }
         }
 
+        // The callbacks exist to assign pipeline.outputNode (see this hook's own JSDoc examples),
+        // so treat any run as a graph change.
+        outputNodeChanged = true
+
         // Mark callbacks as run so we don't re-run on HMR
         callbacksRanRef.current = true
       }
+
+      // three's RenderPipeline only recompiles its present-quad material inside _update() when
+      // needsUpdate is true, and documents the property as "Must be set to true when the output
+      // node changes." It starts true on construction, so the FIRST graph compiled fine and every
+      // later assignment -- i.e. everything driven by rebuild() -- was silently ignored: the
+      // callbacks ran, the assignment happened, the GPU never saw it. See #3853.
+      if (outputNodeChanged) pipeline.needsUpdate = true
+
+      // Now that the new graph is installed and compiled, the replaced pass is unreachable.
+      // three does not free render-target GPU memory on GC, so without this every rebuild()
+      // stranded a full-screen target per MRT attachment. See #3854.
+      if (outgoingScenePass && outgoingScenePass !== scenePass) outgoingScenePass.dispose?.()
     } catch (error) {
       // Surfaced rather than rethrown: throwing here would take down the whole tree for what is
       // usually a recoverable pass-configuration mistake. Logged loudly so a failed pipeline
