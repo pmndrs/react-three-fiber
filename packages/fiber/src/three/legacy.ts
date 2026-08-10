@@ -19,11 +19,13 @@ export * from 'three'
 // These prevent type/runtime errors in shared code
 // They should never actually be used in legacy builds
 
-// Inspector doesn't exist in legacy - stub it
-export const Inspector = class Inspector {
-  constructor() {
-    throw new Error('Inspector is not available in legacy builds. Use @react-three/fiber/webgpu instead.')
-  }
+// Inspector doesn't exist in legacy - stub it.
+// Shape must match the other #three barrels: a type plus a lazy loader.
+export type Inspector = never
+
+/** Not available on the legacy (WebGL-only) entry. */
+export async function loadInspector(): Promise<never> {
+  throw new Error('Inspector is not available in legacy builds. Use @react-three/fiber/webgpu instead.')
 }
 
 // WebGPURenderer stub - throws if someone tries to use it

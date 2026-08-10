@@ -46,4 +46,14 @@ export { CubeRenderTarget as CubeRenderTargetCompat } from 'three/webgpu'
 export { RenderTarget as RenderTargetCompat } from 'three/webgpu'
 
 //* Addons ==============================
-export { Inspector } from 'three/addons/inspector/Inspector.js'
+// Type-only export plus a lazy loader — a static re-export creates an import
+// cycle (Inspector.js -> three/webgpu -> here) that throws under Turbopack.
+// See https://github.com/pmndrs/react-three-fiber/issues/3846 and the longer
+// note in ./webgpu.ts.
+export type { Inspector } from 'three/addons/inspector/Inspector.js'
+
+/** Lazily load the three Inspector. Keeps it out of the eager module graph — see note above. */
+export async function loadInspector() {
+  const { Inspector } = await import('three/addons/inspector/Inspector.js')
+  return Inspector
+}
