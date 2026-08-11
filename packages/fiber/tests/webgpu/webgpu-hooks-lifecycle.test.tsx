@@ -661,8 +661,107 @@ describe('useRenderPipeline — pipeline wiring against the store', () => {
     errSpy.mockRestore()
   })
 
+  //* rebuild(): recompile + disposal ==============================
+  // Regressions for #3853 (rebuilds never reached the GPU) and #3854 (rebuilds leaked the
+  // outgoing scenePass). Both are lifecycle-observable, so they belong in Tier 1: `needsUpdate`
+  // is a plain boolean three reads in _update(), and dispose() is a plain method call.
+
+  /** Mount the hook and hand back the api + store. */
+  async function mountPipeline(mainCB: RenderPipelineMainCallback = () => {}) {
+    const store = makeStore()
+    seedRenderer(store)
+    let api!: ReturnType<typeof useRenderPipeline>
+    function Comp() {
+      api = useRenderPipeline(mainCB)
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+    return { store, api: () => api }
+  }
+
+  it('rebuild(): sets needsUpdate so the new output node actually recompiles', async () => {
+    const { store, api } = await mountPipeline()
+    const pipeline = store.getState().renderPipeline as any
+
+    // Stand in for a frame having been rendered: three's _update() clears needsUpdate once it
+    // has compiled the present-quad material. Without the fix it stays false forever after.
+    pipeline.needsUpdate = false
+
+    await act(async () => api().rebuild())
+
+    expect(store.getState().renderPipeline).toBe(pipeline)
+    expect(pipeline.needsUpdate).toBe(true)
+  })
+
+  it('rebuild(): disposes the replaced scenePass instead of stranding its render target', async () => {
+    const { store, api } = await mountPipeline()
+    const firstPass = store.getState().passes.scenePass as any
+    const disposeSpy = vi.spyOn(firstPass, 'dispose')
+
+    await act(async () => api().rebuild())
+
+    const secondPass = store.getState().passes.scenePass as any
+    expect(secondPass).not.toBe(firstPass)
+    expect(disposeSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('rebuild(): repoints a default passthrough outputNode at the new scenePass', async () => {
+    // With no mainCB assigning outputNode, the pipeline still references the pass being
+    // replaced. Disposing it without repointing would leave the pipeline rendering a freed
+    // render target -- worse than the leak being fixed.
+    const { store, api } = await mountPipeline()
+    const pipeline = store.getState().renderPipeline as any
+    const firstPass = store.getState().passes.scenePass as any
+    expect(pipeline.outputNode).toBe(firstPass)
+
+    await act(async () => api().rebuild())
+
+    const secondPass = store.getState().passes.scenePass as any
+    expect(pipeline.outputNode).toBe(secondPass)
+    expect(pipeline.outputNode).not.toBe(firstPass)
+  })
+
+  it('does not dispose the scenePass on a re-render that reuses it', async () => {
+    const store = makeStore()
+    seedRenderer(store)
+    function Comp() {
+      useRenderPipeline(() => {})
+      return null
+    }
+    let rerender!: (ui: React.ReactElement) => void
+    await act(async () => {
+      ;({ rerender } = withStore(store, <Comp />))
+    })
+    const scenePass = store.getState().passes.scenePass as any
+    const disposeSpy = vi.spyOn(scenePass, 'dispose')
+
+    await act(async () =>
+      rerender(
+        <context.Provider value={store}>
+          <Comp />
+        </context.Provider>,
+      ),
+    )
+
+    expect(store.getState().passes.scenePass).toBe(scenePass)
+    expect(disposeSpy).not.toHaveBeenCalled()
+  })
+
+  it('reset(): disposes the scenePass it drops', async () => {
+    const { store, api } = await mountPipeline()
+    const scenePass = store.getState().passes.scenePass as any
+    const disposeSpy = vi.spyOn(scenePass, 'dispose')
+
+    await act(async () => api().reset())
+
+    expect(disposeSpy).toHaveBeenCalledTimes(1)
+    expect(store.getState().renderPipeline).toBeNull()
+  })
+
   // The render loop actually calling state.renderPipeline.render() each frame,
   // and that call producing correct post-processed output, both need a real device.
   it.todo('covered by Tier 2: default render loop delegates to state.renderPipeline.render() each frame')
   it.todo('covered by Tier 2: renderPipeline / scenePass produce correct post-processed output')
+  // Tier 1 proves needsUpdate flips; that the recompiled graph reaches the GPU needs a device.
+  it.todo('covered by Tier 2: rebuild() output node change is visible in rendered output')
 })
