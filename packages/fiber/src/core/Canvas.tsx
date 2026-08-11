@@ -259,6 +259,26 @@ function CanvasImpl({
     const canvas = canvasRef.current
     if (canvas) {
       return () => {
+        // Only tear the root down once the canvas has actually left the document.
+        //
+        // This cleanup runs whenever CanvasImpl's passive effects are destroyed, which is NOT
+        // the same as CanvasImpl being unmounted. React also destroys them when a Suspense
+        // boundary hides the tree, and StrictMode exercises that path on every mount.
+        //
+        // That matters because any child suspending — a useTexture/useLoader with no <Suspense>
+        // of its own — reaches CanvasImpl through `Block`, which deliberately lifts the promise
+        // out to the boundary *outside* the Canvas so the DOM-level `fallback` can show. The
+        // blast radius was the problem, not the lift: the resource-owning root was destroyed to
+        // display a fallback for one texture, and everything created inside it went with it. For
+        // scenes that only draw that is an invisible flash; for anything accumulating state on
+        // the GPU (useGPUStorage) it is silent data loss, with `R3F.createRoot should only be
+        // called once!` as the only clue. See #3850.
+        //
+        // React detaches the host node before running these cleanups on a real unmount, so
+        // `isConnected` separates the two cases. Both directions are covered by tests — a
+        // suspension must keep the root, and a real unmount must still release it.
+        if (canvas.isConnected) return
+
         unmountComponentAtNode(canvas)
         // Clear root ref so HMR creates a fresh root
         root.current = null!
