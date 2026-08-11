@@ -2,7 +2,7 @@ import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 
-import { createRoot, useTexture, useTextures, extend } from '../src'
+import { createRoot, useTexture, useTextures, useThree, extend } from '../src'
 import type { UseTexturesReturn } from '../src'
 
 extend(THREE as any)
@@ -335,6 +335,84 @@ describe('useTextures (registry)', () => {
     expect(renders).toBe(before)
 
     vi.restoreAllMocks()
+  })
+
+  //* Render-loop regressions (#3849) ==============================
+  // The array and record forms re-ran their registry effect on every render, and the setState
+  // that effect performs re-renders every store subscriber, so the two fed each other until
+  // React bailed out with "Maximum update depth exceeded". The single-URL form was unaffected.
+  //
+  // The loop only closes when the consuming component itself subscribes broadly to the store —
+  // the very common `useThree()` with no selector. A sibling subscriber is not enough, since it
+  // re-renders itself and not the useTexture caller, so the `useThree()` calls below are load
+  // bearing: without them these tests pass even on the broken build.
+
+  /** Mount `children` under Suspense and let the mocked loader settle. */
+  async function mountAndSettle(children: React.ReactNode) {
+    await act(async () => {
+      root.render(<React.Suspense fallback={null}>{children}</React.Suspense>)
+      await new Promise((r) => setTimeout(r, 20))
+    })
+  }
+
+  it('array form settles instead of looping forever', async () => {
+    mockTextureLoad(new THREE.Texture())
+
+    let renders = 0
+    function Consumer() {
+      renders++
+      useThree() // broad subscription — closes the feedback loop
+      // Inline literal on purpose: a fresh reference every render is the common call shape,
+      // and the issue notes that hoisting it to a module constant did not help either.
+      useTexture(['/loop-a.png', '/loop-b.png'])
+      return null
+    }
+
+    await mountAndSettle(<Consumer />)
+
+    // A handful of renders is normal (suspense retry + registry commit). Hundreds means the loop.
+    expect(renders).toBeLessThan(10)
+  })
+
+  it('record form settles instead of looping forever', async () => {
+    mockTextureLoad(new THREE.Texture())
+
+    let renders = 0
+    function Consumer() {
+      renders++
+      useThree()
+      useTexture({ map: '/loop-map.png', normalMap: '/loop-normal.png' })
+      return null
+    }
+
+    await mountAndSettle(<Consumer />)
+
+    expect(renders).toBeLessThan(10)
+  })
+
+  it('array form returns a reference-stable result across re-renders', async () => {
+    // The underlying cause: useLoader built a new array every call, so the result could not be
+    // used as an effect dependency by anyone — useTexture's registry effect was just the first
+    // place it bit. Fixed in useLoader, so this holds for every consumer.
+    mockTextureLoad(new THREE.Texture())
+
+    const seen: unknown[] = []
+    let forceRender!: () => void
+    function Consumer() {
+      const [, setTick] = React.useState(0)
+      forceRender = () => setTick((t) => t + 1)
+      seen.push(useTexture(['/stable-a.png', '/stable-b.png']))
+      return null
+    }
+
+    await mountAndSettle(<Consumer />)
+    const initial = seen.length
+    expect(initial).toBeGreaterThan(0)
+
+    await act(async () => forceRender())
+
+    expect(seen.length).toBeGreaterThan(initial)
+    expect(seen[seen.length - 1]).toBe(seen[initial - 1])
   })
 
   it('selector form returns scoped derived state', async () => {

@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { suspend, preload, clear } from 'suspend-react'
 import { buildGraph, is, isObject3D } from '../utils'
 
@@ -93,8 +94,45 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
     suspend(() => fn(loader, inputs[index]), [loader, key], { equal: is.equ }),
   )
 
+  // Keep the array's identity stable while its contents are unchanged.
+  //
+  // `.map()` builds a fresh array every render, and callers routinely use the result as an effect
+  // dependency. Any such effect that also writes to the store becomes an infinite render loop:
+  // effect -> setState -> re-render -> new array identity -> effect. That is #3849, which
+  // useTexture hit through its registry effect.
+  //
+  // Shallow-compared rather than keyed on the cache keys, because `useLoader.clear()` can hand
+  // back new objects for the *same* keys and that invalidation still has to propagate. Comparing
+  // the resolved values means a genuine change always yields a new identity, and an incidental
+  // re-render never does.
+  //
+  // Only the wrapper array is stabilised. The elements come from the suspend cache, which returns
+  // one object per key process-wide, so two components loading the same URLs still share the very
+  // same loaded assets — they just hold different arrays around them.
+  //
+  // A useMemo cannot express this: its dep array would have to be `results` itself, and React
+  // throws when a dep array changes length — which happens as soon as the URL count does.
+  //
+  // On writing a ref during render, which React discourages: this is a content-keyed cache, not
+  // state. `previous` is only ever returned when it is element-wise equal to the `results` just
+  // computed, so the value handed back is correct no matter which render populated the ref. An
+  // abandoned or interrupted concurrent render can therefore only leave behind an array that the
+  // next render replaces — it cannot produce a stale or wrong result — and StrictMode's double
+  // render settles on the same array both times. Nothing outside this call can observe the write.
+  //
+  // NOTE: this is the first hook in useLoader. `suspend()` is a cache-and-throw, not a hook, so
+  // until now useLoader could be called conditionally despite its name. That was always a
+  // rules-of-hooks violation and lint has always flagged it; it merely happened to work.
+  const stableRef = useRef<unknown[] | null>(null)
+  const previous = stableRef.current
+  const stable =
+    previous !== null && previous.length === results.length && previous.every((value, i) => value === results[i])
+      ? previous
+      : results
+  stableRef.current = stable
+
   // Return the object(s)
-  return (Array.isArray(input) ? results : results[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
+  return (Array.isArray(input) ? stable : stable[0]) as I extends any[] ? LoaderResult<L>[] : LoaderResult<L>
 }
 
 /**
