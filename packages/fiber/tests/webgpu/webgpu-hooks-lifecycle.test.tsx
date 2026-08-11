@@ -29,7 +29,7 @@ import * as React from 'react'
 import { act } from 'react'
 import { render } from '@testing-library/react'
 import * as THREE from 'three/webgpu'
-import { color, vec3, float, instancedArray } from 'three/tsl'
+import { color, vec3, float, instancedArray, uniform } from 'three/tsl'
 
 import { createStore, context } from '../../src/core/store'
 import {
@@ -428,6 +428,121 @@ describe('useGPUStorage — lifecycle against the store', () => {
     expect(store.getState().gpuStorage.heightMap).toBeDefined()
     expect(store.getState().gpuStorage.heightMap).not.toBe(tex0)
   })
+})
+
+//* Scoped resource naming ==============================
+
+describe('scoped resource names are valid WGSL identifiers', () => {
+  /**
+   * Regression for #3848. three builds WGSL struct names by concatenation --
+   * `WGSLNodeBuilder._getWGSLStructBinding` does `const structName = name + 'Struct'` and is fed
+   * the node's own name -- so a `.` separator lands inside a declaration:
+   *
+   *     struct flipGrid.tilesStruct {
+   *                    ^ error: expected '{' for struct declaration
+   *
+   * and every shader touching the resource fails to compile. jsdom cannot run the WGSL parser,
+   * so this asserts the property the parser needs: the name three will interpolate is a legal
+   * WGSL identifier. Tier 2 covers the shader actually compiling.
+   */
+  const WGSL_IDENT = /^[A-Za-z_][A-Za-z0-9_]*$/
+
+  // Only some node classes carry a name (UniformNode, ComputeNode, StorageBufferNode, ...); the
+  // base Node has no setName, so useNodes' `setName?.()` is a deliberate no-op for e.g. ConstNodes
+  // like vec3(). These tests use node types that can actually hold a name.
+
+  it('useNodes: scoped node name has no dot', async () => {
+    const store = makeStore()
+    function Comp() {
+      useNodes(() => ({ tiles: uniform(1) }), 'flipGrid')
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const node = (store.getState().nodes.flipGrid as any).tiles
+    expect(node.name).toBe('flipGrid_tiles')
+    expect(node.name).toMatch(WGSL_IDENT)
+  })
+
+  it('useBuffers: scoped buffer name has no dot', async () => {
+    const store = makeStore()
+    function Comp() {
+      useBuffers(() => ({ pos: instancedArray(4, 'vec2') }), 'particles')
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const buf = (store.getState().buffers.particles as any).pos
+    expect(buf.name).toBe('particles_pos')
+    expect(buf.name).toMatch(WGSL_IDENT)
+  })
+
+  it('useGPUStorage: scoped storage name has no dot', async () => {
+    const store = makeStore()
+    function Comp() {
+      useGPUStorage(() => ({ tiles: instancedArray(16, 'vec4') }), 'flipGrid')
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const storage = (store.getState().gpuStorage.flipGrid as any).tiles
+    expect(storage.name).toBe('flipGrid_tiles')
+    expect(storage.name).toMatch(WGSL_IDENT)
+  })
+
+  it('useUniforms: keeps its already-correct underscore form', async () => {
+    const store = makeStore()
+    function Comp() {
+      useUniforms({ uHealth: 100 }, 'player')
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const node = (store.getState().uniforms.player as any).uHealth
+    expect(node.name).toBe('player_uHealth')
+    expect(node.name).toMatch(WGSL_IDENT)
+  })
+
+  it('sanitises characters that are legal in a JS key but not in WGSL', async () => {
+    // Scope and key names can come from user data (leva labels, dynamic keys), so swapping the
+    // separator alone is not enough to guarantee a parseable identifier.
+    const store = makeStore()
+    function Comp() {
+      useGPUStorage(() => ({ 'a-b': instancedArray(4, 'vec4') }), 'my sim')
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const node = (store.getState().gpuStorage['my sim'] as any)['a-b']
+    expect(node.name).toBe('my_sim_a_b')
+    expect(node.name).toMatch(WGSL_IDENT)
+  })
+
+  it('prefixes a leading digit, which WGSL identifiers cannot start with', async () => {
+    const store = makeStore()
+    function Comp() {
+      useGPUStorage(() => ({ '2d': instancedArray(4, 'vec4') }))
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    const node = (store.getState().gpuStorage as any)['2d']
+    expect(node.name).toBe('_2d')
+    expect(node.name).toMatch(WGSL_IDENT)
+  })
+
+  it('leaves unscoped, already-valid names untouched', async () => {
+    const store = makeStore()
+    function Comp() {
+      useGPUStorage(() => ({ tiles: instancedArray(4, 'vec4') }))
+      return null
+    }
+    await act(async () => withStore(store, <Comp />))
+
+    expect((store.getState().gpuStorage as any).tiles.name).toBe('tiles')
+  })
+
+  it.todo('covered by Tier 2: a scoped storage buffer compiles and runs in a real WGSL shader')
 })
 
 //* useRenderPipeline ==============================
