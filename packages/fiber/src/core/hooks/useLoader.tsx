@@ -106,8 +106,23 @@ export function useLoader<I extends InputLike, L extends LoaderLike | Constructo
   // the resolved values means a genuine change always yields a new identity, and an incidental
   // re-render never does.
   //
-  // The render-phase ref write is idempotent — given equal contents it always settles on the same
-  // array — so it is safe under StrictMode's double render.
+  // Only the wrapper array is stabilised. The elements come from the suspend cache, which returns
+  // one object per key process-wide, so two components loading the same URLs still share the very
+  // same loaded assets — they just hold different arrays around them.
+  //
+  // A useMemo cannot express this: its dep array would have to be `results` itself, and React
+  // throws when a dep array changes length — which happens as soon as the URL count does.
+  //
+  // On writing a ref during render, which React discourages: this is a content-keyed cache, not
+  // state. `previous` is only ever returned when it is element-wise equal to the `results` just
+  // computed, so the value handed back is correct no matter which render populated the ref. An
+  // abandoned or interrupted concurrent render can therefore only leave behind an array that the
+  // next render replaces — it cannot produce a stale or wrong result — and StrictMode's double
+  // render settles on the same array both times. Nothing outside this call can observe the write.
+  //
+  // NOTE: this is the first hook in useLoader. `suspend()` is a cache-and-throw, not a hook, so
+  // until now useLoader could be called conditionally despite its name. That was always a
+  // rules-of-hooks violation and lint has always flagged it; it merely happened to work.
   const stableRef = useRef<unknown[] | null>(null)
   const previous = stableRef.current
   const stable =
