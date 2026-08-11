@@ -1,14 +1,7 @@
-import {
-  WebGLRenderer,
-  WebGPURenderer,
-  Scene,
-  Raycaster,
-  Vector2,
-  Vector3,
-  Inspector,
-  Frustum,
-  SRGBColorSpace,
-} from '#three'
+import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frustum, SRGBColorSpace } from '#three'
+// Type-only: a value import would pull the Inspector into the eager module graph
+// and reintroduce the Turbopack import cycle. See src/three/webgpu.ts (#3846).
+import type { Inspector } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
 

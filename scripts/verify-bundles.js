@@ -222,6 +222,29 @@ for (const file of EMITTED_JS) {
   }
 }
 
+// A *static* import of the three Inspector creates a cycle that no amount of version-bumping fixes:
+// three/addons/inspector/Inspector.js imports { REVISION } from 'three/webgpu', which is the module
+// our own entry is mid-evaluation of. Turbopack (the Next.js 16 default) resolves the namespace to
+// undefined and the entry throws on import for every consumer, inspector user or not. See #3846.
+//
+// A dynamic `import('three/addons/inspector/Inspector.js')` is fine and is what loadInspector() uses
+// -- this pattern only matches the static forms, so the two stay distinguishable.
+console.log('\n   Static Inspector imports (must be none -- see #3846):')
+for (const file of EMITTED_JS) {
+  const filePath = path.join(FIBER_DIST, file)
+  if (!fs.existsSync(filePath)) continue
+
+  const content = fs.readFileSync(filePath, 'utf-8')
+  const staticInspector = content.match(/(?:from|require\()\s*['"]three\/addons\/inspector\/[^'"]*['"]/)
+  if (staticInspector) {
+    console.log(`   ❌ dist/${file} statically imports ${staticInspector[0]}`)
+    console.log(`      This reintroduces the Turbopack REVISION cycle. Use loadInspector() instead.`)
+    crossCuttingPassed = false
+  } else {
+    console.log(`   ✅ dist/${file}`)
+  }
+}
+
 // Stub .d.ts files embed absolute paths from the machine that generated them.
 const dtsWithLocalPaths = ['index.d.ts', 'legacy.d.ts', 'webgpu/index.d.ts'].filter((file) => {
   const filePath = path.join(FIBER_DIST, file)

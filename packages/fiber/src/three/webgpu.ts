@@ -17,7 +17,25 @@ export const R3F_BUILD_WEBGPU = true
 export * from 'three/webgpu'
 
 //* Addons ==============================
-export { Inspector } from 'three/addons/inspector/Inspector.js'
+// Inspector is exported as a TYPE ONLY, plus a lazy loader.
+//
+// A static re-export here would poison the module graph of every consumer:
+// three/addons/inspector/Inspector.js imports { REVISION } from 'three/webgpu',
+// which this file is itself mid-evaluation of. Under Turbopack (the Next.js 16
+// default) that cycle resolves the namespace to undefined and throws
+// "Cannot read properties of undefined (reading 'REVISION')" on import.
+// See https://github.com/pmndrs/react-three-fiber/issues/3846
+//
+// The inspector is opt-in devtooling (state.inspector defaults to null), so it
+// has no business in the eager graph. Anything that wants it must await
+// loadInspector(), which keeps the cycle inside a dynamic import.
+export type { Inspector } from 'three/addons/inspector/Inspector.js'
+
+/** Lazily load the three Inspector. Keeps it out of the eager module graph — see note above. */
+export async function loadInspector() {
+  const { Inspector } = await import('three/addons/inspector/Inspector.js')
+  return Inspector
+}
 
 //* Stubs for legacy-only features ==============================
 // WebGLRenderer stub - throws if someone tries to use it in webgpu-only build
