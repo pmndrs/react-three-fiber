@@ -4,6 +4,7 @@ import * as React from 'react'
 import { context } from '../../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
 import { notifyDepreciated } from '../../utils/notices'
+import { rootIsTicking } from '../../utils/frameloopRegistry'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
@@ -133,6 +134,9 @@ export function useFrame(
       // Wrapper that merges store state with timing (for portal isolation)
       const wrappedCallback: FrameNextCallback = (frameState, delta) => {
         const localState = store.getState()
+        // Sit out frames this root is gated for (per-canvas 'demand' idling, #3852).
+        // Read from local state so portal stores resolve to their canvas root's id.
+        if (!rootIsTicking((localState.internal as any).rootId)) return
         const mergedState = {
           ...localState,
           time: frameState.time,
@@ -181,6 +185,8 @@ export function useFrame(
         (state, delta) => {
           const frameState = state as FrameNextState
           if (!frameState.renderer) return // no host yet — wait for a Canvas
+          // Once adopted by a host root, honor that root's frame gate too (#3852)
+          if (!rootIsTicking((frameState as any).internal?.rootId)) return
           callbackRef.current?.(frameState, delta)
         },
         { id, ...options },

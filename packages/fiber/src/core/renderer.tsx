@@ -21,6 +21,13 @@ import {
   useMutableCallback,
 } from './utils'
 import { notifyDepreciated } from './utils/notices.js'
+import {
+  registerRootLoop,
+  releaseRootLoop,
+  beginRootFrame,
+  endRootFrame,
+  rootIsTicking,
+} from './utils/frameloopRegistry'
 import { getScheduler } from '@pmndrs/scheduler'
 import { checkVisibility, enableOcclusion, cleanupHelperGroup } from './visibility'
 import { registerPrimary, waitForPrimary } from './canvasRegistry'
@@ -640,11 +647,36 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           onError: (err) => store.getState().setError(err),
         })
 
+        // Register this root's frameloop intent. The scheduler's frameloop is global by
+        // design; the registry derives it from all roots and gates this root's jobs per
+        // frame, so `<Canvas frameloop="demand">` idles THIS canvas instead of stopping
+        // the shared loop for every other canvas (#3852).
+        registerRootLoop(newRootId, store.getState().frameloop)
+
+        // Frame gate - first job of the frame decides whether this root participates
+        // (consuming one pending invalidation on 'demand'); last job lifts the gate so
+        // out-of-frame manual stepping (scheduler.stepJob) is never blocked.
+        const unregisterFrameGate = scheduler.register(() => beginRootFrame(newRootId), {
+          id: `${newRootId}_frameGate`,
+          rootId: newRootId,
+          phase: 'start',
+          priority: Infinity,
+          system: true,
+        })
+        const unregisterFrameGateEnd = scheduler.register(() => endRootFrame(newRootId), {
+          id: `${newRootId}_frameGateEnd`,
+          rootId: newRootId,
+          phase: 'finish',
+          priority: -Infinity,
+          system: true,
+        })
+
         // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
         // Runs in 'start' phase so it's set before any other jobs (including user render jobs)
         const unregisterCanvasTarget = scheduler.register(
           () => {
             const state = store.getState()
+            if (!rootIsTicking(newRootId)) return
             if (state.internal.isMultiCanvas && state.internal.canvasTarget) {
               const renderer = state.internal.actualRenderer as WebGPURenderer
               renderer.setCanvasTarget(state.internal.canvasTarget)
@@ -680,6 +712,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
 
         // Register events flush job - flushes deferred pointer raycasts at frame start
         // Runs in 'input' phase (before physics/update) so hover state is up-to-date
+        // Deliberately NOT gated by the frame gate: raycasts only defer while the root is
+        // on 'always' (events.ts), so a pointer deferred just before a switch to 'demand'
+        // must still flush, and an idle root's flush is a cheap no-op.
         const unregisterEventsFlush = scheduler.register(
           () => {
             const state = store.getState()
@@ -700,6 +735,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterFrustum = scheduler.register(
           () => {
             const state = store.getState()
+            if (!rootIsTicking(newRootId)) return
             if (state.autoUpdateFrustum && state.camera) {
               updateFrustum(state.camera, state.frustum)
             }
@@ -721,6 +757,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterVisibility = scheduler.register(
           () => {
             const state = store.getState()
+            if (!rootIsTicking(newRootId)) return
             checkVisibility(state)
           },
           {
@@ -738,6 +775,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterRender = scheduler.register(
           () => {
             const state = store.getState()
+            if (!rootIsTicking(newRootId)) return
             const renderer = state.internal.actualRenderer as WebGPURenderer
 
             // Skip if a user has taken over rendering by registering in the 'render' phase
@@ -775,6 +813,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             ...state.internal,
             rootId: newRootId,
             unregisterRoot: () => {
+              releaseRootLoop(newRootId)
+              unregisterFrameGate()
+              unregisterFrameGateEnd()
               unregisterRoot()
               unregisterCanvasTarget()
               unregisterEventsFlush()
@@ -787,8 +828,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }))
       }
 
-      // Update scheduler frameloop mode
-      scheduler.frameloop = frameloop
+      // Note: no direct `scheduler.frameloop` write here — the mode is global to the
+      // shared loop, so it is derived from every root's intent by the frameloop registry
+      // (fed via setFrameloop above and registerRootLoop at registration). See #3852.
 
       // Set locals
       onCreated = onCreatedCallback
@@ -851,7 +893,14 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   const fiber = root?.fiber
   if (fiber) {
     const state = root?.store.getState()
-    if (state) state.internal.active = false
+    if (state) {
+      state.internal.active = false
+      // Drop this root's frameloop intent NOW rather than in the deferred teardown below —
+      // a dead root must not keep the shared loop's derived mode (e.g. 'always') alive for
+      // the 500ms grace period. releaseRootLoop is idempotent with the one in unregisterRoot.
+      const rootId = (state.internal as any).rootId as string | undefined
+      if (rootId) releaseRootLoop(rootId)
+    }
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
         setTimeout(() => {

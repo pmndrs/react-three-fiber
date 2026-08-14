@@ -26,7 +26,7 @@ import type {
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
-import { getScheduler } from '@pmndrs/scheduler'
+import { setRootFrameloop } from './utils/frameloopRegistry'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -170,8 +170,9 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
-              // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-              getScheduler().invalidate()
+              // Invalidate THIS root so useFrame callbacks can respond to size changes —
+              // per-root so a gated 'demand' canvas actually renders its own resize
+              get().invalidate()
             }
           }
           return
@@ -189,8 +190,9 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
-        // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-        getScheduler().invalidate()
+        // Invalidate THIS root so useFrame callbacks can respond to size changes —
+        // per-root so a gated 'demand' canvas actually renders its own resize
+        get().invalidate()
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -199,11 +201,12 @@ export const createStore = (
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
         set(() => ({ frameloop }))
-        // Mirror the mode onto the scheduler. `configure()` only pushes the *prop* value, so
-        // without this an imperative setFrameloop() would update store state while the RAF loop
-        // kept running (or stayed stopped) — the mode change would never take effect at runtime.
-        // The scheduler's setter is idempotent and owns starting/stopping the loop.
-        getScheduler().frameloop = frameloop
+        // Route the mode through the per-root registry rather than writing the scheduler's
+        // global frameloop directly — the global mode is derived from ALL roots, so one
+        // canvas going 'demand' no longer stops the shared loop for every other canvas (#3852).
+        // Before the root has registered (first configure) this is a no-op; registration
+        // reads the store's frameloop, so the intent is picked up there.
+        setRootFrameloop((get().internal as any).rootId, frameloop)
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
