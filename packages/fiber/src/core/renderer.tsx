@@ -463,6 +463,13 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
       if (state) {
         setTimeout(() => {
           try {
+            // A remount within the grace period — <StrictMode> in development
+            // does exactly this — reuses this canvas' root, store, scene and
+            // GL context, so tearing them down here would destroy a live root.
+            // `internal` is swapped for a fresh object on remount, hence the
+            // re-read from the store rather than from the captured `state`.
+            if (_roots.get(canvas)?.store.getState().internal.active) return
+
             state.events.disconnect?.()
             state.gl?.renderLists?.dispose?.()
             state.gl?.forceContextLoss?.()
