@@ -38,6 +38,7 @@ export function createPointerEvents(store: RootStore): EventManager<HTMLElement>
       if (internal.lastEvent?.current && events.handlers) events.handlers.onPointerMove(internal.lastEvent.current)
     },
     connect: (target: HTMLElement) => {
+      if (!target) return
       const { set, events } = store.getState()
       events.disconnect?.()
       set((state) => ({ events: { ...state.events, connected: target } }))
