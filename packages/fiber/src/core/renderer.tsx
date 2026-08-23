@@ -77,7 +77,7 @@ export interface RenderProps<TCanvas extends HTMLCanvasElement | OffscreenCanvas
   shadows?: boolean | 'basic' | 'percentage' | 'soft' | 'variance' | Partial<THREE.WebGLShadowMap>
   /**
    * Disables three r139 color management.
-   * @see https://threejs.org/docs/#manual/en/introduction/Color-management
+   * @see https://threejs.org/manual/#en/color-management
    */
   legacy?: boolean
   /** Switch off automatic sRGB encoding and gamma correction */
