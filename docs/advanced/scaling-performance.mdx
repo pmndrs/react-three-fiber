@@ -82,7 +82,7 @@ function Scene() {
       <mesh position={[1, 2, 3]} geometry={sphere} material={red} />
 ```
 
-If you create a material or color in global space - outside of React Three Fiber's `Canvas` context - you should enable [ColorManagement](https://threejs.org/docs/#manual/en/introduction/Color-management) in three.js. This will allow certain conversions (for hexadecimal and CSS colors in sRGB) to be made automatically, producing correct colors in all cases.
+If you create a material or color in global space - outside of React Three Fiber's `Canvas` context - you should enable [ColorManagement](https://threejs.org/manual/#en/color-management) in three.js. This will allow certain conversions (for hexadecimal and CSS colors in sRGB) to be made automatically, producing correct colors in all cases.
 
 ```jsx
 import * as THREE from 'three'
