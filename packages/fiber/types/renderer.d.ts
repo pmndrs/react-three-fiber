@@ -65,12 +65,19 @@ export type DefaultRendererProps = {
  */
 export interface CanvasSchedulerConfig {
   /**
-   * Render this canvas after another canvas completes.
-   * Pass the `id` of another canvas.
+   * Run this Canvas root before the referenced Canvas root id(s).
    */
-  after?: string
+  before?: string | string[]
   /**
-   * Limit this canvas's render rate (frames per second).
+   * Run this Canvas root after the referenced Canvas root id(s).
+   */
+  after?: string | string[]
+  /**
+   * Numeric root order. Lower values run first.
+   */
+  order?: number
+  /**
+   * Limit this Canvas's default render job (frames per second).
    */
   fps?: number
 }

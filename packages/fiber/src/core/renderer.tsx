@@ -132,6 +132,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
     performance: RenderProps<TCanvas>['performance']
     shadows: RenderProps<TCanvas>['shadows']
     textureColorSpace: THREE.ColorSpace
+    schedulerBefore: NonNullable<RenderProps<TCanvas>['scheduler']>['before']
+    schedulerAfter: NonNullable<RenderProps<TCanvas>['scheduler']>['after']
+    schedulerOrder: NonNullable<RenderProps<TCanvas>['scheduler']>['order']
   }> = {}
 
   let configured = false
@@ -639,6 +642,9 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
           getState: () => store.getState(),
           onError: (err) => store.getState().setError(err),
           frameloop: store.getState().frameloop,
+          before: schedulerConfig?.before,
+          after: schedulerConfig?.after,
+          order: schedulerConfig?.order,
         })
 
         // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
@@ -764,8 +770,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             rootId: newRootId,
             phase: 'render',
             system: true, // Internal flag: this is a system job, not user-controlled
-            // Apply scheduler config for render ordering and rate limiting
-            ...(schedulerConfig?.after && { after: schedulerConfig.after }),
+            // FPS throttles only the default render job; Canvas ordering belongs to the root.
             ...(schedulerConfig?.fps && { fps: schedulerConfig.fps }),
           },
         )
@@ -786,7 +791,27 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
             scheduler,
           } as any,
         }))
+      } else {
+        // Canvas ordering is root-scoped so every job owned by this Canvas moves together.
+        const constraintsChanged =
+          !is.equ(schedulerConfig?.before, lastConfiguredProps.schedulerBefore, shallowLoose) ||
+          !is.equ(schedulerConfig?.after, lastConfiguredProps.schedulerAfter, shallowLoose)
+
+        if (constraintsChanged) {
+          scheduler.setRootConstraints(rootId, {
+            before: schedulerConfig?.before,
+            after: schedulerConfig?.after,
+          })
+        }
+
+        if (schedulerConfig?.order !== lastConfiguredProps.schedulerOrder) {
+          scheduler.setRootOrder(rootId, schedulerConfig?.order ?? 0)
+        }
       }
+
+      lastConfiguredProps.schedulerBefore = schedulerConfig?.before
+      lastConfiguredProps.schedulerAfter = schedulerConfig?.after
+      lastConfiguredProps.schedulerOrder = schedulerConfig?.order
 
       // Set locals
       onCreated = onCreatedCallback
