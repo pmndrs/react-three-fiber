@@ -462,6 +462,12 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
         setTimeout(() => {
+          // A StrictMode/dev remount re-claimed this canvas within the grace
+          // period; the store, scene and GL context are shared with the live
+          // root, so disposing them now would destroy the mounted view. The
+          // state must be re-read from the store since the remount replaced it.
+          const currentRoot = _roots.get(canvas)
+          if (currentRoot && currentRoot.store.getState().internal.active) return
           try {
             state.events.disconnect?.()
             state.gl?.renderLists?.dispose?.()
