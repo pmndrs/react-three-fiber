@@ -4,7 +4,6 @@ import * as React from 'react'
 import { context } from '../../store'
 import { useMutableCallback, useIsomorphicLayoutEffect } from '../../utils'
 import { notifyDepreciated } from '../../utils/notices'
-import { rootIsTicking } from '../../utils/frameloopRegistry'
 import { getScheduler, type Scheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
@@ -23,7 +22,7 @@ import type { FrameNextState, FrameNextCallback, UseFrameNextOptions, FrameNextC
  *
  * @param callback - Function called each frame with (state, delta). Optional if you only need scheduler access.
  * @param priorityOrOptions - Either a priority number (backwards compat) or options object
- * @returns Controls object with step(), stepAll(), pause(), resume(), isPaused, id, scheduler
+ * @returns Controls object with step(), stepAll(), invalidate(), pause(), resume(), isPaused, id, rootId, scheduler
  *
  * @example
  * // Simple priority (backwards compat)
@@ -134,9 +133,6 @@ export function useFrame(
       // Wrapper that merges store state with timing (for portal isolation)
       const wrappedCallback: FrameNextCallback = (frameState, delta) => {
         const localState = store.getState()
-        // Sit out frames this root is gated for (per-canvas 'demand' idling, #3852).
-        // Read from local state so portal stores resolve to their canvas root's id.
-        if (!rootIsTicking((localState.internal as any).rootId)) return
         const mergedState = {
           ...localState,
           time: frameState.time,
@@ -185,8 +181,6 @@ export function useFrame(
         (state, delta) => {
           const frameState = state as FrameNextState
           if (!frameState.renderer) return // no host yet — wait for a Canvas
-          // Once adopted by a host root, honor that root's frame gate too (#3852)
-          if (!rootIsTicking((frameState as any).internal?.rootId)) return
           callbackRef.current?.(frameState, delta)
         },
         { id, ...options },
@@ -225,6 +219,14 @@ export function useFrame(
       scheduler: scheduler as Scheduler,
 
       /**
+       * The root that currently owns this job. Resolve on access because ambient
+       * jobs can be adopted by a Canvas after the controls object is created.
+       */
+      get rootId() {
+        return getScheduler().getJobRootId(id)
+      },
+
+      /**
        * Manually step this job only.
        * Bypasses FPS limiting - always runs.
        * @param timestamp Optional timestamp (defaults to performance.now())
@@ -240,6 +242,15 @@ export function useFrame(
        */
       stepAll: (timestamp?: number) => {
         getScheduler().step(timestamp)
+      },
+
+      /**
+       * Request frames for this job's owning root without waking sibling roots.
+       */
+      invalidate: (frames?: number, stackFrames?: boolean) => {
+        const scheduler = getScheduler()
+        const rootId = scheduler.getJobRootId(id)
+        if (rootId) scheduler.invalidateRoot(rootId, frames, stackFrames)
       },
 
       /**

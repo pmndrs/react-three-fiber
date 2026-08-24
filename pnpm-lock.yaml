@@ -238,8 +238,8 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0(three@0.185.1)
       '@pmndrs/scheduler':
-        specifier: ^0.1.0
-        version: 0.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: ^0.2.0
+        version: 0.2.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       dequal:
         specifier: ^2.0.3
         version: 2.0.3
@@ -1567,8 +1567,8 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@pmndrs/scheduler@0.1.0':
-    resolution: {integrity: sha512-LjWt2FVi7RDOpgBdSBDxToQwnMWP1wkZwVeAkr8ARvVBtvlfyMqCCvr1y9YcLm9RTUhSebN5Bx4bJTntdSd22Q==}
+  '@pmndrs/scheduler@0.2.0':
+    resolution: {integrity: sha512-Lv+4ZQjxw2BMcPDWHgcP2tULiEKZL+x5+mFW2YXWZUrDhT4h5PKpRv/U5ApweL+R319sdY63C688zd4QVamHvA==}
     peerDependencies:
       react: ^19.2.3
       react-dom: ^19.2.3
@@ -6008,7 +6008,7 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@pmndrs/scheduler@0.1.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@pmndrs/scheduler@0.2.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)

@@ -22,7 +22,7 @@ import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 import { vi } from 'vitest'
-import { getScheduler, Scheduler } from '@pmndrs/scheduler'
+import { getScheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useFrame, useThree, extend } from '../src'
@@ -322,31 +322,30 @@ describe('scheduler integration', () => {
   //* 3. Imperative setFrameloop reaches the scheduler ==============================
 
   describe('imperative setFrameloop', () => {
-    it('mirrors runtime mode changes onto the scheduler, not just store state', async () => {
+    it('mirrors runtime mode changes onto the scheduler root, not just store state', async () => {
       const renderer = new MockWebGPURenderer({ canvas })
       const store = await act(async () => (await root.configure({ renderer, frameloop: 'never' })).render(<mesh />))
 
       const scheduler = getScheduler()
       const { setFrameloop } = store.getState()
+      const rootId = (store.getState().internal as any).rootId as string
 
-      // configure() pushed the prop through, so both sides start at 'never'
-      expect(scheduler.frameloop).toBe('never')
+      // configure() registers this root with the stored Canvas mode.
+      expect(scheduler.getRootFrameloop(rootId)).toBe('never')
 
-      // Runtime change must reach the scheduler. Before the bridge this only moved
-      // store state and the scheduler stayed on 'never'.
+      // Runtime changes update this scheduler root without changing global defaults.
       await act(async () => setFrameloop('demand'))
       expect(store.getState().frameloop).toBe('demand')
-      expect(scheduler.frameloop).toBe('demand')
+      expect(scheduler.getRootFrameloop(rootId)).toBe('demand')
 
-      // 'always' additionally starts the RAF loop (the scheduler's setter owns that)
+      // 'always' additionally starts the shared RAF driver.
       await act(async () => setFrameloop('always'))
-      expect(scheduler.frameloop).toBe('always')
+      expect(scheduler.getRootFrameloop(rootId)).toBe('always')
       expect(scheduler.isRunning).toBe(true)
 
-      // ...and leaving 'always' stops it again. Also returns the shared scheduler to
-      // 'never' so this test doesn't leave a live RAF loop for the next one.
+      // Leaving 'always' stops it again when no other root has automatic work.
       await act(async () => setFrameloop('never'))
-      expect(scheduler.frameloop).toBe('never')
+      expect(scheduler.getRootFrameloop(rootId)).toBe('never')
       expect(scheduler.isRunning).toBe(false)
     })
 
@@ -356,10 +355,11 @@ describe('scheduler integration', () => {
 
       const scheduler = getScheduler()
       const { setFrameloop } = store.getState()
+      const rootId = (store.getState().internal as any).rootId as string
 
       await act(async () => setFrameloop())
       expect(store.getState().frameloop).toBe('always')
-      expect(scheduler.frameloop).toBe('always')
+      expect(scheduler.getRootFrameloop(rootId)).toBe('always')
 
       await act(async () => setFrameloop('never'))
     })

@@ -1,48 +1,76 @@
 /**
  * @fileoverview Per-canvas frameloop tests (#3852)
  *
- * The scheduler's frameloop is process-global by design — a single RAF loop serves
- * every root. `<Canvas frameloop>` however is a per-canvas prop, and writing it
- * straight to the scheduler made one canvas on 'demand' silently stop the shared
- * loop for every other canvas (#3852).
+ * Scheduler 0.2 keeps one shared RAF driver while moving lifecycle mode and pending
+ * frames onto each root. R3F maps Canvas state to those native root controls:
  *
- * These tests cover the r3f-layer reconciliation:
- *   1. The GLOBAL mode is derived from all roots ('always' > 'demand' > 'never'),
- *      not last-writer-wins.
- *   2. A root on 'demand' is gated per frame: its jobs (default render + useFrame)
- *      only run on frames it was invalidated for, while other roots keep ticking.
- *   3. invalidate(state) targets one root; invalidate() and advance() reach all.
- *
- * Frames are driven deterministically via `getScheduler().step(timestamp)` using
- * 'never'/'demand' combinations (the loop never self-runs), per the pattern in
- * scheduler-integration.test.tsx. 'always' appears only in derived-mode assertions.
+ *   1. Registration and imperative mode changes stay root-scoped.
+ *   2. State invalidation and resize wake only the owning demand root.
+ *   3. Stateless invalidation and advance retain their global fan-out contract.
+ *   4. State-bound and XR advance step only the owning root.
+ *   5. Unmount unregisters the scheduler root synchronously.
  */
 import * as React from 'react'
 import { act } from 'react'
 import * as THREE from 'three'
 import { vi } from 'vitest'
-import { getScheduler } from '@pmndrs/scheduler'
+import { getScheduler, Scheduler } from '@pmndrs/scheduler'
 import { createCanvas } from '../../test-renderer/src/createTestCanvas'
 
 import { createRoot, useFrame, invalidate, advance, extend } from '../src'
 
 extend(THREE as any)
 
+//* Deterministic RAF Controller ==============================
+
+function createRafController() {
+  const callbacks = new Map<number, FrameRequestCallback>()
+  let nextId = 1
+
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    const id = nextId++
+    callbacks.set(id, callback)
+    return id
+  })
+  vi.stubGlobal('cancelAnimationFrame', (id: number) => callbacks.delete(id))
+
+  return {
+    flush(timestamp: number) {
+      const queued = [...callbacks.values()]
+      callbacks.clear()
+      for (const callback of queued) callback(timestamp)
+    },
+    get size() {
+      return callbacks.size
+    },
+  }
+}
+
 //* Mock Renderer ==============================
 // Minimal WebGPU-style mock (pattern from scheduler-integration.test.tsx).
 // `render` is the observable signal for "R3F performed its default render".
 class MockWebGPURenderer {
   canvas: HTMLCanvasElement
+  animationLoop: XRFrameRequestCallback | null = null
   private _initialized = false
+  private xrListeners = new Map<string, Set<() => void>>()
   shadowMap = { enabled: false, type: THREE.PCFSoftShadowMap }
   outputColorSpace = THREE.SRGBColorSpace
   toneMapping = THREE.ACESFilmicToneMapping
   xr = {
     enabled: false,
     isPresenting: false,
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    setAnimationLoop: () => {},
+    addEventListener: (type: string, callback: () => void) => {
+      let listeners = this.xrListeners.get(type)
+      if (!listeners) this.xrListeners.set(type, (listeners = new Set()))
+      listeners.add(callback)
+    },
+    removeEventListener: (type: string, callback: () => void) => {
+      this.xrListeners.get(type)?.delete(callback)
+    },
+    setAnimationLoop: (callback: XRFrameRequestCallback | null) => {
+      this.animationLoop = callback
+    },
   }
   backend = { isWebGPUBackend: true }
   renderLists = { dispose: () => {} }
@@ -63,6 +91,11 @@ class MockWebGPURenderer {
   dispose() {}
   setSize() {}
   setPixelRatio() {}
+
+  startXR() {
+    this.xr.isPresenting = true
+    for (const callback of this.xrListeners.get('sessionstart') ?? []) callback()
+  }
 }
 
 describe('per-canvas frameloop (#3852)', () => {
@@ -70,8 +103,11 @@ describe('per-canvas frameloop (#3852)', () => {
   let canvasB: HTMLCanvasElement
   let rootA: ReturnType<typeof createRoot>
   let rootB: ReturnType<typeof createRoot>
+  let raf: ReturnType<typeof createRafController>
 
   beforeEach(() => {
+    Scheduler.reset()
+    raf = createRafController()
     canvasA = createCanvas()
     canvasB = createCanvas()
     rootA = createRoot(canvasA)
@@ -83,177 +119,236 @@ describe('per-canvas frameloop (#3852)', () => {
       rootA.unmount()
       rootB.unmount()
     })
+    Scheduler.reset()
+    vi.unstubAllGlobals()
   })
 
-  //* 1. Derived global mode ==============================
+  function getRootId(store: { getState(): any }): string {
+    return store.getState().internal.rootId
+  }
 
-  describe('derived global mode', () => {
-    it("keeps the shared loop mode 'always' when a second canvas asks for 'demand' (the #3852 regression)", async () => {
-      const scheduler = getScheduler()
+  function Ticker({ frames }: { frames: number[] }) {
+    useFrame(() => frames.push(1))
+    return null
+  }
 
-      const storeA = await act(async () =>
-        (await rootA.configure({ renderer: new MockWebGPURenderer({ canvas: canvasA }), frameloop: 'always' })).render(
-          <mesh />,
-        ),
-      )
-      expect(scheduler.frameloop).toBe('always')
-      expect(scheduler.isRunning).toBe(true)
+  it('registers native per-root modes and lets an always sibling run while demand sleeps', async () => {
+    const rendererA = new MockWebGPURenderer({ canvas: canvasA })
+    const rendererB = new MockWebGPURenderer({ canvas: canvasB })
+    const renderSpyA = vi.spyOn(rendererA, 'render')
+    const renderSpyB = vi.spyOn(rendererB, 'render')
+    const framesA: number[] = []
+    const framesB: number[] = []
 
-      // Pre-fix, this configure was last-writer-wins: it flipped the GLOBAL mode to
-      // 'demand' and stopped the one RAF loop, freezing canvas A silently.
-      await act(async () =>
-        (await rootB.configure({ renderer: new MockWebGPURenderer({ canvas: canvasB }), frameloop: 'demand' })).render(
-          <mesh />,
-        ),
-      )
-      expect(scheduler.frameloop).toBe('always')
-      expect(scheduler.isRunning).toBe(true)
+    const storeA = await act(async () =>
+      (await rootA.configure({ renderer: rendererA, frameloop: 'always' })).render(<Ticker frames={framesA} />),
+    )
+    const storeB = await act(async () =>
+      (await rootB.configure({ renderer: rendererB, frameloop: 'demand' })).render(<Ticker frames={framesB} />),
+    )
 
-      // Wind the loop down so no RAF leaks into other tests
-      await act(async () => storeA.getState().setFrameloop('never'))
-    })
+    const scheduler = getScheduler()
+    expect(scheduler.getRootFrameloop(getRootId(storeA))).toBe('always')
+    expect(scheduler.getRootFrameloop(getRootId(storeB))).toBe('demand')
 
-    it('re-derives on imperative setFrameloop and on unmount, in either configure order', async () => {
-      const scheduler = getScheduler()
+    // Drain the demand root's mount invalidation, then observe one idle frame.
+    await act(async () => raf.flush(1000))
+    renderSpyA.mockClear()
+    renderSpyB.mockClear()
+    framesA.length = 0
+    framesB.length = 0
+    await act(async () => raf.flush(1016))
 
-      // Reverse order from the test above: the demand canvas configures FIRST
-      const storeB = await act(async () =>
-        (await rootB.configure({ renderer: new MockWebGPURenderer({ canvas: canvasB }), frameloop: 'demand' })).render(
-          <mesh />,
-        ),
-      )
-      expect(scheduler.frameloop).toBe('demand')
-
-      const storeA = await act(async () =>
-        (await rootA.configure({ renderer: new MockWebGPURenderer({ canvas: canvasA }), frameloop: 'always' })).render(
-          <mesh />,
-        ),
-      )
-      expect(scheduler.frameloop).toBe('always')
-
-      // The 'always' root stepping down re-derives from what remains
-      await act(async () => storeA.getState().setFrameloop('demand'))
-      expect(scheduler.frameloop).toBe('demand')
-
-      // ...and stepping one root up wins again
-      await act(async () => storeB.getState().setFrameloop('always'))
-      expect(scheduler.frameloop).toBe('always')
-
-      // Unmounting the 'always' root releases its intent immediately (not after the
-      // 500ms deferred teardown) — the survivor's mode takes over
-      await act(async () => rootB.unmount())
-      expect(scheduler.frameloop).toBe('demand')
-    })
+    expect(renderSpyA).toHaveBeenCalledTimes(1)
+    expect(framesA).toHaveLength(1)
+    expect(renderSpyB).not.toHaveBeenCalled()
+    expect(framesB).toHaveLength(0)
+    expect(raf.size).toBe(1)
   })
 
-  //* 2. Per-root frame gating ==============================
+  it('updates only the owning root when setFrameloop is called imperatively', async () => {
+    const storeA = await act(async () =>
+      (
+        await rootA.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasA }),
+          frameloop: 'always',
+        })
+      ).render(<mesh />),
+    )
+    const storeB = await act(async () =>
+      (
+        await rootB.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasB }),
+          frameloop: 'demand',
+        })
+      ).render(<mesh />),
+    )
+    const scheduler = getScheduler()
+    const rootIdA = getRootId(storeA)
+    const rootIdB = getRootId(storeB)
 
-  describe('per-root gating', () => {
-    it("only ticks a 'demand' canvas on frames it was invalidated for, while another canvas keeps ticking", async () => {
-      const rendererA = new MockWebGPURenderer({ canvas: canvasA })
-      const rendererB = new MockWebGPURenderer({ canvas: canvasB })
-      const renderSpyA = vi.spyOn(rendererA, 'render')
-      const renderSpyB = vi.spyOn(rendererB, 'render')
-      const framesA: number[] = []
-      const framesB: number[] = []
+    await act(async () => storeA.getState().setFrameloop('never'))
+    expect(scheduler.getRootFrameloop(rootIdA)).toBe('never')
+    expect(scheduler.getRootFrameloop(rootIdB)).toBe('demand')
 
-      const TickerA = () => {
-        useFrame(() => framesA.push(1))
-        return null
-      }
-      const TickerB = () => {
-        useFrame(() => framesB.push(1))
-        return null
-      }
+    await act(async () => storeB.getState().setFrameloop('always'))
+    expect(scheduler.getRootFrameloop(rootIdA)).toBe('never')
+    expect(scheduler.getRootFrameloop(rootIdB)).toBe('always')
+  })
 
-      // 'never' + 'demand' keeps the loop stopped, so scheduler.step() is the only driver
-      const storeA = await act(async () =>
-        (await rootA.configure({ renderer: rendererA, frameloop: 'never' })).render(<TickerA />),
-      )
-      const storeB = await act(async () =>
-        (await rootB.configure({ renderer: rendererB, frameloop: 'demand' })).render(<TickerB />),
-      )
+  it('targets state invalidation and fans stateless invalidation out to every demand root', async () => {
+    const rendererA = new MockWebGPURenderer({ canvas: canvasA })
+    const rendererB = new MockWebGPURenderer({ canvas: canvasB })
+    const renderSpyA = vi.spyOn(rendererA, 'render')
+    const renderSpyB = vi.spyOn(rendererB, 'render')
+    const framesA: number[] = []
+    const framesB: number[] = []
 
-      const scheduler = getScheduler()
+    const storeA = await act(async () =>
+      (await rootA.configure({ renderer: rendererA, frameloop: 'demand' })).render(<Ticker frames={framesA} />),
+    )
+    await act(async () =>
+      (await rootB.configure({ renderer: rendererB, frameloop: 'demand' })).render(<Ticker frames={framesB} />),
+    )
 
-      // Mounting content invalidates its root (via invalidateInstance), so B rightly
-      // holds one pending frame for its initial commit — drain it before asserting idling.
-      // stop() cancels the RAF that invalidate() started, keeping step() the only driver.
-      scheduler.stop()
-      await act(async () => scheduler.step(984))
-      renderSpyA.mockClear()
-      renderSpyB.mockClear()
-      framesA.length = 0
-      framesB.length = 0
+    await act(async () => raf.flush(1000))
+    renderSpyA.mockClear()
+    renderSpyB.mockClear()
+    framesA.length = 0
+    framesB.length = 0
 
-      // No pending invalidation: A ('never' = happy to be driven manually) ticks,
-      // B ('demand') sits the frames out — render job AND useFrame callback
-      await act(async () => {
-        scheduler.step(1000)
-        scheduler.step(1016)
-      })
-      expect(renderSpyA).toHaveBeenCalledTimes(2)
-      expect(framesA).toHaveLength(2)
-      expect(renderSpyB).not.toHaveBeenCalled()
-      expect(framesB).toHaveLength(0)
-
-      // B invalidates itself: exactly one granted frame, then idle again
-      await act(async () => {
-        storeB.getState().invalidate()
-        scheduler.stop() // cancel the RAF invalidate() scheduled — step() drives
-        scheduler.step(1032)
-        scheduler.step(1048)
-      })
-      expect(renderSpyB).toHaveBeenCalledTimes(1)
-      expect(framesB).toHaveLength(1)
-      // A was unaffected throughout
-      expect(renderSpyA).toHaveBeenCalledTimes(4)
-
-      // Targeted invalidation does not wake the OTHER demand root either
-      await act(async () => storeA.getState().setFrameloop('demand'))
-      renderSpyA.mockClear()
-      renderSpyB.mockClear()
-      await act(async () => {
-        storeB.getState().invalidate()
-        scheduler.stop()
-        scheduler.step(1064)
-      })
-      expect(renderSpyA).not.toHaveBeenCalled()
-      expect(renderSpyB).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      storeA.getState().invalidate()
+      raf.flush(1016)
     })
+    expect(renderSpyA).toHaveBeenCalledTimes(1)
+    expect(framesA).toHaveLength(1)
+    expect(renderSpyB).not.toHaveBeenCalled()
+    expect(framesB).toHaveLength(0)
 
-    it('invalidate() and advance() without a target reach every root', async () => {
-      const rendererA = new MockWebGPURenderer({ canvas: canvasA })
-      const rendererB = new MockWebGPURenderer({ canvas: canvasB })
-      const renderSpyA = vi.spyOn(rendererA, 'render')
-      const renderSpyB = vi.spyOn(rendererB, 'render')
-
-      await act(async () => (await rootA.configure({ renderer: rendererA, frameloop: 'demand' })).render(<mesh />))
-      await act(async () => (await rootB.configure({ renderer: rendererB, frameloop: 'demand' })).render(<mesh />))
-
-      const scheduler = getScheduler()
-      scheduler.stop() // cancel any RAF from mount-time invalidations — step() drives
-      renderSpyA.mockClear()
-      renderSpyB.mockClear()
-
-      // Untargeted invalidate grants a frame to every root
-      await act(async () => {
-        invalidate()
-        scheduler.stop()
-        scheduler.step(1000)
-      })
-      expect(renderSpyA).toHaveBeenCalledTimes(1)
-      expect(renderSpyB).toHaveBeenCalledTimes(1)
-
-      // advance() manually renders everything, even gated demand roots
-      await act(async () => advance(2000))
-      expect(renderSpyA).toHaveBeenCalledTimes(2)
-      expect(renderSpyB).toHaveBeenCalledTimes(2)
-
-      // ...and the granted frame is consumed: the next bare step idles both again
-      await act(async () => scheduler.step(3000))
-      expect(renderSpyA).toHaveBeenCalledTimes(2)
-      expect(renderSpyB).toHaveBeenCalledTimes(2)
+    await act(async () => {
+      invalidate()
+      raf.flush(1032)
     })
+    expect(renderSpyA).toHaveBeenCalledTimes(2)
+    expect(framesA).toHaveLength(2)
+    expect(renderSpyB).toHaveBeenCalledTimes(1)
+    expect(framesB).toHaveLength(1)
+  })
+
+  it('targets state-bound advance while stateless advance still steps every root', async () => {
+    const framesA: number[] = []
+    const framesB: number[] = []
+    const storeA = await act(async () =>
+      (
+        await rootA.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasA }),
+          frameloop: 'never',
+        })
+      ).render(<Ticker frames={framesA} />),
+    )
+    await act(async () =>
+      (
+        await rootB.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasB }),
+          frameloop: 'never',
+        })
+      ).render(<Ticker frames={framesB} />),
+    )
+
+    await act(async () => advance(1000, true, storeA.getState()))
+    expect(framesA).toHaveLength(1)
+    expect(framesB).toHaveLength(0)
+
+    await act(async () => advance(1016))
+    expect(framesA).toHaveLength(2)
+    expect(framesB).toHaveLength(1)
+  })
+
+  it('invalidates only the owning demand root through imperative and configured resize paths', async () => {
+    const rendererA = new MockWebGPURenderer({ canvas: canvasA })
+    const rendererB = new MockWebGPURenderer({ canvas: canvasB })
+    const renderSpyA = vi.spyOn(rendererA, 'render')
+    const renderSpyB = vi.spyOn(rendererB, 'render')
+
+    const storeA = await act(async () =>
+      (await rootA.configure({ renderer: rendererA, frameloop: 'demand' })).render(<mesh />),
+    )
+    await act(async () => (await rootB.configure({ renderer: rendererB, frameloop: 'demand' })).render(<mesh />))
+
+    await act(async () => raf.flush(1000))
+    renderSpyA.mockClear()
+    renderSpyB.mockClear()
+
+    await act(async () => {
+      storeA.getState().setSize(640, 480)
+      raf.flush(1016)
+    })
+    expect(renderSpyA).toHaveBeenCalledTimes(1)
+    expect(renderSpyB).not.toHaveBeenCalled()
+
+    await act(async () => {
+      await rootA.configure({
+        renderer: rendererA,
+        frameloop: 'demand',
+        size: { width: 800, height: 600, top: 0, left: 0 },
+      })
+      raf.flush(1032)
+    })
+    expect(renderSpyA).toHaveBeenCalledTimes(2)
+    expect(renderSpyB).not.toHaveBeenCalled()
+  })
+
+  it('steps only the presenting root from the XR animation loop', async () => {
+    const rendererA = new MockWebGPURenderer({ canvas: canvasA })
+    const rendererB = new MockWebGPURenderer({ canvas: canvasB })
+    const framesA: number[] = []
+    const framesB: number[] = []
+
+    await act(async () =>
+      (await rootA.configure({ renderer: rendererA, frameloop: 'always' })).render(<Ticker frames={framesA} />),
+    )
+    await act(async () =>
+      (await rootB.configure({ renderer: rendererB, frameloop: 'always' })).render(<Ticker frames={framesB} />),
+    )
+
+    await act(async () => raf.flush(1000))
+    framesA.length = 0
+    framesB.length = 0
+    getScheduler().stop()
+
+    rendererA.startXR()
+    expect(rendererA.animationLoop).not.toBeNull()
+    await act(async () => rendererA.animationLoop?.(1016, {} as XRFrame))
+
+    expect(framesA).toHaveLength(1)
+    expect(framesB).toHaveLength(0)
+  })
+
+  it('unregisters the scheduler root immediately when a Canvas unmounts', async () => {
+    const storeA = await act(async () =>
+      (
+        await rootA.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasA }),
+          frameloop: 'demand',
+        })
+      ).render(<mesh />),
+    )
+    const storeB = await act(async () =>
+      (
+        await rootB.configure({
+          renderer: new MockWebGPURenderer({ canvas: canvasB }),
+          frameloop: 'demand',
+        })
+      ).render(<mesh />),
+    )
+    const scheduler = getScheduler()
+    const rootIdA = getRootId(storeA)
+    const rootIdB = getRootId(storeB)
+
+    expect(scheduler.getRootIds()).toEqual([rootIdA, rootIdB])
+    await act(async () => rootA.unmount())
+
+    expect(scheduler.getRootIds()).toEqual([rootIdB])
   })
 })

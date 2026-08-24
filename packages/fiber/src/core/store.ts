@@ -4,6 +4,7 @@ import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frus
 import type { Inspector } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
+import { getScheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
 import type {
@@ -26,7 +27,6 @@ import type {
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
-import { setRootFrameloop } from './utils/frameloopRegistry'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -170,8 +170,8 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
-              // Invalidate THIS root so useFrame callbacks can respond to size changes —
-              // per-root so a gated 'demand' canvas actually renders its own resize
+              // Invalidate this root so a demand Canvas renders its resize without
+              // waking sibling roots.
               get().invalidate()
             }
           }
@@ -190,8 +190,8 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
-        // Invalidate THIS root so useFrame callbacks can respond to size changes —
-        // per-root so a gated 'demand' canvas actually renders its own resize
+        // Invalidate this root so a demand Canvas renders its resize without
+        // waking sibling roots.
         get().invalidate()
       },
       setDpr: (dpr: Dpr) =>
@@ -201,12 +201,10 @@ export const createStore = (
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
         set(() => ({ frameloop }))
-        // Route the mode through the per-root registry rather than writing the scheduler's
-        // global frameloop directly — the global mode is derived from ALL roots, so one
-        // canvas going 'demand' no longer stops the shared loop for every other canvas (#3852).
-        // Before the root has registered (first configure) this is a no-op; registration
-        // reads the store's frameloop, so the intent is picked up there.
-        setRootFrameloop((get().internal as any).rootId, frameloop)
+        // Before registration this is intentionally state-only. registerRoot reads the
+        // stored mode during configure; later imperative changes update this root directly.
+        const rootId = (get().internal as any).rootId as string | undefined
+        if (rootId) getScheduler().setRootFrameloop(rootId, frameloop)
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,

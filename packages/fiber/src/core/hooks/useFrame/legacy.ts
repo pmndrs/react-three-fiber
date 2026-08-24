@@ -11,7 +11,6 @@
 
 import { getScheduler } from '@pmndrs/scheduler'
 import { notifyDepreciated } from '../../utils/notices'
-import { invalidateRootLoop, invalidateAllRootLoops } from '../../utils/frameloopRegistry'
 
 //* Type Imports ==============================
 import type { GlobalRenderCallback, RootState } from '#types'
@@ -123,27 +122,27 @@ export function addTail(callback: GlobalRenderCallback): () => void {
  */
 export function invalidate(state?: RootState, frames = 1, stackFrames = false): void {
   const rootId = (state?.internal as any)?.rootId as string | undefined
-  if (rootId) invalidateRootLoop(rootId, frames, stackFrames)
-  else invalidateAllRootLoops(frames, stackFrames)
-  getScheduler().invalidate(frames, stackFrames)
+  const scheduler = getScheduler()
+  if (rootId) scheduler.invalidateRoot(rootId, frames, stackFrames)
+  else scheduler.invalidate(frames, stackFrames)
 }
 
 /**
  * Advances the frameloop and runs render effects.
  * Useful for when manually rendering via `frameloop="never"`.
  *
- * Roots on 'demand' are granted the frame too (stacked, so their pending
- * invalidations are preserved) — a manual advance renders everything.
+ * With a state argument, only that root is stepped. Without one, every
+ * registered root is stepped for backwards compatibility.
  *
  * @param timestamp - The timestamp to use for this frame
  * @param runGlobalEffects - Ignored (kept for backwards compat, global effects always run)
- * @param state - Optional root state; grants the frame to that root only
+ * @param state - Optional root state; targets the manual step at that root
  *
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
  */
 export function advance(timestamp: number, runGlobalEffects?: boolean, state?: RootState): void {
   const rootId = (state?.internal as any)?.rootId as string | undefined
-  if (rootId) invalidateRootLoop(rootId, 1, true)
-  else invalidateAllRootLoops(1, true)
-  getScheduler().step(timestamp)
+  const scheduler = getScheduler()
+  if (rootId) scheduler.stepRoot(rootId, timestamp)
+  else scheduler.step(timestamp)
 }
