@@ -166,11 +166,15 @@ describe('per-canvas frameloop (#3852)', () => {
     expect(raf.size).toBe(1)
   })
 
-  it('updates only the owning root when setFrameloop is called imperatively', async () => {
+  it('updates only the owning root and renders the transition into demand mode', async () => {
+    const rendererA = new MockWebGPURenderer({ canvas: canvasA })
+    const rendererB = new MockWebGPURenderer({ canvas: canvasB })
+    const renderSpyA = vi.spyOn(rendererA, 'render')
+    const renderSpyB = vi.spyOn(rendererB, 'render')
     const storeA = await act(async () =>
       (
         await rootA.configure({
-          renderer: new MockWebGPURenderer({ canvas: canvasA }),
+          renderer: rendererA,
           frameloop: 'always',
         })
       ).render(<mesh />),
@@ -178,7 +182,7 @@ describe('per-canvas frameloop (#3852)', () => {
     const storeB = await act(async () =>
       (
         await rootB.configure({
-          renderer: new MockWebGPURenderer({ canvas: canvasB }),
+          renderer: rendererB,
           frameloop: 'demand',
         })
       ).render(<mesh />),
@@ -187,12 +191,21 @@ describe('per-canvas frameloop (#3852)', () => {
     const rootIdA = getRootId(storeA)
     const rootIdB = getRootId(storeB)
 
-    await act(async () => storeA.getState().setFrameloop('never'))
-    expect(scheduler.getRootFrameloop(rootIdA)).toBe('never')
+    await act(async () => raf.flush(1000))
+    renderSpyA.mockClear()
+    renderSpyB.mockClear()
+
+    await act(async () => storeA.getState().setFrameloop('demand'))
+    expect(scheduler.getRootFrameloop(rootIdA)).toBe('demand')
     expect(scheduler.getRootFrameloop(rootIdB)).toBe('demand')
+    expect(raf.size).toBe(1)
+
+    await act(async () => raf.flush(1016))
+    expect(renderSpyA).toHaveBeenCalledTimes(1)
+    expect(renderSpyB).not.toHaveBeenCalled()
 
     await act(async () => storeB.getState().setFrameloop('always'))
-    expect(scheduler.getRootFrameloop(rootIdA)).toBe('never')
+    expect(scheduler.getRootFrameloop(rootIdA)).toBe('demand')
     expect(scheduler.getRootFrameloop(rootIdB)).toBe('always')
   })
 

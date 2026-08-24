@@ -200,11 +200,13 @@ export const createStore = (
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
-        set(() => ({ frameloop }))
-        // Before registration this is intentionally state-only. registerRoot reads the
-        // stored mode during configure; later imperative changes update this root directly.
         const rootId = (get().internal as any).rootId as string | undefined
+        // Update a registered scheduler root first so the store mutation's invalidation
+        // is evaluated against the new mode. In particular, entering demand must retain
+        // one transition frame for rendering and deferred event flushes.
         if (rootId) getScheduler().setRootFrameloop(rootId, frameloop)
+        // Before registration this remains state-only; registerRoot reads the stored mode.
+        set(() => ({ frameloop }))
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
