@@ -111,27 +111,38 @@ export function addTail(callback: GlobalRenderCallback): () => void {
  * Invalidates the view, requesting a frame to be rendered.
  * In demand mode, this triggers the scheduler to run frames.
  *
- * @param state - Optional root state (ignored in new scheduler, kept for backwards compat)
+ * With a state argument, only that root's jobs run on the requested frames; other
+ * roots on 'demand' stay idle. Without one, every registered root is invalidated.
+ *
+ * @param state - Optional root state; targets the invalidation at that root
  * @param frames - Number of frames to request (default: 1)
  * @param stackFrames - If false, sets pendingFrames to frames. If true, adds to existing pendingFrames (default: false)
  *
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#invalidate
  */
 export function invalidate(state?: RootState, frames = 1, stackFrames = false): void {
-  getScheduler().invalidate(frames, stackFrames)
+  const rootId = (state?.internal as any)?.rootId as string | undefined
+  const scheduler = getScheduler()
+  if (rootId) scheduler.invalidateRoot(rootId, frames, stackFrames)
+  else scheduler.invalidate(frames, stackFrames)
 }
 
 /**
  * Advances the frameloop and runs render effects.
  * Useful for when manually rendering via `frameloop="never"`.
  *
+ * With a state argument, only that root is stepped. Without one, every
+ * registered root is stepped for backwards compatibility.
+ *
  * @param timestamp - The timestamp to use for this frame
  * @param runGlobalEffects - Ignored (kept for backwards compat, global effects always run)
- * @param state - Ignored (kept for backwards compat)
- * @param frame - Ignored (kept for backwards compat)
+ * @param state - Optional root state; targets the manual step at that root
  *
  * @see https://docs.pmnd.rs/react-three-fiber/api/additional-exports#advance
  */
-export function advance(timestamp: number): void {
-  getScheduler().step(timestamp)
+export function advance(timestamp: number, runGlobalEffects?: boolean, state?: RootState): void {
+  const rootId = (state?.internal as any)?.rootId as string | undefined
+  const scheduler = getScheduler()
+  if (rootId) scheduler.stepRoot(rootId, timestamp)
+  else scheduler.step(timestamp)
 }

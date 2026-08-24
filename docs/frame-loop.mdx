@@ -147,8 +147,10 @@ useFrame(physicsStep, { fps: 60, drop: false })
 interface FrameControls {
   id: string // the job's unique id
   scheduler: Scheduler // the global scheduler
+  readonly rootId: string | undefined // the root currently owning this job
   step(timestamp?: number): void // step this job only (bypasses fps limiting)
   stepAll(timestamp?: number): void // step all jobs once
+  invalidate(frames?: number, stackFrames?: boolean): void // invalidate this job's root
   pause(): void // pause this job (enabled = false)
   resume(): void // resume this job (enabled = true)
   isPaused: boolean // reactive — re-renders the component on change
@@ -227,7 +229,7 @@ useFrame(
 
 ## Frameloop modes {#frameloop-modes}
 
-The Canvas `frameloop` prop (mirrored by `scheduler.frameloop`) controls how the loop runs:
+The Canvas `frameloop` prop controls that Canvas's scheduler root. Every Canvas keeps its own mode and pending-frame count while sharing one RAF driver with the rest of the application.
 
 ### `frameloop="always"` (default) {#always}
 
@@ -277,17 +279,13 @@ function ManualScene() {
 ```tsx
 const { setFrameloop } = useThree()
 setFrameloop('demand') // store action — sets Canvas frameloop
-
-// Or set directly on the scheduler
-const { scheduler } = useThree()
-scheduler.frameloop = 'always'
 ```
 
-Switching to `'always'` starts the loop; switching away from it stops the loop.
+`setFrameloop` updates only the owning Canvas. The scheduler starts the shared driver while any root has automatic work and stops it when every root is idle. `scheduler.frameloop` remains a legacy bulk/default control; use `scheduler.setRootFrameloop(rootId, mode)` when working with scheduler roots directly.
 
 ## Demand mode: invalidate, onIdle & addTail {#demand-mode}
 
-Demand and manual modes use a small set of utilities. **`onIdle` and `addTail` callbacks only fire in `demand` mode** — they run when the pending-frame count reaches zero and the loop goes idle. In `always` mode the loop never becomes idle, so they never fire.
+Demand and manual modes use a small set of utilities. **`onIdle` and `addTail` callbacks fire when the shared driver has no automatic work left.** An `always` root keeps the driver active even when every demand root is idle.
 
 ### `invalidate(frames?, stackFrames?)` {#invalidate}
 
@@ -300,17 +298,17 @@ invalidate() // request a single frame
 invalidate(undefined, 5) // request 5 frames (standalone signature)
 ```
 
-The standalone export's signature is `invalidate(state?, frames = 1, stackFrames = false)`; `state` is ignored (kept for backwards compatibility) and it delegates to `scheduler.invalidate(frames, stackFrames)`. Notes:
+The standalone export's signature is `invalidate(state?, frames = 1, stackFrames = false)`. Passing a root state targets that root through `scheduler.invalidateRoot`; omitting it fans out through `scheduler.invalidate`. The `useThree()` action supplies its own state automatically. Notes:
 
-- No-op unless `frameloop` is `'demand'`.
-- Pending frames are **capped at 60**.
-- Each rendered frame decrements the pending count by 1.
-- When the count reaches 0 the loop stops and `onIdle` callbacks fire.
+- Only roots in `'demand'` mode accumulate invalidations.
+- Pending frames are tracked per root and **capped at 60**.
+- Each rendered frame decrements that root's pending count by 1.
+- The shared loop stops when no root has automatic work left.
 - `stackFrames: true` adds to the existing pending count instead of replacing it.
 
 ### `advance(timestamp)` {#advance}
 
-Standalone util that manually runs one frame for all roots, delegating to `scheduler.step(timestamp)`. Use it in `frameloop="never"` mode and in tests.
+Standalone util that manually runs one frame for all roots through `scheduler.step(timestamp)`. The full signature is `advance(timestamp, runGlobalEffects?, state?)`; passing a root state targets only that root through `scheduler.stepRoot`. Use it in `frameloop="never"` mode and in tests.
 
 ```tsx
 import { advance } from '@react-three/fiber'
@@ -383,15 +381,15 @@ function GameLoop() {
 
 **Phases:** `addPhase(name, { before?, after? })`, `hasPhase(name)`, `phases` (getter).
 
-**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically; the first root to register starts the loop (in `always` mode) and the last to unregister stops it.
+**Roots:** `registerRoot(id, options?)`, `unregisterRoot(id)`, `generateRootId()`, `getRootCount()`, `getRootIds()`, `getRootFrameloop(id)`, `setRootFrameloop(id, mode)`, `isReady` (getter), `onRootReady(cb)`. Canvas manages these automatically.
 
 **Jobs:** `register(callback, options?)`, `unregister(id, rootId?)`, `updateJob(id, partialOptions)`, `getJobCount()`, `getJobIds()`, `hasUserJobsInPhase(phase, rootId?)`.
 
 **Job state:** `pauseJob(id)`, `resumeJob(id)`, `isJobPaused(id)`, `subscribeJobState(id, listener)`.
 
-**Loop control:** `start()`, `stop()`, `isRunning` (getter), `frameloop` (getter/setter), `invalidate(frames?, stackFrames?)`, `resetTiming()`.
+**Loop control:** `start()`, `stop()`, `isRunning` (getter), `frameloop` (legacy bulk/default getter/setter), `defaultFrameloop`, `invalidate(frames?, stackFrames?)`, `invalidateRoot(rootId, frames?, stackFrames?)`, `resetTiming()`.
 
-**Manual stepping:** `step(timestamp?)` (run one frame for all roots), `stepJob(id, timestamp?)` (run one job in isolation).
+**Manual stepping:** `step(timestamp?)` (run one frame for all roots), `stepRoot(rootId, timestamp?)` (run one root), `stepJob(id, timestamp?)` (run one job in isolation).
 
 `register` accepts the full job options:
 

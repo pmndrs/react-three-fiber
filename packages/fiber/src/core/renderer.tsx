@@ -514,7 +514,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const handleXRFrame: XRFrameRequestCallback = (timestamp: number, _frame?: XRFrame) => {
           const state = store.getState()
           if (state.frameloop === 'never') return
-          advance(timestamp)
+          advance(timestamp, true, state)
         }
 
         const actualRenderer = state.internal.actualRenderer
@@ -638,6 +638,7 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         const unregisterRoot = scheduler.registerRoot(newRootId, {
           getState: () => store.getState(),
           onError: (err) => store.getState().setError(err),
+          frameloop: store.getState().frameloop,
         })
 
         // Register canvas target job - sets the canvas target for multi-canvas WebGPU rendering
@@ -787,9 +788,6 @@ export function createRoot<TCanvas extends HTMLCanvasElement | OffscreenCanvas>(
         }))
       }
 
-      // Update scheduler frameloop mode
-      scheduler.frameloop = frameloop
-
       // Set locals
       onCreated = onCreatedCallback
       configured = true
@@ -851,16 +849,21 @@ export function unmountComponentAtNode<TCanvas extends HTMLCanvasElement | Offsc
   const fiber = root?.fiber
   if (fiber) {
     const state = root?.store.getState()
-    if (state) state.internal.active = false
+    if (state) {
+      state.internal.active = false
+      // Stop scheduling this root immediately. Renderer and GPU disposal retain the
+      // existing grace period, but a dead Canvas must not keep running frame jobs.
+      const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
+      if (unregisterRoot) {
+        unregisterRoot()
+        ;(state.internal as any).unregisterRoot = undefined
+      }
+    }
     reconciler.updateContainer(null, fiber, null, () => {
       if (state) {
         setTimeout(() => {
           try {
             const renderer = state.internal.actualRenderer
-
-            // Unregister this root from the global scheduler
-            const unregisterRoot = (state.internal as any).unregisterRoot as (() => void) | undefined
-            if (unregisterRoot) unregisterRoot()
 
             // Unregister primary canvas from registry (if it was registered)
             const unregisterPrimary = state.internal.unregisterPrimary

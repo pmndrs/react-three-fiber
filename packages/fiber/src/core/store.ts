@@ -4,6 +4,7 @@ import { WebGLRenderer, WebGPURenderer, Scene, Raycaster, Vector2, Vector3, Frus
 import type { Inspector } from '#three'
 import * as React from 'react'
 import { createWithEqualityFn } from 'zustand/traditional'
+import { getScheduler } from '@pmndrs/scheduler'
 
 //* Type Imports ==============================
 import type {
@@ -26,7 +27,6 @@ import type {
 import { calculateDpr, isOrthographicCamera, updateCamera, updateFrustum } from './utils'
 import { notifyDepreciated } from './utils/notices'
 import { isInternalRendererAccess } from './utils/isInternalRendererAccess'
-import { getScheduler } from '@pmndrs/scheduler'
 
 //* Cross-Bundle Singleton ==============================
 // Use Symbol.for() to ensure context is shared across bundle boundaries
@@ -170,8 +170,9 @@ export const createStore = (
                 size: newSize,
                 viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, newSize) },
               }))
-              // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-              getScheduler().invalidate()
+              // Invalidate this root so a demand Canvas renders its resize without
+              // waking sibling roots.
+              get().invalidate()
             }
           }
           return
@@ -189,8 +190,9 @@ export const createStore = (
           viewport: { ...s.viewport, ...getCurrentViewport(state.camera, defaultTarget, size) },
           _sizeImperative: true,
         }))
-        // Invalidate to trigger a frame so useFrame callbacks can respond to size changes
-        getScheduler().invalidate()
+        // Invalidate this root so a demand Canvas renders its resize without
+        // waking sibling roots.
+        get().invalidate()
       },
       setDpr: (dpr: Dpr) =>
         set((state) => {
@@ -198,12 +200,13 @@ export const createStore = (
           return { viewport: { ...state.viewport, dpr: resolved, initialDpr: state.viewport.initialDpr || resolved } }
         }),
       setFrameloop: (frameloop: Frameloop = 'always') => {
+        const rootId = (get().internal as any).rootId as string | undefined
+        // Update a registered scheduler root first so the store mutation's invalidation
+        // is evaluated against the new mode. In particular, entering demand must retain
+        // one transition frame for rendering and deferred event flushes.
+        if (rootId) getScheduler().setRootFrameloop(rootId, frameloop)
+        // Before registration this remains state-only; registerRoot reads the stored mode.
         set(() => ({ frameloop }))
-        // Mirror the mode onto the scheduler. `configure()` only pushes the *prop* value, so
-        // without this an imperative setFrameloop() would update store state while the RAF loop
-        // kept running (or stayed stopped) — the mode change would never take effect at runtime.
-        // The scheduler's setter is idempotent and owns starting/stopping the loop.
-        getScheduler().frameloop = frameloop
       },
       setError: (error: Error | null) => set(() => ({ error })),
       error: null as Error | null,
