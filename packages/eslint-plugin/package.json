@@ -1,6 +1,6 @@
 {
   "name": "@react-three/eslint-plugin",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "An ESLint plugin which provides lint rules for @react-three/fiber.",
   "keywords": [
     "react",

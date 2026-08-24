@@ -4,6 +4,103 @@ This changelog tracks changes during the v10 alpha period. For the full per-pack
 
 ---
 
+## 10.0.0-alpha.4
+
+Alpha 4 is a stabilization release for the new scheduler, WebGPU entry point, multi-canvas rendering,
+Suspense lifecycle and resource hooks introduced during the v10 alpha.
+
+### Features
+
+#### Canvas scheduling is root-scoped
+
+R3F now uses the root lifecycle and ordering APIs from `@pmndrs/scheduler@0.2`.
+
+- Every Canvas owns its `frameloop` mode and pending demand frames. A demand or never Canvas no longer
+  freezes an always-running sibling.
+- `invalidate(state)` targets that state’s root; stateless `invalidate()` retains its global fan-out.
+- State-bound `advance()` and XR frames step only their owning root; stateless `advance()` still steps
+  every root.
+- Resizes invalidate only the Canvas that changed, and scheduler roots unregister immediately on
+  unmount.
+- `useFrame` controls expose the owning `rootId` and a root-scoped `invalidate()`.
+
+Canvas ordering also moved from the default render job to the complete scheduler root:
+
+```tsx
+<Canvas
+  id="secondary"
+  renderer={{
+    primaryCanvas: 'main',
+    scheduler: { after: 'main', order: 1, fps: 40 },
+  }}
+/>
+```
+
+`before` and `after` accept one Canvas id or an array. Missing references remain dormant until the
+target mounts, and runtime configuration changes reorder the next frame. `order` supplies a numeric
+root order. `fps` remains scoped to the default render job, so other `useFrame` work can continue
+while rendering is throttled.
+
+#### WebGPU hooks use WebGPU state types
+
+`useThree` and `useFrame` imported from `@react-three/fiber/webgpu` now use `WebGPURootState`.
+`state.renderer`, `state.gl` and frame callback renderers are therefore typed as `WebGPURenderer`
+without casts. This is a types-only narrowing; the exported runtime hooks remain the core
+implementations.
+
+### Bug Fixes
+
+#### `useRenderPipeline` rebuilds now reach the GPU
+
+- Rebuilds set `RenderPipeline.needsUpdate`, so a changed `outputNode` recompiles instead of silently
+  continuing to render the first graph.
+- Replaced `scenePass` instances are disposed after the new graph is installed, preventing render
+  targets and MRT attachments from leaking.
+- The default passthrough follows the replacement pass instead of retaining a disposed target.
+- `reset()` disposes the pass it drops.
+- Setup and main callbacks now receive a state whose `renderPipeline` is correctly typed as
+  non-null.
+
+Application-created passes and effect nodes retain their existing ownership rules; broader disposal
+semantics remain a beta discussion in [#3864](https://github.com/pmndrs/react-three-fiber/issues/3864).
+
+#### Suspense no longer destroys the renderer root
+
+When a child suspends under React StrictMode, Canvas now distinguishes a temporarily hidden tree from
+a real DOM unmount. Showing an outer Suspense fallback no longer tears down and recreates the whole
+renderer root, preserving store identity and stateful GPU resources such as `useGPUStorage`.
+
+#### Array and record textures no longer loop
+
+`useLoader` preserves the returned array identity while its resolved values are unchanged, and
+`useTexture` derives stable signatures for inline array and record inputs. The registry effect no
+longer feeds its own subscriber render and ends in `Maximum update depth exceeded`.
+
+Cache invalidation still propagates correctly: if the same keys resolve to new resources, consumers
+receive a new result.
+
+#### Multi-canvas resize targets the correct Canvas
+
+Multi-canvas WebGPU resizing now updates the owning `CanvasTarget` rather than whichever target is
+currently active on the shared renderer. Deferred backend size updates flush only after that Canvas
+becomes the active target, preventing stale depth attachments and mismatched attachment-size
+validation errors.
+
+#### WebGPU imports and shader identifiers are safe
+
+- The three.js Inspector is loaded lazily, removing an eager `three/webgpu` import cycle that crashed
+  the entire WebGPU entry under Turbopack. This also removes the unused Inspector from normal bundles.
+- Scoped names created by `useGPUStorage`, `useBuffers`, `useNodes` and `useUniforms` are sanitized
+  into valid WGSL identifiers. Spaces, punctuation and leading digits no longer produce invalid
+  struct declarations.
+
+### Dependencies
+
+- `@pmndrs/scheduler` moves from `^0.1.0` to `^0.2.0` for root-scoped lifecycle, invalidation,
+  stepping and ordering.
+
+---
+
 ## 10.0.0-alpha.3
 
 ### Breaking Changes

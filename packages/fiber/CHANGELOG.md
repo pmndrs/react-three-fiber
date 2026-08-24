@@ -1,5 +1,29 @@
 # @react-three/fiber
 
+## 10.0.0-alpha.4
+
+Full detail is in
+[`CHANGELOG-ALPHA.md`](../../CHANGELOG-ALPHA.md#1000-alpha4) at the repo root.
+
+### Features
+
+- Canvas frameloop lifecycle, invalidation, manual stepping and ordering are now scoped to scheduler
+  roots through `@pmndrs/scheduler@0.2`.
+- `renderer.scheduler` accepts root-level `before`, `after` and numeric `order`; `fps` remains scoped
+  to the default render job.
+- `useFrame` controls expose the owning `rootId` and root-scoped `invalidate()`.
+- WebGPU `useThree` and `useFrame` narrow renderer state to `WebGPURenderer`.
+
+### Bug Fixes
+
+- `useRenderPipeline` rebuilds recompile changed output graphs, dispose replaced scene passes and
+  provide callbacks with a non-null `renderPipeline` type.
+- Suspending beneath Canvas no longer destroys and recreates the renderer root under StrictMode.
+- Array and record forms of `useTexture` no longer enter a registry-driven render loop.
+- Shared WebGPU renderers resize the owning Canvas target and refresh stale backend attachments.
+- The optional three.js Inspector no longer creates an eager Turbopack import cycle.
+- Scoped TSL resource names are sanitized into valid WGSL identifiers.
+
 ## 10.0.0-alpha.3
 
 Full detail, with migration notes and examples, is in
